@@ -8,7 +8,7 @@
  * CDP" says where a new check goes.
  */
 
-import { nodeColumns, nodeWeekdayAhead, daysApart } from './lib-dates.mjs';
+import { nodeNow, nodeColumns, nodeWeekdayAhead, daysApart } from './lib-dates.mjs';
 
 export async function run(h) {
 const { check, skip, send, evalJs, has, clickSel, seam } = h;
@@ -67,7 +67,7 @@ if (!seam) {
      under test compares. Same shape as `tomorrow` further up this file, with the step as an
      argument. */
   const calDay = (n) => {
-    const d = new Date();
+    const d = nodeNow();
     d.setDate(d.getDate() + n);
     const p = (x) => (x < 10 ? '0' : '') + x;
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());

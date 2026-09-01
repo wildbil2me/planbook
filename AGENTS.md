@@ -158,6 +158,13 @@ sandboxed agent usually cannot do. If it fails to start, say **"could not run"**
 an environment report, not a result, and the teacher re-runs it locally before any box is ticked.
 Never infer a pass from a harness you could not execute.
 
+*(Two things about it changed on 2026-08-31, WO-1.44. **A section that throws is now contained** —
+reported, counted, its lost checks named — and the rest of the run continues, so a red section no
+longer means the sections after it went unmeasured. The run still exits non-zero; the fix was to the
+blast radius, not to the strictness. And **`--today=YYYY-MM-DD` moves its clock**, which is how a
+failure that only appears on one date gets reproduced. Neither changes the paragraph above: you
+still cannot run it, and "could not run" is still the honest report.)*
+
 **Never tick a 👤 line.** Those need a real iPad, a thumb, or the live SIS, and you have none of them.
 
 **Never tick a 📆 line either — and do not read one as work you owe.** 📆 says *no build can close

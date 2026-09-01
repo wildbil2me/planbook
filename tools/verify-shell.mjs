@@ -40,10 +40,25 @@
  * Adding a section is a new file, one `import` line, and one row in `STATIC_SECTIONS` or
  * `BROWSER_SECTIONS` — a visible diff in one place.
  *
- * A SECTION THAT THROWS STILL KILLS THE RUN. Nothing below wraps `run(h)` in a try/catch, and
- * that is deliberate: catching would turn a section that broke into a section that quietly did
- * not happen, which is the same lie as a silent skip and is the failure mode this file's SKIP
- * accounting exists to make loud.
+ * A SECTION THAT THROWS USED TO KILL THE RUN, AND THE HALF OF THAT RULE THAT SURVIVES IS THE LOUD
+ * HALF. The paragraph that stood here said nothing below wraps `run(h)` in a try/catch, deliberately,
+ * because catching would turn a section that broke into a section that quietly did not happen —
+ * the same lie as a silent skip, and the failure mode this file's SKIP accounting exists to make
+ * loud. That reasoning is still right and it is why the containment below is shaped the way it is.
+ * What beat it is the case it did not imagine, measured on 2026-08-31 (WO-1.44): one unsatisfied
+ * selector in the attendance section threw out of the process at check 518 of 1,284, and the other
+ * 766 checks — grades, signals, outreach, every surface downstream of attendance — did not run, on
+ * a run whose summary line never printed. **A run that stops has not gone green or red, and no
+ * reader of its output can tell.** That is worse than the thing the paragraph was protecting
+ * against, because 513 PASS lines scroll past first and it looks like a run.
+ *
+ * So the rule is now about LOUDNESS rather than about lethality, and `runSection()` below keeps
+ * every word of it: a section that throws gets a FAIL result of its own, named after the file,
+ * carrying the throw and how many of that section's checks had run before it — printed as a FAIL
+ * line, listed in the FAILED block of the summary, counted in `results`, and the run exits 1. It is
+ * not quiet, it is not a skip, and nothing about it reads green. What it stops being is fatal to
+ * the sections after it. If the page cannot be brought back, the run stops there and says which
+ * sections never ran, by name — which is the one thing the old behaviour could not say either.
  */
 
 import http from 'node:http';
@@ -123,6 +138,12 @@ import { run as templates } from './verify/templates.mjs';
 import { run as outreach } from './verify/outreach.mjs';
 import { run as contactLog } from './verify/contact-log.mjs';
 import { run as cooldownQuiet } from './verify/cooldown-quiet.mjs';
+
+/* Not a section — the pure date library every section reads its "what day is it" out of. Imported
+   here for the two values that are this file's business: how far the clock has been moved by
+   `--today` and by how many milliseconds, so the PAGE can be moved by the same amount. Everything
+   else in that module is imported by the sections that use it. */
+import { SHIFT_DAYS, SHIFT_MS, nodeToday } from './verify/lib-dates.mjs';
 
 /* The schema this build writes. Written out here rather than read off the app, so that the checks
    below which say "the document came out at the current version" are claims about a NUMBER and not
@@ -332,8 +353,66 @@ const BROWSER_SECTIONS = [
    helper library nothing runs on its own, and the far half of one section. */
 const HARNESS_ALSO = ['verify/lib-dates.mjs', 'verify/attendance-passes.mjs'];
 
+/* SAID BEFORE THE FIRST CHECK PRINTS, AND AGAIN IN THE SUMMARY (WO-1.44). A run on a moved clock
+   is evidence about a day, not about today, and a log that did not say so is a log somebody quotes
+   as an ordinary run. Nothing prints when the flag is absent, which is the ordinary case. */
+if (SHIFT_DAYS) {
+  console.log('CLOCK   : --today=' + nodeToday + ' — this run is ' + SHIFT_DAYS
+    + ' day(s) from the real one, in Node AND in the page. Not an ordinary run.');
+  console.log('');
+}
+
+/*
+  ── ONE SECTION, RUN, AND WHAT HAPPENS IF IT THROWS (WO-1.44) ──
+
+  Read the amended paragraph at the head of this file first: this is the whole of the containment,
+  and every word of the rule it replaces is kept except the lethality.
+
+  WHAT A THROW MEANS HERE. `clickSel()` throws when the element it was asked for is not on the page,
+  and that is correct — a harness that clicked nothing and carried on would go on reporting about a
+  screen it never touched. What was not correct is where the throw LANDED. On 2026-08-31 one
+  selector built from an id a failed fixture had left `undefined` took out the 766 checks registered
+  after attendance, and the summary line that would have said so never printed.
+
+  SO THE THROW BECOMES A CHECK. `results` gains a `fail` named after the section file, carrying the
+  message, the top of the stack, and how many of that section's own checks had run before it — the
+  last of which is the closest anything here can honestly come to saying how much did NOT run, since
+  no section declares a total. It prints as a FAIL line where it happened, it is listed in the
+  FAILED block of the summary, it is counted in `results`, and it makes the process exit 1.
+
+  AND THE PAGE IS PUT BACK, because a section that died mid-fixture usually leaves a modal open over
+  everything and the sections after it would then be measuring the wreckage rather than the app.
+  `load()` is the same reload a dozen sections already take. If it does not come back, the run stops
+  there and the loop below names the sections that never ran — which is the one thing the old
+  behaviour could not do either.
+
+  IT IS USED FOR BOTH LISTS. A static section throws before the browser is even launched, where the
+  blast radius is all 1,284 checks rather than 766; the argument for containing it is the same
+  argument one size larger. `recover` is what differs, and a null one means "carry on regardless":
+  there is no page to reload before there is a page, and nothing a static section does can wreck one.
+*/
+async function runSection(s, recover) {
+  const before = results.length;
+  try {
+    await s.run(h);
+    return true;
+  } catch (e) {
+    const where = (e && e.stack ? String(e.stack) : String(e))
+      .split('\n').slice(0, 4).map((l) => l.trim()).join(' ← ');
+    check('§ ' + s.file + ' ran to the end of its own checks', false,
+      /* "of its own checks" and never "check(s)": `tools/wo-sweep.mjs` § 11 counts the string
+         `check(` across this file, and a plural written that way is a call site it can see and the
+         run can never fire. The false count then has to be typed into `tools/README.md` to get the
+         sweep green, which is a number nothing produced. */
+      'it threw after ' + (results.length - before) + ' of its own checks, and the rest of that '
+      + 'section did not run — ' + where);
+    if (!recover) return true;
+    return await recover();
+  }
+}
+
 /* The static half of the run: no browser, no server, no page. */
-for (const s of STATIC_SECTIONS) await s.run(h);
+for (const s of STATIC_SECTIONS) await runSection(s, null);
 
 /* ────────────────────────────── static server ────────────────────────────── */
 
@@ -697,6 +776,45 @@ const CATCH_AUDIO_CONTEXTS = `(function(){
 })();`;
 await send('Page.addScriptToEvaluateOnNewDocument', { source: CATCH_AUDIO_CONTEXTS });
 
+/* ────── the page's clock, moved by exactly as much as Node's (WO-1.44) ──────
+ *
+ * `--today=YYYY-MM-DD` moves `tools/verify/lib-dates.mjs`'s four values, which is half of what a
+ * date experiment needs: the app reads its own clock, and a harness that believed in one day while
+ * the page believed in another would fail every check that compares the two — starting with the
+ * attendance section's "the date it will write is today in LOCAL time", which exists precisely to
+ * catch the two runtimes disagreeing. So the same offset goes onto the page.
+ *
+ * A PROXY, FOR THE REASON CATCH_AUDIO_CONTEXTS IS ONE. The page under test is unchanged: nothing in
+ * src/ reads a flag, nothing branches on it, and the app cannot tell this run from one taken on
+ * that day. Only the zero-argument construction and `Date.now()` move; `new Date('2026-09-08')`,
+ * `Date.parse` and `Date.UTC` forward untouched, which is what keeps every ISO string in a fixture
+ * meaning what it says. `instanceof` survives because the proxy forwards `prototype`.
+ *
+ * IT SHIFTS RATHER THAN FREEZES, so elapsed-time arithmetic — the hall-pass clock, the overdue
+ * alerts, the render-cost timings — measures what it always measured. That is stated at the flag's
+ * own definition too; it is the property that makes the flag cheap enough to be worth having.
+ *
+ * INSTALLED ON NEW DOCUMENTS, and it has to be: `src/attendance.js` computes today at module scope
+ * on some paths and this file reloads the page a dozen times. */
+const SHIFT_PAGE_CLOCK = `(function(){
+  var SHIFT = ${SHIFT_MS};
+  if (!SHIFT || window.__clockShifted) return;
+  window.__clockShifted = SHIFT;
+  var Real = Date;
+  window.Date = new Proxy(Real, {
+    construct: function(target, args, nt){
+      return args.length ? Reflect.construct(target, args, nt)
+        : Reflect.construct(target, [Real.now() + SHIFT], nt);
+    },
+    apply: function(target, self, args){ return new Real(Real.now() + SHIFT).toString(); },
+    get: function(target, key, recv){
+      if (key === 'now') return function(){ return Real.now() + SHIFT; };
+      return Reflect.get(target, key, recv);
+    }
+  });
+})();`;
+if (SHIFT_MS) await send('Page.addScriptToEvaluateOnNewDocument', { source: SHIFT_PAGE_CLOCK });
+
 async function load() {
   await send('Page.navigate', { url: 'http://127.0.0.1:' + PORT + '/index.html' });
   await new Promise(r => setTimeout(r, 800));
@@ -717,7 +835,28 @@ Object.assign(h, {
   KILL_ANIM, INSTALL_WALKER, dateResetOn, waitForBoot, load,
 });
 
-for (const s of BROWSER_SECTIONS) await s.run(h);
+/* A booted page again, or an honest no. Everything it can throw is caught in here, because the one
+   thing this must never do is throw out of the recovery from a throw. */
+async function recoverPage() {
+  try {
+    await load();
+    return (await evalJs("document.querySelectorAll('*').length")) > 20;
+  } catch { return false; }
+}
+
+for (let i = 0; i < BROWSER_SECTIONS.length; i++) {
+  if (await runSection(BROWSER_SECTIONS[i], recoverPage)) continue;
+  /* The page did not come back. Stopping is right — every section after this one would throw on its
+     first `evalJs` and print the same failure over and over — but stopping SILENTLY is the whole of
+     the defect this block exists to remove, so the sections that never ran are named, counted, and
+     red. */
+  const rest = BROWSER_SECTIONS.slice(i + 1).map((x) => x.file);
+  check('every browser section in the run order ran', false,
+    'the page could not be brought back after ' + BROWSER_SECTIONS[i].file + ' threw, so '
+    + rest.length + ' section(s) did not run at all: '
+    + (rest.join(', ') || '(none — it was the last one)'));
+  break;
+}
 
 /* ────────────────────────────── summary ────────────────────────────── */
 
@@ -749,6 +888,10 @@ if (skips.length) {
 if (fails.length) {
   console.log('\nFAILED:');
   fails.forEach(f => console.log('  - ' + f.name + (f.detail ? '\n      ' + f.detail : '')));
+}
+if (SHIFT_DAYS) {
+  console.log('\nTHE CLOCK WAS MOVED: this run believed today was ' + nodeToday + ', ' + SHIFT_DAYS
+    + ' day(s) from the real one. It is evidence about that day, not about today.');
 }
 console.log('\nThis tool measures. It does not replace TESTING.md, and nothing here closes a 👤 item —');
 console.log('the iPad checks stay owed to a human no matter how green this run is.');

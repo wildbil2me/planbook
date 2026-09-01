@@ -1254,6 +1254,83 @@ was read after the last revert and returns only the standing prose in `tools/REA
 `tools/wo-sweep.mjs`*, none of which the harness loads — so it fails at HEAD too and wants its own
 look before 2026-09-02. It is named here rather than in this work order's boxes because* **no
 Acceptance line of WO-1.42 asks for it**: *the fourth names* `wo-sweep.mjs` *and* `--audit`*.*
+**That paragraph is what booked WO-1.44, and the entry below closes it.**
+
+---
+
+### WO-1.44 — the browser harness dies at check 518 and 766 checks never run
+
+**What this changes.** Nothing a teacher sees, and nothing a device gets. `src/`, `index.html`,
+`sw.js`, `privacy.html`, `manifest.json` and `icons/` are **byte-identical to HEAD** —
+`git diff HEAD -- src/ index.html sw.js privacy.html manifest.json icons/` is empty — so **no `CACHE`
+bump is owed**. The harness gains section containment and a `--today` flag; the attendance section
+stops picking its two future dates off the calendar and picks them off the document instead.
+
+**The verdict on the five failures is *fixture, all five*, and it is proved by the tree rather than
+argued.** Not one byte of `src/` moved and all five went green. The one with a consequence a teacher
+meets was taken first, as the row asks: **the snow-day confirm now names four periods against four
+recorded**, in the app's own words — `["Period 3 — Biology — Monday, August 31, 2026", "Period 1 —
+Biology …", "Period 4 — Physics …", "AP Bio …"]`. The app was right; it had been handed a `dropped`
+event naming two classes because the kind pill it was told to press was behind a confirm overlay the
+section did not know was up. **No app row is booked out of this one.**
+
+- [x] **The five settled in writing, before either side was edited.** `preDropDay` was `today + 9`
+      off the machine clock; on 2026-08-31 that is **2026-09-09**, the date
+      `tools/verify/classes-terms.mjs:641` hard-codes a *surviving* attendance record on for
+      `remembered.ids[1]` — one of the two classes `twoClasses` names. `clashingMeetings()` found it,
+      `openConfirm()` raised the retroactive warning, and nothing was written; the four checks after
+      it drove their clicks into that overlay. The crash is the last link: `dropEvent` fell back to
+      `{}` and `dropEvent.id` came out `undefined`. **The harness had written this collision down in
+      advance** — `tools/verify/attendance.mjs`'s `window.__att` reader says *"if a run ever happens
+      to fall on one of those dates the two collide … instead of turning into six confusing failures
+      further down"* — and it fired as six confusing failures, reached by a date DERIVED from today
+      rather than by today itself, which is the one shape that comment did not imagine.
+- [x] **The crash is contained, driven against two planted missing selectors as well as the real
+      one.** `verify/modal.mjs` was given `#thereIsNoSuchControlAnywhereInThisApp` — a section with
+      nothing to do with the crash, so the claim is about the mechanism — and
+      `verify/attendance-passes.mjs` was given back the literal
+      `[data-dayoff-remove="undefined"]` of 2026-08-31. The run read **`1260 checks · 1248 passed ·
+      12 failed · 0 skipped`, exit 1, and it PRINTED ITS SUMMARY**, where the same tree before this
+      work order died at 518 with none. Three sections threw — the two planted and
+      `verify/log-entries.mjs`, which wants a fixture the attendance section died before installing —
+      each a FAIL line naming the file, the throw and how many of that section's own checks had run
+      first (`0`, `152`, `19`). The other nine reds are collateral from a *Snow day* left on the
+      document, and **red rather than absent is the whole of the change**. Both plants carried a
+      `MUTATION` comment and were reverted with `git checkout --` against a fully staged tree;
+      `grep -rn "MUTATION WO-1.44" tools/ src/` returns nothing.
+- [x] **Four weekdays, all green, on the delivered tree.** `--today=YYYY-MM-DD` moves Node's clock
+      *and* the page's by the same whole-day offset, and its default is the real one.
+      **Mon 2026-08-31 (real clock, no flag)** `1284 checks · 1284 passed · 0 failed · 0 skipped`,
+      39,242 lines, 30.6 lines per check, 421s, exit 0 · **Tue `--today=2026-09-01`** 1284/1284, 422s,
+      exit 0 · **Wed `--today=2026-09-02`** 1284/1284, 421s, exit 0 · **Thu `--today=2026-09-03`**
+      1284/1284, 421s, exit 0. *(**The flag paid for itself on its first use.** The Thursday run of
+      an earlier tree came back red in the punch-list block with a section throw:
+      `nodeWeekdayAhead(4)` from 2026-09-03 is **2026-09-09** too — the same residue reached by
+      different arithmetic, a second site the first repair did not cover. It is repaired the same way
+      and the fixture check asserts both days. **The first site cost 766 checks and a day of
+      diagnosis; the second cost one run**, and the containment is what let that run report it at
+      all.)*
+- [x] **The count in `tools/README.md` is a number a run produced.** Call sites **1269 → 1271** —
+      both the failure arms of the containment, neither of which fires on a green run — and the
+      executed count is **unchanged at 1284**, which is the claim worth making: this added no check
+      and removed none. `node tools/wo-sweep.mjs` § 11 reads
+      `1271 check() call site(s) across 66 harness file(s), matching tools/README.md:1139`.
+      *(A first draft wrote the plural as* `check(s)` *inside a detail string and § 11 counted it as a
+      call site that can never fire — 1272 against a run of 1284. It is* `checks` *now, with a comment
+      at the line saying why.)*
+- [x] `node tools/wo-sweep.mjs` is **`40 checks · 37 passed · 0 failed · 3 to review`**, exit 0 — the
+      same three standing REVIEW lines as before (sensitive field names, due-date/late-missing, the
+      mockup banner), none of which this work order touches. `node tools/wo-gate.mjs --audit` is
+      **PASS**, exit 0.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.* **Two limits worth
+carrying.** A contained section still leaves collateral — the planted run's nine extra reds are the
+attendance fixture half-built, not nine new defects — so read the section-throw FAILs first and the
+rest as downstream. And **the residue collision is a class, not two sites**: the four other sections
+that derive a future date off the calendar (`register-opens-on-term.mjs`'s `DAY_OFF`,
+`term-edges-marking.mjs`, `term-ended.mjs`, `today-goes-to-term.mjs`) were green on all four days
+tested but are not immune by construction. That is named here as a finding rather than folded in,
+because widening the work order is what the Traps line forbids.
 
 ---
 

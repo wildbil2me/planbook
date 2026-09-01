@@ -8,6 +8,10 @@
  * CDP" says where a new check goes.
  */
 
+/* The harness's one answer to "what day is it", so the three windows this section cuts out of
+   "now" move with `--today` exactly as the page's own clock does. */
+import { nodeNow } from './lib-dates.mjs';
+
 export async function run(h) {
 const { check, evalJs, has, clickSel } = h;
 
@@ -93,16 +97,16 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
     const p = (x) => (x < 10 ? '0' : '') + x;
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
   };
-  const WO217_TODAY = WO217_ISO(new Date());
+  const WO217_TODAY = WO217_ISO(nodeNow());
   const WO217_END = (() => {
-    const d = new Date();
+    const d = nodeNow();
     d.setFullYear(d.getFullYear() + 1);
     return WO217_ISO(d);
   })();
   /* The five weekdays after today, walked the same way nodeWeekdayAhead() walks them further down —
      Mon-Fri only, so the late term's meetings land on days a school year has. */
   const WO217_AHEAD = (() => {
-    const d = new Date();
+    const d = nodeNow();
     const out = [];
     while (out.length < 5) {
       d.setDate(d.getDate() + 1);

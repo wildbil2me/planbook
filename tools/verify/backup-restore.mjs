@@ -10,6 +10,9 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+/* The harness's one answer to "what day is it", so the file-name stamp below moves with
+   `--today` exactly as the page's own clock does. */
+import { nodeNow, nodeNowMs } from './lib-dates.mjs';
 
 export async function run(h) {
 const { SCHEMA_NOW, udd, check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER,
@@ -96,7 +99,7 @@ if (!backupBooted || !backupSeam) {
      today's date on her file, so `dateStamp()` builds it from getFullYear/getMonth/getDate and so
      does this. Stricter about the right value rather than looser about the wrong one. */
   const localStamp = (() => {
-    const now = new Date();
+    const now = nodeNow();
     const pad = (n) => String(n).padStart(2, '0');
     return now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
   })();
@@ -146,7 +149,7 @@ if (!backupBooted || !backupSeam) {
     nag.atTwoDays === false && nag.never === true,
     'at 2 days shown=' + nag.atTwoDays + ', never-backed-up shown=' + nag.never);
   check('a successful download clears the nag and stamps the planbook_ preference for that year',
-    nag.afterDownload === false && Math.abs(Date.now() - nag.pref) < 120000,
+    nag.afterDownload === false && Math.abs(nodeNowMs() - nag.pref) < 120000,
     'planbook_lastBackupAt[' + nag.year + '] = ' + nag.pref + ', nag shown = ' + nag.afterDownload);
 
   /*
@@ -532,7 +535,7 @@ if (!backupBooted || !backupSeam) {
     const stamped = Object.keys(ran.stamps || {}).sort();
     check('each year written gets its own lastBackupAt stamp, and every stamp is fresh',
       JSON.stringify(stamped) === JSON.stringify(yearsOnDevice.slice().sort())
-        && stamped.every(y => Math.abs(Date.now() - Number(ran.stamps[y])) < 180000)
+        && stamped.every(y => Math.abs(nodeNowMs() - Number(ran.stamps[y])) < 180000)
         && ran.disabled === false,
       'planbook_lastBackupAt = ' + JSON.stringify(ran.stamps));
 

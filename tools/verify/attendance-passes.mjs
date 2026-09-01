@@ -17,7 +17,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { nodeToday, nodeColumns, nodeWeekdayAhead, tomorrow } from './lib-dates.mjs';
+import { nodeToday, nodeNow, nodeColumns, nodeWeekdayAhead, tomorrow } from './lib-dates.mjs';
 
 export async function passes(h, ctx) {
 const { ROOT, check, skip, send, evalJs, has, clickSel, openCalendarPanel, dateResetOn } = h;
@@ -1368,7 +1368,7 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
   /* The dates this fixture is cut against, in Node, the way the pre-drop day below this section is:
      a window that holds today, and a day well outside it. */
   const dayFrom = (n) => {
-    const d = new Date();
+    const d = nodeNow();
     d.setDate(d.getDate() + n);
     const p = (x) => (x < 10 ? '0' : '') + x;
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
@@ -2178,13 +2178,47 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
      word. It is asked of the PREDICATE here rather than of the screen — which was once because the
      registry had no column after today, and since 2026-08-08 is because stateOf() is the thing this
      acceptance line is about. The screen's own answer about a future day is measured in the punch
-     list at the end of this section. */
-  const preDropDay = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 9);
+     list at the end of this section.
+
+     ── AND IT IS THE FIRST FUTURE DAY THE DOCUMENT HAS NOTHING ON, NOT `today + 9` (WO-1.44) ──
+
+     This read `today + 9` off `new Date()` for a year, and on 2026-08-31 that arithmetic landed on
+     2026-09-09 — the date `tools/verify/classes-terms.mjs` hard-codes a surviving attendance record
+     on, for `ids[1]`, which is one of the two classes `twoClasses` below names. The app then did
+     exactly what it is built to do: `clashingMeetings()` found a recorded meeting under the event,
+     so `openConfirm()` raised the retroactive-snow-day warning and wrote NOTHING. The check read
+     that as "the event was not authored", and the four checks after it read the confirm dialog that
+     was still up as their own — every click landing on an overlay this section did not know was
+     there — until `dropEvent.id` came out `undefined`, `clickSel` threw, and 766 checks in the
+     sections after this one did not run. One day of the year, and the whole harness stopped
+     reporting on it. The reader at `tools/verify/attendance.mjs`'s `window.__att` had NAMED this
+     collision in advance — *"if a run ever happens to fall on one of those dates the two collide"* —
+     and named the date; what it had not imagined is that a date DERIVED from the clock could reach
+     the residue without today being on it.
+
+     So the date is taken from the document instead of from the calendar: walk forward from today
+     until a day nobody has a record on. `beforeEvents.records` is every record in the document, so
+     this is immune to which fixture an earlier section leaves behind and to which day of the year
+     the run is taken on — and the walk starts at `today + 9` so that the ordinary run picks the
+     same date it always did. It is asserted rather than trusted: the fixture check below carries
+     the precondition, so a build where the walk stopped working goes red HERE, on one line that
+     says why, instead of six checks and a crash further down. */
+  const preDropDayFrom = (records) => {
+    const taken = {};
+    (records || []).forEach((r) => { taken[r.date] = true; });
     const p = (x) => (x < 10 ? '0' : '') + x;
-    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
-  })();
+    const iso = (d) => d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate());
+    /* UTC throughout, off the ISO string this run already agreed on, so the walk cannot land a day
+       either side of itself on a DST seam — the same reasoning src/calendar.js's plusDays() gives
+       at the one place that file touches a Date at all. */
+    const d = new Date(Date.UTC(Number(nodeToday.slice(0, 4)), Number(nodeToday.slice(5, 7)) - 1,
+      Number(nodeToday.slice(8, 10))));
+    d.setUTCDate(d.getUTCDate() + 9);
+    /* A ceiling rather than a `while (true)`: a document that somehow held a record on every one of
+       the next sixty days should fail the precondition below, loudly, rather than hang the run. */
+    for (let i = 0; i < 60 && taken[iso(d)]; i += 1) d.setUTCDate(d.getUTCDate() + 1);
+    return iso(d);
+  };
 
   /* stateOf() for every active class over a list of dates, in one round trip. Asked of the app's
      own predicate — the point of the whole work order is that there is exactly one of them. */
@@ -2257,11 +2291,59 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
   const emptyRange = beforeEvents.records.filter((r) => r.date >= offFrom && r.date <= offTo);
   const edgeRecord = beforeEvents.records.filter((r) => r.date === offEdge
     && r.classId === marking)[0] || null;
-  check('WO-2.3 fixture: the week this section is about to close holds no attendance, and the day just outside the range is dropped so the two greys can be told apart',
+  /* Derived from the document that was just read, for the reason written out at preDropDayFrom(). */
+  const preDropDay = preDropDayFrom(beforeEvents.records);
+  const preDropRecords = beforeEvents.records.filter((r) => r.date === preDropDay);
+  /*
+    ── AND THE PUNCH LIST'S OWN FUTURE DAY, DERIVED HERE FOR THE SAME REASON (WO-1.44) ──
+
+    `aheadDay` is the day the block at the foot of this section authors *Teacher institute day* on
+    and then pages forward to. It read `nodeWeekdayAhead(4)` off the calendar, which is the same
+    trap `preDropDay` was in one door along: on Thursday 2026-09-03 four weekdays ahead is
+    **2026-09-09**, the residue date, so the add raised the retroactive-meeting confirm instead of
+    committing — the form kept its values, the list stayed empty, the forward pager had nothing to
+    page to, and `.id` was read off an event that was never written. **This second site was found by
+    the `--today` flag rather than reasoned about**, on the Thursday run of the three this work
+    order's acceptance line asks for, and it is the argument for the flag in one sentence: the first
+    site cost 766 checks and a day of diagnosis, and the second cost one run.
+
+    Walked in WEEKDAYS, because the pager walks weekdays and a Saturday could not be paged to. The
+    two-weekday reach for the `To` field is derived from it rather than from the clock for the same
+    reason, and because an end date the walk had moved PAST would be an end date the app is right to
+    overwrite — which would fail the check about not overwriting one.
+  */
+  const nextWeekday = (iso) => {
+    const p = (x) => (x < 10 ? '0' : '') + x;
+    const d = new Date(Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1,
+      Number(iso.slice(8, 10))));
+    do { d.setUTCDate(d.getUTCDate() + 1); } while (d.getUTCDay() === 0 || d.getUTCDay() === 6);
+    return d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate());
+  };
+  const aheadDay = (() => {
+    const taken = {};
+    beforeEvents.records.forEach((r) => { taken[r.date] = true; });
+    let day = nodeWeekdayAhead(4);
+    for (let i = 0; i < 60 && taken[day]; i += 1) day = nextWeekday(day);
+    return day;
+  })();
+  const aheadTo = nextWeekday(nextWeekday(aheadDay));
+  const aheadRecords = beforeEvents.records.filter((r) => r.date === aheadDay);
+  check('WO-2.3 fixture: the week this section is about to close holds no attendance, the day just outside the range is dropped so the two greys can be told apart, and BOTH future days it will author on hold nothing at all',
     emptyRange.length === 0 && beforeEvents.events.length === 0
-      && !!edgeRecord && edgeRecord.exception === 'dropped',
+      && !!edgeRecord && edgeRecord.exception === 'dropped'
+      /* The precondition WO-1.44 exists to make loud: an event authored over a day that already
+         holds a recorded meeting is a WARNING and not a write, which is the app behaving correctly
+         and this section measuring the wrong thing. It is asserted rather than assumed, because the
+         residue an earlier section leaves is not this file's to control — and it is asserted about
+         BOTH future days, because the two sites failed on two different weekdays. */
+      && preDropRecords.length === 0 && preDropDay > nodeToday
+      && aheadRecords.length === 0 && aheadDay > nodeToday && aheadTo > aheadDay,
     offFrom + ' .. ' + offTo + ' holds ' + emptyRange.length + ' record(s); '
       + offEdge + ' holds ' + JSON.stringify(edgeRecord)
+      + '; the pre-drop day is ' + preDropDay + ' (today is ' + nodeToday + '), holding '
+      + preDropRecords.length + ' record(s) ' + JSON.stringify(preDropRecords.map((r) => r.classId))
+      + '; the punch list\'s day off is ' + aheadDay + ' .. ' + aheadTo + ', holding '
+      + aheadRecords.length + ' record(s) ' + JSON.stringify(aheadRecords.map((r) => r.classId))
       + '; the document holds ' + beforeEvents.events.length + ' event(s) and '
       + beforeEvents.records.length + ' attendance record(s) in total');
 
@@ -2513,7 +2595,8 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
     safe to make is that the refusal to write tomorrow lives in the writer.
   */
 
-  const aheadDay = nodeWeekdayAhead(4);
+  /* `aheadDay` and `aheadTo` are derived at the head of this sub-section, off the same document
+     read the pre-drop day comes from, and the reasoning is written out there. */
 
   /* One page-side read of the grid AND the pager AND the action row, for the reason every other
      reader in this file is one round trip: three reads taken a paint apart can disagree with each
@@ -2613,14 +2696,14 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
     from.value = ${JSON.stringify(aheadDay)};
     from.dispatchEvent(new Event('change', { bubbles: true }));
     var filled = to.value;
-    to.value = ${JSON.stringify(nodeWeekdayAhead(6))};
+    to.value = ${JSON.stringify(aheadTo)};
     from.value = ${JSON.stringify(aheadDay)};
     from.dispatchEvent(new Event('change', { bubbles: true }));
     return { filled: filled, kept: to.value }; })()`);
   check('picking a start date carries the end date with it, and never overwrites an end date the teacher set herself',
-    carried.filled === aheadDay && carried.kept === nodeWeekdayAhead(6),
+    carried.filled === aheadDay && carried.kept === aheadTo,
     'an empty To became ' + JSON.stringify(carried.filled) + ' (start was ' + aheadDay
-      + '); a To already set to ' + nodeWeekdayAhead(6) + ' stayed ' + JSON.stringify(carried.kept));
+      + '); a To already set to ' + aheadTo + ' stayed ' + JSON.stringify(carried.kept));
 
   /* goHome() rather than closeAll(), because the two lines above left the page on the CALENDAR and
      not on the grid (WO-6.6 moved the days-off door there). `#homeGrid` is `.hidden` from the

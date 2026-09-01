@@ -3983,7 +3983,7 @@ rewritten most.
 
 ## WO-1.44 — the browser harness dies at check 518 and 766 checks never run
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** nothing formally,
+**Ship** — · **Status** ✅ DONE — 2026-08-31 · **Size** M · **Depends on** — · **Blocks** nothing formally,
 and read that as the defect rather than the scope: nothing depends on this because nothing *can*
 depend on a harness, which is exactly why it went two days without anyone noticing
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.43
@@ -4030,6 +4030,37 @@ asserted at `:2431`, so the section is not vacuous on a Sunday and the mechanism
 "nothing recorded". **The WO-2.50 term gate is already ruled out**: this section blanks every term
 date on entry, at `tools/verify/attendance.mjs:110`, and says why. *Go-live is Wednesday 2026-09-02 —
 a weekday — so a fix that is only green on the day it was written is not a fix.*
+
+**It was not the weekday. It was one calendar date, the window is one day wide, and the harness had
+written the collision down in advance** (2026-08-31, this dispatch, settled before a line of either
+side was edited). `preDropDay` is `today + 9`, and on 2026-08-31 that arithmetic lands on
+**2026-09-09** — the date `tools/verify/classes-terms.mjs:641` hard-codes a *surviving* attendance
+record on, for the neighbour class it plants one on so that "the delete took the right class" is
+falsifiable. That neighbour is `remembered.ids[1]`, and the pre-drop names `[ids[1], ids[3]]`. So the
+`dropped` event this section authors covers a day that already holds a recorded meeting, and the app
+does exactly what `plans/rotating-schedule.md` § Precedence tells it to: `clashingMeetings()` finds
+it, `openConfirm()` raises the retroactive warning, and **nothing is written**. `afterDrop.events[0]`
+is `undefined`, `dropEvent` falls back to `{}`, and the four checks after it drive their clicks into
+a confirm overlay this section does not know is up — which is where "2 periods against 4 recorded"
+comes from, and why two events it never meant to commit are in the document by the end. The crash is
+the last link: `dropEvent.id` is `undefined`, so the removal at `:2481` asks for
+`[data-dayoff-remove="undefined"]` and `clickSel` throws. **One arithmetic collision, five failures
+and 766 lost checks.** `tools/verify/attendance.mjs`'s own reader comment had named this class of
+collision and the date — *"if a run ever happens to fall on one of those dates the two collide, and
+this line is where that says so out loud instead of turning into six confusing failures further
+down"* — and it fired as six confusing failures because what it guards is *today* being 2026-09-09,
+and what happened is a date DERIVED from today reaching the residue while today was somewhere else.
+*The weekday paragraph above is left standing rather than deleted: it was the honest reading of the
+evidence available at booking, and a reader who finds it needs to see what replaced it.*
+
+**All five failures are the fixture, and the app is clean — proved by changing no byte of `src/`.**
+`preDropDay` now walks forward from `today + 9` to the first day the document holds no record on
+(`preDropDayFrom()`, asserted in the fixture check rather than trusted), and on 2026-08-31 that is
+2026-09-10. With `src/` untouched: `1284 checks · 1284 passed · 0 failed · 0 skipped`, exit 0. **The
+snow-day confirm names four periods against four recorded**, in the app's own words on the app's own
+screen — so the teacher-facing question this row was ordered to take first is answered *the app was
+right*: a teacher laying a snow day over a day she really taught is told every period it touches. No
+app row is booked out of this one, because there is nothing to book.
 
 **What the failures do and do not threaten.** Three of the five print `attendance byte-identical` and
 the other two assert it inside the check: **no path here is losing or rewriting a mark.** What is
@@ -4089,16 +4120,16 @@ weekday line is third and may slide past 2026-09-02 without costing anything.
   head; a repair here that is not driven is a repair that moves the blind spot rather than closing it.
 
 **Acceptance**
-- [ ] Each of the five current failures is settled **in writing as harness or app**, with the
+- [x] Each of the five current failures is settled **in writing as harness or app**, with the
       evidence, before either side is edited — **the snow-day confirm first**, because it is the one
       with a consequence a teacher meets; any app defect found is fixed here or booked as its own row
       and named on this one.
-- [ ] `node tools/verify-shell.mjs` runs to completion and prints its summary line, with no throw out
+- [x] `node tools/verify-shell.mjs` runs to completion and prints its summary line, with no throw out
       of the process — driven against a **planted** missing selector as well as the real one, so the
       claim is about the mechanism and not about this one element.
-- [ ] The section no longer depends on which weekday it is run on, proved on **at least three
+- [x] The section no longer depends on which weekday it is run on, proved on **at least three
       different weekdays** — by moving the clock or by making *today* an input whose default is still
       the real clock, never by asserting it in a comment.
-- [ ] The check count the run reports is stated in `tools/README.md` and matches, so § 11 and § 22
+- [x] The check count the run reports is stated in `tools/README.md` and matches, so § 11 and § 22
       are both reading a number a full run actually produced.
-- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+- [x] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.

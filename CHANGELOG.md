@@ -13,6 +13,41 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The harness stops at the first section that throws, and 766 checks never run — 2026-08-31
+
+**`node tools/verify-shell.mjs` died at check 518 of 1,284 and printed no summary.** An uncaught
+throw in the days-off flow — `nothing to click for #daysOffList [data-dayoff-remove="undefined"]` —
+took the process with it, so grades, signals, outreach and everything else registered after
+attendance **had not executed on any run since 2026-08-30**, while the output still showed 513 green
+lines above the stack trace. **A harness that goes red has reported; a harness that stops has
+stopped reporting**, and nothing on screen told the two apart.
+
+**The app was innocent, and proving that came first.** `git diff 703af0a HEAD` was empty over `src/`,
+`index.html`, `sw.js`, `privacy.html`, `manifest.json` and `icons/` — the bytes running red were the
+bytes that had run green — and two runs on 2026-08-31 gave identical results, so it was deterministic
+rather than flaky. All five failures were diagnosed **fixture, in writing, before either side was
+edited**: `tools/verify/classes-terms.mjs:641` plants an attendance record dated `2026-09-09` that
+survives its own section, and `attendance-passes.mjs` computed its pre-drop day as *today + 9* — the
+same date on exactly one day of the year. **The snow-day confirm that appeared to undercount periods
+was right all along.**
+
+**`runSection()` contains a throw.** The section is reported and counted, its remaining checks are
+named as lost, and every later section still runs. **A swallowed throw would be the worse bug**, so
+the run still exits non-zero and still refuses a clean summary — the change is to the blast radius,
+not to the strictness. One unsatisfied selector cost 766 unrelated checks; it now costs its own
+section.
+
+**`--today=YYYY-MM-DD` moves the harness's clock**, because a failure that appears on one date cannot
+be chased without being reproducible on demand. Seven `new Date()` sites across six section files
+route through `nodeNow()`; the default is the real clock and a shifted run announces itself twice. A
+malformed date throws before the browser launches.
+
+**The fixture's date is now derived rather than guessed.** `preDropDayFrom()` walks forward past any
+day already holding a record — capped at 60 days rather than a `while (true)` — and the section
+**asserts its own precondition**, so the next cross-section collision goes red with a reason instead
+of cascading into a crash. Driven green on five weekdays: 2026-08-31 real-clock, and 09-01, 09-02,
+09-03 and 09-04 shifted, all `1284 · 1284 · 0 · 0`.
+
 ### The sweep's own check count is checked by the sweep — 2026-08-31
 
 **`tools/README.md` records how many checks `wo-sweep.mjs` runs, and a person typed that number.**

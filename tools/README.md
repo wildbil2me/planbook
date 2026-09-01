@@ -598,6 +598,45 @@ stylesheet review calls that line compliant. Measuring it does not.
 still closes no 👤 item: it drives a page, not an installed app, and it has never seen a service
 worker.
 
+### It takes one argument, and it is a date — `--today` (WO-1.44, 2026-08-31)
+
+```
+node tools/verify-shell.mjs                    # the real clock, and this is the run that counts
+node tools/verify-shell.mjs --today=2026-09-03 # the same run, taken as if today were that Thursday
+```
+
+**The default is the real clock and that is a rule rather than a convenience.** A harness whose
+ordinary run stopped measuring the day the teacher is actually in would have traded one blind spot
+for another. Without the flag `SHIFT_DAYS` is 0, the page is handed nothing, and every value is what
+it was before this existed.
+
+**It moves BOTH clocks, and that is the whole of why it works.** `tools/verify/lib-dates.mjs` is the
+one place this harness answers *what day is it* — `nodeToday`, the column walkers, `nodeNow()` for
+the five sections that cut a fixture window out of "now", and `nodeNowMs()` for the three that ask
+whether a stamp is fresh. The entry file takes the same offset and shifts the PAGE's `Date` with a
+`Proxy`, installed on every new document, so `src/attendance.js` believes the same day Node does.
+The attendance section's *"the date it will write is today in LOCAL time — the same day Node reads
+off this machine"* check is what holds the two together, and it is asserted on a shifted run exactly
+as it is on a real one.
+
+**It shifts, it does not freeze.** `Date.now()` is the real clock plus a constant on both sides, so
+every elapsed-time measurement in the run — the hall-pass clock, the overdue alerts, the render-cost
+timings — goes on measuring what it measured. Only the zero-argument construction and `Date.now()`
+move: `new Date('2026-09-08')`, `Date.parse` and `Date.UTC` forward untouched, so every ISO literal
+in a fixture still means the day it says.
+
+**What it is for, and what it is not.** It exists so that a date-coupled failure can be *reproduced
+and then disproved* rather than argued about in a comment — WO-1.44's whole third acceptance line is
+"proved on at least three different weekdays", and there is no other way to take that reading before
+Thursday arrives. It is **not** a way to make an inconvenient check go away, and a run taken with it
+says so twice, once above the first check and once in the summary: *"this run believed today was X …
+it is evidence about that day, not about today."* A figure quoted out of a shifted run without that
+sentence beside it is a figure about a day nobody was on.
+
+**A typo throws rather than defaulting.** `--today=tuesday` stops the run with a message; silently
+falling back to the real clock would produce a green run somebody would then cite as proof of a day
+it never saw.
+
 **It grows with each work order: 28 at WO-1.3, 54 at WO-1.4, 82 at WO-1.5, 130 at WO-1.6, 162 at
 WO-1.7, 164 once the line cap was retired and its two replacement measurements went in, 184 at
 WO-1.8, 201 at WO-1.9, 222 at WO-1.11, 224 once WO-1.11's correction round added the fixture that
@@ -1097,7 +1136,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1269 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1271 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1294,6 +1333,46 @@ string comparison" until 2026-08-30, which was false as written on a check whose
 structurally cannot ask. Each mutation was reverted **by hand, immediately, before a word of this
 paragraph was written** — never `git checkout`, with the rest of the work order staged first — and
 `grep -rn MUTATION` was run over the tree after the second revert, not before it.
+
+**WO-1.44 moved it from 1269 to 1271, and both of the two never fire on a green run.** They are the
+failure arms of the section containment described at the head of `verify-shell.mjs` — one for a
+section that throws, one for a run that had to stop because the page would not come back — so the
+gap between sites and results widens from −15 to −13 and the executed count does not move at all.
+**The run prints 1284**: `1284 checks · 1284 passed · 0 failed · 0 skipped`, 39,242 lines, 30.6 lines
+per check, 421s, exit 0, measured 2026-08-31 on the delivered tree. **The count is the same 1284 the
+last green run before it printed**, which is the claim worth making: this work order added no check
+and removed none, it only stopped the run dying at 518 of them.
+
+*(**What it was.** `preDropDay` in the attendance section was `today + 9` off the machine clock, and
+on 2026-08-31 that landed on **2026-09-09** — the date `tools/verify/classes-terms.mjs` hard-codes a
+surviving attendance record on, for the very class the pre-drop names. The app then did exactly what
+it is built to do: it raised the retroactive-meeting confirm and wrote nothing. Five checks read the
+wreckage, `clickSel` was handed `[data-dayoff-remove="undefined"]`, and **766 checks in the sections
+after attendance did not run, with no summary line to say so.** *Nothing in `src/` was touched and*
+**all five went green** *— including the snow-day confirm, which names four periods against four
+recorded, so the app was right about the one thing on that list a teacher meets. The two future dates
+that section authors on are now walked forward off the document until they land on a day nothing has
+a record on, and the fixture check asserts it rather than trusting it.)*
+
+*(**The second site was found by `--today` rather than by reading**, and that is the flag's whole
+argument in one line. The Thursday run of the three the acceptance line asks for came back red in the
+punch-list block: `nodeWeekdayAhead(4)` from 2026-09-03 is **2026-09-09** as well, the same residue
+reached by different arithmetic, on a date the first repair did not cover. The first site cost 766
+checks and a day of diagnosis; the second cost one run. **The containment is what let that run report
+it** — three sections threw, the summary printed, and the log named all three.)*
+
+*(**Its planted round is two missing selectors in one run, and the point is the summary line rather
+than the failures.** `verify/modal.mjs` was given `#thereIsNoSuchControlAnywhereInThisApp` — a section
+unrelated to the crash, so the claim is about the mechanism — and `verify/attendance-passes.mjs` was
+given back the literal `[data-dayoff-remove="undefined"]` of 2026-08-31. The run read **`1260 checks ·
+1248 passed · 12 failed · 0 skipped`, exit 1**, and **it reached its summary**, where the same tree
+before this work order died at 518 with no summary at all. Three sections threw — the two planted and
+`verify/log-entries.mjs`, which wants a fixture the attendance section died before installing — each
+one a FAIL line naming the file, the throw and how many of that section's checks had run first (`0`,
+`152`, `19`). The other nine failures are collateral from the attendance section dying with a *Snow
+day* still on the document, and they are **red rather than absent**, which is the difference this
+change is about. Both plants carried a `MUTATION` comment, both were reverted with
+`git checkout --` against a fully staged tree, and `grep -rn MUTATION tools/ src/` was read after.)*
 
 **The pre-change reading was `1194 checks · 1194 passed · 0 failed · 0 skipped`, 407s, exit 0 — and
 its LINE figure is not a pre-change figure.** `ownLines` is read off the disk in the summary, after

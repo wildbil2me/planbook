@@ -8,6 +8,11 @@
  * CDP" says where a new check goes.
  */
 
+/* The harness's one clock, as an epoch number: the freshness assertion below compares a stamp the
+   PAGE wrote against a millisecond read in Node, and the two have to be the same clock under
+   `--today`. See nodeNowMs() at its definition. */
+import { nodeNowMs } from './lib-dates.mjs';
+
 export async function run(h) {
 const { SCHEMA_NOW, consoleLog, check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER,
   waitForBoot, seam } = h;
@@ -192,7 +197,7 @@ if (!storeSeam) {
     return { before:before, after:s.getDoc().rev, chip:chip.className, text:chip.textContent,
              updatedAt:s.getDoc().updatedAt, year:s.getDoc().year, docId:s.getDoc().docId }; })()`);
   check('a further save bumps rev by exactly one and stamps updatedAt',
-    once.after === once.before + 1 && Math.abs(Date.now() - Date.parse(once.updatedAt)) < 120000,
+    once.after === once.before + 1 && Math.abs(nodeNowMs() - Date.parse(once.updatedAt)) < 120000,
     'rev ' + once.before + ' -> ' + once.after + ', updatedAt = ' + once.updatedAt);
   check('the save indicator shows the real write landing',
     /(^|\s)saved(\s|$)/.test(once.chip) && once.text.indexOf('Saved') >= 0,

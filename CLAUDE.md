@@ -510,7 +510,7 @@ run by bare Node. Full notes: [`tools/README.md`](tools/README.md).
 |---|---|
 | Run locally | `node tools/serve-https.mjs` — app on `:8443` over HTTPS, iPad setup page on `:8080` |
 | Once per machine | `node tools/make-cert.mjs` — and again if the LAN address changes |
-| Verify before a deploy | `node tools/verify-shell.mjs` — drives the app in headless Edge over CDP |
+| Verify before a deploy | `node tools/verify-shell.mjs` — drives the app in headless Edge over CDP · `--today=YYYY-MM-DD` moves its clock |
 | Verify after a deploy | `node tools/verify-deploy.mjs` — the only check that reads the live origin |
 | Work-order gates | `node tools/wo-gate.mjs next` (or a `WO-` id) · `--audit` · `--self-check` |
 | Deploy | Cloudflare Pages, static assets only — no `functions/` directory, ever |
@@ -523,6 +523,21 @@ result, and it gets re-run locally before any box is ticked. When it *does* run 
 on 2026-08-16 — that is a green run and not a tick, and the first sentence still governs. *(Narrowed
 from a flat "cannot" that day, WO-1.21, so this file and `AGENTS.md` say one thing: a rule that calls
 a true report impossible teaches its reader to disbelieve one.)*
+
+**A section that throws no longer takes the rest of the run with it, and the clock is now an input**
+(WO-1.44, 2026-08-31). Both come from the same afternoon: `verify-shell.mjs` died at check 518 of
+1,284 on an uncaught throw, **766 checks never ran, and no summary line printed to say so** — the
+output was 513 green lines and a stack trace, which reads far more like a bad section than like a
+harness that has stopped reporting. `runSection()` now contains a throw: the section is reported and
+counted, its remaining checks are lost and named as lost, and every later section still runs. **A
+swallowed throw would be the worse bug**, so the run still exits non-zero and still refuses to print
+a clean summary — the change is about *blast radius*, not about tolerance. And `--today=YYYY-MM-DD`
+shifts the harness's idea of the date, because the defect underneath was a fixture colliding with a
+hard-coded date on exactly one day of the year: **a bug that only appears on one date cannot be
+chased without being reproducible on demand**. The default is the real clock and a shifted run says
+so twice. *The thing that made this expensive is worth carrying: the app was innocent throughout —
+not one byte of `src/` moved — and the first instinct on both sides was to look for the commit that
+broke it. There wasn't one.*
 
 **An Acceptance line can also say it is waiting on the calendar, and 📆 is the mark for it** (WO-1.28,
 2026-08-26). 👤 means *no headless browser can close this*; **📆 means *no build can close this*** — the

@@ -8,7 +8,7 @@
  * CDP" says where a new check goes.
  */
 
-import { nodeToday, tomorrow } from './lib-dates.mjs';
+import { nodeToday, nodeNow, tomorrow } from './lib-dates.mjs';
 import { measureIn } from './touch-targets.mjs';
 
 export async function run(h) {
@@ -78,7 +78,7 @@ console.log('\n--- the past-due prompt (WO-3.6) ---');
        for the same reason. setDate() past either end of a month is the platform's own arithmetic,
        which is what makes this correct on the 1st and the 31st. */
     const nodeDay = (offset) => {
-      const n = new Date();
+      const n = nodeNow();
       n.setDate(n.getDate() + offset);
       const p = (x) => (x < 10 ? '0' : '') + x;
       return n.getFullYear() + '-' + p(n.getMonth() + 1) + '-' + p(n.getDate());
