@@ -4377,7 +4377,8 @@ repair that keeps inferring *she cleared it* from an empty value is arguing with
 rather than removing it, so WO-1.47's `0` is one instance of the defect and not the whole of it.
 **This row removes the ambiguity instead of guarding against it.**
 
-**What to build.** An explicit **Clear** beside each of the five date fields. The picker reset hangs
+**What to build.** An explicit **Clear** beside each of the **ten** date fields, which sit on five
+surfaces and are driven by five `*DateBlurred()` handlers. The picker reset hangs
 off that button — where focus is on the button and there is no caret to take — and the `focusout`
 rebuild WO-1.47 installed comes back out, so **no code path infers a clear from a value at all.**
 
@@ -4405,10 +4406,26 @@ because it never replaces the element.
   rule; `src/calendar-view.css`'s 28px month chip is the owner's single ruled departure and **is not
   a precedent** (`CLAUDE.md` § Conventions). A new control gets 44, or it gets its own reading on
   hardware and its own note at its own point of departure.
-- **Five fields, and they do not all live on the same kind of surface.** Two sit in the assignment
-  editor, two in the term editor, one on the roster's supports panel, two in the days-off form and
-  three in the events form. A layout that works beside a wide field in a modal may not survive the
-  `.config-date-range` pairing. Read all five before drawing one.
+- **Ten fields across five surfaces, and they do not all live on the same kind of surface.** Two
+  sit in the assignment editor, two in the term editor, one on the roster's supports panel, two in
+  the days-off form and three in the events form. A layout that works beside a wide field in a modal
+  may not survive the `.config-date-range` pairing. Read all ten before drawing one.
+
+  *(**This bullet said* **Five fields** *until 2026-09-06, over an enumeration that has always summed
+  to ten, and* `**What to build**` *and two Acceptance lines carried the five with it. Corrected
+  against the tree:* `dateField(assignment, 'assigned'|'due')` *and* `dateField(cls, term,
+  'start'|'end')` *are built dynamically, and* `supportsReviewDate`*,* `daysOffFrom`*,* `daysOffTo`*,*
+  `eventFrom`*,* `eventTo` *and* `eventUntil` *are static in* `index.html` *— 2 + 2 + 1 + 2 + 3.*
+  **Five was never the number of fields; it is the number of surfaces and the number of**
+  `*DateBlurred()` **handlers**, *which is why the 44px line reading "all five surfaces" was right
+  while the line above it was wrong.* **The failure this would have produced is the dangerous kind:**
+  *five Clears satisfies the old line 1 literally, ticks the box, and leaves five date fields without
+  one — a work order passing its own Acceptance while delivering half the fix.* **It is the**
+  `WO-1.40`/`WO-1.42`/`WO-1.45`/`WO-1.49` **shape for the fifth time** *— a hand-typed number in prose
+  that nothing checks — and the fifth instance was found in the work order rather than in the code,
+  which is the only reason it cost nothing. Nothing in the repository can catch this class inside a
+  work order's own prose;* `--audit` *reads header fields and roadmap fragments, and* `--tick` *reads
+  checkbox state, and neither counts anything a sentence claims.)*
 - **A review date is accommodation-adjacent.** The roster's field sits in the supports panel, so
   whatever the control says and however it is labelled is read under presentation mode. Nothing new
   may be disclosed by its presence — see `src/supports.js` and `CLAUDE.md` § Accommodations.
@@ -4419,8 +4436,10 @@ because it never replaces the element.
   check count moves with it or § 22 goes red (WO-1.42).
 
 **Acceptance**
-- [ ] Each of the five date fields carries a **Clear**, and pressing it empties the field, writes the
-      empty value, and leaves a live element in the panel.
+- [ ] Each of the **ten** date fields carries a **Clear** — two in the assignment editor, two in the
+      term editor, one on the roster's supports panel, two in the days-off form and three in the
+      events form — and pressing it empties the field, writes the empty value, and leaves a live
+      element in the panel.
 - [ ] **No code path rebuilds a date field from a `change` or `focusout` value being empty.** The
       reset happens on the Clear and nowhere else, asserted structurally rather than by fixture — the
       shape `wo-sweep.mjs` § 17 uses for *this file holds no writer*.
@@ -4429,7 +4448,8 @@ because it never replaces the element.
 - [ ] 👤 On the iPad, after a force-quit: **clear a date and tap the same day again without leaving
       the field**, and it takes. This is the case WO-1.47 wrote down as failing, and the reason this
       row exists.
-- [ ] 👤 Every Clear is reachable under a thumb at 44px, on all five surfaces, in portrait.
+- [ ] 👤 Every one of the ten Clears is reachable under a thumb at 44px, on all five surfaces, in
+      portrait.
 - [ ] `node tools/verify-shell.mjs` is green, `node tools/wo-sweep.mjs` is green, and
       `node tools/wo-gate.mjs --audit` is green on a clean tree.
 - [ ] `TESTING.md` gains a § WO-1.48, and `CHANGELOG.md` records the new control.
