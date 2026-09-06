@@ -4471,6 +4471,20 @@ about, and eleven below it: `submit` :2727, `keydown` :2825, `beforeinput` :2937
 `change` :3091, `focusin` :3205, `focusout` :3246, `dragover` :3269, `dragleave` :3276, `drop` :3277
 and `DOMContentLoaded` :3297. So the sentence names three of eleven.
 
+*(**Those numbers are a measurement dated 2026-09-06, not a fact about the file this row will be
+built against, and they are left exactly as they were for the reason `known-bugs.md` § 1 leaves
+WO-1.47's:** they are the evidence, and a measurement quietly re-taken is a measurement that can only
+be checked against itself.* **What is expected to move them, and it is booked ahead of this row:**
+[WO-1.48](#wo-148--a-date-field-cannot-tell-mid-typing-from-cleared-and-the-app-infers-it-anyway)
+*takes the `focusout` rebuild back out, and the listener at :3246* **exists for nothing else** *— its
+whole body routes the five `*DateBlurred()` calls and it writes nothing — so it goes with the rebuild,
+`twelve` becomes* **eleven**, *`three of eleven` becomes* **three of ten**, *and every line number
+below :3246 shifts.* **Re-derive the count from the tree before writing a word of the repair**; do not
+quote the enumeration above, and do not assume WO-1.48 landed — read the file. *If this row is somehow
+taken first, the numbers above are the live ones and WO-1.48 will invalidate the repair within the
+sitting, which is the ordering argument and a further argument for* **answer 1**: *a paragraph holding
+no figure is correct on both sides of WO-1.48, and is the only version of this repair that is.)*
+
 **It was already wrong before WO-1.47, and that is the argument for a row rather than a footnote.**
 `beforeinput`, `change`, `focusin` and the three drag listeners all postdate the sentence; WO-1.47
 then added `focusout` and made it one worse. Nothing in the repository noticed across all of them,
@@ -4512,6 +4526,13 @@ row moves words, or words plus one check. It moves no behaviour.
 - **"Other" is doing real work in that sentence.** It means *other than the `click` delegation the
   preceding paragraph is about*, so the total is twelve and the sentence's denominator is eleven.
   A repair that reads as three-of-twelve is a new wrong number.
+- **This work order's own heading says "there are twelve", and it does not get corrected.** The
+  heading is the anchor
+  `#wo-149--a-comment-counts-three-document-level-listeners-and-there-are-twelve`, which
+  `plans/work-orders/README.md` row 53 links to and `--audit` reads; renaming it to match a
+  post-WO-1.48 count breaks the link and buys nothing. **It is the title of a defect report and
+  records what was true when the defect was found** — the same reason `known-bugs.md` § 1 keeps
+  its pre-WO-1.47 line numbers. Repair the comment in `src/shell.js`; leave the heading alone.
 - **The parenthetical comes out if the count does.** Answer 1 makes it redundant; leaving both is a
   paragraph apologising for a number it no longer contains.
 - **This is prose in a file that has failed once for prose.** WO-1.47's Acceptance line 4 went red on
