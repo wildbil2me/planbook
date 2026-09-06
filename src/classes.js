@@ -1544,24 +1544,23 @@ function dateField(cls, term, field) {
 }
 
 /*
-  Clearing a date on iPadOS, which is a WebKit quirk and was found on the hardware rather than here.
+  A TERM DATE COMMITTED EMPTY — the write, and nothing else since WO-1.47.
 
-  The date popover keeps its OWN selection, separate from the input's value. Clear a field that
-  held 2026-09-04 and the calendar still has September 4th highlighted — so tapping September 4th
-  again changes nothing from the picker's point of view, no `input` event fires, and the field stays
-  empty. The teacher's workaround is to tap a neighbouring day and come back, which is worse than an
-  annoyance: it writes a date she never wanted into the year document on the way past.
+  Written here as well as in editTermField(), for the browser that commits a picker change without
+  an `input` event first: the document is what the rebuilt field reads its value from, and a cleared
+  date that never reached the store would come back holding the old one.
 
-  So a cleared field is thrown away and rebuilt. A fresh element has no picker state, and the next
-  tap opens a calendar with nothing selected, where every date — including the one just cleared —
-  registers on the first tap.
+  THE REBUILD USED TO LIVE HERE AND NOW LIVES IN termDateBlurred() BELOW, which is the whole of
+  WO-1.47 at this site. `change` is the wrong event to throw an element away on: Chromium fires it
+  on the momentarily-empty read a date field reports while a `0` is being typed into the month or
+  the day, so the rebuild landed under the caret and took the date with it. The long version of both
+  halves — the iPadOS quirk the rebuild exists for, and why `focusout` is the fence `change` was
+  mistaken for — is on that function.
 
-  ON `change`, NOT ON `input`, and that distinction is the whole reason this is a second function
-  rather than three lines inside editTermField(). A desktop date field reports its value as '' while
-  it is being typed into ("09/0…" is not a date yet), so `input` fires with an empty value several
-  times per date entered. Rebuilding on those would replace the element under the caret on the
-  second keystroke. `change` fires when a value is committed — the picker's Clear, or a blur — and
-  never mid-typing.
+  The write stays on `change` and did not move with it. It is about the DOCUMENT, it is idempotent,
+  and it fires on the picker's own Clear, which is where the browsers that never send an `input`
+  event need it. The condition is what keeps it from saving the document over an identical copy of
+  itself and bumping `rev` for a term date that was already empty (docs/sync.md).
 */
 export function termDateCommitted(input) {
   const cls = findClass(termClassId);
@@ -1573,16 +1572,60 @@ export function termDateCommitted(input) {
   const term = termsOf(cls).filter((t) => t.id === termId)[0];
   if (!term) return;
 
-  /* Written here as well as in editTermField(), for the browser that commits a picker change
-     without an `input` event first: the document is what the rebuilt field reads its value from,
-     and a cleared field that never reached the store would come back holding the old date.
-
-     The write is conditional and the rebuild below is not, which is the right way round. By the
-     time `change` fires, the `input` listener has usually already stored the '' — so testing the
-     stored value to decide whether to REBUILD would skip the rebuild in the exact case it exists
-     for. What the test is good for is not saving the document over an identical copy of itself, and
-     not bumping `rev` for a term date that was already empty (docs/sync.md). */
   if (term[field]) update(() => { term[field] = ''; });
+}
+
+/*
+  Clearing a date on iPadOS, which is a WebKit quirk and was found on the hardware rather than here.
+  THIS IS THE LONG VERSION for all five date fields in the app — src/assignments.js, src/roster.js,
+  src/days-off.js and src/events.js each point at this paragraph rather than holding a copy of it.
+
+  The date popover keeps its OWN selection, separate from the input's value. Clear a field that
+  held 2026-09-04 and the calendar still has September 4th highlighted — so tapping September 4th
+  again changes nothing from the picker's point of view, no `input` event fires, and the field stays
+  empty. The teacher's workaround is to tap a neighbouring day and come back, which is worse than an
+  annoyance: it writes a date she never wanted into the year document on the way past.
+
+  So a cleared field is thrown away and rebuilt. A fresh element has no picker state, and the next
+  tap opens a calendar with nothing selected, where every date — including the one just cleared —
+  registers on the first tap.
+
+  ON `focusout`, AND THE PARAGRAPH THAT USED TO SIT HERE GOT THE FENCE WRONG (WO-1.47, 2026-09-03).
+  It said `change` and not `input`, reasoning that a desktop date field reports '' several times
+  while a date is being typed and that `change` "fires when a value is committed … and never
+  mid-typing". The first half is true and the second is not. `0` is not a valid month or a valid day
+  on its own, so Chromium blanks the segment, waits for the second digit, and fires `input` AND
+  `change` on that empty read — measured 2026-09-03 in headed Edge 152. So the rebuild ran on the
+  first keystroke of `09/03`, replaced the element under the caret, sent the focus to `BODY`, and
+  every digit after it went nowhere. `plans/known-bugs.md` § 1 carries the measurement.
+
+  `focusout` cannot do that by construction: the field has already been left, so there is no caret
+  in it to take. That is the whole reason this is a separate function from the write above rather
+  than three lines inside it.
+
+  WHAT THAT COSTS, NAMED RATHER THAN HIDDEN. A blur-time rebuild still covers the teacher who clears
+  a date and LEAVES the field — she comes back to a fresh element and a picker with nothing
+  selected. It does NOT cover clearing a date and tapping the same day again WITHOUT leaving, which
+  is the exact iPadOS sequence the paragraph above is about, because the rebuild now arrives after
+  the tap that needed it. That is a knowing trade of a data-loss defect on the laptop for a
+  stale-highlight defect on the iPad — Roll Call! has shipped the second for a year of daily
+  classroom use without a report — and it is a GUARD, not the repair. WO-1.48 removes the ambiguity
+  underneath both by giving the teacher an explicit Clear, at which point the rebuild hangs off a
+  button, there is no caret anywhere near it, and none of this is inferred from an empty read.
+*/
+export function termDateBlurred(input) {
+  const cls = findClass(termClassId);
+  const termId = input.getAttribute('data-term-id');
+  const field = input.getAttribute('data-term-field');
+  if (!cls || !termId) return;
+  if (field !== 'start' && field !== 'end') return;
+  if (input.value) return;
+  const term = termsOf(cls).filter((t) => t.id === termId)[0];
+  if (!term) return;
+
+  /* Unconditional on the STORED value, which is the same right-way-round the write above is the
+     other half of: by the time focus leaves, the `input` listener has already stored the '', so
+     testing it here would skip the rebuild in the exact case the rebuild exists for. */
   const wrap = input.closest('.term-date-field');
   if (wrap) wrap.replaceWith(dateField(cls, term, field));
 }

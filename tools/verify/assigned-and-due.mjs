@@ -173,8 +173,16 @@ console.log('\n--- the Assigned and Due fields (WO-3.17) ---');
                  innerW: window.innerWidth }; })()`;
 
       /* A date cleared the way the iPad's picker clears one: the value goes, `input` fires, and
-         `change` follows — which is the event src/assignments.js rebuilds the field on, because a
-         WebKit date popover keeps its own selection and a re-tap on the old day fires nothing. */
+         `change` follows — which is the event src/assignments.js writes the empty date to the
+         document on.
+
+         IT DOES NOT BLUR, so since WO-1.47 it no longer drives the rebuild. The rebuild moved to
+         `focusout` (assignmentDateBlurred), because `change` also fires on the momentarily-empty
+         read Chromium reports while a leading `0` is typed and a rebuild there ate the field under
+         the caret. The checks below still pass and still mean something — a cleared date must not
+         re-fill itself — but what they read is the SAME element, not a rebuilt one. Nothing here
+         asserts the rebuild any more, and that is stated rather than left to be assumed;
+         tools/verify/date-zero-key.mjs is where the two events are told apart. */
       const clearDate = async (field) => {
         await evalJs(`(function(){
           var f = document.querySelector('#assignmentFields [data-assignment-field="${field}"]');
@@ -259,15 +267,20 @@ console.log('\n--- the Assigned and Due fields (WO-3.17) ---');
 
       /*
         ACCEPTANCE LINE 2. Both dates cleared through the real fields, on the real `change` the
-        picker's Clear fires — which is also the path that throws the input away and rebuilds it, so
-        this asserts the REBUILT field is empty and not merely that the document is. A build whose
-        rebuild re-applied the creation default would store '' and show today, and the teacher would
-        find the date back the moment she looked away.
+        picker's Clear fires. A build that re-applied the creation default would store '' and show
+        today, and the teacher would find the date back the moment she looked away — that is what
+        this catches, on the field as well as on the document.
+
+        WHAT IT STOPPED ASSERTING (WO-1.47): the field read below is the same element that was
+        cleared, not a rebuilt one. clearDate() above never blurs, and the rebuild moved off
+        `change` onto `focusout`, so this line's premise changed under it without the check going
+        red. Extending it to drive the blur would be new coverage rather than a repair and was left
+        alone deliberately.
       */
       await clearDate('assigned');
       await clearDate('due');
       const cleared = await readFields();
-      check('clearing either date stores it empty and leaves the rebuilt field empty — a cleared date is never re-filled',
+      check('clearing either date stores it empty and leaves the field empty — a cleared date is never re-filled',
         cleared.editorOpen && cleared.fields.assigned === '' && cleared.fields.due === ''
           && cleared.assignments.some((a) => a.id === madeId && a.assigned === '' && a.due === ''),
         'fields ' + JSON.stringify(cleared.fields) + ', document '

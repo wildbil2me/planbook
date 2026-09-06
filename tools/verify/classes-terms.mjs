@@ -384,13 +384,37 @@ if (!classesBooted || !classSeam) {
 
     Run on term 1's start date and then put it back, so MESSY is intact for the reload check
     further down that asserts these same dates survived a restart.
+
+    THE FIELD IS NOW LEFT AS WELL AS CLEARED, AND THAT IS WO-1.47 (2026-09-03). The rebuild used to
+    hang off `change` and hangs off `focusout` now, because `change` also fires on the empty read
+    Chromium reports while a `0` is being typed into a month or a day — so the old hook replaced the
+    element under the teacher's caret and took the date with it (`plans/known-bugs.md` § 1). This
+    check went RED on the first run after that move, correctly: its premise was *cleared*, and the
+    premise is *cleared and left*. It clears the field, asserts nothing has happened yet, and only
+    then blurs it — so the two halves of the move are both measured here rather than one of them
+    being traded for the other. `tools/verify/date-zero-key.mjs` is the same pair on the assignment
+    editor's Due field, driven with real keystrokes.
   */
   await evalJs(`(function(){ var f = document.querySelectorAll('#termList .term-row')[0]
       .querySelectorAll('.term-date')[0];
     f.__pbStale = 1;
+    f.focus();
     f.value = ''; f.dispatchEvent(new Event('input', { bubbles:true }));
     f.dispatchEvent(new Event('change', { bubbles:true }));
     return 1; })()`);
+  await new Promise(r => setTimeout(r, 200));
+  const stillThere = await evalJs(`(function(){ var f = document.querySelectorAll('#termList .term-row')[0]
+      .querySelectorAll('.term-date')[0];
+    return { survived: !!f.__pbStale, value: f.value }; })()`);
+  check('clearing a term date does not throw the field away while the caret is still in it — the empty `change` a part-typed date fires is not a clear',
+    stillThere.survived === true && stillThere.value === '',
+    JSON.stringify(stillThere));
+  /* And now she leaves it, which is how a teacher gets out of a date field. `blur()` rather than a
+     synthetic event, because `focusout` is what the app listens on and a dispatched one would be
+     the check agreeing with itself. */
+  await evalJs(`(function(){ var f = document.querySelectorAll('#termList .term-row')[0]
+      .querySelectorAll('.term-date')[0];
+    f.blur(); return 1; })()`);
   await new Promise(r => setTimeout(r, 200));
   const cleared = await evalJs(`(function(){ var f = document.querySelectorAll('#termList .term-row')[0]
       .querySelectorAll('.term-date')[0];
@@ -418,16 +442,23 @@ if (!classesBooted || !classSeam) {
     JSON.stringify(repicked.termDates[1][0]));
 
   /* The other half of that fix, and the regression it could easily become. A desktop date field
-     reports '' while a date is part-typed, so the rebuild is bound to `change` and must NOT happen
-     on `input` — rebuilding there would replace the element under the teacher's caret partway
-     through typing. Term 3 carries no dates in MESSY, so an empty `input` here changes nothing. */
+     reports '' while a date is part-typed, so the rebuild must NOT happen on `input` — rebuilding
+     there would replace the element under the teacher's caret partway through typing. Term 3
+     carries no dates in MESSY, so an empty `input` here changes nothing.
+
+     IT FIRES `change` AS WELL SINCE WO-1.47, and that is the clause with teeth now. Chromium fires
+     `change` on the same empty read, so a check that only dispatched `input` passed on the build
+     that lost a teacher's due date — it was measuring the wrong half of the pair. Both events go in
+     with the caret in the field, and the element has to survive both. */
   const typing = await evalJs(`(function(){ var f = document.querySelectorAll('#termList .term-row')[2]
       .querySelectorAll('.term-date')[0];
     f.__pbTyping = 1;
+    f.focus();
     f.value = ''; f.dispatchEvent(new Event('input', { bubbles:true }));
+    f.dispatchEvent(new Event('change', { bubbles:true }));
     var now = document.querySelectorAll('#termList .term-row')[2].querySelectorAll('.term-date')[0];
     return { survived: !!now.__pbTyping, same: now === f }; })()`);
-  check('an empty date field being typed into is not rebuilt underneath the caret',
+  check('an empty date field being typed into is not rebuilt underneath the caret, on `input` or on `change`',
     typing.survived && typing.same, JSON.stringify(typing));
 
   /*

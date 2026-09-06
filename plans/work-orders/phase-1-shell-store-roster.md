@@ -4255,7 +4255,7 @@ constraint — it touches `wo-sweep.mjs` and cannot affect a run.)*
 
 ## WO-1.47 — a zero typed into a date field clears the date and takes the field with it
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing · **Blocks** WO-1.48, which
+**Ship** — · **Status** ✅ DONE — 2026-09-06 · **Size** S · **Depends on** nothing · **Blocks** WO-1.48, which
 replaces this row's guard with the control that removes the ambiguity underneath it
 **Closes roadmap** Phase 1 → *(no box. A defect in a delivered surface rather than new scope — the
 same call WO-1.26 through WO-1.46 made about the tooling rows. Booked 2026-09-03, owner-directed, on
@@ -4331,24 +4331,35 @@ the native control is what buys the OS picker on the iPad, and it is not what is
   hook does before moving the whole of it — only the **rebuild** moves.
 
 **Acceptance**
-- [ ] Typing `0` as the first digit into an assignment date field holding a date leaves **the same
+- [x] Typing `0` as the first digit into an assignment date field holding a date leaves **the same
       element** in place, the caret still in it, and the date complete once Chromium commits — driven
       in `tools/verify-shell.mjs`, seeding a date and pressing `0` through `Input.dispatchKeyEvent`.
       *(A prefilled date field is faithfully drivable over CDP and a blank one is not; the bug lives
       in the prefilled one. `plans/known-bugs.md` § 1 carries the measurement.)*
-- [ ] Typing a full `09032026` into that field leaves the assignment holding **2026-09-03** and not
+- [x] Typing a full `09032026` into that field leaves the assignment holding **2026-09-03** and not
       an empty date — the data-loss half, asserted separately from the focus half.
-- [ ] **The day segment is driven too, and separately.** `10032026` has a safe month and a `0` day,
+- [x] **The day segment is driven too, and separately.** `10032026` has a safe month and a `0` day,
       and it is the case that outlives September — the month segment stops triggering this on Oct 1
       and the day segment never does.
-- [ ] The other four fields are each **moved and read**, with the iPadOS reasoning relocated so that
+- [x] The other four fields are each **moved and read**, with the iPadOS reasoning relocated so that
       no comment describes a hook it no longer sits on. Five sites, five decisions, none silent.
-- [ ] 👤 On the iPad, after a force-quit: clearing a date and **leaving the field** still lets the
+      *(Failed verification 2026-09-03 and re-ticked the same day after the correction round.
+      `src/shell.js`'s attribute census — four entries at the head of the file — still said the
+      rebuild runs on `change`; the grep that was supposed to catch that searched function names and
+      those comments name only the event. All five census entries now name both events, the
+      `focusout` listener is in the census, and the stated check in `TESTING.md` § WO-1.47 is now the
+      grep that finds them — every place in `src/*.js` where the word *rebuild* and a mention of the
+      `change` event sit within three lines of each other, 29 of them on this tree, each read.)*
+- [x] 👤 On the iPad, after a force-quit: clearing a date and **leaving the field** still lets the
       picker reopen with nothing selected. The case this row knowingly gives up — clear, then tap the
       same day without leaving — is read and **written down as failing**, so WO-1.48 has a baseline.
-- [ ] `node tools/verify-shell.mjs` is green, `node tools/wo-sweep.mjs` is green, and
+      *(Owner, 2026-09-06, installed app against the local server. Reading 1 passes. Reading 2 fails
+      as designed — cleared a due date holding September 4, stayed in the field, tapped September 4
+      again, and the field stayed empty. The trade this row made is therefore measured rather than
+      assumed. Both readings, and the one diagnostic not taken, are in `TESTING.md` § WO-1.47.)*
+- [x] `node tools/verify-shell.mjs` is green, `node tools/wo-sweep.mjs` is green, and
       `node tools/wo-gate.mjs --audit` is green on a clean tree.
-- [ ] `TESTING.md` gains a § WO-1.47, and `plans/known-bugs.md` § 1 is struck with this ID.
+- [x] `TESTING.md` gains a § WO-1.47, and `plans/known-bugs.md` § 1 is struck with this ID.
 
 ---
 
@@ -4422,3 +4433,80 @@ because it never replaces the element.
 - [ ] `node tools/verify-shell.mjs` is green, `node tools/wo-sweep.mjs` is green, and
       `node tools/wo-gate.mjs --audit` is green on a clean tree.
 - [ ] `TESTING.md` gains a § WO-1.48, and `CHANGELOG.md` records the new control.
+
+---
+
+## WO-1.49 — a comment counts three document-level listeners and there are twelve
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing · **Blocks** nothing
+**Closes roadmap** Phase 1 → *(no box. A comment repair in a delivered file — the same call WO-1.26
+through WO-1.48 made. Booked 2026-09-06, owner-directed, on WO-1.47's implementer's own proposal:
+it found the defect mid-correction-round, declined to fix it there, and said in as many words that
+it would rather the count were booked than smuggled.)*
+
+**Why it exists.** `src/shell.js`'s delegation preamble says **"Three other document-level listeners
+live further down"** and names `submit`, `input` and `keydown`. There are **twelve**
+`document.addEventListener` calls in the file — `click` at :1655 which the paragraph above it is
+about, and eleven below it: `submit` :2727, `keydown` :2825, `beforeinput` :2937, `input` :2948,
+`change` :3091, `focusin` :3205, `focusout` :3246, `dragover` :3269, `dragleave` :3276, `drop` :3277
+and `DOMContentLoaded` :3297. So the sentence names three of eleven.
+
+**It was already wrong before WO-1.47, and that is the argument for a row rather than a footnote.**
+`beforeinput`, `change`, `focusin` and the three drag listeners all postdate the sentence; WO-1.47
+then added `focusout` and made it one worse. Nothing in the repository noticed across all of them,
+which is the WO-1.40 / WO-1.42 / WO-1.45 shape for the fourth time: **a hand-typed number in prose
+that nothing checks, drifting quietly while every tracker stays green.**
+
+**Why it was not fixed in WO-1.47.** That work order had just **failed verification for a stale
+comment**, and rewriting an unrelated paragraph into an accurate census inside its correction round
+would have widened it at exactly the wrong moment. The correction round added one parenthetical —
+*"There are more document-level listeners further down than that sentence counts … this paragraph is
+deliberately not being turned into one here"* — and left the number alone. **That parenthetical is
+the current state and it is a holding position, not the answer**: it makes the sentence honest about
+being incomplete without making it true.
+
+**The ruling this row has to make, and it is not "type 11".** Two answers, and the lean is stated:
+
+1. **Take the number out.** Name the three listeners the paragraph actually wants to talk about, drop
+   the count, and let the parenthetical's own point stand — the census is the listeners themselves.
+   **This is the lean.** It closes the class rather than the instance: there is no figure left to
+   rot, and the paragraph goes on doing the one job it was written for.
+2. **Repair the count and fence it.** Only worth doing if the fence asserts at **runtime against the
+   file** the way WO-1.42's does against `results.length` — a sweep check that counts
+   `document.addEventListener` in `src/shell.js` and compares it to the number in the comment.
+
+**Do not take answer 2's first half without its second.** Writing `Eleven` into the comment and
+stopping is this work order's own defect, re-armed with a fresh number and a later expiry date.
+
+**Out of scope** — every other listener comment in the file, § 18's delegated-attribute inventory
+(which is green and was green through WO-1.47's failure, because it diffs hooks against the census
+for **presence** and has no opinion about a prose count), and any change to a listener itself. This
+row moves words, or words plus one check. It moves no behaviour.
+
+**Traps**
+
+- **`DOMContentLoaded` is the reason "eleven" and "ten" are both defensible.** It is a boot hook and
+  not an interaction listener, so a reader counting *listeners that carry a gesture* gets ten. If
+  answer 2 is taken, **the check and the comment must agree about it in as many words**, or the
+  fence fails on the first honest disagreement and teaches its next reader to disbelieve it.
+- **"Other" is doing real work in that sentence.** It means *other than the `click` delegation the
+  preceding paragraph is about*, so the total is twelve and the sentence's denominator is eleven.
+  A repair that reads as three-of-twelve is a new wrong number.
+- **The parenthetical comes out if the count does.** Answer 1 makes it redundant; leaving both is a
+  paragraph apologising for a number it no longer contains.
+- **This is prose in a file that has failed once for prose.** WO-1.47's Acceptance line 4 went red on
+  four census entries that named an event and no function, and the grep that was supposed to catch
+  them searched function names. Whatever check this row states, run it against the **pre-repair**
+  file and confirm it returns the thing it claims to catch — the discipline WO-1.47's correction
+  round used, and the reason its re-tick was accepted.
+
+**Acceptance**
+- [ ] `src/shell.js`'s delegation preamble no longer states a count that disagrees with the file —
+      by answer 1 or by answer 2, with **which answer was taken and why written at the line**.
+- [ ] If answer 2: the count is asserted by `wo-sweep.mjs` against the file at runtime, never by a
+      second hand-typed number, and the check is proved against the pre-repair comment.
+- [ ] If answer 1: no count remains in the paragraph, and the holding parenthetical WO-1.47 added is
+      removed rather than left standing beside its own resolution.
+- [ ] `node tools/verify-shell.mjs` is green, `node tools/wo-sweep.mjs` is green, and
+      `node tools/wo-gate.mjs --audit` is green on a clean tree — with `tools/README.md`'s check
+      count moved to match if answer 2 added one.

@@ -13,6 +13,27 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A date field no longer empties itself when you type a zero — 2026-09-06
+
+**Typing a due date that starts with `0` used to blank the field, throw away the date already in it
+and drop the cursor**, so everything you typed after that first keystroke went nowhere and the
+assignment was left with no due date at all — silently. That is every day from the 1st to the 9th,
+and every month from January to September. It was reported from the classroom on the second day of
+the term.
+
+**All five date fields in the app are fixed** — assignments, term dates, the roster's support review
+dates, days off and calendar events. `0` is not a valid month or day on its own, so the browser
+blanks the segment and waits for the second digit; for that one keystroke the field reads as empty,
+and the app treated that as *you cleared this* and rebuilt the field from scratch, taking the element
+out from under the cursor. The rebuild now happens when you **leave** the field, where there is no
+cursor to take.
+
+**One thing this trades, said plainly rather than left to be discovered.** On the iPad, clearing a
+date and immediately tapping the same day again still does nothing — you have to leave the field and
+come back first. That was working before and it is not any more; it is the smaller of the two
+problems and it loses no data. **An explicit Clear button is coming**, which removes the guesswork
+underneath both.
+
 ### The harness stops at the first section that throws, and 766 checks never run — 2026-08-31
 
 **`node tools/verify-shell.mjs` died at check 518 of 1,284 and printed no summary.** An uncaught

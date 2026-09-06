@@ -1116,15 +1116,18 @@ export function removeAccommodation(indexValue) {
 }
 
 /*
-  Clearing the review date on iPadOS. Identical quirk, identical fix and identical reasoning to
-  src/classes.js's termDateCommitted() — the date popover keeps its own selection, so a cleared
-  field cannot be re-set to the value it just held until the element is thrown away. Read that
-  comment; it is not repeated here.
+  THE REVIEW DATE COMMITTED EMPTY — the write and the dot, and nothing else since WO-1.47.
 
-  Cloned rather than rebuilt from a template, because unlike a term date this field is real markup
-  in index.html: a clone carries every attribute and hook it was authored with, and the value
-  PROPERTY — the thing the picker set — is what a clone does not carry, which is exactly the state
-  being discarded.
+  The rebuild that used to finish this function is supportDateBlurred() below. It moved to
+  `focusout` for the reason src/classes.js's termDateBlurred() gives at length: `change` fires on the
+  momentarily-empty read a date field reports while a `0` is being typed, so a rebuild hung off it
+  replaces the element under the caret. On this field that would empty an IEP/504 review date the
+  teacher was in the middle of typing — the same data loss WO-1.47 was reported for on the
+  assignment editor, on the one panel in the app where the data is accommodation data.
+
+  The write stays here because it is about the DOCUMENT and because `refreshSupportDot()` has to run
+  beside it: `had` is read before the write, so the two cannot be separated without the dot on the
+  roster falling out of step with what is on file.
 */
 export function supportDateCommitted(input) {
   const student = findStudent(editingId);
@@ -1134,10 +1137,33 @@ export function supportDateCommitted(input) {
   /* Conditional for the same reason the term version is: not saving the document over an identical
      copy of itself, and not moving `rev` for a date that was already empty (docs/sync.md). */
   if (supports.reviewDate) update(() => { supports.reviewDate = ''; });
+  refreshSupportDot(student, had);
+}
+
+/*
+  Clearing the review date on iPadOS. Identical quirk, identical fix and identical reasoning to
+  src/classes.js's termDateBlurred() — the date popover keeps its own selection, so a cleared
+  field cannot be re-set to the value it just held until the element is thrown away. Read that
+  comment; it is not repeated here, and neither is the trade WO-1.47 made to move this hook.
+
+  Cloned rather than rebuilt from a template, because unlike a term date this field is real markup
+  in index.html: a clone carries every attribute and hook it was authored with, and the value
+  PROPERTY — the thing the picker set — is what a clone does not carry, which is exactly the state
+  being discarded.
+
+  It keeps supportsVisible() for the reason the write does, and the guard is exactly as narrow here
+  as it is there: src/supports.js's function is `!presentationMode()` and nothing else, so it says
+  the supports panel is not being suppressed and says nothing about whether the editor is open.
+  `findStudent(editingId)` is what covers that half. Both are kept — swapping an element inside a
+  panel presentation mode is refusing to draw would be this module doing work about accommodation
+  data on a screen that has decided none of it is on the glass.
+*/
+export function supportDateBlurred(input) {
+  const student = findStudent(editingId);
+  if (!student || input.value || !supportsVisible()) return;
   const fresh = input.cloneNode(true);
   fresh.value = '';
   input.replaceWith(fresh);
-  refreshSupportDot(student, had);
 }
 
 /* The roster behind the dialog carries the dot, so an edit that turns "nothing on file" into

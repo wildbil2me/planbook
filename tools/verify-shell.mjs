@@ -113,6 +113,7 @@ import { run as recordedMeetingCounts } from './verify/recorded-meeting-counts.m
 import { run as totalsByteIdentical } from './verify/totals-byte-identical.mjs';
 import { run as scoreGrid } from './verify/score-grid.mjs';
 import { run as assignedAndDue } from './verify/assigned-and-due.mjs';
+import { run as dateZeroKey } from './verify/date-zero-key.mjs';
 import { run as attendanceHistory } from './verify/attendance-history.mjs';
 import { run as gradeDetail } from './verify/grade-detail.mjs';
 import { run as gradeSheet } from './verify/grade-sheet.mjs';
@@ -303,6 +304,10 @@ const BROWSER_SECTIONS = [
   { file: 'verify/totals-byte-identical.mjs', run: totalsByteIdentical },
   { file: 'verify/score-grid.mjs', run: scoreGrid },
   { file: 'verify/assigned-and-due.mjs', run: assignedAndDue },
+  /* Straight after the section about the same two fields, and it depends on that placement in one
+     direction only: it puts the viewport back to 1024 for itself rather than trusting the 390 it
+     inherits. Moving it elsewhere in this list costs nothing. */
+  { file: 'verify/date-zero-key.mjs', run: dateZeroKey },
   { file: 'verify/attendance-history.mjs', run: attendanceHistory },
   { file: 'verify/grade-detail.mjs', run: gradeDetail },
   { file: 'verify/grade-sheet.mjs', run: gradeSheet },

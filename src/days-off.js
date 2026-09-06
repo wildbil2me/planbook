@@ -67,7 +67,7 @@
   are still talking about it.
 
   Keeping them was not arbitrary, though, and the reason it was done has NOT gone away. It is the
-  WebKit fact src/classes.js's termDateCommitted() documents from the same hardware: the date
+  WebKit fact src/classes.js's termDateBlurred() documents from the same hardware: the date
   popover keeps its OWN selection, separate from the input's value, so a field cleared in code still
   has that day highlighted in the picker and tapping it again fires no `input` event at all. Clear
   these two naively and the teacher entering a run of half-days cannot re-pick the day she just
@@ -256,14 +256,14 @@ function paintClassPicker() {
 /* ────────────────────────────── the two date fields ────────────────────────────── */
 
 /*
-  A DATE FIELD, THROWN AWAY AND REBUILT. src/classes.js's termDateCommitted() carries the long
+  A DATE FIELD, THROWN AWAY AND REBUILT. src/classes.js's termDateBlurred() carries the long
   version of why; the short one is that a cleared `<input type="date">` on iPadOS keeps its picker's
   selection, so the day just used cannot be re-picked until the element itself is gone.
 
   Written as a rebuild of the ELEMENT rather than as a `value = ''`, and both places this file
-  empties a date go through it — the commit below and the change hook underneath. Two ways to clear
-  a field would be one way that works and one that strands the teacher on the day she is most likely
-  to want twice.
+  empties a date go through it — the successful add above, and the focusout hook underneath. Two
+  ways to clear a field would be one way that works and one that strands the teacher on the day she
+  is most likely to want twice.
 */
 function rebuildDateField(input) {
   if (!input || !input.parentNode) return null;
@@ -285,20 +285,21 @@ function clearDates() {
 }
 
 /*
-  A DATE THE TEACHER HAS COMMITTED. Two jobs, and they are the two halves of the same iPadOS
-  paragraph in the header.
+  A DATE THE TEACHER HAS COMMITTED — one job since WO-1.47, and it is the half that was never about
+  the picker. `To` follows `From`, which is a thing that happens when a date is SET; the rebuild that
+  used to sit in front of it is dateBlurred() below.
 
-  ON `change`, NOT ON `input`, for the reason src/classes.js gives at the same hook: a desktop date
-  field reports '' several times while a date is being typed into it, so an `input`-driven rebuild
-  would replace the element under the caret on the second keystroke. `change` fires when a value is
-  committed — the picker's own Clear, or a blur — and never mid-typing.
+  It stays on `change` because that is the event a set date arrives on, including from the browsers
+  that commit a picker choice without an `input` event first. It touches no element and writes
+  nothing to the document — this hook changes what is in a form, not what is in the year.
 */
 export function dateCommitted(input) {
   if (!input) return;
   const which = input.getAttribute('data-dayoff-date');
-  /* Cleared by hand, on the field that has the picker-state problem. Rebuilt for the same reason
-     the commit rebuilds them: an empty field the teacher emptied is one she is about to re-fill. */
-  if (!input.value) { rebuildDateField(input); return; }
+  /* An empty commit is dateBlurred()'s business now, not this function's — it means the teacher is
+     mid-way through typing at least as often as it means she cleared the field, and `from` cannot
+     carry anything to `to` either way. */
+  if (!input.value) return;
   if (which !== 'from') return;
 
   /* `To` follows `From` — see the header. A `to` already past the new start is left exactly as the
@@ -308,6 +309,24 @@ export function dateCommitted(input) {
   if (toEl.value && toEl.value >= input.value) return;
   toEl.value = input.value;
   showError('');
+}
+
+/*
+  A DATE FIELD THE TEACHER HAS LEFT EMPTY. The other half of the same iPadOS paragraph in the
+  header, on `focusout` rather than `change` since WO-1.47.
+
+  The reason is src/classes.js's termDateBlurred() at length, and the short one is that `change`
+  fires on the empty read Chromium reports mid-typing — a `0` first in the month or the day — so a
+  rebuild hung off it replaces the element under the caret and the rest of the date goes nowhere.
+  A field that has been left has no caret in it to take. Nothing here writes to the document.
+*/
+export function dateBlurred(input) {
+  if (!input) return;
+  if (input.value) return;
+  /* Cleared by hand, on the field that has the picker-state problem. Rebuilt for the same reason a
+     successful add rebuilds them: an empty field the teacher emptied is one she is about to
+     re-fill. */
+  rebuildDateField(input);
 }
 
 /* ────────────────────────────── the list of what is already there ────────────────────────────── */

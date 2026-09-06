@@ -31,6 +31,34 @@ means nothing. A row that is genuinely urgent says so in its own body.
 waits for one that is not. This row stays here unstruck in body because both work orders point back
 at it for the measurement rather than repeating it; it is closed when WO-1.48 ticks.*
 
+~~**Struck in part 2026-09-03: WO-1.47 landed.**~~ *The strike is a partial one and it is drawn here
+rather than through the body on purpose — WO-1.47's own Acceptance line asks for this row to be
+struck with its ID, and this row's paragraph above says it survives until WO-1.48 ticks, and the two
+are reconciled by* **striking what was closed and leaving the measurement standing**, *which is what
+both documents were actually asking for. The measurement below is what WO-1.48 will be built and
+verified against and not one word of it has been edited.*
+
+**What WO-1.47 closed.** The rebuild moved from `change` to `focusout` at all five sites, so no
+`0` typed as the first digit of a month or a day can replace the element under the caret. Typing
+`09032026` into a due date now leaves the assignment holding 2026-09-03, and `10032026` — the day
+segment, the half that outlives September — leaves 2026-10-03. Driven in
+`tools/verify/date-zero-key.mjs`; read `TESTING.md` § WO-1.47 for what each check asserts.
+
+**What is still open, and it is the whole of the root cause.** A native date input still reports
+`''` for both *mid-typing* and *deliberately emptied*, and the app still infers the second from the
+first — it has only stopped acting on the inference at a moment when acting on it destroys
+something. **The iPadOS case this row was originally about is now WORSE, knowingly**: clearing a date
+and tapping the same day again *without leaving the field* no longer works at all, because the
+rebuild arrives after the tap that needed it. That is the trade WO-1.47 states in writing —
+a data-loss defect on the laptop for a stale-highlight defect on the iPad — and WO-1.48's Clear
+control is what buys it back.
+
+**One thing to know before reading the line numbers below.** They are as measured on 2026-09-03,
+*before* WO-1.47 moved the code, and they are left as they were because they are part of the
+measurement. The rebuild is no longer at any of them: it lives in `termDateBlurred()`,
+`assignmentDateBlurred()`, `supportDateBlurred()` and the two `dateBlurred()` functions, routed from
+a `focusout` listener in `src/shell.js` rather than from the `change` listener the table names.
+
 *Reported 2026-09-03 by the owner, narrowed by the owner the same day to* **the zero key
 specifically**, *and* **reproduced and confirmed that narrowing** *(see the measurement below). It
 writes as well as breaks focus — read the second half before scheduling it behind anything.*

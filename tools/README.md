@@ -1136,14 +1136,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1271 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1278 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the sixty-four files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the sixty-six files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -1373,6 +1373,27 @@ one a FAIL line naming the file, the throw and how many of that section's checks
 day* still on the document, and they are **red rather than absent**, which is the difference this
 change is about. Both plants carried a `MUTATION` comment, both were reverted with
 `git checkout --` against a fully staged tree, and `grep -rn MUTATION tools/ src/` was read after.)*
+
+**WO-1.47 moved it from 1271 to 1278**: six literal call sites in `verify/date-zero-key.mjs` — a
+file that work order created — plus one in `verify/classes-terms.mjs`, and **the executed count moves
+from 1284 to 1290, which is six and not seven.** One of the seven is the failure arm of
+`date-zero-key.mjs`'s fixture guard and never fires while the fixture installs, so the gap between
+sites and results widens from −13 to −14. None of the six that fire is inside a loop. That section's
+other guard is a `skip()` call (no `window.planbook`), on the WO-4.5 and WO-5.1 pattern above, which
+is why it moves this number by nothing.
+
+*(**The seventh site is in an older section and is the more interesting one.**
+`verify/classes-terms.mjs`'s cleared-term-date check had *cleared* as its premise where the app now
+wants *cleared and left*, so it went red on the first run after the hook moved — correctly. Rather
+than move the assertion, the block was split: one new check that the field survives the empty
+`change`, and the existing one re-asked after a `blur()`. The check beside it that had only ever
+dispatched `input` now dispatches `change` too, which is the clause that had no teeth on the build
+this work order repaired.)*
+
+*(The sentence two paragraphs up said* **sixty-four**
+*files under `tools/verify/` and was already stale by one before this work order — the entry file
+named sixty-five at `3acc086`. It reads* **sixty-six** *now. Nothing asserts that figure; the sweep
+greps the count sentence only, so this one is maintained by whoever notices.)*
 
 **The pre-change reading was `1194 checks · 1194 passed · 0 failed · 0 skipped`, 407s, exit 0 — and
 its LINE figure is not a pre-change figure.** `ownLines` is read off the disk in the summary, after

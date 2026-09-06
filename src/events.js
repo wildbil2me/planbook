@@ -254,7 +254,7 @@ function paintLead() {
 
 /*
   A DATE FIELD, THROWN AWAY AND REBUILT — the iPadOS picker quirk, for the fifth time in this app.
-  src/classes.js's termDateCommitted() carries the long version and this is not a sixth copy of the
+  src/classes.js's termDateBlurred() carries the long version and this is not a sixth copy of the
   reasoning: a cleared `<input type="date">` on iPadOS keeps its picker's own selection, so the day
   just used cannot be re-picked until the element itself is gone. src/days-off.js, src/roster.js and
   src/assignments.js each hold their own copy of these ten lines, each pointing at that one, which
@@ -281,9 +281,9 @@ function clearDates() {
 }
 
 /*
-  On `change` and never on `input`, for src/classes.js's reason: a desktop date field reports ''
-  several times while a date is being typed into it, so an `input`-driven rebuild would replace the
-  element under the caret on the second keystroke.
+  A DATE THIS FORM HAS BEEN GIVEN — one job since WO-1.47, and it is the half that is about a date
+  being SET rather than about the picker. The rebuild that used to sit in front of it is
+  dateBlurred() below, on `focusout`.
 
   `To` FOLLOWS `From` here as it does on the days-off form, and for the same reason — a one-day
   event is then one field. `Repeat until` does NOT follow it: an until-date equal to the start is a
@@ -293,13 +293,31 @@ function clearDates() {
 export function dateCommitted(input) {
   if (!input) return;
   const which = input.getAttribute('data-event-date');
-  if (!input.value) { rebuildDateField(input); return; }
+  /* An empty commit belongs to dateBlurred() now: mid-typing and cleared read identically here, and
+     neither carries anything from `from` to `to`. */
+  if (!input.value) return;
   if (which !== 'from') return;
   const toEl = document.getElementById(TO_ID);
   if (!toEl) return;
   if (toEl.value && toEl.value >= input.value) return;
   toEl.value = input.value;
   showError('');
+}
+
+/*
+  A DATE FIELD THE TEACHER HAS LEFT EMPTY, on `focusout` and never on `change` or `input` (WO-1.47).
+  All three of this form's fields go through it, `until` included.
+
+  src/classes.js's termDateBlurred() carries the long version, this file's fifth pointer at it and
+  not a sixth copy: `change` fires on the momentarily-empty read Chromium reports while a `0` is
+  being typed into the month or the day, so a rebuild hung off it replaces the element under the
+  caret and every digit after the first goes nowhere. A field that has been left cannot have a caret
+  taken from it.
+*/
+export function dateBlurred(input) {
+  if (!input) return;
+  if (input.value) return;
+  rebuildDateField(input);
 }
 
 /* ────────────────────────────── the list ────────────────────────────── */

@@ -1334,6 +1334,148 @@ because widening the work order is what the Traps line forbids.
 
 ---
 
+### WO-1.47 — a zero typed into a date field clears the date and takes the field with it
+
+**What this changes, in one sentence.** The rebuild that throws a cleared `<input type="date">` away
+moved from `change` to `focusout` at all five date fields, so it can no longer replace the element a
+teacher's caret is in. `sw.js`'s `CACHE` goes **v107 → v108**, because six files in `SHELL` moved.
+
+**Read this before the 👤 line.** The move is a **guard and not the repair**, and it costs something
+on purpose: clearing a date and tapping the same day again *without leaving the field* — the iPadOS
+picker quirk the rebuild was written for — **goes back to being broken** until WO-1.48 lands. That
+is a knowing trade of a data-loss defect on the laptop for a stale-highlight defect on the iPad, and
+the 👤 line below asks for the broken half to be **read and written down as failing**, so WO-1.48 has
+a baseline rather than an assumption.
+
+- [x] **Typing `0` as the first digit into an assignment date field holding a date leaves the same
+      element in place, the caret still in it, and the date complete once Chromium commits.** Driven
+      in `tools/verify/date-zero-key.mjs` with `Input.dispatchKeyEvent` against a field seeded
+      `2026-11-20`. After the `0`: *same element = true, caret in INPUT[due], field "", document ""* —
+      the empty read really happens and the element survives it. After the `9`: *field "2026-09-20",
+      document "2026-09-20"*.
+- [x] **Typing a full `09032026` leaves the assignment holding 2026-09-03.** *field "2026-09-03",
+      document "2026-09-03", same element = true, caret in INPUT[due]*.
+- [x] **The day segment, driven separately: `10032026` leaves 2026-10-03.** *field "2026-10-03",
+      document "2026-10-03"*. A green line 2 with a red line 3 would be a build that looks fixed
+      until October 1st and then goes on losing three dates in ten forever, which is why the two are
+      separate checks.
+- [x] **The other four fields are each moved and read, with the iPadOS reasoning relocated.** The
+      long version moved out of `termDateCommitted()` and onto **`termDateBlurred()`**, which is where
+      the rebuild now is; the other four modules point at the new name.
+      `src/assignments.js` → `assignmentDateBlurred()` · `src/classes.js` → `termDateBlurred()` ·
+      `src/roster.js` → `supportDateBlurred()` · `src/days-off.js` and `src/events.js` →
+      `dateBlurred()`. Two stale pointers were repaired on the way past (`src/assignments.js`'s
+      `DATE_LABELS` comment named a `rebuildDateField()` that does not exist in that file, and
+      `src/days-off.js:70` pointed at the moved paragraph by its old name).
+      **The check is a grep on the EVENT, not on the function name:**
+
+      ```
+      grep -rn -B3 -A3 -i "rebuild" src/*.js | grep '`change`'
+      ```
+
+      Every line it returns is read by hand — 29 on the tree as delivered, most of them the date
+      fields — and none of them may say the rebuild happens on `change` in the present tense.
+      *(This replaced `grep -rn "DateCommitted\|dateCommitted" src/` on 2026-09-03, in the
+      correction round, because
+      that grep is why this line failed verification the first time: it searches FUNCTION names, and
+      the four comments that were left stale — `src/shell.js`'s census entries for `data-term-field`,
+      `data-assignment-field`, `data-dayoff-date` and `data-event-date` — name the EVENT and no
+      function at all, so it walked past every one of them. The `-B3 -A3` window is not decoration:
+      two of the four wrapped `change` and `rebuilds` onto different lines, and a single-line grep
+      finds only two of the four. Run against the pre-repair file it returns all four.)*
+      The five census entries in `src/shell.js` are also read directly, since they are the only place
+      the five hooks are documented together:
+
+      ```
+      grep -n -A5 -E "data-(term-field|assignment-field|dayoff-date|event-date|support-date)" src/shell.js
+      ```
+- [x] 👤 On the iPad, after a **force-quit from the app switcher**: clearing a date and **leaving the
+      field** still lets the picker reopen with nothing selected. And the case this row knowingly
+      gives up — clear, then tap the same day **without** leaving — is read and **written down as
+      failing**. *(Owner, on the installed app against the local server, 2026-09-06.)*
+
+      **Reading 1 — passes.** Clear a date, leave the field, come back: the picker reopens with
+      nothing selected. The `focusout` rebuild covers this case, which is the half WO-1.47 keeps.
+
+      **Reading 2 — FAILS, as designed, and this is the baseline WO-1.48 is built against.** Clear a
+      due date holding September 4, stay in the field, tap **September 4 again**: *the field stays
+      empty.* The popover's own selection still holds that day, so the tap changes nothing from the
+      picker's point of view, no `input` fires, and no value comes back. The rebuild that would have
+      cleared the picker now arrives on `focusout` — after the tap that needed it. Reasoning at
+      `src/classes.js`, the paragraph on `termDateBlurred()`.
+
+      *What was read and what was not: the same-day tap was read and is inert. The neighbouring-day
+      diagnostic — tap September 5 and watch it register instantly — was **not** taken, so this
+      reading confirms the same-day tap is dead without separately re-proving the field is otherwise
+      live. Reading 1 covers that from the other direction. Take the neighbour tap on the next iPad
+      sitting if WO-1.48 wants a sharper before-picture; it costs one unwanted date written to the
+      document on the way past, which is the workaround this defect forces.*
+- [x] **`node tools/verify-shell.mjs`, `node tools/wo-sweep.mjs` and `node tools/wo-gate.mjs --audit`
+      are green on a clean tree.** Figures in the block below.
+- [x] **`TESTING.md` gains a § WO-1.47** (this section) **and `plans/known-bugs.md` § 1 is struck with
+      this ID.** The strike is a **partial** one, drawn at the head of § 1 rather than through its
+      body, and the reading is stated there: that section's own paragraph says it survives until
+      WO-1.48 ticks because both work orders point at it for the measurement, so what is struck is
+      *what WO-1.47 closed* and what stands is the measurement WO-1.48 will be built against. Not one
+      word of the measurement was edited; a note names the line numbers in it as pre-move.
+
+**The runs**, re-taken on the tree as corrected 2026-09-03 (the comment repair below).
+`node tools/verify-shell.mjs`: **`1290 checks · 1290 passed · 0 failed · 0 skipped`**, 39,654 lines,
+30.7 lines per check, 435s, exit 0 — up from 1284, which is the five that fire in the new section
+plus one added to `verify/classes-terms.mjs`; the count is unchanged by the correction round, which
+added no check and removed none. `node tools/wo-sweep.mjs`:
+**`40 checks · 37 passed · 0 failed · 3 to review`**, exit 0, the same three standing REVIEW lines
+(sensitive field names, due-date/late-missing, the mockup banner), none of which this work order
+touches. `node tools/wo-gate.mjs --audit`: **PASS**, exit 0. *(The pre-correction run of the same
+tree read 39,632 lines and 436s; the 22 lines are the comments the correction round added.)*
+
+**Both directions were mutation-proved in one run, and the failure text is the reported bug verbatim.**
+Two plants in `src/shell.js`, both carrying a `MUTATION WO-1.47` comment, both reverted with
+`git checkout --` against a fully staged tree before anything else was written; `grep -rn "MUTATION
+WO-1.47"` was read after and returns nothing. **A** put the rebuild back on `change` for the
+assignment pair — all four assignment checks went red reading *same element = false, caret in BODY,
+document "2026-01-20"*, which is a due date wiped down to a month the teacher never finished typing.
+**B** deleted the term field's rebuild instead of moving it — *a cleared term date … is rebuilt* went
+red at `{"rebuilt":false}` while the new check beside it stayed green, which is the two halves of the
+move failing independently. `1290 checks · 1285 passed · 5 failed`, exit 1.
+
+*(**One pre-existing check went red on the first run after the hook moved, and it was right to.**
+`verify/classes-terms.mjs`'s cleared-term-date check had *cleared* as its premise where the app now
+wants *cleared and left*. It was not re-aimed: the block was **split**, so one new check asserts the
+field survives the empty `change` and the existing one is re-asked after a `blur()`. The check beside
+it had only ever dispatched `input` — which is why it passed on the build that lost a due date — and
+it dispatches `change` too now.)*
+
+*(**A CDP trap that cost one run, written up at the check rather than added to `tools/README.md`'s
+numbered list**, because that list's rule is two agents twice and this has been hit once. `focus()`
+on a date input that is **already focused** is a no-op and the caret stays where the last keystroke
+left it — Chromium advances to the day segment on its own once a month completes. Two fixtures that
+re-seeded a field the run was already standing in typed `09032026` into the day and then the year and
+came back with a **year of 32026**, which reads exactly like the app writing the wrong date.
+`caretHome()` walks three ArrowLefts to the leftmost segment instead. The other one is older and
+known: **a backtick inside a page-side template literal** ends the literal — one in a comment about
+the seed date cost a run before the harness would even import.)*
+
+*(**This section failed verification once, on Acceptance line 4, and the failure was a comment
+rather than a line of code** — 2026-09-03. The code moved correctly at all five sites; what did not
+move was `src/shell.js`'s **attribute census**, the block at the head of the file where four of the
+five date hooks are documented, and all four still told a reader the rebuild happens on `change`.
+The file therefore contradicted itself — line 76 said one thing and line 3103, three thousand lines
+below it, said the opposite — which is precisely the trap this work order names against itself.
+**Nothing could have caught it**: the stated check was a grep on FUNCTION names and every one of the
+four names only the EVENT; `wo-sweep.mjs` § 18 diffs delegated hooks against the census for
+**presence only, on purpose**, so four correctly-listed attributes keep it green whatever the listing
+says. Repaired by rewriting all four entries, completing the fifth (`data-support-date` named no
+event at all), and adding the `focusout` listener to the census; the stated check above is now the
+event grep, which is the one that would have found them. Two comments elsewhere were stale for the
+same reason and were repaired in the same pass —* `tools/verify/assigned-and-due.mjs` *claimed to
+assert a REBUILT field when its fixture never blurs, and the phantom-empty-date note sat in the
+neighbouring function's header rather than at* `editAssignmentField()`*'s store, where the work order
+asked for it. **No behaviour changed in the correction round** — src/ moved by comments only, no
+`check()` was added, moved or re-aimed, and the three tools were re-run over the corrected tree.)*
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*
@@ -5672,9 +5814,14 @@ control is really about is that work order's.*
       same machine clock and compared, rather than read back out of the field it was written from:
       two runtimes, one clock, one answer, and a check that asked the app what day it was would agree
       with a build that wrote UTC's tomorrow into an October evening.
-- [x] **Clearing either date stores it empty and leaves the rebuilt field empty.** Driven on the real
-      `change` the iPad picker's Clear fires — which is also the event that throws the input away and
-      builds a fresh one — so what is asserted is the *rebuilt* field, not just the document.
+- [x] **Clearing either date stores it empty and leaves the field empty.** Driven on the real
+      `change` the iPad picker's Clear fires, so what is asserted is the field as well as the
+      document — a default re-applied on clear would show today over a stored `''`.
+      *(This line read "the **rebuilt** field" until 2026-09-03. It was true when it was written and
+      WO-1.47 made it false: the rebuild moved to `focusout`, the fixture never blurs, so the element
+      read back is the one that was cleared. The check is unchanged and still green; only the claim
+      about which element it is has been corrected. `tools/verify/date-zero-key.mjs` is where the two
+      events are told apart.)*
 - [x] And **reopening that assignment shows both dates still empty** rather than filling them in
       again. The editor is filled from the document every time it opens, so this is the line that
       catches a default applied on OPEN rather than on creation.
