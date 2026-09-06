@@ -73,9 +73,21 @@
       data-term-remove="<termId>"     removes it, unless it holds an assignment
       data-term-preset="<key>"        replaces the term list with a starting structure
       data-term-field="label|start|end" + data-term-id: an input; edits that field as it is typed,
-                                      on `change` writes a date committed empty, and on `focusout`
-                                      rebuilds a date field that was cleared (WO-1.47 — TWO EVENTS,
-                                      and the rebuild is on neither of the other two)
+                                      and on `change` writes a date committed empty. NO EVENT
+                                      REBUILDS IT (WO-1.48): the rebuild is on the Clear beside the
+                                      field — `data-date-clear` below — and on nothing else
+      data-date-field                 on the wrapper a date input and its Clear share; how the
+                                      button below finds the field it is about, which is what lets
+                                      one route serve all ten fields including the four with no id
+      data-date-clear                 the Clear beside every one of the ten date fields, on all five
+                                      surfaces. It empties the field, writes the empty value where
+                                      there is a document to write to, and throws the element away
+                                      so iPadOS's picker forgets the day it is still holding
+                                      selected. **The only path that resets a date field** — a
+                                      native date input reports the same empty value for a date
+                                      half typed and a date deliberately emptied, so an event
+                                      cannot tell them apart and this button does not have to
+                                      (WO-1.48; clearDateField() carries the reasoning)
       data-category-manage="<classId>" opens the grading categories for that class
       data-category-add               adds a category to the class the editor is open for, at 0%
       data-category-move-up="<id>"    moves that category one place earlier in the list
@@ -179,13 +191,12 @@
       data-assignment-delete-confirm  carries out that deletion
       data-assignment-delete-cancel   abandons it, having written nothing
       data-assignment-field="name|points|assigned|due" + data-assignment-id: an input; edits that
-                                      field as it is typed, on `change` writes a date committed
-                                      empty, and on `focusout` rebuilds a date field that was
-                                      cleared — the iPadOS picker quirk data-term-field answers
-                                      above, on the same two events. THIS IS THE PAIR WO-1.47 WAS
-                                      REPORTED AGAINST: the rebuild was on `change` until then and
-                                      ate the field a due date was being typed into.
-                                      `points` stores what was typed, INCLUDING 0
+                                      field as it is typed, and on `change` writes a date committed
+                                      empty. THIS IS THE PAIR WO-1.47 WAS REPORTED AGAINST: the
+                                      rebuild was on `change` until then and ate the field a due
+                                      date was being typed into. It is on no event at all now —
+                                      `data-date-clear` above, the same answer data-term-field
+                                      takes (WO-1.48). `points` stores what was typed, INCLUDING 0
       data-assignment-category="<id>" a <select>; files that assignment under another category of
                                       the same class, on `change` rather than on `input`
       data-assignment-copy-term       a <select> in the copy dialog; which term the copy lands in
@@ -317,10 +328,10 @@
                                       back to not taken yet, because nothing was ever copied onto a
                                       record to have to unpick
       data-dayoff-date="from|to"      a date field in that form; on `change` it carries the end date
-                                      along with the start, and on `focusout` rebuilds a field
-                                      cleared by hand — the iPadOS picker quirk `data-term-field`
-                                      answers above, on the same two events (WO-1.47). The carry
-                                      stayed on `change` and only the rebuild moved
+                                      along with the start, and that is the whole of what an event
+                                      does to it. The rebuild is on the field's own Clear —
+                                      `data-date-clear` above (WO-1.48). Nothing on this form
+                                      writes to the document: it is a form, and the submit writes
       data-events-panel               fills the calendar-events panel, then opens it — the second
                                       door onto `doc.events`, beside the days-off one on the
                                       CALENDAR's panel header since WO-6.6 and on the home screen's
@@ -340,10 +351,10 @@
                                       once, by the label rather than by matching title and kind —
                                       which would also take the one she typed by hand. Drawn only on
                                       a row that has siblings
-      data-event-date="from|to|until"  a date field in that form; same two hooks and same iPadOS
-                                      rebuild as `data-dayoff-date` — the carry on `change`, the
-                                      rebuild on `focusout` — over three fields rather than two.
-                                      `until` is the repeat and carries nothing along with it
+      data-event-date="from|to|until"  a date field in that form; the same carry on `change` and the
+                                      same Clear as `data-dayoff-date`, over three fields rather
+                                      than two. `until` is the repeat and carries nothing along
+                                      with it
       data-event-lead                 on an <input>: how many days ahead a grades-due date starts
                                       showing, written as it is typed. It is a setting about the
                                       YEAR rather than about the entry being typed, and WHERE it
@@ -477,9 +488,11 @@
       data-support-kind + data-accommodation-index: a <select>; sets that accommodation's kind on
                                       `change` rather than on `input`, which is what a <select> is
       data-support-date               on the review-date input: on `change` writes a date committed
-                                      empty and re-draws the roster's support dot, and on `focusout`
-                                      rebuilds a field cleared on iPadOS. The same two events as
-                                      `data-term-field`, and the fifth of the five (WO-1.47)
+                                      empty and re-draws the roster's support dot. The rebuild is on
+                                      the field's own Clear — `data-date-clear` above — which is the
+                                      fifth of the five surfaces and the one that is accommodation-
+                                      adjacent: the button says `Clear` and nothing else, and
+                                      presentation mode does not draw that panel at all (WO-1.48)
       data-teacher-panel              fills the teacher's own details, then opens them
       data-teacher-field="<name>"     an input; edits that field as it is typed
       data-teacher-cc                 toggles whether outreach drafts copy the teacher
@@ -592,16 +605,23 @@
     — it names the ones that were there to name. The census is the listeners themselves; this
     paragraph is not one and is deliberately not being turned into one here.)
 
-    THE FIVE DATE FIELDS ARE READ FROM TWO LISTENERS SINCE WO-1.47, and the five entries above say
-    which half is on which event rather than leaving a reader to assume one hook. `change` carries
-    the WRITE — a date committed empty reaching the document, and on the two forms a `from` carrying
-    a `to` along with it. `focusout` carries the REBUILD, which throws a cleared
-    `<input type="date">` away and builds a fresh one so that iPadOS's picker forgets the day it is
-    still holding selected. It is `focusout` BY CONSTRUCTION and not by a better guess about when a
-    value is real: Chromium blanks a month or a day segment while a leading `0` is typed and fires
-    `change` on that empty read, so a rebuild hung there replaces the element under the caret and
-    the rest of the date goes nowhere. src/classes.js's termDateBlurred() is the long version and
-    plans/known-bugs.md § 1 is the measurement. Do not fold the two back together.
+    THE TEN DATE FIELDS KEEP THEIR WRITE ON AN EVENT AND THEIR REBUILD ON A BUTTON (WO-1.48), and
+    the entries above say which half is which rather than leaving a reader to assume one hook.
+    `change` carries the WRITE — a date committed empty reaching the document, and on the two forms
+    a `from` carrying a `to` along with it. `data-date-clear` carries the REBUILD, which throws a
+    cleared `<input type="date">` away and builds a fresh one so that iPadOS's picker forgets the day
+    it is still holding selected.
+
+    IT IS A BUTTON BECAUSE NO EVENT CAN ANSWER THE QUESTION. A native date input reports
+    `value === ''` for two different states — a date half typed, and a date deliberately emptied —
+    and offers nothing to tell them apart. Chromium blanks a month or a day segment while a leading
+    `0` is typed and fires `input` AND `change` on that empty read, so a rebuild hung on either
+    replaced the element under the caret and the rest of the date went nowhere (WO-1.47, reported
+    from the classroom); `focusout` could not do that but arrived after the tap it was needed for, so
+    the iPad case it exists for stayed broken. The teacher pressing Clear is the one unambiguous
+    signal, and there is no caret near a button. src/classes.js's termDateCleared() is the long
+    version, plans/known-bugs.md § 1 is the measurement, and tools/wo-sweep.mjs § 23 is what stops a
+    rebuild going back onto an event. Do not fold the two halves back together.
 
     `data-year-picker` is not `data-modal-open="yearModal"` because the list inside it has to
     be read out of IndexedDB before the panel is on screen — a modal that opens and then fills
@@ -1650,6 +1670,48 @@ function afterThresholdChange() {
   if (views.currentView() === 'signals') signalsView.renderSignals();
 }
 
+/*
+  THE CLEAR BESIDE A DATE FIELD (WO-1.48) — ten buttons on five surfaces, one route, and the ONLY
+  path in the app that empties a date field as a gesture.
+
+  WHY IT IS A BUTTON AND NOT AN EVENT, in one paragraph, because this is the seam a later reader will
+  be standing at. A native `<input type="date">` reports `value === ''` for two different states —
+  *mid-typing, not yet a complete date* and *deliberately emptied* — and hands the page nothing to
+  tell them apart. A rebuild hung off `change` or `input` therefore ate the element under the caret
+  on the first keystroke of `09/03` (WO-1.47, reported from the classroom on the second day of the
+  term); a rebuild hung off `focusout` could not do that, but it also arrived after the tap it was
+  needed for, so clearing a date and re-picking the same day still failed on the iPad. This button is
+  the teacher saying which of the two she meant. **Do not put a rebuild back on an event.**
+  src/classes.js's termDateCleared() is the long version and `tools/wo-sweep.mjs` § 23 is the fence.
+
+  IT FINDS THE FIELD THROUGH THE WRAPPER RATHER THAN THROUGH AN ID, because four of the ten are built
+  in JavaScript and carry none — `[data-date-field]` is on the wrapper each pair shares, in
+  index.html for the six static fields and in src/assignments.js and src/classes.js for the four
+  dynamic ones. One rule for all ten, and a Clear that is somehow not inside one does nothing rather
+  than clearing whichever field it happens to find first.
+
+  THE FIVE MODULES ARE ROUTED BY THE HOOK THE INPUT ALREADY CARRIES, which is the same set of five
+  attributes the `change` listener further down reads for the WRITE. This function is deliberately
+  the only caller of any of them: a second call site is a second way to reach the reset, and the
+  whole property being bought is that there is exactly one.
+*/
+function clearDateField(btn) {
+  const wrap = btn.closest('[data-date-field]');
+  const input = wrap ? wrap.querySelector('input[type="date"]') : null;
+  if (!input) return;
+  if (input.hasAttribute('data-term-field')) { classes.termDateCleared(input); return; }
+  if (input.hasAttribute('data-support-date')) { roster.supportDateCleared(input); return; }
+  if (input.hasAttribute('data-dayoff-date')) { daysOff.dateCleared(input); return; }
+  if (input.hasAttribute('data-event-date')) { events.dateCleared(input); return; }
+  if (input.hasAttribute('data-assignment-field')) {
+    /* The chain the assignment editor's `change` route runs for the same reason: a due date is
+       printed on the column head of the score grid and on the student record, and a cleared one has
+       to leave both. The other four surfaces have nothing behind them that reads the date they
+       just emptied — two of them are forms that have not been submitted yet. */
+    assignments.assignmentDateCleared(input); afterAssignmentChange();
+  }
+}
+
 /* One click listener for the whole document. Order matters only in that the first hook to
    match wins, and no element carries two of them. */
 document.addEventListener('click', (e) => {
@@ -1688,6 +1750,13 @@ document.addEventListener('click', (e) => {
   }
 
   if (e.target.closest('[data-install-dismiss]')) { dismissInstallBanner(); return; }
+
+  /* The Clear beside a date field (WO-1.48), high in this listener because it is the one hook that
+     appears on five different screens and inside four different dialogs — a route matched further
+     down would have to be re-read against every block above it. clearDateField() carries the whole
+     of the reasoning; this line is the door. */
+  const dateClear = e.target.closest('[data-date-clear]');
+  if (dateClear) { clearDateField(dateClear); return; }
 
   /* Both controls that carry this hook — the header button and the strip's "Turn it off" — flip
      the same switch, because the strip is only on screen while the mode is on and so its tap can
@@ -3097,13 +3166,18 @@ document.addEventListener('change', (e) => {
   const contactFile = e.target.closest('[data-roster-import-file]');
   if (contactFile) rosterImport.handleChosenFile(contactFile);
   /*
-    THE FIVE DATE FIELDS ARE ROUTED FROM TWO LISTENERS SINCE WO-1.47, and the split is the whole of
-    that work order at this seam. What is left on `change` is the WRITE — a date committed empty
-    reaching the document, and a `from` carrying a `to` along with it. What moved to the `focusout`
-    listener further down is the REBUILD, because `change` fires on the momentarily-empty read
-    Chromium reports while a `0` is being typed into a month or a day, and a rebuild on that read
-    replaces the element under the caret and sends the focus to `BODY`. Do not put a rebuild back
-    here; src/classes.js's termDateBlurred() is the long version and `plans/known-bugs.md` § 1 is the
+    WHAT THIS LISTENER CARRIES FOR THE TEN DATE FIELDS IS THE WRITE, AND ONLY THE WRITE — a date
+    committed empty reaching the document, and a `from` carrying a `to` along with it. The REBUILD
+    is on the Clear button beside each field (clearDateField(), up in the click listener) and on no
+    event anywhere, which is WO-1.48; it was here until WO-1.47 and on `focusout` in between.
+
+    DO NOT PUT A REBUILD BACK HERE, and the reason is stronger than "this event is badly timed".
+    `change` fires on the momentarily-empty read Chromium reports while a `0` is being typed into a
+    month or a day, so a rebuild on it replaces the element under the caret and sends the focus to
+    `BODY` — but the general fact underneath is that an empty date input means *half typed* and
+    *deliberately emptied* at the same time, and no event can tell a page which. Storing what the
+    field says is safe; deciding what the teacher MEANT by it is what moved to a button.
+    src/classes.js's termDateCleared() is the long version and `plans/known-bugs.md` § 1 is the
     measurement.
 
     A committed term date, which matters only when it was committed EMPTY — see
@@ -3132,10 +3206,11 @@ document.addEventListener('change', (e) => {
   const kind = e.target.closest('[data-support-kind]');
   if (kind) roster.editAccommodationKind(kind);
   /* An assignment's dates — the pair WO-1.47 was reported against. Same element the `input`
-     listener above already saved; this hook exists for the cleared value. The chain runs for the
-     reason it does there: a due date is printed on the column head of the score grid, and a cleared
-     one has to leave it. It stays on this listener and NOT on the focusout one, because it is about
-     a date that changed and the rebuild is not. */
+     listener above already saved; this hook exists for the value a picker committed empty without an
+     `input` event first. The chain runs for the reason it does there: a due date is printed on the
+     column head of the score grid, and a cleared one has to leave it. It stays on this listener and
+     not on the Clear's route, because it is about a date that CHANGED and the rebuild is not — the
+     Clear runs its own copy of both, which is what makes the two paths independent. */
   const assignmentDate = e.target.closest('[data-assignment-field]');
   if (assignmentDate) { assignments.assignmentDateCommitted(assignmentDate); afterAssignmentChange(); }
   /* Which category an assignment counts in, read HERE and not in the `input` listener above, for
@@ -3216,47 +3291,20 @@ document.addEventListener('focusin', (e) => {
 });
 
 /*
-  A DATE FIELD THAT HAS BEEN LEFT (WO-1.47, 2026-09-03). Five hooks, one job: if the field is empty
-  now that the teacher has gone, throw the element away and build a fresh one, because a cleared
-  `<input type="date">` on iPadOS keeps its picker's own selection and the day just used cannot
-  otherwise be re-picked. src/classes.js's termDateBlurred() is the long version of that quirk and
-  of the trade this listener makes; all four of the other modules point at it.
+  THE `focusout` LISTENER THAT USED TO SIT HERE IS GONE (WO-1.48, 2026-09-06), and its whole body has
+  become clearDateField() up in the click listener. It existed for one job — throw a cleared date
+  field away and build a fresh one, because a cleared `<input type="date">` on iPadOS keeps its
+  picker's own selection and the day just used cannot otherwise be re-picked — and it read the
+  teacher's intention off an empty VALUE, which a native date input reports both while a date is half
+  typed and when it has been deliberately emptied.
 
-  WHY IT IS A SIXTH LISTENER RATHER THAN FIVE MORE LINES IN THE `change` ONE ABOVE. `change` is not
-  the fence it was taken for. Chromium blanks a month or a day segment when the first digit typed is
-  `0` — it is not a valid month or day on its own — waits for the second digit, and fires `input`
-  AND `change` on that empty read. So the rebuild was landing on the first keystroke of `09/03`:
-  the element under the caret was replaced, focus went to `BODY`, and every digit after it went
-  nowhere, leaving the assignment with no due date and saying nothing. It was reported from the
-  classroom on the second day of the term; `plans/known-bugs.md` § 1 has the measurement, the
-  segments it fires in, and the two repairs that were struck.
-
-  `focusout` cannot do that BY CONSTRUCTION, which is the property being bought — not a narrower
-  guess about when a value is real. The field has been left, so there is no caret in it to take.
-
-  `focusout` rather than `blur`, for the reason `focusin` above is not `focus`: `blur` does not
-  bubble, and these fields are rebuilt, re-rendered and cloned constantly, so binding to elements
-  would mean re-binding on every render.
-
-  WHAT IT DOES NOT DO, and both are deliberate. It writes nothing to the year document — every date
-  these fields set was already stored by the `input` listener, and every empty one by the `change`
-  listener above — so nothing here can move `rev`. And it runs no re-render chain: swapping an empty
-  element for an identical empty element changes nothing a list, a grid or a calendar could show.
+  It is not a deletion of the reset. The reset now hangs off a Clear button beside each of the ten
+  date fields, where the focus is on the button, there is no caret anywhere near the element being
+  discarded, and the teacher has SAID which of the two empty states she meant. src/classes.js's
+  termDateCleared() is the long version of the quirk and of both repairs; the four other modules
+  point at it. This paragraph is left standing because the next reader to meet an iPadOS date-picker
+  report will look for a listener here, and finding nothing would read like nothing was ever done.
 */
-document.addEventListener('focusout', (e) => {
-  const t = e.target;
-  if (!t || !t.closest) return;
-  const termDate = t.closest('[data-term-field]');
-  if (termDate) classes.termDateBlurred(termDate);
-  const supportDate = t.closest('[data-support-date]');
-  if (supportDate) roster.supportDateBlurred(supportDate);
-  const dayOffDate = t.closest('[data-dayoff-date]');
-  if (dayOffDate) daysOff.dateBlurred(dayOffDate);
-  const eventDate = t.closest('[data-event-date]');
-  if (eventDate) events.dateBlurred(eventDate);
-  const assignmentDate = t.closest('[data-assignment-field]');
-  if (assignmentDate) assignments.assignmentDateBlurred(assignmentDate);
-});
 
 /*
   Drag and drop for the restore target. Three listeners, and the reason they are on `document`

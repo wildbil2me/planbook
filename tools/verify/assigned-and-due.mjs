@@ -176,13 +176,14 @@ console.log('\n--- the Assigned and Due fields (WO-3.17) ---');
          `change` follows — which is the event src/assignments.js writes the empty date to the
          document on.
 
-         IT DOES NOT BLUR, so since WO-1.47 it no longer drives the rebuild. The rebuild moved to
-         `focusout` (assignmentDateBlurred), because `change` also fires on the momentarily-empty
-         read Chromium reports while a leading `0` is typed and a rebuild there ate the field under
-         the caret. The checks below still pass and still mean something — a cleared date must not
-         re-fill itself — but what they read is the SAME element, not a rebuilt one. Nothing here
-         asserts the rebuild any more, and that is stated rather than left to be assumed;
-         tools/verify/date-zero-key.mjs is where the two events are told apart. */
+         IT DRIVES NO REBUILD, AND SINCE WO-1.48 NO EVENT DOES. The rebuild was on `change` until
+         WO-1.47 — where it ate the field under the caret on the momentarily-empty read Chromium
+         reports while a leading `0` is typed — then on `focusout`, and it now hangs off the Clear
+         button beside each field, which is the only thing that reaches it. The checks below still
+         pass and still mean something — a cleared date must not re-fill itself — but what they read
+         is the SAME element, not a rebuilt one. Nothing here asserts the rebuild, and that is stated
+         rather than left to be assumed; tools/verify/date-clear.mjs drives the button and
+         tools/verify/date-zero-key.mjs drives the keystroke that used to trigger it. */
       const clearDate = async (field) => {
         await evalJs(`(function(){
           var f = document.querySelector('#assignmentFields [data-assignment-field="${field}"]');

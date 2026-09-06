@@ -254,11 +254,15 @@ function paintLead() {
 
 /*
   A DATE FIELD, THROWN AWAY AND REBUILT — the iPadOS picker quirk, for the fifth time in this app.
-  src/classes.js's termDateBlurred() carries the long version and this is not a sixth copy of the
+  src/classes.js's termDateCleared() carries the long version and this is not a sixth copy of the
   reasoning: a cleared `<input type="date">` on iPadOS keeps its picker's own selection, so the day
   just used cannot be re-picked until the element itself is gone. src/days-off.js, src/roster.js and
   src/assignments.js each hold their own copy of these ten lines, each pointing at that one, which
   is the convention this file follows rather than inventing a sixth home for it.
+
+  It replaces the INPUT and nothing around it, which since WO-1.48 is load-bearing rather than
+  incidental: the Clear beside each of these three fields is a sibling inside the same
+  `[data-date-field]` wrapper, and the focus is on it when this runs.
 */
 function rebuildDateField(input) {
   if (!input || !input.parentNode) return null;
@@ -283,7 +287,7 @@ function clearDates() {
 /*
   A DATE THIS FORM HAS BEEN GIVEN — one job since WO-1.47, and it is the half that is about a date
   being SET rather than about the picker. The rebuild that used to sit in front of it is
-  dateBlurred() below, on `focusout`.
+  dateCleared() below, on the Clear button beside each field.
 
   `To` FOLLOWS `From` here as it does on the days-off form, and for the same reason — a one-day
   event is then one field. `Repeat until` does NOT follow it: an until-date equal to the start is a
@@ -293,8 +297,9 @@ function clearDates() {
 export function dateCommitted(input) {
   if (!input) return;
   const which = input.getAttribute('data-event-date');
-  /* An empty commit belongs to dateBlurred() now: mid-typing and cleared read identically here, and
-     neither carries anything from `from` to `to`. */
+  /* An empty commit belongs to nobody: mid-typing and cleared read identically here, and neither
+     carries anything from `from` to `to`. Since WO-1.48 nothing tries to tell them apart — emptying
+     a field on purpose is the Clear button beside it. */
   if (!input.value) return;
   if (which !== 'from') return;
   const toEl = document.getElementById(TO_ID);
@@ -305,18 +310,22 @@ export function dateCommitted(input) {
 }
 
 /*
-  A DATE FIELD THE TEACHER HAS LEFT EMPTY, on `focusout` and never on `change` or `input` (WO-1.47).
-  All three of this form's fields go through it, `until` included.
+  THE CLEAR (WO-1.48), on the button beside the field and never on `change`, `input` or `focusout`.
+  All three of this form's fields carry one, `until` included.
 
-  src/classes.js's termDateBlurred() carries the long version, this file's fifth pointer at it and
-  not a sixth copy: `change` fires on the momentarily-empty read Chromium reports while a `0` is
-  being typed into the month or the day, so a rebuild hung off it replaces the element under the
-  caret and every digit after the first goes nowhere. A field that has been left cannot have a caret
-  taken from it.
+  src/classes.js's termDateCleared() carries the long version, this file's fifth pointer at it and
+  not a sixth copy: every one of those events arrives on the momentarily-empty read Chromium reports
+  while a `0` is being typed into the month or the day, so a rebuild hung off one either replaces
+  the element under the caret or lands after the tap it was needed for. A button is the teacher
+  saying which of the two empty states she meant, and it holds the focus while this runs.
+
+  Nothing here writes to the document: these three fields are a FORM, and an event is written by the
+  submit.
 */
-export function dateBlurred(input) {
+export function dateCleared(input) {
   if (!input) return;
-  if (input.value) return;
+  /* Unconditional. A field the teacher has already emptied by hand is a field whose picker still
+     has the old day highlighted, which is exactly the state being discarded. */
   rebuildDateField(input);
 }
 

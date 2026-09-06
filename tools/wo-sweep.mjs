@@ -2614,6 +2614,182 @@ function commentLines(file) {
   }
 }
 
+/* ══════ 23. no code path rebuilds a date field from an empty value ══════
+   WO-1.48's second acceptance line, and it sits ABOVE § 22 in this file on purpose: § 22 has to be
+   the last thing that pushes a result or its census reads its own position rather than the total,
+   and it says so at its own head. The number is the order this section was written in, not its
+   position. Renumbering § 22 was the alternative and was refused — that number is quoted in
+   `tools/README.md`, in a work order's Traps line and inside § 22's own prose, and a re-point of all
+   three to keep two banners in ascending order is four things to keep in step for no property.
+
+   WHAT IT IS FOR. A native `<input type="date">` reports `value === ''` for two different states —
+   *mid-typing, not yet a complete date* and *deliberately emptied* — and offers the page nothing to
+   tell them apart. Every version of this app's iPadOS picker reset that hung off an EVENT was
+   therefore guessing which one it had:
+     · on `change` and `input` it guessed wrong on the first keystroke of `09/03`, replaced the
+       element under the caret, sent the focus to <body> and left the assignment with no due date —
+       reported from the classroom on the second day of the live term (WO-1.47,
+       `plans/known-bugs.md` § 1);
+     · on `focusout` it could not do that by construction, but it arrived after the tap it existed
+       for, so clearing a date and re-picking the same day stayed broken on the iPad — read failing
+       on hardware, deliberately, so this row had a baseline.
+   WO-1.48 removed the question rather than answering it better: the reset hangs off a Clear button
+   the teacher presses, and nothing anywhere infers a clear from a value.
+
+   THE SHAPE IS § 17's, AND FOR § 17's REASON. `tools/verify/date-clear.mjs` proves what today's ten
+   buttons do when they are pressed; this proves there is nothing in the tree that could rebuild a
+   date field on any input, including on a surface added by a work order that never runs the harness.
+   The harness asserts behaviour over the paths it drives, the grep asserts absence over the file.
+
+   FOUR CLAUSES, and each one is a different way the defect comes back:
+     1. NO `focusout` LISTENER ANYWHERE IN `src/`. That is where the rebuild sat between WO-1.47 and
+        WO-1.48, and it is the single edit that reinstates the iPad half of the defect. It is asserted
+        over `src/` rather than over `src/shell.js` because the convention that says delegated
+        listeners live in one file is a convention, and a `focusout` bound inside a module would be
+        invisible to a check that only read the shell.
+     2. NO `*DateBlurred` IDENTIFIER SURVIVES, in code OR in prose. The five functions were renamed
+        to `*DateCleared`, and a comment pointing at a function that no longer exists is the exact
+        defect WO-1.47 failed verification for — a stale census entry describing a hook it no longer
+        sat on. Comments are searched here where every other section excludes them, and that is the
+        departure this clause is about.
+     3. EVERY `*DateCleared` IS CALLED FROM EXACTLY ONE PLACE, and that place is inside
+        `clearDateField()` in `src/shell.js` — the body of the `[data-date-clear]` route. One entry
+        point is the whole property being bought: a second call site is a second way to reach the
+        reset, and the first thing a later hand will reach for is "just call it from the change
+        listener as well".
+     4. AND THE ROUTE EXISTS. `closest('[data-date-clear]')` in `src/shell.js`, or the three clauses
+        above are all satisfied by an app that has deleted the reset outright — which is the thing
+        WO-1.47's own Traps line forbids in as many words, and which breaks only a picker on hardware
+        no harness has.
+
+   VACUITY GUARDS, because every clause above is an ABSENCE and an absence is what a pattern that has
+   stopped matching also reports. Five `*DateCleared` functions must be found, in five named modules;
+   `clearDateField(` must be found in `src/shell.js` with a body this check can bound. Any of those
+   missing is a FAIL, for this file's standing reason: green from a distance is the wrongness every
+   section here is about.
+
+   THE BODY OF `clearDateField()` IS BOUNDED BY BRACE COUNTING FROM ITS OWN DECLARATION, which is
+   sound because this repo writes top-level functions with their closing brace in column 0 and
+   because the count is checked — a body that never closes FAILs rather than being read as running to
+   the end of the file. It is not a parser and does not need to be. */
+
+{
+  const NAME = 'no code path rebuilds a date field from an empty value';
+  const srcDir = path.join(REPO, 'src');
+  const shellPath = path.join(srcDir, 'shell.js');
+  // The five modules that own a date field, named rather than discovered: this is a closed set the
+  // work order enumerates (assignment editor, term editor, roster supports, days off, events), and a
+  // sixth arriving should turn this red and be added deliberately rather than counted in silence.
+  const OWNERS = ['assignments.js', 'classes.js', 'roster.js', 'days-off.js', 'events.js'];
+
+  if (!fs.existsSync(srcDir) || !fs.existsSync(shellPath)) {
+    check(NAME, false,
+      `${!fs.existsSync(srcDir) ? 'src/' : 'src/shell.js'} is not where this check expects it — the one-entry-point rule behind the date Clear is now asserted by nothing but the browser harness, which asserts what today's buttons do rather than what the tree could do. Restore the file or point this check at the new path.`);
+  } else {
+    const faults = [];
+
+    // Clause 1 and clause 2, over every module in src/. Clause 1 reads code only — a comment may
+    // legitimately explain why there is no `focusout` listener, and this file's own § 2 makes the
+    // same allowance for prose about a prohibition. Clause 2 reads EVERY line, comments included.
+    const listeners = [];
+    const blurred = [];
+    // A LIST rather than a map keyed by name, because two of the five are called `dateCleared` —
+    // src/days-off.js's and src/events.js's — and a map would silently hold four entries for five
+    // functions and report one module missing.
+    const cleared = [];
+    for (const name of fs.readdirSync(srcDir).sort()) {
+      if (!/\.js$/i.test(name)) continue;
+      const file = path.join(srcDir, name);
+      const prose = commentLines(file);
+      fs.readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+        if (!prose.has(i + 1) && /addEventListener\s*\(\s*['"]focusout['"]/.test(line)) {
+          listeners.push({ file: 'src/' + name, line: i + 1, text: line.trim() });
+        }
+        if (/[A-Za-z_$][\w$]*DateBlurred|\bdateBlurred\b/.test(line)) {
+          blurred.push({ file: 'src/' + name, line: i + 1, text: line.trim() });
+        }
+        if (prose.has(i + 1)) return;
+        // `dateCleared` on the two form modules and `<thing>DateCleared` on the three that write to
+        // the document — matched as one name and then filtered, rather than as an alternation that
+        // has to allow for a bare `dateCleared` having nothing in front of it.
+        const decl = /^\s*export\s+function\s+([A-Za-z_$][\w$]*)\s*\(/.exec(line);
+        if (decl && /[Dd]ateCleared$/.test(decl[1])) {
+          cleared.push({ fn: decl[1], file: 'src/' + name, line: i + 1 });
+        }
+      });
+    }
+
+    if (listeners.length) faults.push(`${report(listeners)} — a \`focusout\` listener in src/. That is where the date-field rebuild sat between WO-1.47 and WO-1.48, and it is the one edit that puts the iPad half of the defect back: the reset arrives after the tap it exists for. If this listener is about something else entirely, this check is the place to say so`);
+    if (blurred.length) faults.push(`${report(blurred)} — the name \`*DateBlurred\`/\`dateBlurred\` still appears in src/, in code or in a comment. The five functions were renamed \`*DateCleared\` at WO-1.48; a comment naming a function that no longer exists is the defect WO-1.47 failed verification for, one work order earlier`);
+
+    // The vacuity guard for clause 3, and it is the one that matters most: an app that has deleted
+    // the reset satisfies every absence above.
+    const missingOwners = OWNERS.filter(n => !cleared.some(v => v.file === 'src/' + n));
+    if (cleared.length !== 5 || missingOwners.length) {
+      faults.push(`${cleared.length} exported \`*DateCleared\` function(s) found in src/ (${cleared.map(v => `${v.fn} at ${v.file}:${v.line}`).join(', ') || 'none'}) — WO-1.48 put one in each of ${OWNERS.map(n => 'src/' + n).join(', ')}${missingOwners.length ? `, and ${missingOwners.map(n => 'src/' + n).join(', ')} has none` : ''}. A smaller number means either that the picker reset has been deleted — which WO-1.47's Traps line forbids in as many words, and which breaks only a picker on hardware no harness has — or that the pattern in tools/wo-sweep.mjs § 23 has stopped matching. Either way the clause below is now asserting nothing`);
+    }
+
+    // Clause 4 and the bounds of clause 3, out of src/shell.js.
+    const shellLines = fs.readFileSync(shellPath, 'utf8').split('\n');
+    const shellProse = commentLines(shellPath);
+    const routed = shellLines.some((line, i) => !shellProse.has(i + 1)
+      && /closest\(\s*'\[data-date-clear\]'\s*\)/.test(line));
+    if (!routed) faults.push("no `closest('[data-date-clear]')` call in src/shell.js — the ten Clear buttons are routed by nothing, so pressing one does nothing at all and every absence asserted above is satisfied by an app with no picker reset in it");
+
+    const at = shellLines.findIndex((line, i) => !shellProse.has(i + 1)
+      && /^function\s+clearDateField\s*\(/.test(line));
+    let from = -1;
+    let to = -1;
+    if (at < 0) {
+      faults.push('no top-level `function clearDateField(` in src/shell.js — that is the one place the five reset functions may be called from, and this check cannot bound a body it cannot find. Restore the function, or re-point tools/wo-sweep.mjs § 23 if it was renamed');
+    } else {
+      let depth = 0;
+      for (let i = at; i < shellLines.length; i++) {
+        if (shellProse.has(i + 1)) continue;
+        for (const ch of shellLines[i]) {
+          if (ch === '{') depth++;
+          else if (ch === '}') depth--;
+        }
+        if (depth <= 0 && i > at) { from = at; to = i; break; }
+      }
+      if (to < 0) faults.push(`\`clearDateField()\` opens at src/shell.js:${at + 1} and its body never closes — the brace count in tools/wo-sweep.mjs § 23 ran off the end of the file, so the one-call-site clause below would be reading the whole of src/shell.js as the function's body`);
+    }
+
+    // Clause 3 itself. Every reference to a `*DateCleared` name anywhere in src/ that is not the
+    // declaration must be inside clearDateField()'s body — which is exactly one call site each.
+    if (cleared.length && to >= 0) {
+      const strays = [];
+      // The declaration SITES, as file:line, and the names deduplicated — two of the five are both
+      // called `dateCleared`, so a scan that skipped "the line this name was declared on" would
+      // read each of those declarations as a stray call to the other one.
+      const declaredAt = new Set(cleared.map(v => `${v.file}:${v.line}`));
+      const names = [...new Set(cleared.map(v => v.fn))];
+      for (const name of fs.readdirSync(srcDir).sort()) {
+        if (!/\.js$/i.test(name)) continue;
+        const file = path.join(srcDir, name);
+        const prose = commentLines(file);
+        const isShell = name === 'shell.js';
+        fs.readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+          if (prose.has(i + 1)) return;
+          if (declaredAt.has(`src/${name}:${i + 1}`)) return;
+          if (isShell && i >= from && i <= to) return;
+          for (const fn of names) {
+            if (!new RegExp(`(^|[^A-Za-z0-9_$.])${fn}\\s*\\(`).test(line)
+              && !new RegExp(`\\.${fn}\\s*\\(`).test(line)) continue;
+            strays.push({ file: 'src/' + name, line: i + 1, text: line.trim() });
+            break;
+          }
+        });
+      }
+      if (strays.length) faults.push(`${report(strays)} — a \`*DateCleared\` call outside \`clearDateField()\` at src/shell.js:${from + 1}-${to + 1}. The picker reset has exactly one entry point on purpose: a second one is a second way to reach it, and the obvious second one — calling it from the \`change\` listener as well — is WO-1.47's data-loss defect rebuilt by hand. Route it through the button or say here why this call is not a reset`);
+    }
+
+    check(NAME, !faults.length,
+      faults.length ? faults.join(' · ')
+        : `no \`focusout\` listener and no \`*DateBlurred\` name anywhere in src/; ${cleared.length} \`*DateCleared\` function(s) (${cleared.map(v => `${v.fn} at ${v.file}:${v.line}`).join(', ')}), each called from exactly one place — inside clearDateField() at src/shell.js:${from + 1}-${to + 1}, which is the body of the [data-date-clear] route`);
+  }
+}
+
 /* ══════ 22. the count of checks in tools/README.md is the number this run emits ══════
    WO-1.42. § 11 holds `tools/README.md`'s figures for `verify-shell.mjs` against what the tree
    actually contains. This is that census turned on the sweep itself. The same file records how many

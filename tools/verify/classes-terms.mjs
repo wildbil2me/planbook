@@ -385,15 +385,28 @@ if (!classesBooted || !classSeam) {
     Run on term 1's start date and then put it back, so MESSY is intact for the reload check
     further down that asserts these same dates survived a restart.
 
-    THE FIELD IS NOW LEFT AS WELL AS CLEARED, AND THAT IS WO-1.47 (2026-09-03). The rebuild used to
-    hang off `change` and hangs off `focusout` now, because `change` also fires on the empty read
+    THIS BLOCK HAS BEEN RE-CUT TWICE, BY THE TWO WORK ORDERS THAT MOVED THE HOOK, AND BOTH TIMES THE
+    CHECK WAS RIGHT AND ITS PREMISE HAD MOVED UNDER IT.
+
+    WO-1.47 (2026-09-03) took the rebuild off `change`, because `change` also fires on the empty read
     Chromium reports while a `0` is being typed into a month or a day — so the old hook replaced the
-    element under the teacher's caret and took the date with it (`plans/known-bugs.md` § 1). This
-    check went RED on the first run after that move, correctly: its premise was *cleared*, and the
-    premise is *cleared and left*. It clears the field, asserts nothing has happened yet, and only
-    then blurs it — so the two halves of the move are both measured here rather than one of them
-    being traded for the other. `tools/verify/date-zero-key.mjs` is the same pair on the assignment
-    editor's Due field, driven with real keystrokes.
+    element under the teacher's caret and took the date with it (`plans/known-bugs.md` § 1). The
+    premise went from *cleared* to *cleared and left*, and the block was split rather than re-aimed.
+
+    WO-1.48 (2026-09-06) took it off `focusout` as well, and off events altogether. The root cause
+    was never the choice of event: a native date input reports `value === ''` for *mid-typing* and
+    for *deliberately emptied* alike, so any event-driven reset is a guess, and the one on `focusout`
+    guessed late — it arrived after the tap it existed for, which is the iPadOS case the reset is
+    FOR. The reset now hangs off an explicit **Clear** beside the field. So the premise is now three
+    statements, and they are three checks because each fails for its own reason:
+      · the empty `change` does not throw the field away — a rebuild back on `change` is data loss;
+      · LEAVING the field does not throw it away either — a rebuild back on `focusout` is the iPad
+        case broken again, silently, on a laptop where nobody can see it;
+      · and pressing the field's own Clear DOES replace it — without which the two clauses above are
+        satisfied by an app that deleted the reset outright, which WO-1.47's Traps line forbids in as
+        many words and which breaks only a picker on hardware this run does not have.
+    `tools/verify/date-zero-key.mjs` is the first clause on the assignment editor's Due field, driven
+    with real keystrokes, and `tools/verify/date-clear.mjs` is the third on all five surfaces.
   */
   await evalJs(`(function(){ var f = document.querySelectorAll('#termList .term-row')[0]
       .querySelectorAll('.term-date')[0];
@@ -410,20 +423,40 @@ if (!classesBooted || !classSeam) {
     stillThere.survived === true && stillThere.value === '',
     JSON.stringify(stillThere));
   /* And now she leaves it, which is how a teacher gets out of a date field. `blur()` rather than a
-     synthetic event, because `focusout` is what the app listens on and a dispatched one would be
-     the check agreeing with itself. */
+     synthetic event, because a dispatched `focusout` would be the check agreeing with itself about
+     an event nothing listens for any more. The date is asserted STORED empty here as well as in the
+     clause below: the write did not move with the rebuild — it is still on `change` — and the two
+     have to be able to fail apart. */
   await evalJs(`(function(){ var f = document.querySelectorAll('#termList .term-row')[0]
       .querySelectorAll('.term-date')[0];
     f.blur(); return 1; })()`);
   await new Promise(r => setTimeout(r, 200));
+  const left = await evalJs(`(function(){ var f = document.querySelectorAll('#termList .term-row')[0]
+      .querySelectorAll('.term-date')[0];
+    return { survived: !!f.__pbStale, value: f.value,
+             stored: window.planbook.store.getDoc().classes[1].terms[0].start }; })()`);
+  check('and LEAVING the cleared field does not throw it away either — since WO-1.48 no event rebuilds a date field, though the empty value is stored all the same',
+    left.survived === true && left.value === '' && left.stored === '',
+    JSON.stringify(left));
+
+  /* The third clause: the Clear beside this very field, pressed the way a teacher presses it. Its
+     row holds two of them — Starts then Ends — so index 0 is the one this block has been clearing.
+     Without this, the two clauses above are equally true of a build with no picker reset in it. */
+  await clickSel('#termList .term-row:nth-child(1) [data-date-clear]', 0);
+  await new Promise(r => setTimeout(r, 250));
   const cleared = await evalJs(`(function(){ var f = document.querySelectorAll('#termList .term-row')[0]
       .querySelectorAll('.term-date')[0];
+    var wrap = f.closest('.term-date-field');
     return { rebuilt: !f.__pbStale, value: f.value, type: f.type,
-             label: (f.closest('.term-date-field')||{}).textContent,
+             /* The CAPTION element rather than the wrapper's whole text, which since WO-1.48 also
+                holds the Clear's own label. */
+             label: ((wrap || {}).querySelector
+               ? (wrap.querySelector('.term-date-label') || {}).textContent : null),
+             button: !!(wrap && wrap.querySelector('[data-date-clear]')),
              stored: window.planbook.store.getDoc().classes[1].terms[0].start }; })()`);
-  check('a cleared term date is stored empty, and its field is rebuilt so the picker keeps no stale selection',
+  check('and pressing that field\'s own Clear IS what replaces the element, so the picker keeps no stale selection — the rebuild is the button\'s and nothing else\'s',
     cleared.rebuilt && cleared.value === '' && cleared.stored === '' && cleared.type === 'date'
-      && cleared.label === 'Starts',
+      && cleared.label === 'Starts' && cleared.button === true,
     JSON.stringify(cleared));
 
   await evalJs(`(function(){ var f = document.querySelectorAll('#termList .term-row')[0]

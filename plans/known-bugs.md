@@ -31,6 +31,13 @@ means nothing. A row that is genuinely urgent says so in its own body.
 waits for one that is not. This row stays here unstruck in body because both work orders point back
 at it for the measurement rather than repeating it; it is closed when WO-1.48 ticks.*
 
+~~**Struck 2026-09-06: WO-1.48 ticked and this row is closed.**~~ *The condition is the one this
+row set for itself in its own second paragraph — not a judgment made on the day. What closed it last
+was the pair of* 👤 *readings, taken on hardware by the owner: the failing case recorded below now
+takes on the first tap. The body is left standing rather than deleted because two work orders and
+two* `TESTING.md` *sections point back at it for the measurement, and a measurement nobody can read
+is a citation to nothing.*
+
 ~~**Struck in part 2026-09-03: WO-1.47 landed.**~~ *The strike is a partial one and it is drawn here
 rather than through the body on purpose — WO-1.47's own Acceptance line asks for this row to be
 struck with its ID, and this row's paragraph above says it survives until WO-1.48 ticks, and the two
@@ -53,11 +60,22 @@ rebuild arrives after the tap that needed it. That is the trade WO-1.47 states i
 a data-loss defect on the laptop for a stale-highlight defect on the iPad — and WO-1.48's Clear
 control is what buys it back.
 
+**What WO-1.48 then did to the paragraph above, 2026-09-06.** It removed the inference rather than
+guarding it: each of the ten date fields carries an explicit **Clear**, the reset hangs off that
+button, and the `focusout` listener came back out — so **no code path anywhere reads a clear out of
+an empty value.** The iPadOS case this row was originally about is bought back by construction: the
+reset lands at the moment of clearing, with the focus on a button and no caret to take. `TESTING.md`
+§ WO-1.48 has the runs; `tools/wo-sweep.mjs` § 23 is the fence that stops a rebuild going back onto
+an event. **This row is struck as of 2026-09-06**: the two 👤 Acceptance lines
+were read on hardware that day — including the one that reads the failing case above as passing —
+and WO-1.48 is ✅ DONE.
+
 **One thing to know before reading the line numbers below.** They are as measured on 2026-09-03,
 *before* WO-1.47 moved the code, and they are left as they were because they are part of the
-measurement. The rebuild is no longer at any of them: it lives in `termDateBlurred()`,
-`assignmentDateBlurred()`, `supportDateBlurred()` and the two `dateBlurred()` functions, routed from
-a `focusout` listener in `src/shell.js` rather than from the `change` listener the table names.
+measurement. The rebuild is no longer at any of them, and it is no longer on any event: since
+WO-1.48 it lives in `termDateCleared()`, `assignmentDateCleared()`, `supportDateCleared()` and the
+two `dateCleared()` functions, routed from `clearDateField()` — the `[data-date-clear]` click route
+in `src/shell.js` — rather than from the `change` listener the table names.
 
 *Reported 2026-09-03 by the owner, narrowed by the owner the same day to* **the zero key
 specifically**, *and* **reproduced and confirmed that narrowing** *(see the measurement below). It

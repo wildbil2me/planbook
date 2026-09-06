@@ -114,6 +114,7 @@ import { run as totalsByteIdentical } from './verify/totals-byte-identical.mjs';
 import { run as scoreGrid } from './verify/score-grid.mjs';
 import { run as assignedAndDue } from './verify/assigned-and-due.mjs';
 import { run as dateZeroKey } from './verify/date-zero-key.mjs';
+import { run as dateClear } from './verify/date-clear.mjs';
 import { run as attendanceHistory } from './verify/attendance-history.mjs';
 import { run as gradeDetail } from './verify/grade-detail.mjs';
 import { run as gradeSheet } from './verify/grade-sheet.mjs';
@@ -308,6 +309,11 @@ const BROWSER_SECTIONS = [
      direction only: it puts the viewport back to 1024 for itself rather than trusting the 390 it
      inherits. Moving it elsewhere in this list costs nothing. */
   { file: 'verify/date-zero-key.mjs', run: dateZeroKey },
+  /* Straight after the keystroke section, because the two are halves of one repair: that one drives
+     the `0` and asserts that no event replaces the element, this one drives the button that does.
+     It sets its own 1024 viewport and puts the page back on the home view when it is finished, so
+     it depends on its neighbours in neither direction. */
+  { file: 'verify/date-clear.mjs', run: dateClear },
   { file: 'verify/attendance-history.mjs', run: attendanceHistory },
   { file: 'verify/grade-detail.mjs', run: gradeDetail },
   { file: 'verify/grade-sheet.mjs', run: gradeSheet },

@@ -3220,12 +3220,25 @@
                      autocomplete="off" spellcheck="false" data-student-field="caseManager.email"
                      aria-label="Case manager email address">
             </label>
-            <label class="student-field">
+            <!-- A <div> rather than the <label> its two neighbours are, and that is WO-1.48's doing
+                 rather than an inconsistency: a <button> is a labelable element, so a second one
+                 inside a <label> that already wraps an input is invalid HTML and makes the label's
+                 own "which control am I for" question ambiguous. Nothing is lost by the swap — the
+                 accessible name of this field has always come from its own `aria-label` and never
+                 from the caption beside it. The same swap is made at the other nine date fields,
+                 for the same reason. -->
+            <div class="student-field" data-date-field>
               <span class="student-label">Review date</span>
               <input class="student-date" id="supportsReviewDate" type="date"
                      data-student-field="supports.reviewDate" data-support-date
                      aria-label="Plan review date">
-            </label>
+              <!-- The Clear, on the one of the ten that is accommodation-adjacent. It says the same
+                   word as the other nine and names nothing about the plan, the date or the student;
+                   and presentation mode does not draw #supportsBody at all, so it is off the glass
+                   with the field it belongs to rather than being a new thing to suppress. -->
+              <button class="class-action-btn date-clear" type="button" data-date-clear
+                      aria-label="Clear the plan review date">Clear</button>
+            </div>
           </div>
           <!-- The second sentence said "nothing reads it yet" until WO-6.3, which is the work order
                that made it read. It is corrected rather than deleted because the teacher needs to
@@ -3581,19 +3594,28 @@
         <input class="class-input" id="daysOffTitle" type="text"
                placeholder="Thanksgiving break" aria-label="What to call this day off"
                autocomplete="off">
+        <!-- Each field is a <div> carrying `data-date-field`, with its Clear as the last child —
+             WO-1.48, and the swap from <label> is explained where the roster's review date makes
+             it. The Clear is what empties one of these now: nothing in the app infers "she cleared
+             it" from an empty value any more, because a date input reports the same empty string
+             while a date is half typed. -->
         <div class="dayoff-dates">
-          <label class="term-date-field">
+          <div class="term-date-field" data-date-field>
             <span class="term-date-label">From</span>
             <input class="term-date" id="daysOffFrom" type="date"
                    data-dayoff-date="from"
                    aria-label="First day this covers">
-          </label>
-          <label class="term-date-field">
+            <button class="class-action-btn date-clear" type="button" data-date-clear
+                    aria-label="Clear the first day this covers">Clear</button>
+          </div>
+          <div class="term-date-field" data-date-field>
             <span class="term-date-label">To</span>
             <input class="term-date" id="daysOffTo" type="date"
                    data-dayoff-date="to"
                    aria-label="Last day this covers — leave empty for a single day">
-          </label>
+            <button class="class-action-btn date-clear" type="button" data-date-clear
+                    aria-label="Clear the last day this covers">Clear</button>
+          </div>
         </div>
         <button class="class-action-btn primary" type="submit">Add to the calendar</button>
       </form>
@@ -3712,31 +3734,41 @@
         <input class="class-input" id="eventTitle" type="text"
                placeholder="Quarter 1 grades into the SIS" aria-label="What to call this event"
                autocomplete="off">
+        <!-- Three date fields on this form, each with its own Clear as the last child — WO-1.48,
+             and the swap from <label> to <div> is explained at the roster's review date. -->
         <div class="event-dates">
-          <label class="term-date-field">
+          <div class="term-date-field" data-date-field>
             <span class="term-date-label">From</span>
             <input class="term-date" id="eventFrom" type="date"
                    data-event-date="from"
                    aria-label="First day this covers">
-          </label>
-          <label class="term-date-field">
+            <button class="class-action-btn date-clear" type="button" data-date-clear
+                    aria-label="Clear the first day this covers">Clear</button>
+          </div>
+          <div class="term-date-field" data-date-field>
             <span class="term-date-label">To</span>
             <input class="term-date" id="eventTo" type="date"
                    data-event-date="to"
                    aria-label="Last day this covers - leave empty for a single day">
-          </label>
+            <button class="class-action-btn date-clear" type="button" data-date-clear
+                    aria-label="Clear the last day this covers">Clear</button>
+          </div>
         </div>
 
         <!-- Hidden while an existing entry is open for editing: a repeat materializes into whole
              entries at the moment it is added, so there is no rule to re-run on an edit, and a
              field that looked like it would do something is worse than one that is not there. -->
         <div class="event-dates" id="eventRepeatRow">
-          <label class="term-date-field">
+          <div class="term-date-field" data-date-field>
             <span class="term-date-label">Repeat weekly until</span>
             <input class="term-date" id="eventUntil" type="date"
                    data-event-date="until"
                    aria-label="Repeat this every week until - leave empty for a single entry">
-          </label>
+            <!-- The widest caption of the ten, which is why `.term-date-field` wraps: at 390px this
+                 button drops to a line of its own rather than pushing the row past the panel. -->
+            <button class="class-action-btn date-clear" type="button" data-date-clear
+                    aria-label="Clear the repeat-until date">Clear</button>
+          </div>
         </div>
 
         <input class="class-input" id="eventNotes" type="text"

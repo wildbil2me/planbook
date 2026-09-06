@@ -7,7 +7,7 @@
 | `make-icons.mjs` | Draws the home-screen icons and writes them as PNGs into `icons/`, using `node:zlib` and nothing else. `node tools/make-icons.mjs` |
 | `make-cert.mjs` | Mints a local CA and a server certificate into `certs/`, so the LAN address is a secure context. `node tools/make-cert.mjs` |
 | `serve-https.mjs` | Serves the repo over HTTPS for a device sitting, plus a plain-HTTP page that hands the iPad the CA. `node tools/serve-https.mjs` |
-| `wo-sweep.mjs` | The verifier's 40-check standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down, including the three active `no-cache` stanzas in `_headers`, the backup nag's collection list against `docs/data-model.md`, and both copies of the repo-write guard — plus, since WO-2.48, the list of guarded scripts itself, derived and diffed against what § 15 declares, and since 2026-08-20 the drawings in `design/mockups/` — § 19, which is the machine-run half of `design/mockups/PROTOCOL.md` — and since 2026-08-30 the two files the pipeline is typed and dispatched from, § 21, which reaches `.claude/commands/wo.md` and `.claude/agents/work-order-orchestrator.md` **by naming their paths** because `.claude` is in `IGNORE_DIRS` and stays there — and, since WO-1.41 the same day, `AGENTS.md` against `CLAUDE.md` as § 21's **second pair**, on four claims about the rules both files carry, which needs no path trick (the walk already reaches the repository root) and is named all the same, because a pair is a hand-maintained list rather than a directory scan — and, since WO-1.42 on 2026-08-31, the count at the head of this very row, § 22, which is held against the number of results the run emits and against no figure written down inside the tool. `node tools/wo-sweep.mjs` |
+| `wo-sweep.mjs` | The verifier's 41-check standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down, including the three active `no-cache` stanzas in `_headers`, the backup nag's collection list against `docs/data-model.md`, and both copies of the repo-write guard — plus, since WO-2.48, the list of guarded scripts itself, derived and diffed against what § 15 declares, and since 2026-08-20 the drawings in `design/mockups/` — § 19, which is the machine-run half of `design/mockups/PROTOCOL.md` — and since 2026-08-30 the two files the pipeline is typed and dispatched from, § 21, which reaches `.claude/commands/wo.md` and `.claude/agents/work-order-orchestrator.md` **by naming their paths** because `.claude` is in `IGNORE_DIRS` and stays there — and, since WO-1.41 the same day, `AGENTS.md` against `CLAUDE.md` as § 21's **second pair**, on four claims about the rules both files carry, which needs no path trick (the walk already reaches the repository root) and is named all the same, because a pair is a hand-maintained list rather than a directory scan — and, since WO-1.42 on 2026-08-31, the count at the head of this very row, § 22, which is held against the number of results the run emits and against no figure written down inside the tool. `node tools/wo-sweep.mjs` |
 | `wo-gate.mjs` | Work order gates, "what's next", claiming a work order for a dispatch, handing it to the verifier at the implementer's return (`--handoff`, WO-1.38), the maintenance ticks with a recomputed dashboard, and — since WO-2.15 — a read-only `--audit` of both trackers and a `--self-check` that plants its own violations. `node tools/wo-gate.mjs next` |
 | `wo-brief.mjs` | Assembles the verbatim parts of a dispatch brief. `node tools/wo-brief.mjs WO-1.7 > .claude/dispatch/WO-1.7-brief.md` |
 | `wo-cost.mjs` | What each dispatch cost, from the session transcripts. `node tools/wo-cost.mjs` |
@@ -1138,14 +1138,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1278 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1288 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the sixty-six files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the sixty-seven files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -1394,8 +1394,31 @@ this work order repaired.)*
 
 *(The sentence two paragraphs up said* **sixty-four**
 *files under `tools/verify/` and was already stale by one before this work order — the entry file
-named sixty-five at `3acc086`. It reads* **sixty-six** *now. Nothing asserts that figure; the sweep
-greps the count sentence only, so this one is maintained by whoever notices.)*
+named sixty-five at `3acc086`. It reads* **sixty-seven** *now, WO-1.48 having added a sixty-seventh.
+Nothing asserts that figure; the sweep greps the count sentence only, so this one is maintained by
+whoever notices.)*
+
+**WO-1.48 moved it from 1278 to 1288, and the executed count from 1290 to 1299 — nine sites and nine
+results, which do not correspond one to one.** Nine of the ten new sites are `verify/date-clear.mjs`,
+a file that work order created; the tenth is a third check in `verify/classes-terms.mjs`'s
+cleared-term-date block. One of the ten never fires — `date-clear.mjs`'s fixture-guard failure arm —
+so the gap between sites and results widens from −14 to −15, and it is a coincidence that the count
+of new sites and the count of new results are both nine. None of the nine that fire is inside a loop.
+That section's other guard is **eight** `skip()` calls in one arm (no `window.planbook`), which is
+the WO-4.5 and WO-5.1 pattern above and is why they move this number by nothing — eight rather than
+the usual one or two because the section carries eight checks and a run without the seam should say
+which eight it did not take rather than being quietly shorter.
+
+*(**The tenth site is the interesting one again, and it is the same check as last time.**
+`verify/classes-terms.mjs`'s cleared-term-date block has now been re-cut by two consecutive work
+orders, and both times the check was right and its premise had moved under it. WO-1.47 split it
+because the premise went from *cleared* to *cleared and left*; WO-1.48 split it again because the
+rebuild came off `focusout` too, so "cleared and left" is now a **survival** clause and the rebuild
+is asserted by pressing the field's own Clear. Three clauses, three checks, each failing for its own
+reason — a rebuild back on `change` is data loss, a rebuild back on `focusout` is the iPad case
+broken where nobody can see it, and no rebuild at all is the reset deleted. Its `label` read also
+moved from the wrapper's whole `textContent` to the caption element, because the wrapper now holds
+the Clear's own label too.)*
 
 **The pre-change reading was `1194 checks · 1194 passed · 0 failed · 0 skipped`, 407s, exit 0 — and
 its LINE figure is not a pre-change figure.** `ownLines` is read off the disk in the summary, after

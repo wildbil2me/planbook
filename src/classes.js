@@ -1513,20 +1513,16 @@ function termRow(cls, term, index) {
   return row;
 }
 
-/* One truth for the two captions, because resetDateField() below has to rebuild a field without
-   being told what it was called. */
+/* One truth for the two captions, read by the field itself and by the Clear beside it. The second
+   map is the same two fields said as a NOUN, because "Clear the starts date" is not a sentence. */
 const DATE_LABELS = { start: 'Starts', end: 'Ends' };
+const DATE_NOUNS = { start: 'start', end: 'end' };
 
-function dateField(cls, term, field) {
+/* The ELEMENT, apart from the wrapper and the Clear beside it (WO-1.48). Split out because the reset
+   the Clear performs replaces the input and nothing else: replacing the whole wrapper would take
+   away the button that was just tapped, with the focus on it. */
+function dateInput(cls, term, field) {
   const labelText = DATE_LABELS[field] || '';
-  const wrap = document.createElement('label');
-  wrap.className = 'term-date-field';
-
-  const caption = document.createElement('span');
-  caption.className = 'term-date-label';
-  caption.textContent = labelText;
-  wrap.append(caption);
-
   const input = document.createElement('input');
   input.className = 'term-date';
   /* A real date input, so iPadOS gives the teacher its own picker rather than a text field she
@@ -1539,7 +1535,37 @@ function dateField(cls, term, field) {
   input.setAttribute('data-term-field', field);
   input.setAttribute('data-term-id', term.id);
   input.setAttribute('aria-label', labelText + ' — ' + (term.label || 'term') + ' in ' + cls.name);
-  wrap.append(input);
+  return input;
+}
+
+function dateField(cls, term, field) {
+  const labelText = DATE_LABELS[field] || '';
+  const wrap = document.createElement('div');
+  wrap.className = 'term-date-field';
+  /* A <div> rather than the <label> this was until WO-1.48: a <button> is a labelable element, so
+     the Clear below cannot sit inside a <label> that already wraps an input without making that
+     label's own "which control am I for" question ambiguous. The accessible name of this field has
+     always come from its own `aria-label`, so nothing is lost. index.html makes the same swap at
+     the six static date fields. */
+
+  const caption = document.createElement('span');
+  caption.className = 'term-date-label';
+  caption.textContent = labelText;
+  wrap.append(caption);
+  wrap.setAttribute('data-date-field', '');
+  wrap.append(dateInput(cls, term, field));
+
+  /* THE CLEAR (WO-1.48). The reset below hangs off this button and off no event at all, because a
+     native date input reports `''` both while a date is half typed and when it has been deliberately
+     emptied. src/shell.js routes it; termDateCleared() below is the long version of why. */
+  const clear = document.createElement('button');
+  clear.type = 'button';
+  clear.className = 'class-action-btn date-clear';
+  clear.setAttribute('data-date-clear', '');
+  clear.setAttribute('aria-label', 'Clear the ' + (DATE_NOUNS[field] || '') + ' date — '
+    + (term.label || 'term') + ' in ' + cls.name);
+  clear.textContent = 'Clear';
+  wrap.append(clear);
   return wrap;
 }
 
@@ -1550,17 +1576,20 @@ function dateField(cls, term, field) {
   an `input` event first: the document is what the rebuilt field reads its value from, and a cleared
   date that never reached the store would come back holding the old one.
 
-  THE REBUILD USED TO LIVE HERE AND NOW LIVES IN termDateBlurred() BELOW, which is the whole of
-  WO-1.47 at this site. `change` is the wrong event to throw an element away on: Chromium fires it
-  on the momentarily-empty read a date field reports while a `0` is being typed into the month or
-  the day, so the rebuild landed under the caret and took the date with it. The long version of both
-  halves — the iPadOS quirk the rebuild exists for, and why `focusout` is the fence `change` was
-  mistaken for — is on that function.
+  THE REBUILD USED TO LIVE HERE AND NOW LIVES IN termDateCleared() BELOW, WHICH NO EVENT REACHES.
+  `change` was the wrong event to throw an element away on and so is every other one: Chromium fires
+  `input` AND `change` on the momentarily-empty read a date field reports while a `0` is being typed
+  into the month or the day, so the rebuild landed under the caret and took the date with it
+  (WO-1.47), and `focusout` only moved that hazard rather than removing it (WO-1.48). The long
+  version of both halves — the iPadOS quirk the rebuild exists for, and why the answer turned out to
+  be a button rather than a better event — is on that function.
 
-  The write stays on `change` and did not move with it. It is about the DOCUMENT, it is idempotent,
-  and it fires on the picker's own Clear, which is where the browsers that never send an `input`
-  event need it. The condition is what keeps it from saving the document over an identical copy of
-  itself and bumping `rev` for a term date that was already empty (docs/sync.md).
+  The write stays on `change`. It is about the DOCUMENT, it is idempotent, and it fires on the
+  picker's own Clear, which is where the browsers that never send an `input` event need it. The
+  condition is what keeps it from saving the document over an identical copy of itself and bumping
+  `rev` for a term date that was already empty (docs/sync.md). It is a WRITE and not a REBUILD, and
+  that is the whole of why it may read an empty value when nothing else may: storing what the field
+  says is not the same as deciding what the teacher meant by it.
 */
 export function termDateCommitted(input) {
   const cls = findClass(termClassId);
@@ -1576,9 +1605,12 @@ export function termDateCommitted(input) {
 }
 
 /*
-  Clearing a date on iPadOS, which is a WebKit quirk and was found on the hardware rather than here.
-  THIS IS THE LONG VERSION for all five date fields in the app — src/assignments.js, src/roster.js,
+  THE CLEAR, AND THE LONG VERSION OF WHY THERE IS ONE (WO-1.48).
+
+  THIS IS THE LONG VERSION for all ten date fields in the app — src/assignments.js, src/roster.js,
   src/days-off.js and src/events.js each point at this paragraph rather than holding a copy of it.
+
+  ── THE QUIRK THE RESET IS FOR, which is a WebKit fact found on the hardware rather than here ──
 
   The date popover keeps its OWN selection, separate from the input's value. Clear a field that
   held 2026-09-04 and the calendar still has September 4th highlighted — so tapping September 4th
@@ -1590,44 +1622,53 @@ export function termDateCommitted(input) {
   tap opens a calendar with nothing selected, where every date — including the one just cleared —
   registers on the first tap.
 
-  ON `focusout`, AND THE PARAGRAPH THAT USED TO SIT HERE GOT THE FENCE WRONG (WO-1.47, 2026-09-03).
-  It said `change` and not `input`, reasoning that a desktop date field reports '' several times
-  while a date is being typed and that `change` "fires when a value is committed … and never
-  mid-typing". The first half is true and the second is not. `0` is not a valid month or a valid day
+  ── AND WHY IT HANGS OFF A BUTTON, WHICH IS THE PART TWO WORK ORDERS GOT WRONG BEFORE THIS ONE ──
+
+  A native `<input type="date">` reports `value === ''` for TWO different states — *mid-typing, not
+  yet a complete date* and *deliberately emptied* — and offers the page nothing at all to tell them
+  apart. Every version of this reset that hung off an EVENT was therefore guessing.
+
+  The first guess was `change`, on the reasoning that it "fires when a value is committed … and never
+  mid-typing". The first half is true and the second is not: `0` is not a valid month or a valid day
   on its own, so Chromium blanks the segment, waits for the second digit, and fires `input` AND
-  `change` on that empty read — measured 2026-09-03 in headed Edge 152. So the rebuild ran on the
-  first keystroke of `09/03`, replaced the element under the caret, sent the focus to `BODY`, and
-  every digit after it went nowhere. `plans/known-bugs.md` § 1 carries the measurement.
+  `change` on that empty read — measured 2026-09-03 in headed Edge 152. The rebuild ran on the first
+  keystroke of `09/03`, replaced the element under the caret, sent the focus to `BODY`, and every
+  digit after it went nowhere, leaving the assignment with no due date and saying nothing. It was
+  reported from the classroom on the second day of the live term; `plans/known-bugs.md` § 1 carries
+  the measurement.
 
-  `focusout` cannot do that by construction: the field has already been left, so there is no caret
-  in it to take. That is the whole reason this is a separate function from the write above rather
-  than three lines inside it.
+  The second guess was `focusout` (WO-1.47), which cannot replace an element under a caret BY
+  CONSTRUCTION — the field has been left, so there is no caret in it to take. That was a real guard
+  and it was deliberately the smaller repair: it bought the days this one needed. What it could not
+  buy is the case the reset exists for in the first place — clearing a date and tapping the same day
+  again WITHOUT leaving the field — because the rebuild then arrives after the tap that needed it.
+  The owner read that failing on hardware on 2026-09-06, on purpose, so this row had a baseline.
 
-  WHAT THAT COSTS, NAMED RATHER THAN HIDDEN. A blur-time rebuild still covers the teacher who clears
-  a date and LEAVES the field — she comes back to a fresh element and a picker with nothing
-  selected. It does NOT cover clearing a date and tapping the same day again WITHOUT leaving, which
-  is the exact iPadOS sequence the paragraph above is about, because the rebuild now arrives after
-  the tap that needed it. That is a knowing trade of a data-loss defect on the laptop for a
-  stale-highlight defect on the iPad — Roll Call! has shipped the second for a year of daily
-  classroom use without a report — and it is a GUARD, not the repair. WO-1.48 removes the ambiguity
-  underneath both by giving the teacher an explicit Clear, at which point the rebuild hangs off a
-  button, there is no caret anywhere near it, and none of this is inferred from an empty read.
+  THE BUTTON REMOVES THE QUESTION RATHER THAN ANSWERING IT BETTER. The teacher says which of the two
+  empty states she meant by pressing Clear; focus is on the button, so there is no caret anywhere
+  near the element being discarded; and the reset lands at the moment of clearing, so the next tap on
+  the same day is already on a fresh element. **No code path in this app infers a clear from a value
+  being empty.** Putting a rebuild back on `change`, `input` or `focusout` re-opens both defects at
+  once, and `tools/wo-sweep.mjs` § 23 is the fence that says so.
 */
-export function termDateBlurred(input) {
+export function termDateCleared(input) {
   const cls = findClass(termClassId);
   const termId = input.getAttribute('data-term-id');
   const field = input.getAttribute('data-term-field');
   if (!cls || !termId) return;
   if (field !== 'start' && field !== 'end') return;
-  if (input.value) return;
   const term = termsOf(cls).filter((t) => t.id === termId)[0];
   if (!term) return;
 
-  /* Unconditional on the STORED value, which is the same right-way-round the write above is the
-     other half of: by the time focus leaves, the `input` listener has already stored the '', so
-     testing it here would skip the rebuild in the exact case the rebuild exists for. */
-  const wrap = input.closest('.term-date-field');
-  if (wrap) wrap.replaceWith(dateField(cls, term, field));
+  /* Conditional on the STORED value only, and never on the field's — the write above's reason,
+     which is not saving the document over an identical copy of itself. The rebuild below is
+     unconditional: a teacher who taps Clear on a field she has already emptied by hand is a teacher
+     whose picker still has the old day highlighted, which is exactly the state being discarded.
+
+     It replaces the INPUT and not the wrapper, because the wrapper holds the Clear that was just
+     tapped and the focus is on it. */
+  if (term[field]) update(() => { term[field] = ''; });
+  input.replaceWith(dateInput(cls, term, field));
 }
 
 function renderTermList() {

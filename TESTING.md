@@ -1476,6 +1476,127 @@ asked for it. **No behaviour changed in the correction round** — src/ moved by
 
 ---
 
+### WO-1.48 — a date field cannot tell mid-typing from cleared, and the app infers it anyway
+
+**What this changes, in one sentence.** Each of the **ten** date fields in the app carries an
+explicit **Clear**; the picker reset hangs off that button and off nothing else, and WO-1.47's
+`focusout` listener came back out — so **no code path infers a clear from a value being empty.**
+`sw.js`'s `CACHE` goes **v108 → v109**, because `index.html` and six other files in `SHELL` moved.
+
+**Why the button rather than a better event, in one paragraph**, because it is the thing to read
+before touching any of this again. A native `<input type="date">` reports `value === ''` for two
+different states — *mid-typing, not yet a complete date* and *deliberately emptied* — and hands the
+page nothing to tell them apart. On `change` and `input` the reset guessed wrong on the first
+keystroke of `09/03` and ate the field (WO-1.47, reported from the classroom); on `focusout` it could
+not do that, but it arrived after the tap it existed for, so the iPad case stayed broken. The teacher
+pressing Clear is the one unambiguous signal, and there is no caret near a button.
+`src/classes.js`'s `termDateCleared()` is the long version; the other four modules point at it.
+
+**Where the ten are.** Two in the assignment editor and two in the term editor, built by
+`dateField()` in `src/assignments.js` and `src/classes.js`; six static in `index.html` —
+`supportsReviewDate`, `daysOffFrom`, `daysOffTo`, `eventFrom`, `eventTo`, `eventUntil`. That is
+2 + 2 + 1 + 2 + 3 across **five** surfaces driven by **five** `*DateCleared()` handlers, all routed
+from one place: `clearDateField()` in `src/shell.js`, the body of the `[data-date-clear]` click route.
+
+- [x] **Each of the ten date fields carries a Clear, and pressing it empties the field, writes the
+      empty value, and leaves a live element in the panel.** Driven in `tools/verify/date-clear.mjs`,
+      which walks all five surfaces in turn: it **counts** the Clears on each as it opens it —
+      2 · 2 · 1 · 2 · 3 = 10, asserted as one census rather than five per-surface checks, because five
+      green surfaces say nothing about a sixth — and **presses** one on each, chosen so that the three
+      that write to the year document and the two that must not are each exercised. *Assignment `Due`:
+      field "", document due "", assigned still "2026-11-16". Term `Starts`: field "", document start
+      "", end still "2026-11-20". Review date: field "", document "", panel still revealed. Days-off
+      `From`: field "", `To` still "2026-11-16", `doc.events` unchanged. Events `Repeat weekly until`:
+      field "", `doc.events` unchanged.* Each read also asserts the element is a **new** one (an
+      expando witness, which a `cloneNode` rebuild drops and an attribute witness would survive) and
+      that the **Clear button is the same element** — the reset replaces the input and never the
+      wrapper, or the control under the teacher's finger would be destroyed under the tap.
+- [x] **No code path rebuilds a date field from a `change` or `focusout` value being empty**, asserted
+      structurally rather than by fixture. `tools/wo-sweep.mjs` **§ 23** — four clauses, one check:
+      no `addEventListener('focusout'` anywhere in `src/`; no `*DateBlurred`/`dateBlurred` name left
+      in `src/` **in code or in prose**; five exported `*DateCleared` functions, one per owning
+      module, each called from exactly one place, and that place inside `clearDateField()`; and the
+      `[data-date-clear]` route present, without which every absence above is satisfied by an app
+      that deleted the reset outright. Green reads *"no `focusout` listener and no `*DateBlurred`
+      name anywhere in src/; 5 `*DateCleared` function(s) … each called from exactly one place —
+      inside clearDateField() at src/shell.js:1698-1713"*. **Mutation-proved, four ways, each
+      reverted immediately and `grep -rn MUTATION` read after**: a `focusout` listener appended to
+      `src/shell.js` (red, naming the line); `dateCleared` renamed back to `dateBlurred` in
+      `src/days-off.js` (red twice — the stale name *and* four functions where five are wanted); a
+      second `daysOff.dateCleared()` call in the `change` listener (red, naming it as outside
+      `clearDateField()`); and the `closest('[data-date-clear]')` route deleted (red, saying the ten
+      buttons are routed by nothing). The check is also the reason `tools/README.md`'s recorded sweep
+      count moved 40 → 41.
+      *(It sits **above** § 22 in the file although it is numbered after it: § 22's census has to be
+      the last thing that pushes a result or it reads its own position rather than the total. The
+      alternative was renumbering § 22, which is quoted in `tools/README.md`, in WO-1.48's own Traps
+      line and inside § 22's prose — four things to keep in step to put two banners in order.)*
+- [x] **WO-1.47's three Acceptance drives still pass unchanged.** `tools/verify/date-zero-key.mjs` is
+      untouched in its first three checks: one `0` into the month leaves the same element, the caret
+      in it and the date complete after the `9`; `09032026` leaves 2026-09-03; `10032026` — the safe
+      month with the `0` day, the half that outlives September — leaves 2026-10-03.
+      **Its fourth check was re-cut, and that is a change of subject rather than a relaxation.** It
+      used to assert the move: survive the empty `change`, *be replaced* on `focusout`. It now asserts
+      that an empty value replaces the element on **neither** event — both clauses failing in the same
+      direction — because a rebuild put back on either one re-opens a defect this app has already
+      shipped. That the reset is not merely *deleted* is what `date-clear.mjs` and § 23's fourth
+      clause are for; WO-1.47's own Traps line asks for exactly that separation.
+      *(`tools/verify/classes-terms.mjs`'s cleared-term-date pair was re-cut the same way and for the
+      same reason — it went red on the first run after this change, correctly, its premise having
+      been "cleared and left is a rebuild". It now presses the field's own Clear for the rebuild half.
+      This is the second consecutive work order to move that check; both times the check was right and
+      the premise had moved under it.)*
+- [x] 👤 **On the iPad, after a force-quit from the app switcher: clear a date and tap the same day
+      again without leaving the field, and it takes.** **Read by the owner on hardware 2026-09-06:
+      it takes.** This is the case `TESTING.md` § WO-1.47 wrote
+      down as **failing** on 2026-09-06 — a due date holding September 4, cleared, September 4 tapped
+      again, field stayed empty — and it is the reason this row exists. **Not tickable from a desk:**
+      the popover's stale selection is a WebKit behaviour headless Chromium does not reproduce, which
+      `tools/verify/classes-terms.mjs` has said at its own check since WO-1.6.
+- [x] 👤 **Every one of the ten Clears is reachable under a thumb at 44px, on all five surfaces, in
+      portrait.** **Read by the owner on hardware 2026-09-06: all ten, all five surfaces, including
+      the `Repeat weekly until` row named at the foot of this line.** What a machine can say is measured and is not this: `tools/verify/touch-targets.mjs`
+      already opens the term editor, the support panel, the days-off panel and the events panel on an
+      emulated coarse pointer and measures every button in each, so **eight** of the ten arrive
+      covered; `tools/verify/date-clear.mjs` measures the assignment editor's **two**, which that
+      sweep does not reach. All ten wear `.class-action-btn`, whose 44px floor is in `src/shell.css`'s
+      `@media (pointer: coarse)` block. **None of that is a thumb**, and the portrait layout of the
+      events form's `Repeat weekly until` row — where the caption, a 160px field and a 44px button do
+      not fit one line, so `.term-date-field` wraps — is the one a person should look at first.
+- [x] **`node tools/verify-shell.mjs`, `node tools/wo-sweep.mjs` and `node tools/wo-gate.mjs --audit`
+      are green on a clean tree.** Figures in the block below.
+- [x] **`TESTING.md` gains a § WO-1.48** (this section) **and `CHANGELOG.md` records the new
+      control.** The changelog entry is prose about what the change *means* and was the teacher's to
+      write; the dispatch left a draft in `.claude/dispatch/WO-1.48-result.md`, the owner accepted it
+      on 2026-09-06, and it is in `CHANGELOG.md` under *Every date field has a Clear*.
+
+**The runs**, on the delivered tree, 2026-09-06. `node tools/verify-shell.mjs`:
+**`1299 checks · 1299 passed · 0 failed · 0 skipped`**, 40,199 lines, 30.9 lines per check, 443s,
+exit 0 — up from 1290, which is the eight that fire in `verify/date-clear.mjs` plus one added to
+`verify/classes-terms.mjs`. `node tools/wo-sweep.mjs`: **`41 checks · 38 passed · 0 failed ·
+3 to review`**, exit 0 — 41 rather than 40 because of § 23, and the same three standing REVIEW lines
+(sensitive field names, due-date/late-missing, the mockup banner), none of which this work order
+touches. `node tools/wo-gate.mjs --audit`: **PASS**, exit 0.
+
+*(**The first run of the changed tree was `1298 · 1297 · 1 failed`, and the one red line was the
+right one.** `verify/classes-terms.mjs`'s cleared-term-date check read
+`{"rebuilt":false,…,"label":"StartsClear"}` — both halves of it correct: the field is no longer
+rebuilt when it is left, and the wrapper's `textContent` now holds the Clear's own word. It was
+re-cut rather than re-aimed, into the three clauses described above, and the second run is the one
+quoted.)*
+
+*(**What the harness does NOT prove here, stated rather than left to be assumed.** Headless Chromium
+cannot reproduce the iPadOS popover's stale selection — the whole reason the reset exists — so every
+check above measures the MECHANISM (a fresh element replaces the old one, wired to the same term and
+field) and none of them measures the SYMPTOM. That is the first 👤 line, and it has been true of this
+mechanism since WO-1.6. The eight new checks were not separately mutation-proved, and the reason is
+that each one printed a real transition rather than a boolean — `"2026-11-16"` → `""` on five
+surfaces, and a census computed from live counts taken with each dialog open — so a vacuous pass
+would have had to print a value that is not there. § 23, which asserts an ABSENCE and therefore could
+pass over an empty grep, was mutation-proved four ways.)*
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*

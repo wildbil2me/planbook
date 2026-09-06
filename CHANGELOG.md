@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Every date field has a Clear — 2026-09-06
+
+Assignment dates, term dates, the plan review date, the days-off range and the three dates on the
+calendar-events form each have a **Clear** button beside them. Tapping it empties the field, and on
+the iPad the date picker forgets what it was holding — so the day you just cleared can be picked
+again on the first tap, instead of needing a detour through a neighbouring day that writes a date
+you never wanted.
+
+Underneath, this removes a guess. A date field reports "empty" both while you are still typing a
+date and when you have deliberately cleared one, and it never says which. Every earlier version of
+this had to guess — and last week’s guess is what emptied a due date the moment you typed a leading
+zero. Nothing guesses now: the button is you saying which one you meant.
+
 ### A read-only viewer for the stored year document — 2026-09-06
 
 **There was no way to look at the data except by opening a backup in a text editor**, and a year

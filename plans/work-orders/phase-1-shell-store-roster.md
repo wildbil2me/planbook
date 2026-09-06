@@ -4365,7 +4365,7 @@ the native control is what buys the OS picker on the iPad, and it is not what is
 
 ## WO-1.48 — a date field cannot tell mid-typing from cleared, and the app infers it anyway
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.47 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-09-06 · **Size** M · **Depends on** WO-1.47 · **Blocks** nothing
 **Closes roadmap** Phase 1 → *(no box. Booked 2026-09-03 alongside WO-1.47, owner-directed. It adds a
 control the app has never had, but it adds it to fix a defect, so it closes nothing that was
 promised.)*
@@ -4436,23 +4436,43 @@ because it never replaces the element.
   check count moves with it or § 22 goes red (WO-1.42).
 
 **Acceptance**
-- [ ] Each of the **ten** date fields carries a **Clear** — two in the assignment editor, two in the
+- [x] Each of the **ten** date fields carries a **Clear** — two in the assignment editor, two in the
       term editor, one on the roster's supports panel, two in the days-off form and three in the
       events form — and pressing it empties the field, writes the empty value, and leaves a live
-      element in the panel.
-- [ ] **No code path rebuilds a date field from a `change` or `focusout` value being empty.** The
+      element in the panel. *(`tools/verify/date-clear.mjs` walks all five surfaces: it counts the
+      Clears on each as it opens it — 2 · 2 · 1 · 2 · 3 = 10, as one census rather than five
+      per-surface checks — and presses one on each, covering both the three that write to the
+      document and the two that must not. Every read also asserts a NEW element and the SAME button,
+      the reset replacing the input and never the wrapper. `TESTING.md` § WO-1.48.)*
+- [x] **No code path rebuilds a date field from a `change` or `focusout` value being empty.** The
       reset happens on the Clear and nowhere else, asserted structurally rather than by fixture — the
-      shape `wo-sweep.mjs` § 17 uses for *this file holds no writer*.
-- [ ] WO-1.47's three Acceptance drives still pass unchanged: `0` as a first digit costs neither the
-      element nor the date, in the month segment and in the day.
-- [ ] 👤 On the iPad, after a force-quit: **clear a date and tap the same day again without leaving
+      shape `wo-sweep.mjs` § 17 uses for *this file holds no writer*. *(`wo-sweep.mjs` § 23, four
+      clauses in one check: no `focusout` listener in `src/`, no `*DateBlurred` name left in code or
+      prose, five `*DateCleared` functions each called from exactly one place inside
+      `clearDateField()`, and the `[data-date-clear]` route present. Mutation-proved four ways, each
+      reverted immediately. `tools/README.md`'s sweep count moved 40 → 41 with it.)*
+- [x] WO-1.47's three Acceptance drives still pass unchanged: `0` as a first digit costs neither the
+      element nor the date, in the month segment and in the day. *(`verify/date-zero-key.mjs`'s first
+      three checks are untouched and green. Its FOURTH was re-cut — it asserted the `focusout`
+      rebuild that this row removes, and now asserts that an empty value rebuilds on neither event;
+      `verify/classes-terms.mjs`'s pair was re-cut the same way, into three clauses. Both are
+      described in `TESTING.md` § WO-1.48.)*
+- [x] 👤 On the iPad, after a force-quit: **clear a date and tap the same day again without leaving
       the field**, and it takes. This is the case WO-1.47 wrote down as failing, and the reason this
-      row exists.
-- [ ] 👤 Every one of the ten Clears is reachable under a thumb at 44px, on all five surfaces, in
-      portrait.
-- [ ] `node tools/verify-shell.mjs` is green, `node tools/wo-sweep.mjs` is green, and
-      `node tools/wo-gate.mjs --audit` is green on a clean tree.
-- [ ] `TESTING.md` gains a § WO-1.48, and `CHANGELOG.md` records the new control.
+      row exists. *(Read on hardware by the owner 2026-09-06: it takes. The measurement WO-1.47 wrote
+      down as failing is the one this reading reverses.)*
+- [x] 👤 Every one of the ten Clears is reachable under a thumb at 44px, on all five surfaces, in
+      portrait. *(Read on hardware by the owner 2026-09-06, all five surfaces in portrait, including
+      the events form's `Repeat weekly until` row where `.term-date-field` wraps.)*
+- [x] `node tools/verify-shell.mjs` is green, `node tools/wo-sweep.mjs` is green, and
+      `node tools/wo-gate.mjs --audit` is green on a clean tree. *(`1299 checks · 1299 passed ·
+      0 failed · 0 skipped`, 40,199 lines, 443s, exit 0 · `41 checks · 38 passed · 0 failed ·
+      3 to review`, exit 0 · `--audit` PASS, exit 0. All 2026-09-06.)*
+- [x] `TESTING.md` gains a § WO-1.48, and `CHANGELOG.md` records the new control. *(Both in the
+      tree 2026-09-06. The `CHANGELOG.md` entry is prose about what the change MEANS and was the
+      teacher's to write — `AGENTS.md` § "If you were dispatched with a work order" — so the dispatch
+      left a draft in `.claude/dispatch/WO-1.48-result.md` and the owner accepted it that day, which
+      is what put it in the file.)*
 
 ---
 

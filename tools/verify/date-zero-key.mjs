@@ -289,23 +289,34 @@ console.log('\n--- a `0` typed into a date field (WO-1.47) ---');
           + ', caret in ' + typedDay.active);
 
       /*
-        ── AND THE REBUILD IS STILL THERE, WHICH IS THE TRAP THIS WORK ORDER NAMES AGAINST ITSELF ──
+        ── AND NO EVENT REPLACES THE ELEMENT ANY MORE, WHICH IS WO-1.48 ASSERTED FROM THIS SIDE ──
 
-        "Do not delete the rebuild outright. It is not dead code and it is not the bug; the bug is
-        WHEN it runs." So this asserts both halves of the move in one sequence, and the two clauses
-        fail in opposite directions:
+        WO-1.47's own trap said "do not delete the rebuild outright — it is not dead code and it is
+        not the bug; the bug is WHEN it runs", and this check used to assert the move: survive the
+        empty `change`, be replaced on `focusout`. WO-1.48 took the second half away on purpose. The
+        rebuild is not deleted — it hangs off the Clear button now, and tools/verify/date-clear.mjs
+        drives that button and would go red if it had been. What is asserted HERE is the property
+        that replaced it: **an empty value reaches no rebuild at all, on either event.**
+
+        Both clauses now fail in the SAME direction, and that is the point — a build that put a
+        rebuild back on `change` or on `focusout` goes red here, and either one re-opens a defect
+        this app has already shipped once. The sequence is left exactly as it was so that the two
+        halves stay comparable across the re-cut:
 
           · the field is cleared and `change` is fired on it, and the element must SURVIVE — a build
             that put the rebuild back on `change` goes red here, and it is the same event shape
             `assigned-and-due.mjs` uses to imitate the picker's own Clear;
-          · then the field is left, and the element must be GONE and its replacement empty — a build
-            that deleted the rebuild rather than moving it goes red here, with nothing else in the
-            harness able to notice, since a deleted rebuild breaks only a picker on hardware this run
-            does not have.
+          · then the field is LEFT, and the element must still be the same one — this clause was
+            inverted by WO-1.48, and it is the half that says the `focusout` rebuild really came
+            back out rather than being left standing beside its replacement.
 
         The field is left by focusing the *name* input above it, which is how a teacher leaves it.
         `blur()` would also fire `focusout`, and it would prove less: what has to work is the real
         sequence where focus arrives somewhere else.
+
+        The DOCUMENT is still asserted empty at the end, because the WRITE did not move: `change`
+        still stores a date committed empty, and it is only the ELEMENT that no event may replace.
+        Storing what the field says is not the same as deciding what the teacher meant by it.
       */
       await evalJs(`(function(){
         var f = document.querySelector('#assignmentFields [data-assignment-field="due"]');
@@ -324,9 +335,9 @@ console.log('\n--- a `0` typed into a date field (WO-1.47) ---');
         return 1; })()`);
       await new Promise(r => setTimeout(r, 180));
       const afterLeaving = await evalJs(READ);
-      check('clearing the date does not replace the field while the teacher is still in it, and leaving the field afterwards does replace it with an empty one — the rebuild moved to `focusout` rather than being deleted',
+      check('an empty date value replaces the element on NEITHER event — not on the `change` fired while the teacher is still in the field, and not on the `focusout` when she leaves it. The write still lands; the rebuild is the Clear button\'s alone (WO-1.48)',
         clearedStillThere.same === true && clearedStillThere.value === ''
-          && afterLeaving.present === true && afterLeaving.same === false
+          && afterLeaving.present === true && afterLeaving.same === true
           && afterLeaving.value === '' && afterLeaving.stored.due === '',
         'on the empty `change`: same element = ' + clearedStillThere.same + ', field '
           + JSON.stringify(clearedStillThere.value)

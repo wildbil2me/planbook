@@ -1118,11 +1118,12 @@ export function removeAccommodation(indexValue) {
 /*
   THE REVIEW DATE COMMITTED EMPTY — the write and the dot, and nothing else since WO-1.47.
 
-  The rebuild that used to finish this function is supportDateBlurred() below. It moved to
-  `focusout` for the reason src/classes.js's termDateBlurred() gives at length: `change` fires on the
-  momentarily-empty read a date field reports while a `0` is being typed, so a rebuild hung off it
-  replaces the element under the caret. On this field that would empty an IEP/504 review date the
-  teacher was in the middle of typing — the same data loss WO-1.47 was reported for on the
+  The rebuild that used to finish this function is supportDateCleared() below, and since WO-1.48 it
+  hangs off the Clear button beside the field rather than off any event. The reason is
+  src/classes.js's termDateCleared() at length: `change`, `input` and `focusout` all arrive carrying
+  an empty value that means *mid-typing* as often as it means *cleared*, and a rebuild hung on one of
+  them replaces the element under the caret. On this field that would empty an IEP/504 review date
+  the teacher was in the middle of typing — the same data loss WO-1.47 was reported for on the
   assignment editor, on the one panel in the app where the data is accommodation data.
 
   The write stays here because it is about the DOCUMENT and because `refreshSupportDot()` has to run
@@ -1141,10 +1142,19 @@ export function supportDateCommitted(input) {
 }
 
 /*
-  Clearing the review date on iPadOS. Identical quirk, identical fix and identical reasoning to
-  src/classes.js's termDateBlurred() — the date popover keeps its own selection, so a cleared
-  field cannot be re-set to the value it just held until the element is thrown away. Read that
-  comment; it is not repeated here, and neither is the trade WO-1.47 made to move this hook.
+  THE CLEAR ON THE REVIEW DATE (WO-1.48) — the write, the dot and the reset, in one gesture.
+
+  Identical quirk, identical fix and identical reasoning to src/classes.js's termDateCleared() — the
+  date popover keeps its own selection, so a cleared field cannot be re-set to the value it just held
+  until the element is thrown away, and the reset hangs off the button rather than off an event
+  because an empty date field means *mid-typing* as often as it means *cleared*. Read that comment;
+  it is not repeated here.
+
+  THE BUTTON DISCLOSES NOTHING NEW, which is the one thing this site has to answer that the other
+  four do not. It says `Clear`, the same word as the other nine, and names no plan, no date and no
+  student on the glass; presentation mode does not draw #supportsBody at all, so it is off screen
+  with the field it belongs to rather than being a new thing to suppress. index.html says the same at
+  the markup.
 
   Cloned rather than rebuilt from a template, because unlike a term date this field is real markup
   in index.html: a clone carries every attribute and hook it was authored with, and the value
@@ -1158,12 +1168,19 @@ export function supportDateCommitted(input) {
   panel presentation mode is refusing to draw would be this module doing work about accommodation
   data on a screen that has decided none of it is on the glass.
 */
-export function supportDateBlurred(input) {
+export function supportDateCleared(input) {
   const student = findStudent(editingId);
-  if (!student || input.value || !supportsVisible()) return;
+  if (!student || !supportsVisible()) return;
+  const supports = supportsOf(student);
+  /* `had` is read BEFORE the write, so the write and the dot cannot be separated — the same pairing
+     supportDateCommitted() above depends on. Conditional on the STORED value only, and never on the
+     field's: not saving the document over an identical copy of itself (docs/sync.md). */
+  const had = hasSupports(student);
+  if (supports.reviewDate) update(() => { supports.reviewDate = ''; });
   const fresh = input.cloneNode(true);
   fresh.value = '';
   input.replaceWith(fresh);
+  refreshSupportDot(student, had);
 }
 
 /* The roster behind the dialog carries the dot, so an edit that turns "nothing on file" into

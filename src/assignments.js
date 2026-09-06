@@ -47,7 +47,7 @@
 
      THREE THINGS THAT SURVIVE THAT CHANGE, and each is one of that work order's acceptance lines.
      An empty date is still valid and still stays empty — the same rule src/classes.js states for
-     term dates — so clearing one must not re-fill it (assignmentDateBlurred() below rebuilds the
+     term dates — so clearing one must not re-fill it (assignmentDateCleared() below rebuilds the
      field from the assignment, which is what makes that true rather than remembered). The default
      is a CREATION-time default, so an assignment being EDITED is never touched: open a two-year-old
      assignment with a blank Due and it opens blank. And a COPY keeps whatever its source had, which
@@ -603,8 +603,13 @@ export function renderAssignments() {
 
 /* ────────────────────────────── the editor ────────────────────────────── */
 
-function fieldWrap(labelText, wide) {
-  const wrap = document.createElement('label');
+/* `tag` is 'label' everywhere but the two date fields, which take a <div> (WO-1.48). A <button> is
+   a labelable element, so the Clear beside a date cannot live inside a <label> that already wraps an
+   input without making that label's own "which control am I for" question ambiguous — and every
+   field built here already carries its own `aria-label`, so the wrapper was never where the
+   accessible name came from. index.html makes the same swap at the six static date fields. */
+function fieldWrap(labelText, wide, tag) {
+  const wrap = document.createElement(tag || 'label');
   wrap.className = 'assign-field' + (wide ? ' assign-field-wide' : '');
   const caption = document.createElement('span');
   caption.className = 'assign-field-label';
@@ -691,12 +696,13 @@ function categoryField(assignment, cls) {
   return wrap;
 }
 
-/* One truth for the two captions, because assignmentDateBlurred() below has to rebuild a field
-   without being told what it was called. */
+/* One truth for the two captions, read by the field itself and by the Clear beside it. */
 const DATE_LABELS = { assigned: 'Assigned', due: 'Due' };
 
-function dateField(assignment, field) {
-  const wrap = fieldWrap(DATE_LABELS[field] || '');
+/* The ELEMENT, apart from the wrapper and the Clear beside it (WO-1.48). Split out because the
+   reset the Clear performs replaces the input and nothing else: replacing the whole wrapper would
+   take away the button that was just tapped, with the focus on it. */
+function dateInput(assignment, field) {
   const input = document.createElement('input');
   input.className = 'assign-field-date';
   /* A real date input, so iPadOS gives the teacher its own picker rather than a text field she has
@@ -715,7 +721,30 @@ function dateField(assignment, field) {
   input.setAttribute('data-assignment-id', assignment.id);
   input.setAttribute('aria-label', (DATE_LABELS[field] || '') + ' — '
     + (assignment.name || 'this assignment'));
-  wrap.append(input);
+  return input;
+}
+
+function dateField(assignment, field) {
+  const wrap = fieldWrap(DATE_LABELS[field] || '', false, 'div');
+  wrap.setAttribute('data-date-field', '');
+  wrap.append(dateInput(assignment, field));
+  /* THE CLEAR (WO-1.48), and it is the only way this field is emptied by a gesture now. A native
+     date input reports `''` both while a date is half typed and when it has been deliberately
+     emptied, so every repair that read the second out of the first was arguing with an ambiguity
+     rather than removing it. Focus is on the BUTTON when this runs, so the reset underneath it can
+     throw the element away with no caret anywhere near it — which is what buys back the case
+     WO-1.47 knowingly gave up. src/shell.js routes it; assignmentDateCleared() below does it.
+
+     The label is a word rather than a glyph and the button is `.class-action-btn` shipped as it is,
+     for the reasons src/shell.css § "THE CLEAR BESIDE A DATE FIELD" sets out at the class. */
+  const clear = document.createElement('button');
+  clear.type = 'button';
+  clear.className = 'class-action-btn date-clear';
+  clear.setAttribute('data-date-clear', '');
+  clear.setAttribute('aria-label', 'Clear the ' + (DATE_LABELS[field] || '').toLowerCase()
+    + ' date — ' + (assignment.name || 'this assignment'));
+  clear.textContent = 'Clear';
+  wrap.append(clear);
   return wrap;
 }
 
@@ -936,12 +965,14 @@ export function editAssignmentField(input) {
       deliberately. Chromium blanks a month or a day segment while a leading `0` is typed and
       reports `value === ''` until the second digit lands, so `09/03` really is stored as '' for a
       moment and a reader who ever reacts to an empty stored date has to know that. It is harmless
-      only because the element now survives to receive the commit that follows — the rebuild moved
-      to assignmentDateBlurred() and no longer replaces the field under the caret — and because the
-      store's debounce turns the empty and the committed write into one save.
+      only because the element survives to receive the commit that follows — since WO-1.48 the
+      rebuild hangs off the Clear button (assignmentDateCleared()) and no event reaches it at all —
+      and because the store's debounce turns the empty and the committed write into one save.
 
-      Not repaired here: telling *mid-typing* from *deliberately emptied* is the ambiguity a native
-      date input does not expose, and removing it is WO-1.48's explicit Clear.
+      The phantom is still not repaired here, and it is not a thing to react to. Telling *mid-typing*
+      from *deliberately emptied* is the ambiguity a native date input does not expose; WO-1.48
+      removed the NEED to tell them apart rather than the ambiguity itself, by having the teacher say
+      which she meant. A future reader who adds an `if (!value)` branch here is re-opening it.
     */
     const value = input.value;
     update(() => { assignment[field] = value; });
@@ -963,19 +994,24 @@ export function editAssignmentField(input) {
   without an `input` event first. Conditional so that a date that was already empty does not save
   the document over an identical copy of itself.
 
-  THE REBUILD USED TO BE THE SECOND HALF OF THIS FUNCTION AND IS NOW assignmentDateBlurred() BELOW.
-  This is the field WO-1.47 was reported against, on the second day of the live term: `change` fires
-  on the momentarily-empty read Chromium reports while a `0` is being typed into the month or the
-  day, so the rebuild replaced the element under the caret, took the focus to `BODY`, and left the
-  assignment with no due date at all. src/classes.js's termDateBlurred() holds the long version of
-  both halves and `plans/known-bugs.md` § 1 holds the measurement.
+  THE REBUILD IS NOT REACHED FROM HERE AND IS NOT REACHED FROM ANY EVENT (WO-1.48). It was the second
+  half of this function until WO-1.47 moved it to `focusout`, and it now hangs off the Clear button
+  beside the field — assignmentDateCleared() below. This is the field WO-1.47 was reported against,
+  on the second day of the live term: `change` fires on the momentarily-empty read Chromium reports
+  while a `0` is being typed into the month or the day, so a rebuild hung on it replaced the element
+  under the caret, took the focus to `BODY`, and left the assignment with no due date at all.
+  src/classes.js's termDateCleared() holds the long version of both halves and `plans/known-bugs.md`
+  § 1 holds the measurement. DO NOT PUT A REBUILD BACK ON AN EVENT: `change` and `focusout` both
+  arrive on values a date input reports empty for two different reasons, and telling those two apart
+  is what the button removed the need to do.
 
   AND THE TRANSIENT EMPTY WRITE BELOW STAYS, deliberately. editAssignmentField() has already stored
   '' on the empty `input` a keystroke before Chromium commits the month, so a date typed as `09/03`
   really is empty in the document for a moment — a phantom a future reader who reacts to an empty
-  stored date needs to know about. It is harmless ONLY because the element now survives to receive
-  the commit that follows, and because the store's debounce turns the pair into one save. Removing
-  it is not this row's job; WO-1.48 is where the two states stop being told apart by guesswork.
+  stored date needs to know about. It is harmless ONLY because the element survives to receive the
+  commit that follows, and because the store's debounce turns the pair into one save. It is still
+  not a thing to react to: nothing may infer that the teacher meant to empty the field from the
+  field being empty, which is the whole of WO-1.48.
 */
 export function assignmentDateCommitted(input) {
   const id = input.getAttribute('data-assignment-id');
@@ -990,38 +1026,43 @@ export function assignmentDateCommitted(input) {
 }
 
 /*
-  Clearing a date on iPadOS, which is a WebKit quirk found on the hardware rather than here, and
-  the third field in this app to need the same answer — src/classes.js's termDateBlurred() holds
-  the long version and src/roster.js's supportDateBlurred() points at it.
+  THE CLEAR (WO-1.48) — the whole gesture, and the only path in this file that empties a date field.
 
-  Short version: the date popover keeps its own selection separate from the input's value, so a
-  cleared field still has the old day highlighted and tapping that day again fires nothing. The
-  field is thrown away and rebuilt; a fresh element has no picker state.
+  It does three things in one go, in this order: it writes the empty date to the document, it throws
+  the element away and builds a fresh one, and it redraws the list behind the dialog because a due
+  date is printed on a score-grid column head and a cleared one has to leave it.
 
-  ON `focusout`, NEVER ON `change` AND NEVER ON `input` (WO-1.47). Both of those fire on the empty
-  read a date field reports mid-typing, and rebuilding on either replaces the element under the
-  caret — which is not a hypothetical here, it is the reported bug this hook moved to fix. A field
-  that has been LEFT has no caret in it to take. What the move gives up — clearing a date and
-  tapping the same day again without leaving the field — is named at the long version rather than
-  quietly dropped, and WO-1.48 is what buys it back.
+  WHY THE ELEMENT IS DISCARDED, which is a WebKit fact found on the hardware rather than here and is
+  the third field in this app to need the same answer — src/classes.js's termDateCleared() holds the
+  long version and src/roster.js's supportDateCleared() points at it. Short version: the date popover
+  keeps its own selection separate from the input's value, so a cleared field still has the old day
+  highlighted and tapping that day again fires nothing at all. A fresh element has no picker state.
+
+  AND WHY IT HANGS OFF A BUTTON RATHER THAN AN EVENT. `change`, `input` and `focusout` all arrive
+  carrying `value === ''` for two different reasons — a date half typed, and a date deliberately
+  emptied — and a native date input offers nothing that tells them apart. WO-1.47 was the guard
+  against that (move the rebuild to the one event that cannot fire under a caret); this is the
+  removal of it. The teacher says which one she meant by pressing this button, focus is ON the
+  button, and there is no caret to take. **Nothing in this file may put a rebuild back on an event.**
+
+  It replaces the INPUT and not the wrapper, because the wrapper holds the Clear that was just
+  tapped and the focus is on it.
 */
-export function assignmentDateBlurred(input) {
+export function assignmentDateCleared(input) {
   const id = input.getAttribute('data-assignment-id');
   const field = input.getAttribute('data-assignment-field');
   if (field !== 'assigned' && field !== 'due') return;
-  if (input.value) return;
   const assignment = findAssignment(id);
   if (!assignment) return;
 
-  /* Unconditional on the STORED value, which is the right way round: by the time focus leaves, the
-     `input` listener has usually stored the '' already, so testing before REBUILDING would skip the
-     rebuild in the exact case it exists for.
-
-     The list behind the dialog is NOT re-rendered here and the chain in src/shell.js is not run.
-     Both belong to the write above, because both are about a date that changed; this function
-     swaps one element for an identical empty one and changes nothing a list could show. */
-  const wrap = input.closest('.assign-field');
-  if (wrap) wrap.replaceWith(dateField(assignment, field));
+  /* Conditional on the STORED value only, and never on the field's — not saving the document over
+     an identical copy of itself and not moving `rev` for a date that was already empty
+     (docs/sync.md). The rebuild below is unconditional: a teacher who taps Clear on a field she has
+     already emptied by hand is a teacher whose picker still has the old day highlighted, which is
+     exactly the state this exists to discard. */
+  if (assignment[field]) update(() => { assignment[field] = ''; });
+  input.replaceWith(dateInput(assignment, field));
+  renderAssignments();
 }
 
 /*
