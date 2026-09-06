@@ -418,7 +418,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 49 | 37 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 50 | 37 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
@@ -427,7 +427,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **166** | **134** | **2** | `[████████░░] 81%` |
+| | **167** | **134** | **2** | `[████████░░] 80%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)
@@ -436,6 +436,26 @@ still reading *Nothing* are watched by no one.
 rewrites it when something is ticked and neither row will be for days. Recomputed against the same
 rule `--tick` applies, and* **the next `--tick` is still the authority**, *exactly as the note below
 says. The percentage went* **down** *a point on a denominator that grew: 133 of 165.*
+
+***And by hand again on 2026-09-06, from `49 | 37` to `50 | 37`.*** *Same cause, third instance:*
+[WO-1.50](phase-1-shell-store-roster.md#wo-150--a-document-you-can-read-is-not-a-document-anything-checks)
+*was booked that day and* `--tick` *only rewrites this table when something is ticked, so a booking
+that ticks nothing leaves the count one short until the next unrelated tick. The percentage went*
+**down** *again on a denominator that grew — 134 of 167 is 80%, where 134 of 166 was 81% — which is
+the direction a booking should move it and the direction a stale table hides.* **Recomputed against
+`recomputeDashboard()`'s own rule and not by counting rows here**: *total is headings minus struck
+and deferred, done is* `✅ DONE`*, and the percentage is* `Math.round`*. The next* `--tick` *is still
+the authority.*
+
+*(**The Status cell beside it was left alone, and that is a flag rather than a fix.** "Reopened
+nineteen times; last on 2026-09-03" is hand-kept, `--tick` never touches column 5, and it had
+**already** drifted before WO-1.50: commit* `3acc086` *booked WO-1.45 and WO-1.46 and did not bump
+it, so the number is not one-per-sitting after all and there is no rule left to recompute it from.
+It is the* `WO-1.40`/`WO-1.42`/`WO-1.45`/`WO-1.49` *shape for the fifth time — a hand-typed number in
+prose that nothing checks — and guessing a replacement would re-arm it with a later expiry date,
+which is exactly what* [WO-1.49](phase-1-shell-store-roster.md#wo-149--a-comment-counts-three-document-level-listeners-and-there-are-twelve)
+*rules against. **The owner's call:** take the count out and let the cell say* 🔨 IN PROGRESS
+*(reopened repeatedly), or fence it.)*
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -1751,7 +1771,7 @@ it, never from a reading taken earlier in the same session.)*
 
 | # | Work order | Size | G3 | Suggested |
 |---|---|---|---|---|
-| 50 | [WO-1.44](phase-1-shell-store-roster.md#wo-144--the-browser-harness-dies-at-check-518-and-766-checks-never-run) **The browser harness dies at check 518** | M | — | **Next — and the number is a label, not the position.** Booked **2026-08-31**, owner-directed, out of WO-1.42's dispatch. It sits at the **head of this table** rather than at the foot because `next` walks document order — `runningOrder()` reads the row's place and never its `#`, which `tools/wo-gate.mjs:2378` says in as many words — and renumbering 12–49 to open a slot would break the prose cross-references that name rows by number ("behind row 20", "Pairs with row 15"). So the label continues the sequence and the position carries the priority. **Why it leads:** `verify-shell.mjs` throws out of the run partway through and **766 of its 1,284 checks have not executed since at least 2026-08-30**, with no summary line printed to say so. **That is exposure to the next app change and not to Wednesday's deploy** — no app file has moved since the last full green run, so the build that meets students is the build that passed 1,284/1,284; the row said go-live at first and the Why now carries the correction. Not 🚩: 🚩 is a claim about a surface a teacher touches, and this is the instrument, not the app. **Read the working order before the Traps** — the row is written crash-first and is meant to be worked snow-day-confirm-first, because that one failure asks whether a teacher is told which periods a snow day touches, and it is the only part of this with a consequence she meets in week one. The crash containment is second and is the fallback if the diagnosis runs long |
+| 50 | [WO-1.44](phase-1-shell-store-roster.md#wo-144--the-browser-harness-dies-at-check-518-and-766-checks-never-run) **The browser harness dies at check 518** | M | — | ✅ **2026-08-31** — **and the number is a label, not the position.** *This row led the table as* **Next** *until 2026-09-06, when a tidy-up read the head of the table against the tracker and found the two disagreeing: the row was `✅ DONE` on the day it was booked and its cell still said* **Next** *for six days.* `next` *was never fooled — it reads the* `**Status**` *field and answered* [WO-1.27](phase-1-shell-store-roster.md#wo-127--a-field-name-in-prose-is-read-as-a-field-and-only-half-the-parser-knows-the-rule) *(row 12) throughout — so the cost was to a person reading the table, which is the only reader this column has.* **The row stays at the head rather than moving to the foot**, *because the paragraph below is still the reason nobody may renumber it, and a finished row is the cheapest place to keep that argument.* Booked **2026-08-31**, owner-directed, out of WO-1.42's dispatch. It sits at the **head of this table** rather than at the foot because `next` walks document order — `runningOrder()` reads the row's place and never its `#`, which `tools/wo-gate.mjs:2378` says in as many words — and renumbering 12–49 to open a slot would break the prose cross-references that name rows by number ("behind row 20", "Pairs with row 15"). So the label continues the sequence and the position carries the priority. **Why it led:** `verify-shell.mjs` throws out of the run partway through and **766 of its 1,284 checks have not executed since at least 2026-08-30**, with no summary line printed to say so. **That is exposure to the next app change and not to Wednesday's deploy** — no app file has moved since the last full green run, so the build that meets students is the build that passed 1,284/1,284; the row said go-live at first and the Why now carries the correction. Not 🚩: 🚩 is a claim about a surface a teacher touches, and this is the instrument, not the app. **Read the working order before the Traps** — the row is written crash-first and is meant to be worked snow-day-confirm-first, because that one failure asks whether a teacher is told which periods a snow day touches, and it is the only part of this with a consequence she meets in week one. The crash containment is second and is the fallback if the diagnosis runs long |
 | 7 | [WO-8.12](phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document) **The privacy policy and the FERPA document** | M | — | ✅ **2026-08-21** — **all seven boxes**, including the 👤. *(This cell read "six of seven boxes; line 1 waits on the push and the deploy" until 2026-08-28. It was stale on the day it was written: line 1 was ticked in the same sitting, against `verify-deploy.mjs` at `16 checks · 16 passed · 0 failed` on the live origin. **A row that says a work order is waiting invites somebody to go and pay a debt that does not exist** — it cost exactly that here, one session later.)* |
 | 8 | [WO-7.1](phase-7-sync.md#wo-71--auth) **Auth — the GIS token flow** | M | — | ✅ **2026-08-24** — built, green, and closed the same day. The sitting happened: consent screen read, a real token left to lapse for its hour, iPad confirmed clear. **Row 9 is unblocked** |
 | 9 | [WO-3.18](phase-3-gradebook.md#wo-318--verification-submitted-) Verification submitted 🔒 | S | — | **Gate-clear and not startable — behind row 20.** All four declared dependencies ✅ since 2026-08-24, and its second deliverable is a demo video **showing the scope in use** while nothing in the app uses it: WO-7.2 is unbuilt, so `files.create` greps to zero and the Drive panel reads "Nothing is uploaded yet." *(Read "**Startable now**" until 2026-08-28 — see the note below the table.)* |
