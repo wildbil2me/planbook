@@ -33,6 +33,18 @@
   `log[]` bodies and `students[].notes` are NOT masked, which follows the same file's ruling that
   a note to self is the teacher's working memory and hiding it costs her the useful half.
 
+  NOTHING IN THIS REPOSITORY CHECKS THAT MASKING, AND THE FIRST CUT OF THIS FILE GOT IT WRONG.
+  The tree asked masked() about a path; the side pane matched key NAMES instead. Two readers, one
+  rule, and the reader that was wrong is the one that prints a whole subtree at once — selecting
+  `students[0].supports` printed `medical` in full while the tree beside it masked the same field
+  correctly. Caught 2026-09-06 by a throwaway browser harness that was deliberately not kept (the
+  page gates nothing and fails loudly, so a standing behavioural harness earns little), and repaired
+  the same day to the one predicate below. What is owed is a STRUCTURAL check — a second answer to
+  "is this masked" is a thing a grep settles — and it is booked as part of WO-1.50, which is also the
+  row that adds the third and fourth readers: a finding body and a report copied to the clipboard.
+  Until that lands, this paragraph is the whole of what watches it. Add a reader and you are the
+  check.
+
   IDS ARE RESOLVED INLINE, and that is the only thing here a generic JSON viewer cannot do. Every
   id in this document is opaque on purpose (docs/data-model.md), so a raw tree makes you carry
   `s_7f2c` in your head across four collections.

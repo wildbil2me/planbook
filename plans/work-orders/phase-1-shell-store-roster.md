@@ -4564,6 +4564,12 @@ picture makes none of them — and this row's whole risk is in them rather than 
   finding body, a path list, and a report copied to the clipboard. The copied report is the worst of
   them, because it is the one that ends up in a file somebody commits. Share the predicate; do not
   re-ask the question. A finding names **a path and a count**, never a value.
+  **This row carries the fence for it, and the fence is a grep rather than a run** — see Acceptance.
+  The choice was made 2026-09-06 with the alternatives on the table: the browser harness that caught
+  the original leak was deliberately **not** kept, because this page gates nothing and fails loudly
+  when it is broken, so a 400-second behavioural run on every dispatch buys a *loud* failure a
+  standing check for a *silent* one. A second answer to "is this masked" is text, and text is what
+  `wo-sweep.mjs` is for.
 - **Severity is a reading, not a verdict.** `wo-sweep.mjs` § 21's posture and the drawing's own limits
   box: green means *no unexcused occurrence*, not *the document is right*. Several of the mockup's
   amber rows are states a teacher has every right to hold — weights that do not total 100 is the
@@ -4574,9 +4580,11 @@ picture makes none of them — and this row's whole risk is in them rather than 
   snippet the reader copies keeps the keystroke a person's. Editing is *down the road* — the owner's
   own words, 2026-09-06.
 - **It is not a harness and must not become one.** A page, run by hand, gating nothing — the line
-  `plans/verification-tooling.md` draws between the two existing tools. If a check here turns out to
-  be worth running on every dispatch, it belongs in `wo-sweep.mjs`, and moving it there is a different
-  row with a different argument.
+  `plans/verification-tooling.md` draws between the two existing tools. If a check *the panel makes
+  about a document* turns out to be worth running on every dispatch, it belongs in `wo-sweep.mjs`, and
+  moving it there is a different row with a different argument. **The masking fence below is not that
+  and is not an exception to it**: it is a check about **this file's own text** — how many places
+  answer one question — and it never reads a year document at all.
 - **The drawing's 38 checks are a picture's number.** Two of them answer a report that actually
   exists — § 2's off-roster mark, and the both-ways count that shows it — and the rest are candidates
   nobody has needed yet. **Build the ones with a report behind them and leave the table short**, or
@@ -4599,6 +4607,16 @@ picture makes none of them — and this row's whole risk is in them rather than 
 - [ ] **No masked value reaches a finding body, a path list, or the copied report** — driven with
       masking on, against a fixture carrying a distinctive string in `supports.medical`, over all
       four surfaces including the clipboard text.
+- [ ] `wo-sweep.mjs` gains **one check that the masking question has exactly one answer** in the
+      viewer's file: no `'supports'` or `'guardians'` comparison, and no `JSON.stringify` replacer,
+      anywhere outside the single predicate. **Proved against the 2026-09-06 defect restored on
+      purpose** — the key-name replacer put back, the check red, the replacer reverted — because a
+      grep that has never seen the thing it is for is a grep nobody has tested. `tools/README.md`'s
+      check count moves with it, and § 22 is what fails if it does not.
+- [ ] The paragraph in `tools/data-viewer.html`'s header that says **nothing checks the masking** is
+      replaced by what now does, in the same sitting. It was written on 2026-09-06 as the standing
+      admission until this row landed, and leaving it beside its own fence is the `§ SHARED` failure
+      `design/mockups/PROTOCOL.md` § 4 records.
 - [ ] The report copies out as Markdown shaped for a `plans/known-bugs.md` row: the reproduction, the
       paths and the counts, and no diagnosis.
 - [ ] `node tools/wo-sweep.mjs` is green and `node tools/wo-gate.mjs --audit` is green on a clean
