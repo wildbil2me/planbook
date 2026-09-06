@@ -13,6 +13,29 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A read-only viewer for the stored year document — 2026-09-06
+
+**There was no way to look at the data except by opening a backup in a text editor**, and a year
+document is a few megabytes of JSON keyed by ids that mean nothing to a reader — `s_7f2c` tells you
+which student only if you go and look it up, four collections at a time. The occasion was a class
+reading *1 unconfirmed* on the day header while every student on the grid showed present: a
+disagreement a person can only settle by reading the file, and reading the file was the part nobody
+could do.
+
+`tools/data-viewer.html` is that reading. Drop a backup on it from anywhere — it opens straight off
+the filesystem, no server — or, served from the app's own origin, have it read that origin's stored
+years directly. It draws the document as a tree you open a node at a time, **annotates every id with
+the name it belongs to**, searches keys and values for a string, and shows the raw JSON of whatever
+is selected with its full path.
+
+**It interprets nothing.** No count is recomputed, no rule is checked, nothing is called wrong — an
+absent key is drawn as absent, because in this document an absent key is often the correct state. It
+applies no migration, so an older file is shown as stored rather than as repaired. **And it never
+writes:** the store is opened read-only, and where the browser cannot say whether a database exists,
+the empty one that asking creates is deleted rather than left behind. IEP and 504 supports,
+guardians and a student's own contact details are masked until asked for, since these screens get
+projected and screenshots get pasted into bug reports.
+
 ### A date field no longer empties itself when you type a zero — 2026-09-06
 
 **Typing a due date that starts with `0` used to blank the field, throw away the date already in it

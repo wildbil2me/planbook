@@ -1,0 +1,726 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Planbook data viewer</title>
+<!--
+  A viewer for one year document. Hand-run, READ-ONLY, and it makes no judgements: it shows what
+  is in the file and never says whether that is right. Written 2026-09-06.
+
+  It is `tools/` in the same sense tools/audio-probe.html is — a page, not a script, self-styled,
+  imported by nothing, not in sw.js SHELL, gates nothing. Opened from a Downloads folder over
+  file:// it reads a backup you drop on it; served from the app's own origin it can also read the
+  app's own IndexedDB, because IndexedDB is per-origin and there is no other way in.
+
+  THREE THINGS IT WILL NOT DO, each on purpose.
+    - It never writes. The object store is opened `readonly` and `put` appears nowhere in this
+      file. The one write it could make by accident is creating an empty `planbook` database at an
+      origin that has none — indexedDB.open() does that — so it probes with indexedDB.databases()
+      first where that exists, and where it does not it deletes the shell it just made rather
+      than leaving a database behind that the app would then find and open.
+    - It applies no migration. A document below schemaVersion 3 is shown exactly as stored, because
+      the app's own migration runs on open and a viewer that repeated it would be showing you the
+      repair rather than the file.
+    - It does not interpret. No counts are recomputed, no rule is checked, nothing is called wrong.
+      An absent key is drawn as absent — `calendar` and an untuned threshold are absent BY RULE
+      (docs/data-model.md), and a viewer that drew them as gaps would teach a reader to fill
+      them in.
+
+  WHAT IS MASKED, AND WHY IT IS NOT A SETTING WORTH FORGETTING. CLAUDE.md § Accommodations rule 1
+  has no tools/ carve-out: "the default state of any list view is not showing it". So `supports`
+  and `guardians` subtrees, and a student's own `email`/`phone`/`phone2`, are masked until the
+  checkbox is ticked — key names still show, values do not. A screenshot of this page pasted into
+  a bug report is a disclosure, and this is the whole of the fence against that.
+  `log[]` bodies and `students[].notes` are NOT masked, which follows the same file's ruling that
+  a note to self is the teacher's working memory and hiding it costs her the useful half.
+
+  IDS ARE RESOLVED INLINE, and that is the only thing here a generic JSON viewer cannot do. Every
+  id in this document is opaque on purpose (docs/data-model.md), so a raw tree makes you carry
+  `s_7f2c` in your head across four collections.
+-->
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { font: 14px/1.5 -apple-system, system-ui, "Segoe UI", sans-serif; margin: 0;
+         background: #f0f2f5; color: #1a1a2e; display: flex; flex-direction: column; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  button { font: inherit; }
+
+  .band { background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 60%, #2a2a6e 100%); color: #fff;
+          padding: 9px 16px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .band h1 { font-size: 15px; margin: 0; font-weight: 700; }
+  .band .note { font-size: 12px; color: rgba(255,255,255,0.55); margin-left: auto; }
+
+  .source { background: #fff; border-bottom: 1px solid #e0e4f0; padding: 12px 16px; }
+  .srow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .drop { flex: 1 1 300px; min-height: 44px; border: 2px dashed #b0bcf0; border-radius: 8px;
+          background: #eef0fb; color: #5b6fcc; font-weight: 600; display: flex; align-items: center;
+          justify-content: center; padding: 8px 12px; text-align: center; }
+  .drop.over { border-color: #5b6fcc; background: #e0e6fb; }
+  .or { color: #a0aab8; font-size: 12px; font-weight: 700; letter-spacing: 0.6px; }
+  .btn { min-height: 44px; padding: 0 14px; border: 1.5px solid #b0bcf0; border-radius: 8px;
+         background: #eef0fb; color: #5b6fcc; font-weight: 600; }
+  .btn.plain { border-color: #d0d8e4; background: #f8f9fc; color: #6b7a8d; }
+  .btn.small { min-height: 30px; padding: 0 10px; font-size: 12px; }
+  .btn:disabled { opacity: 0.4; }
+
+  .hdr { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-size: 13px;
+         color: #6b7a8d; align-items: baseline; }
+  .hdr b { color: #1a1a2e; font-weight: 600; }
+  .hdr .sep { color: #d0d8e4; }
+  .toggle { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #6b7a8d;
+            margin-left: auto; white-space: nowrap; }
+  .msg { margin-top: 10px; font-size: 13px; border-radius: 6px; padding: 7px 10px; }
+  .msg.warn { color: #8a6d1a; background: #fff8e6; border: 1px solid #f0dfa8; }
+  .msg.err { color: #c0392b; background: #fdeaea; border: 1px solid #f0b0b0; }
+
+  .bar { background: #fff; border-bottom: 1px solid #e0e4f0; padding: 8px 16px; display: flex;
+         gap: 8px; align-items: center; flex-wrap: wrap; }
+  .bar input[type=search] { flex: 1 1 240px; min-height: 36px; padding: 0 10px; font: inherit;
+         border: 1px solid #e0e4ea; border-radius: 8px; }
+  .bar .hits { font-size: 12px; color: #6b7a8d; white-space: nowrap; }
+
+  main { flex: 1 1 auto; display: flex; min-height: 0; }
+  .pane { overflow: auto; padding: 10px 14px; }
+  .tree-pane { flex: 1 1 62%; border-right: 1px solid #e0e4f0; background: #fff; }
+  .side { flex: 1 1 38%; background: #f8f9fb; min-width: 260px; }
+  @media (max-width: 860px) { main { flex-direction: column; }
+    .tree-pane { border-right: 0; border-bottom: 1px solid #e0e4f0; }
+    .pane { flex: none; max-height: 60vh; } }
+
+  /* ── the tree ─────────────────────────────────────────────────────────────────── */
+  .tree { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+  .row { display: flex; align-items: baseline; gap: 6px; padding: 1px 4px; border-radius: 4px;
+         cursor: default; white-space: nowrap; }
+  .row:hover { background: #f3f4f6; }
+  .row.sel { background: #eef0fb; box-shadow: inset 2px 0 0 #5b6fcc; }
+  .row .tw { width: 14px; flex: none; color: #8a9bb0; text-align: center; cursor: pointer;
+             user-select: none; }
+  .row .tw.leaf { cursor: default; color: transparent; }
+  .row .k { color: #5b6fcc; }
+  .row .v { color: #1a6b3a; overflow: hidden; text-overflow: ellipsis; }
+  .row .v.num { color: #7c3aed; }
+  .row .v.nul { color: #a0aab8; font-style: italic; }
+  .row .c { color: #a0aab8; }
+  .row .res { color: #6b7a8d; font-family: -apple-system, system-ui, sans-serif; font-style: italic;
+              font-size: 12px; }
+  .row .masked { background: #e4e7eb; color: #8a9bb0; border-radius: 3px; padding: 0 6px;
+                 font-family: -apple-system, system-ui, sans-serif; font-size: 11px; }
+  .row .hit { background: #fff3cd; border-radius: 2px; }
+  .kids { padding-left: 15px; border-left: 1px solid #f3f4f6; margin-left: 7px; }
+  .more { color: #5b6fcc; cursor: pointer; padding: 1px 4px; font-size: 12px; }
+  .more:hover { text-decoration: underline; }
+
+  /* ── the side pane ────────────────────────────────────────────────────────────── */
+  .side h2 { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+             color: #8a9bb0; margin: 0 0 8px; }
+  .side .path { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;
+                color: #5b6fcc; background: #fff; border: 1px solid #e0e4f0; border-radius: 6px;
+                padding: 6px 8px; word-break: break-all; }
+  .side .acts { display: flex; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
+  .side pre { margin: 0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;
+              background: #fff; border: 1px solid #e0e4f0; border-radius: 6px; padding: 8px;
+              white-space: pre-wrap; word-break: break-word; }
+  .side .about { font-size: 12px; color: #6b7a8d; margin: 6px 0 10px; }
+  .side .about b { color: #1a1a2e; }
+  .results { list-style: none; margin: 0; padding: 0; font-size: 12px; }
+  .results li { padding: 5px 6px; border-bottom: 1px solid #eef0f4; cursor: pointer; }
+  .results li:hover { background: #eef0fb; }
+  .results .rp { font-family: ui-monospace, Menlo, Consolas, monospace; color: #5b6fcc;
+                 word-break: break-all; }
+  .results .rv { color: #52606d; }
+  .empty { color: #a0aab8; font-size: 13px; padding: 20px 0; text-align: center; }
+
+  .foot { padding: 8px 16px 14px; color: #a0aab8; font-size: 11.5px; }
+  [hidden] { display: none !important; }
+  @media (pointer: coarse) { .row { padding: 5px 4px; } .row .tw { width: 22px; } }
+</style>
+
+<div class="band">
+  <h1>Planbook data viewer</h1>
+  <span class="note">read-only &middot; no network &middot; nothing here leaves this device</span>
+</div>
+
+<div class="source">
+  <div class="srow">
+    <div class="drop" id="drop">Drop a backup <code>.json</code> here</div>
+    <span class="or">OR</span>
+    <button class="btn plain" id="pick">Choose a file&hellip;</button>
+    <input type="file" id="file" accept=".json,application/json" hidden>
+    <span class="or">OR</span>
+    <button class="btn" id="local">Read this device</button>
+    <select id="years" class="btn plain" hidden></select>
+  </div>
+  <div class="hdr" id="hdr" hidden></div>
+  <div id="msg" hidden></div>
+</div>
+
+<div class="bar" id="bar" hidden>
+  <input type="search" id="q" placeholder="Search keys and values&hellip;   ( / )" autocomplete="off">
+  <span class="hits" id="hits"></span>
+  <button class="btn plain small" id="expandTop">Top level</button>
+  <button class="btn plain small" id="collapse">Collapse all</button>
+</div>
+
+<main id="main" hidden>
+  <div class="pane tree-pane"><div class="tree" id="tree"></div></div>
+  <div class="pane side" id="side"></div>
+</main>
+
+<div class="foot" id="foot">
+  Nothing is loaded yet. A backup file is the whole document as the app wrote it, so this page can
+  read one straight from Downloads. <b>Read this device</b> works only when this page is served from
+  the same origin as the app &mdash; IndexedDB is per-origin.
+</div>
+
+<script>
+/* ═══════════════════════════════ state ═══════════════════════════════ */
+var doc = null;              /* the document being viewed */
+var names = {};              /* id -> readable name, every prefix in one map */
+var reveal = false;          /* sensitive values shown? */
+var selPath = null;          /* the selected node, as a path array */
+var CHUNK = 120;             /* children rendered per click — a 1,000-cell scores block is one node */
+var HITCAP = 800;
+
+var el = function (id) { return document.getElementById(id); };
+
+/* ═══════════════════════════════ loading ═══════════════════════════════ */
+function say(text, kind) {
+  var m = el('msg');
+  if (!text) { m.hidden = true; return; }
+  m.hidden = false; m.className = 'msg ' + (kind || 'warn'); m.textContent = text;
+}
+
+function loadText(text, where) {
+  var parsed;
+  try { parsed = JSON.parse(text); }
+  catch (e) { say('That file is not JSON the browser can read: ' + e.message, 'err'); return; }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    say('That parsed, but it is not a year document — the top level is not an object.', 'err');
+    return;
+  }
+  load(parsed, where, new Blob([text]).size);
+}
+
+function load(parsed, where, bytes) {
+  doc = parsed;
+  buildNames();
+  say('');
+  drawHeader(where, bytes);
+  el('bar').hidden = false;
+  el('main').hidden = false;
+  el('foot').hidden = true;
+  el('q').value = '';
+  selPath = null;
+  drawTree();
+  showAbout();
+}
+
+/* Every id in the document, mapped to something a person can read. Nothing here is checked or
+   compared — an id with no entry simply gets no annotation. */
+function buildNames() {
+  names = {};
+  var i, j;
+  var students = Array.isArray(doc.students) ? doc.students : [];
+  for (i = 0; i < students.length; i++) {
+    var s = students[i] || {};
+    var nm = [s.last, s.first].filter(Boolean).join(', ') || s.nickname || '(no name)';
+    if (s.nickname && s.first && s.nickname !== s.first) nm += ' "' + s.nickname + '"';
+    if (s.id) names[s.id] = nm;
+  }
+  var classes = Array.isArray(doc.classes) ? doc.classes : [];
+  for (i = 0; i < classes.length; i++) {
+    var c = classes[i] || {};
+    if (c.id) names[c.id] = c.name || '(unnamed class)';
+    var terms = Array.isArray(c.terms) ? c.terms : [];
+    for (j = 0; j < terms.length; j++) if (terms[j] && terms[j].id) {
+      names[terms[j].id] = (terms[j].label || '(unlabelled term)') + ' — ' + (c.name || '');
+    }
+    var cats = Array.isArray(c.categories) ? c.categories : [];
+    for (j = 0; j < cats.length; j++) if (cats[j] && cats[j].id) {
+      names[cats[j].id] = (cats[j].name || '(unnamed category)') + ' — ' + (c.name || '');
+    }
+  }
+  var asg = Array.isArray(doc.assignments) ? doc.assignments : [];
+  for (i = 0; i < asg.length; i++) {
+    var a = asg[i] || {};
+    if (a.id) names[a.id] = (a.name || '(unnamed)') + (names[a.classId] ? ' — ' + names[a.classId] : '');
+  }
+}
+
+function looksLikeId(v) {
+  return typeof v === 'string' && /^(s|c|a|k|tm|e|l|p|d)_/.test(v) && v.length > 2;
+}
+function resolved(v) { return looksLikeId(v) && names[v] ? names[v] : ''; }
+
+function drawHeader(where, bytes) {
+  var counts = [];
+  Object.keys(doc).forEach(function (k) {
+    var v = doc[k];
+    if (Array.isArray(v)) counts.push(k + ' ' + v.length);
+    else if (v && typeof v === 'object') counts.push(k + ' {' + Object.keys(v).length + '}');
+  });
+  var bits = [];
+  bits.push('<span><b>' + esc(String(doc.year || '(no year key)')) + '</b> · ' + esc(where) + '</span>');
+  bits.push('<span class="sep">|</span>');
+  if ('rev' in doc) bits.push('<span>rev <b>' + esc(String(doc.rev)) + '</b></span>');
+  if (doc.schemaVersion !== undefined) bits.push('<span>schemaVersion <b>' + esc(String(doc.schemaVersion)) + '</b></span>');
+  if (doc.updatedAt) bits.push('<span>updatedAt <b>' + esc(String(doc.updatedAt)) + '</b></span>');
+  if (doc.deviceId) bits.push('<span>device <b class="mono">' + esc(String(doc.deviceId)) + '</b></span>');
+  if (doc.docId) bits.push('<span>docId <b class="mono">' + esc(String(doc.docId)) + '</b></span>');
+  if (bytes) bits.push('<span><b>' + (bytes / 1048576).toFixed(2) + ' MB</b></span>');
+  bits.push('<span class="sep">|</span><span>' + esc(counts.join(' · ')) + '</span>');
+  bits.push('<label class="toggle"><input type="checkbox" id="reveal"' + (reveal ? ' checked' : '')
+    + '> Show sensitive fields</label>');
+  var h = el('hdr');
+  h.hidden = false;
+  h.innerHTML = bits.join('');
+  el('reveal').addEventListener('change', function (e) {
+    reveal = e.target.checked;
+    drawTree();
+    if (selPath) select(selPath);
+    if (el('q').value) runSearch();
+  });
+}
+
+/* ═══════════════════════════════ masking ═══════════════════════════════ */
+/* One list, read by the tree, the side pane and the search results alike, so the three cannot
+   disagree about what is covered. It masks VALUES; key names stay, because the shape of the
+   document is the thing this page exists to show. */
+function masked(path) {
+  if (reveal) return false;
+  for (var i = 0; i < path.length; i++) {
+    if (path[i] === 'supports' || path[i] === 'guardians') return true;
+  }
+  if (path.length === 3 && path[0] === 'students'
+      && (path[2] === 'email' || path[2] === 'phone' || path[2] === 'phone2')) return true;
+  return false;
+}
+
+/* ═══════════════════════════════ the tree ═══════════════════════════════ */
+function kindOf(v) {
+  if (v === null) return 'null';
+  if (Array.isArray(v)) return 'array';
+  return typeof v;
+}
+function childKeys(v) { return Array.isArray(v) ? v.map(function (_, i) { return i; }) : Object.keys(v); }
+function isContainer(v) { return v !== null && typeof v === 'object'; }
+
+function pathText(path) {
+  var out = '';
+  for (var i = 0; i < path.length; i++) {
+    if (typeof path[i] === 'number') out += '[' + path[i] + ']';
+    else out += (out ? '.' : '') + path[i];
+  }
+  return out || '(root)';
+}
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* A one-line summary of a container, so a collapsed row still says something. */
+function summary(v) {
+  if (Array.isArray(v)) return '[' + v.length + ']';
+  var ks = Object.keys(v);
+  var head = ks.slice(0, 4).join(', ');
+  return '{' + ks.length + (ks.length ? ': ' + head + (ks.length > 4 ? ', …' : '') : '') + '}';
+}
+
+function valueHtml(v, path) {
+  if (masked(path) && !isContainer(v)) return '<span class="masked">masked</span>';
+  var k = kindOf(v);
+  if (k === 'string') {
+    var short = v.length > 160 ? v.slice(0, 160) + '…' : v;
+    var r = resolved(v);
+    return '<span class="v">"' + esc(short) + '"</span>'
+      + (r ? ' <span class="res">— ' + esc(r) + '</span>' : '');
+  }
+  if (k === 'number' || k === 'boolean') return '<span class="v num">' + esc(String(v)) + '</span>';
+  if (k === 'null') return '<span class="v nul">null</span>';
+  return '';
+}
+
+function makeRow(key, value, path, depth) {
+  var row = document.createElement('div');
+  row.className = 'row';
+  row.__path = path;
+  row.__value = value;
+  row.dataset.path = pathText(path);
+
+  var tw = document.createElement('span');
+  tw.className = 'tw' + (isContainer(value) && childKeys(value).length ? '' : ' leaf');
+  tw.textContent = isContainer(value) && childKeys(value).length ? '▸' : '·';
+  row.appendChild(tw);
+
+  var label = document.createElement('span');
+  var keyHtml = typeof key === 'number' ? '<span class="c">[' + key + ']</span>'
+    : '<span class="k">' + esc(key) + '</span>';
+  var keyRes = typeof key === 'string' ? resolved(key) : '';
+  var tail = isContainer(value)
+    ? '<span class="c">' + esc(summary(value)) + '</span>'
+      + (masked(path) ? ' <span class="masked">values masked</span>' : '')
+    : valueHtml(value, path);
+  label.innerHTML = keyHtml + (keyRes ? ' <span class="res">— ' + esc(keyRes) + '</span>' : '')
+    + ' ' + tail;
+  row.appendChild(label);
+
+  var wrap = document.createElement('div');
+  wrap.appendChild(row);
+  var kids = document.createElement('div');
+  kids.className = 'kids';
+  kids.hidden = true;
+  kids.__rendered = 0;
+  kids.__byKey = {};
+  wrap.appendChild(kids);
+  row.__kids = kids;
+  row.__wrap = wrap;
+  row.__depth = depth;
+
+  tw.addEventListener('click', function (e) { e.stopPropagation(); toggle(row); });
+  row.addEventListener('click', function () { select(path); });
+  return row;
+}
+
+function renderMore(row) {
+  var kids = row.__kids, value = row.__value;
+  var keys = childKeys(value);
+  var from = kids.__rendered;
+  var to = Math.min(keys.length, from + CHUNK);
+  var moreRow = kids.querySelector(':scope > .more');
+  if (moreRow) moreRow.remove();
+  for (var i = from; i < to; i++) {
+    var k = keys[i];
+    var child = makeRow(k, Array.isArray(value) ? value[k] : value[k],
+      row.__path.concat([k]), row.__depth + 1);
+    kids.__byKey[String(k)] = child;
+    kids.appendChild(child.__wrap);
+  }
+  kids.__rendered = to;
+  if (to < keys.length) {
+    var more = document.createElement('div');
+    more.className = 'more';
+    more.textContent = '… ' + (keys.length - to) + ' more — show ' + Math.min(CHUNK, keys.length - to);
+    more.addEventListener('click', function (e) { e.stopPropagation(); renderMore(row); });
+    kids.appendChild(more);
+  }
+  return to > from;
+}
+
+function expand(row) {
+  if (!isContainer(row.__value) || !childKeys(row.__value).length) return;
+  if (!row.__kids.__rendered) renderMore(row);
+  row.__kids.hidden = false;
+  row.querySelector('.tw').textContent = '▾';
+}
+function collapse(row) {
+  row.__kids.hidden = true;
+  row.querySelector('.tw').textContent = '▸';
+}
+function toggle(row) { row.__kids.hidden ? expand(row) : collapse(row); }
+
+function drawTree() {
+  var host = el('tree');
+  host.innerHTML = '';
+  host.__byKey = {};
+  host.__rendered = 0;
+  var keys = Object.keys(doc);
+  for (var i = 0; i < keys.length; i++) {
+    var row = makeRow(keys[i], doc[keys[i]], [keys[i]], 0);
+    host.__byKey[keys[i]] = row;
+    host.appendChild(row.__wrap);
+  }
+  el('collapse').onclick = function () {
+    var rows = host.querySelectorAll('.row');
+    for (var j = 0; j < rows.length; j++) if (rows[j].__kids) collapse(rows[j]);
+  };
+  el('expandTop').onclick = function () {
+    Object.keys(host.__byKey).forEach(function (k) { expand(host.__byKey[k]); });
+  };
+}
+
+/* Open every ancestor of a path and hand back its row, pulling further chunks where the child
+   sits past the ones already drawn. This is what a search result clicks into. */
+function revealPath(path) {
+  var host = el('tree');
+  var row = null;
+  for (var i = 0; i < path.length; i++) {
+    var key = String(path[i]);
+    row = host.__byKey ? host.__byKey[key] : null;
+    while (!row) {
+      var parentRow = host.__owner;
+      if (!parentRow || !renderMore(parentRow)) return null;
+      row = host.__byKey[key];
+    }
+    if (i < path.length - 1) { expand(row); host = row.__kids; host.__owner = row; }
+  }
+  return row;
+}
+
+/* ═══════════════════════════════ selection & side pane ═══════════════════════════════ */
+function valueAt(path) {
+  var v = doc;
+  for (var i = 0; i < path.length; i++) {
+    if (v === null || typeof v !== 'object') return undefined;
+    v = v[path[i]];
+  }
+  return v;
+}
+
+/* A copy of a subtree with its masked leaves replaced, for the side pane to print.
+   IT ASKS masked() ABOUT EVERY LEAF BY ITS REAL PATH, and the first cut of this did not — it was a
+   JSON.stringify replacer matching on key NAMES, which is a different question wearing the same
+   answer. `supports` is masked because the path runs through it, so a replacer only ever saw the
+   key of the node ABOVE the secret: selecting `students[0].supports` printed `medical` in full,
+   while the tree beside it masked the same field correctly. Two readers, two answers, and the one
+   that was wrong was the one that prints a whole subtree at once. So there is one predicate now
+   and this walks the tree to feed it. */
+function maskedCopy(value, path) {
+  if (reveal) return value;
+  if (!isContainer(value)) return masked(path) ? '[masked]' : value;
+  if (Array.isArray(value)) {
+    return value.map(function (v, i) { return maskedCopy(v, path.concat([i])); });
+  }
+  var out = {};
+  Object.keys(value).forEach(function (k) { out[k] = maskedCopy(value[k], path.concat([k])); });
+  return out;
+}
+
+function select(path) {
+  selPath = path;
+  var rows = el('tree').querySelectorAll('.row');
+  for (var i = 0; i < rows.length; i++) {
+    rows[i].classList.toggle('sel', rows[i].dataset.path === pathText(path));
+  }
+  var v = valueAt(path);
+  var text;
+  try { text = JSON.stringify(maskedCopy(v, path), null, 2); } catch (e) { text = '(cannot stringify: ' + e.message + ')'; }
+  if (text === undefined) text = 'undefined';
+  var truncated = false;
+  if (text.length > 200000) { text = text.slice(0, 200000); truncated = true; }
+
+  var about = [];
+  about.push('<b>' + esc(kindOf(v)) + '</b>');
+  if (isContainer(v)) about.push(childKeys(v).length + ' ' + (Array.isArray(v) ? 'entries' : 'keys'));
+  var r = resolved(v) || (typeof path[path.length - 1] === 'string' ? resolved(path[path.length - 1]) : '');
+  if (r) about.push(esc(r));
+  if (masked(path)) about.push('<b>masked</b> — tick <i>Show sensitive fields</i> to read it');
+
+  el('side').innerHTML = ''
+    + '<h2>Selected</h2>'
+    + '<div class="path">' + esc(pathText(path)) + '</div>'
+    + '<div class="about">' + about.join(' · ') + '</div>'
+    + '<div class="acts">'
+    +   '<button class="btn plain small" id="cpPath">Copy path</button>'
+    +   '<button class="btn plain small" id="cpJson">Copy JSON</button>'
+    +   '<button class="btn plain small" id="findThis">Search for this value</button>'
+    + '</div>'
+    + (truncated ? '<div class="about">Showing the first 200,000 characters.</div>' : '')
+    + '<pre>' + esc(text) + '</pre>';
+  el('cpPath').onclick = function () { copy(pathText(path), this); };
+  el('cpJson').onclick = function () { copy(text, this); };
+  el('findThis').onclick = function () {
+    /* A masked leaf searches for its KEY, never its value — the search box is on screen and would
+       otherwise print the thing the mask is for. */
+    var needle = (isContainer(v) || masked(path)) ? String(path[path.length - 1]) : String(v);
+    el('q').value = needle; runSearch();
+  };
+}
+
+function showAbout() {
+  el('side').innerHTML = ''
+    + '<h2>Nothing selected</h2>'
+    + '<div class="about">Click a row to see it as raw JSON, with its full path.<br><br>'
+    + 'Click a <b>▸</b> to open a node. Long lists draw ' + CHUNK + ' at a time.<br><br>'
+    + 'Ids are annotated with the name they belong to wherever this document names one.<br><br>'
+    + 'This page reads. It never writes, never migrates, and never says whether what it found is '
+    + 'right.</div>';
+}
+
+function copy(text, btn) {
+  var done = function () {
+    var was = btn.textContent; btn.textContent = 'Copied';
+    setTimeout(function () { btn.textContent = was; }, 1200);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, function () { fallback(); });
+  } else fallback();
+  function fallback() {
+    var ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    ta.remove();
+  }
+}
+
+/* ═══════════════════════════════ search ═══════════════════════════════ */
+/* A plain case-insensitive substring over key names and primitive values. No regex, no ranking,
+   no interpretation — it answers "where does this string appear" and nothing else. */
+function search(needle) {
+  var out = [], stack = [{ v: doc, p: [] }], q = needle.toLowerCase();
+  while (stack.length && out.length < HITCAP) {
+    var node = stack.pop();
+    var v = node.v, p = node.p;
+    if (isContainer(v)) {
+      var keys = childKeys(v);
+      for (var i = keys.length - 1; i >= 0; i--) {
+        var k = keys[i], path = p.concat([k]), child = v[k];
+        var keyHit = typeof k === 'string' && k.toLowerCase().indexOf(q) >= 0;
+        if (isContainer(child)) {
+          if (keyHit) out.push({ path: path, key: k, value: summary(child), why: 'key' });
+          stack.push({ v: child, p: path });
+        } else {
+          var sv = child === null ? 'null' : String(child);
+          var valHit = sv.toLowerCase().indexOf(q) >= 0;
+          if (keyHit || valHit) {
+            out.push({ path: path, key: k, value: sv, why: keyHit && !valHit ? 'key' : 'value' });
+          }
+        }
+        if (out.length >= HITCAP) break;
+      }
+    }
+  }
+  return out;
+}
+
+function runSearch() {
+  var needle = el('q').value.trim();
+  if (!needle) { el('hits').textContent = ''; showAbout(); return; }
+  var hits = search(needle);
+  el('hits').textContent = hits.length + (hits.length >= HITCAP ? '+' : '') + ' match'
+    + (hits.length === 1 ? '' : 'es');
+  var html = '<h2>' + esc(needle) + ' — ' + hits.length + (hits.length >= HITCAP ? '+' : '')
+    + ' match' + (hits.length === 1 ? '' : 'es') + '</h2>';
+  if (!hits.length) {
+    el('side').innerHTML = html + '<div class="empty">Nothing in the document holds that text.</div>';
+    return;
+  }
+  html += '<ul class="results">';
+  for (var i = 0; i < hits.length; i++) {
+    var h = hits[i];
+    var shown = masked(h.path) ? '(masked)' : (h.value.length > 90 ? h.value.slice(0, 90) + '…' : h.value);
+    var r = resolved(h.value) || (typeof h.key === 'string' ? resolved(h.key) : '');
+    html += '<li data-i="' + i + '"><div class="rp">' + esc(pathText(h.path)) + '</div>'
+      + '<div class="rv">' + esc(shown) + (r ? ' — ' + esc(r) : '') + '</div></li>';
+  }
+  html += '</ul>';
+  el('side').innerHTML = html;
+  var lis = el('side').querySelectorAll('.results li');
+  for (var j = 0; j < lis.length; j++) {
+    lis[j].addEventListener('click', function () {
+      var hit = hits[Number(this.dataset.i)];
+      var row = revealPath(hit.path);
+      if (row) { row.scrollIntoView({ block: 'center' }); select(hit.path); }
+    });
+  }
+}
+
+/* ═══════════════════════════════ sources ═══════════════════════════════ */
+function readFile(file) {
+  if (!file) return;
+  var fr = new FileReader();
+  fr.onerror = function () { say('The browser could not read that file.', 'err'); };
+  fr.onload = function () { loadText(String(fr.result), file.name); };
+  fr.readAsText(file);
+}
+
+el('pick').addEventListener('click', function () { el('file').click(); });
+el('file').addEventListener('change', function () { readFile(this.files[0]); });
+
+var drop = el('drop');
+['dragenter', 'dragover'].forEach(function (t) {
+  drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.add('over'); });
+});
+['dragleave', 'drop'].forEach(function (t) {
+  drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.remove('over'); });
+});
+drop.addEventListener('drop', function (e) {
+  if (e.dataTransfer && e.dataTransfer.files) readFile(e.dataTransfer.files[0]);
+});
+/* A file dropped anywhere else on the page is a file the browser would otherwise NAVIGATE to,
+   which loses the page. Same handler, whole window. */
+window.addEventListener('dragover', function (e) { e.preventDefault(); });
+window.addEventListener('drop', function (e) {
+  e.preventDefault();
+  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
+});
+
+/* ── IndexedDB, readonly, and it leaves nothing behind ──────────────────────────────
+   The store is `years` in the database `planbook`, keyed by the year label, holding the document
+   itself (src/store.js). Opened WITHOUT a version on purpose: naming one can trigger an upgrade,
+   and an upgrade is a write. */
+function openDb() {
+  return new Promise(function (res, rej) {
+    var req;
+    try { req = indexedDB.open('planbook'); }
+    catch (e) { rej(new Error('this browser will not open IndexedDB here (' + e.message + ')')); return; }
+    req.onerror = function () { rej(new Error('IndexedDB refused to open')); };
+    req.onblocked = function () { rej(new Error('another tab is holding the database open')); };
+    req.onsuccess = function () { res(req.result); };
+  });
+}
+
+async function openLocal() {
+  say('');
+  if (!window.indexedDB) { say('This browser exposes no IndexedDB at all.', 'err'); return; }
+  var existed = null;
+  if (indexedDB.databases) {
+    try {
+      var list = await indexedDB.databases();
+      existed = list.some(function (d) { return d.name === 'planbook'; });
+    } catch (e) { existed = null; }
+  }
+  if (existed === false) {
+    say('No Planbook database at this origin (' + location.origin + '). IndexedDB is per-origin, so'
+      + ' this page has to be served from the app itself to read it — otherwise drop a backup file.', 'err');
+    return;
+  }
+  var db;
+  try { db = await openDb(); } catch (e) { say(e.message, 'err'); return; }
+  if (!db.objectStoreNames.contains('years')) {
+    db.close();
+    /* Nothing was here and open() just made an empty shell. Take it away again rather than
+       leaving a database behind for the app to find. */
+    if (existed === null) { try { indexedDB.deleteDatabase('planbook'); } catch (e) {} }
+    say('There is a database called planbook at this origin but it has no `years` store, so this is'
+      + ' not the app’s data.', 'err');
+    return;
+  }
+  var tx = db.transaction('years', 'readonly').objectStore('years');
+  var keys = await new Promise(function (res, rej) {
+    var r = tx.getAllKeys();
+    r.onsuccess = function () { res(r.result || []); };
+    r.onerror = function () { rej(new Error('could not list the years')); };
+  });
+  if (!keys.length) { db.close(); say('The store is there and holds no years yet.', 'err'); return; }
+
+  var sel = el('years');
+  sel.hidden = keys.length < 2;
+  sel.innerHTML = keys.map(function (k) { return '<option>' + esc(k) + '</option>'; }).join('');
+  sel.onchange = function () { readYear(db, sel.value); };
+  readYear(db, keys[keys.length - 1]);
+}
+
+function readYear(db, year) {
+  var store = db.transaction('years', 'readonly').objectStore('years');
+  var r = store.get(year);
+  r.onsuccess = function () {
+    if (!r.result) { say('No document stored under ' + year + '.', 'err'); return; }
+    var text = JSON.stringify(r.result);
+    load(r.result, 'this device — IndexedDB', new Blob([text]).size);
+  };
+  r.onerror = function () { say('Could not read ' + year + ' out of the store.', 'err'); };
+}
+
+el('local').addEventListener('click', function () { openLocal(); });
+
+/* ═══════════════════════════════ wiring ═══════════════════════════════ */
+var searchTimer = null;
+el('q').addEventListener('input', function () {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(runSearch, 180);
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key === '/' && document.activeElement !== el('q')) { e.preventDefault(); el('q').focus(); }
+  if (e.key === 'Escape' && document.activeElement === el('q')) { el('q').value = ''; runSearch(); el('q').blur(); }
+});
+</script>
