@@ -215,3 +215,55 @@ still complete; then press the new Clear and assert the field is empty and a liv
 in the panel. **A fix here does not need a 👤 line**, and a work order that books one is booking a
 wait it does not have to pay. What it *does* still want a thumb for is the iPadOS half the Clear
 exists to serve — clear, then tap the same day again — which is a reading and not a check.
+
+---
+
+## 2. A class reads "1 unconfirmed" while every student on the grid shows present
+
+**Not booked, and read the next sentence before assuming it is.**
+[WO-1.50](work-orders/phase-1-shell-store-roster.md#wo-150--a-document-you-can-read-is-not-a-document-anything-checks)
+is booked **off** this row and is not its fix: it is the tool that would *find* which of the
+document's shapes is behind it. **No work order fixes this yet, because nothing has been run against
+the document that produced it** — the row below is a report and one suspect, and the suspect is
+untested.
+
+**The report, verbatim:** *"the other day I had an 'uncommited' count of 1 on a class even though the
+display showed everyone marked as present."*
+
+**What that names.** The word on the screen is **unconfirmed**, not *uncommitted* — the temporary `U`
+code WO-2.10 added. The number comes from `stateSummary()` at
+[attendance.js:1557](../src/attendance.js#L1557), and it is drawn in two places that read the same
+figure: the day header's chip (`stateChip()`, [attendance.js:1616](../src/attendance.js#L1616)) and
+the class card on the home screen ([home.js:318](../src/home.js#L318)). The date and the class were
+not recorded at the time, and that is the first thing the reproduction is missing.
+
+**The suspect — a mark cell keyed by a student who is no longer on that class's roster.** Marked as
+a suspect, not a diagnosis; it is a reading of the code and nothing has been run.
+`countsFor()` at [attendance.js:1319](../src/attendance.js#L1319) walks `Object.keys(marks)` and
+counts **every key in the record**, roster or not. The grid renders **roster rows**, and
+`readingOf()` at [attendance.js:1343](../src/attendance.js#L1343) — the one answer to *what does this
+cell say* — is only ever asked about a student who has a row. So a cell keyed by a student off the
+roster is counted by the header and cannot be drawn, reached, or cleared from any screen: tapping
+every row present empties the roster's marks and leaves the count at 1.
+
+**How a document would come to hold one, still as a suspect.** The first tap on a class writes `U`
+for every student in it. Removing a student from a roster afterwards does not visit that class's
+`attendance[]` — which is the correct posture, since a past absence is not undone by a schedule
+change — so a student who was on the roster when the class was first taken and off it later leaves a
+counted, undrawable `U` behind. That makes a mid-term roster move the thing to ask the owner about
+first.
+
+**What would settle it, and it can be done today.** Open a backup in
+[`tools/data-viewer.html`](../tools/data-viewer.html), search the class's `attendance` record for
+that date, and compare the keys under `marks` against that class's `roster` — the viewer annotates
+both with student names, so this is a reading rather than an id hunt. **A key under `marks` that is
+absent from `roster` is this row confirmed.** If every key is on the roster, the suspect is wrong and
+should be struck rather than deleted, and the second candidate to read is a duplicate `attendance`
+record for the same class and date — `recordFor()` at
+[attendance.js:1167](../src/attendance.js#L1167) returns `[0]`, so a second record is unreachable —
+though note that shape produces the **opposite** symptom, marks that are never counted rather than a
+count with no marks.
+
+**Not urgent, and the reason is worth stating rather than assumed.** It miscounts a chip; it changes
+no grade, loses no data, and writes nothing. What it costs is trust in the one number the home screen
+exists to show — *did I forget anybody* — so it should not sit here indefinitely either.

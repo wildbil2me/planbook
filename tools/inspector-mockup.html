@@ -1,0 +1,619 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Planbook data inspector — mockup</title>
+<!--
+  MOCKUP of tools/inspector.html — a hand-run, read-only diagnostic for a year document.
+  Drawn 2026-09-06. Every number, id, name and finding on this page is INVENTED. Nothing here
+  reads a file, opens IndexedDB, or computes anything: the only script is the tab strip and the
+  sensitive-field toggle, because both are load-bearing to judging the layout.
+
+  WHY THIS DOES NOT FOLLOW design/mockups/PROTOCOL.md, said at the point of departure as
+  CLAUDE.md asks. That protocol governs an APP SCREEN drawn before it is built: two stylesheets,
+  `../../src/shell.css` linked and never copied, `mk-` chrome that stays behind, a row in
+  design/mockups/index.html, and tools/wo-sweep.mjs § 19 walking design/mockups/ to enforce it.
+  Three of those are wrong for this file.
+    - It is not an app screen and never will be. Nothing here is lifted into src/*.css, so the
+      protocol's load-bearing rule 5 — a pending section styles no class src/ already styles —
+      has no subject. This page's CSS IS the real file's CSS; it proposes nothing.
+    - It must be self-contained. Rule 2 requires linking src/shell.css, and a diagnostic that
+      needs the app's stylesheet to render cannot be opened from a Downloads folder over
+      file:// at 10pm to read a backup, which is one of the two ways in.
+    - Its kin is tools/audio-probe.html — a page, not a script, self-styled, gates nothing,
+      imported by nothing, not in sw.js SHELL.
+  What it DOES honour is the spirit: the palette is design/style-guide.md's real one, so the tool
+  looks like it belongs to the suite; every class is `ins-` prefixed, so it can never collide
+  with src/; and the black band at the top means a screenshot of this page can never pass for
+  the app.
+
+  THE SENSITIVE-FIELD DEFAULT IS A RULING, NOT A FLOURISH. CLAUDE.md § Accommodations rule 1
+  has no tools/ carve-out — "the default state of any list view is not showing it" — and a
+  screenshot of this page pasted into a bug report is a disclosure. So supports, medical,
+  behavior plans, guardian addresses and phone numbers are masked until a deliberate tap, and
+  the checks still run over them: a finding names a path and a count, never a value.
+-->
+<style>
+  * { box-sizing: border-box; }
+  body { font: 14px/1.5 -apple-system, system-ui, "Segoe UI", sans-serif; margin: 0;
+         background: #f0f2f5; color: #1a1a2e; }
+  code, .ins-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+  /* ── the band. A screenshot of this page must never pass for the app. ───────────── */
+  .ins-band { background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 60%, #2a2a6e 100%);
+              color: #fff; padding: 10px 16px; display: flex; align-items: baseline;
+              gap: 12px; flex-wrap: wrap; }
+  .ins-band h1 { font-size: 15px; margin: 0; font-weight: 700; letter-spacing: 0.2px; }
+  .ins-band .ins-tag { font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+              text-transform: uppercase; background: #e67e22; color: #fff;
+              padding: 2px 7px; border-radius: 3px; }
+  .ins-band .ins-note { font-size: 12px; color: rgba(255,255,255,0.55); margin-left: auto; }
+
+  /* ── source bar ─────────────────────────────────────────────────────────────────── */
+  .ins-source { background: #fff; border-bottom: 1px solid #e0e4f0; padding: 12px 16px; }
+  .ins-source-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .ins-drop { flex: 1 1 320px; min-height: 44px; border: 2px dashed #b0bcf0; border-radius: 8px;
+              background: #eef0fb; color: #5b6fcc; font-weight: 600; display: flex;
+              align-items: center; justify-content: center; gap: 8px; padding: 8px 12px; }
+  .ins-or { color: #a0aab8; font-size: 12px; font-weight: 700; letter-spacing: 0.6px; }
+  .ins-btn { min-height: 44px; padding: 0 14px; border: 1.5px solid #b0bcf0; border-radius: 8px;
+             background: #eef0fb; color: #5b6fcc; font: inherit; font-weight: 600; }
+  .ins-btn.ins-plain { border-color: #d0d8e4; background: #f8f9fc; color: #6b7a8d; }
+  .ins-hdr { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; font-size: 13px;
+             color: #6b7a8d; align-items: baseline; }
+  .ins-hdr b { color: #1a1a2e; font-weight: 600; }
+  .ins-hdr .ins-ok { color: #27ae60; font-weight: 600; }
+  .ins-hdr .ins-sep { color: #d0d8e4; }
+  .ins-stale { margin-top: 8px; font-size: 12px; color: #8a6d1a; background: #fff8e6;
+               border: 1px solid #f0dfa8; border-radius: 6px; padding: 6px 10px; }
+
+  /* ── tabs ───────────────────────────────────────────────────────────────────────── */
+  .ins-tabs { display: flex; gap: 2px; padding: 0 16px; background: #fff;
+              border-bottom: 1px solid #e0e4f0; overflow-x: auto; }
+  .ins-tab { min-height: 40px; padding: 0 14px; border: 0; background: none; font: inherit;
+             font-weight: 600; color: #6b7a8d; border-bottom: 3px solid transparent;
+             white-space: nowrap; }
+  .ins-tab.ins-on { color: #1a1a2e; border-bottom-color: #5b6fcc; }
+  .ins-tab .ins-count { display: inline-block; margin-left: 6px; font-size: 11px;
+             font-weight: 700; background: #fdeaea; color: #c0392b; border-radius: 9px;
+             padding: 1px 6px; }
+
+  /* ── layout ─────────────────────────────────────────────────────────────────────── */
+  .ins-body { padding: 16px; max-width: 1180px; }
+  .ins-panel { background: #fff; border: 1px solid #e0e4f0; border-radius: 10px;
+               padding: 14px 16px; margin-bottom: 14px; }
+  .ins-panel > h2 { font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+               text-transform: uppercase; color: #8a9bb0; margin: 0 0 10px; }
+  .ins-lede { color: #6b7a8d; margin: 0 0 12px; max-width: 78ch; }
+
+  /* ── scoreboard ─────────────────────────────────────────────────────────────────── */
+  .ins-score { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .ins-score div { flex: 1 1 120px; border-radius: 10px; padding: 10px 12px;
+                   border: 1px solid #e0e4f0; background: #f8f9fc; }
+  .ins-score b { display: block; font-size: 22px; line-height: 1.1; }
+  .ins-score span { font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
+                    text-transform: uppercase; color: #8a9bb0; }
+  .ins-score .ins-e { background: #fdeaea; border-color: #f0b0b0; }
+  .ins-score .ins-e b { color: #c0392b; }
+  .ins-score .ins-w { background: #fef5ea; border-color: #f5c98a; }
+  .ins-score .ins-w b { color: #c0700a; }
+  .ins-score .ins-n { background: #eef0fb; border-color: #b0bcf0; }
+  .ins-score .ins-n b { color: #5b6fcc; }
+  .ins-score .ins-g { background: #eafaf1; border-color: #a3e4bc; }
+  .ins-score .ins-g b { color: #27ae60; }
+
+  /* ── a finding ──────────────────────────────────────────────────────────────────── */
+  .ins-find { border: 1px solid #e0e4f0; border-left-width: 4px; border-radius: 8px;
+              padding: 12px 14px; margin-bottom: 12px; background: #fff; }
+  .ins-find.ins-e { border-left-color: #e74c3c; }
+  .ins-find.ins-w { border-left-color: #e67e22; }
+  .ins-find.ins-n { border-left-color: #5b6fcc; }
+  .ins-find h3 { font-size: 15px; margin: 0 0 2px; display: flex; gap: 8px;
+                 align-items: baseline; flex-wrap: wrap; }
+  .ins-chip { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase;
+              padding: 2px 7px; border-radius: 3px; }
+  .ins-chip.ins-e { background: #fdeaea; color: #c0392b; }
+  .ins-chip.ins-w { background: #fff3cd; color: #c0700a; }
+  .ins-chip.ins-n { background: #eef0fb; color: #5b6fcc; }
+  .ins-check-id { font-size: 11px; color: #a0aab8; font-weight: 600; }
+  .ins-find p { margin: 8px 0; max-width: 82ch; }
+  .ins-find .ins-mech { background: #f8f9fb; border: 1px solid #eef0f4; border-radius: 6px;
+              padding: 8px 10px; font-size: 13px; color: #52606d; max-width: 82ch; }
+  .ins-find .ins-mech b { color: #1a1a2e; }
+  .ins-acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .ins-acts button { min-height: 32px; padding: 0 10px; font: inherit; font-size: 12px;
+              font-weight: 600; border: 1px solid #d0d8e4; border-radius: 6px;
+              background: #f8f9fc; color: #52606d; }
+  .ins-acts button.ins-key { border-color: #b0bcf0; background: #eef0fb; color: #5b6fcc; }
+
+  /* ── tables ─────────────────────────────────────────────────────────────────────── */
+  table.ins-t { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0 2px; }
+  table.ins-t th { text-align: left; font-size: 10px; font-weight: 700; letter-spacing: 0.6px;
+              text-transform: uppercase; color: #8a9bb0; padding: 4px 8px 6px;
+              border-bottom: 1px solid #d0d8e4; white-space: nowrap; }
+  table.ins-t td { padding: 6px 8px; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+  table.ins-t td.ins-mono { font-size: 12px; color: #52606d; }
+  table.ins-t tr.ins-bad td { background: #fdeaea; }
+  table.ins-t tr.ins-bad td:first-child { box-shadow: inset 3px 0 0 #e74c3c; }
+  .ins-scroll { overflow-x: auto; }
+  .ins-delta { font-weight: 700; color: #c0392b; }
+  .ins-zero { color: #a0aab8; }
+
+  /* ── marks matrix ───────────────────────────────────────────────────────────────── */
+  table.ins-grid { border-collapse: collapse; font-size: 12px; }
+  table.ins-grid th, table.ins-grid td { border: 1px solid #eef0f4; padding: 4px 6px;
+              text-align: center; min-width: 34px; }
+  table.ins-grid th.ins-name { text-align: left; min-width: 150px; font-weight: 600;
+              font-size: 13px; color: #1a1a2e; }
+  table.ins-grid th.ins-day { font-size: 11px; color: #6b7a8d; font-weight: 600; }
+  .ins-m { display: inline-block; min-width: 20px; border-radius: 3px; font-weight: 700;
+           font-size: 11px; padding: 1px 4px; }
+  .ins-m-A { background: #fdeaea; color: #c0392b; }
+  .ins-m-T { background: #fef5ea; color: #c0700a; }
+  .ins-m-E { background: #eef0fb; color: #5b6fcc; }
+  .ins-m-D { background: #f3eaff; color: #7c3aed; }
+  .ins-m-U { background: #fff3cd; color: #8a6d1a; }
+  .ins-orphan { outline: 2px solid #e74c3c; outline-offset: -2px; background: #fdeaea; }
+  .ins-rule-row th { border: 0; padding-top: 14px; color: #c0392b; font-size: 11px;
+              letter-spacing: 0.6px; text-transform: uppercase; }
+
+  /* ── tree / browse ──────────────────────────────────────────────────────────────── */
+  .ins-crumb { font-size: 12px; color: #6b7a8d; margin-bottom: 8px; }
+  .ins-crumb code { color: #5b6fcc; }
+  .ins-search { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .ins-search input { flex: 1 1 260px; min-height: 40px; padding: 0 12px; font: inherit;
+              border: 1px solid #e0e4ea; border-radius: 8px; }
+  .ins-tree { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+              font-size: 12.5px; line-height: 1.7; overflow-x: auto; }
+  .ins-tree div { white-space: pre; }
+  .ins-tree .ins-k { color: #5b6fcc; }
+  .ins-tree .ins-v { color: #1a6b3a; }
+  .ins-tree .ins-c { color: #a0aab8; }
+  .ins-tree .ins-resolved { color: #6b7a8d; font-style: italic; font-family: inherit; }
+  .ins-tree .ins-hit { background: #fff3cd; }
+  .ins-mask { background: #e4e7eb; color: #8a9bb0; border-radius: 3px; padding: 0 6px;
+              font-style: normal; font-family: inherit; }
+
+  /* ── the limits box, and the footer ─────────────────────────────────────────────── */
+  .ins-limits { background: #f8f9fb; border: 1px solid #eef0f4; border-left: 4px solid #c9a83f;
+              border-radius: 8px; padding: 12px 14px; }
+  .ins-limits h3 { font-size: 13px; margin: 0 0 8px; }
+  .ins-limits ul { margin: 0; padding-left: 20px; color: #52606d; }
+  .ins-limits li { margin-bottom: 5px; max-width: 84ch; }
+  .ins-foot { padding: 10px 16px 28px; color: #8a9bb0; font-size: 12px; max-width: 1180px; }
+  .ins-foot b { color: #6b7a8d; }
+
+  .ins-toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6b7a8d;
+              margin-left: auto; }
+  [hidden] { display: none !important; }
+  @media (pointer: coarse) {
+    .ins-tab { min-height: 44px; }
+    .ins-acts button { min-height: 44px; padding: 0 14px; }
+  }
+</style>
+
+<div class="ins-band">
+  <h1>Planbook data inspector</h1>
+  <span class="ins-tag">mockup &middot; invented data</span>
+  <span class="ins-note">read-only &middot; nothing on this page leaves the device</span>
+</div>
+
+<div class="ins-source">
+  <div class="ins-source-row">
+    <div class="ins-drop">Drop a backup <code>.json</code> here</div>
+    <span class="ins-or">OR</span>
+    <button class="ins-btn ins-plain">Choose a file&hellip;</button>
+    <span class="ins-or">OR</span>
+    <button class="ins-btn">Read this device &mdash; 2026-2027 &#9662;</button>
+  </div>
+  <div class="ins-hdr">
+    <span><b>2026-2027</b> &middot; from this device's IndexedDB</span>
+    <span class="ins-sep">|</span>
+    <span>rev <b>412</b></span>
+    <span>saved <b>2026-09-05 4:12 PM</b></span>
+    <span>by <b>iPad (d_9f31&hellip;)</b></span>
+    <span>schema <b>3</b> <span class="ins-ok">&#10003; current</span></span>
+    <span>docId <b class="ins-mono">yr_2026_a41c</b></span>
+    <span><b>2.4 MB</b> &middot; 5 classes &middot; 118 students &middot; 61 assignments &middot; 1,204 attendance marks</span>
+    <label class="ins-toggle"><input type="checkbox" id="reveal"> Show sensitive fields</label>
+  </div>
+  <div class="ins-stale">Read at 4:19 PM, seven minutes after the last save. A document is written
+    <b>800&thinsp;ms after an edit</b>, not on the keystroke &mdash; if you are chasing something you just
+    typed, leave the app's screen first, then re-read.</div>
+</div>
+
+<div class="ins-tabs">
+  <button class="ins-tab ins-on" data-p="health">Health<span class="ins-count">3</span></button>
+  <button class="ins-tab" data-p="counts">Counts &amp; states</button>
+  <button class="ins-tab" data-p="att">Attendance</button>
+  <button class="ins-tab" data-p="grades">Grades</button>
+  <button class="ins-tab" data-p="browse">Browse</button>
+  <button class="ins-tab" data-p="compare">Compare</button>
+</div>
+
+<div class="ins-body">
+
+<!-- ══════════════════════════════ HEALTH ══════════════════════════════ -->
+<section id="p-health">
+  <div class="ins-score">
+    <div class="ins-e"><b>3</b><span>errors</span></div>
+    <div class="ins-w"><b>4</b><span>warnings</span></div>
+    <div class="ins-n"><b>2</b><span>notes</span></div>
+    <div class="ins-g"><b>29</b><span>checks clean</span></div>
+    <div><b>38</b><span>checks run</span></div>
+  </div>
+
+  <div class="ins-find ins-e">
+    <h3><span class="ins-chip ins-e">error</span> A mark for a student who is not on that class's roster
+      <span class="ins-check-id">check 1 &middot; 1 cell</span></h3>
+    <p><b>This is the &ldquo;1 unconfirmed with everyone present&rdquo; case.</b> The cell is counted and
+      never drawn, so the day header disagrees with the grid under it and no amount of tapping the grid
+      can clear it.</p>
+    <div class="ins-scroll"><table class="ins-t">
+      <tr><th>Class</th><th>Date</th><th>Path</th><th>Student</th><th>Code</th><th>On the roster?</th><th>In students[]?</th></tr>
+      <tr class="ins-bad"><td>Period 3 &mdash; Biology</td><td>2026-09-04</td>
+        <td class="ins-mono">attendance[214].marks.s_7f2c</td><td>Marcus Bell</td>
+        <td><span class="ins-m ins-m-U">U</span></td><td>no</td><td>yes &mdash; in Period 6</td></tr>
+    </table></div>
+    <p class="ins-mech"><b>The mechanism.</b> <code>countsFor()</code> at
+      <code>src/attendance.js:1319</code> walks <code>Object.keys(marks)</code> &mdash; every key in the
+      record, roster or not. The grid renders <b>roster rows</b>. So the header reads
+      <code>1 unconfirmed</code>, all 24 rows read present, and both are telling the truth about
+      different sets. <code>readingOf()</code> is never asked about <code>s_7f2c</code>, because there
+      is no row to ask for.</p>
+    <p class="ins-mech"><b>How it got there, offered as a suspect.</b> <code>s_7f2c</code> was on this
+      roster when the class was first taken on 2026-09-04 and was moved to Period 6 the next day.
+      Removing a student from a roster does not visit that class's <code>attendance[]</code>, which is
+      the correct posture for history &mdash; a past absence is not undone by a schedule change &mdash;
+      and is why an unconfirmed scaffolding mark can outlive the row it belonged to.</p>
+    <div class="ins-acts">
+      <button class="ins-key">Show in Attendance</button>
+      <button>Copy the 1 path</button>
+      <button>Copy as a known-bugs row</button>
+      <button>Copy a repair snippet</button>
+    </div>
+  </div>
+
+  <div class="ins-find ins-e">
+    <h3><span class="ins-chip ins-e">error</span> Two attendance records for the same class and date
+      <span class="ins-check-id">check 12 &middot; 1 pair</span></h3>
+    <p>The second record is <b>unreachable and undeletable from inside the app</b>. Everything in it
+      &mdash; three marks, one of them carrying a note &mdash; is invisible on every screen and still in
+      every backup.</p>
+    <div class="ins-scroll"><table class="ins-t">
+      <tr><th>Class</th><th>Date</th><th>Index</th><th>Holds</th><th>What the app sees</th></tr>
+      <tr><td>Period 5 &mdash; Physics</td><td>2026-09-03</td><td class="ins-mono">attendance[198]</td>
+        <td>18 marks, no exception</td><td>this one, as <b>taken</b></td></tr>
+      <tr class="ins-bad"><td>Period 5 &mdash; Physics</td><td>2026-09-03</td><td class="ins-mono">attendance[207]</td>
+        <td>3 marks (1 with a note)</td><td>nothing at all</td></tr>
+    </table></div>
+    <p class="ins-mech"><b>The mechanism.</b> <code>recordFor()</code> at
+      <code>src/attendance.js:1167</code> filters and returns <code>[0]</code>. One record per class per
+      date is an invariant nothing enforces on write, so a second one is silent by construction &mdash;
+      it cannot be seen, edited, or reached by <code>stateOf()</code>.</p>
+    <div class="ins-acts">
+      <button class="ins-key">Show both records</button>
+      <button>Diff the two marks blocks</button>
+      <button>Copy as a known-bugs row</button>
+    </div>
+  </div>
+
+  <div class="ins-find ins-e">
+    <h3><span class="ins-chip ins-e">error</span> A score cell that is a bare value
+      <span class="ins-check-id">check 13 &middot; 2 cells</span></h3>
+    <p>A cell is always an object, never a bare value &mdash; <code>docs/data-model.md</code> says
+      polymorphic cells are where grade bugs live. These two read as nothing at all to anything asking
+      for <code>.v</code>, so they are <b>ungraded</b> to the engine and <b>87</b> to a human reading the
+      JSON.</p>
+    <div class="ins-scroll"><table class="ins-t">
+      <tr><th>Path</th><th>Stored</th><th>Should be</th><th>Assignment</th><th>Student</th><th>Effect on the grade</th></tr>
+      <tr class="ins-bad"><td class="ins-mono">scores.a_4d19.s_2a80</td><td class="ins-mono">87</td>
+        <td class="ins-mono">{ "v": 87 }</td><td>Cell Quiz 1</td><td>Ana Ruiz</td><td>drops out of the math</td></tr>
+      <tr class="ins-bad"><td class="ins-mono">scores.a_4d19.s_51bb</td><td class="ins-mono">"92"</td>
+        <td class="ins-mono">{ "v": 92 }</td><td>Cell Quiz 1</td><td>Devon Park</td><td>drops out of the math</td></tr>
+    </table></div>
+    <div class="ins-acts"><button class="ins-key">Show in Grades</button><button>Copy the 2 paths</button>
+      <button>Copy a repair snippet</button></div>
+  </div>
+
+  <div class="ins-find ins-w">
+    <h3><span class="ins-chip ins-w">warning</span> A stored <code>P</code> mark
+      <span class="ins-check-id">check 15 &middot; 5 cells</span></h3>
+    <p>Present is the <b>absence</b> of a mark. A stored <code>P</code> is not in
+      <code>STORED_MARKS</code>, so <code>countsFor()</code> ignores it &mdash; it changes no total and
+      no screen. It is dead weight in every backup and a sign something wrote a cell the app's own
+      cycle never writes.</p>
+    <div class="ins-acts"><button>List the 5 paths</button><button>Copy a repair snippet</button></div>
+  </div>
+
+  <div class="ins-find ins-w">
+    <h3><span class="ins-chip ins-w">warning</span> A <code>U</code> carrying more than its code
+      <span class="ins-check-id">check 16 &middot; 1 cell</span></h3>
+    <p><code>attendance[186].marks.s_c204</code> is <code>{ "code": "U", "note": "check with
+      guidance" }</code>. A <code>U</code> means nobody has looked at this student yet and its whole
+      entry is deleted the moment somebody does &mdash; so <b>this note is scheduled to be destroyed by
+      the next tap on that row</b>, and no screen shows it in the meantime.</p>
+    <div class="ins-acts"><button class="ins-key">Show the cell</button><button>Copy the note text</button></div>
+  </div>
+
+  <div class="ins-find ins-w">
+    <h3><span class="ins-chip ins-w">warning</span> Category weights do not total 100
+      <span class="ins-check-id">check 21 &middot; 1 class</span></h3>
+    <p>Not an error and not refused &mdash; a class mid-setup is allowed to total anything. But it is the
+      answer to <b>&ldquo;why is there no grade on this screen&rdquo;</b>, which is the question this
+      check exists to answer in one look.</p>
+    <div class="ins-scroll"><table class="ins-t">
+      <tr><th>Class</th><th>Categories</th><th>Weights</th><th>Total</th><th>Grade shown</th></tr>
+      <tr><td>Period 2 &mdash; Chemistry</td><td>4</td>
+        <td class="ins-mono">Tests 40 &middot; Quizzes 25 &middot; Labs 20 &middot; Homework 10</td>
+        <td><span class="ins-delta">95</span></td><td>none, by design</td></tr>
+    </table></div>
+    <p class="ins-mech">Also flagged here: <b>Labs holds nothing but zero-point assignments</b>, so its
+      <code>possible</code> sums to 0 and its 20 points redistribute. That is legal and documented, and
+      it is the edge case that crashes a naive engine.</p>
+    <div class="ins-acts"><button class="ins-key">Show in Grades</button></div>
+  </div>
+
+  <div class="ins-find ins-w">
+    <h3><span class="ins-chip ins-w">warning</span> A letter band nothing can reach
+      <span class="ins-check-id">check 22 &middot; 1 band</span></h3>
+    <p>Document scale: <code>A</code> at <b>89.5</b> sits above <code>A&minus;</code> at <b>90</b>.
+      &ldquo;First band whose <code>min</code> it meets&rdquo; means <b>A&minus; can never be
+      awarded</b>. Nothing sorts the list, deliberately &mdash; so this stands until the teacher changes
+      it.</p>
+    <div class="ins-acts"><button>Show the scale</button><button>Copy as a known-bugs row</button></div>
+  </div>
+
+  <div class="ins-find ins-n">
+    <h3><span class="ins-chip ins-n">note</span> Dangling ids in <code>events[].classIds</code>
+      <span class="ins-check-id">check 9 &middot; 4 references</span></h3>
+    <p>Four events name <code>c_8e11</code>, a class that is not in <code>classes[]</code> &mdash;
+      deleted last June. They are school-wide-by-accident: an empty <code>classIds</code> means
+      school-wide, and a <code>classIds</code> holding only dead ids matches nothing at all, which is a
+      different thing that looks the same on the calendar.</p>
+    <div class="ins-acts"><button>List the 4 events</button></div>
+  </div>
+
+  <div class="ins-find ins-n">
+    <h3><span class="ins-chip ins-n">note</span> Keys stored empty where the rule says delete
+      <span class="ins-check-id">check 23 &middot; 11 keys</span></h3>
+    <p>Nine <code>note: ""</code> on mark cells and two on passes. Harmless, invisible, and a hint about
+      which writer stored them &mdash; the app's own path deletes the key rather than storing
+      <code>""</code>.</p>
+    <div class="ins-acts"><button>Group by writer</button></div>
+  </div>
+
+  <div class="ins-limits">
+    <h3>What these checks cannot see</h3>
+    <ul>
+      <li><b>A clean report means &ldquo;no unexcused occurrence&rdquo;, not &ldquo;the document is
+        right.&rdquo;</b> 38 checks are 38 questions somebody thought to ask. A wrong score that is
+        well-formed is invisible here and always will be.</li>
+      <li><b>There is no provenance in the document.</b> Nothing records which build, screen or gesture
+        wrote a cell, so every &ldquo;how it got there&rdquo; above is a reading of the shape, offered as
+        a suspect. Treat it the way <code>plans/known-bugs.md</code> treats one: write the reproduction,
+        not the diagnosis.</li>
+      <li><b>It cannot tell a deliberate empty from a lost value.</b> An empty <code>note</code>, a
+        cleared date and a <code>{ }</code> cell all read as absence &mdash; which is exactly the
+        ambiguity WO-1.48 exists to remove at the input.</li>
+      <li><b>It reads the document as stored and applies no migration.</b> A file below schema 3 is
+        reported as-is, because an anomaly you are chasing may be the thing the migration would repair on
+        the way in &mdash; and then you would be reading the repair.</li>
+      <li><b>It does not know what the screen was showing.</b> The Counts tab recomputes both readings
+        from the same document; it is evidence about the data, not about the render.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ COUNTS ══════════════════════════════ -->
+<section id="p-counts" hidden>
+  <div class="ins-panel">
+    <h2>Every count, computed both ways</h2>
+    <p class="ins-lede">The left figures are computed the way <code>countsFor()</code> does &mdash; over
+      the keys in <code>marks</code>. The right figures are computed the way the grid renders &mdash;
+      over the class roster, through <code>readingOf()</code>. <b>A row where they disagree is a screen
+      that cannot be made to agree with itself.</b> This is the panel that answers the bug in one look,
+      and it would be worth building with no other check beside it.</p>
+    <div class="ins-scroll"><table class="ins-t">
+      <tr><th>Class</th><th>Date</th><th>State</th><th>Roster</th><th>Mark keys</th>
+        <th>Header says</th><th>Grid adds up to</th><th>&Delta;</th><th>Extra keys</th></tr>
+      <tr><td>Period 1 &mdash; Biology</td><td>2026-09-04</td><td>taken</td><td>26</td><td>3</td>
+        <td>2 absent &middot; 1 tardy</td><td>2 absent &middot; 1 tardy</td><td class="ins-zero">&mdash;</td><td class="ins-zero">&mdash;</td></tr>
+      <tr class="ins-bad"><td>Period 3 &mdash; Biology</td><td>2026-09-04</td><td>taken</td><td>24</td><td>1</td>
+        <td><b>1 unconfirmed</b></td><td>all present</td><td class="ins-delta">+1 U</td>
+        <td class="ins-mono">s_7f2c</td></tr>
+      <tr><td>Period 3 &mdash; Biology</td><td>2026-09-05</td><td>taken</td><td>24</td><td>2</td>
+        <td>2 absent</td><td>2 absent</td><td class="ins-zero">&mdash;</td><td class="ins-zero">&mdash;</td></tr>
+      <tr><td>Period 5 &mdash; Physics</td><td>2026-09-03</td><td>taken</td><td>18</td><td>18</td>
+        <td>4 absent &middot; 2 tardy</td><td>4 absent &middot; 2 tardy</td><td class="ins-zero">&mdash;</td>
+        <td class="ins-mono">see check 12</td></tr>
+      <tr><td>Period 6 &mdash; Chemistry</td><td>2026-09-04</td><td>not taken</td><td>25</td><td>0</td>
+        <td>Not taken yet</td><td>25 unconfirmed</td><td class="ins-zero">&mdash;</td>
+        <td class="ins-zero">no record &mdash; correct</td></tr>
+    </table></div>
+    <p class="ins-mech">The last row is <b>not</b> a disagreement. No record at all means <i>not taken
+      yet</i>, and <code>readingOf()</code> answers <code>U</code> for every student precisely because
+      nobody has looked at the class &mdash; the header is right to lead with the state instead of a
+      count. A check that flagged it would cry wolf on every future date in the year.</p>
+  </div>
+
+  <div class="ins-panel">
+    <h2>Meetings per class, per term</h2>
+    <div class="ins-scroll"><table class="ins-t">
+      <tr><th>Class</th><th>Term</th><th>Taken</th><th>Dropped</th><th>Weekdays with no record</th>
+        <th>Covered by an event</th><th>Unexplained gaps</th></tr>
+      <tr><td>Period 1 &mdash; Biology</td><td>Quarter 1</td><td>4</td><td>0</td><td>1</td><td>1</td>
+        <td class="ins-zero">0</td></tr>
+      <tr><td>Period 3 &mdash; Biology</td><td>Quarter 1</td><td>4</td><td>1</td><td>0</td><td>0</td>
+        <td class="ins-zero">0</td></tr>
+      <tr><td>Period 5 &mdash; Physics</td><td>Quarter 1</td><td>3</td><td>0</td><td>2</td><td>1</td>
+        <td><span class="ins-delta">1</span> &mdash; 2026-09-02</td></tr>
+    </table></div>
+    <p class="ins-mech"><b>&ldquo;Unexplained gap&rdquo; is a question, never a fault.</b> There is no
+      schedule model, on purpose &mdash; a class met if it has a record. A weekday inside a term with no
+      record and no covering event is the <i>did I forget?</i> question this column exists to ask, and
+      the honest answer is often &ldquo;the rotation skipped it.&rdquo;</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ ATTENDANCE ══════════════════════════════ -->
+<section id="p-att" hidden>
+  <div class="ins-panel">
+    <h2>Period 3 &mdash; Biology &middot; Quarter 1</h2>
+    <p class="ins-lede">Stored cells only, exactly as they are on disk &mdash; a blank cell is a blank
+      cell, not an inferred present. <b>The red row is not on the roster</b>; it is drawn here, below a
+      rule, because this is the only screen in either program that can show it at all.</p>
+    <div class="ins-scroll"><table class="ins-grid">
+      <tr><th class="ins-name">Student</th><th class="ins-day">Sep 2</th><th class="ins-day">Sep 3</th>
+        <th class="ins-day">Sep 4</th><th class="ins-day">Sep 5</th><th class="ins-day">Sep 8</th></tr>
+      <tr><th class="ins-name">Bell, Adrian</th><td></td><td><span class="ins-m ins-m-A">A</span></td><td></td><td></td><td></td></tr>
+      <tr><th class="ins-name">Chen, Wei</th><td></td><td></td><td></td><td><span class="ins-m ins-m-T">T</span></td><td></td></tr>
+      <tr><th class="ins-name">Okafor, Nia</th><td></td><td></td><td></td><td><span class="ins-m ins-m-A">A</span></td><td><span class="ins-m ins-m-E">E</span></td></tr>
+      <tr><th class="ins-name">Ruiz, Ana</th><td></td><td><span class="ins-m ins-m-D">D</span></td><td></td><td></td><td></td></tr>
+      <tr class="ins-rule-row"><th class="ins-name" colspan="6">Not on this roster &mdash; counted, never drawn in the app</th></tr>
+      <tr><th class="ins-name" style="color:#c0392b;">Bell, Marcus <span class="ins-resolved" style="color:#8a9bb0;">&middot; Period 6</span></th>
+        <td></td><td></td><td class="ins-orphan"><span class="ins-m ins-m-U">U</span></td><td></td><td></td></tr>
+    </table></div>
+  </div>
+  <div class="ins-panel">
+    <h2>The selected cell, raw</h2>
+    <div class="ins-crumb">Path <code>attendance[214].marks.s_7f2c</code> &middot; Period 3 &mdash;
+      Biology &middot; 2026-09-04</div>
+    <div class="ins-tree">
+<div><span class="ins-c">{</span></div>
+<div>  <span class="ins-k">"code"</span>: <span class="ins-v">"U"</span>   <span class="ins-c">// unconfirmed &mdash; scaffolding, never a finished record</span></div>
+<div><span class="ins-c">}</span></div>
+    </div>
+    <div class="ins-acts">
+      <button class="ins-key">Copy path</button><button>Copy cell</button>
+      <button>Copy the whole record</button><button>Where else does s_7f2c appear? (14)</button>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ GRADES ══════════════════════════════ -->
+<section id="p-grades" hidden>
+  <div class="ins-panel">
+    <h2>Period 1 &mdash; Biology &middot; Quarter 1 &middot; recomputed here</h2>
+    <p class="ins-lede">Recomputed from the cells, category by category, with empty categories' weights
+      redistributed. The point is not to second-guess the engine &mdash; it is to make a disagreement
+      with the SIS traceable to a cell in two clicks.</p>
+    <div class="ins-scroll"><table class="ins-t">
+      <tr><th>Student</th><th>Tests 40</th><th>Quizzes 25</th><th>Labs 20</th><th>Homework 15</th>
+        <th>Weighted</th><th>Letter</th><th>Cells that changed the answer</th></tr>
+      <tr><td>Ruiz, Ana</td><td>88.0</td><td class="ins-delta">&mdash;</td><td>95.0</td><td>100.0</td>
+        <td>91.7</td><td>A&minus;</td><td class="ins-mono">scores.a_4d19.s_2a80 is a bare 87</td></tr>
+      <tr><td>Chen, Wei</td><td>91.0</td><td>84.0</td><td>90.0</td><td>93.3</td><td>89.9</td><td>B+</td>
+        <td class="ins-zero">&mdash;</td></tr>
+      <tr><td>Okafor, Nia</td><td>76.0</td><td>81.0</td><td>88.0</td><td>60.0</td><td>77.4</td><td>C+</td>
+        <td class="ins-mono">2 missing &middot; 1 excused</td></tr>
+    </table></div>
+    <p class="ins-mech"><b>Ana's Quizzes category has no percentage at all</b>, because her only quiz cell
+      is the bare <code>87</code> from check 13 &mdash; invisible to the math. Her 25 points redistribute,
+      which is why she reads 91.7 rather than the ~91.0 the same cells would give if that one were an
+      object. <b>A silently better grade is still a wrong one</b>, and this is the shape of disagreement
+      the SIS re-key will surface first.</p>
+  </div>
+  <div class="ins-panel">
+    <h2>Period 2 &mdash; Chemistry</h2>
+    <p class="ins-lede"><b>No grade, and that is correct.</b> The weights come to 95, so there is no
+      number &mdash; not a provisional one, not a labelled one. This panel says so in the app's own words
+      rather than dividing by 95 and printing something.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ BROWSE ══════════════════════════════ -->
+<section id="p-browse" hidden>
+  <div class="ins-panel">
+    <h2>Browse the document</h2>
+    <div class="ins-search">
+      <input value="s_7f2c" aria-label="Search keys and values">
+      <button class="ins-btn ins-plain">Regex</button>
+      <button class="ins-btn ins-plain">Values only</button>
+      <button class="ins-btn">Find (14)</button>
+    </div>
+    <div class="ins-crumb">Path <code>attendance[214]</code> &middot; 3 keys &middot; 1 mark cell
+      &middot; <b>the record check 1 is about</b></div>
+    <div class="ins-tree">
+<div><span class="ins-k">classes</span> <span class="ins-c">[5]</span></div>
+<div>  <span class="ins-k">[1]</span> <span class="ins-c">{</span> <span class="ins-k">id</span>: <span class="ins-v">"c_3bio"</span> <span class="ins-resolved">&mdash; Period 3 &mdash; Biology</span> <span class="ins-c">}</span></div>
+<div>    <span class="ins-k">terms</span> <span class="ins-c">[2]</span> &middot; <span class="ins-k">categories</span> <span class="ins-c">[4]</span> &middot; <span class="ins-k">roster</span> <span class="ins-c">[24]</span></div>
+<div><span class="ins-k">students</span> <span class="ins-c">[118]</span></div>
+<div>  <span class="ins-k">[41]</span> <span class="ins-c">{</span> <span class="ins-k">id</span>: <span class="ins-v ins-hit">"s_7f2c"</span> <span class="ins-resolved">&mdash; Bell, Marcus</span></div>
+<div>       <span class="ins-k">email</span>, <span class="ins-k">phone</span>, <span class="ins-k">guardians</span> <span class="ins-c">[2]</span> <span class="ins-mask">masked</span></div>
+<div>       <span class="ins-k">supports</span> <span class="ins-c">{ plan, caseManager, reviewDate, accommodations[2], medical, behaviorPlan, attendanceClause }</span> <span class="ins-mask">masked &mdash; 7 keys present</span></div>
+<div><span class="ins-k">attendance</span> <span class="ins-c">[247]</span></div>
+<div>  <span class="ins-k">[214]</span> <span class="ins-c">{</span> <span class="ins-k">classId</span>: <span class="ins-v">"c_3bio"</span> <span class="ins-resolved">&mdash; Period 3</span> &middot; <span class="ins-k">date</span>: <span class="ins-v">"2026-09-04"</span> <span class="ins-c">}</span></div>
+<div>       <span class="ins-k">marks</span> <span class="ins-c">{1}</span></div>
+<div>         <span class="ins-k ins-hit">s_7f2c</span> <span class="ins-resolved">&mdash; Bell, Marcus</span>: <span class="ins-c">{</span> <span class="ins-k">code</span>: <span class="ins-v">"U"</span> <span class="ins-c">}</span>  <span class="ins-c">&#9888; not in c_3bio.roster</span></div>
+<div><span class="ins-k">scores</span> <span class="ins-c">{61 assignments &middot; 1,043 cells}</span></div>
+<div><span class="ins-k">log</span> <span class="ins-c">[38]</span> &middot; <span class="ins-k">openPasses</span> <span class="ins-c">[0]</span> &middot; <span class="ins-k">passes</span> <span class="ins-c">[52]</span> &middot; <span class="ins-k">events</span> <span class="ins-c">[19]</span> &middot; <span class="ins-k">templates</span> <span class="ins-c">[6]</span></div>
+<div><span class="ins-k">signals</span> <span class="ins-c">{2 keys &mdash; the rest are defaults, absent by design}</span></div>
+<div><span class="ins-k">calendar</span> <span class="ins-c">&mdash; absent. leadDaysOf() defaults; not an error</span></div>
+    </div>
+    <p class="ins-mech"><b>Ids are resolved inline, and that is the whole difference from a generic JSON
+      viewer.</b> Every id in this document is opaque on purpose, so a raw tree makes you hold
+      <code>s_7f2c</code> in your head across four collections. <b>An absent key is annotated rather than
+      missing</b> &mdash; <code>calendar</code> and the unset thresholds are absent <i>by rule</i>, and a
+      tool that drew them as gaps would teach you to fill them in.</p>
+    <div class="ins-acts">
+      <button class="ins-key">Copy path</button><button>Copy subtree</button>
+      <button>Collapse all</button><button>Only keys with findings</button>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ COMPARE ══════════════════════════════ -->
+<section id="p-compare" hidden>
+  <div class="ins-panel">
+    <h2>Compare two documents <span style="color:#c0700a;">&middot; stretch, not v1</span></h2>
+    <p class="ins-lede">Two backups, or a backup against this device. Sync is whole-document
+      last-writer-wins, so &ldquo;what did the iPad overwrite?&rdquo; is a question with no answer
+      anywhere today &mdash; and it is the question WO-7.2's keep-both conflict will be debugged with.</p>
+    <div class="ins-scroll"><table class="ins-t">
+      <tr><th>&nbsp;</th><th>A &mdash; backup 2026-09-04</th><th>B &mdash; this device</th><th>&Delta;</th></tr>
+      <tr><td>rev</td><td>398</td><td>412</td><td>+14 saves</td></tr>
+      <tr><td>deviceId</td><td class="ins-mono">d_1188 (laptop)</td><td class="ins-mono">d_9f31 (iPad)</td>
+        <td class="ins-delta">a different device wrote last</td></tr>
+      <tr><td>attendance</td><td>241 records</td><td>247 records</td><td>+6 &middot; 0 removed &middot; 3 changed</td></tr>
+      <tr><td>scores</td><td>1,031 cells</td><td>1,043 cells</td><td>+12 &middot; <span class="ins-delta">1 removed</span> &middot; 4 changed</td></tr>
+      <tr><td>students</td><td>118</td><td>118</td><td>1 changed &mdash; <span class="ins-mono">s_7f2c</span> roster move</td></tr>
+      <tr><td>log</td><td>38</td><td>38</td><td class="ins-zero">&mdash; append-only, and it held</td></tr>
+    </table></div>
+    <p class="ins-mech"><b>A removed score cell is the row to read first.</b> Nothing in the app deletes
+      one in the ordinary course, and <code>log[]</code> shrinking would be worse still &mdash; it is
+      append-only, so a smaller array is a restore, a clobber or a bug, and never a teacher.</p>
+  </div>
+</section>
+
+</div>
+
+<div class="ins-foot">
+  <b>tools/inspector-mockup.html</b> &mdash; drawn 2026-09-06. Read-only by construction: it opens
+  IndexedDB and never calls <code>put</code>, it fetches nothing, loads no CDN, and has no network code
+  of any kind, so a backup dropped on it cannot leave the machine. Not in <code>sw.js</code>
+  <code>SHELL</code>, imported by nothing, gates nothing. Served from the app's own origin it can read
+  the app's own database; opened over <code>file://</code> it can only read a file you drop on it.
+</div>
+
+<script>
+/* The whole of the script: the tab strip, and the sensitive-field toggle. Both are load-bearing to
+   judging the layout — a mockup whose panels cannot be clicked through is five screenshots. */
+var panels = ['health', 'counts', 'att', 'grades', 'browse', 'compare'];
+document.querySelectorAll('.ins-mask').forEach(function (el) { el.dataset.off = el.textContent; });
+document.querySelectorAll('.ins-tab').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.ins-tab').forEach(function (b) { b.classList.remove('ins-on'); });
+    btn.classList.add('ins-on');
+    panels.forEach(function (p) {
+      document.getElementById('p-' + p).hidden = (p !== btn.dataset.p);
+    });
+  });
+});
+document.getElementById('reveal').addEventListener('change', function (e) {
+  document.querySelectorAll('.ins-mask').forEach(function (el) {
+    el.textContent = e.target.checked
+      ? 'revealed — no real values in a mockup'
+      : el.dataset.off;
+  });
+});
+</script>

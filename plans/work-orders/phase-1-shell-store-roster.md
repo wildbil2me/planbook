@@ -4510,3 +4510,107 @@ row moves words, or words plus one check. It moves no behaviour.
 - [ ] `node tools/verify-shell.mjs` is green, `node tools/wo-sweep.mjs` is green, and
       `node tools/wo-gate.mjs --audit` is green on a clean tree — with `tools/README.md`'s check
       count moved to match if answer 2 added one.
+
+---
+
+## WO-1.50 — a document you can read is not a document anything checks
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** nothing · **Blocks** nothing
+*(`tools/data-viewer.html` already exists and this builds on it — that is a starting point rather than
+a dependency, and it is stated here instead of in the field so the gate reads clean.)*
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.49 made.
+Booked 2026-09-06, owner-directed, out of the sitting that built the viewer.* **Lower priority than
+every row above it, in the owner's own framing** *— it sits at the foot of § After Ship 3 for that
+reason and for no other, and* **position is not a fence** *(§ Ride-along rows, and row 36's scar), so
+a reader who finds it leading the table should re-place it rather than take the position as
+permission.)*
+
+**Why it exists.** [`plans/known-bugs.md`](../known-bugs.md) § 2: a class read *1 unconfirmed* on the
+day header while every student on the grid showed present. `tools/data-viewer.html`, built the same
+day, makes that **readable** — a person can open the record, compare the keys under `marks` against
+the class's `roster`, and see it, with both ends annotated by name. What it cannot do is make it
+**noticed.** Nobody opens a viewer about a class that looks fine, and this disagreement sat on screen
+across more than one day before anybody asked the document about it. **The viewer answers a question;
+this row asks one.**
+
+**What it is.** [`tools/inspector-mockup.html`](../../tools/inspector-mockup.html) is the drawing,
+made 2026-09-06 and parked the same day — a checking panel over the same document the viewer already
+loads, with findings in four families: **referential** (an id pointing at nothing, a mark or score
+keyed outside the roster, a duplicate `attendance` record for one class and date), **shape** (a cell
+that is a bare value rather than an object, a code outside the vocabulary, a `U` carrying more than
+its code), **semantic** (weights that do not total 100, a letter band nothing can reach, a term whose
+edges cross) and **consistency** (a count computed both the way `countsFor()` computes it and the way
+the grid renders it). Read the drawing for the surface. What belongs *here* are the rulings, because a
+picture makes none of them — and this row's whole risk is in them rather than in the checks.
+
+**Traps**
+
+- **A check that re-derives the app's arithmetic is a second truth, and this is the central hazard of
+  the row.** The tool cannot call `countsFor()`: `src/attendance.js` reads the open document out of
+  `src/store.js`, so its functions are not pure over a document handed to them, and over `file://`
+  importing them at all drags IndexedDB into a page that must work without it. So a check either
+  re-derives or does not exist — and **a re-derived count that drifts from the app's puts the defect
+  in the tool while wearing a report's clothes**, which is worse than no check, because a green panel
+  is then evidence. **Prefer the checks that need no app arithmetic at all**: comparing mark keys
+  against roster ids, or two `attendance` rows against each other, is a comparison of two things
+  *inside the document* and cannot drift however `src/` changes. A weighted-grade recomputation can
+  only ever be a second implementation of `src/grade-engine.js`. Where the second shape is genuinely
+  wanted, **name the source line the check mirrors, at the check**, and say what that means where a
+  reader of a green report will meet it.
+- **One loader, one masking predicate, one id map — and the masking one has already failed once.**
+  On 2026-09-06 the viewer's tree masked `supports.medical` correctly while its own side pane printed
+  it in full, because the two asked different questions: the tree asked a path predicate and the pane
+  matched key names. **A checking panel is a third reader, and it brings three more escapes** — a
+  finding body, a path list, and a report copied to the clipboard. The copied report is the worst of
+  them, because it is the one that ends up in a file somebody commits. Share the predicate; do not
+  re-ask the question. A finding names **a path and a count**, never a value.
+- **Severity is a reading, not a verdict.** `wo-sweep.mjs` § 21's posture and the drawing's own limits
+  box: green means *no unexcused occurrence*, not *the document is right*. Several of the mockup's
+  amber rows are states a teacher has every right to hold — weights that do not total 100 is the
+  clearest, and it is documented app behaviour rather than a fault. **An "error" here is the tool's
+  opinion.** Say so on the panel, not only in a comment.
+- **No repair button, and the reason is not that writing is hard.** The first write this tool ever
+  makes will be to the file holding a live term's grades, and it will be made **from a suspect**. A
+  snippet the reader copies keeps the keystroke a person's. Editing is *down the road* — the owner's
+  own words, 2026-09-06.
+- **It is not a harness and must not become one.** A page, run by hand, gating nothing — the line
+  `plans/verification-tooling.md` draws between the two existing tools. If a check here turns out to
+  be worth running on every dispatch, it belongs in `wo-sweep.mjs`, and moving it there is a different
+  row with a different argument.
+- **The drawing's 38 checks are a picture's number.** Two of them answer a report that actually
+  exists — § 2's off-roster mark, and the both-ways count that shows it — and the rest are candidates
+  nobody has needed yet. **Build the ones with a report behind them and leave the table short**, or
+  this row spends its afternoon filling in a mockup's arithmetic.
+- **Decide whether it is reachable from the deployed origin, and write the decision down.** The viewer
+  faces this already: `/tools/…` is public on Pages and holds no data, and reading the teaching iPad
+  without a file round-trip needs exactly that. It is not obviously the same answer for a page that
+  prints findings.
+
+**Acceptance**
+- [ ] The checking surface and the viewer share **one** loader, **one** masking predicate and **one**
+      id map — one page or one module — with which was chosen and why written at the line.
+- [ ] The off-roster-mark check and the both-ways count check each find `plans/known-bugs.md` § 2's
+      shape, driven against a document that carries it **and** one that does not, so neither is
+      vacuous.
+- [ ] Every check names the source line whose behaviour it mirrors, and a check that re-derives app
+      arithmetic says so where a reader of a green report will meet it — not only in a comment.
+- [ ] No write path anywhere in the file: no `put`, no `readwrite` transaction, no repair button. A
+      repair is a snippet the reader copies.
+- [ ] **No masked value reaches a finding body, a path list, or the copied report** — driven with
+      masking on, against a fixture carrying a distinctive string in `supports.medical`, over all
+      four surfaces including the clipboard text.
+- [ ] The report copies out as Markdown shaped for a `plans/known-bugs.md` row: the reproduction, the
+      paths and the counts, and no diagnosis.
+- [ ] `node tools/wo-sweep.mjs` is green and `node tools/wo-gate.mjs --audit` is green on a clean
+      tree, with `tools/README.md`'s row for the mockup replaced by one for the built tool.
+
+**Not in scope**
+
+- **Editing the document.** Named above; it is a later row and it wants a forced backup before its
+  first write.
+- **The Compare panel** — two documents, their `rev`, `deviceId` and per-collection differences. It is
+  in the drawing and it is a different job with a different reason: sync is whole-document
+  last-writer-wins, so *what did the iPad overwrite* has no answer anywhere today, and the row that
+  wants it is [WO-7.2](phase-7-sync.md#wo-72--document-transfer--conflicts) rather than this one.
+- **Zip archives and Drive.** `downloadAllBackups()` writes a zip and this reads one JSON file; a
+  reader for the archive is worth having and is not this.
