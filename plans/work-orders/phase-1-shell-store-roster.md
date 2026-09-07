@@ -4478,7 +4478,7 @@ because it never replaces the element.
 
 ## WO-1.49 — a comment counts three document-level listeners and there are twelve
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-09-06 · **Size** S · **Depends on** nothing · **Blocks** nothing
 **Closes roadmap** Phase 1 → *(no box. A comment repair in a delivered file — the same call WO-1.26
 through WO-1.48 made. Booked 2026-09-06, owner-directed, on WO-1.47's implementer's own proposal:
 it found the defect mid-correction-round, declined to fix it there, and said in as many words that
@@ -4562,15 +4562,25 @@ row moves words, or words plus one check. It moves no behaviour.
   round used, and the reason its re-tick was accepted.
 
 **Acceptance**
-- [ ] `src/shell.js`'s delegation preamble no longer states a count that disagrees with the file —
+- [x] `src/shell.js`'s delegation preamble no longer states a count that disagrees with the file —
       by answer 1 or by answer 2, with **which answer was taken and why written at the line**.
-- [ ] If answer 2: the count is asserted by `wo-sweep.mjs` against the file at runtime, never by a
-      second hand-typed number, and the check is proved against the pre-repair comment.
-- [ ] If answer 1: no count remains in the paragraph, and the holding parenthetical WO-1.47 added is
+- [x] If answer 1: no count remains in the paragraph, and the holding parenthetical WO-1.47 added is
       removed rather than left standing beside its own resolution.
-- [ ] `node tools/verify-shell.mjs` is green, `node tools/wo-sweep.mjs` is green, and
+- [x] `node tools/verify-shell.mjs` is green, `node tools/wo-sweep.mjs` is green, and
       `node tools/wo-gate.mjs --audit` is green on a clean tree — with `tools/README.md`'s check
       count moved to match if answer 2 added one.
+
+*(The answer-**2** Acceptance line — "If answer 2: the count is asserted by `wo-sweep.mjs` against
+the file at runtime, never by a second hand-typed number, and the check is proved against the
+pre-repair comment" — **is not applicable and has been rewritten out of the checklist deliberately**,
+on WO-1.19's precedent 3,200 lines above in this file. Answer 1 was taken, so the line could never
+become true; left standing as a checkbox it would have held this row at 🔨 IN PROGRESS forever, since
+`wo-gate.mjs --tick` reads any `- [ ]` as unfinished and has no vocabulary for a line that is moot
+rather than open. Recorded here rather than deleted, because **the fence it describes is the repair
+this row considered and refused** — argued at its own line in `src/shell.js` against `wo-sweep.mjs`
+§ 22's test, with the conditions for re-opening it written there. Rewritten by the owner 2026-09-06
+on the verifier's finding, and not by the verifier: an agent that could edit an Acceptance line could
+reword a test it had just failed.)*
 
 ---
 

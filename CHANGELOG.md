@@ -13,6 +13,41 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A comment that counted the listeners under it stops counting — 2026-09-06
+
+**`src/shell.js` opens with a paragraph introducing the app's event delegation, and it counted the
+document-level listeners below it.** The figure said three. There were twelve the day the row was
+booked and eleven the day it was built. It had not moved while `beforeinput`, `change`, `focusin`
+and the drag listeners arrived underneath it, and nothing in the repository noticed any of them —
+the same shape WO-1.40, WO-1.42 and WO-1.45 each found somewhere else: a hand-typed number in prose
+that nothing reads.
+
+**The count is gone rather than corrected.** The row offered two repairs and this is the first of
+them. The paragraph now names the three listeners it is actually about — `submit`, `input` and
+`keydown` — and states no figure of any kind, so there is nothing left in it to drift. The census
+moved to one command, `grep -n '^document.addEventListener' src/shell.js`, which cannot go stale.
+
+**The second repair was refused on the sweep's own test.** Writing the true figure and fencing it at
+runtime is what `wo-sweep.mjs` § 22 does for this repository's check count, and § 22 earns its keep
+because the number it guards is load-bearing for a recovery procedure other documents send a reader
+to. Nothing anywhere acts on this one — the names carry everything a reader of the paragraph needs
+and the figure carried only the risk. A fence would also have had to rule, in as many words, on
+whether `DOMContentLoaded` counts, since it is a boot hook and not a gesture, or fail on its first
+honest disagreement and teach its next reader to disbelieve it. The conditions for re-opening that
+choice are written at the line.
+
+**The dates are the evidence.** The row was booked against a census taken on the afternoon of
+2026-09-06, and WO-1.48 landed that same evening, took the `focusout` listener back out and moved
+the figure before the repair was written. A number typed here on the day it was booked would already
+have been wrong on the day it was built.
+
+**The replacement command was wrong on its first draft, in this row's own way.** Unanchored,
+`grep -n document.addEventListener src/shell.js` matches the sentence advertising it and returns
+twelve — one more than the file holds, and the exact wrong figure this row is named after, arriving
+by a second route inside the command written to replace it. Verification caught it. The pattern is
+anchored to column 0 now, every real listener is there, and the anchor says so at the line so nobody
+tidies it away.
+
 ### Every date field has a Clear — 2026-09-06
 
 Assignment dates, term dates, the plan review date, the days-off range and the three dates on the

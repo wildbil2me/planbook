@@ -595,15 +595,37 @@
     the first case of it: src/year-picker.js builds them fresh every time the modal opens and
     binds nothing.
 
-    NOT EVERYTHING ON THIS SCREEN IS A CLICK. Three other document-level listeners live further
-    down, and each one is there because the thing it carries has no control to hang a hook on:
-    `submit` (forms), `input` (fields saved as they are typed), and since WO-2.5 `keydown` — the
-    registry's marking keys, which are the path a live class is marked on now that the laptop is
-    the device of record. That last one is the only listener in this file that reads
+    NOT EVERYTHING ON THIS SCREEN IS A CLICK. Other document-level listeners live further down, and
+    the ones named here are named because the thing each of them carries has no control to hang a
+    hook on: `submit` (forms), `input` (fields saved as they are typed), and since WO-2.5 `keydown`
+    — the registry's marking keys, which are the path a live class is marked on now that the laptop
+    is the device of record. That last one is the only listener in this file that reads
     document.activeElement to decide whether the event is for it, and its five guards are argued
-    where it sits. (There are more document-level listeners further down than that sentence counts
-    — it names the ones that were there to name. The census is the listeners themselves; this
-    paragraph is not one and is deliberately not being turned into one here.)
+    where it sits.
+
+    THIS PARAGRAPH NAMES LISTENERS AND HOLDS NO COUNT OF THEM, WHICH IS WO-1.49's RULING AND NOT AN
+    OMISSION. It used to open by counting them, and the figure did not move while `beforeinput`,
+    `change`, `focusin` and the drag listeners arrived underneath it — nothing in the repository
+    noticed any of them, which is the WO-1.40 / WO-1.42 / WO-1.45 shape a fourth time: a hand-typed
+    number in prose that nothing reads. The row offered two repairs, and this is the first of them.
+    The second was to write the true figure and fence it at runtime the way tools/wo-sweep.mjs § 22
+    fences this repository's sweep-check count, and IT WAS REFUSED ON § 22's OWN TEST: that section
+    earns its keep because the figure it guards is load-bearing for a recovery procedure other
+    documents send a reader to, and nothing anywhere acts on this one. The names carry everything a
+    reader of this paragraph needs; the figure carried only the risk. A fence would also have had to
+    rule on whether `DOMContentLoaded` counts — it is a boot hook and not a gesture — in as many
+    words on both sides, or it fails on its first honest disagreement and teaches its next reader to
+    disbelieve it; and that ruling is precisely the census WO-1.47's correction round declined to
+    turn this paragraph into. THE DATES ARE THE EVIDENCE. This row was booked on 2026-09-06 against
+    a census taken that afternoon, and WO-1.48 landed the same evening, took the `focusout` listener
+    back out and moved the figure before the repair was written: a number typed here on the day it
+    was booked would have been wrong on the day it was built. `grep -n '^document.addEventListener'
+    src/shell.js` is the census, it is one command, and it cannot go stale. THE ANCHOR IS
+    LOAD-BEARING AND IS NOT TIDINESS: unanchored, the pattern matches this very sentence advertising
+    it and returns one more than the file holds — the wrong figure this row is named after, arriving
+    by a second route, in the command written to replace it. Every real listener is at column 0 and
+    the anchor is what says so. Do not put a figure back without the fence, and read § 22's test
+    before deciding the fence is worth it.
 
     THE TEN DATE FIELDS KEEP THEIR WRITE ON AN EVENT AND THEIR REBUILD ON A BUTTON (WO-1.48), and
     the entries above say which half is which rather than leaving a reader to assume one hook.
