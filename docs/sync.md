@@ -52,14 +52,24 @@ loses on one sentence from this document: *sync is not a backup.* A Connect butt
 a backup" teaches the misconception that costs a term of grades. About already carries the sentence
 a sign-in qualifies — "There is no account and no server" — and that is where the footnote belongs.
 
-**The flag is the origin.** `hostAllowsSignIn()` answers for loopback and nothing else, which is
-where the OAuth client's only authorized JavaScript origin (`https://localhost:8443`) can actually
-succeed. On the deployed app the section is not drawn, no Google script is ever fetched, and
+**The flag is the origin.** `hostAllowsSignIn()` answers for loopback and nothing else, and **that
+is the code holding itself back rather than a limit Google imposes** — the client's authorized-origin
+list has carried `https://planbook.hwgteach.com` beside `https://localhost:8443` since 2026-08-21,
+confirmed 2026-08-24. Loopback is simply where a handshake can succeed with the code's list as it
+stands. On the deployed app the section is not drawn, no Google script is ever fetched, and
 [`../privacy.html`](../privacy.html)'s claim that Planbook loads no third-party code of any kind
-stays true word for word. **WO-7.3 widens that one function, and that is all that is left of the
-pair** — the client's origin list already carries `https://planbook.hwgteach.com` beside the loopback
-origin, registered 2026-08-21 and confirmed 2026-08-24. Either half alone gives a button that ends in
-`origin_mismatch`, and today the code is the half that is behind, which is the safe direction.
+stays true word for word — **which is what the hold buys, and what widening the list costs.**
+**WO-7.3 widens that one function, and that is all that is left of the pair**; the console half was
+paid on the dates above. Either half alone gives a button that ends in `origin_mismatch`, and today
+the code is the half that is behind, which is the safe direction.
+
+*(This paragraph read* "the OAuth client's **only** authorized JavaScript origin (`https://localhost:8443`)"
+*until 2026-09-07, four lines above the sentence naming the second origin — a contradiction inside one
+paragraph.* `0f77a37` *swept that instruction out of eight files on 2026-08-24 and reached the WO-7.3
+sentence below rather than this one. **The claim travelled before it was caught**: it is where*
+`CLAUDE.md`*'s copy came from, and a reading of WO-7.2 on 2026-09-07 concluded from it that the iPad
+was blocked behind Google's review queue, when the block is one line in* `hostAllowsSignIn()` *and
+the deploy that would widen it.)*
 
 Two more things worth carrying forward. A grant that does not contain this scope is **refused**
 rather than held, so a token whose consent screen said something else never gets stored. And

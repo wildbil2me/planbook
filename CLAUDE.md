@@ -112,10 +112,17 @@ sign-out: there is no refresh token in a browser flow, so persisting a bearer cr
 tail of one hour and cost a laptop handed to a substitute.* **The control is in the About modal, not
 the backup panel** — *sync is not a backup, and a Connect button under "Download a backup" teaches the
 one misconception that costs a term of grades.* **And the flag** `docs/sync.md` **asks for is the
-origin** — *the section draws only on a loopback host, because the OAuth client's only authorized
-JavaScript origin is* `https://localhost:8443`*. So the deployed app and the iPad show the About modal
-exactly as before, fetch no Google script, and contact Google not at all — which is what keeps*
-`privacy.html`*'s "no third-party code of any kind" true word for word.* **It moves no data**: *upload,
+origin** — *the section draws only on a loopback host, and* **that is the code holding itself back
+rather than a limit Google imposes**: *the client's authorized-origin list has carried*
+`https://planbook.hwgteach.com` *beside* `https://localhost:8443` *since 2026-08-21. So the deployed
+app and the iPad show the About modal exactly as before, fetch no Google script, and contact Google
+not at all — which is what keeps* `privacy.html`*'s "no third-party code of any kind" true word for
+word, and it is what widening the list costs.* **(This block said** *"the OAuth client's only
+authorized JavaScript origin" until 2026-09-07, and it was false the day it was written:* `0f77a37`
+*swept that instruction out of eight files the same afternoon and this file was not one of them — the
+ninth place. Read it as the standing warning about this one:* **a fact copied out of** `docs/sync.md`
+**into here is a second copy nothing keeps in step**, *and this one sent a reading of WO-7.2 looking
+for a blocker in Google's review queue that was really one line in* `hostAllowsSignIn()`*.)* **It moves no data**: *upload,
 download, the* `rev`/`baseRev` *comparison and the keep-both conflict are* [WO-7.2](plans/work-orders/phase-7-sync.md#wo-72--document-transfer--conflicts)*,
 still* `🔒`*, and the panel says so on screen because a teacher who connects and assumes her
 gradebook is in Drive would stop downloading backups. **WO-3.18's demo video is unblocked** — the

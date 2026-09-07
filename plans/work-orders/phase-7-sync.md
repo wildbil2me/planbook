@@ -11,10 +11,14 @@ rather than work-bound, which is why it is slotted in wherever it opens rather t
 console 2026-08-11) sits in **Testing** mode with the owner as a test user, and it runs `drive.file`
 today. So everything here can be built, run and used on the owner's own devices months before any
 paperwork clears — the unverified-app screen is a click-through for one person who knows what it is.
-**One caveat inherited from that client:** its only authorized origin is `https://localhost:8443`,
-because Google will not take a raw LAN address, so the auth handshake is drivable on the laptop only
-until [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) settles a domain. The rest
-of the protocol is ordinary code and tests anywhere.
+**One caveat inherited from that client:** Google will not take a raw LAN address, so the handshake
+was drivable on the laptop only until
+[WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) settled a domain — **which it
+has.** `https://planbook.hwgteach.com` has sat in the client's authorized origins beside
+`https://localhost:8443` since 2026-08-21, so what keeps the handshake on the laptop today is
+`hostAllowsSignIn()`'s own list and nothing else; widening it is WO-7.3's one edit. The rest of the
+protocol is ordinary code and tests anywhere. *(This paragraph said the client had one authorized
+origin until 2026-09-07.)*
 
 ***The dependency runs the other way too, and nobody had written that down until 2026-08-20.*** *WO-3.18's
 third deliverable is a demo video* **showing the scope in use** *— and until this phase builds a sign-in
@@ -115,7 +119,7 @@ have prevented, and whatever moves a document says so in the same place.
       Google session or a consent screen, so the success path of the handshake is unreachable from
       `verify-shell.mjs` and always will be. The procedure is one paragraph and it is in `TESTING.md`
       § WO-7.1: `node tools/serve-https.mjs`, open **`https://localhost:8443`** on the laptop — that
-      exact origin, because it is the client's only authorized one — About ▸ Connect Google Drive.
+      exact origin, because it is the only one `hostAllowsSignIn()` accepts — About ▸ Connect Google Drive.
       **Driven by the owner on 2026-08-24 at that origin** — the handshake completed and the panel
       read *Connected to Google Drive* with a clock time about an hour out.)*
 - [x] The consent screen shows exactly one scope. 👤

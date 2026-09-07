@@ -23,7 +23,8 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
   handshake is unreachable from this file** and always will be. The work order's first two
   acceptance lines — a sign-in completes and the app receives a token, and the consent screen shows
   exactly one scope — are 👤 lines against `https://localhost:8443` on the owner's laptop, which is
-  the client's only authorized JavaScript origin (WO-3.10). Nothing here closes either of them, and
+  the only origin `hostAllowsSignIn()` accepts (WO-3.10; the client itself has also authorized
+  `https://planbook.hwgteach.com` since 2026-08-21). Nothing here closes either of them, and
   a green run below is not a sign-in.
 
   WHAT IS MEASURABLE IS EVERYTHING AROUND IT, and it is most of the risk:

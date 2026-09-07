@@ -180,9 +180,12 @@ const DISCONNECT_ID = 'driveDisconnectBtn';
 /*
   Is the sign-in reachable on this origin at all — decision 3 in the header.
 
-  Loopback and nothing else. `https://localhost:8443` is the client's only authorized JavaScript
-  origin (WO-3.10, and `tools/make-cert.mjs` writes both of these names into the certificate so
-  that server answers this laptop's own browser); `127.0.0.1` is additionally what
+  Loopback and nothing else — and IT IS THIS LIST THAT IS NARROW, NOT THE CLIENT'S. The client has
+  authorized `https://planbook.hwgteach.com` beside `https://localhost:8443` since 2026-08-21, so
+  the deployed origin would handshake today if this function let it; WO-7.3 is that one edit, and
+  what it costs is privacy.html's "no third-party code of any kind" on the deployed origin.
+  (WO-3.10, and `tools/make-cert.mjs` writes both loopback names into the certificate so that
+  server answers this laptop's own browser); `127.0.0.1` is additionally what
   tools/verify-shell.mjs serves the app from, so the harness can drive every state below. A real
   handshake attempted from the harness's origin would come back `origin_mismatch`, which is
   correct and is not what the harness measures — it measures the state machine, which is the half

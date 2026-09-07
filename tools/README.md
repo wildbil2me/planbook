@@ -2733,7 +2733,7 @@ both controls are measured in the state each is actually drawn in, by two of the
 **The new section is shaped by one fact stated at its top: the success path of the handshake is
 unreachable from this file and always will be.** No headless browser has a Google account, a Google
 session or a consent screen, so *"a sign-in completes"* and *"the consent screen shows exactly one
-scope"* are 👤 lines against `https://localhost:8443` — the client's only authorized origin — and no
+scope"* are 👤 lines against `https://localhost:8443` — the only origin `hostAllowsSignIn()` accepts — and no
 run here closes either. What the section does instead is take everything around them, and it is most
 of the risk. **Five sites are static, in Node**: the scope string occurs exactly once in all 54 files
 the app itself *runs* — `index.html`, `sw.js` and all of `src/`, which is not the same set as
