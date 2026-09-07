@@ -166,19 +166,47 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
       }
     });
   }
-  check('src/shell.js is the only file in the app that imports src/auth.js — so nothing outside '
-    + 'this phase can tell whether a teacher is signed in, which is what makes "works identically '
+  /*
+     THE SET IS TWO SINCE WO-7.2, AND WHAT IS ASSERTED IS THE SET RATHER THAN THE SIZE. It was
+     `length === 1` until 2026-09-07, when `src/drive-sync.js` — the transfer half of this same
+     phase — became the second importer, exactly as this module's own header invited it to: "a
+     later work order that needs the document should take the token from here rather than bring the
+     store in."
+
+     THE CLAIM IS UNCHANGED AND IS NOT WEAKER BY ONE FILE, because both importers are Phase 7's
+     own. What "every feature outside this phase works identically signed-out" needs is that no
+     file OUTSIDE the phase can observe a sign-in, and an allowlist of two named Phase 7 files says
+     that where a count of one only said it by accident. A third importer is red, and so is a
+     second one that is not `src/drive-sync.js` — which is the edit that would actually break the
+     line: the roster, the score grid or the signal engine learning whether a teacher is connected.
+  */
+  const AUTH_IMPORTERS = ['src/shell.js', 'src/drive-sync.js'];
+  const importerFiles = [...new Set(authImporters.map(a => a.split(':')[0]))].sort();
+  check('the only files in the app that import src/auth.js are Phase 7’s own — src/shell.js, which '
+    + 'draws the panel, and src/drive-sync.js, which spends the token — so nothing OUTSIDE this '
+    + 'phase can tell whether a teacher is signed in, which is what makes "works identically '
     + 'signed-out" a fact about the import graph rather than a claim about a green run',
-    authImporters.length === 1 && authImporters[0].indexOf('src/shell.js:') === 0,
-    authImporters.length + ' importer(s): ' + JSON.stringify(authImporters));
+    importerFiles.length === 2
+      && importerFiles.every(f => AUTH_IMPORTERS.indexOf(f) >= 0),
+    authImporters.length + ' import(s) in ' + importerFiles.length + ' file(s): '
+      + JSON.stringify(authImporters) + '; the allowed set is ' + JSON.stringify(AUTH_IMPORTERS));
 
   /*
-     THE ONE PIECE OF COPY IN THIS SECTION THAT IS A DELIVERABLE. This build signs in and moves no
-     data, and a teacher who connects, assumes her gradebook is in Drive and stops downloading
-     backups has been misled by an omission — which is the one way this work order does real harm.
-     So the sentence is asserted, not left to a later tidy-up: it is the kind of line that gets
-     deleted as redundant by whoever wires the upload, and the day it stops being true is the day
-     WO-7.2 lands and rewrites it on purpose.
+     THE ONE PIECE OF COPY IN THIS SECTION THAT IS A DELIVERABLE — and WO-7.2 is the day the
+     paragraph above this one predicted.
+
+     What it said, until 2026-09-07: this build signs in and moves no data, a teacher who connects
+     and assumes her gradebook is in Drive has been misled by an omission, so the sentence
+     "Nothing is uploaded yet" is asserted rather than left to a later tidy-up — "and the day it
+     stops being true is the day WO-7.2 lands and rewrites it on purpose." That day came, the
+     upload is real, and the sentence would now be the lie it was written to prevent. It is gone
+     from index.html and this check asserts that it is gone.
+
+     WHAT REPLACED IT IS ASSERTED IN THE SECTION BELOW rather than here, and the split is
+     deliberate: what sync puts in a teacher's Drive and the fact that sync is not a backup are
+     WO-7.2's copy, and they belong beside the transfer they describe. What is left here is
+     WO-7.1's own half — the permission, named in plain English and never as a scope URL, which is
+     a claim about the sign-in and stays true whatever moves afterwards.
   */
   /* The element, not the first `</div>` after it — which was this check's own first defect: the
      section opens with a `.modal-section-label` div, so a naive slice ended 81 characters in and
@@ -193,13 +221,14 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
     }
     return '';
   })();
-  check('the Drive panel says in its own copy that nothing is uploaded yet, and names the one '
-    + 'permission in plain English rather than as a scope URL — the panel a teacher reads has to '
-    + 'be honest about a build that signs in and stops there',
-    driveBlock.length > 200 && /Nothing is uploaded yet/.test(driveBlock)
+  check('the Drive panel names the one permission in plain English rather than as a scope URL, '
+    + 'and no longer claims that nothing is uploaded — that sentence was this section’s '
+    + 'deliverable while the build signed in and stopped, and WO-7.2 made it the lie it existed '
+    + 'to prevent (what replaced it is asserted in the section below)',
+    driveBlock.length > 200 && /Nothing is uploaded yet/.test(driveBlock) === false
       && /only the files you use with this app/.test(driveBlock)
       && driveBlock.indexOf(SCOPE_URL) < 0,
-    'the block is ' + driveBlock.length + ' chars; "Nothing is uploaded yet" = '
+    'the block is ' + driveBlock.length + ' chars; "Nothing is uploaded yet" still present = '
       + /Nothing is uploaded yet/.test(driveBlock) + ', plain-English permission = '
       + /only the files you use with this app/.test(driveBlock) + ', raw scope URL in it = '
       + (driveBlock.indexOf(SCOPE_URL) >= 0));

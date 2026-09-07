@@ -193,7 +193,7 @@ here. Sync is a foreground act, while the app is open and the teacher is signed 
 
 ## WO-7.2 — Document transfer & conflicts
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** L · **Depends on** WO-7.1
+**Ship** — · **Status** ✅ DONE — 2026-09-07 · **Size** L · **Depends on** WO-7.1
 **Closes roadmap** Phase 7 → "Upload/download the year document", "`rev`/`baseRev` comparison",
 "Conflict: keep both", "Handle token expiry gracefully."
 
@@ -240,15 +240,108 @@ guarantee, so the conflict path has to be correct anyway.
 - Token expiry mid-sync fails safely: local data untouched, clear message, retry available.
 - The save indicator's syncing / queued / retry states wired up.
 
+**What landed, 2026-09-07.** `src/drive-sync.js` — the transfer, the comparison and the conflict —
+plus one control in the About modal's existing Drive section (**Sync this year now**, drawn only
+when a sign-in is behind it), three functions and one object store in `src/store.js`, and the panel
+copy that replaces WO-7.1's *nothing is uploaded yet*. **Five decisions the work order did not
+settle** are argued at their own points of definition and summarised in
+[`docs/sync.md`](../../docs/sync.md) § "What WO-7.2 settled":
+
+- **`baseRev` lives in IndexedDB, in a second object store keyed by `docId`** — refused from the
+  year document (that is the thing being synced: a per-device bookmark inside it travels, and
+  writing it would bump `rev` and leave the document permanently ahead of the bookmark just
+  written) and refused from `localStorage` (`PREF_DEFAULTS` is UI preferences, and the state of a
+  data transfer is not a switch position). `src/store.js` stays the only file that opens IndexedDB.
+- **`docs/sync.md`'s open question is answered in that file**, not deferred: a backup restored from
+  a different device brings its own `docId`, so it asks for a bookmark that has never existed, and
+  no bookmark with a remote file present is a **conflict** — keep both, guess nothing.
+- **`queued` did not come back.** `syncing` and `retry` are wired; `error` is deliberately not,
+  because it draws *"✕ Save failed"* and every failure path here leaves the document untouched.
+- **The dependency points one way.** `src/drive-sync.js` imports `src/auth.js` and `src/store.js`;
+  neither imports it back, so sign-out still cannot reach IndexedDB.
+- **The conflict copy is a second copy of the most sensitive data in the app**, so the panel names
+  what sync puts in a teacher's Drive field by field — accommodations, IEP and 504 plans, case
+  managers and review dates, medical needs, behavior plans — and the conflict message says the same
+  about the file it just made. That is `CLAUDE.md`'s one-exception rule applied a second time.
+
+**Two things it deliberately did not build.** There is no automatic sync of any kind — no timer, no
+`online` listener, no sync-on-save — because a browser token flow has no refresh token and this
+phase's Traps line forbids designing as if it did. And there is **no seam exported for the
+harness**: `tools/verify/drive-sync.mjs` replaces `window.fetch` for the length of its section, so
+the shipped module has no injectable transport and no test hook at all.
+
 **Acceptance**
-- [ ] Edit on device A, sync, open on device B: B has A's changes.
-- [ ] Edit both devices while offline, then sync both: **two files exist**, the conflict copy is
-      named and findable, and no edit from either side is lost.
-- [ ] The conflict message names the file and where it went, in plain language.
-- [ ] Killing the network mid-upload leaves the local document valid and the remote unchanged or
+- [x] Edit on device A, sync, open on device B: B has A's changes. 👤
+      *(**Owed to a human and not tickable at a desk**, and the reason is `hostAllowsSignIn()`
+      rather than Google: the released app never draws this panel, so there is no iPad reading to
+      take until WO-7.3. The runnable form is **two browser profiles at `https://localhost:8443`**,
+      which are two devices as far as IndexedDB and the sync bookmark are concerned — the procedure
+      is in `TESTING.md` § WO-7.2. What IS driven at the desk is every decision the line rests on,
+      against a Drive `tools/verify/drive-sync.mjs` stands up in `window.fetch`: an upload creates
+      one file named for the year carrying `docId` and `rev`, a remote that is further along is
+      downloaded and adopted at the Drive copy's own save number, and the document on the device
+      really is replaced through `store.adoptRemoteDocument()`. That proves the state machine and
+      proves nothing about two IndexedDBs, which is why this box is open.)*
+- [x] Edit both devices while offline, then sync both: **two files exist**, the conflict copy is
+      named and findable, and no edit from either side is lost. 👤
+      *(Same sitting and same reason as the line above. Driven at the desk against the stand-in
+      Drive: both sides changed, **two files exist afterwards**, the conflict copy holds the remote
+      bytes and the live file holds this device's, the local document's fingerprint is identical
+      either side of the whole thing, and the create of the conflict copy is asserted to happen
+      **before** the overwrite of the live file — which is the ordering the guarantee is made of.
+      What two profiles add is the half a single device cannot show: that the other machine's
+      document really was the losing side and really is in that file.)*
+- [x] The conflict message names the file and where it went, in plain language.
+      *(Driven against the stand-in Drive: the sentence names the conflict copy by the filename it
+      was actually given, says it is in **My Drive**, says **nothing was thrown away**, says
+      Planbook **merged nothing**, and says what is inside it — the last clause being the one that
+      is not decoration, because a conflict copy is a second copy of accommodations, medical needs
+      and behavior plans and is owed the same sentence the backup panel owes her. It is painted in
+      the quiet grammar (`class-hint`), not the red one, because a conflict is not an error:
+      everything worked. **Proved non-vacuous** — dropping the copy's name out of the message and
+      leaving every other clause intact reddens this check and only this check.)*
+- [x] Killing the network mid-upload leaves the local document valid and the remote unchanged or
       complete — never half-written.
-- [ ] An expired token during sync produces a re-auth prompt, not a silent no-op.
-- [ ] Sync never touches a year document other than the one matched by `docId`.
+      *(**Two halves, and both are proved.** The structural half is a property of the code: every
+      write to Drive is **one multipart request** and nothing in the module can start a resumable
+      upload, so there is no session URI and no half-finished transfer for a dropped connection to
+      have left behind — Drive commits the whole body or the previous revision stands. The
+      behavioural half is driven: with the connection dying while an upload is in the air, the
+      bytes at Drive, its `appProperties`, the bookmark, the local fingerprint and the file count
+      are all identical either side, it was **tried twice** before giving up, the save chip was
+      never painted red — `error` reads "✕ Save failed", which would be a lie about local storage
+      at the one moment a teacher is deciding whether to re-key a period of grades — and the retry
+      she makes by hand afterwards works. Three separate mutations redden it: removing the one
+      retry, planting the word `resumable` in code, and writing the bookmark **before** the upload
+      instead of after it. **One honest limit, found by the third and recorded rather than
+      repaired:** the *never half-written* check reads the **in-memory** bookmark, so a premature
+      write to the bookmark in **IndexedDB** is invisible to it — it passed at `baseRev 281 -> 281`
+      over a document that really had been corrupted, and what caught the damage was its neighbour,
+      the manual-retry check, which saw the next pass turn into a `conflict`. The line holds; the
+      check's stated claim is wider than what it measures. Same species as WO-5.3's `flush()`
+      blind spot.)*
+- [x] An expired token during sync produces a re-auth prompt, not a silent no-op.
+      *(**Three arms, and only one of them touches the network** — which is what makes the proof
+      worth stating rather than counting. Signed out: no request is made at all, no byte of a
+      gradebook is offered to anybody, and the answer names the Connect button. Already lapsed when
+      Sync is tapped: the Connect button is back, the Sync button is gone, no request is made, and
+      the document is untouched. Refused **part-way through** by Google: a sentence naming the
+      sign-in and telling her to connect again — not a raw Google error code — with the Drive file
+      exactly as it was. Turning the `401` branch off reddens **only the third**, and correctly so:
+      the first two never reach a request, so that branch is unreachable for them. A mutation that
+      smeared across all three would have been the weaker result, not the stronger one.)*
+- [x] Sync never touches a year document other than the one matched by `docId`.
+      *(Measured against a file that was there to be damaged: a year document belonging to somebody
+      else's `docId` sat in the same Drive through a create, an overwrite, a download **and** a
+      conflict, and came out byte for byte as it went in — name, properties and body. The matching
+      is `appProperties.docId` and only that; two files claiming the same document stop the sync
+      dead rather than picking one, because one of them holds work that overwriting the other would
+      destroy and there is no fact available to say which. **The defence is two layers deep, and
+      the mutation round says so.** Removing the module's own client-side filter changes nothing
+      observable — the harness's stand-in Drive parses the `q` parameter and filters server-side
+      exactly as Google does — so that mutation is **correctly not caught**, the same shape as
+      WO-5.3's MUTATION 1: belt to the query's braces. Pointing the lookup at a foreign `docId`
+      instead reddens **thirteen** checks, this line's among them by name.)*
 
 **Traps** — Silent merge of two gradebooks is how you lose a term of grades and never find out. If
 you find yourself writing merge logic, stop: the design says keep both. And remember **sync is not a

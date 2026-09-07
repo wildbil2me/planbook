@@ -438,10 +438,10 @@ still reading *Nothing* are watched by no one.
 | 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
 | 5 — Outreach | 9 | 7 | — | 🔨 IN PROGRESS — WO-5.1, WO-5.2 and WO-5.3 all ✅ DONE; the first two 2026-08-28 and the send flow **2026-08-29, when the owner read its last two 👤 lines on hardware** — the draft opened in the default client on both devices and the copy reached the sent folder. **That sitting is also where rows 5.5–5.8 came from**: six changes asked for after using it, booked rather than folded in, plus one defect fixed the same day (WO-5.2’s editor had no way out — see its note). **Three of those rows are already ✅ — WO-5.6, WO-5.5 and now WO-5.4, all 2026-08-29**; WO-5.7 and WO-5.8 ⬜. **WO-5.4 is the one that mattered for Sep 2**: it writes the `contact` entry two Phase 4 readers were already reading, so the cooldown has an input for the first time. **WO-5.9 joined them 2026-08-30** — a ride-along inside `tools/verify/contact-log.mjs` that drives the one branch of that writer nothing had ever walked, and the only row here that changed no app code. The phase stays 🔨 — the owner's call on the day, with two rows still ⬜ |
 | 6 — Calendar & glance | 6 | 4 | — | 🔨 IN PROGRESS |
-| 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
+| 7 — Drive sync | 3 | 2 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | WO-G2 ⬜ **workable 2026-09-07** — the term opened Sep 2 and first grades go in Sep 8; WO-G3 🔒 on four weeks after it |
-| | **167** | **138** | **2** | `[████████░░] 83%` |
+| | **167** | **139** | **2** | `[████████░░] 83%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)

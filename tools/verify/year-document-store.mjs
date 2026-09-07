@@ -110,32 +110,73 @@ if (!storeSeam) {
         + oneYear.samples + ' samples over 1s (' + oneYear.visible + ' sightings)');
   }
 
-  /* The Traps line, measured rather than asserted: splitting the document into per-collection
-     stores is the change that breaks sync and breaks nothing you can see on a desk. */
+  /*
+     The Traps line, measured rather than asserted: splitting the document into per-collection
+     stores is the change that breaks sync and breaks nothing you can see on a desk.
+
+     THERE ARE TWO OBJECT STORES SINCE WO-7.2 AND THE CLAIM IS NARROWER BY EXACTLY ONE STORE, so
+     read what changed rather than the number. This block asserted `objectStoreNames.length === 1`
+     until 2026-09-07, and it read whichever store came FIRST in that list — which was `years`
+     because it was the only one. `sync` sorts ahead of it, so the day a second store arrived both
+     checks went red at once and the second one reported `records = 0` about a store it had never
+     heard of: a check reading a collection by position rather than by name, found by the first
+     thing that moved. Both read `years` BY NAME now.
+
+     WHAT THE SECOND STORE IS ALLOWED TO BE is the part worth keeping. `sync` holds the per-device
+     sync bookmark — one record per document, four scalars: the document id, the year label, the
+     rev this device last put in Drive, and when (src/store.js, readSyncState(), which argues why it
+     could live nowhere else). THAT IS NOT A NORMALIZATION OF THE DOCUMENT, and this block now says
+     so with a check rather than by leaving the door open: every field of every record in it is
+     asserted against that list of four, so a later work order that starts keeping `students` or
+     `scores` over here — which is the actual Traps line — turns this red on the first record it
+     writes. The set of stores is asserted whole, too: a THIRD store is a red check and a decision
+     somebody has to defend, not a silent arrival.
+  */
   const shape = await evalJs(`(function(){ return new Promise(function(res, rej){
     var open = indexedDB.open('planbook');
     open.onerror = function(){ rej(open.error); };
     open.onsuccess = function(){
       var db = open.result;
       var names = Array.prototype.slice.call(db.objectStoreNames);
-      var s = db.transaction(names[0], 'readonly').objectStore(names[0]);
+      if (names.indexOf('years') < 0) { db.close(); res({ stores:names, missing:true }); return; }
+      var t = db.transaction(names, 'readonly');
+      var s = t.objectStore('years');
       var all = s.getAll();
+      var bookmarks = names.indexOf('sync') >= 0 ? t.objectStore('sync') : null;
+      var marks = bookmarks ? bookmarks.getAll() : null;
       all.onerror = function(){ rej(all.error); };
-      all.onsuccess = function(){
+      t.oncomplete = function(){
         var recs = all.result;
+        var markRecs = marks ? marks.result : [];
+        var markFields = [];
+        markRecs.forEach(function(m){
+          Object.keys(m).forEach(function(k){ if (markFields.indexOf(k) < 0) markFields.push(k); });
+        });
         res({ stores:names, keyPath:s.keyPath, indexes:Array.prototype.slice.call(s.indexNames),
               count:recs.length,
+              syncKeyPath: bookmarks ? bookmarks.keyPath : null,
+              syncIndexes: bookmarks ? Array.prototype.slice.call(bookmarks.indexNames) : null,
+              syncCount: markRecs.length, syncFields: markFields.sort(),
               whole: recs.length > 0 && recs.every(function(d){
                 return Array.isArray(d.students) && Array.isArray(d.classes)
                   && Array.isArray(d.attendance) && !!d.scores && typeof d.rev === 'number'; }) });
         db.close();
       };
     }; }); })()`);
-  check('one object store called years, keyed by the year string, with no index on it',
-    shape.stores.length === 1 && shape.stores[0] === 'years' && shape.keyPath === 'year'
-      && shape.indexes.length === 0,
-    'stores=' + JSON.stringify(shape.stores) + ' keyPath=' + shape.keyPath
-      + ' indexes=' + JSON.stringify(shape.indexes));
+  const BOOKMARK_FIELDS = ['at', 'baseRev', 'docId', 'year'];
+  check('one object store called years holds the documents, keyed by the year string with no index '
+    + 'on it, and the only other store in the database is WO-7.2’s sync bookmark — four scalars per '
+    + 'document and not one collection lifted out of a year',
+    !shape.missing && shape.stores.length === 2
+      && shape.stores.indexOf('years') >= 0 && shape.stores.indexOf('sync') >= 0
+      && shape.keyPath === 'year' && shape.indexes.length === 0
+      && shape.syncKeyPath === 'docId' && shape.syncIndexes.length === 0
+      && shape.syncFields.every(f => BOOKMARK_FIELDS.indexOf(f) >= 0),
+    'stores=' + JSON.stringify(shape.stores) + ' years keyPath=' + shape.keyPath
+      + ' indexes=' + JSON.stringify(shape.indexes) + ' · sync keyPath=' + shape.syncKeyPath
+      + ' indexes=' + JSON.stringify(shape.syncIndexes) + ' holding ' + shape.syncCount
+      + ' bookmark(s) whose every field is one of ' + JSON.stringify(BOOKMARK_FIELDS) + ': '
+      + JSON.stringify(shape.syncFields));
   check('one record per year, and the record IS the whole document — nothing normalized out',
     shape.count >= 1 && shape.whole, 'records = ' + shape.count);
 

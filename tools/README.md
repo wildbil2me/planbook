@@ -1171,14 +1171,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1288 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1324 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the sixty-seven files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the sixty-eight files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -1475,6 +1475,42 @@ vacuous. What it could not do was **say what it was proving**: a check that goes
 string stopped matching names no leak, and the three new ones name the sentences, the surname and the
 field that carried them. Reverted by name — `git checkout -- src/merge-fields.js`, never
 `git checkout .` — before a word of this paragraph was written.
+
+**WO-7.2's correction round moved it from 1320 to 1324, and the executed count from 1331 to 1334 —
+four sites, three results.** WO-7.2 itself moved the number from 1288 to 1320 and left no entry here;
+this is that entry as well as its own. Three of the four are the repair: one static, in
+`verify/drive-sync.mjs`'s Node half, asserting that both of the branches in `src/shell.js` that flip a
+Google sign-in also repaint the sync half of the Drive panel; and two driven at the foot of the same
+section, which tap Disconnect and then Connect **with the About modal never closed**. The fourth is
+the connect check's failure arm — an `else check(…, false, …)` that never fires on a green run — so
+the gap between sites and results widens by one. That check's third arm is a `skip()`, for a machine
+whose sign-in attempt is still out at Google when the six-second bound runs out, and a `skip` is not a
+`check(`: it moves this number by nothing. **The delivered tree was green over the defect** —
+`1331 checks · 1331 passed · 0 failed · 0 skipped`, 41,286 lines, 437s, exit 0 — because every
+existing check that asserts the Sync button is visible closes and reopens About immediately before it
+looks, which is the one path that painted it. **After the repair**:
+`1334 checks · 1334 passed · 0 failed · 0 skipped`, 41,335 lines, 31.0 lines per check, 451s, exit 0,
+measured 2026-09-07 on the delivered tree. *(The three mutation runs below were taken at 41,328
+lines — the seven-line difference is a comment added to the harness afterwards, recording the
+coupling the third mutation found, and it moves no check.)*
+
+**Three mutations, one per run, each reverted by name before anything else was written.**
+*Overwrite-then-preserve* — the create of the conflict copy moved below the overwrite of the live
+file in `keepBoth()` — reads `1334 checks · 1333 passed · 1 failed`, exit 1, and **the one that
+reddens is the ordering check**, detail `["GET api:list","GET api:read","PATCH upload","POST upload"]`.
+It is the mutation this work order most needed and had not had: keep-both still keeps both under it,
+both files still exist with the right bytes in each, and **only the order is destroyed** — which is
+why every other conflict check stays green and why this one exists at all. *The Connect branch put
+back the way it was delivered* (`auth.connect(); return;`) reads `1332 passed · 2 failed`: the static
+check, naming which branch (`connect chains it on both arms of the promise = false`), and the driven
+one, which takes its **failure** arm rather than its skip arm — *"the tap settled … and the Sync
+button is still not on the screen 6099ms later"*, which is the delivered defect reproduced and named.
+*The Disconnect branch put back* reads `1331 passed · 3 failed`, and **the third is the interesting
+one**: the two driven checks are chained, so with the sign-out repaint gone the connect check fails on
+its own non-vacuity clause — the button it needs to see hidden is still on the screen. A build that
+breaks only the sign-out half therefore turns both red, which is recorded at the checks themselves so
+that a future red run is read correctly rather than chased twice.
+
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not
 line-anchored, and comment lines are excluded because the harness quotes call names in its prose

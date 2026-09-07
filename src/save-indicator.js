@@ -6,7 +6,7 @@
     saving   ⏳ orange wash   a write is in flight
     saved    ✓  green wash    the write landed; the chip fades itself out after 2s
     error    ✕  red wash      the write failed and the teacher has to know
-    syncing  ↻  indigo wash   Drive sync is moving the year document (Phase 7)
+    syncing  ↻  indigo wash   Drive sync is moving the year document (WO-7.2)
     retry    ↻  orange wash   a failed write is being retried
 
   Roll Call! has a sixth state, `queued`, and it is deliberately absent here. `queued`
@@ -17,14 +17,27 @@
 
   WO-1.4 wired it: src/store.js calls showSaveState() around every write of the year
   document — `saving` before, `saved` on the transaction completing, `retry` for the one
-  retry, `error` when that fails too. Nothing sets `syncing`; Phase 7 owns it.
+  retry, `error` when that fails too.
 
   WO-1.10 removed demoSaveCycle(), the WO-1.2 stub that ran one pass through all five states at a
   pace a human can read. Its only callers were the component shelf's five state buttons and the
   console, the shelf went, and a demo with no fixture is dead code the next reader has to prove is
-  dead. One consequence, recorded rather than fixed: `syncing` now has NO caller in the app at all —
-  Phase 7's Drive sync is what will paint it, and until then it is a state in the table below and
-  nothing more.
+  dead. One consequence, recorded rather than fixed: `syncing` had NO caller in the app at all for
+  the next twenty work orders, because Phase 7's Drive sync was what would paint it.
+
+  WO-7.2 IS THAT WORK ORDER, AND `syncing` HAS A CALLER AS OF 2026-09-07. src/drive-sync.js paints
+  it when a transfer is actually about to leave the device, and paints `retry` for the one retry it
+  makes of a request that is safe to repeat — the same one-retry shape src/store.js uses, and for
+  the same reason. So this table now has two writers rather than one, and they divide cleanly:
+  THE STORE OWNS EVERY STATE ABOUT THIS DEVICE'S OWN STORAGE AND SYNC OWNS `syncing`.
+
+  WHAT SYNC DELIBERATELY DOES NOT PAINT IS `error`, and that is a ruling rather than an oversight.
+  This chip's `error` reads "✕ Save failed" and announces "Your last change may not be stored" —
+  and a sync that fails means nothing of the kind: every failure path in src/drive-sync.js leaves
+  the document on this device exactly as it was. Painting this red for one would tell a teacher her
+  grades are in danger at the moment they are not, which is the same lie as a green tick over a
+  write that was thrown away, in the other direction. A failed sync reports in the Drive panel in
+  the About modal, which is where the teacher tapped and where the sentence can be a paragraph.
 
   The chip is declared in <header> since WO-1.10, having lived in the shelf's inset toolbar before
   that. src/shell.css pins it to the top-right corner of the viewport either way, above the modal
@@ -34,6 +47,16 @@
   failed, and a screen-reader user has no reason to be looking at it. `saving`/`saved` are
   deliberately silent — announcing every autosave would make the app unusable with a screen
   reader on.
+
+  ONE KNOWN IMPRECISION, LEFT ALONE ON PURPOSE (WO-7.2). `retry` announces "Retrying the last
+  save", which is exactly right for src/store.js and slightly wrong for src/drive-sync.js, where
+  what is being retried is a request to Drive rather than a save. Three ways to fix it were
+  weighed and all three cost more than the imprecision: re-wording it to something that covers
+  both makes the STORE's announcement vaguer, and the store's is the one a teacher hears when her
+  grades are at risk; a sixth state means a sixth wash colour for a condition that lasts six
+  hundred milliseconds; and taking `retry` off sync leaves the deliverable's named state unwired.
+  The visible half — "↻ Retrying…" — is accurate for both. Recorded here rather than in a report
+  nobody will find, because the next reader to notice it should know it was seen.
 */
 
 import { announce } from './live-region.js';

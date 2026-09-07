@@ -2043,15 +2043,30 @@
            AFTER THE POLICY ROWS, DELIBERATELY: the way out to what leaves this device is read
            before the control that starts sending it anywhere.
 
-           THE COPY SAYS NOTHING IS UPLOADED YET, and that line is a deliverable rather than a
-           caveat. This build signs in and stops — upload, download and conflicts are WO-7.2 — and a
-           teacher who connects, assumes her gradebook is now in Drive and stops downloading backups
-           has been misled by an omission this panel could have prevented.
+           THE COPY USED TO SAY NOTHING IS UPLOADED YET, and WO-7.2 is the landing that made that
+           false — docs/sync.md's rule is that whatever moves a document says so in the same words,
+           so the sentence went in the same sitting as the code that moved one. What replaced it is
+           two notes rather than one, and neither is a caveat:
 
-           BOTH BUTTONS ARE `.class-action-btn`, whose 44px floor already sits in src/shell.css's
-           coarse block, and both notes are `.class-hint` — the same grammar every other dialog in
-           this app uses (src/shell.css says why at that rule). The only new selector is the
-           wrapper, which exists so one class hides the section, and it is not a control. -->
+             · WHAT SYNC PUTS IN DRIVE, named field by field. The year document carries IEP and 504
+               details, case managers, plan review dates, medical needs, behavior plans and what a
+               plan says about attendance, and sync is the SECOND place in this app where that data
+               leaves the device. CLAUDE.md's rule allows one exception — the downloadable backup —
+               "and its own UI says so"; this is the same exception a second time and it is held to
+               the same standard, which is the backup panel's own paragraph a few hundred lines
+               below. Do not soften it, and do not filter the upload to make it go away: a Drive
+               copy with the support fields stripped would restore a gradebook that had lost the
+               things a teacher is legally obliged to implement.
+             · SYNC IS NOT A BACKUP, said here and not only in a source comment. Drive holds one
+               live copy that the next sync overwrites. A teacher who reads a Connect button as a
+               safety net stops downloading the file that actually is one, and that is the
+               misconception this whole section was placed in this modal to avoid.
+
+           ALL THREE BUTTONS ARE `.class-action-btn`, whose 44px floor already sits in
+           src/shell.css's coarse block, and every note is `.class-hint` — the same grammar every
+           other dialog in this app uses (src/shell.css says why at that rule). WO-7.2 ADDED NO
+           SELECTOR AT ALL: the only one this section ever had is the wrapper, which exists so one
+           class hides the section, and it is not a control. -->
       <div class="drive-panel hidden" id="drivePanel">
         <div class="modal-section-label">Google Drive sync</div>
         <p>
@@ -2065,13 +2080,37 @@
         <p class="class-hint" id="driveStatus"></p>
         <div class="modal-actions">
           <button class="class-action-btn primary" id="driveConnectBtn" data-drive-connect>Connect Google Drive</button>
+          <!-- WO-7.2's one new control, and it is a deliberate tap rather than anything automatic.
+               A browser token flow has no refresh token, so sync can only happen while the app is
+               open and the teacher is signed in; a feature built on a timer would fail every time
+               the hour was up. Hidden until there is a sign-in behind it, which is why the touch
+               sweep in tools/verify-shell.mjs measures it in the state it is drawn in rather than
+               the state it rests in. -->
+          <button class="class-action-btn primary hidden" id="driveSyncBtn" data-drive-sync>Sync this year now</button>
           <button class="class-action-btn hidden" id="driveDisconnectBtn" data-drive-disconnect>Disconnect</button>
         </div>
+        <!-- Written by src/drive-sync.js and empty here for #driveStatus's reason one element up:
+             it reports where a gradebook has been sent and when, which is the last fact in this app
+             that may be a sentence somebody typed into a markup file. It stays blank until the
+             answer has been read out of IndexedDB rather than guessing in the meantime. -->
+        <p class="class-hint" id="driveSyncStatus"></p>
         <p class="class-hint">
           Planbook asks Google for one permission and no others: to see, edit, create and delete
           only the files you use with this app. It cannot see anything else in your Drive.
-          <strong>Nothing is uploaded yet</strong> — this build signs you in and stops there, and
-          the file you download from the ⤓ button is still the backup that matters.
+        </p>
+        <p class="class-hint">
+          <strong>What sync puts in your Drive.</strong> The whole school year you have open: your
+          classes, your roster, guardian and counselor contacts, attendance, grades, your record of
+          who you have contacted, and <strong>the support details you keep on students —
+          accommodations, IEP and 504 plans, case managers and review dates, medical needs,
+          behavior plans, and what a plan says about attendance.</strong> It is the same information
+          as the file the ⤓ button downloads. It goes to your own Google Drive, into My Drive,
+          where you can open it, move it or delete it like any other file of yours.
+        </p>
+        <p class="class-hint">
+          <strong>Sync is not a backup.</strong> Drive holds one live copy of the year, and the next
+          sync overwrites it with a newer one. Keep downloading the file from the ⤓ button
+          — that is the copy that can bring a year back.
         </p>
       </div>
 

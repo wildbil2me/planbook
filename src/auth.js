@@ -511,10 +511,14 @@ export function disconnect() {
 }
 
 /*
-  A fresh token for a caller that needs one now — WO-7.2's door, and it has no caller in this
-  build. That is the same shape as the save indicator's `syncing` state, which has sat with no
-  caller since WO-1.10 because Phase 7 owns it; this is the half of Phase 7 that owns the token,
-  and the half that spends it is the next work order.
+  A fresh token for a caller that needs one now — WO-7.2's door, and IT HAS ONE AS OF 2026-09-07.
+  This comment read "it has no caller in this build" until that day, and named the save indicator's
+  `syncing` state as the same shape: a thing built for the next work order and unreachable until it
+  arrived. Both were true for WO-7.1 and both stopped being true in the same landing.
+  src/drive-sync.js calls this once per tap of Sync, before it reads or writes anything, so a
+  sign-in that lapsed is found at the top of the flow rather than in the middle of a transfer — and
+  it is still the only caller. The half of Phase 7 that owns the token is this file; the half that
+  spends it is that one, and the dependency points from there to here and never back.
 
   SILENT ONLY, AND NEVER A POPUP. A visible Google window with no tap behind it is blocked by every
   browser worth supporting, and one that got through mid-lesson would be worse than the failure it

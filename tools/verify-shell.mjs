@@ -134,6 +134,7 @@ import { run as concernList } from './verify/concern-list.mjs';
 import { run as praiseColumn } from './verify/praise-column.mjs';
 import { run as policyUrl } from './verify/policy-url.mjs';
 import { run as driveSignIn } from './verify/drive-sign-in.mjs';
+import { run as driveSync } from './verify/drive-sync.mjs';
 import { run as logEntries } from './verify/log-entries.mjs';
 import { run as mergeFields } from './verify/merge-fields.mjs';
 import { run as templates } from './verify/templates.mjs';
@@ -333,6 +334,12 @@ const BROWSER_SECTIONS = [
   { file: 'verify/praise-column.mjs', run: praiseColumn },
   { file: 'verify/policy-url.mjs', run: policyUrl },
   { file: 'verify/drive-sign-in.mjs', run: driveSignIn },
+  /* DIRECTLY AFTER THE SIGN-IN, because it depends on that section in one direction and
+     repays it in the other. It seeds a token through the same seam and it hands the page
+     back signed out, so the two read as one argument about Phase 7 in this order. It is not
+     last for the reason `verify/cooldown-quiet.mjs` is, even though it drives a real
+     document swap: it puts its own fixture back at the foot and asserts that it did. */
+  { file: 'verify/drive-sync.mjs', run: driveSync },
   { file: 'verify/log-entries.mjs', run: logEntries },
   { file: 'verify/merge-fields.mjs', run: mergeFields },
   /* AFTER THE RESOLVER AND BEFORE THE RESTORE (WO-5.2). It drives the screen over

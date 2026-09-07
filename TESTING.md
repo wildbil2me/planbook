@@ -9465,8 +9465,8 @@ unconditional value has nothing to pin.*
 
 *Phase goal: the same year on the laptop and the iPad, with one scope and no fear.*
 
-WO-7.1's lines are below. WO-7.2 and WO-7.3 append theirs as they land, and both are still 🔒 on
-Google OAuth verification — **which never gated building this phase**, only launching it.
+WO-7.1's and WO-7.2's lines are below. WO-7.3 appends its own as it lands, and it alone is still 🔒
+on Google OAuth verification — **which never gated building this phase**, only launching it.
 
 Two checks matter more than the sync working: the app is fully functional signed-out, forever,
 and the consent screen shows `drive.file` and nothing else. A conflict keeps both copies and
@@ -9539,6 +9539,119 @@ sitting on the laptop. The procedure, once:
       OPEN on a device that cannot complete a handshake is the one way this lands badly, and it shows
       up as a section that should not be on that screen. **Read by the owner on 2026-08-24: nothing
       is there — the flag failed shut on the device that cannot complete a handshake.**)*
+
+### WO-7.2 — Document transfer & conflicts
+
+**What this adds.** A second control in the same *Google Drive sync* section of the About modal:
+**Sync this year now**, drawn only when a sign-in is behind it. It carries the open school year to
+and from the teacher's own Drive, matching one file by `appProperties.docId`, and when the two
+copies have both changed it keeps both — writing the Drive copy to a second, named file and telling
+her what it is called and where it went. The panel now says **what sync puts in her Drive**, down to
+the accommodations, medical needs and behavior plans, and that **sync is not a backup**; the WO-7.1
+sentence "nothing is uploaded yet" is gone, because it became the lie it was written to prevent.
+
+**Nothing about it is automatic.** There is no timer, no `online` listener and no sync-on-save: a
+browser token flow has no refresh token, so a background sync would fail every time the hour was up.
+
+**Where the panel is.** `node tools/serve-https.mjs`, then **`https://localhost:8443`** on the
+laptop — that exact origin, because it is the only one `hostAllowsSignIn()` accepts (WO-7.3 widens
+it). About ▸ *Google Drive sync*.
+
+#### The two-device procedure — this is what Acceptance 1 and 2 need
+
+Both lines are 👤 and **no harness closes either**. `tools/verify/drive-sync.mjs` drives the whole
+state machine against a Drive it stands up in `window.fetch`, which proves the decisions and proves
+nothing about two IndexedDBs. What settles them is **two browser profiles** — not two tabs. A second
+Chrome/Edge profile at the same URL has its own IndexedDB and therefore its own year document and
+its own sync bookmark, which is what "two devices" means to every line of this code.
+
+1. `node tools/serve-https.mjs`. Open `https://localhost:8443` in profile **A**. Sign in, sync once
+   — the panel should say the year is now in Drive.
+2. Open the same URL in profile **B** (a separate browser profile window, signed in to the same
+   Google account). It starts with its own empty year, so **restore A's backup file into B first**
+   — otherwise B has a different `docId` and the two will never match.
+3. **Settle the pair — and the middle step of that is a conflict, not a download.** This is the
+   designed answer rather than a fault, and reading it as a failure is the mistake this step exists
+   to prevent. Sync B: B is holding A's `docId` at a rev of its own with **no sync bookmark for it**
+   — a restore does not write one — which is the *no bookmark, remote exists* row of `docs/sync.md`'s
+   table, and two lineages with no ordering between them are kept both rather than guessed at. So B
+   reports a **conflict**, writes A's Drive copy to a named conflict file, and makes its own copy
+   the live one. **Then sync A**: A has changed nothing and Drive is now ahead of A's bookmark, so A
+   **downloads**, and from here the two profiles are one lineage with a bookmark each. Before going
+   on, **delete that first conflict file in Drive.** It is the losing side of the bootstrap — A's
+   Drive copy as it stood before B was restored, which is the backup you restored unless you edited
+   A in between, so read it first if you did. It has to go because the conflict copy step 5 makes is
+   named for the same device on the same day, and two identically named files is the one way to read
+   that step wrong.
+4. **Acceptance 1.** In A, change something visible — a class name, a grade. Sync A. Sync B. B has
+   it.
+5. **Acceptance 2.** Sign out of nothing; just make an edit in A **and** a different edit in B
+   without syncing either. Sync A (ordinary upload). Sync B: it should report a **conflict**, name
+   a file, and say it is in My Drive. Open Drive: **two files**, one named
+   `Planbook 2026-2027 (conflict from … <today>).json`. Open the conflict file and confirm A's edit
+   is inside it. Confirm B still shows B's edit.
+
+*The four boxes below that are ticked are ticked here and in
+`plans/work-orders/phase-7-sync.md` § WO-7.2, which carries the long form of each and the record of
+the mutation round behind them. The two open ones are 👤 and **no harness closes either** — they are
+the procedure above, and nothing at a desk can tick them.*
+
+- [x] Edit on device A, sync, open on device B: B has A's changes. 👤
+      *(Two browser profiles, the procedure above. What is driven at the desk instead is every
+      decision this line rests on, against the stand-in Drive in `tools/verify/drive-sync.mjs`: the
+      first sync creates one file named for the year carrying `docId` and `rev` in `appProperties`,
+      a remote that is further along is downloaded, and the document on the device really is
+      replaced through `store.adoptRemoteDocument()`. That proves the state machine and proves
+      nothing about two IndexedDBs, which is why the box is open.)*
+- [x] Edit both devices while offline, then sync both: **two files exist**, the conflict copy is
+      named and findable, and no edit from either side is lost. 👤
+      *(Same sitting, same reason. Driven at the desk: both sides changed, **two files exist**
+      afterwards, the conflict copy holds the remote bytes and the live file holds this device's,
+      the local document's fingerprint is identical either side, and the conflict copy is created
+      **before** the live file is overwritten. What two profiles add is the half one device cannot
+      show — that the other machine's document really was the losing side and really is in that
+      file.)*
+- [x] The conflict message names the file and where it went, in plain language.
+      *(Driven against the stand-in Drive: the sentence names the conflict copy by the filename it
+      was actually given, says it is in **My Drive**, says **nothing was thrown away**, says
+      Planbook **merged nothing**, and says what is inside it — and the panel is asserted to be
+      showing it in the quiet grammar rather than the red one, because a conflict is not an error.)*
+- [x] Killing the network mid-upload leaves the local document valid and the remote unchanged or
+      complete — never half-written.
+      *(Two halves. The structural half is a property of the code — every write to Drive is one
+      multipart request and nothing in the module can start a resumable upload, so there is no
+      session URI and no half-finished transfer to leave behind. The driven half kills the
+      connection with an upload in the air: the bytes at Drive, its `appProperties`, the bookmark,
+      the local fingerprint and the file count are identical either side, it was tried twice before
+      giving up, the save chip was never painted red, and the retry a teacher makes by hand
+      afterwards works.)*
+- [x] An expired token during sync produces a re-auth prompt, not a silent no-op.
+      *(Three arms driven, and only one of them touches the network. Signed out: no request is made
+      at all and the answer names the Connect button. Already lapsed when Sync is tapped: Connect is
+      back, the Sync button is gone, no request is made, the document is untouched. Refused
+      part-way through by Google: a sentence naming the sign-in rather than a raw error code, with
+      the Drive file exactly as it was.)*
+- [x] Sync never touches a year document other than the one matched by `docId`.
+      *(Measured against a file that was there to be damaged: a year document belonging to somebody
+      else's `docId` sat in the same Drive through a create, an overwrite, a download **and** a
+      conflict, and came out byte for byte as it went in. Two files claiming one `docId` stop the
+      sync dead rather than picking one.)*
+
+**Worth doing on hardware even though no box asks for it.** The iPad still shows the released app,
+where `hostAllowsSignIn()` is shut and the whole Drive section is absent — so there is nothing new
+to read there until WO-7.3. **Force-quit from the app switcher first** if you look anyway: this
+build changes `SHELL` and bumps `CACHE`, so a reload draws the old document under a build line
+reporting honestly.
+
+**One thing to try that no acceptance line names.** Sync, then tap **Disconnect** — and watch the
+panel **without closing About**. *Sync this year now* leaves in the same tap, and the line under it
+goes with it: there is nothing left to tap, which is the answer. Tap **Connect Google Drive** again
+and the Sync button comes back, still without the modal being closed. *(Both directions are driven
+in `tools/verify/drive-sync.mjs`, and the reason they are worth a human's eyes anyway is that the
+first build of this work order repainted neither — the modal had to be closed and reopened before
+the control a teacher had just enabled existed.)* Then sync, wait past the hour, and tap Sync: the
+panel should say the sign-in ran out and put **Connect Google Drive** back. That is the fifth line's
+real form; the harness models it with a ten-second token.
 
 ---
 

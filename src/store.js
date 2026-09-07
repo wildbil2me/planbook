@@ -27,8 +27,14 @@
 
   ── WHAT IS NOT HERE ──
 
-  No Drive, no conflict handling, and nothing ever sets the chip's `syncing` state — Phase 7
-  owns all of it.
+  No Drive. Not one line of this file knows what a Google file id is, what `appProperties` are,
+  or which of two documents is ahead of the other — src/drive-sync.js (WO-7.2) owns every bit of
+  that, and it imports this file rather than the other way round. What WO-7.2 added HERE is
+  three functions and one object store, all at the bottom, and each of them is here for the same
+  reason backup's two are: THIS FILE IS THE ONLY DOOR TO IndexedDB IN THE REPOSITORY. A second
+  module calling indexedDB.open() would be a second copy of openDb()'s three careful behaviours —
+  the Safari-private-mode throw, the `onversionchange` release, the `onblocked` refusal — and two
+  copies of a careful thing is one copy that will be edited and one that will not.
 
   Backup and restore live in src/backup.js, which owns the file format, the validation, and the
   teacher-facing copy. Only two things about them are the store's business and they are at the
@@ -40,12 +46,38 @@ import { announce } from './live-region.js';
 import { getPref, setPref } from './prefs.js';
 
 const DB_NAME = 'planbook';
-/* The IndexedDB version, which is NOT the document's schemaVersion and never tracks it. This
-   number changes only when the object stores themselves change shape — and the whole point of
-   the single-document design is that they never will. Document shape changes go through
-   MIGRATIONS below. */
-const DB_VERSION = 1;
+/*
+  The IndexedDB version, which is NOT the document's schemaVersion and never tracks it. This
+  number changes only when the object stores themselves change shape. Document shape changes go
+  through MIGRATIONS below.
+
+  IT WENT TO 2 AT WO-7.2, AND THE SENTENCE IT REPLACED SAID THEY NEVER WOULD — so read the reason
+  rather than the number. The stores did not change shape; a SECOND store arrived beside the
+  first, holding the per-device sync bookmark (SYNC_STORE below, and its own block explains why
+  it could go nowhere else). The single-document design is untouched: `years` still holds one
+  whole document per year and nothing about a year document is normalized out of it.
+
+  WHAT A BUMP COSTS, stated because it is not free and because this is the first one. Every
+  existing install runs `onupgradeneeded` once on its next launch, which creates the missing
+  store and nothing else. A SECOND TAB OF THE OLDER BUILD, open at the same moment, is the one
+  case that bites: `openDb()` below installs `db.onversionchange` on every connection it makes,
+  so that tab closes its handle and lets this upgrade through — and then its own next save
+  reopens at version 1 against a stored version 2 and gets a VersionError. That surfaces as the
+  red save chip and a console line, with the change still in memory and the document on disk
+  untouched, and a reload fixes it. It is loud, it is not destructive, and it wants two tabs
+  across a build boundary to happen at all. Recorded rather than engineered around, because the
+  engineering — a versionless open, a fallback ladder — would be a second way to open the
+  database in the one file whose whole claim is that there is only one.
+*/
+const DB_VERSION = 2;
 const STORE = 'years';
+/*
+  The per-device sync bookmark (WO-7.2), keyed by `docId`. One small record per document this
+  device has ever synced: which rev of it last matched what was in Drive, and when. It is NOT
+  part of any year document and never travels — see readSyncState() at the foot of this file for
+  the whole argument, including the two places it was not allowed to live.
+*/
+const SYNC_STORE = 'sync';
 
 /* The document's own version, stamped into every document and read back on load. It went to 2 at
    WO-2.10, when every `marks` cell became an object, and to 3 at WO-2.8, when hall passes arrived
@@ -341,10 +373,21 @@ function openDb() {
 
     req.onupgradeneeded = () => {
       const db = req.result;
-      /* One store. No index: the document loads whole and is written whole, so there is
-         nothing to look up by. An index added here would be the first half of splitting the
-         document, which the header comment explains at length. */
+      /* No index on either store: a document loads whole and is written whole, and a bookmark is
+         fetched by the one key it has. An index on `years` would be the first half of splitting
+         the document, which the header comment explains at length.
+
+         BOTH ARMS ARE GUARDED BY `contains`, which is what makes this function safe to run from
+         any stored version to this one. A fresh install arrives here with neither store and gets
+         both; an install from before WO-7.2 arrives with `years` and gets only `sync`. There is
+         no ladder here and there does not need to be one — a missing store is created and a
+         present one is left exactly as it is, so the step is the same step whatever it starts
+         from. That is the same idempotence MIGRATIONS above buys with a comparison per cell, one
+         level down. */
       if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'year' });
+      if (!db.objectStoreNames.contains(SYNC_STORE)) {
+        db.createObjectStore(SYNC_STORE, { keyPath: 'docId' });
+      }
     };
     req.onsuccess = () => {
       const db = req.result;
@@ -688,6 +731,157 @@ export async function restoreDocument(incoming) {
   setPref('openYear', current.year);
   notify();
   return current;
+}
+
+/*
+  ────────────────────────── sync: the swap, and the bookmark (WO-7.2) ──────────────────────────
+
+  Three functions, and they are the whole of what Drive sync needed from the store. Everything
+  else that work order built — the file matching, the rev comparison, the conflict copy, the
+  teacher-facing sentences — is in src/drive-sync.js, which imports this file. Nothing here
+  imports it back, and nothing here knows Drive exists.
+*/
+
+/*
+  ADOPT A DOCUMENT THAT CAME DOWN FROM DRIVE, and read it against restoreDocument() above rather
+  than on its own: the two are the same swap with opposite rules about `rev`, and the difference
+  is the entire reason this is a second function instead of a second argument.
+
+  A RESTORE IS A DECISION AND A DOWNLOAD IS THIS DEVICE CATCHING UP. The teacher who restores has
+  reached past the current state on purpose, so `rev` continues this device's count and the
+  restored document legitimately supersedes whatever is in Drive (docs/sync.md § "What a restore
+  does to `rev`"). A download is the opposite act: the document arriving is the SAME document,
+  further along, carrying the count of saves that produced it on whichever device did the
+  producing. Bumping it here would make this device's copy instantly newer than the file it was
+  just handed — `rev` would be one past the remote's, the caller would compute "local is ahead"
+  on the very next pass, and the app would upload three megabytes it had received four seconds
+  earlier, forever. `rev` counts SAVES OF A DOCUMENT, not saves on a device; the header of this
+  file has said so since WO-1.4, and adopting the number is what makes that true across two
+  machines instead of only on one.
+
+  IT REFUSES TO GO BACKWARDS, and that refusal is the invariant rather than a sanity check.
+  docs/sync.md's rule is that `rev` never goes backwards for a year on a device, because a later
+  comparison would then be made against a rev this document never had. The caller only downloads
+  when the remote is provably further along, so this can only fire on a caller bug or a
+  hand-edited file — and when it does, the answer is to refuse the swap, not to invent a number.
+  A refusal leaves everything exactly as it was; the caller says so to the teacher.
+
+  THE ORDER OF THE LINES IS restoreDocument()'S, LINE FOR LINE, and it is WO-1.5's Traps line:
+  nothing here touches the open document until IndexedDB has said the new record is on disk. If
+  the write throws, this throws, and the open document, the header and the stored record are all
+  exactly as they were. There is no state in which half a download has happened.
+*/
+export async function adoptRemoteDocument(incoming) {
+  if (!incoming || !incoming.year) {
+    throw new Error('store: that document has no school year in it, so there is nothing to '
+      + 'adopt. Nothing on this device has been changed.');
+  }
+  /* Whatever is pending belongs to the document that is about to be replaced, and if it would
+     not write, this refuses for the reason a year switch does — the pending change is in memory
+     and nowhere else, and overwriting the record now would throw it away. */
+  await leaveCurrent();
+
+  const existing = await readYear(incoming.year);
+  const here = Number(existing && existing.rev) || 0;
+  const there = Number(incoming.rev) || 0;
+  if (!(there > here)) {
+    throw new Error('store: the copy in Google Drive is at save ' + there + ' and the '
+      + incoming.year + ' document on this device is at save ' + here + ', so taking the Drive '
+      + 'copy would move this year backwards. Planbook has not changed anything on this device.');
+  }
+
+  await writeDocument(incoming);
+
+  current = incoming;
+  dirty = false;
+  setPref('openYear', current.year);
+  notify();
+  return current;
+}
+
+/*
+  THE PER-DEVICE SYNC BOOKMARK, and WHERE IT LIVES IS THE DECISION — the one WO-7.2 had to make
+  with nothing in the tree to copy, because `baseRev` existed in three paragraphs of prose and in
+  no line of code. What is stored is four scalars: the document id, the year label, the rev this
+  device last knows landed in Drive, and when that was. Nothing a teacher typed, and nothing from
+  inside a document.
+
+  TWO PLACES IT WAS NOT ALLOWED TO GO, and both were the first idea:
+
+    · NOT IN THE YEAR DOCUMENT. newYearDocument() is fenced by parseBackup(), which validates a
+      restored file against the shape that function returns — so a block added there refuses
+      every backup written by every earlier build, by name (the WO-6.1 scar, CLAUDE.md § Data).
+      WO-6.1's own answer, a block created by its first write and absent until then, WOULD have
+      cleared that fence, and it still loses on something worse: THE DOCUMENT IS THE THING BEING
+      SYNCED. A bookmark inside it would be uploaded with it and downloaded onto the other
+      device, which then reads this laptop's bookmark as its own — and writing the bookmark would
+      itself be an update(), which bumps `rev`, which makes the document ahead of the bookmark
+      that was just written, forever. A per-device fact cannot live in the thing that travels
+      between devices.
+    · NOT IN localStorage AT ALL. src/prefs.js's PREF_DEFAULTS is UI preferences only and refuses any
+      key not declared in it — and the door being shut is the weaker half of the reason. A sync
+      bookmark is not a switch position or a remembered tab: it is the state of a data transfer,
+      and CLAUDE.md's rule for that file is about what localStorage is FOR rather than about how
+      big the value is. Declaring `syncBaseRev` there would be the sixth work order to restrict
+      that file and the first to widen what it means.
+
+  SO: IndexedDB, beside the documents, in a store of its own — the same storage the thing it is
+  about lives in, evicted with it and cleared with it, which is the property that matters. A
+  bookmark that survived a storage wipe its document did not would claim a Drive file matches a
+  document that is no longer there.
+
+  KEYED BY `docId` AND NOT BY YEAR, which is what answers docs/sync.md's open question — a backup
+  restored from a DIFFERENT device brings that file's `docId` with it, and `docId` is what
+  files.list matches on. Keyed this way there is nothing to detect and nothing to invalidate: the
+  restored document asks for a bookmark under its new id, there has never been one, and the
+  caller reads "this device has never synced this document" — which is exactly true. Keyed by
+  year, the same read would have handed back the OLD document's bookmark under the new
+  document's id, and a baseRev that belongs to a different lineage is the one input the
+  comparison in src/drive-sync.js cannot survive. docs/sync.md § "What a restore does to `rev`"
+  carries the answer in full.
+*/
+export async function readSyncState(docId) {
+  if (!docId) return null;
+  const db = await connect();
+  const found = await request(
+    db.transaction(SYNC_STORE, 'readonly').objectStore(SYNC_STORE).get(docId)
+  );
+  return found || null;
+}
+
+/*
+  Write one bookmark. Called only after a transfer has actually landed — never before one, and
+  never from a `finally`: a bookmark written for an upload that failed is a claim that Drive
+  holds a rev it does not, and the next pass would compute "nothing to do" over a file that never
+  arrived. That ordering is the caller's to keep, and src/drive-sync.js says so at every call.
+
+  It stores what it is given and adds the stamp. There is no updater and no delete, for the
+  reason there is neither in src/log.js: the whole record is four fields and rewriting it is one
+  put, so an "update the rev and keep the rest" path would exist only to be got wrong.
+*/
+export async function writeSyncState(docId, year, baseRev) {
+  if (!docId) return null;
+  const record = {
+    docId: String(docId),
+    year: String(year || ''),
+    baseRev: Number(baseRev) || 0,
+    at: new Date().toISOString(),
+  };
+  const db = await connect();
+  await new Promise((resolve, reject) => {
+    let t;
+    try {
+      t = db.transaction(SYNC_STORE, 'readwrite');
+      t.objectStore(SYNC_STORE).put(record);
+    } catch (e) { reject(e); return; }
+    /* Resolved on `complete` and never on the request's own `success`, for writeDocument()'s
+       reason further up this file: a request can succeed and the transaction still abort, and a
+       bookmark that was thrown away is worse than one that was never written. */
+    t.oncomplete = () => resolve();
+    t.onerror = () => reject(t.error || new Error('the sync bookmark transaction failed'));
+    t.onabort = () => reject(t.error || new Error('the sync bookmark transaction was aborted'));
+  });
+  return record;
 }
 
 /* Said out loud on a year switch, because the only visible change is a label in the header and

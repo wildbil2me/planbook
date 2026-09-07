@@ -86,9 +86,9 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 5/8 `[██████░░░░] 63%` |
 | 5 | Outreach | 🔨 IN PROGRESS | 9/9 `[██████████] 100%` |
 | 6 | Calendar & the glance page | 🔨 IN PROGRESS | 6/8 `[███████░░░] 75%` |
-| 7 | Drive sync (opt-in) | 🔨 IN PROGRESS — launch needs OAuth verification | 2/7 `[██░░░░░░░░] 29%` |
+| 7 | Drive sync (opt-in) | 🔨 IN PROGRESS — launch needs OAuth verification | 6/7 `[█████████░] 86%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 2/8 `[██░░░░░░░░] 25%` |
-| | | **Overall** | **65/81 `[████████░░] 80%`** · ⏳ 1 deferred |
+| | | **Overall** | **69/81 `[█████████░] 85%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -620,11 +620,11 @@ it. If it can't be acted on, it doesn't earn a place.
 
 - [x] Google Identity Services token flow, browser-only, **`drive.file` and nothing else**.
 - [x] Sign-in is opt-in and reversible; the app stays fully functional signed-out, forever.
-- [ ] Upload/download the year document, matched by `appProperties.docId`.
-- [ ] `rev`/`baseRev` comparison per [`../docs/sync.md`](../docs/sync.md).
-- [ ] **Conflict: keep both, never merge, never discard.** Write the loser as a named conflict copy
+- [x] Upload/download the year document, matched by `appProperties.docId`.
+- [x] `rev`/`baseRev` comparison per [`../docs/sync.md`](../docs/sync.md).
+- [x] **Conflict: keep both, never merge, never discard.** Write the loser as a named conflict copy
       and say plainly where it went.
-- [ ] Handle token expiry gracefully — no refresh token exists in a browser flow, so sync is a
+- [x] Handle token expiry gracefully — no refresh token exists in a browser flow, so sync is a
       foreground act. Never build a feature assuming background sync.
 - [ ] Verification complete: privacy policy, verified domain, demo video, a consent screen showing
       one scope and no warning.

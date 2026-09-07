@@ -589,6 +589,12 @@
       data-drive-disconnect           signs out. Clears the in-memory token, asks Google to
                                       revoke it, and touches no year document — src/auth.js
                                       imports the store for nothing at all
+      data-drive-sync                 moves the open school year to or from Drive, or keeps both
+                                      copies when the two have diverged (WO-7.2). Beside the two
+                                      above and hidden until one of them has produced a token.
+                                      A TAP AND NEVER A TIMER: a browser token flow has no
+                                      refresh token, so nothing in this app may be built on sync
+                                      happening while the teacher is not looking
 
     Delegation also means markup rendered later needs no re-binding, which is what makes it
     the right default for a screen whose rows come from the year document. The year rows are
@@ -793,6 +799,11 @@ import * as gradesReport from './grades-report.js';
    own hostname whether the section exists at all, and that decision is not repeated here for
    src/supports.js's reason — one asker, so the screen cannot disagree with the rule. */
 import * as auth from './auth.js';
+/* The Drive transfer (WO-7.2). Imported for three calls: the Sync control in the same section,
+   and the two paints on the path that opens it. It is hidden on exactly the devices src/auth.js
+   is hidden on and for the same reason — it asks that module whether the flag is open rather than
+   reading the hostname a second time, which is src/supports.js's rule about one asker per fact. */
+import * as driveSync from './drive-sync.js';
 
 /* WO-5.2, and it is TWO modules for the reason `signals` and `signalsView` are two: `templates` is
    the model — what a record is, which templates exist for a tone and an audience, and the eight the
@@ -1734,6 +1745,34 @@ function clearDateField(btn) {
   }
 }
 
+/*
+  A SIGN-IN OR A SIGN-OUT CHANGED, SO THE OTHER HALF OF THE DRIVE PANEL IS REPAINTED (WO-7.2).
+
+  The panel a teacher sees as one section is painted by two modules: src/auth.js owns the status
+  line and the Connect/Disconnect pair, and src/drive-sync.js owns "Sync this year now" and the
+  last-synced line under it. auth.js repaints its own half on every outcome including the failures,
+  and it CANNOT repaint the other one — importing src/drive-sync.js from there would reverse the
+  one-way dependency that module's fourth decision rests on (auth.js imports src/live-region.js and
+  nothing else, so signing out cannot write, clear or reorder anything in IndexedDB). So the second
+  half is chained from here, in the one listener that already carries every other cross-module
+  consequence in this app: the year switch, the restore, the categories, the bands, the thresholds.
+
+  THE OTHER ANSWER WAS A SUBSCRIBER LIST IN src/auth.js for the sync module to register with. It
+  keeps the import pointing the right way too, and it was refused for what it costs: a
+  general-purpose notification bus, in the file whose whole claim is that it reaches nothing, for
+  two call sites that both live in this one function. `window.planbook` is "a one-way window for a
+  tool, not a bus" for the same reason, and this file is where wiring is allowed to be wiring.
+
+  BOTH CALLS, IN THIS ORDER, and it is the About-modal-open path's order for its reason:
+  refreshSyncChrome() is synchronous and settles whether the button is on the screen at all, and
+  primeSyncChrome() reads the sync bookmark out of IndexedDB and fills in the one line that needs
+  it. The read is not awaited by either caller.
+*/
+function afterDriveAuthChange() {
+  driveSync.refreshSyncChrome();
+  driveSync.primeSyncChrome();
+}
+
 /* One click listener for the whole document. Order matters only in that the first hook to
    match wins, and no element carries two of them. */
 document.addEventListener('click', (e) => {
@@ -1757,6 +1796,16 @@ document.addEventListener('click', (e) => {
          are true the moment it appears — and outside the .then arms because it cannot fail: the
          module returns early when the section is not on the page or the flag is shut. */
       auth.refreshAuthChrome();
+      /* And the transfer's own half beside it (WO-7.2), in the same breath and for the same
+         reason. Two calls rather than one because they answer at two speeds: refreshSyncChrome()
+         is synchronous and paints the button state off a module variable, so the section is whole
+         the moment it appears; primeSyncChrome() reads the sync bookmark out of IndexedDB and
+         fills in the one line that needs it. THE SECOND IS NOT AWAITED, deliberately — a modal
+         that waits on a database before appearing is a modal that hangs on a slow device, and the
+         line it fills is a footnote rather than the panel's subject. It starts blank rather than
+         guessing, so nothing false is ever on the glass while it lands. */
+      driveSync.refreshSyncChrome();
+      driveSync.primeSyncChrome();
       paintBuildLine().then(() => openModal(overlayId, open), () => openModal(overlayId, open));
       return;
     }
@@ -1792,13 +1841,41 @@ document.addEventListener('click', (e) => {
      opposite of the mode above, where the redraw is the point. */
   if (e.target.closest('[data-sounds-toggle]')) { alertSound.toggleAlertSounds(); return; }
 
-  /* THE TWO DRIVE CONTROLS (WO-7.1), and neither is awaited. Both report into the panel they sit
-     in — src/auth.js repaints it on every outcome, including the failures — and there is nothing
-     here to chain onto the end of either: a sign-in changes no screen but that section, because
-     this build moves no data. The day one does, it is WO-7.2 that adds the line, exactly as the
-     categories, the bands and the thresholds each added theirs. */
-  if (e.target.closest('[data-drive-connect]')) { auth.connect(); return; }
-  if (e.target.closest('[data-drive-disconnect]')) { auth.disconnect(); return; }
+  /* THE TWO DRIVE CONTROLS (WO-7.1), AND THE CHAIN THE COMMENT HERE SAID WO-7.2 WOULD ADD. It read
+     "a sign-in changes no screen but that section, because this build moves no data — the day one
+     does, it is WO-7.2 that adds the line, exactly as the categories, the bands and the thresholds
+     each added theirs." This is that line, and afterDriveAuthChange() above carries the argument
+     for why it is here rather than in src/auth.js.
+
+     WITHOUT IT THE PANEL LIES IN BOTH DIRECTIONS. Connecting left "Sync this year now" hidden
+     until About was closed and reopened, so the one modal session that turns the feature on was
+     the one session that could not use it; disconnecting left that button and the last-synced line
+     on the screen underneath the words "Not connected".
+
+     connect() is ASYNC and the repaint belongs on the far end of it: whether the Sync button is
+     drawn at all is whether there is a sign-in behind it, and that is not known until Google has
+     answered. Both arms take the same chain, because a refusal has to repaint too — a connect that
+     failed can leave an earlier session standing, and the panel describes what it finds rather than
+     what the tap hoped for. disconnect() is synchronous and has already dropped the session by the
+     time it returns, so its repaint is the next statement.
+
+     Neither is awaited from here, exactly as before. */
+  if (e.target.closest('[data-drive-connect]')) {
+    auth.connect().then(afterDriveAuthChange, afterDriveAuthChange);
+    return;
+  }
+  if (e.target.closest('[data-drive-disconnect]')) {
+    auth.disconnect();
+    afterDriveAuthChange();
+    return;
+  }
+  /* AND THE LINE THE PARAGRAPH ABOVE SAID WO-7.2 WOULD ADD. It is not awaited either, for the
+     same reason and one more of its own: a sync moves a document, so the screens behind this
+     modal can change under it — and they are not repainted from here. src/store.js's own
+     subscribers do that, because adopting a downloaded document goes through the store like any
+     other write and notify() is what every screen in this app already listens to. A repaint
+     chained on here would be a second one, racing the first. */
+  if (e.target.closest('[data-drive-sync]')) { driveSync.syncNow(); return; }
 
   const picker = e.target.closest('[data-year-picker]');
   if (picker) { openYearPicker(picker); return; }
@@ -3977,6 +4054,20 @@ window.planbook = {
      app, to anything that could equally have called Google itself. Nothing in the app reads
      window.planbook — see the block above for why the seam outlived the shelf. */
   auth,
+  /* `driveSync` joined at WO-7.2, and its reason is `auth`'s carried one step further. A page
+     cannot be handed a real Google token and it cannot be handed a real Google Drive either, so
+     the success path of every transfer is unreachable by clicking — and unlike `auth`, this
+     module exports NOTHING for a harness to stand in the middle of. It does not need to: every
+     request goes through the page's own `fetch`, which tools/verify/drive-sync.mjs replaces for
+     the length of its section, so the shipped code has no door in it at all and the whole state
+     machine is still drivable. What this entry buys is the READING half that `classes` gives —
+     what plan a set of three revs produces, what the bookmark now says, which sentence the
+     teacher was shown — and one thing no click can reach: planFor() is where the conflict rule
+     lives, and a build that keeps both copies and a build that silently overwrites one look
+     identical from outside it until the day it matters. syncState() carries no token and no
+     document, which is authState()'s shape and its argument. Nothing in the app reads
+     window.planbook — see the block above for why the seam outlived the shelf. */
+  driveSync,
   /* `templates` and `templatesView` joined at WO-5.2, and their reasons are the two this list
      already has rather than a third. THE MODEL is `mergeFields`': what the acceptance lines ask
      about is the collection — that a concern template and a praise template can exist for the same
