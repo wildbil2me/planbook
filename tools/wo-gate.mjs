@@ -228,21 +228,112 @@ const KNOWN_FIELDS = ['Ship', 'Status', 'Size', 'Depends on', 'Owes', 'Blocks', 
 const FIELD_NAME = String.raw`[A-Z][A-Za-z]*(?: [a-z][A-Za-z]*)*`;
 const FIELD_TOKEN = new RegExp(String.raw`(?:^|·)\s*\*\*(${FIELD_NAME})(?: WO-[\dG][\w.]*)*\*\*`, 'g');
 
-// Every field-shaped token in one header block, in the order written. Read off the block's LINES and
-// not off the joined paragraph, because "the start of a line" is a position the join destroys.
+// The same token WITHOUT the position rule in front of it: a bold run that is SHAPED like a field,
+// wherever it happens to sit. Only strayFieldTokens() uses it, to tell the two apart (WO-1.27).
+const FIELD_SHAPE = new RegExp(String.raw`\*\*(${FIELD_NAME})(?: WO-[\dG][\w.]*)*\*\*`, 'g');
+
+// **THE POSITION RULE LIVES HERE, ONCE, AND IS READ THREE TIMES (WO-1.27).** Every field-shaped token
+// in one header block that is written WHERE A FIELD IS WRITTEN — at the start of a header line, or
+// after a `·` — with the offsets the value parse needs. Read off the block's LINES and not off the
+// joined paragraph, because "the start of a line" is a position the join destroys.
+//
+// **It used to be read once, and the other reader had no positions left to read it with.** fieldsIn()
+// applied the rule and populated `unknownFields`; fieldRe() — which extracted the VALUE, and is what
+// every consumer actually uses — was a bare `\*\*Name\*\*\s*(.*?)` run against `joined`, the block
+// collapsed into one string. WO-6.3's header paragraph ran straight on into an italic note ending
+// ``here under WO-6.2's `**Owes**`.)*``; fieldsIn() correctly declined to call that a field, and
+// fieldRe('Owes') matched it anyway and captured `` `.)* ``. Because gate() prints a DEPENDENCY's
+// **Owes** beside it, the phantom surfaced on WO-6.4 and WO-6.5 — two work orders that have no
+// **Owes** field and never had one. --audit passed clean over it every run for a week: it checks
+// fragments, pointers, § The files and the dashboards, and nothing anywhere asked whether a field it
+// had read was field-shaped in the first place. One predicate read three times is the whole fix; a
+// second copy of the rule is how the two halves came to disagree at all.
+//
+// `bodyStart` is the offset of the `**`, not of the match — FIELD_TOKEN's own match begins at the
+// `·` or at column 0. `end` is where a value starts, and the NEXT token's `start` is where it stops,
+// which is the `·` itself: the separator falls outside both values without anything having to strip
+// it, exactly as fieldRe()'s `(?=\s*·?\s*…)` lookahead used to arrange.
+function positionalFields(block) {
+  const out = [];
+  for (let i = 0; i < block.length; i++) {
+    for (const m of block[i].matchAll(FIELD_TOKEN)) {
+      out.push({ name: m[1], line: i, start: m.index, bodyStart: m.index + m[0].indexOf('**'), end: m.index + m[0].length });
+    }
+  }
+  return out;
+}
+
+// Every field-shaped token in one header block, in the order written — the names, for `present`.
 function fieldsIn(block) {
   const names = [];
-  for (const line of block) {
-    for (const m of line.matchAll(FIELD_TOKEN)) if (!names.includes(m[1])) names.push(m[1]);
-  }
+  for (const f of positionalFields(block)) if (!names.includes(f.name)) names.push(f.name);
   return names;
 }
 
-// `**Name** …everything up to the next field or the end of the header paragraph`. `present` is this
-// block's own fields, so an unknown one terminates the field before it exactly as a known one does.
-function fieldRe(name, present = []) {
-  const others = [...new Set([...KNOWN_FIELDS, ...present])].filter(f => f !== name).join('|');
-  return new RegExp(`\\*\\*${name}\\*\\*\\s*(.*?)(?=\\s*·?\\s*\\*\\*(?:${others})\\b|$)`);
+// `**Name** …everything up to the next FIELD or the end of the header paragraph`, by name, for every
+// field in the block at once. The terminator is the next POSITIONAL token, known or unknown — an
+// unknown field ends the field before it exactly as a known one does (WO-2.16) — and a field-shaped
+// token written anywhere else is prose that belongs to whatever value it sits inside.
+//
+// **That last clause is the whole of the do-not-over-tighten rule**, and both halves of it are real
+// lines in this directory rather than hypotheticals: WO-1.13's **Closes roadmap** note says
+// *see **Why it exists** below*, and WO-1.11's **Depends on** runs on into a line opening
+// **Not a go-live blocker.** — field-shaped in the wrong place, and field-placed without the shape. A
+// blanket "a value ends at the next `**`" cuts both, and --self-check plants them.
+//
+// Lines are joined with a single space, which is what `block.join(' ')` did, so a value that wraps
+// reads exactly as it did before. **Nothing here touches a terminator**: the block arrives already
+// split on /\r?\n/ by parseFile(), and no line ending is written back (WO-3.25).
+//
+// First occurrence wins, the way the old first-match-in-`joined` did. A field written twice in one
+// header block is malformed, and nothing here tries to be clever about which one was meant.
+function fieldValues(block) {
+  const tokens = positionalFields(block);
+  const values = new Map();
+  for (let k = 0; k < tokens.length; k++) {
+    const from = tokens[k], to = tokens[k + 1];
+    if (values.has(from.name)) continue;
+    const parts = [];
+    for (let i = from.line; i <= (to ? to.line : block.length - 1); i++) {
+      parts.push(block[i].slice(i === from.line ? from.end : 0, to && i === to.line ? to.start : undefined));
+    }
+    // A `·` left on the end is the separator in front of the next field, not content, and it is
+    // dropped only when there IS a next field — which is exactly what fieldRe()'s `\s*·?\s*`
+    // lookahead did, and it did it across a line break too. WO-3.18's **Depends on** wraps onto a
+    // third line ending `… goes in the form ·`, with **Blocks** opening the line below: the token
+    // scan matches that field on `^` and leaves the separator behind on the line above. One `·`,
+    // like the `·?` it replaces, and never on the last field in a block, where the old lazy match
+    // ran to `$` and kept whatever was there.
+    values.set(from.name, to ? parts.join(' ').trim().replace(/\s*·$/, '').trim() : parts.join(' ').trim());
+  }
+  return values;
+}
+
+// A field-shaped token that is NOT at a field position — the inverse of the field with no row, and
+// the other half of the same rule. That one is a name nothing reads; this is a name EVERYTHING reads,
+// written where a field is not written. It draws a NOTE on the gate report and never a refusal:
+// prose in a header block legitimately discusses field names — WO-1.27's own does — and a refusal
+// would make these files unwriteable.
+//
+// **Narrowed to the names something actually reads**, which is KNOWN_FIELDS plus this block's own
+// positional fields. The broad version fires on four work orders in today's tree and three of them
+// are innocent prose — WO-1.13's *see **Why it exists** below*, WO-2.53's
+// *see **Why it exists** § the seventh control*, WO-3.25's `ROADMAP.md`'s **Score entry grid** line —
+// and "a control that goes red for a reason the reader learns to dismiss is worse than no control"
+// (WO-1.12). The class this exists to catch is a name a consumer would have read: WO-6.3's was
+// **Owes**, and the one live instance this scan found on the day it was written was WO-2.52's
+// **Takes from WO-2.51**, a real field written mid-sentence, repaired in the same sitting.
+function strayFieldTokens(block, present) {
+  const read = new Set([...KNOWN_FIELDS, ...present]);
+  const out = [];
+  for (let i = 0; i < block.length; i++) {
+    const positional = new Set(positionalFields([block[i]]).map(f => f.bodyStart));
+    for (const m of block[i].matchAll(FIELD_SHAPE)) {
+      if (positional.has(m.index) || !read.has(m[1])) continue;
+      out.push({ name: m[1], line: i, text: m[0] });
+    }
+  }
+  return out;
 }
 
 // **Split on either terminator, and this is the only place the file decides what a line is
@@ -278,11 +369,21 @@ function parseFile(file) {
     while (j < lines.length && !lines[j].trim()) j++;          // skip the blank after the heading
     const blockStart = j;
     while (j < lines.length && lines[j].trim()) block.push(lines[j++]);
-    const joined = block.join(' ');
-    const present = fieldsIn(block);
+    const joined = block.join(' ');                            // 🚩 only — every VALUE below is read
+    const present = fieldsIn(block);                           // off the lines (WO-1.27)
+    const values = fieldValues(block);
 
-    const field = re => { const r = re.exec(joined); return r ? r[1].trim() : ''; };
-    const statusRaw = field(/\*\*Status\*\*\s*([^·]*)/);
+    // `field()` is a lookup now rather than a regex, and there is no `fieldRe()` left to run against
+    // the joined paragraph: a value starts at a POSITIONAL token or it does not start (WO-1.27).
+    //
+    // `upToDot()` is the `[^·]*` the three status-line fields have always carried, and it stays for
+    // the reason it was written: **Ship**, **Status** and **Size** share one line with each other and
+    // with 🚩, so the `·` is where each of them ends whatever follows it. WO-1.13's line reads
+    // `**Size** M · 🚩 ·` and its **Size** is `M`, not `M · 🚩 ·`. The other six fields own the rest
+    // of their line and take the value whole.
+    const field = name => values.get(name) || '';
+    const upToDot = s => s.split('·')[0].trim();
+    const statusRaw = upToDot(field('Status'));
     const status = STATUSES.find(s => statusRaw.startsWith(s)) || statusRaw || '(none)';
 
     // The rest of the work order — heading to the next `---` rule or the next `## WO-`, which is
@@ -311,18 +412,22 @@ function parseFile(file) {
       blockStart,                                              // 0-indexed line of the header block
       blockLines: block.length,
       acceptance: acceptanceOf(lines, j, end),                 // null when there is no list at all
-      ship: field(/\*\*Ship\*\*\s*([^·]*)/),
+      ship: upToDot(field('Ship')),
       status,
       statusRaw,
-      size: field(/\*\*Size\*\*\s*([^·]*)/),
+      size: upToDot(field('Size')),
       flag: /🚩/.test(joined),
-      dependsRaw: field(fieldRe('Depends on', present)),
-      owesRaw: field(fieldRe('Owes', present)),
-      blocks: field(fieldRe('Blocks', present)),
-      target: field(fieldRe('Target', present)),
-      closesRoadmap: field(fieldRe('Closes roadmap', present)),
-      amendsRoadmap: field(fieldRe('Amends roadmap', present)),
+      dependsRaw: field('Depends on'),
+      owesRaw: field('Owes'),
+      blocks: field('Blocks'),
+      target: field('Target'),
+      closesRoadmap: field('Closes roadmap'),
+      amendsRoadmap: field('Amends roadmap'),
       unknownFields: present.filter(f => !KNOWN_FIELDS.includes(f)),
+      // The other half of the same rule (WO-1.27): a name something READS, written where a field is
+      // not written. Absolute 0-indexed lines, like strayRoadmapLines above, so the note can point at
+      // the line rather than at the work order.
+      strayFields: strayFieldTokens(block, present).map(t => ({ ...t, line: blockStart + t.line })),
       strayRoadmapLines: strays,                               // 0-indexed, outside the header block
     });
   }
@@ -809,6 +914,21 @@ function gate(id, wos) {
   // what becomes of a field with no row.
   for (const f of wo.unknownFields) {
     notes.push(`**${f}** is a header field nothing reads — no row in plans/work-orders/README.md § "Header fields", no line in KNOWN_FIELDS. It is parsed only far enough to keep it out of the field written before it. Give it both, or take it out of the header block`);
+  }
+
+  // The inverse of the field with no row, and the other half of the same rule (WO-1.27). That one is
+  // a name nothing reads; this is a name EVERYTHING reads, written where a field is not written — so
+  // it is prose, it stays inside the value around it, and no field comes of it. Said once per token
+  // and with the line, because WO-6.3's took a week to find and surfaced on two OTHER work orders:
+  // gate() prints a dependency's **Owes** beside it, so the phantom read as a malformed field on
+  // WO-6.4 and WO-6.5, which have never had one.
+  //
+  // A NOTE and never a refusal, and the reason is not squeamishness: a header block legitimately
+  // discusses field names — WO-1.27's own does — so a refusal here would make these files
+  // unwriteable. What it buys is the moment: the next one is named the day it is typed rather than
+  // the week somebody thinks the output looks odd.
+  for (const t of wo.strayFields) {
+    notes.push(`${t.text} sits in ${wo.id}'s header block at ${path.relative(REPO, wo.file)}:${t.line + 1} but not where a field is written — it neither starts the line nor follows a "·". It is read as prose inside the value around it and no **${t.name}** value comes of it, which is deliberate; this is a NOTE because prose in a header block may legitimately name a field. If it was meant AS a field, put it at the start of a line (plans/work-orders/README.md § "Header fields")`);
   }
   for (const k of wo.strayRoadmapLines) {
     notes.push(`a **Closes/Amends roadmap** line sits below the header paragraph at ${path.relative(REPO, wo.file)}:${k + 1} — nothing in this script can see it, so --tick would tick no box and say so as if there were none. Move it into the header paragraph (--audit lists these)`);
@@ -2034,16 +2154,27 @@ function acceptanceSection({ open, rehome, boxes, calendar = false }) {
 ${second}${third}${rehome ? `\n- [ ] ${rehome}` : ''}`;
 }
 
+// `afterStatus`, `closesProse` and `trailer` (WO-1.27) are the three places bold can appear in a
+// header block that is not a field, and each is a real shape out of this directory rather than an
+// invention: a line OPENING with bold that is not field-shaped (WO-1.11's **Not a go-live blocker.**),
+// field-shaped bold in the MIDDLE of a value (WO-1.13's *see **Why it exists** below*), and an
+// italic note running straight on into the paragraph with no blank line above it, ending in a field
+// name (WO-6.3's, which is the one that produced a phantom **Owes** on two other work orders).
+// All three default to '' — no other plant's fixture changes shape.
+//
+// Whatever goes in them must carry no `"`: the **Closes roadmap** fragment matcher reads anything in
+// double quotes on that line, and a second quoted run is a second fragment matching no box.
 function fixtureBlock({ status, fragment, open, owes = '', rehome = '', target = 'open', boxes = true,
                         calendar = false, depends = 'nothing',
+                        afterStatus = '', closesProse = '', trailer = '',
                         chainStatus = '⬜ NOT STARTED', chainCalendar = false }) {
   return `
 ---
 
 ## ${FIXTURE_ID} — self-check fixture
 
-**Ship** — · **Status** ${status} · **Size** S · **Depends on** ${depends}${owes ? ` · **Owes** ${owes}` : ''}
-**Closes roadmap** Phase ${FIXTURE_PHASE} → "${fragment}"
+**Ship** — · **Status** ${status} · **Size** S · **Depends on** ${depends}${owes ? ` · **Owes** ${owes}` : ''}${afterStatus ? `\n${afterStatus}` : ''}
+**Closes roadmap** Phase ${FIXTURE_PHASE} → ${closesProse}"${fragment}"${trailer ? `\n${trailer}` : ''}
 
 **Why it exists.** \`wo-gate.mjs --self-check\` writes this into a temp copy of \`plans/\` and deletes
 it with the copy. **If you are reading this inside the repository, a self-check died before its
@@ -2501,6 +2632,22 @@ function runPlants(subject, sandbox) {
 
   const OK = '⬜ NOT STARTED', RUN = '🔨 IN PROGRESS', CLAIM = '🤖 CLAIMED';
   const STRUCK_AT = `${STRUCK} — 2026-01-01`, DEFERRED_AT = `${DEFERRED} — 2026-01-01`;
+
+  // WO-1.27's four shapes, written once so a plant and its assertion read the same text.
+  //
+  // `STRAY_MARK` is what a plant finds the line by, because naming the LINE is half of what the note
+  // is for: WO-6.3's phantom **Owes** took a week to find and surfaced on WO-6.4 and WO-6.5, which
+  // have never had the field. **No `"` in any of these** — the fragment matcher reads anything in
+  // double quotes on the **Closes roadmap** line, and three of the four end up inside one.
+  //
+  // **No `WO-` id in BOLD_PROSE**, and that is not tidiness: it lands inside **Depends on**, depsOf()
+  // reads every `WO-` token off that field, and a fixture naming a real work order is the mistake
+  // WO-2.15's acceptance list was re-cut twice for.
+  const STRAY_MARK = "under WO-6.2's `**Owes**`";
+  const PROSE_OWES = `*(An italic note that ran straight on into the header block with no blank line above it, the way\nWO-6.3's did — it names the field here ${STRAY_MARK}.)*`;
+  const BOLD_PROSE = '**Not a go-live blocker.** Added out of the verification above, at the head of a header line.';
+  const NOTE_PROSE = '*(no roadmap line for the note itself — see **Why it exists** below)* ';
+  const TAKES_FROM = `**Takes from ${CHAIN_ID}**`;
   const plants = [
     {
       name: 'an unticked Acceptance line holds --tick at 🔨 IN PROGRESS instead of ✅ DONE',
@@ -3280,6 +3427,96 @@ function runPlants(subject, sandbox) {
     // The status is written as `AWAITING` rather than aliased beside OK/RUN/CLAIM above, because the
     // fences under test read the same constant — an alias here would let a plant and a fence disagree
     // about the spelling of a glyph and both look right.
+    // WO-1.27's FOUR, about where a field is written rather than about what it says. They go here
+    // and not at the end for the reason the WO-1.38 four below give: those write a result file into
+    // the sandbox's `.claude/dispatch/`, which `reset()` does not clear — it restores `plans/` — so a
+    // gate report run after them carries a `dispatch result` line, and three of these four read a
+    // gate report line by line.
+    {
+      name: 'a field name written in prose is not read as a field, and the report names the line it sits on',
+      run: () => {
+        // WO-6.3's shape exactly: an italic note running straight on into the header paragraph, no
+        // blank line above it, ending in a field name inside backticks. fieldsIn() always declined to
+        // call that a field; the value parse matched it anyway and captured the tail of the note.
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false, trailer: PROSE_OWES });
+        const bad = [];
+        const before = snapshot();
+        const r = run([FIXTURE_ID]);
+        if (r.code !== 0) bad.push(`the gate report exited ${r.code} on a fixture with no dependencies:`, ...verdict(r.out));
+        const owesLine = (r.out.match(/^\s*owes\s.*$/m) || [''])[0].trim();
+        if (owesLine) bad.push(`the report printed "${owesLine}" over a header block whose only **Owes** is inside backticks in an italic note — this is WO-6.3's phantom, which surfaced on two other work orders`);
+        if (/`\.\)\*/.test(r.out)) bad.push('the tail of the italic note was printed as a field value');
+        if (!/but not where a field is written/.test(r.out)) bad.push('no NOTE was drawn for a field-shaped token sitting where a field is not written');
+        const at = readSb(path.join('work-orders', FIXTURE_FILE)).split('\n').findIndex(l => l.includes(STRAY_MARK)) + 1;
+        if (at < 1) bad.push('the plant could not find its own planted line — the fixture is not what this plant thinks it is');
+        else if (!r.out.includes(`${FIXTURE_FILE}:${at}`)) bad.push(`the NOTE did not name ${FIXTURE_FILE}:${at}, the line the token is on — a note that cannot say where is what let WO-6.3's run for a week`);
+        if (changedSince(before).length) bad.push(`a gate report wrote ${changedSince(before).join(', ')}`);
+        return bad;
+      },
+    },
+    {
+      name: 'bold prose inside a value stays in the value — a line opening with bold, and field-shaped bold mid-value',
+      run: () => {
+        // The two named regressions, in one fixture because they are one rule read from both sides:
+        // WO-1.11's line OPENS with bold that is not field-shaped, and WO-1.13's note carries bold
+        // that IS field-shaped in the middle of a value. Neither may end the field it sits in.
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false,
+                afterStatus: BOLD_PROSE, closesProse: NOTE_PROSE });
+        const bad = [];
+        const g = run([FIXTURE_ID]);
+        if (!g.out.includes(BOLD_PROSE)) {
+          bad.push(`**Depends on** lost the bold that opens the line under it — the report never printed "${BOLD_PROSE}"`);
+          bad.push(...verdict(g.out));
+        }
+        // The false-positive direction, and it is the whole reason this is a NOTE: *see **Why it
+        // exists** below* names no field this script reads, so nothing may be said about it.
+        if (/but not where a field is written/.test(g.out)) bad.push('a NOTE fired on bold prose naming no field this script reads — the note would then fire on most of this directory, and a control a reader learns to dismiss is worse than none');
+
+        const before = snapshot();
+        const t = run(['--tick', FIXTURE_ID, '--dry-run']);
+        if (/quotes no box/.test(t.out)) bad.push('the **Closes roadmap** fragment was cut off by the field-shaped bold written ahead of it — --tick found no box to tick, which is the quiet failure this line exists to catch');
+        if (t.code !== 0) bad.push(`--tick --dry-run exited ${t.code} over a fully ticked list:`, ...verdict(t.out));
+        if (!t.out.includes(FIXTURE_BOX)) bad.push('the dry run never named the roadmap box it would tick');
+        if (changedSince(before).length) bad.push(`the dry run wrote ${changedSince(before).join(', ')}`);
+        return bad;
+      },
+    },
+    {
+      name: 'a **Takes from WO-x.y** field parses — the id inside the asterisks is part of the field, not prose',
+      run: () => {
+        // A rule of "capitalised words only" refuses this one, and it is a real field on WO-2.52.
+        // The assertion is that it ENDS **Depends on**: if it is not read as a field, the value
+        // swallows it and the report prints a prose clause instead of `depends nothing`.
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false,
+                depends: `nothing · ${TAKES_FROM} its ruling, reversed in the same sitting` });
+        const bad = [];
+        const r = run([FIXTURE_ID]);
+        const dependsLine = (r.out.match(/^\s*depends.*$/m) || [''])[0].trim();
+        if (dependsLine !== 'depends nothing') bad.push(`**Depends on** did not end at the "· ${TAKES_FROM}" that follows it — the report printed "${dependsLine}"`);
+        if (/is a header field nothing reads/.test(r.out)) bad.push('**Takes from** was reported as a field with no row — it has one in § "Header fields" and a line in KNOWN_FIELDS');
+        if (/but not where a field is written/.test(r.out)) bad.push('a field written after a "·" drew the not-at-a-field-position NOTE — position-aware does not mean line-start-only');
+        return bad;
+      },
+    },
+    {
+      name: 'a field after a "·" mid-line parses — **Status**, **Size**, **Depends on** and **Owes** all share one line',
+      run: () => {
+        // The NORMAL case, and the one an over-strict position rule breaks silently: every fixture
+        // here writes four fields on the status line, and a line-start-only rule would leave the
+        // status at "(none)" while every plant above went on passing.
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false,
+                owes: TARGET_ID, rehome: `${TARGET_BOX} → ${TARGET_ID}`, target: 'open' });
+        const bad = [];
+        const r = run([FIXTURE_ID]);
+        const shipLine = (r.out.match(/^\s*ship\s.*$/m) || [''])[0].trim();
+        if (!/^ship\s+—\s+size S\b/.test(shipLine)) bad.push(`**Size**, which follows a "·", did not parse — the report printed "${shipLine}"`);
+        const statusLine = (r.out.match(/^\s*status\s.*$/m) || [''])[0].trim();
+        if (!statusLine.startsWith(`status  ${CLAIM}`)) bad.push(`**Status**, which follows a "·", did not parse — the report printed "${statusLine}"`);
+        const owesLine = (r.out.match(/^\s*owes\s.*$/m) || [''])[0].trim();
+        if (!owesLine.startsWith(`owes    ${TARGET_ID}`)) bad.push(`**Owes**, the fourth field on that line, did not parse — the report printed "${owesLine}"`);
+        return bad;
+      },
+    },
     {
       name: '--handoff writes 🔍 AWAITING VERDICT over a claim, refuses every other status, and its --dry-run writes nothing',
       run: () => {
@@ -3463,6 +3700,18 @@ function runPlants(subject, sandbox) {
   console.log('  and --tick go through to ✅ DONE, and a dependent\'s gate still refuses it; and --audit');
   console.log('  reports the row whose shelf has emptied as a NOTE rather than a problem, says nothing');
   console.log('  about the same mark one row lower, and writes nothing either way.');
+  console.log('  And WO-1.27\'s FOUR, the first here about WHERE a field is written rather than what');
+  console.log('  it says: a field name in prose — WO-6.3\'s italic note running on into the header');
+  console.log('  block, ending in `**Owes**` inside backticks — yields no **Owes** value and draws a');
+  console.log('  NOTE naming its line, where it used to be captured as one and printed on two other');
+  console.log('  work orders; bold prose inside a value stays in the value, from both sides at once —');
+  console.log('  a header line OPENING with bold that is not field-shaped, and field-shaped bold');
+  console.log('  MID-value ahead of the quoted fragment, which an over-tightened parse cuts off into');
+  console.log('  a silent "no roadmap box to tick" — and no NOTE fires on either, because prose that');
+  console.log('  names no field this script reads must draw nothing; a **Takes from WO-x.y** field');
+  console.log('  parses, id and all, and ends the field before it; and the four fields that share one');
+  console.log('  line after a `·` — **Status**, **Size**, **Depends on**, **Owes** — all parse, which');
+  console.log('  is the normal case a line-start-only rule loses silently.');
   console.log('  And WO-1.38\'s FOUR, for the fourth status — 🔍 AWAITING VERDICT, the row whose');
   console.log('  implementer returned and whose verifier is owed: --handoff writes it over a claim and');
   console.log('  refuses the other eight statuses, moving nothing but the status line and nothing at all');

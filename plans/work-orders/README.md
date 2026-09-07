@@ -119,6 +119,20 @@ alone and stays part of that value, which is why WO-1.13's *see **Why it exists*
 its **Closes roadmap** line and WO-1.11's **Not a go-live blocker.** does not end its **Depends on**.
 Write a new field at the start of a line, the way every existing one is written, and it will be seen.
 
+**That rule is enforced in both halves of the parser since WO-1.27 — the scan that names the fields
+and the parse that reads their values — and until 2026-09-06 it was enforced in one.** `fieldsIn()`
+read the block's lines and applied the position rule; the value parse was a regex over the block
+collapsed into one string, where there are no positions left to apply it to, so **a field name
+written in prose was read as a field by everything that actually consumes one**. WO-6.3's header
+paragraph ran straight on into an italic note ending `` `**Owes**`.)* ``, and the phantom **Owes**
+that produced was printed on WO-6.4 and WO-6.5 — two work orders that have never had the field —
+because a gate report names a *dependency's* **Owes** beside it. Both readers now come off one
+predicate, and a field-shaped token written anywhere else **draws a NOTE on the gate report naming
+its line**. It is a note and never a refusal: prose in a header block may legitimately discuss a
+field name, as the row above and this paragraph both do. If you meant it as a field, move it to the
+start of a line — which is what WO-2.52's `**Takes from WO-2.51**`, written mid-sentence and the one
+live instance in the directory the day the note was built, needed.
+
 **Everything must sit in one paragraph with no blank line in it.** The header block ends at the
 first blank line, and a field below that line is invisible to every script here — WO-2.8's
 **Closes roadmap** sat one blank line out of reach under an italic note, so `--tick` would have
@@ -418,7 +432,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 50 | 39 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 50 | 40 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
@@ -427,7 +441,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
-| | **167** | **136** | **2** | `[████████░░] 81%` |
+| | **167** | **137** | **2** | `[████████░░] 82%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)

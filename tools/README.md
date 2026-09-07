@@ -103,7 +103,7 @@ node tools/wo-gate.mjs --self-check    plant every violation this script is supp
 ```
 
 `--self-check` copies `plans/` to a temp directory, writes four **synthetic** work orders into the copy,
-plants thirty-one violations against them, runs the script over the copy, and deletes the directory on
+plants thirty-five violations against them, runs the script over the copy, and deletes the directory on
 both exit paths. *(Thirteen until 2026-08-16; WO-1.21 added four, for the two statuses that mean the
 work is not coming and for the § The files index. WO-2.49 added the eighteenth on 2026-08-18, and it
 is the first that is about the **reader** rather than about a refusal — a fixture written CRLF in its
@@ -124,8 +124,18 @@ is a fresh session on every work order. They are the first plants here to write 
 sandbox: one of them puts a `<WO>-result.md` in the copy's `.claude/dispatch/`, because the `--release`
 refusal names the file it would orphan and a plant with no such file would be asserting against a path
 rather than against a report. That is why they run **last** in the array — a gate report run after them
-would carry a `dispatch result` line no earlier plant has ever seen.
-`31 plants, 31 caught, 0 missed` / `PASS | 31 of 31 plants were caught`, read
+would carry a `dispatch result` line no earlier plant has ever seen. **WO-1.27 added four on
+2026-09-06**, the first here about **where a field is written** rather than about what it says: a
+field name in prose draws no field and a NOTE naming its line; bold prose inside a value stays in the
+value, asserted from both sides — a header line opening with bold that is not field-shaped, and
+field-shaped bold mid-value ahead of the quoted fragment — and neither draws the NOTE, because prose
+naming no field this script reads must draw nothing; a `**Takes from WO-x.y**` field parses with the
+id inside its asterisks; and the four fields that share one line after a `·` all parse. They brought
+no fixture with them and three new **shapes** for the one there is — `afterStatus`, `closesProse` and
+`trailer` on `fixtureBlock()`, each a real header block out of `plans/work-orders/` with the ids
+changed. They run **before** WO-1.38's four, deliberately: three of them read a gate report line by
+line, and a run after those four carries the `dispatch result` line the sentence above describes.
+`35 plants, 35 caught, 0 missed` / `PASS | 35 of 35 plants were caught`, read
 off the run and not added up. The counts further down are readings from dated
 runs against older copies of the script and stay at the number that was true then.)* Two things about it are load-bearing. **Every plant path — and, since WO-2.44, the
 sandbox that holds them — goes through a guard that
@@ -215,6 +225,10 @@ part is what did **not** go red beside it:
 | `gate()`'s `ok` widened to `✅ DONE` **or** `🔍 AWAITING VERDICT` — WO-1.38, same method | **1 red**: the dependency plant. This is the one defect none of WO-1.38's own Acceptance lines names — a new status that silently satisfies a dependency hands unchecked code to whatever is built on top of it, and every other report stays green |
 | `applyTick()` taught to write `✅ DONE` over an open Acceptance line when the status is `🔍` — WO-1.38, same method | **1 red**: the same plant, on its held-tick half. The handoff records who is holding the work, never whether it is finished, and the tick's own refusal has to survive the new status arriving in front of it |
 | the 🎒 NOTE counted into `--audit`'s problem total — WO-1.35, same method | **3 red**, and the two unintended ones are the argument for reporting rather than refusing: the audit plant's *"--audit failed over an empty shelf"*, plus WO-1.21's `--audit` plant and the § The files plant, both of which assert that `--audit` exits 0 on a healthy fixture. The sandbox is a copy of the real `plans/`, so a live NOTE in the running order would be a live `FAIL` inside every plant that runs `--audit` |
+| **the whole of `tools/wo-gate.mjs` as it stood before WO-1.27** — `--against` over `git show HEAD:tools/wo-gate.mjs`, so nothing in the tree was mutated at all | **1 red**: the prose-field plant, on all four of its assertions at once, printing WO-6.3's phantom verbatim — `owes    ` then the tail of an italic note, then `0 re-homed line(s) resolving`. The other three of WO-1.27's four stay **green**, which is the shape to expect: one of the four reproduces the defect and the rest are fences against the fix being over-tightened later |
+| the position prefix deleted from `FIELD_TOKEN`, so a value ends at the next `**` wherever it sits — WO-1.27, `--against` over a copy in the scratchpad | **2 red**: the prose-field plant (the phantom comes back) and the bold-prose plant, on the half that matters — *"the **Closes roadmap** fragment was cut off by the field-shaped bold written ahead of it — --tick found no box to tick"*. This is the mutation that matters most of WO-1.27's four: it is the cleverer regex the work order's Traps line forbids, and what it costs is a **silent** no-op at tick time |
+| the `WO-` id clause deleted from `FIELD_TOKEN` — "capitalised words only, no digits" — WO-1.27, same method | **1 red**: the `**Takes from WO-x.y**` plant, on both arms. The field is swallowed into **Depends on**, whose `WO-` token then becomes a **dependency the gate reports on**, and the same token draws the not-positional NOTE. Nothing else: no other fixture writes an id inside a field's asterisks |
+| `FIELD_TOKEN`'s position prefix narrowed to a line-start anchor, dropping the `·` arm — position-aware read as line-start-only — WO-1.27, same method | **33 red of 35**, and the breadth is the finding: every fixture here writes four fields on one line, so **Status**, **Size**, **Depends on** and **Owes** all vanish at once and the status reads `(none)`. The plant aimed at it names the three it can see — *"the report printed ship — size —"*, *"status (none)"*, *"owes (no **Owes** field)"* — which is what a reader needs when thirty-three lines go red together |
 
 **And the pre-WO-1.28 script is the broad run for those six**, with the same caveat the WO-3.11
 paragraph above states: `--self-check --against <the script as of c6a1a4b>` reddens **2 of the 6** —
@@ -222,9 +236,11 @@ the two that assert the new *acceptance* — and leaves the four that assert a *
 the old script refuses too, for a different reason. That is why the four one-line mutations above
 exist rather than the broad run standing alone.
 
-Twenty-two mutations, all reverted or driven over a copy, and every one of them red on the plant it
-was aimed at. **Twenty-one touched nothing else; the one that did touched two more and that is the
-row's finding rather than its failure** — see the 🎒-NOTE cell. *(WO-1.38's six are six of **twelve**
+Twenty-six mutations, all reverted or driven over a copy, and every one of them red on the plant it
+was aimed at. **Twenty-three touched nothing else; the three that did are findings rather than
+failures and each says so in its own cell** — the 🎒-NOTE row, and two of WO-1.27's four, where the
+breadth is the point: a header block's fields are read by everything here, so a position rule read
+wrongly reddens most of the board at once. *(WO-1.38's six are six of **twelve**
 run against its four plants, all with `--against` over a copy in the scratchpad, so the tree was never
 mutated. The six not tabulated are the same shapes one fence over — `--handoff` writing on `--dry-run`
 or moving a dashboard, `next` not skipping the status at all, the "abandoned claim" sentence deleted

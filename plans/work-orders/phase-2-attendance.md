@@ -5314,8 +5314,9 @@ creates, edits or reorders terms.
 
 **Ship** 2 · **Status** ✅ DONE — 2026-08-19 · **Size** L · **Depends on** WO-2.50 · WO-2.51 · **Blocks** nothing
 **Closes roadmap** Phase 2 → *(no box. Owner-asked 2026-08-19, out of the screen the two rows above it
-left behind.)* **Takes from WO-2.51** its *nothing switches by itself* ruling, reversed with the owner
-in the same sitting — see **Deliverables** § the jump.
+left behind.)*
+**Takes from WO-2.51** its *nothing switches by itself* ruling, reversed with the owner in the same
+sitting — see **Deliverables** § the jump.
 
 **Owner-asked 2026-08-19, from `https://planbook.hwgteach.com/`:** *instead of showing all dates, it
 should only show dates in the selected term, starting with the earliest term date closest to today.

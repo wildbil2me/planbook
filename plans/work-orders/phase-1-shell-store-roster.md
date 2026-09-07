@@ -2424,7 +2424,7 @@ process, one summary line, one exit code. What changes is that the checks stop l
 
 ## WO-1.27 — a field name in prose is read as a field, and only half the parser knows the rule
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** nothing; every
+**Ship** — · **Status** ✅ DONE — 2026-09-07 · **Size** M · **Depends on** — · **Blocks** nothing; every
 header block in the directory is parsed by the function this fixes
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — `wo-gate.mjs` is not a promise the roadmap
 makes, the way WO-2.14, WO-2.15 and WO-1.26 are not. Booked 2026-08-25, owner-directed, found while
@@ -2458,6 +2458,12 @@ malformed field on the wrong work orders.
 Fixed 2026-08-25 in the same sitting that found it, and all 138 work orders were scanned for the
 same shape: WO-6.3 was the only one. **This work order is about the parser, not the document**, and
 it needs a fixture.
+
+*(**Both sentences above went stale on 2026-09-07, the day this work order landed.** The scan was of
+138 work orders and there are 169 now; and the tree was not clean — the new NOTE found
+`**Takes from WO-2.51**` written mid-sentence in WO-2.52's header block on its first run, repaired in
+the same sitting. "Do not go looking for a live reproduction" still holds for the phantom `**Owes**`
+shape and never held for the class. The account is under Deliverables below.)*
 
 **And nothing was watching.** `--audit` passed clean with the phantom in place, every run, because it
 checks fragments, `Owes` *pointers*, § The files and the dashboards — not whether a field it read was
@@ -2508,19 +2514,43 @@ the inverse: read by everything, and said nowhere.
   scar — a rule documented in one file and half-implemented in another is the shape worth recording.
 
 **Acceptance**
-- [ ] A header block containing `` here under WO-6.2's `**Owes**`.)* `` yields **no** `Owes` value,
+- [x] A header block containing `` here under WO-6.2's `**Owes**`.)* `` yields **no** `Owes` value,
       and `--self-check` has a plant that fails if that regresses.
-- [ ] WO-1.13's **Closes roadmap** and WO-1.11's **Depends on** parse byte-identically to today —
+      *(Plant 1 of four, `a field name written in prose is not read as a field, and the report names
+      the line it sits on`. Proved non-vacuous against the pre-WO-1.27 script —
+      `--self-check --against <git show HEAD:tools/wo-gate.mjs>` — which reddens it alone, printing
+      the phantom verbatim: `owes    ` `` `.)* `` `   0 re-homed line(s) resolving`.)*
+- [x] WO-1.13's **Closes roadmap** and WO-1.11's **Depends on** parse byte-identically to today —
       quote both values before and after in the result file.
-- [ ] `node tools/wo-gate.mjs --audit` passes, and every work order's parsed `Ship`, `Status`,
+      *(Both quoted in `.claude/dispatch/WO-1.27-result.md`, and both fall out of the whole-directory
+      diff on the line below.)*
+- [x] `node tools/wo-gate.mjs --audit` passes, and every work order's parsed `Ship`, `Status`,
       `Size`, `Depends on`, `Owes`, `Blocks`, `Target`, `Closes roadmap` and `Amends roadmap` is
       **unchanged across all 139**, proved by dumping them before and after and diffing.
-- [ ] `node tools/wo-gate.mjs --self-check` passes with more plants than it has today, and the new
+      *(**169 today, not 139** — the directory has grown since this was written, and the dump covers
+      all of them. `--audit` output is byte-identical before and after. One work order's parse DID
+      move on the first run and it is the class this work order is about, not a regression: WO-2.52
+      wrote `**Takes from WO-2.51**` mid-sentence in its header block, which the position rule does
+      not read as a field. The header block was repaired — the field moved to the start of a line,
+      the way § "Header fields" says to write one — and the parse is identical either side of it.
+      Recorded rather than folded in: see the result file and `TESTING.md` § WO-1.27.)*
+- [x] `node tools/wo-gate.mjs --self-check` passes with more plants than it has today, and the new
       ones are named in its closing summary.
-- [ ] A header block with a non-positional field-shaped token draws a NOTE naming the line, and no
+      *(**31 → 35**, `PASS | 35 of 35 plants were caught`. The count in the work order reads 18,
+      which was true when it was booked on 2026-08-25.)*
+- [x] A header block with a non-positional field-shaped token draws a NOTE naming the line, and no
       work order in the tree draws one today.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` are unaffected — quoted, both green.
-- [ ] No file's line endings changed: `git diff --stat` shows no whole-file rewrite.
+      *(All 169 gate reports run: zero NOTEs. **It took one repair to make that true** — WO-2.52's,
+      above — which is the note earning its keep on the day it was built rather than a caveat on it.)*
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` are unaffected — quoted, both green.
+      *(`1299 checks · 1299 passed · 0 failed · 0 skipped`, 40,199 lines, 433s, exit 0 · sweep
+      `41 checks · 38 passed · 0 failed · 3 to review`, exit 0, the same three standing REVIEW lines
+      this work order does not touch. Neither reads `wo-gate.mjs`; both were run because "unaffected"
+      is a claim that has to be measured rather than reasoned.)*
+- [x] No file's line endings changed: `git diff --stat` shows no whole-file rewrite.
+      *(Seven files, all prose or `tools/`; the largest single one is `tools/wo-gate.mjs` at 297
+      changed lines of 3,873, which is new code and not a rewrite. Every changed file re-read
+      afterwards for terminators: `CRLF=0` in all seven, as before.)*
 
 **Not in scope, and each is a decision rather than an omission.**
 - **No new header fields, and no change to `KNOWN_FIELDS`.** This fixes how a field is *found*, not

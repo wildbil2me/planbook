@@ -1057,6 +1057,88 @@ than an installed app, and a green run here still closes no 👤 item anywhere e
 
 ---
 
+### WO-1.27 — a field name in prose is read as a field, and only half the parser knows the rule
+
+**What this changes.** Nothing a teacher sees and nothing a device gets: `src/`, `index.html`,
+`sw.js`, `privacy.html`, `manifest.json` and `icons/` are untouched, so **no `CACHE` bump is owed**.
+`tools/wo-gate.mjs` reads a header field's **value** off the block's lines with the same position
+rule `fieldsIn()` already applied to its **name** — one predicate, `positionalFields()`, read three
+times — and a field-shaped token written where a field is not written draws a **NOTE** on the gate
+report naming its line.
+
+**One header block in `plans/work-orders/` was repaired, and it is a finding rather than a
+side-effect.** WO-2.52 carried `**Takes from WO-2.51**` mid-sentence — a real field, in a position
+the rule does not read as one, absorbed silently since 2026-08-19. The old parser terminated
+**Closes roadmap** on it by *name*; the new one does not, because a token that is not at a field
+position is prose. The field was moved to the start of a line, which is exactly what the new NOTE
+asks for, and the parse is byte-identical either side of that move. **The work order was written on
+the belief that the tree was clean** — it was clean of the *shape* it named (WO-6.3's, repaired
+2026-08-25) and carried one more of the *class*.
+
+- [x] **A header block containing `` here under WO-6.2's `**Owes**`.)* `` yields no `Owes` value, and
+      a plant fails if that regresses.** `--self-check` plant *"a field name written in prose is not
+      read as a field, and the report names the line it sits on"*: the gate report on the fixture
+      prints **no `owes` line at all**, prints nothing matching the tail of the note, draws the NOTE,
+      and the NOTE names `phase-3-gradebook.md:<the planted line>` — computed by the plant from the
+      sandbox file rather than hard-coded. **Proved non-vacuous against the previous script**, which
+      is the defect itself rather than a mutation of it:
+      `node tools/wo-gate.mjs --self-check --against <git show HEAD:tools/wo-gate.mjs>` reddens
+      **that plant alone, 1 of 35**, on all four assertions, printing WO-6.3's phantom verbatim —
+      `owes    ` `` `.)* `` `   0 re-homed line(s) resolving`.
+- [x] **WO-1.13's **Closes roadmap** and WO-1.11's **Depends on** parse byte-identically.** Both are
+      quoted before and after in `.claude/dispatch/WO-1.27-result.md`, and both fall out of the
+      whole-directory diff below rather than being spot-checked.
+- [x] **`--audit` passes and every work order's nine parsed fields are unchanged.** `--audit` output
+      is **byte-identical** before and after (`diff` empty, exit 0 both runs). The nine fields —
+      `Ship`, `Status`, `Size`, `Depends on`, `Owes`, `Blocks`, `Target`, `Closes roadmap`,
+      `Amends roadmap`, plus `statusRaw` and `unknownFields` — were dumped for **every work order in
+      `plans/work-orders/`, 169 of them** (the work order says 139; the directory has grown) by
+      importing each build of `parseFile()` directly, and diffed. **Zero value differences.** *(Two
+      intermediate states are worth having on the record. The first cut differed on **two** work
+      orders: WO-2.52's, above, and WO-3.18's **Depends on**, whose third line ends `… in the form ·`
+      with `**Blocks**` opening the line below — the old lookahead ate that separator across the line
+      break and the first version of the new parse kept it. `fieldValues()` drops one trailing `·`,
+      and only when a next field exists, which is what the old `\s*·?\s*` did.)*
+- [x] **`--self-check` passes with more plants, and the closing summary names the new ones.**
+      **31 → 35**, `PASS | 35 of 35 plants were caught`, exit 0. *(The work order says 18, true when
+      it was booked on 2026-08-25.)* Each of the four is proved able to fail, three of them against
+      one-line mutations of `FIELD_TOKEN` driven with `--against` over copies in the scratchpad, so
+      **nothing in the tree was ever mutated**: the position prefix deleted → **2 red** (the phantom
+      returns, and the **Closes roadmap** fragment is cut off by the bold ahead of it, which `--tick`
+      reports as the silent *"no roadmap box to tick"*); the `WO-` id clause deleted → **1 red**, the
+      `**Takes from WO-x.y**` plant, whose id then becomes a *dependency the gate reports on*; the
+      position prefix narrowed to a line-start anchor → **33 red of 35**, because every fixture here
+      writes four fields on one line. All four rows are in `tools/README.md`'s mutation table.
+- [x] **A non-positional field-shaped token draws a NOTE naming the line, and no work order in the
+      tree draws one.** All **169** gate reports were run —
+      `node tools/wo-gate.mjs --list` → each ID → `grep -c "but not where a field is written"` — and
+      the count is **0**. It took the WO-2.52 repair above to make that true, which is the note
+      earning its keep on the day it was built rather than a caveat on it. The NOTE is narrowed to
+      names something reads (`KNOWN_FIELDS` ∪ the block's own fields): the broad version fires on
+      four work orders today and three are innocent prose — WO-1.13's *see **Why it exists** below*,
+      WO-2.53's *see **Why it exists** § the seventh control*, WO-3.25's **Score entry grid** — and a
+      note a reader learns to dismiss is worse than none (WO-1.12).
+- [x] **`verify-shell.mjs` and `wo-sweep.mjs` are unaffected.**
+      `1299 checks · 1299 passed · 0 failed · 0 skipped`, 40,199 lines, 30.9 lines per check, **433s,
+      exit 0** · `41 checks · 38 passed · 0 failed · 3 to review`, **exit 0**, the same three standing
+      REVIEW lines (sensitive field names, due-date/late-missing, the mockup banner), none of which
+      this work order touches. Neither tool reads `wo-gate.mjs`; both were run because "unaffected"
+      is a claim to measure, not to reason about.
+- [x] **No line endings changed.** `git diff --stat` lists **seven** files, all of them prose or
+      `tools/`; the largest single one is `tools/wo-gate.mjs` at 297 changed lines of 3,873, which is
+      new code rather than a rewrite. Every changed file was re-read afterwards for terminators:
+      `CRLF=0` in all seven, as before. `git config core.autocrlf` is `false` and there is no
+      `.gitattributes`, so nothing normalises on the way in either.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.* **Two limits worth
+carrying.** The NOTE is **narrowed by name**, so a field-shaped token whose name nothing reads is
+still invisible — which is correct today and stops being correct the moment a new field is added to
+`KNOWN_FIELDS` without its § "Header fields" row. And **the whole-directory dump is a snapshot, not a
+standing check**: it proved this change moved nothing, and nothing re-runs it. The standing guard is
+the four plants, which are four claims and not coverage of the parser.
+
+---
+
 ### WO-1.40 — the file a human types is outside every fence
 
 **What this changes.** Nothing a teacher sees. `src/`, `index.html`, `sw.js` and every stylesheet are

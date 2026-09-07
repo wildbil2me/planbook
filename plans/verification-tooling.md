@@ -666,6 +666,62 @@ the code. The one they do not separate is `isGateWorkOrder()`'s two arms: it ans
 satisfies only the first. The `gates.md` arm is a guard for a gate written somewhere unexpected and
 it is proved by mutation, not by plant. The run says so.
 
+## The other half of that rule, and what half an implementation costs, 2026-09-06 (WO-1.27)
+
+**The section above names this one as the second of two, found in two days. This is it, closed.**
+§ "Header fields" says a field is recognised by **where it sits** as much as by its name — it starts
+a line of the header block or follows a `·`. `wo-gate.mjs` implemented that in `fieldsIn()`, which
+reads the block's **lines** and populates `unknownFields`, and did not implement it in the function
+that reads a field's **value** — a regex run against the block collapsed into one string, where there
+are no positions left to apply it to. So the half that reports had the rule and **the half every
+consumer actually uses did not**.
+
+**What half an implementation cost, concretely, is worth more than the rule it broke.** WO-6.3's
+header paragraph ran on into an italic note with no blank line between them, ending
+`` here under WO-6.2's `**Owes**`.)* ``. `fieldsIn()` correctly declined to call that a field. The
+value parse matched it and captured `` `.)* ``. And because a gate report prints a **dependency's**
+**Owes** beside it, the phantom surfaced on **WO-6.4 and WO-6.5** — two work orders that have no
+**Owes** field and never had one. It read as a malformed field on the wrong work orders, for a week,
+with `--audit` green through all of it: the audit checks fragments, pointers, § The files and the
+dashboards, and nothing anywhere asked whether a field it had just read was field-shaped in the
+first place.
+
+**Three things generalise, and none of them is "add a check".**
+
+**A rule with two readers is a rule that will be implemented once.** The fix is not a second copy of
+the position rule in the value parse — that is the same defect one release later. It is one
+predicate, `positionalFields()`, read by the name scan, by the value parse and by the note; that is
+WO-2.25's argument, lifted rather than re-derived. **The shape to look for is a rule stated in a
+document and implemented in a function whose name does not contain the rule's subject.**
+
+**The inverse of a silent failure is not a refusal.** § "Header fields" already had a row for a field
+nothing reads — *"read by nothing, and said so once per gate report"* — and a field name in prose is
+its mirror: read by everything, and said nowhere. The mirror of the note is a note. A **refusal**
+would fire on any header block that discusses a field name, which includes the work order that fixed
+this, this paragraph's own file, and the § "Header fields" row itself — so the check that caught the
+bug would have made the documents describing it unwriteable. The narrowing that makes it usable is
+that only names something *reads* are reported: three of the four field-shaped tokens in today's
+header blocks are ordinary prose, and *"a control that goes red for a reason the reader learns to
+dismiss is worse than no control"* (WO-1.12).
+
+**And the fix had to be proved not to over-tighten, which cost more thought than the fix.** The
+tempting rule — *a value ends at the next `**`* — breaks two real lines in this directory: WO-1.13's
+**Closes roadmap** note says *see **Why it exists** below*, and WO-1.11's **Depends on** runs on into
+a line opening **Not a go-live blocker.**. Field-shaped in the wrong place, and field-placed without
+the shape; a value must keep both. The proof is a dump of nine parsed fields for **every** work order
+in the directory, before and after, diffed to nothing — 169 of them on the day, where the work order
+was written naming 139 — and four new `--self-check` plants, 31 → 35, each shown red against a
+mutation aimed at the rule it guards. One of the four goes red against the previous script, which is
+the defect reproduced; the other three are fences, and a fence cannot be proved by the bug it
+prevents.
+
+**One live instance turned up, and it is why the note is worth having.** The scan the note performs
+found `**Takes from WO-2.51**` written mid-sentence in WO-2.52's header block — a real field, in a
+place the rule does not read as one, absorbed silently since 2026-08-19. It was repaired by moving it
+to the start of a line, which is the whole of what the note asks for, and the parse either side of
+that repair is byte-identical. **The work order was written on the belief that the tree was clean.**
+It was clean of the *shape* it named, and carried one of the class.
+
 ## What it cannot do, and must never claim to
 
 - **No 👤 item, ever.** No emulator has a thumb, a safe-area inset, a home-screen install, or

@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A work-order header field's value is read by position, not by name — 2026-09-07
+
+**`wo-gate.mjs` applied the § "Header fields" position rule when scanning field names but not when
+extracting values**, so a field name written in prose inside a header block was read as a real
+field — WO-6.3's italic note produced a phantom **Owes** that surfaced on two unrelated work orders,
+neither of which has an **Owes** field or ever had one. One predicate now serves both halves, and a
+field-shaped token in a non-field position draws a NOTE naming its line. **Found one live instance in
+the tree while building it**: WO-2.52 had written `**Takes from WO-2.51**` mid-sentence, which the
+position rule correctly declines to read as a field, so the field moved to a line start rather than
+the parser loosening to accept it.
+
 ### A comment that counted the listeners under it stops counting — 2026-09-06
 
 **`src/shell.js` opens with a paragraph introducing the app's event delegation, and it counted the
