@@ -217,7 +217,7 @@ That is not a failure of the project; it is the reason the fallback exists.
 
 ## WO-G2 — Ship 2 gate: first grades
 
-**Ship** 2 · **Status** 🔒 GATED · **Size** S · **Depends on** WO-2.5, WO-2.6, WO-3.1, WO-3.2, WO-3.3, WO-3.4, WO-3.5, WO-3.6, WO-3.7, WO-3.8, WO-3.9 · **Owes** WO-3.18
+**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.5, WO-2.6, WO-3.1, WO-3.2, WO-3.3, WO-3.4, WO-3.5, WO-3.6, WO-3.7, WO-3.8, WO-3.9 · **Owes** WO-3.18
 **Target** ~2026-09-15, before the first grades are entered for real
 
 *(**`⬜ NOT STARTED` until 2026-08-20**, owner-directed, and the change is about `next` rather than
@@ -236,6 +236,21 @@ and this one means gated on the calendar. The vocabulary line in* [`../ROADMAP.m
 *and in* [`README.md`](README.md) *never bound the word to OAuth — only the usage did — so this is a
 word being used as defined rather than bent, and* `README.md` *§ Status vocabulary now says so out
 loud rather than leaving it to be inferred from two examples that happen to agree.*
+
+*(**Unlocked 2026-09-07, owner-directed — the day came.** The term opened Wed 2026-09-02 and the first
+real grades go in Tue 2026-09-08, so the calendar this row was gated on has arrived and the block below
+is now a record of why it waited rather than an instruction. **What changes with the status is `next`,
+and that is deliberate this time.** This row is #78 of § Ship 2, above § Ship 3 in document order, so
+`next` answers with it again and the Ship 3 rows sit behind it — which was the defect in August and is
+the correct report now, because this is the row to work. Dispatch a Ship 3 work order by naming its ID.*
+
+***Three of the nine boxes are perishable and want tomorrow specifically*** *— the timed five-class
+entry measures the FIRST real entry, the printout order wants a real SIS re-key, and the backup drill
+wants the first evening there is something to lose. One box needs setting up in advance rather than
+verified after:* **the hand-computed grade wants a student with a `missing` and one with an `excused`**,
+*and both are teacher-marked and never inferred, so if neither is genuine tomorrow that box waits for a
+week that has one. And* **box 8 cannot close from a desk at all** *— it wants WO-3.18 submitted, which
+wants the demo video, which wants* [WO-7.2](phase-7-sync.md#wo-72--document-transfer--conflicts).*)*
 
 *`--tick` will refuse this status when the day comes, which is correct and is the last step:* **put it
 back to `⬜` when there are real grades to run it against**, *then work the boxes. Teaching `next` to

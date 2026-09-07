@@ -440,7 +440,7 @@ still reading *Nothing* are watched by no one.
 | 6 — Calendar & glance | 6 | 4 | — | 🔨 IN PROGRESS |
 | 7 — Drive sync | 3 | 1 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 and WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
-| Gates | 4 | 1 | — | 🔒 GATED — WO-G2 waits on Sep 2; WO-G3 on four weeks after it |
+| Gates | 4 | 1 | — | WO-G2 ⬜ **workable 2026-09-07** — the term opened Sep 2 and first grades go in Sep 8; WO-G3 🔒 on four weeks after it |
 | | **167** | **138** | **2** | `[████████░░] 83%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
@@ -697,7 +697,7 @@ loaded into the two weeks *before* the term rather than spread evenly to Sep 15.
 | 75 | [WO-3.26](phase-3-gradebook.md#wo-326--the-ungraded-count-on-the-home-screen) The ungraded count on the home screen | S | | Aug 21, half a day |
 | 76 | [WO-2.54](phase-2-attendance.md#wo-254--today-goes-to-the-term-and-there-is-no-way-back-to-today) **`Today` goes to the term, and there is no way back to today** | M | | **Before Sep 2 — the register opens in the wrong term right now.** Aug 20, half a day |
 | 77 | [WO-2.53](phase-2-attendance.md#wo-253--the-rows-detail-panel-says-what-the-row-already-says) **The row's detail panel says what the row already says** | L | | **Before Sep 2 — while there is no habit to unlearn.** Aug 21, a day |
-| 78 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | ~Sep 15 |
+| 78 | [WO-G2](gates.md#wo-g2--ship-2-gate-first-grades) **Ship 2 gate: first grades** | S | — | **Now — unlocked 2026-09-07, first grades Sep 8.** Target ~Sep 15. Three boxes are perishable and want the first entry session; box 8 waits on WO-7.2 → WO-3.18 and closes from no desk |
 
 ***WO-3.18 left this table on 2026-08-20, owner-directed, and it is the only row ever removed from it
 rather than reordered.*** *Its row was #78 and its cell read* **"One uninterrupted sitting, then a
