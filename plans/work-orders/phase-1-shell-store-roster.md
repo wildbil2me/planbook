@@ -2734,7 +2734,8 @@ That is a true and useful sentence. It is not a field, and it is sitting in the 
 treats as machine-readable.
 
 **What that costs, concretely.** `rehomesOf()` extracts the named work orders with a single match at
-`tools/wo-gate.mjs:425`:
+`tools/wo-gate.mjs:582` *(:425 when this was booked; WO-1.27 moved it on 2026-09-07 without touching
+it)*:
 
 ```js
 const named = [...new Set((wo.owesRaw.match(/WO-[\dG][\w.]*/g) || []))];
@@ -2747,7 +2748,7 @@ nothing, and reported clean. **A check that cannot fail on the input it was writ
 check**, and this is the second one this directory has found in three days.
 
 **And the audit prints the discrepancy without seeing it.** The section skips a work order only when
-it has neither a field nor a marker (`tools/wo-gate.mjs:1571`), so WO-4.3 is counted into
+it has neither a field nor a marker (`tools/wo-gate.mjs:1976`, `:1571` when booked), so WO-4.3 is counted into
 `withOwes`; the rows are printed per marker, so it prints none. Today's run says, in full:
 
 ```
@@ -2775,11 +2776,28 @@ two are orthogonal and neither blocks the other, but they touch the same neighbo
 
 **Traps**
 
-- **Do not write a bold `Owes` inside this work order's own header block.** WO-1.27 is unbuilt, so
-  `fieldRe()` still matches a field name anywhere in the collapsed block — a work order *about* this
-  field can give itself a phantom one, and the audit would then report the defect on the work order
-  written to fix it. This heading says `Owes` unbolded for exactly that reason. Body prose after a
-  blank line is safe; WO-1.28's body carries it a dozen times and parses clean.
+- **Do not write a bold `Owes` inside this work order's own header block.** *(Rewritten 2026-09-07:
+  WO-1.27 landed first and the reason inverted.)* When this was booked, `fieldRe()` matched a field
+  name anywhere in the collapsed block, so a work order *about* this field could give itself a
+  phantom one and the audit would report the defect on the work order written to fix it. `fieldRe()`
+  is gone — `positionalFields()` is the sole holder of the rule — so a bold `**Owes**` in prose is
+  no longer read as a field at all; it draws WO-1.27's NOTE instead. **The instruction stands and
+  the risk is smaller**: keep it out of the header block, and expect a NOTE naming the line rather
+  than a phantom field if it goes anywhere else. This heading says `Owes` unbolded for the original
+  reason and there is no cause to change it. Body prose after a blank line is safe; WO-1.28's body
+  carries it a dozen times and parses clean.
+- **Do not generalise the refusal to `**Depends on**`.** WO-1.30 below is this defect one field over
+  and its answer is **not** the same one: zero-IDs-plus-prose is illegitimate in every case for
+  `Owes` and legitimate in about thirty for `Depends on`, which is the whole of why that row is an M
+  and this one an S. A shared "value parses to zero IDs" predicate over both fields is the tempting
+  factoring, and it refuses correct work orders — including the three written to repair this family.
+  Constrain `owesRaw` and nothing else. *(Added 2026-09-07: WO-1.30's gates cleared when WO-1.27
+  landed, so both rows are buildable now and a reader of this neighbourhood meets them together.)*
+- **Removing WO-4.3's field makes the symptom vanish whether or not the tooling changed.**
+  `4 counted, 3 shown` becomes `3 counted, 3 shown` on the document fix alone. **A clean audit after
+  both changes is therefore not evidence the refusal works** — the plants are the only proof. That
+  is this work order's own "a check that cannot fail on the input it was written for" arriving one
+  level up, against the person building it.
 - **A refusal here, not a NOTE, and the argument is not WO-1.27's.** WO-1.27 chose a NOTE because
   prose legitimately discusses field names and a refusal would make this file unwriteable. That does
   not apply: this field is positional and real, and § "Header fields" says a value with no ID in it
@@ -2825,9 +2843,10 @@ two are orthogonal and neither blocks the other, but they touch the same neighbo
       `node tools/wo-gate.mjs WO-4.3` still reports the 📆 line exactly as it does today.
 - [ ] `node tools/wo-gate.mjs --audit` passes, and every work order's parsed `Ship`, `Status`,
       `Size`, `Depends on`, `Blocks`, `Target`, `Closes roadmap` and `Amends roadmap` is unchanged
-      across all 141 — dump before and after and diff.
-- [ ] `node tools/wo-gate.mjs --self-check` passes with more plants than it has today, and the new
-      ones are named in its closing summary.
+      across all 169 — dump before and after and diff. *(141 when booked; take the count from the
+      tree on the day rather than from this line.)*
+- [ ] `node tools/wo-gate.mjs --self-check` passes with more plants than it has today — 35 as of
+      2026-09-07 — and the new ones are named in its closing summary.
 - [ ] This work order's own header parses with **no** field of the kind it is about — `--audit`
       reports nothing against WO-1.29 itself.
 - [ ] `node tools/wo-sweep.mjs` is unaffected — quoted, green. `verify-shell.mjs` is not touched by
@@ -2838,8 +2857,11 @@ two are orthogonal and neither blocks the other, but they touch the same neighbo
 - **The field is not widened to carry prose alongside an ID.** A field that means two things is the
   rot § "Header fields" exists to prevent; the prose goes in the body.
 - **No new header field, and no change to `KNOWN_FIELDS`.** This constrains a value, not the set.
-- **WO-1.27 is not done here and is not a dependency.** Whichever lands second rebases onto the
-  other; both are small and neither changes what the field *means*.
+- **WO-1.27 is not done here and is not a dependency.** *(Settled 2026-09-07: WO-1.27 landed first,
+  so this is the one that rebases.* `fieldRe()` *is gone and* `positionalFields()` *hands*
+  `rehomesOf()` *the same string it always got — the value this work order constrains is untouched
+  by that landing. It is still not a dependency and this row's gates were clear before it.)* Both
+  are small and neither changes what the field *means*.
 - **The 📆 mechanism is not reopened.** WO-1.28 is done and this work order depends on its output
   being correct, not on its code changing.
 
