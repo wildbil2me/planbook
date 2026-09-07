@@ -762,7 +762,8 @@ against the absence of the thing it guards; it was proved against three one-line
 the refusal widened to `**Depends on**` as well, the refusal widened to every `**Owes**` field, and
 the audit's skip deleted. Each reddens the case that names it. The first of those three is the reason
 this row was an S and its neighbour WO-1.30 an M: `**Depends on**` is *reported* rather than acted on
-and legitimately parses to zero IDs in about thirty work orders, so the tempting shared predicate
+and legitimately parses to zero IDs in **forty-one** work orders — the figure read *about thirty* here
+until WO-1.30's table was re-measured against 169 on 2026-09-07 — so the tempting shared predicate
 turns thirteen plants red at once — measured, not assumed.
 
 **And the trap this one sets for whoever builds it is worth carrying forward.** Taking the field off

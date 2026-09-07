@@ -600,7 +600,7 @@ function rehomesOf(wo, wos) {
   //
   // AND IT IS `owesRaw` ONLY — do not lift it into a shared predicate over `**Depends on**`. That
   // field is reported rather than acted on, and zero-IDs-plus-prose is its ordinary case: `nothing`,
-  // `everything`, `Phase 3`, and the thirty-odd lines depsOf() already hands to a human as prose. A
+  // `everything`, `Phase 3`, and the forty-odd lines depsOf() already hands to a human as prose. A
   // "value parses to zero IDs" test over both fields refuses correct work orders, including the ones
   // written to repair this family. What `**Depends on**` should do instead is WO-1.30, a different
   // work order with a different answer.
