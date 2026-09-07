@@ -188,7 +188,6 @@ class*. Three absences across three weeks of a twice-weekly section is still thr
 ## WO-4.3 — Praise signals
 
 **Ship** 3 · **Status** 🔨 IN PROGRESS — built 2026-08-24 · **Size** M · **Depends on** WO-4.1
-**Owes** the real-data box (Acceptance line 3) — and nothing else; the 👤 sitting is green, 2026-08-25
 **Closes roadmap** Phase 4 → "Praise signals."
 
 **Why it exists.** "Top of the class" surfaces the same four students every week and is worth
@@ -295,6 +294,19 @@ readable at equal width on a real iPad in both orientations, so the breakpoint d
 and the one-column drop with praise drawn first was not found infuriating — the drawing's argument
 surviving a thumb rather than being taken on trust. **So one box stands between this and ✅, and
 nobody can hurry it:** Acceptance line 3 wants a fortnight of a real term, ~Sep 16.
+
+*(**The header said that in a field until 2026-09-07, and a field is the one place it could not
+be said.** It read* `the real-data box (Acceptance line 3) — and nothing else; the 👤 sitting is
+green, 2026-08-25` *in the* `Owes` *slot — true, useful, and sitting where `wo-gate.mjs` reads a list
+of work-order ids. It named none, so both of that field's cross-checks iterated over an empty list,
+and `--audit` counted this work order into its tally and printed no row for it: four counted, three
+shown, nought wrong, every run for a fortnight. **WO-1.29 took the field off and taught the tool to
+refuse a value with no id in it**, which is why this paragraph carries the sentence instead. Nothing
+was lost in the move — both halves are the two bolded sentences above, and the box the field pointed
+at now carries* 📆 *where a tool can see it:* `--tick` *refuses it, WO-4.5's gate report names it, and
+WO-G3 refuses on it. **Do not put it back.** If a line ever really is re-homed off this work order,
+the field returns naming the work order that carries it, with a bare* `→ WO-x.y` *marker on the line
+below.)*
 
 **Traps** — the delta is the ranking *and* the only bold figure on a praise row; the current grade
 is not drawn on the row at all. And the turnaround is derived at read time from the evaluator's own

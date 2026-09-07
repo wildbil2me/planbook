@@ -1139,6 +1139,89 @@ the four plants, which are four claims and not coverage of the parser.
 
 ---
 
+### WO-1.29 — the Owes field on WO-4.3 names no work order, and nothing notices
+
+**What this changes.** Nothing a teacher sees and nothing a device gets: `src/`, `index.html`,
+`sw.js`, `privacy.html`, `manifest.json` and `icons/` are untouched, so **no `CACHE` bump is owed**.
+`rehomesOf()` in `tools/wo-gate.mjs` refuses a `**Owes**` field whose value carries prose and no
+work-order id, `--audit`'s `**Owes**` section prints a row for every work order it counts, and
+WO-4.3's header loses the field it had carried since 2026-08-24.
+
+**The defect is the one this repository keeps finding, one level in.** `rehomesOf()` cross-checks the
+ids a field names against the `→` markers under it — in both directions, with two `for` loops.
+WO-4.3's value named none, the markers named none, **both loops iterated zero times**, and the field
+was read, found to contain nothing, and reported clean. `--audit` counted it and printed its rows per
+marker, so the section read `4 work order(s) …, 3 pointer(s) resolving, 0 problem(s)` over three
+rows — the missing row being the whole of it, printed every run since 2026-08-24 and read by nobody.
+
+- [x] **A field holding prose with no id is refused by `--audit`, naming the work order and the file
+      line, and a plant fails if that regresses.** Measured against the real defect rather than only
+      against a fixture: WO-4.3's old header was restored in a **copy** of the repository in the
+      scratchpad — nothing in the tree was edited — and `--audit` over it prints
+      `BAD  WO-4.3   **Owes** names no work order — its value carries prose and no WO- id: the
+      real-data box (Acceptance line 3) — and nothing else; t… …   (phase-4-signals.md:188)`, with
+      the section reading **4 counted, 4 shown, 1 problem** and exit **1**. The standing guard is the
+      `--self-check` plant *"a **Owes** field that names no work order is refused by --audit, holds
+      --tick, and never vanishes between the rows and the tally"*, **proved non-vacuous against the
+      previous script** — `--self-check --against <git show HEAD:tools/wo-gate.mjs>` reddens **that
+      plant alone, 1 of 37**, on all ten of its assertions.
+- [x] **`--tick` refuses it.** Over the same restored copy, `--tick WO-4.3 --dry-run` exits **1** with
+      `HELD | WO-4.3 has a **Owes** field or a re-homed Acceptance line that does not resolve:` and
+      the refusal's wording under it. Against the previous script the same input **exits 0** and
+      writes `ROADMAP.md`, the phase file and `README.md` — which is what the plant reports.
+- [x] **The section's rows and its tally agree on every run.** Before: `4 work order(s) …, 3
+      pointer(s) resolving, 0 problem(s)` over three rows. After: **3 and 3**. On the restored copy:
+      **4 and 4**. The whole `--audit` diff before → after is **that one line and nothing else**. The
+      floor that guarantees it — a `—` row for a counted work order that printed nothing — is
+      **unreachable on a healthy tree by construction**, and was observed firing only by deleting the
+      section's skip: 169 rows where the healthy tree prints 3.
+- [x] **WO-4.3 no longer carries the field, its body records the 2026-08-25 👤 sitting, and the 📆
+      reporting is unchanged.** The field is gone from the header; the sitting is in **Where this
+      stands** (*"The 👤 sitting was run by the owner on 2026-08-25 and all eight readings passed"*),
+      now with a dated paragraph beside it recording what the field said and why it is not coming
+      back. *Read the third clause precisely: `wo-gate.mjs WO-4.3` prints no 📆 line before or after,
+      because 📆 is reported on a **dependent's** gate report. `wo-gate.mjs WO-4.5` — where it is
+      actually printed — is identical either side but for the line number the same line now sits on
+      (`phase-4-signals.md:257` → `:256`) and the `git` block.*
+- [x] **`--audit` passes and every work order's eight parsed fields are unchanged across all 169.**
+      Dumped by importing each build's own `parseFile()` over every file in `plans/work-orders/` and
+      diffed: with `owesRaw` excluded the diff is **empty**, and with it included the **entire** diff
+      is WO-4.3's one line. *(The work order says 141; the directory has grown.)*
+- [x] **`--self-check` passes with more plants and the closing summary names them.** **35 → 37**,
+      `PASS | 37 of 37 plants were caught`, exit 0. The second is a **positive control** and could
+      not be proved against the previous script — a control never reddens against the absence of what
+      it guards — so it was proved against three one-line mutations driven with `--against` over
+      copies in the scratchpad, **nothing in the tree mutated**: the refusal widened to
+      `**Depends on**` as well → **13 red of 37**, the tempting shared factoring the Traps line
+      forbids; the refusal widened to every `**Owes**` field → **6 red**, with the zero-id plant
+      staying green; the audit's skip deleted → **1 red**, on the skipped-work-order case alone. All
+      four rows are in `tools/README.md`'s mutation table.
+- [x] **This work order's own header carries no such field.** The only line naming WO-1.29 anywhere
+      in `--audit` is the informational `—    WO-1.29  **Closes roadmap** quotes no box` that
+      WO-1.26, WO-1.27, WO-1.28 and WO-1.30 all draw for the same reason. Nothing in the `**Owes**`
+      section, and no problem counted.
+- [x] **`wo-sweep.mjs` is unaffected.** `41 checks · 38 passed · 0 failed · 3 to review`, **exit 0**,
+      the same three standing REVIEW lines (sensitive field names, due-date/late-missing, the mockup
+      banner). The only difference from the baseline run is three reported `:NNN` pointers into
+      `wo-gate.mjs` and `tools/README.md`, all of which the sweep resolves by text.
+      **`verify-shell.mjs` was not run and is not owed one**: this work order touches no file it
+      reads, and the Acceptance line says so in as many words.
+- [x] **No line endings changed.** `git diff --stat` lists **seven** files, the largest being
+      `tools/wo-gate.mjs` at 204 changed lines of 4,000-odd — new code, not a rewrite. Every changed
+      file re-read for terminators afterwards: `CRLF=0` in all seven. `git config core.autocrlf` is
+      `false` and there is no `.gitattributes`.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.* **Three limits worth
+carrying.** The refusal is `owesRaw` **only** and deliberately not lifted into a shared predicate —
+`**Depends on**` is the same defect one field over with a different answer, and it is WO-1.30. The
+refusal points at the work order's **heading** line and not at the header line the field is written
+on, which is the shape the field's other refusals already had. And **the row that guarantees the
+tally is a floor with no live input**: it is proved by the mutation that deletes the skip above it,
+not by a plant, and it is written that way on purpose — the next field-shaped hole should not have to
+be anticipated to be visible.
+
+---
+
 ### WO-1.40 — the file a human types is outside every fence
 
 **What this changes.** Nothing a teacher sees. `src/`, `index.html`, `sw.js` and every stylesheet are

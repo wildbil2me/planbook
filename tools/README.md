@@ -103,7 +103,7 @@ node tools/wo-gate.mjs --self-check    plant every violation this script is supp
 ```
 
 `--self-check` copies `plans/` to a temp directory, writes four **synthetic** work orders into the copy,
-plants thirty-five violations against them, runs the script over the copy, and deletes the directory on
+plants thirty-seven violations against them, runs the script over the copy, and deletes the directory on
 both exit paths. *(Thirteen until 2026-08-16; WO-1.21 added four, for the two statuses that mean the
 work is not coming and for the § The files index. WO-2.49 added the eighteenth on 2026-08-18, and it
 is the first that is about the **reader** rather than about a refusal — a fixture written CRLF in its
@@ -135,7 +135,17 @@ no fixture with them and three new **shapes** for the one there is — `afterSta
 `trailer` on `fixtureBlock()`, each a real header block out of `plans/work-orders/` with the ids
 changed. They run **before** WO-1.38's four, deliberately: three of them read a gate report line by
 line, and a run after those four carries the `dispatch result` line the sentence above describes.
-`35 plants, 35 caught, 0 missed` / `PASS | 35 of 35 plants were caught`, read
+**WO-1.29 added two on 2026-09-07**, about what a found field is allowed to **contain** where
+WO-1.27's four are about where it is written: a `**Owes**` field holding prose with no work-order id
+is refused by `--audit` and holds `--tick`, and the section prints a row for every work order it
+counts, so its rows and its `N work order(s)` tally are about the same set. The second is a
+**positive control** and not a spare — a field naming a work order still passes, a work order with
+neither field nor marker is still skipped, and a `**Depends on**` written in prose is untouched,
+which is the one that stops the refusal being lifted into a shared predicate over both fields. They
+brought no fixture with them and no new shape: the value goes into `fixtureBlock()`'s existing `owes`
+option, because this class of defect is about a value rather than about a header. They run **after**
+WO-3.11's four, whose neighbourhood they are in, and before WO-1.21's.
+`37 plants, 37 caught, 0 missed` / `PASS | 37 of 37 plants were caught`, read
 off the run and not added up. The counts further down are readings from dated
 runs against older copies of the script and stay at the number that was true then.)* Two things about it are load-bearing. **Every plant path — and, since WO-2.44, the
 sandbox that holds them — goes through a guard that
@@ -229,6 +239,10 @@ part is what did **not** go red beside it:
 | the position prefix deleted from `FIELD_TOKEN`, so a value ends at the next `**` wherever it sits — WO-1.27, `--against` over a copy in the scratchpad | **2 red**: the prose-field plant (the phantom comes back) and the bold-prose plant, on the half that matters — *"the **Closes roadmap** fragment was cut off by the field-shaped bold written ahead of it — --tick found no box to tick"*. This is the mutation that matters most of WO-1.27's four: it is the cleverer regex the work order's Traps line forbids, and what it costs is a **silent** no-op at tick time |
 | the `WO-` id clause deleted from `FIELD_TOKEN` — "capitalised words only, no digits" — WO-1.27, same method | **1 red**: the `**Takes from WO-x.y**` plant, on both arms. The field is swallowed into **Depends on**, whose `WO-` token then becomes a **dependency the gate reports on**, and the same token draws the not-positional NOTE. Nothing else: no other fixture writes an id inside a field's asterisks |
 | `FIELD_TOKEN`'s position prefix narrowed to a line-start anchor, dropping the `·` arm — position-aware read as line-start-only — WO-1.27, same method | **33 red of 35**, and the breadth is the finding: every fixture here writes four fields on one line, so **Status**, **Size**, **Depends on** and **Owes** all vanish at once and the status reads `(none)`. The plant aimed at it names the three it can see — *"the report printed ship — size —"*, *"status (none)"*, *"owes (no **Owes** field)"* — which is what a reader needs when thirty-three lines go red together |
+| **the whole of `tools/wo-gate.mjs` as it stood before WO-1.29** — `--against` over `git show HEAD:tools/wo-gate.mjs`, so nothing in the tree was mutated at all | **1 red**: the zero-id plant, on all ten of its assertions at once, and two of them are the defect verbatim — *"--tick exited 0 on a `**Owes**` field that names no work order"*, which then wrote `ROADMAP.md`, the phase file and `README.md`; and *"the `**Owes**` section printed rows for 3 work order(s) and its tally says 4"*. The positive control beside it stays **green**, which is the shape to expect and the reason it is a pair: a control never reddens against the absence of the thing it guards |
+| the refusal widened to `**Depends on**` as well — one shared "value parses to zero ids" predicate over both fields, which WO-1.29's Traps line forbids in as many words — `--against` over a copy in the scratchpad | **13 red of 37**, and the breadth is the finding rather than noise: the fixture's own `**Depends on** nothing` parses to zero ids, so every plant that expects a clean run over a healthy fixture reddens at once. The plant aimed at it names two of its three cases — the well-formed `**Owes**` refused, and the prose `**Depends on**` reported as a problem beside a field and a marker that agree. **This is the mutation that matters most of WO-1.29's four**: it is the tempting factoring, and what it costs is about thirty correct work orders |
+| the refusal widened to every `**Owes**` field, however well formed — WO-1.29, same method | **6 red of 37**: the positive control on all three of its cases, plus four plants that tick or audit a fixture carrying a field that resolves. The zero-id plant stays **green**, which is exactly why the control exists — a refusal that says no to everything passes the plant named after the defect |
+| the `if (!wo.owesRaw && !marks.length) continue` skip deleted from `--audit`'s `**Owes**` section — WO-1.29, same method | **1 red**: the positive control, on its skipped-work-order case alone. It is also the only run in which the floor row this work order added is observed firing — 169 rows where the healthy tree prints 3, each reading `counted here and nothing above is about it — **Owes** (blank), no marker` |
 
 **And the pre-WO-1.28 script is the broad run for those six**, with the same caveat the WO-3.11
 paragraph above states: `--self-check --against <the script as of c6a1a4b>` reddens **2 of the 6** —
@@ -236,11 +250,14 @@ the two that assert the new *acceptance* — and leaves the four that assert a *
 the old script refuses too, for a different reason. That is why the four one-line mutations above
 exist rather than the broad run standing alone.
 
-Twenty-six mutations, all reverted or driven over a copy, and every one of them red on the plant it
-was aimed at. **Twenty-three touched nothing else; the three that did are findings rather than
-failures and each says so in its own cell** — the 🎒-NOTE row, and two of WO-1.27's four, where the
-breadth is the point: a header block's fields are read by everything here, so a position rule read
-wrongly reddens most of the board at once. *(WO-1.38's six are six of **twelve**
+Thirty mutations, all reverted or driven over a copy, and every one of them red on the plant it
+was aimed at. **Twenty-five touched nothing else; the five that did are findings rather than
+failures and each says so in its own cell** — the 🎒-NOTE row, two of WO-1.27's four, and two of
+WO-1.29's four, where the breadth is the point in two different ways. A header block's fields are
+read by everything here, so a position rule read wrongly reddens most of the board at once; and a
+refusal aimed at one field's value reddens most of it too the moment it is widened to a second field
+or to a second value, because every fixture in the array carries a healthy header and expects a clean
+run over it. *(WO-1.38's six are six of **twelve**
 run against its four plants, all with `--against` over a copy in the scratchpad, so the tree was never
 mutated. The six not tabulated are the same shapes one fence over — `--handoff` writing on `--dry-run`
 or moving a dashboard, `next` not skipping the status at all, the "abandoned claim" sentence deleted

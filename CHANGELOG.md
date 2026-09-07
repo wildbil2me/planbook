@@ -13,6 +13,23 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### An Owes field that names no work order is refused, and the audit prints every row it counts — 2026-09-07
+
+**`**Owes**` is the one header field the tool acts on rather than reports**, and WO-4.3 had carried
+a true English sentence in it since August — a re-homing described in words, naming no work order.
+`--audit` counted the work order, printed no row for it, and reported `0 problem(s)`: a cross-check
+that could not fail on the input it was written for, because both of its loops were handed an empty
+list. A value that parses to zero work-order IDs is now refused at `--audit` and at `--tick`, and the
+section prints a row for every work order it counts — so the rows and the tally can never again
+disagree in silence. WO-4.3's field is gone; what it said moved into that work order's body beside
+the 📆 line that already carries the same fact where a tool can see it.
+
+**The refusal is deliberately not extended to `**Depends on**`**, which is reported rather than acted
+on and legitimately names nothing in about thirty work orders. The tempting shared predicate over
+both fields was written and measured rather than argued about: it reddens thirteen of the
+thirty-seven self-check plants. Two new plants hold the refusal, and the whole of the pre-WO-1.29
+script, run under `--self-check --against`, reproduces the original defect verbatim.
+
 ### A work-order header field's value is read by position, not by name — 2026-09-07
 
 **`wo-gate.mjs` applied the § "Header fields" position rule when scanning field names but not when

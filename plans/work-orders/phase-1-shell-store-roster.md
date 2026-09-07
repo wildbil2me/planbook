@@ -2715,7 +2715,7 @@ them silently.**
 
 ## WO-1.29 — the Owes field on WO-4.3 names no work order, and nothing notices
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-09-07 · **Size** S · **Depends on** — · **Blocks** nothing
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — `wo-gate.mjs` is not a promise the roadmap
 makes, the way WO-1.26, WO-1.27 and WO-1.28 are not. Booked 2026-08-27, owner-directed, found by
 WO-1.28's verifier while reading WO-4.3's header for an unrelated reason.)*
@@ -2833,25 +2833,25 @@ two are orthogonal and neither blocks the other, but they touch the same neighbo
   one paragraph beside WO-1.28's.
 
 **Acceptance**
-- [ ] A header field holding prose with no work-order ID is refused by `--audit`, naming the work
+- [x] A header field holding prose with no work-order ID is refused by `--audit`, naming the work
       order and the file line, and `--self-check` has a plant that fails if that regresses.
-- [ ] `node tools/wo-gate.mjs --tick` refuses a work order whose field parses to zero IDs. Output
+- [x] `node tools/wo-gate.mjs --tick` refuses a work order whose field parses to zero IDs. Output
       quoted.
-- [ ] The audit's section prints one row per counted work order — the printed rows and the
+- [x] The audit's section prints one row per counted work order — the printed rows and the
       `N work order(s)` tally agree on every run. Quote the section before and after.
-- [ ] WO-4.3 no longer carries the field, its body records the 2026-08-25 👤 sitting, and
+- [x] WO-4.3 no longer carries the field, its body records the 2026-08-25 👤 sitting, and
       `node tools/wo-gate.mjs WO-4.3` still reports the 📆 line exactly as it does today.
-- [ ] `node tools/wo-gate.mjs --audit` passes, and every work order's parsed `Ship`, `Status`,
+- [x] `node tools/wo-gate.mjs --audit` passes, and every work order's parsed `Ship`, `Status`,
       `Size`, `Depends on`, `Blocks`, `Target`, `Closes roadmap` and `Amends roadmap` is unchanged
       across all 169 — dump before and after and diff. *(141 when booked; take the count from the
       tree on the day rather than from this line.)*
-- [ ] `node tools/wo-gate.mjs --self-check` passes with more plants than it has today — 35 as of
+- [x] `node tools/wo-gate.mjs --self-check` passes with more plants than it has today — 35 as of
       2026-09-07 — and the new ones are named in its closing summary.
-- [ ] This work order's own header parses with **no** field of the kind it is about — `--audit`
+- [x] This work order's own header parses with **no** field of the kind it is about — `--audit`
       reports nothing against WO-1.29 itself.
-- [ ] `node tools/wo-sweep.mjs` is unaffected — quoted, green. `verify-shell.mjs` is not touched by
+- [x] `node tools/wo-sweep.mjs` is unaffected — quoted, green. `verify-shell.mjs` is not touched by
       this work order and does not need re-running; say so rather than quoting a stale run.
-- [ ] No file's line endings changed: `git diff --stat` shows no whole-file rewrite.
+- [x] No file's line endings changed: `git diff --stat` shows no whole-file rewrite.
 
 **Not in scope, and each is a decision rather than an omission.**
 - **The field is not widened to carry prose alongside an ID.** A field that means two things is the

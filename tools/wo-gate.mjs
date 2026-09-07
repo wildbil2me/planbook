@@ -581,6 +581,37 @@ function rehomesOf(wo, wos) {
   // somewhere the field does not name is a debt the header does not admit to.
   const named = [...new Set((wo.owesRaw.match(/WO-[\dG][\w.]*/g) || []))];
   const pointed = [...new Set((wo.acceptance || []).flatMap(a => (a.rehomes || []).map(m => m.target)))];
+
+  // A field that names nothing at all (WO-1.29), checked before the two loops below because it is
+  // the state in which NEITHER of them can say anything. `named` is empty and `pointed` is empty, so
+  // both iterate zero times, and the field is read, found to contain nothing, and reported clean.
+  // WO-4.3 carried a true and useful English sentence in this slot from 2026-08-24 to 2026-09-07 —
+  // *the real-data box (Acceptance line 3) — and nothing else; the 👤 sitting is green* — and every
+  // run in that fortnight passed it. **A check that cannot fail on the input it was written for is
+  // not a check**, and a cross-check whose input is a list is handed an empty one by exactly this.
+  //
+  // IT IS A REFUSAL, NOT WO-1.27'S NOTE, and the two arguments are not interchangeable. That one is
+  // about a field NAME written in prose, which prose may legitimately write — README.md § "Header
+  // fields" writes every one of them — so refusing there would make the directory unwriteable. This
+  // is about the VALUE of a field that really is at a field position, in the one slot § "Header
+  // fields" says is "acted on rather than only reported": it is "present exactly when a line has
+  // been moved", and each ID on it "must be pointed at by a `- [ ] … → WO-x.y` line below". A value
+  // with no ID in it has no reading that satisfies either sentence.
+  //
+  // AND IT IS `owesRaw` ONLY — do not lift it into a shared predicate over `**Depends on**`. That
+  // field is reported rather than acted on, and zero-IDs-plus-prose is its ordinary case: `nothing`,
+  // `everything`, `Phase 3`, and the thirty-odd lines depsOf() already hands to a human as prose. A
+  // "value parses to zero IDs" test over both fields refuses correct work orders, including the ones
+  // written to repair this family. What `**Depends on**` should do instead is WO-1.30, a different
+  // work order with a different answer.
+  //
+  // A field present and BLANK is not this — `positionalFields()` trims, so an empty value leaves
+  // `owesRaw` falsy and every caller here treats it as no field at all. It is caught one level up
+  // instead: --audit counts such a work order into its tally and prints the row that says so.
+  if (wo.owesRaw.trim() && !named.length) {
+    problems.push({ item: null, why: [`**Owes** names no work order — its value carries prose and no WO- id: ${clip(wo.owesRaw, 60)}. This field is acted on rather than reported, and every id on it must be pointed at by a "- [ ] … → WO-x.y" line below. Name the work order carrying the re-homed line, or take the field off and say it in the body, where a reader looks for it and no parser does`] });
+  }
+
   for (const id of named) {
     if (!pointed.includes(id)) problems.push({ item: null, why: [`**Owes** names ${id} and no Acceptance line carries a "→ ${id}" marker`] });
   }
@@ -1764,7 +1795,12 @@ function applyTick(id, wos, dryRun) {
   // the **Owes** field must name what the markers point at. It names the line, and it writes nothing.
   if (rehome.problems.length) {
     console.log('');
-    console.log(`HELD | ${id} has a re-homed Acceptance line whose pointer does not resolve:`);
+    // Two shapes reach here and the heading names both, because one of them carries no line at all:
+    // a marker whose pointer does not resolve (`p.item` is the line), and a **Owes** field that
+    // disagrees with the markers under it or names nothing (`p.item` is null, and the report points
+    // at the header). It said only the first until WO-1.29, over a refusal that has been able to
+    // fire on a field alone since WO-3.11.
+    console.log(`HELD | ${id} has a **Owes** field or a re-homed Acceptance line that does not resolve:`);
     for (const p of rehome.problems) {
       if (p.item) console.log(`  ${path.relative(REPO, wo.file)}:${p.item.line + 1}  ${clip(p.item.text, 80)}`);
       for (const w of p.why) console.log(`      ${w}`);
@@ -1975,17 +2011,33 @@ function audit(wos) {
     const marks = (wo.acceptance || []).filter(a => a.rehomes && a.rehomes.length);
     if (!wo.owesRaw && !marks.length) continue;
     withOwes++;
+    // Rows printed about THIS work order (WO-1.29). The tally below counts work orders and the rows
+    // are printed per marker, so before this counter the two answered different questions and the
+    // section could say `4 work order(s) …` over three rows and `0 problem(s)` under them. That is
+    // what WO-4.3's field did for a fortnight, in a run nobody read past the summary line: the
+    // missing row WAS the defect, and a reader had to notice 4 ≠ 3 to see it.
+    let rows = 0;
     const { problems: rehomeProblems } = rehomesOf(wo, wos);
     for (const p of rehomeProblems) {
       owesBad++;
       const where = p.item ? `${path.basename(wo.file)}:${p.item.line + 1}` : `${path.basename(wo.file)}:${wo.headingLine}`;
-      for (const w of p.why) console.log(`  BAD  ${wo.id.padEnd(8)} ${w}   (${where})`);
+      for (const w of p.why) { console.log(`  BAD  ${wo.id.padEnd(8)} ${w}   (${where})`); rows++; }
     }
     for (const a of marks) {
       if (rehomeProblems.some(p => p.item === a)) continue;
       pointers += a.rehomes.length;
       console.log(`  ok   ${wo.id.padEnd(8)} ${a.ticked ? '[x]' : '[ ]'} → ${a.rehomes.map(m => m.target).join(', ')}   ${clip(a.text.replace(REHOME_MARKER, '').trim(), 56)}`);
+      rows++;
     }
+    // The floor: counted and silent is now a row of its own. **There is no input in today's tree
+    // that reaches it, and that is the intended state** — a truthy `**Owes**` either parses to ids,
+    // and then every id is either pointed at or a BAD, or it parses to none and the refusal in
+    // rehomesOf() is a BAD; and a work order with no field is only counted here when it carries
+    // markers, which print. It is written anyway, and it is not the same shape as the check it
+    // guards: that one asks whether a value is well formed, this one asks only whether the tally and
+    // the rows are talking about the same set. The next field-shaped hole does not have to be
+    // anticipated to be visible.
+    if (!rows) console.log(`  —    ${wo.id.padEnd(8)} counted here and nothing above is about it — **Owes** ${clip(wo.owesRaw, 56) || '(blank)'}${marks.length ? `, ${marks.length} marker(s)` : ', no marker'}   (${path.basename(wo.file)}:${wo.headingLine})`);
   }
   if (!withOwes) console.log('  —    no work order carries a **Owes** field or a re-homed line');
   console.log('');
@@ -2122,6 +2174,15 @@ const TARGET_BOX = 'the re-homed line, carried by the target fixture';
 // WO-9.7 is what WO-9.9 itself waits on, so the two-hop chain has a second hop to name.
 // It is ✅ DONE and inert unless a plant asks for it, because a fixture that changes the answer to
 // every other plant is a fixture that makes eighteen green lights mean less than they did.
+// WO-1.29's plant value, and no fifth fixture with it: this class of defect is about what a field
+// CONTAINS, so it is expressed by handing `fixtureBlock()`'s existing `owes` option a value rather
+// than by writing another synthetic work order for the other plants to trip over. It is the shape
+// WO-4.3 carried from 2026-08-24 to 2026-09-07, kept recognisable on purpose. Three things it must
+// not hold: a `WO-` token, which is the whole point; a `·`, which would end the field and start an
+// unknown one; and a `"`, because anything double-quoted on a header line is read as a **Closes
+// roadmap** fragment and a second fragment matches no box.
+const OWES_PROSE = 'the real-data box (Acceptance line 3) — and nothing else, which is a true sentence and not a field';
+
 const GATE_ID = 'WO-G9';
 const CHAIN_ID = 'WO-9.7';
 const CHAIN_BOX = 'the far hop, waiting on the calendar behind the near one';
@@ -2605,6 +2666,29 @@ function runPlants(subject, sandbox) {
     plantWrite('ROADMAP.md', lines.join('\n'));
   };
 
+  // The `**Owes**` section of an --audit run, read back off that run's own output (WO-1.29). Two
+  // plants below need to say something about the SET of work orders the section printed a row for
+  // rather than about one row, because the defect they are named after is a work order counted into
+  // the tally with NO row above it — which no single-row assertion can see, and which is why it went
+  // unread for a fortnight. Read independently of the parser being tested, like every reader here.
+  //
+  // The plants that use it assert about the FIXTURE and about the section's own arithmetic, never
+  // about --audit's exit code. `--self-check` copies the real `plans/` into its sandbox, so an exit
+  // code carries whatever the directory happens to be carrying that week, and a healthy plant that
+  // goes red for somebody else's **Owes** field is the WO-2.16 morning again.
+  const owesSection = out => {
+    const lines = out.split('\n');
+    const head = lines.findIndex(l => l.includes('markers, against the boxes they name'));
+    const tally = head < 0 ? -1 : lines.findIndex((l, i) => i > head && /work order\(s\) with a \*\*Owes\*\* field/.test(l));
+    if (head < 0 || tally < 0) return null;
+    const rows = [];
+    for (const l of lines.slice(head + 1, tally)) {
+      const m = /^ {2}(ok|BAD|—)\s+(WO-[\dG][\w.]*)\s/.exec(l);
+      if (m) rows.push({ kind: m[1], id: m[2] });
+    }
+    return { rows, ids: new Set(rows.map(r => r.id)), counted: Number((/^\s*(\d+) work order\(s\)/.exec(lines[tally]) || [, NaN])[1]) };
+  };
+
   // The `Suggested` cell of a fixture's running-order row, rewritten whole (WO-1.35). Step 2b puts
   // both fixture rows ABOVE every real one, so WO-9.9 is the first ⬜ in the first table and WO-9.8 is
   // the row below it — which is exactly the pair a 🎒 plant needs: one row with an empty shelf above it
@@ -2937,6 +3021,111 @@ function runPlants(subject, sandbox) {
         if (!new RegExp(`next: ${TARGET_ID}`).test(after.out)) bad.push(`\`next\` did not offer ${TARGET_ID} once ${FIXTURE_ID} was ✅ DONE`);
         if (!new RegExp(`PASS \\| gates clear for ${TARGET_ID}`).test(after.out)) bad.push(`${TARGET_ID}'s gate did not pass with its dependency ✅ DONE`);
         if (/skipped/.test(after.out)) bad.push('`next` still stepped over the landed work order');
+        return bad;
+      },
+    },
+    // ------------------------------------------------------------------ WO-1.29's two
+    //
+    // The four above are all about a pointer that stopped landing somewhere. These two are about the
+    // state in which there is nothing to point at and nothing to land: a **Owes** field carrying an
+    // English sentence with no work-order id in it. WO-4.3 carried one for a fortnight, `named` and
+    // `pointed` both came back empty, both cross-check loops iterated zero times, and every run
+    // reported it clean while counting it — `4 work order(s) …` over three rows and `0 problem(s)`.
+    //
+    // They come as a pair for the reason the fourth of WO-3.11's exists: a refusal that fired on
+    // every **Owes** field would pass the first of these and would have broken the one behaviour the
+    // field is there for. The second is that control, plus the field ONE OVER — `**Depends on**`
+    // parses to zero ids in about thirty correct work orders, so the tempting shared predicate is a
+    // refusal of correct work.
+    {
+      name: 'a **Owes** field that names no work order is refused by --audit, holds --tick, and never vanishes between the rows and the tally',
+      run: () => {
+        const bad = [];
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false, owes: OWES_PROSE });
+        const before = snapshot();
+
+        const a = run(['--audit']);
+        if (!/names no work order/.test(a.out)) bad.push('--audit said nothing about a **Owes** field holding prose and no id');
+        if (!new RegExp(`BAD\\s+${FIXTURE_ID}\\b`).test(a.out)) bad.push(`--audit did not name ${FIXTURE_ID} as the work order carrying it`);
+        if (!new RegExp(`\\(${FIXTURE_FILE.replace(/\./g, '\\.')}:\\d+\\)`).test(a.out)) bad.push('--audit did not point at the file and line it is written on');
+        if (a.code === 0) bad.push('--audit exited 0 with a **Owes** field that names nothing');
+        if (changedSince(before).length) bad.push(`--audit wrote ${changedSince(before).join(', ')} — it may write nothing, ever`);
+
+        // The other half, and the half a refusal alone does not buy: the section's rows and its own
+        // tally have to be about the same set of work orders. Before WO-1.29 this fixture was
+        // counted and silent, which is the entire defect and is invisible to every assertion above.
+        const s = owesSection(a.out);
+        if (!s) bad.push('the **Owes** section of --audit could not be found in its output');
+        else {
+          if (!s.ids.has(FIXTURE_ID)) bad.push(`${FIXTURE_ID} was counted into the **Owes** tally and printed no row of its own — which is the defect, printed every run and read by nobody`);
+          if (s.ids.size !== s.counted) bad.push(`the **Owes** section printed rows for ${s.ids.size} work order(s) and its tally says ${s.counted}`);
+        }
+
+        const t = run(['--tick', FIXTURE_ID]);
+        if (t.code === 0) bad.push('--tick exited 0 on a **Owes** field that names no work order');
+        if (!/HELD/.test(t.out)) bad.push('the refused --tick never said HELD');
+        if (!/names no work order/.test(t.out)) bad.push('the refused --tick did not say why it refused');
+        if (changedSince(before).length) bad.push(`the refused --tick wrote ${changedSince(before).join(', ')}`);
+        return bad;
+      },
+    },
+    {
+      name: 'the refusal reads **Owes**\'s value and nothing else — a field naming a work order still passes, no field is still skipped, and a prose **Depends on** is untouched',
+      run: () => {
+        const bad = [];
+
+        // 1. The field doing exactly what § "Header fields" describes it doing.
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false, owes: TARGET_ID,
+                rehome: `a line this fixture will not close → ${TARGET_ID} "${TARGET_BOX}"`, target: 'open' });
+        const good = run(['--audit']);
+        if (/names no work order/.test(good.out)) bad.push('the zero-id refusal fired on a **Owes** field that names one');
+        const g = owesSection(good.out);
+        if (!g) bad.push('the **Owes** section of --audit could not be found in its output');
+        else {
+          if (!g.rows.some(r => r.id === FIXTURE_ID && r.kind === 'ok')) bad.push(`${FIXTURE_ID}'s resolving pointer did not print an ok row`);
+          if (g.rows.some(r => r.id === FIXTURE_ID && r.kind === 'BAD')) bad.push(`${FIXTURE_ID} was reported as a problem while its field and its marker agreed`);
+        }
+        const tick = run(['--tick', FIXTURE_ID]);
+        if (tick.code !== 0) bad.push('--tick refused a **Owes** field naming a work order whose marker resolves:', ...verdict(tick.out));
+
+        // 2. Neither a field nor a marker: skipped, not flagged. The section may not mention it.
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
+        const none = run(['--audit']);
+        // Deliberately over the WHOLE output and not just the fixture's rows: on this tree every
+        // real **Owes** field names a work order, so a refusal appearing anywhere means the check is
+        // reading more than this one field's value. It cannot cry wolf on repository drift — the
+        // only thing that would trip it is a real zero-id field, which is the defect itself.
+        if (/names no work order/.test(none.out)) bad.push('the zero-id refusal fired somewhere on a tree whose fixture has no **Owes** field at all and whose real ones every one name a work order — it is reading more than this field\'s value');
+        const n = owesSection(none.out);
+        if (!n) bad.push('the **Owes** section of --audit could not be found in its output');
+        else {
+          if (n.ids.has(FIXTURE_ID)) bad.push('a work order with neither a field nor a marker printed a row — it is skipped rather than flagged, and the row that guarantees the tally must not become one');
+          if (n.ids.size !== n.counted) bad.push(`the **Owes** section printed rows for ${n.ids.size} work order(s) and its tally says ${n.counted}`);
+        }
+
+        // 3. The field one over, which is WO-1.30's and not this one's. `**Depends on**` is reported
+        //    rather than acted on, and a value with no id in it is its ordinary case — `nothing`,
+        //    `everything`, `Phase 3`. A shared "parses to zero ids" predicate reddens here.
+        //
+        //    IT CARRIES A WELL-FORMED **Owes** AS WELL, and that is the whole of what makes the
+        //    assertion work: --audit skips a work order with neither a field nor a marker before
+        //    rehomesOf() is ever called on it, so a fixture with a prose **Depends on** and nothing
+        //    else is never READ by the predicate under test and would sit green under any mutation
+        //    of it. Measured, not assumed — the first cut of this case had no **Owes** on it and
+        //    caught nothing when the refusal was widened to both fields.
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false, owes: TARGET_ID,
+                rehome: `a line this fixture will not close → ${TARGET_ID} "${TARGET_BOX}"`, target: 'open',
+                depends: 'a phase this fixture waits on, written in prose and naming no id' });
+        const dep = run(['--audit']);
+        const d = owesSection(dep.out);
+        if (!d) bad.push('the **Owes** section of --audit could not be found in its output');
+        else {
+          if (d.rows.some(r => r.id === FIXTURE_ID && r.kind === 'BAD')) bad.push('a **Depends on** written in prose was reported as a problem while **Owes** named a work order and its marker resolved — the refusal was generalised to the field one over, which refuses about thirty correct work orders');
+          if (!d.rows.some(r => r.id === FIXTURE_ID && r.kind === 'ok')) bad.push('a well-formed **Owes** stopped printing its ok row once **Depends on** was written in prose');
+        }
+        const gate = run([FIXTURE_ID]);
+        if (gate.code !== 0) bad.push(`${FIXTURE_ID}'s own gate refused a prose **Depends on**:`, ...verdict(gate.out));
+        if (!/depends \(prose\)/.test(gate.out)) bad.push('the gate report stopped reporting a prose **Depends on** as prose for a human to read');
         return bad;
       },
     },
@@ -3721,6 +3910,17 @@ function runPlants(subject, sandbox) {
   console.log('  away, while the claim beside it keeps its way back and gains the handoff; and it is');
   console.log('  not ✅ DONE where that matters — a dependent\'s gate still refuses it, and --tick runs');
   console.log('  from it to ✅ DONE with a full list and holds at 🔨 with an open one.');
+  console.log('  And WO-1.29\'s TWO, about what a found field is allowed to CONTAIN where WO-1.27\'s');
+  console.log('  four are about where it is written: a **Owes** field holding prose with no work-order');
+  console.log('  id is refused by --audit naming the work order and its file line, holds --tick with a');
+  console.log('  HELD and writes nothing, and prints a row of its own — the section\'s rows and its');
+  console.log('  `N work order(s)` tally are asserted to be about the same set, which is the half a');
+  console.log('  refusal alone does not buy and the half that went unread for a fortnight; and the');
+  console.log('  refusal reads that value and nothing else — a field naming a work order whose marker');
+  console.log('  resolves still passes and still ticks, a work order with neither field nor marker is');
+  console.log('  still skipped rather than flagged, and a **Depends on** written in prose with no id');
+  console.log('  in it draws nothing, because that field is reported rather than acted on and about');
+  console.log('  thirty correct work orders write it that way.');
   console.log('  NOT covered: the Acceptance parser otherwise. It is still never run');
   console.log('  against a real work order\'s list, and one terminator is one way it can go blind and');
   console.log('  not the class of them — a narrowed gap, not a closed one. Nor is gate()\'s');

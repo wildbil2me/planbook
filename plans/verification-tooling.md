@@ -722,6 +722,55 @@ to the start of a line, which is the whole of what the note asks for, and the pa
 that repair is byte-identical. **The work order was written on the belief that the tree was clean.**
 It was clean of the *shape* it named, and carried one of the class.
 
+## A cross-check whose input is a list can pass by being handed an empty one, 2026-09-07 (WO-1.29)
+
+**Third of the family in a fortnight, and the first that was printing its own evidence the whole
+time.** WO-4.3's header carried `**Owes** the real-data box (Acceptance line 3) — and nothing else;
+the 👤 sitting is green, 2026-08-25` — a true and useful sentence, sitting in the one slot
+§ "Header fields" describes as *acted on rather than only reported*. `rehomesOf()` extracts the named
+work orders with one match and then cross-checks them in both directions: every ID named must have a
+`→` marker under it, and every marker must be named. Against that value the match returned `[]`, the
+markers returned `[]`, **both loops iterated zero times**, and the field was read, found to contain
+nothing, and reported clean — every run for a fortnight.
+
+**The shape is not the one the two sections above record, and the difference is where to look
+next.** Those are *a rule the trackers state and the script does not know*. Here the script knew the
+rule and had implemented it — as an iteration over a list derived from the input. **A `for` loop over
+a derived list is blind to exactly one input: the one that derives an empty list**, and it does not
+report being blind, it reports agreement. So the question to ask of a check is not only *does it know
+the rule* but *what does it do when it has nothing to compare* — and the answer wanted, wherever the
+empty case is illegitimate, is a refusal written before the loops rather than inside them.
+
+**The second half is the reporting, and it is the half worth arguing about.** `--audit` counts a work
+order into this section when it has a field **or** a marker, and prints its rows **per marker**, so
+the section said `4 work order(s) with a **Owes** field or a "→" marker, 3 pointer(s) resolving,
+0 problem(s)` over three rows. Two counts answering different questions, printed four lines apart,
+with the missing row as the whole of the defect — and `0 problem(s)` is where a reader stops. **The
+fix is not a smarter summary line.** A tally recomputed and compared against the loop that produced it
+is this document's own subject one level up: a check that cannot fail. It is a **row for every work
+order the section counts**, so the evidence is the rows themselves and not an arithmetic a reader has
+to perform. On today's tree that floor is unreachable — a truthy field either parses to IDs, which are
+then either pointed at or a problem, or it parses to none, which is now a problem — and it was
+observed firing only by deleting the skip above it. That is the intended state, said out loud, the
+way § "Header fields" says it of a field with no row.
+
+**Two behaviours, two plants, 35 → 37, and only one of them can be proved the cheap way.** The
+refusal goes red against the previous script on all ten of its assertions, including the two that are
+the defect verbatim — `--tick exited 0`, and *"the section printed rows for 3 work order(s) and its
+tally says 4"*. The other plant is a **positive control**, and a positive control never reddens
+against the absence of the thing it guards; it was proved against three one-line mutations instead —
+the refusal widened to `**Depends on**` as well, the refusal widened to every `**Owes**` field, and
+the audit's skip deleted. Each reddens the case that names it. The first of those three is the reason
+this row was an S and its neighbour WO-1.30 an M: `**Depends on**` is *reported* rather than acted on
+and legitimately parses to zero IDs in about thirty work orders, so the tempting shared predicate
+turns thirteen plants red at once — measured, not assumed.
+
+**And the trap this one sets for whoever builds it is worth carrying forward.** Taking the field off
+WO-4.3 turns `4 counted, 3 shown` into `3 counted, 3 shown` **on the document fix alone**, so a clean
+`--audit` after both halves have landed is evidence of nothing at all. It is this document's subject
+aimed at the person rather than the script, and the only answer to it is a plant that has been
+watched to fail.
+
 ## What it cannot do, and must never claim to
 
 - **No 👤 item, ever.** No emulator has a thumb, a safe-area inset, a home-screen install, or
