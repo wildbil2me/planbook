@@ -241,3 +241,209 @@ own and match on `appProperties.docId` — no folder picker, no stored file path
 It isn't a backup. Drive holds one live copy that sync will happily overwrite with a newer one.
 The downloadable JSON in [data-model.md](data-model.md) is the backup, and it stays mandatory
 whether or not sync is on.
+
+## Wanting it to be seamless — the conversation of 2026-09-07
+
+**Nothing here is decided and none of it is a work order.** It is the shape of a conversation the
+owner and a session had the day WO-7.2 landed, written down because the next person to want
+invisible sync will re-derive the whole argument otherwise — and because two of the turns in it
+are corrections that are easy to miss.
+
+**The goal, in the owner's words: sync should be seamless, ideally invisible.**
+
+**The ceiling is real and it is not a build problem.** *Invisible* taken literally means syncing
+while the app is closed, and that is impossible here for the reason § Auth already gives: no
+refresh token exists in a browser-only flow, so an unattended sync fails the moment the hour is up.
+Getting past it needs a persisted bearer credential or a backend that refreshes one, and
+[`CLAUDE.md`](../CLAUDE.md) refuses both — the first outlives the tab and survives a laptop handed
+to a substitute, the second ends *no vendor server ever touches student data*. So the target worth
+aiming at is **invisible while the app is open**, which is most of the felt benefit.
+
+**Taken as a given: sync at natural moments while signed in.** App open, tab regains visibility, a
+beat after the last save settles. No new scope, no new permission, and it behaves the same on both
+devices. The one trap is ordering — it has to respect the `flush()` that `syncNow()` already does
+first, or an auto-sync fires inside the 800ms debounce and uploads the document as it stood
+*before* the grade that triggered it.
+
+**The owner's second idea, and the line that runs through it: asking for authorization at launch.**
+A version of this is fine and a version of it is fatal, and the difference is whether it **blocks**.
+
+- **A blocking gate is refused twice over.** It breaks the standing rule that the app works fully
+  signed-out forever — but the sharper objection is that this is a local-first offline app, so an
+  auth step in the load path means **no wifi, no gradebook**. That is a strictly worse app in its
+  core property, traded for a feature that is optional by design.
+- **A non-blocking ask at launch fights nothing** — dismissible, skipped instantly when offline,
+  the app renders either way.
+
+**But a launch prompt does not buy invisibility, and this is the turn worth keeping.** The token
+still lapses in an hour — `expires_in` is 3599 and `FRESH_MARGIN_MS` retires it a minute early, so
+the usable window is ~59 minutes, and a reload or a close ends it outright. Prompt at 7:50 and the
+panel reads disconnected by 9; one launch and a day of teaching puts the tap back in the middle of
+the afternoon. **So the goal restated: not zero taps,
+but taps at predictable, cheap moments.** A tap while setting up costs nothing. A tap discovered at
+2pm because sync quietly stopped is the expensive one. That target is reachable without touching
+the architecture, and it is better defined than *invisible*.
+
+**The pragmatic shape, if it is built:** try `prompt: ''` silently on load and put up a
+non-blocking reconnect affordance only when it fails. **Do not expect the silent half to carry the
+iPad.** It renews off the teacher's own Google session rather than off anything we store, and iOS
+blocks what that depends on — so the laptop mostly never sees the prompt and the tablet sees it
+once a session. That is the device the whole feature exists for, so plan for the visible arm being
+the normal one there rather than the fallback.
+
+**Two things that do not improve with automation.**
+
+- **A conflict can never be invisible.** Both sides moved, someone must choose, and merge logic is
+  refused outright. The consolation is real though: syncing often *shrinks the windows*, so
+  automation makes conflicts rarer — it helps the one case that most needs a human.
+- **§ What sync is not gets harder to teach, not easier.** Silent sync earns trust, and damage
+  propagates just as silently — delete a class, auto-sync, and Drive is wrong too. If sync becomes
+  invisible, the backup habit wants reinforcing in the same change, not later.
+
+**And keep it off the critical path.** Attendance is marked while students walk in; anything at
+launch competes with that directly. Whatever this becomes belongs beside the home screen, never in
+front of it.
+
+None of this is reachable until [WO-7.3](../plans/work-orders/phase-7-sync.md) opens the flag on the
+deployed origin, so there is time for the shape to settle.
+
+### And if it becomes automatic, it needs a status on the glass
+
+The owner's third turn, same conversation: **a flag or icon showing connected vs disconnected.**
+
+**It is not a nice-to-have — rung 1 requires it**, and the reason is a sentence already in the
+code. [`src/drive-sync.js`](../src/drive-sync.js) explains why a failed sync deliberately does not
+redden the save chip: *"A failed sync reports in the Drive panel, which is where the teacher
+tapped."* That reasoning is correct and it rests entirely on **there having been a tap**. Take the
+tap away and she is not looking at the panel, so a lapsed token goes silent. Today there is a
+transient `↻ Syncing…` chip during a transfer and nothing persistent at all.
+
+**But connected/disconnected is probably the wrong axis.** It reports whether a token is alive,
+which is the thing the teacher cares least about. Four states have consequences:
+
+- signed out
+- connected, up to date
+- connected, **local ahead** — work on this device that is not in Drive
+- connected, **last sync failed**
+
+A binary flag collapses the middle two, and those are the two that matter. *Connected* with three
+grades unsynced is true and useless.
+
+**The green dot has a trap of its own.** A permanent *connected* indicator reads as **your
+gradebook is safe in the cloud** — § What sync is not, rendered on the glass as a standing
+reassurance instead of corrected in a panel she chose to open. Connected-and-never-synced would
+light it up.
+
+**So the shape to consider is freshness, not connection:** *Synced 2 min ago* · *3 changes not
+synced* · *Sync stopped — reconnect*. Disconnected becomes the extreme case of stale rather than a
+concept of its own, every state names what to do about it, and the indicator survives whatever is
+later decided about how manual sync is — freshness is the invariant, connection is an
+implementation detail.
+
+**Where it does not go:** into the save chip. That chip has an ownership rule worth keeping —
+`src/store.js` owns every state about this device's own storage and sync owns `syncing` — and a
+persistent freshness reading is a third kind of thing, state rather than event. Nor onto the home
+screen's critical path, for the reason the section above gives about attendance.
+
+### What actually happens at the hour — checked 2026-09-07, and it corrects the block above
+
+**Silent renewal is already built.** `ensureFreshToken()` calls `requestToken(true)` — `prompt: ''`
+— whenever the token is stale, and renews with no UI at all if the teacher's Google session is
+still live in that browser. An earlier draft of the section above implied the hour simply runs out
+flat. It does not.
+
+**But the screen retires the entry point before that path can be used.** `signedIn` is computed
+from the clock, so at ~59 minutes the Sync button hides and Connect returns — which means the
+silent arm is reachable only in a narrow window, and the flow a teacher actually meets is the
+visible one. **Worth a decision rather than an inheritance:** trying the silent renewal *before*
+drawing Connect is possibly the cheapest step toward seamless that exists, because the machinery
+is already here.
+
+**And the lapse itself is silent — deliberately, and coherently, for as long as sync is manual.**
+Nothing watches the clock: the only `setTimeout` in [`src/auth.js`](../src/auth.js) guards a
+request in flight, `refreshAuthChrome()` runs on flips and on the About modal opening and never on
+a schedule, and no sync state is drawn anywhere outside that modal. Two things keep it honest. A
+panel left open does not go wrong, because the expiry is written as a clock time and not a
+countdown — *"ends at 2:47"* stays true after 2:47. And **the lapse is silent while the
+consequence is loud**: tapping Sync on a lapsed token spends zero calls, leaves the document
+untouched, and says so in a sentence.
+
+That holds because the teacher only needs to know she is connected at the moment she acts, and at
+that moment she is told. **It stops holding the day sync runs without a tap** — no tap, no loud
+failure, no indicator, and an app that has quietly stopped syncing looks exactly like one that is
+working. That is the hole the freshness reading above closes, which is why it belongs *with*
+rung 1 rather than after it.
+
+### The one thing in this conversation that is already a build — 2026-09-07
+
+The owner's conclusion from the section above: **the indicator matters more than the automation,
+and it should appear only IF the teacher opted into sync.** The conditional is right, and it has a
+dependency that does not exist.
+
+**Nothing about sync is persisted anywhere.** The token lives in memory by
+[ruling](#what-wo-71-settled--2026-08-24), `signedIn` is computed from the clock, and no
+`planbook_` key mentions Drive. So **after a reload the app cannot tell a teacher who syncs every
+day from one who has never connected** — they are the same state. A conditional indicator has no
+condition to read.
+
+**What it wants is one preference key, and `PREF_DEFAULTS` is already its home.**
+[`src/prefs.js`](../src/prefs.js) holds precisely this species of fact — when the install banner
+was dismissed, which year this browser had open, when a backup was last started; *facts about this
+browser's chrome, not about a student*. A boolean **this teacher uses Drive sync** sits beside them
+without argument. **It is not a credential**: it records that she opted in, never anything she
+could authenticate with, so the token-in-memory ruling is untouched and the `localStorage` rule
+(UI preferences only, never student data) is satisfied on its own terms rather than by exception.
+
+**One key, three things unlocked** — which is why it is worth doing before any of them:
+
+1. **The indicator gets its condition.** Invisible to everyone who never opted in, which keeps the
+   signed-out app exactly as clean as the standing rule requires.
+2. **`lapsed, one tap away` becomes distinguishable from `never connected`.** Today these render
+   identically and cost entirely different things to fix — the single most useful distinction the
+   freshness reading could draw.
+3. **A launch-time renewal attempt can target the people who want it**, instead of prompting
+   everyone or nobody.
+
+**Two things to decide if it is built.** What clears it — presumably *Disconnect*, or a teacher who
+deliberately switches sync off keeps seeing an indicator about it. And whether opting in also means
+*try to reconnect me at launch*, or whether those are two consents and not one.
+
+**It is the cheapest item in this whole conversation and the only one that is a prerequisite rather
+than a feature** — no architecture, no new permission, no new scope.
+
+### A second Google account makes a latent hole reachable — found 2026-09-07
+
+Raised by the owner while deciding whether to add the `@stjohnshigh.org` account as a second test
+user on the OAuth client: *if I add it, it writes to its own Drive, right?* Yes — and the follow-on
+is worth writing down before anyone does it.
+
+**This app is account-blind by construction.** It requests no `openid`, no `profile` and no `email`
+— [`src/auth.js`](../src/auth.js) argues that every scope costs — so it cannot know which account
+is signed in. And the sync bookmark is four fields, `docId` · `year` · `baseRev` · `at`, with **no
+record of whose Drive that `baseRev` was measured against.** Combined with `drive.file`, which only
+ever sees files this app created *in the signed-in account*, two consequences follow.
+
+**Two devices on two different accounts never find each other.** Each looks in its own Drive, finds
+nothing, and does a `first-upload`. Two lineages, two files, no syncing — **and no error of any
+kind.** To the teacher it reads as sync silently not working.
+
+**Switching accounts on one device produces a spurious conflict later.** `planFor()` tests
+`remoteRev === null` *before* it looks at `baseRev`, so a bookmark claiming rev 40 is ignored when
+the new account's Drive is empty and the document uploads as if new. Sign back into the first
+account and the revs no longer line up, so the pair goes to `conflict`. **Nothing is lost** — that
+is keep-both doing exactly its job — but the teacher collects conflict copies across two Drives for
+a reason no screen explains.
+
+**The operating rule, until something changes: one Google account, used on every device.** Given
+the argument in [`FERPA.md`](FERPA.md) that the accounts involved are ones the teacher *and often
+the district* already control, that account should be the school Workspace one wherever real
+student data is in play — a personal consumer account is outside the tenant that argument relies
+on. Adding a second account as a *test user* to learn whether a Workspace admin blocks unverified
+apps is a different act and is safe: sign in, read the answer, disconnect **without syncing**.
+
+**What is worth booking.** `baseRev > 0` together with `remoteRev === null` is a suspicious pair:
+it says *this device has a bookmark claiming a sync that this Drive has no file for.* It has
+exactly two causes — the account changed, or the file was deleted out of Drive — and neither is
+obviously a **first** upload. Today it becomes one silently. **This is not a WO-7.2 defect**: that
+work order scoped one account, and with one account the state is unreachable. A second test user is
+what makes it reachable, which is why it is written here rather than filed against the build.
