@@ -335,9 +335,14 @@ waits on unwritten. `next` would have routed a dispatch straight at it. **This i
 unfixed one gate later:** its line was `Phase 3, WO-2.5 … WO-2.7` until 2026-08-09, where the phase
 name was invisible for the same reason and the ellipsis was read as two tokens rather than a range,
 leaving ten real dependencies unenforced. Same repair, applied before it costs anything: the five ids
-written out, the prose kept after the dash for a human to read. **WO-8.1 and WO-G4 still carry it** —
-`every phase` and `every work order` — and both are named in WO-1.24 rather than fixed, because both
-are genuinely about everything and a written-out list would rot at the next booking.)*
+written out, the prose kept after the dash for a human to read. **WO-8.1 and WO-G4 carried it until
+2026-08-28 and 2026-09-07** — `every phase` and `every work order` — and both were named in WO-1.24
+rather than fixed, because both are genuinely about everything and a written-out list would rot at
+the next booking. **Neither is a written-out list now: each names the one work order its clause
+stands for and keeps the clause**, WO-8.1 by hand and WO-G4 at
+[WO-1.30](phase-1-shell-store-roster.md#wo-130--a-depends-on-that-names-no-work-order-clears-its-own-gate),
+which also made the shape unwriteable — a value with no id in it that is not a no-dependency marker
+is refused by the gate rather than noted beside a `PASS`.)*
 
 **Why it exists.** Signals tuned against thin data produce lists nobody trusts, and a teacher who
 stops reading the list has lost the feature permanently — quietly, without anyone deciding to kill it.
@@ -357,10 +362,26 @@ stops reading the list has lost the feature permanently — quietly, without any
 
 ## WO-G4 — The 1.0.0 call
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** every work order
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-8.1 — which stands for every
+work order here: it is the regression gate, its own field names the last work order of the span it
+checks, and there is no 1.0.0 call over a checklist nobody has run
 **Closes roadmap** → the *What 1.0.0 means* section, which is a heading and a set of criteria rather
 than a box — there is nothing here for `--tick` to tick, and the quotation marks are off it on
 purpose so the sweep does not read it as a fragment *(2026-08-08, WO-2.15)*
+
+*(**`Depends on every work order` until 2026-09-07, and it reported `PASS | gates clear for WO-G4`** —
+the last gate of the whole project, clearing itself. The field held a clause and no `WO-` token, so it
+parsed to* **zero dependencies**, *and zero dependencies is indistinguishable, to `wo-gate.mjs`, from
+every dependency satisfied. WO-8.1's `every phase` was the same defect and was repaired by hand on
+2026-08-28;* **this one was left standing on purpose as the live reproduction** *for
+[WO-1.30](phase-1-shell-store-roster.md#wo-130--a-depends-on-that-names-no-work-order-clears-its-own-gate),
+which closed it —* `depsOf()` *now refuses a value with no id in it that is not one of this
+directory's no-dependency markers, so a field like the old one cannot pass again anywhere in the
+directory.* **WO-8.1 is a stand-in and the criteria table below is the actual list** *— naming every
+work order would rot at the next booking, which is WO-1.24's own reason for leaving this one alone in
+August. What the id buys is that the gate now refuses for a reason a reader can check:* `WO-8.1 is
+⬜ NOT STARTED, not ✅ DONE`*, on a work order whose first Acceptance line is every acceptance line in
+the directory appearing in* `TESTING.md`*. The clause stays after the dash, where a human reads it.)*
 
 **Why it exists.** *This is an argument, not a scoreboard, and ticking every box is the trigger for
 the call, not the call itself.* Write the argument down; each criterion gets a sentence of evidence,

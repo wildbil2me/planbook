@@ -103,7 +103,7 @@ node tools/wo-gate.mjs --self-check    plant every violation this script is supp
 ```
 
 `--self-check` copies `plans/` to a temp directory, writes four **synthetic** work orders into the copy,
-plants thirty-seven violations against them, runs the script over the copy, and deletes the directory on
+plants thirty-nine violations against them, runs the script over the copy, and deletes the directory on
 both exit paths. *(Thirteen until 2026-08-16; WO-1.21 added four, for the two statuses that mean the
 work is not coming and for the § The files index. WO-2.49 added the eighteenth on 2026-08-18, and it
 is the first that is about the **reader** rather than about a refusal — a fixture written CRLF in its
@@ -140,12 +140,27 @@ WO-1.27's four are about where it is written: a `**Owes**` field holding prose w
 is refused by `--audit` and holds `--tick`, and the section prints a row for every work order it
 counts, so its rows and its `N work order(s)` tally are about the same set. The second is a
 **positive control** and not a spare — a field naming a work order still passes, a work order with
-neither field nor marker is still skipped, and a `**Depends on**` written in prose is untouched,
-which is the one that stops the refusal being lifted into a shared predicate over both fields. They
+neither field nor marker is still skipped, and a `**Depends on**` that parses to zero ids is
+untouched, which is the one that stops the refusal being lifted into a shared predicate over both
+fields. They
 brought no fixture with them and no new shape: the value goes into `fixtureBlock()`'s existing `owes`
 option, because this class of defect is about a value rather than about a header. They run **after**
 WO-3.11's four, whose neighbourhood they are in, and before WO-1.21's.
-`37 plants, 37 caught, 0 missed` / `PASS | 37 of 37 plants were caught`, read
+**WO-1.30 added two on 2026-09-07**, immediately after them and about the field one over — one per
+**arm**, which is the whole shape of that work order. The sentinel arm: `—`, `-`, `–`, `none`,
+`nothing` and `nothing — <reason>` are read as *no dependencies*, drawing neither a problem nor the
+prose `NOTE`, asserted over eight values in one plant because **the naive fix passes a plant that
+only proves the refusal fires** — and refuses 41 of this directory's 169 work orders on the way. The
+refusal arm: a value with no id in it that is none of those is a `FAIL` and not a note beside a
+`PASS`, with the two cases that must survive it beside it — ids and prose together still gate on the
+ids and still draw the NOTE, and a bare id draws neither. They brought no fixture and no new shape;
+the values go into `fixtureBlock()`'s existing `depends` option. **They also moved two older plants,
+which is worth reading before assuming a fixture is arbitrary**: WO-1.29's control now writes
+`nothing — <reason>` where it wrote a clause with no id, because *untouched* on that field means the
+markers now, and WO-1.27's bold-prose plant now writes `WO-9.7` ahead of its bold, which is WO-1.11's
+real shape and is the line that plant reads its value off — a `nothing` there stopped echoing the
+value the moment `nothing` became a marker.
+`39 plants, 39 caught, 0 missed` / `PASS | 39 of 39 plants were caught`, read
 off the run and not added up. The counts further down are readings from dated
 runs against older copies of the script and stay at the number that was true then.)* Two things about it are load-bearing. **Every plant path — and, since WO-2.44, the
 sandbox that holds them — goes through a guard that
@@ -243,6 +258,10 @@ part is what did **not** go red beside it:
 | the refusal widened to `**Depends on**` as well — one shared "value parses to zero ids" predicate over both fields, which WO-1.29's Traps line forbids in as many words — `--against` over a copy in the scratchpad | **13 red of 37**, and the breadth is the finding rather than noise: the fixture's own `**Depends on** nothing` parses to zero ids, so every plant that expects a clean run over a healthy fixture reddens at once. The plant aimed at it names two of its three cases — the well-formed `**Owes**` refused, and the prose `**Depends on**` reported as a problem beside a field and a marker that agree. **This is the mutation that matters most of WO-1.29's four**: it is the tempting factoring, and what it costs is about thirty correct work orders |
 | the refusal widened to every `**Owes**` field, however well formed — WO-1.29, same method | **6 red of 37**: the positive control on all three of its cases, plus four plants that tick or audit a fixture carrying a field that resolves. The zero-id plant stays **green**, which is exactly why the control exists — a refusal that says no to everything passes the plant named after the defect |
 | the `if (!wo.owesRaw && !marks.length) continue` skip deleted from `--audit`'s `**Owes**` section — WO-1.29, same method | **1 red**: the positive control, on its skipped-work-order case alone. It is also the only run in which the floor row this work order added is observed firing — 169 rows where the healthy tree prints 3, each reading `counted here and nothing above is about it — **Owes** (blank), no marker` |
+| **the sentinel arm dropped from `depsOf()`** — `unresolvedClause` set to `!ids.length && !!raw.trim()`, which is *zero ids plus prose is a refusal*, the naive fix WO-1.30's Traps line forbids — `--against` over a copy in the scratchpad | **5 red of 39**: the sentinel plant on all eight of its values, and four others — WO-1.29's control, the 🎒 ordering plant, the prose-field plant and the `**Takes from**` plant — because every fixture that writes `nothing` in that field is now refused. **This is the mutation that matters most of WO-1.30's two**, and the breadth is the finding: it is what a plant proving only that the refusal fires would have waved through, and what it costs is 41 of the 169 work orders in the directory, including the three written to repair this family |
+| the refusal arm never firing — `unresolvedClause: false`, so a zero-id clause draws WO-1.27-era prose `NOTE` again — WO-1.30, same method | **1 red**: the refusal plant, on the two assertions that are the defect verbatim — *"the gate exited 0 on a **Depends on** naming no work order"* and *"the refusal is not a FAIL — a NOTE beside a PASS reads as a footnote"*. Nothing else moves, which is the point of the pair: the sentinel plant is green under this one and red under the one above it |
+| the `nothing` prefix test narrowed back to the whole-value `/^nothing$/i` it replaced — WO-1.30, same method | **2 red of 39**: the sentinel plant on its two `nothing <reason>` values only, and WO-1.29's control, whose value is one of them. This is the arm the five real work orders that write down WHY they wait on nothing rest on — WO-2.19, WO-2.20, WO-2.37, WO-3.10 and WO-8.7 — and under it all five are refused outright rather than merely noted |
+| the shared "value parses to zero ids" predicate over both fields — the WO-1.29 row above that read **13 red of 37** — **re-measured after WO-1.30** — `--against` over a copy in the scratchpad, 2026-09-07 | **12 red of 39**, where the same mutation read 13 of 37 an hour earlier. The two WO-1.30 plants are **not** among them and that is the honest reading rather than a gap: this mutation lives in `rehomesOf()`, on the `--tick` and `--audit` paths, and those two plants read gate reports. The claim the Traps line makes — that one predicate over both fields is expensive — survives the re-measure at very nearly the same number |
 
 **And the pre-WO-1.28 script is the broad run for those six**, with the same caveat the WO-3.11
 paragraph above states: `--self-check --against <the script as of c6a1a4b>` reddens **2 of the 6** —

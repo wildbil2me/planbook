@@ -2869,7 +2869,7 @@ two are orthogonal and neither blocks the other, but they touch the same neighbo
 
 ## WO-1.30 — a Depends on that names no work order clears its own gate
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.27 — landed, and it rewrote
+**Ship** — · **Status** ✅ DONE — 2026-09-08 · **Size** M · **Depends on** WO-1.27 — landed, and it rewrote
 the function this one reads its input from; see Traps · **Blocks** nothing; every gate report in the
 directory runs through the function this fixes
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — `wo-gate.mjs` is not a promise the roadmap
@@ -2896,6 +2896,12 @@ WO-8.1's `every phase`, was found and repaired by hand on 2026-08-28; **this one
 left standing as the reproduction**, and closing it is an Acceptance line below. WO-1.27 had to
 build a fixture because its defect was repaired the day it was found — this one does not.
 
+*(**Read the paragraph above in the past tense as of 2026-09-07.** WO-G4's field now names WO-8.1 and
+keeps the clause after it, so its gate report refuses on `WO-8.1 is ⬜ NOT STARTED, not ✅ DONE` —
+checkable, where `PASS | gates clear` was not. The reproduction was run first and is quoted in
+`TESTING.md` § WO-1.30; it is the only live instance the directory has ever had, and there is no
+second one to leave standing, so the standing guard is the plant rather than the tree.)*
+
 ***The rot is the same one § Ship 2 named on 2026-08-09, and this is its third face.*** *There, an
 absent* `**Ship**` *read as* **"in no ship"** *when it meant* **"nobody has said."** *In WO-8.1 an
 unparseable* `**Depends on**` *read as* **"nothing blocks this"** *when it meant* **"everything
@@ -2916,6 +2922,12 @@ moves.
 | `nothing` | ~11 | 15 | **no dependencies** | silent, correct |
 | `nothing — <reason>` | 5 | 5 | **no dependencies, and why** | `NOTE`, wrongly |
 | a clause naming a real constraint | 1 | 1 | **everything** | `NOTE` + `PASS` — the defect |
+
+*(**Re-measured a third time on the build day, 2026-09-07, and the second column is unmoved** —
+127 · 21 · 15 · 5 · 1 over 169, read by running the gate report on every id `--list` returns and
+classifying its `depends` lines, which is the parser answering rather than a grep. The `Today` column
+is history from that afternoon: the 26 rows it marks `NOTE, wrongly` now read `depends nothing` with
+no note, and the last row is a `FAIL`.)*
 
 Only the last row is the bug, and it is the same single work order in both columns — **WO-G4**. So
 is the `nothing — <reason>` set: WO-2.19, WO-2.20, WO-2.37, WO-3.10 and WO-8.7, unmoved in ten days.
@@ -2940,7 +2952,10 @@ and that ratio has worsened by half again since the row was booked.
   2026-09-07 column was measured against that parser. What did **not** change is the code this row
   fixes — the `depsOf()` quoted above is byte-identical to `tools/wo-gate.mjs:650`. **Re-measure
   again before writing the sentinel arm**: the table is evidence with a date on it, not a constant,
-  and it has already moved once.
+  and it has already moved once. *(Both citations were true when this was written and one is spent:
+  `field('Depends on')` is still at `:420` and `positionalFields()` still at `:256`, and `depsOf()`
+  is at `:694` since this row landed — the quote above is the code as it stood, which is the point of
+  quoting it. The table was re-measured a third time on the build day and had not moved.)*
 - **WO-1.29 has landed one field over, and its answer is not this one's.** `rehomesOf()` refuses an
   `Owes` value that parses to zero work-order ids — flatly, with no sentinel arm — because `Owes` is
   *acted on* and a zero-id value there is illegitimate in every case. `Depends on` is *reported*,
@@ -2972,16 +2987,38 @@ and that ratio has worsened by half again since the row was booked.
   that would have caught the naive fix.
 
 **Acceptance**
-- [ ] A `Depends on` holding no `WO-` id and a clause that is not a no-dependency sentinel is a
-      **problem**, not a note — the gate report refuses it.
-- [ ] `—`, `-`, `–`, `none`, `nothing`, and `nothing — <any reason>` raise neither a problem nor the
+- [x] A `Depends on` holding no `WO-` id and a clause that is not a no-dependency sentinel is a
+      **problem**, not a note — the gate report refuses it. *(Run against the live reproduction
+      before it was repaired: `wo-gate.mjs WO-G4` printed `FAIL | **Depends on** names no work order,
+      and its value is not one of this directory's no-dependency markers: every work order …` and
+      exited **1**, where the same command had printed `NOTE` + `PASS | gates clear for WO-G4`
+      minutes earlier. Quoted in `TESTING.md` § WO-1.30.)*
+- [x] `—`, `-`, `–`, `none`, `nothing`, and `nothing — <any reason>` raise neither a problem nor the
       prose `NOTE`. All forty-one work orders using them — the count re-measured on the day, not
-      taken from this line — report exactly as they do today, minus the note.
-- [ ] `WO-G4`'s field names a work order, and its gate report refuses it for a reason a reader can
-      check rather than clearing it.
-- [ ] A `Depends on` carrying **both** ids and prose still raises the `NOTE` and still gates on the
-      ids — that is the correct case and there are dozens of it.
-- [ ] `--audit` and `--self-check` both pass, and `--self-check` gains a plant per arm.
+      taken from this line — report exactly as they do today, minus the note. *(41 re-measured from
+      the tree: 21 `—`, 15 `nothing`, 5 `nothing <reason>`. The gate report for every one of the 169
+      work orders was captured before and after and diffed: **27 changed and 142 are byte-identical**,
+      the twenty-seventh being WO-G4 under the line below — so the 26 that were drawing the spurious
+      note are the whole of the change here, each losing its `depends (prose) …` line and its
+      `NOTE` for the `depends nothing` the other 15 already printed. The sentinel arm was landed and
+      measured green over all 41 **before** the refusal arm existed.)*
+- [x] `WO-G4`'s field names a work order, and its gate report refuses it for a reason a reader can
+      check rather than clearing it. *(`**Depends on** WO-8.1 — which stands for every work order
+      here …`; the report now reads `depends WO-8.1   ⬜ NOT STARTED   <-- not done` and
+      `FAIL | dependency WO-8.1 is ⬜ NOT STARTED, not ✅ DONE`, exit 1. WO-8.1's own field names
+      WO-7.3 for the same reason, 2026-08-28.)*
+- [x] A `Depends on` carrying **both** ids and prose still raises the `NOTE` and still gates on the
+      ids — that is the correct case and there are dozens of it. *(20 in the directory, WO-G4 now
+      the twenty-first, and all 20 report identically before and after — the diff above. The plant
+      asserts all three of it at once: the id is walked, the prose `NOTE` still prints, and the
+      refusal does not fire.)*
+- [x] `--audit` and `--self-check` both pass, and `--self-check` gains a plant per arm. *(`--audit`
+      output is **byte-identical** to the pre-change run, exit 0 — it does not read this field.
+      `--self-check` **37 → 39**, `PASS | 39 of 39 plants were caught`. Both plants proved
+      non-vacuous by mutation over copies in the scratchpad, nothing in the tree mutated: the
+      sentinel arm dropped → **5 red**, the refusal arm never firing → **1 red**, the `nothing`
+      prefix narrowed back to a whole-value test → **2 red**. Rows in `tools/README.md`'s mutation
+      table.)*
 
 ---
 

@@ -13,6 +13,31 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A `Depends on` that names no work order is refused, unless it says so in one of six ways — 2026-09-08
+
+**WO-G4 — the 1.0.0 call — cleared its own gate.** Its `**Depends on**` read `every work order`: a
+true English sentence naming no id, and a value that parses to zero ids is indistinguishable from
+every dependency satisfied. The gate printed a `NOTE` for a human nobody reads, then `PASS`. WO-8.1's
+`every phase` had done the same until August. The field is now refused when it holds no `WO-` id
+**and** is not one of this directory's ways of saying *no dependencies* — `—`, `-`, `–`, `none`,
+`nothing`, or `nothing` with a reason after it. WO-G4's field names WO-8.1 and keeps the clause after
+it, so the report reads `FAIL | dependency WO-8.1 is ⬜ NOT STARTED, not ✅ DONE` — a refusal a reader
+can check.
+
+**This is the sibling of the entry below and its answer is deliberately not the same one.** `Owes` is
+acted on, so a value there that parses to zero ids is illegitimate in every case and is refused
+flatly. `Depends on` is reported, and a zero-id value is legitimate **forty-one times out of
+forty-two** — twenty-one work orders write `—` and mean it. The shared predicate over both fields
+that these two rows keep suggesting reddens thirteen of the self-check plants; the sentinel arm is
+what buys those thirteen back, and it was landed and measured green over all forty-one **before** the
+refusal arm was written.
+
+**What changed was measured rather than asserted.** All 169 gate reports were captured before and
+after and diffed: **27 changed, 142 byte-identical**, and 26 of the 27 are work orders losing exactly
+the spurious prose `NOTE` this row removes. The twenty-seventh is WO-G4. `--audit` is byte-identical —
+it does not read this field — and `--self-check` goes 37 → 39, one plant per arm, with the naive fix
+reddening five of them.
+
 ### An Owes field that names no work order is refused, and the audit prints every row it counts — 2026-09-07
 
 **`**Owes**` is the one header field the tool acts on rather than reports**, and WO-4.3 had carried

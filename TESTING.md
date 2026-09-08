@@ -1222,6 +1222,79 @@ be anticipated to be visible.
 
 ---
 
+### WO-1.30 — a Depends on that names no work order clears its own gate
+
+**What this changes.** Nothing a teacher sees and nothing a device gets: `src/`, `index.html`,
+`sw.js`, `privacy.html`, `manifest.json` and `icons/` are untouched, so **no `CACHE` bump is owed**.
+`depsOf()` in `tools/wo-gate.mjs` gains a **sentinel list** — the six ways this directory writes *no
+dependencies* — and a **refusal** for a value that is none of them and holds no `WO-` id. WO-G4's
+header names a work order for the first time.
+
+**The defect, reproduced before it was repaired.** `wo-gate.mjs WO-G4` — the 1.0.0 call, whose field
+read `**Depends on** every work order` — printed `NOTE | "Depends on" carries a non-work-order clause
+— read it yourself: every work order` and then `PASS | gates clear for WO-G4`, exit **0**. Zero ids
+is indistinguishable from every id satisfied, so the last gate of the whole project cleared itself,
+and **a note beside a PASS reads as a footnote rather than a refusal**. Re-run at the end from a copy
+of the pre-change script and the pre-change `gates.md` outside the repository, to quote it exactly.
+
+- [x] **A clause with no id that is not a marker is refused.** Against the untouched reproduction, the
+      new script printed `FAIL | **Depends on** names no work order, and its value is not one of this
+      directory's no-dependency markers: every work order. No id parses out of it, so the dependency
+      walk has nothing to check — and zero dependencies is indistinguishable from every dependency
+      satisfied …`, exit **1**. The standing guard is the `--self-check` plant *"the refusal arm — a
+      **Depends on** with no id and no marker is a problem, while ids beside prose still gate on the
+      ids and still draw the NOTE"*, proved non-vacuous by setting `unresolvedClause` to `false`:
+      **1 red of 39**, on the two assertions that are the defect verbatim.
+- [x] **The six markers raise neither a problem nor the note, on all forty-one work orders.**
+      Re-measured from the tree on the build day by running the gate report for every id `--list`
+      returns and classifying its `depends` lines — **127 · 21 · 15 · 5 · 1 over 169**, the work
+      order's second column unmoved. All 169 reports were captured before and after and diffed:
+      **27 changed and 142 byte-identical** — the 26 markers, plus WO-G4, which is the next line.
+      Each of the 26 loses a `depends (prose) …` line and a
+      `NOTE`, and prints the `depends nothing` the other 15 markers already printed. **The sentinel
+      arm was landed and measured over all 41 before the refusal arm was written**, which is the
+      order the work order is emphatic about: the other way round, the run that proves the fix is the
+      run that refuses the directory. Guarded by the plant *"the sentinel arm — `—`, `-`, `–`,
+      `none`, `nothing` and `nothing — <reason>` …"*, over eight values including WO-3.10's and
+      WO-8.7's own, and proved non-vacuous twice: the naive fix (`!ids.length && !!raw.trim()`)
+      → **5 red of 39**, and the `nothing` prefix narrowed back to the whole-value `/^nothing$/i`
+      it replaced → **2 red**, on the two `nothing <reason>` values alone.
+- [x] **WO-G4 names a work order and is refused for a checkable reason.** `**Depends on** WO-8.1 —
+      which stands for every work order here …`. The report reads `depends WO-8.1   ⬜ NOT STARTED
+      <-- not done` and `FAIL | dependency WO-8.1 is ⬜ NOT STARTED, not ✅ DONE`, exit **1**.
+      WO-8.1 is a **stand-in** and the criteria table under WO-G4 is the actual list — a written-out
+      list of every work order would rot at the next booking, which is WO-1.24's own reason for
+      leaving this field alone in August. Its own field names WO-7.3 on exactly that argument.
+- [x] **Ids and prose together are unchanged.** 20 work orders carry that shape and all 20 report
+      identically across the before/after diff; WO-G4 is now the twenty-first, and WO-1.30's own
+      header is one of them. The plant asserts the id is walked, the `NOTE` still prints, and the
+      refusal does not fire — and, on the other fixture, that a bare id draws neither.
+- [x] **`--audit` and `--self-check` pass, and there is a plant per arm.** `--audit` is
+      **byte-identical** to the pre-change run and exits 0 — it does not read this field at all.
+      `--self-check` **37 → 39**, `PASS | 39 of 39 plants were caught`, exit 0, with both new plants
+      named in the closing summary. Every mutation above was run with `--against` over a copy in the
+      scratchpad; **nothing in the tree was mutated** — `git diff` adds the word `MUTATION` to this
+      repository in exactly one place, which is this sentence, and every other occurrence of it in
+      `tools/`, `src/` and `plans/` predates this work order and is prose about mutation rounds.
+- [x] **`wo-sweep.mjs` is unaffected.** `41 checks · 38 passed · 0 failed · 3 to review`, exit 0 —
+      the same three standing REVIEW lines, verdict for verdict identical to the baseline run.
+      **`verify-shell.mjs` was run anyway and is green**: `1334 checks · 1334 passed · 0 failed ·
+      0 skipped`, exit 0, before and after, unchanged — this work order touches no file it reads.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.* **Three limits worth
+carrying.** There is **no directory-wide reader of `**Depends on**`** — `--audit` reads the two
+trackers and never this field — so the refusal fires on a gate report, one work order at a time, and
+the nearest a plant can get to *the tree as a whole is clean* is a second fixture's report. A section
+in `--audit` is the obvious follow-up and is deliberately not in this work order. **`--tick` is
+untouched**: dependencies are not checked at tick time and never have been, so a work order carrying
+this defect can still be ticked — unlike WO-1.29's field, which is acted on. And **two older plants
+moved to make room**, both recorded in `tools/README.md`: WO-1.29's control now writes
+`nothing — <reason>` where it wrote a clause with no id, because *untouched* on this field means the
+markers now; and WO-1.27's bold-prose plant now writes an id ahead of its bold — WO-1.11's real shape
+— because the report stops echoing a value the moment that value is a marker.
+
+---
+
 ### WO-1.40 — the file a human types is outside every fence
 
 **What this changes.** Nothing a teacher sees. `src/`, `index.html`, `sw.js` and every stylesheet are

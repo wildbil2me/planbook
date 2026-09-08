@@ -772,6 +772,39 @@ WO-4.3 turns `4 counted, 3 shown` into `3 counted, 3 shown` **on the document fi
 aimed at the person rather than the script, and the only answer to it is a plant that has been
 watched to fail.
 
+## The permissive answer, and why the sentinels go in first, 2026-09-07 (WO-1.30)
+
+**Fourth of the family in a fortnight, and the first whose fix is mostly a list of things not to
+refuse.** `**Depends on** every work order` — WO-G4, the 1.0.0 call, the truest dependency line in
+the directory — parsed to **zero** ids, and zero dependencies is indistinguishable from every
+dependency satisfied, so the last gate of the whole project cleared itself. `hasProse` printed a
+`NOTE` beside the `PASS`, which is the part worth carrying: **a note beside a PASS reads as a
+footnote, not a refusal**, and this one had been printing since the check was written.
+
+**The general shape is the one § Ship 2 named in August, and this is its third face.** An absent
+`**Ship**` read as *in no ship* when it meant *nobody has said*. An unparseable `**Depends on**` read
+as *nothing blocks this* when it meant *everything does*. **Absence and unparseability keep resolving
+to the permissive answer**, in a directory whose entire job is refusing work that is not ready. Ask
+of any new check which way its unreadable input falls.
+
+**What made this an M where the field one over was an S is that the obvious fix is wrong.** *Zero ids
+plus prose is a refusal* refuses **41 of the 169** work orders in the directory — measured on the
+day, from the tree, twice: 26 of them were drawing the spurious note as well, and the shape has grown
+every week since the row was booked while the real instance stayed at one. The em dash is this
+directory's own *no dependencies* marker on 21 work orders; `nothing` is 15 more; and five write
+`nothing` with a reason after it, which the old `/^nothing$/i` against the whole trimmed value
+matched none of. So the fix is a **sentinel list first** — `—`, `-`, `–`, `none`, and a *prefix* test
+for `nothing` — and the refusal only behind it.
+
+**The order those two arms are built in is the whole of the method here, and it is not a preference.**
+Write the refusal first and the run that proves it works is the run that refuses the directory: 41
+work orders go red at once, every one of them correct, and there is no way to tell that noise from a
+real find. Write the sentinels first and each arm is provable alone — the sentinel arm against the
+whole tree with the refusal not yet existing, then the refusal against the one work order that has
+always deserved it. **The same ordering is what the plants inherit**: a plant that proves only that
+the refusal fires is half a check, and it is the half that passes the naive fix. Both arms carry
+one, and the sentinel one reddens on five plants under exactly that mutation.
+
 ## What it cannot do, and must never claim to
 
 - **No 👤 item, ever.** No emulator has a thumb, a safe-area inset, a home-screen install, or

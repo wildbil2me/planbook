@@ -645,12 +645,62 @@ function allWorkOrders() {
   return map;
 }
 
-// "WO-1.1" → dependency. "nothing", "everything", "Phase 3" → not a work order this script can
-// resolve, and reported as such rather than silently passed.
+// ---------------------------------------------------------------------------- **Depends on**
+//
+// **The directory's own ways of writing "no dependencies" (WO-1.30).** Read here, once, and nowhere
+// else. Measured off the tree on 2026-09-07, over all 169 work orders: 127 fields name real ids, 21
+// are a bare `—`, 15 are a bare `nothing`, 5 are `nothing` with a reason after it, and **one** —
+// WO-G4 — is a clause that means everything and parsed to nothing.
+//
+// `nothing` is a PREFIX test where the other four are the whole trimmed value, and that asymmetry is
+// a measurement rather than a style. The rule this replaces was `/^nothing$/i` against the whole
+// value, which matched the 15 bare ones and **none** of the 5 that say why — `nothing — no domain,
+// no name, no policy` (WO-3.10), `nothing but a decision` (WO-8.7) — so those five drew the prose
+// NOTE for writing down their reason. The `—` is this directory's marker for the same fact and
+// § "Header fields" already uses it that way for **Ship**; `–`, `-` and `none` have no live instance
+// on the day this was written and are here because a hand reaching for *no dependencies* reaches for
+// one of them, and a sentinel list that refuses the synonym is a refusal nobody expects.
+//
+// **This list is the whole of what makes the refusal below safe**, and the order the two arms were
+// built in is not incidental: this one went in first and was green on all 41 of those work orders
+// before the refusal existed. The other order makes the run that proves the fix the run that refuses
+// the directory.
+const NO_DEPENDENCY_MARKS = ['—', '–', '-', 'none'];
+
+function noDependencies(raw) {
+  const v = raw.trim();
+  if (!v) return true;                                       // no field at all, or a blank one
+  if (NO_DEPENDENCY_MARKS.includes(v.toLowerCase())) return true;
+  return /^nothing\b/i.test(v);                              // `nothing`, and `nothing <any reason>`
+}
+
+// "WO-1.1" → dependency. `—`, `none`, `nothing`, `nothing — <reason>` → no dependencies, said in the
+// directory's own words. Anything else with no `WO-` token in it → a clause naming a real constraint
+// that this script cannot resolve to anything, and `unresolvedClause` says so for gate() to refuse.
+//
+// **Zero ids used to be indistinguishable from every id satisfied** (WO-1.30). WO-G4 — the 1.0.0
+// call, and the truest dependency line in the directory at `every work order` — cleared its own gate
+// on that, with `hasProse` printing a NOTE beside the PASS, and **a note beside a PASS reads as a
+// footnote rather than a refusal**. WO-8.1's `every phase` was the same defect and was repaired by
+// hand on 2026-08-28; this one was left standing as the reproduction until the check existed.
+//
+// It reads the value and NOTHING else, and in particular it is not `rehomesOf()`'s predicate one
+// field over. That one refuses an `**Owes**` value parsing to zero ids flatly, because `**Owes**` is
+// *acted on* and a zero-id value there is illegitimate in every case. This field is *reported*, and
+// a zero-id value is legitimate 41 times out of 42 — so one shared "parses to zero ids" test over
+// both fields refuses forty-one correct work orders and turns 12 of the 39 plants red at once —
+// measured on 2026-09-07, and 13 of 37 an hour earlier, before this work order added two. Both
+// work orders forbid the sharing, each from its own side; the sentinel arm above is what buys those
+// forty-one back.
 function depsOf(wo) {
   const ids = [...(wo.dependsRaw.match(/WO-[\dG][\w.]*/g) || [])];
   const prose = wo.dependsRaw.replace(/WO-[\dG][\w.]*/g, '').replace(/[…,\s·]/g, '');
-  return { ids: [...new Set(ids)], hasProse: prose.length > 0 && !/^nothing$/i.test(wo.dependsRaw.trim()) };
+  const none = noDependencies(wo.dependsRaw);
+  return {
+    ids: [...new Set(ids)],
+    hasProse: prose.length > 0 && !none,
+    unresolvedClause: !ids.length && !none,
+  };
 }
 
 // The running order in README.md. Rows look like:
@@ -828,8 +878,17 @@ function gate(id, wos) {
   console.log(`  status  ${wo.status}`);
 
   // 1. Dependencies
-  const { ids, hasProse } = depsOf(wo);
-  if (!ids.length && !hasProse) {
+  const { ids, hasProse, unresolvedClause } = depsOf(wo);
+  if (unresolvedClause) {
+    // The refusal arm (WO-1.30). The value is printed the way a prose clause always was, because
+    // the reader has to see what it says to act on it, and then it is a PROBLEM rather than the
+    // NOTE it used to be: an empty dependency list is indistinguishable from a satisfied one, so
+    // this is the only reading of the field on which the gate would clear for a reason nobody wrote.
+    // Nothing in the tree reaches it as of 2026-09-07 — WO-G4's `every work order` was the last, and
+    // repairing it is this work order's own Acceptance line — and that is the intended state.
+    console.log(`  depends (prose) ${wo.dependsRaw}`);
+    problems.push(`**Depends on** names no work order, and its value is not one of this directory's no-dependency markers: ${clip(wo.dependsRaw, 60)}. No id parses out of it, so the dependency walk has nothing to check — and zero dependencies is indistinguishable from every dependency satisfied, which is this gate clearing on a clause that may mean the opposite. Name the work order the clause stands for and keep the clause after it for a human to read, the way WO-8.1's names WO-7.3; or write "—", "none", "nothing" or "nothing — <reason>" if it really waits on nothing`);
+  } else if (!ids.length && !hasProse) {
     console.log('  depends nothing');
   } else {
     for (const dep of ids) {
@@ -2131,6 +2190,11 @@ function audit(wos) {
 // what changed: six plants exercise 📆 against a synthetic dependency, so the walk is no longer
 // untouched — but nothing here reads a real **Depends on** line, and the four statuses those plants
 // try are tried one at a time against one fixture. A narrowed gap, again, not a closed one.
+// *(WO-1.30 added two more over the same walk — the two arms of what a* **Depends on** *VALUE is
+// allowed to be — and they narrow the same gap in the same way: eleven synthetic values against one
+// fixture, and still not one real line. There is no directory-wide reader of that field for a plant
+// to stand behind, the way the **Owes** plants stand behind --audit's section, which is why the
+// nearest thing to one here is a second fixture's report rather than a whole run's output.)*
 //
 // IT HAS A PRECONDITION, AND SINCE WO-2.16 IT SAYS SO FIRST. The copy is made from the live plans/,
 // so it inherits whatever drift the trackers are carrying, and drift makes plants fail — `--tick`
@@ -3070,7 +3134,7 @@ function runPlants(subject, sandbox) {
       },
     },
     {
-      name: 'the refusal reads **Owes**\'s value and nothing else — a field naming a work order still passes, no field is still skipped, and a prose **Depends on** is untouched',
+      name: 'the refusal reads **Owes**\'s value and nothing else — a field naming a work order still passes, no field is still skipped, and a zero-id **Depends on** is untouched',
       run: () => {
         const bad = [];
 
@@ -3104,28 +3168,112 @@ function runPlants(subject, sandbox) {
         }
 
         // 3. The field one over, which is WO-1.30's and not this one's. `**Depends on**` is reported
-        //    rather than acted on, and a value with no id in it is its ordinary case — `nothing`,
-        //    `everything`, `Phase 3`. A shared "parses to zero ids" predicate reddens here.
+        //    rather than acted on, and a value from which no id parses is its ordinary case — 41 of
+        //    the 169 work orders in this directory on 2026-09-07. A shared "parses to zero ids"
+        //    predicate reddens here.
+        //
+        //    *(Rebased 2026-09-07, WO-1.30, and the value changed with it.* It used to be
+        //    `a phase this fixture waits on, written in prose and naming no id`, asserting that the
+        //    gate CLEARED over it — which WO-1.30 made false the same week: a clause with no id in
+        //    it that is not one of the directory's no-dependency markers is now a refusal, because
+        //    zero dependencies was indistinguishable from every dependency satisfied. So the value
+        //    is a marker with a reason after it, which is what *untouched* means on that field now,
+        //    and the assertion is unchanged in what it guards: it still parses to zero ids, so the
+        //    shared predicate still turns it red. WO-1.30's own two plants are below.)*
         //
         //    IT CARRIES A WELL-FORMED **Owes** AS WELL, and that is the whole of what makes the
         //    assertion work: --audit skips a work order with neither a field nor a marker before
-        //    rehomesOf() is ever called on it, so a fixture with a prose **Depends on** and nothing
-        //    else is never READ by the predicate under test and would sit green under any mutation
-        //    of it. Measured, not assumed — the first cut of this case had no **Owes** on it and
-        //    caught nothing when the refusal was widened to both fields.
+        //    rehomesOf() is ever called on it, so a fixture with a zero-id **Depends on** and
+        //    nothing else is never READ by the predicate under test and would sit green under any
+        //    mutation of it. Measured, not assumed — the first cut of this case had no **Owes** on
+        //    it and caught nothing when the refusal was widened to both fields.
         reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false, owes: TARGET_ID,
                 rehome: `a line this fixture will not close → ${TARGET_ID} "${TARGET_BOX}"`, target: 'open',
-                depends: 'a phase this fixture waits on, written in prose and naming no id' });
+                depends: 'nothing — a reason this fixture writes down, the way five real work orders do' });
         const dep = run(['--audit']);
         const d = owesSection(dep.out);
         if (!d) bad.push('the **Owes** section of --audit could not be found in its output');
         else {
-          if (d.rows.some(r => r.id === FIXTURE_ID && r.kind === 'BAD')) bad.push('a **Depends on** written in prose was reported as a problem while **Owes** named a work order and its marker resolved — the refusal was generalised to the field one over, which refuses about thirty correct work orders');
-          if (!d.rows.some(r => r.id === FIXTURE_ID && r.kind === 'ok')) bad.push('a well-formed **Owes** stopped printing its ok row once **Depends on** was written in prose');
+          if (d.rows.some(r => r.id === FIXTURE_ID && r.kind === 'BAD')) bad.push('a **Depends on** that parses to zero ids was reported as a problem while **Owes** named a work order and its marker resolved — the refusal was generalised to the field one over, which refuses forty-one correct work orders');
+          if (!d.rows.some(r => r.id === FIXTURE_ID && r.kind === 'ok')) bad.push('a well-formed **Owes** stopped printing its ok row once **Depends on** parsed to zero ids');
         }
         const gate = run([FIXTURE_ID]);
-        if (gate.code !== 0) bad.push(`${FIXTURE_ID}'s own gate refused a prose **Depends on**:`, ...verdict(gate.out));
-        if (!/depends \(prose\)/.test(gate.out)) bad.push('the gate report stopped reporting a prose **Depends on** as prose for a human to read');
+        if (gate.code !== 0) bad.push(`${FIXTURE_ID}'s own gate refused a **Depends on** saying it waits on nothing and why:`, ...verdict(gate.out));
+        if (!/depends nothing/.test(gate.out)) bad.push('the gate report did not read a no-dependency marker with a reason after it as no dependencies (WO-1.30)');
+        return bad;
+      },
+    },
+    // ------------------------------------------------------------------ WO-1.30's two
+    //
+    // One plant per ARM, and the order they are written in is the order they were built in. The
+    // sentinel arm is the one that would have caught the naive fix — *zero ids plus prose is a
+    // refusal* — which refuses 41 of this directory's 169 work orders, including the three written to
+    // repair this family. A plant proving only that the refusal fires is half a check.
+    {
+      name: 'the sentinel arm — `—`, `-`, `–`, `none`, `nothing` and `nothing — <reason>` are read as no dependencies, with no problem and no prose NOTE',
+      run: () => {
+        const bad = [];
+        // The five live shapes plus the three synonyms with no live instance. `nothing but a
+        // decision` is WO-8.7's, word for word, and it is the one the old whole-value /^nothing$/i
+        // missed along with the four that write `nothing —`: a prefix test is what buys those five.
+        for (const value of ['—', '-', '–', 'none', 'NONE', 'nothing', 'nothing — no domain, no name, no policy',
+                             'nothing but a decision']) {
+          reset({ status: OK, fragment: FIXTURE_BOX, open: false, depends: value });
+          const r = run([FIXTURE_ID]);
+          const dependsLine = (r.out.match(/^\s*depends.*$/m) || [''])[0].trim();
+          if (dependsLine !== 'depends nothing') bad.push(`**Depends on** ${value} was not read as no dependencies — the report printed "${dependsLine}"`);
+          if (/Depends on" carries a non-work-order clause/.test(r.out)) bad.push(`**Depends on** ${value} drew the prose NOTE — it is this directory's own way of writing no dependencies, and the note was noise on 26 work orders before WO-1.30`);
+          if (/names no work order/.test(r.out)) bad.push(`**Depends on** ${value} was REFUSED — this is the naive fix, and it refuses 41 of the 169 work orders in this directory`);
+          if (r.code !== 0) bad.push(`the gate exited ${r.code} on **Depends on** ${value}:`, ...verdict(r.out));
+        }
+        return bad;
+      },
+    },
+    {
+      name: 'the refusal arm — a **Depends on** with no id and no marker is a problem, while ids beside prose still gate on the ids and still draw the NOTE',
+      run: () => {
+        const bad = [];
+
+        // 1. WO-G4's shape, which is where this came from: the truest dependency line in the
+        //    directory, resolving to zero, clearing the last gate of the whole project.
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false, depends: 'every work order' });
+        const before = snapshot();
+        const r = run([FIXTURE_ID]);
+        if (r.code === 0) bad.push('the gate exited 0 on a **Depends on** naming no work order — an empty dependency list is indistinguishable from a satisfied one, which is the whole defect');
+        if (!/^FAIL \|.*names no work order/m.test(r.out)) bad.push('the refusal is not a FAIL — a NOTE beside a PASS reads as a footnote rather than a refusal, which is why this went unread from the day the check was written');
+        if (!/every work order/.test(r.out)) bad.push('the refusal did not quote the value it refused, so a reader cannot see what to fix');
+        if (!/depends \(prose\)/.test(r.out)) bad.push('the clause stopped being printed for a human to read');
+        if (changedSince(before).length) bad.push(`a gate report wrote ${changedSince(before).join(', ')} — it may write nothing, ever`);
+
+        // 2. The correct case, and there are dozens of it: ids AND prose. The NOTE stays, and the
+        //    gate still refuses on the ID rather than on the clause — which is the difference
+        //    between a value this script could not read and a dependency that is not done yet.
+        //    CHAIN_ID is ⬜ NOT STARTED by default, so there is a real refusal to tell apart.
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false,
+                depends: `${CHAIN_ID} — a clause a human reads, beside the id the gate walks` });
+        const both = run([FIXTURE_ID]);
+        if (!new RegExp(`depends ${CHAIN_ID.replace(/\./g, '\\.')}\\s`).test(both.out)) bad.push(`the id beside the prose was not walked as a dependency — the report printed no "depends ${CHAIN_ID}" line`);
+        if (!/Depends on" carries a non-work-order clause/.test(both.out)) bad.push('a value carrying both an id and a clause stopped drawing the prose NOTE — the clause is still a human\'s to read, and that case is the correct one');
+        if (/names no work order/.test(both.out)) bad.push('the refusal fired on a value that names a work order — it reads whether an id parsed and nothing else');
+        if (!new RegExp(`FAIL \\|.*${CHAIN_ID.replace(/\./g, '\\.')} is ⬜ NOT STARTED`).test(both.out)) bad.push('the gate stopped refusing on the id itself — a clause beside an id must not change what the id does');
+
+        // 3. An id and nothing else — the commonest shape in the directory, 127 of 169 — draws
+        //    neither the refusal nor the NOTE. Read off the OTHER fixture's report, whose
+        //    **Depends on** is a bare `WO-9.9`, so this case is not the same value as either above.
+        //
+        //    **It is one report and not the whole run, deliberately.** The obvious version of this
+        //    case greps the whole output of a directory-wide command for the refusal's wording — the
+        //    way WO-1.29's control does over `--audit` — and there is no directory-wide reader of
+        //    this field to grep: `--audit` does not read **Depends on** at all, which is a gap named
+        //    in WO-1.30's result rather than papered over here. The first cut tried `--list`, whose
+        //    output is titles, and went red on WO-1.30's OWN TITLE — *a Depends on that names no
+        //    work order clears its own gate*. A wording assertion over a whole run is only as
+        //    narrow as the words are rare, and these are the words of the work order.
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        const plain = run([TARGET_ID]);
+        if (/names no work order/.test(plain.out)) bad.push(`the refusal fired on ${TARGET_ID}, whose **Depends on** is a bare id — it reads whether an id parsed and nothing else`);
+        if (/Depends on" carries a non-work-order clause/.test(plain.out)) bad.push(`${TARGET_ID}'s bare id drew the prose NOTE`);
+        if (!new RegExp(`depends ${FIXTURE_ID.replace(/\./g, '\\.')}\\s`).test(plain.out)) bad.push(`${TARGET_ID} stopped reporting the one id its field names`);
         return bad;
       },
     },
@@ -3649,7 +3797,16 @@ function runPlants(subject, sandbox) {
         // The two named regressions, in one fixture because they are one rule read from both sides:
         // WO-1.11's line OPENS with bold that is not field-shaped, and WO-1.13's note carries bold
         // that IS field-shaped in the middle of a value. Neither may end the field it sits in.
-        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false,
+        //
+        // **`depends: CHAIN_ID` since WO-1.30, and it is the fixture moving TO the real shape rather
+        // than away from a check.** WO-1.11's value is `WO-1.5 **Not a go-live blocker.** Added
+        // 2026-08-04 …` — an id, then the bold — and this fixture used the default `nothing` because
+        // the leading token was beside the point. It stopped being beside the point when `nothing`
+        // became a no-dependency SENTINEL: the report then reads `depends nothing` and says no more,
+        // so the assertion below lost the line it reads the value off. The assertion is unchanged in
+        // what it guards — bold prose inside a value stays in the value, and the report echoes the
+        // whole value — and it is now made against the header this directory actually contains.
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false, depends: CHAIN_ID,
                 afterStatus: BOLD_PROSE, closesProse: NOTE_PROSE });
         const bad = [];
         const g = run([FIXTURE_ID]);
@@ -3918,9 +4075,20 @@ function runPlants(subject, sandbox) {
   console.log('  refusal alone does not buy and the half that went unread for a fortnight; and the');
   console.log('  refusal reads that value and nothing else — a field naming a work order whose marker');
   console.log('  resolves still passes and still ticks, a work order with neither field nor marker is');
-  console.log('  still skipped rather than flagged, and a **Depends on** written in prose with no id');
-  console.log('  in it draws nothing, because that field is reported rather than acted on and about');
-  console.log('  thirty correct work orders write it that way.');
+  console.log('  still skipped rather than flagged, and a **Depends on** that parses to zero ids');
+  console.log('  draws nothing from it, because a shared predicate over both fields refuses 41 of');
+  console.log('  the 169 work orders in this directory.');
+  console.log('  And WO-1.30\'s TWO, one per ARM of the field one over: `—`, `-`, `–`, `none`,');
+  console.log('  `nothing` and `nothing — <reason>` are read as NO DEPENDENCIES — no problem, no');
+  console.log('  prose NOTE, the report reading `depends nothing` on all of them, which is the arm');
+  console.log('  the naive fix breaks and 41 work orders rest on; and a value with no id in it that');
+  console.log('  is NOT one of those is a FAIL rather than a NOTE beside a PASS, because an empty');
+  console.log('  dependency list is indistinguishable from a satisfied one — WO-G4, the 1.0.0 call,');
+  console.log('  cleared its own gate on `every work order` until 2026-09-07. Ids and prose together');
+  console.log('  keep the NOTE and still gate on the ids, which is the correct case and the common');
+  console.log('  one. NOT covered by them: any directory-wide reading of **Depends on** — --audit');
+  console.log('  does not read that field at all, so nothing here asks whether the tree as a whole');
+  console.log('  is clean of the shape, the way the **Owes** plants ask it of theirs.');
   console.log('  NOT covered: the Acceptance parser otherwise. It is still never run');
   console.log('  against a real work order\'s list, and one terminator is one way it can go blind and');
   console.log('  not the class of them — a narrowed gap, not a closed one. Nor is gate()\'s');
