@@ -4819,3 +4819,71 @@ picture makes none of them — and this row's whole risk is in them rather than 
   wants it is [WO-7.2](phase-7-sync.md#wo-72--document-transfer--conflicts) rather than this one.
 - **Zip archives and Drive.** `downloadAllBackups()` writes a zip and this reads one JSON file; a
   reader for the archive is worth having and is not this.
+---
+
+## WO-1.51 — the word boundary that keeps `nothing` a sentinel is asserted nowhere
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.30 ✅ · **Blocks** nothing
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.50 made.
+Booked 2026-09-08 out of WO-1.30's verification, which raised it and correctly declined to widen that
+row with it.)*
+
+**Why it exists.** [WO-1.30](#wo-130--a-depends-on-that-names-no-work-order-clears-its-own-gate) made
+`**Depends on**` refuse a value naming no work order **unless** it is one of six ways of saying *no
+dependencies*. Five of the six are whole-value comparisons against `NO_DEPENDENCY_MARKS`. The sixth is
+a **prefix** test — `/^nothing\b/i` — and it has to be, because five work orders write down *why* they
+wait on nothing: `nothing — no domain, no name, no policy` (WO-3.10), `nothing but a decision`
+(WO-8.7), and WO-2.19, WO-2.20 and WO-2.37 beside them.
+
+**The `\b` is the whole of what stops that prefix being a hole, and nothing asserts it.** Measured
+2026-09-08 against a copy under `--self-check --against`: with the boundary dropped to `/^nothing/i`,
+the run is `PASS | 39 of 39 plants were caught`. Under that mutant `nothingburger` — and every other
+word beginning with those seven letters — parses as *no dependencies*, so a `**Depends on**` naming a
+real constraint clears its own gate with no problem and no note. **That is WO-1.30's own defect,
+arriving through the arm that was built to make WO-1.30 safe.**
+
+**What makes it worth a row rather than a comment is the direction.** WO-1.30's other two mutations
+both go red — the sentinel arm dropped is 5 of 39, the prefix narrowed back to whole-value is 2 of 39,
+both recorded in `tools/README.md`'s mutation table. Only the *widening* is silent, and widening is
+the move a hand makes: a boundary is the part of a regex that looks like noise to somebody tidying
+one, where an anchor looks load-bearing. **The fence has to be a plant, because the thing it guards
+against is a future reader's reasonable-looking edit.**
+
+**Traps**
+
+- **A negative case cannot be appended to the existing loop.** The sentinel plant walks eight values
+  and asserts three things about each — reads as `depends nothing`, draws no prose `NOTE`, is not
+  refused. Every one of those is an assertion that the value **is** a sentinel. `nothingburger` wants
+  the opposite of all three, so putting it in the array asserts the defect. It needs its own values
+  and its own assertions, in the same plant or a new one — the implementer's call, and say which and
+  why at the line.
+- **Do not narrow the prefix to fix it.** `/^nothing$/i` is the rule WO-1.30 replaced, it refuses all
+  five work orders that write down their reason, and it is already a red mutation. The boundary is the
+  answer; the whole-value test is not.
+- **Pick the negative values against the real risk, not against the joke.** `nothingburger` is
+  memorable and is not what will actually be typed. **`nothings`**, **`nothing_but_a_hunch`** and
+  **`nothingness`** are the shapes a hand produces, and a `-` or `_` where the live instances have a
+  space is the likeliest of them. At least one value whose eighth character is a word character and at
+  least one that is punctuation-joined.
+- **This row adds a check and must change no verdict.** Every one of the 169 work orders reports
+  exactly as it does today; the only run that moves is `--self-check`. If a live `**Depends on**` in
+  this directory turns out to fail the new plant, that is a finding to report and not a value to widen
+  the sentinel for.
+- **Take the plant count from `--self-check` on the day.** It read 37 before WO-1.30 and 39 after.
+  Whether this is a fortieth plant or a widening of the thirty-eighth is the first Trap's question, so
+  the count is not predicted here.
+
+**Acceptance**
+- [ ] `--self-check` catches the boundary being dropped: with `/^nothing\b/i` widened to
+      `/^nothing/i` in a copy, `--self-check --against <copy>` fails and names the arm, where it
+      passes 39 of 39 today. *(Nothing in the tree is mutated to prove this — WO-1.30's own plants
+      were proved the same way, over copies in the scratchpad.)*
+- [ ] At least two negative values, one word-joined and one punctuation-joined, each asserted to be
+      **refused** rather than read as a sentinel — and the assertions say so, rather than being the
+      positive loop's three checks with the sense flipped by hand.
+- [ ] All eight of the sentinel plant's existing values still read as no dependencies, and the two
+      standing mutations still bite at 5 of N and 2 of N.
+- [ ] Every one of the 169 work orders' gate reports is byte-identical to the pre-change run — this
+      row changes what the script *proves*, never what it *says*.
+- [ ] `--audit`, `--self-check` and `node tools/wo-sweep.mjs` all green, and `tools/README.md`'s
+      mutation table gains the row for the widening.
