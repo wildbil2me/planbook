@@ -1,15 +1,17 @@
 /*
-  The send flow's model — who a draft can be addressed to, and the `mailto:` URL that hands it
-  over to the teacher's own mail client (WO-5.3).
+  The send flow's model — who a draft can be addressed to, the `mailto:` URL that hands it over to
+  the teacher's own mail client (WO-5.3), and the same draft as plain text for a clipboard (WO-5.7).
 
   ── WHAT THIS FILE IS, AND THE ONE IT IS NOT ──
 
   It is the MODEL: the list of people this student can be written to, the mapping from one of those
-  people onto the audience a template is filed under, the URL, and the practical ceiling on that
-  URL's length. It draws nothing and it navigates nowhere — the screen is src/outreach-view.js and
-  the handoff itself is a real link on that screen. The split is src/templates.js / src/templates-
-  view.js's and src/log.js / src/log-sheet.js's, for their reason: what a recipient IS and what a
-  `mailto:` URL IS are questions with one answer, and a harness can ask them without a browser.
+  people onto the audience a template is filed under, the URL, the practical ceiling on that URL's
+  length, and the plain-text block WO-5.7 puts on the clipboard. It draws nothing and it navigates
+  nowhere — the screen is src/outreach-view.js, the handoff itself is a real link on that screen and
+  the clipboard write is that screen's too, because it has to happen inside the tap. The split is
+  src/templates.js / src/templates-view.js's and src/log.js / src/log-sheet.js's, for their reason:
+  what a recipient IS, what a `mailto:` URL IS and what a pasteable draft IS are questions with one
+  answer each, and a harness can ask all three without a browser.
 
   IT IS NOT A RESOLVER AND IT IS NOT A SECOND OPINION ABOUT ONE. `{{field}}` becomes text in exactly
   one place — src/merge-fields.js — and nothing here reads a token, splits one, or looks anything up
@@ -23,7 +25,8 @@
   preference: a mail scope reads "Send email as you" on the consent screen, and the teacher's own
   sent-mail record — which is what a school asks for when it asks — stays intact only if the message
   leaves from her client. So there is no SMTP here, no API, no scope, and no fetch of any kind. What
-  this file produces is a STRING. The operating system decides what to do with it.
+  this file produces is a STRING — two of them since WO-5.7, and neither of them is a message being
+  sent. The operating system decides what to do with the first and the teacher pastes the second.
 
   ── A RECIPIENT IS NOT AN AUDIENCE, AND THE TWO LISTS ARE DIFFERENT LENGTHS ──
 
@@ -63,6 +66,14 @@
   SCREEN** — src/outreach-view.js's recordHandoff(), through src/log.js's writeContact() — for the
   reason this file and that one are two files at all. This one answers who a draft can go to and
   what a `mailto:` URL is, and neither question has an answer that involves the document changing.
+
+  **AND SINCE WO-5.7 THAT PARAGRAPH IS ASSERTED RATHER THAN PROMISED.** `tools/wo-sweep.mjs` § 24
+  greps this file for a store call, a document mutation and an import of `./store.js`, in § 17's own
+  shape and for § 17's own reason: the browser harness proves that today's copy left `rev` where it
+  found it, and a grep proves there is nothing in the file that COULD move it on any input. The two
+  are not redundant and neither one alone is the claim. The same section reads copyDraft() in
+  src/outreach-view.js, because that function is on the copy path and its own file has a writer in
+  it — so the boundary is asserted where it actually runs rather than only where it is easy.
 */
 
 import { fullName } from './roster.js';
@@ -291,4 +302,75 @@ export const MAILTO_CEILING = 2000;
 
 export function overCeiling(url) {
   return text(url).length > MAILTO_CEILING;
+}
+
+/*
+  ────────────────────── THE SAME DRAFT AS PLAIN TEXT (WO-5.7) ──────────────────────
+
+  THE SECOND HONEST DOOR OUT OF A DRAFT, and it is a second SERIALISER of the four fields above
+  rather than a second draft. `mailto:` opens the machine's DEFAULT mail client, and a teacher whose
+  real mail is Gmail in a browser tab has no default worth opening: she can see a finished message
+  on screen and no way to get it into the window she actually writes email in. Handing her the text
+  costs no permission at all, which is the whole argument — between "open your desktop client" and
+  "grant us your mailbox" there is a third option and this is it. The header above still governs:
+  what this file produces is a STRING, and somebody else decides what to do with it.
+
+  IT READS THE SAME DRAFT OBJECT `mailtoUrl()` READS, so the two doors cannot come to disagree about
+  what is in the message. What differs is the encoding, and none of the differences is cosmetic:
+
+    · **The line break is `\n` here and `\r\n` there, and that is the point of departure.** RFC 6068
+      § 5 requires a body's break to arrive as `%0D%0A`, which is why encodeField() normalises to
+      CRLF *before* encoding. The clipboard's `text/plain` flavour takes the opposite convention: the
+      Clipboard API is handed LF and the platform layer puts its own ending back — Chromium writes
+      CRLF onto the Windows clipboard itself. Handing it CRLF as well is how a bare `\r` reaches a
+      compose window that draws it as a second break, which is **WO-5.3's mangled-paragraph defect
+      arriving through the other door**. So a draft is normalised to LF here exactly as deliberately
+      as it is normalised to CRLF there, and neither normalisation is the other one's oversight.
+    · **Nothing is percent-encoded**, because nothing is being put in a URL. The `#` in "#3 on the
+      worksheet" truncates a `mailto:` at that character with no error anywhere; here it is four
+      characters of a teacher's sentence and is left alone.
+    · **There is no ceiling.** MAILTO_CEILING is `ShellExecute`'s limit on a string the operating
+      system is handed, and a clipboard is not handed to it. Nothing about this string is measured,
+      warned about or cut.
+
+  WHAT IT PUTS IN, AND THE ONE HEADER THAT IS CONDITIONAL. The recipient, the subject and the body,
+  in the order a compose window asks for them, with a blank line between the headers and the message
+  — that blank line is what makes the block read as a message rather than as three fields run
+  together. `Cc:` appears only when the draft actually copies the teacher, which is the rule
+  mailtoUrl() already keeps about an empty header and for its reason. A recipient with a name gets
+  `Name <address>`, the form a To field parses when the whole line is pasted into it; a recipient
+  whose "name" IS the address gets the address once, because `admin@school <admin@school>` is this
+  app's own admin row (src/outreach.js's recipientsFor(), where an administrator has an address and
+  no name anywhere) read back as a mistake.
+
+  A HEADER IS ONE LINE BY DEFINITION, so a line break inside the recipient or the subject is folded
+  to a space. Neither box can produce one by typing — the subject is an `<input>` — but a template
+  restored from a hand-edited backup can, and a `Subject:` carrying a break stops the block being
+  readable as headers-then-message for every reader after it. The BODY is never folded: its breaks
+  are the whole of what Acceptance line 1 is about.
+
+  WHAT IT CANNOT PUT IN. Four fields is the whole of what it is handed. There is no document here,
+  no student, no roster and no support block — so accommodation, medical and plan data is out of
+  reach of the clipboard by construction, at exactly the distance it is out of reach of the URL.
+*/
+
+/* A header value, folded onto the one line a header is. Runs of whitespace that already contained a
+   break collapse to a single space, so "line one\n\nline two" is not "line one  line two". */
+function oneLine(value) {
+  return text(value).replace(/\s*(?:\r\n|\r|\n)\s*/g, ' ').trim();
+}
+
+export function draftText(draft) {
+  const d = draft || {};
+  const to = oneLine(d.to);
+  const name = oneLine(d.name);
+  const cc = oneLine(d.cc);
+  const lines = [];
+  lines.push('To: ' + (name && to && name !== to ? name + ' <' + to + '>' : (name || to)));
+  if (cc) lines.push('Cc: ' + cc);
+  lines.push('Subject: ' + oneLine(d.subject));
+  /* The blank line, and then the message exactly as it stands in the box — LF, and nothing else
+     touched. See this section's header for why that is the opposite of encodeField()'s answer. */
+  lines.push('');
+  return lines.join('\n') + '\n' + text(d.body).replace(/\r\n|\r|\n/g, '\n');
 }

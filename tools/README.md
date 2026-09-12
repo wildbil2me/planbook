@@ -7,7 +7,7 @@
 | `make-icons.mjs` | Draws the home-screen icons and writes them as PNGs into `icons/`, using `node:zlib` and nothing else. `node tools/make-icons.mjs` |
 | `make-cert.mjs` | Mints a local CA and a server certificate into `certs/`, so the LAN address is a secure context. `node tools/make-cert.mjs` |
 | `serve-https.mjs` | Serves the repo over HTTPS for a device sitting, plus a plain-HTTP page that hands the iPad the CA. `node tools/serve-https.mjs` |
-| `wo-sweep.mjs` | The verifier's 41-check standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down, including the three active `no-cache` stanzas in `_headers`, the backup nag's collection list against `docs/data-model.md`, and both copies of the repo-write guard — plus, since WO-2.48, the list of guarded scripts itself, derived and diffed against what § 15 declares, and since 2026-08-20 the drawings in `design/mockups/` — § 19, which is the machine-run half of `design/mockups/PROTOCOL.md` — and since 2026-08-30 the two files the pipeline is typed and dispatched from, § 21, which reaches `.claude/commands/wo.md` and `.claude/agents/work-order-orchestrator.md` **by naming their paths** because `.claude` is in `IGNORE_DIRS` and stays there — and, since WO-1.41 the same day, `AGENTS.md` against `CLAUDE.md` as § 21's **second pair**, on four claims about the rules both files carry, which needs no path trick (the walk already reaches the repository root) and is named all the same, because a pair is a hand-maintained list rather than a directory scan — and, since WO-1.42 on 2026-08-31, the count at the head of this very row, § 22, which is held against the number of results the run emits and against no figure written down inside the tool. `node tools/wo-sweep.mjs` |
+| `wo-sweep.mjs` | The verifier's 42-check standing sweep as greps — the checks a `grep` settles correctly, with their allowlists written down, including the three active `no-cache` stanzas in `_headers`, the backup nag's collection list against `docs/data-model.md`, and both copies of the repo-write guard — plus, since WO-2.48, the list of guarded scripts itself, derived and diffed against what § 15 declares, and since 2026-08-20 the drawings in `design/mockups/` — § 19, which is the machine-run half of `design/mockups/PROTOCOL.md` — and since 2026-08-30 the two files the pipeline is typed and dispatched from, § 21, which reaches `.claude/commands/wo.md` and `.claude/agents/work-order-orchestrator.md` **by naming their paths** because `.claude` is in `IGNORE_DIRS` and stays there — and, since WO-1.41 the same day, `AGENTS.md` against `CLAUDE.md` as § 21's **second pair**, on four claims about the rules both files carry, which needs no path trick (the walk already reaches the repository root) and is named all the same, because a pair is a hand-maintained list rather than a directory scan — and, since WO-1.42 on 2026-08-31, the count at the head of this very row, § 22, which is held against the number of results the run emits and against no figure written down inside the tool — and, since WO-5.7 on 2026-09-12, § 24, the second door out of an outreach draft: `src/outreach.js` has no writer in it at all and `copyDraft()` in its neighbour reaches none, which is § 17's division of labour over a file whose neighbour legitimately DOES write, plus the one claim the browser harness said it could not make, that nothing asynchronous sits between that function's gate and its `writeText(` — the clipboard API is refused outside a user gesture, the harness has to grant the permission in order to press the control at all, and a granted permission is exactly what stops the activation rule applying. `node tools/wo-sweep.mjs` |
 | `wo-gate.mjs` | Work order gates, "what's next", claiming a work order for a dispatch, handing it to the verifier at the implementer's return (`--handoff`, WO-1.38), the maintenance ticks with a recomputed dashboard, and — since WO-2.15 — a read-only `--audit` of both trackers and a `--self-check` that plants its own violations. `node tools/wo-gate.mjs next` |
 | `wo-brief.mjs` | Assembles the verbatim parts of a dispatch brief. `node tools/wo-brief.mjs WO-1.7 > .claude/dispatch/WO-1.7-brief.md` |
 | `wo-cost.mjs` | What each dispatch cost, from the session transcripts. `node tools/wo-cost.mjs` |
@@ -1210,7 +1210,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1324 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1332 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1549,6 +1549,34 @@ one**: the two driven checks are chained, so with the sign-out repaint gone the 
 its own non-vacuity clause — the button it needs to see hidden is still on the screen. A build that
 breaks only the sign-out half therefore turns both red, which is recorded at the checks themselves so
 that a future red run is read correctly rather than chased twice.
+
+**WO-5.7 moved it from 1324 to 1332, and the executed count from 1334 to 1342 — eight sites, eight
+results.** All eight are literal call sites inside the existing § *"the send flow (WO-5.3)"*, none in
+a loop and none a failure arm, standing on that section's own fixture guard: the clipboard copy is
+the same draft through a second control, so it rides the WO-5.3 fixture rather than planting one of
+its own. **A ninth was considered and not written**: the copy control is measured in that section's
+existing touch pass, because it stands in the same `.modal-actions` row as the handoff and what a
+third control costs is a property of the ROW — the check gained a conjunct naming it by id rather
+than a site of its own, so the count moved by eight and the coverage by nine. On the delivered tree:
+`1342 checks · 1342 passed · 0 failed · 0 skipped`, 41,737 lines, 31.1 lines per check, 449s, exit 0,
+measured 2026-09-12.
+
+*(**One thing from its mutation round belongs here rather than only in `TESTING.md`, because it is
+about how to write a clipboard check anywhere in this harness.** The check that presses the control
+reads the clipboard back AND spies on the write, and the spy is not belt-and-braces. With the body
+normalised to CRLF — the `mailto:` answer applied at the clipboard door, which is WO-5.3's own
+mangled-paragraph defect — the run reads* `handed matches = false, read back matches = true`*: the
+platform normalises a clipboard's line endings away on the way out, so a read-back alone is blind to
+exactly the defect the check exists for. The spy WRAPS the real `writeText` and delegates, so the
+platform still receives the string and the two readings stay independent.)*
+
+*(**And a second thing, about mutation rounds generally.** That round's first attempt at the
+"copying writes nothing" mutation planted `writeContact({ studentId: '', … })` and the harness stayed
+green at 1342 of 1342 — because `writeContact()` returns `null` on a falsy `studentId` and nothing
+was ever written. **A green harness under a mutation is two claims, not one**: the check is vacuous,
+or the mutation is. Only reading what the mutated code actually does tells them apart. With the real
+`subject.studentId` it reads `1338 passed · 4 failed` — one here and three in
+`verify/contact-log.mjs`, which reads the log a spurious `contact` pollutes.)*
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not

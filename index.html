@@ -2697,6 +2697,24 @@
                draft with no `href` writes nothing because it is not a link to click. -->
           <a class="class-action-btn primary" id="outreachOpen" data-outreach-handoff
              aria-disabled="true">Open in my mail app</a>
+          <!-- THE SECOND DOOR (WO-5.7), and it is a BUTTON standing beside a link on purpose. A
+               `mailto:` opens the machine's DEFAULT mail client, and a teacher whose real mail is
+               Gmail in a browser tab has no default worth opening; this hands her the same draft as
+               plain text and costs no permission at all, which is the architecture table's point
+               rather than a workaround for it.
+
+               ITS REFUSAL IS `disabled` — the structural equivalent of the link's missing `href`,
+               because a button with no attributes is still a button. The browser refuses the event,
+               the dimming is `.class-action-btn:disabled` which src/shell.css already had, and
+               src/outreach-view.js asks the model again anyway rather than trusting this markup.
+
+               `data-outreach-clipboard` AND NOT `data-outreach-copy-…`: the *Copy me* toggle
+               further up this panel already owns `data-outreach-copy`, and two hooks a reader has
+               to tell apart by a suffix is one `closest()` away from a control that answers for the
+               wrong thing. Attribute selectors do not match on a prefix, so this was never a
+               collision in the browser — it was a collision in the next person to read it. -->
+          <button class="class-action-btn" type="button" id="outreachCopy" data-outreach-clipboard
+                  disabled>Copy the draft</button>
           <button class="class-action-btn" type="button" data-modal-close>Close</button>
         </div>
         <p class="roster-hint hidden" id="outreachStatus"></p>

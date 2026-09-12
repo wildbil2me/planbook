@@ -9087,6 +9087,150 @@ only state in which it exists to be measured, since an untouched draft rebuilds 
 
 ---
 
+### WO-5.7 — Copy the draft to the clipboard
+
+**What this adds.** The second way out of a draft. `mailto:` opens the machine's **default** mail
+client, and a teacher whose real mail is Gmail in a browser tab has no default worth opening — she
+can see a finished message and have no way into the window she actually writes email in (the owner,
+2026-08-29). The copy hands her the recipient, the subject and the body as one block of plain text.
+**It is not a workaround for a missing scope**: `CLAUDE.md`'s architecture table forbids a mail scope
+because the consent screen reads *"Send email as you"*, and between "open your desktop client" and
+"grant us your mailbox" this is a third option costing no permission at all.
+
+It is one exported serialiser in `src/outreach.js` (`draftText()`), one control and one action in
+`src/outreach-view.js`, one `<button>` in `index.html`, one delegated hook in `src/shell.js`, and
+**two declarations in `src/shell.css`** — which is two more than WO-5.6 needed and both are argued at
+their own point of departure.
+
+**The refusal had to be re-decided, because a button is not a link.** The handoff beside it refuses
+**structurally**, by having no `href` at all: not a link, not focusable, not clickable. A button with
+no attributes is still a button, so the structural equivalent is `disabled` — the BROWSER refuses the
+event, and a click dispatched at it raises nothing for the delegated listener to see. It costs no
+stylesheet either: `.class-action-btn:disabled` was already the same dimming
+`a.class-action-btn[aria-disabled="true"]` wears, so the two controls in that row refuse in the same
+pixels. **And `copyDraft()` asks the model anyway**, which is `recordHandoff()`'s posture in as many
+words — both ends read one `outreachModel()`, so a state where one says ready and the other does not
+cannot exist.
+
+**The line ending is LF here and CRLF at the `mailto:`, and the mutation round is what makes that a
+finding rather than an opinion.** RFC 6068 § 5 requires a body's break as `%0D%0A`, which is why
+`encodeField()` normalises to CRLF before encoding; the clipboard's `text/plain` flavour is the
+opposite convention — the API is handed LF and the platform puts its own ending back, Chromium
+writing CRLF onto the Windows clipboard itself. Handing it CRLF as well is how a bare `\r` reaches a
+compose window that draws it as a second break, which is **WO-5.3's mangled-paragraph defect arriving
+through the other door**.
+
+- [x] 👤 The copied text carries the recipient, the subject and the body, and pastes into a compose
+      window as readable text with its paragraph breaks intact. *(**Read on hardware by the owner
+      2026-09-12** — pasted into iPad Mail and into a Gmail compose on the laptop; headers, one blank
+      line and the paragraphs all intact on both. **The mark was added when the row
+      was built.** Everything up to the edge of the app is closed character for character: the block
+      handed to `navigator.clipboard.writeText` is compared against a string built from fixture
+      literals — `To:`, `Cc:`, `Subject:`, a blank line, then the message — with `\r` counted at zero
+      and the blank lines counted at three. The clipboard is read back as well. **What no headless
+      browser can do is paste it into somebody else's compose window**, so the second half of the
+      sentence is owed to a person: open a draft, copy it, paste into Gmail and into the iPad's Mail,
+      and read whether the paragraphs are still paragraphs.)*
+- [x] A blocked draft cannot be copied, and presentation mode disables the control with the rest of
+      the flow.
+- [x] The teacher is told the copy happened, through `announce()` as well as on screen.
+- [x] Copying writes nothing to the document.
+- [x] The control clears 44px under a coarse pointer at 390px.
+
+**Eight new sites, inside § *"the send flow (WO-5.3)"* rather than in a section of its own** — it is
+the same draft through a second control, on the same class, the same student, the same guardian and
+the same addresses, so a block of text that named somebody else would be visible against everything
+that section already asserts. What the block plants of its own is a subject and a body, typed through
+the real `input` listener, because Acceptance line 1 is about paragraph breaks and none of the five
+fixture templates has a body this file can predict character for character. A ninth check was not
+added for the touch pass: the copy is measured in the send flow's existing one, **named by its own id
+rather than counted**, because what a third control costs is a property of the `.modal-actions` row
+and not of the button.
+
+**The one thing the browser harness cannot ask, and it is the Traps line.**
+`navigator.clipboard.write*` is refused outside a user gesture — the rule that bites on iOS, where a
+copy fired from after an `await` fails silently and passes on the laptop. The harness grants
+`clipboardReadWrite` at the browser level in order to press the control at all, **and a granted
+permission is exactly what makes the activation requirement stop applying**, so a green click there
+would pass whether or not the call sits inside the gesture. The claim is carried in two other places:
+`tools/wo-sweep.mjs` **§ 24** asserts that nothing asynchronous — no `await`, no `setTimeout`, no
+repaint, no `.then` — sits between `copyDraft()`'s gate and its `writeText(`, and the tap itself is
+the 👤 line above. That is said out loud at the check rather than left for a green run to imply.
+
+**There is no `execCommand` fallback, and the Traps line permitted one.** The API needs a secure
+context and this app has one everywhere it runs, including the harness's own `127.0.0.1`; every
+browser it supports has had `writeText` for years, iPad Safari from 13.4; and a hidden `<textarea>`
+plus a deprecated call is a polyfill in a repository whose first architectural rule is that it has
+none. **A browser without the API gets a sentence** — in the status line and through `announce()` —
+rather than a silent no-op, and the control stays live, so `disabled` keeps meaning exactly one thing.
+
+**Four mutations, each reverted by name before anything else was written, and two of them are worth
+carrying.**
+
+*A repaint inserted between the gate and the `writeText(`* reads `wo-sweep` at
+`42 checks · 38 passed · 1 failed`, naming the line and the call it sits in front of — the rule the
+browser cannot see, asserted by the tool that can.
+
+*A `writeContact()` in the copy's success path* is the Acceptance-line-4 mutation and **it was run
+twice, because the first attempt was vacuous and the check was innocent.** Handed
+`studentId: ''` it reads `1342 checks · 1342 passed · 0 failed`, because `writeContact()` returns
+`null` on a falsy `studentId` and no entry was ever written — *the mutation did nothing, and a
+mutation that does nothing proves nothing.* Handed the real `subject.studentId` it reads
+`1342 checks · 1338 passed · 4 failed`: this work order's own at `rev 297 → 299, log 0 → 2, contact
+entries 2`, and **three more in `verify/contact-log.mjs`**, because a spurious `contact` pollutes the
+log the later section reads. The same line reddens `wo-sweep` § 24 by name. *The generalisable half
+is the first run: a green harness under a mutation is two different claims — the check is vacuous, or
+the mutation is — and only reading what the mutated code actually does tells them apart.*
+
+*The body normalised to CRLF* — the `mailto:` answer applied at the clipboard door — reads
+`1342 checks · 1339 passed · 3 failed`, and **its detail line is the reason the write is spied on as
+well as read back**:
+
+```
+clipboard granted, 1 call(s), handed matches = false, read back matches = true
+```
+
+The platform normalises a clipboard's line endings away on the way out, so **a check that only read
+the clipboard back would have passed over the exact defect WO-5.3's Traps line is about.** The spy
+wraps the real `writeText` rather than standing in for it — the platform still receives the string —
+which is what makes the two readings independent.
+
+**One open edge, stated rather than claimed away.** Presentation mode empties this panel and disables
+this control, and it cannot reach a draft copied a minute earlier: the clipboard belongs to the
+operating system, and a paste into any other window still produces a named student's business.
+Nothing in a browser can undo that. It is written down at `src/outreach-view.js`'s own point of
+departure rather than left to imply that the mode covers it.
+
+**And one thing found by reading and deliberately not fixed here.** `renderOutreach()`'s
+presentation-mode branch empties the two boxes, both pickers, three hint lines, the block strip and
+the handoff's `href` — and **does not clear `#outreachStatus`**, which can be holding
+*"…rebuilt for Wo53Guardian One"* or *"Handed to your mail app and logged on Ada Wo53Full's record."*
+That element sits inside the `.hidden` form, and this flow's own rule is that hidden is not a
+redaction. It predates this work order and belongs to WO-5.3's rule rather than to this one. WO-5.7's
+own sentence names nobody **by construction, and is asserted to** — the status line, the button
+label, the `aria-label` and the live region are all searched for the student, both guardians and the
+address — so nothing here deepens it. Booking the repair is the owner's call.
+
+**Where this stands.** Four of five Acceptance lines closed on 2026-09-12, **one 👤 and no 📆**. Both
+tools green on the delivered tree: `verify-shell.mjs` at
+`1342 checks · 1342 passed · 0 failed · 0 skipped`, 41,737 lines, 31.1 lines per check, 449s; and
+`wo-sweep.mjs` at `42 checks · 39 passed · 0 failed · 3 to review`, all three of those reviews
+pre-existing and unchanged. The harness exited 0.
+
+**A teardown hang was seen three times in six runs of `verify-shell.mjs` while this was built, and
+it is not deterministic.** The run prints its whole summary and then does not exit; it has to be
+killed, and `msedge.exe` is still in the process list when it is. `tools/verify-shell.mjs` predicts
+exactly this at its own last three lines — *"if this ever hangs instead of exiting, one of them
+stopped releasing its handle, and that is the bug rather than this line"* — and `server.close()`
+waiting on a keep-alive socket held by a browser `proc.kill()` did not fully take down is the shape
+that fits. **What rules out a property of this change is that two runs of byte-identical trees
+disagreed**: the first green run of the delivered tree hung, and the last one exited 0. The best
+correlation available from six runs is that the hangs followed runs whose stray `msedge.exe`
+processes had not been killed first. **Read the summary line, not the exit code, when it happens** —
+and clear the strays before the next run. Worth a work order if it starts costing runs.
+
+---
+
 ### WO-5.9 — The hitless draft is written but never driven
 
 **What this adds.** No app code at all — two checks and one more student in a fixture. What it

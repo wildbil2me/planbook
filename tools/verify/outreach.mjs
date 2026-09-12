@@ -26,7 +26,11 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, KILL_ANIM, waitForBoot, seam } = h;
+/* `PORT` joined at WO-5.7 and it is the only thing in this list that is not about the page: the
+   clipboard is a BROWSER-level permission, granted against the harness's own origin rather than
+   through the page session, so the check that presses the copy control needs to know what that
+   origin is. tools/verify/score-grid.mjs takes it from the same place for the same reason. */
+const { check, skip, send, evalJs, clickSel, KILL_ANIM, waitForBoot, seam, PORT } = h;
 
 /*
  * ───────── the send flow (WO-5.3) ─────────
@@ -833,10 +837,20 @@ if (!seam) {
       Measured here rather than in tools/verify/touch-targets.mjs's view loop for the reason that
       file gives about the template editor: this is a MODAL over two different screens and that loop
       walks views in <main>. Every control in it is a component src/shell.css already owns — the
-      chips, the two fields, the select, the strip's jump and the two actions — plus one that is
+      chips, the two fields, the select, the strip's jump and the actions — plus one that is
       new, the handoff link, which takes `.class-action-btn`'s floor only because § THE SEND FLOW
       makes it inline-flex first. That is exactly the kind of thing a stylesheet review gets wrong,
       so it is measured rather than read.
+
+      **AND WO-5.7's COPY CONTROL IS MEASURED HERE RATHER THAN IN ITS OWN BLOCK FURTHER DOWN**, for
+      the reason this whole pass is one reading: it stands in the same `.modal-actions` row as the
+      handoff, so what a third control costs is a property of the ROW and not of the button. That
+      cost is real — `.class-action-btn` is `white-space: nowrap`, and three of them at 390px are
+      wider than the panel — which is why `#outreachModal .modal-actions` gained a `flex-wrap` and
+      why the sideways-scroll conjunct below is the half of this check that WO-5.7 could break. The
+      floor itself comes from `#outreachModal .class-action-btn` in the coarse block, scoped to this
+      panel rather than written as a bare class: every action button in the app wears that class,
+      and a 44px MIN-WIDTH on all of them would silently widen the reorder arrows on eleven screens.
     */
     await send('Emulation.setDeviceMetricsOverride',
       { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
@@ -850,7 +864,7 @@ if (!seam) {
           var r = e.getBoundingClientRect();
           if (r.width === 0 && r.height === 0) return;
           if (getComputedStyle(e).display === 'none') return;
-          out.push({ t: e.tagName + '.' + (e.className || ''),
+          out.push({ t: e.tagName + '.' + (e.className || ''), id: e.id || '',
             w: Math.round(r.width * 100) / 100, h: Math.round(r.height * 100) / 100 }); });
       var doc = document.documentElement;
       return { controls: out, under: out.filter(function(m){ return m.h < 44 || m.w < 44; }),
@@ -858,10 +872,16 @@ if (!seam) {
         sideways: doc.scrollWidth - doc.clientWidth }; })()`);
     check('every control in the send flow measures at least 44px on both axes at 390px under a '
       + 'coarse pointer — including the handoff link, which is an anchor and would have ignored the '
-      + 'floor entirely without the `display: inline-flex` in src/shell.css § THE SEND FLOW — '
-      + 'and the panel puts the page into no sideways scroll',
-      touch.coarse === true && touch.controls.length >= 8 && touch.under.length === 0
-        && touch.sideways <= 0,
+      + 'floor entirely without the `display: inline-flex` in src/shell.css § THE SEND FLOW, and '
+      + 'including WO-5.7’s copy control beside it — and the panel puts the page into no sideways '
+      + 'scroll, which is the conjunct a third button in the actions row is what threatens',
+      touch.coarse === true && touch.controls.length >= 9 && touch.under.length === 0
+        && touch.sideways <= 0
+        /* NAMED, NOT COUNTED. A floor that reached eight of nine controls and missed the new one
+           would pass a count and fail a teacher, so the control this work order added is asserted
+           to be IN the measured set by its own id — the vacuity guard this file's own header is
+           about, applied to the one control the count cannot distinguish. */
+        && touch.controls.some((m) => m.id === 'outreachCopy'),
       touch.controls.length + ' control(s) measured, ' + touch.under.length + ' under 44px'
         + (touch.under.length ? ': ' + JSON.stringify(touch.under) : '') + ', sideways scroll '
         + touch.sideways + 'px');
@@ -1356,6 +1376,388 @@ if (!seam) {
         && afterMind.contacts === 0 && afterMind.templates === beforeMind.templates,
       'rev ' + beforeMind.rev + ' → ' + afterMind.rev + ', log ' + beforeMind.log + ' → '
         + afterMind.log + ', contact entries ' + afterMind.contacts);
+
+    /*
+      ─────────── THE SECOND DOOR OUT OF A DRAFT (WO-5.7) ───────────
+
+      `mailto:` opens the machine's DEFAULT mail client, and a teacher whose real mail is Gmail in a
+      browser tab has no default worth opening. The copy control hands her the same draft as plain
+      text, and it costs no permission at all — which is why it is a feature rather than a
+      workaround for the mail scope CLAUDE.md's architecture table forbids.
+
+      IT RIDES THE WO-5.3 FIXTURE rather than planting a second one, because it is the same draft
+      through a second control: the same class, the same student, the same guardian and the same
+      addresses, so a block of text that named somebody else would be visible against everything
+      already asserted above. What it plants is a SUBJECT and a BODY of its own, typed through the
+      real `input` listener, because Acceptance line 1 is about paragraph breaks and none of the
+      five fixture templates has a body this file can predict character for character.
+
+      **THE ONE THING THIS SECTION CANNOT ASK IS THE ONE THE TRAPS LINE IS ABOUT.**
+      `navigator.clipboard.writeText` is refused outside a user gesture — that is the rule that bites
+      on iOS, where a copy fired from after an `await` fails silently and passes on the laptop. This
+      run grants `clipboardReadWrite` at the browser level (score-grid.mjs's own note: without it
+      writeText rejects on a page the harness serves), and a granted permission is exactly what makes
+      the activation requirement stop applying. So a click here would pass whether or not the call
+      sits inside the gesture. The claim is carried in two other places instead, and neither of them
+      is this file: `tools/wo-sweep.mjs` § 24 asserts that nothing asynchronous sits between the gate
+      and the call inside copyDraft(), which is the property the rule is actually about, and the tap
+      itself is a 👤 line on hardware (`TESTING.md` § WO-5.7). Saying so here rather than letting a
+      green click imply it is the difference between this section and a vacuous one.
+    */
+    const COPY_SUBJECT = 'WO-5.7 — the subject line, #3 and all';
+    const COPY_BODY = 'Dear Wo53Guardian One,\n\nTwo paragraphs, an em dash — and a # in '
+      + '"worksheet #3".\n\nThird paragraph, after a blank line.';
+    /* WHAT THE CLIPBOARD MUST HOLD, BUILT OUT OF LITERALS AND NOT OUT OF THE MODEL. Every name and
+       address in it is a fixture constant asserted independently below, so this is not the app's
+       own answer handed back to it — a model that had picked the wrong recipient would fail the
+       comparison rather than move the target. LF between every line, and nowhere a `\r`. */
+    const COPY_WANT = 'To: Wo53Guardian One <' + G1_EMAIL + '>\n'
+      + 'Cc: ' + TEACHER_EMAIL + '\n'
+      + 'Subject: ' + COPY_SUBJECT + '\n'
+      + '\n' + COPY_BODY;
+
+    const beforeCopy = await evalJs(`(async function(){
+      await window.planbook.store.flush();
+      var d = window.planbook.store.getDoc();
+      return { rev: d.rev, log: (d.log || []).length,
+        templates: JSON.stringify(d.templates || []),
+        contacts: (d.log || []).filter(function(e){ return e.kind === 'contact'; }).length }; })()`);
+
+    /* ── the state this block needs, driven through the real controls ──
+       The recipient is put back to the first guardian — the one with an address — through the chip
+       a teacher taps, and through agree(), because the draft above has been typed into and WO-5.6's
+       confirm stands between an edited draft and a rebuild. *Copy me* is turned ON if a check
+       further up left it off, so the `Cc:` line is a fact of this run rather than an inheritance.
+       Then the two boxes are typed, which rebuilds nothing: WO-5.3's own rule. */
+    await evalJs(`(function(){
+      ${AGREE}
+      agree(function(){
+        document.querySelector('#outreachRecipients [data-outreach-to="guardian-0"]').click(); });
+      var m = window.planbook.outreachView.outreachModel();
+      if (!m.cc.on) document.getElementById('outreachCc').click();
+      return 1; })()`);
+    await new Promise(r => setTimeout(r, 200));
+    await evalJs(`(function(){
+      var s = document.getElementById('outreachSubject');
+      s.value = ${JSON.stringify(COPY_SUBJECT)};
+      s.dispatchEvent(new Event('input', { bubbles: true }));
+      var b = document.getElementById('outreachBody');
+      b.value = ${JSON.stringify(COPY_BODY)};
+      b.dispatchEvent(new Event('input', { bubbles: true }));
+      return 1; })()`);
+    await new Promise(r => setTimeout(r, 200));
+
+    const copyLive = await evalJs(`(function(){
+      ${DRAWN}
+      var d = drawn();
+      var m = window.planbook.outreachView.outreachModel();
+      var b = document.getElementById('outreachCopy');
+      return { modalOpen: d.open, ready: m.ready, reasons: m.reasons.length,
+        there: !!b, disabled: b ? !!b.disabled : null, label: b ? b.textContent : '',
+        aria: b ? (b.getAttribute('aria-label') || '') : '',
+        beside: !!(b && b.parentNode
+          && b.parentNode.querySelector('#outreachOpen')
+          && b.parentNode.classList.contains('modal-actions')),
+        copied: m.copied, clipboardLength: m.clipboard.length,
+        recipientKey: m.recipient ? m.recipient.key : '',
+        recipientName: m.recipient ? m.recipient.name : '',
+        recipientEmail: m.recipient ? m.recipient.email : '',
+        ccOn: m.cc.on, ccEmail: m.cc.email, hasHref: d.hasHref }; })()`);
+    check('the copy control is drawn BESIDE the handoff in the same actions row, live on a ready '
+      + 'draft, saying what it will do and not yet saying it has done it — and the draft under it '
+      + 'is the one this block planted, addressed to the first guardian, the one with an address',
+      copyLive.modalOpen === true && copyLive.ready === true && copyLive.reasons === 0
+        && copyLive.there === true && copyLive.disabled === false && copyLive.beside === true
+        && copyLive.label === 'Copy the draft' && copyLive.copied === false
+        && copyLive.clipboardLength > 0 && copyLive.hasHref === true
+        && copyLive.recipientKey === 'guardian-0'
+        && copyLive.recipientName === 'Wo53Guardian One'
+        && copyLive.recipientEmail === G1_EMAIL
+        && copyLive.ccOn === true && copyLive.ccEmail === TEACHER_EMAIL,
+      JSON.stringify(copyLive));
+
+    /*
+      ACCEPTANCE LINE 1, ASSERTED CHARACTER FOR CHARACTER AND NOT BY SUBSTRING. A check that looked
+      for the subject somewhere in the block would pass over headers run together, a missing blank
+      line, and the CRLF this work order's Traps line is about — which is the failure WO-5.3's
+      mutation round found at the other door: invisible on screen, and a mangled paragraph in a real
+      compose window. So the whole string is compared, and the two things a `\r` would do to it —
+      show up at all, or double a break — are reported separately so a red names which.
+
+      AND THE TWO DOORS ARE COMPARED WITH EACH OTHER, which is the cheapest proof that this is a
+      second SERIALISER rather than a second draft: at this instant the `mailto:` URL carries the em
+      dash as `%E2%80%94` and the `#` as `%23`, because both would otherwise break a URL, and the
+      clipboard carries both as themselves, because nothing about a clipboard is a URL. One of those
+      being true of the other string is the shape of the defect.
+    */
+    const copyText = await evalJs(`(function(){
+      var m = window.planbook.outreachView.outreachModel();
+      var t = m.clipboard;
+      return { text: t, cr: (t.match(/\\r/g) || []).length,
+        blankLines: (t.match(/\\n\\n/g) || []).length,
+        emDash: t.indexOf('—') >= 0, hash: t.indexOf('#3') >= 0,
+        url: m.url, urlEmDash: m.url.indexOf('%E2%80%94') >= 0,
+        urlHash: m.url.indexOf('%23') >= 0, urlCrLf: m.url.indexOf('%0D%0A') >= 0 }; })()`);
+    check('the copied text carries the recipient, the `Cc:`, the subject and the body — in that '
+      + 'order, headers first, one blank line between them and the message — and its paragraph '
+      + 'breaks are LF with not one `\\r` anywhere in it. Compared character for character against '
+      + 'a string built from fixture literals, and compared with the `mailto:` URL built from the '
+      + 'same draft at the same instant, which percent-encodes the em dash and the `#` and breaks '
+      + 'its lines with `%0D%0A` — the two encodings are opposite on purpose (src/outreach.js)',
+      copyText.text === COPY_WANT && copyText.cr === 0 && copyText.blankLines === 3
+        && copyText.emDash === true && copyText.hash === true
+        && copyText.urlEmDash === true && copyText.urlHash === true && copyText.urlCrLf === true,
+      copyText.cr + ' carriage return(s), ' + copyText.blankLines + ' blank line(s), matches the '
+        + 'expected block = ' + String(copyText.text === COPY_WANT) + '; URL encodes the em dash = '
+        + copyText.urlEmDash + ', the # = ' + copyText.urlHash + ', CRLF = ' + copyText.urlCrLf
+        + (copyText.text === COPY_WANT ? '' : ' :: got ' + JSON.stringify(copyText.text)));
+
+    /*
+      THE NORMALISATIONS, ASKED OF THE MODULE DIRECTLY, because the screen cannot produce the input
+      they are for. A `<textarea>`'s IDL `value` normalises every newline to LF before anything in
+      this app sees it, so a CR cannot be typed into the draft at all — but a template restored from
+      a hand-edited backup carries whatever is in the file, and that is the path draftText() has to
+      survive. Three claims: a CRLF and a lone CR in the body both become one LF; a break inside a
+      header is folded to a single space, because a header is one line by definition and a
+      `Subject:` carrying a break stops the block being readable as headers-then-message; and an
+      administrator — who has an address and no name anywhere in this schema — is written once
+      rather than as `admin@school <admin@school>`.
+    */
+    const copyEdges = await evalJs(`(function(){
+      var f = window.planbook.outreach.draftText;
+      return {
+        crlf: f({ to:'a@b.test', subject:'S', body:'one\\r\\ntwo\\rthree\\nfour' }),
+        folded: f({ to:'a@b.test', name:'Gr\\nace Hopper', subject:'two\\nlines', body:'b' }),
+        admin: f({ to:'${ADMIN_EMAIL}', name:'${ADMIN_EMAIL}', subject:'S', body:'b' }),
+        noCc: f({ to:'a@b.test', cc:'', subject:'S', body:'b' }).indexOf('Cc:') >= 0 }; })()`);
+    check('draftText() folds every line ending in the BODY to LF — a CRLF and a lone CR alike — '
+      + 'folds a break inside a header onto the one line a header is, writes an administrator’s '
+      + 'address once rather than as its own display name, and leaves an empty `Cc:` out '
+      + 'altogether, which is mailtoUrl()’s rule about an empty header kept at the second door',
+      copyEdges.crlf === 'To: a@b.test\nSubject: S\n\none\ntwo\nthree\nfour'
+        && copyEdges.folded === 'To: Gr ace Hopper <a@b.test>\nSubject: two lines\n\nb'
+        && copyEdges.admin === 'To: ' + ADMIN_EMAIL + '\nSubject: S\n\nb'
+        && copyEdges.noCc === false,
+      JSON.stringify(copyEdges));
+
+    /*
+      AND THE TAP ACTUALLY WRITES IT. Two readings, because one alone is weak. The spy WRAPS the
+      real writeText rather than replacing it — it records the argument and hands the call straight
+      on — so the platform still receives the string and the check still learns exactly what the app
+      handed over, which a read-back alone cannot tell from a lucky earlier write. The read-back is
+      the other half: it proves the platform took it. It is normalised before comparison because the
+      line ending on the far side of a clipboard is the PLATFORM's — Chromium writes CRLF onto the
+      Windows clipboard itself — and the app's contribution is the string asserted above, not what
+      Windows does with it afterwards.
+
+      The permission is granted at the browser level, without the page session, exactly as
+      score-grid.mjs does it and for its reason: the harness's origin is a secure context because it
+      is 127.0.0.1, and without the grant writeText rejects.
+    */
+    let copyPerm = 'not asked';
+    try {
+      await send('Browser.grantPermissions',
+        { origin: 'http://127.0.0.1:' + PORT,
+          permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'] }, false);
+      copyPerm = 'granted';
+    } catch (e) { copyPerm = 'refused: ' + e.message; }
+    await evalJs(`(function(){
+      window.__wo57 = { calls: [] };
+      var c = navigator.clipboard;
+      window.__wo57real = c.writeText;
+      c.writeText = function(text){
+        window.__wo57.calls.push(String(text));
+        return window.__wo57real.call(c, text); };
+      return 1; })()`);
+    await clickSel('#outreachCopy');
+    await new Promise(r => setTimeout(r, 400));
+    const copyDone = await evalJs(`(async function(){
+      var read = '';
+      var err = '';
+      try { read = await navigator.clipboard.readText(); } catch (e) { err = e.name + ': ' + e.message; }
+      var calls = window.__wo57.calls;
+      navigator.clipboard.writeText = window.__wo57real;
+      return { calls: calls.length, handed: calls[0] || '', read: read, err: err,
+        readNormalised: String(read).replace(/\\r\\n/g, '\\n') }; })()`);
+    check('tapping it hands exactly that block to `navigator.clipboard.writeText`, ONCE, and the '
+      + 'platform takes it — the clipboard reads back the same text, normalised for the line ending '
+      + 'the operating system puts on its own clipboard. The spy wraps the real call rather than '
+      + 'standing in for it, so a read-back cannot be satisfied by an earlier write',
+      copyPerm === 'granted' && copyDone.calls === 1 && copyDone.handed === COPY_WANT
+        && copyDone.err === '' && copyDone.readNormalised === COPY_WANT,
+      'clipboard ' + copyPerm + ', ' + copyDone.calls + ' call(s), handed matches = '
+        + String(copyDone.handed === COPY_WANT) + ', read back matches = '
+        + String(copyDone.readNormalised === COPY_WANT)
+        + (copyDone.err ? ', readText ' + copyDone.err : ''));
+
+    /*
+      ACCEPTANCE LINE 3. It says it worked, in both channels, and the control stops looking
+      identical to the control that has not been pressed — WO-5.7's third Deliverable in as many
+      words: *a copy button that looks identical before and after is a button people press four
+      times*. The live region is read as well as the status line, because the acknowledgement is one
+      short line of type under a row of buttons, which is exactly what a screen reader has no reason
+      to be looking at.
+
+      AND THE ACKNOWLEDGEMENT NAMES NOBODY, which is asserted rather than assumed: the status line
+      lives inside the panel presentation mode empties, and a sentence about a copy has no reason to
+      carry a student, a guardian or an address even there.
+    */
+    const copySaid = await evalJs(`(function(){
+      var line = document.getElementById('outreachStatus');
+      var b = document.getElementById('outreachCopy');
+      var m = window.planbook.outreachView.outreachModel();
+      var said = (document.getElementById('srLive') || {}).textContent || '';
+      var hay = line.textContent + ' ' + b.textContent + ' ' + (b.getAttribute('aria-label') || '')
+        + ' ' + said;
+      return { status: line.textContent, hidden: line.classList.contains('hidden'),
+        label: b.textContent, aria: b.getAttribute('aria-label') || '', said: said,
+        copied: m.copied,
+        names: /Wo53Full|Wo53Guardian|Ada|Addie|example\\.invalid/.test(hay) }; })()`);
+    check('the teacher is told the copy happened — the status line under the actions says so and is '
+      + 'no longer hidden, the button’s own label has moved off *Copy the draft*, and `announce()` '
+      + 'put a sentence in the live region for a reader who is not looking at that line. None of '
+      + 'the three names a student, a guardian or an address',
+      copySaid.copied === true && copySaid.hidden === false
+        && copySaid.status.indexOf('Copied') === 0 && copySaid.label === 'Copied'
+        && /copied/i.test(copySaid.said) && copySaid.aria.indexOf('Copied') === 0
+        && copySaid.names === false,
+      JSON.stringify(copySaid));
+
+    /*
+      ACCEPTANCE LINE 2, FIRST HALF: A BLOCKED DRAFT COPIES NOTHING. The draft is blocked the way a
+      teacher blocks one — by typing a merge field into the body that nothing will ever fill — which
+      is the state the block strip is about and the state the handoff refuses by having no `href`.
+
+      THE REFUSAL IS ASKED THREE WAYS, because a button is not a link and the mechanism had to be
+      re-decided. The model has nothing to copy (`clipboard` is '' exactly as `url` is). The control
+      is `disabled`, which is the structural equivalent of the link's missing `href`: a click
+      dispatched at a disabled button does not fire a `click` event at all, so the delegated
+      listener is never reached — and that is asserted by dispatching one and watching the spy stay
+      empty. And copyDraft() is called DIRECTLY, past the markup altogether, because "the markup
+      says so" is not the kind of answer this app makes about a disclosure — recordHandoff()'s own
+      posture, and the reason both ends read one outreachModel().
+    */
+    await evalJs(`(function(){
+      var b = document.getElementById('outreachBody');
+      b.value = 'Dear {{guardian.nickname}}, this draft is blocked.';
+      b.dispatchEvent(new Event('input', { bubbles: true }));
+      return 1; })()`);
+    await new Promise(r => setTimeout(r, 200));
+    const copyBlocked = await evalJs(`(function(){
+      window.__wo57.calls = [];
+      var real = navigator.clipboard.writeText;
+      navigator.clipboard.writeText = function(t){ window.__wo57.calls.push(String(t));
+        return Promise.resolve(); };
+      var b = document.getElementById('outreachCopy');
+      b.click();
+      var direct = window.planbook.outreachView.copyDraft();
+      navigator.clipboard.writeText = real;
+      var m = window.planbook.outreachView.outreachModel();
+      var link = document.getElementById('outreachOpen');
+      return { ready: m.ready, reasons: m.reasons.length, clipboard: m.clipboard,
+        disabled: !!b.disabled, label: b.textContent, calls: window.__wo57.calls.length,
+        direct: direct, hasHref: link.hasAttribute('href') }; })()`);
+    check('a blocked draft cannot be copied, and the refusal is structural rather than a control '
+      + 'declining: the model has nothing to copy, the button is `disabled` so a click dispatched '
+      + 'at it raises no event at all, and copyDraft() called directly — past the markup — still '
+      + 'refuses, because it asks the same model the handoff link asks. The link beside it has lost '
+      + 'its `href` in the same paint',
+      copyBlocked.ready === false && copyBlocked.reasons > 0 && copyBlocked.clipboard === ''
+        && copyBlocked.disabled === true && copyBlocked.calls === 0 && copyBlocked.direct === false
+        && copyBlocked.hasHref === false && copyBlocked.label === 'Copy the draft',
+      JSON.stringify(copyBlocked));
+
+    /*
+      ACCEPTANCE LINE 2, SECOND HALF: PRESENTATION MODE TAKES THE CONTROL DOWN WITH THE REST OF THE
+      FLOW. The draft is put back to a READY one first, and the copy is pressed again, so that the
+      projector is switched on over a flow that has something to copy and has just copied it —
+      otherwise this would be the check above wearing a projector's clothes.
+
+      WHAT IS ASSERTED IS THE SAME POSTURE THE REST OF THE PANEL TAKES: the model returns before it
+      has a recipient, so `clipboard` is '' beside `url`; the control is disabled rather than merely
+      undrawn, because `display: none` is not a refusal any more than it is a redaction; and the
+      label is back at its resting word, because *Copied* left standing over an emptied panel is the
+      flow reporting on a draft nothing on screen admits to.
+
+      THE OPEN EDGE IS NOT ASSERTED BECAUSE IT CANNOT BE FIXED: a draft copied a minute before the
+      projector went on is still on the operating system's clipboard, and nothing in a browser can
+      reach in and take it back. src/outreach-view.js writes that down at its own point of
+      departure rather than implying the mode covers it.
+    */
+    await evalJs(`(function(){
+      var b = document.getElementById('outreachBody');
+      b.value = ${JSON.stringify(COPY_BODY)};
+      b.dispatchEvent(new Event('input', { bubbles: true }));
+      return 1; })()`);
+    await new Promise(r => setTimeout(r, 200));
+    await clickSel('#outreachCopy');
+    await new Promise(r => setTimeout(r, 350));
+    await evalJs(`(function(){
+      document.querySelector('header [data-presentation-toggle]').click(); return 1; })()`);
+    await new Promise(r => setTimeout(r, 300));
+    const copyProjected = await evalJs(`(function(){
+      var b = document.getElementById('outreachCopy');
+      var m = window.planbook.outreachView.outreachModel();
+      var hay = document.getElementById('outreachModal').textContent;
+      return { blocked: m.blocked, clipboard: m.clipboard, copied: m.copied,
+        disabled: !!b.disabled, label: b.textContent,
+        direct: window.planbook.outreachView.copyDraft(),
+        formHidden: document.getElementById('outreachForm').classList.contains('hidden'),
+        names: hay.indexOf('Wo53Full') >= 0 || hay.indexOf('Wo53Guardian') >= 0
+          || hay.indexOf('${G1_EMAIL}') >= 0 }; })()`);
+    check('presentation mode disables the copy with the rest of the flow — the model has nothing to '
+      + 'copy, the control is `disabled` rather than merely undrawn, its label is back at its '
+      + 'resting word rather than still reading *Copied* over an emptied panel, and copyDraft() '
+      + 'called directly refuses. No student, guardian or address is left anywhere in the modal',
+      copyProjected.blocked === true && copyProjected.clipboard === ''
+        && copyProjected.copied === false && copyProjected.disabled === true
+        && copyProjected.label === 'Copy the draft' && copyProjected.direct === false
+        && copyProjected.formHidden === true && copyProjected.names === false,
+      JSON.stringify(copyProjected));
+    await evalJs(`(function(){
+      document.querySelector('header [data-presentation-toggle]').click(); return 1; })()`);
+    await new Promise(r => setTimeout(r, 300));
+
+    /*
+      ACCEPTANCE LINE 4. Two real copies, a blocked one, a refused one, a projector cycle and a
+      dozen keystrokes, and the document has not moved. **This is the half a fixture can prove**;
+      the other half is tools/wo-sweep.mjs § 24, which proves there is nothing in src/outreach.js
+      that COULD write on any input and nothing inside copyDraft() that reaches a writer — § 17's
+      division of labour, applied to the second door.
+
+      FLUSHED FIRST, for the reason every `rev` reading in this file carries: update() only
+      SCHEDULES a save and `rev` advances 800ms later, so a reading taken straight after the last
+      control cannot see a write made by it. `log[]` is counted as well as `rev`, because WO-5.4
+      gave this flow one writer and a copy is not it: Planbook cannot tell whether a copied string
+      was ever pasted anywhere, and a `contact` entry written on a copy would be the app recording
+      an outreach that may never have happened — which src/log.js's append-only rule makes
+      impossible to take back.
+    */
+    const afterCopy = await evalJs(`(async function(){
+      await window.planbook.store.flush();
+      var d = window.planbook.store.getDoc();
+      var leaked = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        var v = String(localStorage.getItem(k));
+        if (/clipboard|Copied|WO-5\\.7|worksheet|example\\.invalid/i.test(k + ' ' + v)) leaked.push(k);
+      }
+      return { rev: d.rev, log: (d.log || []).length,
+        templates: JSON.stringify(d.templates || []),
+        contacts: (d.log || []).filter(function(e){ return e.kind === 'contact'; }).length,
+        leaked: leaked }; })()`);
+    check('and copying wrote NOTHING to the document — `rev` has not moved across two real copies, '
+      + 'a blocked one, a refusal, a projector cycle and every keystroke between them, `log[]` is '
+      + 'the length it was and still holds no `contact`, `templates[]` is byte-identical, and no '
+      + '`planbook_` key mentions the clipboard, the copied draft or an address. The handoff writes '
+      + 'one entry and the copy writes none, which is the difference between a message that left '
+      + 'the building and a string on a clipboard',
+      afterCopy.rev === beforeCopy.rev && afterCopy.log === beforeCopy.log
+        && afterCopy.contacts === 0 && afterCopy.templates === beforeCopy.templates
+        && afterCopy.leaked.length === 0,
+      'rev ' + beforeCopy.rev + ' → ' + afterCopy.rev + ', log ' + beforeCopy.log + ' → '
+        + afterCopy.log + ', contact entries ' + afterCopy.contacts + ', localStorage '
+        + (afterCopy.leaked.length ? JSON.stringify(afterCopy.leaked) : 'mentions none of it'));
 
     /* ── and the fixture comes back off ──
        OFF THE SCREEN FIRST, for the reason templates.mjs leaves its own screen before it takes its

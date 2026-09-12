@@ -1610,6 +1610,28 @@ a.class-action-btn {
 a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
 
 /*
+  AND THE ACTIONS ROW WRAPS, WHICH IS WO-5.7's ONE DECLARATION IN THIS SHEET. `.modal-actions` is a
+  plain `display: flex` with no wrap anywhere else in the app, and everywhere else that is right:
+  two buttons fit. This row now holds THREE — *Open in my mail app*, *Copy the draft* and *Close* —
+  and `.class-action-btn` is `white-space: nowrap`, so at 390px on a coarse pointer the three of
+  them are wider than the panel and the page goes into SIDEWAYS SCROLL. A modal a teacher has to
+  scroll horizontally to reach the second half of is a modal whose second half does not exist, and
+  the failure is invisible on a laptop, which is where the panel gets read.
+
+  IT IS SCOPED TO THIS PANEL rather than added to `.modal-actions` itself, for the reason every
+  other rule in this section is an ID selector: there is exactly one of this panel, every other
+  actions row in the app holds two controls and fits, and wrapping them all is a change to eleven
+  screens in order to fix one. If a fourth control ever arrives here, this is already the rule that
+  carries it — but it is still WO-5.8 that would have to argue for the fourth control.
+
+  `flex-wrap` AND NOT A SMALLER LABEL. *Copy the draft* could be *Copy*, and one word beside a
+  *Copy me: on* toggle eleven lines further up this same panel is the kind of collision a teacher
+  resolves by pressing the wrong one — src/outreach-view.js keeps the two apart by name for the same
+  reason. The pixels are the cheaper thing to spend.
+*/
+#outreachModal .modal-actions { flex-wrap: wrap; }
+
+/*
   THE TRUNCATION WARNING, and it is amber rather than red on this sheet's own grammar: amber means
   "act on this" and red means "this destroys something" (src/assignments.css). A draft that some
   mail apps will cut is the first of those. The three colours are the style guide's §1 caution
@@ -1648,6 +1670,15 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
      here anyway, for the reason `.cls-tab-home` is: every control appears in this block by its own
      name, and one covered only by another rule is one the next reader has to go and prove. */
   a.class-action-btn { min-height: 44px; min-width: 44px; }
+  /* WO-5.7's one new control — the copy to the clipboard — and it is an ordinary `<button>`, so the
+     bare `button` rule at the head of this block already carries its height. Named here anyway, and
+     SCOPED TO THE PANEL rather than written as a bare `.class-action-btn`: that class is worn by
+     every action button in the app, and giving all of them a 44px MIN-WIDTH would silently widen
+     the reorder arrows (`.class-action-btn.move`, one glyph and a narrow padding) on eleven screens
+     this work order never opened. One control's floor is not a reason to re-measure the app. The
+     link beside it is matched by the rule above as well; the values are the same, so which one wins
+     does not matter and both say 44. */
+  #outreachModal .class-action-btn { min-height: 44px; min-width: 44px; }
   /* The two rows in that panel which are not targets themselves — the chips and the actions. The
      gap between 44px targets is part of the touch pass, which is `.panel-title-row`'s note above
      applied to a modal that holds three rows of them. */

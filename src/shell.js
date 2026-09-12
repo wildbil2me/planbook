@@ -581,6 +581,20 @@
                                       handoff" is still a property of the markup — and the writer
                                       asks the model as well, rather than trusting the element it
                                       was clicked on
+      data-outreach-clipboard         #outreachCopy, the SECOND door out of a draft (WO-5.7): the
+                                      recipient, the subject and the message as one block of plain
+                                      text, for a teacher whose real mail is webmail and whose
+                                      `mailto:` default opens nothing she uses. It WRITES NOTHING —
+                                      no log entry, no preference, no byte of the document — where
+                                      the handoff above writes one, because Planbook cannot tell
+                                      whether a copied string was ever pasted anywhere. The
+                                      clipboard call happens inside this gesture and must: the API
+                                      is refused outside a user activation, and a copy fired from
+                                      after an await fails on iOS and nowhere else. Not to be
+                                      confused with `data-outreach-copy` eleven rows up, which is
+                                      the copy-ME toggle; an attribute selector matches the whole
+                                      name and never a prefix, so the two have never collided in a
+                                      browser — the distinct name is for the reader
       data-drive-connect              signs in to Google Drive — silent first, a visible Google
                                       prompt when that fails (WO-7.1). It lives in the About
                                       modal and is HIDDEN on every origin but loopback, which
@@ -2863,6 +2877,19 @@ document.addEventListener('click', (e) => {
     if (outreachView.recordHandoff()) afterContactLogged();
     return;
   }
+  /* THE SECOND DOOR, AND IT IS THE ONE HOOK IN THIS FILE THAT CANNOT BE MOVED (WO-5.7).
+
+     `navigator.clipboard.write*` is refused outside a user gesture, and a delegated listener is
+     inside one — this handler runs during the click's own dispatch, so the activation is live all
+     the way down into copyDraft(). What would break it is anything ASYNCHRONOUS put between here
+     and the call: an `await`, a queued repaint, a `setTimeout`. It fails on iOS and passes on the
+     laptop, which is the worst way for it to fail, so the rule is written at both ends — see
+     src/outreach-view.js's copyDraft().
+
+     NOTHING IS CHAINED OFF THE RETURN, unlike the handoff above. There is no `afterContactLogged()`
+     here because there is nothing to log: a copy is a string handed to the platform, and the app
+     cannot tell whether it was pasted into a compose window, a notes app, or nothing at all. */
+  if (e.target.closest('[data-outreach-clipboard]')) { outreachView.copyDraft(); return; }
   const outreachJump = e.target.closest('[data-outreach-jump]');
   if (outreachJump) {
     outreachView.jumpTo(outreachJump.getAttribute('data-outreach-jump'));

@@ -748,7 +748,7 @@ case sounding like a near miss.
 
 ## WO-5.7 — Copy the draft to the clipboard
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-5.3
+**Ship** — · **Status** ✅ DONE — 2026-09-12 · **Size** S · **Depends on** WO-5.3
 
 **Why it exists.** `mailto:` opens the machine's **default** mail client, and a teacher whose real
 mail is Gmail in a browser tab has no default worth opening. She can see a finished draft on screen
@@ -772,18 +772,99 @@ that day rather than leaving it implied.)*
   four times.
 
 **Acceptance**
-- [ ] The copied text carries the recipient, the subject and the body, and pastes into a compose
-      window as readable text with its paragraph breaks intact.
-- [ ] A blocked draft cannot be copied, and presentation mode disables the control with the rest of
-      the flow.
-- [ ] The teacher is told the copy happened, through `announce()` as well as on screen.
-- [ ] Copying writes nothing to the document.
-- [ ] The control clears 44px under a coarse pointer at 390px.
+- [x] 👤 The copied text carries the recipient, the subject and the body, and pastes into a compose
+      window as readable text with its paragraph breaks intact. *(**Read on hardware by the owner
+      2026-09-12** — the iPad Mail paste and the laptop Gmail paste both arrived with headers, one
+      blank line and the paragraphs intact; "it works great on iPad." **The mark was added when the row
+      was built**, 2026-09-12, rather than being on it when it was written — WO-5.3's first line,
+      same shape, same reason: the second half of this sentence ends outside the app, in somebody
+      else's compose window. What the harness closes is everything up to that edge, and it closes it
+      character for character: the block the app hands `navigator.clipboard.writeText` is compared
+      against a string built from fixture literals, the clipboard is read back, and both halves of
+      the line ending are asserted — no `\r` anywhere, three blank lines where three were typed.
+      What it cannot do is paste. **The mutation round is why this is two readings and not one**:
+      with the body normalised to CRLF — the `mailto:` answer applied at the wrong door, which is
+      WO-5.3's own mangled-paragraph defect arriving here — the spy on the write went red and the
+      read-back went GREEN, because the platform normalises a clipboard's line endings away on the
+      way out. A check that only read the clipboard back would have passed over it.)*
+- [x] A blocked draft cannot be copied, and presentation mode disables the control with the rest of
+      the flow. *(Asked three ways, because a button is not a link and the refusal had to be
+      re-decided: the model has nothing to copy — `clipboard` is empty on exactly the drafts `url`
+      is empty on — the control is `disabled`, which is a button's structural equivalent of the
+      handoff's missing `href`, so a click dispatched at it raises no event at all and the spy on
+      the clipboard stays empty; and `copyDraft()` called **directly, past the markup** still
+      refuses, because both ends read one `outreachModel()`. Under a projector the same three hold,
+      the label goes back to its resting word rather than standing at *Copied* over an emptied
+      panel, and no student, guardian or address is left anywhere in the modal.)*
+- [x] The teacher is told the copy happened, through `announce()` as well as on screen. *(Three
+      channels asserted together: the status line under the actions, no longer `.hidden`; the
+      button's own label, which moves off *Copy the draft* — WO-5.7's third Deliverable in as many
+      words; and the live region. **None of the three names a student, a guardian or an address**,
+      which is asserted rather than assumed.)*
+- [x] Copying writes nothing to the document. *(Both halves. The fixture half: `rev`, `log[]`,
+      `templates[]` and `localStorage` are unmoved across two real copies, a blocked one, a refusal,
+      a projector cycle and every keystroke between them — flushed first, because `update()` only
+      schedules a save. The structural half is `tools/wo-sweep.mjs` § **24**, in § 17's shape:
+      `src/outreach.js` imports neither the store nor the log and holds no writer of any kind, and
+      `copyDraft()` — whose own file legitimately DOES write, through `recordHandoff()` — reaches
+      none. **Mutation-proved on both**: a real `writeContact()` in the copy's success path reddens
+      the fixture check at `rev 297 → 299, log 0 → 2` and three downstream checks in
+      `verify/contact-log.mjs`, and the same line reddens § 24 by name.)*
+- [x] The control clears 44px under a coarse pointer at 390px. *(Measured in the send flow's
+      existing touch pass rather than in a block of its own, because it stands in that panel's
+      `.modal-actions` row — and what a third control costs is a property of the ROW: fifteen
+      controls, none under 44px, **no sideways scroll**, with the copy asserted to be IN the
+      measured set by its own id rather than counted. That conjunct is the one this work order could
+      break: `.class-action-btn` is `white-space: nowrap` and three of them do not fit 390px, which
+      is why `#outreachModal .modal-actions` gained a `flex-wrap`.)*
 
 **Traps** — `navigator.clipboard` needs a secure context and is refused without a user gesture. The
 app is HTTPS everywhere so the first half is satisfied, but a copy fired from anything other than
 the tap itself fails on iOS. Do not fall back to a hidden `<textarea>` and `execCommand` without
 saying so at the point of departure — it is deprecated, and this repo has no polyfills.
+
+**What it decided, 2026-09-12.**
+
+**The refusal is `disabled`, and that is the one thing this work order had to invent.** The handoff
+beside it refuses by having no `href` at all — not a link, not focusable, not clickable — and a
+button cannot inherit that, because a button with no attributes is still a button. `disabled` is the
+same *kind* of answer rather than a weaker one: the browser refuses the event. It also cost no
+stylesheet, because `.class-action-btn:disabled` was already the same dimming
+`a.class-action-btn[aria-disabled="true"]` wears, so the two controls in that row refuse in the same
+pixels. And `copyDraft()` asks the model anyway — `recordHandoff()`'s posture, in its own words.
+
+**There is no `execCommand` fallback, and the Traps line permitted one.** Three parts: the API needs
+a secure context and this app has one everywhere it runs, including the harness's `127.0.0.1`; every
+browser it supports has had `writeText` for years, iPad Safari from 13.4; and a hidden `<textarea>`
+plus a deprecated call is a polyfill, in a repository whose first architectural rule is that it has
+none. **So a browser without the API gets a sentence** — in the status line and through `announce()`
+— rather than a silent no-op or a second mechanism, and the control stays live so that `disabled`
+keeps meaning exactly one thing.
+
+**The acknowledgement is the status line's own sentence and nothing else is remembered.** The
+button's label is drawn from a comparison against that one string, so every other act in the flow
+clears it by doing what it already did — writing over `status`. A keystroke blanks it, which is
+deliberate: a draft edited after a copy is a draft the clipboard no longer holds, and a button still
+reading *Copied* over it would be lying about the clipboard rather than about the draft.
+
+**The line ending is LF here and CRLF at the `mailto:`, and that is a departure with a reason.**
+RFC 6068 § 5 wants `%0D%0A`; the clipboard's `text/plain` flavour takes LF and the platform puts its
+own ending back — Chromium writes CRLF onto the Windows clipboard itself. Handing it CRLF as well is
+how a bare `\r` reaches a compose window that draws it as a second break. Argued at `draftText()`.
+
+**⚠ ONE OPEN EDGE, STATED RATHER THAN CLAIMED AWAY.** Presentation mode empties this panel and
+disables this control, and it cannot reach a draft copied a minute earlier: the clipboard is the
+operating system's, and a paste into any other window still produces a named student's business.
+Nothing in a browser can undo that. It is written down at `src/outreach-view.js`'s own point of
+departure rather than left to imply that the mode covers it.
+
+**And one thing found while reading, not fixed here, because it is not this work order's:**
+`renderOutreach()`'s presentation-mode branch empties the two boxes, both pickers, three hint lines
+and the block strip, and **does not clear `#outreachStatus`** — which can be holding
+*"…rebuilt for Wo53Guardian One"* or *"Handed to your mail app and logged on Ada Wo53Full's
+record."* The element is inside the `.hidden` form, and this flow's own rule is that hidden is not a
+redaction. WO-5.7's own sentence names nobody by construction and is asserted to, so nothing here
+deepens it. Booking the repair is the owner's call.
 
 ---
 

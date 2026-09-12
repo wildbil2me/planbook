@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Copy the draft — 2026-09-12
+
+**An email draft has a second way out.** *Copy the draft* sits beside *Open in my mail app* and
+puts the recipient, the subject and the message on the clipboard as plain text, ready to paste into
+Gmail or any other webmail — for the teacher whose real mail lives in a browser tab and whose
+`mailto:` default opens nothing she uses. It costs no new permission: Planbook still sends nothing
+and asks Google for nothing. A blocked draft cannot be copied, presentation mode disables the
+control with the rest of the flow, and copying writes nothing to the document — `wo-sweep.mjs` § 24
+asserts that structurally. The clipboard gets LF where the `mailto:` gets CRLF, on purpose: handing
+the clipboard CRLF is how a bare `` reaches a compose window and draws a second paragraph break,
+and a check that only read the clipboard back would have passed over it. Read on hardware by the
+owner the same day — iPad Mail and a laptop Gmail compose, paragraphs intact on both. (WO-5.7)
+
 ### A `🔒 GATED` work order has to say what it is gated on — 2026-09-12
 
 **`🔒 GATED` was always two halves, and only one of them was enforced.** *Do not start it* has been a

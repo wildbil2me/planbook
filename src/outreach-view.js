@@ -1,13 +1,15 @@
 /*
-  The send flow — the audience picker, the draft, and the handoff to the teacher's own mail client
-  (WO-5.3).
+  The send flow — the audience picker, the draft, and the two ways it leaves: the handoff to the
+  teacher's own mail client (WO-5.3) and the copy to her clipboard (WO-5.7).
 
   ── WHAT THIS FILE IS, AND THE THREE IT IS NOT ──
 
   It is the SCREEN over src/outreach.js, the same split src/templates-view.js makes with
-  src/templates.js: that file owns who a recipient is, what a `mailto:` URL is and how long one may
-  be; this one owns the pixels, the order things happen in, and the one control that hands the draft
-  over.
+  src/templates.js: that file owns who a recipient is, what a `mailto:` URL is, how long one may be
+  and what the same draft reads like as plain text; this one owns the pixels, the order things
+  happen in, and the two controls that hand the draft over. **The second one is a control and not a
+  second draft** — both doors are built from one `outreachModel()`, past one gate, out of the same
+  four fields, so nothing on this screen can offer to copy a message it would refuse to send.
 
   IT IS NOT A RESOLVER. `{{field}}` becomes text in exactly one place — src/merge-fields.js — and
   this file asks `resolveDraft()` for a whole draft and puts what comes back in a box. Nothing here
@@ -27,6 +29,16 @@
   src/log.js's writeContact(): the audience, the subject, the body and the `ruleId` the cooldown
   keys on. This file holds no `update()` of its own and knows nothing about the shape of a log
   entry; the split is src/log-sheet.js's with the sheet it draws.
+
+  **AND COPYING IS STILL A READ (WO-5.7).** The second door writes nothing — not a log entry, not a
+  preference, not a byte of the document — and that is the deliberate half of it rather than an
+  omission. The handoff logs because a `mailto:` is the moment a message leaves the building and the
+  cooldown keys on it; a copy is a string on a clipboard, which may be pasted into a mail window, a
+  notes app, or nothing at all. **Planbook cannot tell, and a `contact` entry written on a copy
+  would be the app recording an outreach that may never have happened** — which is the one thing
+  src/log.js's append-only rule makes impossible to take back. The `rev` assertions in
+  tools/verify/outreach.mjs are asserted across the copy for that reason, and tools/wo-sweep.mjs
+  § 24 asserts the same thing from the other side.
 
   ── A MODAL, AND IT OPENS OVER THE CARD RATHER THAN REPLACING IT ──
 
@@ -174,7 +186,44 @@ const CC_NOTE_ID = 'outreachCcNote';
 const BLOCK_ID = 'outreachBlock';
 const LENGTH_ID = 'outreachLength';
 const OPEN_ID = 'outreachOpen';
+const COPY_ID = 'outreachCopy';
 const STATUS_ID = 'outreachStatus';
+
+/* ── THE COPY (WO-5.7), AND THE THREE THINGS ABOUT IT THAT ARE RULINGS ──
+
+   WHY THERE IS A SECOND DOOR AT ALL. `mailto:` opens the machine's DEFAULT mail client, and a
+   teacher whose real mail is Gmail in a browser tab has no default worth opening — she can see a
+   finished draft and have no way into the window she actually writes email in (the owner,
+   2026-08-29). It costs no permission, which is the point: the alternative to "open your desktop
+   client" is not a mail scope, it is handing her the text.
+
+   IT IS A `<button>` STANDING BESIDE A LINK, AND THE REFUSAL HAD TO BE RE-DECIDED. The handoff is
+   refused STRUCTURALLY by having no `href` at all — not a link, not focusable, not clickable — and
+   a button cannot inherit that mechanism because a button with no attributes is still a button. The
+   structural equivalent is `disabled`, and it is the same kind of answer rather than a weaker one:
+   the BROWSER refuses the event, so a blocked draft's copy control is not reachable by a tap, by a
+   keyboard, or by a click dispatched at it. It costs no stylesheet either — `.class-action-btn
+   :disabled` in src/shell.css is already the same dimming `a.class-action-btn[aria-disabled=true]`
+   wears, so the two controls refuse in the same pixels. **And copyDraft() asks the model anyway**,
+   which is recordHandoff()'s posture in as many words: "the markup says so" is not the kind of
+   answer this app makes about a disclosure, and both ends read one outreachModel().
+
+   THE ACKNOWLEDGEMENT IS THE STATUS LINE THIS FLOW ALREADY HAS, AND IT IS ALSO THE BUTTON'S LABEL.
+   WO-5.7's third Deliverable: *a copy button that looks identical before and after is a button
+   people press four times*. So the label is drawn from a comparison against the one sentence below,
+   which means the acknowledgement is cleared by whatever the teacher does next WITHOUT a second
+   flag to keep in step — every other act in this file writes over `status`, and a keystroke blanks
+   it. That is deliberate: a draft edited after a copy is a draft the clipboard no longer holds, and
+   a button still reading *Copied* over it would be lying about the clipboard rather than about the
+   draft.
+
+   THE OPEN EDGE, STATED RATHER THAN CLAIMED AWAY: **the clipboard is the operating system's and
+   presentation mode cannot reach into it.** Turning the projector on empties this panel and
+   disables this control, and it does nothing whatever to a draft copied a minute earlier — a paste
+   into any other window still produces a named student's business. Nothing in a browser can undo
+   that, and the honest thing is to write it down here rather than to imply the mode covers it. */
+const COPIED_NOTE = 'Copied. The recipient, the subject and the message are on your clipboard as '
+  + 'plain text — paste it into your mail and send it from there.';
 
 /* The rebuild confirm (WO-5.6) — a second overlay, opened OVER this one when a rebuild would throw
    away something the teacher typed. src/modal.js stacks by construction, so it can sit three deep
@@ -237,8 +286,16 @@ let copySelf = true;
 
 /* One sentence under the actions — what the last thing pressed did. One line rather than a banner,
    so the eye has one place to go back to (src/templates-view.js's status line, one screen over).
-   Every sentence it can hold is about a draft being rebuilt, which is why there is no error tone
-   here: what is wrong with a draft is the block strip's to say, in the resolver's own words. */
+
+   THERE IS STILL NO ERROR TONE HERE, AND WO-5.7 DID NOT ADD ONE. Until that work order every
+   sentence this line could hold was about a draft being rebuilt or handed over; it can now also
+   say that the clipboard refused. That is not an error about the DRAFT — what is wrong with a draft
+   is the block strip's to say, in the resolver's own words — it is a fact about the browser, and it
+   is drawn in the same neutral type as the rest for that reason.
+
+   IT IS ALSO THE FLOW'S WHOLE MEMORY OF THE CLIPBOARD. The copy control's label is drawn from a
+   comparison against COPIED_NOTE above, so every other act in this file clears the acknowledgement
+   by doing what it already did — writing over this string. See that block. */
 let status = '';
 
 /* ────────────────────────────── the model ──────────────────────────────
@@ -288,6 +345,10 @@ export function outreachModel() {
     cc: { on: false, email: '', ok: false },
     reasons: [], ready: false,
     url: '', length: 0, long: false,
+    /* WO-5.7's two. `clipboard` is empty for exactly as long as `url` is — see the pair of them
+       further down — so a blocked draft and a projected screen both copy nothing, and they do it by
+       having nothing to copy rather than by a control declining. */
+    clipboard: '', copied: false,
     status: status,
   };
   /* NOTHING IS RESOLVED, LISTED OR ADDRESSED WHILE THE PROJECTOR IS ON. Returned before a recipient
@@ -378,6 +439,24 @@ export function outreachModel() {
     subject: draft.subject,
     body: draft.body,
   }) : '';
+  /* THE SAME FOUR FIELDS, THE SAME GATE, THE SAME OBJECT (WO-5.7). Built here beside the URL rather
+     than inside the tap, so that the one gate `ready` — every reason in the list above — decides
+     both doors at once and neither can be open while the other is shut. What comes back is plain
+     text rather than a URL and the difference is entirely src/outreach.js's, argued at draftText():
+     the line break is LF here and CRLF there, and that is a departure rather than an oversight.
+
+     `name` IS THE FIFTH FIELD AND THE URL HAS NO USE FOR IT. A `mailto:` carries a bare addr-spec
+     (RFC 6068), so the person's name is not in the URL at all; a pasted block is read by a human
+     and by a compose window's To field, and both of them want "Jane Okafor <jane@…>". It is the
+     name that is already on the line under the chips, which presentation mode empties with
+     everything else — this is the same string, not a second reach into the roster. */
+  const clipboard = ready ? outreach.draftText({
+    to: to,
+    name: chosen ? chosen.name : '',
+    cc: cc.on && cc.ok ? cc.email : '',
+    subject: draft.subject,
+    body: draft.body,
+  }) : '';
 
   return Object.assign(base, {
     name: fullName(student),
@@ -399,6 +478,10 @@ export function outreachModel() {
     url: url,
     length: url.length,
     long: outreach.overCeiling(url),
+    clipboard: clipboard,
+    /* WHETHER THE CLIPBOARD HOLDS THIS DRAFT, ASKED OF THE STATUS LINE RATHER THAN OF A FLAG —
+       see COPIED_NOTE at the head of this file for why that is the whole of the bookkeeping. */
+    copied: status === COPIED_NOTE,
   });
 }
 
@@ -594,6 +677,29 @@ function paintOpen(model) {
 }
 
 /*
+  THE COPY CONTROL (WO-5.7). Three lines, and every one of them is argued at COPIED_NOTE above: the
+  refusal is `disabled` because that is a button's structural equivalent of the anchor's missing
+  `href`; the label changes because a control that looks identical before and after is one people
+  press four times; and the gate is `model.clipboard`, which is empty on exactly the drafts `url`
+  is empty on. Nothing here decides anything — paintOpen() reads the same model beside it.
+*/
+function paintCopy(model) {
+  const button = document.getElementById(COPY_ID);
+  if (!button) return;
+  button.disabled = !(model.ready && model.clipboard);
+  button.textContent = model.copied ? 'Copied' : 'Copy the draft';
+  /* The spoken label says what the control is FOR rather than repeating the word on it, and in the
+     refused state it says what is stopping it — the sentence the handoff link's own label takes,
+     because the two controls are refused by one gate and a screen reader should not hear two
+     different reasons for it. */
+  button.setAttribute('aria-label', button.disabled
+    ? 'Copy the draft — not until the draft is unblocked'
+    : (model.copied
+      ? 'Copied. The recipient, the subject and the message are on your clipboard'
+      : 'Copy the recipient, the subject and the message to your clipboard'));
+}
+
+/*
   PAINT THE FLOW. `opts.fields === false` leaves the subject and the body alone, and that is the
   rule src/templates-view.js's paintEditor() and src/categories.js both keep: replacing the value of
   a field while somebody is typing into it moves the caret to the end, and on iPadOS it can close
@@ -666,6 +772,15 @@ export function renderOutreach(opts) {
     if (block) block.textContent = '';
     const link = document.getElementById(OPEN_ID);
     if (link) { link.removeAttribute('href'); link.setAttribute('aria-disabled', 'true'); }
+    /* AND THE COPY GOES DOWN WITH IT (WO-5.7), on the same line as the link and for the link's
+       reason: the form is `.hidden` here, and `display: none` is not a refusal any more than it is
+       a redaction. The control is disabled rather than merely undrawn, so a click dispatched at it
+       — by a script, by a stuck focus, by a screen reader on a page a stylesheet lied to — does
+       nothing at all. The label goes back to its resting word in the same breath, because *Copied*
+       left standing on a panel that has just emptied itself is the flow reporting on a draft
+       nothing on screen admits to. */
+    const copy = document.getElementById(COPY_ID);
+    if (copy) { copy.disabled = true; copy.textContent = 'Copy the draft'; }
     return;
   }
 
@@ -694,6 +809,7 @@ export function renderOutreach(opts) {
 
   paintBlock(model);
   paintOpen(model);
+  paintCopy(model);
 
   const line = document.getElementById(STATUS_ID);
   if (line) {
@@ -1106,6 +1222,100 @@ export function recordHandoff() {
   renderOutreach({ fields: false });
   announce('Logged. Entries are never edited or deleted.');
   return entry;
+}
+
+/* ────────────────────────── the copy (WO-5.7) ──────────────────────────
+
+  THE SECOND DOOR OUT OF A DRAFT, AND IT WRITES NOTHING ANYWHERE.
+
+  Read the block at COPIED_NOTE at the head of this file first — why there is a second door, why
+  the refusal is `disabled` rather than a missing attribute, why the acknowledgement is the status
+  line's own sentence, and the one open edge (a clipboard already written is beyond presentation
+  mode's reach). What is left to say is what happens in this function.
+
+  ── THE `writeText` CALL IS THE FIRST THING PAST THE GATE, AND THAT IS THE TRAPS LINE ──
+
+  `navigator.clipboard.write*` is refused outside a user gesture, and the gesture is the tap this is
+  called from. It survives the delegated listener in src/shell.js — a listener on `document` is
+  still inside the click's own dispatch — and it does NOT survive an `await`, a `setTimeout` or a
+  repaint that happens first. So the order here is fixed: ask the model, take the string it already
+  built, hand it over, and only then say so. **A copy that works on the laptop and fails silently on
+  the iPad is the default outcome of getting that order wrong**, because Safari is stricter about
+  user activation than Chromium and the iPad is the device that decides go-live. Nothing may be
+  inserted above the call that is not synchronous, and nothing that can throw belongs there either
+  — hence one `try` around the call and none around the rest.
+
+  ── THERE IS NO `execCommand` FALLBACK, AND THAT IS A DECISION ──
+
+  WO-5.7's Traps line does not forbid one; it forbids adding one silently. This adds none, and the
+  argument is three parts. The API needs a SECURE CONTEXT and this app has one everywhere it runs —
+  `https://planbook.hwgteach.com`, `https://localhost:8443`, and the harness's own `127.0.0.1`,
+  which counts as one — so the half of the trap that is about `http://` does not arise. Every
+  browser this app supports has had `navigator.clipboard.writeText` for years, including the iPad's
+  Safari from 13.4. And a hidden `<textarea>` plus `document.execCommand('copy')` is a deprecated
+  API and a polyfill, in a repository whose first architectural rule is that it has none.
+
+  SO WHAT A BROWSER WITHOUT THE API GETS IS A SENTENCE, not a silent no-op and not a second
+  mechanism. The control stays live — the only thing that disables it is a blocked draft, so
+  `disabled` keeps meaning exactly one thing — and the tap answers in the status line and in
+  announce(): the draft is still on screen, still selectable, and the teacher can copy it by hand.
+  A refusal that says what happened is the shape WO-4.2 shipped; a button that does nothing at all
+  is the shape this app does not.
+
+  ── AND THE PROMISE'S ONLY JOB IS TO REPORT ──
+
+  Everything that could matter has already happened by the time it settles: the string was built
+  from the model, the string was handed to the platform. What the `.then` does is write one sentence
+  and repaint with `fields: false`, for recordHandoff()'s reason — the two boxes hold exactly what
+  was just copied, and writing their values back would move the caret of a teacher still reading
+  them. The rejection path is not an error tone: a clipboard the browser would not open is not
+  something wrong with the DRAFT, and the block strip is the only thing here that speaks about that.
+*/
+export function copyDraft() {
+  const model = outreachModel();
+  /* THE SAME QUESTION paintOpen() ASKED, ASKED AGAIN — recordHandoff()'s rule, and its reason: a
+     disabled button is a refusal the browser enforces and "the markup says so" is not the kind of
+     answer this app makes about a disclosure. Presentation mode arrives through this same door,
+     because the model returns before it has a recipient and `clipboard` is '' with `url`. */
+  if (!model.open || !model.ready || !model.clipboard) return false;
+
+  const api = navigator.clipboard;
+  if (!api || typeof api.writeText !== 'function') return copyRefused(
+    'This browser will not let Planbook reach the clipboard. The draft is still here — select the '
+      + 'subject and the message above and copy them yourself.');
+
+  let handed;
+  try {
+    handed = api.writeText(model.clipboard);
+  } catch (e) {
+    return copyRefused('The clipboard would not open, so nothing was copied. The draft is still '
+      + 'here — select the subject and the message above and copy them yourself.');
+  }
+  Promise.resolve(handed).then(() => {
+    status = COPIED_NOTE;
+    renderOutreach({ fields: false });
+    /* SPOKEN AS WELL AS DRAWN — WO-5.7's third Acceptance line wants both, and it wants both for
+       the reason this file's status line exists at all: the acknowledgement is one short line of
+       type under a row of buttons, which is precisely what a screen reader has no reason to be
+       looking at. */
+    announce('Copied to your clipboard.');
+  }, () => {
+    copyRefused('The clipboard would not open, so nothing was copied. The draft is still here — '
+      + 'select the subject and the message above and copy them yourself.');
+  });
+  return true;
+}
+
+/* WHAT A REFUSED COPY SAYS. One sentence, in the line every other act in this flow reports through,
+   and spoken as well — the same pair the success takes, because a teacher who cannot see the status
+   line has exactly the same need to know the clipboard is empty as to know it is full. It is NOT
+   COPIED_NOTE, so the button's label stays at its resting word: the comparison at the model is the
+   whole of that bookkeeping. */
+function copyRefused(sentence) {
+  status = sentence;
+  renderOutreach({ fields: false });
+  announce(sentence);
+  return false;
 }
 
 /* The block strip's one control: to the half of the draft the field is in. It does not select the

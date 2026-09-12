@@ -2790,6 +2790,113 @@ function commentLines(file) {
   }
 }
 
+/* ══════ 24. the second door out of a draft writes nothing, and its call is inside the tap ══════
+   WO-5.7, and it is § 17's shape over a different file for § 17's reason. `tools/verify/outreach.mjs`
+   proves that two real copies, a blocked one, a refusal and a projector cycle left `rev` where they
+   found it — which is a claim about the paths that run today. This proves there is nothing in
+   `src/outreach.js` that COULD write on any input, and nothing inside `copyDraft()` that reaches a
+   writer. Neither one alone is the acceptance line.
+
+   **THE BOUNDARY IS ASSERTED IN TWO PLACES BECAUSE IT RUNS THROUGH TWO FILES, AND ONLY ONE OF THEM
+   IS CLEAN.** `src/outreach.js` has no writer at all — no store import, nothing that mutates a
+   document — and that is a whole-file claim exactly as `src/calendar-derived.js`'s is. Its
+   neighbour is not: `src/outreach-view.js` holds recordHandoff(), which appends a `contact` through
+   `src/log.js`, because WO-5.4 gave this flow one writer on the one gesture that means a message
+   left the building. So the claim there is scoped to the FUNCTION — a copy is a string on a
+   clipboard, Planbook cannot tell whether it was ever pasted anywhere, and a `contact` entry
+   written on a copy would be the app recording an outreach that may never have happened, which
+   `src/log.js`'s append-only rule makes impossible to take back.
+
+   AND THE THIRD CLAIM IS THE ONE THE BROWSER HARNESS SAID IT COULD NOT MAKE. `navigator.clipboard`
+   is refused outside a user gesture; the harness grants `clipboardReadWrite` at the browser level
+   in order to press the control at all, and a granted permission is precisely what makes the
+   activation requirement stop applying — so a green click there would pass whether or not the call
+   sits inside the tap. **The failure it cannot see is silent on the laptop and total on the iPad**,
+   which is the device that decides go-live. What makes the call gesture-bound is that nothing
+   asynchronous sits between the gate and it: no `await`, no `setTimeout`, no repaint, no `.then`.
+   That is a grep, `plans/verification-tooling.md` directs grep-shaped checks here, and it is the
+   only mechanical reading of that rule this repository can take.
+
+   Every anchor FAILs loudly when it moves rather than going quiet, for the reason § 11's count
+   does: the two files are found by path and the function by `export function copyDraft(`. A scan
+   that matched nothing would read exactly like a flow with no clipboard in it. */
+
+{
+  const NAME = 'the clipboard copy writes nothing, and its call has nothing async in front of it';
+  const modelPath = path.join(REPO, 'src', 'outreach.js');
+  const viewPath = path.join(REPO, 'src', 'outreach-view.js');
+  if (!fs.existsSync(modelPath) || !fs.existsSync(viewPath)) {
+    check(NAME, false,
+      `${!fs.existsSync(modelPath) ? 'src/outreach.js' : 'src/outreach-view.js'} is not where this check expects it — WO-5.7's "copying writes nothing to the document" is now asserted only by a fixture, which proves what today's path did rather than what the code can do. Restore the file or point this check at the new path.`);
+  } else {
+    const faults = [];
+
+    // ── the model half: a whole file with no writer in it ──
+    const modelLines = fs.readFileSync(modelPath, 'utf8').split('\n');
+    const modelProse = commentLines(modelPath);
+    const modelCode = modelLines.map((l, i) => (modelProse.has(i + 1) ? '' : l));
+    // The store's own door, the log's two writers, and the preference setters — every way a module
+    // in src/ reaches something that outlives the page.
+    const WRITERS = /\b(update|writeContact|writeEntry|setPref|setPresentationMode|addTemplate|updateTemplate|removeTemplate|supportsOf)\s*\(/;
+    // And a direct mutation of the document, on either name this repository gives it.
+    const MUTATES = /\b(doc|d)\.[A-Za-z_$][\w$]*\s*(=[^=]|\.(push|pop|shift|unshift|splice|sort|reverse|fill)\s*\()/;
+    const modelWrites = [];
+    modelCode.forEach((line, i) => {
+      if (WRITERS.test(line) || MUTATES.test(line)) {
+        modelWrites.push({ file: 'src/outreach.js', line: i + 1, text: line.trim() });
+      }
+    });
+    const modelText = modelCode.join('\n');
+    for (const bad of ['./store.js', './log.js']) {
+      if (modelText.indexOf(`from '${bad}'`) >= 0) {
+        faults.push(`src/outreach.js imports ${bad} — the model half of the send flow answers who a draft can go to and what it looks like as a URL and as text, and not one of those questions has an answer that involves the document changing`);
+      }
+    }
+    if (modelWrites.length) faults.push(`${report(modelWrites)} can write — src/outreach.js reaches a document mutation or a store call, and its own header promises in as many words that it does not`);
+    // The vacuity guard: an emptied file has no writers in it either, so the module has to still be
+    // the module — both serialisers exported, and the one read-only import it declares.
+    const ANSWERS = ['audienceOf', 'recipientsFor', 'recipientByKey', 'tokensLeftIn', 'mailtoUrl',
+      'draftText', 'overCeiling'];
+    const missing = ANSWERS.filter(f => modelText.indexOf(`export function ${f}(`) < 0);
+    if (missing.length) faults.push(`src/outreach.js exports no ${missing.join(', no ')} — the two serialisers and the people they address are what this file IS, and their absence must not read as a passing no-writer check`);
+    if (modelText.indexOf("from './roster.js'") < 0) faults.push('src/outreach.js no longer imports ./roster.js — the module this check is about has changed shape, and a file that reads nothing has no writers in it either, which reads green from a distance');
+
+    // ── the view half: one function, scoped, because its file legitimately holds a writer ──
+    const viewLines = fs.readFileSync(viewPath, 'utf8').split('\n');
+    const viewProse = commentLines(viewPath);
+    const fnAt = viewLines.findIndex(l => /^export function copyDraft\s*\(/.test(l));
+    let fnEnd = fnAt < 0 ? -1 : viewLines.findIndex((l, i) => i > fnAt && /^\}/.test(l));
+    if (fnEnd < 0) fnEnd = viewLines.length;
+    if (fnAt < 0) {
+      faults.push('src/outreach-view.js has no top-level `export function copyDraft(` — WO-5.7\'s control is gone or renamed, and both of the claims this section makes about it are now asserted by nothing');
+    } else {
+      const body = [];
+      for (let i = fnAt; i < fnEnd; i++) {
+        if (viewProse.has(i + 1)) continue;
+        body.push({ line: i + 1, text: viewLines[i] });
+      }
+      const reaches = body.filter(r => WRITERS.test(r.text) || MUTATES.test(r.text))
+        .map(r => ({ file: 'src/outreach-view.js', line: r.line, text: r.text.trim() }));
+      if (reaches.length) faults.push(`${report(reaches)} — copyDraft() reaches a writer. The handoff logs a \`contact\` because a \`mailto:\` is the moment a message leaves the building; a copy is a string on a clipboard and Planbook cannot tell whether it was ever pasted, so an entry written here would record an outreach that may never have happened`);
+
+      // The gesture. Everything before the writeText( call, with nothing asynchronous allowed in it.
+      const callAt = body.filter(r => /writeText\s*\(/.test(r.text))[0] || null;
+      if (!callAt) {
+        faults.push('copyDraft() contains no `writeText(` call at all — either the clipboard write has moved out of the tap\'s own handler, which is the whole of WO-5.7\'s Traps line, or this check has stopped matching. Both must be looked at by a person');
+      } else {
+        const ASYNC = /\bawait\b|\bsetTimeout\s*\(|\bqueueMicrotask\s*\(|requestAnimationFrame\s*\(|\.then\s*\(|renderOutreach\s*\(/;
+        const before = body.filter(r => r.line < callAt.line && ASYNC.test(r.text))
+          .map(r => ({ file: 'src/outreach-view.js', line: r.line, text: r.text.trim() }));
+        if (before.length) faults.push(`${report(before)} sits between the top of copyDraft() and its \`writeText(\` at src/outreach-view.js:${callAt.line} — \`navigator.clipboard\` is refused outside a user gesture, and a call reached after an await, a timer or a repaint fails SILENTLY on iOS and passes on the laptop. The browser harness cannot see this: it grants the clipboard permission in order to press the control, and a granted permission is what makes the activation requirement stop applying`);
+      }
+    }
+
+    check(NAME, !faults.length,
+      faults.length ? faults.join(' · ')
+        : `no store call, no doc mutation and none of ${'update/writeContact/writeEntry/setPref/setPresentationMode/addTemplate/updateTemplate/removeTemplate/supportsOf'} in ${modelCode.filter(Boolean).length} line(s) of src/outreach.js code, which imports neither ./store.js nor ./log.js and still exports all seven answers; and copyDraft() at src/outreach-view.js:${fnAt + 1} reaches no writer, with nothing asynchronous between its top and the \`writeText(\` it hands the draft to`);
+  }
+}
+
 /* ══════ 22. the count of checks in tools/README.md is the number this run emits ══════
    WO-1.42. § 11 holds `tools/README.md`'s figures for `verify-shell.mjs` against what the tree
    actually contains. This is that census turned on the sweep itself. The same file records how many
