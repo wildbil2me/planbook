@@ -103,6 +103,13 @@
     margin-bottom: 8px; color: #5a6478;
   }
   .note p { max-width: 66ch; }
+  /* A claim this document made and no longer makes. Kept rather than deleted: the reasoning is
+     why the shoot waited, and a runbook that silently drops its own blockers teaches nobody. */
+  .note p.was {
+    margin-top: 14px; padding-top: 12px; border-top: 1px dashed #c9cdd6;
+    color: #5a6172; font-size: 14px;
+  }
+  .note p.was em { color: #6b7280; }
   .note.stop  { border-left: 4px solid #a3283c; background: #fdf1f3; }
   .note.stop h4 { color: #8e2235; }
   .note.warn  { border-left: 4px solid #b07d12; background: #fdf7e9; }
@@ -266,8 +273,8 @@
       before you set anything up.
     </p>
     <div class="band-meta">
-      <span><b>drafted</b> 2026-08-28</span>
-      <span><b>work order</b> WO-3.18 🔒 GATED on WO-7.2 · S</span>
+      <span><b>drafted</b> 2026-08-28 · <b>revised</b> 2026-09-12</span>
+      <span><b>work order</b> WO-3.18 ⬜ NOT STARTED · S</span>
       <span><b>acceptance</b> 1 of 4 closed</span>
       <span><b>companion</b> plans/wo-3-18-runbook.html</span>
     </div>
@@ -279,13 +286,14 @@
   <!-- ═══════════════ 1. STATE ═══════════════ -->
   <section class="wrap">
     <div class="sec-label">Where this actually stands</div>
-    <h2 class="head">Three things have moved since the last runbook, and two of them stop the camera</h2>
+    <h2 class="head">Three things have moved since the last runbook, and one of them still stops the camera</h2>
 
     <p>
-      <code>node tools/wo-gate.mjs next</code> returns WO-3.18 and reports
-      <code>PASS | gates clear</code>. All four declared dependencies are ✅ DONE. That is true and
-      it is not the whole picture: <strong>the thing the video has to film is not in the
-      <code>Depends on</code> line.</strong>
+      <code>node tools/wo-gate.mjs WO-3.18</code> reports <code>PASS | gates clear</code> and all
+      five declared dependencies are ✅ DONE. That is true and it is not the whole picture:
+      <strong>the thing the video has to film is not in the <code>Depends on</code> line.</strong>
+      <em>(Corrected 2026-09-12 — this read <code>next</code> returns WO-3.18, which it has not
+      since WO-3.18 moved to § After Ship 3. <code>next</code> answers WO-G2.)</em>
     </p>
 
     <div class="strip">
@@ -302,10 +310,10 @@
       </div>
       <div class="cell">
         <span class="k">WO-7.2 · transfer</span>
-        <span class="v bad">⬜ not started · L</span>
-        <span class="n">Nothing uploads, nothing downloads, no file is ever created in Drive.
-          <strong>Unblocked 2026-08-28</strong> — its <code>🔒</code> named no gate and had gone
-          circular; now row 18 and the thing this shoot waits on.</span>
+        <span class="v ok">✅ done 2026-09-07</span>
+        <span class="n"><code>src/drive-sync.js</code> carries the year document both ways against
+          <code>https://www.googleapis.com/upload/drive/v3/files</code>. <strong>Blocker 1 below is
+          discharged</strong> — the scope is in use and there is a file transfer to film.</span>
       </div>
       <div class="cell">
         <span class="k">WO-7.3 · the flag</span>
@@ -314,21 +322,27 @@
       </div>
     </div>
 
-    <div class="note stop">
-      <h4>Blocker 1 — there is no "scope in use" to film</h4>
+    <div class="note go">
+      <h4>Blocker 1 — discharged 2026-09-07</h4>
       <p>
         Google's demo-video requirement is not "show the consent screen." It is
-        <strong>show how each sensitive scope's granted data is actually used functionally</strong>.
-        WO-7.2 — upload, download, the <code>rev</code>/<code>baseRev</code> comparison, the
-        keep-both conflict — is <code>🔒 GATED</code> and unbuilt. <code>src/auth.js</code> exports
-        no writer, and a grep for <code>files.create</code> across <code>src/</code> returns nothing.
-        The Drive panel says so on screen, in as many words: <em>"Nothing is uploaded yet."</em>
+        <strong>show how each sensitive scope's granted data is actually used functionally</strong>
+        — and as of WO-7.2 there is such a use. <code>src/drive-sync.js</code> uploads and downloads
+        the year document, compares <code>rev</code> against <code>baseRev</code>, and keeps both
+        sides of a conflict. <strong>There is a file transfer to film.</strong>
       </p>
-      <p>
-        So the most a camera can capture today is a teacher granting a permission the app then does
-        not exercise. <strong>That is the "filming a stub" objection this work order already
-        recorded on 2026-08-20</strong>, arriving one level up — it was written about a missing
-        sign-in, and the sign-in now exists while the use of it does not.
+      <p class="was">
+        <b>What this said until 2026-09-12, and why it is kept:</b> <em>"WO-7.2 … is <code>🔒
+        GATED</code> and unbuilt. <code>src/auth.js</code> exports no writer, and a grep for
+        <code>files.create</code> across <code>src/</code> returns nothing … the most a camera can
+        capture today is a teacher granting a permission the app then does not exercise."</em> That
+        was the <strong>"filming a stub" objection this work order recorded on 2026-08-20</strong>,
+        arriving one level up, and it is the reason the shoot waited rather than compromising. It
+        stopped being true when WO-7.2 landed — and <strong>sat here as a stop for five days
+        anyway</strong>, invisible to every checker in the repository, because this is HTML and lies
+        outside the work-order parser and outside <code>--audit</code>. A stale blocker inside a
+        runbook for the very work order whose lock had just expired for the same reason: see
+        WO-1.31.
       </p>
     </div>
 
@@ -510,7 +524,8 @@
       Shoot in order. Each shot names what is on screen, roughly what you say over it, and which
       requirement it pays — because a shot that pays nothing is a shot that makes a reviewer go
       looking for the one it replaced. The three marked
-      <span style="color:#8e2235;font-weight:600;">WO-7.2</span> are the ones that do not exist yet.
+      <span style="color:#8e2235;font-weight:600;">WO-7.2</span> are the ones that show the scope in
+      use — <strong>shootable since 2026-09-07</strong>, when that work order landed.
     </p>
 
     <div class="shots">
