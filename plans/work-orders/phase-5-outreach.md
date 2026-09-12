@@ -1083,3 +1083,66 @@ into `announce()`.** `setOutreachRecipient()` announces *"Writing to Wo53Guardia
 region — that is a screen reader, not a projector, and the same reasoning that keeps a `note`
 visible under presentation mode (`CLAUDE.md` § Accommodations) applies: the teacher at the keyboard
 is not the audience the mode protects against. Leave it.
+
+## WO-5.11 — A web mail handler takes the PWA window with it
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-5.7
+
+**Why it exists.** `#outreachOpen` is a plain `<a href="mailto:…">` with no `target`, and
+`src/outreach-view.js`'s header gives three reasons it is a link and not a scripted navigation —
+the second being that *iOS opens a `mailto:` link more reliably than a scripted navigation*. All
+three hold. What none of them considered is a **web** handler for the scheme. On 2026-09-12 the
+owner registered Gmail as Chrome's `mailto:` handler on the laptop (the setting is per browser
+profile and Gmail had never been allowed to ask), clicked *Open in my mail app* from the installed
+PWA, and the app window **navigated** to `mail.google.com/mail/?extsrc=mailto&url=…` — Gmail's
+bare compose-only page, outside the app's scope, no address bar, Planbook gone from under it. The
+owner's words: *"it opens it in a broken email window within the PWA."* With an OS client the
+scheme never touches the window, which is why WO-5.3's two hardware readings did not see this.
+
+**The fix is one attribute** — `target="_blank" rel="noopener"` on the anchor. A web handler then
+opens in a real browser tab, with To, Subject and body filled, and the PWA stays on the draft. An
+OS handler ignores `target` entirely, so Outlook and Mail on the desktop see no change. **The whole
+cost is the iPad**: Safari has a history of leaving an empty tab or window behind for a `mailto:`
+carrying `_blank`, and the iPad is the device that decides go-live. If it does that here, this work
+order reverses itself and says so — an honest outcome, not a failure of the reading.
+
+**It is a work order rather than a line typed in the moment for two reasons.** The 👤 reading above
+is the whole of it; nothing on a desk can take it. And the contact-log listener in `src/shell.js`
+rides this anchor's click, WO-5.9's mutation round proved the browser follows the `href` even when
+that listener throws, and `tools/verify/outreach.mjs` asserts the `href` — a new attribute on the
+same element needs a check beside those so a later hand cannot strip it back to the shape that
+looked complete for two weeks.
+
+**Deliverables**
+- `target="_blank" rel="noopener"` on `#outreachOpen` in `index.html`, present whether or not the
+  draft is ready — an anchor with no `href` is not a link and the attributes do nothing on it.
+- The three-reason comment in `src/outreach-view.js`'s header gains a fourth, at the point of
+  departure: what a web handler does to a same-window `mailto:`, and why `_blank` is safe for an OS
+  handler.
+- A check in `tools/verify/outreach.mjs` beside the `href` check, asserting `target === '_blank'`
+  and `rel` containing `noopener` on the ready draft; `tools/README.md`'s count moves with it.
+- `CACHE` bumped in `sw.js` — `index.html` is in `SHELL`.
+
+**Acceptance**
+- [ ] 👤 On the laptop, with mail.google.com registered as Chrome's `mailto:` handler, *Open in my
+      mail app* from the **installed** PWA opens a Gmail compose in a browser tab with recipient,
+      subject and body filled, and the PWA window is still showing the draft.
+- [ ] 👤 On the iPad, the same tap opens Mail with the draft filled and leaves **no blank tab and no
+      blank window** behind, in Safari or in the installed app. **This is the line that decides
+      it** — if it fails, the attribute comes out and the failure is written at the point of
+      departure.
+- [ ] The contact-log entry is still written on the click: the existing check in
+      `tools/verify/contact-log.mjs` passes unchanged.
+- [ ] A blocked draft is still not a link — no `href` — and the new check asserts the attributes
+      only on a ready one.
+- [ ] The mutation — the attribute removed — turns exactly the new check red.
+
+**Traps** — **Do not reach for `window.open()` or a click handler that assigns `location`.** The
+header's second reason is the one that bites: a scripted navigation on iOS is what the anchor exists
+to avoid, and `preventDefault()` on this click is what WO-5.4's listener deliberately never calls.
+The attribute keeps the browser's own navigation and changes only where it lands. **`rel="noopener"`
+is not optional** — without it the new tab holds a `window.opener` onto a page carrying a student's
+draft. **And nothing here detects the handler, offers to register Gmail, or explains a Chrome
+settings page.** The app cannot see a browser's protocol-handler table, and the webmail teacher's
+documented door is WO-5.7's *Copy the draft*; this work order only stops the other door taking the
+app with it.
