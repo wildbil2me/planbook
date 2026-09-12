@@ -373,7 +373,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.51 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.52 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.54 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.26 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.5 | Phase 4 |
@@ -447,7 +447,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 51 | 43 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 52 | 43 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 5 | 3 | — | 🔨 IN PROGRESS |
@@ -456,7 +456,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 3 | 2 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 13 | 6 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | WO-G2 ⬜ **workable 2026-09-07** — the term opened Sep 2 and first grades go in Sep 8; WO-G3 🔒 on four weeks after it |
-| | **168** | **141** | **2** | `[████████░░] 84%` |
+| | **169** | **141** | **2** | `[████████░░] 83%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)
@@ -484,6 +484,14 @@ command. The percentage went* **down** *again on a denominator that grew — 140
 140 of 167 was 84% — and the bar did not move, because* `filled` *is* `Math.floor(pct / 10)` *and both
 numbers floor to eight.* **Recomputed against `recomputeDashboard()`'s own rule and not by counting
 rows here.** *The next* `--tick` *is still the authority.*
+
+***And by hand again on 2026-09-12, from `51 | 43` to `52 | 43`.*** *Same cause, fifth instance, and
+this one missed the* `--tick` *by minutes in the other direction:* [WO-1.52](phase-1-shell-store-roster.md#wo-152--a-planning-document-can-contradict-the-tracker-and-nothing-looks)
+*was booked out of WO-1.31's verdict sitting, and WO-1.31's own tick had already run and already
+written this table.* **The percentage went down again on a denominator that grew** *— 141 of 169 is
+83%, where 141 of 168 was 84% — and the bar did not move, for the same reason as last time. Recomputed
+against* `recomputeDashboard()`*'s rule, not by counting rows. The next* `--tick` *is still the
+authority.*
 
 *(**The Status cell beside it was left alone, and that is a flag rather than a fix.** "Reopened
 nineteen times; last on 2026-09-03" is hand-kept, `--tick` never touches column 5, and it had
@@ -1821,6 +1829,7 @@ it, never from a reading taken earlier in the same session.)*
 | 15 | [WO-1.30](phase-1-shell-store-roster.md#wo-130--a-depends-on-that-names-no-work-order-clears-its-own-gate) A Depends on that names no work order clears its own gate | M | — | **Whenever the tracker is quiet, and it is the third of the four tracker rows** — 12, 14, 15, 16. Its live instance is row 32, left standing on purpose so the fix has something real to fail against. **Read its table before writing a line:** the obvious fix refuses forty-one work orders that are correct today, twenty-one of which use `—` to mean "no dependencies" — re-measured 2026-09-07 against 169 work orders, up from thirty and fourteen against 143 |
 | 16 | [WO-1.31](phase-1-shell-store-roster.md#wo-131--a--gated-work-order-that-never-says-what-it-is-gated-on) A 🔒 GATED work order that never says what it is gated on | S | — | **Pairs with row 15 — same file, same neighbourhood, one sitting.** A plant rather than a repair: all four gated work orders name their gate today, and the one that did not — WO-7.2 — cost seventeen days and was found by a human reading an unrelated runbook |
 | 57 | [WO-1.51](phase-1-shell-store-roster.md#wo-151--the-word-boundary-that-keeps-nothing-a-sentinel-is-asserted-nowhere) The word boundary that keeps `nothing` a sentinel is asserted nowhere | S | — | 🎒 `tools/wo-gate.mjs` — **Nothing blocks it, and it is the fourth row of this neighbourhood** — 12, 14, 15, 16 and now this. An hour to fold into whichever sitting opens that file next; row 16 is the obvious one. Booked **2026-09-08** out of WO-1.30's verification, which raised it and declined to widen that row with it. **The row it fences is WO-1.30's own sentinel arm:** dropping the `\b` from `/^nothing\b/i` leaves `--self-check` green at 39 of 39, measured the same day, and under that mutant `nothingburger` parses as *no dependencies* — WO-1.30's defect arriving through the arm built to make WO-1.30 safe. **The drift is permissive and therefore silent**, where its two neighbouring mutations go red at 5 of 39 and 2 of 39 |
+| 58 | [WO-1.52](phase-1-shell-store-roster.md#wo-152--a-planning-document-can-contradict-the-tracker-and-nothing-looks) A planning document can contradict the tracker and nothing looks | S | — | **Fifth row of this neighbourhood** — 12, 14, 15, 16, 57 and now this — and placed here rather than at the foot for row 57's reason: row 56 argues for sitting last and a row dropped beneath it falsifies the argument. Booked **2026-09-12** out of WO-1.31's verdict sitting, which found the instance and declined to widen a work order already verified. **Why it exists:** WO-1.31 made every `🔒` say what it waits for and `--audit` read them directory-wide — over `plans/work-orders/*.md` **and nothing else**. The hand-written HTML under `plans/` may state any work order's status, dependency or blocker and be wrong about it forever. **It had a live instance the day it was booked:** `plans/wo-3-18-video-runbook.html` carried **four** false statements — a `🔒 GATED` band five days after the lock came off, WO-7.2 as `⬜ not started` five days after it landed, a **stop**-styled blocker whose premise had been discharged, and three shots called *"the ones that do not exist yet"* — repaired by hand in `a16b87c`. **That repair is this row's reproduction**, which is more than WO-1.31 had. **Read the first Trap before writing a line:** a planning document is *allowed* to be historical, so the check tests for a contradicted claim in a live voice, not for staleness — lift WO-1.40's § 21 exclusions rather than re-deriving them, and **do not widen `IGNORE_DIRS` or `--audit`'s walk** or it drowns in `design/mockups/` and 371 dispatch files on the first run |
 | 17 | [WO-5.1](phase-5-outreach.md#wo-51--merge-field-resolver) **Merge-field resolver** | M | — | ✅ **2026-08-28** — booked and built the same day, all six Acceptance lines closed. *By construction* turned out to mean a **whitelist**: `src/merge-fields.js` holds the sixteen documented names and matches a token against them by exact string, with no path expression anywhere in it, so a support field added to the data model next year is refused on the day it is added. **Rows 21–23 are unblocked** |
 | 18 | [WO-6.5](phase-6-calendar-glance.md#wo-65--a-tapped-day-opens-on-that-day) A tapped day opens on that day | S | — | 🎒 anything — **Rides along with anything.** Depends only on WO-6.3 ✅; nothing else waits on it |
 | 19 | [WO-2.33](phase-2-attendance.md#wo-233--the-overdue-tone-is-silent-on-the-ipad-and-nobody-knows-why) The overdue tone is silent on the iPad | M | — | **When there is an iPad sitting anyway.** Carries [WO-2.31](phase-2-attendance.md#wo-231--the-overdue-alert)'s `**Owes**` from the 👤 run that failed 2026-08-16 — the only open pointer of the three `--audit` tracks |
