@@ -1023,3 +1023,63 @@ stylesheet. `verify-shell.mjs` `1284 checks · 1284 passed · 0 failed · 0 skip
 `wo-sweep.mjs` `34 checks · 31 passed · 0 failed · 3 to review`, all three reviews pre-existing and
 byte-identical to the before-run's. `TESTING.md` § WO-5.9 carries the readings and both mutation
 runs.
+
+## WO-5.10 — The status line is the one field the projector does not empty
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-5.7
+
+**Why it exists.** `paintOutreach()`'s blocked branch empties the subject, the body, the *To* line,
+its note, the chips, the template options and the reasons list, in as many words: *"emptied rather
+than hidden … `display: none` is not a redaction."* Then it returns, and **the status line is drawn
+after the return, from `model.status`, which `outreachModel()` puts on `base` before it asks whether
+the projector is on.** Two of the sentences that variable can hold name a person: *"The draft was
+rebuilt for Wo53Guardian One…"* (`setOutreachRecipient()`) and *"Handed to your mail app and logged
+on Ada …'s record"* (`recordHandoff()`). So a teacher who switches recipient, or hands a draft off,
+and then flips the projector has a guardian's name or a child's sitting inside the `.hidden` form —
+`display: none`, exactly the thing the flow's own rule says is not a redaction.
+
+**It is a breach of the rule and not a live disclosure, and both halves of that sentence matter.**
+Nothing is on the glass today; `#outreachStatus` is inside `#outreachForm`, which the same paint
+hides. But the rule exists because a hidden element is one CSS regression, one `hidden` class
+dropped by a later work order, or one *Inspect element* under a projector from being read — and
+WO-5.3's mutation round found the shape once already, a confirm dialog left standing over a form
+that had just emptied itself. **Found by WO-5.7's implementer, confirmed by its verifier against
+`git show HEAD:src/outreach-view.js`, and deliberately not fixed there**: the fix is one line, but
+it is a line in the presentation-mode branch of a sensitive surface, and WO-5.7 was about a
+clipboard.
+
+**Why the harness is green over it.** `tools/verify/outreach.mjs`'s projector check reads
+`#outreachModal.textContent` — which *does* include hidden text — and asserts no guardian's name is
+in it. It passes because of **ordering**: the fixture flips the projector before it has ever
+switched a recipient or handed anything off, so `status` is `''` when the flip lands and the check
+never sees the sentence it would catch. The check is right; the fixture cannot make it fire.
+
+**Deliverables**
+- `outreachModel()` returns `status: ''` when `blocked` — on `base`, beside `clipboard: ''`, for the
+  reason written there: the projected model has nothing to draw rather than a paint declining to
+  draw it. **The model, not the paint**: the paint draws `model.status` and must keep doing so, or the
+  status line becomes the one field with two opinions about the projector.
+- A check in `tools/verify/outreach.mjs` that **switches recipient first, then flips the projector**,
+  and asserts `#outreachStatus` is empty and `#outreachModal.textContent` carries no guardian's name.
+  The existing projector check is left as it is — it is a different fixture and it already passes
+  for an honest reason.
+- `tools/README.md`'s `check()` count moves; update it in the same sitting (the WO-3.26 scar).
+
+**Acceptance**
+- [ ] With a recipient switched and the rebuilt note on screen, flipping the projector leaves
+      `#outreachStatus` empty and no guardian's name anywhere in `#outreachModal.textContent`, hidden
+      or not.
+- [ ] Flipping the projector back does not resurrect the sentence: the status line stays empty until
+      the teacher does something that writes a new one.
+- [ ] The mutation — `status: status` restored on `base` — turns the new check red and leaves the
+      existing projector check green, which is the proof that the new fixture reaches what the old
+      one cannot.
+
+**Traps** — **Do not clear the module variable from inside the paint.** `status = ''` in
+`paintOutreach()`'s blocked branch would pass the first two Acceptance lines and put a writer of flow
+state inside a function whose contract is to draw a model; every other status write in the file is
+in a handler, and `resetOutreach()` is the one place the paint's caller clears it. **And do not widen
+into `announce()`.** `setOutreachRecipient()` announces *"Writing to Wo53Guardian One."* to the live
+region — that is a screen reader, not a projector, and the same reasoning that keeps a `note`
+visible under presentation mode (`CLAUDE.md` § Accommodations) applies: the teacher at the keyboard
+is not the audience the mode protects against. Leave it.
