@@ -57,7 +57,14 @@ the claim for however long the next work order took — and `wo-gate.mjs --tick`
 header declares, so the fix is the header, not the tick.
 
 **Status vocabulary:** `⬜ NOT STARTED` · `🤖 CLAIMED — <dispatch>` · `🔨 IN PROGRESS` ·
-`✅ DONE — <date>` · `🚧 BLOCKED` · `🔒 GATED` · `🚫 STRUCK — <date>` · `⏳ DEFERRED — <date>`
+`✅ DONE — <date>` · `🚧 BLOCKED` · `🔒 GATED — <what it waits for>` · `🚫 STRUCK — <date>` ·
+`⏳ DEFERRED — <date>`
+
+*(**`🔒` gained its suffix on 2026-09-12, WO-1.31**, and this list is a copy — the maintained one is
+`plans/work-orders/README.md` § "Header fields", which is also the only place that records what the
+suffix may not do: **nothing parses it**, and `🚧 BLOCKED` is outside the rule. Updated here in the
+same sitting, which is the only thing keeping the two lists in step — **nothing checks them against
+each other**.)*
 
 *(The last two were added 2026-08-16, WO-1.21, and they are the only two that mean **this is not
 coming**. `🚫` is a *whether* — it should not be built, and the roadmap box it closes stops being a

@@ -575,6 +575,24 @@ ride-along that has become the first `⬜` in its section — as a **note and no
 Defined in [`plans/work-orders/README.md`](plans/work-orders/README.md) § "Ride-along rows"; the
 glyph is the owner's to change and the behaviour is not.
 
+**A `🔒 GATED` status must now say what it is gated *on*, in a suffix** (WO-1.31, 2026-09-12):
+`🔒 GATED — <what it waits for>`. The obligation was always on the document and was read by nothing,
+which is how **WO-7.2 wore a lock for seventeen days after WO-3.10 had demolished the reasoning
+behind it** — found by a human reading an unrelated runbook, not by any tool. `wo-gate.mjs` refuses a
+bare lock twice: as a second problem under the refusal the lock already earns, and directory-wide in
+`--audit` — **the half that matters, because a lock is the one status that guarantees nobody runs a
+gate report on it**. Three limits, all of them deliberate. **Nothing parses the suffix and nothing may
+start to** — it is prose for a person, and a reader that expected a date would make the sentence
+unwriteable. **`🚧 BLOCKED` is outside the rule**, with its own vocabulary row; widening the check to
+every non-`⬜` status is how a small fence becomes a large one. And **the check asks whether a gate is
+*stated*, never whether it is still *live*** — no grep reads the second. WO-3.18's lock was stated,
+discharged on 2026-09-07 and still on the row five days later; a person lifted it on this check's
+evidence rather than the check lifting it. *(**Which is also the correction to the status block at the
+top of this file.** It says* **"WO-G2 is now `🔒 GATED`"** *and that has been false since* `3149bea`*;
+the calendar it waited on arrived and* `next` *answers WO-G2 today. Read it as the second instance of
+the same failure the paragraph above describes —* **a gate stated, discharged, and outliving the
+condition anyway** *— in the one file nothing in this repository checks for contradiction.)*
+
 **Before any 👤 iPad reading, force-quit the app from the app switcher.** A reload is not enough and
 neither is a pull-to-refresh. `sw.js` uses `skipWaiting` + `clients.claim`, so a new worker takes over
 and deletes the old cache the moment it activates — but it does not re-render the open window, whose

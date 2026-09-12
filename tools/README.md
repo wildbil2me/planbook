@@ -103,7 +103,7 @@ node tools/wo-gate.mjs --self-check    plant every violation this script is supp
 ```
 
 `--self-check` copies `plans/` to a temp directory, writes four **synthetic** work orders into the copy,
-plants thirty-nine violations against them, runs the script over the copy, and deletes the directory on
+plants forty violations against them, runs the script over the copy, and deletes the directory on
 both exit paths. *(Thirteen until 2026-08-16; WO-1.21 added four, for the two statuses that mean the
 work is not coming and for the § The files index. WO-2.49 added the eighteenth on 2026-08-18, and it
 is the first that is about the **reader** rather than about a refusal — a fixture written CRLF in its
@@ -160,7 +160,19 @@ which is worth reading before assuming a fixture is arbitrary**: WO-1.29's contr
 markers now, and WO-1.27's bold-prose plant now writes `WO-9.7` ahead of its bold, which is WO-1.11's
 real shape and is the line that plant reads its value off — a `nothing` there stopped echoing the
 value the moment `nothing` became a marker.
-`39 plants, 39 caught, 0 missed` / `PASS | 39 of 39 plants were caught`, read
+**WO-1.31 added one on 2026-09-12**, the fortieth, about the half of `🔒 GATED` that was on the
+document and on nothing else: a bare lock is refused a SECOND time, by name and by the rule it
+breaks, and a `🔒 GATED — <what it waits for>` is refused once, for being a lock. It is **one plant
+over three states** — bare, stated, and `🚧 BLOCKED`, which must stay out of the rule — because they
+are one claim about one status line and a plant per state would have three fixtures asserting about
+each other. It brought no fixture and no new shape; the value goes into `fixtureBlock()`'s existing
+`status` option, and the suffix it writes is the one two older plants have written since WO-2.14
+(*waiting on a fixture*), which is why the parser needed nothing. **It is the first plant here to
+read an `--audit` section AND that run's verdict**, and the reason is in the mutation table: its
+first cut asserted the BAD row and not the count, and a mutation that printed the row and dropped
+it from the total was green on all forty. It runs **after** WO-1.30's two, whose neighbourhood it
+is in, and before WO-1.21's four.
+`40 plants, 40 caught, 0 missed` / `PASS | 40 of 40 plants were caught`, read
 off the run and not added up. The counts further down are readings from dated
 runs against older copies of the script and stay at the number that was true then.)* Two things about it are load-bearing. **Every plant path — and, since WO-2.44, the
 sandbox that holds them — goes through a guard that
@@ -262,6 +274,11 @@ part is what did **not** go red beside it:
 | the refusal arm never firing — `unresolvedClause: false`, so a zero-id clause draws WO-1.27-era prose `NOTE` again — WO-1.30, same method | **1 red**: the refusal plant, on the two assertions that are the defect verbatim — *"the gate exited 0 on a **Depends on** naming no work order"* and *"the refusal is not a FAIL — a NOTE beside a PASS reads as a footnote"*. Nothing else moves, which is the point of the pair: the sentinel plant is green under this one and red under the one above it |
 | the `nothing` prefix test narrowed back to the whole-value `/^nothing$/i` it replaced — WO-1.30, same method | **2 red of 39**: the sentinel plant on its two `nothing <reason>` values only, and WO-1.29's control, whose value is one of them. This is the arm the five real work orders that write down WHY they wait on nothing rest on — WO-2.19, WO-2.20, WO-2.37, WO-3.10 and WO-8.7 — and under it all five are refused outright rather than merely noted |
 | the shared "value parses to zero ids" predicate over both fields — the WO-1.29 row above that read **13 red of 37** — **re-measured after WO-1.30** — `--against` over a copy in the scratchpad, 2026-09-07 | **12 red of 39**, where the same mutation read 13 of 37 an hour earlier. The two WO-1.30 plants are **not** among them and that is the honest reading rather than a gap: this mutation lives in `rehomesOf()`, on the `--tick` and `--audit` paths, and those two plants read gate reports. The claim the Traps line makes — that one predicate over both fields is expensive — survives the re-measure at very nearly the same number |
+| **the second refusal deleted from `gate()`** — the `🔒 GATED` branch left with the one problem it has always pushed — WO-1.31, `--against` over a copy in the scratchpad, 2026-09-12 | **1 red of 40**: the lock plant, on the two assertions that are the defect verbatim — *"a 🔒 naming no gate drew no second refusal"* and *"the second refusal does not name the § Header fields rule it breaks"*. Nothing else moves; the lock is still refused for being a lock, which is the whole shape of the change |
+| **`gateUnstated()` reading the NORMALISED `wo.status` instead of `statusRaw`** — WO-1.31, same method | **4 red of 40**, and the breadth is the finding rather than noise. `parseFile()` stores the STATUSES entry a status starts with, so under this mutation **every** lock reads as unstated, including the two real ones the sandbox copies in — `--audit` fails for the whole run and three plants that expect a clean one redden with it. **This is the mutation that matters most of WO-1.31's five**: the wrong field is green on a healthy tree and wrong on every input, and the version of this check that reads `wo.status` is the one somebody writes next time |
+| **the rule widened to `🚧 BLOCKED` as well** — the widening WO-1.31's Traps line forbids in as many words — WO-1.31, same method | **1 red of 40**: the lock plant, on the one assertion aimed at it — *"🚧 BLOCKED was pulled into the 🔒 rule"*. It is the cheapest edit in this family to make by accident: both statuses refuse in the same branch of the same report, four lines apart |
+| **`--audit`'s new section printed and dropped from the problem total** — `gl.problems.length` off the sum, so the BAD rows appear above a `PASS` — WO-1.31, same method | **1 red of 40**: the lock plant, on its two verdict assertions. **It is the row worth reading of the five**, because it was measured twice: against the plant's first cut, which asserted the BAD ROW and not the count, this mutation was **green on all forty** — WO-1.29's counted-and-silent defect arriving in a new section. The plant gained the two assertions before anything was ticked |
+| **the whole section deleted** — `gatedProblems()` stubbed to an empty result, so `--audit` walks no lock at all — WO-1.31, same method | **1 red of 40**: the lock plant, on four assertions at once — the missing BAD row, both verdict assertions, and the stated lock no longer counted as sound. The per-work-order half stays green under it, which is the point of having both: a gate report only fires when somebody names the ID, and nobody names a work order marked do-not-start |
 
 **And the pre-WO-1.28 script is the broad run for those six**, with the same caveat the WO-3.11
 paragraph above states: `--self-check --against <the script as of c6a1a4b>` reddens **2 of the 6** —
@@ -269,14 +286,17 @@ the two that assert the new *acceptance* — and leaves the four that assert a *
 the old script refuses too, for a different reason. That is why the four one-line mutations above
 exist rather than the broad run standing alone.
 
-Thirty mutations, all reverted or driven over a copy, and every one of them red on the plant it
-was aimed at. **Twenty-five touched nothing else; the five that did are findings rather than
-failures and each says so in its own cell** — the 🎒-NOTE row, two of WO-1.27's four, and two of
-WO-1.29's four, where the breadth is the point in two different ways. A header block's fields are
-read by everything here, so a position rule read wrongly reddens most of the board at once; and a
+Thirty-five mutations, all reverted or driven over a copy, and every one of them red on the plant it
+was aimed at. **Twenty-nine touched nothing else; the six that did are findings rather than
+failures and each says so in its own cell** — the 🎒-NOTE row, two of WO-1.27's four, two of
+WO-1.29's four, and one of WO-1.31's five, where the breadth is the point in three different ways. A
+header block's fields are
+read by everything here, so a position rule read wrongly reddens most of the board at once; a
 refusal aimed at one field's value reddens most of it too the moment it is widened to a second field
 or to a second value, because every fixture in the array carries a healthy header and expects a clean
-run over it. *(WO-1.38's six are six of **twelve**
+run over it; and a reader pointed at the wrong half of a parsed field — the normalised status rather
+than the status as typed — reddens the three plants that expect a clean `--audit`, because the
+sandbox copies the real directory's own work orders in and they are what it then misreads. *(WO-1.38's six are six of **twelve**
 run against its four plants, all with `--against` over a copy in the scratchpad, so the tree was never
 mutated. The six not tabulated are the same shapes one fence over — `--handoff` writing on `--dry-run`
 or moving a dashboard, `next` not skipping the status at all, the "abandoned claim" sentence deleted

@@ -1418,7 +1418,7 @@ the thing the no-timetable rule actually forbids.
 
 ## WO-3.18 — verification submitted 🔒
 
-**Ship** — · **Status** 🔒 GATED · **Size** S · **Depends on** WO-3.10, WO-8.7, WO-7.1, WO-7.2,
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.10, WO-8.7, WO-7.1, WO-7.2,
 WO-8.12 — the client to verify, the domain to verify it at, the sign-in the demo video has to film,
 **the file transfer it has to film being used**, and the policy whose URL goes in the form ·
 **Blocks** a stranger seeing a clean consent screen
@@ -1484,6 +1484,37 @@ can only be filmed at* `https://localhost:8443` *until WO-7.3 widens it — and 
 *shows a truncated origin bar, so the* `client_id` *Google asks to see in the address bar cannot
 appear there and has to be filmed off the console instead. Both are written up, with a shot list, in*
 [`plans/wo-3-18-video-runbook.html`](../wo-3-18-video-runbook.html)*.)*
+
+*(**`🔒 GATED` until 2026-09-12, and what took the lock off is the lock's own sentence coming true.**
+[WO-7.2](phase-7-sync.md#wo-72--document-transfer--conflicts) *landed* **✅ 2026-09-07**: `src/drive-sync.js`
+*carries the year document both ways against* `https://www.googleapis.com/upload/drive/v3/files`*, so
+the scope is **in use** and there is a file transfer to film. The first of the two notes above says in
+as many words* **"Put it back to `⬜` when WO-7.2 lands"** *— and for five days nobody did, because
+nothing reads a sentence in a body:* `next` *reads a status,* `--audit` *had never once asked a gated
+work order what it was waiting for, and* **a lock is the one status that guarantees no gate report is
+ever run on it.** *This is the shape
+[WO-1.31](phase-1-shell-store-roster.md#wo-131--a--gated-work-order-that-never-says-what-it-is-gated-on)
+was booked as a* plant *against, turning up live in the fortnight between its booking and its build —
+not WO-7.2's unstated gate but the other half of the same failure:* **a gate stated, discharged, and
+outliving the condition anyway.** *It was found by that work order's own check, on the first run of
+it, and the lock came off in the same sitting.* **Nothing else here changed.** *This is still work
+nobody should fold into a teaching week — the errand is a shoot, a console trip and a form — and*
+[`README.md`](README.md) *§ After Ship 3 row 9 is where that argument belongs, not the status field.
+`🔒` is one hand edit away if the owner wants it back, and it would carry its gate on the status line
+this time.)*
+
+*(**Ratified by the owner 2026-09-12**, *and that is the half worth writing down.* The unlock was made
+by WO-1.31's implementer, and **a status change on a fourth work order was not in that brief** — the
+verifier refused it as out of scope and was right to. *What makes it stand is not that it was harmless
+but that after WO-1.31* **the reversal is the option that cannot be written honestly**: `🔒` *now has
+to name what it waits for, the only true answer was WO-7.2, and WO-7.2 is done. The nearest
+alternative —* `🔒 GATED — an owner's shoot-and-submit sitting, not a build` *— is scheduling advice
+wearing a gate's glyph, which is the abuse this work order exists to make visible.* **The fence that
+survives is [`README.md`](README.md) § After Ship 3 row 9**, *not the status field. One residual cost,
+named rather than repaired:* `⬜` *means* `--start WO-3.18` *will claim it if a person types the ID —*
+`next` *never offers it, so this takes a deliberate act — and* 🎒 *is not the repair, because a
+ride-along says* an hour to fold into a sitting that already has that file open *and row 9 says the
+opposite.)*
 
 **Split out of WO-3.10 on 2026-08-10**, which is where the full reasoning sits. This is the half that
 **cannot start until there is a domain**, and it is booked separately so that the half which can start

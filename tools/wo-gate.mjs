@@ -144,6 +144,40 @@ function notComing(status) { return status.startsWith(STRUCK) || status.startsWi
 // silently stops biting on the one status whose whole job is refusing --release.
 const AWAITING = '🔍 AWAITING VERDICT';
 
+// WO-1.31. `🔒 GATED` is two halves and this file used to enforce one. *Do not start it* is the half
+// below at gate(); *what it is gated ON is the work order's to say* is
+// plans/work-orders/README.md § "Header fields", put on the document and read by nothing — so a lock
+// that named no gate could not be audited, could not expire, and outlived the argument that put it
+// there. WO-7.2 wore one for seventeen days after WO-3.10 had demolished the reasoning behind it for
+// the whole of Phase 7, went circular against WO-3.18's demo video, and was found by a human reading
+// an unrelated runbook. Its own note books this check in as many words.
+//
+// IT READS statusRaw AND NOT status, AND THAT IS THE WHOLE OF THE TRICK. parseFile() normalises a
+// status to the STATUSES entry it starts with, so `wo.status` is a bare '🔒 GATED' whether a suffix
+// was typed or not — every other reader in this file wants that, and this is the first one that wants
+// the text as it was written. A version of this reading `wo.status` is green on every input.
+//
+// **It does not parse the suffix and must not start to** (the work order's own trap). `✅ DONE — <date>`
+// carries a date and three readers here expect one; this carries a sentence written for a person, so
+// the check is that there IS one and never what it says. The em dash is the directory's spelling on
+// all four suffixed statuses and it is the only one accepted, so that the refusal has one shape to
+// name; a hyphen here is a refusal with the repair printed beside it, not a silent pass.
+//
+// **`🚧 BLOCKED` is deliberately not in this rule.** It has its own vocabulary row, and widening this
+// to every non-⬜ status is how a small check becomes a large one.
+const GATED = '🔒 GATED';
+const GATE_STATED = /^🔒 GATED\s+—\s*\S/;
+function gateUnstated(wo) { return wo.status.startsWith(GATED) && !GATE_STATED.test(wo.statusRaw); }
+
+// Said once, because the per-work-order report and --audit both say it and a reader who meets it
+// twice must not have to decide whether they are two findings. The rule is quoted rather than
+// paraphrased: the point of the sentence is to send somebody to the table that states the obligation.
+function unstatedGateProblem(wo) {
+  return `${wo.id} is ${GATED} and does not say what it is gated ON — its status line reads "${wo.statusRaw}" with no "— <what it waits for>" after it. `
+       + `plans/work-orders/README.md § "Header fields" puts that half on the document: 🔒 GATED means do not start it, and what it is gated on is the work order's to say. `
+       + `A lock that says nothing cannot be re-checked and cannot expire — write the gate onto the status line, from the sentence in the body that already argues it`;
+}
+
 // The glyph a roadmap box wears when the work order that closes it is not coming (WO-1.21). It sits
 // immediately after the checkbox — `- [ ] ⏳ **DEFERRED …** — the box text` — and the position is the
 // whole guard: a glyph anywhere else on the line is prose about a deferral, not a deferral. The box
@@ -875,7 +909,12 @@ function gate(id, wos) {
   console.log(`${wo.id} — ${wo.title}`);
   console.log(`  file    ${path.relative(REPO, wo.file)}:${wo.headingLine}`);
   console.log(`  ship    ${wo.ship || '—'}   size ${wo.size || '—'}   ${wo.flag ? '🚩 go-live blocker' : ''}`);
-  console.log(`  status  ${wo.status}`);
+  // The status AS TYPED, not the normalised one (WO-1.31). Four statuses carry a suffix and this
+  // report printed none of them: a reader refused for a 🔒 was shown the glyph and not the gate, on
+  // the one screen written for somebody about to start the work order. It is a change to what is
+  // PRINTED and not to what is parsed — every fence in this file still reads the normalised
+  // `wo.status`, and `--list` keeps it too, where a suffix would break the column.
+  console.log(`  status  ${wo.statusRaw || wo.status}`);
 
   // 1. Dependencies
   const { ids, hasProse, unresolvedClause } = depsOf(wo);
@@ -1033,7 +1072,12 @@ function gate(id, wos) {
   }
 
   // 3. Gated, and 4. already started
-  if (wo.status.startsWith('🔒 GATED')) problems.push(`${wo.id} is 🔒 GATED — do not start it`);
+  if (wo.status.startsWith(GATED)) problems.push(`${wo.id} is ${GATED} — do not start it`);
+  // The second sentence, on a report that is already failing (WO-1.31). It costs the reader nothing —
+  // nobody is starting this work order either way — and it is the only moment anybody is ever shown
+  // that the lock has stopped saying anything. A NOTE would have been the wrong shape: this is the
+  // document breaking a rule its own directory states, not a thing for a human to weigh.
+  if (gateUnstated(wo)) problems.push(unstatedGateProblem(wo));
   if (wo.status.startsWith('✅ DONE')) notes.push(`${wo.id} is already ✅ DONE — ask before proceeding`);
   // The two halves of what 🔨 used to mean, said in two different sentences (WO-3.11). A claim has a
   // way back and a part-built work order does not, so the advice under them is not the same advice.
@@ -1714,6 +1758,31 @@ function fileRowProblems() {
   return { problems, ok };
 }
 
+// Every 🔒 GATED work order, against the gate it states (WO-1.31). The per-work-order half at gate()
+// only fires when somebody names the ID — and the whole shape of this defect is that nobody does:
+// a lock is the one status that guarantees no gate report is run on it, which is why WO-7.2's sat
+// unread for seventeen days. This is the reader that walks the directory without being asked.
+//
+// **A BAD and not a NOTE**, unlike the 🎒 section below it. This is two documents disagreeing — the
+// status line against the rule § "Header fields" states — and it has exactly one repair: write the
+// gate on, from the sentence in the body that already argues it. That is the line the ride-along
+// section draws, and this one falls on the other side of it.
+//
+// It says nothing about whether a gate is still LIVE, and cannot: WO-7.2's real fault was a lock
+// whose reasoning had been demolished a fortnight earlier, and no grep can read that. What a stated
+// gate buys is that the question becomes askable by a person who is not the author — which is the
+// whole claim, and it is smaller than "locks now expire".
+function gatedProblems(wos) {
+  const problems = [], ok = [];
+  for (const wo of wos.values()) {
+    if (!wo.status.startsWith(GATED)) continue;
+    const where = `${path.relative(REPO, wo.file)}:${wo.headingLine}`;
+    if (gateUnstated(wo)) problems.push(`${unstatedGateProblem(wo)}   (${where})`);
+    else ok.push(`${wo.id.padEnd(8)} ${clip(wo.statusRaw.replace(/^🔒 GATED\s+—\s*/, ''), 88)}`);
+  }
+  return { problems, ok };
+}
+
 // Every 🎒 row, and how much shelf is left above it (WO-1.35). A ride-along is a plan to fold an hour
 // of work into somebody else's sitting, and the plan runs out when the rows above it clear: the row is
 // then the first ⬜ in its section, `next` steps over it, and nothing is left for it to fold into.
@@ -2119,6 +2188,18 @@ function audit(wos) {
   for (const l of fr.ok) console.log(`  ok   ${l}`);
   for (const p of fr.problems) console.log(`  BAD  ${p}`);
 
+  // WO-1.31. Placed ABOVE the 🎒 section rather than below it, and not for taste: --self-check's
+  // ride-along plants cut that section out of this output by slicing from its heading to the
+  // dashboard's, so a new section between those two would be read as part of it by four assertions
+  // that have nothing to do with locks.
+  console.log('');
+  console.log(`${GATED} work orders, against the gate each one states`);
+  console.log('');
+  const gl = gatedProblems(wos);
+  for (const l of gl.ok) console.log(`  ok   ${l}`);
+  for (const p of gl.problems) console.log(`  BAD  ${p}`);
+  if (!gl.ok.length && !gl.problems.length) console.log(`  —    no work order is ${GATED}`);
+
   // WO-1.35. The one section here that can only ever print `ok` and `NOTE` — see rideAlongReport()
   // for why an empty shelf is reported rather than refused, and why tightening it would redden two
   // plants in --self-check that no fixture broke.
@@ -2149,11 +2230,11 @@ function audit(wos) {
   console.log('');
   for (const d of drift) console.log(`FAIL | ${d}`);
 
-  const problems = bad + drift.length + owesBad + nc.problems.length + fr.problems.length;
+  const problems = bad + drift.length + owesBad + nc.problems.length + fr.problems.length + gl.problems.length;
   console.log('');
   console.log(problems
     ? `FAIL | ${problems} problem(s) across the two trackers. Nothing was written; all of it is a hand edit.`
-    : `PASS | every fragment matches exactly one roadmap box, every **Owes** pointer lands on an open box, every uncounted box has a struck or deferred work order behind it, § The files names what its files hold, and every dashboard row matches its own boxes.${ride.notes.length ? `\n     | ${ride.notes.length} ${RIDE_ALONG_MARK} row(s) above have run out of shelf. That is a NOTE and not one of the problems counted here — read the section and decide.` : ''}`);
+    : `PASS | every fragment matches exactly one roadmap box, every **Owes** pointer lands on an open box, every uncounted box has a struck or deferred work order behind it, § The files names what its files hold, every ${GATED} work order says what it is gated on, and every dashboard row matches its own boxes.${ride.notes.length ? `\n     | ${ride.notes.length} ${RIDE_ALONG_MARK} row(s) above have run out of shelf. That is a NOTE and not one of the problems counted here — read the section and decide.` : ''}`);
   return problems ? 1 : 0;
 }
 
@@ -3277,6 +3358,73 @@ function runPlants(subject, sandbox) {
         return bad;
       },
     },
+    // ------------------------------------------------------------------ WO-1.31's one
+    //
+    // The other half of `🔒 GATED`, which sat on the document and on nothing else from the day the
+    // word was defined. It is one plant rather than three because the three states it walks —
+    // bare, stated, and the status next door that must NOT be dragged in — are one claim about one
+    // status line, and a plant per state would have three fixtures asserting about each other.
+    //
+    // It reads a gate report AND the directory-wide section, and the second is the one that matters:
+    // a lock is the one status that guarantees nobody runs a gate report on it, which is how WO-7.2's
+    // survived seventeen days of being read past. Both are asserted about the FIXTURE only — the
+    // sandbox is a copy of the real plans/, so the real directory's own locks are in this output too,
+    // and a plant that counted rows would be asserting against whatever the trackers carry that week.
+    {
+      name: 'a 🔒 GATED work order that says nothing about its gate is refused for that too, a stated one is refused only for being gated, and 🚧 BLOCKED is left out of it',
+      run: () => {
+        const bad = [];
+        const FID = FIXTURE_ID.replace(/\./g, '\\.');
+        const lockSection = out => (out.split(`${GATED} work orders, against the gate each one states`)[1] || '')
+          .split(`${RIDE_ALONG_MARK} ride-along rows`)[0];
+
+        // 1. The bare lock: two refusals on one report. The first is the one the status has always
+        //    earned; the second names the rule and the table that states it, because the repair is a
+        //    sentence a person has to write and "write something here" is not a repair.
+        reset({ status: GATED, fragment: FIXTURE_BOX, open: false });
+        const before = snapshot();
+        const bare = run([FIXTURE_ID]);
+        if (bare.code === 0) bad.push('a gate report on a 🔒 GATED work order exited 0');
+        if (!new RegExp(`^FAIL \\|.*${FID} is 🔒 GATED — do not start it`, 'm').test(bare.out)) bad.push('the refusal the lock has always earned stopped being printed — the new sentence is a SECOND one, beside it');
+        if (!/does not say what it is gated ON/.test(bare.out)) bad.push('a 🔒 naming no gate drew no second refusal: a lock that says nothing cannot be re-checked and cannot expire, and this report is the only screen the omission is ever seen on');
+        if (!/Header fields/.test(bare.out)) bad.push('the second refusal does not name the § "Header fields" rule it breaks — the obligation is the document\'s, and a reader sent nowhere writes whatever comes to mind');
+        if (changedSince(before).length) bad.push(`a gate report wrote ${changedSince(before).join(', ')} — it may write nothing, ever`);
+
+        const bareAudit = run(['--audit']);
+        if (!new RegExp(`BAD\\s+${FID} is 🔒 GATED`).test(lockSection(bareAudit.out))) bad.push('--audit walked the whole directory and did not report the bare lock. This is the half that matters: nobody runs a gate report on a work order marked do-not-start');
+        // And the row has to reach the verdict. A BAD printed above a `PASS` is WO-1.29's floor
+        // defect in a new section — the reader stops at the summary line, and a section nobody sums
+        // is a section nobody acts on. Written because the first cut of this plant asserted the row
+        // and not the count, and a mutation that printed the row and dropped it from the total was
+        // green on all forty plants.
+        if (bareAudit.code === 0) bad.push('--audit printed the bare lock as a BAD row and still exited 0');
+        if (!/^FAIL \| \d+ problem\(s\)/m.test(bareAudit.out)) bad.push('--audit printed the bare lock as a BAD row and still summed to a PASS — a section that does not reach the verdict is read by nobody');
+
+        // 2. The suffix. It changes what a lock must SAY and nothing about what it DOES — so the
+        //    work order is still refused, for the reason it always was and for that reason only.
+        reset({ status: `${GATED} — waiting on a fixture`, fragment: FIXTURE_BOX, open: false });
+        const stated = run([FIXTURE_ID]);
+        if (stated.code === 0) bad.push('a stated gate stopped being a refusal — the suffix says what the lock is waiting for, it does not lift it');
+        if (!new RegExp(`^FAIL \\|.*${FID} is 🔒 GATED — do not start it`, 'm').test(stated.out)) bad.push('a 🔒 carrying its gate was no longer refused for being gated');
+        if (/does not say what it is gated ON/.test(stated.out)) bad.push('a 🔒 that states its gate was reported as saying nothing — the check reads the status as TYPED, and parseFile() normalises the status it stores');
+        if (!/waiting on a fixture/.test(stated.out)) bad.push('the gate report never printed the gate itself — the reader it refuses is the one person who needs to know what to wait for');
+
+        const statedSection = lockSection(run(['--audit']).out);
+        if (!new RegExp(`ok\\s+${FID}\\s`).test(statedSection)) bad.push('--audit did not count a stated lock as sound');
+        if (new RegExp(`BAD.*${FID}`).test(statedSection)) bad.push('--audit reported a stated lock as a problem');
+
+        // 3. The trap, asserted rather than promised: this is not retroactive to 🚧 BLOCKED. That
+        //    status has its own vocabulary row, and widening the rule to every non-⬜ status is how a
+        //    small fence becomes a large one — the easiest edit in the world to make by accident,
+        //    since both statuses refuse in the same branch of the same report.
+        reset({ status: '🚧 BLOCKED', fragment: FIXTURE_BOX, open: false });
+        const blocked = run([FIXTURE_ID]);
+        if (!new RegExp(`^FAIL \\|.*${FID} is 🚧 BLOCKED`, 'm').test(blocked.out)) bad.push('🚧 BLOCKED stopped being refused, which is not this rule\'s business either way');
+        if (/gated ON/.test(blocked.out)) bad.push('🚧 BLOCKED was pulled into the 🔒 rule — it has its own row in the vocabulary and takes no suffix');
+        if (new RegExp(FID).test(lockSection(run(['--audit']).out))) bad.push('a 🚧 BLOCKED work order was listed in --audit\'s 🔒 section');
+        return bad;
+      },
+    },
     // ------------------------------------------------------------------ WO-1.21's four
     //
     // A status the script has never seen is a status nothing guards, and these are the first two that
@@ -4089,6 +4237,17 @@ function runPlants(subject, sandbox) {
   console.log('  one. NOT covered by them: any directory-wide reading of **Depends on** — --audit');
   console.log('  does not read that field at all, so nothing here asks whether the tree as a whole');
   console.log('  is clean of the shape, the way the **Owes** plants ask it of theirs.');
+  console.log('  And WO-1.31\'s ONE, for the other half of 🔒 GATED — the half that was on the document');
+  console.log('  and on nothing else: a bare lock is refused a SECOND time, by name and by the');
+  console.log('  § "Header fields" rule it breaks, and --audit walks the whole directory for it and');
+  console.log('  sums the row into its verdict, which is the half that matters because a lock is the');
+  console.log('  one status that guarantees nobody runs a gate report on it; a 🔒 GATED — <text> is');
+  console.log('  refused ONCE, for being gated, with the gate printed on the status line as typed; and');
+  console.log('  🚧 BLOCKED stays out of the rule entirely. NOT covered by it: whether a stated gate is');
+  console.log('  still LIVE. No plant can ask that and neither can the check — WO-7.2\'s real fault was');
+  console.log('  a lock whose reasoning had been demolished a fortnight earlier, and WO-3.18\'s was a');
+  console.log('  gate that had been discharged for five days. Both are a person\'s reading, and what a');
+  console.log('  stated gate buys is that the person can be somebody other than the author.');
   console.log('  NOT covered: the Acceptance parser otherwise. It is still never run');
   console.log('  against a real work order\'s list, and one terminator is one way it can go blind and');
   console.log('  not the class of them — a narrowed gap, not a closed one. Nor is gate()\'s');
@@ -4126,8 +4285,9 @@ if (!argv.length || argv.includes('--help') || argv.includes('-h')) {
                                                         ROADMAP.md, every **Owes** pointer against
                                                         the box it names, every 🚫/⏳ work order
                                                         against the box it takes out of the count,
-                                                        § The files against the files, and the
-                                                        dashboard against its own boxes.
+                                                        every 🔒 GATED one against the gate it is
+                                                        obliged to state, § The files against the
+                                                        files, and the dashboard against its boxes.
                                                         Reports; never writes
   node tools/wo-gate.mjs --self-check [--against <path>] plant every violation this script is
                                                         supposed to catch, in a temp copy of plans/,
@@ -4183,7 +4343,14 @@ being counted, marked "🚫" straight after its checkbox so it is still visible.
 <date, reason> is a *when*: not now, the box stands and stays marked "⏳", and it comes back the
 first time somebody wants the thing. Neither is counted in either dashboard, neither can be
 --start-ed, --tick-ed or --release-d, and neither will ever satisfy a dependency — the gate says so
-in those words rather than reporting a wait that can never end.`);
+in those words rather than reporting a wait that can never end.
+
+🔒 GATED takes a suffix too, and it is the only one carrying a FACT rather than a date (WO-1.31):
+🔒 GATED — <what it waits for>. "Do not start it" is half the status and the other half is the work
+order's to say, so a gate report on a bare one prints a second refusal under the first, and --audit
+walks the whole directory for them — which is the half that matters, because a lock is the one status
+that guarantees nobody runs a gate report on it. Nothing parses the suffix; it is a sentence for a
+person. 🚧 BLOCKED is not in this rule, deliberately: it has its own vocabulary row.`);
   process.exit(0);
 }
 

@@ -316,7 +316,7 @@ the owner's real classes, before the numbers matter.
 
 ## WO-G3 — Ship 3 gate: signals
 
-**Ship** 3 · **Status** 🔒 GATED · **Size** S · **Depends on** WO-4.1, WO-4.2, WO-4.3, WO-4.4, WO-4.5 — all of Phase 4
+**Ship** 3 · **Status** 🔒 GATED — four weeks of a real term's grades and attendance, ~Sep 30 · **Size** S · **Depends on** WO-4.1, WO-4.2, WO-4.3, WO-4.4, WO-4.5 — all of Phase 4
 **Target** October 2026, once 4–6 weeks of real data exist
 
 *(**`🔒 GATED` from 2026-08-28, and what it waits on is the term — put it back to `⬜` when four weeks

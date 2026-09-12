@@ -218,6 +218,14 @@ argument that put it there;* `--audit` *reads fragments, `Owes` pointers and das
 never once asked a gated work order what it is waiting for. **Booked as a check nobody has written:**
 if a `🔒` must state its gate, something should refuse one that does not.)*
 
+*(**Written 2026-09-12** —
+[WO-1.31](phase-1-shell-store-roster.md#wo-131--a--gated-work-order-that-never-says-what-it-is-gated-on).
+The gate goes on the status line as a suffix, a bare `🔒 GATED` is refused twice — on the work
+order's own gate report and in `--audit`, which is the half this work order's seventeen days argue
+for — and the paragraph above is what the check quotes. **It could not have lifted this lock**: a
+grep can ask whether a gate is *stated*, never whether it is still *live*. What it buys is that the
+question is askable by somebody who did not write the work order.)*
+
 **Why it exists.** The teacher never edits two devices at once — established up front, and it is
 what makes whole-document last-writer-wins sound rather than lazy. But "never" is a habit, not a
 guarantee, so the conflict path has to be correct anyway.
@@ -351,7 +359,7 @@ backup** — Drive holds one live copy that sync will happily overwrite. WO-1.5 
 
 ## WO-7.3 — Verification complete
 
-**Ship** — · **Status** 🔒 GATED · **Size** S · **Depends on** WO-3.18, WO-7.2 — approval cannot
+**Ship** — · **Status** 🔒 GATED — Google's verdict on a submission nobody has made yet · **Size** S · **Depends on** WO-3.18, WO-7.2 — approval cannot
 follow from a client nobody submitted
 **Closes roadmap** Phase 7 → "Verification complete."
 

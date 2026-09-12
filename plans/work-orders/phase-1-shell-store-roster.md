@@ -3024,7 +3024,7 @@ and that ratio has worsened by half again since the row was booked.
 
 ## WO-1.31 — a 🔒 GATED work order that never says what it is gated on
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-09-12 · **Size** S · **Depends on** — · **Blocks** nothing
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.30
 made. Booked 2026-08-28, owner-directed, found when WO-7.2's lock came off.)*
 
@@ -3060,6 +3060,22 @@ WO-G2, WO-G3, WO-3.18, WO-7.3 — name their gate in their bodies, the last two 
 **This work order is a plant, not a repair.** It is booked because the failure took seventeen days to
 notice, was invisible to every tool, and was found by a human reading an unrelated runbook.
 
+*(**That census was true when it was written on 2026-08-28 and was stale by the build, 2026-09-12 —
+which is the shape of rot this work order is about, in the work order about it.** The live gated set
+on the day was **three**, not four: WO-G2 came off the lock in `3149bea` when the calendar it waited
+on arrived, and* [WO-7.2](phase-7-sync.md#wo-72--document-transfer--conflicts) *— the work order
+whose seventeen days are the whole argument above — shipped in `f22d863` on 2026-09-07. Read the
+first sentence as unchanged: there was still no live instance of* **a lock that never stated its
+gate**, *and this is still a plant rather than a repair.* **What the build found was the other half
+of the same failure, and it was live.** *WO-3.18 stated its gate, in its body, in as many words —*
+"Put it back to `⬜` when WO-7.2 lands" *— and WO-7.2 had landed five days earlier with nothing
+reading the sentence, because nothing reads a sentence in a body. So the lock came off by hand in
+this work order's own sitting, on the first run of its own check, and the third Acceptance line below
+carries the note. **A stated gate is auditable by a person and by nothing else** — no grep can ask
+whether a gate is still* live*, only whether one was ever* stated*, and the distinction is written at*
+`gatedProblems()` *and in* [`README.md`](README.md) *§ "How to use one" so that a green section is not
+read as a claim that every lock is still earning its glyph.)*
+
 **The shape to build, and why it is not a new field.** Put the gate on the **status line**, as a
 suffix: `🔒 GATED — <what it waits for>`. Three statuses already take one — `✅ DONE — <date>`,
 `🚫 STRUCK — <date>`, `⏳ DEFERRED — <date>` — so the grammar exists, the parser already tolerates
@@ -3071,7 +3087,9 @@ it (`--self-check` writes `'🔒 GATED — waiting on a fixture'` in its own fix
 
 - **All four gated work orders read bare `🔒 GATED` today** and will need the suffix in the same
   sitting, or the check lands red on a directory that is otherwise correct. They are WO-G2, WO-G3,
-  WO-3.18 and WO-7.3; each already has the sentence in its body to copy from.
+  WO-3.18 and WO-7.3; each already has the sentence in its body to copy from. *(**Two of the four, on the
+  day: WO-G3 and WO-7.3.** See the census note above — the trap itself held exactly as written, and
+  both took a suffix in the same sitting as the check.)*
 - **The suffix must not be mistaken for a date.** `✅ DONE` parses one; this does not, and whatever
   reads statuses must not start expecting one here.
 - **A refusal, not a note.** The gate report already refuses a `🔒` outright, so this adds a second
@@ -3081,13 +3099,34 @@ it (`--self-check` writes `'🔒 GATED — waiting on a fixture'` in its own fix
   in scope; widening this to every non-⬜ status is how a small check becomes an M.
 
 **Acceptance**
-- [ ] A work order whose status is `🔒 GATED` with no `—` suffix is reported as a problem naming the
-      § "Header fields" rule it breaks.
-- [ ] `🔒 GATED — <text>` passes that check and still refuses the work order for being gated.
-- [ ] WO-G2, WO-G3, WO-3.18 and WO-7.3 each carry a suffix that matches the gate already stated in
-      their bodies, and `--audit` passes.
-- [ ] § "Header fields" records the suffix in its `🔒 GATED` row.
-- [ ] `--self-check` gains a plant for the bare-lock refusal.
+- [x] A work order whose status is `🔒 GATED` with no `—` suffix is reported as a problem naming the
+      § "Header fields" rule it breaks. *(Twice: as a second problem on the gate report, under the
+      refusal the lock already earns, and directory-wide in `--audit` — which is the half that
+      matters, because a lock is the one status that guarantees nobody runs a gate report on it.)*
+- [x] `🔒 GATED — <text>` passes that check and still refuses the work order for being gated.
+- [x] WO-G2, WO-G3, WO-3.18 and WO-7.3 each carry a suffix that matches the gate already stated in
+      their bodies, and `--audit` passes. *(**Two of those four are no longer `🔒` and neither takes a
+      suffix** — read this line with the census note above. WO-G2 was unlocked in `3149bea` before this
+      work order was dispatched; WO-3.18's lock came off in this sitting, its stated gate having been
+      discharged by WO-7.2 on 2026-09-07. **The live pair is WO-G3 and WO-7.3 and both carry one**,
+      each copied from the sentence already in its body, and `--audit` is `PASS`.)*
+- [x] § "Header fields" records the suffix in its `🔒 GATED` row. *(A **Status**, specifically row,
+      beside the **Ship**, specifically one — the table is keyed by FIELD, so the suffixes live on the
+      row for the field that carries them. The status's own vocabulary paragraph in § "How to use one"
+      gained the rule in the same sitting and points at the row for the grammar, because that
+      paragraph is where the obligation was stated in the first place.)*
+- [x] `--self-check` gains a plant for the bare-lock refusal. *(The fortieth, walking three states —
+      bare, stated, and `🚧 BLOCKED` staying out of the rule. Five mutations over copies in the
+      scratchpad, all red, tabulated in [`tools/README.md`](../../tools/README.md).)*
+
+*(**One thing the Acceptance list does not cover, found by the verifier on 2026-09-12 and recorded
+rather than fixed.** The plant does not hold its own separator rule. Widening `GATE_STATED` from
+`/^🔒 GATED\s+—\s*\S/` to `/^🔒 GATED\s+[—-]\s*\S/` **still passes 40 of 40** — so the em-dash-only
+rule, which the third limit in `TESTING.md` § WO-1.31 states and § "Header fields" states twice more,
+is* **asserted in prose three times and held by no plant.** *Today's behaviour is correct: a hyphen
+suffix is refused with the repair printed beside it. Nothing keeps it there.* **That is a gap in the
+plant, not a defect in the code**, *and it is a follow-up to book rather than a reason to widen this
+work order after its verdict — which is the same call WO-1.35 made about position not being a fence.)*
 
 ---
 

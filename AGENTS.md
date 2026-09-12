@@ -216,3 +216,20 @@ Acceptance-line mark**, so the two rules above about 👤 and 📆 have no beari
 a checkbox. **If you were handed one by ID, build it**: the mark deprioritises and refuses nothing,
 which is the whole line between it and 🔒. Defined in `plans/work-orders/README.md` § "Ride-along
 rows".
+
+**If you write a `🔒 GATED` status, write what it is gated *on* after it.** Since WO-1.31
+(2026-09-12) the status takes a suffix — `🔒 GATED — <what it waits for>` — and `wo-gate.mjs` refuses
+a bare one twice: on the work order's own gate report, under the refusal the lock already earns, and
+directory-wide in `--audit`. **The `--audit` half is the one that will catch you**, because a lock is
+the one status that guarantees nobody runs a gate report on it. Write the em dash; a hyphen is
+refused with the repair printed beside it. **`🚧 BLOCKED` is deliberately outside this rule** — do
+not widen it there, and do not widen it to any other status. **Nothing parses the suffix**: it is
+prose for a person, so write the sentence the work order's own body already uses rather than
+inventing a shorter one.
+
+**And a `🔒` you are not working is still not yours to lift.** The check asks whether a gate is
+*stated*, never whether it is still *live* — no grep can read the second. If you find a lock whose
+gate has plainly been discharged, **say so in your result file and leave the status alone**: a status
+change on a work order your brief did not name is out of scope, and the verifier will refuse it.
+WO-3.18's expired lock came off inside WO-1.31's sitting on exactly this pattern, and it stood only
+because a person ratified it afterwards.

@@ -13,6 +13,37 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A `🔒 GATED` work order has to say what it is gated on — 2026-09-12
+
+**`🔒 GATED` was always two halves, and only one of them was enforced.** *Do not start it* has been a
+single line in the gate report since WO-2.14. *What it is gated **on** is the work order's to say* was
+an obligation on the document that **nothing read** — so a lock could outlive its reason silently, and
+one did: WO-7.2 wore one for seventeen days after WO-3.10 had demolished the reasoning behind it for
+the whole of Phase 7, went circular against WO-3.18's demo video, and was found by a human reading an
+unrelated runbook.
+
+`wo-gate.mjs` now refuses a bare `🔒 GATED` twice — as a second problem on the work order's own gate
+report, under the refusal the lock already earns, and **directory-wide in `--audit`**, which is the
+half that matters: a lock is the one status that guarantees nobody runs a gate report on it. The
+status line prints **as typed** on a refusal now, because the reader being turned away is the one
+person who needs to know what the wait is. `--self-check` gains a fortieth plant, walking three
+states — bare, stated, and `🚧 BLOCKED` staying outside the rule.
+
+Both live locks gained a suffix copied from the sentence already in their own bodies: WO-G3 waits on
+four weeks of a real term's grades and attendance, WO-7.3 on Google's verdict on a submission nobody
+has made yet. `plans/work-orders/README.md` § "Header fields" gains a **Status**, specifically row
+recording which four statuses take a suffix and that **nothing parses it** — it is prose for a person,
+and a reader that expected a date would make the sentence unwriteable.
+
+**The check found a live instance on its first run, which is what a plant is for.** WO-3.18's lock was
+stated, and its stated gate — *"put it back to `⬜` when WO-7.2 lands"* — had been discharged on
+2026-09-07 and sat on the row for five days after. It came off by hand, ratified afterwards, because
+the check reads whether a gate is **stated** and never whether it is still **live**; no grep reads the
+second. A green `--audit` is not a claim that every lock is still earning its glyph.
+
+*Nothing a teacher sees: `src/`, `index.html`, `sw.js`, `privacy.html`, `manifest.json` and `icons/`
+are untouched, and no `CACHE` bump is owed.*
+
 ### A `Depends on` that names no work order is refused, unless it says so in one of six ways — 2026-09-08
 
 **WO-G4 — the 1.0.0 call — cleared its own gate.** Its `**Depends on**` read `every work order`: a

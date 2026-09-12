@@ -1295,6 +1295,91 @@ markers now; and WO-1.27's bold-prose plant now writes an id ahead of its bold �
 
 ---
 
+### WO-1.31 — a 🔒 GATED work order that never says what it is gated on
+
+**What this changes.** Nothing a teacher sees and nothing a device gets: `src/`, `index.html`,
+`sw.js`, `privacy.html`, `manifest.json` and `icons/` are untouched, so **no `CACHE` bump is owed**.
+`tools/wo-gate.mjs` gains one predicate over the status line **as typed**, a second refusal on the
+gate report, and a new `--audit` section walking every `🔒 GATED` work order in the directory. Two
+work orders gain a suffix, one had its lock taken off by hand, and § "Header fields" gains a
+**Status**, specifically row.
+
+**The defect, and why there was no reproduction to run.** `🔒 GATED` is two halves — *do not start
+it*, enforced in one line since WO-2.14, and *what it is gated **on** is the work order's to say*,
+which was on the document and read by nothing. WO-7.2 wore a lock for seventeen days after WO-3.10
+had demolished the reasoning behind it **for its whole phase**, went circular against WO-3.18's demo
+video, and was found by a human reading an unrelated runbook. It was repaired on 2026-08-28, so the
+work order was booked as a **plant and not a repair** — and the first run of the new check over the
+untouched tree is the nearest thing to a reproduction there is.
+
+- [x] **A bare `🔒 GATED` is refused a second time, by name and by the rule it breaks.** The first
+      run of `--audit` over the untouched tree printed a `BAD` row for **each of the three live
+      locks** — WO-G3 (`gates.md:317`), WO-3.18 (`phase-3-gradebook.md:1419`) and WO-7.3
+      (`phase-7-sync.md:352`) — each reading *"is 🔒 GATED and does not say what it is gated ON — its
+      status line reads \"🔒 GATED\" with no \"— <what it waits for>\" after it"* and naming
+      `plans/work-orders/README.md § "Header fields"`, with `FAIL | 3 problem(s)`, exit **1**. The
+      same sentence appears on the per-work-order gate report, under the refusal the lock already
+      earns. Standing guard: the `--self-check` plant *"a 🔒 GATED work order that says nothing about
+      its gate is refused for that too …"*, proved non-vacuous by deleting the second `problems.push`
+      — **1 red of 40**, on the two assertions that are the defect verbatim.
+- [x] **A stated gate passes the check and is still refused for being gated.** `wo-gate.mjs WO-7.3`
+      reads `status  🔒 GATED — Google's verdict on a submission nobody has made yet` and ends
+      `FAIL | WO-7.3 is 🔒 GATED — do not start it`, exit **1**, with no second sentence. **The
+      status line prints as typed now** — `wo.statusRaw` rather than the normalised `wo.status` —
+      because the reader being refused is the one person who needs to know what the wait is. The
+      trick that makes the check work is the same one: `parseFile()` normalises a status to the
+      `STATUSES` entry it starts with, so a check reading `wo.status` is **green on a healthy tree
+      and wrong on every input**. Mutated to read it: **4 red of 40**, the breadth being the finding
+      — every lock in the sandbox's copy of the real directory reads as unstated and `--audit` fails
+      for the whole run.
+- [x] **The two live locks carry a suffix copied from their own bodies, and `--audit` passes.**
+      WO-G3 → `🔒 GATED — four weeks of a real term's grades and attendance, ~Sep 30`, which is its
+      2026-08-28 note in eleven words; WO-7.3 → `🔒 GATED — Google's verdict on a submission nobody
+      has made yet`, which is its `**Depends on**` clause and the phase header's *"the gate is on
+      public launch"*. `--audit` now prints both under `ok` and ends `PASS`, exit **0**. **The work
+      order's census of four was stale and the third Acceptance line is written against it** — see
+      the italic notes on the work order: WO-G2 was unlocked in `3149bea` before dispatch, and
+      **WO-3.18's lock came off in this sitting**, its stated gate (*"put it back to `⬜` when WO-7.2
+      lands"*) having been discharged on 2026-09-07. `next` answers **WO-G2** before and after, so
+      the unlock moved nothing in the running order.
+- [x] **§ "Header fields" records the suffix.** A **Status**, specifically row, beside the **Ship**,
+      specifically one: the four hand-written suffixes and the two the tool writes, *the first three
+      carry a date and `🔒` carries a sentence*, that **nothing parses the suffix**, and that
+      `🚧 BLOCKED` is outside the rule. The `🔒 GATED` paragraph in § "How to use one" — where the
+      obligation was stated in the first place — gained the rule in the same sitting and points at
+      the row for the grammar.
+- [x] **`--self-check` gains the plant, and five mutations prove it.** **39 → 40**,
+      `PASS | 40 of 40 plants were caught`, exit **0**, with the new plant named in the closing
+      summary. One plant over three states — bare, stated, and `🚧 BLOCKED`, which must stay out of
+      the rule. All five mutations were driven with `--against` over copies **in the scratchpad**;
+      **nothing in the tree was mutated**. Rows and numbers are in
+      [`tools/README.md`](tools/README.md)'s mutation table. **One of them found a hole in the plant
+      rather than in the code**: dropping `gl.problems.length` from `--audit`'s total — so the `BAD`
+      rows print above a `PASS` — was **green on all forty** against the plant's first cut, which
+      asserted the row and not the count. The plant gained two verdict assertions and the mutation
+      now reddens it.
+- [x] **`wo-sweep.mjs` is unaffected.** `41 checks · 38 passed · 0 failed · 3 to review`, exit 0 —
+      verdict for verdict identical to the baseline, including § 22's check that
+      `tools/README.md`'s own count still matches the run. **`verify-shell.mjs` was run anyway**:
+      `1334 checks · 1334 passed · 0 failed · 0 skipped`, 447s — the same total as the last recorded
+      green run, and this work order touches no file it reads. **The exit code was not read**: the
+      run printed its whole summary and then held the shell open for more than ten minutes
+      without releasing it, so the wrapper's own `EXIT=` line never appeared. That is the
+      harness's teardown in an agent shell and not a verdict on the run — recorded rather than
+      rounded up to *exit 0*.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.* **Three limits worth
+carrying.** The check asks whether a gate is **stated**, never whether it is still **live** — no
+grep can read the second, and WO-3.18's lock, which was stated and five days expired, was lifted by a
+person on this work order's evidence rather than by it. **A green section is not a claim that every
+lock is still earning its glyph.** Second, the em dash is the only accepted separator: it is what all
+six suffixed statuses in this directory are written with, and a hyphen here is refused with the
+repair printed beside it rather than waved through — a second spelling is a second thing to keep in
+step. Third, **`🚧 BLOCKED` is deliberately outside the rule** and the plant asserts it rather than
+promising it, because both statuses refuse in the same branch of the same report, four lines apart.
+
+---
+
 ### WO-1.40 — the file a human types is outside every fence
 
 **What this changes.** Nothing a teacher sees. `src/`, `index.html`, `sw.js` and every stylesheet are
