@@ -117,6 +117,8 @@ if (!seam) {
       open: !document.getElementById('outreachModal').classList.contains('hidden'),
       href: link.getAttribute('href'),
       hasHref: link.hasAttribute('href'),
+      target: link.getAttribute('target'),
+      rel: link.getAttribute('rel'),
       disabled: link.getAttribute('aria-disabled'),
       head: head ? head.textContent : '',
       reasons: reasons,
@@ -474,7 +476,8 @@ if (!seam) {
         ampersand: subjectRaw.indexOf('%26') >= 0 && subjectRaw.indexOf('&') === -1,
         hash: bodyRaw.indexOf('%23') >= 0 && bodyRaw.indexOf('#') === -1,
         question: bodyRaw.indexOf('%3F') >= 0 && bodyRaw.indexOf('?') === -1,
-        atKept: to.indexOf('@') > 0 && to.indexOf('%40') === -1 }; })()`);
+        atKept: to.indexOf('@') > 0 && to.indexOf('%40') === -1,
+        hasHref: d.hasHref, target: d.target, rel: d.rel }; })()`);
     check('the handoff link carries a `mailto:` URL addressed to the guardian with the `@` left '
       + 'literal, and the subject and the body ride in it as percent-encoded query parameters',
       /^mailto:/.test(url.href || '') && url.to === G1_EMAIL && url.atKept === true
@@ -496,6 +499,28 @@ if (!seam) {
         && url.question === true,
       JSON.stringify({ apostrophe: url.curly, emDash: url.emDash, ampersand: url.ampersand,
         hash: url.hash, question: url.question }));
+    /* WO-5.11, STRUCK 2026-09-12 — THIS CHECK ASSERTS THE ABSENCE OF THE ATTRIBUTE IT WAS
+       WRITTEN TO ASSERT. `target="_blank" rel="noopener"` was the obvious repair for a WEB
+       `mailto:` handler (Gmail registered in Chrome) navigating the installed PWA's own window to
+       Gmail's compose page, and on the laptop it was worse than the defect: Chrome opened a tab
+       that sat BLANK on the `mailto:` URL and never reached the handler — from the installed app
+       and from a plain tab alike — so the app stayed and no compose ever appeared. The iPad,
+       which the work order had budgeted as the reading that could reverse it, passed. The
+       attribute came out the same day and src/outreach-view.js's fourth reason at its header
+       carries the readings. This line exists because `_blank` is the first thing the next hand
+       will reach for on hitting Gmail-in-the-PWA, and a red line naming the reading is cheaper
+       than a second afternoon on hardware. It is asserted on the READY draft, the one that is a
+       link a click can follow; nothing is asserted on the blocked draft, whose claim is still the
+       missing `href` the refused check below makes. The mutation that proves it is the attribute
+       put back on the anchor in index.html, and it is the ONLY check in the run that reads
+       `target` or `rel`. */
+    check('and the ready link carries NO target (WO-5.11, struck): target="_blank" was read on '
+      + 'hardware 2026-09-12 and a Chrome mailto: handler left a blank tab on the URL instead of '
+      + 'a compose — the attribute came out and this line keeps it out; the readings are at '
+      + 'src/outreach-view.js’s header',
+      url.hasHref === true && url.target === null && url.rel === null,
+      'href present = ' + url.hasHref + ', target = ' + JSON.stringify(url.target)
+        + ', rel = ' + JSON.stringify(url.rel));
 
     /* ── copy to self ── */
     const copy = await evalJs(`(function(){

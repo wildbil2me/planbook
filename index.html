@@ -2689,7 +2689,13 @@
         <div class="modal-actions">
           <!-- A REAL LINK, AND THE REFUSAL IS THAT IT HAS NO href. src/outreach-view.js argues it
                at its own header: a blocked draft's handoff is not a dimmed button, it is not a link
-               at all — unclickable, unfocusable, and carrying no address.
+               at all — unclickable, unfocusable, and carrying no address. IT CARRIES NO `target`,
+               AND THAT IS A READING, NOT AN OMISSION (WO-5.11, struck 2026-09-12): with Gmail
+               registered as Chrome's `mailto:` handler a same-window link navigates the installed
+               PWA to Gmail's compose page, and `target="_blank"` — the obvious fix — opens a tab
+               that sits blank on the `mailto:` URL and never reaches the handler at all, in the
+               installed app and in a plain Chrome tab alike. That header's fourth reason has the
+               readings, and tools/verify/outreach.mjs goes red if the attribute comes back.
 
                THE HOOK LOGS THE CONTACT AND DOES NOT INTERCEPT THE LINK (WO-5.4). Following the
                `mailto:` stays the browser's job — nothing in src/shell.js calls preventDefault on

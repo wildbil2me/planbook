@@ -9311,6 +9311,123 @@ inside § *"the contact log and the history over it (WO-5.4)"* rather than in a 
 
 ---
 
+### WO-5.11 — A web mail handler takes the PWA window with it
+
+**Struck on 2026-09-12, the day it was built, on the laptop reading — not the iPad one.** Read the
+rest of this section as the record of a repair that was tried on hardware and taken out, which is
+what the work order said it would do if a reading went against it; it budgeted for the iPad being
+that reading, and it was the laptop.
+
+**What it added.** One attribute pair on one element — `target="_blank" rel="noopener"` on
+`#outreachOpen` in `index.html` — plus the fourth reason in `src/outreach-view.js`'s *the handoff is
+a real link* list, one check beside the `href` trilogy, and a `CACHE` bump. What it was for was seen
+on the owner's laptop on 2026-09-12 and could not have been seen on either of WO-5.3's hardware
+readings: with Gmail registered as Chrome's `mailto:` handler, *Open in my mail app* from the
+**installed** PWA navigated the app's own standalone window to `mail.google.com/mail/?extsrc=mailto&url=…`
+— Gmail's bare compose page, outside the app's scope, no address bar, Planbook gone from under it.
+An OS mail client never touches the window and ignores `target`, which is why Mail on both devices
+showed nothing wrong.
+
+**What the readings said.** The iPad passed both ways — Mail opened filled, no blank tab in Safari,
+no blank window in the installed app. **The laptop failed**: with the attribute, Chrome opened a new
+tab that sat **blank with the whole `mailto:` URL in its address bar** and never handed it to the
+Gmail handler — from the installed PWA, and then, asked for as a second reading to tell an
+installed-app quirk from a browser one, from a plain Chrome tab too. Same blank tab in both. So the
+handler table is not consulted on a new-tab navigation to the scheme at all, and the attribute is
+worse than the defect: before it, the compose was filled and the app was lost; with it, the app
+stayed and no compose ever appeared. **What survives is the record and the fence.** The attributes
+are off the anchor; the fourth reason in the header is rewritten as the failure it turned out to be;
+and the harness check is inverted to assert `target === null && rel === null` on the ready draft —
+because `_blank` is the first thing the next hand will reach for on hitting Gmail-in-the-PWA, and a
+red line naming this reading is cheaper than a second afternoon on hardware. The webmail teacher's
+door beside a Gmail handler is WO-5.7's *Copy the draft*, which is what the header has said since
+that work order landed.
+
+**What it deliberately was not, and what the reversal still is not.** Not `window.open()`, not a
+click handler assigning `location`, and not a `preventDefault()` — the header's second reason (iOS
+opens a link more reliably than a scripted navigation) is the one this anchor exists for, and
+`tools/verify/contact-log.mjs` asserts both absences after stripping comments. The attribute kept
+the browser's own navigation and changed only where it landed, and taking it out changes nothing
+about that. `paintOpen()` sets and strips `href`, `aria-disabled` and `aria-label` and nothing else,
+before and after. And nothing detects the handler, offers to register one, or explains a Chrome
+settings page — the app cannot see a browser's protocol-handler table.
+
+**The check is asserted on the ready draft only**, because that is the one that is a link a click
+can follow; the blocked draft's claim is still the missing `href`, which the refused check already
+makes and which gained nothing here. As delivered it asserted `rel` *contained* `noopener` rather
+than equalled it, so a later `noreferrer` beside it would not have been the defect; inverted, it
+asserts both attributes absent outright, and a later hand wanting a `rel` on this anchor for some
+other reason gets a red line to argue with rather than a silent pass.
+
+**The readings were taken against the LAN build, `v114`, force-quit from the app switcher first.**
+
+- [ ] 👤 ~~On the laptop, with mail.google.com registered as Chrome's `mailto:` handler, *Open in my
+      mail app* from the **installed** PWA opens a Gmail compose in a browser tab with recipient,
+      subject and body filled, and the PWA window is still showing the draft.~~ **Failed, and struck
+      the work order.** *(Read 2026-09-12 on the laptop: a new tab opened and sat blank with the
+      full `mailto:` URL in its address bar; no Gmail compose. A second reading from a plain Chrome
+      tab, not the installed app, gave the same blank tab — so it is not an installed-app path
+      skipping the handler, it is the handler not being consulted on a `_blank` navigation to the
+      scheme at all. The PWA window did stay on the draft, which is the half the attribute was for
+      and is worth nothing without the other half.)*
+- [ ] 👤 ~~On the iPad, the same tap opens Mail with the draft filled and leaves **no blank tab and no
+      blank window** behind, in Safari or in the installed app.~~ **Passed, and did not decide it.**
+      *(Read 2026-09-12 on the iPad: Mail opened filled, nothing left behind, Safari and installed
+      alike. This was the line the work order had budgeted as the one that could reverse it, and it
+      was the other one. Left unticked because the attribute it reads is no longer on the anchor —
+      a tick here would certify a shape the tree does not have.)*
+- [x] The contact-log entry is still written on the click: the existing check in
+      `tools/verify/contact-log.mjs` passes unchanged. *(Not one byte of that file moved, and its
+      section is green on the delivered tree — the handoff press appends exactly one entry, the
+      hook is found with no* `preventDefault` *and no* `location` *in it, and the harness's own
+      listener still stops the navigation.* `target` *changes where a followed link lands, not
+      whether the click on it fires.)* *(Still true on the reverted tree — the file is still
+      untouched and its section was green on both of the evening's runs.)*
+- [x] A blocked draft is still not a link — no `href` — and the new check asserts the attributes
+      only on a ready one. *(The refused-merge-field check still reads* `href: null`*,
+      `aria-disabled: "true"`, not focusable; the new check sits after the* `href` *trilogy on the
+      ready praise draft and is the only site in the run that reads* `target` *or* `rel`*.)* *(On the
+      reverted tree the same site asserts the attributes ABSENT on the ready draft, still the only
+      reader of either, and the refused-draft check still reads* `href: null`*.)*
+- [x] The mutation — the attribute removed — turns exactly the new check red.
+      *(`target="_blank"` removed from the anchor in* `index.html`*:*
+      `1343 checks · 1342 passed · 1 failed · 0 skipped`*, 453s, the one red line the new check, its
+      evidence reading* `href present = true, target = null, rel = "noopener"` *— the contact-log
+      section and the refused-draft check stayed green through it. Reverted by name,*
+      `git checkout -- index.html`*, before anything was written, and re-run clean.)* *(Inverted with
+      the check: the attribute PUT BACK,* `1343 checks · 1342 passed · 1 failed · 0 skipped`*, 452s,
+      the one red line the same check, reverted by name from the index the same way.)*
+
+**Where this stands.** `🚫 STRUCK — 2026-09-12`, by the owner's reading on the laptop, the same
+day the implementer delivered it and the verifier passed it with two 👤 open. The three build-closed
+lines above were verified on the delivered shape and each carries a second note for the reverted
+one; the two 👤 lines are struck through with their readings and stay unticked, because the
+attribute they read is gone. The one check lives inside § *"the send flow (WO-5.3)"* rather than in a
+section of its own, which is why `tools/README.md`'s call-site count moved 1332 → 1333 and not by a
+section's worth — and it is still there, inverted, so the count did not move back. Both tools green
+on the delivered tree before the reversal: `verify-shell.mjs` at `1343 checks · 1343 passed · 0
+failed · 0 skipped`, 41,759 lines, 31.1 lines per check, 450s, and `wo-sweep.mjs` at `42 checks · 39
+passed · 0 failed · 3 to review`. On the reverted tree, same evening: `verify-shell.mjs` at `1343 checks · 1343 passed · 0 failed · 0
+skipped`, 41,762 lines, 31.1 lines per check, 452s, the inverted line green; the inverted mutation —
+`target="_blank" rel="noopener"` put back on the anchor — at `1343 checks · 1342 passed · 1 failed`,
+the one FAIL the WO-5.11 line, reverted by name from the index before anything else was written;
+`wo-sweep.mjs` at `42 checks · 39 passed · 0 failed · 3 to review`, the call-site count still 1333
+and matching; `wo-gate.mjs --audit` PASS. All three harness runs hung at teardown after the summary
+and were killed by PID, which makes it eight of eight across three sessions — and `%TEMP%` held
+1,385 `pb-verify-*` profile directories when the last one was cleared, which is the verifier's side
+finding with a number on it.
+
+**The teardown hang § WO-5.7 records happened on all three runs here — clean, mutated, and clean
+again — and two of the three started with no stray `pb-verify-*` process on the machine.** Each
+printed its whole summary and then sat; each was killed by PID after the summary was read, taking
+only its own `node` and the headless Edge tree carrying its own temp profile. That takes the best
+correlation § WO-5.7 had — hangs following runs whose strays were not cleared — off the table, and
+leaves the harness's own last three lines (a handle not released at `server.close()`) as the
+shape that still fits. Three of three is past *worth a work order if it starts costing runs*; it is
+not this work order's to fix, and nothing in `tools/verify-shell.mjs` moved here.
+
+---
+
 ## Phase 6 — Calendar & the glance page
 
 *Phase goal: open the app at 7:40am and know what the day asks of you.*

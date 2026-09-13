@@ -111,7 +111,8 @@
   ── THE HANDOFF IS A REAL LINK, AND THAT IS THE POINT OF DEPARTURE WORTH READING ──
 
   `#outreachOpen` is an `<a href="mailto:…">` wearing `.class-action-btn`, not a button that assigns
-  `window.location`. Three reasons, in the order they bite:
+  `window.location`. Four reasons, in the order they bite — the first three are why it is a link,
+  and the fourth is why the link carries a `target`:
 
     · **A blocked draft cannot reach the handoff, and with a link that is structural.** When the
       draft is blocked the anchor has no `href` at all — it is not focusable, not clickable and not
@@ -121,6 +122,35 @@
       the iPad is the device that decides go-live.
     · **The URL is readable.** What the operating system will receive is sitting in the DOM, so the
       percent-encoding WO-5.3's Traps line is about can be measured rather than promised.
+    · **A WEB handler for the scheme follows the link INTO THE APP'S OWN WINDOW, and
+      `target="_blank"` does NOT fix it — it was tried, read on hardware, and taken out the same
+      day (WO-5.11, struck 2026-09-12).** None of the three above considered a web handler. An
+      OS mail client never touches the window: the browser hands the URL to the operating system
+      and the page under it does not move — which is why WO-5.3's two hardware readings, both
+      against Mail, saw nothing wrong. A web handler is a different thing. With Gmail registered
+      as Chrome's `mailto:` handler (per browser profile; the owner's laptop, 2026-09-12), a
+      same-window `mailto:` NAVIGATES the installed PWA to `mail.google.com/mail/?extsrc=mailto&url=…`
+      — Gmail's bare compose-only page, outside the app's scope, in a standalone window with no
+      address bar and no back button, and Planbook gone from under it. The owner's words: *"it
+      opens it in a broken email window within the PWA."* The obvious repair is
+      `target="_blank" rel="noopener"` on the anchor, and it was built, verified and read on both
+      devices. THE IPAD PASSED — Mail opened filled, no blank tab, no blank window, Safari and
+      installed alike — and the reading the work order had budgeted as the one that could reverse
+      it did not. THE LAPTOP REVERSED IT: with `_blank`, Chrome opened a new tab that sat BLANK
+      with the whole `mailto:` URL in its address bar and never handed it to the Gmail handler —
+      from the installed PWA and from a plain Chrome tab alike, so it is the handler table not
+      being consulted on a new-tab navigation to the scheme, not an installed-app quirk. That is
+      worse than the defect it was meant to fix: before, the compose was filled and the app was
+      lost; with the attribute, the app stayed and no compose ever appeared. So the anchor carries
+      no `target`, on purpose, and tools/verify/outreach.mjs asserts its ABSENCE on the ready
+      draft — because the next hand to hit Gmail-in-the-PWA will reach for `_blank` first, and a
+      red line naming this reading is cheaper than a second afternoon on hardware. **Do not
+      reach for `window.open()` either**: a scripted navigation is what the second reason above
+      exists to avoid on iOS, and nothing read here says a handler treats one any better. Nothing
+      here detects the handler, offers to register one, or explains a Chrome settings page: the
+      app cannot see a browser's protocol-handler table, and the webmail teacher's documented door
+      is the second one, WO-5.7's *Copy the draft*, which is the door that works beside a Gmail
+      handler.
 
   AND WO-5.4's WRITE RIDES THAT CLICK RATHER THAN REPLACING IT. The hook on the anchor is a plain
   delegated listener in src/shell.js: it appends the contact and returns, and **nothing anywhere

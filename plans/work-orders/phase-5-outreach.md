@@ -1086,7 +1086,29 @@ is not the audience the mode protects against. Leave it.
 
 ## WO-5.11 — A web mail handler takes the PWA window with it
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-5.7
+**Ship** — · **Status** 🚫 STRUCK — 2026-09-12, reversed by the laptop reading · **Size** XS · **Depends on** WO-5.7
+
+*(**Struck the day it was built, on the reading it had not budgeted for.** The attribute went on,
+both harnesses went green, the verifier passed it with the two 👤 lines open, and the owner read it
+on both devices the same evening against the LAN build. **The iPad passed** — Mail opened filled,
+no blank tab in Safari, no blank window in the installed app — and that was the line this work
+order named as the one that could reverse it. **The laptop reversed it instead**: with the
+attribute, Chrome opened a new tab that sat blank with the whole `mailto:` URL in its address bar
+and never handed it to the Gmail handler. A second reading from a plain Chrome tab, asked for to
+tell an installed-app path from a browser one, gave the same blank tab — so the handler table is
+not consulted on a `_blank` navigation to the scheme at all, and the attribute is worse than the
+defect: before it, the compose was filled and the app was lost; with it, the app stayed and no
+compose ever appeared. The attribute came out the same sitting. **What survives**: the fourth
+reason in `src/outreach-view.js`'s header, rewritten as the failure it turned out to be; the check
+in `tools/verify/outreach.mjs`, inverted to assert `target === null && rel === null` on the ready
+draft — because `_blank` is the first thing the next hand will reach for on hitting
+Gmail-in-the-PWA, and a red line naming this reading is cheaper than a second afternoon on
+hardware; the `CACHE` bump, since `index.html`'s comment moved; and the readings in `TESTING.md`
+§ WO-5.11. The defect it was booked for is still real and still unfixed, and this file does not
+book a second attempt: the app cannot see a browser's protocol-handler table, a scripted navigation
+is what the header's second reason exists to avoid, and the door that works beside a Gmail handler
+is WO-5.7's *Copy the draft*. The Acceptance list below is left as written; the two 👤 lines are
+struck through in `TESTING.md` with what each reading showed.)*
 
 **Why it exists.** `#outreachOpen` is a plain `<a href="mailto:…">` with no `target`, and
 `src/outreach-view.js`'s header gives three reasons it is a link and not a scripted navigation —
@@ -1131,11 +1153,11 @@ looked complete for two weeks.
       blank window** behind, in Safari or in the installed app. **This is the line that decides
       it** — if it fails, the attribute comes out and the failure is written at the point of
       departure.
-- [ ] The contact-log entry is still written on the click: the existing check in
+- [x] The contact-log entry is still written on the click: the existing check in
       `tools/verify/contact-log.mjs` passes unchanged.
-- [ ] A blocked draft is still not a link — no `href` — and the new check asserts the attributes
+- [x] A blocked draft is still not a link — no `href` — and the new check asserts the attributes
       only on a ready one.
-- [ ] The mutation — the attribute removed — turns exactly the new check red.
+- [x] The mutation — the attribute removed — turns exactly the new check red.
 
 **Traps** — **Do not reach for `window.open()` or a click handler that assigns `location`.** The
 header's second reason is the one that bites: a scripted navigation on iOS is what the anchor exists

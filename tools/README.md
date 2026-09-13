@@ -1210,7 +1210,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1332 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1333 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1577,6 +1577,28 @@ was ever written. **A green harness under a mutation is two claims, not one**: t
 or the mutation is. Only reading what the mutated code actually does tells them apart. With the real
 `subject.studentId` it reads `1338 passed · 4 failed` — one here and three in
 `verify/contact-log.mjs`, which reads the log a spurious `contact` pollutes.)*
+
+**WO-5.11 moved it from 1332 to 1333, and the executed count from 1342 to 1343 — one site, one
+result — and the site survived the work order being struck, with its assertion turned inside out.**
+One literal call site inside the existing § *"the send flow (WO-5.3)"*, directly after the
+three-check `href` trilogy on the ready draft, not in a loop and not a failure arm, standing on that
+section's own fixture guard. It reads `target` and `rel` off `#outreachOpen` — two fields added to
+that section's `drawn()` snapshot — and as delivered it asserted `target === '_blank'` and `rel`
+containing `noopener`, the attribute pair the work order put on the anchor. **The laptop reading
+reversed the work order the same day** (2026-09-12): with Gmail as Chrome's `mailto:` handler,
+`_blank` opened a tab that sat blank on the `mailto:` URL and never reached the handler, from the
+installed PWA and from a plain tab alike — so the attribute came out, and this check now asserts
+**`target === null && rel === null`** on the ready draft, because `_blank` is the first thing the next
+hand will reach for on hitting Gmail-in-the-PWA and a red line naming the reading is cheaper than a
+second afternoon on hardware. On the blocked draft nothing is asserted here; its claim is still the
+missing `href`, which the refused check already makes. **The mutation is `target="_blank"` put back
+on the anchor in `index.html`**, and it turns exactly this check red — the delivered shape's mutation
+was the same attribute removed, `1343 checks · 1342 passed · 1 failed`, 453s, so the two mutations
+are the same edit read from either side. Nothing else in the run reads either attribute —
+`verify/contact-log.mjs`'s handoff press stops the navigation with a listener of its own, and
+`target` changes where a navigation lands rather than whether the click fires — so that run's one red
+line is the whole of the difference. It touches no control's size: the anchor is the same element in
+the same `.modal-actions` row, and the touch pass measuring it is unchanged.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not
