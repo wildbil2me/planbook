@@ -191,6 +191,23 @@ export const PREF_DEFAULTS = {
      read, so a dead id is inert, and a preference file that prunes itself is a preference file that
      has to know what an assignment is. */
   pastDueDismissed: {},
+
+  /* Where this browser's mail lives, which decides what the send flow's handoff link IS (WO-5.12):
+     'default' for a `mailto:` to the device's own mail app, 'gmail' for Gmail's compose page in a
+     browser tab, 'outlook' for Outlook on the web's. An absent key is 'default', and so is any
+     value that is not one of the three — src/outreach.js's mailDoorOf() is the one reader that
+     turns the stored string into an answer, and it rounds every surprise toward the `mailto:`.
+
+     A FACT ABOUT THIS BROWSER AND NOT ABOUT THE TEACHER, which is what makes it legal here and
+     what makes the year document the WRONG place for it. The owner's laptop is Gmail in a Chrome
+     tab and the owner's iPad is Mail; one answer synced between them through the document would
+     be wrong on one device by construction, and a restore from backup would carry the wrong
+     answer onto whichever device did the restoring. So it sits beside `presentationMode` and
+     `alertSoundOn` above, for their reason: a switch position that says nothing about any
+     student. Three words is the whole of what is stored — no address, no draft, no recipient,
+     nothing from inside a message. src/outreach-view.js is the only reader and owns the three
+     chips that write it. */
+  mailDoor: 'default',
 };
 
 /* Reads never throw: Safari in private mode can make localStorage itself throw on access,

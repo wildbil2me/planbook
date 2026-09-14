@@ -20,6 +20,14 @@
  * to that edge — the address, the copy, the subject and the body, byte for byte, in the string the
  * operating system receives — and the rest is a person with a thumb (`TESTING.md` § WO-5.3).
  *
+ * WO-5.12 ADDED THE WEBMAIL DOORS TO THIS SAME SECTION, in four places rather than one, because each
+ * reads a state the section already builds: five checks after the WO-5.11 line (the Gmail and
+ * Outlook `href` shapes with `target`/`rel` on, the `mailto:` with both off, the document
+ * byte-identical across the tap), one on the refused draft (no `href` under all three doors), one
+ * on the long draft (the warning names no ceiling under Gmail), and two at the foot after every
+ * `rev` reading (the handoff pressed under Gmail writes one `contact`; the chips at 390px). The
+ * handoff is pressed here for the first time in this file, which is why those two are last.
+ *
  * Nothing here launches a browser, a server or a document of its own: the entry file owns all three
  * and hands them over on `h`. `tools/README.md` § "Driving a browser over CDP" says where a new
  * check goes.
@@ -522,6 +530,172 @@ if (!seam) {
       'href present = ' + url.hasHref + ', target = ' + JSON.stringify(url.target)
         + ', rel = ' + JSON.stringify(url.rel));
 
+    /*
+      ─────────── WO-5.12: THE WEBMAIL DOORS, AND THE ATTRIBUTE PAIR THAT TRAVELS WITH THE href ───────────
+
+      THE CHECK ABOVE IS BYTE-IDENTICAL TO WHAT WO-5.11 LEFT, AND ITS LAST SENTENCE IS NOW HISTORY
+      RATHER THAN FACT: it is no longer the only site in the run that reads `target` or `rel` —
+      the checks below read both — but its claim is unchanged and still true, because the draft it
+      reads is the `mailto:` one and a `_blank` `mailto:` is still the blank tab that struck that
+      work order. What WO-5.12 changed is that the pair is now CONDITIONAL on something the model
+      knows: the scheme of the `href`. With *Where does your mail live?* at Gmail or Outlook the
+      link is an https compose page and carries `target="_blank" rel="noopener"`; at the default
+      it is the `mailto:` and carries neither. Both halves are asserted here, on the same ready
+      draft, driven through the real chips — because a build that set the attributes statically
+      would pass the Gmail half and fail the check above, and a build that never set them would
+      pass the check above and fail this one. The two are one fence read from either side.
+
+      THE PREFERENCE IS DRIVEN THROUGH THE CHIP AND READ BACK THROUGH THE SEAM, so what is proved
+      is the wiring and not the module: a tap on `[data-outreach-mail="gmail"]` has to reach
+      src/shell.js's hook, src/outreach-view.js's setter, src/prefs.js's writer, and a repaint that
+      rebuilt the `href` from the new answer. And the document is read before and after, byte for
+      byte, because the Traps line's whole argument is that this is the browser's fact and not the
+      teacher's — a preference that reached the year document would sync to the iPad and be wrong
+      there by construction.
+    */
+    const gmail = await evalJs(`(async function(){
+      ${DRAWN}
+      await window.planbook.store.flush();
+      var d0 = window.planbook.store.getDoc();
+      var docBefore = JSON.stringify(d0), revBefore = d0.rev;
+      var chipsBefore = Array.prototype.map.call(
+        document.querySelectorAll('#outreachMail [data-outreach-mail]'), function(b){
+          return b.getAttribute('data-outreach-mail') + ':' + b.getAttribute('aria-pressed'); });
+      document.querySelector('#outreachMail [data-outreach-mail="gmail"]').click();
+      var d = drawn();
+      var m = window.planbook.outreachView.outreachModel();
+      var href = d.href || '';
+      var q = href.indexOf('?');
+      var params = {};
+      (q < 0 ? '' : href.slice(q + 1)).split('&').forEach(function(pair){
+        var at = pair.indexOf('=');
+        if (at > 0) params[pair.slice(0, at)] = pair.slice(at + 1); });
+      var bodyRaw = params.body || '';
+      await window.planbook.store.flush();
+      var d1 = window.planbook.store.getDoc();
+      return { href: href, hasHref: d.hasHref, target: d.target, rel: d.rel,
+        keys: Object.keys(params), to: params.to || '', cc: params.cc || '',
+        decodedBody: decodeURIComponent(bodyRaw),
+        decodedSubject: decodeURIComponent(params.su || ''),
+        bodyField: d.bodyField, subjectField: d.subjectField,
+        lf: (bodyRaw.match(/%0A/g) || []).length, cr: (bodyRaw.match(/%0D/g) || []).length,
+        hash: bodyRaw.indexOf('%23') >= 0 && bodyRaw.indexOf('#') === -1,
+        pref: window.planbook.getPref('mailDoor'),
+        stored: localStorage.getItem('planbook_mailDoor'),
+        modelMail: m.mail, https: m.https, ready: m.ready,
+        chipsBefore: chipsBefore,
+        chips: Array.prototype.map.call(
+          document.querySelectorAll('#outreachMail [data-outreach-mail]'), function(b){
+            return b.getAttribute('data-outreach-mail') + ':' + b.getAttribute('aria-pressed')
+              + ':' + (b.classList.contains('active') ? 'on' : 'off'); }),
+        note: document.getElementById('outreachMailNote').textContent,
+        strip: d.reasons.join(' '),
+        ariaLabel: document.getElementById('outreachOpen').getAttribute('aria-label') || '',
+        docSame: JSON.stringify(d1) === docBefore, revBefore: revBefore, revAfter: d1.rev }; })()`);
+    check('WO-5.12: tapping *Gmail in the browser* rebuilds the ready draft’s href as an https URL '
+      + 'on mail.google.com — view=cm, carrying `to`, `su` and `body` — and the anchor now wears '
+      + 'target="_blank" and a rel containing noopener; the chip reads pressed, the note and the '
+      + 'strip name Gmail and a browser tab, and the preference is `planbook_mailDoor` read back '
+      + 'as "gmail" through the seam (Acceptance line 1, first half)',
+      /^https:\/\/mail\.google\.com\/mail\/\?view=cm&fs=1&/.test(gmail.href)
+        && gmail.hasHref === true && gmail.target === '_blank'
+        && /\bnoopener\b/.test(gmail.rel || '')
+        && gmail.keys.indexOf('to') >= 0 && gmail.keys.indexOf('su') >= 0
+        && gmail.keys.indexOf('body') >= 0 && gmail.to === G1_EMAIL
+        && gmail.pref === 'gmail' && gmail.stored === '"gmail"' && gmail.modelMail === 'gmail'
+        && gmail.https === true && gmail.ready === true
+        && gmail.chipsBefore.join(',') === 'default:true,gmail:false,outlook:false'
+        && gmail.chips.join(',') === 'default:false:off,gmail:true:on,outlook:false:off'
+        && /Gmail/.test(gmail.note) && /browser tab/.test(gmail.note)
+        && /Gmail, in a browser tab/.test(gmail.strip) && /Gmail/.test(gmail.ariaLabel),
+      gmail.href.slice(0, 90) + '… target = ' + JSON.stringify(gmail.target) + ', rel = '
+        + JSON.stringify(gmail.rel) + ', pref = ' + JSON.stringify(gmail.pref) + ', chips '
+        + gmail.chips.join(' '));
+    check('and the Gmail body survives its own round trip with LF line breaks — a compose page is '
+      + 'a web page and not a mailto: handler, so RFC 6068’s CRLF does not carry (src/outreach.js '
+      + '§ the webmail compose URL); the subject rides in `su`, the copy-to-self in `cc`, and the '
+      + 'hash is still encoded rather than passed through',
+      gmail.decodedBody === String(gmail.bodyField).replace(/\r\n|\r|\n/g, '\n')
+        && gmail.decodedSubject === gmail.subjectField && gmail.lf >= 3 && gmail.cr === 0
+        && gmail.hash === true && gmail.cc.indexOf(TEACHER_EMAIL) >= 0,
+      gmail.lf + ' LF, ' + gmail.cr + ' CR, round trip = '
+        + (gmail.decodedBody === String(gmail.bodyField).replace(/\r\n|\r|\n/g, '\n'))
+        + ', cc = ' + gmail.cc);
+    check('and choosing a door wrote NOTHING to the year document — it is byte-identical either '
+      + 'side of the tap and `rev` has not moved, because where this browser’s mail lives is the '
+      + 'device’s fact and never the teacher’s (Acceptance line 4, the half a fixture can prove)',
+      gmail.docSame === true && gmail.revAfter === gmail.revBefore,
+      'document identical = ' + gmail.docSame + ', rev ' + gmail.revBefore + ' → '
+        + gmail.revAfter);
+
+    const outlook = await evalJs(`(function(){
+      ${DRAWN}
+      document.querySelector('#outreachMail [data-outreach-mail="outlook"]').click();
+      var d = drawn();
+      var m = window.planbook.outreachView.outreachModel();
+      var href = d.href || '';
+      var q = href.indexOf('?');
+      var params = {};
+      (q < 0 ? '' : href.slice(q + 1)).split('&').forEach(function(pair){
+        var at = pair.indexOf('=');
+        if (at > 0) params[pair.slice(0, at)] = pair.slice(at + 1); });
+      return { href: href, hasHref: d.hasHref, target: d.target, rel: d.rel,
+        keys: Object.keys(params), to: params.to || '',
+        decodedBody: decodeURIComponent(params.body || ''),
+        decodedSubject: decodeURIComponent(params.subject || ''),
+        bodyField: d.bodyField, subjectField: d.subjectField,
+        pref: window.planbook.getPref('mailDoor'), modelMail: m.mail, https: m.https,
+        note: document.getElementById('outreachMailNote').textContent,
+        strip: d.reasons.join(' ') }; })()`);
+    check('tapping *Outlook on the web* rebuilds it as an https URL on outlook.office.com — '
+      + 'mail/deeplink/compose, carrying `to`, `subject` and `body` — with the same attribute '
+      + 'pair on the anchor, the same LF round trip, and the preference read back as "outlook"',
+      /^https:\/\/outlook\.office\.com\/mail\/deeplink\/compose\?/.test(outlook.href)
+        && outlook.hasHref === true && outlook.target === '_blank'
+        && /\bnoopener\b/.test(outlook.rel || '')
+        && outlook.keys.indexOf('to') >= 0 && outlook.keys.indexOf('subject') >= 0
+        && outlook.keys.indexOf('body') >= 0 && outlook.to === G1_EMAIL
+        && outlook.decodedBody === String(outlook.bodyField).replace(/\r\n|\r|\n/g, '\n')
+        && outlook.decodedSubject === outlook.subjectField
+        && outlook.pref === 'outlook' && outlook.modelMail === 'outlook' && outlook.https === true
+        && /Outlook on the web/.test(outlook.note) && /Outlook on the web/.test(outlook.strip),
+      outlook.href.slice(0, 90) + '… target = ' + JSON.stringify(outlook.target) + ', rel = '
+        + JSON.stringify(outlook.rel) + ', pref = ' + JSON.stringify(outlook.pref));
+
+    const backToDefault = await evalJs(`(function(){
+      ${DRAWN}
+      document.querySelector('#outreachMail [data-outreach-mail="default"]').click();
+      var d = drawn();
+      var m = window.planbook.outreachView.outreachModel();
+      /* The setter refuses a word that is not one of the three, rather than rounding it to the
+         default and writing that: asked directly, because no chip in the markup carries one. */
+      var refusedWord = window.planbook.outreachView.setOutreachMailDoor('yahoo');
+      var afterRefusal = window.planbook.getPref('mailDoor');
+      return { href: d.href || '', hasHref: d.hasHref, target: d.target, rel: d.rel,
+        pref: window.planbook.getPref('mailDoor'), modelMail: m.mail, https: m.https,
+        note: document.getElementById('outreachMailNote').textContent,
+        strip: d.reasons.join(' '),
+        chips: Array.prototype.map.call(
+          document.querySelectorAll('#outreachMail [data-outreach-mail]'), function(b){
+            return b.getAttribute('data-outreach-mail') + ':' + b.getAttribute('aria-pressed'); }),
+        refusedWord: refusedWord, afterRefusal: afterRefusal }; })()`);
+    check('and tapping *Default mail app* puts the mailto: back with NEITHER attribute on the '
+      + 'anchor — the WO-5.11 shape, restored through the control rather than by a reload — with '
+      + 'the strip back to "your own mail app", the preference read back as "default", and a word '
+      + 'that is not one of the three refused by the setter rather than rounded and written '
+      + '(Acceptance line 1, second half)',
+      /^mailto:/.test(backToDefault.href) && backToDefault.hasHref === true
+        && backToDefault.target === null && backToDefault.rel === null
+        && backToDefault.pref === 'default' && backToDefault.modelMail === 'default'
+        && backToDefault.https === false && /your own mail app/.test(backToDefault.strip)
+        && /this device/.test(backToDefault.note)
+        && backToDefault.chips.join(',') === 'default:true,gmail:false,outlook:false'
+        && backToDefault.refusedWord === false && backToDefault.afterRefusal === 'default',
+      backToDefault.href.slice(0, 40) + '… target = ' + JSON.stringify(backToDefault.target)
+        + ', rel = ' + JSON.stringify(backToDefault.rel) + ', pref = '
+        + JSON.stringify(backToDefault.pref) + ', "yahoo" refused = '
+        + (backToDefault.refusedWord === false));
+
     /* ── copy to self ── */
     const copy = await evalJs(`(function(){
       ${DRAWN}
@@ -637,6 +811,30 @@ if (!seam) {
       refused.head + ' :: '
         + (refused.reasons.filter((r) => /unblocks the draft/.test(r))[0] || 'NO INSTRUCTION ROW'));
 
+    /* WO-5.12, ON THE BLOCKED DRAFT: the refusal is the same under every door. The draft above is
+       blocked by a refused merge field; each chip is tapped in turn and the anchor read after
+       each. A build that painted `target` from the preference rather than from the `href` would
+       leave a `_blank` on an anchor with no address here, which is the shape this reads for. */
+    const blockedDoors = await evalJs(`(function(){
+      ${DRAWN}
+      var out = [];
+      ['gmail', 'outlook', 'default'].forEach(function(door){
+        document.querySelector('#outreachMail [data-outreach-mail="' + door + '"]').click();
+        var d = drawn();
+        var m = window.planbook.outreachView.outreachModel();
+        out.push({ door: door, pref: window.planbook.getPref('mailDoor'), ready: m.ready,
+          url: m.url, hasHref: d.hasHref, href: d.href, target: d.target, rel: d.rel,
+          disabled: d.disabled }); });
+      return out; })()`);
+    check('a blocked draft has no href under ALL THREE doors — Gmail, Outlook and the default '
+      + 'each tapped in turn over the refused draft, and each time the anchor carries no href, no '
+      + 'target, no rel and aria-disabled, with the model’s url empty (Acceptance line 2)',
+      blockedDoors.length === 3 && blockedDoors.every((r) => r.pref === r.door
+        && r.ready === false && r.url === '' && r.hasHref === false && r.href === null
+        && r.target === null && r.rel === null && r.disabled === 'true'),
+      blockedDoors.map((r) => r.door + ': href ' + JSON.stringify(r.href) + ', target '
+        + JSON.stringify(r.target) + ', rel ' + JSON.stringify(r.rel)).join(' · '));
+
     const fixedUp = await evalJs(`(function(){
       ${TYPE}
       ${DRAWN}
@@ -712,6 +910,43 @@ if (!seam) {
       + 'costs six characters and every em dash nine',
       long.length > long.bodyLength,
       long.length + ' encoded vs ' + long.bodyLength + ' typed');
+
+    /* WO-5.12: THE WARNING KNOWS WHICH DOOR IS OPEN. MAILTO_CEILING is a `ShellExecute` fact, and
+       neither webmail documents a figure — so under Gmail the sentence names NO number and says
+       Planbook cannot know, rather than quoting 2,000 at a door it was never measured on
+       (src/outreach.js's ceilingFor(), null on purpose). The same long draft, the chip tapped,
+       the sentence read, and the default put back so the projector check below reads what it
+       always read. */
+    const longWebmail = await evalJs(`(function(){
+      ${DRAWN}
+      document.querySelector('#outreachMail [data-outreach-mail="gmail"]').click();
+      var d = drawn();
+      var m = window.planbook.outreachView.outreachModel();
+      var under = { shown: d.lengthShown, text: d.lengthText, long: m.long, ceiling: m.ceiling,
+        https: m.https, hasHref: d.hasHref, length: m.length };
+      document.querySelector('#outreachMail [data-outreach-mail="default"]').click();
+      var back = drawn();
+      var mb = window.planbook.outreachView.outreachModel();
+      return { under: under, back: { text: back.lengthText, ceiling: mb.ceiling,
+        mailtoCeiling: window.planbook.outreach.ceilingFor('default') } }; })()`);
+    check('and under *Gmail in the browser* the same long draft still warns, still does not block, '
+      + 'and the sentence names NO ceiling — it says Planbook cannot know where that door cuts, '
+      + 'because no figure for a compose URL is documented anywhere and an invented one would be '
+      + 'a promise the warning cannot keep; back on the default the 2,000 and Outlook on Windows '
+      + 'return',
+      longWebmail.under.shown === true && longWebmail.under.long === true
+        && longWebmail.under.ceiling === null && longWebmail.under.https === true
+        && longWebmail.under.hasHref === true
+        && /cannot tell you/.test(longWebmail.under.text)
+        && /does not shorten/.test(longWebmail.under.text)
+        && !/\b2000\b|\b2,000\b/.test(longWebmail.under.text)
+        && !/Outlook on Windows/.test(longWebmail.under.text)
+        && String(longWebmail.under.text).indexOf(String(longWebmail.under.length)) >= 0
+        && longWebmail.back.ceiling === 2000 && longWebmail.back.mailtoCeiling === 2000
+        && /2000/.test(longWebmail.back.text) && /Outlook on Windows/.test(longWebmail.back.text),
+      'Gmail: ceiling ' + JSON.stringify(longWebmail.under.ceiling) + ', "'
+        + String(longWebmail.under.text).slice(0, 110) + '…"; default: ceiling '
+        + longWebmail.back.ceiling);
 
     /* ── the projector ──
        THE REAL HEADER CONTROL, DISPATCHED RATHER THAN CLICKED AT COORDINATES, and the difference
@@ -1784,6 +2019,107 @@ if (!seam) {
         + afterCopy.log + ', contact entries ' + afterCopy.contacts + ', localStorage '
         + (afterCopy.leaked.length ? JSON.stringify(afterCopy.leaked) : 'mentions none of it'));
 
+    /*
+      ─────────── WO-5.12: A WEBMAIL CLICK IS LOGGED EXACTLY AS A mailto: CLICK ───────────
+
+      BELOW EVERY `rev` READING IN THIS FILE ON PURPOSE. The two checks above and the one at
+      "DRAFTING wrote nothing" all rest on nothing above them having pressed the handoff, and this
+      is the first press in the section — so it sits at the foot, after the last of them, on the
+      same ready draft the copy block planted. The press is tools/verify/contact-log.mjs's: a
+      capture-phase listener installed for exactly one click stops the navigation, so the page is
+      not handed to a compose tab, and `prevented` is reported so a reader can see which side
+      stopped it. What is asserted is that the anchor under the press was the https one, wearing
+      `_blank`, and that src/shell.js's hook wrote ONE `contact` — the listener never reads the
+      `href`, so a webmail handoff is a handoff, and the status line names the door.
+    */
+    const webmailPress = await evalJs(`(async function(){
+      ${DRAWN}
+      document.querySelector('#outreachMail [data-outreach-mail="gmail"]').click();
+      await window.planbook.store.flush();
+      var d0 = window.planbook.store.getDoc();
+      var logBefore = (d0.log || []).length;
+      var mine = function(doc){ return (doc.log || []).filter(function(e){
+        return String(e.studentId).indexOf('s_wo53') === 0; }); };
+      var mineBefore = mine(d0).length;
+      var m = window.planbook.outreachView.outreachModel();
+      var link = document.getElementById('outreachOpen');
+      var under = { href: link.getAttribute('href'), target: link.getAttribute('target'),
+        rel: link.getAttribute('rel') };
+      var stop = function(e){ e.preventDefault(); };
+      window.addEventListener('click', stop, true);
+      var ev = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+      var wentThrough = link.dispatchEvent(ev);
+      window.removeEventListener('click', stop, true);
+      await window.planbook.store.flush();
+      var d1 = window.planbook.store.getDoc();
+      var entries = mine(d1);
+      var e = entries[entries.length - 1] || null;
+      return { ready: m.ready, https: m.https, under: under, prevented: !wentThrough,
+        logBefore: logBefore, logAfter: (d1.log || []).length,
+        mineBefore: mineBefore, mineAfter: entries.length,
+        kind: e ? e.kind : '', audience: e ? e.audience : '',
+        subjectLogged: e ? e.subject === m.subject : false,
+        bodyLogged: e ? e.body === m.body : false,
+        status: document.getElementById('outreachStatus').textContent,
+        stillOpen: !document.getElementById('outreachModal').classList.contains('hidden'),
+        pref: window.planbook.getPref('mailDoor') }; })()`);
+    check('pressing the handoff under *Gmail in the browser* appends exactly ONE `contact` entry '
+      + '— the anchor under the press was the https compose URL wearing target="_blank", the '
+      + 'hook never read it, the subject and body logged are the ones in the two boxes, the '
+      + 'status line says it was handed to Gmail, and the modal is still open on the draft '
+      + '(Acceptance line 3)',
+      webmailPress.ready === true && webmailPress.https === true
+        && /^https:\/\/mail\.google\.com\//.test(webmailPress.under.href || '')
+        && webmailPress.under.target === '_blank' && webmailPress.prevented === true
+        && webmailPress.logAfter === webmailPress.logBefore + 1
+        && webmailPress.mineAfter === webmailPress.mineBefore + 1
+        && webmailPress.kind === 'contact' && webmailPress.audience === 'guardian'
+        && webmailPress.subjectLogged === true && webmailPress.bodyLogged === true
+        && /Handed to Gmail and logged/.test(webmailPress.status)
+        && webmailPress.stillOpen === true && webmailPress.pref === 'gmail',
+      'log ' + webmailPress.logBefore + ' → ' + webmailPress.logAfter + ', kind '
+        + JSON.stringify(webmailPress.kind) + ', href under the press '
+        + String(webmailPress.under.href || '').slice(0, 45) + '…, target '
+        + JSON.stringify(webmailPress.under.target) + ', status "'
+        + String(webmailPress.status).slice(0, 40) + '…"');
+
+    /* THE THREE CHIPS AT 390px UNDER A COARSE POINTER, named rather than left to the count in the
+       touch pass above — which measured them too, as three more `button`s in the modal, but a
+       floor that reached every control except the three this work order added would pass a count
+       and fail a thumb. Then the preference is put back to the default, so the section leaves the
+       browser as it found it and the iPad's shape — a `mailto:`, no target — is what every later
+       section reads. */
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+    await new Promise(r => setTimeout(r, 300));
+    const chipTouch = await evalJs(`(function(){
+      var out = [];
+      document.querySelectorAll('#outreachMail [data-outreach-mail]').forEach(function(e){
+        var r = e.getBoundingClientRect();
+        out.push({ door: e.getAttribute('data-outreach-mail'),
+          w: Math.round(r.width * 100) / 100, h: Math.round(r.height * 100) / 100 }); });
+      document.querySelector('#outreachMail [data-outreach-mail="default"]').click();
+      var link = document.getElementById('outreachOpen');
+      return { chips: out, under: out.filter(function(m){ return m.h < 44 || m.w < 44; }),
+        coarse: matchMedia('(pointer: coarse)').matches,
+        pref: window.planbook.getPref('mailDoor'),
+        href: link.getAttribute('href') || '', target: link.getAttribute('target'),
+        rel: link.getAttribute('rel') }; })()`);
+    check('the three *Where does your mail live?* chips each measure at least 44px on both axes at '
+      + '390px under a coarse pointer, and the preference is put back to the default — the link is '
+      + 'a mailto: with no target and no rel again, which is the shape every section after this '
+      + 'one reads',
+      chipTouch.coarse === true && chipTouch.chips.length === 3 && chipTouch.under.length === 0
+        && chipTouch.pref === 'default' && /^mailto:/.test(chipTouch.href)
+        && chipTouch.target === null && chipTouch.rel === null,
+      chipTouch.chips.map((m) => m.door + ' ' + m.w + '×' + m.h).join(', ')
+        + '; pref back to ' + JSON.stringify(chipTouch.pref));
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await new Promise(r => setTimeout(r, 200));
+
     /* ── and the fixture comes back off ──
        OFF THE SCREEN FIRST, for the reason templates.mjs leaves its own screen before it takes its
        class apart: the class being removed is the one the screen behind this modal is drawn from,
@@ -1803,6 +2139,11 @@ if (!seam) {
         doc.assignments = (doc.assignments || []).filter(function(a){
           return String(a.id).indexOf('a_wo53_') !== 0; });
         doc.attendance = (doc.attendance || []).filter(function(r){ return r.classId !== '${CLS}'; });
+        /* The one contact WO-5.12's webmail press made the app write (verify/contact-log.mjs
+           takes its own off the same way). The fixture's students go with it, so an entry left
+           here would be one about a student who no longer exists. */
+        doc.log = (doc.log || []).filter(function(e){
+          return String(e.studentId).indexOf('s_wo53') !== 0; });
         doc.templates = JSON.parse(${JSON.stringify(plant.hadTemplates)});
         doc.teacher = JSON.parse(${JSON.stringify(plant.hadTeacher)});
         if (doc.scores) {
@@ -1817,24 +2158,31 @@ if (!seam) {
         assignments:(d.assignments || []).filter(function(a){
           return String(a.id).indexOf('a_wo53_') === 0; }).length,
         attendance:(d.attendance || []).filter(function(r){ return r.classId === '${CLS}'; }).length,
+        log:(d.log || []).filter(function(e){
+          return String(e.studentId).indexOf('s_wo53') === 0; }).length,
         scores: Object.keys(d.scores || {}).filter(function(k){
           return k.indexOf('a_wo53_') === 0; }).length,
         templates: JSON.stringify(d.templates || []),
         teacher: JSON.stringify(d.teacher || {}),
         mode: window.planbook.supports.presentationMode(),
+        mailDoor: window.planbook.getPref('mailDoor'),
         overlays: document.querySelectorAll('.modal-overlay:not(.hidden)').length }; })()`);
     await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
     check('the WO-5.3 fixture came back off the document — the class, both students, nine '
-      + 'assignments, ten attendance records and every score bag — `templates[]` and the '
-      + 'teacher’s own details were put back exactly as they were found, presentation mode was '
-      + 'left OFF, every modal is closed and the page was left on the grid',
+      + 'assignments, ten attendance records, every score bag and the one contact WO-5.12’s '
+      + 'webmail press wrote — `templates[]` and the teacher’s own details were put back exactly '
+      + 'as they were found, presentation mode was left OFF, the mail door is back at the '
+      + 'default, every modal is closed and the page was left on the grid',
       cleaned.classes === 0 && cleaned.students === 0 && cleaned.assignments === 0
-        && cleaned.attendance === 0 && cleaned.scores === 0 && cleaned.overlays === 0
+        && cleaned.attendance === 0 && cleaned.log === 0 && cleaned.scores === 0
+        && cleaned.overlays === 0
         && cleaned.templates === String(plant.hadTemplates)
         && cleaned.teacher === String(plant.hadTeacher) && cleaned.mode === false
+        && cleaned.mailDoor === 'default'
         && (await onView()) === 'homeView',
       cleaned.classes + ' class(es), ' + cleaned.students + ' student(s), ' + cleaned.assignments
-        + ' assignment(s), ' + cleaned.attendance + ' record(s), ' + cleaned.scores
+        + ' assignment(s), ' + cleaned.attendance + ' record(s), ' + cleaned.log
+        + ' log entr(ies), ' + cleaned.scores
         + ' score bag(s) left behind; templates put back = '
         + String(cleaned.templates === String(plant.hadTemplates)) + ', teacher put back = '
         + String(cleaned.teacher === String(plant.hadTeacher)) + '; presentation mode = '

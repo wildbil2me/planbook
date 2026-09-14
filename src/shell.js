@@ -572,7 +572,15 @@
                                       the question was asked — so this closes the panel and says
                                       so. Escape and the ✕ take the same outcome through
                                       src/modal.js without coming through here
-      data-outreach-handoff           #outreachOpen, which is an `<a href="mailto:...">`. The hook
+      data-outreach-mail="<door>"     default, gmail or outlook: where THIS BROWSER's mail lives
+                                      (WO-5.12). Writes `planbook_mailDoor` — the one preference
+                                      the send flow touches, a fact about the device and never
+                                      about a student — and repaints the handoff link's `href`
+                                      from it: a `mailto:` for the default, an https compose page
+                                      for the other two. Rebuilds nothing and asks nothing
+      data-outreach-handoff           #outreachOpen, which is an `<a href="mailto:...">` — or,
+                                      under a webmail door, an `<a href="https://mail.google.com/…">`
+                                      with `target="_blank"`; same anchor, same hook. The hook
                                       LOGS the contact (WO-5.4) and the navigation stays the
                                       browser's: nothing here calls preventDefault(), because iOS
                                       opens a link more reliably than a scripted navigation and that
@@ -580,7 +588,7 @@
                                       no `href` at all, so "a blocked draft cannot reach the
                                       handoff" is still a property of the markup — and the writer
                                       asks the model as well, rather than trusting the element it
-                                      was clicked on
+                                      was clicked on, and never reads the `href`
       data-outreach-clipboard         #outreachCopy, the SECOND door out of a draft (WO-5.7): the
                                       recipient, the subject and the message as one block of plain
                                       text, for a teacher whose real mail is webmail and whose
@@ -2860,6 +2868,13 @@ document.addEventListener('click', (e) => {
     return;
   }
   if (e.target.closest('[data-outreach-copy]')) { outreachView.toggleOutreachCopy(); return; }
+  /* WHERE DOES YOUR MAIL LIVE (WO-5.12) — the one preference written from this flow, and it
+     changes the string on the handoff link and nothing about the draft. */
+  const outreachMail = e.target.closest('[data-outreach-mail]');
+  if (outreachMail) {
+    outreachView.setOutreachMailDoor(outreachMail.getAttribute('data-outreach-mail'));
+    return;
+  }
   /* THE HANDOFF, AND THE ONE WRITE IN THE WHOLE SEND FLOW (WO-5.4).
 
      NOTHING HERE PREVENTS THE DEFAULT and nothing here navigates: the element is a real

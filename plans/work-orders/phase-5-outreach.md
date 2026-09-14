@@ -1176,7 +1176,7 @@ app with it.
 
 ## WO-5.12 — A webmail door that is not a `mailto:`
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-5.7, WO-8.12
+**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-5.7, WO-8.12
 
 **Why it exists.** WO-5.11 was struck on 2026-09-12 because `mailto:` has no answer for a teacher
 whose mail is Gmail in a browser tab: with Gmail registered as Chrome's `mailto:` handler, a
@@ -1250,23 +1250,46 @@ the same pass rather than around it.)*
 - `CACHE` bumped in `sw.js`.
 
 **Acceptance**
-- [ ] With the preference at *Gmail in the browser*, the ready draft's `href` is an https URL on
+- [x] With the preference at *Gmail in the browser*, the ready draft's `href` is an https URL on
       `mail.google.com` carrying `to`, `su` and `body`, and the anchor carries `target="_blank"` and
       `rel` containing `noopener`; at *Default mail app* the `href` is the `mailto:` and the anchor
-      carries neither — the WO-5.11 check is unchanged and green.
-- [ ] A blocked draft has no `href` under all three preferences.
-- [ ] A webmail click appends exactly one `contact` entry, the same as a `mailto:` click.
-- [ ] The preference is a `planbook_` key and nothing about it reaches the year document —
+      carries neither — the WO-5.11 check is unchanged and green. *(`tools/verify/outreach.mjs`:
+      the Gmail chip tapped on the ready praise draft reads* `https://mail.google.com/mail/?view=cm&fs=1&to=…`*,*
+      `target = "_blank"`*,* `rel = "noopener"`*; the Default chip tapped reads* `mailto:…`*,*
+      `target = null`*,* `rel = null`*. The WO-5.11 check is byte-identical —* `git diff` *shows
+      no line of it moved — and green on the same run,* `1352 checks · 1352 passed`*.)*
+- [x] A blocked draft has no `href` under all three preferences. *(Each chip tapped in turn over
+      the draft blocked by* `{{supports.medical}}`*:* `gmail: href null, target null, rel null ·
+      outlook: href null, target null, rel null · default: href null, target null, rel null`*.)*
+- [x] A webmail click appends exactly one `contact` entry, the same as a `mailto:` click. *(The
+      handoff pressed under Gmail with the harness's own capture-phase stop:* `log 0 → 1, kind
+      "contact"`*, audience* `guardian`*, subject and body the ones in the boxes, status line*
+      "Handed to Gmail and logged"*. `src/shell.js`'s hook and `recordHandoff()` were not touched.)*
+- [x] The preference is a `planbook_` key and nothing about it reaches the year document —
       `wo-sweep.mjs`'s prefs claim still passes and the document is byte-identical either side of
-      changing it.
-- [ ] `privacy.html` and `docs/FERPA.md` carry the rewritten third item **word for word**, and
-      `docs/FERPA.md` no longer says outreach is not in the released app.
-- [ ] 👤 On the laptop, installed PWA, preference at *Gmail in the browser*: *Open in my mail app*
+      changing it. *(`mailDoor` declared in* `PREF_DEFAULTS`*, read back as* `planbook_mailDoor`
+      `= "gmail"` *off* `localStorage` *itself;* `wo-sweep.mjs` *§ 4 both lines PASS —* "prefs.js is
+      the only door"*; the harness reads* `document identical = true, rev 298 → 298` *across the
+      tap. The setter refuses a fourth word rather than rounding and writing it.)*
+- [x] `privacy.html` and `docs/FERPA.md` carry the rewritten third item **word for word**, and
+      `docs/FERPA.md` no longer says outreach is not in the released app. *(Both item 3s
+      normalised —* `<code>` *to backticks, whitespace collapsed — compare* `identical: true`*;
+      the only "released app" lines left in either file are item 2's and the sync section's.
+      FERPA's two other stale outreach sentences — the "record of the outreach" bullet and rule 3
+      under accommodations — were rewritten to the present tense in the same pass, and their twins
+      in* `privacy.html` *with them; both files' "Last updated" moved to 13 September 2026.)*
+- [x] 👤 On the laptop, installed PWA, preference at *Gmail in the browser*: *Open in my mail app*
       opens a Gmail compose in a browser tab with recipient, subject and body filled and paragraph
       breaks intact, and the PWA window is still on the draft. **This is the line WO-5.11 could not
-      close.**
-- [ ] 👤 On the iPad, with the preference untouched, nothing has changed: Mail opens filled, no tab
-      and no window left behind.
+      close.** *(Read by the owner 2026-09-14 on v115, force-quit first, in the installed PWA and in
+      a plain Chrome tab — both working. **What the compose pane looks like is worth writing down,
+      because it reads like a half-loaded page and is not one:** `fs=1` is Gmail's full-screen
+      compose, so what opens is a bare compose pane with no inbox, sidebar or thread list around it.
+      A reader expecting Gmail-with-a-compose-window will think the tab failed. To, Subject and body
+      filled; the paragraph breaks single and not doubled, which is the reading the LF-not-CRLF
+      ruling above exists to earn.)*
+- [x] 👤 On the iPad, with the preference untouched, nothing has changed: Mail opens filled, no tab
+      and no window left behind. *(Read by the owner 2026-09-14, same sitting.)*
 - [ ] 👤 Preference at *Outlook on the web*, in any browser with an Outlook account: compose opens
       filled. *(The owner has no Outlook account on hand; if this cannot be read, the option ships
       behind the same reading as Gmail's and the line says so rather than being ticked.)*

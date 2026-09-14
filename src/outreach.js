@@ -1,6 +1,8 @@
 /*
   The send flow's model — who a draft can be addressed to, the `mailto:` URL that hands it over to
-  the teacher's own mail client (WO-5.3), and the same draft as plain text for a clipboard (WO-5.7).
+  the teacher's own mail client (WO-5.3), the same draft as plain text for a clipboard (WO-5.7), and
+  the same draft as a Gmail or Outlook compose URL for a teacher whose mail is a browser tab
+  (WO-5.12).
 
   ── WHAT THIS FILE IS, AND THE ONE IT IS NOT ──
 
@@ -25,8 +27,9 @@
   preference: a mail scope reads "Send email as you" on the consent screen, and the teacher's own
   sent-mail record — which is what a school asks for when it asks — stays intact only if the message
   leaves from her client. So there is no SMTP here, no API, no scope, and no fetch of any kind. What
-  this file produces is a STRING — two of them since WO-5.7, and neither of them is a message being
-  sent. The operating system decides what to do with the first and the teacher pastes the second.
+  this file produces is a STRING — three of them since WO-5.12, and none of them is a message being
+  sent. The operating system decides what to do with the first, the teacher pastes the second, and
+  the third is an https link to a compose page that the browser opens as an ordinary tab.
 
   ── A RECIPIENT IS NOT AN AUDIENCE, AND THE TWO LISTS ARE DIFFERENT LENGTHS ──
 
@@ -302,6 +305,132 @@ export const MAILTO_CEILING = 2000;
 
 export function overCeiling(url) {
   return text(url).length > MAILTO_CEILING;
+}
+
+/*
+  ──────────────── THE SAME DRAFT AS A WEBMAIL COMPOSE URL (WO-5.12) ────────────────
+
+  THE THIRD DOOR, AND IT IS THE ONE THAT MAKES THE FIRST DOOR HONEST ABOUT WHO IT IS FOR. `mailto:`
+  was only ever the right door for a teacher with a desktop mail client, and at a Google Workspace
+  school most teachers' mail is Gmail in a browser tab. WO-5.11 found what a `mailto:` does there:
+  with Gmail registered as Chrome's handler, a same-window link navigates the installed PWA to
+  Gmail's bare compose page and loses the app, and a `_blank` link opens a tab that sits blank on the
+  URL and never reaches the handler at all (src/outreach-view.js's header, fourth reason). The app
+  cannot see a browser's protocol-handler table, so it cannot even say what happened. What it CAN do
+  is stop asking the handler: both webmails have a plain https compose URL, and an https link with
+  `target="_blank"` from an installed PWA opens an ordinary browser tab, reliably — it is how the
+  About modal's two document links already work.
+
+      Gmail     https://mail.google.com/mail/?view=cm&fs=1&to=…&cc=…&su=…&body=…
+      Outlook   https://outlook.office.com/mail/deeplink/compose?to=…&cc=…&subject=…&body=…
+
+  WHICH DOOR IS A FACT ABOUT THE BROWSER, NOT ABOUT THE TEACHER AND NOT ABOUT THE DRAFT, and it is
+  handed in as `mail` rather than read here: src/prefs.js's `mailDoor` says at its own definition
+  why it is a `planbook_` key and not a field in the document (the owner's laptop is Gmail and the
+  owner's iPad is Mail — one synced answer is wrong on one of them by construction), and this file
+  reads no preference for the reason it reads no store. mailDoorOf() below is the whole of the
+  vocabulary: three strings, and anything else is the default.
+
+  IT READS THE SAME DRAFT OBJECT mailtoUrl() READS, so the doors cannot disagree about what is in
+  the message, and it keeps mailtoUrl()'s rule about an empty header — left out, never sent as
+  `cc=` — for that function's reason. What differs is the encoding, and the line break is again the
+  whole of it:
+
+    · **THE LINE BREAK IS LF HERE, AND THAT IS THE QUESTION RE-ASKED RATHER THAN INHERITED.**
+      encodeField() normalises to CRLF because RFC 6068 § 5 says a `mailto:` body's break arrives
+      as `%0D%0A`, and that is a rule about the `mailto:` scheme. This is not a `mailto:`. It is a
+      query string on an https URL that a WEB PAGE decodes and drops into its own compose box —
+      the same kind of destination a `<textarea>` is, and a textarea's convention is LF on every
+      platform. A CRLF handed to a page that is expecting text can arrive as a break plus a bare
+      `\r`, which is exactly the doubled-paragraph shape draftText() records for the clipboard, one
+      door over. So the body is normalised to LF here as deliberately as it is normalised to CRLF
+      in encodeField(), and the two are two answers to two questions rather than one of them being
+      the other's oversight. WO-5.12's laptop reading — *paragraph breaks intact* — is the reading
+      that checks this ruling on the one webmail the owner has.
+    · **Everything else is `encodeURIComponent`**, for encodeField()'s reason: `&`, `?` and `#`
+      are the characters that must not survive into a query component, and `#3 on the worksheet`
+      is a thing a teacher types.
+    · **The address keeps its `@` literal**, through encodeAddress(), because both compose pages
+      accept either form and the readable one is the one a teacher can check in the address bar.
+
+  THERE IS NO KNOWN CEILING, AND THE WARNING SAYS SO RATHER THAN INVENTING ONE. MAILTO_CEILING is
+  `ShellExecute`'s documented limit on a string the operating system is handed, and a browser
+  following an https link hands nothing to the operating system: Chrome carries a URL of about two
+  megabytes. What is not documented anywhere is what Gmail or Outlook does with a compose URL whose
+  `body=` runs to many thousands of characters — Gmail has been observed to drop very long bodies
+  silently, and neither site publishes a figure. So ceilingFor() answers `null` for a webmail door,
+  and src/outreach-view.js draws a sentence that says Planbook cannot know where this door cuts,
+  rather than a number nobody measured. The warning still appears at MAILTO_CEILING's 2,000, as a
+  conservative trigger and not as a claim: a draft short enough for the tightest documented mail
+  handler is a draft nothing is known to cut, and one over it is one worth a glance either way.
+
+  WHAT THIS DOES TO THE PRIVACY POLICY IS THE PART WO-5.12 PUT BEFORE THE CODE. A `mailto:` hands
+  the draft to the operating system; this hands it, in the URL, to a page on `mail.google.com` or
+  `outlook.office.com` — the same site the message is about to be sent from, on the teacher's own
+  tap and on no other, but a change to what the data-flow statement says all the same. `privacy.html`
+  § *What leaves your device* and `docs/FERPA.md`'s twin were rewritten in the same sitting, word
+  for word, before this function existed; change what this function does and change them first.
+
+  NO `window.open()`, NO handler detection, NO Google script. What this file produces is a STRING,
+  and the anchor in index.html is the mechanism — the same anchor, with `target` and `rel` set by
+  paintOpen() when and only when the string starts with `https:`.
+*/
+
+/* The three doors, in the order the chips are drawn, with the words on them. */
+export const MAIL_DOORS = [
+  { id: 'default', label: 'Default mail app', name: 'your mail app' },
+  { id: 'gmail', label: 'Gmail in the browser', name: 'Gmail' },
+  { id: 'outlook', label: 'Outlook on the web', name: 'Outlook on the web' },
+];
+
+/* A stored preference read back as one of the three ids. Anything that is not 'gmail' or
+   'outlook' — an absent key, an older build's value, a hand-edited string — is the `mailto:`. */
+export function mailDoorOf(value) {
+  const id = text(value);
+  return MAIL_DOORS.some((d) => d.id === id) ? id : 'default';
+}
+
+/* The door's own words, for a sentence on screen: "Gmail", "Outlook on the web", "your mail app". */
+export function mailDoorName(mail) {
+  const id = mailDoorOf(mail);
+  return MAIL_DOORS.filter((d) => d.id === id)[0].name;
+}
+
+/* A compose field: LF, then `encodeURIComponent` — see the block above for why not CRLF. */
+function encodeComposeField(value) {
+  return encodeURIComponent(text(value).replace(/\r\n|\r|\n/g, '\n'));
+}
+
+/*
+  ONE DRAFT AS A WEBMAIL COMPOSE URL, for `mail` = 'gmail' or 'outlook'. Handed 'default' or anything
+  else it answers the `mailto:` — so a caller that always calls this gets the right door for every
+  preference, and there is no value of `mail` for which the draft has no URL.
+*/
+export function composeUrl(draft, mail) {
+  const id = mailDoorOf(mail);
+  if (id === 'default') return mailtoUrl(draft);
+  const d = draft || {};
+  const cc = text(d.cc).trim();
+  const subject = text(d.subject);
+  const body = text(d.body);
+  const parts = ['to=' + encodeAddress(d.to)];
+  if (id === 'gmail') {
+    if (cc) parts.push('cc=' + encodeAddress(cc));
+    if (subject) parts.push('su=' + encodeComposeField(subject));
+    if (body) parts.push('body=' + encodeComposeField(body));
+    return 'https://mail.google.com/mail/?view=cm&fs=1&' + parts.join('&');
+  }
+  if (cc) parts.push('cc=' + encodeAddress(cc));
+  if (subject) parts.push('subject=' + encodeComposeField(subject));
+  if (body) parts.push('body=' + encodeComposeField(body));
+  return 'https://outlook.office.com/mail/deeplink/compose?' + parts.join('&');
+}
+
+/* How long a URL through this door may be before some client cuts it: MAILTO_CEILING for the
+   `mailto:`, and `null` — "Planbook cannot know" — for a webmail compose page. See the block above
+   for why null is the honest answer and not a placeholder for a number still to be found. */
+export function ceilingFor(mail) {
+  return mailDoorOf(mail) === 'default' ? MAILTO_CEILING : null;
 }
 
 /*

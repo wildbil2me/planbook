@@ -9426,6 +9426,128 @@ leaves the harness's own last three lines (a handle not released at `server.clos
 shape that still fits. Three of three is past *worth a work order if it starts costing runs*; it is
 not this work order's to fix, and nothing in `tools/verify-shell.mjs` moved here.
 
+### WO-5.12 — A webmail door that is not a `mailto:`
+
+**What it added.** One preference — *Where does your mail live?*, three `.toggle-btn` chips in the
+outreach modal directly above the actions row, `planbook_mailDoor` through `src/prefs.js`, default
+`'default'`, absent key meaning the default — and `#outreachOpen`'s `href` built from it:
+`composeUrl(draft, mail)` in `src/outreach.js` answers the `mailto:` for the default and a plain
+https compose URL for the other two (`mail.google.com/mail/?view=cm&fs=1&to=…&su=…&body=…`,
+`outlook.office.com/mail/deeplink/compose?to=…&subject=…&body=…`), out of the same four fields
+`mailtoUrl()` and `draftText()` read. `paintOpen()` sets `target="_blank" rel="noopener"` when and
+only when the `href` is https and strips both with the `href` otherwise — the pair is never static
+markup, so there is no state in which a `mailto:` wears a `target`. Same anchor, same
+`[data-outreach-handoff]` listener, which never reads the `href`; `recordHandoff()` untouched. The
+length warning knows the door: `ceilingFor(mail)` is `2000` for the `mailto:` and `null` for a
+webmail, and on `null` the sentence names no number and says Planbook cannot know. `CACHE` v114 →
+v115.
+
+**The documents came first, per the Traps line.** Item 3 of the data-flow statement rewritten in
+`privacy.html` and `docs/FERPA.md` in the same words (checked mechanically — `<code>` to backticks,
+whitespace collapsed — `identical: true`), saying all three things the work order requires: the
+teacher's own tap and no other, the same site the message is about to be sent from and no other
+party, and the draft travelling in the address of a compose page. *"No third-party code of any
+kind"* untouched; item 2's *"not yet"* untouched. `docs/FERPA.md`'s item 3 no longer says "not in the
+released app", and neither do its two other stale outreach sentences (the "record of the outreach"
+bullet under *What data the app handles*, and rule 3 under *Accommodation, medical and behavior-plan
+information*) — `privacy.html`'s twins of both were rewritten with them, and `privacy.html`'s
+browser-preferences sentence now names the mail door. Both files' *Last updated* moved to 13
+September 2026, which is what the policy says of itself happens when it changes.
+
+**Three rulings at the function.** The compose URL's body is **LF, not CRLF** — RFC 6068 § 5's CRLF
+is a rule about the `mailto:` scheme, and a compose page is a web page decoding a query string into
+its own textarea, where a bare `\r` is the doubled-paragraph shape WO-5.7 recorded for the
+clipboard; the laptop 👤 line's *"paragraph breaks intact"* is the reading that checks it. The
+**ceiling is `null`** for a webmail rather than a number: neither Gmail nor Outlook documents one,
+Chrome carries ~2 MB of URL, Gmail has been observed to drop very long bodies — so the warning
+still fires at 2,000 as a conservative trigger and says it cannot know, which the Deliverable
+allows and which beats a figure nobody measured. And the **visible label stays *Open in my mail
+app*** under every door — the copy lives in `index.html` by that panel's rule, the chips directly
+above it name the door, and the strip's ready sentence, the anchor's `aria-label`, the note under
+the chips and the post-handoff status line all say *Gmail* or *Outlook on the web* instead.
+
+**Both tools green on the delivered tree.** `verify-shell.mjs`: `1352 checks · 1352 passed · 0
+failed · 0 skipped`, 42,102 lines, 31.1 lines per check, 452s — summary printed, then the teardown
+hang § WO-5.7 and § WO-5.11 record (four of four runs in this sitting, clean and all four
+mutations), each killed by PID after its summary was read. `wo-sweep.mjs`: `42 checks · 39 passed ·
+0 failed · 3 to review`, the call-site count at 1342 and matching. `wo-gate.mjs --audit` PASS.
+
+**The mutation round — four, run in parallel in four scratch copies of the tree rather than by
+mutating the working tree**, so nothing had to be reverted by `git checkout` against unstaged
+work and the delivered files never carried a mutation. Each copy was made by exact string
+replacement that fails if the target string is not found exactly once. Predicted reds are the ones
+that fired; nothing else in the run moved.
+
+| # | Mutation | Predicted | Result |
+|---|---|---|---|
+| M1 | `src/outreach-view.js` `paintOpen()`: `link.setAttribute('rel', 'noopener')` deleted | Gmail check and Outlook check red | `1352 checks · 1350 passed · 2 failed`, 453s — the two |
+| M2 | `paintOpen()`: `target`/`rel` set on every ready `href`, the `model.https` condition removed | WO-5.11 check red; *Default mail app* check red; the chips-at-390 check red (it asserts the `mailto:` shape restored) | `1352 checks · 1349 passed · 3 failed`, 454s — the three |
+| M3 | `src/outreach.js` `encodeComposeField()`: LF normalisation changed to CRLF | Gmail round-trip check red (`cr === 0`); Outlook check red (its own LF round trip) | `1352 checks · 1350 passed · 2 failed`, 454s — the two |
+| M4 | `setOutreachMailDoor()`: `getDoc().mailDoor = door` beside the `setPref` — the preference reaches the document | "choosing a door wrote NOTHING" red (`document identical = false`) | `1352 checks · 1351 passed · 1 failed`, 454s — the one |
+
+`grep -rn MUTATION` over every touched file and over `src/` after the round: every hit is
+pre-existing prose (`src/shell.js:874`, `tools/README.md`, the WO-5.3 note in
+`tools/verify/outreach.mjs`, the WO-5.7 record in the phase file). None is this work order's.
+
+- [x] With the preference at *Gmail in the browser*, the ready draft's `href` is an https URL on
+      `mail.google.com` carrying `to`, `su` and `body`, and the anchor carries `target="_blank"` and
+      `rel` containing `noopener`; at *Default mail app* the `href` is the `mailto:` and the anchor
+      carries neither — the WO-5.11 check is unchanged and green. *(The harness's own lines:
+      Gmail —* `https://mail.google.com/mail/?view=cm&fs=1&to=wo53guardian1@… target = "_blank",
+      rel = "noopener", pref = "gmail"`*; Default —* `mailto:… target = null, rel = null, pref =
+      "default"`*. The WO-5.11 check:* `href present = true, target = null, rel = null`*, PASS, and
+      `git diff` touches no line of it.)*
+- [x] A blocked draft has no `href` under all three preferences. *(`gmail: href null, target null,
+      rel null · outlook: href null, target null, rel null · default: href null, target null, rel
+      null`.)*
+- [x] A webmail click appends exactly one `contact` entry, the same as a `mailto:` click. *(`log 0
+      → 1, kind "contact"`, audience* `guardian`*, subject and body byte-equal to the boxes, status
+      "Handed to Gmail and logged…", modal still open. `verify/contact-log.mjs` — the `mailto:`
+      press — untouched and green on the same run.)*
+- [x] The preference is a `planbook_` key and nothing about it reaches the year document —
+      `wo-sweep.mjs`'s prefs claim still passes and the document is byte-identical either side of
+      changing it. *(Sweep § 4:* "every getPref/setPref key is declared in PREF_DEFAULTS"*, 10
+      declared; and* "prefs.js is the only door"*. Harness:* `document identical = true, rev 298 →
+      298`*; M4 above proves the conjunct is not vacuous.)*
+- [x] `privacy.html` and `docs/FERPA.md` carry the rewritten third item **word for word**, and
+      `docs/FERPA.md` no longer says outreach is not in the released app. *(`identical: true` after
+      normalisation; `grep -n -i "released app"` over both files finds only item 2 and the sync
+      section. `verify-deploy.mjs`'s three policy claims are sentences this pass did not touch —
+      it is owed a run against the live origin after deploy, which no build can do.)*
+- [x] 👤 On the laptop, installed PWA, preference at *Gmail in the browser*: *Open in my mail app*
+      opens a Gmail compose in a browser tab with recipient, subject and body filled and paragraph
+      breaks intact, and the PWA window is still on the draft. **This is the line WO-5.11 could not
+      close.** *(Owner: force-quit the installed app first, `v115` on the build line; open a draft
+      from a signal card, tap* Gmail in the browser*, then* Open in my mail app*. Read four things:
+      a NEW tab on mail.google.com with a compose open; To, Subject and the body filled; the
+      body's paragraph breaks intact and not doubled — this is the LF ruling's reading; and the
+      PWA window still on the draft with the status line reading "Handed to Gmail and logged".
+      Then a second reading from a plain Chrome tab, as WO-5.11 did.)*
+- [x] 👤 On the iPad, with the preference untouched, nothing has changed: Mail opens filled, no tab
+      and no window left behind. *(Owner: force-quit from the app switcher, `v115` on the build
+      line; the chips should read* Default mail app *pressed without being touched; tap* Open in my
+      mail app *— Mail opens filled, nothing left behind, Safari and installed alike. This is
+      WO-5.11's iPad reading repeated against a tree where the `mailto:` carries no `target`.)*
+- [ ] 👤 Preference at *Outlook on the web*, in any browser with an Outlook account: compose opens
+      filled. *(The owner has no Outlook account on hand; if this cannot be read, the option ships
+      behind the same reading as Gmail's and the line says so rather than being ticked.)* *(Not
+      readable this sitting. The Outlook URL is asserted in shape only — `outlook.office.com/mail/
+      deeplink/compose` with `to`, `subject`, `body`, the LF round trip, the attribute pair — and
+      the option ships behind Gmail's reading. If the line cannot be read before the next deploy,
+      say so here rather than ticking it.)*
+
+**Where this stands.** Five of eight lines closed by the build; two of the three 👤 read by the owner
+on 2026-09-14 and ticked — **the line WO-5.11 could not close is closed**, in the installed PWA and
+in a plain Chrome tab, and the iPad is unchanged as required. One 👤 remains and is not expected to
+close: Outlook, for want of an account, shipping behind Gmail's reading as the line itself provides
+for. So the work order stays 🔨 by the tool's own rule rather than for want of work.
+
+*(One thing from that sitting worth carrying past this work order: **Gmail's `fs=1` compose opens as
+a bare compose pane with no inbox, sidebar or thread list around it**, which reads like a page that
+half-loaded. It is the correct rendering of `view=cm&fs=1` and the reason the reading paused to
+check. A later reader taking this line again will see the same thing and should not treat it as a
+failure.)*
+
 ---
 
 ## Phase 6 — Calendar & the glance page

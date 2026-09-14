@@ -13,6 +13,27 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Where your mail lives — 2026-09-14
+
+**Outreach now asks where your mail lives, and `mailto:` is one of three answers rather than the
+only one.** Three chips in the draft modal — *Default mail app*, *Gmail in the browser*, *Outlook on
+the web*. Under the default nothing has changed: *Open in my mail app* hands the draft to the mail
+client exactly as before, which is what the iPad wants and what it still gets. Under either webmail
+the draft opens instead as a filled compose page in a new browser tab, so an installed Planbook is
+never navigated away from itself by a `mailto:` handler — the defect that struck WO-5.11, where
+Gmail-as-handler either swallowed the app or left a blank tab, and the app could not even tell the
+teacher which, because a browser's protocol-handler table is not something a page can read.
+
+**This buys no permission and costs none.** A compose URL is a link to a web page the teacher is
+already signed in to, not an API call — no mail scope, no Google script fetched, no `window.open()`.
+The preference is a `planbook_` browser key and never reaches the year document. The privacy policy
+and `docs/FERPA.md` say what the handoff sends and where, in the same words.
+
+Read on hardware by the owner 2026-09-14: the installed PWA and a plain Chrome tab both open Gmail
+compose filled with paragraph breaks intact and leave the app on the draft, and the iPad is
+unchanged. Outlook ships behind that reading for want of an account to test it with, and its
+Acceptance line says so rather than being ticked. (WO-5.12)
+
 ### Copy the draft — 2026-09-12
 
 **An email draft has a second way out.** *Copy the draft* sits beside *Open in my mail app* and

@@ -271,7 +271,7 @@ Consequences that follow, and that keep the consent screen clean:
 | Rule | Why |
 |---|---|
 | **`drive.file` is the only scope, ever** | Anything more is a sensitive-scope escalation the teacher sees and fears. Details in [`docs/sync.md`](docs/sync.md) |
-| **Outreach goes out via `mailto:`** | A mail scope reads "Send email as you." No scope, no fear, and the teacher's own sent-mail record stays intact |
+| **Outreach leaves by a door the teacher picks, and never by a mail scope** | A mail scope reads "Send email as you." No scope, no fear, and the teacher's own sent-mail record stays intact. **Three doors since WO-5.12** — the `mailto:`, a Gmail compose URL, an Outlook one — and **not one of them is an API call**: a compose URL is a link to a web page she is already signed in to, so it costs exactly what `mailto:` cost, which is nothing. *(This row read "Outreach goes out via `mailto:`" until 2026-09-14, and the reasoning was never the thing that changed — `mailto:` was. Read it as the standing warning that this table states consequences, not mechanisms.)* |
 | **No dependencies, no framework, no bundler** | Inherited suite rule; a service worker is the only build-adjacent piece |
 | **The app must work fully signed-out** | Sync is a feature, not a prerequisite. A teacher whose Workspace admin blocks third-party apps is still a customer |
 

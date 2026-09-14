@@ -1679,6 +1679,10 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
      link beside it is matched by the rule above as well; the values are the same, so which one wins
      does not matter and both say 44. */
   #outreachModal .class-action-btn { min-height: 44px; min-width: 44px; }
+  /* WO-5.12's three controls — the *Where does your mail live?* chips — wear `.toggle-btn`, whose
+     44px floor is further down this block, and are named here anyway for `.cls-tab-home`'s reason:
+     every control appears in this block by its own name. Same values, so which rule wins is moot. */
+  #outreachModal [data-outreach-mail] { min-height: 44px; min-width: 44px; }
   /* The two rows in that panel which are not targets themselves — the chips and the actions. The
      gap between 44px targets is part of the touch pass, which is `.panel-title-row`'s note above
      applied to a modal that holds three rows of them. */

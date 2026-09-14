@@ -2686,6 +2686,25 @@
         <div class="mf-block" id="outreachBlock"></div>
         <p class="class-hint warn hidden" id="outreachLength"></p>
 
+        <div class="modal-section-label">Where does your mail live?</div>
+        <!-- THE ONE QUESTION THIS PANEL REMEMBERS THE ANSWER TO (WO-5.12), and it is asked HERE,
+             beside the door it changes, rather than on a settings screen a teacher has to know
+             exists. The answer is this BROWSER's and not the teacher's — the laptop is Gmail in a
+             tab and the iPad is Mail — so it is a `planbook_` preference and never a field in the
+             year document (src/prefs.js's `mailDoor` says why at length). Three chips in the same
+             `.toggle-btn` row the tones and the recipients wear; the active one is drawn from the
+             model, so it is always the door the link below was built for. The default is the
+             device's own mail app, which is a `mailto:` and is what the iPad sees, unchanged. -->
+        <div class="roster-actions" id="outreachMail" role="group" aria-label="Where does your mail live">
+          <button class="toggle-btn" type="button" data-outreach-mail="default"
+                  aria-pressed="true">Default mail app</button>
+          <button class="toggle-btn" type="button" data-outreach-mail="gmail"
+                  aria-pressed="false">Gmail in the browser</button>
+          <button class="toggle-btn" type="button" data-outreach-mail="outlook"
+                  aria-pressed="false">Outlook on the web</button>
+        </div>
+        <p class="roster-hint" id="outreachMailNote"></p>
+
         <div class="modal-actions">
           <!-- A REAL LINK, AND THE REFUSAL IS THAT IT HAS NO href. src/outreach-view.js argues it
                at its own header: a blocked draft's handoff is not a dimmed button, it is not a link
@@ -2696,6 +2715,17 @@
                that sits blank on the `mailto:` URL and never reaches the handler at all, in the
                installed app and in a plain Chrome tab alike. That header's fourth reason has the
                readings, and tools/verify/outreach.mjs goes red if the attribute comes back.
+
+               SINCE WO-5.12 THAT SENTENCE IS ABOUT THE `mailto:` AND NOT ABOUT THE ANCHOR. With
+               *Where does your mail live?* above set to Gmail or Outlook, the `href` is a plain
+               https compose URL on that site, and an https link with `target="_blank"
+               rel="noopener"` from an installed PWA opens an ordinary browser tab — the About
+               modal's two document links are the precedent. So the pair is SET AND STRIPPED BY
+               src/outreach-view.js's paintOpen() together with the `href`, on when the `href` is
+               https and off when it is a `mailto:`, and it is still not static markup here: a
+               `_blank` `mailto:` is still the blank tab WO-5.11 read, and the same check still
+               asserts the attributes absent on that draft. Nothing detects Gmail, Chrome or a
+               handler — the teacher answers the question and this browser remembers the answer.
 
                THE HOOK LOGS THE CONTACT AND DOES NOT INTERCEPT THE LINK (WO-5.4). Following the
                `mailto:` stays the browser's job — nothing in src/shell.js calls preventDefault on
@@ -2735,11 +2765,12 @@
              does: they should be revisable without opening a JavaScript file. -->
         <p class="class-hint">
           <strong>Planbook does not send anything.</strong> This opens the draft in your own mail
-          app, where you read it, change it and press send yourself — so what went out is in your
-          own sent-mail folder, which is what a school asks for when it asks. It also means Planbook
-          cannot tell whether you sent it. What it records on this student's page is that you handed
-          this message over, when, to whom, and which signal it was about — not that it was
-          delivered. Entries are never edited or deleted.
+          app — or, if you said above that your mail is Gmail or Outlook in a browser, on that
+          site in a new tab — where you read it, change it and press send yourself, so what went
+          out is in your own sent-mail folder, which is what a school asks for when it asks. It
+          also means Planbook cannot tell whether you sent it. What it records on this student's
+          page is that you handed this message over, when, to whom, and which signal it was about —
+          not that it was delivered. Entries are never edited or deleted.
         </p>
       </div>
     </div>

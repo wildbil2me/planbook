@@ -7,7 +7,7 @@ it to, no account to create, and every record stays in the browser on the teache
 **not** your school's official record. The authoritative record remains your student information
 system; Planbook does not connect to it, does not read from it and does not replace it.
 
-**Last updated 20 August 2026.** The teacher-facing version of the same facts is the
+**Last updated 13 September 2026.** The teacher-facing version of the same facts is the
 [privacy policy](https://planbook.hwgteach.com/privacy), and the two are kept in step by hand: this
 document is written for a district review, that one for a teacher and for Google's OAuth
 verification. Neither restates the other's argument, and where they state the same fact — what
@@ -28,8 +28,9 @@ Entered by the teacher, for the teacher's own classes:
 - What the teacher has written down about a student: short behavior entries and notes to herself,
   each one a few words, a moment and whatever detail she chose to add. They are hers, they are never
   edited or deleted once written, and nothing in the app sends one anywhere
-- A record of the outreach the teacher has sent — the document keeps a place for it in the same
-  collection, and the feature that writes to it is not in the released app yet
+- A record of the outreach the teacher has handed over to be sent — to whom, when, the subject and
+  the message, and which signal it was about; not whether it was delivered, which Planbook cannot
+  tell
 - **Accommodation and plan information: IEP and 504 status, accommodations, plan review dates,
   medical needs, behavior plans, and what a plan says about attendance.** This is the most
   sensitive data in the app and it has its own section below.
@@ -94,9 +95,17 @@ is a deliberate act, and it is visible as it happens:
 2. **Turning on Google Drive sync** — optional, off unless switched on, uploading the year's file
    to the *teacher's own* Google Drive so that a laptop and an iPad show the same gradebook. *Not
    in the released app yet.*
-3. **Sending a message the teacher drafted** — Planbook hands a drafted email to the teacher's own
-   mail application, where the teacher reads it, edits it and sends it. Planbook never sends mail
-   itself, and the sent copy lands in the teacher's own sent folder. *Not in the released app yet.*
+3. **Sending a message the teacher drafted** — Planbook drafts an email to a guardian, counselor
+   or administrator and hands it over unsent, through one of two doors chosen in the draft itself
+   and remembered by the browser it was chosen in, nowhere else. The default door is the device's
+   own mail app, reached through an ordinary `mailto:` link. The other is Gmail in the browser or
+   Outlook on the web: choose one and the same link opens that site's own compose page in a new
+   browser tab, with the recipient, the subject and the message already filled in — which means
+   the draft travels to `mail.google.com` or `outlook.office.com` in the address of that compose
+   page, on that tap and on no other. That is the site the message is about to be sent from and no
+   other party, and nothing goes there until the link is tapped. Through either door the message
+   is read, changed and sent from the mail account that was going to send it anyway; Planbook
+   never sends mail itself, and the sent copy lands in that account's own sent folder.
 
 There is no fourth destination.
 
@@ -127,10 +136,11 @@ a document:
    tap.
 2. **A presentation mode that suppresses every sensitive field at once**, app-wide, for exactly
    that moment.
-3. **No drafted message can ever contain it.** The outreach feature is not in the released app yet;
-   when it ships, its merge fields will refuse accommodation, medical and plan data by
-   construction, rather than merely omitting it from the standard templates. A template system
-   makes an IEP disclosure a one-keystroke mistake unless it is impossible.
+3. **No drafted message can ever contain it.** The outreach feature's merge fields refuse
+   accommodation, medical and plan data by construction — the resolver knows a short list of
+   permitted fields and answers nothing else — rather than merely omitting it from the standard
+   templates. A template system makes an IEP disclosure a one-keystroke mistake unless it is
+   impossible.
 
 ## Backups, and what is in one
 

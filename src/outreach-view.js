@@ -1,6 +1,7 @@
 /*
   The send flow — the audience picker, the draft, and the two ways it leaves: the handoff to the
-  teacher's own mail client (WO-5.3) and the copy to her clipboard (WO-5.7).
+  teacher's own mail client (WO-5.3) — or, since WO-5.12, to Gmail or Outlook in a browser tab if
+  this device says that is where her mail lives — and the copy to her clipboard (WO-5.7).
 
   ── WHAT THIS FILE IS, AND THE THREE IT IS NOT ──
 
@@ -70,6 +71,16 @@
   whether it copies the teacher, and one status sentence. Not one of them reaches localStorage —
   src/signals-view.js's and src/templates-view.js's ruling, and their reason: a remembered choice is
   a choice made by nobody the teacher can remember. Every arrival starts from the row she tapped.
+
+  **ONE THING ON THIS PANEL IS REMEMBERED, AND IT IS NOT ABOUT THE DRAFT (WO-5.12).** *Where does
+  your mail live?* — the three chips above the actions — is `planbook_mailDoor`, read through
+  src/prefs.js and written by nothing but those chips. It is remembered because it is not a choice
+  about this message or this student: it is a fact about THIS BROWSER, the same kind of fact
+  `presentationMode` and `alertSoundOn` are, and a teacher whose mail is Gmail is not going to
+  answer that question forty times a term. It is a `planbook_` key and not a field in the document
+  because the owner's laptop is Gmail and the owner's iPad is Mail, and a synced answer is wrong on
+  one of them by construction — src/prefs.js says so at the key. Nothing about the draft rides
+  along with it: three words, no address, no recipient, no subject.
 
   ── THE DRAFT IS RESOLVED ONCE PER CHOICE, AND EDITED FROM THERE ──
 
@@ -151,12 +162,30 @@
       app cannot see a browser's protocol-handler table, and the webmail teacher's documented door
       is the second one, WO-5.7's *Copy the draft*, which is the door that works beside a Gmail
       handler.
+    · **AND SINCE WO-5.12 THE ANCHOR CARRIES `target="_blank" rel="noopener"` WHEN, AND ONLY WHEN,
+      ITS `href` IS https** — which is the one place this reverses WO-5.11's reasoning, and it does
+      so because the attributes are now conditional on something the model knows. The webmail
+      teacher's door is no longer the clipboard: with *Where does your mail live?* set to Gmail or
+      Outlook, `outreachModel()` builds the `href` from src/outreach.js's composeUrl() — a plain
+      https URL on `mail.google.com` or `outlook.office.com` with every field filled — and an
+      https link with `_blank` from an installed PWA opens an ordinary browser tab, reliably,
+      exactly as the About modal's two document links do. The handler is never consulted because
+      the scheme is never `mailto:`. On the default door the `href` is still the `mailto:` and the
+      anchor still carries NEITHER attribute, because the reading above is still true of a
+      `_blank` `mailto:` — the WO-5.11 check in tools/verify/outreach.mjs is unchanged and still
+      asserts their absence on that draft. paintOpen() sets and strips the pair WITH the `href`
+      rather than as static markup, so there is no state in which a `mailto:` wears a `target`.
+      Nothing here detects Gmail, Chrome or a handler: the question is asked of the teacher, in
+      three chips, and the answer is this browser's (src/prefs.js's `mailDoor`).
 
   AND WO-5.4's WRITE RIDES THAT CLICK RATHER THAN REPLACING IT. The hook on the anchor is a plain
   delegated listener in src/shell.js: it appends the contact and returns, and **nothing anywhere
   calls preventDefault() on it** — the navigation stays the browser's, because the second bullet
   above is about the device that decides go-live and a scripted `window.location` on iOS is the
-  thing it warns against. A log entry is not worth trading the handoff for.
+  thing it warns against. A log entry is not worth trading the handoff for. It is the SAME anchor
+  and the same listener whichever door is open (WO-5.12): the listener never reads the `href`, so a
+  webmail handoff is logged exactly as a `mailto:` one, and a blocked draft is refused the same way
+  under every preference — no `href` at all.
 
   It also means the refusal is unchanged: a blocked draft's anchor has no `href`, so the click that
   writes cannot happen on it. recordHandoff() asks the model the same question paintOpen() asked
@@ -173,6 +202,10 @@ import { getActiveClasses, getTerms, termName } from './classes.js';
 import { fullName } from './roster.js';
 import { announce } from './live-region.js';
 import { openModal, closeModal } from './modal.js';
+/* THE ONE PREFERENCE THIS FLOW READS OR WRITES (WO-5.12): `mailDoor`, which decides what the
+   handoff link IS. Everything else this file holds is deliberately forgotten — see the header — and
+   this is the exception argued there: a fact about the browser, not about the draft. */
+import { getPref, setPref } from './prefs.js';
 /* The switch, and only the switch — see this file's header for why it is this accessor and not the
    visibility rule beside it. src/templates-view.js and src/signals-view.js import the same one from
    the same place, so this is that switch rather than a second copy of it. */
@@ -218,6 +251,10 @@ const LENGTH_ID = 'outreachLength';
 const OPEN_ID = 'outreachOpen';
 const COPY_ID = 'outreachCopy';
 const STATUS_ID = 'outreachStatus';
+/* WO-5.12's two: the row of three chips that answers *Where does your mail live?*, and the line of
+   type under it that says what the answer means for the link. */
+const MAIL_ID = 'outreachMail';
+const MAIL_NOTE_ID = 'outreachMailNote';
 
 /* ── THE COPY (WO-5.7), AND THE THREE THINGS ABOUT IT THAT ARE RULINGS ──
 
@@ -364,6 +401,9 @@ export function outreachModel() {
   const doc = getDoc();
   const student = subject ? studentById(doc, subject.studentId) : null;
   const cls = subject ? classById(doc, subject.classId) : null;
+  /* Read through mailDoorOf() and never trusted raw: an absent key, a value from a build that
+     spelled the options differently, or a hand-edited string all come back as the `mailto:`. */
+  const mail = outreach.mailDoorOf(getPref('mailDoor'));
   const base = {
     open: !!subject,
     blocked: blocked,
@@ -379,6 +419,17 @@ export function outreachModel() {
        further down — so a blocked draft and a projected screen both copy nothing, and they do it by
        having nothing to copy rather than by a control declining. */
     clipboard: '', copied: false,
+    /* WO-5.12's four. `mail` is this browser's answer to *Where does your mail live?* — read here,
+       in the base, because it is not about the student and is drawn under the projector's refusal
+       exactly as it is drawn without it: the chips name no one. `doors` is the three of them with
+       the active one marked. `https` is whether the URL below is a webmail compose page rather than
+       a `mailto:`, which is the one fact paintOpen() needs to decide `target` and `rel`; and
+       `ceiling` is the number the length warning may name, or null when the door has none anybody
+       has measured (src/outreach.js's ceilingFor()). */
+    mail: mail,
+    doors: outreach.MAIL_DOORS.map((d) => ({ id: d.id, label: d.label, active: d.id === mail })),
+    https: false,
+    ceiling: outreach.ceilingFor(mail),
     status: status,
   };
   /* NOTHING IS RESOLVED, LISTED OR ADDRESSED WHILE THE PROJECTOR IS ON. Returned before a recipient
@@ -463,12 +514,17 @@ export function outreachModel() {
 
   const to = chosen ? chosen.email : '';
   const ready = reasons.length === 0;
-  const url = ready ? outreach.mailtoUrl({
+  /* THE URL IS BUILT FOR THE DOOR THIS BROWSER ANSWERED (WO-5.12). composeUrl() hands back the
+     `mailto:` for 'default' and a compose page for the other two, out of the same four fields, so
+     the choice of door changes the string and nothing else — not the gate, not the fields, not
+     the clipboard beside it. Built here rather than in paintOpen() because the one thing the
+     `target` decision needs is whether this string is https, and that is the model's to know. */
+  const url = ready ? outreach.composeUrl({
     to: to,
     cc: cc.on && cc.ok ? cc.email : '',
     subject: draft.subject,
     body: draft.body,
-  }) : '';
+  }, mail) : '';
   /* THE SAME FOUR FIELDS, THE SAME GATE, THE SAME OBJECT (WO-5.7). Built here beside the URL rather
      than inside the tap, so that the one gate `ready` — every reason in the list above — decides
      both doors at once and neither can be open while the other is shut. What comes back is plain
@@ -507,7 +563,11 @@ export function outreachModel() {
     ready: ready,
     url: url,
     length: url.length,
+    /* Measured against MAILTO_CEILING on EVERY door — as the only documented figure for the first
+       and as a conservative trigger for the other two, where `ceiling` is null and the warning
+       says so (src/outreach.js § the webmail compose URL). */
     long: outreach.overCeiling(url),
+    https: /^https:/.test(url),
     clipboard: clipboard,
     /* WHETHER THE CLIPBOARD HOLDS THIS DRAFT, ASKED OF THE STATUS LINE RATHER THAN OF A FLAG —
        see COPIED_NOTE at the head of this file for why that is the whole of the bookkeeping. */
@@ -638,7 +698,13 @@ function paintBlock(model) {
       count, 'thing to fix', 'things to fix')));
 
   if (model.ready) {
-    host.append(el('div', 'mf-reason', 'It opens in your own mail app, addressed to '
+    /* The door is named (WO-5.12): "in Gmail, in a browser tab" is a different promise from "in
+       your own mail app", and the sentence a teacher reads before she taps should be the one that
+       is true of the tap. */
+    host.append(el('div', 'mf-reason', 'It opens in '
+      + (model.https ? outreach.mailDoorName(model.mail) + ', in a browser tab'
+        : 'your own mail app')
+      + ', addressed to '
       + (model.recipient ? (model.recipient.name || model.recipient.email) : '')
       + (model.cc.on && model.cc.ok ? ', copied to you' : '')
       + '. Nothing is sent until you send it there.'));
@@ -683,27 +749,80 @@ function paintOpen(model) {
   if (model.ready && model.url) {
     link.setAttribute('href', model.url);
     link.removeAttribute('aria-disabled');
-    link.setAttribute('aria-label', 'Open this draft in your mail app, addressed to '
+    link.setAttribute('aria-label', 'Open this draft in '
+      + (model.https ? outreach.mailDoorName(model.mail) + ', in a browser tab' : 'your mail app')
+      + ', addressed to '
       + (model.recipient ? (model.recipient.name || model.recipient.email) : ''));
   } else {
     link.removeAttribute('href');
     link.setAttribute('aria-disabled', 'true');
     link.setAttribute('aria-label', 'Open in my mail app — not until the draft is unblocked');
   }
+  /* `target` AND `rel` TRAVEL WITH THE `href` AND ARE CONDITIONAL ON ITS SCHEME (WO-5.12). On an
+     https compose page they go on — a new tab is the whole point, and `noopener` is what keeps
+     that tab from holding a handle to the PWA's window. On a `mailto:` they come OFF, in the same
+     paint, because a `_blank` `mailto:` is the blank tab WO-5.11 read on hardware and the check
+     that keeps it out is still there. Set and stripped here rather than written as static markup,
+     so that there is no state of the anchor the model did not decide. */
+  if (model.ready && model.url && model.https) {
+    link.setAttribute('target', '_blank');
+    link.setAttribute('rel', 'noopener');
+  } else {
+    link.removeAttribute('target');
+    link.removeAttribute('rel');
+  }
 
   const length = document.getElementById(LENGTH_ID);
   if (length) {
     /* THE WARNING IS BEFORE THE FACT, because truncation leaves no gap and no error — see
        src/outreach.js's MAILTO_CEILING for where 2,000 comes from and why it is measured on the
-       encoded URL rather than on what the teacher typed. Nothing in this app cuts the message. */
+       encoded URL rather than on what the teacher typed. Nothing in this app cuts the message.
+
+       AND IT KNOWS WHICH DOOR IS OPEN (WO-5.12). The 2,000 is a fact about a `mailto:` handed to
+       the operating system; a webmail compose page has no figure anybody has documented, so on
+       that door the sentence names no number and says Planbook cannot know — src/outreach.js's
+       ceilingFor() is where null is argued, and an invented figure here would be a promise the
+       warning cannot keep. */
     length.classList.toggle('hidden', !model.long);
-    length.textContent = model.long
-      ? 'This draft is ' + model.length + ' characters once it is encoded for your mail app, which '
-        + 'is over the ' + outreach.MAILTO_CEILING + ' some apps carry — Outlook on Windows cuts '
-        + 'there, silently. Planbook does not shorten it: send it and check what arrived, or trim '
-        + 'it here first.'
-      : '';
+    length.textContent = !model.long ? ''
+      : (model.ceiling === null
+        ? 'This draft is ' + model.length + ' characters once it is encoded into the link that '
+          + 'opens ' + outreach.mailDoorName(model.mail) + '. Neither Gmail nor Outlook says how '
+          + 'long a compose link it will read in full, so Planbook cannot tell you whether this '
+          + 'one arrives whole. Planbook does not shorten it: open it and check what arrived, or '
+          + 'trim it here first.'
+        : 'This draft is ' + model.length + ' characters once it is encoded for your mail app, '
+          + 'which is over the ' + model.ceiling + ' some apps carry — Outlook on Windows cuts '
+          + 'there, silently. Planbook does not shorten it: send it and check what arrived, or '
+          + 'trim it here first.');
   }
+}
+
+/*
+  WHERE DOES YOUR MAIL LIVE (WO-5.12). Three chips in the same `.toggle-btn` row the tones and the
+  recipients wear, drawn from the model rather than from the markup so that the active one is
+  always the one the `href` was built for. The note under them says what the answer means for the
+  link in one sentence, and says in the same breath that it is this device's answer — the one
+  thing on this panel that is remembered, and the reason it is safe to remember (the header).
+*/
+function paintMailDoor(model) {
+  const host = document.getElementById(MAIL_ID);
+  if (host) {
+    host.querySelectorAll('[data-outreach-mail]').forEach((button) => {
+      const on = (button.getAttribute('data-outreach-mail') || '') === model.mail;
+      button.classList.toggle('active', on);
+      button.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+  const note = document.getElementById(MAIL_NOTE_ID);
+  if (!note) return;
+  note.textContent = model.https
+    ? 'Open in my mail app will open ' + outreach.mailDoorName(model.mail) + ' in a new browser '
+      + 'tab with the draft filled in, and this window stays on the draft. Remembered on this '
+      + 'device only — your other devices can answer differently.'
+    : 'Open in my mail app will hand the draft to whatever this device opens mail with. If your '
+      + 'mail is Gmail or Outlook in a browser, say so here and it opens there instead. Remembered '
+      + 'on this device only.';
 }
 
 /*
@@ -801,7 +920,19 @@ export function renderOutreach(opts) {
     const block = document.getElementById(BLOCK_ID);
     if (block) block.textContent = '';
     const link = document.getElementById(OPEN_ID);
-    if (link) { link.removeAttribute('href'); link.setAttribute('aria-disabled', 'true'); }
+    if (link) {
+      link.removeAttribute('href');
+      link.setAttribute('aria-disabled', 'true');
+      /* The pair goes with the `href` it was conditional on (WO-5.12) — an anchor with no address
+         and a `target` is an anchor describing a tab it cannot open. */
+      link.removeAttribute('target');
+      link.removeAttribute('rel');
+    }
+    /* THE MAIL-DOOR NOTE IS EMPTIED WITH THE REST (WO-5.12), though it names nobody: it is one more
+       line of type under a form that is not drawn, and the chips themselves keep their state
+       because the preference is this browser's and not this draft's. */
+    const mailNote = document.getElementById(MAIL_NOTE_ID);
+    if (mailNote) mailNote.textContent = '';
     /* AND THE COPY GOES DOWN WITH IT (WO-5.7), on the same line as the link and for the link's
        reason: the form is `.hidden` here, and `display: none` is not a refusal any more than it is
        a redaction. The control is disabled rather than merely undrawn, so a click dispatched at it
@@ -838,6 +969,7 @@ export function renderOutreach(opts) {
   }
 
   paintBlock(model);
+  paintMailDoor(model);
   paintOpen(model);
   paintCopy(model);
 
@@ -1192,6 +1324,26 @@ export function toggleOutreachCopy() {
   announce(copySelf ? 'This draft will copy you.' : 'This draft will not copy you.');
 }
 
+/*
+  WHERE DOES YOUR MAIL LIVE (WO-5.12) — THE ONE WRITE TO A PREFERENCE IN THIS FLOW, and it writes
+  three words. It does not ask first and it does not rebuild anything: the draft is untouched by
+  it, the gate is untouched by it, and the only thing that changes is the string on the link and
+  the sentence under the chips — which is why this is a plain setter beside toggleOutreachCopy()
+  rather than a fourth door through askBeforeRebuild(). A value that is not one of the three is
+  refused here rather than rounded, so a stray hook cannot write a word the reader would only round
+  back to the default anyway.
+*/
+export function setOutreachMailDoor(id) {
+  const door = outreach.mailDoorOf(id);
+  if (door !== String(id || '')) return false;
+  setPref('mailDoor', door);
+  renderOutreach({ fields: false });
+  announce(door === 'default'
+    ? 'Open in my mail app will use this device’s own mail app.'
+    : 'Open in my mail app will open ' + outreach.mailDoorName(door) + ' in a new browser tab.');
+  return true;
+}
+
 /* ────────────────────────── the handoff (WO-5.4) ──────────────────────────
 
   THE ONE WRITE IN THIS FLOW, ON THE ONE GESTURE THAT MEANS A MESSAGE LEFT THE APP.
@@ -1243,7 +1395,10 @@ export function recordHandoff() {
     ruleId: hit ? hit.ruleId : '',
   });
   if (!entry) return null;
-  status = 'Handed to your mail app and logged on ' + (model.name || 'this student')
+  /* The door is named in the sentence (WO-5.12) — "Handed to Gmail" is what a teacher looking at a
+     new browser tab wants confirmed — and the default door keeps its original words. */
+  status = 'Handed to ' + (model.https ? outreach.mailDoorName(model.mail) : 'your mail app')
+    + ' and logged on ' + (model.name || 'this student')
     + '’s record. Planbook cannot tell whether you send it from there — the log says what you '
     + 'wrote and when.';
   /* `fields: false`, like every other repaint that is not a rebuild: the two boxes hold exactly what

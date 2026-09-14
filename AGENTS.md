@@ -34,7 +34,8 @@ dependencies.
 - **Accommodation, medical, and plan data never leaves the roster.** No merge field resolves it, no
   log line prints it, no export emits it. The one exception is the JSON backup, whose own UI says so.
 - **`drive.file` is the only OAuth scope.** Not `spreadsheets`, not a mail scope. Outreach goes out
-  via `mailto:`.
+  by a door the teacher picks — the `mailto:`, a Gmail compose URL or an Outlook one — and **none of
+  the three is an API call**, which is why three doors still cost no scope.
 - **No backend, no Apps Script.** Both were considered and rejected; `CLAUDE.md` has the reasoning.
 - **A mockup follows [`design/mockups/PROTOCOL.md`](design/mockups/PROTOCOL.md).** Two stylesheets —
   `proposed*.css` lifts, `mockup.css` stays behind the `mk-` prefix — `src/shell.css` linked and never

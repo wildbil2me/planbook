@@ -1210,7 +1210,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1333 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1342 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1599,6 +1599,30 @@ are the same edit read from either side. Nothing else in the run reads either at
 `target` changes where a navigation lands rather than whether the click fires — so that run's one red
 line is the whole of the difference. It touches no control's size: the anchor is the same element in
 the same `.modal-actions` row, and the touch pass measuring it is unchanged.
+
+**WO-5.12 moved it from 1333 to 1342, and the executed count from 1343 to 1352 — nine sites, nine
+results.** All nine are literal call sites inside the existing § *"the send flow (WO-5.3)"*, none in a
+loop and none a failure arm, standing on that section's own fixture guard; they sit in four places
+rather than one, because each reads a state the section already builds. **Five directly after the
+WO-5.11 check** — which is byte-identical and still green, and whose own comment's *"the ONLY check in
+the run that reads `target` or `rel`"* is now history rather than fact, corrected in a note beside it
+rather than inside it: the ready draft with *Gmail in the browser* tapped (an https `href` on
+`mail.google.com` carrying `to`, `su`, `body`; `target="_blank"`; `rel` containing `noopener`; the
+chip pressed; `planbook_mailDoor` read back as `"gmail"` through the seam), its LF round trip, the
+document byte-identical either side of the tap, *Outlook on the web* likewise, and *Default mail app*
+putting the `mailto:` back with neither attribute — plus the setter refusing a fourth word rather
+than rounding it. **One on the refused draft**: no `href`, no `target`, no `rel` under each of the
+three doors in turn. **One on the long draft**: under Gmail the warning names no ceiling and says
+Planbook cannot know. **Two at the foot, after every `rev` reading in the file**: the handoff pressed
+under Gmail with `verify/contact-log.mjs`'s capture-phase stop — exactly one `contact` appended, the
+status line naming Gmail — and the three chips measured at 390px under a coarse pointer, with the
+preference put back to the default so every later section reads the `mailto:` shape. The cleanup
+check gained a conjunct (the one contact taken off the log, the preference read back as default)
+and is the only pre-existing check whose text moved. The run prints **1352**: `1352 checks · 1352
+passed · 0 failed · 0 skipped`, 42,102 lines, 31.1 lines per check, 452s — summary printed, then the
+teardown hang § WO-5.11 records, killed by PID. **There is no exit code for this run and the green
+is the summary line, not the status**: a process killed by PID does not exit 0, and this sentence
+claimed both until 2026-09-14. Mutations are tabulated in `TESTING.md` § WO-5.12.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not
