@@ -174,7 +174,7 @@ it.** A drawing of the destination is what stops each of those lines being desig
 
 | File | What |
 |---|---|
-| `glance.html` | The glance page — WO-6.4. Drawn twice: a Tuesday with things on it, and a quiet day |
+| `glance.html` | The glance page — WO-6.4. Drawn 2026-08-19 twice, **redrawn 2026-09-15 three ways**: a Tuesday with things on it, the same Tuesday while projecting, and a quiet day two weeks into the term — see § "Redrawn against the built half" below |
 | `calendar.html` | Month view, week view, the same month projected, and the event editor — WO-6.1 · 6.2 · 6.3 |
 | `proposed-phase6.css` | **The half that lifts**, split three ways at its section banners |
 
@@ -197,9 +197,40 @@ define. Neither prefix appears anywhere in `src/`. It splits:
 it.
 
 `glance.html` links `src/home.css` as well as `src/shell.css`, because the first thing on that page
-*is* the home grid: `.class-card`, `.class-card-state` and `.class-card-signals` are worn exactly as
-shipped, and the only new class on that panel is the chip that goes in the slot. If WO-6.4 ever
-needs to restyle one of them, that drawing breaks loudly, which is the point.
+*is* the home grid: `.class-card`, `.class-card-state`, `.class-card-signals` and — since the redraw —
+both `.class-card-count` chips are worn exactly as shipped, and that panel proposes **no** class of
+its own any more. It links `src/signals-view.css` too, for the reason given in the next section. If
+WO-6.4 ever needs to restyle one of them, that drawing breaks loudly, which is the point.
+
+## Redrawn against the built half — 2026-09-15
+
+The first drawing was made on 2026-08-19, before any of the three work orders it depends on had
+landed. By 2026-09-15 all three had — WO-3.26 and WO-4.5 filled the card slot, WO-4.2 / 4.3 / 4.5
+built the screen panel 4 summarises — and the drawing was showing a card the app no longer draws and
+a two-column list the app draws differently. It was redrawn rather than left, under PROTOCOL rule 1
+read the other way: a drawing made *before* the build is still worth keeping in step with the parts
+of the build that arrived under it, or the implementer lifts a proposal the app has already refused.
+
+Four things changed, and each is a deletion from `proposed-phase6.css` § GLANCE rather than an
+addition:
+
+1. **`.gl-sig` is gone.** The slot took two grey `.class-card-count`s — *N to grade*, *N need you* —
+   and `src/home.js` measured that a third does not fit. The card on the drawing is the card in the
+   app.
+2. **`.gl-two`, `.gl-col` and `.gl-col-head` are gone.** WO-4.2 and WO-4.3 shipped that exact layout
+   as `.sig-two` / `.sig-col` / `.sig-col-head`, with the figure in the strong position and the
+   cooldown foot under each column. Panel 4 is a summary of that screen, so its rows are that
+   screen's rows, worn as shipped. What the section still proposes is the `and N more ›` foot and
+   the `›` the cooldown foot gains because here it is a door and not an expansion.
+3. **The page is drawn while projecting**, which the first drawing did not do and the work order does
+   not mention — see the questions below.
+4. **The quiet day is two weeks into a term**, with the quiet-middle door on it and the signals
+   screen's own `.sig-inert` line under it.
+
+The counts on the page now add up across panels — five *to grade* chips are five rows in panel 3, six
+*need you* are the six students in panel 4 — which is a property worth keeping through any later
+redraw: WO-6.4's Traps line is about a second answer, and a card saying 2 over a list showing 3 is
+where a teacher would first see one.
 
 ## What the drawings propose
 
@@ -249,6 +280,8 @@ settled**, and three of them are cheaper to answer now than after a work order i
    editor authors all eight kinds including those two. Two authoring surfaces for the same two
    kinds is the "two controls meaning one thing" defect that reopened Phase 1. Drawn as though the
    dialog has gone — the home panel's `📅 Days off` button is `📅 Calendar` on the glance page.
+   **DECIDED (WO-6.6, 2026-08-20):** the home screen keeps *Calendar* and loses the other two; both
+   authoring panels live on the calendar's own header. `glance.html` draws it as shipped.
 5. **Which kinds take a class list?** `no-school` is school-wide and `dropped` refuses an empty
    one — both already shipped in `src/calendar.js`. The other six are undecided, and `studentId`
    has been in the schema since day one with nothing ever writing it. Drawn with the class picker
@@ -268,33 +301,68 @@ settled**, and three of them are cheaper to answer now than after a work order i
    single `<button>` since WO-1.13 and a control cannot nest inside a control. The proposal is
    that **the card says how many and the panels below say who**. That is a defensible reading of
    the work order and it is not the only one. **The owner's call.**
+   **DECIDED by two landings rather than a ruling (WO-3.26 2026-08-19, WO-4.5 2026-08-27):** both
+   chips shipped as `<span>`s inside the card's one button, and `src/home.js` says in its own words
+   that the chip says how many and the screen behind the Signals segment says who. WO-6.4's own
+   text still calls this "the open one" — it is not, and the work order should say so.
 9. **Five panels is two scrolls on an iPad**, which puts "who needs you" — the reason the app
    exists — below the fold at 7:40am. Reorder is ruled out by the work order; collapsing panels
-   3–5 to their counts, or a two-column page above 1024px, are not. **Worth reading on the real
-   iPad against this drawing.**
+   2–3 to their counts, or a two-column page above 1024px, are not. **Worth reading on the real
+   iPad against this drawing.** *Still open at the redraw.*
 
-## The one that is not a preference
+*Raised by the 2026-09-15 redraw —*
 
-**There is no IEP/504 review date anywhere on the glance page, and that is two work orders in the
-same phase disagreeing.** WO-6.1 asks for review dates "surfaced ahead of time, in
-presentation-mode-safe form"; WO-6.2 puts them on the calendar and requires them to vanish when
-projected; and WO-6.4's acceptance says *"Nothing on the page displays `supports` data, in
-presentation mode or out of it"* — where a review date is `students[].supports.reviewDate`.
+10. **Panel 4 while projecting is not in the work order, and it is the state that matters most.**
+    WO-6.4's fifth Acceptance line covers `supports` data and nothing else — but panel 4 is a list
+    of named students in trouble, which is exactly what WO-4.2's screen refuses to draw under a
+    projector, and the glance page is the one an iPad is most likely to be on when the cable goes
+    in. `src/home.js` is deliberately absent from `flipPresentationMode()`'s redraw list, with a
+    note saying what would change that. Drawn **shut, with the counts kept** — the screen's own
+    refusal, worn as shipped — as the proposal. The work order wants an Acceptance line for it and
+    the glance module on the redraw list.
+11. **The deadline panel owns `grades-due` and the week list does not draw it.** The first drawing
+    put "Progress grades due" on the page twice. Proposed: a grades-due date is a deadline by
+    definition and lives under *Closing in* whether or not it is inside its lead time; *Today and
+    this week* lists what is scheduled. The cost is a Thursday grades-due date missing from a list
+    headed "this week". **The owner's call.**
+12. **How many rows before "and N more ›"?** Drawn at three per column because three fired. A
+    November Monday can put twelve in the concern column, and a summary that draws twelve is the
+    list it summarises. Proposed: four, then a foot row that opens the full list. **The number is
+    the owner's.**
+13. **The quiet-middle door on a quiet day.** Panel 4 does not exist on a quiet day and the door
+    lived in its header — which would take it off the page on exactly the day `index.html`'s own
+    comment says that list is the most useful thing on the screen. Drawn on the quiet panel.
+14. **Panel 2's titles are free text and it stays up while projecting.** "Guardian call — Owen
+    Bennett" is typed by the teacher, and nothing stops "IEP meeting — Owen Bennett". The same open
+    edge `CLAUDE.md` records for a note to self, reached from the calendar's side; the calendar
+    draws these chips while projecting today. Named so it is a known edge, not a surprise.
 
-Read literally, **the one deadline a teacher is legally obliged not to miss is the one deadline
-*Closing in* may not show her.** It is drawn literally so the gap is visible. The safe resolution
-is probably that a date and a name is not "displaying supports data" — but that sentence has to be
-written into the work order before an implementer decides it alone, in a file nobody reviews for
-disclosure. `CLAUDE.md` § Accommodations is the standard it has to meet.
+## The one that was not a preference — answered
 
-## And one thing the drawings assume without asking
+**There is no IEP/504 review date anywhere on the first glance drawing, and that was two work orders
+in the same phase disagreeing.** WO-6.1 asked for review dates "surfaced ahead of time, in
+presentation-mode-safe form"; WO-6.2 put them on the calendar and required them to vanish when
+projected; and WO-6.4's old acceptance line said *"Nothing on the page displays `supports` data"* —
+where a review date is `students[].supports.reviewDate`. Read literally, the one deadline a teacher
+is legally obliged not to miss was the one *Closing in* could not show her.
+
+**DECIDED (the owner, 2026-08-19, WO-1.25), and now in WO-6.4's own text:** the review item is a
+**count** — `1 review coming up`, no name, no date, no kind — tapping through to the calendar, which
+is a surface she opened on purpose. The redraw puts it under *Closing in*, and reads it through
+`reviewDatesIn()`, which already answers with an empty list while projecting: the row is absent
+under a projector for free, with one asker, and no "1 hidden" line, because a count of hidden
+reviews is the disclosure one step removed.
+
+## And one thing the first drawings assumed without asking — drawn now
 
 **Signals need 4–6 weeks of real data before they fire at all** (Phase 4's own note), and Phase 6
-sits behind Phase 4. From Sep 2 until mid-October, every day is a quiet day for panels 4 and 5 —
-so `glance.html`'s second drawing is what the glance page looks like for the first six weeks of
-the term it ships into. Either that is fine, because the class grid and the grading queue are real
-from day one, or the empty state needs a second voice for **"not yet" rather than "nothing"**.
-It is the state the owner will see most.
+sits behind Phase 4. From Sep 2 until mid-October, most days are quiet days for panels 4 and 5 —
+so the quiet-day drawing is what the glance page looks like for the first six weeks of the term it
+ships into. The first round asked whether that state needed a second voice for **"not yet" rather
+than "nothing"**. Phase 4 shipped the sentence — `src/signals-view.js` draws a `.sig-inert` line
+from `inertRules()` — and the redraw wears it as shipped under the quiet panel rather than
+composing a second one. Whether it belongs on the page at all is the owner's call: it is honest,
+and it is also a line of grey on the page she opens every morning for six weeks.
 
 ---
 

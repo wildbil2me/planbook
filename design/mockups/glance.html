@@ -6,6 +6,7 @@
 <title>Mockup — The glance page (WO-6.4)</title>
 <link rel="stylesheet" href="../../src/shell.css">
 <link rel="stylesheet" href="../../src/home.css">
+<link rel="stylesheet" href="../../src/signals-view.css">
 <link rel="stylesheet" href="proposed-phase6.css">
 <link rel="stylesheet" href="mockup.css">
 </head>
@@ -14,7 +15,7 @@
 <div class="mk-notice">
   <strong>DRAWING, NOT THE APP.</strong>
   <span>Static HTML. Every count below is typed in — nothing here evaluates a rule or reads a document.</span>
-  <span>The glance page · <a href="../../plans/work-orders/phase-6-calendar-glance.md">WO-6.4</a></span>
+  <span>The glance page · <a href="../../plans/work-orders/phase-6-calendar-glance.md">WO-6.4</a> · drawn 2026-08-19, redrawn 2026-09-15 against the shipped card, the shipped signals screen and the cooldown</span>
 </div>
 <nav class="mk-nav">
   <a href="index.html">← contents</a>
@@ -34,21 +35,24 @@
   <symbol id="ic-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
   <symbol id="ic-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
   <symbol id="ic-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+  <symbol id="ic-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></symbol>
 </defs></svg>
 
-<!-- The app frame, copied from index.html.
+<!-- The app frame, copied from index.html as it stands on 2026-09-15.
 
      THE CAPTION IN THE LEFT STRIP READS "Today", NOT "Your classes". src/classes.js's rule is
      that on a non-class view the strip names the screen that is up, in the panel's own words —
      and the screen that is up is no longer one panel. "Your classes" is the first of five things
-     on it, and a header naming only the first would be a header describing the fold. -->
+     on it, and a header naming only the first would be a header describing the fold. The lookup
+     that draws the caption is src/classes.js's `here.textContent = 'Your classes'`; it is one
+     string, and the string is this work order's to change. -->
 <div class="header">
   <div class="header-top">
     <div class="header-left">
       <div class="header-logo">📓</div>
       <div class="header-title">
         <h1>Planbook</h1>
-        <p>Ms Toomey · St John's High School</p>
+        <p>Mr Toomey · St John's High School</p>
       </div>
     </div>
     <div class="header-actions">
@@ -89,91 +93,93 @@
   </div>
 </div>
 
-<div class="mk-section">A Tuesday with things on it — the five sections, in WO-6.4's order</div>
+<div class="mk-section">Tuesday, September 15 — the five sections, in WO-6.4's order, two weeks into the term</div>
 
 <main class="main">
  <div class="gl-stack">
 
   <!-- ══ 1. EVERY CLASS WITH TODAY'S STATE ══════════════════════════════════════════════
-       WO-1.10's home grid, unchanged, with the slot it has been holding open since August
-       finally filled. `.class-card`, `.class-card-state` and `.class-card-signals` are
-       src/home.css's own and are worn exactly as shipped — the only new class on this panel
-       is `.gl-sig`, the chip that goes IN the slot.
+       WO-1.10's home grid, AS IT SHIPS TODAY. Nothing on this panel is proposed any more:
+       `.class-card`, `.class-card-state`, `.class-card-signals` and BOTH chips are src/home.css's
+       own, worn exactly as shipped. The first drawing proposed a `.gl-sig` chip in three colours;
+       WO-3.26 and WO-4.5 filled the slot before this work order was cut, with two grey
+       `.class-card-count`s — "N to grade" and "N need you" — and src/home.js measured the slot
+       and found that a third does not fit. So the card carries exactly what it carries in the app
+       on 2026-09-15, and the only thing on this panel that WO-6.4 changes is the subtitle.
 
-       THE SUBTITLE HAS LOST ITS SECOND SENTENCE. index.html's copy today reads "Each card will
-       also grow to carry the work waiting to be graded and the students who need attention, as
-       those parts of Planbook arrive — the space on it is already theirs", and that file's own
-       comment says the sentence "is the one thing on this screen written to be deleted: it
-       describes what has not arrived yet, so it goes when the last slot is filled." This is the
-       work order that fills it. -->
+       THE SUBTITLE HAS LOST ITS SECOND SENTENCE. index.html's copy today still reads "Each card
+       will also grow to carry the work waiting to be graded and the students who need attention,
+       as those parts of Planbook arrive — the space on it is already theirs". Both arrived. The
+       sentence has described a kept promise since 2026-08-27, and index.html's own comment calls
+       it "the one thing on this screen written to be deleted". This is the work order that
+       deletes it. -->
   <div class="panel">
     <div class="panel-header">
       <div class="panel-title-row">
         <div class="panel-title">
           <h2>Your classes</h2>
-          <p>Tap a class to open it — its line says whether today's attendance is done.</p>
+          <p>Tap a class to open it — its line says whether today's attendance is done, and its chips say what is waiting on it.</p>
         </div>
-        <button class="class-action-btn" type="button" aria-haspopup="dialog">
-          <span aria-hidden="true">📅</span> Calendar
-        </button>
+        <div class="panel-title-actions">
+          <button class="class-action-btn" type="button" title="The month and the week — what is due, what is off, and where the terms turn">
+            <span aria-hidden="true">🗓</span> Calendar
+          </button>
+        </div>
       </div>
     </div>
 
     <div class="home-grid">
       <span class="class-card">
-        <button class="class-card-open" type="button" title="Biology I">
+        <button class="class-card-open" type="button" title="English I">
           <span class="class-card-head">
-            <span class="avatar av0" aria-hidden="true">BI</span>
-            <span class="class-card-name">Biology I</span>
+            <span class="avatar av0" aria-hidden="true">EI</span>
+            <span class="class-card-name">English I</span>
           </span>
           <span class="class-card-state taken">Taken · 2 absent</span>
           <span class="class-card-signals">
-            <span class="gl-sig grade">3 to grade</span>
-            <span class="gl-sig concern">2 need you</span>
-            <span class="gl-sig praise">1 to praise</span>
+            <span class="class-card-count">2 to grade</span>
+            <span class="class-card-count">2 need you</span>
           </span>
         </button>
       </span>
 
       <span class="class-card">
-        <button class="class-card-open" type="button" title="Biology I · P4">
+        <button class="class-card-open" type="button" title="English I · P3">
           <span class="class-card-head">
-            <span class="avatar av1" aria-hidden="true">BI</span>
-            <span class="class-card-name">Biology I · P4</span>
+            <span class="avatar av1" aria-hidden="true">EI</span>
+            <span class="class-card-name">English I · P3</span>
           </span>
           <span class="class-card-state taken">Taken · all present</span>
           <span class="class-card-signals">
-            <span class="gl-sig grade">1 to grade</span>
-            <span class="gl-sig praise">1 to praise</span>
+            <span class="class-card-count">1 to grade</span>
           </span>
         </button>
       </span>
 
       <span class="class-card">
-        <button class="class-card-open" type="button" title="Anatomy">
+        <button class="class-card-open" type="button" title="English III">
           <span class="class-card-head">
-            <span class="avatar av2" aria-hidden="true">AN</span>
-            <span class="class-card-name">Anatomy</span>
+            <span class="avatar av2" aria-hidden="true">EI</span>
+            <span class="class-card-name">English III</span>
           </span>
           <span class="class-card-state not-taken">Not taken yet</span>
           <span class="class-card-signals">
-            <span class="gl-sig grade">2 to grade</span>
-            <span class="gl-sig concern">1 needs you</span>
-            <span class="gl-sig praise">1 to praise</span>
+            <span class="class-card-count">1 to grade</span>
+            <span class="class-card-count">2 need you</span>
           </span>
         </button>
       </span>
 
       <span class="class-card">
-        <button class="class-card-open" type="button" title="Env Science">
+        <button class="class-card-open" type="button" title="English IV">
           <span class="class-card-head">
-            <span class="avatar av3" aria-hidden="true">ES</span>
-            <span class="class-card-name">Env Science</span>
+            <span class="avatar av3" aria-hidden="true">EI</span>
+            <span class="class-card-name">English IV</span>
           </span>
           <span class="class-card-state dropped">Didn’t meet</span>
           <span class="class-card-signals">
-            <span class="gl-sig grade">1 to grade</span>
-            <span class="gl-sig praise">1 to praise</span>
+            <span class="class-card-count">1 to grade</span>
+            <span class="class-card-count">1 needs you</span>
           </span>
         </button>
       </span>
@@ -182,29 +188,39 @@
            has it on the card today: a green "Taken" over three students nobody reached is the
            silent failure the whole state line exists to prevent. -->
       <span class="class-card">
-        <button class="class-card-open" type="button" title="Research">
+        <button class="class-card-open" type="button" title="AP Lit">
           <span class="class-card-head">
-            <span class="avatar av4" aria-hidden="true">RE</span>
-            <span class="class-card-name">Research</span>
+            <span class="avatar av4" aria-hidden="true">AL</span>
+            <span class="class-card-name">AP Lit</span>
           </span>
           <span class="class-card-state unconfirmed">3 unconfirmed · 1 absent</span>
           <span class="class-card-signals">
-            <span class="gl-sig concern">1 needs you</span>
+            <span class="class-card-count">1 needs you</span>
           </span>
         </button>
       </span>
     </div>
   </div>
 
-  <!-- ══ 2. TODAY'S AND THIS WEEK'S EVENTS ══════════════════════════════════════════════ -->
+  <!-- ══ 2. TODAY'S AND THIS WEEK'S EVENTS ══════════════════════════════════════════════
+       Authored events and derived due dates, from today to Friday, in date order. A derived row
+       carries the calendar's own ↗ (proposed-phase6.css § SHARED) because it opens the
+       ASSIGNMENT, not an event editor — the same grammar the month grid uses.
+
+       NO `grades-due` ROW HERE. The first drawing put "Progress grades due" on this page twice
+       and asked which panel owned it. Proposed answer: the deadline panel owns the kind outright
+       — a grades-due date is a deadline by definition, and a teacher looking for one looks under
+       "Closing in". See the amber note below the page. -->
   <div class="panel">
     <div class="panel-header">
       <div class="panel-title-row">
         <div class="panel-title">
           <h2>Today and this week</h2>
-          <p>What the calendar already knows, from here to Friday.</p>
+          <p>What the calendar already knows, from here to Friday. Each row opens where it was written.</p>
         </div>
-        <button class="class-action-btn" type="button">Open the calendar</button>
+        <div class="panel-title-actions">
+          <button class="class-action-btn" type="button">This week on the calendar</button>
+        </div>
       </div>
     </div>
     <div class="gl-list">
@@ -212,7 +228,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5b6fcc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-users"/></svg>
         <span class="gl-row-main">
           <span class="gl-row-title">Guardian call — Owen Bennett</span>
-          <span class="gl-row-why">Conference you booked on the 9th.</span>
+          <span class="gl-row-why">Conference · you booked it on the 9th.</span>
         </span>
         <span class="gl-row-meta">Today · 3:15</span>
         <span class="gl-row-go" aria-hidden="true">›</span>
@@ -220,7 +236,7 @@
       <button class="gl-row" type="button">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a9bb0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
         <span class="gl-row-main">
-          <span class="gl-row-title">Cell Structure Test due · Biology I</span>
+          <span class="gl-row-title">Of Mice and Men essay due · English I <span class="cal-chip-out" aria-hidden="true">↗</span></span>
           <span class="gl-row-why">From the assignment, not the calendar — opens the assignment.</span>
         </span>
         <span class="gl-row-meta">Today</span>
@@ -229,25 +245,16 @@
       <button class="gl-row" type="button">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5b6fcc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-cal"/></svg>
         <span class="gl-row-main">
-          <span class="gl-row-title">Department meeting</span>
-          <span class="gl-row-why">Room 214.</span>
+          <span class="gl-row-title">English department meeting</span>
+          <span class="gl-row-why">Meeting · Room 214.</span>
         </span>
         <span class="gl-row-meta">Wed · 2:45</span>
-        <span class="gl-row-go" aria-hidden="true">›</span>
-      </button>
-      <button class="gl-row warn" type="button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a6d1a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-upload"/></svg>
-        <span class="gl-row-main">
-          <span class="gl-row-title">Progress grades due in the SIS</span>
-          <span class="gl-row-why">Five classes to re-key by hand. Also in <em>Closing in</em>, below.</span>
-        </span>
-        <span class="gl-row-meta">Thu · in 2 days</span>
         <span class="gl-row-go" aria-hidden="true">›</span>
       </button>
       <button class="gl-row" type="button">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a9bb0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
         <span class="gl-row-main">
-          <span class="gl-row-title">Skeletal system quiz due · Anatomy</span>
+          <span class="gl-row-title">Gatsby ch. 1–3 quiz due · English III <span class="cal-chip-out" aria-hidden="true">↗</span></span>
         </span>
         <span class="gl-row-meta">Thu</span>
         <span class="gl-row-go" aria-hidden="true">›</span>
@@ -255,7 +262,7 @@
       <button class="gl-row" type="button">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a9bb0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-file"/></svg>
         <span class="gl-row-main">
-          <span class="gl-row-title">Cell Structure Test due · Biology I · P4</span>
+          <span class="gl-row-title">Of Mice and Men essay due · English I · P3 <span class="cal-chip-out" aria-hidden="true">↗</span></span>
         </span>
         <span class="gl-row-meta">Fri</span>
         <span class="gl-row-go" aria-hidden="true">›</span>
@@ -263,49 +270,63 @@
     </div>
   </div>
 
-  <!-- ══ 3. WHAT'S WAITING TO BE GRADED ═════════════════════════════════════════════════ -->
+  <!-- ══ 3. WHAT'S WAITING TO BE GRADED ═════════════════════════════════════════════════
+       The page-level half of WO-3.26. Same engine call — openWork() per student, unioned per
+       class — drawn as one row per ASSIGNMENT rather than as a count per class, because this is
+       where the count on the card becomes a place to go. The numbers here and the chips on the
+       cards above are the same numbers: 2 + 1 + 1 + 1 + 0 = 5, and a drawing where they did not
+       add up would be a drawing of the second answer WO-6.4's Traps line warns about. -->
   <div class="panel">
     <div class="panel-header">
       <div class="panel-title-row">
         <div class="panel-title">
-          <h2>Waiting to be graded</h2>
-          <p>Assignments with blanks in them. Each one opens on its own column in the score grid.</p>
+          <h2>Waiting to be graded · 5</h2>
+          <p>Assignments in the open term with blanks in them. Each one opens on its own column in the score grid.</p>
         </div>
       </div>
     </div>
     <div class="gl-list">
       <button class="gl-row" type="button">
-        <span class="avatar av0" aria-hidden="true" style="width:26px;height:26px;font-size:10px">BI</span>
+        <span class="avatar av0 gl-row-avatar" aria-hidden="true">EI</span>
         <span class="gl-row-main">
-          <span class="gl-row-title">Cell Structure Test</span>
-          <span class="gl-row-why">Biology I · Tests, 40% of the grade · due today</span>
+          <span class="gl-row-title">Of Mice and Men essay</span>
+          <span class="gl-row-why">English I · Essays, 40% of the grade · due today</span>
         </span>
         <span class="gl-row-meta">0 of 24</span>
         <span class="gl-row-go" aria-hidden="true">›</span>
       </button>
       <button class="gl-row" type="button">
-        <span class="avatar av1" aria-hidden="true" style="width:26px;height:26px;font-size:10px">BI</span>
+        <span class="avatar av0 gl-row-avatar" aria-hidden="true">EI</span>
         <span class="gl-row-main">
-          <span class="gl-row-title">Osmosis Quiz</span>
-          <span class="gl-row-why">Biology I · P4 · Quizzes, 25% of the grade</span>
+          <span class="gl-row-title">Vocabulary quiz 3</span>
+          <span class="gl-row-why">English I · Quizzes, 25% of the grade</span>
+        </span>
+        <span class="gl-row-meta">18 of 24</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+      <button class="gl-row" type="button">
+        <span class="avatar av1 gl-row-avatar" aria-hidden="true">EI</span>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Vocabulary quiz 3</span>
+          <span class="gl-row-why">English I · P3 · Quizzes, 25% of the grade</span>
         </span>
         <span class="gl-row-meta">18 of 26</span>
         <span class="gl-row-go" aria-hidden="true">›</span>
       </button>
       <button class="gl-row" type="button">
-        <span class="avatar av2" aria-hidden="true" style="width:26px;height:26px;font-size:10px">AN</span>
+        <span class="avatar av2 gl-row-avatar" aria-hidden="true">EI</span>
         <span class="gl-row-main">
-          <span class="gl-row-title">Muscle diagram</span>
-          <span class="gl-row-why">Anatomy · Classwork, 20% of the grade</span>
+          <span class="gl-row-title">Rhetorical analysis draft</span>
+          <span class="gl-row-why">English III · Classwork, 20% of the grade</span>
         </span>
         <span class="gl-row-meta">9 of 22</span>
         <span class="gl-row-go" aria-hidden="true">›</span>
       </button>
       <button class="gl-row" type="button">
-        <span class="avatar av3" aria-hidden="true" style="width:26px;height:26px;font-size:10px">ES</span>
+        <span class="avatar av3 gl-row-avatar" aria-hidden="true">EI</span>
         <span class="gl-row-main">
-          <span class="gl-row-title">Watershed map</span>
-          <span class="gl-row-why">Env Science · Labs, 30% of the grade</span>
+          <span class="gl-row-title">Poetry annotation</span>
+          <span class="gl-row-why">English IV · Reading responses, 30% of the grade</span>
         </span>
         <span class="gl-row-meta">21 of 23</span>
         <span class="gl-row-go" aria-hidden="true">›</span>
@@ -314,90 +335,309 @@
   </div>
 
   <!-- ══ 4. WHO NEEDS ATTENTION — BOTH DIRECTIONS, EQUAL WIDTH ══════════════════════════
-       The load-bearing panel. plans/ROADMAP.md Phase 4: the praise half is what makes this a
-       teacher's assistant rather than a gradebook with alarms, and WO-6.4's acceptance says the
-       praise list must not be buried behind the concern list. A stack buries it on any screen
-       shorter than both lists. So: 1fr 1fr, side by side, and no ratio.
+       THE ROWS ARE THE SIGNALS SCREEN'S OWN ROWS. Every class on this panel below the header is
+       src/signals-view.css's, worn as shipped: `.sig-two`, `.sig-col`, `.sig-col-head` with its
+       note, `.sig-row` with the figure in the strong position, `.sig-hidden` at the foot. The
+       first drawing proposed `.gl-two` / `.gl-col` / `.gl-col-head` for the same job; WO-4.2 and
+       WO-4.3 then shipped that job under `.sig-*`, and a second set of classes for a panel that
+       SUMMARISES that screen is the § CALENDAR scar in reverse — two stylesheets drawing one row.
+       WO-6.4 says the panel is a summary and the list it summarises is WO-4.2's screen; the
+       cheapest way to make that true on the glass is for the row to be the same row.
 
-       Every "why" line is the RULE's own sentence built from the numbers that fired it (WO-4.1),
-       not a phrase this screen composes — which is what stops "why is this student here?" from
-       ever drifting from the arithmetic behind it. -->
+       THREE THINGS DIFFER FROM THAT SCREEN, and all three are the work order's:
+         · every row taps THROUGH to the signals screen rather than opening a card in place;
+         · the foot of each column is a DOOR onto that screen with the column expanded, not an
+           expansion here — one list, one place, two ways in;
+         · there is no sort control and no rule strip: the ranking is the owner's ruled order and
+           the panel says so in its column heads, the way the screen does.
+
+       Every "why" line is the RULE's own sentence built from the numbers that fired it (WO-4.1)
+       — the exact strings src/signals.js's say() produces, typed in here — not a phrase this
+       screen composes. Ruth leads the concern column although Owen's number is bigger, because
+       attendance bands above everything (the owner, 2026-08-20) and the head says so. -->
   <div class="panel">
     <div class="panel-header">
       <div class="panel-title-row">
         <div class="panel-title">
           <h2>Who needs you</h2>
-          <p>Both directions, ranked by how much changed rather than by how high or low it is.</p>
+          <p>Both directions, after the cooldown. Every row opens the full list, on that student.</p>
         </div>
-        <button class="class-action-btn" type="button">The quiet middle · 9</button>
+        <div class="panel-title-actions">
+          <button class="class-action-btn" type="button" title="Neither flagged, nor praised, nor contacted this term">The quiet middle · 9</button>
+          <button class="class-action-btn" type="button">The full list</button>
+        </div>
       </div>
     </div>
-    <div class="gl-two">
-      <div class="gl-col concern">
-        <div class="gl-col-head concern">Concern · 3</div>
-        <div class="gl-list">
-          <button class="gl-row" type="button">
-            <span class="avatar av5" aria-hidden="true" style="width:28px;height:28px;font-size:10px">OB</span>
-            <span class="gl-row-main">
-              <span class="gl-row-title">Owen Bennett <span style="color:#8a9bb0;font-weight:600">· Biology I</span></span>
-              <span class="gl-row-why">Grade fell 12 points across the last 4 assignments — 81% to 69%.</span>
+    <div class="sig-two">
+      <div class="sig-col concern">
+        <div class="sig-col-head concern">Concern · 3 <span class="sig-col-note">attendance first, then the biggest change</span></div>
+        <div class="sig-list">
+          <button class="sig-row" type="button">
+            <span class="avatar av6 gl-row-avatar" aria-hidden="true">RE</span>
+            <span class="sig-row-main">
+              <span class="sig-row-name">Ruth Egan <span class="sig-row-class">· English III</span></span>
+              <span class="sig-row-why">In English III, Ruth Egan has 5 absences in the last 20 recorded meetings — 4 or more.</span>
+              <span class="sig-row-tags"><span class="sig-tag">3 missing</span></span>
             </span>
-            <span class="gl-row-go" aria-hidden="true">›</span>
+            <span class="sig-delta flat">5<span class="sig-delta-unit">absences</span></span>
+            <span class="sig-row-go" aria-hidden="true">›</span>
           </button>
-          <button class="gl-row" type="button">
-            <span class="avatar av6" aria-hidden="true" style="width:28px;height:28px;font-size:10px">RE</span>
-            <span class="gl-row-main">
-              <span class="gl-row-title">Ruth Egan <span style="color:#8a9bb0;font-weight:600">· Anatomy</span></span>
-              <span class="gl-row-why">3 missing assignments, and 5 absences in the last 20 meetings.</span>
+          <button class="sig-row" type="button">
+            <span class="avatar av5 gl-row-avatar" aria-hidden="true">OB</span>
+            <span class="sig-row-main">
+              <span class="sig-row-name">Owen Bennett <span class="sig-row-class">· English I</span></span>
+              <span class="sig-row-why">In English I, Owen Bennett’s grade fell 12.40 points across the last 4 assignments, from 81.20% to 68.80% — a fall of 10 or more.</span>
             </span>
-            <span class="gl-row-go" aria-hidden="true">›</span>
+            <span class="sig-delta down">−12.40<span class="sig-delta-unit">points</span></span>
+            <span class="sig-row-go" aria-hidden="true">›</span>
           </button>
-          <button class="gl-row" type="button">
-            <span class="avatar av7" aria-hidden="true" style="width:28px;height:28px;font-size:10px">SH</span>
-            <span class="gl-row-main">
-              <span class="gl-row-title">Sami Haddad <span style="color:#8a9bb0;font-weight:600">· Research</span></span>
-              <span class="gl-row-why">3 scores in a row under 60% — 55%, 48%, 52%.</span>
+          <button class="sig-row" type="button">
+            <span class="avatar av7 gl-row-avatar" aria-hidden="true">SH</span>
+            <span class="sig-row-main">
+              <span class="sig-row-name">Sami Haddad <span class="sig-row-class">· AP Lit</span></span>
+              <span class="sig-row-why">In AP Lit, Sami Haddad has 3 scores in a row under 60% — 55%, 48% and 52% — 3 or more.</span>
             </span>
-            <span class="gl-row-go" aria-hidden="true">›</span>
+            <span class="sig-delta flat">3<span class="sig-delta-unit">in a row</span></span>
+            <span class="sig-row-go" aria-hidden="true">›</span>
           </button>
         </div>
-        <button class="gl-more" type="button">2 hidden — you wrote home about them in the last 14 days. Show →</button>
+        <!-- The signals screen's own foot, verbatim — but here it is a DOOR, and the › says so.
+             Tapping it lands on the signals screen with this column's suppressed rows shown. -->
+        <button class="sig-hidden" type="button">2 you wrote about recently · show them <span class="gl-foot-go" aria-hidden="true">›</span></button>
       </div>
 
-      <div class="gl-col praise">
-        <div class="gl-col-head praise">Praise · 3</div>
-        <div class="gl-list">
-          <button class="gl-row" type="button">
-            <span class="avatar av4" aria-hidden="true" style="width:28px;height:28px;font-size:10px">CD</span>
-            <span class="gl-row-main">
-              <span class="gl-row-title">Claire Dumont <span style="color:#8a9bb0;font-weight:600">· Anatomy</span></span>
-              <span class="gl-row-why">Rose 14 points across the last 4 assignments — the biggest climb in the class.</span>
+      <div class="sig-col praise">
+        <div class="sig-col-head praise">Praise · 3 <span class="sig-col-note">biggest climb first</span></div>
+        <div class="sig-list">
+          <button class="sig-row" type="button">
+            <span class="avatar av4 gl-row-avatar" aria-hidden="true">CD</span>
+            <span class="sig-row-main">
+              <span class="sig-row-name">Claire Dumont <span class="sig-row-class">· English III</span></span>
+              <span class="sig-row-why">In English III, Claire Dumont’s grade rose 14.20 points across the last 4 assignments, from 71.50% to 85.70% — a rise of 10 or more.</span>
             </span>
-            <span class="gl-row-go" aria-hidden="true">›</span>
+            <span class="sig-delta up">+14.20<span class="sig-delta-unit">points</span></span>
+            <span class="sig-row-go" aria-hidden="true">›</span>
           </button>
-          <button class="gl-row" type="button">
-            <span class="avatar av2" aria-hidden="true" style="width:28px;height:28px;font-size:10px">DC</span>
-            <span class="gl-row-main">
-              <span class="gl-row-title">Daniel Cho <span style="color:#8a9bb0;font-weight:600">· Biology I</span></span>
-              <span class="gl-row-why">Came off the concern list 9 days ago and has stayed off it.</span>
+          <button class="sig-row" type="button">
+            <span class="avatar av2 gl-row-avatar" aria-hidden="true">DC</span>
+            <span class="sig-row-main">
+              <span class="sig-row-name">Daniel Cho <span class="sig-row-class">· English I</span></span>
+              <span class="sig-row-why">In English I, Daniel Cho is off the concern list — 2 rules were flagging them 10 days ago and none is today.</span>
             </span>
-            <span class="gl-row-go" aria-hidden="true">›</span>
+            <span class="sig-delta up">2<span class="sig-delta-unit">cleared</span></span>
+            <span class="sig-row-go" aria-hidden="true">›</span>
           </button>
-          <button class="gl-row" type="button">
-            <span class="avatar av8" aria-hidden="true" style="width:28px;height:28px;font-size:10px">NG</span>
-            <span class="gl-row-main">
-              <span class="gl-row-title">Nora Gallagher <span style="color:#8a9bb0;font-weight:600">· Env Science</span></span>
-              <span class="gl-row-why">No missing work across the last 8 assignments.</span>
+          <button class="sig-row" type="button">
+            <span class="avatar av8 gl-row-avatar" aria-hidden="true">NG</span>
+            <span class="sig-row-main">
+              <span class="sig-row-name">Nora Gallagher <span class="sig-row-class">· English IV</span></span>
+              <span class="sig-row-why">In English IV, Nora Gallagher has nothing marked missing across the last 8 assignments — 8 or more.</span>
             </span>
-            <span class="gl-row-go" aria-hidden="true">›</span>
+            <span class="sig-delta flat">8<span class="sig-delta-unit">in a row</span></span>
+            <span class="sig-row-go" aria-hidden="true">›</span>
           </button>
         </div>
-        <button class="gl-more" type="button">1 hidden — you wrote home about her on the 4th. Show →</button>
+        <button class="sig-hidden" type="button">1 you wrote about recently · show her <span class="gl-foot-go" aria-hidden="true">›</span></button>
       </div>
     </div>
   </div>
 
-  <!-- ══ 5. DEADLINES CLOSING IN ════════════════════════════════════════════════════════ -->
+  <!-- ══ 5. DEADLINES CLOSING IN ════════════════════════════════════════════════════════
+       Dates with a consequence, soonest first, and how long is left. Four kinds of row can
+       appear and all four are drawn: a grades-due date inside its lead time (amber — the one
+       escalation on the page, and it is the calendar's own `.due-now` meaning), a grades-due
+       date outside it, the review COUNT, and a term edge.
+
+       THE REVIEW ROW IS A COUNT, NOT A NAME — the owner's ruling of 2026-08-19 (WO-1.25), now
+       in the work order's own text. No name, no date, no kind. It taps through to the calendar,
+       which is where the name is and which is a surface she opened on purpose. -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Closing in</h2>
+          <p>Dates with a consequence, and how long is left.</p>
+        </div>
+      </div>
+    </div>
+    <div class="gl-list">
+      <button class="gl-row warn" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a6d1a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-upload"/></svg>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Progress grades due in the SIS</span>
+          <span class="gl-row-why">Thursday the 17th. You asked to be warned 3 days ahead — that was yesterday.</span>
+        </span>
+        <span class="gl-row-meta">2 days</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+      <button class="gl-row" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a9bb0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-flag"/></svg>
+        <span class="gl-row-main">
+          <span class="gl-row-title">1 review coming up</span>
+          <span class="gl-row-why">Who and when are on the calendar.</span>
+        </span>
+        <span class="gl-row-meta">this month</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+      <button class="gl-row" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a9bb0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-upload"/></svg>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Quarter 1 grades due in the SIS</span>
+          <span class="gl-row-why">Thursday Oct 1. The warning starts Sep 28.</span>
+        </span>
+        <span class="gl-row-meta">16 days</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+      <button class="gl-row" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a9bb0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-cal"/></svg>
+        <span class="gl-row-main">
+          <span class="gl-row-title">Quarter 1 ends <span class="cal-chip-out" aria-hidden="true">↗</span></span>
+          <span class="gl-row-why">Friday Nov 6 — every class. From the terms, not the calendar.</span>
+        </span>
+        <span class="gl-row-meta">52 days</span>
+        <span class="gl-row-go" aria-hidden="true">›</span>
+      </button>
+    </div>
+  </div>
+
+ </div>
+</main>
+
+<div class="mk-caption decided">
+  <strong>The chips on a card report; they do not tap through.</strong> The first
+  drawing's amber note, answered by two landed work orders rather than by a ruling: WO-3.26
+  (2026-08-19) and WO-4.5 (2026-08-27) filled <code>.class-card-signals</code> with two
+  <code>&lt;span&gt;</code>s inside the card's one button, and <code>src/home.js</code> says in its
+  own words that <em>this says how many, and the screen behind the Signals segment says who</em>.
+  The panels below are the "who". The three-colour <code>.gl-sig</code> the first drawing proposed
+  is gone from <code>proposed-phase6.css</code> — the slot took two grey chips and
+  <code>src/home.js</code> measured that a third does not fit.
+</div>
+<div class="mk-caption decided">
+  <strong>The review item is a count.</strong> The first drawing left the IEP/504
+  review date off the page and called it two work orders disagreeing. WO-1.25 ruled on
+  2026-08-19 and WO-6.4 now carries the sentence: <em>1 review coming up</em>, no name, no date,
+  no kind, tapping through to the calendar. It is drawn under <em>Closing in</em> because the
+  work order calls it "the one deadline a teacher is legally obliged not to miss", and that
+  is the panel for deadlines.
+</div>
+<div class="mk-caption decided">
+  <strong>One door to the calendar, and it is this one.</strong> The first drawing
+  asked what happens to <em>Days off</em>. WO-6.6 (2026-08-20) answered: the home screen keeps
+  <em>Calendar</em> and loses the other two, and the calendar's own header carries the authoring.
+  Drawn as shipped, wrapper and glyph included.
+</div>
+<div class="mk-caption">
+  <strong>The rows in panel 4 are the signals screen's rows, worn as shipped.</strong> This
+  drawing links <code>src/signals-view.css</code> for that reason and proposes nothing for those
+  rows — <code>.gl-two</code>, <code>.gl-col</code> and <code>.gl-col-head</code> are gone from
+  <code>proposed-phase6.css</code>. The figure sits in the strong position because that screen
+  ranks by change and draws the ranking key big; a summary that drew the same students without
+  their figures would be a summary of a different ranking. What the panel does <em>not</em> carry
+  from that screen: the sort control, the class strip and the rule chips. It is the ruled order or
+  nothing — the controls are one tap away, behind any row.
+</div>
+<div class="mk-caption">
+  <strong>The numbers add up, and that is a property of the drawing rather than a coincidence.</strong>
+  Five chips of "to grade" on the cards are five rows in panel 3; six chips of "need you" are the
+  six named students in panel 4, two of them on English I's card and two on English III's. WO-6.4's
+  Traps line is that a section which recomputes rather than calls creates a second answer, and the
+  place a teacher would first see the second answer is a card saying 2 over a list showing 3.
+</div>
+<div class="mk-caption">
+  <strong>Four of the five avatars read “EI”, and that is the app's rule rather than the drawing's
+  shortcut.</strong> <code>src/classes.js</code>'s <code>initials()</code> takes the first letter of
+  the first two words, so <em>English I</em>, <em>English I · P3</em>, <em>English III</em> and
+  <em>English IV</em> all come out the same, and colour is the only thing telling the four apart.
+  A teacher whose five classes are four sections of one subject will see exactly this on the real
+  cards. Not a question for this work order — but the first time the owner's own roster is drawn
+  here, it shows.
+</div>
+<div class="mk-caption">
+  <strong>Drawn mid-morning, not at 7:40.</strong> At 7:40 all five cards say "Not taken yet" and
+  panel 1 proves nothing. The acceptance line wants the row correct "against a day with a mix of
+  taken, dropped, and untaken classes", so the mix is what is drawn: two taken, one untaken, one
+  that didn't meet, and one half-taken carrying WO-2.10's amber.
+</div>
+<div class="mk-caption ask">
+  <strong>The deadline panel owns <code>grades-due</code>, and the week list does not draw it.</strong>
+  The first drawing put "Progress grades due" on the page twice and left the choice open. The
+  proposal drawn here: a grades-due date is a deadline by definition, so it lives under
+  <em>Closing in</em> whether or not it is inside its lead time, and <em>Today and this week</em>
+  lists what is scheduled — conferences, meetings, due dates. One row, one panel, and the panel a
+  teacher would look under first. The cost is that a Thursday grades-due date is missing from a
+  list headed "this week". <strong>The owner's call; cheaper now than after the build.</strong>
+</div>
+<div class="mk-caption ask">
+  <strong>How many rows before "and 4 more ›"?</strong> Drawn at three per column because three
+  fired. With 118 students and nine rules, a Monday in November can put twelve in the concern
+  column, and a summary that draws twelve is the list it was meant to summarise. Proposal: four
+  per column, then a foot row <em>and N more ›</em> that opens the full list — the same shape as
+  the cooldown foot beside it. <strong>The number is the owner's.</strong>
+</div>
+<div class="mk-caption ask">
+  <strong>Five panels is a long page on a tablet.</strong> At 1024×704 the class grid and about
+  one and a half panels are above the fold, which means "who needs you" — the reason the app
+  exists — is two scrolls down at 7:40am. Reorder is ruled out by the work order; collapsing
+  panels 2–3 to a one-line count when they are short, or two columns above 1024px, are not.
+  <strong>Still worth reading on the real iPad against this drawing before WO-6.4 is cut.</strong>
+</div>
+
+<div class="mk-section">The same Tuesday while projecting — panels 1 to 3 draw exactly as above; these are the two that change</div>
+
+<aside class="presentation-strip" aria-labelledby="mkPresentationHeading">
+  <p class="presentation-strip-text">
+    <strong id="mkPresentationHeading"><span aria-hidden="true">🖥</span> Presentation mode is on.</strong>
+    Support details are hidden everywhere — nothing has been deleted. Grades and names are not affected.
+  </p>
+  <button class="presentation-strip-btn" type="button">Turn it off</button>
+</aside>
+
+<main class="main">
+ <div class="gl-stack">
+
+  <!-- ══ 4, PROJECTED ════════════════════════════════════════════════════════════════════
+       THE PANEL SHUTS, THE WAY THE SCREEN IT SUMMARISES SHUTS. src/signals-view.js is the first
+       screen in the app that refuses rather than hides — "a list of named students who are
+       struggling is the one thing in Planbook that should never be on a classroom wall" — and a
+       summary of that list on the page a teacher opens first is the same list, shorter. So the
+       rows go, the refusal is the screen's own (`.sig-blocked-*`, worn as shipped, in a compact
+           wrapper), and it names the control that undoes it.
+
+       WHAT STAYS: the panel, its heading, and both COUNTS — in the heading's own sentence and on
+       the cards above. That is WO-4.5's ruling for the chip, applied here rather than re-decided:
+       a number names nobody and cannot be turned back into a list. The quiet-middle door stays for
+       the same reason; the screen it opens onto will refuse in its turn. -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>Who needs you</h2>
+          <p>Both directions, after the cooldown. Every row opens the full list, on that student.</p>
+        </div>
+        <div class="panel-title-actions">
+          <button class="class-action-btn" type="button">The quiet middle · 9</button>
+          <button class="class-action-btn" type="button">The full list</button>
+        </div>
+      </div>
+    </div>
+    <div class="gl-shut">
+      <div class="sig-blocked-mark" aria-hidden="true">🔒</div>
+      <p class="sig-blocked-lead">Not while you are projecting.</p>
+      <p class="sig-blocked-text">
+        3 students are flagged and 3 are climbing. Their names are the one thing here that should
+        never be on a classroom wall — turn presentation mode off with the screen button in the
+        header and they come straight back.
+      </p>
+    </div>
+  </div>
+
+  <!-- ══ 5, PROJECTED ════════════════════════════════════════════════════════════════════
+       ONE ROW FEWER, AND NOTHING SAYS SO. The review count is read through
+       src/calendar-derived.js's reviewDatesIn(), which already answers with an empty list while
+       projecting — so the row is absent for free, with one asker, exactly as the calendar's chips
+       and the roster's dot are absent. No "1 hidden" line: a count of hidden reviews is the
+       disclosure with one step removed. -->
   <div class="panel">
     <div class="panel-header">
       <div class="panel-title-row">
@@ -421,7 +661,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a9bb0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-upload"/></svg>
         <span class="gl-row-main">
           <span class="gl-row-title">Quarter 1 grades due in the SIS</span>
-          <span class="gl-row-why">Thursday Oct 1. Warning starts Sep 28.</span>
+          <span class="gl-row-why">Thursday Oct 1. The warning starts Sep 28.</span>
         </span>
         <span class="gl-row-meta">16 days</span>
         <span class="gl-row-go" aria-hidden="true">›</span>
@@ -429,8 +669,8 @@
       <button class="gl-row" type="button">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a9bb0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-cal"/></svg>
         <span class="gl-row-main">
-          <span class="gl-row-title">Quarter 1 ends</span>
-          <span class="gl-row-why">Friday Nov 6 — every class.</span>
+          <span class="gl-row-title">Quarter 1 ends <span class="cal-chip-out" aria-hidden="true">↗</span></span>
+          <span class="gl-row-why">Friday Nov 6 — every class. From the terms, not the calendar.</span>
         </span>
         <span class="gl-row-meta">52 days</span>
         <span class="gl-row-go" aria-hidden="true">›</span>
@@ -441,66 +681,27 @@
  </div>
 </main>
 
-<div class="mk-caption">
-  <strong>The reserved slot is spent.</strong> <code>src/home.css</code> has held
-  <code>.class-card-signals</code> open at <code>min-height: 24px</code> since WO-1.10 so that the
-  first real datum would drop into space that was already there rather than reflowing the grid.
-  This is that datum. Nothing about the card changes — <code>.class-card</code>,
-  <code>.class-card-state</code> and the slot itself are worn exactly as shipped, and the only new
-  class on that panel is <code>.gl-sig</code>.
-</div>
-<div class="mk-caption">
-  <strong>And the subtitle has lost its second sentence.</strong> index.html's copy today ends
-  "…as those parts of Planbook arrive — the space on it is already theirs", and that file's own
-  comment calls it "the one thing on this screen written to be deleted". WO-6.4 is what deletes
-  it. A drawing that quietly kept it would be describing a promise the page had just kept.
-</div>
-<div class="mk-caption">
-  <strong>Drawn mid-morning, not at 7:40.</strong> The phase goal is the 7:40 reading, but at 7:40
-  all five cards say "Not taken yet" and the panel proves nothing. WO-6.4's acceptance asks for
-  the row to be correct "against a day with a mix of taken, dropped, and untaken classes", so the
-  mix is what is drawn: two taken, one untaken, one that didn't meet, and one half-taken carrying
-  WO-2.10's amber.
+<div class="mk-caption ask">
+  <strong>This state is not in the work order, and it is the one that matters most.</strong>
+  WO-6.4's acceptance covers <code>supports</code> data — plan type, accommodation, medical text,
+  behavior-plan text — and nothing else. But panel 4 is a list of named students in trouble, which
+  is exactly what WO-4.2's screen refuses to draw under a projector, and this page is the one an
+  iPad is most likely to be sitting on when the cable goes in. <code>src/home.js</code> is
+  deliberately absent from <code>flipPresentationMode()</code>'s redraw list, with a note saying
+  what would change that; this panel is what changes it. <strong>Two things for the work order:
+  an acceptance line for panel 4 while projecting, and the glance module joining the flip's
+  redraw list.</strong> Drawn shut, with the counts kept, as the proposal.
 </div>
 <div class="mk-caption ask">
-  <strong>The chips on a card report; they do not tap through.</strong> WO-6.4 says every item
-  taps through, and "3 to grade" landing on the attendance grid is a half-answer. But
-  <code>src/home.js</code>'s card has been a single <code>&lt;button&gt;</code> since WO-1.13 and a
-  control cannot nest inside a control — making the chips real would put them <em>beside</em> that
-  button, which means <code>.class-card</code> becomes a column, which is <code>src/home.css</code>'s
-  change to make and not a mockup's. The proposal is that the <strong>card says how many and the
-  panels below say who</strong>, each of those being a real launcher. It is a defensible reading
-  of the work order and it is not the only one. <strong>The owner's call.</strong>
-</div>
-<div class="mk-caption ask">
-  <strong>“Progress grades due” is on the page twice</strong> — once under <em>Today and this
-  week</em> and once under <em>Closing in</em> — and WO-6.4 asks for both sections by name. Either
-  the deadline section owns <code>grades-due</code> outright and the week list skips it, or the
-  duplication is accepted as the price of two honest questions ("what is scheduled?" and "what is
-  running out?"). Drawn duplicated, with the second row saying so, so the cost is visible rather
-  than argued.
-</div>
-<div class="mk-caption ask">
-  <strong>There is no IEP/504 review date on this page, and that is two work orders disagreeing.</strong>
-  WO-6.1 asks for review dates "surfaced ahead of time, in presentation-mode-safe form" and WO-6.2
-  puts them on the calendar. WO-6.4's acceptance says <em>"Nothing on the page displays
-  <code>supports</code> data, in presentation mode or out of it"</em> — and a review date is
-  <code>students[].supports.reviewDate</code>. Read literally, the one deadline a teacher is
-  legally obliged not to miss is the one deadline <em>Closing in</em> may not show her. Drawn
-  literally, so the gap is visible. <strong>Settle it before WO-6.4 is cut — the safe resolution
-  is probably that a date-and-a-name is not "displaying supports data", but that sentence has to
-  be written down somewhere before an implementer decides it alone.</strong>
-</div>
-<div class="mk-caption ask">
-  <strong>Five panels is a long page on a tablet.</strong> At 1024×704 the class grid and about
-  one and a half panels are above the fold, which means "who needs you" — the reason the app
-  exists — is two scrolls down at 7:40am. Three ways out, none drawn: reorder (but WO-6.4 fixes
-  the order), collapse panels 3–5 to their counts with a tap to open, or put the whole page in
-  two columns above 1024px. <strong>Worth reading on the real iPad against this drawing before
-  WO-6.4 is cut.</strong>
+  <strong>Panel 2 stays up while projecting, and its titles are free text.</strong> "Guardian
+  call — Owen Bennett" is a conference the teacher typed, and nothing stops a teacher typing "IEP
+  meeting — Owen Bennett". That is the same open edge <code>CLAUDE.md</code> records for a note to
+  self under a projector, reached from the calendar's side, and the calendar itself draws these
+  chips while projecting today. Drawn as the calendar does it — up — and named here so it is a
+  known edge rather than a surprise.
 </div>
 
-<div class="mk-section">The same page on a quiet day — WO-6.4's honest empty state</div>
+<div class="mk-section">The same page on a quiet day — WO-6.4's honest empty state, two weeks into a term</div>
 
 <main class="main">
  <div class="gl-stack">
@@ -510,59 +711,61 @@
       <div class="panel-title-row">
         <div class="panel-title">
           <h2>Your classes</h2>
-          <p>Tap a class to open it — its line says whether today's attendance is done.</p>
+          <p>Tap a class to open it — its line says whether today's attendance is done, and its chips say what is waiting on it.</p>
         </div>
-        <button class="class-action-btn" type="button" aria-haspopup="dialog">
-          <span aria-hidden="true">📅</span> Calendar
-        </button>
+        <div class="panel-title-actions">
+          <button class="class-action-btn" type="button">
+            <span aria-hidden="true">🗓</span> Calendar
+          </button>
+        </div>
       </div>
     </div>
     <div class="home-grid">
       <span class="class-card">
-        <button class="class-card-open" type="button" title="Biology I">
+        <button class="class-card-open" type="button" title="English I">
           <span class="class-card-head">
-            <span class="avatar av0" aria-hidden="true">BI</span>
-            <span class="class-card-name">Biology I</span>
+            <span class="avatar av0" aria-hidden="true">EI</span>
+            <span class="class-card-name">English I</span>
           </span>
           <span class="class-card-state taken">Taken · all present</span>
           <span class="class-card-signals"></span>
         </button>
       </span>
       <span class="class-card">
-        <button class="class-card-open" type="button" title="Biology I · P4">
+        <button class="class-card-open" type="button" title="English I · P3">
           <span class="class-card-head">
-            <span class="avatar av1" aria-hidden="true">BI</span>
-            <span class="class-card-name">Biology I · P4</span>
+            <span class="avatar av1" aria-hidden="true">EI</span>
+            <span class="class-card-name">English I · P3</span>
           </span>
           <span class="class-card-state taken">Taken · 1 tardy</span>
           <span class="class-card-signals"></span>
         </button>
       </span>
       <span class="class-card">
-        <button class="class-card-open" type="button" title="Anatomy">
+        <button class="class-card-open" type="button" title="English III">
           <span class="class-card-head">
-            <span class="avatar av2" aria-hidden="true">AN</span>
-            <span class="class-card-name">Anatomy</span>
+            <span class="avatar av2" aria-hidden="true">EI</span>
+            <span class="class-card-name">English III</span>
           </span>
           <span class="class-card-state taken">Taken · all present</span>
           <span class="class-card-signals"></span>
         </button>
       </span>
       <span class="class-card">
-        <button class="class-card-open" type="button" title="Env Science">
+        <button class="class-card-open" type="button" title="English IV">
           <span class="class-card-head">
-            <span class="avatar av3" aria-hidden="true">ES</span>
-            <span class="class-card-name">Env Science</span>
+            <span class="avatar av3" aria-hidden="true">EI</span>
+            <span class="class-card-name">English IV</span>
           </span>
           <span class="class-card-state taken">Taken · all present</span>
           <span class="class-card-signals"></span>
         </button>
       </span>
       <span class="class-card">
-        <button class="class-card-open" type="button" title="Research">
+        <button class="class-card-open" type="button" title="AP Lit">
           <span class="class-card-head">
-            <span class="avatar av4" aria-hidden="true">RE</span>
-            <span class="class-card-name">Research</span>
+            <span class="avatar av4" aria-hidden="true">AL</span>
+            <span class="class-card-name">AP Lit</span>
           </span>
           <span class="class-card-state taken">Taken · all present</span>
           <span class="class-card-signals"></span>
@@ -576,22 +779,38 @@
        it cannot live inside any of them as an empty state.
 
        The chips say what was looked at. "Nothing needs you" with no warrant behind it sends a
-       teacher off to check for herself, and then the page has cost her time instead of saving it. -->
+       teacher off to check for herself, and then the page has cost her time instead of saving it.
+
+       TWO THINGS ARE NEW SINCE THE FIRST DRAWING, and both are consequences of Phase 4 landing:
+         · THE QUIET-MIDDLE DOOR IS ON THIS PANEL. Panel 4 does not exist on a quiet day, and the
+           door lived in its header — which would take it off the page on exactly the day
+           index.html's own comment says that list is the most useful thing on the screen.
+         · THE "NOT YET" VOICE. Two weeks into a term most rules cannot fire because the window
+           they measure is longer than the term so far. The signals screen already says so in a
+           `.sig-inert` line written from inertRules(); the same sentence belongs here, or "nothing
+           needs you" on Sep 15 is a claim the page cannot yet make. -->
   <div class="panel">
     <div class="gl-quiet">
       <div class="gl-quiet-mark" aria-hidden="true">✓</div>
       <p class="gl-quiet-lead">Nothing needs you today.</p>
       <p class="gl-quiet-text">
         Every class is marked, nothing is waiting to be graded, and no deadline is inside its
-        warning. Tuesday the 22nd is the next thing on your calendar.
+        warning. Thursday the 17th is the next thing on your calendar.
       </p>
       <div class="gl-quiet-checked" role="group" aria-label="What was checked">
         <span class="gl-quiet-chip">5 classes marked</span>
         <span class="gl-quiet-chip">0 assignments part-entered</span>
-        <span class="gl-quiet-chip">118 students evaluated</span>
+        <span class="gl-quiet-chip">118 students, both directions</span>
         <span class="gl-quiet-chip">Next deadline in 16 days</span>
       </div>
+      <div class="gl-quiet-doors">
+        <button class="class-action-btn" type="button" title="Neither flagged, nor praised, nor contacted this term">The quiet middle · 41</button>
+      </div>
     </div>
+    <p class="sig-inert">
+      Four rules can’t fire yet: a fall or a rise in the grade want 4 graded assignments behind
+      them, and the two runs want 3 scores. The term has 2 so far.
+    </p>
   </div>
 
  </div>
@@ -611,13 +830,22 @@
   page has cost her the time it was built to save.
 </div>
 <div class="mk-caption ask">
-  <strong>Does the quiet day exist in the first six weeks?</strong> Signals need 4–6 weeks of real
-  data before they fire at all (Phase 4's own note), so from Sep 2 until mid-October
-  <em>every</em> day is a quiet day for panels 4 and 5, and this drawing is what the glance page
-  looks like for the first six weeks of the term it ships into. Either that is fine — the class
-  grid and the grading queue are real from day one — or the empty state needs a second voice for
-  "not yet, rather than nothing". <strong>Worth deciding, because it is the state the owner will
-  see most.</strong>
+  <strong>The quiet middle is 41 on a quiet day and 9 on the busy one, and both are typed in.</strong>
+  The point of drawing the door here is that a quiet day is when that list is longest and most
+  worth opening — the students nothing is wrong with. The first drawing had no door on this
+  panel because it had no panel 4 to hang one on, and the work order's own sentence about the
+  door ("a door onto that screen") does not say where it lives when the panel it was drawn in is
+  not drawn. <strong>Proposal: it lives here on a quiet day.</strong>
+</div>
+<div class="mk-caption ask">
+  <strong>"Not yet" is a different sentence from "nothing", and the drawing now says both.</strong>
+  The first drawing asked whether the quiet day needed a second voice for the first six weeks of
+  a term. Phase 4 shipped the sentence — <code>src/signals-view.js</code> draws a
+  <code>.sig-inert</code> line from <code>inertRules()</code> — so the proposal is to wear it
+  as shipped under the quiet panel rather than compose a second one. The numbers in it are that
+  function's to produce; the ones drawn are illustrative. <strong>Whether it belongs on this
+  page at all is the owner's call:</strong> it is honest, and it is also a line of grey on the
+  page she opens every morning for six weeks.
 </div>
 
 </body>

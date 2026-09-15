@@ -349,25 +349,16 @@
 .gl-stack { display: flex; flex-direction: column; gap: 14px; }
 
 /*
-  THE CHIP IN `.class-card-signals` — the slot src/home.css has been holding open with
-  `min-height: 24px` since WO-1.10, spent at last.
+  THERE IS NO CHIP RULE HERE ANY MORE, AND THE ABSENCE IS THE RECORD (redrawn 2026-09-15).
 
-  IT REPORTS. IT DOES NOT ACT. src/home.js's classCard() is a single <button> since
-  WO-1.13, and a control cannot nest inside a control — so these are <span>s, like the
-  state line above them, and the card's one tap opens the class. The "every item taps
-  through" half of WO-6.4 is paid by the panels BELOW, where the same counts are named
-  students and named assignments with somewhere to go. The card says how many; the list
-  says who. See the drawing's amber note, which is where the argument lives.
+  The first drawing proposed `.gl-sig` — three coloured chips for the slot src/home.css had
+  been holding open since WO-1.10. Two work orders spent the slot before WO-6.4 was cut:
+  WO-3.26 put "N to grade" in it and WO-4.5 put "N need you" beside it, both as
+  `.class-card-count`, both grey, both <span>s inside the card's one button. src/home.js
+  measured the slot and found a third chip does not fit. So the card on the glance page is
+  the card in the app, worn as shipped, and a rule here for a chip the build has already
+  drawn differently would be the second truth this directory exists to prevent.
 */
-.gl-sig {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 2px 8px; border-radius: 20px;
-  border: 1.5px solid #e0e4ea; background: #fff;
-  font-size: 10px; font-weight: 700; color: #6b7a8d; white-space: nowrap;
-}
-.gl-sig.grade   { background: #eef2ff; border-color: #b0bcf0; color: #5b6fcc; }
-.gl-sig.concern { background: #fdeaea; border-color: #f0b0b0; color: #c0392b; }
-.gl-sig.praise  { background: #eafaf1; border-color: #a3e4bc; color: #27ae60; }
 
 /* ── THE LAUNCHER ROW ── */
 /* Every row on this page is a button, because WO-6.4 says the page is a launcher and not a
@@ -382,12 +373,16 @@
   font-family: inherit; text-align: left; cursor: pointer; transition: background 0.15s;
 }
 .gl-row:hover { background: #f8f9fb; }
-.gl-row-main { flex: 1 1 auto; min-width: 0; }
-.gl-row-title { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+/* `display: block` is stated on all three, not inherited — src/signals-view.css's own note on
+   `.sig-row-main`: a <span> carrying `flex: 1 1 auto` is a flex ITEM of the row and still an inline
+   BOX itself, so its title and its sentence run on one line unless each declares a display. The
+   first drawing had exactly that defect and nobody looked at it rendered until the redraw. */
+.gl-row-main { display: block; flex: 1 1 auto; min-width: 0; }
+.gl-row-title { display: block; font-size: 13px; font-weight: 600; color: #1a1a2e; }
 /* WHY THIS ROW IS HERE, in the rule's own words. WO-4.1 requires the explanation to be
    produced by the rule from the numbers that fired it, never written per screen — so this
    line is a slot for a sentence this file does not compose and must not truncate. */
-.gl-row-why { font-size: 11px; line-height: 1.5; color: #8a9bb0; margin-top: 2px; }
+.gl-row-why { display: block; font-size: 11px; line-height: 1.5; color: #8a9bb0; margin-top: 2px; }
 .gl-row-meta { flex: 0 0 auto; font-size: 11px; font-weight: 700; color: #8a9bb0; font-variant-numeric: tabular-nums; }
 .gl-row-go { flex: 0 0 auto; font-size: 14px; font-weight: 700; color: #c0cad5; }
 .gl-row:hover .gl-row-go { color: #5b6fcc; }
@@ -397,36 +392,45 @@
 .gl-row.warn:hover { background: #fef5ea; }
 .gl-row.warn .gl-row-meta { color: #8a6d1a; }
 
-/* ── CONCERN AND PRAISE, SIDE BY SIDE ── */
+/* ── CONCERN AND PRAISE, SIDE BY SIDE — worn from src/signals-view.css ── */
 /*
-  TWO COLUMNS OF EQUAL WIDTH, and this is the single most load-bearing rule in the file.
+  THE COLUMNS ARE THE SIGNALS SCREEN'S OWN (redrawn 2026-09-15). The first drawing proposed
+  `.gl-two`, `.gl-col` and `.gl-col-head` for a two-column, equal-width, praise-first-on-a-
+  phone layout; WO-4.2 and WO-4.3 then shipped exactly that layout as `.sig-two`, `.sig-col`
+  and `.sig-col-head`, with the figure in the strong position and the cooldown foot under
+  each column. WO-6.4 says this panel is a SUMMARY of that screen. A summary drawn from a
+  second stylesheet is a summary that drifts, so the drawing wears the shipped classes and
+  this section proposes nothing for the rows, the heads or the foot — the argument for
+  1fr 1fr and for praise-first lives in src/signals-view.css now, where it was lifted to.
 
-  plans/ROADMAP.md Phase 4: "the praise half is not decoration — it is what makes this a
-  teacher's assistant rather than a gradebook with alarms." WO-6.4's acceptance says the
-  praise list must not be buried behind the concern list. A stacked layout buries it by
-  construction on any screen shorter than both lists, and every iPad is.
-
-  So: a grid, not a stack, and 1fr 1fr rather than a ratio — the moment concern gets 60%
-  of the width it has been given 60% of the argument. It drops to one column only at the
-  phone breakpoint, where two columns of names are two columns of ellipsis, and there
-  PRAISE IS DRAWN FIRST for the same reason it is drawn equal here.
+  What survives here is the "and N more ›" foot — a door onto the full list when the summary
+  is capped — and the › the cooldown foot gains because on THIS page it is a door and not an
+  expansion. Both are the work order's own: one list, one place, two ways in.
 */
-.gl-two { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #eef0f4; }
-.gl-col { background: #fff; min-width: 0; display: flex; flex-direction: column; }
-.gl-col-head {
-  padding: 10px 20px 6px;
-  font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
-}
-.gl-col-head.concern { color: #c0392b; }
-.gl-col-head.praise  { color: #27ae60; }
-/* Suppressed by cooldown — WO-4.5's "hidden, not deleted", said out loud. A count with no
-   way to open it is a count a teacher cannot trust. */
 .gl-more {
   margin-top: auto; padding: 9px 20px; border: none; border-top: 1px solid #f3f4f6;
   background: none; font-family: inherit; text-align: left;
   font-size: 11px; font-weight: 700; color: #8a9bb0; cursor: pointer; transition: all 0.15s;
 }
 .gl-more:hover { background: #f8f9fb; color: #5b6fcc; }
+.gl-foot-go { margin-left: 4px; color: #c0cad5; font-size: 13px; }
+.sig-hidden:hover .gl-foot-go { color: #5b6fcc; }
+
+/* The class avatar at the head of a row, at row size. `.avatar` is worn as shipped for its
+   colour and its initials; this second class sizes it for a 13px row rather than a card.
+   The same arrangement as `.detail-avatar` beside `.avatar` (design/mockups/PROTOCOL.md § 5). */
+.gl-row-avatar { width: 28px; height: 28px; font-size: 10px; }
+
+/* ── THE PANEL WHILE PROJECTING ── */
+/*
+  THE PANEL SHUTS THE WAY THE SCREEN IT SUMMARISES SHUTS. src/signals-view.js refuses rather
+  than hides under a projector, because its content is a list of named students in trouble
+  — and so is this panel's. The refusal is that screen's own `.sig-blocked-*`, worn as
+  shipped; this wrapper only centres it inside a panel that keeps its header and its
+  counts. Compact on purpose: a full `.empty-state` inside one of five panels would read as
+  the page being broken rather than one panel being closed.
+*/
+.gl-shut { padding: 22px 20px 26px; text-align: center; border-top: 1px solid #f3f4f6; }
 
 /* ── THE HONEST EMPTY STATE ── */
 /*
@@ -459,6 +463,9 @@
   padding: 3px 9px; border-radius: 20px; border: 1.5px solid #eef0f4; background: #f8f9fb;
   font-size: 11px; font-weight: 700; color: #a0aab8;
 }
+/* The quiet-middle door, on the one day it has no panel 4 to hang on. `.class-action-btn`
+   worn as shipped; this is the row that holds it. */
+.gl-quiet-doors { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
    § RESPONSIVE — the order design/style-guide.md §6 names
@@ -500,13 +507,13 @@
   .cal-repeat-note { font-size: 13px; }
   .cal-series-text { font-size: 13px; }
 
-  .gl-sig { font-size: 11px; padding: 3px 9px; }
   .gl-row { min-height: 44px; padding: 12px 20px; }
   .gl-row-title { font-size: 14px; }
   .gl-row-why { font-size: 12px; }
   .gl-row-meta { font-size: 12px; }
   .gl-more { min-height: 44px; font-size: 12px; }
-  .gl-col-head { font-size: 11px; }
+  .gl-row-avatar { width: 32px; height: 32px; font-size: 11px; }
+  .gl-quiet-doors { margin-top: 18px; }
   .gl-quiet-lead { font-size: 16px; }
   .gl-quiet-text { font-size: 14px; }
   .gl-quiet-chip { font-size: 12px; }
@@ -525,9 +532,7 @@
   .cal-week { grid-template-columns: minmax(0, 1fr); padding: 0 12px 12px; }
   .cal-legend { padding: 10px 12px; }
   .gl-row { padding: 10px 12px; }
-  .gl-col-head, .gl-more { padding-left: 12px; padding-right: 12px; }
-  /* One column, and PRAISE FIRST. See `.gl-two` above — the whole reason that rule is
-     1fr 1fr is that praise must not be buried, and a stack buries whichever is second. */
-  .gl-two { grid-template-columns: minmax(0, 1fr); }
-  .gl-col.praise { order: -1; }
+  .gl-more { padding-left: 12px; padding-right: 12px; }
+  /* One column and PRAISE FIRST is src/signals-view.css's rule now, at 720px, and the panel
+     inherits it by wearing that sheet's classes rather than restating it here. */
 }
