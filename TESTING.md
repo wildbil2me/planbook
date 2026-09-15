@@ -9708,9 +9708,10 @@ the glance page. One fact, one warning surface.
       `<select>`, the three date fields and the lead-time number included — and neither button in the
       home header row is narrower than its own label.
 - [ ] A grades-due event warns at its configured lead time.
-      → WO-6.4 *"A grades-due event appears under Deadlines closing in on every day inside its lead
-      time, and taps through to the event"*. The lead time is stored and validated here; the surface
-      that reads it does not exist yet, and no evidence on this tree can close that line.
+      → WO-6.8 *"A grades-due event appears under Closing in on every day inside its lead time, and
+      taps through to the event"*. The lead time is stored and validated here; the surface that reads
+      it does not exist yet, and no evidence on this tree can close that line. *(The pointer read
+      WO-6.4 until 2026-09-15, when that row was cut in three and the panel went to WO-6.8.)*
 
 **What is create-and-delete rather than create-edit-delete.** `no-school` and `dropped` have no edit
 path — they did not have one when WO-2.3 shipped and this work order did not add one, because the

@@ -25,7 +25,7 @@ Three rules govern the phase:
 
 ## WO-6.1 — Event model & authoring
 
-**Ship** — · **Status** ✅ DONE — 2026-08-19 · **Size** M · **Depends on** WO-2.3 · **Owes** WO-6.4
+**Ship** — · **Status** ✅ DONE — 2026-08-19 · **Size** M · **Depends on** WO-2.3 · **Owes** WO-6.8
 **Closes roadmap** Phase 6 → "Event model: date or range, title, kind, optional class and student.",
 "Grades-due deadlines", "Recurring events by materializing instances."
 *(the first fragment stopped at the two words `Event model` until 2026-08-08, WO-2.15 — under twelve
@@ -121,8 +121,9 @@ recurrence, and the validation lift. Read the size against that list.
       `wo-sweep.mjs` § 16 reconciles the § Events table against the object literal in
       `src/calendar.js`. Neither alone catches a field renamed in both the code and the harness.)*
 - [ ] A grades-due event warns at its configured lead time.
-      → WO-6.4 "A grades-due event appears under Deadlines closing in on every day inside its lead
-      time, and taps through to the event"
+      → WO-6.8 "A grades-due event appears under *Closing in* on every day inside its lead time,
+      and taps through to the event" *(the box was WO-6.4's until the cut of 2026-09-15 moved the
+      panel that draws it; the pointer moved with the box)*
 - [x] `no-school` and `dropped` behave exactly as WO-2.3 established — no regression: they are
       created and deleted on the days-off screen, through `commit()` in `src/days-off.js`, and there
       is no edit path for them anywhere in the app. **That is the establishment, and this is the line
@@ -408,8 +409,26 @@ and a `Depends on` in the other direction would be a cycle the gate would call s
 
 ## WO-6.4 — The glance page
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** L · **Depends on** WO-6.3, WO-4.5, WO-3.26
-**Closes roadmap** Phase 6 → "The glance page" and "Honest empty states."
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-6.7, WO-6.8, WO-4.5, WO-3.26
+**Closes roadmap** Phase 6 → "The glance page"
+
+*(**Cut into three on 2026-09-15, owner-directed, and this row is the last of the three.** It was an
+L with eight Acceptance lines, and the reason for the cut is the window and not the work. A median
+dispatch costs ~6M weighted units and the session-limit deaths cluster at 16–20M — WO-1.39's own
+figures — so one L is roughly a whole window, which is the shape behind every dead dispatch in
+`plans/dispatch-retro.md`: ten session-limit deaths by WO-1.38's audit, every one at a handoff. A pause inside a dispatch was weighed the same day and declined: a cooperative pause needs
+the agent to take one more turn, and the limit removes exactly that turn — the WO-4.5 scar of
+2026-08-28 — while the stops the pipeline already has, `--start` and the implementer's return since
+WO-1.38, are seams with a recovery path behind them. **So the seams are work orders.**
+[WO-6.7](#wo-67--the-glance-pages-stack-its-readers-and-the-quiet-day) builds the stack, the readers
+and the quiet day; [WO-6.8](#wo-68--today-and-this-week-waiting-to-be-graded-and-closing-in) draws the
+three panels a live term has already confirmed the sources of; what stays here is **panel 4 — the one
+that draws Phase 4 — and the lines about the page as a whole.** That is also the line the running
+order's *"not before ~Sep 16"* caution was drawn along: panels 2, 3 and 5 read calendar items, the
+ungraded count and lead-time deadlines, all in daily use since Sep 2, and only this panel draws a
+signal a real term has not yet confirmed. **Size dropped L → M.** Three Acceptance lines left with
+their panels, none of them ticked; WO-6.1's `**Owes**` pointer moved with the grades-due line to
+WO-6.8. The split is WO-8.5 → WO-8.12's shape — one part was ready and the rest was not.)*
 
 **Why it exists.** This is what WO-1.10's home screen has been accreting toward since Phase 1. It
 is a **launcher, not a report** — every item taps through to the thing that resolves it.
@@ -420,7 +439,9 @@ its own header; `src/views.js` reserves its one Phase 6 line for the **calendar*
 So `VIEWS`, `CLASS_SCREENS` and `REMEMBERED_AS` are untouched here, `DEFAULT_VIEW` still reads `home`,
 and what is in scope is the card and the panels inside a view that already exists. The slots this
 fills were reserved by name: `src/home.js` appends `.class-card-signals` empty and `src/home.css`
-holds its height, so that the first real datum reflows nothing.
+holds its height, so that the first real datum reflows nothing. *(Since the cut, the stack itself is
+WO-6.7's and the no-new-view line sits there, because that is the row that touches `#homeView` first.
+This row inherits it.)*
 
 **The page is drawn, and the drawing was here before the pointer was** *(2026-08-20)*.
 [`design/mockups/glance.html`](../../design/mockups/glance.html) has drawn this page twice — a Tuesday
@@ -428,7 +449,13 @@ with things on it, and the quiet day that is what the owner will actually see fo
 weeks — since 2026-08-19, and nothing in this work order said so until now. **Read it before
 building**, and lift `design/mockups/proposed-phase6.css` § GLANCE rather than re-deriving it: that
 section is written to become `src/glance.css` almost as-is, and it links `src/home.css` directly so a
-drawing cannot quietly disagree with the card slot it fills.
+drawing cannot quietly disagree with the card slot it fills. *(**Redrawn 2026-09-15 against the built
+half**, three ways — the Tuesday, the same Tuesday while projecting, and a quiet day two weeks into a
+term. `design/mockups/README.md` § "Redrawn against the built half" lists what the redraw deleted
+from § GLANCE and why: the card is worn exactly as shipped, and panel 4's two columns are WO-4.2's
+`.sig-two` / `.sig-col` / `.sig-col-head` worn as shipped, because a summary of that screen draws that
+screen's rows. Questions 10–14 there are this cut's: 10 and 12 land in this row, 11 and 14 in WO-6.8,
+13 in WO-6.7.)*
 
 **This pointer is late by one work order, and the cost is already recorded.** § CALENDAR was drawn the
 same morning and WO-6.3 built the calendar without a line pointing at it: twenty-eight `.cal-*`
@@ -438,33 +465,51 @@ lifted, and nothing noticed until `tools/wo-sweep.mjs` § 19 was written a day l
 file points at it — and § 19 now fails a build whose drawing names an unbuilt work order that does not
 point back.
 
-**What the drawing settles for this page, and the one thing it asks.** Five panels stacked in `.main`,
-each a `.panel` with its own header and destination; concern and praise at `1fr 1fr` with **praise
-first** below the phone breakpoint; the chip in `.class-card-signals` **reports and does not act**,
-because `classCard()` has been a single `<button>` since WO-1.13 and a control cannot nest inside one;
-and a quiet day is **one** panel with its warrant on it — four chips saying what was checked — rather
-than five empty ones. The open one is the amber note in the drawing: *the card says how many and the
-panels below say who* is a defensible reading of this work order's "every item taps through", and it
-is not the only one. **The owner's call, and it is cheaper before the build than after.**
+**What the drawing settles for this page.** Five panels stacked in `.main`, each a `.panel` with its
+own header and destination; concern and praise at `1fr 1fr` with **praise first** below the phone
+breakpoint; and a quiet day is **one** panel with its warrant on it — four chips saying what was
+checked — rather than five empty ones. *(This paragraph ended, until 2026-09-15, by calling the chip
+in `.class-card-signals` "the open one" — whether a card that says how many is a launcher when the
+card cannot tap through to who. **It is not open and has not been since 2026-08-27**: WO-3.26 and
+WO-4.5 both shipped their chip as a `<span>` inside the card's one `<button>`, and `src/home.js` says
+in its own words that the chip says how many and the screen behind the Signals segment says who.
+Decided by two landings rather than a ruling, and the mockup README's question 8 records it the same
+way. The work order said so last, which is the wrong order.)*
 
-**Deliverables** — in the order a teacher needs it at 7:40am:
-1. **Every class with today's state — taken · dropped · not yet** — each with a one-tap fix.
-2. Today's and this week's events.
-3. What's waiting to be graded. **The per-class half of this is WO-3.26's**, which fills
-   `.class-card-signals` in Ship 2; this work order is the page-level panel over the same engine call,
-   and depends on it rather than assuming it.
-4. Who needs attention — concern and praise, post-cooldown, from WO-4.5. **The panel is a
-   summary and the list it summarises is WO-4.2's screen**, so every row here taps through to that
-   screen rather than expanding in place. Ranked the way WO-4.2 ranks: **attendance first, then the
-   biggest change** — the owner's severity ruling of 2026-08-20, which this page inherits rather than
-   re-decides. And **`The quiet middle · N` is a door onto that screen**, landing on it scrolled to
-   its quiet-middle panel — the owner ruled on 2026-08-20 that the quiet middle is a panel there and
-   not a surface of its own, so this control opens a place that already exists. One list, one place,
-   two ways in.
-5. Deadlines closing in, including grades-due lead times — the surface WO-6.1's lead-time warning is
-   re-homed to.
+**Deliverables** — in the order a teacher needs it at 7:40am. Panels 1, 2, 3 and 5 are WO-6.7's and
+WO-6.8's now, listed here only so the order is stated in one place:
+1. *Every class with today's state — taken · dropped · not yet — each with a one-tap fix.* Built —
+   WO-2.1's `.class-card-state` on WO-1.13's card — and asserted by WO-6.7 as panel 1 of the stack.
+2. *Today's and this week's events.* WO-6.8.
+3. *What's waiting to be graded.* WO-6.8, over WO-3.26's engine call.
+4. **Who needs attention — concern and praise, post-cooldown, from WO-4.5. This row.** The panel is a
+   summary and the list it summarises is WO-4.2's screen, so every row here taps through to that
+   screen's card rather than expanding in place. Ranked the way WO-4.2 ranks: **attendance first, then
+   the biggest change** — the owner's severity ruling of 2026-08-20, which this page inherits rather
+   than re-decides. The rows are drawn from the array WO-6.7's reader returns — the same
+   `applyCooldown()`'d hits the card's `N need you` chip counts — so the chip and the panel cannot
+   disagree. Two columns, `.sig-two` / `.sig-col` worn as shipped, praise first below the phone
+   breakpoint; the cooldown foot under each column is a **door** onto the screen's suppressed rows
+   rather than the expansion it is there; and a foot row `and N more ›` after the first few rows of a
+   column, opening the full list, because a summary that draws twelve is the list it was meant to
+   summarise. **`The quiet middle · N` is a door onto that screen**, landing on it scrolled to its
+   quiet-middle panel — the owner ruled on 2026-08-20 that the quiet middle is a panel there and not
+   a surface of its own. *(It lives in this panel's header on a day this panel exists, and on the
+   quiet panel — WO-6.7 — on a day it does not; one control, two homes, never both at once.)*
+5. *Deadlines closing in, including grades-due lead times.* WO-6.8.
 
-Plus: **honest empty states.** A quiet day says "nothing needs you today", not five empty panels.
+**Under a projector this panel shuts, the way the screen it summarises shuts** *(the redraw's
+question 10, 2026-09-15)*. Panel 4 is a list of named students in trouble, which is exactly what
+WO-4.2's screen refuses to draw under a projector, and the glance page is the one an iPad is most
+likely to be on when the cable goes in. `src/home.js` is deliberately absent from
+`flipPresentationMode()`'s redraw list, with a note saying what would change that — **this panel is
+what changes it**: the glance module joins the list, and the flip redraws the page without a reload.
+Drawn shut (`.gl-shut`) with the counts kept, as the proposal; the counts are the card's own and were already on
+the wall.
+
+**Open — the owner's number** — *how many rows before `and N more ›`?* Drawn at three per column
+because three fired. With 118 students and nine rules a Monday in November can put twelve in the
+concern column. Proposed: **four**, then the foot. Answer it when dispatching, not in the editor.
 
 **The review item is a count, not a name** *(owner's call, 2026-08-19, WO-1.25)*. This page shows
 `1 review coming up`, and the student's name is one tap away on the calendar — a surface she
@@ -473,15 +518,26 @@ which says that a student has something on file at all, and it is this page's ow
 says how much is waiting and the surface it launches says what. The alternative reading of the old
 fifth box — no review date on this page in any form — put the one deadline a teacher is legally
 obliged not to miss on the month grid she has to go looking for, and off the page she opens every
-morning.
+morning. *(The row that draws it is WO-6.8's; the ruling stays here because this is the work order
+that made it.)*
 
 **Acceptance**
-- [ ] The five sections appear in that order, and every item in every one taps through.
-- [ ] The today-state row is correct against a day with a mix of taken, dropped, and untaken classes.
-- [ ] A day with nothing pending renders one honest message, not five empty panels.
+- [ ] The five sections appear in that order, and every item in every one taps through. *(The page's
+      line, kept on the last row: WO-6.7 and WO-6.8 each assert their own panels, and this is the
+      one that walks all five.)*
+- [ ] Every student in the concern and praise columns taps through to that student's signal card on
+      WO-4.2's screen, and the count of students drawn here plus the `and N more ›` foot equals the
+      sum of the cards' `N need you` chips — one array, counted on the card and drawn here.
 - [ ] 👤 The praise list is present and delta-ranked — not buried behind the concern list. Present is
       measurable and *not buried* is the owner's reading of her own page, which is why this line needs
-      her and not a selector count.
+      her and not a selector count. *(The redraw's question 9 rides on this reading: five panels is a
+      long page on a tablet, and "who needs you" is two scrolls down at 7:40am unless something
+      changes. Reorder is ruled out; collapsing short panels to a count, or two columns above 1024px,
+      are not. Read on the real iPad.)*
+- [ ] With presentation mode on, no student's name from a signal is on the page — the panel is shut
+      with its counts kept, exactly as `src/signals-view.js` shuts — and turning the mode on with the
+      page open redraws it without a reload. `src/glance.js` is on `flipPresentationMode()`'s redraw
+      list, and the note in `src/home.js` that said what would put it there is updated to say it did.
 - [ ] Nothing on this page renders a **plan type**, an **accommodation**, **medical text** or
       **behavior-plan text**, in presentation mode or out of it. The only `supports`-derived thing
       that reaches it is the review **count** — `1 review coming up`, with no name, no date and no
@@ -489,15 +545,13 @@ morning.
       page displays `supports` data" on 2026-08-19, WO-1.25. The old line was mechanically checkable
       and this one is not; naming the four fields is what keeps it testable, and the count above is
       the thing the old wording would have forbidden.)*
-- [ ] A grades-due event appears under Deadlines closing in on every day inside its lead time, and
-      taps through to the event.
-- [ ] The page adds no view: `src/views.js`'s `VIEWS` is unchanged, `DEFAULT_VIEW` still reads `home`,
-      and a reload still lands here.
 - [ ] 👤 The page loads in under a second on an iPad with a full year of data.
 
 **Traps** — Every section here is a summary of something built earlier. If any of it recomputes
 grades, attendance percentages, or signals rather than calling WO-2.4 / WO-3.4 / WO-4.1, you have
-created a second answer that will eventually disagree with the first.
+created a second answer that will eventually disagree with the first. **Since the cut the readers are
+WO-6.7's**, in `src/glance.js`, and this row draws their arrays: an `evaluate()` or `applyCooldown()`
+call added in this panel's code is the second answer arriving by the front door.
 
 ---
 
@@ -745,3 +799,164 @@ still draws nothing — `plans/rotating-schedule.md`, and `weekdayOf()` says so 
 (home, the attendance row, the covered column head) and three reach it after (the calendar, the covered
 column head, and the calendar's empty state). Count them on the way out; a work order that removes two
 and adds one has narrowed a route rather than re-homed it.
+
+---
+
+## WO-6.7 — The glance page's stack, its readers, and the quiet day
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-6.3, WO-3.26, WO-4.5
+**Closes roadmap** Phase 6 → "Honest empty states."
+
+**Why it exists.** The first third of [WO-6.4](#wo-64--the-glance-page), cut out on 2026-09-15 — the
+reasoning is at the top of that row and is not repeated here. This is the part that has to exist
+before either of the other two can draw a panel: the stack the panels sit in, the four readers whose
+arrays they draw, and the one panel that exists only when none of theirs does.
+
+**What it builds, and the one decision in it.** Three things:
+
+1. **The stack.** `#homeView` gains the `.gl-stack` from `proposed-phase6.css` § GLANCE, and the
+   class grid — the panel headed *Your classes* — is **panel 1 of it, unchanged**. Deliverable 1 of
+   the original row (*every class with today's state, each with a one-tap fix*) has been built since
+   WO-2.1 put `.class-card-state` on WO-1.13's card; this row asserts it as the head of the stack and
+   rebuilds nothing. `classCard()`'s markup is the same bytes either side of this landing. The page
+   adds no view: it is `#homeView` grown, exactly as the original row argued, and the line that says
+   so lives here because this is the row that touches `#homeView` first.
+2. **The readers**, in a new `src/glance.js` — one per source the later panels draw, and **each is a
+   call into an engine that already exists, returning the engine's own array**: the week's items from
+   `src/calendar-derived.js` and the authored events (WO-6.2 / WO-6.1); the grading queue from the
+   engine behind `ungradedChip()` (WO-3.26); the post-cooldown hits from `evaluate()` +
+   `applyCooldown()` the way `attentionChip()` already reads them (WO-4.5); and what is closing in —
+   grades-due dates inside `leadDaysOf()`, term edges, and the review **count** through
+   `reviewDatesIn()`. **This is the decision.** The quiet panel below counts these arrays, and
+   WO-6.8 and WO-6.4 draw rows from the same arrays, so *the card says 5, the chip says 5 and the
+   panel draws 5* is a property of there being one array rather than a thing three screens agree
+   on. The redraw of 2026-09-15 named that property as the one worth keeping through any later
+   redraw, and it is the original Traps line — *no second answer* — made structural. The readers
+   contain no arithmetic of their own: no grade, no attendance percentage, no rule.
+3. **The quiet panel.** When the week, the queue, the hits and the closing-in list are *all* empty,
+   the page draws **one** panel under the class grid with four warrant chips saying what was looked
+   at — and the other four panels **do not exist in the DOM**, rather than existing empty. The
+   decision is about how many panels there *are*, which is why it cannot live inside any of them as
+   an empty state. A bare "nothing needs you" with no warrant sends a teacher off to check for
+   herself, and then the page has cost her time instead of saving it. **The quiet-middle door is on
+   this panel** *(the redraw's question 13)*: on a quiet day panel 4 does not exist, and a door that
+   lived in its header would leave the page on exactly the day `index.html`'s own comment says that
+   list is the most useful thing on the screen. Drawn on the quiet panel; on a busy day WO-6.4 puts
+   it in panel 4's header, and it is never in both places at once.
+
+**Read the drawing before building** — [`design/mockups/glance.html`](../../design/mockups/glance.html),
+the quiet-day section, redrawn 2026-09-15 two weeks into a term — and lift § GLANCE rather than
+re-deriving it. **Lift the whole section into `src/glance.css` here, `.gl-row` and `.gl-shut`
+included, though the rows that wear them come later**: a stylesheet is lifted once, `wo-sweep.mjs`
+§ 19 reads the file's existence as *lifted* from the moment it appears, and a half-lifted sheet is
+exactly the state that check cannot see into. The banner in `proposed-phase6.css` names WO-6.4 and
+should be amended in the same sitting to say this row lifted it. WO-6.3's scar about re-deriving is
+in WO-6.4.
+
+**Open — the owner's call** — *does the "not yet" line belong on the quiet panel?* Two weeks into a
+term most rules cannot fire because the window they measure is longer than the term so far. The
+signals screen already says so in a `.sig-inert` line written from `inertRules()`, and the redraw
+wears that sentence under the quiet panel rather than composing a second one. It is honest, and it is
+also a line of grey on the page she opens every morning for six weeks. Answer it when dispatching.
+
+**Under a projector the quiet panel draws as it does otherwise.** Its chips are counts, and the card
+already puts `N need you` on the wall on the same argument — a launcher says how much is waiting.
+Joining `flipPresentationMode()`'s redraw list is WO-6.4's, because panel 4 is what changes under the
+flip and this row draws nothing that does.
+
+**Acceptance**
+- [ ] `#homeView` holds the stack and the class grid is its first panel, unchanged: `classCard()`'s
+      markup is byte-identical either side of this landing, and the today-state line is correct
+      against a day with a mix of taken, dropped and untaken classes.
+- [ ] A day with nothing pending renders one quiet panel with four warrant chips, and the DOM holds
+      **no** panel for the week, the queue, the hits or what is closing in — not hidden, absent.
+- [ ] `src/glance.js` exports one reader per source and each returns the engine's own array: the
+      harness shows a fixture where the card's `N to grade` chip, the card's `N need you` chip and
+      the readers' lengths agree, and cutting a student from the fixture moves all three.
+- [ ] `src/glance.js` holds no arithmetic of its own — no `evaluate()` reimplemented, no percentage,
+      no rule — which is read by hand and named in `TESTING.md`, because a grep cannot tell a reader
+      from a recomputation.
+- [ ] The quiet-middle door is on the quiet panel and lands on WO-4.2's screen scrolled to its
+      quiet-middle panel, with `The quiet middle · N` carrying the same N that screen's own head shows.
+- [ ] The page adds no view: `src/views.js`'s `VIEWS` is unchanged, `DEFAULT_VIEW` still reads `home`,
+      and a reload still lands here.
+
+**Traps** — The readers are the whole point, and the temptation is to make them smart. A reader that
+filters, ranks or re-dates on the way through has become a second engine; it hands back what the
+engine hands it, and the panel that draws it does the same. If a panel needs an ordering the engine
+does not produce, the ordering goes in the engine — `severityOrder()` and `praiseOrder()` live in
+`src/signals.js` for exactly this reason, stated at their definitions.
+
+Also: the quiet panel's four chips are not the card's two. The card counts one class; the quiet panel
+counts the page. Building the page's count by summing the cards is the second answer at a different
+address.
+
+---
+
+## WO-6.8 — Today and this week, Waiting to be graded, and Closing in
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-6.7
+
+**Why it exists.** The second third of [WO-6.4](#wo-64--the-glance-page), cut out on 2026-09-15 —
+the three panels whose sources a live term has already confirmed. Panel 2 draws calendar items, panel
+3 the ungraded count and panel 5 lead-time deadlines, all in daily use since Sep 2; none of them
+draws a signal, so none of them waits on Phase 4's fortnight the way panel 4 does. This row can be
+built the day WO-6.7 lands.
+
+**What it draws.** Three `.panel`s in the stack WO-6.7 built, each a list of `.gl-row` buttons from
+§ GLANCE lifted rather than re-derived, each row tapping through to the thing that resolves it:
+
+2. **Today and this week** — authored events and derived items from today through six days on,
+   from WO-6.7's week reader. An event opens the calendar's week on that day; a derived due date
+   carries the calendar's `↗` and opens the assignment's editor, exactly as the month grid's chip
+   does; a term edge opens the class.
+3. **Waiting to be graded** — one row per assignment with ungraded cells in the open term, headed
+   with the count, from WO-6.7's queue reader; the row opens that class's assignment column. The
+   per-class half of this is WO-3.26's chip, and this is the page-level panel over the same engine
+   call.
+5. **Closing in** — grades-due dates inside their lead time, from WO-6.7's closing-in reader, each
+   tapping through to the event — **the surface WO-6.1's lead-time warning has been waiting to be
+   re-homed to**, and the box WO-6.1 `**Owes**` this row; term edges approaching; and the review item
+   as a **count** — `1 review coming up`, no name, no date, no kind — tapping through to the calendar.
+   The ruling behind the count is WO-6.4's and stays there. It is read through `reviewDatesIn()`,
+   which already answers with an empty list while projecting: the row is absent under a projector
+   for free, with one asker, and **no "1 hidden" line**, because a count of hidden reviews is the
+   disclosure one step removed.
+
+**Open — the owner's call** *(the redraw's question 11)* — *does a grades-due date appear in* Today
+and this week *as well, or only under* Closing in? Proposed: a grades-due date is a deadline by
+definition and lives under *Closing in* whether or not it is inside its lead time; *Today and this
+week* lists what is scheduled. One row, one panel, and the panel a teacher would look under first.
+The cost is a Thursday grades-due date missing from a list headed "this week". Answer it when
+dispatching.
+
+**A known edge, recorded rather than fixed** *(the redraw's question 14)*. Panel 2's titles are free
+text and the panel stays up while projecting. "Guardian call — Owen Bennett" is a conference the
+teacher typed, and nothing stops her typing "IEP meeting — Owen Bennett". It is the same open edge
+`CLAUDE.md` § Accommodations records for a note to self under a projector, reached from the calendar's
+side, and the calendar draws these chips while projecting today. Drawn as the calendar does it — up —
+and named here so that it is a known edge rather than a surprise. Reversing it is the owner's call and
+costs her the panel.
+
+**Acceptance**
+- [ ] *Today and this week* lists every authored event and derived item from today through six days
+      on and nothing outside that window, and each row taps through to its subject — an event to the
+      calendar's week on that day, a due date to the assignment's editor.
+- [ ] *Waiting to be graded* draws one row per assignment with ungraded work in the open term, its
+      head count equals the sum of the cards' `N to grade` chips, and a row opens that class's
+      assignment column.
+- [ ] A grades-due event appears under *Closing in* on every day inside its lead time, and taps
+      through to the event. *(Moved here from WO-6.4 at the cut, with WO-6.1's `**Owes**` pointer.)*
+- [ ] The review item is a count with no name, date or kind; with presentation mode on it is absent
+      and no line says anything was hidden; and `reviewDatesIn()` is its only asker — `wo-sweep`
+      counts the askers of `presentationMode()` and this row adds none.
+- [ ] Every row in the three panels is a `<button>` measuring ≥44px under an emulated coarse pointer.
+- [ ] The three panels draw WO-6.7's arrays and nothing else: no engine import is added to the panel
+      code, and the harness fixture that moves the readers' lengths moves the rows drawn.
+
+**Traps** — Panel 2 is the month grid's chips in a list, and the month grid already decided what a
+derived item looks like and where it goes: plain, carrying `↗`, never dashed, opening the assignment.
+Re-deciding any of it here is the `.cal-*` / `.calendar-*` scar with a different prefix. And the
+review count is the one `supports`-derived thing on the page: a name, a date or a kind beside it is a
+disclosure WO-6.4's fifth line forbids, and a "1 hidden" under a projector is the same disclosure one
+step removed.
