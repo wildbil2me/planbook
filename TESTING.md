@@ -9311,6 +9311,90 @@ inside § *"the contact log and the history over it (WO-5.4)"* rather than in a 
 
 ---
 
+### WO-5.10 — The status line is the one field the projector does not empty
+
+**What it changed.** One field on the outreach model and one block of four lines moved in the paint.
+`outreachModel()` used to put `status: status` on `base` — the object it returns *before* it asks
+whether the projector is on — so the projected model carried whatever sentence the flow had last
+written, two of which name a person (`applyRecipient()`'s *"The draft was rebuilt for …"*,
+`recordHandoff()`'s *"… logged on …'s record"*). It now carries `status: ''` on `base`, beside
+WO-5.7's `clipboard: ''` and for the reason written there, and the real sentence is put on by the
+`Object.assign` at the foot, which only a model that got past the projector ever reaches. **The
+model decides and the paint draws it.** The four lines that write `#outreachStatus` sat *after*
+`renderOutreach()`'s blocked branch returns, so an emptied model alone would have left the old text
+in the DOM inside the merely-hidden form; they now sit **above** that branch, unconditional, a
+single read of `model.status`. That is a move rather than a second opinion: there is no
+`textContent = ''` in the blocked branch, and no `status = ''` anywhere in the paint — the Traps
+line forbids a writer of flow state in a function whose contract is to draw one. `CACHE` v115 →
+v116.
+
+**What was already true and stayed true.** The existing projector check in
+`tools/verify/outreach.mjs` is byte-identical and green: it passes because its fixture flips before
+anything has written a sentence naming a person, which is the honest reason the work order gives
+for leaving it alone. `announce()` was not touched — the live region is a screen reader, not a
+projector.
+
+**Both tools green on the delivered tree.** `verify-shell.mjs`: `1354 checks · 1354 passed · 0
+failed · 0 skipped`, 42,182 lines, 31.2 lines per check, 440s, **exit 0** — measured on the
+delivered tree, after the mutation was reverted and after the last comment landed in `src/`. (A
+first clean run before that comment printed the same figures at 442s; the line count is the
+HARNESS's own and `src/` does not move it.) No teardown hang on any run of this sitting. `wo-sweep.mjs`: `42 checks · 39 passed · 0 failed · 3 to review`, the
+call-site count at 1344 and matching, all three reviews pre-existing and byte-identical to the
+before-run's. **No before-run was taken in this sitting** — the comparison figure is WO-5.12's
+recorded `1352 · 1352 · 0 · 0` one section down, and 1352 + this work order's two checks is the 1354
+above; read it as arithmetic against a record rather than as a measurement.
+
+**The mutation round — one, the one the work order names**, planted in the working tree against a
+fully staged repository (the memory rule: a `git checkout` after a mutation eats unstaged work, so
+everything was staged first), carrying a `MUTATION` comment, reverted by exact string replacement
+the moment the run was read and **before any prose was written**. `git diff` was empty against the
+staged tree afterwards and `grep -rn MUTATION src/` returns only the pre-existing
+`src/shell.js:874`.
+
+| # | Mutation | Predicted | Result |
+|---|---|---|---|
+| M1 | `outreachModel()`: `status: status` restored on `base`, beside `ceiling` | the new WO-5.10 check red; the existing projector check GREEN | `1354 checks · 1353 passed · 1 failed`, 441s, exit 1 — exactly the one, and the projector check above it printed PASS on the same run |
+
+M1's red line is worth quoting, because it is the disclosure the work order is about, read off the
+page: `projected: {"status":"The draft was rebuilt for Wo53Guardian Two. Nothing had been typed into
+it, so nothing was lost.","hidden":false,"model":"…","blocked":true,"name":true,"address":false}`.
+`name: true` is `#outreachModal.textContent` carrying a guardian's name while presentation mode is
+on. On the delivered tree the same reading is `{"status":"","hidden":true,"model":"","blocked":true,
+"name":false,"address":false}`.
+
+- [x] With a recipient switched and the rebuilt note on screen, flipping the projector leaves
+      `#outreachStatus` empty and no guardian's name anywhere in `#outreachModal.textContent`,
+      hidden or not. *(The new check, green: the sentence is read on the glass first —* `"The draft
+      was rebuilt for Wo53Guardian Two…"`, `hidden = false` *— and after the flip the line is `''`,
+      wearing `hidden`, with the model's own `status` empty and neither `Wo53Full` nor
+      `Wo53Guardian` anywhere in the modal's text. M1 proves it is not vacuous.)*
+- [x] Flipping the projector back redraws the sentence from the flow's own state, beside the name
+      and address the same flip un-hides — the status line is never the only thing that comes back,
+      and nothing in the paint writes it. **Reworded 2026-09-15, the owner's ruling, on the
+      verifier's FAIL against the line as first written** — *"the status line stays empty until the
+      teacher does something that writes a new one."* *It was open, and not for want of a run. The
+      harness reads it every pass and prints it without asserting it:* `status on the way back out =
+      "The draft was rebuilt for Wo53Guardian Two…" (hidden = false)`. *The sentence comes back,
+      because* `status` *is a module variable and* **nothing in `src/outreach-view.js` runs on a
+      projector flip except the paint** — `flipPresentationMode()` *calls* `renderOutreach()` *and
+      nothing else. Closing it costs either the Traps ruling (a* `status = ''` *in the paint) or a
+      new export called from* `src/shell.js`*, which is a second file and outside the Deliverables.
+      The owner paid neither: what comes back comes back beside the student's name and the guardian's
+      address on a panel that has already un-hidden itself — tidiness, not exposure. The phase file
+      carries the same note.* **Nothing is on the glass while the mode is on**, *which is the
+      disclosure this work order exists to close.*
+- [x] The mutation — `status: status` restored on `base` — turns the new check red and leaves the
+      existing projector check green. *(M1 above, run and not reasoned: one red line in 1,354, and
+      the projector check's own PASS line on the same run is the second half of the claim.)*
+
+**No 👤 and no 📆.** Nothing here adds a control, opens a stylesheet or changes a measurement — the
+status line is the same `<p class="roster-hint">` in the same place, drawn from the same string, and
+the only difference a thumb could find is that it is empty under a projector. The iPad's own copy of
+this behaviour is worth a glance on the next reading that happens for another reason: force-quit
+first, `v116` on the build line.
+
+---
+
 ### WO-5.11 — A web mail handler takes the PWA window with it
 
 **Struck on 2026-09-12, the day it was built, on the laptop reading — not the iPad one.** Read the

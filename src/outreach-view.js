@@ -419,6 +419,15 @@ export function outreachModel() {
        further down — so a blocked draft and a projected screen both copy nothing, and they do it by
        having nothing to copy rather than by a control declining. */
     clipboard: '', copied: false,
+    /* WO-5.10's one, and it is the pair above's rule reaching the one field that had escaped it.
+       This line can hold two sentences that NAME A PERSON — applyRecipient()'s *rebuilt for …*
+       and recordHandoff()'s *logged on …'s record* — and until WO-5.10 it was put on `base`
+       before the projector was asked about, so a teacher who switched recipient and then flipped
+       the switch left a guardian's name sitting in the `.hidden` form: `display: none`, which this
+       file's header says is not a redaction. Empty here and filled in the assign below, exactly as
+       `clipboard` is — the projected model has NOTHING TO DRAW rather than a paint declining to
+       draw it, which is what keeps the one line that draws it an unconditional read. */
+    status: '',
     /* WO-5.12's four. `mail` is this browser's answer to *Where does your mail live?* — read here,
        in the base, because it is not about the student and is drawn under the projector's refusal
        exactly as it is drawn without it: the chips name no one. `doors` is the three of them with
@@ -430,7 +439,6 @@ export function outreachModel() {
     doors: outreach.MAIL_DOORS.map((d) => ({ id: d.id, label: d.label, active: d.id === mail })),
     https: false,
     ceiling: outreach.ceilingFor(mail),
-    status: status,
   };
   /* NOTHING IS RESOLVED, LISTED OR ADDRESSED WHILE THE PROJECTOR IS ON. Returned before a recipient
      is built, not filtered out of a model that was built anyway — src/signals-view.js's rule, and
@@ -572,6 +580,10 @@ export function outreachModel() {
     /* WHETHER THE CLIPBOARD HOLDS THIS DRAFT, ASKED OF THE STATUS LINE RATHER THAN OF A FLAG —
        see COPIED_NOTE at the head of this file for why that is the whole of the bookkeeping. */
     copied: status === COPIED_NOTE,
+    /* AND THE SENTENCE ITSELF, WHICH ONLY A MODEL THAT GOT PAST THE PROJECTOR EVER CARRIES. The
+       flow's memory of it is the module variable and is untouched by the mode, the way the draft in
+       the boxes is: what presentation mode suppresses here is the drawing rather than the work. */
+    status: status,
   });
 }
 
@@ -889,6 +901,21 @@ export function renderOutreach(opts) {
      under an open modal, which resetOutreach() below also closes. */
   host.classList.toggle('hidden', model.blocked || !model.open);
 
+  /* THE STATUS LINE IS DRAWN IN BOTH BRANCHES, AND THAT IS THE WHOLE OF WO-5.10 ON THIS SIDE. It
+     used to be drawn after the blocked branch's `return` below, so the last sentence written — two
+     of which name a person — stayed in the DOM inside a form this paint had only HIDDEN, which is
+     the one thing this file's header says a redaction is not. What empties it is the MODEL:
+     outreachModel() carries `status: ''` on the projected model, so this stays a single
+     unconditional read of `model.status`. A `textContent = ''` in the branch below would make this
+     the one field on the panel with two opinions about presentation mode, and clearing the module
+     variable here would put a writer of flow state in a function whose contract is to draw one —
+     every other write of it is in a handler, and resetOutreach() is where a caller clears it. */
+  const line = document.getElementById(STATUS_ID);
+  if (line) {
+    line.textContent = model.status;
+    line.classList.toggle('hidden', !model.status);
+  }
+
   /* EMPTIED RATHER THAN HIDDEN. The two boxes hold a named student's business and a guardian's
      address, and `display: none` is not a redaction — see this file's header. */
   const subjectField = document.getElementById(SUBJECT_ID);
@@ -972,12 +999,6 @@ export function renderOutreach(opts) {
   paintMailDoor(model);
   paintOpen(model);
   paintCopy(model);
-
-  const line = document.getElementById(STATUS_ID);
-  if (line) {
-    line.textContent = model.status;
-    line.classList.toggle('hidden', !model.status);
-  }
 }
 
 /*
@@ -1245,7 +1266,11 @@ function applyRecipient(key, replaced) {
   }
   buildDraft();
   /* The STATUS line names the person, where the dialog above named the position. It is drawn inside
-     the panel presentation mode empties and is cleared with it, which is the difference. */
+     the panel presentation mode empties and is cleared with it, which is the difference.
+     THE SECOND HALF OF THAT SENTENCE WAS A PROMISE UNTIL WO-5.10 and is now a fact: the panel was
+     emptied and this line was not, because outreachModel() put it on `base` before it asked about
+     the projector and renderOutreach() drew it after the blocked branch had already returned. Both
+     ends are fixed there; nothing here changed. */
   status = rebuiltNote('for ' + (next.recipient
     ? (next.recipient.name || next.recipient.label) : 'that recipient'), replaced);
   renderOutreach();

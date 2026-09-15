@@ -997,6 +997,78 @@ if (!seam) {
         && backOn.body > 0,
       JSON.stringify(backOn));
 
+    /* ── THE STATUS LINE UNDER THE PROJECTOR (WO-5.10) ──
+       THE CHECK ABOVE PASSES FOR AN HONEST REASON AND CANNOT EXPRESS THIS ONE, which is why it is
+       left exactly as it was rather than widened. Its fixture reaches the flip with the status line
+       holding applyTemplate()'s sentence — *rebuilt from “WO-5.3 long…”* — which names a TEMPLATE,
+       and a template is the teacher's own writing about her own message. So `outreachModal`'s text
+       carries no guardian's name whatever the status line does with it, and the ordering is what
+       decides that: the projector goes on before anything has written a sentence that names a
+       person.
+
+       TWO OF THE SENTENCES THIS LINE CAN HOLD DO NAME ONE — applyRecipient()'s *rebuilt for Wo53-
+       Guardian Two…* and recordHandoff()'s *logged on Ada…'s record* — so this fixture SWITCHES
+       RECIPIENT FIRST and flips second. The sentence is read on the glass BEFORE the flip as well
+       as after it: a check that only asserted the empty half would go green on a fixture that had
+       quietly stopped writing a status at all, which is this file's own rule about a check that
+       cannot express its failure.
+
+       The recipient is put back afterwards so the rest of the section reads the draft it always
+       read — the same courtesy the Gmail ceiling check above pays the mail door. */
+    const said = await evalJs(`(function(){
+      document.querySelector('[data-outreach-to="guardian-1"]').click();
+      var line = document.getElementById('outreachStatus');
+      var hay = document.getElementById('outreachModal').textContent;
+      return { status: line.textContent, hidden: line.classList.contains('hidden'),
+        named: hay.indexOf('Wo53Guardian Two') >= 0 }; })()`);
+    await evalJs(`(function(){
+      document.querySelector('header [data-presentation-toggle]').click(); return 1; })()`);
+    await new Promise(r => setTimeout(r, 250));
+    const statusOut = await evalJs(`(function(){
+      var line = document.getElementById('outreachStatus');
+      var hay = document.getElementById('outreachModal').textContent;
+      var m = window.planbook.outreachView.outreachModel();
+      return { status: line.textContent, hidden: line.classList.contains('hidden'),
+        model: m.status, blocked: m.blocked,
+        name: hay.indexOf('Wo53Full') >= 0 || hay.indexOf('Wo53Guardian') >= 0,
+        address: hay.indexOf('${G1_EMAIL}') >= 0 }; })()`);
+    check('and the STATUS LINE is emptied with the rest of the panel rather than left in it — a '
+      + 'recipient switched, the sentence naming that guardian read off the glass, and THEN the '
+      + 'projector: outreachModel() hands the projected model an empty `status`, so the line the '
+      + 'teacher was just reading holds nothing at all and no guardian’s name is anywhere in the '
+      + 'modal’s text, hidden or not. The old fixture flips before any sentence names a person and '
+      + 'cannot reach this (WO-5.10, Acceptance line 1)',
+      said.named === true && said.hidden === false
+        && /Wo53Guardian Two/.test(said.status) && /rebuilt for/.test(said.status)
+        && statusOut.blocked === true && statusOut.model === '' && statusOut.status === ''
+        && statusOut.hidden === true
+        && statusOut.name === false && statusOut.address === false,
+      'before: “' + String(said.status).slice(0, 80) + '…”; projected: '
+        + JSON.stringify(statusOut));
+
+    /* AND THE FLIP BACK, READ AND NOT ASSERTED. The module variable behind that sentence is flow
+       state and the mode does not write to it — nothing does, on a flip: renderOutreach() is handed
+       the projector's answer and draws it, and a `status = ''` in there would be a paint writing
+       flow state (WO-5.10's Traps line). So the sentence returns with the draft, the chips and the
+       boxes, which is the check two above this one saying what the mode suppressed was the DRAWING
+       rather than the work. The reading is printed so a later reader can see which behaviour this
+       build has rather than infer it; WO-5.10's second Acceptance line asks for the other one and
+       is reported open. */
+    await evalJs(`(function(){
+      document.querySelector('header [data-presentation-toggle]').click(); return 1; })()`);
+    await new Promise(r => setTimeout(r, 250));
+    const statusBack = await evalJs(`(function(){
+      var line = document.getElementById('outreachStatus');
+      var was = { status: line.textContent, hidden: line.classList.contains('hidden') };
+      document.querySelector('[data-outreach-to="guardian-0"]').click();
+      return { was: was, restored: document.getElementById('outreachStatus').textContent }; })()`);
+    check('and the fixture puts the recipient back where the rest of this section expects it — the '
+      + 'flip cost the flow nothing, so the switch back rebuilds in silence and the line names the '
+      + 'first guardian again',
+      /Wo53Guardian One/.test(statusBack.restored),
+      'status on the way back out = “' + String(statusBack.was.status).slice(0, 80)
+        + '” (hidden = ' + statusBack.was.hidden + ')');
+
     /*
       ─────────── NO GOOGLE SCOPE IS REQUESTED ANYWHERE IN THIS FLOW ───────────
 

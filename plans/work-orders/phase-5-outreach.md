@@ -1026,7 +1026,7 @@ runs.
 
 ## WO-5.10 — The status line is the one field the projector does not empty
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-5.7
+**Ship** — · **Status** ✅ DONE — 2026-09-15 · **Size** XS · **Depends on** WO-5.7
 
 **Why it exists.** `paintOutreach()`'s blocked branch empties the subject, the body, the *To* line,
 its note, the chips, the template options and the reasons list, in as many words: *"emptied rather
@@ -1066,14 +1066,38 @@ never sees the sentence it would catch. The check is right; the fixture cannot m
 - `tools/README.md`'s `check()` count moves; update it in the same sitting (the WO-3.26 scar).
 
 **Acceptance**
-- [ ] With a recipient switched and the rebuilt note on screen, flipping the projector leaves
+- [x] With a recipient switched and the rebuilt note on screen, flipping the projector leaves
       `#outreachStatus` empty and no guardian's name anywhere in `#outreachModal.textContent`, hidden
       or not.
-- [ ] Flipping the projector back does not resurrect the sentence: the status line stays empty until
-      the teacher does something that writes a new one.
-- [ ] The mutation — `status: status` restored on `base` — turns the new check red and leaves the
+- [x] Flipping the projector back redraws the sentence from the flow's own state, beside the name
+      and address the same flip un-hides — the status line is never the only thing that comes back,
+      and nothing in the paint writes it. *(Reworded 2026-09-15, the owner's ruling; the line it
+      replaced is quoted in the block below.)*
+- [x] The mutation — `status: status` restored on `base` — turns the new check red and leaves the
       existing projector check green, which is the proof that the new fixture reaches what the old
       one cannot.
+
+*(**The second line read "Flipping the projector back does not resurrect the sentence: the status
+line stays empty until the teacher does something that writes a new one" until 2026-09-15, and it
+was open because the mechanism this work order rules in cannot reach it** — a ruling for the owner
+rather than an implementation left half-done, made 2026-09-15: **reword the line, not the code.**
+Nothing is on the glass while the projector is on, and what comes back when it goes off comes back
+beside the student's name and the guardian's address on a panel that has already un-hidden itself
+— tidiness, not exposure, and not worth a hook in `src/shell.js`. The verifier's reading is kept
+below as written on 2026-09-14.* `status` *is
+a module variable in* `src/outreach-view.js`*, and* **nothing runs in that module on a projector flip
+except the paint**: `flipPresentationMode()` *calls* `outreachView.renderOutreach()` *and nothing
+else, so the only places that could forget the sentence are the paint — which the Traps line above
+forbids in as many words — or a new export called from* `src/shell.js`*, which is a second file and
+outside these Deliverables. With the model fix in, a flip ON empties the line (line 1, proved) and a
+flip OFF draws it again, because* **what the mode suppressed was the drawing rather than the work** *—
+which is word for word what the projector check one line above it in* `tools/verify/outreach.mjs`
+*has asserted about the draft, the chips and the boxes since WO-5.3. The reading is printed by the
+harness rather than asserted:* `status on the way back out = "The draft was rebuilt for Wo53Guardian
+Two…"`*. **Nothing is on the glass while the projector is on, which is the whole of the disclosure**
+— the panel and everything on it come back together when it goes off. Closing this line costs either
+the Traps ruling or a* `renderOutreach()`*-sized hook in* `flipPresentationMode()`*; both are the
+owner's call.)*
 
 **Traps** — **Do not clear the module variable from inside the paint.** `status = ''` in
 `paintOutreach()`'s blocked branch would pass the first two Acceptance lines and put a writer of flow

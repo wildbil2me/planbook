@@ -13,6 +13,16 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The status line empties with the rest of the form — 2026-09-15
+
+**Outreach: the status line now empties with the rest of the form under the projector**, so a
+rebuilt-for-guardian note or a handoff sentence no longer sits inside the hidden form. It was the
+one field the projector branch hid rather than emptied — never on the glass, but one dropped
+`hidden` class from being read, which is the difference the flow's own rule draws. The fix is on the
+model, not the paint: the projected model carries an empty status, and the paint keeps drawing
+whatever the model says. When the projector goes off the sentence is redrawn beside everything else
+the same flip brings back, which is the owner's ruling rather than an omission (WO-5.10).
+
 ### Where your mail lives — 2026-09-14
 
 **Outreach now asks where your mail lives, and `mailto:` is one of three answers rather than the

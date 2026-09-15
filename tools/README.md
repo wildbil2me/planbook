@@ -1210,7 +1210,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1342 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1344 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1623,6 +1623,23 @@ passed · 0 failed · 0 skipped`, 42,102 lines, 31.1 lines per check, 452s — s
 teardown hang § WO-5.11 records, killed by PID. **There is no exit code for this run and the green
 is the summary line, not the status**: a process killed by PID does not exit 0, and this sentence
 claimed both until 2026-09-14. Mutations are tabulated in `TESTING.md` § WO-5.12.
+
+**WO-5.10 moved it from 1342 to 1344, and the executed count from 1352 to 1354 — two sites, two
+results.** Both are literal call sites inside the existing § *"the send flow (WO-5.3)"*, neither in a
+loop and neither a failure arm, standing on that section's own fixture guard, and they sit
+immediately after the two projector checks — which are byte-identical and still green. **The first is
+the work order's own**: a recipient switched so the status line holds `applyRecipient()`'s sentence,
+that sentence read off the glass *before* the flip, and then the projector, with `#outreachStatus`,
+its `hidden` class, `outreachModel().status` and `#outreachModal.textContent` all read after it.
+**The ordering is the whole of what it adds.** The check above it flips before anything has written
+a sentence naming a person — what it reaches the flip holding is `applyTemplate()`'s *rebuilt from
+"WO-5.3 long…"*, which names a TEMPLATE — so it passes honestly and cannot express this failure, and
+it was left alone rather than widened. **The second puts the recipient back** where every later check
+in the section expects it, the way the Gmail ceiling check above restores the mail door; it asserts
+the restore and *prints, without asserting*, what the status line held on the way back out of
+presentation mode — the reading WO-5.10's second Acceptance line is about, left open. The run prints
+**1354**: `1354 checks · 1354 passed · 0 failed · 0 skipped`, 42,182 lines, 31.2 lines per check,
+440s, exit 0 — no teardown hang on this one. Mutations are tabulated in `TESTING.md` § WO-5.10.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not
