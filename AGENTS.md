@@ -122,6 +122,14 @@ dependencies.
   there is no `classList.toggle('hidden')` anywhere in the file. And the one record the file
   composes rather than forwards, the review-date chip, carries no name, no student id and no date;
   `closingIn()` asks `presentationMode()` nothing, because `reviewDatesIn()` already refuses.
+  The panels (WO-6.8, 2026-09-16) are held to the same rule, and the owner ruled on its edge. A panel
+  may import a **name that reads no document** (`kindInfo`, a token constant such as
+  `ASSIGNMENT_DUE`), and a panel head may make **the same engine call its reader made, with the same
+  arguments** (`leadWindowOf(doc, today)` to name *Closing in*'s window). A panel that computes a
+  window, re-clamps a lead, re-runs a rule, or imports anything that reads the document is still
+  outside. A **kind decision belongs to the engine**: grades-due dates left the week through
+  `scheduledIn()` in `src/calendar.js`, not through a filter in `weekItems()`. The full ruling is
+  under WO-6.8's sixth Acceptance line.
 Full schema and grade math: [`docs/data-model.md`](docs/data-model.md).
 
 ## If you were dispatched with a work order

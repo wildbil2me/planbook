@@ -435,6 +435,16 @@ Seven things that will bite:
   one record the file composes rather than forwards — the review-date chip — is composed **on a
   ruling** (a review is a count on this page), carrying no name, no student id and no date;
   `closingIn()` asks `presentationMode()` nothing, because `reviewDatesIn()` already refuses.
+  *(**The panels exist since WO-6.8, 2026-09-16, and they are held to the same rule, with its edge
+  now ruled on by the owner.** A panel may import a **name that reads no document** — `kindInfo`'s
+  word table, a token constant like `ASSIGNMENT_DUE` — because a second copy of those words in
+  `src/glance.js` is exactly how a screen disagrees with itself. A panel head may make **the same
+  engine call its reader made, with the same arguments** — *Closing in*'s head reads
+  `leadWindowOf(doc, today)` to name the window, as the quiet panel already did. What stays outside:
+  a panel that computes a window, re-clamps a lead, re-runs a rule, or imports anything that reads
+  the document. **And a kind decision belongs to the engine, not the reader**: when grades-due dates
+  were ruled out of the week, `src/calendar.js` gained `scheduledIn()` rather than `weekItems()`
+  gaining a filter. The ruling in full is under WO-6.8's sixth Acceptance line.)*
 
 ## Accommodations are the most sensitive data here
 

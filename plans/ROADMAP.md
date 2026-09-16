@@ -631,6 +631,19 @@ which is what stops "five empty panels" being one dropped class away. **One cost
 hidden**: a truly quiet morning runs the signals pass once more per class than it did before, because
 the cards and the page each pay for one. `TESTING.md` § WO-6.7 carries it.)*
 
+*(**Three of the glance page's five panels are drawn as of 2026-09-16, and the box stays open** —
+[WO-6.8](work-orders/phase-6-calendar-glance.md#wo-68--today-and-this-week-waiting-to-be-graded-and-closing-in)
+drew *Today and this week*, *Waiting to be graded* and *Closing in*; who needs attention waits on
+Phase 4's fortnight. **Two things landed differently from the box's wording, both the owner's rulings
+at dispatch.** "Today's and this week's events" **excludes grades-due dates**, which live only under
+*Closing in* — so a deadline outside its lead time is on the calendar and nowhere on this page until
+its warning starts. And "deadlines closing in" is **one window for three kinds**: grades-due dates, term
+edges and IEP/504 reviews all use the lead time the teacher set for grades, and the panel head says so.
+A review therefore gets a re-keying notice, three days by default; that is accepted, and reversing it
+is a settings-block row rather than a panel one. **One defect booked rather than fixed**: the review
+count opens this month's calendar, which misses a review early next month —
+[WO-6.9](work-orders/phase-6-calendar-glance.md#wo-69--the-review-count-opens-a-page-that-shows-the-review).)*
+
 ---
 
 ## Phase 7 — Drive sync (opt-in) 🔒
