@@ -1,0 +1,192 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   Planbook — the glance page (WO-6.7 · WO-6.8 · WO-6.4).
+
+   THE NINTH PER-SCREEN STYLESHEET, and the first whose screen is a view that already had
+   one: `#homeView` is src/home.css's, and it stays src/home.css's. That sheet styles the
+   class grid and the card; this one styles the STACK the grid is the first panel of and
+   the panels that follow it, and the two never name the same class. src/shell.css's rule
+   — one file per screen, styling only its own class names, with its own (pointer: coarse)
+   block at the end — is obeyed by prefix: every class here is `gl-`, and that prefix
+   appears in no other stylesheet.
+
+   LIFTED WHOLE FROM design/mockups/proposed-phase6.css § GLANCE ON 2026-09-15, BY WO-6.7,
+   including the rules nothing wears yet. `.gl-row`, `.gl-more`, `.gl-foot-go`,
+   `.gl-row-avatar` and `.gl-shut` are WO-6.8's and WO-6.4's — the rows in the three list
+   panels and the shut panel while projecting — and they are here now because a stylesheet
+   is lifted once: tools/wo-sweep.mjs § 19 reads this file's existence as "§ GLANCE has
+   landed" from the moment it appears, and a half-lifted sheet is exactly the state that
+   check cannot see into. The scar behind that is WO-6.3's: § CALENDAR was re-derived
+   rather than lifted and not one of twenty-seven drawn names reached the file its banner
+   promised (design/mockups/PROTOCOL.md § When the drawing lands). So the names here are
+   the drawing's names, unchanged, and the section banner over there now says so.
+
+   The values are design/style-guide.md's and src/shell.css's, not new ones — nothing here
+   is a new hex. Two things read like mistakes and are the same two that read like mistakes
+   in every sheet before this one: colours are written out inline rather than as custom
+   properties, and there is no dark variant of anything. Both are deliberate suite
+   conventions — read CLAUDE.md before tidying either.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Every tappable class this sheet adds, in one grouped selector — design/style-guide.md §6.
+   Neither is worn yet (WO-6.8); the quiet panel's one control is `.class-action-btn`, worn as
+   shipped from src/shell.css, which already carries this and the 44px floor. */
+.gl-row, .gl-more {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Five panels stacked in `.main`, in the order a teacher needs them at 7:40am. Panels
+   rather than sections of one panel: each is a different KIND of thing with a different
+   destination, and `.panel`'s own header is what gives each one a title and a control. */
+.gl-stack { display: flex; flex-direction: column; gap: 14px; }
+
+/*
+  THERE IS NO CHIP RULE HERE, AND THE ABSENCE IS THE RECORD (redrawn 2026-09-15).
+
+  The first drawing proposed `.gl-sig` — three coloured chips for the slot src/home.css had
+  been holding open since WO-1.10. Two work orders spent the slot before WO-6.4 was cut:
+  WO-3.26 put "N to grade" in it and WO-4.5 put "N need you" beside it, both as
+  `.class-card-count`, both grey, both <span>s inside the card's one button. src/home.js
+  measured the slot and found a third chip does not fit. So the card on the glance page is
+  the card in the app, worn as shipped, and a rule here for a chip the build has already
+  drawn differently would be the second truth design/mockups/ exists to prevent.
+*/
+
+/* ── THE LAUNCHER ROW (WO-6.8) ── */
+/* Every row on this page is a button, because WO-6.4 says the page is a launcher and not a
+   report: an item that cannot be acted on does not earn a place. The `›` is drawn on every
+   one of them for the same reason — a row that goes somewhere and a row that does not must
+   not look alike, and the way to guarantee that is for there to be no second kind. */
+.gl-list { display: flex; flex-direction: column; }
+.gl-row {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 10px 20px;
+  border: none; border-top: 1px solid #f3f4f6; background: none;
+  font-family: inherit; text-align: left; cursor: pointer; transition: background 0.15s;
+}
+.gl-row:hover { background: #f8f9fb; }
+/* `display: block` is stated on all three, not inherited — src/signals-view.css's own note on
+   `.sig-row-main`: a <span> carrying `flex: 1 1 auto` is a flex ITEM of the row and still an inline
+   BOX itself, so its title and its sentence run on one line unless each declares a display. The
+   first drawing had exactly that defect and nobody looked at it rendered until the redraw. */
+.gl-row-main { display: block; flex: 1 1 auto; min-width: 0; }
+.gl-row-title { display: block; font-size: 13px; font-weight: 600; color: #1a1a2e; }
+/* WHY THIS ROW IS HERE, in the rule's own words. WO-4.1 requires the explanation to be
+   produced by the rule from the numbers that fired it, never written per screen — so this
+   line is a slot for a sentence this file does not compose and must not truncate. */
+.gl-row-why { display: block; font-size: 11px; line-height: 1.5; color: #8a9bb0; margin-top: 2px; }
+.gl-row-meta { flex: 0 0 auto; font-size: 11px; font-weight: 700; color: #8a9bb0; font-variant-numeric: tabular-nums; }
+.gl-row-go { flex: 0 0 auto; font-size: 14px; font-weight: 700; color: #c0cad5; }
+.gl-row:hover .gl-row-go { color: #5b6fcc; }
+/* A deadline inside its lead time. The one amber row on the page, and it means what amber
+   means everywhere else in this app: act on this. */
+.gl-row.warn { background: #fff8e6; }
+.gl-row.warn:hover { background: #fef5ea; }
+.gl-row.warn .gl-row-meta { color: #8a6d1a; }
+
+/* ── CONCERN AND PRAISE, SIDE BY SIDE — worn from src/signals-view.css (WO-6.4) ── */
+/*
+  THE COLUMNS ARE THE SIGNALS SCREEN'S OWN (redrawn 2026-09-15). The first drawing proposed
+  `.gl-two`, `.gl-col` and `.gl-col-head` for a two-column, equal-width, praise-first-on-a-
+  phone layout; WO-4.2 and WO-4.3 then shipped exactly that layout as `.sig-two`, `.sig-col`
+  and `.sig-col-head`, with the figure in the strong position and the cooldown foot under
+  each column. WO-6.4 says this panel is a SUMMARY of that screen. A summary drawn from a
+  second stylesheet is a summary that drifts, so the panel wears the shipped classes and
+  this sheet declares nothing for the rows, the heads or the foot — the argument for
+  1fr 1fr and for praise-first lives in src/signals-view.css, where it was lifted to.
+
+  What survives here is the "and N more ›" foot — a door onto the full list when the summary
+  is capped — and the › the cooldown foot gains because on THIS page it is a door and not an
+  expansion. Both are the work order's own: one list, one place, two ways in. The second is
+  a rule on `.gl-foot-go` UNDER `.sig-hidden`, never a rule on `.sig-hidden` itself — two
+  stylesheets must never style the same class, and the class this sets a property on is ours.
+*/
+.gl-more {
+  margin-top: auto; padding: 9px 20px; border: none; border-top: 1px solid #f3f4f6;
+  background: none; font-family: inherit; text-align: left;
+  font-size: 11px; font-weight: 700; color: #8a9bb0; cursor: pointer; transition: all 0.15s;
+}
+.gl-more:hover { background: #f8f9fb; color: #5b6fcc; }
+.gl-foot-go { margin-left: 4px; color: #c0cad5; font-size: 13px; }
+.sig-hidden:hover .gl-foot-go { color: #5b6fcc; }
+
+/* The class avatar at the head of a row, at row size. `.avatar` is worn as shipped for its
+   colour and its initials; this second class sizes it for a 13px row rather than a card.
+   The same arrangement as `.detail-avatar` beside `.avatar` (design/mockups/PROTOCOL.md § 5). */
+.gl-row-avatar { width: 28px; height: 28px; font-size: 10px; }
+
+/* ── THE PANEL WHILE PROJECTING (WO-6.4) ── */
+/*
+  THE PANEL SHUTS THE WAY THE SCREEN IT SUMMARISES SHUTS. src/signals-view.js refuses rather
+  than hides under a projector, because its content is a list of named students in trouble
+  — and so is this panel's. The refusal is that screen's own `.sig-blocked-*`, worn as
+  shipped; this wrapper only centres it inside a panel that keeps its header and its
+  counts. Compact on purpose: a full `.empty-state` inside one of five panels would read as
+  the page being broken rather than one panel being closed.
+*/
+.gl-shut { padding: 22px 20px 26px; text-align: center; border-top: 1px solid #f3f4f6; }
+
+/* ── THE HONEST EMPTY STATE (WO-6.7) ── */
+/*
+  "A quiet day says 'nothing needs you today', not five empty panels."
+
+  Which means this is not a panel's empty state — it is the PAGE's, and the four panels
+  below the class grid are not drawn at all. That is why it lives here and not as a variant
+  of `.empty-state`'s children: the decision is about how many panels exist, and no rule
+  inside a panel can make that decision. src/glance.js makes it, once, over its four readers.
+
+  The class grid stays. Whether today's attendance is done is not "something pending" —
+  it is the question the home screen exists to answer, and it has an answer on a quiet day
+  too.
+*/
+.gl-quiet { padding: 40px 20px; text-align: center; }
+.gl-quiet-mark { font-size: 30px; line-height: 1; }
+.gl-quiet-lead { margin-top: 10px; font-size: 15px; font-weight: 700; color: #1a1a2e; }
+.gl-quiet-text {
+  max-width: 460px; margin: 8px auto 0;
+  font-size: 13px; line-height: 1.6; color: #8a9bb0;
+}
+/* What it checked, so that "nothing needs you" is a claim with a warrant rather than a
+   shrug. A teacher who cannot see what was looked at will go and look herself, and then
+   the page has cost her time instead of saving it. */
+.gl-quiet-checked {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+  margin-top: 14px;
+}
+.gl-quiet-chip {
+  padding: 3px 9px; border-radius: 20px; border: 1.5px solid #eef0f4; background: #f8f9fb;
+  font-size: 11px; font-weight: 700; color: #a0aab8;
+}
+/* The quiet-middle door, on the one day it has no panel 4 to hang on. `.class-action-btn`
+   worn as shipped; this is the row that holds it. */
+.gl-quiet-doors { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § RESPONSIVE — the order design/style-guide.md §6 names: (pointer: coarse) first,
+   then the width blocks.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* THE TOUCH PASS. Every control this file adds is named here, including the ones a bare
+   `button` rule in src/shell.css already floors — a control that is only covered by
+   another selector's rule is a control the next reader has to go and prove is covered.
+   The quiet panel's door is `.class-action-btn` and is floored where that class is declared. */
+@media (pointer: coarse) {
+  .gl-row { min-height: 44px; padding: 12px 20px; }
+  .gl-row-title { font-size: 14px; }
+  .gl-row-why { font-size: 12px; }
+  .gl-row-meta { font-size: 12px; }
+  .gl-more { min-height: 44px; font-size: 12px; }
+  .gl-row-avatar { width: 32px; height: 32px; font-size: 11px; }
+  .gl-quiet-doors { margin-top: 18px; }
+  .gl-quiet-lead { font-size: 16px; }
+  .gl-quiet-text { font-size: 14px; }
+  .gl-quiet-chip { font-size: 12px; }
+}
+
+@media (max-width: 640px) {
+  .gl-row { padding: 10px 12px; }
+  .gl-more { padding-left: 12px; padding-right: 12px; }
+  /* One column and PRAISE FIRST is src/signals-view.css's rule, at 720px, and the panel
+     inherits it by wearing that sheet's classes rather than restating it here. */
+}

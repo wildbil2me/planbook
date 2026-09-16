@@ -174,6 +174,14 @@
        renders a resolved draft too and one sentence — “an unresolved merge field never renders
        blank” — gets one treatment in the sheet both screens already load. -->
   <link rel="stylesheet" href="src/templates.css">
+  <!-- The glance page’s own sheet (WO-6.7), ninth instance of the same convention and the first
+       whose screen already had one: `#homeView` is src/home.css’s and stays so — that sheet is
+       the class grid and the card, this one is the STACK the grid is panel 1 of and the panels
+       under it, and the two never name the same class. It WEARS `.panel*`, `.class-action-btn`,
+       `.avatar` and `.sig-hidden` from the sheets above and restyles none of them. Lifted whole
+       from design/mockups/proposed-phase6.css § GLANCE, rows that nothing wears yet included —
+       the sheet says why at its own head. -->
+  <link rel="stylesheet" href="src/glance.css">
 </head>
 <body>
 
@@ -520,8 +528,27 @@
   surface IS the marking screen, those two taps mean the same thing, so the state line went back to
   being a <span> that reports, inside the one button that opens the class. src/home.js carries the
   reasoning; the subtitle below says the shorter version to a teacher.
+
+  IT IS THE FIRST PANEL OF A STACK SINCE WO-6.7 (2026-09-15), AND THE PAGE ADDED NO VIEW TO BECOME
+  ONE. This is `#homeView` grown into the glance page, exactly as WO-6.4 argued on 2026-08-19 and
+  as src/home.js's own header has said since WO-1.10: src/views.js's VIEWS, CLASS_SCREENS and
+  REMEMBERED_AS are untouched, DEFAULT_VIEW still reads `home`, and a reload still lands here. What
+  changed in the markup is one wrapper — `.gl-stack`, lifted from
+  design/mockups/proposed-phase6.css § GLANCE into src/glance.css — with this panel as its first
+  child, unchanged: the same header, the same grid, the same empty state, and classCard() in
+  src/home.js drawing the same bytes.
+
+  EVERYTHING UNDER THIS PANEL IS DRAWN BY src/glance.js AND NONE OF IT IS IN THE MARKUP, which is
+  a decision about how many panels EXIST rather than a convenience. On a day with nothing pending
+  the page draws ONE panel under the grid — "Nothing needs you today", with four chips saying what
+  was looked at — and the panels for the week, the grading queue, who needs attention and what is
+  closing in are not in the tree at all, rather than sitting here empty behind `.hidden`. A
+  hand-written panel in this file would exist on every day, and the whole point is that on a quiet
+  day it does not. Their copy therefore lives in src/glance.js as named constants at the head of
+  its renderer, and that departure from "copy lives in index.html" is written out there.
 -->
 <div id="homeView">
+ <div class="gl-stack" id="glanceStack">
   <div class="panel">
     <div class="panel-header">
       <div class="panel-title-row">
@@ -599,6 +626,9 @@
       </div>
     </div>
   </div>
+  <!-- Panels 2–5 and the quiet panel are appended here by src/glance.js — see the comment above
+       this view for why none of them is written out. -->
+ </div>
 </div>
 
 <!--
@@ -1687,7 +1717,10 @@
     <div class="panel-header">
       <div class="panel-title-row">
         <div class="panel-title">
-          <h2 id="signalsQuietHead">The quiet middle</h2>
+          <!-- `tabindex="-1"` so the glance page's door (WO-6.7, `data-signals-open="quiet"`) can
+               land focus here as well as scrolling here — the arrangement #detailStudentName has
+               for the same reason: this is a screen a screen-reader user cannot see move. -->
+          <h2 id="signalsQuietHead" tabindex="-1">The quiet middle</h2>
           <p>
             Neither flagged, nor praised, nor contacted this term — and how long that has been
             true. Every row opens that student's record.

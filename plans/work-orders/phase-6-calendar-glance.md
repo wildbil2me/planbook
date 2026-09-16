@@ -804,7 +804,7 @@ and adds one has narrowed a route rather than re-homed it.
 
 ## WO-6.7 — The glance page's stack, its readers, and the quiet day
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-6.3, WO-3.26, WO-4.5
+**Ship** — · **Status** ✅ DONE — 2026-09-15 · **Size** M · **Depends on** WO-6.3, WO-3.26, WO-4.5
 **Closes roadmap** Phase 6 → "Honest empty states."
 
 **Why it exists.** The first third of [WO-6.4](#wo-64--the-glance-page), cut out on 2026-09-15 — the
@@ -858,6 +858,22 @@ term most rules cannot fire because the window they measure is longer than the t
 signals screen already says so in a `.sig-inert` line written from `inertRules()`, and the redraw
 wears that sentence under the quiet panel rather than composing a second one. It is honest, and it is
 also a line of grey on the page she opens every morning for six weeks. Answer it when dispatching.
+*(**Answered NO at dispatch, 2026-09-15, from the tree rather than from taste** — and flagged for the
+owner in the result file. `inertRules()` returns the rules that are not BUILT, has returned `[]` since
+WO-4.4 landed, and knows nothing about term length, so wearing `.sig-inert` as shipped draws nothing;
+composing the sentence the drawing shows needs term-length arithmetic no engine produces, which the
+fourth Acceptance line forbids in `src/glance.js`. The quiet panel ships without the line.
+Reversible: a follow-up adds an engine-side function to `src/signals.js` first and a one-line wear
+second. `src/glance.js`'s header carries the same note.)*
+
+**Two things this row decided that its text did not settle** *(2026-09-15, the implementer, named
+in `.claude/dispatch/WO-6.7-result.md`)*. **The closing-in reader reads one window for all three
+kinds** — grades-due dates, term edges and the review count, all through `leadWindowOf()` — because
+the lead time is the one "how far ahead do you want warning" number the teacher owns, and a second
+horizon is a second setting nobody typed; the drawing's "this month" beside the review count is the
+owner's to ask for. **And the window questions went into the engine**: `src/calendar.js` gained
+`eventsCovering()`, `gradesDueIn()` and `leadWindowOf()`, so a reader asks for a range rather than
+computing one — the Traps line's own instruction, applied to a window rather than an ordering.
 
 **Under a projector the quiet panel draws as it does otherwise.** Its chips are counts, and the card
 already puts `N need you` on the wall on the same argument — a launcher says how much is waiting.
@@ -865,20 +881,20 @@ Joining `flipPresentationMode()`'s redraw list is WO-6.4's, because panel 4 is w
 flip and this row draws nothing that does.
 
 **Acceptance**
-- [ ] `#homeView` holds the stack and the class grid is its first panel, unchanged: `classCard()`'s
+- [x] `#homeView` holds the stack and the class grid is its first panel, unchanged: `classCard()`'s
       markup is byte-identical either side of this landing, and the today-state line is correct
       against a day with a mix of taken, dropped and untaken classes.
-- [ ] A day with nothing pending renders one quiet panel with four warrant chips, and the DOM holds
+- [x] A day with nothing pending renders one quiet panel with four warrant chips, and the DOM holds
       **no** panel for the week, the queue, the hits or what is closing in — not hidden, absent.
-- [ ] `src/glance.js` exports one reader per source and each returns the engine's own array: the
+- [x] `src/glance.js` exports one reader per source and each returns the engine's own array: the
       harness shows a fixture where the card's `N to grade` chip, the card's `N need you` chip and
       the readers' lengths agree, and cutting a student from the fixture moves all three.
-- [ ] `src/glance.js` holds no arithmetic of its own — no `evaluate()` reimplemented, no percentage,
+- [x] `src/glance.js` holds no arithmetic of its own — no `evaluate()` reimplemented, no percentage,
       no rule — which is read by hand and named in `TESTING.md`, because a grep cannot tell a reader
       from a recomputation.
-- [ ] The quiet-middle door is on the quiet panel and lands on WO-4.2's screen scrolled to its
+- [x] The quiet-middle door is on the quiet panel and lands on WO-4.2's screen scrolled to its
       quiet-middle panel, with `The quiet middle · N` carrying the same N that screen's own head shows.
-- [ ] The page adds no view: `src/views.js`'s `VIEWS` is unchanged, `DEFAULT_VIEW` still reads `home`,
+- [x] The page adds no view: `src/views.js`'s `VIEWS` is unchanged, `DEFAULT_VIEW` still reads `home`,
       and a reload still lands here.
 
 **Traps** — The readers are the whole point, and the temptation is to make them smart. A reader that

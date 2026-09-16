@@ -1210,14 +1210,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1344 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1364 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the sixty-eight files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the sixty-nine files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -1640,6 +1640,29 @@ the restore and *prints, without asserting*, what the status line held on the wa
 presentation mode — the reading WO-5.10's second Acceptance line is about, left open. The run prints
 **1354**: `1354 checks · 1354 passed · 0 failed · 0 skipped`, 42,182 lines, 31.2 lines per check,
 440s, exit 0 — no teardown hang on this one. Mutations are tabulated in `TESTING.md` § WO-5.10.
+
+**WO-6.7 moved it from 1344 to 1364, and the executed count from 1354 to 1373 — twenty sites,
+nineteen results.** Nineteen are literal call sites in one new section, `verify/glance-quiet.mjs` —
+a file that work order created — and the twentieth is that section's fixture-guard failure arm,
+which never fires while the fixture installs, so the gap between sites and results widens from −15
+to −16. None of the nineteen is inside a loop. The section's other guard is a `skip()` call (no
+`window.planbook`), on the WO-4.5 pattern, which is why it moves this number by nothing. **The run
+prints 1373**: `1373 checks · 1373 passed · 0 failed · 0 skipped`, 42,801 lines, 31.2 lines per check, 452s, exit 0, measured 2026-09-15 on the delivered tree.
+
+*(**It was not green on the first run, and two of the three reds were the harness's.** The first
+was `verify/copy-class.mjs`, untouched by this work order: its fixture plants an open hall pass at
+the written-down stamp `2026-09-15T09:00:00-04:00`, which was a FUTURE instant on every day the
+harness had run until 2026-09-15 — and on that date became a pass 676 minutes overdue the moment its
+class was opened, so `src/attendance.js` announced it and the live region held that sentence where
+the copy's own should have been. WO-1.44's one-date collision, in a fourth section; the stamp is now
+two minutes before the page's clock, under the first alert level. The second was this section's own
+fixture: two students planted on `cooldown-quiet.mjs`'s Ben-and-Cal shape carried TWO hits each and
+not one — three zeros then three 85s leaves two zeros outside the four-assignment window, a `before`
+of 0% and a rise of 77 points, so `grade-rose` fires beside `missing-count`, which is why that
+section counts eight hits over four students. One scored task instead of three makes the whole
+graded history the window, `before` is null, and the rule cannot fire; the check now asserts the
+rule ids as well as the count. The third was a helper of this section throwing on a view it was
+already on. The app was not touched between the two runs.)*
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not

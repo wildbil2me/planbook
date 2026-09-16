@@ -189,7 +189,7 @@ define. Neither prefix appears anywhere in `src/`. It splits:
 § SHARED          →  whichever lands first
 § CALENDAR        →  src/calendar-view.css   (WO-6.3)
 § EVENT EDITOR    →  src/events.css          (WO-6.1)
-§ GLANCE          →  src/glance.css          (WO-6.4)
+§ GLANCE          →  src/glance.css          (WO-6.4 — lifted whole by WO-6.7, 2026-09-15)
 ```
 
 `src/calendar.js` already exists and is the event **model** (WO-2.3). The view is not it — hence

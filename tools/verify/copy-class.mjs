@@ -51,6 +51,24 @@ console.log('\n--- copying a class, terms and categories only (WO-1.22) ---');
       var s = window.planbook.store;
       var d = s.getDoc();
       if (!d) return { ok:false, why:'no year document is open' };
+      /* THE OPEN PASS WENT OUT TWO MINUTES AGO, BY THE CLOCK, AND NOT AT A WRITTEN-DOWN HOUR. It read
+         out:'2026-09-15T09:00:00-04:00' until 2026-09-15, and on that date exactly it became a pass
+         676 minutes overdue the moment the class was opened: src/attendance.js announced it, the live
+         region held that sentence instead of the copy's, and the announce() check below went red
+         on a build in which nothing about copying a class had changed. Every day before it the stamp
+         was in the FUTURE and alerted nothing, which is why it was green for a fortnight. Two minutes
+         is under the five the first alert level wants, so the card draws and nothing fires. Written
+         in the app's own local-offset shape (src/passes.js), the way cooldown-quiet.mjs stamps its
+         log entries. Found by WO-6.7's first run, 2026-09-15 — the one-date collision WO-1.44 added
+         --today to reproduce. No backticks in this comment. */
+      var outAt = (function(){
+        var t = new Date(Date.now() - 2 * 60000);
+        var p = function(n){ return (n < 10 ? '0' : '') + n; };
+        var o = -t.getTimezoneOffset();
+        var off = (o < 0 ? '-' : '+') + p(Math.floor(Math.abs(o) / 60)) + ':' + p(Math.abs(o) % 60);
+        return t.getFullYear() + '-' + p(t.getMonth() + 1) + '-' + p(t.getDate()) + 'T'
+          + p(t.getHours()) + ':' + p(t.getMinutes()) + ':' + p(t.getSeconds()) + off;
+      })();
       s.update(function(doc){
         doc.classes.push({ id:'c_wo122_src', name:'WO-1.22 Copy Source', archived:false,
           terms:[
@@ -88,7 +106,7 @@ console.log('\n--- copying a class, terms and categories only (WO-1.22) ---');
           categoryId:'k_wo122_1', name:'WO-1.22 Test', points:100, assigned:'', due:'' });
         doc.scores['a_wo122'] = { 'wo122-s1': { v:90 } };
         doc.openPasses.push({ id:'p_wo122_open', studentId:'wo122-s1', classId:'c_wo122_src',
-          type:'bathroom', out:'2026-09-15T09:00:00-04:00' });
+          type:'bathroom', out:outAt });
         doc.passes.push({ id:'p_wo122_hist', studentId:'wo122-s2', classId:'c_wo122_src',
           type:'nurse', out:'2026-09-14T09:00:00-04:00', back:'2026-09-14T09:10:00-04:00',
           minutes:10, endedBy:'return' });

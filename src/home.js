@@ -31,10 +31,19 @@
   ~180px at the coarse block's 12px. WO-4.5 arrived wanting two of its own — the students who need
   attention, and the quiet middle — and the second would have wrapped the slot onto a line the
   reserved height does not cover, which is the invariant above broken on every card at once. So the
-  card carries the signals count and the quiet middle's page-level control is WO-6.4's, which draws
-  it by name as `The quiet middle · N` and lands on the panel WO-4.5 built for it. If a later work
-  order needs a third number here, it needs a second row and a new height, and that is a change to
-  every card on the screen rather than an addition to one.
+  card carries the signals count and the quiet middle's page-level control is the glance page's
+  (src/glance.js since WO-6.7, on the quiet panel; WO-6.4's panel 4 header on a busy day), which
+  draws it by name as `The quiet middle · N` and lands on the panel WO-4.5 built for it. If a later
+  work order needs a third number here, it needs a second row and a new height, and that is a change
+  to every card on the screen rather than an addition to one.
+
+  AND THE GRID IS PANEL 1 OF A STACK SINCE WO-6.7, WITHOUT THIS FILE CHANGING WHAT IT DRAWS. The
+  glance page is `#homeView` grown (WO-6.4): src/glance.js holds the readers the other panels draw
+  from and draws them under the grid, and refreshHome() below hands it the last word on every
+  redraw so that whatever puts the grid on screen puts the page on screen. classCard() is the same
+  bytes either side of that landing, which WO-6.7's first acceptance line asserts by diff — the
+  card is the one part of this page that was built before the page was, and it is asserted here as
+  its head rather than rebuilt.
 
   THE FIRST SLOT WAS FILLED BY WO-2.1, and it cost this card its shape — which was foreseen here
   and paid for twice, so the whole of it is worth reading before the next slot is filled. The state
@@ -153,6 +162,9 @@ import { stateSummary, todayISO } from './attendance.js';
 /* Which view is on screen, asked rather than read off a class name — see the header's last
    paragraph for what this guards and why the cost of not guarding it lands on attendance marking. */
 import { currentView } from './views.js';
+/* The rest of the page, under the grid (WO-6.7). One import, one call at the foot of refreshHome();
+   that module imports nothing from this one, so the grid is drawn first and the page after it. */
+import { renderGlance } from './glance.js';
 
 const GRID_ID = 'homeGrid';
 const EMPTY_ID = 'homeEmpty';
@@ -184,9 +196,13 @@ export function refreshHome() {
   grid.textContent = '';
   grid.classList.toggle('hidden', list.length === 0);
   if (empty) empty.classList.toggle('hidden', list.length > 0);
-  if (!list.length) { renderEmpty(!!doc); return; }
+  if (!list.length) renderEmpty(!!doc);
+  else list.forEach((cls) => grid.append(classCard(cls, cls.id === selectedId)));
 
-  list.forEach((cls) => grid.append(classCard(cls, cls.id === selectedId)));
+  /* AND THE PANELS UNDER THE GRID (WO-6.7), on both branches: a document whose last class was just
+     archived has a quiet panel to take down as well as an empty state to put up, and src/glance.js
+     decides that for itself from the document rather than being told here. */
+  renderGlance();
 }
 
 /*

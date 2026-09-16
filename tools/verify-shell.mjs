@@ -132,6 +132,7 @@ import { run as calendarDerived } from './verify/calendar-derived.mjs';
 import { run as calendarDrawn } from './verify/calendar-drawn.mjs';
 import { run as concernList } from './verify/concern-list.mjs';
 import { run as praiseColumn } from './verify/praise-column.mjs';
+import { run as glanceQuiet } from './verify/glance-quiet.mjs';
 import { run as policyUrl } from './verify/policy-url.mjs';
 import { run as driveSignIn } from './verify/drive-sign-in.mjs';
 import { run as driveSync } from './verify/drive-sync.mjs';
@@ -332,6 +333,12 @@ const BROWSER_SECTIONS = [
   { file: 'verify/calendar-drawn.mjs', run: calendarDrawn },
   { file: 'verify/concern-list.mjs', run: concernList },
   { file: 'verify/praise-column.mjs', run: praiseColumn },
+  /* AFTER THE THREE SIGNALS SECTIONS AND BEFORE THE RESTORE (WO-6.7). It reads the card's two chips
+     against src/glance.js's readers, so it wants the signal engine's own sections behind it — and it
+     puts every other class away for its own length and asserts the restore at its foot, so it must
+     run before anything whose fixture it would otherwise be hiding. It is not last for the reason
+     `verify/cooldown-quiet.mjs` is: it replaces nothing, and its own fixture is put back by hand. */
+  { file: 'verify/glance-quiet.mjs', run: glanceQuiet },
   { file: 'verify/policy-url.mjs', run: policyUrl },
   { file: 'verify/drive-sign-in.mjs', run: driveSignIn },
   /* DIRECTLY AFTER THE SIGN-IN, because it depends on that section in one direction and

@@ -368,6 +368,16 @@
                                       which is `data-class-screen` and opens filtered to the class
                                       you were in. It navigates rather than opening a dialog, which
                                       is why it has no aria-haspopup
+      data-signals-open="quiet"       puts the concern list in <main> with every class showing — the
+                                      calendar door's shape one screen over (WO-6.7), and the second
+                                      door onto that screen after the Signals segment on the
+                                      class-screen switcher, which opens filtered to the class you
+                                      were in. The value says where on the screen to land: `quiet`
+                                      scrolls WO-4.5's quiet-middle panel into view and moves focus
+                                      to its heading. Carried by `The quiet middle · N` on the glance
+                                      page's quiet panel (src/glance.js); WO-6.4 puts the same door
+                                      in panel 4's header on a busy day, never both at once. It
+                                      navigates rather than opening a dialog, so no aria-haspopup
       data-calendar-scale="month|week"  how much of the calendar is on screen. The anchor is kept
                                       across the switch: a teacher who paged to the week of the
                                       14th and then asked for the month means the month that week
@@ -730,6 +740,11 @@ import * as contactHistory from './contact-history.js';
    precached nor loadable, and the sixteen fields it resolves could not be asked anything. */
 import * as mergeFields from './merge-fields.js';
 import * as home from './home.js';
+/* WO-6.7's readers and the quiet panel. src/home.js imports it and calls its renderer, so the
+   module is already in the graph; it is imported HERE for the read seam at the foot of this file
+   and for nothing else — no chain below calls it directly, because refreshHome() is what draws the
+   page and this module draws under it. */
+import * as glance from './glance.js';
 import * as attendance from './attendance.js';
 /* WO-2.6's two read-only surfaces — a student's history, and the class's record as a printed page
    and a CSV. Its own module for the reason src/days-off.js is one: the registry is the flow that
@@ -1294,6 +1309,54 @@ function showCalendar() {
   calendarView.renderCalendar();
   const range = document.getElementById('calendarRange');
   announce('Calendar' + (range && range.textContent ? ' — ' + range.textContent : '') + '.');
+}
+
+/*
+  THE WAY ONTO THE CONCERN LIST FROM THE GLANCE PAGE (WO-6.7), and the shape is showCalendar()'s
+  exactly, one screen over. It is the second door onto that screen: the first is the Signals pill
+  inside a class, which lands in showClassScreen() above and hands the open class. This one hands
+  '' — a teacher on the class grid is not in a class, so the honest lens is every class — which is
+  the very value src/signals-view.js's resetSignals() has reserved "from the home screen's door"
+  since WO-4.2, with no such door existing until now.
+
+  Four calls in showCalendar()'s order and for its reasons: RESET first and before the view swaps,
+  so the first paint is already of every class on the ruled order rather than of whatever this
+  browser was left on; the view; the two strips; the paint.
+
+  THEN THE LANDING, WHICH IS THE ONE THING THIS DOOR HAS THAT THE OTHER DOES NOT. The control that
+  opens it is `The quiet middle · N` — a door onto the panel WO-4.5 built at the FOOT of that
+  screen, on the owner's 2026-08-20 ruling that the quiet middle is a panel there and not a
+  surface of its own. A door that landed at the top of the screen would leave her looking at two
+  columns of concern and praise on the day she pressed a button about the students nothing is
+  wrong with; so `landing` names the panel and the screen is scrolled to it, and focus goes to its
+  heading (tabindex="-1" in index.html) the way showStudentDetail() moves it, for the reason that
+  one gives: this is a screen a screen-reader user cannot see move. The N on the door and the N on
+  that heading come out of one engine function — src/signals.js's quietMiddle(), asked of every
+  active class's open term by src/glance.js and by src/signals-view.js's collect() alike.
+
+  WHICH CLASS IS OPEN IS UNTOUCHED, and so is every preference except `openView`, which
+  src/views.js writes this view down as `class`, for the reason it gives at REMEMBERED_AS: a
+  reload must never land on a ranked list of named students in trouble.
+*/
+function showSignals(landing) {
+  signalsView.resetSignals('');
+  views.showView('signals');
+  classes.refreshClassBar();
+  screenNav.refreshScreenNav();
+  signalsView.renderSignals();
+  const quiet = landing === 'quiet' ? document.getElementById('signalsQuiet') : null;
+  /* While projecting the screen is refused and the panel is not drawn (src/signals-view.js's
+     paintQuiet() follows `model.blocked`), so there is nothing to scroll to and the refusal — which
+     names the control that undoes it — is what the arrival reads. */
+  if (quiet && !quiet.classList.contains('hidden')) {
+    quiet.scrollIntoView({ block: 'start' });
+    const head = document.getElementById('signalsQuietHead');
+    if (head && typeof head.focus === 'function') head.focus({ preventScroll: true });
+    announce('Who needs you — ' + (head && head.textContent ? head.textContent : 'the quiet middle')
+      + '.');
+    return;
+  }
+  announce('Who needs you.');
 }
 
 /*
@@ -2537,6 +2600,13 @@ document.addEventListener('click', (e) => {
     how to open a class would have to import the navigation that imports it.
   */
   if (e.target.closest('[data-calendar-open]')) { showCalendar(); return; }
+  /* ── the glance page's door onto the concern list (WO-6.7) ──
+     Beside the calendar's door because it is the same shape one screen over: a button on the home
+     view that puts a screen ABOUT every class in <main>, with every class showing. The value names
+     where on that screen to land — `quiet` is the quiet-middle panel, and it is the only value
+     anything writes today. */
+  const signalsOpen = e.target.closest('[data-signals-open]');
+  if (signalsOpen) { showSignals(signalsOpen.getAttribute('data-signals-open')); return; }
   const calendarScale = e.target.closest('[data-calendar-scale]');
   if (calendarScale) {
     calendarView.setCalendarScale(calendarScale.getAttribute('data-calendar-scale'));
@@ -4004,6 +4074,17 @@ window.planbook = {
      is right about a grid nobody drew still fails. Nothing in the app reads window.planbook — see
      the block above for why the seam outlived the shelf. */
   calendarView,
+  /* `glance` joined at WO-6.7, and its reason is `signals`' and `calendarDerived`'s rather than
+     the reading reason `classes` gives: its five readers are pure functions over the open document
+     and there is no control anywhere a harness could tap to make one answer — the page draws
+     PANELS from them, and in this work order it draws exactly one, on a day nothing is pending.
+     What has to be asked is the work order's own claim: that each reader hands back the engine's
+     array and nothing of its own, so that the card's "N to grade", the card's "N need you" and the
+     readers' lengths are one number, and that cutting a student from the fixture moves all three
+     together. A build whose readers recomputed and a build whose readers called look identical on
+     a quiet day, and the difference is the whole of the Traps line. Nothing in the app reads
+     window.planbook — see the block above for why the seam outlived the shelf. */
+  glance,
   /* `supports` joined at WO-1.8, and it is the one entry here whose reason is an ACCEPTANCE line
      rather than a convenience. The work order's claim is that support data is discreet by default
      and that one function decides it — so tools/verify-shell.mjs has to be able to ask that

@@ -13,6 +13,33 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A quiet day says so, in one panel — 2026-09-15
+
+**The home screen has a stack now, and the class grid is its first panel — unchanged.** Under it,
+on a day with nothing due, nothing waiting to be graded, nobody needing attention and nothing
+closing in, sits **one** panel that says so, with four chips naming what was looked at: the week
+that was read, the classes whose queues were checked, the students both signal columns were run
+over, and the lead time the teacher herself set. The other four panels are **absent from the page**,
+not hidden — a source with nothing draws no panel at all, so "five empty panels" is not one dropped
+class away.
+
+**The panels it is the empty state of do not exist yet, and that is the order on purpose.** WO-6.4
+was cut in three the same day; this is its first third. `src/glance.js` holds one reader per source —
+the week, the grading queue, the attention hits, what is closing in, and the quiet middle — and each
+is a call into an engine that already exists, handing back that engine's own array. **No arithmetic
+lives in the file**: no percentage, no threshold, no rule, no date compared to another date. So the
+four panels arrive filled rather than the quiet rule being rewritten to notice them, and the three
+numbers a teacher can see at once — the card's *2 to grade*, the queue, the hits — move together
+because one reader feeds each.
+
+**The quiet panel carries a door.** *The quiet middle · N* lands on the signals screen scrolled to
+its quiet-middle panel, with the same N on both sides from the same function — the students who are
+neither in trouble nor being praised, which on a quiet day is the most useful list on the screen.
+
+No view was added; the page is still the home screen, and a reload still lands on it. One cost is
+named rather than hidden: a genuinely quiet morning runs the signals pass once more per class than
+before, once for the cards and once for the page. (WO-6.7)
+
 ### The status line empties with the rest of the form — 2026-09-15
 
 **Outreach: the status line now empties with the rest of the form under the projector**, so a

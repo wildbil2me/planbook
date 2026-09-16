@@ -34,7 +34,7 @@
 /* Bump on every deploy that changes any file in SHELL. The name is the version: `activate`
    deletes every cache that is not this one, which is what makes a deploy replace the shell
    rather than layer on top of it. */
-const CACHE = 'planbook-shell-v116';
+const CACHE = 'planbook-shell-v117';
 
 /* Relative to this file, which is why sw.js lives at the repo root: a service worker can only
    control pages at or below its own directory (src/README.md). Kept relative rather than
@@ -70,8 +70,16 @@ const SHELL = [
   './src/calendar-view.css',
   './src/signals-view.css',
   './src/templates.css',
+  /* WO-6.7. The glance page: the stack under the class grid and the quiet panel. A stylesheet is
+     the entry rule 2 above says gets missed, and this one is worn by the home view — the first
+     screen every launch draws — so an offline launch without it is a home screen unstyled from
+     the grid down. */
+  './src/glance.css',
   './src/shell.js',
   './src/home.js',
+  /* WO-6.7. Imported by src/home.js and by src/shell.js and reached no other way, which is exactly
+     as absent offline as a file named in index.html (tools/verify/precache.mjs). */
+  './src/glance.js',
   './src/attendance.js',
   './src/attendance-report.js',
   './src/passes.js',

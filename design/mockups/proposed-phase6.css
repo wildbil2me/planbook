@@ -23,7 +23,7 @@
 
      § CALENDAR       →  src/calendar-view.css   (WO-6.3)
      § EVENT EDITOR   →  src/events.css          (WO-6.1)
-     § GLANCE         →  src/glance.css          (WO-6.4)
+     § GLANCE         →  src/glance.css          (WO-6.4 — lifted whole by WO-6.7, 2026-09-15)
      § SHARED         →  whichever lands first
 
    `src/calendar.js` already exists and is the event MODEL (WO-2.3). The view is not it,
@@ -340,7 +340,20 @@
 .cal-series-text b { color: #1a1a2e; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § GLANCE — src/glance.css (WO-6.4)
+   § GLANCE — src/glance.css (WO-6.4 — lifted whole by WO-6.7, 2026-09-15)
+
+   LIFTED IN ONE PIECE, NAMES UNCHANGED, on the day the first third of WO-6.4 landed. WO-6.7 built
+   the stack and the quiet panel and wears `.gl-stack` and the `.gl-quiet-*` rules today; `.gl-row`,
+   `.gl-more`, `.gl-foot-go`, `.gl-row-avatar` and `.gl-shut` went across in the same lift and are
+   worn by nothing until WO-6.8 and WO-6.4 draw the rows — because tools/wo-sweep.mjs § 19 reads
+   src/glance.css's existence as "landed" from the moment it appears, and a half-lifted sheet is
+   exactly the state that check cannot see into (design/mockups/PROTOCOL.md § When the drawing
+   lands). The § CALENDAR banner above records the other way this can go.
+
+   What the build declined from the drawing: the `.sig-inert` "not yet" line under the quiet panel,
+   answered NO at WO-6.7's dispatch — src/glance.js says why at its head — and the class grid's
+   subtitle, which WO-6.7 left as it was because that row asserts panel 1 unchanged. Both stay
+   drawn, per PROTOCOL § What the build declined to take stays drawn.
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* Five panels stacked in `.main`, in the order a teacher needs them at 7:40am. Panels

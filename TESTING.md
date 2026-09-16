@@ -10086,6 +10086,156 @@ unconditional value has nothing to pin.*
 
 ---
 
+### WO-6.7 — The glance page's stack, its readers, and the quiet day
+
+**What this adds.** The first third of WO-6.4, cut out on 2026-09-15: the `.gl-stack` in `#homeView`
+with the class grid as its unchanged first panel; `src/glance.js`, holding one reader per source the
+later panels draw — `weekItems()`, `queueRows()`, `attentionHits()`, `closingIn()`, and
+`quietMiddleRows()` for the door — each a call into an engine that already exists, returning that
+engine's own array; `src/glance.css`, lifted whole from `design/mockups/proposed-phase6.css` § GLANCE,
+rows nothing wears yet included; and the quiet panel — **one** panel under the grid when all four
+arrays are empty, with four warrant chips and `The quiet middle · N` as a door onto WO-4.2's screen
+scrolled to its quiet-middle panel. No view was added; `src/views.js` is untouched.
+
+**Three decisions the work order left open, and which way each went.** *The "not yet" line:* **not
+drawn**, the dispatcher's answer to the owner's call — `inertRules()` means *not built*, has answered
+`[]` since WO-4.4, and knows nothing about term length, so the line as shipped draws nothing and the
+sentence the drawing shows needs arithmetic `src/glance.js` refuses. *The closing-in window:* one
+horizon for all three kinds — grades-due dates, term edges and the review count all read through
+`leadWindowOf()`, the lead time the teacher already owns — chosen for want of a ruling, because a
+second horizon is a second setting nobody typed; the drawing's "this month" beside the review count is
+the owner's to ask for. *Where the window questions live:* in the engine. `src/calendar.js` gained
+`eventsCovering()`, `gradesDueIn()` and `leadWindowOf()` so that a window is something a reader asks
+for, not something it computes — the Traps line's own instruction ("the ordering goes in the engine")
+applied to a range.
+
+**The hand reading that closes the fourth line — `src/glance.js` holds no arithmetic of its own.**
+Read top to bottom on 2026-09-15 against the delivered file, function by function, because a grep
+cannot tell a reader from a recomputation:
+
+- `weekItems()` — three engine calls (`eventsCovering`, `assignmentDuesIn`, `termEdgesIn`) over a
+  window built by `shiftDays(today, 6)`, concatenated in a fixed order. No sort, no filter, no test
+  of a date against anything.
+- `queueRows()` — `openWork()` per roster id, rows with `state === 'open'` kept — the engine's own
+  state token, compared by equality, never re-derived from a cell — and grouped one row per
+  assignment. The only number it produces is `open`, incremented once per engine row: the size of a
+  list the engine handed back. No points are summed, no percentage exists, no cell is read.
+- `attentionHits()` — `evaluate()` then `applyCooldown()`, the `shown` half, concatenated across
+  classes. No threshold is read, no rule is re-run, no hit is added, dropped or re-ordered.
+- `quietMiddleRows()` — `quietMiddle()` per class, handed the same full pass, concatenated. Not
+  sorted across classes.
+- `closingIn()` — `gradesDueIn()` and `termEdgesIn()` over `leadWindowOf()`'s window, plus one
+  built record whose `count` is `reviewDatesIn(...).length`. The record is the one shape this file
+  composes, and it composes it on a ruling (a review is a count on this page); no name, no student
+  id and no date of the review is on it.
+- The renderer's half: `studentsLookedAt()` counts distinct roster ids that name a student — the
+  size of the set `evaluate()` walks, on a chip and nowhere else — and the lead figure on the fourth
+  chip is `daysBetween(w.from, w.to)` over the engine's own window rather than a second read of the
+  setting with a second clamp. No `Math.*` call, no `%`, no `/`, and no threshold key anywhere in
+  the file.
+
+What was found: the first draft read `leadDaysOf()` a second time for the chip and clamped it with
+`Math.max(0, Math.floor(…))` — a copy of `leadWindowOf()`'s own clamp, one file away. Replaced with
+`daysBetween()` over the window the reader used, before the first harness run.
+
+- [x] `#homeView` holds the stack and the class grid is its first panel, unchanged: `classCard()`'s
+      markup is byte-identical either side of this landing — `git diff src/home.js` touches the
+      header comment, one import and the foot of `refreshHome()`, and not one line of `classCard()`,
+      `stateLine()` or the two chip functions — and the today-state line is correct against a day
+      with a mix of taken, dropped and untaken classes: the three WO-2.1 checks in
+      `tools/verify/attendance.mjs` ("each card on the home screen states its own class's answer",
+      the half-taken card in the caution palette, and "a taken class, a dropped one and an untaken
+      one are three different cards to look at") are green on the delivered tree, and the new
+      section reads the card's shipped shape — head, state line, signals slot, in that order, inside
+      one button — as panel 1 of the stack.
+- [x] A day with nothing pending renders one quiet panel with four warrant chips, and the DOM holds
+      **no** panel for the week, the queue, the hits or what is closing in — not hidden, absent:
+      the stack holds exactly two `.panel`s, the only `[data-glance-panel]` is `quiet`, and there is
+      no `.gl-list`, `.gl-row`, `.gl-more`, `.gl-shut`, `.sig-two` or `.sig-col` anywhere under
+      `#homeView`. The four chips read the readers' figures and the engine's settings: the calendar
+      through today + 6 in `src/date-text.js`'s words, the queue over 1 class, 4 students both
+      directions, and the lead time read back through `leadDaysOf()` rather than assumed.
+- [x] `src/glance.js` exports one reader per source and each returns the engine's own array: the
+      fixture puts `2 to grade` and `2 need you` on the card with `queueRows().length === 2`,
+      `attentionHits().length === 2` over two distinct students and `quietMiddleRows().length === 2`;
+      cutting one student from the roster moves all three to `1 to grade` · `1 needs you` · 1 · 1;
+      and a contact about the remaining student's one rule two days ago takes her off the card and
+      off the hits reader together — post-cooldown on both — while the queue holds and the quiet
+      middle does not gain her.
+- [x] `src/glance.js` holds no arithmetic of its own — read by hand, above.
+- [x] The quiet-middle door is on the quiet panel and lands on WO-4.2's screen scrolled to its
+      quiet-middle panel, with `The quiet middle · N` carrying the same N that screen's own head
+      shows: the door reads `· 4`, the tap lands on `#signalsView` with every class showing on the
+      ruled order, `#signalsQuietHead` reads `The quiet middle · 4` and `signalsModel().quiet.count`
+      is 4; the panel's top is at the top of a 600px viewport the page overflows (`scrollY > 0`), focus
+      is on the heading, and `planbook_openView` holds `class`.
+- [x] The page adds no view: `src/views.js` is untouched by this work order (`git diff --stat` does
+      not list it), `<main>` holds the same eight views, standing on the grid writes `home` to
+      `planbook_openView`, and a real reload lands on `#homeView` with the quiet panel redrawn from the
+      document on arrival.
+
+**Two more things the section asserts that no acceptance line asks for by name.** The week reader's
+far edge is a window and not a filter — a reminder on day six is one item and day seven is none — and
+the closing-in reader reads a grades-due date on the last day of its lead and not one day past it,
+while the week reader carries it on both days. And with presentation mode on and a review date inside
+the lead window, `closingIn()` answers `[]` — inherited from `reviewDatesIn()`, with no asker of
+`presentationMode()` in `src/glance.js` — so the day reads quiet and the panel draws exactly as
+otherwise, `The quiet middle · 3` on the door from the engine that does not refuse.
+
+*Desk pass 2026-09-15: `verify-shell.mjs` **1373 of 1373, 0 failed, 0 skipped**, 42,801 lines, 31.2
+lines per check, 452s, exit 0 — up from 1354 on the tree this work order arrived on: twenty call
+sites in one new section, `tools/verify/glance-quiet.mjs`, nineteen of which fire on a green run (the
+twentieth is the fixture guard's failure arm).* `wo-sweep.mjs` *is 42 checks, 38 passed, 0 failed, 4
+to review — two of the four are the pre-existing shapes, and two are this work order's: the
+sensitive-field census now lists `src/glance.js` (it names `reviewDatesIn()` and the review COUNT,
+and emits neither a name nor a date — the review probe above searches the reader's whole output for
+both), and the coarse-block review names eight new selectors, every one of them a container or a
+line of text and not a control: `.gl-stack`, `.gl-list`, `.gl-row-main`, `.gl-row-go`,
+`.gl-foot-go`, `.gl-shut`, `.gl-quiet-mark`, `.gl-quiet-checked`.*
+
+**It was not green on the first run, and the app was innocent all three times.** The first run read
+`1366 checks · 1363 passed · 3 failed`. One red was `tools/verify/copy-class.mjs`'s, untouched by this
+work order: its fixture plants an open hall pass at a written-down stamp, `2026-09-15T09:00:00-04:00`,
+which was in the FUTURE on every day the harness had run — and on 2026-09-15 exactly became a pass
+676 minutes overdue the moment its class opened, so `src/attendance.js` announced it and the live
+region held *"Wo122 Ashgrove has been out on a bathroom pass for 676 minutes."* where the copy's own
+sentence should have been. WO-1.44's one-date collision, in a fourth section; the stamp is now two
+minutes before the page's clock, under the first alert level. The second red was this section's
+fixture: two students planted on `cooldown-quiet.mjs`'s Ben-and-Cal shape carried **two** hits each,
+not one — three zeros then three 85s leaves two zeros outside the four-assignment window, a `before`
+of 0% and a rise of 77 points, so `grade-rose` fires beside `missing-count` (which is why that section
+counts eight hits over four students). One scored task instead of three makes the whole graded history
+the window, `before` is null, and the rule cannot fire; the check now asserts the rule ids and not
+only the count. The third was a helper of this section throwing on the view it was already standing
+on. Not one byte of `src/` moved between the two runs.
+
+**Three mutations, one run, four reds, all four predicted — and reverted before a word of this
+paragraph was written.** Planted together in `src/glance.js`, each under a `MUTATION` comment:
+`WEEK_DAYS_AHEAD = 7`; the quiet decision dropping `closingIn().length`; and `attentionHits()` handing
+back the pre-cooldown pass. The run read **`1373 checks · 1369 passed · 4 failed`, exit 1**: the
+chips check (the first chip named *Tue, Sep 22*), the week-window check (day seven became an item and
+the panel stayed down), the review-date check (`closingIn()` still answered its one record and the
+quiet panel drew over it regardless), and the post-cooldown check (`hits: 1` where the card drew no
+chip). The other 1,369 held, including every earlier section's. Reverted by copying the pristine file
+back — `cmp` identical — and `grep -rn MUTATION src tools` read after, finding only the eight
+pre-existing mentions at `HEAD`; the reverted tree was then re-run before this file was touched.
+
+
+**Two temptations declined, both the parent row's.** The class grid's subtitle still promises the
+card "will also grow to carry" what it has carried since 2026-08-27, and `index.html`'s own comment
+says to delete it; the header caption over this view still reads *Your classes* where the drawing
+says *Today*. Both are sentences about panel 1, which this row asserts unchanged, so both are left
+for WO-6.4 — named in the result file rather than done quietly.
+
+**One known cost, named rather than hidden.** On a morning with nothing due, nothing to grade and
+nothing closing in, the signals pass runs once more per class than it did before this work order — the
+three cheap readers are read first and the pass is skipped the moment any is non-empty, and the pass
+is shared between the hits and the quiet middle, but a truly quiet morning pays for it twice (once for
+the cards, once for the page). WO-6.4 will want the hits on every render; whether the card then reads
+this file's array is that sitting's decision, and `src/glance.js`'s header says so.
+
+---
+
 
 ## Phase 7 — Drive sync (opt-in) 🔒
 

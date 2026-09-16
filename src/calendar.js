@@ -368,6 +368,35 @@ export function generalEventsIn(doc) {
 }
 
 /*
+  EVERY AUTHORED EVENT WHOSE RANGE TOUCHES A WINDOW, in date order (WO-6.7).
+
+  The authored half of "what is on the calendar between these two dates" — the question
+  src/calendar-derived.js's derivedItemsIn() already answers for the half the teacher did not type.
+  src/calendar-view.js asks it inline, with coversDate() against every cell of a grid it has already
+  built; the glance page (src/glance.js) has no grid to walk and wants the list, and its readers are
+  forbidden a range test of their own — a reader that decided which events fall in a week would be a
+  second opinion about what "covers" means, one file away from the function that owns it. So the
+  question moved here, beside coversDate(), and both callers can take it.
+
+  A RANGE TOUCHES THE WINDOW if any day of it is inside: an event that starts before the window and
+  ends inside it is in, and so is one that starts inside and runs past the end. Both edges are
+  inclusive, which is coversDate()'s own reading of an event's last day. An event with no readable
+  `date` covers nothing, for coversDate()'s reason, and so is never in any window.
+
+  Sorted on a copy, for the reason the two readers above sort on one. */
+export function eventsCovering(doc, from, to) {
+  if (!isDate(from) || !isDate(to)) return [];
+  return eventsIn(doc)
+    .filter((e) => {
+      if (!e || !isDate(e.date)) return false;
+      const end = isDate(e.endDate) && e.endDate > e.date ? e.endDate : e.date;
+      return e.date <= to && end >= from;
+    })
+    .slice()
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+}
+
+/*
   WHICH ALREADY-RECORDED MEETINGS THIS EVENT WOULD COVER — the rule half of the fourth thing
   protecting `doc.events`, and the reason it is only the rule half is worth writing down.
 
@@ -574,6 +603,36 @@ export function leadDaysOf(doc) {
     if (Number.isFinite(n)) return n;
   }
   return DEFAULT_LEAD_DAYS;
+}
+
+/*
+  THE DATES A LEAD TIME COVERS, counted from a day (WO-6.7) — `from` itself through `from` plus the
+  lead, both ends inside. A lead of 3 read on the 14th covers the 14th, 15th, 16th and 17th, so a
+  grades-due date on the 17th is "inside its warning" from the 14th, which is what "three days
+  ahead" means to the teacher who typed it. A lead of 0 covers the day itself and nothing else.
+
+  IT IS HERE AND NOT ON THE GLANCE PAGE because "inside its lead time" is one definition with two
+  edges, and the quiet panel's warrant chip, WO-6.8's *Closing in* rows and this file's own
+  gradesDueIn() below all have to agree on where those edges are. A negative lead — nothing in the
+  editor can type one, but a hand-edited document can hold one — reads as 0 rather than as a window
+  that ends before it starts.
+
+  The dates only: nothing here reads an event, and it returns the same shape whether or not the
+  document holds a single grades-due date. */
+export function leadWindowOf(doc, from) {
+  const days = Math.max(0, Math.floor(leadDaysOf(doc)));
+  return { from: from, to: shiftDays(from, days) };
+}
+
+/* THE GRADES-DUE DATES INSIDE A WINDOW, in date order (WO-6.7). eventsCovering() above with the
+   kind decided here rather than by the caller, for the reason exceptionsIn() and generalEventsIn()
+   are two functions and not one with a filter argument: the caller that wants "which deadlines are
+   closing in" should not be the one deciding which kind a deadline is. It reuses the range test
+   above rather than comparing `date` alone: a grades-due date is one day in practice, and one that
+   a hand-edited document gave a range is inside the window on every day of it, exactly as the month
+   grid draws it. */
+export function gradesDueIn(doc, from, to) {
+  return eventsCovering(doc, from, to).filter((e) => e.kind === 'grades-due');
 }
 
 /* The one writer. It refuses anything that is not a finite number — a field mid-way through a
