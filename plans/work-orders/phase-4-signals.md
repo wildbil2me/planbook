@@ -545,3 +545,60 @@ critical path. Everything that puts the grid on screen calls* `refreshHome()` *s
 the chip is never stale when a teacher can see it.* **This one is asserted by reading and not by
 measurement**: *timing it from outside would want* `home` *and* `views` *on the* `window.planbook`
 *seam, and two new seam entries for one performance guard was declined.)*
+
+---
+
+## WO-4.6 — A rule that cannot fire *yet* is a different sentence from a rule that is not built
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-4.1, WO-4.3
+
+**Why it exists.** `inertRules()` answers one question — *which rules are registered and cannot fire
+because the code behind them does not exist* — and it has answered `[]` since WO-4.4 landed and the
+last `inert` string came out. It is still wired: `src/signals-view.js` reads it into `model.inert`
+and `.sig-inert` draws *"One rule is not running yet: …"* from the length of the list, so the machinery
+for saying this on screen is built and has nothing to say.
+
+The question nobody has an answer for is the **other** one. In the first fortnight of a term, several
+rules cannot fire because the term has not produced enough data yet — a grade fall wants four
+assignments, a turnaround wants a window to look back across — and on those mornings the concern
+column is short for a reason that has nothing to do with the students in it. **A teacher reading a
+thin list in week one cannot tell "nobody qualified" from "not enough term yet",** which is the exact
+confusion WO-4.2 built `inert` to prevent, arriving from the calendar's side instead of the
+build's.
+
+**This was declined once, deliberately, and this row is not that decision reversed.** WO-6.7 asked
+whether the glance page's quiet panel should wear a "not yet" sentence, and the answer was **no** —
+correctly, because `inertRules()` filters on a static per-rule string, knows nothing about term
+length, and would have drawn nothing. **The screen was never the missing piece; the engine answer
+was.** Book the engine answer here, in the phase that owns the rules, and let a screen wear it
+afterwards if it earns the room.
+
+**Deliverables**
+- A second exported answer in `src/signals.js` — *rules that are built, registered, and cannot fire
+  yet against this document on this date* — beside `inertRules()` and never folded into it. The two
+  say different things and a screen that merged them would tell a teacher a rule is unbuilt when it
+  is merely early.
+- Each entry carries the rule's id, its direction, its text from `ruleText()`, and **why** in the
+  same shape `inertRules()` already returns, so a caller that draws one can draw the other.
+- The reason is **measured, not asserted**: a rule is not-yet because the data its own thresholds
+  ask for is not there, read through `thresholdsOf()` like every other threshold read.
+
+**Acceptance**
+- [ ] Against a document in the first week of a term, the new answer names the rules whose windows
+      are not full and no others; against a document with a full term behind it, it returns `[]`.
+- [ ] `inertRules()` is unchanged and still returns `[]` — the two answers are separate functions
+      with separate meanings, and no caller has to know which it is holding.
+- [ ] `src/signals.js` still holds **no writer of any kind** (WO-4.3's invariant) — the new answer
+      reads the document and the clock through the pass's existing `{ through }`, and stores nothing.
+- [ ] A rule is handed its own measured numbers and nothing else: the new answer does not pass a
+      rule the document, and does not re-run `evaluate()` to find out whether a rule fired.
+- [ ] No screen is changed by this row. *(Deliberate. The engine answer is the deliverable; which
+      surface wears it — the signals screen's existing `.sig-inert` line, the glance page's quiet
+      panel, or neither — is a separate call with its own room argument, and WO-6.7's `Open` line is
+      the record of that call being made once already.)*
+
+**Traps** — The obvious implementation walks every day of the term to find out when each window
+fills, which is WO-2.13's defect reached from a fifth direction. Ask the thresholds what they want
+and count what exists; do not simulate. And **do not give a rule an `inert` string to mean "early"** —
+that field means *not built*, it is read by a screen that says so in those words, and overloading it
+makes the one sentence this row exists to separate impossible to write.

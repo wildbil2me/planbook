@@ -946,6 +946,19 @@ week* lists what is scheduled. One row, one panel, and the panel a teacher would
 The cost is a Thursday grades-due date missing from a list headed "this week". Answer it when
 dispatching.
 
+**Open — the owner's call** *(raised by WO-6.7's verifier, 2026-09-15)* — *do all three kinds under*
+Closing in *share one horizon?* `closingIn()` gives grades-due dates, term edges and IEP/504 reviews
+the same window, `leadWindowOf()` — the lead time the teacher set **for grades**. On WO-6.7 that
+decides only whether a day is quiet, and the chip names its own window, so nothing false is asserted;
+**this row is where it becomes a sentence a teacher reads.** Proposed: **keep the one horizon**, and
+let the panel head name whose lead it is — a second lead time is a second setting nobody typed, and
+the drawing's "this month" beside the review count would be a third. The cost is real and worth
+stating: a review she is legally obliged to prepare for gets the notice she chose for re-keying
+grades, and three days is plausibly short for one. Reversing it means a second key in the `calendar`
+block, which is a settings-block question rather than a panel one — **it wants its own row, not this
+row's editor**, and `CLAUDE.md`'s rule that a settings block is created by its first write governs it.
+Answer it when dispatching.
+
 **A known edge, recorded rather than fixed** *(the redraw's question 14)*. Panel 2's titles are free
 text and the panel stays up while projecting. "Guardian call — Owen Bennett" is a conference the
 teacher typed, and nothing stops her typing "IEP meeting — Owen Bennett". It is the same open edge
@@ -969,6 +982,15 @@ costs her the panel.
 - [ ] Every row in the three panels is a `<button>` measuring ≥44px under an emulated coarse pointer.
 - [ ] The three panels draw WO-6.7's arrays and nothing else: no engine import is added to the panel
       code, and the harness fixture that moves the readers' lengths moves the rows drawn.
+- [ ] A day where **only** the attention hits are non-empty — nothing due, nothing to grade, nothing
+      closing in — draws the three panels' states and **not** the quiet panel. *(WO-6.7's verifier
+      found this by reading, not by running: no fixture in `tools/verify/glance-quiet.mjs` reaches
+      that state, so a build that dropped `attentionHits()` from the quiet decision passes all
+      nineteen of its checks while drawing "Nothing needs you today" on a Friday where two students
+      are failing. The line is here rather than on WO-6.7 because that row is ✅ and a landed work
+      order is not reopened to add a check — and because this sitting has the file open. It asserts
+      the quiet **decision**, which is one level up from the line above it: that one says panels
+      follow readers, this one says the quiet panel's absence does too.)*
 
 **Traps** — Panel 2 is the month grid's chips in a list, and the month grid already decided what a
 derived item looks like and where it goes: plain, carrying `↗`, never dashed, opening the assignment.
