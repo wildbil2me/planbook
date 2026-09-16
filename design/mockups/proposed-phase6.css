@@ -354,6 +354,13 @@
    answered NO at WO-6.7's dispatch — src/glance.js says why at its head — and the class grid's
    subtitle, which WO-6.7 left as it was because that row asserts panel 1 unchanged. Both stay
    drawn, per PROTOCOL § What the build declined to take stays drawn.
+
+   WO-6.8 (2026-09-16) wore `.gl-row` and added ONE name the drawing does not have: `.gl-row-out`,
+   the ↗ after a row's title. The drawing puts § SHARED's `.cal-chip-out` there, which no src/
+   sheet declares (src/calendar-view.css renamed its section and drew no arrow), and a `cal-` rule
+   in src/glance.css would break that sheet's prefix rule — so the build renamed it and kept its
+   values. Also declined for now: the drawing's leading row icons (an SVG sprite this app does not
+   have) and `.gl-row-avatar` on the queue rows (the class colour is src/home.js's to hand out).
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* Five panels stacked in `.main`, in the order a teacher needs them at 7:40am. Panels

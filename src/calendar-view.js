@@ -587,7 +587,8 @@ function paintEmpty(model) {
   teacher who has just paged to April must not be put back on today because something behind her
   redrew the screen.
 
-  EVERY ARRIVAL STARTS ON TODAY AND ON THE MONTH. The header says why neither is remembered.
+  EVERY ARRIVAL STARTS ON TODAY AND ON THE MONTH, unless the door itself names a day (WO-6.8, the
+  second argument below) — and then on that day's week. The header says why neither is remembered.
 
   AND ON THE CLASS THE ARRIVAL IS ABOUT (WO-6.6). The caller passes it: '' from the home screen's
   Calendar button, which is a door out of every class at once, and the open class's id from the
@@ -599,9 +600,15 @@ function paintEmpty(model) {
   archived: paintClassFilter() resolves that on the next paint, exactly as it does for a class
   archived behind this screen.
 */
-export function resetCalendar(classId) {
-  anchor = todayISO();
-  scale = MONTH;
+export function resetCalendar(classId, weekOf) {
+  /* THE SECOND ARGUMENT IS WO-6.8's, and it is additive: every caller that hands one argument lands
+     on this month exactly as before. The glance page's *Today and this week* opens an event onto the
+     calendar's WEEK on that event's day, and the day arrives here as an argument rather than being
+     written somewhere this screen reads on the way up — WO-6.5's Traps line, about the register, is
+     the same rule at the same scale. Nothing about it is kept: the next reset forgets it. */
+  const on = isDate(weekOf) ? weekOf : '';
+  anchor = on || todayISO();
+  scale = on ? WEEK : MONTH;
   filterClassId = String(classId || '');
 }
 

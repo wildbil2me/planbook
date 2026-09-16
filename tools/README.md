@@ -1210,7 +1210,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1364 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1378 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1663,6 +1663,19 @@ section counts eight hits over four students. One scored task instead of three m
 graded history the window, `before` is null, and the rule cannot fire; the check now asserts the
 rule ids as well as the count. The third was a helper of this section throwing on a view it was
 already on. The app was not touched between the two runs.)*
+
+**WO-6.8 moved it from 1364 to 1378, and the executed count from 1373 to 1387 — fourteen sites,
+fourteen results.** All fourteen are literal call sites in a new block at the foot of
+`verify/glance-quiet.mjs`'s fixture branch, *"the glance page: today and this week, waiting to be
+graded, closing in (WO-6.8)"*, standing on that section's own fixture guard; none is inside a loop —
+the one loop in the block walks the days of the lead time and checks once, after it — and none is a
+failure arm, so the gap between sites and results stays at −16. **Three pre-existing checks in the
+same file changed what they assert, and none moves the count**: the quiet chips now read *Nothing
+scheduled through …*; the grades-due probe asserts the owner's 2026-09-16 ruling (never a week item)
+where it asserted the opposite; and two checks that read *"this row draws nothing in its place"* now
+assert the one list panel whose reader is non-empty. The run prints **1387**: `1387 checks · 1387
+passed · 0 failed · 0 skipped`, 43,229 lines, 31.2 lines per check, 475s, exit 0, measured 2026-09-16
+on the delivered tree. Mutations are tabulated in `TESTING.md` § WO-6.8.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not

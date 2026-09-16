@@ -10,8 +10,9 @@
   the READERS those panels draw, one per source, and each one is a call into an engine that already
   exists, handing back that engine's own records:
 
-    weekItems()        src/calendar.js's eventsCovering() and src/calendar-derived.js's due dates
-                       and term edges, today through six days on          (WO-6.1 · WO-6.2)
+    weekItems()        src/calendar.js's scheduledIn() — every authored event but a grades-due date
+                       — and src/calendar-derived.js's due dates and term edges, today through six
+                       days on                                            (WO-6.1 · WO-6.2 · WO-6.8)
     queueRows()        src/grade-engine.js's openWork(), the `open` rows, one row per assignment —
                        the engine behind the card's "N to grade"          (WO-3.26)
     attentionHits()    src/signals.js's evaluate() through applyCooldown(), the `shown` half — the
@@ -71,16 +72,51 @@
   reading src/signals-view.js's collect() takes for the head of the panel it lands on, which is
   what keeps the two from ever being one number apart.
 
+  ── THE THREE LIST PANELS (WO-6.8) ──
+
+  *Today and this week*, *Waiting to be graded* and *Closing in* — panels 2, 3 and 5 of the page, in
+  that order in the stack, with WO-6.4's panel 4 still to come between the second and the third.
+  Each is a `.panel` holding a `.gl-list` of `.gl-row` BUTTONS lifted from § GLANCE, and each is
+  drawn out of ONE reader's array and nothing else: a row per record, in the order the reader
+  returned them. What the panel code adds is words — a class's name, an assignment's name, a date
+  in src/date-text.js's format — read off the record or off the document by id, and never a
+  question put to an engine: no rule, no grade, no window, no cell.
+
+  A PANEL WHOSE READER IS EMPTY IS NOT DRAWN — absent, not empty, which is the quiet panel's
+  argument one level down (CLAUDE.md § Data, "a source with nothing draws no panel at all"). So a
+  day where only the signals are non-empty draws neither these three nor the quiet panel, and the
+  page under the grid is empty until WO-6.4's panel 4 exists to stand there.
+
+  EVERY ROW GOES WHERE THE MONTH GRID ALREADY SENDS THE SAME THING, through the hooks src/shell.js
+  already routes, rather than through a route of its own. A derived due date or a term edge, and
+  a grades-due date under *Closing in*, wear `data-calendar-item` with its four companions — the
+  exact attributes a chip on the grid wears — so openCalendarItem() takes them where a chip goes:
+  the assignment's editor, the class's terms, the event loaded into its form. An authored event
+  under *Today and this week* is the one departure the work order asks for: it opens the calendar's
+  WEEK on that event's day, through `data-calendar-open="<date>"`, the home screen's own calendar
+  door with a day on the end. A queue row wears `data-scores-open`, the only new hook.
+
+  A GRADES-DUE DATE IS UNDER *CLOSING IN* AND NOWHERE ELSE ON THIS PAGE (the owner, 2026-09-16):
+  it is a deadline, and the week lists what is scheduled. The decision is src/calendar.js's
+  scheduledIn(), not a filter here. And ALL THREE KINDS UNDER *CLOSING IN* SHARE ONE HORIZON (the
+  owner, the same day) — the lead time the teacher set for grades, which the panel's own head says
+  in as many words, because a review she is legally obliged to prepare for gets exactly the notice
+  she chose for re-keying grades and the page must not let her think otherwise.
+
   ── WHAT IT DOES NOT DO ──
 
-  IT DRAWS AS IT DOES OTHERWISE UNDER A PROJECTOR, and is deliberately absent from src/shell.js's
-  flipPresentationMode() redraw list for now. The chips are counts, and the card already puts
-  "N need you" on the wall on the same argument — a launcher says how much is waiting and the
-  surface it launches says what (the owner, 2026-08-19). Joining that list is WO-6.4's, because
-  panel 4 is what changes under the flip and this row draws nothing that does. The one
-  supports-derived thing a reader touches — the review count — reaches closingIn() through
-  reviewDatesIn(), which already answers with an empty list while projecting: this file asks
-  src/supports.js nothing, and inherits the suppression exactly as src/calendar-view.js does.
+  IT IS ON src/shell.js's flipPresentationMode() REDRAW LIST SINCE WO-6.8, which is a correction to
+  what this paragraph said at WO-6.7: the review COUNT under *Closing in* is the first thing on this
+  page that changes under the flip, so a projector switched on with the page up must take it off the
+  glass at once, not on the next arrival. The suppression itself is still not this file's — the
+  count reaches closingIn() through reviewDatesIn(), which already answers with an empty list while
+  projecting: this file asks src/supports.js nothing, inherits the suppression exactly as
+  src/calendar-view.js does, and draws NO "1 hidden" line, because a count of hidden reviews is the
+  disclosure one step removed. The quiet panel's chips and the other two panels draw as they do
+  otherwise — counts, names of assignments and classes, and the titles the teacher typed on her own
+  events. THAT LAST IS A KNOWN EDGE, recorded in the work order rather than fixed: an event titled
+  "IEP meeting — Owen Bennett" is free text on the week panel under a projector, as it is on the
+  month grid today.
 
   IT WRITES NOTHING. Every import below is a reader; there is no update() and no store call.
 
@@ -116,12 +152,25 @@ import { openWork } from './grade-engine.js';
 /* The engine behind "N need you" and behind the quiet middle. Nothing here decides whether a rule
    fired, whether a hit is silenced, or who is on the third list. */
 import { evaluate, applyCooldown, quietMiddle } from './signals.js';
-/* The authored half of the calendar, and the lead time it owns. All four are READS. */
-import { eventsCovering, gradesDueIn, leadWindowOf, shiftDays, daysBetween } from './calendar.js';
+/* The authored half of the calendar, and the lead time it owns. All five are READS. scheduledIn()
+   replaced eventsCovering() here at WO-6.8, on the owner's ruling that a grades-due date belongs to
+   *Closing in* alone — the kind decision is the engine's, one function from gradesDueIn().
+
+   `kindInfo` IS THE ONE NAME THE PANELS ADDED TO THIS LINE, and it is a word table rather than an
+   engine: it is handed a kind token and answers the word every other surface prints for it
+   ("Conference"), and it never sees the document. Without it an untitled event would need a second
+   copy of the eight words, which is how two screens come to call one entry two things. Named in
+   WO-6.8's result file against that work order's sixth Acceptance line, for the owner to rule on. */
+import { scheduledIn, gradesDueIn, leadWindowOf, shiftDays, daysBetween, kindInfo } from './calendar.js';
 /* The derived half. Asked kind by kind rather than through derivedItemsIn(), because the panels
    these feed draw due dates and term edges and never a meeting state — which is the class grid's —
-   and asking for the kinds a panel draws is choosing a question, not filtering an answer. */
-import { assignmentDuesIn, termEdgesIn, reviewDatesIn } from './calendar-derived.js';
+   and asking for the kinds a panel draws is choosing a question, not filtering an answer.
+
+   ASSIGNMENT_DUE and TERM_START are the other two names the panels added, for the same reason as
+   `kindInfo` above and under the same note: token constants, so a row can tell a due date from a
+   term edge, and a start from an end, without this file holding its own copy of the strings. */
+import { assignmentDuesIn, termEdgesIn, reviewDatesIn, ASSIGNMENT_DUE, TERM_START }
+  from './calendar-derived.js';
 import { todayISO } from './attendance.js';
 import { weekdayShortDate } from './date-text.js';
 import { currentView } from './views.js';
@@ -189,15 +238,17 @@ function weekWindow(today) {
   date order over authored and derived together asks the engine for it.
 
   What is deliberately NOT in it: meeting states (panel 1's, and on a list headed "this week" they
-  would be five "Taken" rows saying what the cards above already say) and review dates (a count on
-  this page, under what is closing in, and never a name in a week list).
+  would be five "Taken" rows saying what the cards above already say), review dates (a count on
+  this page, under what is closing in, and never a name in a week list), and — since WO-6.8, on the
+  owner's ruling of 2026-09-16 — grades-due dates, which are deadlines and live under *Closing in*
+  alone. The last is src/calendar.js's scheduledIn() deciding, not a filter here.
 */
 export function weekItems() {
   const doc = getDoc();
   if (!doc) return [];
   const w = weekWindow(todayISO());
   return [].concat(
-    eventsCovering(doc, w.from, w.to),
+    scheduledIn(doc, w.from, w.to),
     assignmentDuesIn(doc, w.from, w.to),
     termEdgesIn(doc, w.from, w.to));
 }
@@ -288,9 +339,10 @@ export function quietMiddleRows() {
   window, and the review COUNT inside it — one window, src/calendar.js's leadWindowOf(), because
   the lead time is the one "how far ahead do you want warning" number the teacher owns and a second
   horizon would be a second setting nobody typed. The review count rides in that window rather than
-  a wider one as a decision made here for want of a ruling (WO-6.7's result file names it): the
-  calendar's month grid is where a review has a date and a name, and this page says "closing in",
-  not "coming up this month".
+  a wider one — decided here for want of a ruling at WO-6.7, and RULED by the owner on 2026-09-16:
+  one window, with the panel's head naming whose lead time it is. The calendar's month grid is where
+  a review has a date and a name, and this page says "closing in", not "coming up this month".
+  Reversing it is a second key in the `calendar` block, and a row of its own rather than an edit here.
 
   THE REVIEW ITEM IS ONE RECORD CARRYING A NUMBER, present only when the number is not zero. It is
   the one thing this file builds — see REVIEW_COUNT above for why — and it is absent, not zero,
@@ -341,7 +393,16 @@ function studentsLookedAt(doc, classes) {
   decision, and at 7:40 every card says "Not taken yet" on a quiet day too.
 */
 const QUIET_LEAD = 'Nothing needs you today.';
-const QUIET_TEXT = 'Nothing is on the calendar this week, nothing is waiting to be graded, no '
+/* "SCHEDULED", NOT "ON THE CALENDAR" — since WO-6.8, and the word is load-bearing. The week reader
+   no longer carries grades-due dates (the owner, 2026-09-16), so a week whose only entry is a
+   grades-due date OUTSIDE its lead time is a quiet day: nothing in the week reader, nothing in the
+   closing-in reader. That day is reachable on the default lead of 3 — a Thursday deadline read on a
+   Sunday — and on it "Nothing on the calendar through Sat" would be false with the deadline sitting
+   on the calendar four days out. The day is right to be quiet: it is exactly the notice the teacher
+   chose. The SENTENCE was wrong, and the fix is to claim what the week reader actually asked —
+   what is scheduled — beside the fourth chip, which already says deadlines are counted from their
+   warning. tools/verify/glance-quiet.mjs plants that day. */
+const QUIET_TEXT = 'Nothing is scheduled this week, nothing is waiting to be graded, no '
   + 'signal is waiting on you in either direction, and no deadline is inside its warning.';
 const QUIET_CHECKED = 'What was checked';
 const QUIET_DOOR_TITLE = 'Neither flagged, nor praised, nor contacted this term';
@@ -351,13 +412,17 @@ const QUIET_DOOR_TITLE = 'Neither flagged, nor praised, nor contacted this term'
    students the pass walked, and the lead time the deadline window was read through — read back
    off the window closingIn() used, through src/calendar.js's own daysBetween(), rather than off
    the setting a second time with a second clamp. */
+function leadShown(doc, today) {
+  const w = leadWindowOf(doc, today);
+  return { to: w.to, days: daysBetween(w.from, w.to) };
+}
+
 function warrantChips(doc, classes, today) {
   const students = studentsLookedAt(doc, classes);
   const weekTo = weekWindow(today).to;
-  const w = leadWindowOf(doc, today);
-  const lead = daysBetween(w.from, w.to);
+  const lead = leadShown(doc, today).days;
   return [
-    'Nothing on the calendar through ' + weekdayShortDate(weekTo),
+    'Nothing scheduled through ' + weekdayShortDate(weekTo),
     'Nothing to grade in ' + plural(classes.length, 'class', 'classes'),
     plural(students, 'student', 'students') + ' checked, both directions',
     lead === 0 ? 'No deadline today' : 'No deadline inside its ' + lead + '-day warning',
@@ -367,9 +432,9 @@ function warrantChips(doc, classes, today) {
 function quietPanel(doc, classes, quietCount) {
   const panel = el('div', 'panel');
   panel.id = QUIET_ID;
-  /* Which panel of the page this is, by name, so a check — or WO-6.8's rows — can ask the stack
-     which panels EXIST without reading headings. The four this one stands in for would carry
-     `week`, `queue`, `attention` and `closing`; on a quiet day none of them is in the tree. */
+  /* Which panel of the page this is, by name, so a check can ask the stack which panels EXIST
+     without reading headings. The four this one stands in for carry `week`, `queue`, `attention`
+     and `closing` (three of them since WO-6.8); on a quiet day none of them is in the tree. */
   panel.setAttribute('data-glance-panel', 'quiet');
 
   const body = el('div', 'gl-quiet');
@@ -404,30 +469,267 @@ function quietPanel(doc, classes, quietCount) {
   return panel;
 }
 
+/* ────────────────────────────── the three list panels (WO-6.8) ──────────────────────────────
+
+   The header's WO-6.8 section is the argument. What follows draws, and each builder is handed ONE
+   reader's array and draws a row per record in the order it arrived. The copy is constants for
+   decision 7 of WO-6.7's result — these panels exist only some days, so there is no static element
+   in index.html for their words to live on. */
+
+const WEEK_TITLE = 'Today and this week';
+const WEEK_TEXT = 'What is scheduled from today through ';
+const WEEK_TEXT_TAIL = '. Grades-due dates are under Closing in.';
+const QUEUE_TITLE = 'Waiting to be graded';
+const QUEUE_TEXT = 'Assignments in the open term with blanks in them. Each one opens on its own '
+  + 'column in the score grid.';
+const CLOSING_TITLE = 'Closing in';
+/* WHOSE LEAD TIME IT IS, said on the panel's head (the owner, 2026-09-16). The one window is the
+   lead time the teacher set for GRADES on the events panel, and term edges and reviews ride it too;
+   a head that said only "closing in" would let a review read as if it had its own notice. */
+const CLOSING_TEXT = 'Inside the lead time you set for grades — ';
+const CLOSING_TEXT_TAIL = '. Term edges and reviews use the same window.';
+/* No name, no date, no kind — WO-6.4's ruling. The row's only words are the count and where the
+   rest is; there is deliberately no `.gl-row-meta` on it, which is where a date would go. */
+const REVIEW_ONE = 'review coming up';
+const REVIEW_MANY = 'reviews coming up';
+const REVIEW_TEXT = 'Who and when are on the calendar.';
+const UNTITLED_ASSIGNMENT = 'Untitled assignment';
+const UNTITLED_TERM = 'Untitled term';
+
+function classNameIn(classes, id) {
+  const cls = classes.filter((c) => c && c.id === id)[0];
+  return cls ? cls.name : '';
+}
+
+/* A panel with its head and an empty list, named for which panel of the page it is. */
+function listPanel(name, title, text) {
+  const panel = el('div', 'panel');
+  panel.setAttribute('data-glance-panel', name);
+  const header = el('div', 'panel-header');
+  const row = el('div', 'panel-title-row');
+  const words = el('div', 'panel-title');
+  words.append(el('h2', '', title));
+  if (text) words.append(el('p', '', text));
+  row.append(words);
+  header.append(row);
+  panel.append(header);
+  const list = el('div', 'gl-list');
+  panel.append(list);
+  return { panel: panel, list: list };
+}
+
 /*
-  DRAW THE PAGE'S PANELS UNDER THE CLASS GRID — in this work order, the quiet panel or nothing.
-  Called by src/home.js's refreshHome() after the cards, so every chain in src/shell.js that
-  redraws the grid redraws this too, and every path onto the home screen paints it on arrival.
+  ONE ROW: a <button> whose whole face is the tap, as § GLANCE draws it — title, an optional line
+  under it, an optional figure at the right, and the `›` every row on this page carries.
 
-  SILENT WHILE THE GRID IS NOT ON SCREEN, and the panel is left as it was rather than taken down:
-  the next arrival repaints it, and painting a hidden page on every attendance mark is the cost the
-  header's last paragraph refuses. Asked of src/views.js rather than read off the DOM, because that
-  module owns the answer.
+  `out` puts the calendar's ↗ after the title, which is the month grid's grammar for "this is kept
+  somewhere else, and the tap goes there" (design/mockups/proposed-phase6.css § SHARED). It is
+  aria-hidden: the arrow is a picture of the destination, and the button's own words already say
+  what it is. textContent throughout — every title here was typed by a teacher.
+*/
+function glRow(title, why, meta, out) {
+  const button = el('button', 'gl-row');
+  button.type = 'button';
+  const main = el('span', 'gl-row-main');
+  const head = el('span', 'gl-row-title', title);
+  if (out) {
+    const arrow = el('span', 'gl-row-out', '↗');
+    arrow.setAttribute('aria-hidden', 'true');
+    head.append(arrow);
+  }
+  main.append(head);
+  if (why) main.append(el('span', 'gl-row-why', why));
+  button.append(main);
+  if (meta) button.append(el('span', 'gl-row-meta', meta));
+  const go = el('span', 'gl-row-go', '›');
+  go.setAttribute('aria-hidden', 'true');
+  button.append(go);
+  return button;
+}
 
-  THE THREE CHEAP READERS FIRST, and the pass only if all three came back empty — see the header.
+/* The month grid's chip attributes, worn by a row, so src/shell.js's openCalendarItem() routes the
+   row exactly where it routes the chip. Nothing here decides a destination. */
+function asCalendarItem(button, kind, ref, classId, date) {
+  button.setAttribute('data-calendar-item', '');
+  button.setAttribute('data-calendar-kind', kind || '');
+  button.setAttribute('data-calendar-ref', ref || '');
+  button.setAttribute('data-calendar-class', classId || '');
+  button.setAttribute('data-calendar-date', date || '');
+  return button;
+}
+
+/* An authored event's name: what the teacher typed, or the kind's own word when she typed nothing —
+   `event.title || info.word`, the phrase src/events.js and src/calendar-view.js both use. */
+function eventName(event) {
+  const info = kindInfo(event.kind);
+  return String(event.title || '').trim() || (info ? info.word : 'Event');
+}
+
+/* When an authored event is: one day, or its two edges. Equality and not order — an event written
+   by newEvent() carries endDate equal to date when it is one day, and this file compares no two
+   dates. */
+function eventWhen(event) {
+  const end = String(event.endDate || '');
+  return end && end !== event.date
+    ? weekdayShortDate(event.date) + ' – ' + weekdayShortDate(end)
+    : weekdayShortDate(event.date);
+}
+
+/* A derived term edge, as a row: the class and which edge in the title, the term's name under it. */
+function termEdgeRow(item, classes) {
+  const who = classNameIn(classes, item.classId);
+  const word = item.kind === TERM_START ? 'Term starts' : 'Term ends';
+  return asCalendarItem(
+    glRow((who ? who + ' · ' : '') + word, item.title || UNTITLED_TERM,
+      weekdayShortDate(item.date), true),
+    item.kind, item.termId, item.classId, item.date);
+}
+
+/*
+  PANEL 2 — TODAY AND THIS WEEK, from weekItems(). Three shapes of row, for the reader's three
+  halves, and each goes where the work order says:
+
+    an authored event   the calendar's WEEK on that event's day — `data-calendar-open` carrying the
+                        day. A range that began before today opens on its first day, the one its
+                        row names; the row says both edges, so the landing matches the words.
+    a due date          ↗, and the assignment's editor — the month grid's chip exactly.
+    a term edge         ↗, and where the month grid's term chip goes (src/shell.js's
+                        openCalendarItem(): that class's term editor).
+*/
+function weekPanel(items, classes, today) {
+  const built = listPanel('week', WEEK_TITLE,
+    WEEK_TEXT + weekdayShortDate(weekWindow(today).to) + WEEK_TEXT_TAIL);
+  items.forEach((item) => {
+    if (item && item.derived === true) {
+      if (item.kind === ASSIGNMENT_DUE) {
+        const who = classNameIn(classes, item.classId);
+        built.list.append(asCalendarItem(
+          glRow(item.title + ' due' + (who ? ' · ' + who : ''), '', weekdayShortDate(item.date), true),
+          item.kind, item.assignmentId, item.classId, item.date));
+        return;
+      }
+      built.list.append(termEdgeRow(item, classes));
+      return;
+    }
+    const info = kindInfo(item.kind);
+    const named = String(item.title || '').trim();
+    const row = glRow(eventName(item), named && info ? info.word : '', eventWhen(item), false);
+    row.setAttribute('data-calendar-open', item.date);
+    built.list.append(row);
+  });
+  return built.panel;
+}
+
+/*
+  PANEL 3 — WAITING TO BE GRADED, from queueRows(). The head's figure is the reader's LENGTH — one
+  row per assignment, which is the unit the card's `N to grade` counts, so the head equals the sum
+  of the cards because both are the same engine reading and not because anything here adds them.
+
+  The row's figure is the record's own `open`, the number of students the engine reported the
+  assignment blank for, said as "blanks" — the word this app's past-due prompt uses — and NOT as
+  "N of M graded", which would be a subtraction this file does not do. The assignment's and the
+  category's names are read off the document by id; a name is not an answer.
+*/
+function queuePanel(rows, classes, doc) {
+  const built = listPanel('queue', QUEUE_TITLE + ' · ' + rows.length, QUEUE_TEXT);
+  const assignments = doc && Array.isArray(doc.assignments) ? doc.assignments : [];
+  rows.forEach((row) => {
+    const work = assignments.filter((a) => a && a.id === row.assignmentId)[0] || null;
+    const cls = classes.filter((c) => c && c.id === row.classId)[0] || null;
+    const cats = cls && Array.isArray(cls.categories) ? cls.categories : [];
+    const cat = cats.filter((c) => c && c.id === row.categoryId)[0] || null;
+    const why = (cls ? cls.name : '') + (cat && cat.name ? ' · ' + cat.name : '');
+    const button = glRow((work && String(work.name || '').trim()) || UNTITLED_ASSIGNMENT, why,
+      plural(row.open, 'blank', 'blanks'), false);
+    button.setAttribute('data-scores-open', row.assignmentId);
+    button.setAttribute('data-scores-class', row.classId);
+    built.list.append(button);
+  });
+  return built.panel;
+}
+
+/*
+  PANEL 5 — CLOSING IN, from closingIn(). Three shapes of row:
+
+    a grades-due date   amber (`.warn`: § GLANCE's "the one amber row on the page") — every one in
+                        this reader is inside its lead time by construction — and the tap loads the
+                        event into its form, which is where the month grid's grades-due chip goes.
+                        This is the surface WO-6.1's lead-time warning was re-homed to.
+    a term edge         as on the week panel.
+    the review count    a count and a sentence, opening the calendar on this month. No name, no
+                        date, no kind, no meta — and absent under a projector because the reader is.
+*/
+function closingPanel(items, classes, doc, today) {
+  const lead = leadShown(doc, today);
+  const span = lead.days === 0 ? 'today only'
+    : plural(lead.days, 'day', 'days') + ', through ' + weekdayShortDate(lead.to);
+  const built = listPanel('closing', CLOSING_TITLE, CLOSING_TEXT + span + CLOSING_TEXT_TAIL);
+  items.forEach((item) => {
+    if (item.kind === REVIEW_COUNT) {
+      const row = glRow(item.count + ' ' + (item.count === 1 ? REVIEW_ONE : REVIEW_MANY),
+        REVIEW_TEXT, '', false);
+      row.setAttribute('data-calendar-open', '');
+      built.list.append(row);
+      return;
+    }
+    if (item.derived === true) {
+      built.list.append(termEdgeRow(item, classes));
+      return;
+    }
+    const named = String(item.title || '').trim();
+    const info = kindInfo(item.kind);
+    const row = asCalendarItem(
+      glRow(eventName(item), named && info ? info.word : '', eventWhen(item), false),
+      item.kind, item.id, '', item.date);
+    row.classList.add('warn');
+    built.list.append(row);
+  });
+  return built.panel;
+}
+
+/*
+  DRAW THE PAGE'S PANELS UNDER THE CLASS GRID — the three list panels whose readers have something,
+  or the quiet panel, or nothing. Called by src/home.js's refreshHome() after the cards, so every
+  chain in src/shell.js that redraws the grid redraws this too, and every path onto the home screen
+  paints it on arrival; and by src/shell.js's flipPresentationMode(), because the review count
+  under *Closing in* changes under the flip.
+
+  SILENT WHILE THE GRID IS NOT ON SCREEN, and the panels are left as they were rather than taken
+  down: the next arrival repaints them, and painting a hidden page on every attendance mark is the
+  cost the header's last paragraph refuses. Asked of src/views.js rather than read off the DOM,
+  because that module owns the answer.
+
+  EVERY PANEL THIS FILE DREW IS TAKEN DOWN FIRST — found by `data-glance-panel`, which the class
+  grid's panel does not carry — so a panel is never drawn twice and never outlives the day it
+  belonged to.
+
+  THE THREE CHEAP READERS FIRST. Any of them non-empty draws its panel and ends the decision: the day
+  is not quiet. All three empty, the pass runs, and ONLY then can the quiet panel be drawn — and it
+  is not drawn when the pass found a hit, which is the day a teacher with two failing students must
+  never be told nothing needs her (WO-6.8's seventh Acceptance line asserts exactly that).
 */
 export function renderGlance() {
   const stack = document.getElementById(STACK_ID);
   if (!stack) return;
   if (currentView() !== 'home') return;
 
-  const was = document.getElementById(QUIET_ID);
-  if (was) was.remove();
+  Array.prototype.slice.call(stack.querySelectorAll('[data-glance-panel]'))
+    .forEach((panel) => panel.remove());
 
   const doc = getDoc();
   const classes = doc ? getActiveClasses() : [];
   if (!classes.length) return;
-  if (weekItems().length || queueRows().length || closingIn().length) return;
+
+  const today = todayISO();
+  const week = weekItems();
+  const queue = queueRows();
+  const closing = closingIn();
+  if (week.length || queue.length || closing.length) {
+    if (week.length) stack.append(weekPanel(week, classes, today));
+    if (queue.length) stack.append(queuePanel(queue, classes, doc));
+    if (closing.length) stack.append(closingPanel(closing, classes, doc, today));
+    return;
+  }
 
   const passes = signalPasses(doc);
   if (shownOf(doc, passes).length) return;

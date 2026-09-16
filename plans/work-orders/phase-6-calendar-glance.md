@@ -25,7 +25,7 @@ Three rules govern the phase:
 
 ## WO-6.1 — Event model & authoring
 
-**Ship** — · **Status** ✅ DONE — 2026-08-19 · **Size** M · **Depends on** WO-2.3 · **Owes** WO-6.8
+**Ship** — · **Status** ✅ DONE — 2026-08-19 · **Size** M · **Depends on** WO-2.3
 **Closes roadmap** Phase 6 → "Event model: date or range, title, kind, optional class and student.",
 "Grades-due deadlines", "Recurring events by materializing instances."
 *(the first fragment stopped at the two words `Event model` until 2026-08-08, WO-2.15 — under twelve
@@ -120,10 +120,13 @@ recurrence, and the validation lift. Read the size against that list.
       *(Asserted twice: `verify-shell.mjs` reads the object the running app builds, and
       `wo-sweep.mjs` § 16 reconciles the § Events table against the object literal in
       `src/calendar.js`. Neither alone catches a field renamed in both the code and the harness.)*
-- [ ] A grades-due event warns at its configured lead time.
-      → WO-6.8 "A grades-due event appears under *Closing in* on every day inside its lead time,
-      and taps through to the event" *(the box was WO-6.4's until the cut of 2026-09-15 moved the
-      panel that draws it; the pointer moved with the box)*
+- [x] A grades-due event warns at its configured lead time.
+      *(Closed at WO-6.8 on 2026-09-16 and ticked back here, with the `**Owes**` field off. The box
+      was WO-6.4's until the cut of 2026-09-15 moved the panel that draws it, and the pointer moved
+      with the box. The evidence is WO-6.8's own third line: `tools/verify/glance-quiet.mjs` plants a
+      grades-due date on each day from the day itself to the last day of the lead and reads an amber
+      row for it under *Closing in* on every one, none the day after, and a tap on it loads the event
+      into the events panel's form.)*
 - [x] `no-school` and `dropped` behave exactly as WO-2.3 established — no regression: they are
       created and deleted on the days-off screen, through `commit()` in `src/days-off.js`, and there
       is no edit path for them anywhere in the app. **That is the establishment, and this is the line
@@ -911,7 +914,7 @@ address.
 
 ## WO-6.8 — Today and this week, Waiting to be graded, and Closing in
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-6.7
+**Ship** — · **Status** ✅ DONE — 2026-09-16 · **Size** M · **Depends on** WO-6.7
 
 **Why it exists.** The second third of [WO-6.4](#wo-64--the-glance-page), cut out on 2026-09-15 —
 the three panels whose sources a live term has already confirmed. Panel 2 draws calendar items, panel
@@ -926,6 +929,10 @@ built the day WO-6.7 lands.
    from WO-6.7's week reader. An event opens the calendar's week on that day; a derived due date
    carries the calendar's `↗` and opens the assignment's editor, exactly as the month grid's chip
    does; a term edge opens the class.
+   *(**A term edge opens that class's term editor**, which is where the month grid's term-edge chip
+   already goes through `openCalendarItem()`. Recorded 2026-09-16 on the verifier's flag, as
+   intended and not a defect: an approaching edge is about the term's dates, and the editor is
+   where they are, one tap closer than the class screen. This line was not rewritten.)*
 3. **Waiting to be graded** — one row per assignment with ungraded cells in the open term, headed
    with the count, from WO-6.7's queue reader; the row opens that class's assignment column. The
    per-class half of this is WO-3.26's chip, and this is the page-level panel over the same engine
@@ -938,6 +945,12 @@ built the day WO-6.7 lands.
    which already answers with an empty list while projecting: the row is absent under a projector
    for free, with one asker, and **no "1 hidden" line**, because a count of hidden reviews is the
    disclosure one step removed.
+   *(**Where the count's tap lands is a known defect, booked rather than fixed here**, 2026-09-16.
+   The row opens the calendar on the current month, so a review inside the window but early next
+   month (lead 3, read on the 29th) lands on a page that does not show it. The fix is a design
+   choice, because `leadWindowOf()` has no upper clamp and a week view does not always cover the
+   window. It is [WO-6.9](#wo-69--the-review-count-opens-a-page-that-shows-the-review), and nothing
+   in this row waits on it.)*
 
 **Open — the owner's call** *(the redraw's question 11)* — *does a grades-due date appear in* Today
 and this week *as well, or only under* Closing in? Proposed: a grades-due date is a deadline by
@@ -945,6 +958,19 @@ definition and lives under *Closing in* whether or not it is inside its lead tim
 week* lists what is scheduled. One row, one panel, and the panel a teacher would look under first.
 The cost is a Thursday grades-due date missing from a list headed "this week". Answer it when
 dispatching.
+*(**Answered at dispatch, 2026-09-16, by the owner: only under* Closing in*, never under* Today and
+this week.** *Relayed by the coordinator and recorded in* `.claude/dispatch/WO-6.8-status.md`*. Two
+consequences the implementer met, both named in* `.claude/dispatch/WO-6.8-result.md`*.* **The kind
+decision went into the engine**: `src/calendar.js` *gained* `scheduledIn()`*,* `gradesDueIn()`*'s
+complement, and WO-6.7's* `weekItems()` *asks it instead of* `eventsCovering()` *— the glance rule that
+a reader asks and never selects.* **And the quiet panel's first chip had to change its word**: *with
+grades-due dates out of the week reader, a week whose only entry is a grades-due date outside its
+lead time (a Thursday deadline read on a Sunday, on the default lead of 3) is a quiet day, and*
+"Nothing on the calendar through Sat" *was false on it. The day is right to be quiet — it is the notice
+the teacher chose — so the chip now claims what the reader asked,* "Nothing scheduled through Sat"*,
+beside the fourth chip that already counts deadlines from their warning;* `tools/verify/glance-quiet.mjs`
+*plants that day. Combined with the ruling below, a grades-due date outside its lead appears nowhere
+on the glance page until its warning starts, and is on the calendar the whole time.)*
 
 **Open — the owner's call** *(raised by WO-6.7's verifier, 2026-09-15)* — *do all three kinds under*
 Closing in *share one horizon?* `closingIn()` gives grades-due dates, term edges and IEP/504 reviews
@@ -958,6 +984,11 @@ grades, and three days is plausibly short for one. Reversing it means a second k
 block, which is a settings-block question rather than a panel one — **it wants its own row, not this
 row's editor**, and `CLAUDE.md`'s rule that a settings block is created by its first write governs it.
 Answer it when dispatching.
+*(**Answered at dispatch, 2026-09-16, by the owner: one window.** Grades-due dates, term edges and
+IEP/504 reviews all stay on* `leadWindowOf()`*, and* **the panel's head names whose lead time it is**
+*— it reads* "Inside the lead time you set for grades — 3 days, through Sat, Sep 19. Term edges and
+reviews use the same window." *No second setting, and no "this month" beside the review count. The
+cost stated above is accepted rather than removed.)*
 
 **A known edge, recorded rather than fixed** *(the redraw's question 14)*. Panel 2's titles are free
 text and the panel stays up while projecting. "Guardian call — Owen Bennett" is a conference the
@@ -968,21 +999,53 @@ and named here so that it is a known edge rather than a surprise. Reversing it i
 costs her the panel.
 
 **Acceptance**
-- [ ] *Today and this week* lists every authored event and derived item from today through six days
+- [x] *Today and this week* lists every authored event and derived item from today through six days
       on and nothing outside that window, and each row taps through to its subject — an event to the
       calendar's week on that day, a due date to the assignment's editor.
-- [ ] *Waiting to be graded* draws one row per assignment with ungraded work in the open term, its
+      *("Every authored event" reads* **every authored event except `grades-due`** *since the owner's
+      ruling of 2026-09-16, under the first* Open *paragraph above; the line is left as written.)*
+- [x] *Waiting to be graded* draws one row per assignment with ungraded work in the open term, its
       head count equals the sum of the cards' `N to grade` chips, and a row opens that class's
       assignment column.
-- [ ] A grades-due event appears under *Closing in* on every day inside its lead time, and taps
+- [x] A grades-due event appears under *Closing in* on every day inside its lead time, and taps
       through to the event. *(Moved here from WO-6.4 at the cut, with WO-6.1's `**Owes**` pointer.)*
-- [ ] The review item is a count with no name, date or kind; with presentation mode on it is absent
+- [x] The review item is a count with no name, date or kind; with presentation mode on it is absent
       and no line says anything was hidden; and `reviewDatesIn()` is its only asker — `wo-sweep`
       counts the askers of `presentationMode()` and this row adds none.
-- [ ] Every row in the three panels is a `<button>` measuring ≥44px under an emulated coarse pointer.
-- [ ] The three panels draw WO-6.7's arrays and nothing else: no engine import is added to the panel
+- [x] Every row in the three panels is a `<button>` measuring ≥44px under an emulated coarse pointer.
+- [x] The three panels draw WO-6.7's arrays and nothing else: no engine import is added to the panel
       code, and the harness fixture that moves the readers' lengths moves the rows drawn.
-- [ ] A day where **only** the attention hits are non-empty — nothing due, nothing to grade, nothing
+      *(**Left open by the implementer on purpose, 2026-09-16 — the owner's to rule on.** The harness
+      half is met: every panel's rows equal its reader's length in every state the fixture reaches,
+      and removing an event, a grades-due date and an assignment moves week 5 → 4, queue 4 → 3 and
+      closing in 1 → 0 in rows and readers together. The import half is a judgement against the
+      letter: no new MODULE is imported and the panel code calls no engine function on the document,
+      but three NAMES were added to existing import lines for the panels' sake — `kindInfo` from
+      `src/calendar.js` (the word an untitled event reads as, e.g. "Conference") and `ASSIGNMENT_DUE`
+      / `TERM_START` from `src/calendar-derived.js` (token constants). Without them the file would
+      hold a second copy of the kind words. The reasoning is at the import in `src/glance.js` and in
+      `.claude/dispatch/WO-6.8-result.md`.)*
+      *(**The verifier failed this line on 2026-09-16, and the owner ruled it met the same day** — so
+      the verifier's second pass reads the line through this ruling rather than against the letter
+      alone. The first pass found two things, both real. **The three names:** `src/glance.js:164`
+      adds `kindInfo` and `:172` adds `ASSIGNMENT_DUE` and `TERM_START`. **Accepted**, because none
+      of them reads the document. `kindInfo` is a word table handed a kind token, and the other two
+      are token constants. The line exists to stop a screen disagreeing with itself, and a second
+      copy of those words in this file is exactly how that would happen. **The heading's read:** the
+      result file said the panel code calls no engine function on the document, and that was false.
+      `closingPanel()` (`:663`) calls `leadShown()` (`:415–416`), which calls
+      `leadWindowOf(doc, today)` and `daysBetween()`. **Also accepted**, because it is the same call
+      with the same arguments that `closingIn()` makes, with no clamp of its own, so it cannot name a
+      different window from the one the rows were read through. And WO-6.7's quiet panel, which is
+      ✅, reads the window the same way through the same helper. The code fix would have been a new
+      return shape for `closingIn()` carrying its window, changing a landed reader to meet the letter
+      of a line whose purpose already holds. **What this ruling does not cover:** a panel that
+      computes a window, re-clamps a lead, or re-runs a rule is still outside the line, and so is
+      any engine import that reads the document. **The verifier also flagged `src/glance.js:573`**
+      as a date comparison, which `CLAUDE.md`'s glance rule forbids. It is `end !== event.date`,
+      string equality that asks whether an event lasts one day, not an order comparison between
+      two dates, and the comment above it says so. The owner accepts it on the same ruling.)*
+- [x] A day where **only** the attention hits are non-empty — nothing due, nothing to grade, nothing
       closing in — draws the three panels' states and **not** the quiet panel. *(WO-6.7's verifier
       found this by reading, not by running: no fixture in `tools/verify/glance-quiet.mjs` reaches
       that state, so a build that dropped `attentionHits()` from the quiet decision passes all
@@ -998,3 +1061,62 @@ Re-deciding any of it here is the `.cal-*` / `.calendar-*` scar with a different
 review count is the one `supports`-derived thing on the page: a name, a date or a kind beside it is a
 disclosure WO-6.4's fifth line forbids, and a "1 hidden" under a projector is the same disclosure one
 step removed.
+
+---
+
+## WO-6.9 — The review count opens a page that shows the review
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-6.8
+
+**Why it exists.** Booked 2026-09-16 out of WO-6.8's verdict. The verifier flagged it, and the owner
+chose to book it rather than hold WO-6.8 open for it. *1 review coming up* under *Closing in* carries
+`data-calendar-open` with no value, so it opens the calendar on **this month**. The count's reader asks
+`reviewDatesIn()` over `leadWindowOf()`, and that window crosses a month edge whenever the lead
+reaches past the last day. On the default lead of 3, read on the 29th, a review on the 1st is counted
+on the glance page and missing from the page the tap opens. The teacher has to know to press *next
+month*, which means knowing the date the count refuses to show her.
+
+**Nothing is disclosed and nothing is lost.** The count is still right, the review is still on the
+calendar one page on, and presentation mode still takes the row away. This row is about a tap that
+lands one page short, which is why it did not hold WO-6.8.
+
+**Open — the owner's call** — *where does the tap land?* Each answer has a cost, and the choice is
+why this is a work order rather than a patch.
+1. **The week view on today.** It matches the event rows' landing. It covers the whole window only
+   while the lead is six days or less, because `leadWindowOf()` has **no upper clamp**
+   (`src/calendar.js`, `leadDaysOf()` takes any finite number). A teacher who sets 14 days is back
+   where this row started.
+2. **The month holding the window's far edge.** The review-count item already carries `from` and
+   `to` (`closingIn()` in `src/glance.js`), so the tap can carry `to` without asking anything new.
+   That covers every review early next month, and misses one late this month when the window
+   crosses the edge. It is the same defect in the other direction, which is worse on the 29th than
+   the default and better on the 1st.
+3. **The month of the earliest review.** This is always right, but it needs a review's **date** on
+   the glance page. It either hands the row a date, which WO-6.4's fifth line and this file's Traps
+   forbid, or adds a second asker of `reviewDatesIn()` in the tap handler, which WO-6.8's fourth line
+   counts. **Proposed: not this one.**
+4. **The month on today, with the month edge named.** When the window crosses a month edge, the
+   calendar arrival says the window runs into next month. That changes a sentence instead of a
+   landing, and it is the only option that states the window rather than guessing a page.
+
+No answer is proposed among 1, 2 and 4. Answer it when dispatching.
+
+**Acceptance**
+- [ ] With a lead that crosses a month edge and a review only in next month's part of the window,
+      tapping the count leaves the review visible on the screen it lands on, or leaves on screen a
+      sentence naming the month it is in, depending on the answer taken.
+- [ ] With a review only in this month's part of the same window, the same holds.
+- [ ] The row still carries no name, no date and no kind, and nothing it puts in the DOM contains an
+      ISO date that is a review's rather than the window's.
+- [ ] `reviewDatesIn()` is still the review count's only asker, and `wo-sweep` counts no new asker of
+      `presentationMode()`.
+- [ ] With presentation mode on, the row is still absent and no line says anything was hidden.
+- [ ] 👤 On the iPad, on a day whose window crosses a month edge, the tap lands where the answer says
+      it lands.
+
+**Traps** — The obvious fix is option 3, and it is the one this row exists to refuse. The review
+count is the one `supports`-derived item on the glance page, and **a date on its button is a
+disclosure of when a student's IEP or 504 is reviewed**. It is still a disclosure when it sits in an
+attribute and not in the text, because the DOM is what a projector's mirror and a screen reader both
+read. Whatever the tap needs, it gets from the **window**, which belongs to the teacher's setting,
+and never from a review.

@@ -10234,6 +10234,112 @@ is shared between the hits and the quiet middle, but a truly quiet morning pays 
 the cards, once for the page). WO-6.4 will want the hits on every render; whether the card then reads
 this file's array is that sitting's decision, and `src/glance.js`'s header says so.
 
+### WO-6.8 — Today and this week, Waiting to be graded, and Closing in
+
+**What this adds.** The second third of WO-6.4: three `.panel`s in WO-6.7's stack, each a `.gl-list`
+of `.gl-row` buttons drawn out of one reader's array and nothing else, and each absent when its reader
+is empty. *Today and this week* (from `weekItems()`), *Waiting to be graded* (from `queueRows()`) and
+*Closing in* (from `closingIn()`), in that order under the class grid. `src/glance.js` draws them;
+`src/calendar.js` gained `scheduledIn()`; `src/calendar-view.js`'s `resetCalendar()` takes an optional
+day; `src/scores.js` gained `revealScoreColumn()`; `src/shell.js` routes `data-calendar-open="<iso>"`
+and the new `data-scores-open`, and puts `renderGlance()` on the presentation-mode flip list;
+`src/glance.css` gained `.gl-row-out`; `CACHE` is `planbook-shell-v118`.
+
+**The owner's two rulings of 2026-09-16, both recorded under their paragraphs in the phase file.** A
+grades-due date shows only under *Closing in* — the kind decision is `scheduledIn()` in the engine,
+and `weekItems()` asks it instead of `eventsCovering()`. And one window for all three kinds under
+*Closing in*, with the panel's head naming whose lead time it is: *"Inside the lead time you set for
+grades — 3 days, through Sat, Sep 19. Term edges and reviews use the same window."*
+
+**The knock-on the first ruling had on WO-6.7's quiet panel, found and fixed rather than left.** With
+grades-due dates out of the week reader, a week whose only entry is a grades-due date outside its lead
+time is a quiet day — reachable on the default lead of 3, a Thursday deadline read on a Sunday — and
+the first chip said *"Nothing on the calendar through …"* on it, which was false. The day is right to
+be quiet: it is the notice the teacher chose. So the chip and the panel's sentence now say
+*scheduled*, which is what the reader asked, beside the fourth chip that already counts deadlines from
+their warning. The WO-6.7 grades-due probe plants exactly that day and asserts the new wording and
+that no text under `#homeView` says "on the calendar".
+
+**The hand reading WO-6.7's fourth line depends on, carried forward over what this row added to
+`src/glance.js`.** The panel builders compare only by equality (`item.kind === TERM_START`,
+`item.count === 1`, `end !== event.date`) and never order two dates; the one figure on a queue row is
+the record's own `open`, said as *N blanks* rather than *N of M graded*, which would be a subtraction;
+the lead figure on *Closing in*'s head is `daysBetween()` over `leadWindowOf()`'s own window, shared
+with the fourth quiet chip through one helper rather than read twice. No `Math.*`, no `%`, no `/`, no
+sort, and no `presentationMode()` call anywhere in the file.
+
+- [x] *Today and this week* lists every authored event but `grades-due` and every derived item from
+      today through six days on and nothing outside that window, and each row taps through to its
+      subject. Fixture: a trip on days −2…1, a reminder today, an untitled conference on day 6, a
+      reminder on day 7, a grades-due date on the last day of the lead, assignments due on days −1, 3
+      and 8, and a term ending on day 5 — the reader answers five records
+      (`trip,reminder,conference,assignment-due,term-end`) and the panel draws five rows, none for day
+      7, days −1/8 or the grades-due date. An event row carries `data-calendar-open` = its first day
+      (the trip names both edges); tapping the day-6 conference lands on `#calendarView` at scale
+      `week`, 2026-09-20 → 2026-09-26, every class showing. The due-date row carries the aria-hidden ↗
+      and the month grid's chip hooks; tapping it opens `#assignmentModal` on `a_wo68_d3` over the
+      assignment list, class open.
+- [x] *Waiting to be graded* draws one row per assignment with blanks in the open term — four rows
+      over two classes — headed *Waiting to be graded · 4*, which equals the sum of the two cards'
+      chips (`3 to grade` + `1 to grade`) and the reader's length. Tapping the second class's row lands
+      on `#scoresView` with that class open, the column's head inside the viewport (left 314, right
+      1240 of 1280) and the caret in its first cell.
+- [x] A grades-due event appears under *Closing in* on every day inside its lead time — planted on
+      each of days 0…3 in turn (lead 3), an amber `.warn` row every time, none on day 4, and never a
+      row under *Today and this week* on any of them — and a tap loads it into the events panel's
+      form (`#eventsModal`, title *WO-6.8 grades due*). WO-6.1's re-homed box is ticked back on this.
+- [x] The review item is a count with no name, date or kind: two reviews inside the lead draw one row,
+      *2 reviews coming up* · *Who and when are on the calendar.*, no `.gl-row-meta`, no weekday or
+      month word, no digit but the 2, and a door onto the calendar's month. With presentation mode
+      switched on **through the header's real control while the page is up** the row is absent at once
+      — no re-arrival — and nothing under `#homeView` says *hidden* or *review*; switched off, it is
+      back the same way. `wo-sweep` still reads *"asked by 7 other file(s)"*, the same list as before
+      this work order.
+- [x] Every row in the three panels is a `<button type="button">` wearing `.gl-row`, and under an
+      emulated coarse pointer (`matchMedia('(pointer: coarse)')` true, 1024×768 mobile) every row of
+      all three measures 44 or 64px tall.
+- [ ] The three panels draw WO-6.7's arrays and nothing else. **Left open, the owner's call** — the
+      harness half is met (rows equal readers in every state; removing an event, the grades-due date
+      and an assignment moves week 5 → 4, queue 4 → 3 and closing in 1 → 0 in both together), but
+      three names were added to existing import lines for the panels' sake: `kindInfo`,
+      `ASSIGNMENT_DUE`, `TERM_START`. See the phase file under the box.
+- [x] A day where only the attention hits are non-empty draws neither the three panels nor the quiet
+      panel: Ada's `missing-count` is the one hit, week, queue and closing in are all empty, and the
+      stack holds the class grid alone — no `[data-glance-panel]` at all.
+
+**Four pre-existing checks in `tools/verify/glance-quiet.mjs` changed what they assert, each because
+this row changed the behaviour on purpose.** The chips check reads *Nothing scheduled through …*; the
+grades-due probe asserts the ruling (never a week item; the day past the lead is quiet and its chip
+claims only *scheduled*); and the busy-day and day-six checks, which read *"this row draws nothing in
+its place"*, now assert that the one panel whose reader is non-empty is drawn and no other. The first
+run of the delivered tree was red on exactly those last two — `1387 checks · 1385 passed · 2 failed`
+— before they were re-cut.
+
+*Desk pass 2026-09-16: `verify-shell.mjs` **1387 of 1387, 0 failed, 0 skipped**, 43,229 lines, 31.2
+lines per check, 475s, exit 0 — up from 1373: fourteen literal call sites, all firing. An earlier
+green run of the same tree printed the same summary and then hung in teardown and was killed by PID,
+with stray `msedge.exe` from the mutation runs still up — the WO-5.11 hang; the strays were cleared
+and the exit-0 run above is the one quoted.* `wo-sweep.mjs` *is 42 checks, 39 passed, 0 failed, 3 to
+review — the same three reviews as on the tree this work order arrived on.*
+
+**Four mutations in two runs, every one of them bit, and every one reverted by copying the pristine
+file back before a word of this paragraph was written** (`cmp` identical; `grep -rn "MUTATION M" src
+tools` after finds only the two pre-existing *THE MUTATION MATCHED NOTHING* strings in
+`tools/verify/keys-legend-guards.mjs`). Round one, planted together: `weekItems()` asking `eventsCovering()` again, and
+the week panel drawing `items.slice(0, 4)` (two more were planted with them and are counted in round
+two, because the section threw before reaching their checks). It read `1379 checks · 1374 passed · 5
+failed` — the grades-due probe, the week-list check, the week-doors check, the every-row-a-button
+check, and the section throwing when the row it went to tap was not there. Round two planted the
+other two alone: the quiet decision dropping the hits, and `renderGlance()` taken off the flip list.
+It read `1387 checks · 1385 passed · 2 failed` — exactly the attention-only check (the quiet panel
+drew over Ada's hit) and the projector check (the review row stayed on the glass). Both mutated runs
+hung in teardown after printing their summaries and were killed by PID.
+
+**Temptations declined.** The drawing's leading row icons need an SVG sprite this app does not have;
+the queue rows' class avatars need the card's colour index out of `src/home.js`; and the drawing's
+grades-due row *outside* its lead is gone by ruling. The two parent-row sentences WO-6.7 declined — the
+grid's subtitle and the *Your classes* caption — are still WO-6.4's.
+
 ---
 
 

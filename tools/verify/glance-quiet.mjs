@@ -11,7 +11,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, waitForBoot, seam } = h;
 
 /*
  * ───────── the glance page: the stack, the readers and the quiet day (WO-6.7) ─────────
@@ -119,6 +119,38 @@ if (!seam) {
       closingKinds: g.closingIn().map(function(i){ return i.kind; }),
       closingText: JSON.stringify(g.closingIn()),
       queueOpen: g.queueRows().map(function(r){ return r.assignmentId + ':' + r.open; }).sort(),
+      /* WO-6.8's three list panels, read row by row: what each row IS (tag, type, class), what it
+         SAYS (title with the arrow taken out, the line under it, the figure), whether it carries the
+         calendar's arrow, and every hook a tap is routed on. */
+      lists: (function(){
+        var out = {};
+        ['week', 'queue', 'closing'].forEach(function(name){
+          var panel = view ? view.querySelector('[data-glance-panel="' + name + '"]') : null;
+          if (!panel) { out[name] = null; return; }
+          out[name] = {
+            head: (panel.querySelector('.panel-title h2') || {}).textContent || '',
+            text: (panel.querySelector('.panel-title p') || {}).textContent || '',
+            rows: Array.prototype.map.call(panel.querySelectorAll('.gl-list > *'), function(b){
+              var t = b.querySelector('.gl-row-title');
+              var arrow = t ? t.querySelector('.gl-row-out') : null;
+              return { tag: b.tagName, type: b.type || '', cls: b.className,
+                title: t ? t.textContent.replace(arrow ? arrow.textContent : '', '') : '',
+                out: !!arrow, outHidden: arrow ? arrow.getAttribute('aria-hidden') : '',
+                why: (b.querySelector('.gl-row-why') || {}).textContent || '',
+                meta: b.querySelector('.gl-row-meta') ? b.querySelector('.gl-row-meta').textContent : null,
+                text: b.textContent,
+                open: b.getAttribute('data-calendar-open'),
+                item: b.hasAttribute('data-calendar-item'),
+                kind: b.getAttribute('data-calendar-kind') || '',
+                ref: b.getAttribute('data-calendar-ref') || '',
+                klass: b.getAttribute('data-calendar-class') || '',
+                date: b.getAttribute('data-calendar-date') || '',
+                scores: b.getAttribute('data-scores-open'),
+                scoresClass: b.getAttribute('data-scores-class') }; }) };
+        });
+        return out; })(),
+      weekKinds: g.weekItems().map(function(i){ return i.kind; }),
+      viewText: view ? view.textContent : '',
     }; })()`;
 
   await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
@@ -230,7 +262,7 @@ if (!seam) {
     check('the four chips say what was looked at, in the order the missing panels would have '
       + 'appeared: the calendar through today plus six, the queue over 1 class, four students both '
       + 'directions, and no deadline inside the lead time the document actually holds',
-      new RegExp('^Nothing on the calendar through [A-Z][a-z]{2}, [A-Z][a-z]{2} ' + dayNum + '$').test(quiet.chips[0] || '')
+      new RegExp('^Nothing scheduled through [A-Z][a-z]{2}, [A-Z][a-z]{2} ' + dayNum + '$').test(quiet.chips[0] || '')
         && quiet.chips[1] === 'Nothing to grade in 1 class'
         && quiet.chips[2] === '4 students checked, both directions'
         && quiet.chips[3] === (plant67.lead === 0 ? 'No deadline today'
@@ -355,9 +387,15 @@ if (!seam) {
         return String(a.id).indexOf('a_wo67_') === 0; }).length }; })()`);
     await rehome67();
     const busy = await evalJs(PAGE);
-    check('on a busy day the quiet panel is GONE — one panel in the stack, no named panel at all — '
-      + 'and this row draws nothing in its place',
-      busy67.assignments === 6 && !busy.quiet && busy.panels === 1 && busy.named.length === 0 && busy.rows === 0,
+    /* RE-CUT AT WO-6.8. At WO-6.7 this asserted "one panel in the stack … this row draws nothing in its
+       place", which was true of a build with no list panels and is exactly what WO-6.8 exists to
+       change. The claim that survives is the quiet panel's absence; what stands in its place is now
+       the one panel whose reader is non-empty — the queue — and no other, because the week and
+       closing-in readers are empty on this day and an empty reader draws no panel. */
+    check('on a busy day the quiet panel is GONE, and what stands in its place is exactly the panel whose '
+      + 'reader has something — the queue — and no panel for the empty week or closing-in readers',
+      busy67.assignments === 6 && !busy.quiet && busy.panels === 2
+        && busy.named.join(',') === 'queue' && busy.week === 0 && busy.closing === 0,
       JSON.stringify({ planted: busy67.assignments, quiet: busy.quiet, panels: busy.panels, named: busy.named }));
     check('the card\'s `2 to grade`, the card\'s `2 need you` and the readers\' lengths AGREE: the '
       + 'queue reader hands back two rows (one per assignment, one of them open for one student '
@@ -449,23 +487,35 @@ if (!seam) {
     const atSix = await probe(clearProbe + ev('e_wo67_r6', 'reminder', 6));
     const atSeven = await probe(clearProbe + ev('e_wo67_r7', 'reminder', 7));
     check('the week reader reads today through six days on and not seven: a reminder on day six is '
-      + 'one week item and takes the quiet panel down; the same reminder on day seven is none and '
+      + 'one week item, takes the quiet panel down and puts the week panel up in its place (WO-6.8); '
+      + 'the same reminder on day seven is none and '
       + 'the panel is back — the far edge is a reader\'s WINDOW, not a filter of its own',
-      atSix.week === 1 && !atSix.quiet && atSix.panels === 1
+      atSix.week === 1 && !atSix.quiet && atSix.panels === 2 && atSix.named.join(',') === 'week'
         && atSeven.week === 0 && atSeven.quiet && atSeven.panels === 2 && atSeven.chips.length === 4,
       JSON.stringify({ daySix: { week: atSix.week, quiet: atSix.quiet },
         daySeven: { week: atSeven.week, quiet: atSeven.quiet } }));
 
     const dueIn = await probe(clearProbe + ev('e_wo67_gd', 'grades-due', plant67.lead));
     const dueOut = await probe(clearProbe + ev('e_wo67_gd2', 'grades-due', plant67.lead + 1));
+    /* RE-CUT AT WO-6.8, on the owner's ruling of 2026-09-16 that a grades-due date is under *Closing
+       in* and never under *Today and this week*. This check used to assert the opposite half — "on
+       both days it is one WEEK item" — which was WO-6.7's reading before the ruling existed. So the
+       day one past the lead is now a QUIET day on the default lead of 3 (a deadline four days out is
+       inside the week and outside its warning), and that is the day whose first chip used to say
+       "Nothing on the calendar" with a deadline sitting on the calendar. The chip now says what the
+       week reader actually asked, and this probe is the fixture that reaches that state. */
     check('the closing-in reader reads a grades-due date inside src/calendar.js\'s lead window and '
       + 'not one day past it: on the last day of the lead it is one closing-in item; one day later '
-      + 'it is none — and on both days it is one WEEK item, because a grades-due date is on the '
-      + 'calendar whether or not its warning has started',
-      dueIn.closing === 1 && dueIn.closingKinds[0] === 'grades-due' && !dueIn.quiet
-        && dueOut.closing === 0 && (plant67.lead + 1 > 6 || (dueOut.week === 1 && !dueOut.quiet)),
+      + 'it is none — and on NEITHER day is it a week item (the owner, 2026-09-16), so the day past '
+      + 'the lead is quiet and its first chip claims only that nothing is SCHEDULED, never that the '
+      + 'calendar is empty',
+      dueIn.closing === 1 && dueIn.closingKinds[0] === 'grades-due' && !dueIn.quiet && dueIn.week === 0
+        && dueOut.closing === 0 && dueOut.week === 0
+        && (plant67.lead + 1 > 6 || (dueOut.quiet && /^Nothing scheduled through /.test(dueOut.chips[0] || '')
+          && !/on the calendar/i.test(dueOut.viewText))),
       JSON.stringify({ inside: { closing: dueIn.closing, kinds: dueIn.closingKinds, week: dueIn.week },
-        pastIt: { closing: dueOut.closing, week: dueOut.week, quiet: dueOut.quiet } }));
+        pastIt: { closing: dueOut.closing, week: dueOut.week, quiet: dueOut.quiet,
+          chip: dueOut.chips[0] } }));
 
     const review = await probe(clearProbe
       + `(doc.students || []).forEach(function(p){ if (p.id === '${CARA}') { p.supports = p.supports || {}; p.supports.reviewDate = shift(lead); } });`);
@@ -522,6 +572,384 @@ if (!seam) {
       cleared.quiet && before.view === 'homeView' && before.openView === 'home' && before.views === 8
         && after.view === 'homeView' && after.quiet && after.panels === 2,
       JSON.stringify({ before: before, after: after }));
+
+    /*
+     * ───────── the three list panels: today and this week, waiting to be graded, closing in (WO-6.8) ─────────
+     *
+     * WHAT ONLY A BROWSER CAN SETTLE HERE. That each panel draws ITS reader's array and nothing else —
+     * a row per record, no more and no fewer, and the panel absent when the reader is empty — which is
+     * a claim about the tree against the readers' own lengths read through the seam in the same
+     * breath. That every row is a <button> a thumb can hit, measured on a pointer that is really
+     * coarse. That each row lands where the work order says, which is a chain of navigation only a
+     * click can walk. That the review COUNT carries no name, date or kind, and is gone from the glass
+     * the moment the REAL presentation control is pressed with the page up — the flip list, not the
+     * next arrival. And that a day where only a signal is pending draws no quiet panel.
+     *
+     * THE FIXTURE BUILDS ON THE WO-6.7 CLASS AS THE BLOCK ABOVE LEFT IT: three students (Beth was cut),
+     * no assignments, no events, the document quiet. It adds, all anchored to the page's own clock:
+     * events on days -2..1 (a trip that began before the window), 0, 6 (untitled, so the kind's own
+     * word is the title), 7 (outside) and a grades-due date inside the lead; three assignments due on
+     * days -1, 3 and 8, one of them inside the week; a second term on the class whose END is day 5; and
+     * a SECOND class of one student with one open assignment, so the queue's head has two cards to be
+     * the sum of rather than one.
+     */
+    console.log('\n--- the glance page: today and this week, waiting to be graded, closing in (WO-6.8) ---');
+    const CLS68 = 'c_wo68', TERM68 = 'tm_wo68', EDGE68 = 'tm_wo68edge', ELI68 = 's_wo68eli';
+    const lead68 = plant67.lead;
+    /* The grades-due date sits on the LAST day of the lead, capped to the week so it is also a day a
+       week reader that still carried the kind would have picked up — which is what makes its absence
+       from the week panel a claim rather than an accident of the window. */
+    const GD68 = Math.min(Math.max(lead68, 0), 6);
+    const openClassWas68 = await evalJs("window.planbook.getPref('openClassId')");
+
+    const plant68 = await evalJs(`(function(){
+      var s = window.planbook.store, cal = window.planbook.calendar;
+      var today = window.planbook.attendance.todayISO();
+      var shift = function(n){ return cal.shiftDays(today, n); };
+      var ev = function(id, kind, from, to, title){
+        return { id:id, date:shift(from), endDate:shift(to), kind:kind, title:title, classIds:[],
+          studentId:'', notes:'', seriesId:'' }; };
+      s.update(function(doc){
+        var cls = (doc.classes || []).filter(function(c){ return c.id === '${CLS}'; })[0];
+        cls.terms.push({ id:'${EDGE68}', label:'WO-6.8 Edge term', start:shift(-100), end:shift(5) });
+        doc.events.push(ev('e_wo68_trip', 'trip', -2, 1, 'WO-6.8 trip'));
+        doc.events.push(ev('e_wo68_rem0', 'reminder', 0, 0, 'WO-6.8 reminder'));
+        doc.events.push(ev('e_wo68_conf6', 'conference', 6, 6, ''));
+        doc.events.push(ev('e_wo68_rem7', 'reminder', 7, 7, 'WO-6.8 day seven'));
+        doc.events.push(ev('e_wo68_gd', 'grades-due', ${GD68}, ${GD68}, 'WO-6.8 grades due'));
+        var work = function(id, cid, tid, cat, name, due){
+          doc.assignments.push({ id:id, classId:cid, termId:tid, categoryId:cat, name:name, points:10,
+            assigned:shift(-10), due:due }); };
+        work('a_wo68_dm1', '${CLS}', '${TERM}', 'k_wo67', 'WO-6.8 Due yesterday', shift(-1));
+        work('a_wo68_d3', '${CLS}', '${TERM}', 'k_wo67', 'WO-6.8 Due soon', shift(3));
+        work('a_wo68_d8', '${CLS}', '${TERM}', 'k_wo67', 'WO-6.8 Due later', shift(8));
+        doc.students.push({ id:'${ELI68}', first:'Eli', last:'Wo68Second' });
+        doc.classes.push({ id:'${CLS68}', name:'WO-6.8 Second', archived:false, roster:['${ELI68}'],
+          letterScale:null, terms:[{ id:'${TERM68}', label:'WO-6.8 Term', start:shift(-40), end:shift(40) }],
+          categories:[{ id:'k_wo68', name:'Essays', weight:100 }]});
+        work('a_wo68_x', '${CLS68}', '${TERM68}', 'k_wo68', 'WO-6.8 Essay', '');
+      });
+      return { today: today, days: [-2, 0, 3, 5, 6, 7, 8, ${GD68}].map(shift),
+        active: window.planbook.classes.getActiveClasses().map(function(c){ return c.id; }).sort(),
+        openTerm: window.planbook.classes.getOpenTermId('${CLS}') }; })()`);
+    const day68 = (n) => plant68.days[[-2, 0, 3, 5, 6, 7, 8, GD68].indexOf(n)];
+    await rehome67();
+    const full68 = await evalJs(PAGE);
+    const cards68 = await evalJs(`(function(){
+      var sum = 0, each = {};
+      Array.prototype.forEach.call(document.querySelectorAll('#homeGrid [data-class-tab]'), function(card){
+        Array.prototype.forEach.call(card.querySelectorAll('.class-card-count'), function(chip){
+          var m = /^(\\d+) to grade$/.exec(chip.textContent);
+          if (m) { sum += Number(m[1]); each[card.getAttribute('data-class-tab')] = chip.textContent; }
+        }); });
+      return { sum: sum, each: each }; })()`);
+
+    const W = full68.lists.week, Q = full68.lists.queue, C = full68.lists.closing;
+    const weekRows = W ? W.rows : [];
+    const byTitle = (rows, t) => rows.filter(r => r.title === t)[0] || null;
+    const trip68 = byTitle(weekRows, 'WO-6.8 trip'), rem68 = byTitle(weekRows, 'WO-6.8 reminder');
+    const conf68 = byTitle(weekRows, 'Conference');
+    const due68 = byTitle(weekRows, 'WO-6.8 Due soon due · ' + CLASS_NAME);
+    const edge68 = byTitle(weekRows, CLASS_NAME + ' · Term ends');
+
+    /* ── acceptance line 1: the week, its window, and nothing else ── */
+    check('the WO-6.8 fixture is real: two active classes, the WO-6.7 class still open on its first term, '
+      + 'and the planted days anchored to the page\'s clock',
+      full68.view === 'homeView' && plant68.active.join(',') === [CLS, CLS68].sort().join(',')
+        && plant68.openTerm === TERM,
+      JSON.stringify({ active: plant68.active, openTerm: plant68.openTerm, today: plant68.today,
+        lead: lead68, gradesDueOn: GD68 }));
+    check('*Today and this week* lists every authored event but the grades-due date and every derived '
+      + 'item from today through six days on, and nothing outside it: the trip that began two days ago, '
+      + 'today\'s reminder, the day-six conference (untitled, so it reads as its kind), the day-three '
+      + 'due date and the day-five term end — five rows for a five-record reader — and not the day-seven '
+      + 'reminder, the due dates on days -1 and 8, or the grades-due date inside the week',
+      !!W && W.head === 'Today and this week' && weekRows.length === 5 && full68.week === 5
+        && full68.weekKinds.join(',') === 'trip,reminder,conference,assignment-due,term-end'
+        && !!trip68 && !!rem68 && !!conf68 && !!due68 && !!edge68
+        && !weekRows.some(r => /day seven|Due yesterday|Due later|grades due/i.test(r.text))
+        && full68.weekKinds.indexOf('grades-due') === -1,
+      JSON.stringify({ head: W && W.head, reader: full68.week, kinds: full68.weekKinds,
+        rows: weekRows.map(r => r.title + ' | ' + r.why + ' | ' + r.meta) }));
+    check('each week row carries its own door: an authored event opens the calendar ON ITS DAY '
+      + '(`data-calendar-open` = that event\'s first day, and a trip that began before today names both '
+      + 'edges), while the due date and the term edge wear the month grid\'s own chip hooks with the '
+      + 'calendar\'s aria-hidden ↗ — and an event row carries no arrow',
+      !!trip68 && trip68.open === day68(-2) && !trip68.item && !trip68.out && / – /.test(trip68.meta || '')
+        && trip68.why === 'Trip'
+        && !!rem68 && rem68.open === day68(0) && !rem68.out
+        && !!conf68 && conf68.open === day68(6) && conf68.why === ''
+        && !!due68 && due68.item && due68.out && due68.outHidden === 'true' && due68.open === null
+        && due68.kind === 'assignment-due' && due68.ref === 'a_wo68_d3' && due68.klass === CLS
+        && due68.date === day68(3)
+        && !!edge68 && edge68.item && edge68.out && edge68.kind === 'term-end' && edge68.ref === EDGE68
+        && edge68.date === day68(5),
+      JSON.stringify({ trip: trip68, conference: conf68 && { open: conf68.open, why: conf68.why },
+        due: due68 && { kind: due68.kind, ref: due68.ref, out: due68.out },
+        edge: edge68 && { kind: edge68.kind, ref: edge68.ref } }));
+
+    /* ── acceptance line 2: the queue, and its head is the cards' sum ── */
+    const qRows = Q ? Q.rows : [];
+    const essay68 = qRows.filter(r => r.scores === 'a_wo68_x')[0] || null;
+    check('*Waiting to be graded* draws one row per assignment with blanks in the open term — the three '
+      + 'dated assignments in one class and the essay in the other — and its head count, 4, equals the '
+      + 'SUM of the cards\' `N to grade` chips (3 + 1), which is also the queue reader\'s length',
+      !!Q && qRows.length === 4 && full68.queue === 4 && Q.head === 'Waiting to be graded · 4'
+        && cards68.sum === 4 && cards68.each[CLS] === '3 to grade' && cards68.each[CLS68] === '1 to grade'
+        && !!essay68 && essay68.scoresClass === CLS68 && essay68.meta === '1 blank'
+        && essay68.title === 'WO-6.8 Essay' && essay68.why === 'WO-6.8 Second · Essays'
+        && qRows.filter(r => r.scoresClass === CLS).every(r => r.meta === '3 blanks'),
+      JSON.stringify({ head: Q && Q.head, reader: full68.queue, cards: cards68,
+        rows: qRows.map(r => r.title + ' | ' + r.why + ' | ' + r.meta + ' -> ' + r.scoresClass + '/' + r.scores) }));
+
+    /* ── acceptance line 3, first half: the grades-due date is under Closing in and names its lead ── */
+    const cRows = C ? C.rows : [];
+    const gd68 = cRows.filter(r => r.ref === 'e_wo68_gd')[0] || null;
+    check('*Closing in* carries the grades-due date as an amber row wearing the month grid\'s own chip '
+      + 'hooks (so a tap loads the EVENT), and its head names whose lead time the window is — the one '
+      + 'the teacher set for grades — with no second horizon anywhere on the panel',
+      !!C && C.head === 'Closing in' && /lead time you set for grades/.test(C.text)
+        && /Term edges and reviews use the same window/.test(C.text)
+        && !/this month/i.test(C.text + JSON.stringify(cRows))
+        && !!gd68 && /\bwarn\b/.test(gd68.cls) && gd68.item && gd68.kind === 'grades-due'
+        && gd68.date === day68(GD68) && gd68.title === 'WO-6.8 grades due' && gd68.why === 'Grades due'
+        && cRows.length === full68.closing,
+      JSON.stringify({ head: C && C.head, text: C && C.text, reader: full68.closing,
+        rows: cRows.map(r => r.title + ' | ' + r.cls + ' | ' + r.kind) }));
+
+    /* ── acceptance line 5, on the desktop pass first: every row is a real button ── */
+    const allRows68 = weekRows.concat(qRows, cRows);
+    check('every row in the three panels is a <button type="button"> wearing .gl-row — no span, no '
+      + 'link, no second kind of row',
+      allRows68.length === weekRows.length + qRows.length + cRows.length && allRows68.length >= 10
+        && allRows68.every(r => r.tag === 'BUTTON' && r.type === 'button' && /\bgl-row\b/.test(r.cls)),
+      allRows68.length + ' rows: ' + JSON.stringify(allRows68.map(r => r.tag + '.' + r.cls)));
+
+    /* ── the taps, walked ── */
+    const where68 = `(function(){
+      var open = document.querySelector('.modal-overlay:not(.hidden)');
+      var m = window.planbook.calendarView.calendarModel();
+      var focus = document.activeElement;
+      return { view: (document.querySelector('main > :not(.hidden)') || {}).id || '',
+        modal: open ? open.id : '',
+        scale: m.scale, from: m.from, to: m.to, filter: m.classId,
+        openClass: window.planbook.classes.getSelectedClassId(),
+        eventTitle: (document.getElementById('eventTitle') || {}).value || '',
+        assignmentId: (document.querySelector('#assignmentModal [data-assignment-id]') || {})
+          .getAttribute ? document.querySelector('#assignmentModal [data-assignment-id]').getAttribute('data-assignment-id') : '',
+        focusCell: focus && focus.getAttribute ? focus.getAttribute('data-score-cell') : null,
+        col: (function(){
+          var th = document.querySelector('#scoresGridWrap [data-score-col="a_wo68_x"]');
+          if (!th) return null;
+          var r = th.getBoundingClientRect();
+          return { left: Math.round(r.left), right: Math.round(r.right), inner: window.innerWidth }; })() }; })()`;
+    const closeAll68 = async () => await evalJs(`(function(){
+      var open = document.querySelectorAll('.modal-overlay:not(.hidden)');
+      Array.prototype.forEach.call(open, function(o){ window.planbook.closeModal(o); });
+      return open.length; })()`);
+
+    await clickSel('#homeView [data-glance-panel="week"] [data-calendar-open="' + day68(6) + '"]');
+    await new Promise(r => setTimeout(r, 300));
+    const toWeek68 = await evalJs(where68);
+    await goHome67();
+    await clickSel('#homeView [data-glance-panel="week"] [data-calendar-ref="a_wo68_d3"]');
+    await new Promise(r => setTimeout(r, 300));
+    const toDue68 = await evalJs(where68);
+    await closeAll68();
+    await goHome67();
+    check('the taps land where the work order says: the day-six conference opens the calendar\'s WEEK '
+      + 'holding day six, with every class showing; the day-three due date opens that class\'s '
+      + 'assignment list with that assignment\'s own editor up',
+      toWeek68.view === 'calendarView' && toWeek68.scale === 'week' && toWeek68.filter === ''
+        && toWeek68.from <= day68(6) && toWeek68.to >= day68(6)
+        && toDue68.view === 'assignmentsView' && toDue68.modal === 'assignmentModal'
+        && toDue68.assignmentId === 'a_wo68_d3' && toDue68.openClass === CLS,
+      JSON.stringify({ event: { view: toWeek68.view, scale: toWeek68.scale, from: toWeek68.from,
+        to: toWeek68.to, day: day68(6) }, due: { view: toDue68.view, modal: toDue68.modal,
+        assignment: toDue68.assignmentId, openClass: toDue68.openClass } }));
+
+    await clickSel('#homeView [data-scores-open="a_wo68_x"]');
+    await new Promise(r => setTimeout(r, 400));
+    const toColumn68 = await evalJs(where68);
+    await goHome67();
+    await clickSel('#homeView [data-glance-panel="closing"] [data-calendar-ref="e_wo68_gd"]');
+    await new Promise(r => setTimeout(r, 300));
+    const toEvent68 = await evalJs(where68);
+    await closeAll68();
+    await goHome67();
+    check('a queue row opens that class\'s score grid with that assignment\'s column on screen and the '
+      + 'caret in its first cell, the class now the open one; and the grades-due row under *Closing in* '
+      + 'taps through to the EVENT — the events panel with that row loaded into its form',
+      toColumn68.view === 'scoresView' && toColumn68.openClass === CLS68 && !!toColumn68.col
+        && toColumn68.col.left >= 0 && toColumn68.col.right <= toColumn68.col.inner
+        && toColumn68.focusCell === 'a_wo68_x'
+        && toEvent68.modal === 'eventsModal' && toEvent68.eventTitle === 'WO-6.8 grades due',
+      JSON.stringify({ column: { view: toColumn68.view, openClass: toColumn68.openClass,
+        col: toColumn68.col, focus: toColumn68.focusCell },
+        event: { modal: toEvent68.modal, title: toEvent68.eventTitle } }));
+
+    /* ── acceptance line 3, second half: on EVERY day inside its lead, and not the day after ── */
+    const onDays68 = [];
+    const lastLead68 = Math.min(Math.max(lead68, 0), 13);
+    for (let k = 0; k <= lastLead68 + 1; k++) {
+      const at = await probe(`doc.events.forEach(function(e){ if (e.id === 'e_wo68_gd') { e.date = shift(${k}); e.endDate = shift(${k}); } });`);
+      const rows = at.lists.closing ? at.lists.closing.rows : [];
+      const row = rows.filter(r => r.ref === 'e_wo68_gd')[0] || null;
+      const inWeek = (at.lists.week ? at.lists.week.rows : []).some(r => /grades due/i.test(r.text));
+      onDays68.push({ k: k, row: !!row, warn: !!row && /\bwarn\b/.test(row.cls), inWeek: inWeek,
+        rows: rows.length, reader: at.closing });
+    }
+    check('a grades-due event appears under *Closing in* — amber — on EVERY day inside its lead time, '
+      + 'from the day itself to ' + lastLead68 + ' days ahead, is gone the day after the lead ends, and '
+      + 'is never a row under *Today and this week* on any of those days; the panel\'s rows follow the '
+      + 'reader\'s length on every one',
+      onDays68.length === lastLead68 + 2
+        && onDays68.slice(0, lastLead68 + 1).every(d => d.row && d.warn)
+        && !onDays68[lastLead68 + 1].row
+        && onDays68.every(d => !d.inWeek && d.rows === d.reader),
+      JSON.stringify(onDays68));
+    /* Back to the planted day for everything below. */
+    await probe(`doc.events.forEach(function(e){ if (e.id === 'e_wo68_gd') { e.date = shift(${GD68}); e.endDate = shift(${GD68}); } });`);
+
+    /* ── acceptance line 6: move the readers, and the rows move with them ── */
+    const moved68 = await probe(`doc.events = doc.events.filter(function(e){ return e.id !== 'e_wo68_rem0' && e.id !== 'e_wo68_gd'; });
+      doc.assignments = doc.assignments.filter(function(a){ return a.id !== 'a_wo68_d8'; });`);
+    const lenOf = (list) => list ? list.rows.length : 0;
+    check('taking one event, the grades-due date and one assignment out of the fixture moves every '
+      + 'reader and every panel TOGETHER — the week reader 5 → 4 and four rows, the queue 4 → 3 with '
+      + 'three rows under a head reading 3, and closing in down by one with the panel\'s rows equal '
+      + 'to it (absent when it reaches zero)',
+      moved68.week === 4 && lenOf(moved68.lists.week) === 4
+        && moved68.queue === 3 && lenOf(moved68.lists.queue) === 3
+        && moved68.lists.queue && moved68.lists.queue.head === 'Waiting to be graded · 3'
+        && moved68.closing === full68.closing - 1 && lenOf(moved68.lists.closing) === moved68.closing
+        && (moved68.closing > 0) === !!moved68.lists.closing,
+      JSON.stringify({ week: [full68.week, moved68.week, lenOf(moved68.lists.week)],
+        queue: [full68.queue, moved68.queue, lenOf(moved68.lists.queue)],
+        closing: [full68.closing, moved68.closing, lenOf(moved68.lists.closing)] }));
+
+    /* ── acceptance line 4: the review count, and the projector ── */
+    const reviews68 = await probe(`(doc.students || []).forEach(function(p){
+        if (p.id === '${CARA}' || p.id === '${DREW}') { p.supports = p.supports || {};
+          p.supports.reviewDate = p.id === '${CARA}' ? shift(0) : shift(lead); } });`);
+    const rv68 = (reviews68.lists.closing ? reviews68.lists.closing.rows : []).filter(r => /review/.test(r.title))[0] || null;
+    check('two reviews inside the lead reach *Closing in* as ONE row reading `2 reviews coming up` — no '
+      + 'name, no date, no kind, no figure at the right where a date would go — and it opens the '
+      + 'calendar on the month (`data-calendar-open` with no day)',
+      !!rv68 && rv68.title === '2 reviews coming up' && rv68.why === 'Who and when are on the calendar.'
+        && rv68.meta === null && rv68.open === '' && !rv68.item && !rv68.out
+        && !/Wo67|Cara|Drew|IEP|504|plan|medical|accommodation/i.test(rv68.text)
+        && !/\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/.test(rv68.text)
+        && rv68.text.replace(/[^0-9]/g, '') === '2',
+      JSON.stringify(rv68));
+
+    /* The REAL control, pressed with the page up and nothing re-arriving — so the review row coming
+       off is src/shell.js's flip list redrawing the page, not the next render. */
+    const modeWas68 = await evalJs('window.planbook.supports.presentationMode()');
+    if (modeWas68) { await clickVisible('[data-presentation-toggle]'); await new Promise(r => setTimeout(r, 200)); }
+    await clickVisible('[data-presentation-toggle]');
+    await new Promise(r => setTimeout(r, 300));
+    const projected68 = await evalJs(PAGE);
+    const projMode68 = await evalJs('window.planbook.supports.presentationMode()');
+    await clickVisible('[data-presentation-toggle]');
+    await new Promise(r => setTimeout(r, 300));
+    const unprojected68 = await evalJs(PAGE);
+    if (modeWas68) await clickVisible('[data-presentation-toggle]');
+    const projRows68 = projected68.lists.closing ? projected68.lists.closing.rows : [];
+    const backRows68 = unprojected68.lists.closing ? unprojected68.lists.closing.rows : [];
+    check('with presentation mode switched ON through its real control while the page is up, the review '
+      + 'row is ABSENT at once — no re-arrival — and no text anywhere under #homeView says anything '
+      + 'was hidden or names a review; switched off again, the row is back the same way',
+      projMode68 === true && projected68.view === 'homeView'
+        && projected68.closingKinds.indexOf('review-count') === -1
+        && !projRows68.some(r => /review/i.test(r.text))
+        && !/hidden|review/i.test(projected68.viewText)
+        && backRows68.some(r => r.title === '2 reviews coming up'),
+      JSON.stringify({ mode: projMode68, closingKinds: projected68.closingKinds,
+        rows: projRows68.map(r => r.title), after: backRows68.map(r => r.title),
+        mentions: (projected68.viewText.match(/[^.]*(hidden|review)[^.]*/i) || [''])[0] }));
+
+    /* ── acceptance line 5: 44px, on a pointer that is really coarse ── */
+    await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+    await send('Emulation.setDeviceMetricsOverride', { width: 1024, height: 768, deviceScaleFactor: 2, mobile: true });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+    await send('Page.reload');
+    await new Promise(r => setTimeout(r, 700));
+    await waitForBoot();
+    await evalJs(KILL_ANIM);
+    const coarse68 = await evalJs("matchMedia('(pointer: coarse)').matches");
+    if ((await onView67()) !== 'homeView') await goHome67();
+    const sizes68 = await evalJs(`(function(){
+      var out = {};
+      ['week', 'queue', 'closing'].forEach(function(name){
+        var panel = document.querySelector('#homeView [data-glance-panel="' + name + '"]');
+        out[name] = panel ? Array.prototype.map.call(panel.querySelectorAll('.gl-list > *'), function(b){
+          var r = b.getBoundingClientRect();
+          return { tag: b.tagName, h: Math.round(r.height * 100) / 100, w: Math.round(r.width) }; }) : null;
+      });
+      return out; })()`);
+    const flat68 = [].concat(sizes68.week || [], sizes68.queue || [], sizes68.closing || []);
+    check('under an emulated coarse pointer every row in all three panels is a <button> measuring at '
+      + 'least 44px tall — every row of each, not a sample',
+      coarse68 === true && !!sizes68.week && !!sizes68.queue && !!sizes68.closing && flat68.length >= 7
+        && flat68.every(b => b.tag === 'BUTTON' && b.h >= 44 && b.w >= 44),
+      'coarse = ' + coarse68 + ', ' + JSON.stringify(sizes68));
+    await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 600, deviceScaleFactor: 1, mobile: false });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await send('Page.reload');
+    await new Promise(r => setTimeout(r, 600));
+    await waitForBoot();
+    await evalJs(KILL_ANIM);
+    if ((await onView67()) !== 'homeView') await goHome67();
+
+    /* ── acceptance line 7: ONLY a signal pending, and the quiet panel is not drawn ── */
+    /*
+      Everything WO-6.8 planted comes off first — events, assignments, the second class and its
+      student, the edge term and both review dates — so the week, the queue and closing in are empty.
+      Then Ada gets the WO-6.7 busy fixture's shape WITHOUT its two open assignments: three warmups
+      marked MISSING and one 90, Cara and Drew excused and 85. `missing` is not a blank, so nothing
+      is waiting to be graded, and the one thing pending on the page is Ada's `missing-count` hit.
+      WO-6.7's verifier found that no fixture reached this day; a build whose quiet decision forgot
+      the signals draws "Nothing needs you today" here.
+    */
+    const onlyHits68 = await probe(`doc.events = doc.events.filter(function(e){ return String(e.id).indexOf('e_wo68') !== 0; });
+      doc.assignments = doc.assignments.filter(function(a){ return String(a.id).indexOf('a_wo68_') !== 0; });
+      doc.classes = doc.classes.filter(function(c){ return c.id !== '${CLS68}'; });
+      doc.students = doc.students.filter(function(p){ return p.id !== '${ELI68}'; });
+      var cls = doc.classes.filter(function(c){ return c.id === '${CLS}'; })[0];
+      cls.terms = cls.terms.filter(function(t){ return t.id !== '${EDGE68}'; });
+      doc.students.forEach(function(p){ if (p.supports && (p.id === '${CARA}' || p.id === '${DREW}')) p.supports.reviewDate = ''; });
+      if (!doc.scores || typeof doc.scores !== 'object') doc.scores = {};
+      var back = function(n){ return shift(-n); };
+      for (var n = 1; n <= 3; n++) {
+        doc.assignments.push({ id:'a_wo68_s' + n, classId:'${CLS}', termId:'${TERM}', categoryId:'k_wo67',
+          name:'WO-6.8 Warmup ' + n, points:10, assigned:back(30), due:back(25) });
+      }
+      doc.assignments.push({ id:'a_wo68_t1', classId:'${CLS}', termId:'${TERM}', categoryId:'k_wo67',
+        name:'WO-6.8 Task 1', points:100, assigned:back(30), due:back(20) });
+      var put = function(id, sid, cell){ doc.scores[id] = doc.scores[id] || {}; doc.scores[id][sid] = cell; };
+      for (var i = 1; i <= 3; i++) {
+        put('a_wo68_s' + i, '${ADA}', { v: null, flag: 'missing' });
+        put('a_wo68_s' + i, '${CARA}', { v: null, flag: 'excused' });
+        put('a_wo68_s' + i, '${DREW}', { v: null, flag: 'excused' });
+      }
+      put('a_wo68_t1', '${ADA}', { v: 90 });
+      put('a_wo68_t1', '${CARA}', { v: 85 });
+      put('a_wo68_t1', '${DREW}', { v: 85 });`);
+    check('a day where ONLY the attention hits are non-empty — nothing scheduled, nothing to grade, '
+      + 'nothing closing in, one student flagged — draws the three panels\' states, which is absent, '
+      + 'and NOT the quiet panel: the stack holds the class grid and nothing else',
+      onlyHits68.hits === 1 && onlyHits68.rules.join(',') === '7ada:missing-count'
+        && onlyHits68.week === 0 && onlyHits68.queue === 0 && onlyHits68.closing === 0
+        && !onlyHits68.quiet && onlyHits68.panels === 1 && onlyHits68.named.length === 0
+        && onlyHits68.rows === 0 && !/Nothing needs you/.test(onlyHits68.viewText),
+      JSON.stringify({ hits: onlyHits68.hits, rules: onlyHits68.rules, week: onlyHits68.week,
+        queue: onlyHits68.queue, closing: onlyHits68.closing, quiet: onlyHits68.quiet,
+        panels: onlyHits68.panels, named: onlyHits68.named }));
+
+    /* The open class goes back to what it was before the taps above moved it. */
+    await evalJs('window.planbook.setPref(' + JSON.stringify('openClassId') + ', '
+      + JSON.stringify(openClassWas68 == null ? '' : openClassWas68) + '); 1');
   }
 
   /* ── and the fixture comes back off, flag by flag ── */
@@ -529,18 +957,18 @@ if (!seam) {
     var s = window.planbook.store;
     var stash = ${JSON.stringify((plant67 && plant67.stash) || { archived: [], events: [], reviews: [] })};
     s.update(function(doc){
-      doc.classes = (doc.classes || []).filter(function(c){ return c.id !== '${CLS}'; });
+      doc.classes = (doc.classes || []).filter(function(c){ return c.id !== '${CLS}' && c.id !== 'c_wo68'; });
       doc.students = (doc.students || []).filter(function(p){
-        return String(p.id).indexOf('s_wo67') !== 0; });
+        return String(p.id).indexOf('s_wo67') !== 0 && String(p.id).indexOf('s_wo68') !== 0; });
       doc.assignments = (doc.assignments || []).filter(function(a){
-        return String(a.id).indexOf('a_wo67_') !== 0; });
+        return String(a.id).indexOf('a_wo67_') !== 0 && String(a.id).indexOf('a_wo68_') !== 0; });
       doc.events = (doc.events || []).filter(function(e){
-        return String(e.id).indexOf('e_wo67') !== 0; });
+        return String(e.id).indexOf('e_wo67') !== 0 && String(e.id).indexOf('e_wo68') !== 0; });
       doc.log = (doc.log || []).filter(function(e){
         return String(e.id).indexOf('l_wo67') !== 0; });
       if (doc.scores) {
         Object.keys(doc.scores).forEach(function(k){
-          if (k.indexOf('a_wo67_') === 0) delete doc.scores[k]; });
+          if (k.indexOf('a_wo67_') === 0 || k.indexOf('a_wo68_') === 0) delete doc.scores[k]; });
       }
       stash.archived.forEach(function(a){
         var c = doc.classes.filter(function(x){ return x.id === a.id; })[0];
@@ -555,17 +983,17 @@ if (!seam) {
     });
     var d = s.getDoc();
     var out = {
-      classes:(d.classes || []).filter(function(c){ return c.id === '${CLS}'; }).length,
+      classes:(d.classes || []).filter(function(c){ return c.id === '${CLS}' || c.id === 'c_wo68'; }).length,
       students:(d.students || []).filter(function(p){
-        return String(p.id).indexOf('s_wo67') === 0; }).length,
+        return String(p.id).indexOf('s_wo67') === 0 || String(p.id).indexOf('s_wo68') === 0; }).length,
       assignments:(d.assignments || []).filter(function(a){
-        return String(a.id).indexOf('a_wo67_') === 0; }).length,
+        return String(a.id).indexOf('a_wo67_') === 0 || String(a.id).indexOf('a_wo68_') === 0; }).length,
       ownEvents:(d.events || []).filter(function(e){
-        return String(e.id).indexOf('e_wo67') === 0; }).length,
+        return String(e.id).indexOf('e_wo67') === 0 || String(e.id).indexOf('e_wo68') === 0; }).length,
       log:(d.log || []).filter(function(e){
         return String(e.id).indexOf('l_wo67') === 0; }).length,
       scores: Object.keys(d.scores || {}).filter(function(k){
-        return k.indexOf('a_wo67_') === 0; }).length,
+        return k.indexOf('a_wo67_') === 0 || k.indexOf('a_wo68_') === 0; }).length,
       stillArchived: stash.archived.filter(function(a){
         var c = (d.classes || []).filter(function(x){ return x.id === a.id; })[0];
         return c && c.archived; }).length,

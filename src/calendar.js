@@ -635,6 +635,25 @@ export function gradesDueIn(doc, from, to) {
   return eventsCovering(doc, from, to).filter((e) => e.kind === 'grades-due');
 }
 
+/*
+  AND EVERY OTHER AUTHORED EVENT INSIDE A WINDOW, in date order (WO-6.8) — gradesDueIn()'s
+  complement, and a second function rather than a flag on that one for the reason exceptionsIn() and
+  generalEventsIn() are two.
+
+  THE OWNER'S RULING OF 2026-09-16: a grades-due date is a DEADLINE and shows under the glance page's
+  *Closing in* and nowhere else on that page — never in *Today and this week*, which lists what is
+  scheduled. So the week reader needs "what is on the calendar, less the deadlines", and deciding
+  which kind a deadline is belongs here, beside the function that already decided it once. A reader
+  in src/glance.js that dropped `grades-due` from eventsCovering()'s answer would be the second
+  opinion that file's header refuses; this is the same range test and the same kind test, asked from
+  the other side, so the two lists cannot overlap and cannot both miss an event.
+
+  The month grid does not ask this: a grid cell draws a grades-due chip beside everything else, and
+  the ruling is about which PANEL of one page owns the kind, not about the calendar. */
+export function scheduledIn(doc, from, to) {
+  return eventsCovering(doc, from, to).filter((e) => e.kind !== 'grades-due');
+}
+
 /* The one writer. It refuses anything that is not a finite number — a field mid-way through a
    number reports '' and `Number('')` is 0, which is a real answer (warn on the day itself) and not
    a NaN in the year document. The block is created empty if a restored or hand-edited document

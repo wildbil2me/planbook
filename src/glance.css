@@ -28,8 +28,9 @@
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* Every tappable class this sheet adds, in one grouped selector — design/style-guide.md §6.
-   Neither is worn yet (WO-6.8); the quiet panel's one control is `.class-action-btn`, worn as
-   shipped from src/shell.css, which already carries this and the 44px floor. */
+   `.gl-row` is worn since WO-6.8, by every row of the three list panels; `.gl-more` waits for
+   WO-6.4. The quiet panel's one control is `.class-action-btn`, worn as shipped from
+   src/shell.css, which already carries this and the 44px floor. */
 .gl-row, .gl-more {
   touch-action: manipulation;
   user-select: none;
@@ -78,6 +79,13 @@
 .gl-row-why { display: block; font-size: 11px; line-height: 1.5; color: #8a9bb0; margin-top: 2px; }
 .gl-row-meta { flex: 0 0 auto; font-size: 11px; font-weight: 700; color: #8a9bb0; font-variant-numeric: tabular-nums; }
 .gl-row-go { flex: 0 0 auto; font-size: 14px; font-weight: 700; color: #c0cad5; }
+/* THE CALENDAR'S ↗, AFTER A ROW'S TITLE (WO-6.8) — "kept somewhere else, and the tap goes there".
+   The drawing wears `.cal-chip-out` here, which is § SHARED's name for the arrow on a month-grid
+   chip; that rule was never lifted into src/ (src/calendar-view.css renamed its section and drew no
+   arrow), and a `cal-` rule in this sheet would break the prefix rule in the banner above. So the
+   arrow takes a `gl-` name and § SHARED's values, unchanged: the same muted grey, indigo on hover. */
+.gl-row-out { margin-left: 5px; font-size: 10px; font-weight: 700; color: #c0cad5; }
+.gl-row:hover .gl-row-out { color: #5b6fcc; }
 .gl-row:hover .gl-row-go { color: #5b6fcc; }
 /* A deadline inside its lead time. The one amber row on the page, and it means what amber
    means everywhere else in this app: act on this. */
@@ -176,6 +184,7 @@
   .gl-row-title { font-size: 14px; }
   .gl-row-why { font-size: 12px; }
   .gl-row-meta { font-size: 12px; }
+  .gl-row-out { font-size: 11px; }
   .gl-more { min-height: 44px; font-size: 12px; }
   .gl-row-avatar { width: 32px; height: 32px; font-size: 11px; }
   .gl-quiet-doors { margin-top: 18px; }

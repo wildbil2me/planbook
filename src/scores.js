@@ -799,6 +799,36 @@ function paintKeys() {
   if (btn) btn.setAttribute('aria-expanded', keysOpen ? 'true' : 'false');
 }
 
+/*
+  ONE ASSIGNMENT'S COLUMN, BROUGHT INTO VIEW WITH THE CARET IN ITS FIRST CELL (WO-6.8) — the landing
+  for a row under the glance page's *Waiting to be graded*, called by src/shell.js after it has made
+  the class open and painted this screen. The column is found by `data-score-col`, which
+  columnHead() already writes for exactly this kind of question, so nothing new is written on the
+  grid to be found by.
+
+  THE FIRST CELL, AND NOT "THE FIRST BLANK ONE". Which cells are waiting is src/grade-engine.js's
+  answer, and this screen does not re-ask it on the way past (decision in the header: nothing here
+  computes a grade, and nothing here decides what "open" means); Enter moves down a column, which is
+  the whole screen's promise, so the top of the column is the honest place for a hand to start.
+  `preventScroll` on the focus, because the scroll above has already put the column where it should
+  be and a second, browser-chosen scroll would undo the centring.
+
+  Answers false when the column is not on this grid — an assignment deleted, or filed under a term
+  the class is not open on — and the caller then says nothing more than the screen's own arrival.
+*/
+export function revealScoreColumn(assignmentId) {
+  const id = String(assignmentId || '');
+  if (!id) return false;
+  const heads = document.querySelectorAll('#' + GRID_WRAP_ID + ' [data-score-col]');
+  const head = Array.prototype.filter.call(heads, (th) => th.getAttribute('data-score-col') === id)[0];
+  if (!head) return false;
+  head.scrollIntoView({ block: 'nearest', inline: 'center' });
+  const cells = document.querySelectorAll('#' + GRID_WRAP_ID + ' [data-score-cell]');
+  const first = Array.prototype.filter.call(cells, (input) => input.getAttribute('data-score-cell') === id)[0];
+  if (first && typeof first.focus === 'function') first.focus({ preventScroll: true });
+  return true;
+}
+
 export function toggleScoreKeys() {
   keysOpen = !keysOpen;
   paintKeys();

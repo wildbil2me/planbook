@@ -13,6 +13,31 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The week, the grading queue, and what is closing in — 2026-09-16
+
+**The glance page draws three of its panels now**, under the class grid and in the order a teacher
+needs them. **Today and this week** lists what is scheduled from today through six days on — an event
+opens the calendar's week on that day, a due date opens the assignment's editor, and a term edge opens
+that class's term editor, exactly where the month grid's chips already go. **Waiting to be graded** is
+one row per assignment with ungraded work in the open term, headed with a count that is the sum of the
+cards' *N to grade* chips, and a row opens that assignment's column. **Closing in** carries grades-due
+dates inside their lead time, approaching term edges, and IEP/504 reviews **as a count** — *1 review
+coming up*, with no name, no date and no kind. Under the projector that row is absent, and nothing says
+anything was hidden.
+
+**Two rulings shaped it, both the owner's, both made at dispatch.** A grades-due date appears **only**
+under *Closing in*, never under *Today and this week* — so a deadline outside its lead time appears
+nowhere on the glance page until its warning starts, and is on the calendar the whole time. The quiet
+panel's first chip changed its word to match: *Nothing scheduled through Sat*, because *nothing on the
+calendar* was false on a week whose only entry is a deadline not yet due a warning. And **all three
+kinds share one window**, the lead time set for grades, with the panel's head saying so in words. A
+review therefore gets the notice chosen for re-keying grades; that cost is accepted rather than
+hidden, and a second lead time would be a second setting nobody typed.
+
+One known edge is booked rather than fixed: the review count opens the calendar on this month, so a
+review early next month is counted on the glance page and not on the page the tap opens. It is
+WO-6.9. (WO-6.8)
+
 ### A quiet day says so, in one panel — 2026-09-15
 
 **The home screen has a stack now, and the class grid is its first panel — unchanged.** Under it,

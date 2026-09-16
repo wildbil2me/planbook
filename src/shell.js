@@ -367,7 +367,16 @@
                                       door is the Calendar segment on the class-screen switcher,
                                       which is `data-class-screen` and opens filtered to the class
                                       you were in. It navigates rather than opening a dialog, which
-                                      is why it has no aria-haspopup
+                                      is why it has no aria-haspopup. A VALUE is a day (WO-6.8): the
+                                      glance page's event rows carry `data-calendar-open="<iso>"`
+                                      and land on that day's WEEK; no value is the month and today.
+                                      The review count under *Closing in* carries it empty
+      data-scores-open="<assignmentId>" + data-scores-class="<classId>"  a row under the glance
+                                      page's *Waiting to be graded* (WO-6.8): makes that class the
+                                      open one, shows its score grid, and brings that assignment's
+                                      column into view with the caret in its first cell. Routed by
+                                      openScoreColumn() through openClassOn(), the calendar chip's
+                                      own way into a class
       data-signals-open="quiet"       puts the concern list in <main> with every class showing — the
                                       calendar door's shape one screen over (WO-6.7), and the second
                                       door onto that screen after the Signals segment on the
@@ -1300,9 +1309,16 @@ function showHome() {
   Said out loud for the reason selectClass() and showHome() are: this moves a screen a screen-reader
   user cannot see move. The month is named in the sentence, because "Calendar" alone leaves the one
   thing she needs — which month — to be discovered by arrowing into the grid.
+
+  A DAY ON THE END OF THE DOOR (WO-6.8). The glance page's *Today and this week* opens an authored
+  event onto the calendar's WEEK on that event's day, and it does so through this same door with the
+  day as the hook's value — `data-calendar-open="<iso>"` — handed straight to resetCalendar() as an
+  argument. The home screen's own button carries no value and still lands on the month and today.
+  The day is not kept anywhere: it is an argument, and then it is the grid's own anchor, which the
+  next arrival replaces. The sentence names the range either way, so it says the week when it is one.
 */
-function showCalendar() {
-  calendarView.resetCalendar('');
+function showCalendar(weekOf) {
+  calendarView.resetCalendar('', weekOf);
   views.showView('calendar');
   classes.refreshClassBar();
   screenNav.refreshScreenNav();
@@ -1460,6 +1476,23 @@ function openCalendarItem(button) {
     if (item.ref) { daysOff.openDaysOff(button); return; }
     openClassOn(item.classId, 'class');
   }
+}
+
+/*
+  A ROW UNDER *WAITING TO BE GRADED* (WO-6.8): that class open, on its score grid, with the row's
+  assignment column brought into view — "a row opens that class's assignment column", the work
+  order's second Acceptance line. openClassOn() below is the whole of the navigation, reached exactly
+  as the calendar's due-date chip reaches the assignment list; the column is src/scores.js's to find.
+
+  The term is not handed across and does not need to be: the row came out of src/glance.js's
+  queueRows(), which reads each class's OPEN term through src/classes.js's getOpenTermId(), and the
+  grid draws getSelectedTerm(), which is that same function asked about the class just opened.
+*/
+function openScoreColumn(button) {
+  const classId = button.getAttribute('data-scores-class') || '';
+  const assignmentId = button.getAttribute('data-scores-open') || '';
+  if (!openClassOn(classId, 'scores')) return;
+  scores.revealScoreColumn(assignmentId);
 }
 
 /*
@@ -1661,7 +1694,8 @@ function flipPresentationMode() {
      src/accommodation-prompt.js empties its host rather than styling it away, and asks
      src/supports.js the same one question rather than testing the preference itself. */
   assignments.refreshAccommodationPrompt();
-  /* The home screen is deliberately NOT in this list. Nothing on a class card comes out of a
+  /* The CLASS CARDS are deliberately NOT in this list (the glance page under them is, since WO-6.8 —
+     see below). Nothing on a class card comes out of a
      student's `supports` block — a class name and a colour are not a student's file — so there is
      nothing on it for the flip to suppress. src/home.js's header comment carries the same note and
      the condition under which it stops being true, because WO-4.x putting a behavior note into a
@@ -1703,6 +1737,17 @@ function flipPresentationMode() {
     renders it on arrival, so a repaint of a hidden view is work nobody sees.
   */
   if (views.currentView() === 'calendar') calendarView.renderCalendar();
+  /*
+    AND THE GLANCE PAGE IS ON THIS LIST SINCE WO-6.8, which is the condition the paragraph about
+    src/home.js above names arriving — not on a class card, which still carries nothing out of a
+    student's `supports` block, but in the stack under the cards: *Closing in* draws the review COUNT,
+    and a count of IEP/504 reviews is the one thing on that page the flip must take off the glass. It
+    goes the calendar's way — src/calendar-derived.js's reviewDatesIn() answers [] while projecting,
+    src/glance.js has no test of its own, and there is no "1 hidden" line — and this line buys the word
+    "next" for the reason the calendar's does. renderGlance() is silent unless the home view is the
+    one on screen, so it carries its own guard rather than one here.
+  */
+  glance.renderGlance();
   /*
     AND THE CONCERN LIST IS ON THIS LIST FOR A REASON NO OTHER ENTRY HAS (WO-4.2): it is the one
     screen that CLOSES rather than hiding something. Every line above suppresses a field and leaves
@@ -2599,7 +2644,16 @@ document.addEventListener('click', (e) => {
     operations, and this file is where every other one in this app is stated. A renderer that knew
     how to open a class would have to import the navigation that imports it.
   */
-  if (e.target.closest('[data-calendar-open]')) { showCalendar(); return; }
+  const calendarOpen = e.target.closest('[data-calendar-open]');
+  if (calendarOpen) { showCalendar(calendarOpen.getAttribute('data-calendar-open')); return; }
+  /* ── the glance page's door onto one assignment's column (WO-6.8) ──
+     The third door out of the home view into a screen, and the first into one class's screen rather
+     than a screen about every class: a row under *Waiting to be graded*. openClassOn() is the
+     calendar chip's own route into a class — select it, reset the register, redraw the cards, show
+     the screen — and the column is then the score grid's to find, by the id it already writes on
+     every head. */
+  const scoresOpen = e.target.closest('[data-scores-open]');
+  if (scoresOpen) { openScoreColumn(scoresOpen); return; }
   /* ── the glance page's door onto the concern list (WO-6.7) ──
      Beside the calendar's door because it is the same shape one screen over: a button on the home
      view that puts a screen ABOUT every class in <main>, with every class showing. The value names
