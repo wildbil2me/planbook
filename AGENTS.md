@@ -108,6 +108,20 @@ dependencies.
   (`selectClass()` owns it on every path reachable twice; the one other writer fires once on a first
   class), and `src/calendar-view.js` must **not** be imported into `src/classes.js`, which closes a
   loop. Order of operations lives in `src/shell.js`. Three files, three jobs.
+- **A glance reader reads, and the temptation is to make it smart** (WO-6.7). `src/glance.js` holds
+  one function per source the home screen's stack draws — `weekItems()`, `queueRows()`,
+  `attentionHits()`, `closingIn()`, `quietMiddleRows()` — and each is a call into an engine that
+  already exists, handing back that engine's own array. The file holds **no arithmetic of its own**:
+  no percentage, no threshold read, no rule re-run, no date compared to another date, no `Math.*`.
+  A window is something a reader **asks the engine for** (`eventsCovering()`, `gradesDueIn()`,
+  `leadWindowOf()` in `src/calendar.js`), never something it computes — the first draft re-clamped
+  the lead time one file away from `leadWindowOf()`'s own clamp, and that duplicate is what the rule
+  exists to stop. Break it and the screen disagrees with itself: the card's *2 to grade*, the queue
+  panel and the attention chips move together only because one reader feeds each. Two riders. The
+  empty state is **structural, not a toggle** — a source with nothing draws no panel at all, and
+  there is no `classList.toggle('hidden')` anywhere in the file. And the one record the file
+  composes rather than forwards, the review-date chip, carries no name, no student id and no date;
+  `closingIn()` asks `presentationMode()` nothing, because `reviewDatesIn()` already refuses.
 Full schema and grade math: [`docs/data-model.md`](docs/data-model.md).
 
 ## If you were dispatched with a work order

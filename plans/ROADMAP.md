@@ -92,10 +92,10 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 3 | Gradebook | 🔨 IN PROGRESS | 10/10 `[██████████] 100%` |
 | 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 5/8 `[██████░░░░] 63%` |
 | 5 | Outreach | 🔨 IN PROGRESS | 9/9 `[██████████] 100%` |
-| 6 | Calendar & the glance page | 🔨 IN PROGRESS | 6/8 `[███████░░░] 75%` |
+| 6 | Calendar & the glance page | 🔨 IN PROGRESS | 7/8 `[█████████░] 88%` |
 | 7 | Drive sync (opt-in) | 🔨 IN PROGRESS — launch needs OAuth verification | 6/7 `[█████████░] 86%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 2/8 `[██░░░░░░░░] 25%` |
-| | | **Overall** | **69/81 `[█████████░] 85%`** · ⏳ 1 deferred |
+| | | **Overall** | **70/81 `[█████████░] 86%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -610,12 +610,26 @@ it. If it can't be acted on, it doesn't earn a place.
 - [ ] **The glance page**, in the order a teacher needs it: **every class with today's state —
       taken · dropped · not yet** — each with a one-tap fix · today's and this week's events ·
       what's waiting to be graded · who needs attention · deadlines closing in.
-- [ ] Honest empty states. A quiet day says "nothing needs you today", not five empty panels.
+- [x] Honest empty states. A quiet day says "nothing needs you today", not five empty panels.
 - [x] **Grades-due deadlines** as a first-class event kind with a lead-time warning. Re-keying into
       the SIS is a scheduled job, not something you remember.
 - [x] **IEP/504 review dates** surfaced ahead of time, in presentation-mode-safe form.
 - [x] Recurring events by **materializing** instances rather than storing a recurrence rule. Flat,
       editable, and one instance can move without reasoning about exceptions. *RRULE is V2, if ever.*
+
+*(**The empty state closed before the page it is the empty state of**, 2026-09-15, and that is the
+cut rather than a hole. [WO-6.4](work-orders/phase-6-calendar-glance.md#wo-64--the-glance-page) was
+cut in three that day and its first third,
+[WO-6.7](work-orders/phase-6-calendar-glance.md#wo-67--the-glance-pages-stack-its-readers-and-the-quiet-day),
+delivered the stack, the five readers in `src/glance.js`, and the quiet panel — so the box above it
+is still open while this one is ticked. **The order is what makes the claim honest rather than
+provisional**: the quiet panel decides on the four readers' arrays, and each reader already calls the
+engine the later panel will draw, so the four panels arrive **filled** and the quiet rule is not
+rewritten to notice them. And the empty state is **structural, not a toggle** — a source with nothing
+has no panel in the DOM at all, and `src/glance.js` holds no `classList.toggle('hidden')` anywhere,
+which is what stops "five empty panels" being one dropped class away. **One cost is named rather than
+hidden**: a truly quiet morning runs the signals pass once more per class than it did before, because
+the cards and the page each pay for one. `TESTING.md` § WO-6.7 carries it.)*
 
 ---
 

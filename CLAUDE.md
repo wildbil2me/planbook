@@ -418,6 +418,23 @@ Seven things that will bite:
   decides that a review date follows its student through the class filter, because a review carries
   no `classId`; `src/calendar-derived.js` declined to answer that on the screen's behalf, in as many
   words, and `docs/data-model.md` § Events carries the ruling.)*
+- **A glance reader reads, and the temptation is to make it smart** (WO-6.7). `src/glance.js` holds
+  one function per source the home screen's stack draws — `weekItems()`, `queueRows()`,
+  `attentionHits()`, `closingIn()`, `quietMiddleRows()` — and **each is a call into an engine that
+  already exists, handing back that engine's own array**. The file contains **no arithmetic of its
+  own**: no percentage, no threshold read, no rule re-run, no date compared to another date, and no
+  `Math.*`. A window is something a reader **asks the engine for** — `eventsCovering()`,
+  `gradesDueIn()` and `leadWindowOf()` went into `src/calendar.js` for that — never something it
+  computes; the first draft re-read `leadDaysOf()` for a chip and re-clamped it one file away from
+  `leadWindowOf()`'s own clamp, which is the exact duplicate this rule exists to stop. **The cost of
+  breaking it is a screen disagreeing with itself**: the card's *2 to grade*, the queue panel and the
+  attention chips move together only because one reader feeds each, and a second opinion anywhere in
+  the chain is how they drift apart. Two riders. **The empty state is structural, not a toggle** —
+  a source with nothing draws no panel at all, and there is no `classList.toggle('hidden')` anywhere
+  in the file, which is what keeps "five empty panels" from being one dropped class away. And the
+  one record the file composes rather than forwards — the review-date chip — is composed **on a
+  ruling** (a review is a count on this page), carrying no name, no student id and no date;
+  `closingIn()` asks `presentationMode()` nothing, because `reviewDatesIn()` already refuses.
 
 ## Accommodations are the most sensitive data here
 
