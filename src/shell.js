@@ -386,7 +386,14 @@
                                       to its heading. Carried by `The quiet middle · N` on the glance
                                       page's quiet panel (src/glance.js); WO-6.4 puts the same door
                                       in panel 4's header on a busy day, never both at once. It
-                                      navigates rather than opening a dialog, so no aria-haspopup
+                                      navigates rather than opening a dialog, so no aria-haspopup.
+                                      WO-6.4's *Who needs you* panel writes four more values, each
+                                      with `data-signals-column="concern|praise"` beside it: `list`
+                                      (the screen's top), `card` + `data-signals-key="<student>|
+                                      <class>"` (that row, with its signal card open over it),
+                                      `more` + the key of the first row the panel did not draw
+                                      (that row, focused), and `held` (that column's cooldown rows
+                                      open, focus on its foot). Routed by showSignals()
       data-calendar-scale="month|week"  how much of the calendar is on screen. The anchor is kept
                                       across the switch: a teacher who paged to the week of the
                                       14th and then asked for the month means the month that week
@@ -1354,12 +1361,61 @@ function showCalendar(weekOf) {
   src/views.js writes this view down as `class`, for the reason it gives at REMEMBERED_AS: a
   reload must never land on a ranked list of named students in trouble.
 */
-function showSignals(landing) {
+/*
+  AND FOUR MORE LANDINGS SINCE WO-6.4, one per kind of control in the glance page's *Who needs you*
+  panel, each carrying the COLUMN it was drawn in (`concern` or `praise`) — because one student can
+  be a row in both columns, and a landing that looked for her by key alone would find whichever came
+  first in the markup:
+
+    list   `The full list`. The screen, at its top — the arrival the Signals segment gives.
+    card   a row. Her row in that column is scrolled into view and HER CARD OPENS over it, with the
+           row as the opener so closing the card puts focus back on the list at her. "Every student
+           taps through to that student's signal card on WO-4.2's screen" is this branch.
+    more   `and N more ›`. The row the summary did not draw first — the key names it — scrolled to
+           the top and focused, so the teacher picks up the list exactly where the panel stopped.
+    held   a column's cooldown foot. That column's suppressed rows are open on arrival — the
+           expansion the foot is a door onto rather than performs — and focus is on the foot.
+
+  THE RESET STILL COMES FIRST AND STILL CLEARS EVERYTHING; the one thing a landing sets back is the
+  held column's expansion, through src/signals-view.js's expandSuppressed(), before the one paint.
+  A landing whose target is not on the screen — a stale key, a student who came off the list between
+  the tap and the paint, or a projector that has closed the screen — falls through to the top, and
+  the refusal is what the arrival reads.
+*/
+function showSignals(landing, column, key) {
   signalsView.resetSignals('');
+  const side = column === 'praise' ? 'praise' : 'concern';
+  if (landing === 'held') signalsView.expandSuppressed(side);
   views.showView('signals');
   classes.refreshClassBar();
   screenNav.refreshScreenNav();
   signalsView.renderSignals();
+
+  const listId = side === 'praise' ? 'signalsPraiseList' : 'signalsList';
+  const row = (landing === 'card' || landing === 'more') && key
+    ? Array.prototype.filter.call(document.querySelectorAll('#' + listId + ' [data-signal-row]'),
+      (node) => node.getAttribute('data-signal-row') === key)[0] || null
+    : null;
+  if (row && landing === 'card') {
+    row.scrollIntoView({ block: 'center' });
+    if (signalsView.openSignalCard(key, row)) return;
+  }
+  if (row && landing === 'more') {
+    row.scrollIntoView({ block: 'start' });
+    if (typeof row.focus === 'function') row.focus({ preventScroll: true });
+    announce('Who needs you — ' + side + ', from the first student the glance page did not show.');
+    return;
+  }
+  const foot = landing === 'held'
+    ? document.getElementById(side === 'praise' ? 'signalsPraiseHidden' : 'signalsConcernHidden')
+    : null;
+  if (foot && !foot.classList.contains('hidden')) {
+    foot.scrollIntoView({ block: 'start' });
+    if (typeof foot.focus === 'function') foot.focus({ preventScroll: true });
+    announce('Who needs you — ' + foot.textContent + '.');
+    return;
+  }
+
   const quiet = landing === 'quiet' ? document.getElementById('signalsQuiet') : null;
   /* While projecting the screen is refused and the panel is not drawn (src/signals-view.js's
      paintQuiet() follows `model.blocked`), so there is nothing to scroll to and the refusal — which
@@ -1746,6 +1802,14 @@ function flipPresentationMode() {
     src/glance.js has no test of its own, and there is no "1 hidden" line — and this line buys the word
     "next" for the reason the calendar's does. renderGlance() is silent unless the home view is the
     one on screen, so it carries its own guard rather than one here.
+
+    AND SINCE WO-6.4 IT IS ALSO WHAT SHUTS *WHO NEEDS YOU*, which is the heavier of its two reasons.
+    Panel 4 is a list of named students in trouble — the concern list's own content, summarised — and
+    src/glance.js asks presentationMode() at the point it would build the columns and builds the
+    refusal instead, counts kept. Without this line a teacher who switches the projector on with the
+    page up would put those names on the wall until her next arrival. Called with no reading, so the
+    glance module takes its own: the class cards above it are not redrawn here and have nothing to
+    hand it.
   */
   glance.renderGlance();
   /*
@@ -2657,10 +2721,16 @@ document.addEventListener('click', (e) => {
   /* ── the glance page's door onto the concern list (WO-6.7) ──
      Beside the calendar's door because it is the same shape one screen over: a button on the home
      view that puts a screen ABOUT every class in <main>, with every class showing. The value names
-     where on that screen to land — `quiet` is the quiet-middle panel, and it is the only value
-     anything writes today. */
+     where on that screen to land — `quiet` is the quiet-middle panel — and since WO-6.4 panel 4
+     writes four more, each with the column it came from and, for two of them, the row: see
+     showSignals(). The two companions are read off the same element rather than found by a second
+     closest(), because they only mean something beside this one. */
   const signalsOpen = e.target.closest('[data-signals-open]');
-  if (signalsOpen) { showSignals(signalsOpen.getAttribute('data-signals-open')); return; }
+  if (signalsOpen) {
+    showSignals(signalsOpen.getAttribute('data-signals-open'),
+      signalsOpen.getAttribute('data-signals-column'), signalsOpen.getAttribute('data-signals-key'));
+    return;
+  }
   const calendarScale = e.target.closest('[data-calendar-scale]');
   if (calendarScale) {
     calendarView.setCalendarScale(calendarScale.getAttribute('data-calendar-scale'));

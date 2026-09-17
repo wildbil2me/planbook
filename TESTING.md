@@ -10340,6 +10340,75 @@ the queue rows' class avatars need the card's colour index out of `src/home.js`;
 grades-due row *outside* its lead is gone by ruling. The two parent-row sentences WO-6.7 declined — the
 grid's subtitle and the *Your classes* caption — are still WO-6.4's.
 
+### WO-6.4 — The glance page
+
+**What this adds.** Panel 4, *Who needs you*, between *Waiting to be graded* and *Closing in*: two
+columns in `src/signals-view.css`'s own classes (`.sig-two`, `.sig-col`, `.sig-row`, `.sig-hidden`),
+four rows each at most — the owner's number — then `and N more ›`, a cooldown foot under a column the
+engine held rows out of, and two header doors, `The quiet middle · N` and `The full list`. Every
+control is a door onto WO-4.2's screen through `data-signals-open` (`card`, `more`, `held`, `list`,
+`quiet`) with `data-signals-column` and, for a row, `data-signals-key`; `src/shell.js`'s
+`showSignals()` does the landing and `src/signals-view.js` gained `expandSuppressed()`. Under a
+projector the columns are not built — `.gl-shut` with the counts kept. `src/glance.js` gained
+`signalReading()`, and **the cards' `N need you` chips now count that same array** (`src/home.js`
+no longer imports `src/signals.js`), so the signal pass runs once per class per render rather than
+twice. The grid's subtitle no longer promises what the chips have carried since 2026-08-27. `CACHE`
+is `planbook-shell-v119`.
+
+- [x] The five sections appear in that order and every item taps through. The stack reads
+      `grid,week,queue,attention,closing`; every visible button in each of the five carries a hook the
+      click listener routes (4 · 1 · 7 · 11 · 1 buttons, none without one); and one item from each,
+      tapped in order, lands on `#classView` with that class open, `#calendarView`, `#scoresView`,
+      `#signalsView` with `#signalCardModal` open, and `#eventsModal`.
+- [x] Every student drawn taps through to her signal card on WO-4.2's screen, and the count holds.
+      The fixture ranks eight concern rows (Abe first on `absence-run` although his class is last)
+      and two praise rows (Ben's `grade-rose` ahead of Gus's `no-missing` although Gus is first on the
+      roster). The panel's rows are the signals screen's model's first four keys in order, its heads
+      are that screen's heads character for character, and Abe's glance row and his row on the
+      screen have the same children and the same text. Six taps open six cards, each titled with that
+      row's student; closing each returns focus to her row **in the column she was tapped in** — Ben,
+      who is on both lists, to `#signalsPraiseList` from the praise column. Arithmetic, read off the
+      glass: 4 + 2 drawn + `and 4 more` = 10; chips 1 + 7 + 1 = 9; the one difference is Ben, drawn in
+      both columns, and over distinct students the two agree. `and 4 more ›` lands focused on the
+      fifth concern row; each cooldown foot lands with that column's held rows open and the other
+      closed.
+- [ ] 👤 The praise list is present and delta-ranked — not buried. Present and delta-ranked are
+      asserted above; *not buried* is the owner's reading on the iPad. **Owed.**
+- [x] Presentation mode, through the header's real control with the page up and no re-arrival: panel 4
+      is shut — no `.sig-two`, no keyed row, no foot — its header and both doors stay, and the refusal
+      reads *8 students are flagged and 2 are climbing.* No fixture surname is anywhere in `#homeView`'s
+      `outerHTML`, attributes included; the cards' chips are unchanged; switched off, the same rows are
+      back at once. `src/glance.js` is on `flipPresentationMode()`'s list (since WO-6.8), and
+      `src/home.js`'s note says the condition it named was met.
+- [x] A plan type (`504`), an accommodation (`extended-time`, with a planted detail), medical text,
+      behavior-plan text and a case manager on every student on the page: none of them in
+      `#homeView`'s markup with the mode off or on. The review count reads *1 review coming up* with
+      the mode off and is absent with it on.
+- [ ] 👤 The page loads in under a second on an iPad with a full year of data. **Owed.** Nothing here
+      measures it; what the build did about it is halve the signal work per render.
+
+Under an emulated coarse pointer every control in panel 4 — two doors, six rows, `and 4 more` and
+two feet — measures at least 44px each way (rows 76–99px, the rest 44).
+
+*Desk pass 2026-09-16: `verify-shell.mjs` **1400 of 1400, 0 failed, 0 skipped**, 43,708 lines, 31.2
+lines per check, 486s, exit 0 — up from 1387: thirteen literal call sites, all firing.
+`wo-sweep.mjs` 42 checks, 39 passed, 0 failed, 3 to review — the same three as before.*
+
+**Two pre-existing checks re-cut, both because panel 4 now stands where they asserted nothing did**:
+WO-6.7's busy day wants `queue,attention`, and WO-6.8's attention-only day wants panel 4 alone under
+the grid rather than the grid alone.
+
+**Seven mutations, one run each, each against a single-section copy of the harness that was deleted
+afterwards; every one bit, and every file was copied back from a pristine copy (`cmp` identical)
+before this was written.** M1, the columns left in roster order: the columns check, the arithmetic
+check, and the section throwing when the row it went to tap was not drawn. M2, the projector branch
+disabled: the shut check alone. M3, `renderGlance()` off the flip list: WO-6.8's review-row check, the
+shut check, and the supports check (the review count stayed on the glass). M4, the landing looking for
+the row across both columns: the every-tap check alone (Ben's praise tap returned focus to his concern
+row). M5, five rows instead of four: five checks, from the columns check to the coarse measurement.
+M6, a row carrying `supports.medical` in an attribute: the supports check alone. M7, the card chip
+counting hits instead of students: the arithmetic check alone.
+
 ---
 
 

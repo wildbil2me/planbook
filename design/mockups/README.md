@@ -329,6 +329,8 @@ settled**, and three of them are cheaper to answer now than after a work order i
     November Monday can put twelve in the concern column, and a summary that draws twelve is the
     list it summarises. Proposed: four, then a foot row that opens the full list. **The number is
     the owner's.**
+    **DECIDED (the owner, 2026-09-16, at WO-6.4's dispatch): four** per column, concern and praise
+    alike, then the foot row.
 13. **The quiet-middle door on a quiet day.** Panel 4 does not exist on a quiet day and the door
     lived in its header — which would take it off the page on exactly the day `index.html`'s own
     comment says that list is the most useful thing on the screen. Drawn on the quiet panel.

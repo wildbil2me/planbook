@@ -412,7 +412,7 @@ and a `Depends on` in the other direction would be a cycle the gate would call s
 
 ## WO-6.4 — The glance page
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-6.7, WO-6.8, WO-4.5, WO-3.26
+**Ship** — · **Status** 🔨 IN PROGRESS · **Size** M · **Depends on** WO-6.7, WO-6.8, WO-4.5, WO-3.26
 **Closes roadmap** Phase 6 → "The glance page"
 
 *(**Cut into three on 2026-09-15, owner-directed, and this row is the last of the three.** It was an
@@ -513,6 +513,9 @@ the wall.
 **Open — the owner's number** — *how many rows before `and N more ›`?* Drawn at three per column
 because three fired. With 118 students and nine rules a Monday in November can put twelve in the
 concern column. Proposed: **four**, then the foot. Answer it when dispatching, not in the editor.
+*(**Answered at dispatch, 2026-09-16, by the owner: four.** Four rows per column — concern and praise
+alike — then the `and N more ›` foot. Relayed by the coordinator and recorded in
+`.claude/dispatch/WO-6.4-status.md`*.)*
 
 **The review item is a count, not a name** *(owner's call, 2026-08-19, WO-1.25)*. This page shows
 `1 review coming up`, and the student's name is one tap away on the calendar — a surface she
@@ -525,10 +528,10 @@ morning. *(The row that draws it is WO-6.8's; the ruling stays here because this
 that made it.)*
 
 **Acceptance**
-- [ ] The five sections appear in that order, and every item in every one taps through. *(The page's
+- [x] The five sections appear in that order, and every item in every one taps through. *(The page's
       line, kept on the last row: WO-6.7 and WO-6.8 each assert their own panels, and this is the
       one that walks all five.)*
-- [ ] Every student in the concern and praise columns taps through to that student's signal card on
+- [x] Every student in the concern and praise columns taps through to that student's signal card on
       WO-4.2's screen, and the count of students drawn here plus the `and N more ›` foot equals the
       sum of the cards' `N need you` chips — one array, counted on the card and drawn here.
 - [ ] 👤 The praise list is present and delta-ranked — not buried behind the concern list. Present is
@@ -537,11 +540,11 @@ that made it.)*
       long page on a tablet, and "who needs you" is two scrolls down at 7:40am unless something
       changes. Reorder is ruled out; collapsing short panels to a count, or two columns above 1024px,
       are not. Read on the real iPad.)*
-- [ ] With presentation mode on, no student's name from a signal is on the page — the panel is shut
+- [x] With presentation mode on, no student's name from a signal is on the page — the panel is shut
       with its counts kept, exactly as `src/signals-view.js` shuts — and turning the mode on with the
       page open redraws it without a reload. `src/glance.js` is on `flipPresentationMode()`'s redraw
       list, and the note in `src/home.js` that said what would put it there is updated to say it did.
-- [ ] Nothing on this page renders a **plan type**, an **accommodation**, **medical text** or
+- [x] Nothing on this page renders a **plan type**, an **accommodation**, **medical text** or
       **behavior-plan text**, in presentation mode or out of it. The only `supports`-derived thing
       that reaches it is the review **count** — `1 review coming up`, with no name, no date and no
       kind — so a `Ctrl+P` taken here emits none of the four either. *(Reworded from "nothing on the
@@ -549,6 +552,14 @@ that made it.)*
       and this one is not; naming the four fields is what keeps it testable, and the count above is
       the thing the old wording would have forbidden.)*
 - [ ] 👤 The page loads in under a second on an iPad with a full year of data.
+
+*(**Four boxes ticked 2026-09-16 by the implementer, on a green run** — `verify-shell.mjs` 1400 of
+1400, exit 0, and `wo-sweep.mjs` 42 · 39 · 0 · 3. The evidence is `tools/verify/glance-quiet.mjs`
+§ "who needs you, and the page as a whole (WO-6.4)" and `TESTING.md` § WO-6.4, with seven mutations
+that each turned the check they aim at red. **The second line's arithmetic is over DISTINCT students**:
+a student on both lists is one on her card and a row in each column, so the fixture plants one such
+student and the check asserts drawn + `and N more` = the chips' sum + the students drawn in both.
+**The two 👤 lines are open** and no build can close them.)*
 
 **Traps** — Every section here is a summary of something built earlier. If any of it recomputes
 grades, attendance percentages, or signals rather than calling WO-2.4 / WO-3.4 / WO-4.1, you have

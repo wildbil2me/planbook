@@ -1216,6 +1216,15 @@ export function resetSignals(classId) {
   Object.keys(writtenAnyway).forEach((key) => { delete writtenAnyway[key]; });
 }
 
+/* OPEN ONE COLUMN'S SUPPRESSED ROWS, WITHOUT PAINTING OR SPEAKING (WO-6.4). The glance page's
+   cooldown foot is a door onto this expansion rather than the expansion itself, so src/shell.js's
+   showSignals() sets it between the arrival's reset and the arrival's one paint — toggleSuppressed()
+   below would paint the screen a second time and announce over the arrival. It is still this
+   minute's state and nothing else: the next arrival's reset closes it again. */
+export function expandSuppressed(direction) {
+  expanded[direction === 'praise' ? 'praise' : 'concern'] = true;
+}
+
 /* OPEN OR CLOSE ONE COLUMN'S SUPPRESSED ROWS. Nothing is written and nothing is remembered — what
    changes is which rows are on screen, which is a fact about this browser and this minute. */
 export function toggleSuppressed(direction) {

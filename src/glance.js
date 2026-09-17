@@ -20,6 +20,8 @@
     closingIn()        grades-due dates inside src/calendar.js's lead window, term edges inside it,
                        and the review COUNT through reviewDatesIn()        (WO-6.1 · WO-6.2)
     quietMiddleRows()  src/signals.js's quietMiddle(), for the door's N    (WO-4.5)
+    signalReading()    the last two and applyCooldown()'s suppressed half, off one set of passes —
+                       what the render, panel 4 and the cards' chips all draw (WO-6.4)
 
   THE DECISION IS THAT THERE IS ONE ARRAY. The quiet panel below counts these arrays, WO-6.8 and
   WO-6.4 draw rows from the same arrays, and the card on the class grid asks the same engines about
@@ -75,7 +77,8 @@
   ── THE THREE LIST PANELS (WO-6.8) ──
 
   *Today and this week*, *Waiting to be graded* and *Closing in* — panels 2, 3 and 5 of the page, in
-  that order in the stack, with WO-6.4's panel 4 still to come between the second and the third.
+  that order in the stack, with WO-6.4's panel 4 — *Who needs you* — between the second and the
+  third since 2026-09-16 (its own section, below the three).
   Each is a `.panel` holding a `.gl-list` of `.gl-row` BUTTONS lifted from § GLANCE, and each is
   drawn out of ONE reader's array and nothing else: a row per record, in the order the reader
   returned them. What the panel code adds is words — a class's name, an assignment's name, a date
@@ -84,8 +87,8 @@
 
   A PANEL WHOSE READER IS EMPTY IS NOT DRAWN — absent, not empty, which is the quiet panel's
   argument one level down (CLAUDE.md § Data, "a source with nothing draws no panel at all"). So a
-  day where only the signals are non-empty draws neither these three nor the quiet panel, and the
-  page under the grid is empty until WO-6.4's panel 4 exists to stand there.
+  day where only the signals are non-empty draws neither these three nor the quiet panel — and,
+  since WO-6.4, panel 4 alone stands under the grid on that day.
 
   EVERY ROW GOES WHERE THE MONTH GRID ALREADY SENDS THE SAME THING, through the hooks src/shell.js
   already routes, rather than through a route of its own. A derived due date or a term edge, and
@@ -110,13 +113,22 @@
   page that changes under the flip, so a projector switched on with the page up must take it off the
   glass at once, not on the next arrival. The suppression itself is still not this file's — the
   count reaches closingIn() through reviewDatesIn(), which already answers with an empty list while
-  projecting: this file asks src/supports.js nothing, inherits the suppression exactly as
+  projecting: the review count asks src/supports.js nothing, inherits the suppression exactly as
   src/calendar-view.js does, and draws NO "1 hidden" line, because a count of hidden reviews is the
   disclosure one step removed. The quiet panel's chips and the other two panels draw as they do
   otherwise — counts, names of assignments and classes, and the titles the teacher typed on her own
   events. THAT LAST IS A KNOWN EDGE, recorded in the work order rather than fixed: an event titled
   "IEP meeting — Owen Bennett" is free text on the week panel under a projector, as it is on the
   month grid today.
+
+  AND PANEL 4 IS THE ONE PLACE THIS FILE ASKS THE SWITCH ITSELF (WO-6.4). The paragraph above is
+  about a support field, whose suppression has an upstream owner; panel 4 is a list of named students
+  in trouble, which has none — src/signals-view.js's header says so of its own list — so the panel
+  asks `presentationMode()` once, at the point it would build the columns, and builds the refusal
+  instead. That is a second asker of the switch on the page and not a second opinion about support
+  data: there is still no support field anywhere in panel 4 and no path to one. The flip entry above
+  is what makes the panel shut WITH THE PAGE UP rather than on the next arrival — the condition
+  src/home.js's header named for joining that list, met in the stack under the cards.
 
   IT WRITES NOTHING. Every import below is a reader; there is no update() and no store call.
 
@@ -131,17 +143,15 @@
 
   ── THE COST, SAID ONCE ──
 
-  The signals pass is the one expensive thing on the home screen, and src/home.js already runs it
-  once per class for the card. The quiet decision needs it again, page-wide. Two things keep that
-  honest: the three cheap arrays are read first and the pass is skipped the moment any of them is
-  non-empty, so on most mornings the panel decision costs a few array walks; and on a quiet morning
-  the pass runs ONCE more per class, shared between the hits and the quiet middle through one set of
-  passes rather than run for each. The renderer is also silent while the grid is not the view on
-  screen, for the reason src/home.js's header gives about the chip: src/shell.js chains
-  refreshHome() off every attendance mark, and painting a hidden page is work nobody sees. WO-6.4
-  will want the hits on every render for panel 4; whether the card's chip then reads from this
-  file's array rather than asking again is a decision for that sitting, noted here so it is not
-  re-derived from scratch.
+  The signals pass is the one expensive thing on the home screen. Until WO-6.4 the card ran it once
+  per class for its chip and this file ran it again on a quiet morning. Panel 4 wants the hits on
+  every render, so WO-6.4 took the decision WO-6.7 left here: THE CARD'S CHIP READS THIS FILE'S
+  ARRAY. src/home.js's refreshHome() asks signalReading() once, counts each card's chip off it, and
+  hands the same object to renderGlance() — one pass per class per render, shared by the cards, the
+  panel, its feet and the quiet-middle door, where the arrangement before it would have been two.
+  The renderer is also silent while the grid is not the view on screen, for the reason src/home.js's
+  header gives about the chip: src/shell.js chains refreshHome() off every attendance mark, and
+  painting a hidden page is work nobody sees — and refreshHome() takes no reading at all then.
 */
 
 import { getDoc } from './store.js';
@@ -152,6 +162,26 @@ import { openWork } from './grade-engine.js';
 /* The engine behind "N need you" and behind the quiet middle. Nothing here decides whether a rule
    fired, whether a hit is silenced, or who is on the third list. */
 import { evaluate, applyCooldown, quietMiddle } from './signals.js';
+/* PANEL 4's NAMES FROM THE SAME MODULE (WO-6.4), and none of them reads the document — which is the
+   ruling under WO-6.8's sixth Acceptance line applied to the panel that draws Phase 4. Each is handed
+   hits and answers about hits: `orderHits`, `severityOrder` and `praiseOrder` are the owner's
+   rankings, asked rather than re-decided (src/signals.js says at their definitions that this panel
+   inherits them); `signalFigure` is the number a rule publishes as its own headline; `ruleText` is
+   the word table a tag falls back on. There is no evaluate() or applyCooldown() below the readers —
+   the Traps line of WO-6.4 is that such a call in the panel's code is the second answer. */
+import { orderHits, severityOrder, praiseOrder, signalFigure, ruleText } from './signals.js';
+/* A student's name, off the record, for a row that names her — the one call src/signals-view.js
+   makes for the same row. A formatter over one student object; it reads no document. */
+import { fullName } from './roster.js';
+/* The class's colour and initials on a row's avatar, the ones every other surface wears. */
+import { initials, avatarClass } from './classes.js';
+/* THE SWITCH, AND THIS FILE'S FIRST ASKER OF IT (WO-6.4). The review count below still asks
+   nothing — its suppression is src/calendar-derived.js's — but panel 4 is a list of named students
+   in trouble, and there is nowhere upstream for that refusal to live: src/signals-view.js's header
+   says so about its own list, word for word, and asks `presentationMode()` and not
+   `supportsVisible()` for the reason it gives. This file inherits that choice rather than making
+   a second one. */
+import { presentationMode } from './supports.js';
 /* The authored half of the calendar, and the lead time it owns. All five are READS. scheduledIn()
    replaced eventsCovering() here at WO-6.8, on the owner's ruling that a grades-due date belongs to
    *Closing in* alone — the kind decision is the engine's, one function from gradesDueIn().
@@ -175,7 +205,8 @@ import { todayISO } from './attendance.js';
 import { weekdayShortDate } from './date-text.js';
 import { currentView } from './views.js';
 
-/* The stack in #homeView (index.html) and the one panel this file draws into it. */
+/* The stack in #homeView (index.html), and the quiet panel's id — the one panel of the five this
+   file draws that has one. */
 const STACK_ID = 'glanceStack';
 const QUIET_ID = 'glanceQuiet';
 
@@ -335,6 +366,36 @@ export function quietMiddleRows() {
 }
 
 /*
+  THE PAGE'S ONE SIGNALS READING (WO-6.4): both halves of applyCooldown() and the quiet middle, off
+  ONE set of passes. attentionHits() and quietMiddleRows() above are the same engine calls asked one
+  at a time; this is them asked together, for the render, because panel 4 draws the shown half, its
+  two feet count the suppressed half, its header's door counts the quiet middle, and the class cards
+  above count the shown half again — and four askers each running evaluate() over every class is
+  WO-2.13's defect reached from a fifth direction.
+
+  AND THE CARDS READ IT TOO, WHICH IS THE DECISION WO-6.7 LEFT FOR THIS SITTING. src/home.js's
+  refreshHome() asks this once and hands the same object to every card's `N need you` chip and then
+  to renderGlance() — so "the chip and the panel cannot disagree" is one array counted twice rather
+  than two passes that happen to agree, and the home screen runs the signal pass once per class
+  per render rather than twice. `hits` is exactly attentionHits()'s array, and the order is the
+  same: class by class, roster order within.
+*/
+export function signalReading() {
+  const doc = getDoc();
+  if (!doc) return { hits: [], suppressed: [], quiet: [] };
+  const hits = [];
+  const suppressed = [];
+  const quiet = [];
+  signalPasses(doc).forEach((pass) => {
+    const cool = applyCooldown(doc, pass.hits);
+    cool.shown.forEach((hit) => hits.push(hit));
+    cool.suppressed.forEach((row) => suppressed.push(row));
+    quietMiddle(doc, pass.cls, pass.termId, { hits: pass.hits }).forEach((row) => quiet.push(row));
+  });
+  return { hits: hits, suppressed: suppressed, quiet: quiet };
+}
+
+/*
   WHAT IS CLOSING IN: the grades-due dates inside their lead time, the term edges inside the same
   window, and the review COUNT inside it — one window, src/calendar.js's leadWindowOf(), because
   the lead time is the one "how far ahead do you want warning" number the teacher owns and a second
@@ -457,16 +518,24 @@ function quietPanel(doc, classes, quietCount) {
      middle" with no number when nobody is on it. The hook is src/shell.js's; the value says where
      on that screen to land. */
   const doors = el('div', 'gl-quiet-doors');
+  doors.append(quietDoor(quietCount));
+  body.append(doors);
+
+  panel.append(body);
+  return panel;
+}
+
+/* THE DOOR ITSELF, built in one place because it has two homes (WO-6.4): this panel on a day with
+   nothing pending, and panel 4's header on a day that panel exists — never both at once, which
+   renderGlance() decides by drawing one panel or the other. One builder is what keeps the two homes
+   from ever saying it two ways. */
+function quietDoor(quietCount) {
   const door = el('button', 'class-action-btn',
     quietCount ? 'The quiet middle · ' + quietCount : 'The quiet middle');
   door.type = 'button';
   door.setAttribute('data-signals-open', 'quiet');
   door.title = QUIET_DOOR_TITLE;
-  doors.append(door);
-  body.append(doors);
-
-  panel.append(body);
-  return panel;
+  return door;
 }
 
 /* ────────────────────────────── the three list panels (WO-6.8) ──────────────────────────────
@@ -687,6 +756,255 @@ function closingPanel(items, classes, doc, today) {
   return built.panel;
 }
 
+/* ────────────────────────────── panel 4: who needs you (WO-6.4) ──────────────────────────────
+
+   A SUMMARY OF WO-4.2's SCREEN, DRAWN IN THAT SCREEN'S OWN CLASSES. `.sig-two`, `.sig-col`,
+   `.sig-col-head` with its note, `.sig-row` with the figure in the strong position, `.sig-col-empty`
+   and `.sig-hidden` — every one of them src/signals-view.css's, worn as shipped, because a summary
+   drawn from a second stylesheet is a summary that drifts (design/mockups/glance.html, redrawn
+   2026-09-15). src/glance.css adds only `.gl-more`, `.gl-foot-go` and `.gl-shut`.
+
+   THREE THINGS DIFFER FROM THAT SCREEN, and all three are the work order's. Every row taps THROUGH
+   to that screen and opens the student's card there, rather than opening a card over this page. Each
+   column's cooldown foot is a DOOR onto that screen with the column's suppressed rows open, not an
+   expansion here. And a column longer than the owner's number draws that many rows and an
+   `and N more ›` foot that lands on the first row it did not draw. There is no sort control, no
+   class strip and no rule chip: the ranking is the owner's ruled order or nothing, and the
+   controls are one tap away behind any row.
+
+   THE ROWS ARE BUILT HERE AND THEIR SHAPE IS rowButton()'s in src/signals-view.js — avatar, name
+   with the class beside it, the rule's own sentence, the other rules as tags, the figure, the
+   chevron. A second copy of a row builder is a drift risk this file accepts rather than importing
+   that module, which reads the document and runs its own pass; tools/verify/glance-quiet.mjs reads a
+   row here and the same student's row there and fails if the two stop matching. */
+
+/* THE OWNER'S NUMBER (2026-09-16, answered at dispatch): four rows per column, concern and praise
+   alike, and then the foot. A column of four or fewer draws no foot at all. */
+const ATTENTION_ROWS = 4;
+
+const ATTENTION_TITLE = 'Who needs you';
+const ATTENTION_TEXT = 'Both directions, after the cooldown. Every row opens the full list, on that '
+  + 'student.';
+const ATTENTION_FULL = 'The full list';
+const ATTENTION_FULL_TITLE = 'Every student on both lists, on the Who needs you screen';
+/* The two heads and their notes, in the words WO-4.2's screen prints over the same columns on its
+   arrival order. They are copies of that screen's `SORT_NOTES.ruled` and `PRAISE_NOTE`, and the
+   harness reads both screens' heads and fails when they part. */
+const CONCERN_LABEL = 'Concern';
+const PRAISE_LABEL = 'Praise';
+const CONCERN_NOTE = 'attendance first, then the biggest change';
+const PRAISE_NOTE = 'biggest climb first';
+/* A column with nothing in it while the other has something — that screen's own quiet lines. */
+const CONCERN_EMPTY = 'Nobody is flagged here right now.';
+const PRAISE_EMPTY = 'Nobody is climbing yet.';
+/* THE REFUSAL, in that screen's lead and with the counts kept (design/mockups/glance.html, the
+   Tuesday while projecting). The counts are how many rows each column holds — a number names nobody
+   and cannot be turned back into a list, which is WO-4.5's ruling for the card's chip. */
+const SHUT_LEAD = 'Not while you are projecting.';
+const SHUT_TAIL = ' Their names are the one thing here that should never be on a classroom wall — '
+  + 'turn presentation mode off with the screen button in the header and they come straight back.';
+
+/*
+  THE HITS, GROUPED INTO THE TWO COLUMNS THE SIGNALS SCREEN DRAWS FROM THEM — one row per student
+  per class, in that screen's order, and nothing about which hits exist decided here.
+
+  src/signals-view.js's collect() walks the active classes in order, hands each class's live hits to
+  orderHits(), and makes a row per student the first time a student appears; columnRows() then
+  takes a direction's slice of each row with the first of it as the lead, and order()/orderPraise()
+  hand the leads to severityOrder()/praiseOrder(). This is that walk over signalReading()'s array,
+  which already arrives class by class in roster order — the same input, the same engine calls, the
+  same stable sorts, so the same rows in the same order. Every ordering here is the engine's.
+
+  NO NAME IS READ HERE. The grouping is ids and hits; the renderer below looks a name up only for a
+  row it is about to draw, and while projecting it draws none.
+*/
+function attentionColumns(hits) {
+  const classOrder = [];
+  const byClass = Object.create(null);
+  hits.forEach((hit) => {
+    if (!byClass[hit.classId]) { byClass[hit.classId] = []; classOrder.push(hit.classId); }
+    byClass[hit.classId].push(hit);
+  });
+  const rows = [];
+  const byKey = Object.create(null);
+  classOrder.forEach((classId) => {
+    orderHits(byClass[classId]).forEach((hit) => {
+      const key = hit.studentId + '|' + hit.classId;
+      if (!byKey[key]) {
+        byKey[key] = { key: key, studentId: hit.studentId, classId: hit.classId, hits: [] };
+        rows.push(byKey[key]);
+      }
+      byKey[key].hits.push(hit);
+    });
+  });
+  const columnOf = (direction, rank) => {
+    const mine = [];
+    rows.forEach((row) => {
+      const own = row.hits.filter((hit) => hit.direction === direction);
+      if (own.length) mine.push({ key: row.key, studentId: row.studentId, classId: row.classId,
+        lead: own[0], tags: own.slice(1) });
+    });
+    return rank(mine.map((row) => row.lead))
+      .map((lead) => mine.filter((row) => row.lead === lead)[0]).filter(Boolean);
+  };
+  return { concern: columnOf('concern', severityOrder), praise: columnOf('praise', praiseOrder) };
+}
+
+/* ONE ROW — src/signals-view.js's rowButton(), shape for shape, with a door where that one has a
+   card. The column and the key say where on that screen to land; src/shell.js's showSignals() does
+   the landing. textContent throughout: a name was pasted out of a school system. */
+function attentionRow(doc, classes, direction, row) {
+  const student = studentsIn(doc).filter((s) => s && s.id === row.studentId)[0] || null;
+  const name = student ? fullName(student) : '';
+  const figure = signalFigure(row.lead) || { value: 0, text: '', unit: '', tone: 'flat' };
+
+  const button = el('button', 'sig-row');
+  button.type = 'button';
+  button.setAttribute('data-signals-open', 'card');
+  button.setAttribute('data-signals-column', direction);
+  button.setAttribute('data-signals-key', row.key);
+
+  const avatar = el('span', 'avatar ' + avatarClass(row.classId), initials(name));
+  avatar.setAttribute('aria-hidden', 'true');
+  button.append(avatar);
+
+  const main = el('span', 'sig-row-main');
+  const who = el('span', 'sig-row-name');
+  who.append(document.createTextNode(name));
+  who.append(el('span', 'sig-row-class', classNameIn(classes, row.classId)));
+  main.append(who);
+  main.append(el('span', 'sig-row-why', row.lead.explanation));
+  if (row.tags.length) {
+    const tags = el('span', 'sig-row-tags');
+    row.tags.forEach((hit) => {
+      const shape = signalFigure(hit);
+      tags.append(el('span', 'sig-tag',
+        (shape ? shape.text + ' ' : '') + (shape ? shape.unit : ruleText(hit.ruleId))));
+    });
+    main.append(tags);
+  }
+  button.append(main);
+
+  const delta = el('span', 'sig-delta ' + figure.tone, figure.text);
+  delta.append(el('span', 'sig-delta-unit', figure.unit));
+  button.append(delta);
+  const go = el('span', 'sig-row-go', '›');
+  go.setAttribute('aria-hidden', 'true');
+  button.append(go);
+
+  button.setAttribute('aria-label', row.lead.explanation + ' Opens why ' + name
+    + ' is on the list, on the Who needs you screen.');
+  return button;
+}
+
+/* A foot that is a door: the words, and the › that says the tap goes somewhere else. */
+function footDoor(className, text) {
+  const button = el('button', className, text);
+  button.type = 'button';
+  const go = el('span', 'gl-foot-go', '›');
+  go.setAttribute('aria-hidden', 'true');
+  button.append(go);
+  return button;
+}
+
+/*
+  ONE COLUMN: its head with the count and the note, up to ATTENTION_ROWS rows, the quiet line when
+  it has none, the `and N more ›` foot when it has more, and the cooldown foot when the engine held
+  rows out of it.
+
+  `and N more` IS THE LENGTH OF THE ROWS NOT DRAWN — the slice past the owner's number, counted —
+  and it lands on the first of them. The cooldown foot's count is the suppressed hits in this
+  direction, which is what the signals screen's own foot counts, in that foot's own words.
+*/
+function attentionColumn(doc, classes, direction, rows, held) {
+  const concern = direction === 'concern';
+  const col = el('div', 'sig-col ' + direction);
+  const head = el('div', 'sig-col-head ' + direction);
+  head.append(document.createTextNode((concern ? CONCERN_LABEL : PRAISE_LABEL) + ' · ' + rows.length));
+  head.append(el('span', 'sig-col-note', concern ? CONCERN_NOTE : PRAISE_NOTE));
+  col.append(head);
+
+  const list = el('div', 'sig-list');
+  rows.slice(0, ATTENTION_ROWS).forEach((row) => list.append(attentionRow(doc, classes, direction, row)));
+  col.append(list);
+  if (!rows.length) col.append(el('p', 'sig-col-empty', concern ? CONCERN_EMPTY : PRAISE_EMPTY));
+
+  const rest = rows.slice(ATTENTION_ROWS);
+  if (rest.length) {
+    const more = footDoor('gl-more', 'and ' + rest.length + ' more');
+    more.setAttribute('data-signals-open', 'more');
+    more.setAttribute('data-signals-column', direction);
+    more.setAttribute('data-signals-key', rest[0].key);
+    col.append(more);
+  }
+
+  if (held.length) {
+    const foot = footDoor('sig-hidden', held.length + ' you wrote about recently · '
+      + (held.length === 1 ? 'show it' : 'show them'));
+    foot.setAttribute('data-signals-open', 'held');
+    foot.setAttribute('data-signals-column', direction);
+    col.append(foot);
+  }
+  return col;
+}
+
+/*
+  PANEL 4 — WHO NEEDS YOU, from signalReading(). Drawn only on a day its shown half is not empty;
+  a day whose only signals are held by the cooldown is a day with no signal waiting on the teacher,
+  which is what the quiet panel's own sentence claims.
+
+  THE HEADER CARRIES TWO DOORS: `The quiet middle · N` (its home on a day this panel exists) and
+  `The full list`. Both stay up while projecting — a count and a way in, and the screen they open
+  refuses in its turn.
+
+  UNDER A PROJECTOR THE COLUMNS ARE NOT BUILT AT ALL — not built and hidden, because a Ctrl+P and a
+  screen reader both read the tree. In their place is the signals screen's own refusal, compact,
+  with each column's count in its sentence; no student record is looked at on the way.
+*/
+function attentionPanel(doc, classes, reading) {
+  const panel = el('div', 'panel');
+  panel.setAttribute('data-glance-panel', 'attention');
+  const header = el('div', 'panel-header');
+  const titleRow = el('div', 'panel-title-row');
+  const words = el('div', 'panel-title');
+  words.append(el('h2', '', ATTENTION_TITLE));
+  words.append(el('p', '', ATTENTION_TEXT));
+  titleRow.append(words);
+  const actions = el('div', 'panel-title-actions');
+  actions.append(quietDoor(reading.quiet.length));
+  const full = el('button', 'class-action-btn', ATTENTION_FULL);
+  full.type = 'button';
+  full.setAttribute('data-signals-open', 'list');
+  full.title = ATTENTION_FULL_TITLE;
+  actions.append(full);
+  titleRow.append(actions);
+  header.append(titleRow);
+  panel.append(header);
+
+  const columns = attentionColumns(reading.hits);
+  if (presentationMode()) {
+    const shut = el('div', 'gl-shut');
+    const mark = el('div', 'sig-blocked-mark', '🔒');
+    mark.setAttribute('aria-hidden', 'true');
+    shut.append(mark);
+    shut.append(el('p', 'sig-blocked-lead', SHUT_LEAD));
+    const flagged = columns.concern.length;
+    const climbing = columns.praise.length;
+    shut.append(el('p', 'sig-blocked-text',
+      plural(flagged, 'student is', 'students are') + ' flagged and ' + climbing
+        + (climbing === 1 ? ' is' : ' are') + ' climbing.' + SHUT_TAIL));
+    panel.append(shut);
+    return panel;
+  }
+
+  const heldIn = (direction) => reading.suppressed.filter((row) => row.hit.direction === direction);
+  const two = el('div', 'sig-two');
+  two.append(attentionColumn(doc, classes, 'concern', columns.concern, heldIn('concern')));
+  two.append(attentionColumn(doc, classes, 'praise', columns.praise, heldIn('praise')));
+  panel.append(two);
+  return panel;
+}
+
 /*
   DRAW THE PAGE'S PANELS UNDER THE CLASS GRID — the three list panels whose readers have something,
   or the quiet panel, or nothing. Called by src/home.js's refreshHome() after the cards, so every
@@ -703,12 +1021,22 @@ function closingPanel(items, classes, doc, today) {
   grid's panel does not carry — so a panel is never drawn twice and never outlives the day it
   belonged to.
 
-  THE THREE CHEAP READERS FIRST. Any of them non-empty draws its panel and ends the decision: the day
-  is not quiet. All three empty, the pass runs, and ONLY then can the quiet panel be drawn — and it
-  is not drawn when the pass found a hit, which is the day a teacher with two failing students must
-  never be told nothing needs her (WO-6.8's seventh Acceptance line asserts exactly that).
+  THE SIGNALS READING IS NOW TAKEN ON EVERY RENDER (WO-6.4), which is a correction to what this
+  paragraph said at WO-6.7 and WO-6.8 — the three cheap readers first, and the pass skipped the
+  moment any of them had something. Panel 4 draws the hits on a busy day as well as a quiet one, so
+  there is no day the pass can be skipped. What pays for it is that the pass is taken ONCE: `reading`
+  is src/home.js's, handed over by refreshHome() after the cards counted it, and this function only
+  asks for its own when it is called from somewhere that has none — src/shell.js's
+  flipPresentationMode().
+
+  Then one of two things. ANY of the four sources has something, and each non-empty one draws its
+  panel in the page's order — week, queue, who needs you, closing in — and the quiet panel is not
+  drawn, which is the day a teacher with two failing students must never be told nothing needs her
+  (WO-6.8's seventh Acceptance line). OR all four are empty, and the quiet panel is the one panel.
+  The quiet-middle door is on exactly one of panel 4 and the quiet panel, because at most one of
+  them is drawn.
 */
-export function renderGlance() {
+export function renderGlance(reading) {
   const stack = document.getElementById(STACK_ID);
   if (!stack) return;
   if (currentView() !== 'home') return;
@@ -724,15 +1052,14 @@ export function renderGlance() {
   const week = weekItems();
   const queue = queueRows();
   const closing = closingIn();
-  if (week.length || queue.length || closing.length) {
+  const signals = reading || signalReading();
+  if (week.length || queue.length || signals.hits.length || closing.length) {
     if (week.length) stack.append(weekPanel(week, classes, today));
     if (queue.length) stack.append(queuePanel(queue, classes, doc));
+    if (signals.hits.length) stack.append(attentionPanel(doc, classes, signals));
     if (closing.length) stack.append(closingPanel(closing, classes, doc, today));
     return;
   }
 
-  const passes = signalPasses(doc);
-  if (shownOf(doc, passes).length) return;
-
-  stack.append(quietPanel(doc, classes, quietOf(doc, passes).length));
+  stack.append(quietPanel(doc, classes, signals.quiet.length));
 }

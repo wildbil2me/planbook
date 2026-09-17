@@ -10,9 +10,10 @@
    appears in no other stylesheet.
 
    LIFTED WHOLE FROM design/mockups/proposed-phase6.css § GLANCE ON 2026-09-15, BY WO-6.7,
-   including the rules nothing wears yet. `.gl-row`, `.gl-more`, `.gl-foot-go`,
+   including the rules nothing wore yet. `.gl-row`, `.gl-more`, `.gl-foot-go`,
    `.gl-row-avatar` and `.gl-shut` are WO-6.8's and WO-6.4's — the rows in the three list
-   panels and the shut panel while projecting — and they are here now because a stylesheet
+   panels, panel 4's two feet and the shut panel while projecting; all but `.gl-row-avatar`
+   are worn since 2026-09-16 — and they were here first because a stylesheet
    is lifted once: tools/wo-sweep.mjs § 19 reads this file's existence as "§ GLANCE has
    landed" from the moment it appears, and a half-lifted sheet is exactly the state that
    check cannot see into. The scar behind that is WO-6.3's: § CALENDAR was re-derived
@@ -28,9 +29,11 @@
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* Every tappable class this sheet adds, in one grouped selector — design/style-guide.md §6.
-   `.gl-row` is worn since WO-6.8, by every row of the three list panels; `.gl-more` waits for
-   WO-6.4. The quiet panel's one control is `.class-action-btn`, worn as shipped from
-   src/shell.css, which already carries this and the 44px floor. */
+   `.gl-row` is worn since WO-6.8, by every row of the three list panels; `.gl-more` since WO-6.4,
+   by a *Who needs you* column longer than four rows. The quiet panel's one control, and panel 4's
+   two header doors, are `.class-action-btn`, worn as shipped from src/shell.css, which already
+   carries this and the 44px floor; panel 4's rows and cooldown feet are src/signals-view.css's
+   `.sig-row` and `.sig-hidden`, which carry both there. */
 .gl-row, .gl-more {
   touch-action: manipulation;
   user-select: none;

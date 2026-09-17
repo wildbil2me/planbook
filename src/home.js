@@ -80,6 +80,16 @@
   list. WO-1.9's own acceptance says to re-verify that inheritance at every later phase; this
   paragraph is where the next reader starts.
 
+  AND THE CONDITION THIS PARAGRAPH NAMED WAS MET AT WO-6.4 — ON THE PAGE, NOT ON THE CARD. What this
+  note said would put a module on the flip list is something that varies with who a student is, and
+  panel 4 of the glance page under these cards is exactly that: a list of named students in trouble,
+  which shuts under a projector the way WO-4.2's screen does. So the glance module JOINED the list —
+  src/glance.js's renderGlance() is on flipPresentationMode()'s redraw list (it went on at WO-6.8 for
+  the review count, and WO-6.4 is the panel that made it load-bearing), and turning the mode on with
+  the page up shuts panel 4 without a reload. THIS module is still not on the list, for the reason
+  above and the two re-verifications below: the card names nobody, and since WO-6.4 its chip counts
+  the very reading the panel draws, so there is still nothing on a card for the flip to change.
+
   RE-VERIFIED AT WO-3.26, AND THE ANSWER IS STILL "STAYS OFF THE LIST". The ungraded chip is built
   from openWork()'s rows, which are assignment ids, category ids, points and a state — the whole of
   what src/grade-engine.js will hand out, and none of it a student. It is asked once per student on
@@ -153,7 +163,10 @@ import { openWork } from './grade-engine.js';
    here decides whether a rule fired or whether a signal is silenced: src/signals.js decides it once,
    for this card and for the list the card's own class opens onto, which is what stops a chip saying
    four and the screen behind it showing two. */
-import { evaluate, applyCooldown } from './signals.js';
+/* SINCE WO-6.4 THE ANSWER ARRIVES THROUGH src/glance.js's signalReading(), which is that module's
+   applyCooldown(doc, evaluate(doc, cls, termId)).shown for every active class, taken once per render
+   and handed to the cards and to the panel under them alike — see refreshHome(). This file no longer
+   imports src/signals.js at all: the chip counts an array; it does not ask for one. */
 /* The state slot's whole content, from the module that owns what a state IS. Nothing here decides
    whether a class was taken, dropped or forgotten; src/attendance.js's stateSummary() decides it
    once, for this card and for the marking screen both, which is what stops the two disagreeing
@@ -164,7 +177,7 @@ import { stateSummary, todayISO } from './attendance.js';
 import { currentView } from './views.js';
 /* The rest of the page, under the grid (WO-6.7). One import, one call at the foot of refreshHome();
    that module imports nothing from this one, so the grid is drawn first and the page after it. */
-import { renderGlance } from './glance.js';
+import { renderGlance, signalReading } from './glance.js';
 
 const GRID_ID = 'homeGrid';
 const EMPTY_ID = 'homeEmpty';
@@ -193,16 +206,23 @@ export function refreshHome() {
   const list = doc ? getActiveClasses() : [];
   const selectedId = getSelectedClassId();
 
+  /* THE PAGE'S ONE SIGNALS READING (WO-6.4), taken once, here, and only while the grid is the view on
+     screen — the guard attentionCount() carried on its own until then, for the reason the header's
+     last paragraph gives. The cards count it and the panel under them draws it, so "2 need you" on a
+     card and the two rows in panel 4 are one array counted twice. */
+  const reading = list.length && currentView() === 'home' ? signalReading() : null;
+
   grid.textContent = '';
   grid.classList.toggle('hidden', list.length === 0);
   if (empty) empty.classList.toggle('hidden', list.length > 0);
   if (!list.length) renderEmpty(!!doc);
-  else list.forEach((cls) => grid.append(classCard(cls, cls.id === selectedId)));
+  else list.forEach((cls) => grid.append(classCard(cls, cls.id === selectedId, reading)));
 
   /* AND THE PANELS UNDER THE GRID (WO-6.7), on both branches: a document whose last class was just
      archived has a quiet panel to take down as well as an empty state to put up, and src/glance.js
-     decides that for itself from the document rather than being told here. */
-  renderGlance();
+     decides that for itself from the document rather than being told here. What it IS told, since
+     WO-6.4, is the reading the cards just counted, so the pass is not run a second time. */
+  renderGlance(reading);
 }
 
 /*
@@ -226,7 +246,7 @@ export function refreshHome() {
   pasted out of a school system, and a class called "Bio <3" has to be a class called "Bio <3"
   rather than markup (src/classes.js says the same thing over the same string).
 */
-function classCard(cls, isOpen) {
+function classCard(cls, isOpen, reading) {
   const card = document.createElement('span');
   card.className = 'class-card' + (isOpen ? ' open' : '');
 
@@ -278,7 +298,7 @@ function classCard(cls, isOpen) {
   if (count) signals.append(count);
   /* WO-4.5's, and second because that is the order a teacher reads the card in: what is waiting on
      her desk, then who is waiting on her. */
-  const attention = attentionChip(cls);
+  const attention = attentionChip(cls, reading);
   if (attention) signals.append(attention);
   open.append(signals);
 
@@ -438,17 +458,21 @@ function ungradedChip(cls) {
 
   AND IT IS SKIPPED WHILE THE GRID IS NOT ON SCREEN. The header's last paragraph is the whole of the
   reason; what matters here is that the skip is not a fallback for a missing answer, it is a refusal
-  to compute one nobody can see.
+  to compute one nobody can see. Since WO-6.4 the skip is refreshHome()'s, which takes no reading
+  while another view is up — so `reading` is null here then, and the count is zero for the reason it
+  always was.
+
+  IT COUNTS THE PAGE'S ARRAY RATHER THAN ASKING FOR ONE (WO-6.4). `reading.hits` is
+  src/glance.js's signalReading() — every active class's open term, evaluated and put through the
+  cooldown once — and this class's share of it is the hits that carry its id: the same hits the
+  engine call this function used to make returned, since a hit is stamped with the class it was
+  evaluated for and a class with no open term contributes none. The panel under the grid draws the
+  same array, so the chip and the rows are one reading and not two that agree.
 */
-function attentionCount(cls) {
-  if (currentView() !== 'home') return 0;
-  const doc = getDoc();
-  if (!doc || !cls) return 0;
-  const termId = getOpenTermId(cls.id);
-  if (!termId) return 0;
+function attentionCount(cls, reading) {
+  if (!reading || !cls) return 0;
   const waiting = new Set();
-  applyCooldown(doc, evaluate(doc, cls, termId)).shown
-    .forEach((hit) => waiting.add(hit.studentId));
+  reading.hits.forEach((hit) => { if (hit.classId === cls.id) waiting.add(hit.studentId); });
   return waiting.size;
 }
 
@@ -457,8 +481,8 @@ function attentionCount(cls) {
    acts on what it says is the card's own. What that tap lands on is the class's working surface
    rather than the signals list, which is a real limit of this chip and the reason WO-6.4's
    page-level panel exists: this says how many, and the screen behind the Signals segment says who. */
-function attentionChip(cls) {
-  const n = attentionCount(cls);
+function attentionChip(cls, reading) {
+  const n = attentionCount(cls, reading);
   if (!n) return null;
   const chip = document.createElement('span');
   chip.className = 'class-card-count';

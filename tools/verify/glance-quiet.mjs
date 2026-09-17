@@ -392,10 +392,13 @@ if (!seam) {
        change. The claim that survives is the quiet panel's absence; what stands in its place is now
        the one panel whose reader is non-empty — the queue — and no other, because the week and
        closing-in readers are empty on this day and an empty reader draws no panel. */
-    check('on a busy day the quiet panel is GONE, and what stands in its place is exactly the panel whose '
-      + 'reader has something — the queue — and no panel for the empty week or closing-in readers',
-      busy67.assignments === 6 && !busy.quiet && busy.panels === 2
-        && busy.named.join(',') === 'queue' && busy.week === 0 && busy.closing === 0,
+    /* RE-CUT AGAIN AT WO-6.4: the hits reader has two hits on this day, so panel 4 — *Who needs you* —
+       now stands after the queue, in the page's order. Still no panel for the two empty readers. */
+    check('on a busy day the quiet panel is GONE, and what stands in its place is exactly the panels whose '
+      + 'readers have something — the queue, then who needs you — and no panel for the empty week or '
+      + 'closing-in readers',
+      busy67.assignments === 6 && !busy.quiet && busy.panels === 3
+        && busy.named.join(',') === 'queue,attention' && busy.week === 0 && busy.closing === 0,
       JSON.stringify({ planted: busy67.assignments, quiet: busy.quiet, panels: busy.panels, named: busy.named }));
     check('the card\'s `2 to grade`, the card\'s `2 need you` and the readers\' lengths AGREE: the '
       + 'queue reader hands back two rows (one per assignment, one of them open for one student '
@@ -936,16 +939,481 @@ if (!seam) {
       put('a_wo68_t1', '${ADA}', { v: 90 });
       put('a_wo68_t1', '${CARA}', { v: 85 });
       put('a_wo68_t1', '${DREW}', { v: 85 });`);
+    /* RE-CUT AT WO-6.4. "The stack holds the class grid and nothing else" was true of a build with no
+       panel 4, and panel 4 is exactly what stands on this day now. What survives unchanged is the
+       claim WO-6.8's seventh line made: none of the three list panels, and NOT the quiet panel. */
     check('a day where ONLY the attention hits are non-empty — nothing scheduled, nothing to grade, '
       + 'nothing closing in, one student flagged — draws the three panels\' states, which is absent, '
-      + 'and NOT the quiet panel: the stack holds the class grid and nothing else',
+      + 'and NOT the quiet panel: the stack holds the class grid and panel 4 (WO-6.4) and nothing else',
       onlyHits68.hits === 1 && onlyHits68.rules.join(',') === '7ada:missing-count'
         && onlyHits68.week === 0 && onlyHits68.queue === 0 && onlyHits68.closing === 0
-        && !onlyHits68.quiet && onlyHits68.panels === 1 && onlyHits68.named.length === 0
-        && onlyHits68.rows === 0 && !/Nothing needs you/.test(onlyHits68.viewText),
+        && !onlyHits68.quiet && onlyHits68.panels === 2 && onlyHits68.named.join(',') === 'attention'
+        && !/Nothing needs you/.test(onlyHits68.viewText),
       JSON.stringify({ hits: onlyHits68.hits, rules: onlyHits68.rules, week: onlyHits68.week,
         queue: onlyHits68.queue, closing: onlyHits68.closing, quiet: onlyHits68.quiet,
         panels: onlyHits68.panels, named: onlyHits68.named }));
+
+    /*
+     * ───────── the glance page: who needs you, and the page as a whole (WO-6.4) ─────────
+     *
+     * WHAT ONLY A BROWSER CAN SETTLE HERE. That the five sections stand in the page's order and that
+     * every control in every one of them carries a door — a claim about the tree. That panel 4's rows
+     * are the signals screen's rows in the signals screen's order, and that each one lands on THAT
+     * student's card over there, in the right column — a chain of navigation only a click can walk,
+     * and the column matters because one student is on both lists. That the students drawn plus the
+     * `and N more` foot are the cards' own chips, read off the glass rather than recomputed. That the
+     * real presentation control, pressed with the page up, takes every name off the page at once and
+     * leaves the counts. And that nothing out of a `supports` block reaches the page in either mode.
+     *
+     * THE FIXTURE BUILDS ON THE STATE THE BLOCK ABOVE LEFT: the WO-6.7 class with Ada flagged for
+     * `missing-count`, Cara and Drew quiet. It adds two classes, in this order after it:
+     *
+     *   WO-6.4 Main    Gus, Ben, then six students on the WO-6.7 missing shape (three warmups marked
+     *                  missing, one task at 90, the rest blank — exactly one hit each). Gus has every
+     *                  task at 95 and the warmups excused: two praise rules, no concern. Ben has the
+     *                  missing warmups and three 85s: `missing-count` AND `grade-rose` — the student
+     *                  on BOTH lists. The sixth missing student and Gus's run of strong scores are
+     *                  each silenced by a contact two days back, so each column has a cooldown foot.
+     *   WO-6.4 Absent  Abe alone, absent at nine recorded meetings: three attendance rules.
+     *
+     * SO THE RULED ORDER IS NOT THE ROSTER ORDER IN EITHER COLUMN, which is what makes "ranked the way
+     * WO-4.2 ranks" a measurement: Abe's class is last and he leads the concern column only because
+     * attendance bands first; Gus is ahead of Ben on the roster and behind him in praise only because
+     * a climb bands ahead of a count. Eight concern rows is four drawn and `and 4 more`.
+     *
+     * Plus a reminder today and a grades-due date today, and the blanks the missing shape leaves, so
+     * all five sections are on the page at once.
+     */
+    console.log('\n--- the glance page: who needs you, and the page as a whole (WO-6.4) ---');
+    const CLS64 = 'c_wo64', TERM64 = 'tm_wo64', ABS64 = 'c_wo64abs', ABSTERM64 = 'tm_wo64abs';
+    const GUS64 = 's_wo64gus', BEN64 = 's_wo64ben', ABE64 = 's_wo64abe';
+    const MISS64 = [1, 2, 3, 4, 5, 6].map(n => 's_wo64m' + n);
+    const NAMES64 = ['Wo64Gus', 'Wo64Ben', 'Wo64Abe', 'Wo64Miss', 'Wo67Flagged'];
+    const modeWas64 = await evalJs('window.planbook.supports.presentationMode()');
+    await evalJs('window.planbook.supports.setPresentationMode(false); 1');
+    const plant64 = await probe(`
+      var back = function(n){ return shift(-n); };
+      var stamp = function(iso){
+        var o = -new Date().getTimezoneOffset();
+        var p = function(n){ return (n < 10 ? '0' : '') + n; };
+        return iso + 'T09:00:00' + (o < 0 ? '-' : '+') + p(Math.floor(Math.abs(o) / 60)) + ':' + p(Math.abs(o) % 60); };
+      if (!Array.isArray(doc.attendance)) doc.attendance = [];
+      if (!Array.isArray(doc.log)) doc.log = [];
+      doc.students.push({ id:'${GUS64}', first:'Gus', last:'Wo64Gus' });
+      doc.students.push({ id:'${BEN64}', first:'Ben', last:'Wo64Ben' });
+      doc.students.push({ id:'${ABE64}', first:'Abe', last:'Wo64Abe' });
+      ${JSON.stringify(MISS64)}.forEach(function(id, i){
+        doc.students.push({ id:id, first:'M' + (i + 1), last:'Wo64Miss' + (i + 1) }); });
+      doc.classes.push({ id:'${CLS64}', name:'WO-6.4 Main', archived:false,
+        roster:['${GUS64}', '${BEN64}'].concat(${JSON.stringify(MISS64)}), letterScale:null,
+        terms:[{ id:'${TERM64}', label:'WO-6.4 Term', start:shift(-40), end:shift(40) }],
+        categories:[{ id:'k_wo64', name:'All work', weight:100 }]});
+      doc.classes.push({ id:'${ABS64}', name:'WO-6.4 Absent', archived:false, roster:['${ABE64}'],
+        letterScale:null, terms:[{ id:'${ABSTERM64}', label:'WO-6.4 Absent Term', start:shift(-40), end:shift(40) }],
+        categories:[{ id:'k_wo64abs', name:'All work', weight:100 }]});
+      for (var n = 1; n <= 3; n++) {
+        doc.assignments.push({ id:'a_wo64_s' + n, classId:'${CLS64}', termId:'${TERM64}', categoryId:'k_wo64',
+          name:'WO-6.4 Warmup ' + n, points:10, assigned:back(30), due:back(25) });
+      }
+      for (var m = 1; m <= 8; m++) {
+        doc.assignments.push({ id:'a_wo64_' + m, classId:'${CLS64}', termId:'${TERM64}', categoryId:'k_wo64',
+          name:'WO-6.4 Task ' + m, points:100, assigned:back(30), due:back(20) });
+      }
+      var put = function(id, sid, cell){ doc.scores[id] = doc.scores[id] || {}; doc.scores[id][sid] = cell; };
+      ['${BEN64}'].concat(${JSON.stringify(MISS64)}).forEach(function(sid){
+        for (var i = 1; i <= 3; i++) put('a_wo64_s' + i, sid, { v: null, flag: 'missing' }); });
+      ${JSON.stringify(MISS64)}.forEach(function(sid){ put('a_wo64_1', sid, { v: 90 }); });
+      [1, 2, 3].forEach(function(k){ put('a_wo64_' + k, '${BEN64}', { v: 85 }); });
+      for (var g = 1; g <= 3; g++) put('a_wo64_s' + g, '${GUS64}', { v: null, flag: 'excused' });
+      for (var t = 1; t <= 8; t++) put('a_wo64_' + t, '${GUS64}', { v: 95 });
+      for (var d = 9; d >= 1; d--) {
+        var marks = {}; marks['${ABE64}'] = { code: 'A' };
+        doc.attendance.push({ classId:'${ABS64}', date:back(d), marks: marks });
+      }
+      doc.log.push({ id:'l_wo64_m6', studentId:'${MISS64[5]}', at:stamp(back(2)), kind:'contact',
+        audience:'guardian', subject:'Missing work', body:'', ruleId:'missing-count' });
+      doc.log.push({ id:'l_wo64_gus', studentId:'${GUS64}', at:stamp(back(2)), kind:'contact',
+        audience:'guardian', subject:'Great run', body:'', ruleId:'high-score-run' });
+      doc.events.push({ id:'e_wo64_rem', date:shift(0), endDate:shift(0), kind:'reminder',
+        title:'WO-6.4 reminder', classIds:[], studentId:'', notes:'', seriesId:'' });
+      doc.events.push({ id:'e_wo64_gd', date:shift(0), endDate:shift(0), kind:'grades-due',
+        title:'WO-6.4 grades due', classIds:[], studentId:'', notes:'', seriesId:'' });`);
+
+    /* The page's attention panel, and the signals screen's own model asked on arrival order, in one
+       read — so every ordering claim below compares the glass to that screen's model rather than to a
+       ranking typed into this file. */
+    const PANEL64 = `(function(){
+      var view = document.getElementById('homeView');
+      var stack = document.getElementById('glanceStack');
+      var panel = view ? view.querySelector('[data-glance-panel="attention"]') : null;
+      var sv = window.planbook.signalsView;
+      sv.resetSignals('');
+      var model = sv.signalsModel();
+      var col = function(dir){
+        var c = panel ? panel.querySelector('.sig-col.' + dir) : null;
+        if (!c) return null;
+        var more = c.querySelector('.gl-more');
+        var held = c.querySelector('.sig-hidden');
+        return {
+          head: (c.querySelector('.sig-col-head') || {}).textContent || '',
+          rows: Array.prototype.map.call(c.querySelectorAll('.sig-list > *'), function(b){
+            return { tag: b.tagName, type: b.type || '', cls: b.className,
+              open: b.getAttribute('data-signals-open'), column: b.getAttribute('data-signals-column'),
+              key: b.getAttribute('data-signals-key'),
+              name: (b.querySelector('.sig-row-name') || {}).textContent || '',
+              text: b.textContent,
+              shape: Array.prototype.map.call(b.children, function(n){ return n.className; }).join('|') }; }),
+          empty: (c.querySelector('.sig-col-empty') || {}).textContent || null,
+          more: more ? { text: more.textContent, open: more.getAttribute('data-signals-open'),
+            column: more.getAttribute('data-signals-column'), key: more.getAttribute('data-signals-key') } : null,
+          held: held ? { text: held.textContent, open: held.getAttribute('data-signals-open'),
+            column: held.getAttribute('data-signals-column') } : null };
+      };
+      var chips = 0, each = {};
+      Array.prototype.forEach.call(document.querySelectorAll('#homeGrid [data-class-tab]'), function(card){
+        Array.prototype.forEach.call(card.querySelectorAll('.class-card-count'), function(chip){
+          var m = /^(\\d+) needs? you$/.exec(chip.textContent);
+          if (m) { chips += Number(m[1]); each[card.getAttribute('data-class-tab')] = chip.textContent; } }); });
+      return {
+        view: (document.querySelector('main > :not(.hidden)') || {}).id || '',
+        order: stack ? Array.prototype.map.call(stack.children, function(n){
+          return n.getAttribute('data-glance-panel') || (n.querySelector('#homeGrid') ? 'grid' : '?'); }) : [],
+        panel: !!panel,
+        title: panel ? (panel.querySelector('.panel-title h2') || {}).textContent : '',
+        doors: panel ? Array.prototype.map.call(panel.querySelectorAll('.panel-title-actions button'), function(b){
+          return b.getAttribute('data-signals-open') + '=' + b.textContent; }) : [],
+        quietDoors: view ? view.querySelectorAll('[data-signals-open="quiet"]').length : -1,
+        quietPanel: !!document.getElementById('glanceQuiet'),
+        shut: panel ? !!panel.querySelector('.gl-shut') : false,
+        shutText: panel && panel.querySelector('.gl-shut') ? panel.querySelector('.gl-shut').textContent : '',
+        two: panel ? !!panel.querySelector('.sig-two') : false,
+        keyed: panel ? panel.querySelectorAll('[data-signals-key]').length : -1,
+        concern: col('concern'), praise: col('praise'),
+        chips: chips, each: each,
+        reading: (function(){ var r = window.planbook.glance.signalReading();
+          return { hits: r.hits.length, held: r.suppressed.map(function(x){ return x.hit.direction + ':' + x.hit.ruleId; }).sort(),
+            quiet: r.quiet.length }; })(),
+        model: { blocked: model.blocked,
+          concern: model.concern.rows.map(function(r){ return r.key; }),
+          praise: model.praise.rows.map(function(r){ return r.key; }),
+          concernHead: 'Concern · ' + model.concern.count + model.concern.note,
+          praiseHead: 'Praise · ' + model.praise.count + model.praise.note,
+          names: model.all.reduce(function(o, r){ o[r.key] = r.name; return o; }, {}),
+          leads: model.concern.rows.map(function(r){ return r.studentId.slice(-4) + ':' + r.lead.ruleId; }),
+          praiseLeads: model.praise.rows.map(function(r){ return r.studentId.slice(-4) + ':' + r.lead.ruleId; }),
+          quiet: model.quiet.count },
+        html: view ? view.outerHTML : '' }; })()`;
+    const key64 = (sid, cid) => sid + '|' + cid;
+    const p64 = await evalJs(PANEL64);
+    const C64 = p64.concern || { rows: [] }, P64 = p64.praise || { rows: [] };
+
+    check('the WO-6.4 fixture is real: the signals screen\'s own model ranks EIGHT concern rows with Abe '
+      + 'first on attendance though his class is last, TWO praise rows with Ben\'s climb ahead of Gus '
+      + 'though Gus is first on the roster, Ben on both lists, and one hit held by the cooldown in each '
+      + 'direction',
+      plant64.view === 'homeView' && p64.model.blocked === false
+        && p64.model.concern.length === 8 && p64.model.praise.length === 2
+        && p64.model.concern[0] === key64(ABE64, ABS64)
+        && /^4abe:(absence|attendance)-/.test(p64.model.leads[0])
+        && p64.model.praise.join(',') === [key64(BEN64, CLS64), key64(GUS64, CLS64)].join(',')
+        && p64.model.concern.indexOf(key64(BEN64, CLS64)) !== -1
+        && p64.reading.held.join(',') === 'concern:missing-count,praise:high-score-run',
+      JSON.stringify({ concern: p64.model.leads, praise: p64.model.praiseLeads, held: p64.reading.held,
+        hits: p64.reading.hits }));
+
+    /* ── acceptance line 1: the five sections, in order, and every control in them is a door ── */
+    const doors64 = await evalJs(`(function(){
+      var stack = document.getElementById('glanceStack');
+      var HOOKS = ['data-class-tab', 'data-calendar-open', 'data-calendar-item', 'data-scores-open', 'data-signals-open'];
+      return Array.prototype.map.call(stack.children, function(panel){
+        var name = panel.getAttribute('data-glance-panel') || 'grid';
+        var shown = Array.prototype.filter.call(panel.querySelectorAll('button'), function(b){
+          var r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
+        var dead = shown.filter(function(b){
+          return !HOOKS.some(function(h){ return b.hasAttribute(h); }); });
+        return { name: name, buttons: shown.length,
+          dead: dead.map(function(b){ return b.className + ':' + b.textContent.slice(0, 30); }) }; }); })()`);
+    const doorsBy = (n) => doors64.filter(d => d.name === n)[0] || { buttons: 0, dead: ['missing'] };
+    check('the five sections appear in the page\'s order — the class grid, today and this week, waiting '
+      + 'to be graded, who needs you, closing in — and every visible control in every one of them '
+      + 'carries a route hook the one click listener handles: a card, a calendar door, a chip, a score '
+      + 'column, or a door onto the signals screen',
+      p64.order.join(',') === 'grid,week,queue,attention,closing'
+        && doors64.every(d => d.dead.length === 0)
+        && doorsBy('grid').buttons >= 4 && doorsBy('week').buttons >= 1 && doorsBy('queue').buttons >= 1
+        && doorsBy('attention').buttons >= 2 + 6 + 3 && doorsBy('closing').buttons >= 1,
+      JSON.stringify({ order: p64.order, doors: doors64 }));
+
+    /* One item from each of the five, walked in the page's order. */
+    const land64 = `(function(){
+      var open = document.querySelector('.modal-overlay:not(.hidden)');
+      return { view: (document.querySelector('main > :not(.hidden)') || {}).id || '',
+        modal: open ? open.id : '', openClass: window.planbook.classes.getSelectedClassId() }; })()`;
+    const closeAll64 = async () => await evalJs(`(function(){
+      var open = document.querySelectorAll('.modal-overlay:not(.hidden)');
+      Array.prototype.forEach.call(open, function(o){ window.planbook.closeModal(o); });
+      return open.length; })()`);
+    const walk64 = {};
+    await clickSel('#homeGrid [data-class-tab="' + CLS64 + '"]');
+    await new Promise(r => setTimeout(r, 300));
+    walk64.grid = await evalJs(land64);
+    await closeAll64(); await goHome67();
+    await clickSel('#homeView [data-glance-panel="week"] .gl-row');
+    await new Promise(r => setTimeout(r, 300));
+    walk64.week = await evalJs(land64);
+    await closeAll64(); await goHome67();
+    await clickSel('#homeView [data-glance-panel="queue"] .gl-row');
+    await new Promise(r => setTimeout(r, 400));
+    walk64.queue = await evalJs(land64);
+    await closeAll64(); await goHome67();
+    await clickSel('#homeView [data-glance-panel="attention"] .sig-row');
+    await new Promise(r => setTimeout(r, 400));
+    walk64.attention = await evalJs(land64);
+    await closeAll64(); await goHome67();
+    await clickSel('#homeView [data-glance-panel="closing"] .gl-row');
+    await new Promise(r => setTimeout(r, 300));
+    walk64.closing = await evalJs(land64);
+    await closeAll64(); await goHome67();
+    check('and one item from each of the five, tapped in the page\'s order, lands where it resolves: the '
+      + 'card on its class, the week row on the calendar, the queue row on the score grid, the '
+      + 'who-needs-you row on the signals screen with a signal card open, the closing-in row on the '
+      + 'events panel',
+      walk64.grid.view === 'classView' && walk64.grid.openClass === CLS64
+        && walk64.week.view === 'calendarView'
+        && walk64.queue.view === 'scoresView'
+        && walk64.attention.view === 'signalsView' && walk64.attention.modal === 'signalCardModal'
+        && walk64.closing.modal === 'eventsModal',
+      JSON.stringify(walk64));
+
+    /* ── acceptance line 2: the rows are that screen's rows, in that screen's order ── */
+    await rehome67();
+    const q64 = await evalJs(PANEL64);
+    const Cq = q64.concern || { rows: [] }, Pq = q64.praise || { rows: [] };
+    check('panel 4 draws two columns in src/signals-view.css\'s own classes, headed exactly as the signals '
+      + 'screen heads them — `Concern · 8` with the ruled note and `Praise · 2` with the climb note — '
+      + 'and each column\'s rows are THAT SCREEN\'S MODEL\'S FIRST FOUR KEYS IN THAT ORDER: four concern '
+      + 'rows led by Abe and both praise rows, Ben ahead of Gus; every row a <button type="button"> '
+      + 'wearing .sig-row',
+      q64.panel && q64.two && q64.title === 'Who needs you'
+        && Cq.head === q64.model.concernHead && Pq.head === q64.model.praiseHead
+        && Cq.rows.map(r => r.key).join(',') === q64.model.concern.slice(0, 4).join(',')
+        && Pq.rows.map(r => r.key).join(',') === q64.model.praise.join(',')
+        && Cq.rows.length === 4 && Pq.rows.length === 2
+        && Cq.rows.concat(Pq.rows).every(r => r.tag === 'BUTTON' && r.type === 'button'
+          && r.cls === 'sig-row' && r.open === 'card'),
+      JSON.stringify({ heads: [Cq.head, Pq.head], want: [q64.model.concernHead, q64.model.praiseHead],
+        concern: Cq.rows.map(r => r.key), model: q64.model.concern, praise: Pq.rows.map(r => r.key) }));
+
+    const dist64 = new Set(Cq.rows.concat(Pq.rows).map(r => r.key));
+    const onBoth64 = Cq.rows.filter(r => Pq.rows.some(p => p.key === r.key)).length;
+    const modelBoth64 = q64.model.concern.filter(k => q64.model.praise.indexOf(k) !== -1).length;
+    check('the students drawn plus the `and N more` foot equal the sum of the cards\' `N need you` chips, '
+      + 'read off the glass: 4 + 2 drawn and `and 4 more` is 10, the chips are 1 + 7 + 1 = 9, and the one '
+      + 'difference is Ben — one student on the card and a row in each column, the only student on '
+      + 'both lists, drawn in both — so over DISTINCT students the panel and the chips are one number; '
+      + 'and a column of four or fewer draws no foot',
+      !!Cq.more && Cq.more.text === 'and 4 more›' && Cq.more.open === 'more' && Cq.more.column === 'concern'
+        && Cq.more.key === q64.model.concern[4] && !Pq.more
+        && q64.each[CLS] === '1 needs you' && q64.each[CLS64] === '7 need you' && q64.each[ABS64] === '1 needs you'
+        && Cq.rows.length + Pq.rows.length + 4 === q64.chips + onBoth64
+        && onBoth64 === 1 && modelBoth64 === 1 && dist64.has(key64(BEN64, CLS64))
+        && dist64.size + (q64.model.concern.length - 4) === q64.chips,
+      JSON.stringify({ drawn: [Cq.rows.length, Pq.rows.length], more: Cq.more, praiseMore: Pq.more,
+        chips: q64.chips, each: q64.each, onBoth: onBoth64, distinct: dist64.size }));
+
+    /* Every drawn row, tapped, opens THAT student's card on the signals screen — and the column is
+       honoured: closing Ben's card from the PRAISE column puts focus back on his praise row. */
+    const taps64 = [];
+    for (const [dir, rows] of [['concern', Cq.rows], ['praise', Pq.rows]]) {
+      for (const r of rows) {
+        await goHome67();
+        await clickSel('#homeView [data-glance-panel="attention"] .sig-col.' + dir + ' [data-signals-key="' + r.key + '"]');
+        await new Promise(res => setTimeout(res, 400));
+        const at = await evalJs(`(function(){
+          var modal = document.getElementById('signalCardModal');
+          var target = window.planbook.signalsView.openCardTarget();
+          var out = { view: (document.querySelector('main > :not(.hidden)') || {}).id || '',
+            open: !!modal && !modal.classList.contains('hidden'),
+            title: (document.getElementById('signalCardTitle') || {}).textContent || '',
+            target: target ? target.studentId + '|' + target.classId : '' };
+          window.planbook.closeModal(modal);
+          var f = document.activeElement;
+          out.focusKey = f ? f.getAttribute('data-signal-row') : null;
+          out.focusList = f && f.parentNode ? f.parentNode.id : '';
+          return out; })()`);
+        taps64.push(Object.assign({ dir: dir, key: r.key, want: q64.model.names[r.key] }, at));
+      }
+    }
+    await goHome67();
+    check('EVERY student drawn in either column taps through to THAT student\'s signal card on WO-4.2\'s '
+      + 'screen — six taps, six cards, each titled with the row\'s own student and targeting her row\'s '
+      + 'key — and closing the card returns focus to her row in the column she was tapped in (Ben\'s '
+      + 'praise tap to #signalsPraiseList, his concern tap to #signalsList)',
+      taps64.length === 6 && taps64.every(t => t.view === 'signalsView' && t.open && t.title === t.want
+        && t.target === t.key && t.focusKey === t.key
+        && t.focusList === (t.dir === 'praise' ? 'signalsPraiseList' : 'signalsList')),
+      JSON.stringify(taps64.map(t => ({ dir: t.dir, key: t.key, title: t.title, want: t.want,
+        target: t.target, focus: t.focusList + '/' + t.focusKey }))));
+
+    /* The row on the glance page and the row on the screen, for the same student: same pieces, same words. */
+    await clickSel('#homeView [data-glance-panel="attention"] .sig-col.concern [data-signals-key="' + key64(ABE64, ABS64) + '"]');
+    await new Promise(r => setTimeout(r, 400));
+    const there64 = await evalJs(`(function(){
+      window.planbook.closeModal(document.getElementById('signalCardModal'));
+      var b = document.querySelector('#signalsList [data-signal-row="${key64(ABE64, ABS64)}"]');
+      return b ? { text: b.textContent, shape: Array.prototype.map.call(b.children, function(n){ return n.className; }).join('|') } : null; })()`);
+    await goHome67();
+    const here64 = Cq.rows[0] || {};
+    check('the glance row and the signals screen\'s row for the same student are the same row — the same '
+      + 'child elements in the same classes (avatar, name block, figure, chevron) and the same words, '
+      + 'Abe\'s attendance sentence and his tags included',
+      !!there64 && here64.key === key64(ABE64, ABS64) && here64.shape === there64.shape
+        && here64.text === there64.text && /Wo64Abe/.test(here64.text),
+      JSON.stringify({ here: { shape: here64.shape, text: here64.text }, there: there64 }));
+
+    /* ── the feet and the header doors ── */
+    await clickSel('#homeView [data-glance-panel="attention"] .gl-more');
+    await new Promise(r => setTimeout(r, 400));
+    const more64 = await evalJs(`(function(){ var f = document.activeElement;
+      var r = f ? f.getBoundingClientRect() : null;
+      return { view: (document.querySelector('main > :not(.hidden)') || {}).id || '',
+        modal: !!document.querySelector('.modal-overlay:not(.hidden)'),
+        key: f ? f.getAttribute('data-signal-row') : null, list: f && f.parentNode ? f.parentNode.id : '',
+        top: r ? Math.round(r.top) : null, inner: window.innerHeight }; })()`);
+    await goHome67();
+    await clickSel('#homeView [data-glance-panel="attention"] .sig-col.concern .sig-hidden');
+    await new Promise(r => setTimeout(r, 400));
+    const heldC64 = await evalJs(`(function(){ var m = window.planbook.signalsView.signalsModel();
+      var list = document.getElementById('signalsConcernQuiet');
+      return { view: (document.querySelector('main > :not(.hidden)') || {}).id || '',
+        expanded: m.concern.expanded, praiseExpanded: m.praise.expanded,
+        shown: list ? !list.classList.contains('hidden') && list.children.length : 0,
+        focus: document.activeElement ? document.activeElement.id : '' }; })()`);
+    await goHome67();
+    await clickSel('#homeView [data-glance-panel="attention"] .sig-col.praise .sig-hidden');
+    await new Promise(r => setTimeout(r, 400));
+    const heldP64 = await evalJs(`(function(){ var m = window.planbook.signalsView.signalsModel();
+      var list = document.getElementById('signalsPraiseQuiet');
+      return { expanded: m.praise.expanded, concernExpanded: m.concern.expanded,
+        shown: list ? !list.classList.contains('hidden') && list.children.length : 0,
+        focus: document.activeElement ? document.activeElement.id : '' }; })()`);
+    await goHome67();
+    await clickSel('#homeView [data-glance-panel="attention"] [data-signals-open="list"]');
+    await new Promise(r => setTimeout(r, 400));
+    const list64 = await evalJs(`(function(){ var m = window.planbook.signalsView.signalsModel();
+      return { view: (document.querySelector('main > :not(.hidden)') || {}).id || '', filter: m.classId,
+        sort: m.sort, modal: !!document.querySelector('.modal-overlay:not(.hidden)') }; })()`);
+    await goHome67();
+    await clickSel('#homeView [data-glance-panel="attention"] [data-signals-open="quiet"]');
+    await new Promise(r => setTimeout(r, 400));
+    const quiet64 = await evalJs(`(function(){ return { view: (document.querySelector('main > :not(.hidden)') || {}).id || '',
+      head: (document.getElementById('signalsQuietHead') || {}).textContent || '',
+      focus: document.activeElement ? document.activeElement.id : '' }; })()`);
+    await goHome67();
+    check('the feet and the header are doors onto that screen, not expansions here: `and 4 more ›` lands '
+      + 'with focus on the FIRST row the panel did not draw, in the concern list, scrolled into view; '
+      + 'each cooldown foot lands with THAT column\'s suppressed rows open and the other closed, focus '
+      + 'on its foot; `The full list` lands on the screen with every class on the ruled order and no card; '
+      + 'and `The quiet middle · N` lands on the quiet-middle panel with the same N',
+      more64.view === 'signalsView' && !more64.modal && more64.key === q64.model.concern[4]
+        && more64.list === 'signalsList' && more64.top >= 0 && more64.top < more64.inner
+        && heldC64.view === 'signalsView' && heldC64.expanded === true && heldC64.praiseExpanded === false
+        && heldC64.shown === 1 && heldC64.focus === 'signalsConcernHidden'
+        && heldP64.expanded === true && heldP64.concernExpanded === false && heldP64.shown === 1
+        && heldP64.focus === 'signalsPraiseHidden'
+        && list64.view === 'signalsView' && list64.filter === '' && list64.sort === 'ruled' && !list64.modal
+        && quiet64.view === 'signalsView' && quiet64.focus === 'signalsQuietHead'
+        && q64.doors.indexOf('quiet=' + quiet64.head) !== -1,
+      JSON.stringify({ more: more64, heldConcern: heldC64, heldPraise: heldP64, list: list64,
+        quiet: quiet64, doors: q64.doors }));
+    check('the quiet-middle door has ONE home on this page: panel 4\'s header carries it, the quiet panel '
+      + 'is not drawn, and there is exactly one `data-signals-open="quiet"` under #homeView; the two '
+      + 'cooldown feet say the signals screen\'s own words with the › of a door',
+      q64.quietDoors === 1 && !q64.quietPanel
+        && q64.doors.length === 2 && /^quiet=The quiet middle/.test(q64.doors[0])
+        && q64.doors[1] === 'list=The full list'
+        && !!Cq.held && Cq.held.text === '1 you wrote about recently · show it›' && Cq.held.open === 'held'
+        && !!Pq.held && Pq.held.text === '1 you wrote about recently · show it›' && Pq.held.column === 'praise',
+      JSON.stringify({ quietDoors: q64.quietDoors, quietPanel: q64.quietPanel, doors: q64.doors,
+        feet: [Cq.held, Pq.held] }));
+
+    /* ── acceptance line 5: support data planted on every fixture student, in both modes ── */
+    await probe(`doc.students.forEach(function(p){
+      if (String(p.id).indexOf('s_wo64') !== 0 && p.id !== '${ADA}') return;
+      p.supports = { plan: '504', caseManager: { name: 'Wo64CaseManager', email: 'wo64cm@example.org' },
+        reviewDate: p.id === '${ABE64}' ? shift(0) : '',
+        accommodations: [{ kind: 'extended-time', detail: 'Wo64AccommodationDetail', appliesTo: [] }],
+        medical: 'Wo64MedicalText', behaviorPlan: 'Wo64BehaviorPlanText' }; });`);
+    const SUPPORT64 = /Wo64CaseManager|wo64cm@|Wo64AccommodationDetail|Wo64MedicalText|Wo64BehaviorPlanText|Extended time|extended-time|\b504\b|\bIEP\b/;
+    const out64 = await evalJs(PANEL64);
+    const outReview64 = /1 review coming up/.test(out64.html);
+
+    /* ── acceptance line 4: the REAL control, pressed with the page up ── */
+    await clickVisible('[data-presentation-toggle]');
+    await new Promise(r => setTimeout(r, 300));
+    const on64 = await evalJs(PANEL64);
+    const onMode64 = await evalJs('window.planbook.supports.presentationMode()');
+    await clickVisible('[data-presentation-toggle]');
+    await new Promise(r => setTimeout(r, 300));
+    const off64 = await evalJs(PANEL64);
+    const offMode64 = await evalJs('window.planbook.supports.presentationMode()');
+    const namesIn = (html) => NAMES64.filter(n => html.indexOf(n) !== -1);
+    check('with presentation mode switched ON through its real control while the page is up — no '
+      + 're-arrival — panel 4 is SHUT: its header and both doors stay, the columns are not in the tree '
+      + '(no .sig-two, no keyed row, no foot), no fixture student\'s name is anywhere in #homeView\'s '
+      + 'markup, attributes included, and the refusal keeps the counts — `8 students are flagged and 2 '
+      + 'are climbing` — while the cards\' chips are unchanged',
+      onMode64 === true && on64.view === 'homeView' && on64.panel && on64.shut && !on64.two
+        && on64.keyed === 0 && !on64.concern && !on64.praise
+        && on64.doors.length === 2 && on64.order.join(',') === 'grid,week,queue,attention,closing'
+        && namesIn(on64.html).length === 0
+        && /^🔒Not while you are projecting\.8 students are flagged and 2 are climbing\./.test(on64.shutText)
+        && on64.chips === q64.chips,
+      JSON.stringify({ mode: onMode64, shut: on64.shut, two: on64.two, keyed: on64.keyed,
+        text: on64.shutText, names: namesIn(on64.html), chips: on64.chips }));
+    check('and switched OFF the same way, the columns are back at once with the same rows',
+      offMode64 === false && off64.two && !off64.shut
+        && (off64.concern || { rows: [] }).rows.map(r => r.key).join(',') === Cq.rows.map(r => r.key).join(',')
+        && (off64.praise || { rows: [] }).rows.length === 2,
+      JSON.stringify({ mode: offMode64, two: off64.two, shut: off64.shut }));
+    check('with a plan type, an accommodation, medical text, behavior-plan text and a case manager '
+      + 'planted on every student on the page, NONE of them is in #homeView\'s markup in presentation '
+      + 'mode or out of it; the one supports-derived thing on the page is the review COUNT, present '
+      + 'with the mode off and gone with it on',
+      !SUPPORT64.test(out64.html) && !SUPPORT64.test(on64.html) && !SUPPORT64.test(off64.html)
+        && outReview64 && !/review coming up/.test(on64.html),
+      JSON.stringify({ off: (out64.html.match(SUPPORT64) || [null])[0], on: (on64.html.match(SUPPORT64) || [null])[0],
+        reviewOff: outReview64, reviewOn: /review coming up/.test(on64.html) }));
+
+    /* ── panel 4's controls on a pointer that is really coarse ── */
+    await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+    await send('Emulation.setDeviceMetricsOverride', { width: 1024, height: 768, deviceScaleFactor: 2, mobile: true });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+    await send('Page.reload');
+    await new Promise(r => setTimeout(r, 700));
+    await waitForBoot();
+    await evalJs(KILL_ANIM);
+    const coarse64 = await evalJs("matchMedia('(pointer: coarse)').matches");
+    if ((await onView67()) !== 'homeView') await goHome67();
+    const sizes64 = await evalJs(`(function(){
+      var panel = document.querySelector('#homeView [data-glance-panel="attention"]');
+      return panel ? Array.prototype.map.call(panel.querySelectorAll('button'), function(b){
+        var r = b.getBoundingClientRect();
+        return { cls: b.className, h: Math.round(r.height * 100) / 100, w: Math.round(r.width) }; }) : null; })()`);
+    await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 600, deviceScaleFactor: 1, mobile: false });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await send('Page.reload');
+    await new Promise(r => setTimeout(r, 600));
+    await waitForBoot();
+    await evalJs(KILL_ANIM);
+    if ((await onView67()) !== 'homeView') await goHome67();
+    check('under an emulated coarse pointer every control in panel 4 — the two header doors, six rows, '
+      + '`and 4 more` and both cooldown feet — measures at least 44px each way',
+      coarse64 === true && Array.isArray(sizes64) && sizes64.length === 2 + 6 + 1 + 2
+        && sizes64.every(b => b.h >= 44 && b.w >= 44),
+      'coarse = ' + coarse64 + ', ' + JSON.stringify(sizes64));
+
+    await evalJs('window.planbook.supports.setPresentationMode(' + (modeWas64 ? 'true' : 'false') + '); 1');
 
     /* The open class goes back to what it was before the taps above moved it. */
     await evalJs('window.planbook.setPref(' + JSON.stringify('openClassId') + ', '
@@ -957,18 +1425,23 @@ if (!seam) {
     var s = window.planbook.store;
     var stash = ${JSON.stringify((plant67 && plant67.stash) || { archived: [], events: [], reviews: [] })};
     s.update(function(doc){
-      doc.classes = (doc.classes || []).filter(function(c){ return c.id !== '${CLS}' && c.id !== 'c_wo68'; });
+      doc.classes = (doc.classes || []).filter(function(c){ return c.id !== '${CLS}' && c.id !== 'c_wo68'
+        && c.id !== 'c_wo64' && c.id !== 'c_wo64abs'; });
+      doc.attendance = (doc.attendance || []).filter(function(r){ return r.classId !== 'c_wo64abs'; });
       doc.students = (doc.students || []).filter(function(p){
-        return String(p.id).indexOf('s_wo67') !== 0 && String(p.id).indexOf('s_wo68') !== 0; });
+        return String(p.id).indexOf('s_wo67') !== 0 && String(p.id).indexOf('s_wo68') !== 0
+          && String(p.id).indexOf('s_wo64') !== 0; });
       doc.assignments = (doc.assignments || []).filter(function(a){
-        return String(a.id).indexOf('a_wo67_') !== 0 && String(a.id).indexOf('a_wo68_') !== 0; });
+        return String(a.id).indexOf('a_wo67_') !== 0 && String(a.id).indexOf('a_wo68_') !== 0
+          && String(a.id).indexOf('a_wo64_') !== 0; });
       doc.events = (doc.events || []).filter(function(e){
-        return String(e.id).indexOf('e_wo67') !== 0 && String(e.id).indexOf('e_wo68') !== 0; });
+        return String(e.id).indexOf('e_wo67') !== 0 && String(e.id).indexOf('e_wo68') !== 0
+          && String(e.id).indexOf('e_wo64') !== 0; });
       doc.log = (doc.log || []).filter(function(e){
-        return String(e.id).indexOf('l_wo67') !== 0; });
+        return String(e.id).indexOf('l_wo67') !== 0 && String(e.id).indexOf('l_wo64') !== 0; });
       if (doc.scores) {
         Object.keys(doc.scores).forEach(function(k){
-          if (k.indexOf('a_wo67_') === 0 || k.indexOf('a_wo68_') === 0) delete doc.scores[k]; });
+          if (k.indexOf('a_wo67_') === 0 || k.indexOf('a_wo68_') === 0 || k.indexOf('a_wo64_') === 0) delete doc.scores[k]; });
       }
       stash.archived.forEach(function(a){
         var c = doc.classes.filter(function(x){ return x.id === a.id; })[0];
@@ -983,17 +1456,22 @@ if (!seam) {
     });
     var d = s.getDoc();
     var out = {
-      classes:(d.classes || []).filter(function(c){ return c.id === '${CLS}' || c.id === 'c_wo68'; }).length,
+      classes:(d.classes || []).filter(function(c){ return c.id === '${CLS}' || c.id === 'c_wo68'
+        || c.id === 'c_wo64' || c.id === 'c_wo64abs'; }).length,
+      attendance:(d.attendance || []).filter(function(r){ return r.classId === 'c_wo64abs'; }).length,
       students:(d.students || []).filter(function(p){
-        return String(p.id).indexOf('s_wo67') === 0 || String(p.id).indexOf('s_wo68') === 0; }).length,
+        return String(p.id).indexOf('s_wo67') === 0 || String(p.id).indexOf('s_wo68') === 0
+          || String(p.id).indexOf('s_wo64') === 0; }).length,
       assignments:(d.assignments || []).filter(function(a){
-        return String(a.id).indexOf('a_wo67_') === 0 || String(a.id).indexOf('a_wo68_') === 0; }).length,
+        return String(a.id).indexOf('a_wo67_') === 0 || String(a.id).indexOf('a_wo68_') === 0
+          || String(a.id).indexOf('a_wo64_') === 0; }).length,
       ownEvents:(d.events || []).filter(function(e){
-        return String(e.id).indexOf('e_wo67') === 0 || String(e.id).indexOf('e_wo68') === 0; }).length,
+        return String(e.id).indexOf('e_wo67') === 0 || String(e.id).indexOf('e_wo68') === 0
+          || String(e.id).indexOf('e_wo64') === 0; }).length,
       log:(d.log || []).filter(function(e){
-        return String(e.id).indexOf('l_wo67') === 0; }).length,
+        return String(e.id).indexOf('l_wo67') === 0 || String(e.id).indexOf('l_wo64') === 0; }).length,
       scores: Object.keys(d.scores || {}).filter(function(k){
-        return k.indexOf('a_wo67_') === 0 || k.indexOf('a_wo68_') === 0; }).length,
+        return k.indexOf('a_wo67_') === 0 || k.indexOf('a_wo68_') === 0 || k.indexOf('a_wo64_') === 0; }).length,
       stillArchived: stash.archived.filter(function(a){
         var c = (d.classes || []).filter(function(x){ return x.id === a.id; })[0];
         return c && c.archived; }).length,
@@ -1012,6 +1490,7 @@ if (!seam) {
     + 'it lifted out is back at its own index, every review date it blanked is restored, and the '
     + 'page was left on the grid',
     cleaned67.classes === 0 && cleaned67.students === 0 && cleaned67.assignments === 0
+      && cleaned67.attendance === 0
       && cleaned67.ownEvents === 0 && cleaned67.log === 0 && cleaned67.scores === 0
       && cleaned67.stillArchived === 0
       && cleaned67.eventsBack === cleaned67.eventsOwed && cleaned67.reviewsBack === cleaned67.reviewsOwed

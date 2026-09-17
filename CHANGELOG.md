@@ -13,6 +13,27 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The home screen shows who needs you — 2026-09-16
+
+**The glance page's fourth panel is drawn**, between *Waiting to be graded* and *Closing in*: two
+columns, concern and praise, ranked exactly as the *Who needs you* screen ranks them — the praise
+side by delta, never by level. Each column shows **four** students, the owner's number, then *and
+N more ›*; a column the engine held rows out of on cooldown says so in a foot. Every row is a door:
+tapping a student opens her card on the signals screen and closing it returns focus to the row she
+was tapped from, in the column she was tapped in. *The full list* and *The quiet middle · N* open the
+same screen at the head and at its held rows. The cards' *N need you* chips now count the same
+reading the panel draws, so the signal pass runs once per class per render instead of twice, and the
+home screen can no longer disagree with itself about the count.
+
+**Under the projector the panel shuts rather than hides**: no columns, no names, no foot — the
+header stays with the count kept, *8 students are flagged and 2 are climbing*, and nothing says what
+was withheld. Not one support field reaches the page in either mode; the only supports-derived read
+on the glance page is the review count, already reduced to a number.
+
+Two readings are owed to an iPad before the work order closes: whether the praise column is reachable
+without scrolling past the week and the queue, and whether the page draws in under a second on a
+full year. Shell cache is v119.
+
 ### The week, the grading queue, and what is closing in — 2026-09-16
 
 **The glance page draws three of its panels now**, under the class grid and in the order a teacher
