@@ -92,10 +92,10 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 3 | Gradebook | 🔨 IN PROGRESS | 10/10 `[██████████] 100%` |
 | 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 5/8 `[██████░░░░] 63%` |
 | 5 | Outreach | 🔨 IN PROGRESS | 9/9 `[██████████] 100%` |
-| 6 | Calendar & the glance page | 🔨 IN PROGRESS | 7/8 `[█████████░] 88%` |
+| 6 | Calendar & the glance page | 🔨 IN PROGRESS | 8/8 `[██████████] 100%` |
 | 7 | Drive sync (opt-in) | 🔨 IN PROGRESS — launch needs OAuth verification | 6/7 `[█████████░] 86%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 2/8 `[██░░░░░░░░] 25%` |
-| | | **Overall** | **70/81 `[█████████░] 86%`** · ⏳ 1 deferred |
+| | | **Overall** | **71/81 `[█████████░] 88%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -607,7 +607,7 @@ it. If it can't be acted on, it doesn't earn a place.
 - [x] Event model: date or range, title, kind, optional class and student.
 - [x] Derived events computed at render from assignments, terms, and the schedule — not stored.
 - [x] Month and week views, filterable by class.
-- [ ] **The glance page**, in the order a teacher needs it: **every class with today's state —
+- [x] **The glance page**, in the order a teacher needs it: **every class with today's state —
       taken · dropped · not yet** — each with a one-tap fix · today's and this week's events ·
       what's waiting to be graded · who needs attention · deadlines closing in.
 - [x] Honest empty states. A quiet day says "nothing needs you today", not five empty panels.

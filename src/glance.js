@@ -99,6 +99,18 @@
   WEEK on that event's day, through `data-calendar-open="<date>"`, the home screen's own calendar
   door with a day on the end. A queue row wears `data-scores-open`, the only new hook.
 
+  THE REVIEW COUNT KEEPS THE DOOR EMPTY AND CARRIES THE WINDOW'S FAR EDGE BESIDE IT (WO-6.9). It
+  wears `data-calendar-open=""` — the month on today, the home button's own landing — and
+  `data-calendar-through="<iso>"`, which is the `to` of the window closingIn() counted the reviews
+  over. The calendar reads that edge on arrival and, when it lies past the page it drew, says so in
+  a sentence under the grid (src/calendar-view.js). THE DATE ON THAT ATTRIBUTE IS THE WINDOW'S AND
+  NEVER A REVIEW'S: the window is the lead time the teacher set, already printed on the panel's own
+  head, and a review's date on this row — in the text or in an attribute, since a projector's mirror
+  and a screen reader both read the DOM — would say when a student's plan is reviewed. The obvious
+  fix, landing on the month of the earliest review, needs exactly that date and is what WO-6.9's
+  Traps line refuses; whether the window crosses a month edge is not decided here either, because
+  this file computes nothing — the calendar decides at render from the edge it was handed.
+
   A GRADES-DUE DATE IS UNDER *CLOSING IN* AND NOWHERE ELSE ON THIS PAGE (the owner, 2026-09-16):
   it is a deadline, and the week lists what is scheduled. The decision is src/calendar.js's
   scheduledIn(), not a filter here. And ALL THREE KINDS UNDER *CLOSING IN* SHARE ONE HORIZON (the
@@ -725,8 +737,11 @@ function queuePanel(rows, classes, doc) {
                         event into its form, which is where the month grid's grades-due chip goes.
                         This is the surface WO-6.1's lead-time warning was re-homed to.
     a term edge         as on the week panel.
-    the review count    a count and a sentence, opening the calendar on this month. No name, no
-                        date, no kind, no meta — and absent under a projector because the reader is.
+    the review count    a count and a sentence, opening the calendar on this month, with the
+                        window's far edge riding along so the calendar can say when the window runs
+                        past the month it drew (WO-6.9; the header's paragraph on the two
+                        attributes). No name, no date, no kind, no meta — and absent under a
+                        projector because the reader is.
 */
 function closingPanel(items, classes, doc, today) {
   const lead = leadShown(doc, today);
@@ -738,6 +753,9 @@ function closingPanel(items, classes, doc, today) {
       const row = glRow(item.count + ' ' + (item.count === 1 ? REVIEW_ONE : REVIEW_MANY),
         REVIEW_TEXT, '', false);
       row.setAttribute('data-calendar-open', '');
+      /* The window's `to`, off the record closingIn() already carries — never a review's date, and
+         never a month comparison made here. The header says why on both counts (WO-6.9). */
+      row.setAttribute('data-calendar-through', item.to);
       built.list.append(row);
       return;
     }

@@ -208,6 +208,17 @@
   margin-top: 10px; padding: 0 2px;
   font-size: 11px; line-height: 1.6; color: #8a9bb0;
 }
+/* "The lead time you set for grades runs through Thu, Oct 1 — into October, past the month on
+   screen." (WO-6.9). The answer to "where is the review the count said was coming" when the
+   window the glance page counted over runs past the page drawn — prose under the grid beside the
+   hint, one shade stronger than it (the empty state's lead colour, not bold) because it is an
+   answer the teacher came here for rather than a note about what the grid is not saying. Not
+   amber: nothing is wrong, the page is one tap short. Never a control; the → it names is the
+   pager's. */
+.calendar-through {
+  margin-top: 10px; padding: 0 2px;
+  font-size: 12px; line-height: 1.6; color: #6b7a8d;
+}
 
 /* ── THE EMPTY STATE ── */
 /* Inside shell.css's `.empty-state`, which supplies the centred zero-data block; these three
@@ -291,6 +302,7 @@
   /* Prose, not targets — the 44px next to them belongs to `.class-action-btn`, which the
      empty state's own doors wear. */
   .calendar-hint { font-size: 12px; }
+  .calendar-through { font-size: 13px; }
   .calendar-empty-lead { font-size: 15px; }
   .calendar-empty-text { font-size: 14px; }
   .calendar-empty-actions { gap: 10px; }
@@ -383,7 +395,8 @@
      the sheet. The stamp below is what titles the printout instead. */
   body[data-calendar-print] .calendar-header,
   body[data-calendar-print] .calendar-toolbar,
-  body[data-calendar-print] .calendar-hint { display: none !important; }
+  body[data-calendar-print] .calendar-hint,
+  body[data-calendar-print] .calendar-through { display: none !important; }
   body[data-calendar-print] .calendar-body { padding: 0 !important; }
   body[data-calendar-print] .calendar-print-stamp {
     display: block !important;

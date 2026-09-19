@@ -370,7 +370,13 @@
                                       is why it has no aria-haspopup. A VALUE is a day (WO-6.8): the
                                       glance page's event rows carry `data-calendar-open="<iso>"`
                                       and land on that day's WEEK; no value is the month and today.
-                                      The review count under *Closing in* carries it empty
+                                      The review count under *Closing in* carries it empty, and
+                                      beside it `data-calendar-through="<iso>"` (WO-6.9) — a
+                                      value-carrying companion, never routed on its own: the far
+                                      edge of the lead window the count was read over, handed to
+                                      resetCalendar() as its third argument so the month can say
+                                      when that window runs past the page. The window's date and
+                                      never a review's — src/glance.js's header says why
       data-scores-open="<assignmentId>" + data-scores-class="<classId>"  a row under the glance
                                       page's *Waiting to be graded* (WO-6.8): makes that class the
                                       open one, shows its score grid, and brings that assignment's
@@ -1323,15 +1329,28 @@ function showHome() {
   argument. The home screen's own button carries no value and still lands on the month and today.
   The day is not kept anywhere: it is an argument, and then it is the grid's own anchor, which the
   next arrival replaces. The sentence names the range either way, so it says the week when it is one.
+
+  AND AN EDGE ON THE END OF IT (WO-6.9). The review count under *Closing in* is read over the lead
+  window, which crosses a month edge whenever the lead reaches past the last day — so the month on
+  today can be one page short of a review the count included. The row carries that window's far edge
+  as `data-calendar-through="<iso>"`, handed here to resetCalendar() as its third argument exactly
+  as the day is handed as its second: an argument, then the view's own, then forgotten. The calendar
+  decides at render whether the edge lies past the page and paints a line under the grid if it does
+  (src/calendar-view.js's throughText()); the sentence spoken here is that line read back off the
+  DOM, the way the range is, so a screen-reader user hears what the sighted teacher reads. Every
+  door that names no edge — the home button, an event row — lands and speaks exactly as before.
 */
-function showCalendar(weekOf) {
-  calendarView.resetCalendar('', weekOf);
+function showCalendar(weekOf, throughDate) {
+  calendarView.resetCalendar('', weekOf, throughDate);
   views.showView('calendar');
   classes.refreshClassBar();
   screenNav.refreshScreenNav();
   calendarView.renderCalendar();
   const range = document.getElementById('calendarRange');
-  announce('Calendar' + (range && range.textContent ? ' — ' + range.textContent : '') + '.');
+  const beyond = document.getElementById('calendarThrough');
+  const said = beyond && !beyond.classList.contains('hidden') ? beyond.textContent : '';
+  announce('Calendar' + (range && range.textContent ? ' — ' + range.textContent : '') + '.'
+    + (said ? ' ' + said : ''));
 }
 
 /*
@@ -2709,7 +2728,13 @@ document.addEventListener('click', (e) => {
     how to open a class would have to import the navigation that imports it.
   */
   const calendarOpen = e.target.closest('[data-calendar-open]');
-  if (calendarOpen) { showCalendar(calendarOpen.getAttribute('data-calendar-open')); return; }
+  if (calendarOpen) {
+    /* The second attribute is the review count's alone (WO-6.9) and reads null off every other door,
+       which resetCalendar() takes as no edge. */
+    showCalendar(calendarOpen.getAttribute('data-calendar-open'),
+      calendarOpen.getAttribute('data-calendar-through'));
+    return;
+  }
   /* ── the glance page's door onto one assignment's column (WO-6.8) ──
      The third door out of the home view into a screen, and the first into one class's screen rather
      than a screen about every class: a row under *Waiting to be graded*. openClassOn() is the

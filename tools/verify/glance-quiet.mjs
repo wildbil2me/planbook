@@ -10,6 +10,9 @@
  * § "Driving a browser over CDP" says where a new check goes.
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
+
 export async function run(h) {
 const { check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, waitForBoot, seam } = h;
 
@@ -140,6 +143,8 @@ if (!seam) {
                 meta: b.querySelector('.gl-row-meta') ? b.querySelector('.gl-row-meta').textContent : null,
                 text: b.textContent,
                 open: b.getAttribute('data-calendar-open'),
+                through: b.getAttribute('data-calendar-through'),
+                html: b.outerHTML,
                 item: b.hasAttribute('data-calendar-item'),
                 kind: b.getAttribute('data-calendar-kind') || '',
                 ref: b.getAttribute('data-calendar-ref') || '',
@@ -952,6 +957,254 @@ if (!seam) {
       JSON.stringify({ hits: onlyHits68.hits, rules: onlyHits68.rules, week: onlyHits68.week,
         queue: onlyHits68.queue, closing: onlyHits68.closing, quiet: onlyHits68.quiet,
         panels: onlyHits68.panels, named: onlyHits68.named }));
+
+    /*
+     * ───────── the review count opens a page that shows the review (WO-6.9) ─────────
+     *
+     * WHAT ONLY A BROWSER CAN SETTLE HERE. That the tap on the review count lands where the
+     * dispatcher's answer says — the MONTH on today, every class showing, exactly the home button's
+     * landing — and that the page it lands on carries a sentence naming where the lead window runs
+     * when that window reaches past the month drawn: a chain of navigation only a click can walk,
+     * and a line whose presence is decided at render. That the sentence goes away ON ITS OWN when
+     * the teacher pages to the month that holds the edge, and follows her to the week. That it is
+     * spoken on arrival. And that the review's own date is nowhere in the row's markup — text or
+     * attribute — while the window's edge is, which is the whole of the Traps line.
+     *
+     * THE WINDOW CROSSES THE MONTH EDGE ON EVERY DAY THIS RUNS. The lead is not hard-coded: it is
+     * set to the days from today to the 1st of next month plus eight, so the window's far edge is
+     * the 9th of next month whatever today is — including the 1st and the last day of a month — and
+     * it is past the end of any week drawn on today as well. One review sits on the 1st of next
+     * month (line 1) and then on today (line 2); neither is the edge, which is what makes "the
+     * review's date is absent from the row" a claim and not a tautology. The lead goes back to
+     * exactly what it was, key absent or present, at the foot.
+     */
+    console.log('\n--- the glance page: the review count opens a page that shows the review (WO-6.9) ---');
+    const leadWas69 = await evalJs(`(function(){
+      var d = window.planbook.store.getDoc();
+      var block = d && d.calendar && typeof d.calendar === 'object' ? d.calendar : {};
+      return Object.prototype.hasOwnProperty.call(block, 'gradesDueLeadDays')
+        ? { had: true, value: block.gradesDueLeadDays } : { had: false }; })()`);
+    /* The dates, computed page-side off the page's own clock and handed back as strings. */
+    const dates69 = await evalJs(`(function(){
+      var cal = window.planbook.calendar;
+      var today = window.planbook.attendance.todayISO();
+      var y = Number(today.slice(0, 4)), m = Number(today.slice(5, 7));
+      var pad = function(n){ return (n < 10 ? '0' : '') + n; };
+      var firstNext = (m === 12 ? y + 1 : y) + '-' + pad(m === 12 ? 1 : m + 1) + '-01';
+      var lead = cal.daysBetween(today, firstNext) + 8;
+      return { today: today, firstNext: firstNext, lead: lead, through: cal.shiftDays(today, lead) }; })()`);
+    const MONTHS69 = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthOf69 = (iso) => MONTHS69[Number(iso.slice(5, 7)) - 1];
+    /* `Thu, Oct 9` — src/date-text.js's weekdayShortDate() shape, written out here rather than read
+       through the seam, so the expected sentence below owes the app nothing but the model's window. */
+    const weekdayOf69 = (iso) => {
+      const p = iso.split('-').map(Number);
+      const d = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+      return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getUTCDay()] + ', '
+        + monthOf69(iso).slice(0, 3) + ' ' + p[2]; };
+    /* The sentence the work order asks for, built here from the WINDOW's edge and the page on screen
+       and nothing else — so a build that named a review, a count or a different date fails on the
+       string. */
+    const expect69 = async () => {
+      const m = await evalJs('window.planbook.calendarView.calendarModel()');
+      const due = dates69.through > m.to;
+      const same = dates69.through.slice(0, 7) === m.to.slice(0, 7);
+      return { due: due, scale: m.scale, from: m.from, to: m.to, through: m.through, text: m.throughText,
+        want: due ? 'The lead time you set for grades runs through ' + weekdayOf69(dates69.through) + ' — '
+          + (same ? 'later this month' : 'into ' + monthOf69(dates69.through))
+          + ', past the ' + (m.scale === 'week' ? 'week' : 'month') + ' on screen. '
+          + 'The → arrow above the grid gets you there.' : '' }; };
+    const screen69 = `(function(){
+      var m = window.planbook.calendarView.calendarModel();
+      var line = document.getElementById('calendarThrough');
+      var chip = document.querySelector('#calendarGrid [data-calendar-kind="review-date"][data-calendar-ref="${CARA}"]');
+      var cell = chip ? chip.closest('.calendar-day') : null;
+      return { view: (document.querySelector('main > :not(.hidden)') || {}).id || '',
+        scale: m.scale, from: m.from, to: m.to, filter: m.classId, through: m.through, modelText: m.throughText,
+        shown: !!line && !line.classList.contains('hidden'), text: line ? line.textContent : null,
+        chip: !!chip, chipInRange: !!cell && !cell.classList.contains('outside'),
+        live: (document.getElementById('srLive') || {}).textContent || '' }; })()`;
+
+    /* ── line 1: a review only in NEXT month's part of the window ── */
+    const next69 = await probe(`cal.setLeadDays(doc, ${dates69.lead});
+      (doc.students || []).forEach(function(p){ if (p.id === '${CARA}') { p.supports = p.supports || {}; p.supports.reviewDate = '${dates69.firstNext}'; } });`);
+    const rv69 = (next69.lists.closing ? next69.lists.closing.rows : []).filter(r => /reviews? coming up/.test(r.title))[0] || null;
+    const windowTo69 = await evalJs("window.planbook.calendar.leadWindowOf(window.planbook.store.getDoc(), window.planbook.attendance.todayISO()).to");
+    check('the WO-6.9 fixture is real: the lead now reaches eight days past the 1st of next month, so '
+      + 'the window\'s far edge is next month\'s 9th on whatever day this runs, and a review on that '
+      + '1st is counted — the row is under *Closing in*, wearing `data-calendar-open=""` and beside it '
+      + '`data-calendar-through` holding leadWindowOf()\'s own `to`',
+      windowTo69 === dates69.through && dates69.through.slice(8, 10) === '09'
+        && dates69.through.slice(0, 7) === dates69.firstNext.slice(0, 7)
+        && !!rv69 && rv69.open === '' && rv69.through === dates69.through,
+      JSON.stringify({ today: dates69.today, lead: dates69.lead, through: dates69.through,
+        windowTo: windowTo69, review: dates69.firstNext, row: rv69 && { title: rv69.title, open: rv69.open, through: rv69.through } }));
+
+    await clickSel('#homeView [data-glance-panel="closing"] [data-calendar-through]');
+    await new Promise(r => setTimeout(r, 300));
+    const landed69 = await evalJs(screen69);
+    const wantMonth69 = await expect69();
+    check('tapping the count lands on the MONTH on today with every class showing — the home button\'s '
+      + 'own landing, not a week and not a later month — and the page carries a sentence under the grid '
+      + 'naming where the lead window runs: the date it runs through, the month it runs into, and the → '
+      + 'arrow that gets there; the sentence is the model\'s own and is spoken on arrival',
+      landed69.view === 'calendarView' && landed69.scale === 'month' && landed69.filter === ''
+        && landed69.from <= dates69.today && landed69.to >= dates69.today
+        && landed69.from.slice(0, 7) === dates69.today.slice(0, 7)
+        && landed69.shown && wantMonth69.due && landed69.text === wantMonth69.want
+        && landed69.modelText === wantMonth69.want && landed69.through === dates69.through
+        && new RegExp('into ' + monthOf69(dates69.through) + ', past the month on screen').test(landed69.text)
+        && landed69.live.indexOf(wantMonth69.want) >= 0 && /^Calendar — /.test(landed69.live),
+      JSON.stringify({ view: landed69.view, scale: landed69.scale, from: landed69.from, to: landed69.to,
+        filter: landed69.filter, shown: landed69.shown, text: landed69.text, live: landed69.live,
+        reviewChipOnBorrowedCell: landed69.chip && !landed69.chipInRange }));
+    check('the sentence names the WINDOW and nothing else: no student\'s name, no count, no "review", '
+      + 'no plan word, and the only ISO-shaped or calendar date in it is the window\'s edge',
+      !!landed69.text && !/Wo67|Cara|review|IEP|504|plan|hidden|\d+ (review|student)/i.test(landed69.text)
+        && (landed69.text.match(/\d{4}-\d{2}-\d{2}/g) || []).length === 0
+        && (landed69.text.match(/\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun), [A-Z][a-z]{2} \d{1,2}\b/g) || []).length === 1,
+      JSON.stringify(landed69.text));
+
+    /* Switch to the WEEK on the same arrival: a shorter page, the same gap, the line follows. */
+    await clickSel('#calendarScaleWeek');
+    await new Promise(r => setTimeout(r, 200));
+    const onWeek69 = await evalJs(screen69);
+    const wantWeek69 = await expect69();
+    check('switching to the WEEK after arriving keeps the sentence — the edge is past the week drawn too '
+      + '— and it now says "past the week on screen", with "later this month" or "into <month>" '
+      + 'decided against the week\'s own last day rather than the month\'s',
+      onWeek69.scale === 'week' && onWeek69.shown && wantWeek69.due && onWeek69.text === wantWeek69.want
+        && /past the week on screen/.test(onWeek69.text) && onWeek69.modelText === wantWeek69.want,
+      JSON.stringify({ scale: onWeek69.scale, to: onWeek69.to, text: onWeek69.text }));
+    await clickSel('#calendarScaleMonth');
+    await new Promise(r => setTimeout(r, 200));
+    /* Page forward to the month that holds the edge: the line goes on its own, and the review the
+       count included is on THIS grid, inside the month named. */
+    await clickSel('[data-calendar-page="later"]');
+    await new Promise(r => setTimeout(r, 300));
+    const paged69 = await evalJs(screen69);
+    const wantPaged69 = await expect69();
+    check('one tap on the → arrow lands on next month, the sentence is gone on its own — hidden and '
+      + 'empty, with the model earning none — and the review the count included is a chip inside that '
+      + 'month, which is the page the count was one short of',
+      paged69.view === 'calendarView' && paged69.scale === 'month'
+        && paged69.from === dates69.firstNext && !wantPaged69.due
+        && !paged69.shown && paged69.text === '' && paged69.modelText === ''
+        && paged69.through === dates69.through && paged69.chip && paged69.chipInRange,
+      JSON.stringify({ from: paged69.from, to: paged69.to, shown: paged69.shown, text: paged69.text,
+        chip: paged69.chip, inRange: paged69.chipInRange }));
+    /* And the home button, which names no edge, forgets it: the next arrival draws no line however
+       the lead is set. */
+    await goHome67();
+    await clickSel('#homeView [data-calendar-open]');
+    await new Promise(r => setTimeout(r, 300));
+    const plain69 = await evalJs(screen69);
+    const stored69 = await evalJs(`Object.keys(localStorage).filter(function(k){
+      return String(localStorage.getItem(k)).indexOf('${dates69.through}') >= 0; })`);
+    check('arriving through the home screen\'s own Calendar button — no edge on the door — draws no '
+      + 'sentence with the same lead set: the edge is an argument to the arrival that carried it, '
+      + 'forgotten by the next, and no localStorage value holds it',
+      plain69.view === 'calendarView' && plain69.through === '' && !plain69.shown && plain69.text === ''
+        && Array.isArray(stored69) && stored69.length === 0,
+      JSON.stringify({ through: plain69.through, shown: plain69.shown, text: plain69.text, stored: stored69 }));
+
+    /* ── line 2: a review only in THIS month's part of the same window ── */
+    const here69 = await probe(`(doc.students || []).forEach(function(p){ if (p.id === '${CARA}') { p.supports.reviewDate = '${dates69.today}'; } });`);
+    const rvHere69 = (here69.lists.closing ? here69.lists.closing.rows : []).filter(r => /reviews? coming up/.test(r.title))[0] || null;
+    await clickSel('#homeView [data-glance-panel="closing"] [data-calendar-through]');
+    await new Promise(r => setTimeout(r, 300));
+    const landedHere69 = await evalJs(screen69);
+    check('with the review on today instead — this month\'s part of the same window — the row is '
+      + 'byte-identical, the tap lands on the same month, the review is a chip on the page it lands on, '
+      + 'and the sentence reads word for word as it did with the review next month: it is about the '
+      + 'window, and a count-in-a-month would be a second way to say when a plan is reviewed',
+      !!rvHere69 && !!rv69 && rvHere69.html === rv69.html
+        && landedHere69.view === 'calendarView' && landedHere69.scale === 'month'
+        && landedHere69.from === landed69.from && landedHere69.chip && landedHere69.chipInRange
+        && landedHere69.shown && landedHere69.text === landed69.text,
+      JSON.stringify({ sameRow: !!rvHere69 && !!rv69 && rvHere69.html === rv69.html, from: landedHere69.from,
+        chipInRange: landedHere69.chipInRange, text: landedHere69.text }));
+    await goHome67();
+
+    /* ── line 3: the row's markup, read whole ── */
+    const isoIn69 = (rv69 && rv69.html.match(/\d{4}-\d{2}-\d{2}/g)) || [];
+    check('the review row\'s whole outerHTML — text and every attribute — holds no name, no plan word, '
+      + 'no weekday or month word and no `.gl-row-meta`; the only ISO date anywhere in it is the '
+      + 'window\'s edge, and the review\'s own date (the 1st, one day inside that edge) is absent',
+      !!rv69 && !/Wo67|Cara|Drew|IEP|504|plan|medical|accommodation|gl-row-meta/i.test(rv69.html)
+        && !/\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/.test(rv69.text)
+        && isoIn69.length >= 1 && isoIn69.every(d => d === dates69.through)
+        && rv69.html.indexOf(dates69.firstNext) === -1 && dates69.firstNext !== dates69.through,
+      JSON.stringify({ isoDates: isoIn69, reviewOn: dates69.firstNext, html: rv69 && rv69.html }));
+
+    /* ── line 4: one asker of reviewDatesIn(), and no new asker of presentationMode() — read off disk ── */
+    const askers69 = (() => {
+      const dir = path.join(h.ROOT, 'src');
+      const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      const out = { reviewDatesIn: {}, presentationMode: {} };
+      for (const name of fs.readdirSync(dir)) {
+        if (!/\.js$/.test(name)) continue;
+        const code = strip(fs.readFileSync(path.join(dir, name), 'utf8'));
+        const r = (code.match(/(?<![\w.])reviewDatesIn\s*\(/g) || []).length;
+        const p = (code.match(/(?<![\w.])presentationMode\s*\(/g) || []).length;
+        if (r) out.reviewDatesIn[name] = r;
+        if (p) out.presentationMode[name] = p;
+      }
+      return out; })();
+    check('read off disk with comments stripped: `reviewDatesIn(` is called from exactly one file outside '
+      + 'src/calendar-derived.js and that file is src/glance.js, once — no asker in src/shell.js or '
+      + 'src/calendar-view.js — and `presentationMode(` is called once in src/glance.js (WO-6.4\'s '
+      + 'panel 4) and never in src/calendar-view.js or src/shell.js',
+      Object.keys(askers69.reviewDatesIn).sort().join(',') === 'calendar-derived.js,glance.js'
+        && askers69.reviewDatesIn['glance.js'] === 1
+        && askers69.presentationMode['glance.js'] === 1
+        && !askers69.presentationMode['calendar-view.js'] && !askers69.presentationMode['shell.js'],
+      JSON.stringify(askers69));
+
+    /* ── line 5: the projector, with the review still on file ── */
+    const modeWas69 = await evalJs('window.planbook.supports.presentationMode()');
+    if (modeWas69) { await clickVisible('[data-presentation-toggle]'); await new Promise(r => setTimeout(r, 200)); }
+    await clickVisible('[data-presentation-toggle]');
+    await new Promise(r => setTimeout(r, 300));
+    const proj69 = await evalJs(PAGE);
+    const projRows69 = proj69.lists.closing ? proj69.lists.closing.rows : [];
+    const projThrough69 = await evalJs("document.querySelectorAll('#homeView [data-calendar-through]').length");
+    await clickSel('#homeView [data-calendar-open]');
+    await new Promise(r => setTimeout(r, 300));
+    const projCal69 = await evalJs(screen69);
+    await goHome67();
+    await clickVisible('[data-presentation-toggle]');
+    await new Promise(r => setTimeout(r, 300));
+    if (modeWas69) await clickVisible('[data-presentation-toggle]');
+    check('with presentation mode on and the review still on file, the row is absent, nothing under '
+      + '#homeView carries `data-calendar-through` or says anything was hidden, and the calendar '
+      + 'reached by the home button draws no sentence and no review chip — the edge has no door to '
+      + 'arrive through, with no test of the mode added anywhere',
+      proj69.closingKinds.indexOf('review-count') === -1 && !projRows69.some(r => /review/i.test(r.text))
+        && projThrough69 === 0 && !/hidden|review/i.test(proj69.viewText)
+        && projCal69.view === 'calendarView' && !projCal69.shown && projCal69.text === '' && !projCal69.chip,
+      JSON.stringify({ closingKinds: proj69.closingKinds, throughAttrs: projThrough69,
+        mentions: (proj69.viewText.match(/[^.]*(hidden|review)[^.]*/i) || [''])[0],
+        calendar: { shown: projCal69.shown, text: projCal69.text, chip: projCal69.chip } }));
+
+    /* ── the lead and the review go back to what they were ── */
+    /* Put back by assignment rather than through setLeadDays(): a key that held something the
+       writer refuses (`"three"`) goes back as it was, and an absent key stays absent. */
+    const restored69 = await probe((leadWas69.had
+      ? `doc.calendar.gradesDueLeadDays = ${JSON.stringify(leadWas69.value)};`
+      : `if (doc.calendar && typeof doc.calendar === 'object') delete doc.calendar.gradesDueLeadDays;`)
+      + ` (doc.students || []).forEach(function(p){ if (p.id === '${CARA}' && p.supports) p.supports.reviewDate = ''; });`);
+    const leadNow69 = await evalJs(`(function(){
+      var d = window.planbook.store.getDoc();
+      var block = d && d.calendar && typeof d.calendar === 'object' ? d.calendar : {};
+      return { had: Object.prototype.hasOwnProperty.call(block, 'gradesDueLeadDays'), value: block.gradesDueLeadDays,
+        read: window.planbook.calendar.leadDaysOf(d) }; })()`);
+    check('the WO-6.9 fixture came back off: the lead key is exactly as it was (absent stays absent), '
+      + 'leadDaysOf() reads the WO-6.8 value again, and closing in is empty',
+      leadNow69.had === leadWas69.had && (!leadWas69.had || leadNow69.value === leadWas69.value)
+        && leadNow69.read === lead68 && restored69.closing === 0 && restored69.view === 'homeView',
+      JSON.stringify({ was: leadWas69, now: leadNow69, closing: restored69.closing }));
 
     /*
      * ───────── the glance page: who needs you, and the page as a whole (WO-6.4) ─────────

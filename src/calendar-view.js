@@ -78,7 +78,9 @@
   ── WHAT IS HELD HERE, AND WHY NONE OF IT IS REMEMBERED ──
 
   Three values: which date the window is anchored on, whether the window is a month or a week, and
-  which class the filter names. None of the three is written to localStorage, and that is the call
+  which class the filter names. (A fourth since WO-6.9 — how far the window the door was opened FOR
+  runs — and it is held exactly as the third is: an argument to resetCalendar(), forgotten by the
+  next one, never written anywhere. Its own paragraph is at throughText() below.) None of the three is written to localStorage, and that is the call
   src/attendance.js's own filter pills make for the same reason: a remembered filter is a month grid
   quietly hiding four fifths of the school year from a teacher who does not remember setting it,
   which is the one failure a calendar cannot afford. Every arrival starts on today and on the month.
@@ -120,6 +122,7 @@ const RANGE_ID = 'calendarRange';
 const GRID_ID = 'calendarGrid';
 const CLASSES_ID = 'calendarClasses';
 const HINT_ID = 'calendarHint';
+const THROUGH_ID = 'calendarThrough';
 const EMPTY_ID = 'calendarEmpty';
 const EMPTY_LEAD_ID = 'calendarEmptyLead';
 const SCALE_MONTH_ID = 'calendarScaleMonth';
@@ -147,6 +150,11 @@ const WEEK = 'week';
 let anchor = '';
 let scale = MONTH;
 let filterClassId = '';
+/* And the fourth (WO-6.9): the far edge of the window the arrival was opened FOR, or '' when the
+   door named none. It is the teacher's lead-time setting read back as a date — the `to` of
+   src/calendar.js's leadWindowOf() — and never a date off a student's record; throughText() below
+   is the whole of what is done with it. */
+let through = '';
 
 /* ────────────────────────────── the window ──────────────────────────────
 
@@ -195,6 +203,49 @@ function rangeText(win) {
   const y = String(win.from).slice(0, 4);
   const m = Number(String(win.from).slice(5, 7));
   return MONTHS[m - 1] + ' ' + y;
+}
+
+function monthNameOf(iso) { return MONTHS[Number(String(iso).slice(5, 7)) - 1]; }
+
+/*
+  WHEN THE WINDOW THE DOOR WAS OPENED FOR RUNS PAST THE PAGE, SAY SO (WO-6.9).
+
+  The glance page's review count is read over src/calendar.js's leadWindowOf(), and that window
+  crosses a month edge whenever the lead reaches past the last day: on the default lead of 3, read on
+  the 29th, a review on the 1st is counted on the glance page and missing from the month the tap
+  opens. The teacher had to know to press the arrow, which meant knowing the date the count refuses
+  to show her. The dispatcher's answer (option 4 of the work order's four) was to keep the landing
+  — the month on today, the home button's own — and change a SENTENCE: the arrival carries the
+  window's far edge, and when that edge lies past the window drawn, this line says where the
+  window runs and how to get there.
+
+  IT IS ABOUT THE WINDOW AND NEVER ABOUT A REVIEW. The sentence names the month the lead time runs
+  into and the date it runs through — the teacher's own setting, already printed on the glance
+  panel's head — and reads identically whether the reviews in that month number zero or three,
+  because a count-in-a-month is a second way to say when somebody's plan is reviewed. Nothing here
+  asks src/calendar-derived.js a second time: closingIn() stays the review count's only asker, and
+  the landing that would need a review's date (the month of the earliest one) is the one WO-6.9's
+  Traps line refuses.
+
+  COMPUTED AT EVERY RENDER, NOT AT ARRIVAL. The edge is compared against the window ON SCREEN, so
+  the line goes away on its own when the teacher pages to a month that holds it, and comes back if
+  she pages behind it. A window that does not cross the edge draws no line at all.
+
+  AND IT FOLLOWS HER TO THE WEEK. Switching to WEEK after arriving draws a window that ends sooner
+  still, and the line stays — the sentence is about the window's edge against the page on screen,
+  not about the month grid, and a week is a shorter page opening the same gap. What changes is the
+  wording: "past the week on screen", and "later this month" when the edge is still inside the
+  drawn month, so the line never claims a month change it cannot see. The control it names is the
+  pager's own → button, which moves a week on the week and a month on the month — "gets you there"
+  rather than "one tap", because on the week it may be several.
+*/
+function throughText(win) {
+  if (!isDate(through) || through <= win.to) return '';
+  const sameMonth = String(through).slice(0, 7) === String(win.to).slice(0, 7);
+  return 'The lead time you set for grades runs through ' + weekdayShortDate(through) + ' — '
+    + (sameMonth ? 'later this month' : 'into ' + monthNameOf(through))
+    + ', past the ' + (scale === WEEK ? 'week' : 'month') + ' on screen. '
+    + 'The → arrow above the grid gets you there.';
 }
 
 /* ────────────────────────────── what goes in a cell ──────────────────────────────
@@ -355,6 +406,11 @@ export function calendarModel() {
     gridTo: win.gridTo,
     label: rangeText(win),
     today: todayISO(),
+    /* The edge the door handed in ('' when none) and the sentence it earns against THIS window ('' when
+       it earns none) — on the model so a check can hold the line under the grid to the same rule
+       the renderer painted it by (WO-6.9). Neither is a fact about a student. */
+    through: through,
+    throughText: throughText(win),
     days: days,
     /* What the empty state is decided on: chips inside the range the heading names. A break bleeding
        in from the month before is drawn on a borrowed cell and does not make this month non-empty,
@@ -449,6 +505,17 @@ export function renderCalendar() {
       ? 'Pick a class above to see which of its days were taken, dropped, or closed by the '
         + 'calendar. The week view shows every class at once.'
       : '';
+  }
+
+  /* Where the window the door was opened for runs, when it runs past the page — throughText()'s
+     paragraph. A sentence of its own rather than a clause on the hint above: the hint's condition
+     is "every class showing" and this one's is "an edge beyond the page", and the two can be true
+     together. Hidden with nothing in it when it earns nothing, so the line is never an empty
+     paragraph a screen reader stops on. */
+  const beyond = document.getElementById(THROUGH_ID);
+  if (beyond) {
+    beyond.classList.toggle('hidden', !model.throughText);
+    beyond.textContent = model.throughText;
   }
 
   paintEmpty(model);
@@ -600,7 +667,7 @@ function paintEmpty(model) {
   archived: paintClassFilter() resolves that on the next paint, exactly as it does for a class
   archived behind this screen.
 */
-export function resetCalendar(classId, weekOf) {
+export function resetCalendar(classId, weekOf, throughDate) {
   /* THE SECOND ARGUMENT IS WO-6.8's, and it is additive: every caller that hands one argument lands
      on this month exactly as before. The glance page's *Today and this week* opens an event onto the
      calendar's WEEK on that event's day, and the day arrives here as an argument rather than being
@@ -610,6 +677,11 @@ export function resetCalendar(classId, weekOf) {
   anchor = on || todayISO();
   scale = on ? WEEK : MONTH;
   filterClassId = String(classId || '');
+  /* THE THIRD IS WO-6.9's, additive the same way: the far edge of the window the door was opened
+     for, and '' from every door that names none — the home button, the class pill, an event row.
+     It moves no landing; throughText() is the whole of what reads it, and this reset is the whole
+     of what forgets it. */
+  through = isDate(throughDate) ? throughDate : '';
 }
 
 /* Move the window. `today` returns to the day the screen opens on, which is the way back from a

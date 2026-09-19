@@ -412,7 +412,7 @@ and a `Depends on` in the other direction would be a cycle the gate would call s
 
 ## WO-6.4 — The glance page
 
-**Ship** — · **Status** 🔨 IN PROGRESS · **Size** M · **Depends on** WO-6.7, WO-6.8, WO-4.5, WO-3.26
+**Ship** — · **Status** ✅ DONE — 2026-09-19 · **Size** M · **Depends on** WO-6.7, WO-6.8, WO-4.5, WO-3.26
 **Closes roadmap** Phase 6 → "The glance page"
 
 *(**Cut into three on 2026-09-15, owner-directed, and this row is the last of the three.** It was an
@@ -534,12 +534,15 @@ that made it.)*
 - [x] Every student in the concern and praise columns taps through to that student's signal card on
       WO-4.2's screen, and the count of students drawn here plus the `and N more ›` foot equals the
       sum of the cards' `N need you` chips — one array, counted on the card and drawn here.
-- [ ] 👤 The praise list is present and delta-ranked — not buried behind the concern list. Present is
+- [x] 👤 The praise list is present and delta-ranked — not buried behind the concern list. Present is
       measurable and *not buried* is the owner's reading of her own page, which is why this line needs
       her and not a selector count. *(The redraw's question 9 rides on this reading: five panels is a
       long page on a tablet, and "who needs you" is two scrolls down at 7:40am unless something
       changes. Reorder is ruled out; collapsing short panels to a count, or two columns above 1024px,
-      are not. Read on the real iPad.)*
+      are not. Read on the real iPad.)* *(**Read by the owner 2026-09-19 on v120**, the installed test
+      app, the page opened cold at tablet width and scrolled as at 7:40am: the praise column is on the
+      page beside the concern column and reads as a list of its own, not a tail on the other. Question 9
+      is answered *nothing changes* — neither the collapse nor the two-column layout is booked.)*
 - [x] With presentation mode on, no student's name from a signal is on the page — the panel is shut
       with its counts kept, exactly as `src/signals-view.js` shuts — and turning the mode on with the
       page open redraws it without a reload. `src/glance.js` is on `flipPresentationMode()`'s redraw
@@ -551,7 +554,12 @@ that made it.)*
       page displays `supports` data" on 2026-08-19, WO-1.25. The old line was mechanically checkable
       and this one is not; naming the four fields is what keeps it testable, and the count above is
       the thing the old wording would have forbidden.)*
-- [ ] 👤 The page loads in under a second on an iPad with a full year of data.
+- [x] 👤 The page loads in under a second on an iPad with a full year of data. *(Read by the owner
+      2026-09-19 on v120, the installed test app: the page was on screen inside a second. **The year is
+      seventeen days old**, so the figure is for a term's worth of data and not a year's; the owner
+      closed the line on it rather than holding a work order open until June for a number nothing in
+      the build will move — the signal pass runs once per class per render since this row landed, and
+      that is what the build did about it.)*
 
 *(**Four boxes ticked 2026-09-16 by the implementer, on a green run** — `verify-shell.mjs` 1400 of
 1400, exit 0, and `wo-sweep.mjs` 42 · 39 · 0 · 3. The evidence is `tools/verify/glance-quiet.mjs`
@@ -1077,7 +1085,7 @@ step removed.
 
 ## WO-6.9 — The review count opens a page that shows the review
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-6.8
+**Ship** — · **Status** ✅ DONE — 2026-09-19 · **Size** S · **Depends on** WO-6.8
 
 **Why it exists.** Booked 2026-09-16 out of WO-6.8's verdict. The verifier flagged it, and the owner
 chose to book it rather than hold WO-6.8 open for it. *1 review coming up* under *Closing in* carries
@@ -1112,18 +1120,59 @@ why this is a work order rather than a patch.
 
 No answer is proposed among 1, 2 and 4. Answer it when dispatching.
 
+*(**Answered at dispatch, 2026-09-16: option 4**, the dispatcher's call — **and the owner's, confirmed
+2026-09-17, wording left as built.** It was open to overrule until the verdict; it no longer is. The reasons, from the brief: it is the only option right for every lead value —
+option 1 breaks past the coming Saturday, not just past a lead of 6, and option 2 is the same defect
+mirrored, with the month grid's borrowed days making both it and today's landing right only by luck
+of the weekday; it keeps the landing the home button already has; and its sentence is about the
+**window**, the teacher's own setting, never about a review. **What was built on it.** The row keeps
+`data-calendar-open=""` and gains `data-calendar-through="<iso>"` — the `to` of the window
+`closingIn()` already carries, read by `showCalendar()` and handed to `resetCalendar()` as a third
+argument held the way `anchor` and `scale` are and forgotten by the next reset; nothing reaches
+`localStorage`. `src/calendar-view.js`'s `throughText()` decides **at every render** whether the edge
+lies past the window on screen and paints `#calendarThrough` under the grid beside the hint: *"The
+lead time you set for grades runs through Fri, Oct 9 — into October, past the month on screen. The →
+arrow above the grid gets you there."* The same sentence is spoken on arrival. It goes away on its own
+when she pages to the month that holds the edge, and **it follows her to the week** — the sentence is
+about the window's edge against the page on screen, a week is a shorter page opening the same gap,
+and the wording turns to *past the week on screen* and, when the week's last day is still in the
+edge's month, *later this month*. `src/glance.js` makes no month comparison and `closingIn()` is
+still the count's only asker of `reviewDatesIn()`.)*
+
 **Acceptance**
-- [ ] With a lead that crosses a month edge and a review only in next month's part of the window,
+- [x] With a lead that crosses a month edge and a review only in next month's part of the window,
       tapping the count leaves the review visible on the screen it lands on, or leaves on screen a
-      sentence naming the month it is in, depending on the answer taken.
-- [ ] With a review only in this month's part of the same window, the same holds.
-- [ ] The row still carries no name, no date and no kind, and nothing it puts in the DOM contains an
-      ISO date that is a review's rather than the window's.
-- [ ] `reviewDatesIn()` is still the review count's only asker, and `wo-sweep` counts no new asker of
-      `presentationMode()`.
-- [ ] With presentation mode on, the row is still absent and no line says anything was hidden.
-- [ ] 👤 On the iPad, on a day whose window crosses a month edge, the tap lands where the answer says
-      it lands.
+      sentence naming the month it is in, depending on the answer taken. *(Option 4: the sentence.
+      `tools/verify/glance-quiet.mjs` § WO-6.9 sets the lead to reach eight days past the 1st of next
+      month on whatever day it runs, plants a review on that 1st, taps the row, and reads the month on
+      today with `#calendarThrough` naming the month the window runs into, the model's own text, and
+      the live region carrying it; one tap on → lands on next month with the sentence gone and the
+      review a chip inside the month.)*
+- [x] With a review only in this month's part of the same window, the same holds. *(The same run,
+      review moved to today: the row's `outerHTML` is byte-identical, the tap lands on the same month,
+      the review is a chip in range on the page it lands on, and the sentence reads word for word as
+      it did with the review next month.)*
+- [x] The row still carries no name, no date and no kind, and nothing it puts in the DOM contains an
+      ISO date that is a review's rather than the window's. *(The row's whole `outerHTML` read: no
+      name, plan word, weekday or month word, no `.gl-row-meta`; every ISO date in it equals
+      `leadWindowOf()`'s `to`, and the review's own date — the 1st, one day inside that edge — is
+      absent.)*
+- [x] `reviewDatesIn()` is still the review count's only asker, and `wo-sweep` counts no new asker of
+      `presentationMode()`. *(Read off disk with comments stripped by the same section: `reviewDatesIn(`
+      is called once in `src/glance.js` and nowhere else outside `src/calendar-derived.js`;
+      `presentationMode(` once in `src/glance.js` (panel 4) and never in `src/calendar-view.js` or
+      `src/shell.js`. `wo-sweep` still reads *"asked by 8 other file(s)"*, the same list as before.)*
+- [x] With presentation mode on, the row is still absent and no line says anything was hidden. *(The
+      real header control, review still on file: no `review-count` in the reader, no row, no
+      `data-calendar-through` anywhere under `#homeView`, no *hidden* or *review* in its text, and the
+      calendar reached by the home button draws no sentence and no chip.)*
+- [x] 👤 On the iPad, on a day whose window crosses a month edge, the tap lands where the answer says
+      it lands. *(Read by the owner 2026-09-19 on v120, force-quit first, from the installed test app
+      against the LAN server — the working tree, not a deploy. Lead set to 14 so the window reached into
+      October, a review on file inside it: the tap landed on September with the sentence under the grid
+      naming the edge; → to October took the sentence away; the week view brought it back worded
+      *past the week on screen*; presentation mode took the row, the sentence and the chip; a force-quit
+      and relaunch remembered none of it.)*
 
 **Traps** — The obvious fix is option 3, and it is the one this row exists to refuse. The review
 count is the one `supports`-derived item on the glance page, and **a date on its button is a

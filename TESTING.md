@@ -10372,8 +10372,11 @@ is `planbook-shell-v119`.
       both columns, and over distinct students the two agree. `and 4 more ›` lands focused on the
       fifth concern row; each cooldown foot lands with that column's held rows open and the other
       closed.
-- [ ] 👤 The praise list is present and delta-ranked — not buried. Present and delta-ranked are
-      asserted above; *not buried* is the owner's reading on the iPad. **Owed.**
+- [x] 👤 The praise list is present and delta-ranked — not buried. Present and delta-ranked are
+      asserted above; *not buried* is the owner's reading on the iPad. *(Read by the owner 2026-09-19
+      on v120, installed test app, the page opened cold and scrolled as at 7:40am: not buried. Neither
+      of the two changes the phase file left open — collapsing short panels, two columns above 1024px —
+      is wanted.)*
 - [x] Presentation mode, through the header's real control with the page up and no re-arrival: panel 4
       is shut — no `.sig-two`, no keyed row, no foot — its header and both doors stay, and the refusal
       reads *8 students are flagged and 2 are climbing.* No fixture surname is anywhere in `#homeView`'s
@@ -10384,8 +10387,11 @@ is `planbook-shell-v119`.
       behavior-plan text and a case manager on every student on the page: none of them in
       `#homeView`'s markup with the mode off or on. The review count reads *1 review coming up* with
       the mode off and is absent with it on.
-- [ ] 👤 The page loads in under a second on an iPad with a full year of data. **Owed.** Nothing here
-      measures it; what the build did about it is halve the signal work per render.
+- [x] 👤 The page loads in under a second on an iPad with a full year of data. Nothing here measures
+      it; what the build did about it is halve the signal work per render. *(Read by the owner
+      2026-09-19 on v120, installed test app: under a second — on seventeen days of a term rather than
+      a year, which the phase file's line says in as many words. Closed on that reading rather than
+      held to June.)*
 
 Under an emulated coarse pointer every control in panel 4 — two doors, six rows, `and 4 more` and
 two feet — measures at least 44px each way (rows 76–99px, the rest 44).
@@ -10408,6 +10414,91 @@ the row across both columns: the every-tap check alone (Ben's praise tap returne
 row). M5, five rows instead of four: five checks, from the columns check to the coarse measurement.
 M6, a row carrying `supports.medical` in an attribute: the supports check alone. M7, the card chip
 counting hits instead of students: the arithmetic check alone.
+
+### WO-6.9 — The review count opens a page that shows the review
+
+**What this adds.** Nothing new on the glance page and one sentence on the calendar. The review row
+under *Closing in* keeps `data-calendar-open=""` — the month on today, the home button's own landing
+— and gains `data-calendar-through="<iso>"`, the `to` of the window `closingIn()` already carried on
+its record. `src/shell.js`'s `showCalendar()` reads it off the door and hands it to `resetCalendar()`
+as a third argument, held as `anchor` and `scale` are and forgotten by the next reset;
+`src/calendar-view.js`'s `throughText()` decides **at every render** whether that edge lies past the
+window on screen and paints `#calendarThrough` under the grid beside the hint — *"The lead time you
+set for grades runs through Fri, Oct 9 — into October, past the month on screen. The → arrow above
+the grid gets you there."* — spoken on arrival through the same live region as the range. It goes
+away on its own when she pages to the month that holds the edge and follows her to the week, where
+the wording turns to *past the week on screen*. `CACHE` is `planbook-shell-v120`.
+
+**The open line, answered at dispatch: option 4.** The dispatcher's call, recorded under the question
+in the phase file, and the owner's to overrule before the verdict. What decided it: it is the only
+landing right for every lead value (option 1 breaks past the coming Saturday, option 2 is the same
+defect mirrored), it keeps the landing the home button already has, and its sentence names the
+**window** — the teacher's own setting, already on the panel's head — and never a review. The landing
+that would need a review's date, the month of the earliest one, is the one the Traps line refuses.
+
+**The fixture crosses the month edge on every day of the year rather than on a date.** The lead is
+set to `daysBetween(today, first of next month) + 8`, so the window's far edge is the 9th of next
+month on the 1st, the 31st and every day between, and past the end of any week drawn on today. One
+review sits on the 1st of next month for line 1 and on today for line 2; neither is the edge, which
+is what makes *the review's date is absent from the row* a claim rather than a tautology. On
+2026-09-16 that read lead 23, window through 2026-10-09, review 2026-10-01.
+
+- [x] With a lead that crosses a month edge and a review only in next month's part of the window,
+      tapping the count leaves on screen a sentence naming the month it is in. Tapped through
+      `[data-calendar-through]` under *Closing in*: `#calendarView` at scale `month`, September,
+      every class showing, `#calendarThrough` shown and equal to the model's own `throughText` and
+      to the sentence the harness builds from the window's edge and nothing else, *into October*
+      in it, the live region reading *Calendar — September 2026.* followed by the sentence. The
+      sentence names no student, no count, no *review* and no plan word, and the only date in it is
+      the window's edge. Switching to WEEK keeps it, reworded *past the week on screen*; one → lands
+      on October with the line hidden and empty, the model earning none, and the review a chip in
+      range. Arriving through the home screen's own Calendar button with the same lead draws no
+      sentence, and no `localStorage` value holds the edge.
+- [x] With a review only in this month's part of the same window, the same holds: the row's
+      `outerHTML` is byte-identical to line 1's, the tap lands on the same month, the review is a chip
+      in range on the page it lands on, and the sentence reads word for word as before.
+- [x] The row's whole `outerHTML` holds no name, no plan word, no weekday or month word and no
+      `.gl-row-meta`; every ISO date in it equals `leadWindowOf()`'s `to` (2026-10-09), and the
+      review's own date (2026-10-01) is absent.
+- [x] Read off disk with comments stripped: `reviewDatesIn(` is called once in `src/glance.js` and
+      nowhere else outside `src/calendar-derived.js`; `presentationMode(` once in `src/glance.js` and
+      never in `src/calendar-view.js` or `src/shell.js`. `wo-sweep` still reads *"asked by 8 other
+      file(s)"*, the same list as before.
+- [x] Presentation mode on through the header's real control, review still on file: no `review-count`
+      in the reader, no row, no `data-calendar-through` anywhere under `#homeView`, no *hidden* or
+      *review* in its text, and the calendar reached by the home button draws no sentence and no chip.
+- [x] 👤 On the iPad, on a day whose window crosses a month edge, the tap lands where the answer says
+      it lands. *(Read by the owner 2026-09-19 on v120, force-quit first, installed test app against the
+      LAN server. Lead at 14 on Sep 19 puts the edge in October; with a review inside the window, the tap
+      landed on September and the sentence under the grid named the edge and pointed at →; paging to
+      October took the sentence away, the week view brought it back as *past the week on screen*,
+      presentation mode removed row, sentence and chip together, and a force-quit relaunch opened the
+      calendar on today with nothing remembered.)*
+
+*Desk pass 2026-09-16, on the recovered tree: `verify-shell.mjs` **1411 of 1411, 0 failed, 0
+skipped**, 43,961 lines, 31.2 lines per check, 497s, exit 0 — up from 1400: eleven literal call sites
+in one new block of `tools/verify/glance-quiet.mjs`, all firing.* `wo-sweep.mjs` *is 42 checks, 39
+passed, 0 failed, 3 to review — the same three reviews as on the tree this work order arrived on.*
+
+**This is the seventh dead dispatch and the first killed by a power cut, and it left one live
+mutation.** The implementer finished its whole pass — code, the phase file's five ticks, the
+`tools/README.md` count — and died inside mutation (a) below, with its plant still in the tree and
+this section unwritten: `tools/README.md` cited a `TESTING.md § WO-6.9` that did not exist.
+`grep -rn MUTATION` found the plant in one command. The cited 1411 was real and was taken before the
+plant went in; the recovered tree reproduces it exactly, which is the evidence the reconstruction is
+right. The record is `.claude/dispatch/WO-6.9-status.md`.
+
+**Two mutations, one run each, both bit, both reverted by a scripted exact-string swap against a
+fully staged tree (`git diff` empty after; `grep -c MUTATION src/glance.js` 0).** M(a), the row's
+edge blanked — the corpse's own plant, re-planted on purpose: `1411 checks · 1404 passed · 7 failed`
+— the fixture check (the row's `through` empty), the landing-and-sentence check, the
+window-and-nothing-else check (text `""`), the week check, the → check, the line-2 check and the
+line-3 check (no ISO date in the row at all). M(b), the review's date on the button — `closingIn()`
+handing `reviewDatesIn(doc, w.from, w.to)[0].date` as `to` instead of the window's: `1411 checks ·
+1404 passed · 7 failed` — the same set less the window-and-nothing-else check (the sentence was still
+about the window) plus the disk-read line-4 check, which caught the mutation's own second
+`reviewDatesIn(` call site. Neither mutated run hung in teardown; no headless `msedge.exe` was left
+behind.
 
 ---
 

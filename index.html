@@ -1471,6 +1471,16 @@
            and a bug look identical, and this screen should say which one it is. -->
       <p class="calendar-hint hidden" id="calendarHint"></p>
 
+      <!-- Where the window the door was opened for runs, when it runs past the page (WO-6.9). The
+           glance page's review count is read over the lead time the teacher set, and that window
+           crosses a month edge whenever the lead reaches past the last day — so the month on today
+           can be one page short of a review the count included. src/calendar-view.js writes this
+           from the edge the arrival handed it and hides it the moment the page on screen holds that
+           edge. It names the WINDOW — the teacher's own setting — and never a review, a count or a
+           student; a sentence of its own rather than a clause on the hint above, because the two
+           conditions are independent and can hold together. -->
+      <p class="calendar-through hidden" id="calendarThrough"></p>
+
       <!-- The honest empty state, shown by src/calendar-view.js only when the range on screen holds
            nothing at all. The grid stays up behind it: a teacher who opened a calendar wants the
            dates whether or not anything is on them, and a month replaced by a sentence is a month

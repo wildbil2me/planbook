@@ -1210,7 +1210,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1391 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1402 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1688,6 +1688,26 @@ assert, and neither moves the count**: the busy-day check now wants `queue,atten
 alone — both because panel 4 is what this work order draws on those days. The run prints **1400**:
 `1400 checks · 1400 passed · 0 failed · 0 skipped`, 43,708 lines, 31.2 lines per check, 486s, exit 0,
 measured 2026-09-16 on the delivered tree. Mutations are tabulated in `TESTING.md` § WO-6.4.
+
+**WO-6.9 moved it from 1391 to 1402, and the executed count from 1400 to 1411 — eleven sites, eleven
+results.** All eleven are literal call sites in a new block inside `verify/glance-quiet.mjs`'s fixture
+branch, *"the glance page: the review count opens a page that shows the review (WO-6.9)"*, placed
+between WO-6.8's attention-only check and WO-6.4's block because it wants the state the first leaves
+and must leave the state the second expects; standing on that section's own fixture guard, none in a
+loop and none a failure arm, so the gap between sites and results stays at −16. **The fixture makes
+the window cross the month edge on every day of the year rather than on a date**: the lead is set to
+`daysBetween(today, first of next month) + 8`, so the window's far edge is the 9th of next month on
+the 1st, the 31st and every day between, and past the end of any week drawn on today. One
+pre-existing reader changed without moving the count: `PAGE`'s row reader now also returns
+`data-calendar-through` and the row's `outerHTML`, which is what lets the third Acceptance line be
+read as *every ISO date in the markup equals the window's edge* rather than as a list of fields
+somebody remembered to look at. **One check in the block reads the tree rather than the browser** —
+`reviewDatesIn(` and `presentationMode(` call sites under `src/`, comments stripped — and it sits in
+this section rather than in a static one because it is the fourth Acceptance line of the surface
+this section drives; the file imports `node:fs` and `node:path` for it, as `attendance-passes.mjs`
+does. The run prints **1411**: `1411 checks · 1411 passed · 0 failed · 0 skipped`, 43,961 lines, 31.2
+lines per check, 503s, exit 0, measured 2026-09-16 on the delivered tree — green on the first run.
+Mutations are tabulated in `TESTING.md` § WO-6.9.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not
