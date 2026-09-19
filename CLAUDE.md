@@ -433,8 +433,14 @@ Seven things that will bite:
   a source with nothing draws no panel at all, and there is no `classList.toggle('hidden')` anywhere
   in the file, which is what keeps "five empty panels" from being one dropped class away. And the
   one record the file composes rather than forwards — the review-date chip — is composed **on a
-  ruling** (a review is a count on this page), carrying no name, no student id and no date;
-  `closingIn()` asks `presentationMode()` nothing, because `reviewDatesIn()` already refuses.
+  ruling** (a review is a count on this page), carrying no name, no student id and no date —
+  **no review's date**: since WO-6.9 (2026-09-19) the row does carry one ISO date,
+  `data-calendar-through`, and it is the window's far edge out of `leadWindowOf()`, the teacher's own
+  setting, which the calendar names in a sentence when the edge lies past the page on screen. A grep
+  finding a date on that row is finding the window; a review's date on it is the disclosure WO-6.9's
+  Traps refuse, and `tools/verify/glance-quiet.mjs` asserts every ISO date in the row equals the
+  window's `to`; `closingIn()` asks `presentationMode()` nothing, because `reviewDatesIn()` already
+  refuses.
   *(**The panels exist since WO-6.8, 2026-09-16, and they are held to the same rule, with its edge
   now ruled on by the owner.** A panel may import a **name that reads no document** — `kindInfo`'s
   word table, a token constant like `ASSIGNMENT_DUE` — because a second copy of those words in

@@ -120,8 +120,11 @@ dependencies.
   panel and the attention chips move together only because one reader feeds each. Two riders. The
   empty state is **structural, not a toggle** — a source with nothing draws no panel at all, and
   there is no `classList.toggle('hidden')` anywhere in the file. And the one record the file
-  composes rather than forwards, the review-date chip, carries no name, no student id and no date;
-  `closingIn()` asks `presentationMode()` nothing, because `reviewDatesIn()` already refuses.
+  composes rather than forwards, the review-date chip, carries no name, no student id and no
+  review's date — the one ISO date on the row since WO-6.9 (2026-09-19), `data-calendar-through`, is
+  the window's far edge from `leadWindowOf()`, the teacher's setting, and `tools/verify/glance-quiet.mjs`
+  asserts every ISO date in the row equals it; `closingIn()` asks `presentationMode()` nothing,
+  because `reviewDatesIn()` already refuses.
   The panels (WO-6.8, 2026-09-16) are held to the same rule, and the owner ruled on its edge. A panel
   may import a **name that reads no document** (`kindInfo`, a token constant such as
   `ASSIGNMENT_DUE`), and a panel head may make **the same engine call its reader made, with the same

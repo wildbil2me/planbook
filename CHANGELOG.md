@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The review count's tap lands on a page that says where the window ends — 2026-09-19
+
+Tapping *N review coming up* on the home screen opened this month's calendar, and when the grades
+lead window ran into next month the review it counted was one page on, with nothing saying so. The
+tap still lands on this month — the landing the home button already has — and when the window's far
+edge lies past the page on screen, a sentence under the grid names that edge and points at the →
+arrow. It follows you to the week view, reworded for a shorter page, and disappears on its own when
+you page to the month that holds it. The sentence is about the lead time you set, never about a
+review: the row still carries no name, no date of a review and no kind, and under the projector row
+and sentence both go. Read on the iPad the day it closed, along with the glance page's own two
+readings — the praise column is on the page and not buried, and the page is up inside a second —
+which close **WO-6.4, the glance page**, and with it the roadmap's box for it.
+
 ### The home screen shows who needs you — 2026-09-16
 
 **The glance page's fourth panel is drawn**, between *Waiting to be graded* and *Closing in*: two

@@ -644,6 +644,23 @@ is a settings-block row rather than a panel one. **One defect booked rather than
 count opens this month's calendar, which misses a review early next month —
 [WO-6.9](work-orders/phase-6-calendar-glance.md#wo-69--the-review-count-opens-a-page-that-shows-the-review).)*
 
+*(**The box closed on 2026-09-19, and Phase 6 has one row left that is not on this list.**
+[WO-6.4](work-orders/phase-6-calendar-glance.md#wo-64--the-glance-page) landed panel 4 — who needs
+attention — on 2026-09-16 and closed on the owner's two iPad readings three days later: the praise
+column is on the page and not buried, and the page is up inside a second on seventeen days of a term,
+which the Acceptance line says in as many words rather than waiting until June for a year's worth.
+[WO-6.9](work-orders/phase-6-calendar-glance.md#wo-69--the-review-count-opens-a-page-that-shows-the-review)
+closed the same day, **option 4**: the tap still lands on this month, and when the lead window's far
+edge lies past the page on screen the calendar says so under the grid and points at →. The sentence is
+about the **window** and never about a review — the only date the row carries is the window's edge,
+which is the teacher's own setting. Two things about how it got there. **It was the seventh dead
+dispatch and the first killed by a power cut**, with one live mutation under five ticked boxes; and
+its verifier ran the harness on the real clock as well as the shifted one and found the two
+disagreeing about a tree that had not moved, which is
+[WO-1.53](work-orders/phase-1-shell-store-roster.md#wo-153--the-residue-meets-the-registers-earlier-page-for-a-week-every-september)
+— a harness collision a week wide every September, booked rather than folded in. What is left of the
+phase is WO-6.5, a tapped day opening on that day, which closes no box here.)*
+
 ---
 
 ## Phase 7 — Drive sync (opt-in) 🔒
