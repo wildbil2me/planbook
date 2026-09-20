@@ -65,6 +65,16 @@ if (!seam) {
   await new Promise(r => setTimeout(r, 300));
 
   const V = nodeColumns(6, 0);                 /* [today, ...five weekdays back] */
+  /* LEFT AS A GUESS, ON PURPOSE (WO-1.46) — the same ruling as term-edges-marking.mjs's, which has
+     the argument in full. AHEAD and LATER are term edges: `end` of the running term and `start`
+     of the third arrangement's late term. What this block measures is which term a screen is
+     handed and what the band says about it — getSelectedTermId(), the `openTermIds` preference,
+     paintBanner()'s two arms — none of which reads the ledger, and every writer it drives is gated
+     per-class with this class's records cleared at plant. A neighbour's record on either edge is
+     not a collision, because nothing here is authored onto that day and nothing here reads that
+     day for that class. Walking a term edge past a recorded day would assert something the app
+     does not require of a term. The one site in this run that authors an EVENT onto a guessed
+     future day is register-opens-on-term.mjs's day off, and that one is derived. */
   const AHEAD = nodeWeekdayAhead(40);
   const LATER = nodeWeekdayAhead(10);
   const EARLY_ID = 'tm_wo251a', LATE_ID = 'tm_wo251b';

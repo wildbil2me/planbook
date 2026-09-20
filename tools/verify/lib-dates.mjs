@@ -6,6 +6,12 @@
  * tools/README.md § "Driving a browser over CDP" states: anything that talks to the browser rides
  * on the harness object; anything that does not is imported from a `lib-` file.
  *
+ * Since WO-1.46 it also answers a fifth question, and it is a question about the DOCUMENT rather
+ * than the clock: "what is the first day from here that nothing has a record on" —
+ * firstClearDayFrom(), at the foot of the file, with its reasoning. It lives here and not in a
+ * section because three sites in two sections want it, and a walk copied to each would be three
+ * walks — WO-1.44 wrote two of them inline before this file had one.
+ *
  * These were module-scope consts in tools/verify-shell.mjs — nodeToday above the classes & terms
  * section, the other three above attendance — and each had already MOVED up the file once or twice
  * as a later section came to need it. Their comments say why, and they travel here unchanged: one
@@ -175,9 +181,89 @@ export const nodeWeekdayAhead = (n) => {
 export const daysApart = (a, b) => Math.round(
   (new Date(a.slice(0, 4), Number(a.slice(5, 7)) - 1, a.slice(8, 10))
     - new Date(b.slice(0, 4), Number(b.slice(5, 7)) - 1, b.slice(8, 10))) / 86400000);
-export const tomorrow = (() => {
+/* The CALENDAR-DAY walk from today, `n` days on (negative walks back) — the sibling of
+   nodeWeekdayAhead() for the sites that measure in days a school is not necessarily open: a gap
+   between two terms is two days whether or not they are school days, and a pre-drop nine days out
+   is nine days out on a Saturday too. `tomorrow` below is this with n = 1 and has been since
+   WO-1.26 (the WO-2.54 section carried its own copy as `calDay()` until WO-1.46 — a second walk
+   in a second file is the defect this module exists to catch, and it moved here rather than being
+   left beside the one it duplicated). */
+export const nodeDaysFromToday = (n) => {
   const d = now();
-  d.setDate(d.getDate() + 1);
+  d.setDate(d.getDate() + n);
   const p = (x) => (x < 10 ? '0' : '') + x;
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
-})();
+};
+export const tomorrow = nodeDaysFromToday(1);
+
+/*
+  ── THE FIRST DAY THE DOCUMENT HAS NOTHING ON, FROM A GIVEN START (WO-1.46) ──
+
+  The shape WO-1.44 settled on for `preDropDay` in tools/verify/attendance-passes.mjs, moved here so
+  there is one of it. A date a fixture is FREE TO PICK — the day a future event is authored on, a
+  horizon the register pages forward to — is taken from the document rather than guessed off the
+  calendar, because a guess is an offset, and an offset collides with whatever an earlier section
+  planted at that distance on exactly the days nobody drove. `today + 9` reached the class manager's
+  residue on 2026-08-31 and cost 766 checks and a day; `nodeWeekdayAhead(4)` reached the same residue
+  from a Thursday and cost one `--today` run; `nodeWeekdayAhead(9)` in the WO-2.52 section was the
+  same construct on the same offset one file along, green on every day anyone had happened to run
+  it, which is the evidence that failed on 2026-08-30.
+
+  DERIVED, NOT WIDENED. The walk STARTS at the date the site always used, so the ordinary run picks
+  the day it always picked, and it moves forward only past days that already hold a record. A bigger
+  offset would move the collision to a day nobody has driven; this removes it.
+
+  IT WALKS CALENDAR DAYS UNLESS ASKED FOR WEEKDAYS, and the caller says which, because the two are
+  different properties of the date handed back. A day-off event or a horizon the register pages to
+  has to sit on a weekday — the strip draws no Saturday, so a Saturday horizon is a horizon no column
+  reaches — and those sites pass `{ weekdays: true }`. The pre-drop predicate reads any date at all
+  and keeps the calendar walk WO-1.44 wrote. THE START IS TRUSTED EITHER WAY: a weekday walk handed
+  a Saturday hands it back if nothing is recorded there, because every site here starts from a
+  `nodeWeekdayAhead()` and a helper that quietly moved a clear start would be a second opinion about
+  which day was asked for — the sites assert the weekday themselves.
+
+  A CEILING RATHER THAN A `while (true)`, AND THE CEILING IS NOT A THROW. After sixty taken days in
+  a row it hands back the sixty-first whatever is on it, and the site's own precondition — zero
+  records on the date, and the date in the future — is what goes red, on one line that says what
+  was assumed, instead of the run hanging or a stack trace taking the section with it. Every site
+  that calls this asserts that precondition in its fixture check; a call without one is a guess with
+  extra steps, and the check is what turns the next collision into a named red line rather than the
+  cascade of 2026-08-31.
+
+  UTC throughout, off the ISO string, so the walk cannot land a day either side of itself on a DST
+  seam — the same reasoning src/calendar.js's plusDays() gives at the one place that file touches a
+  Date at all. `records` is any array of objects carrying a `date`, which is the shape every reader
+  in the harness hands back for `doc.attendance`; the classId is deliberately not consulted, because
+  the collision this guards against was a NEIGHBOUR's record, and a walk that only stepped past the
+  open class's own records would have walked straight onto it.
+*/
+const utcOf = (iso) => new Date(Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1,
+  Number(iso.slice(8, 10))));
+const isoOfUTC = (d) => {
+  const p = (x) => (x < 10 ? '0' : '') + x;
+  return d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate());
+};
+/* The next Monday-to-Friday after `iso`, by calendar. Exported because a site that derives an
+   event's END from a derived start needs the same step the walk takes — an end the walk had moved
+   PAST would be an end the app is right to overwrite. */
+export const nextWeekday = (iso) => {
+  const d = utcOf(iso);
+  do { d.setUTCDate(d.getUTCDate() + 1); } while (d.getUTCDay() === 0 || d.getUTCDay() === 6);
+  return isoOfUTC(d);
+};
+/* Whether an ISO date is a Monday-to-Friday, for the sites that assert it of a derived date. */
+export const isWeekday = (iso) => {
+  const dow = utcOf(iso).getUTCDay();
+  return dow !== 0 && dow !== 6;
+};
+export const firstClearDayFrom = (records, start, opts) => {
+  const weekdays = !!(opts && opts.weekdays);
+  const taken = {};
+  (records || []).forEach((r) => { if (r && typeof r.date === 'string') taken[r.date] = true; });
+  let day = start;
+  for (let i = 0; i < 60 && taken[day]; i += 1) {
+    if (weekdays) day = nextWeekday(day);
+    else { const d = utcOf(day); d.setUTCDate(d.getUTCDate() + 1); day = isoOfUTC(d); }
+  }
+  return day;
+};

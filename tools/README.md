@@ -1210,7 +1210,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1403 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1405 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1728,6 +1728,28 @@ skipped`, 44,090 lines, 31.2 lines per check, 494s, exit 0, measured 2026-09-19 
 `--today=2026-09-17` — the first day of the window, on which the untouched tree read
 `1396 · 1391 · 5 failed` with fifteen checks lost. The other four dates and the mutation are
 tabulated in `TESTING.md` § WO-1.53.
+
+**WO-1.46 moved it from 1403 to 1405, and the executed count from 1412 to 1414 — two sites, two
+results.** Both are literal call sites in `verify/register-opens-on-term.mjs`, inside its fixture
+branch, neither in a loop and neither a failure arm, so the gap between sites and results stays at
+−16. The first sits above phase A and is the work order's whole first Acceptance line as a
+check: *the WO-2.52 day off is derived from the document rather than guessed* — a neighbour's record
+is planted on the weekday `nodeWeekdayAhead(9)` would have chosen, the date is walked forward off
+`doc.attendance` through `lib-dates.mjs`'s `firstClearDayFrom()`, and the check asserts the walk
+stepped past the plant onto a later weekday, in the future, holding no record of any class. The
+second is the teardown's: the guessed day holds exactly what it held before the plant and the day
+off is off the calendar, so the proof leaves no residue for the sections after it — which is the
+class of defect the work order is about, one file on. **The helper is the thing that moved rather
+than the count**: `preDropDayFrom()` and the `aheadDay` walk in `verify/attendance-passes.mjs`, two
+inline copies WO-1.44 wrote, are one exported function now, walking calendar days or weekdays as
+the site says, with the sixty-day ceiling kept and the precondition still asserted at each site.
+The three cousins — `term-edges-marking.mjs`, `term-ended.mjs`, `today-goes-to-term.mjs` — are
+**left as guesses on purpose**, each with the ruling at its own line: they plant term *edges*, every
+gate that reads an edge is per-class and record-first, nothing in them authors onto the day, and a
+term edge walked past a neighbour's record would assert something the app does not require of a
+term. The run prints **1414**: `1414 checks · 1414 passed · 0 failed · 0 skipped`, 44,287 lines,
+31.3 lines per check, 494s, exit 0, measured 2026-09-19 on the real clock, a Saturday. The three
+weekdays and the mutation are tabulated in `TESTING.md` § WO-1.46.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not

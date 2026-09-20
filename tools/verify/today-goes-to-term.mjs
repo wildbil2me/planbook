@@ -8,7 +8,7 @@
  * CDP" says where a new check goes.
  */
 
-import { nodeNow, nodeColumns, nodeWeekdayAhead, daysApart } from './lib-dates.mjs';
+import { nodeColumns, nodeWeekdayAhead, nodeDaysFromToday, daysApart } from './lib-dates.mjs';
 
 export async function run(h) {
 const { check, skip, send, evalJs, has, clickSel, seam } = h;
@@ -62,19 +62,27 @@ if (!seam) {
   await new Promise(r => setTimeout(r, 300));
 
   const W = nodeColumns(6, 0);                 /* [today, ...five weekdays back] */
-  /* THE CALENDAR-DAY STEP, which the weekday walkers above cannot express: a gap of two days either
-     side of today is two days whether or not they are school days, and it is exactly what the walk
-     under test compares. Same shape as `tomorrow` further up this file, with the step as an
-     argument. */
-  const calDay = (n) => {
-    const d = nodeNow();
-    d.setDate(d.getDate() + n);
-    const p = (x) => (x < 10 ? '0' : '') + x;
-    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
-  };
+  /* THE CALENDAR-DAY STEP, which the weekday walkers cannot express: a gap of two days either side
+     of today is two days whether or not they are school days, and it is exactly what the walk
+     under test compares. It was a local `calDay()` here — "same shape as `tomorrow`, with the step
+     as an argument" — until WO-1.46 moved it to lib-dates.mjs as nodeDaysFromToday(), because a
+     second copy of a clock walk in a second file is the defect that module exists to catch. */
+  const calDay = nodeDaysFromToday;
 
   /* Four dated terms, all of them AHEAD of today — the owner's own screen on the day she reported
-     this, with the register being readied a fortnight before the year starts. */
+     this, with the register being readied a fortnight before the year starts.
+
+     LEFT AS GUESSES, ON PURPOSE (WO-1.46). Every future date in this block is a term EDGE — the
+     ruling term-edges-marking.mjs writes at its own SOON/FAR applies here whole — and this file is
+     on WO-1.46's list for a reason its Traps name outright: it honours `--today` through
+     lib-dates.mjs, and honouring a shifted clock is not the same property as choosing a date that
+     cannot collide. It has the first and was never given the second, and it does not need it: what
+     is measured here is which term `Today` and the arrival rollover hand the screen, read off
+     terms[] alone, and no record of any class on OPENS or on any other edge below can move that
+     answer — nothing here is authored onto these days, and the only thing this block ever does to
+     `attendance` is clear this class's own records (clear54, and the plant). Walking an edge off
+     `doc.attendance` would assert that a term may not begin on a day another class met, which the
+     app does not hold. */
   const Q1_ID = 'tm_wo254a', Q2_ID = 'tm_wo254b', Q3_ID = 'tm_wo254c', Q4_ID = 'tm_wo254d';
   const Q1 = 'WO-2.54 first', Q4 = 'WO-2.54 fourth';
   const OPENS = nodeWeekdayAhead(10);

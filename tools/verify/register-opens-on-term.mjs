@@ -8,7 +8,8 @@
  * CDP" says where a new check goes.
  */
 
-import { nodeColumns, nodeWeekdayAhead, daysApart, tomorrow } from './lib-dates.mjs';
+import { nodeColumns, nodeWeekdayAhead, daysApart, tomorrow, firstClearDayFrom, isWeekday }
+  from './lib-dates.mjs';
 
 export async function run(h) {
 const { check, skip, send, evalJs, has, clickSel, seam } = h;
@@ -35,7 +36,11 @@ const { check, skip, send, evalJs, has, clickSel, seam } = h;
  * term is built AHEAD of today — ten weekdays out, running to forty — so today is genuinely before
  * it, the anchor is genuinely the term's first day, and there is a real fortnight for the band to
  * count. A fixture pinned to a literal September 2 would stop testing any of this the moment the
- * calendar passed it, which is the fortnight the work order was written in.
+ * calendar passed it, which is the fortnight the work order was written in. ONE DATE IS DERIVED
+ * FROM THE DOCUMENT INSTEAD, since WO-1.46: the day off phase D authors is walked forward off
+ * `doc.attendance` from the weekday this block used to guess, because an event authored onto a
+ * day that already holds a record is the collision that cost WO-1.44 766 checks — the note at
+ * `DAY_OFF_GUESS` has the argument, and the check above phase A proves the walk on every run.
  *
  * THE CALENDAR IS EMPTIED, AND THAT IS A PREMISE RATHER THAN A TIDY-UP. The forward stop is the
  * furthest of the last day off and the SELECTED TERM'S OWN END, and acceptance line 4 is about the
@@ -70,9 +75,28 @@ if (!seam) {
   const OPENS = nodeWeekdayAhead(10);
   const NEXT = nodeWeekdayAhead(11);
   const ENDS = nodeWeekdayAhead(40);
-  /* One weekday before the term opens, for the phase that needs a horizon past today WITHOUT a
-     dated term to provide one: a day off is the other thing forwardLimit() walks to. */
-  const DAY_OFF = nodeWeekdayAhead(9);
+  /* THE DAY OFF IS DERIVED FROM THE DOCUMENT, NOT GUESSED OFF THE CALENDAR (WO-1.46). This line
+     read `const DAY_OFF = nodeWeekdayAhead(9)` from 2026-08-19 to 2026-09-19 — the same construct on
+     the same offset as the `today + 9` that cost 766 checks on 2026-08-31, one file along: an event
+     AUTHORED onto a future day that may already hold a record. What it is for is phase D, which
+     needs a horizon past today for a class with no dated term, and a day off is the other thing
+     forwardLimit() walks to. What it is NOT is "one weekday before the term opens", which is what
+     this comment used to say: phase D's only term carries no dates, `OPENS` is not in play there,
+     and the relation was descriptive rather than load-bearing — the derived day sits ON `OPENS` on
+     an ordinary run now, and nothing in that phase can tell.
+
+     WHY IT IS DERIVED WHEN THIS CLASS'S OWN LEDGER IS CLEARED ANYWAY. The event clear52() plants
+     carries `classIds: []` — the whole school's — and src/attendance.js's precedence says a record
+     under it wins for whichever class holds one, so a horizon authored over a neighbour's recorded
+     meeting is a horizon the model contradicts for that class: the premise "a day past today with
+     nothing under it" is false in the document even where this section does not read it today. And
+     a section that authored the same event through the days-off FORM rather than through the
+     store would meet clashingMeetings() and the confirm, which is the 2026-08-31 cascade exactly.
+     So the date is walked forward off `doc.attendance` — every class's records, not this one's —
+     and the precondition is asserted at the site, over a record this section plants ON the guessed
+     day so that the walk is proved to walk on every run rather than on the one day it happens to
+     matter. `DAY_OFF` itself is settled below, after the plant, from the document as it then is. */
+  const DAY_OFF_GUESS = nodeWeekdayAhead(9);
   const TOMORROW = nodeWeekdayAhead(1);
   const Q1_ID = 'tm_wo252a', Q2_ID = 'tm_wo252b';
   const Q1 = 'WO-2.52 first', Q2 = 'WO-2.52 second';
@@ -259,7 +283,9 @@ if (!seam) {
      housekeeping: WO-2.50's decision 2 says a day that already carries a record is never out of
      term, so a mark left behind by the phase above would make the next phase's locked column
      editable for a reason with nothing to do with what it is asserting. The day off is the same
-     claim about the other horizon — see the section header, and phase D's own note. */
+     claim about the other horizon — see the section header, and phase D's own note. `dayOff` is
+     the ISO date to plant it on, or false for none; it is a parameter rather than a closure over
+     `DAY_OFF` because that date is derived from the document after this function is defined. */
   const clear52 = (dayOff) => evalJs(`(async function(){
     var s = window.planbook.store, c = window.planbook.classes, a = window.planbook.attendance;
     var id = c.getSelectedClassId();
@@ -267,7 +293,7 @@ if (!seam) {
       d.attendance = (d.attendance || []).filter(function(r){ return r.classId !== id; });
       d.events = (d.events || []).filter(function(e){ return e.id !== 'ev_wo252'; });
       if (${dayOff ? 'true' : 'false'}) d.events.push({ id:'ev_wo252', kind:'no-school',
-        date: ${JSON.stringify(DAY_OFF)}, endDate: ${JSON.stringify(DAY_OFF)},
+        date: ${JSON.stringify(dayOff || '')}, endDate: ${JSON.stringify(dayOff || '')},
         title:'WO-2.52 institute day', classIds: [] });
     });
     /* THE TAB IS PUT BACK AFTER THE PAGING RESET (WO-2.54). This is a ledger reset rather than a
@@ -320,6 +346,59 @@ if (!seam) {
       false, plant252.why);
   } else {
     await evalJs(INSTALL_252);
+
+    /* ── THE DAY OFF'S DATE, SETTLED FROM THE DOCUMENT OVER A RECORD PLANTED TO BE WALKED PAST ──
+
+       The proof is in the fixture, on every run, rather than in a `--today` that happens to
+       collide: a record is planted on the day the old line would have chosen, for a NEIGHBOUR
+       class — the shape of 2026-08-31, where the residue was `ids[1]`'s and the event was authored
+       over it — and the date is then derived from the document as it stands. clear52() clears this
+       class's records before every phase and never a neighbour's, so the planted record is still
+       under the event when phase D authors it, which is the case this line exists to survive.
+
+       It is planted AFTER `__wo252save` took its snapshot, so the teardown at the foot of the block
+       puts the document back without it; a future record left behind would be a new residue for
+       every section after this one, which is the defect this work order is about, one file on. The
+       last check in the block asserts that it went. */
+    const proof252 = await evalJs(`(async function(){
+      var s = window.planbook.store, c = window.planbook.classes;
+      var id = c.getSelectedClassId();
+      var doc = s.getDoc();
+      var neighbour = (doc.classes || []).filter(function(x){ return x.id !== id && !x.archived; })[0];
+      if (!neighbour) return { ok:false, why:'no second active class to plant a neighbour record on' };
+      /* How many records the guessed day held BEFORE the plant — what the teardown check compares
+         against, so it asserts this section's own trace is gone and nothing about what an earlier
+         section left. (No backticks in this comment: it is inside a template literal.) */
+      var held = (doc.attendance || []).filter(function(r){
+        return r.date === ${JSON.stringify(DAY_OFF_GUESS)}; }).length;
+      s.update(function(d){
+        /* A recorded meeting with no marks on it — the shape classes-terms.mjs's own fixture uses —
+           so no reader meets a mark for a student the neighbour does not have.
+           (No backticks in this comment: it is inside a template literal.) */
+        d.attendance.push({ classId: neighbour.id, date: ${JSON.stringify(DAY_OFF_GUESS)},
+          marks: {} });
+      });
+      await s.flush();
+      return { ok:true, neighbour: neighbour.id, held: held,
+        records: (s.getDoc().attendance || []).map(function(r){
+          return { classId: r.classId, date: r.date }; }) }; })()`);
+    const DAY_OFF = firstClearDayFrom(proof252.ok ? proof252.records : [], DAY_OFF_GUESS,
+      { weekdays: true });
+    const onGuess = (proof252.records || []).filter((r) => r.date === DAY_OFF_GUESS);
+    const onDayOff = (proof252.records || []).filter((r) => r.date === DAY_OFF);
+    check('the WO-2.52 day off is derived from the document rather than guessed (WO-1.46): a neighbour’s record sits on the day the old `nodeWeekdayAhead(9)` would have chosen, the walk stepped past it onto a later weekday that is in the future and holds no record of any class',
+      proof252.ok && onGuess.length >= 1
+        && onGuess.some((r) => r.classId === proof252.neighbour)
+        && DAY_OFF > DAY_OFF_GUESS && DAY_OFF > D[0] && isWeekday(DAY_OFF)
+        && onDayOff.length === 0,
+      (proof252.ok ? 'the neighbour ' + JSON.stringify(proof252.neighbour) : proof252.why || '')
+        + '; the guess was ' + DAY_OFF_GUESS + ' holding ' + onGuess.length + ' record(s) '
+        + JSON.stringify(onGuess.map((r) => r.classId)) + '; the day off is ' + DAY_OFF
+        + ' (today is ' + D[0] + ', the term opens ' + OPENS + '), holding ' + onDayOff.length
+        + ' record(s), a weekday = ' + isWeekday(DAY_OFF) + '; the document holds '
+        + (proof252.records || []).length + ' attendance record(s) in total, on '
+        + JSON.stringify((proof252.records || []).map((r) => r.date)
+          .filter((v, i, all) => all.indexOf(v) === i).sort()));
 
     /* ── PHASE A: the fortnight before the term — the owner's own screen ── */
     await arrange52([AHEAD_TERM], Q1_ID);
@@ -500,10 +579,12 @@ if (!seam) {
        ONE DAY OFF IS PLANTED HERE, and it is this phase's premise rather than decoration: with no
        dated term and an empty calendar there is no horizon past today at all, so there would be no
        future column on screen to assert the absence of a ✏ ON. The day off is what opens the window
-       forward, which is WO-2.3's own answer and the other half of forwardLimit(). */
+       forward, which is WO-2.3's own answer and the other half of forwardLimit(). Its date is the
+       one derived above the phases, over the neighbour's planted record, which is still in the
+       document here: clear52() clears this class and no other. */
     await arrange52([{ id: 'tm_wo252u', label: 'WO-2.52 undated', start: '', end: '' }],
       'tm_wo252u');
-    await clear52(true);
+    await clear52(DAY_OFF);
     const undated = await read52();
     check('a class whose terms carry no dates opens on TODAY with no band at all — it pays nothing for this feature and is promised nothing by it',
       dates52(undated)[0] === D[0] && undated.band.up === false
@@ -648,8 +729,10 @@ if (!seam) {
 
     /* The document back as it was, IN PLACE rather than as a fresh object — every module holds the
        reference getDoc() handed it — with the class and term this block found open put back, and
-       the calendar this block emptied restored with the rest of it. */
-    await evalJs(`(async function(){
+       the calendar this block emptied restored with the rest of it. What comes back is what the
+       next section inherits, read after the restore: the WO-1.46 proof record and the day off must
+       both be gone, or this block has left the residue it was rewritten to survive. */
+    const afterTeardown = await evalJs(`(async function(){
       var s = window.planbook.store, c = window.planbook.classes, a = window.planbook.attendance;
       var saved = window.__wo252save, d = s.getDoc();
       var restored = JSON.parse(saved.doc);
@@ -668,7 +751,21 @@ if (!seam) {
       delete window.__wo252save;
       delete window.__wo252;
       await s.flush();
-      return 1; })()`);
+      var doc = s.getDoc();
+      return {
+        onGuess: (doc.attendance || []).filter(function(r){
+          return r.date === ${JSON.stringify(DAY_OFF_GUESS)}; }).length,
+        ahead: (doc.attendance || []).filter(function(r){
+          return r.date > ${JSON.stringify(D[0])}; }).length,
+        dayOffs: (doc.events || []).filter(function(e){ return e.id === 'ev_wo252'; }).length,
+        events: (doc.events || []).length }; })()`);
+    check('and the teardown leaves no trace of the WO-1.46 proof: the guessed day holds exactly what it held before the plant, and the WO-2.52 day off is off the calendar',
+      proof252.ok && afterTeardown.onGuess === proof252.held && afterTeardown.dayOffs === 0,
+      'after the restore ' + DAY_OFF_GUESS + ' holds ' + afterTeardown.onGuess
+        + ' record(s) against ' + (proof252.ok ? proof252.held : '?') + ' before the plant, '
+        + afterTeardown.ahead + ' record(s) in the document sit after ' + D[0]
+        + ', and the calendar holds ' + afterTeardown.events + ' event(s) of which '
+        + afterTeardown.dayOffs + ' is/are ev_wo252');
   }
 
   await send('Emulation.clearDeviceMetricsOverride');

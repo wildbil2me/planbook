@@ -2008,6 +2008,99 @@ and `exception` alone, and the plant site says what to do if that ever changes.
 
 ---
 
+### WO-1.46 — four fixtures still guess a date, and one of them is the twin of the one that broke
+
+**What this changes.** Nothing a teacher sees, and nothing a device gets. `src/`, `index.html`,
+`sw.js`, `privacy.html`, `manifest.json` and `icons/` are **byte-identical to HEAD** — `git diff
+HEAD -- src/ index.html sw.js privacy.html manifest.json icons/` is empty — so **no `CACHE` bump is
+owed**. Six files under `tools/verify/` move. `lib-dates.mjs` gains `firstClearDayFrom(records,
+start, { weekdays })` — WO-1.44's inline walk, lifted whole with its UTC arithmetic and its sixty-day
+ceiling, plus `nextWeekday()`, `isWeekday()` and `nodeDaysFromToday()` beside it. The twin,
+`register-opens-on-term.mjs`, derives its day off through it over a record it plants on the guessed
+day; `attendance-passes.mjs`'s two inline walks (`preDropDayFrom()` and the `aheadDay` IIFE) become
+two calls; and the three cousins each carry a ruling at the line and are otherwise unchanged. *(One
+mechanical fold rides along: `today-goes-to-term.mjs`'s local `calDay()` was `nodeDaysFromToday()`
+to the character and now aliases it, because a second clock walk in a second file is the defect
+`lib-dates.mjs` exists to catch.)*
+
+- [x] **The twin's day off is derived from the document, and the proof is in the fixture on every
+      run.** `DAY_OFF` was `nodeWeekdayAhead(9)`; it is now `firstClearDayFrom(doc.attendance,
+      nodeWeekdayAhead(9), { weekdays: true })`, settled AFTER the section plants a neighbour's
+      record (`{ classId: c_b1, date: <the guess>, marks: {} }`) on exactly the day the old line
+      would have chosen. A new check above phase A asserts the walk stepped past it — `DAY_OFF >
+      guess`, in the future, a weekday, holding no record of any class — and a second new check at
+      the teardown asserts the guessed day holds what it held before the plant and the day off is off
+      the calendar, so the proof leaves no residue for the sections after. On every run below the
+      first read *"the guess was … holding 1 record(s) ["c_b1"]; the day off is … holding 0
+      record(s), a weekday = true"* with the two dates one weekday apart, and the second read
+      *"holds 0 record(s) against 0 before the plant … 0 is/are ev_wo252"*.
+- [x] **Four sites, four decisions, none silent.** `register-opens-on-term.mjs:75` — **derived**, at
+      the `DAY_OFF_GUESS` note, which also corrects the old "one weekday before the term opens"
+      comment (phase D's term is undated; `OPENS` was never in play there, and the derived day sits
+      ON `OPENS` on an ordinary run). `term-edges-marking.mjs` (`SOON`, `FAR`) — **left**, at the
+      line: term edges are bounds read out of `terms[]`, every gate that reads one is per-class and
+      record-first (`!recordFor(classId, date) && …`), this class's records are cleared at plant,
+      nothing is authored onto the day, and walking an edge past a neighbour's record would assert
+      that a term may not open on a day another class met. `term-ended.mjs` (`AHEAD`, `LATER`) —
+      **left**, same ruling, at the line: what it measures is which term a screen is handed, read
+      off `terms[]` and the preference, none of which reads the ledger. `today-goes-to-term.mjs`
+      (`OPENS` and the other edges) — **left**, at the line, with the Traps' own distinction written
+      down: it honours `--today` and was never given a date that cannot collide, and it does not
+      need one because its only ledger write is clearing its own class.
+- [x] **One helper, in `lib-dates.mjs`, with a ceiling.** `firstClearDayFrom()` walks calendar days
+      or, with `{ weekdays: true }`, Monday-to-Friday; after sixty taken days it hands back the
+      sixty-first and lets the site's precondition go red rather than throwing or hanging.
+      `attendance-passes.mjs` calls it twice — `preDropDay = firstClearDayFrom(records,
+      nodeDaysFromToday(9))` (calendar days, as WO-1.44 wrote it) and `aheadDay =
+      firstClearDayFrom(records, nodeWeekdayAhead(4), { weekdays: true })` — and its fixture check
+      still asserts zero records and a future date for both. `grep -n "preDropDayFrom\|nextWeekday
+      = " tools/verify/*.mjs` finds no definition outside `lib-dates.mjs`.
+- [x] **Four runs green, three of them weekdays, each read to its own `EXIT=` line.** **Real clock,
+      Sat 2026-09-19, no flag**: `1414 checks · 1414 passed · 0 failed · 0 skipped`, 44,287 lines,
+      31.3 lines per check, 494s, exit 0 · **Mon `--today=2026-09-21`**: 1414/1414, 495s, exit 0 —
+      the guess was Fri 2026-10-02 and the walk landed on Mon 2026-10-05, which is the weekday walk
+      crossing a weekend · **Wed `--today=2026-09-23`**: 1414/1414, 495s, exit 0 (guess 10-06 →
+      10-07) · **Fri `--today=2026-09-25`**: 1414/1414, 495s, exit 0 (guess 10-08 → 10-09). **On
+      "a date the fixtures plant records on", read this before citing the box.** The work order
+      was written when the class manager's residue sat on a hard-coded 2026-09-09 and `today + 9`
+      could be aimed at it. Since WO-1.53 every record that survives into this section's document
+      is derived off the clock and BEHIND it — the derived check prints the whole list on each run,
+      and on all four it is the residue, the attendance section's own marks on today and the earlier
+      page, and nothing after today except the proof this section plants — so no `--today` can put a
+      foreign record on a forward guess any more, and the collision the line wanted driven is
+      instead planted by the fixture itself on every run. Each `--today` above is a date the
+      fixtures plant records on in the literal sense (the attendance section marks today); none is
+      one a forward walk could have reached by luck. The box is ticked on that reading, and the
+      verifier should say so if it wants a narrower one.
+- [x] **The check has teeth — one mutation, reverted by hand before anything else was written.**
+      `return day;` inserted at the top of `firstClearDayFrom()`'s loop under a `MUTATION WO-1.46`
+      comment — the walk never walks — run with `--today=2026-09-21`: **`1414 checks · 1413 passed ·
+      1 failed · 0 skipped`**, 496s, `EXIT=1`, no throw. The one red line is the derived check,
+      reading *"the day off is 2026-10-02 … holding 1 record(s)"* — and every other check in the
+      section stayed green, phase D included, with the event authored over the neighbour's recorded
+      meeting. That is the finding in one line: nothing in the section but the precondition can see
+      the collision, which is why WO-1.44's Traps insist on asserting it at the site. The tree was
+      staged before the plant; the mutation came out by hand the moment the run had printed its
+      first section, and `grep -rn "MUTATION WO-1.46" tools/ src/` returns nothing.
+- [x] **The count in `tools/README.md` is a number a run produced.** Call sites **1403 → 1405** and
+      the executed count **1412 → 1414** — two sites, two results, neither in a loop and neither a
+      failure arm. `node tools/wo-sweep.mjs` reads `1405 check() call site(s) across 70 harness
+      file(s), matching tools/README.md:1213` and prints **`42 checks · 39 passed · 0 failed · 3 to
+      review`**, exit 0 — the same three standing REVIEW lines as before, none of which this work
+      order touches. `node tools/wo-gate.mjs --audit` is **PASS**, exit 0.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.* **Two limits worth
+carrying.** The twin's derived day sits ON `OPENS` on every ordinary run now, because the proof
+record is always on the guess and the walk always steps one weekday; phase D cannot tell, but a
+future phase that arranged a dated term AND planted the day off would be arranging a day off on the
+term's first day, and the note at `DAY_OFF_GUESS` is where that would be found. And the mutation
+above reddened one check, not two: the WO-2.3 fixture check in `attendance-passes.mjs` was green
+under the same broken walk because nothing sat on its two dates — its teeth were proved by WO-1.44's
+real collision and its clauses did not move, but a reader wanting them re-proved on this tree wants a
+planted record there too, which this work order did not add.
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*

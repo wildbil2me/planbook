@@ -13,6 +13,16 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The last fixture that guessed a date off the calendar now derives it — 2026-09-20
+
+Nothing a teacher sees. The four verification fixtures WO-1.44 left guessing a future date off the
+calendar are settled. The one that authored an event — the WO-2.52 day off, the twin of the `today + 9`
+that cost 766 checks — now derives its date from the document over a record the fixture plants on
+purpose, and asserts the walk at the site on every run. The other three plant term edges, which no
+per-class gate reads against a neighbour's record; each says so at its own line. The walk itself
+lives once, in `lib-dates.mjs`, with a sixty-day ceiling. Green on four days, one of them a real
+weekend; a mutation that stopped the walk reddened exactly the line built to catch it.
+
 ### The harness stops going red for a week every September — 2026-09-19
 
 Nothing a teacher sees. The verification harness plants one attendance record on purpose and leaves

@@ -17,7 +17,8 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { nodeToday, nodeNow, nodeColumns, nodeWeekdayAhead, tomorrow } from './lib-dates.mjs';
+import { nodeToday, nodeNow, nodeColumns, nodeWeekdayAhead, nodeDaysFromToday, tomorrow,
+  firstClearDayFrom, nextWeekday } from './lib-dates.mjs';
 
 export async function passes(h, ctx) {
 const { ROOT, check, skip, send, evalJs, has, clickSel, openCalendarPanel, dateResetOn } = h;
@@ -2226,23 +2227,14 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
      the run is taken on — and the walk starts at `today + 9` so that the ordinary run picks the
      same date it always did. It is asserted rather than trusted: the fixture check below carries
      the precondition, so a build where the walk stopped working goes red HERE, on one line that
-     says why, instead of six checks and a crash further down. */
-  const preDropDayFrom = (records) => {
-    const taken = {};
-    (records || []).forEach((r) => { taken[r.date] = true; });
-    const p = (x) => (x < 10 ? '0' : '') + x;
-    const iso = (d) => d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate());
-    /* UTC throughout, off the ISO string this run already agreed on, so the walk cannot land a day
-       either side of itself on a DST seam — the same reasoning src/calendar.js's plusDays() gives
-       at the one place that file touches a Date at all. */
-    const d = new Date(Date.UTC(Number(nodeToday.slice(0, 4)), Number(nodeToday.slice(5, 7)) - 1,
-      Number(nodeToday.slice(8, 10))));
-    d.setUTCDate(d.getUTCDate() + 9);
-    /* A ceiling rather than a `while (true)`: a document that somehow held a record on every one of
-       the next sixty days should fail the precondition below, loudly, rather than hang the run. */
-    for (let i = 0; i < 60 && taken[iso(d)]; i += 1) d.setUTCDate(d.getUTCDate() + 1);
-    return iso(d);
-  };
+     says why, instead of six checks and a crash further down.
+
+     THE WALK ITSELF LIVED HERE AS `preDropDayFrom()` UNTIL WO-1.46 and is lib-dates.mjs's
+     firstClearDayFrom() now — the UTC walk and the sixty-day ceiling travelled with it, and its
+     reasoning is at the definition. This site calls it in CALENDAR days, which is what it always
+     walked: the pre-drop is asked of the predicate and not of the strip, so it needs no column to
+     land on. The WO-2.52 section calls the same function in weekdays for a day off the strip pages
+     to, and the punch list below calls it in weekdays for the same reason. One walk, three sites. */
 
   /* stateOf() for every active class over a list of dates, in one round trip. Asked of the app's
      own predicate — the point of the whole work order is that there is exactly one of them. */
@@ -2315,8 +2307,9 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
   const emptyRange = beforeEvents.records.filter((r) => r.date >= offFrom && r.date <= offTo);
   const edgeRecord = beforeEvents.records.filter((r) => r.date === offEdge
     && r.classId === marking)[0] || null;
-  /* Derived from the document that was just read, for the reason written out at preDropDayFrom(). */
-  const preDropDay = preDropDayFrom(beforeEvents.records);
+  /* Derived from the document that was just read, for the reason written out above `offWeek`'s
+     neighbours: today + 9 in calendar days, walked forward past anything recorded. */
+  const preDropDay = firstClearDayFrom(beforeEvents.records, nodeDaysFromToday(9));
   const preDropRecords = beforeEvents.records.filter((r) => r.date === preDropDay);
   /*
     ── AND THE PUNCH LIST'S OWN FUTURE DAY, DERIVED HERE FOR THE SAME REASON (WO-1.44) ──
@@ -2334,22 +2327,11 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
     Walked in WEEKDAYS, because the pager walks weekdays and a Saturday could not be paged to. The
     two-weekday reach for the `To` field is derived from it rather than from the clock for the same
     reason, and because an end date the walk had moved PAST would be an end date the app is right to
-    overwrite — which would fail the check about not overwriting one.
+    overwrite — which would fail the check about not overwriting one. The walk and the weekday step
+    are lib-dates.mjs's since WO-1.46 (they were a second copy of the pre-drop's walk, in this same
+    block, with the weekend skip as the one difference — which is now an argument).
   */
-  const nextWeekday = (iso) => {
-    const p = (x) => (x < 10 ? '0' : '') + x;
-    const d = new Date(Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1,
-      Number(iso.slice(8, 10))));
-    do { d.setUTCDate(d.getUTCDate() + 1); } while (d.getUTCDay() === 0 || d.getUTCDay() === 6);
-    return d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate());
-  };
-  const aheadDay = (() => {
-    const taken = {};
-    beforeEvents.records.forEach((r) => { taken[r.date] = true; });
-    let day = nodeWeekdayAhead(4);
-    for (let i = 0; i < 60 && taken[day]; i += 1) day = nextWeekday(day);
-    return day;
-  })();
+  const aheadDay = firstClearDayFrom(beforeEvents.records, nodeWeekdayAhead(4), { weekdays: true });
   const aheadTo = nextWeekday(nextWeekday(aheadDay));
   const aheadRecords = beforeEvents.records.filter((r) => r.date === aheadDay);
   check('WO-2.3 fixture: the week this section is about to close holds no attendance, the day just outside the range is dropped so the two greys can be told apart, and BOTH future days it will author on hold nothing at all',

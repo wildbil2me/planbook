@@ -4346,7 +4346,7 @@ describe the containment, and not one of them fails a build.
 
 ## WO-1.46 — four fixtures still guess a date, and one of them is the twin of the one that broke
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.44 ✅ · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-09-20 · **Size** S · **Depends on** WO-1.44 ✅ · **Blocks** nothing
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.45
 made. Booked 2026-08-31, owner-directed, on WO-1.44's verifier's second proposal.)*
 
@@ -4403,16 +4403,19 @@ constraint — it touches `wo-sweep.mjs` and cannot affect a run.)*
   first and not the second.
 
 **Acceptance**
-- [ ] `register-opens-on-term.mjs`'s day-off date is **derived from the document** rather than
+- [x] `register-opens-on-term.mjs`'s day-off date is **derived from the document** rather than
       guessed, with its precondition asserted at the site — driven against a planted record on the
       date it would otherwise have chosen.
-- [ ] The other three sites are each **read and settled in writing**: derived the same way, or left
+- [x] The other three sites are each **read and settled in writing**: derived the same way, or left
       as they are with the reason named at the line. Four sites, four decisions, none silent.
-- [ ] The helper lives in `lib-dates.mjs`, carries a ceiling rather than an unbounded walk, and is
+- [x] The helper lives in `lib-dates.mjs`, carries a ceiling rather than an unbounded walk, and is
       used by WO-1.44's site too, so there is one of it rather than two.
-- [ ] `node tools/verify-shell.mjs` is green on **at least three weekdays** including one driven with
-      `--today` onto a date the fixtures plant records on.
-- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+- [x] `node tools/verify-shell.mjs` is green on **at least three weekdays** including one driven with
+      `--today` onto a date the fixtures plant records on. *(Sat real clock, Mon/Wed/Fri by
+      `--today`, all 1414/1414 — and read `TESTING.md` § WO-1.46's fourth box before citing this
+      one: since WO-1.53 no surviving record sits ahead of the clock, so the planted record the
+      line wants is the fixture's own, on every run, rather than one a `--today` can be aimed at.)*
+- [x] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
 
 ---
 

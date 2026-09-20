@@ -61,6 +61,18 @@ if (!seam) {
   await new Promise(r => setTimeout(r, 300));
 
   const W = nodeColumns(6, 0);                 /* [today, ...five weekdays back] */
+  /* LEFT AS A GUESS, ON PURPOSE, AND HERE IS WHY (WO-1.46). These two are term EDGES, and WO-1.46
+     read this site as one of four that still pick a future date off the calendar the way the
+     `today + 9` that cost WO-1.44 766 checks did. It is not the same case. A term boundary is a
+     bound read out of `classes[].terms[]` by termContaining() and outOfTermGap(), and every gate
+     that consults it is per-class and record-first — `!recordFor(classId, date) && …` — so a
+     neighbour's record on SOON or FAR moves no answer this block reads, and this class's own
+     records are cleared at plant252 and again before each phase. Nothing here AUTHORS onto these
+     days: the writer probe on SOON at the foot of the block writes this class's own record and
+     puts the ledger back, which is the thing the probe is for. Walking a term edge forward off
+     `doc.attendance` would say something false — that a term may not open on a day another class
+     met — and would move SOON off the tenth weekday, which the probe's own wording names. The
+     day-off in register-opens-on-term.mjs is the twin that IS the WO-1.44 case, and it is derived. */
   const FAR = nodeWeekdayAhead(40);
   const SOON = nodeWeekdayAhead(10);
   const EARLY = 'WO-2.50 early';
