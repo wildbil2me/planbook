@@ -870,49 +870,83 @@ deepens it. Booking the repair is the owner's call.
 
 ## WO-5.8 — Several recipients, and one of them is primary
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** L · **Depends on** WO-5.3, WO-5.6
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-5.13, WO-5.14, WO-5.6
+
+*(**Cut in four on 2026-09-20, the owner's call, before it was ever dispatched** — it was the last
+`Size L` row in the directory, and one L is roughly a whole five-hour window against session-limit
+deaths that cluster at 16–20M weighted units. The precedent is WO-6.4's cut of 2026-09-15
+(`1bc04e0`): cut along the row's own deliverable seams before `--start`, and let `--start` of each
+piece be the "is there a window" check. Three rows came out of it, and* **this row keeps its id, its
+place in the running order and the picker** *— which is what keeps* [WO-8.13](phase-8-packaging.md#wo-813--the-about-modal-names-two-documents-and-not-the-licence)*'s
+🎒 shelf resolving, since that cell names row 41 as the sitting that opens `index.html`.*
+**Size dropped L → M.** *What went where:*
+[WO-5.13](#wo-513--every-template-whatever-the-recipient) *took the audience-filter reversal —
+Acceptance lines 3 and 7, and the* ⚠ *block that used to stand here —* **because it is independent
+of multi-select and must land first**: *a filter that needs one audience cannot survive a draft that
+has no single one.* [WO-5.14](#wo-514--the-compose-doors-take-a-list-and-which-header-the-others-ride-in)
+*took the first half of line 4 and* **the argument this row said it owed** *— which header the
+non-primary recipients ride in — because that is a ruling best made in the pure module before the
+picker exists, rather than at the point in a build where the budget is thinnest.*
+[WO-5.15](#wo-515--one-contact-several-audiences) *was booked out of the reading rather than out of
+the Deliverables below, which never mentioned it: `writeContact({ audience })` is a scalar enum with
+three readers, and a draft to two guardians and the counselor has no single value for it.*
+**Expect the four pieces to cost more in total than one clean L** *— a verifier cold start and an
+orchestrator each. The trade is blast radius, not efficiency.)*
 
 **Why it exists.** One message often goes to more than one person — both guardians, or a guardian
 and the counselor — and today that is one draft written twice. The owner, 2026-08-29: *"You should
 be able to select more than one 'recipient' and all templates should be available regardless of
 recipient. One should be 'primary.'"*
 
-**⚠ THIS REVERSES A VERIFIED ACCEPTANCE LINE, and it is the owner's call rather than a correction.**
-WO-5.3's seventh line — proved, mutation-tested, and inherited from WO-5.2's first — reads templates
-through `templatesFor(doc, tone, audience)` **with both arguments, never audience alone**, so that a
-guardian's concern template is not offered for a praise draft. **The tone half is untouched and must
-stay.** The audience half is what is being reversed: templates become available whatever the
-recipients are, because a message to both guardians and the counselor has no single audience to
-filter on. Whoever builds this amends that line where it stands rather than leaving two documents
-disagreeing — and `{{guardian.name}}` then has to resolve against *somebody*, which is what
-`primary` is for.
+**The reversal this row used to carry is WO-5.13's now.** The ⚠ block arguing it stood here until
+the cut; it is reproduced in full under [WO-5.13](#wo-513--every-template-whatever-the-recipient),
+which is also where `TESTING.md` § WO-5.2 and § WO-5.3 are amended. **This row depends on it**, so
+by the time the picker is built every template is already offered whatever the recipient is, and
+`{{guardian.name}}` resolving against *somebody* is the only half of that argument left here —
+which is what `primary` is for.
 
 **Deliverables**
 - Several recipients selectable at once from the list WO-5.3 already builds, with one marked
   **primary**.
 - The primary is who the merge fields resolve against and who the message is addressed to; the rest
-  ride as additional recipients. **Which header they ride in is a decision this work order owes an
-  argument for** — a guardian who can see the counselor's address is a different thing from one who
-  cannot, and that is a disclosure question rather than a formatting one.
-- All templates offered regardless of recipient; tone filtering unchanged.
-- WO-5.3's Acceptance line 7 amended in place, in the same sitting, with the reversal recorded.
+  ride as additional recipients, **in the header WO-5.14 ruled on**. *(That ruling was this row's to
+  make until the cut. It is not re-opened here — read it, and build to it.)*
+- The picker's own state: `recipientKey` is one string today (`src/outreach-view.js:312`) and every
+  consumer downstream assumes one. It becomes a selection plus a primary.
 
 **Acceptance**
 - [ ] Two guardians and a counselor can be chosen for one draft, with exactly one primary at all
       times, and the primary changeable without losing the selection.
 - [ ] `{{guardian.name}}` and every other merge field resolve against the primary, and the draft
       says who that is.
-- [ ] Every saved template is offered whatever the recipients are; a concern template is still never
-      offered for a praise draft.
-- [ ] The `mailto:` URL carries every chosen recipient, and copy-to-self behaves as WO-5.3 proved.
+- [ ] Every chosen recipient reaches the compose URL, in the header WO-5.14 ruled on, and
+      copy-to-self behaves as WO-5.3 proved. *(The second half of the line that read "The `mailto:`
+      URL carries every chosen recipient" until the cut; the builders' half went to WO-5.14.)*
 - [ ] A recipient with no address on file cannot be chosen, and says why — WO-5.3's rule, unchanged.
 - [ ] Changing the recipients obeys WO-5.6's confirm rather than a second rule of its own.
-- [ ] WO-5.3's seventh Acceptance line and `TESTING.md` § WO-5.3 both record the reversal.
 
 **Traps** — The accommodation fence does not move: the picker still reads `students[].counselor` and
-never `supports.caseManager`, and `AUDIENCES` is not widened to make a recipient list work. The
-`mailto:` ceiling is measured on the whole encoded URL, so several addresses eat into the same 2,000
-characters the body does.
+never `supports.caseManager`, and `AUDIENCES` is not widened to make a recipient list work.
+
+**And one thing the fourth Acceptance line hides.** Today an addressless recipient is **choosable
+and then blocked**, not unchoosable — `src/outreach.js:112-117` argues for that deliberately, and
+the ban lands as a `reasons` entry of `kind: 'recipient'` (`src/outreach-view.js:488-496`) which
+drives `ready = false`. **The harness clicks the addressless chip and asserts the block**
+(`tools/verify/outreach.mjs:873`), and `phase-1-shell-store-roster.md:3619-3621` treats
+choose-then-block as the rule this row leaves standing. If multi-select makes it genuinely
+unchoosable, that `.click()` becomes a no-op and the check must be **rewritten, not re-asserted**.
+Decide which, and say so at the point of departure.
+
+Second: `tools/verify/outreach.mjs:356-366` asserts `recipients.length === 5` and five exact
+`key:label:has|none` strings **in order**, plus `chips.length === 5`. Any change to row shape or
+ordering breaks it positionally rather than by meaning.
+
+Third: `model.recipients[].has` (`src/outreach-view.js:560`) is already in the model and read by
+nothing in `src/` — only the harness reads it. It is the hook a disable would use, already there.
+
+Fourth: WO-5.6's confirm is reached through `askBeforeRebuild()` (`src/outreach-view.js:1174-1201`),
+and its lead sentence uses the chip's **position** and never the person (`:1244-1252`). That
+survives a multi-select; check it rather than assume it.
 
 ---
 
@@ -1329,3 +1363,186 @@ code before the two documents are rewritten**: the data-flow statement is a publ
 policy is the page Google fetches during OAuth verification (WO-3.18), and the sitting that ships a
 webmail door with the old sentence still live has published a policy that is wrong for as long as
 the gap lasts.
+
+---
+
+## WO-5.13 — Every template, whatever the recipient
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-5.3
+
+**Why it exists.** The owner, 2026-08-29: *"all templates should be available regardless of
+recipient."* That is the half of [WO-5.8](#wo-58--several-recipients-and-one-of-them-is-primary)'s
+ask which needs no picker, and **it has to land first**: multi-select cannot keep a filter that
+needs one audience, because a message to both guardians and the counselor has no single audience to
+filter on. Cut out of WO-5.8 on 2026-09-20 — see the block under that row's header.
+
+**⚠ THIS REVERSES A VERIFIED ACCEPTANCE LINE, and it is the owner's call rather than a correction.**
+*(This block stood under WO-5.8 until the cut of 2026-09-20 and came here with the work.)*
+WO-5.3's seventh line — proved, mutation-tested, and inherited from WO-5.2's first — reads templates
+through `templatesFor(doc, tone, audience)` **with both arguments, never audience alone**, so that a
+guardian's concern template is not offered for a praise draft. **The tone half is untouched and must
+stay.** The audience half is what is being reversed. Whoever builds this amends those lines where
+they stand rather than leaving two documents disagreeing.
+
+**What changes, and what deliberately does not.** `templatesFor(doc, tone, audience)`
+(`src/templates.js:159-167`) **keeps its signature** — `''` already means "all of that dimension",
+so the send flow simply stops passing the third argument. **Four call sites**, all in
+`src/outreach-view.js`: `:463` (the send-time read), `:1118` (at open), `:1232` (`applyTone`),
+`:1263` (`applyRecipient`). The fifth, `src/templates-view.js:302`, already passes `''`.
+
+`model.audience` (`src/outreach-view.js:451`, `:563`) **stays**: it still feeds the note under the
+picker and `writeContact()`. Only the filter goes. **`AUDIENCES` is not widened and `audienceOf()`
+is not removed** — `tools/wo-sweep.mjs` § 24 pins seven exports of `src/outreach.js` by name,
+`audienceOf` among them, and drops a vacuity guard if one goes missing.
+
+**Deliverables**
+- The audience argument dropped at the four send-flow call sites; the tone argument untouched.
+- Two sentences reworded rather than deleted, because both go stale the moment the filter does: the
+  "no template for this pair" reason (`src/outreach-view.js:484`) and the note under the picker,
+  *"N templates written for a guardian in the concern tone"* (`:655`).
+- The reversal recorded in every document that asserts the both-arguments rule, in the same sitting:
+  **WO-5.2's first Acceptance line** (`phase-5-outreach.md:183-187`, ✅ ticked), **WO-5.3's seventh**
+  (`:314-316` and `:325`, ✅ ticked and mutation-proved), both prose twins in `TESTING.md`
+  (§ WO-5.2 and § WO-5.3), and `docs/data-model.md:725`.
+
+**Acceptance**
+- [ ] Every saved template is offered whatever the recipient is; a concern template is still never
+      offered for a praise draft. *(Moved here from WO-5.8 at the cut of 2026-09-20, reworded from
+      "whatever the recipients are" because multi-select does not exist yet and this row does not
+      wait for it.)*
+- [ ] WO-5.2's first Acceptance line, WO-5.3's seventh, both `TESTING.md` twins and
+      `docs/data-model.md` all record the reversal, amended in place rather than left disagreeing.
+      *(Moved here from WO-5.8 at the cut, and widened: the line named WO-5.3 and `TESTING.md`
+      only, but WO-5.3's own text says it inherited the rule from WO-5.2, and the data model states
+      it a third time.)*
+
+**Traps** — `tools/verify/templates.mjs:420` asserts the audience filter and **will go red on work
+being done**. Rewrite it to assert the tone half and the *absence* of the audience half rather than
+deleting it; a claim deleted because it went red is a claim nobody replaces. Harness prose at
+`tools/verify/outreach.mjs:391-417` says the same thing in words and needs the same treatment.
+
+Second: `CLAUDE.md:206` mentions `templatesFor` and is **not** about this filter — it is the WO-6.6
+class-tab ruling that templates are global. Leave it alone.
+
+Third: if the count of `check(` lines moves, `tools/README.md`'s call-site count moves with it and
+`wo-sweep.mjs` § 11 compares against the sentence there. Update it in the same sitting — the WO-3.26
+scar, where a green tree turned the sweep red on work being done.
+
+---
+
+## WO-5.14 — The compose doors take a list, and which header the others ride in
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-5.3
+
+**The dependency is WO-5.3 and not WO-5.12, deliberately.** WO-5.12 built two of the three doors
+this row changes, so it is the obvious id to name — and naming it would gate this row on a 👤 line
+nobody can currently close: WO-5.12 is 🔨 on *"Preference at Outlook on the web, in any browser with
+an Outlook account"*, and its own text says **the owner has no Outlook account on hand**. The three
+builders are in the tree and stable whatever that reading does; a dependency that cannot be
+discharged is a row that never starts. **WO-5.3 is what created `mailtoUrl()` and `draftText()`**,
+which is the honest floor for this work. *(Said here rather than left to be rediscovered: the gate
+refused `WO-5.12` on 2026-09-20 and this is the answer, not an oversight.)*
+
+**Why it exists.** [WO-5.8](#wo-58--several-recipients-and-one-of-them-is-primary) said it owed an
+argument nobody had made: **which header do the non-primary recipients ride in — To, Cc, or Bcc?**
+A guardian who can see the counselor's address is a different thing from one who cannot, and that is
+a disclosure question rather than a formatting one. **This row makes that argument, and implements
+it, before the picker exists** — so the picker consumes a settled ruling instead of making one at
+the point in a build where the budget is thinnest. Cut out of WO-5.8 on 2026-09-20.
+
+**It lands invisibly, which is the point.** The model passes one-element lists, the app behaves
+exactly as it does today, and the multi-address behaviour is proved by harness fixtures calling the
+builders directly. That is clean here and nowhere else: `wo-sweep.mjs` § 24 already forbids
+`src/outreach.js` from importing the store or mutating the document, so these are pure functions
+over a hand-built draft object.
+
+**Deliverables**
+- The ruling, written down at its own point of departure in `src/outreach.js`, with the disclosure
+  argument for it — not a comment saying which header, a comment saying **why that header**.
+  `src/outreach.js` has **no bcc anywhere today**, so choosing one is a new field, not a toggle.
+- `encodeAddress()` (`src/outreach.js:228-230`) over a list. It runs `encodeURIComponent` across the
+  whole string and restores only `@`; a comma-joined list comes back with `%2C` between addresses,
+  which is **not** the RFC 6068 to-list grammar. It becomes map-then-join.
+- `draft.to` and `draft.cc` become lists, across all three builders that share them:
+  `mailtoUrl()` (`:261-271`), `composeUrl()` (`:409-427`, the Gmail and Outlook doors), and
+  `draftText()` (`:492-505`) for the clipboard — whose `Name <addr>` line and admin special-case
+  (`:498`) need the same treatment.
+- The ceiling recounted. `MAILTO_CEILING = 2000` (`:304`), `overCeiling()` (`:306`), `ceilingFor()`
+  (`:432`) measure the **whole encoded URL**, so several addresses eat into the same budget the body
+  does. The warning at `src/outreach-view.js:787-810` must count what is actually on the wire.
+
+**Acceptance**
+- [ ] All three doors — default, Gmail and Outlook — carry several addresses, each correctly
+      encoded, and copy-to-self behaves as WO-5.3 proved. *(The builders' half of WO-5.8's line
+      "The `mailto:` URL carries every chosen recipient", moved here at the cut of 2026-09-20; the
+      picker's half stayed with WO-5.8.)*
+- [ ] The header the non-primary recipients ride in is chosen, and the disclosure argument for it is
+      written down where the code makes it. *(The argument WO-5.8's Deliverables said that row owed,
+      moved here at the cut.)*
+- [ ] The ceiling warning counts every address on the wire, and still **warns rather than
+      truncates** — nothing truncates today and nothing starts to here.
+
+**Traps** — **One shape only.** Do not let the builders accept both a string and a list "so nothing
+breaks"; this repo does not keep two truths, and the second one is what rots.
+
+Second: `encodeField()` (`:249`) normalises to CRLF for `mailto:` and `encodeComposeField()` (`:400`)
+to LF for webmail, and that split is argued at `:339-349`. **Do not collapse it while you are in the
+file.** A deleted CRLF normalisation is invisible on screen and produces exactly the
+mangled-paragraph email WO-5.3's Traps line exists to catch — it is one of the five live mutations
+that sitting's dead dispatch left behind.
+
+Third: `MAIL_DOORS` (`:380-384`) and `ceilingFor()` return `null` for the webmail doors on purpose —
+the 2,000 is ShellExecute's limit and belongs to the default door alone. Do not give the webmail
+doors a ceiling while making the count correct for the one that has one.
+
+---
+
+## WO-5.15 — One contact, several audiences
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-5.8
+
+**Why it exists.** **Booked out of the reading, not out of WO-5.8's Deliverables, which never
+mentioned it.** `writeContact({ audience })` (`src/outreach-view.js:1417` → `src/log.js:222` →
+`:244`) records a **scalar enum**, pinned at `docs/data-model.md:144` as
+`"guardian|counselor|admin|student"` and called half a firewall at `:269-270`. Three readers depend
+on it: the history chip (`src/contact-history.js:141`), `lastContactAbout()` (`src/log.js:430`,
+which is the cooldown WO-5.4 built the input for), and signals-view's sentence *"You wrote to their
+guardian about this on Sep 6"* (`src/signals-view.js:667`).
+
+**A draft to two guardians and the counselor has no single value for that field.**
+
+**What WO-5.8 leaves, and why it is not a stopgap.** WO-5.8 lands writing `audienceOf(primary)`,
+which is **correct rather than provisional** — the message *is* addressed to the primary, and the
+sentence on the signal card is true as far as it goes. It is **incomplete, not false**. This row
+decides whether the cooldown and the history should say more, and what.
+
+**Deliverables**
+- The decision on what a `contact` entry records when the draft went to several people, and the
+  writer changed to match. `src/log.js` holds **no updater and no delete** — append-only is a
+  property of what is there, not a promise about it — so whatever is decided is decided on the
+  write, and entries already in a teacher's document are never rewritten.
+- `docs/data-model.md` updated to state the field's shape under several recipients, whatever that
+  turns out to be, in the same sitting as the code.
+- Whatever the three readers need to stay honest, without widening the `contact` / `note` /
+  `behavior` firewall by so much as one reader.
+
+**Acceptance**
+- [ ] A contact written to several recipients records what the cooldown needs to silence the right
+      rule and nothing else, and the history card says who it went to.
+- [ ] The `kind` filter is untouched: no reader gains a kind, and there is still no exported reader
+      that hands back all three.
+- [ ] `docs/data-model.md` records the field's shape under several recipients.
+
+**Traps** — **The under-fire posture at the foot of `src/log.js` governs this row.** Praise not sent
+is a missed opportunity; **a rule silenced by a message that was never about it is how a teacher
+stops trusting the list.** If the decision is ever between silencing too much and too little, it is
+too little.
+
+Second: `tools/verify/cooldown-quiet.mjs` reads `entry.audience` off a **planted** record and
+`tools/verify/contact-log.mjs` drives the real writer. WO-5.9 closed the loop between them for the
+hitless case and proved the writer produces `ruleId: ''` — **empty, not `undefined`, and not
+invented.** Do not disturb that while changing the neighbouring field.
+
+Third: an email's subject line on the card headed *"What you have written down"*, under a footer
+promising the teacher those notes go nowhere, is one missing filter away. That is why the second
+Acceptance line is here and why it is not a formality.
