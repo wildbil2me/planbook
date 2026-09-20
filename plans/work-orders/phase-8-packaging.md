@@ -1046,16 +1046,26 @@ this, run it for their own department, or sell it. **One row. It stays one row.*
   entry one in `SHELL`; without the bump no installed device sees the row at all.
 - **One `verify-shell.mjs` check.** The two rows beside it are asserted nowhere — they landed outside
   a work order and only `TESTING.md` records them. A check written to read *every* `.doc-link` in
-  that modal closes all three at once and is the better shape.
+  that modal closes all three at once and is the better shape. *(Still true on 2026-09-20: no file
+  under `tools/verify/` names `.doc-link`. The home is `tools/verify/build-line.mjs`, which already
+  opens `#aboutModal` — do not add a section to open it a second time.)*
 - **A `TESTING.md` line of its own**, and the 👤 reading below.
 
 **Acceptance**
 - [ ] The About modal names the licence and links `LICENSE.md`, and the link text says *which*
       licence.
 - [ ] The row is **not** inside the **Privacy and student data** section.
-- [ ] **No new CSS.** It reuses `.modal-body .doc-link`, including that rule's `(pointer: coarse)`
-      entry in `src/shell.css`, which is what gives it 44px. **A row that needs a new rule is the
-      wrong shape** — say so in the result rather than adding one quietly.
+- [ ] **No new CSS for the row.** It reuses `.modal-body .doc-link`, including that rule's
+      `(pointer: coarse)` entry in `src/shell.css`, which is what gives it 44px. **A row that needs
+      a new rule is the wrong shape** — say so in the result rather than adding one quietly.
+      **The label is the one exception, ruled here on 2026-09-20 rather than left for the dispatch
+      to find.** A section label gets its 16px from `.modal-body p + .modal-section-label`, and
+      this one follows an `<a>` — the FERPA row — not a `<p>`, so it gets nothing; past `#drivePanel`
+      it follows a `<div>` and gets nothing there either. That is the break the `.drive-panel`
+      comment in `src/shell.css` records for WO-7.1, and this is its second instance. **Add one
+      selector to the existing adjacency rule** — `.modal-body .doc-link + .modal-section-label` —
+      rather than a second declaration, and say why in that rule's comment. Nothing else in
+      `src/shell.css` moves, and `touch-targets.mjs` measures the row, not the gap.
 - [ ] `target="_blank" rel="noopener"`, matching the two rows beside it, for the reason written
       above them in `index.html`.
 - [ ] `sw.js` `CACHE` bumped in the same commit that edits `index.html`.
