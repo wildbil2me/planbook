@@ -67,7 +67,8 @@
 
   ── WHAT IS HELD HERE, AND WHY NONE OF IT IS REMEMBERED ──
 
-  Which student the draft is about, which tone, which recipient, which template, the draft itself,
+  Which student the draft is about, which tone, which recipients and which of them it is written
+  to (WO-5.8 — a list and a pointer where there was one key), which template, the draft itself,
   whether it copies the teacher, and one status sentence. Not one of them reaches localStorage —
   src/signals-view.js's and src/templates-view.js's ruling, and their reason: a remembered choice is
   a choice made by nobody the teacher can remember. Every arrival starts from the row she tapped.
@@ -240,6 +241,13 @@ const FORM_ID = 'outreachForm';
 const TONES_ID = 'outreachTones';
 const TO_ID = 'outreachRecipients';
 const TO_NOTE_ID = 'outreachRecipientNote';
+/* WO-5.8's three: the second chip row — which of the chosen recipients the draft is WRITTEN to —
+   the line of type under it, and the wrapper that carries both off the screen when there is only
+   one of them and therefore nothing to ask. See paintPrimary() for why that is a wrapper rather
+   than two toggles. */
+const PRIMARY_ROW_ID = 'outreachPrimaryRow';
+const PRIMARY_ID = 'outreachPrimary';
+const PRIMARY_NOTE_ID = 'outreachPrimaryNote';
 const TEMPLATE_ID = 'outreachTemplate';
 const TEMPLATE_NOTE_ID = 'outreachTemplateNote';
 const SUBJECT_ID = 'outreachSubject';
@@ -309,7 +317,36 @@ const CONFIRM_BTN_ID = 'outreachConfirmBtn';
 let subject = null;
 
 let tone = templates.TONES[0];
-let recipientKey = '';
+
+/* ── WHO THIS MESSAGE GOES TO, AND WHICH OF THEM IT IS WRITTEN TO (WO-5.8) ──
+
+   ONE STRING BECAME A LIST AND A POINTER INTO IT. Until 2026-09-20 this was `recipientKey`, one
+   key, and "who the draft goes to" and "who the draft is about" were the same question because
+   there was only ever one answer. The owner, 2026-08-29: *"You should be able to select more than
+   one 'recipient' … One should be 'primary.'"* — one message to both guardians and the counselor
+   rather than the same message written three times.
+
+   THE TWO ARE SEPARATE VARIABLES RATHER THAN A LIST WITH ITS HEAD AS THE PRIMARY, and that is the
+   whole of "the primary is changeable without losing the selection". A head-of-list arrangement
+   makes promoting somebody a reorder, and a reorder is a thing the Cc line, the clipboard block and
+   the `mailto:` all read — so switching who the message is addressed to would silently shuffle the
+   order the others arrive in. Here the selection keeps the picker's own order whatever happens to
+   the pointer, because `recipients[]` is filtered rather than sorted (outreachModel(), below).
+
+   THREE INVARIANTS, AND EVERY ONE OF THEM IS HELD BY CODE RATHER THAN PROMISED:
+
+     · **There is exactly one primary at all times.** outreachModel() resolves `primaryKey` against
+       the chosen rows and falls to the first of them, so a key that has gone stale — a recipient
+       taken off the message, a document replaced under an open modal — cannot leave the draft
+       addressed to nobody.
+     · **The primary is always ON the message.** applyRecipient() puts the key into the selection
+       if it is somehow not there, so "written to" can never name somebody the picker says is off.
+     · **A recipient with no address is never in here at all** (Acceptance line 4). The refusal is
+       at the door — toggleOutreachRecipient() — which is a departure from WO-5.3 argued at that
+       function rather than here. */
+let recipientKeys = [];
+let primaryKey = '';
+
 let templateId = '';
 
 /* What is in the two boxes RIGHT NOW. It starts as whatever the resolver handed back and is the
@@ -409,7 +446,12 @@ export function outreachModel() {
     blocked: blocked,
     name: '', className: '', termLabel: '',
     tone: tone,
-    recipients: [], recipient: null, audience: '',
+    /* `recipients` is every person on this student's roster entry, each of them saying whether it
+       is on this message and whether it is the one the message is written to; `recipient` is that
+       one, unchanged in name and in meaning since WO-5.3 because every reader of it wants the
+       same thing it always wanted; and `copies` (WO-5.8) is the rest of the selection, in the
+       picker's own order, which is what rides in Cc. */
+    recipients: [], recipient: null, copies: [], audience: '',
     templates: [], templateId: '', templateName: '',
     subject: '', body: '',
     cc: { on: false, email: '', ok: false },
@@ -447,7 +489,23 @@ export function outreachModel() {
 
   const term = cls ? getTerms(cls.id).filter((t) => t.id === subject.termId)[0] : null;
   const recipients = outreach.recipientsFor(doc, student);
-  const chosen = outreach.recipientByKey(recipients, recipientKey) || recipients[0] || null;
+  /* THE SELECTION IS A FILTER OVER THE PICKER AND NEVER A LIST OF ITS OWN (WO-5.8), which is what
+     makes the Cc order the order of the chips a teacher is looking at: guardians in roster order,
+     then the counselor, the administrator and the student. Storing the keys in tap order and
+     reading them back in tap order would put the counselor above the second guardian on one draft
+     and below her on the next, for no reason the teacher could see. */
+  const picked = recipients.filter((r) => recipientKeys.indexOf(r.key) >= 0);
+  /* EXACTLY ONE PRIMARY, RESOLVED RATHER THAN TRUSTED. `primaryKey` is asked of the CHOSEN rows,
+     so a key that has gone stale falls to the first of them, and an empty selection falls to the
+     first row of the picker — which is WO-5.3's answer, kept for the case it was written for: a
+     student with nobody on her roster entry still gets a named recipient and a reason below. */
+  const chosen = outreach.recipientByKey(picked, primaryKey) || picked[0] || recipients[0] || null;
+  const copies = chosen ? picked.filter((r) => r.key !== chosen.key) : [];
+  /* ONE AUDIENCE, AND IT IS THE PRIMARY'S — WO-5.15's, NOT THIS WORK ORDER'S. `writeContact()`
+     files a `contact` under a scalar enum, and a draft to two guardians and the counselor has no
+     single value for it. That is booked as its own row; today's behaviour stands, which is that
+     the log records the audience of the person the message was written TO. Read it as a known
+     limit of the contact log rather than a claim about who the message reached. */
   const audience = chosen ? outreach.audienceOf(chosen) : '';
   /* THE TONE AND NOT THE AUDIENCE, AND THE SECOND HALF OF THAT IS A REVERSAL (WO-5.13). This read
      filtered on BOTH until 2026-09-20 — WO-5.3's seventh Acceptance line, inherited from WO-5.2's
@@ -547,8 +605,16 @@ export function outreachModel() {
      hands over several there is no second branch for it to miss. Today the primary is alone in
      `to` and the copy-to-self is the whole of `cc`; the picker's other recipients JOIN `cc`, per
      the ruling written above mailtoUrl() in src/outreach.js, which this file does not re-decide. */
+  /* AND WO-5.8 IS THE DAY THE PARAGRAPH ABOVE WAS WRITTEN FOR. The primary is alone in `to`; every
+     other chosen recipient joins the copy-to-self in `cc`, in the picker's order, with the
+     teacher's own copy last because it is the one addressee who is not being told anything. Which
+     header they ride in is src/outreach.js § "which header the non-primary recipients ride in" and
+     is NOT re-decided here — this is the two lines that ruling says a reader would change to
+     reverse it. Blanks cannot arise, because a recipient with no address cannot be chosen; the
+     builders drop them anyway. */
   const toList = [to];
-  const ccList = cc.on && cc.ok ? [cc.email] : [];
+  const ccList = copies.map((r) => r.email).filter(Boolean)
+    .concat(cc.on && cc.ok ? [cc.email] : []);
   const url = ready ? outreach.composeUrl({
     to: toList,
     cc: ccList,
@@ -580,10 +646,17 @@ export function outreachModel() {
     name: fullName(student),
     className: cls ? cls.name : '',
     termLabel: termName(term),
+    /* `active` BECAME `chosen` AND GAINED A SECOND FLAG BESIDE IT (WO-5.8). It read "this is the
+       one" when there could only be one; now the chip's `.active` and its `aria-pressed` mean what
+       they mean on every other `.toggle-btn` row in this app — in the set — and `primary` is the
+       separate question the second row asks. One field answering both would be a chip that looked
+       unchosen the moment somebody else was written to. */
     recipients: recipients.map((r) => ({ key: r.key, label: r.label, name: r.name, email: r.email,
-      active: !!chosen && r.key === chosen.key, has: !!r.email })),
+      chosen: recipientKeys.indexOf(r.key) >= 0,
+      primary: !!chosen && r.key === chosen.key, has: !!r.email })),
     recipient: chosen ? { key: chosen.key, label: chosen.label, name: chosen.name,
       email: chosen.email } : null,
+    copies: copies.map((r) => ({ key: r.key, label: r.label, name: r.name, email: r.email })),
     audience: audience,
     templates: offered.map((t) => ({ id: t.id, name: t.name, active: !!record && t.id === record.id })),
     templateId: record ? record.id : '',
@@ -620,29 +693,106 @@ function el(tag, className, text) {
   return node;
 }
 
+/*
+  ROW ONE: WHO THE MESSAGE GOES TO. Since WO-5.8 it is a genuine multi-select — `.toggle-btn` with
+  `aria-pressed` moving with the class, which is what that component already means on the roster's
+  *which classes is this student in* row and on the day-off picker's. A tap adds or removes; it
+  never decides who the message is WRITTEN to, which is row two's one question.
+
+  THE CHIP WITH NO ADDRESS IS DRAWN `aria-disabled` AND IS STILL A LIVE BUTTON, and both halves of
+  that are deliberate. It is drawn because src/outreach.js's ruling has not moved — a row left out
+  reads as "this app cannot write to a counselor" when what is true is "there is no counselor on
+  this roster", and an absence and a bug look identical. It is not the `disabled` ATTRIBUTE,
+  because a disabled button swallows the click and a tap that does nothing at all is the dead
+  button openOutreach() already refuses to open on. The tap lands, the door refuses it, and the
+  refusal says why in the status line and out loud — see toggleOutreachRecipient().
+*/
 function paintRecipients(model) {
   const host = document.getElementById(TO_ID);
   if (host) {
     host.textContent = '';
     model.recipients.forEach((row) => {
-      const button = el('button', 'toggle-btn' + (row.active ? ' active' : ''), row.label);
+      const button = el('button', 'toggle-btn' + (row.chosen ? ' active' : ''), row.label);
       button.type = 'button';
       button.setAttribute('data-outreach-to', row.key);
-      button.setAttribute('aria-pressed', row.active ? 'true' : 'false');
+      button.setAttribute('aria-pressed', row.chosen ? 'true' : 'false');
+      /* Set rather than toggled, because the row is built fresh on every paint — see the host's
+         `textContent = ''` above. src/shell.css dims it; the click still lands. */
+      if (!row.has) button.setAttribute('aria-disabled', 'true');
       /* The whole row said in one string, because the chip is a position and the person is on the
          line below it: a screen reader on the chip alone would hear "Guardian 2" and nothing about
-         who that is or whether there is an address for her. */
+         who that is or whether there is an address for her. Since WO-5.8 it also says which of the
+         three things this chip is — written to, copied, or not on the message — because with
+         several chips pressed at once the class alone stops being enough to hear. */
       button.setAttribute('aria-label', row.label + (row.name ? ' — ' + row.name : '')
-        + (row.email ? ', ' + row.email : ', no email address on file'));
+        + (row.email ? ', ' + row.email : ', no email address on file, so this one cannot go on '
+          + 'the message')
+        + (row.primary ? ', written to' : (row.chosen ? ', copied' : '')));
       host.append(button);
     });
   }
   const note = document.getElementById(TO_NOTE_ID);
   if (!note) return;
   const to = model.recipient;
+  /* THE LINE NAMES THE PRIMARY FIRST AND THE COPIES AFTER HER, which is the same order the header
+     the message actually carries puts them in. It is the one place on the panel where the whole
+     selection is readable as people rather than as positions, and it is inside the form
+     presentation mode empties. */
   note.textContent = !to ? ''
-    : (to.name ? to.name + (to.email ? ' · ' + to.email : '') : (to.email || ''))
-      || 'No name and no address on file for this one yet.';
+    : ((to.name ? to.name + (to.email ? ' · ' + to.email : '') : (to.email || ''))
+      || 'No name and no address on file for this one yet.')
+      + (model.copies.length
+        ? ' · copied to ' + model.copies.map((r) => r.name || r.label).join(', ')
+        : '');
+}
+
+/*
+  ROW TWO: WHICH OF THEM IT IS WRITTEN TO (WO-5.8), AND IT IS DRAWN ONLY WHEN THERE IS SOMETHING TO
+  ASK. With one recipient chosen the question has exactly one answer, the line under row one
+  already names her, and a single chip that can only be pressed to no effect is the dead button
+  this file refuses twice over. So the whole block — its heading, its chips and its line of type —
+  goes off the panel together.
+
+  THE WRAPPER IS TOGGLED RATHER THAN THE TWO PIECES, because a heading left standing over an empty
+  row is exactly the defect src/classes.js records about the class tabs: a caption describing
+  something that is not there. One `hidden` on one element is one thing to keep in step instead of
+  three.
+
+  A SECOND ROW AND NOT A SECOND GESTURE ON THE FIRST ONE. A chip that meant *add* on the first tap,
+  *write to this one* on the second and *take off* on the third is one control answering three
+  questions, and the third tap is the one that destroys something. Two rows, one question each,
+  and the teacher can see which is which without having to remember what she tapped last.
+
+  IT NAMES POSITIONS, LIKE ROW ONE, for the reason src/outreach.js gives at `label`: "Guardian 1"
+  is one of the app's own short strings and a guardian called Bartholomew Featherstonehaugh must
+  not put a 390px modal into sideways scroll. Who those positions are is the line under row one.
+*/
+function paintPrimary(model) {
+  const picked = model.recipients.filter((r) => r.chosen);
+  const several = picked.length > 1;
+  const wrap = document.getElementById(PRIMARY_ROW_ID);
+  if (wrap) wrap.classList.toggle('hidden', !several);
+  const host = document.getElementById(PRIMARY_ID);
+  if (host) {
+    host.textContent = '';
+    if (several) {
+      picked.forEach((row) => {
+        const button = el('button', 'toggle-btn' + (row.primary ? ' active' : ''), row.label);
+        button.type = 'button';
+        button.setAttribute('data-outreach-primary', row.key);
+        button.setAttribute('aria-pressed', row.primary ? 'true' : 'false');
+        button.setAttribute('aria-label', 'Write this message to ' + row.label
+          + (row.name ? ' — ' + row.name : ''));
+        host.append(button);
+      });
+    }
+  }
+  const note = document.getElementById(PRIMARY_NOTE_ID);
+  if (!note) return;
+  const to = model.recipient;
+  note.textContent = !several || !to ? ''
+    : 'Addressed to ' + (to.name || to.label) + ', and every merge field in the draft fills in '
+      + 'for that one. The others are copied, so they see who it went to.';
 }
 
 /*
@@ -747,6 +897,13 @@ function paintBlock(model) {
         : 'your own mail app')
       + ', addressed to '
       + (model.recipient ? (model.recipient.name || model.recipient.email) : '')
+      /* AND THE REST OF THE SELECTION IS NAMED IN THE SAME BREATH (WO-5.8), because this is the
+         sentence a teacher reads immediately before she taps, and "addressed to Ms Okafor" over a
+         message that is also going to the counselor is the strip stating half a fact. The copies
+         come before the copy-to-self for the reason the Cc list itself puts them there: the
+         teacher's own copy is the one addressee who is not being told anything. */
+      + (model.copies.length
+        ? ', copying ' + model.copies.map((r) => r.name || r.email || r.label).join(' and ') : '')
       + (model.cc.on && model.cc.ok ? ', copied to you' : '')
       + '. Nothing is sent until you send it there.'));
     return;
@@ -966,6 +1123,17 @@ export function renderOutreach(opts) {
     if (to) to.textContent = '';
     const note = document.getElementById(TO_NOTE_ID);
     if (note) note.textContent = '';
+    /* ROW TWO GOES DOWN THE SAME WAY (WO-5.8) — EMPTIED AND THEN HIDDEN, in that order, because
+       this file's header says `display: none` is not a redaction. Its chips name positions and its
+       line of type names the primary; the wrapper is put back to `.hidden` as well so that a
+       projector switched on over a three-recipient draft leaves the panel in the shape a
+       one-recipient draft leaves it, rather than in a state only this branch can produce. */
+    const primary = document.getElementById(PRIMARY_ID);
+    if (primary) primary.textContent = '';
+    const primaryNote = document.getElementById(PRIMARY_NOTE_ID);
+    if (primaryNote) primaryNote.textContent = '';
+    const primaryRow = document.getElementById(PRIMARY_ROW_ID);
+    if (primaryRow) primaryRow.classList.add('hidden');
     const picker = document.getElementById(TEMPLATE_ID);
     if (picker) picker.textContent = '';
     /* The two lines of type under the pickers go with them. Neither names a student, and both are
@@ -1006,6 +1174,7 @@ export function renderOutreach(opts) {
 
   paintTones(model);
   paintRecipients(model);
+  paintPrimary(model);
   paintTemplates(model);
   /* THE TWO BOXES, WRITTEN ONLY WHEN THE DRAFT CHANGED UNDER THE TEACHER — see this function's
      own comment for the rule and the reason. */
@@ -1042,7 +1211,8 @@ export function renderOutreach(opts) {
 export function resetOutreach() {
   subject = null;
   tone = templates.TONES[0];
-  recipientKey = '';
+  recipientKeys = [];
+  primaryKey = '';
   templateId = '';
   draft = { subject: '', body: '' };
   /* The snapshot and the proposal go with everything else, and the reason is the one this function
@@ -1146,7 +1316,13 @@ export function openOutreach(where, opener) {
      src/outreach.js's — guardians first, in roster order. */
   const people = outreach.recipientsFor(doc, student);
   const first = people.filter((r) => r.email)[0] || people[0] || null;
-  recipientKey = first ? first.key : '';
+  /* EVERY ARRIVAL OPENS ON EXACTLY ONE RECIPIENT, AND WO-5.8 DID NOT CHANGE THAT. A picker that
+     opened with both guardians and the counselor already ticked would be the app deciding on the
+     teacher's behalf who hears about a child, which is the opposite of what a selection is for —
+     and it is a decision she would have to notice in order to undo. The second row is not even
+     drawn until she has put somebody else on the message herself. */
+  recipientKeys = first ? [first.key] : [];
+  primaryKey = first ? first.key : '';
   /* THE TONE AND NOTHING ELSE (WO-5.13). This read asked `audienceOf(first)` as well until
      2026-09-20 — the reversal is argued at outreachModel()'s own call, which is the one a teacher's
      every repaint goes through — so which recipient opened first no longer decides which of her
@@ -1185,8 +1361,24 @@ export function openOutreach(where, opener) {
   the draft turns out to be untouched or the teacher presses the button, and *cancel* is the absence
   of a call rather than an undo.
 
-  WO-5.8 EXTENDS THIS RATHER THAN INVENTING A SECOND ONE. Several recipients change what "changing
-  the recipient" means; what it must not change is where the question is asked, which is here.
+  WO-5.8 EXTENDS THIS RATHER THAN INVENTING A SECOND ONE, AND THE EXTENSION IS THAT ONE OF ITS TWO
+  NEW GESTURES IS NOT A DOOR AT ALL. Several recipients split "changing the recipient" in half:
+
+    · **Who the message is WRITTEN to** — setOutreachRecipient(), unchanged in name, in wiring and
+      in its `kind: 'recipient'` proposal. Every merge field resolves against that person and the
+      salutation names her, so a different primary is a different draft, and it asks exactly as it
+      always did.
+    · **Who ELSE is on the message** — toggleOutreachRecipient(), which asks NOTHING, because it
+      rebuilds nothing. Adding the counselor to the Cc does not move one character of the subject
+      or the body: the resolve ran against the primary and the primary has not changed. It is
+      toggleOutreachCopy()'s sibling, not this block's — *Copy me* has put an address on the same
+      header since WO-5.3 without ever raising a dialog, for exactly this reason.
+
+  THAT IS WO-5.6's RULE APPLIED RATHER THAN A SECOND RULE OF ITS OWN (Acceptance line 5). The rule
+  is *ask when there is something to lose*, and its own header says a confirm on a tap that costs
+  nothing "teaches people to dismiss dialogs, and the tap after that is the one that destroys
+  something". A membership tap costs nothing, provably: draftEdited() compares the two boxes
+  against the snapshot, and neither box moves.
 */
 
 /* One line of the dialog's fact list, the shape src/assignments.js's factLine() draws. */
@@ -1275,6 +1467,95 @@ function applyTone(next, replaced) {
   announce(templates.toneLabel(tone) + '.');
 }
 
+/*
+  ── ROW ONE: WHO ELSE IS ON THIS MESSAGE (WO-5.8) ──
+
+  A MEMBERSHIP TOGGLE, AND IT IS THE ONE CONTROL IN THIS FLOW THAT CAN REFUSE A TAP. Two refusals,
+  and each of them is a sentence rather than a silence.
+
+  **THE ADDRESSLESS RECIPIENT CANNOT GO ON THE MESSAGE, AND THAT IS A DEPARTURE FROM WO-5.3 MADE
+  HERE ON PURPOSE.** Until 2026-09-20 she was choosable and then BLOCKED: the draft went dead and
+  the block strip said why, which src/outreach.js:114 argues for and which was right while the
+  picker held exactly one person. Under a single selection, choosing her was a QUESTION — *what
+  about Guardian 2?* — and the block was the answer, in place of a draft that could not have
+  existed anyway. Under a selection, the same tap means something else: *also send this to Guardian
+  2*, over a draft to Guardian 1 and the counselor that is finished and ready. Blocking there kills
+  a working message to punish a request the app could simply decline, and it hides the reason in a
+  strip of things to fix rather than putting it where the thumb is.
+
+  THE THIRD ANSWER — take the tap, drop her from the URL — IS THE ONE THAT IS ACTUALLY FORBIDDEN.
+  A teacher who believes a message went to both parents and finds it went to one is the silent
+  failure this app refuses everywhere it can see one (src/outreach.js's MAILTO_CEILING: "warns
+  before the fact… nothing truncates anything").
+
+  **WHAT DOES NOT MOVE IS EVERYTHING THAT WAS ARGUED.** She is still drawn, still in her own
+  position, still saying what is missing — an absence and a bug still do not look identical — and
+  the app still never opens a mail window with an empty To field. The `reasons` entry of
+  `kind: 'recipient'` stays and is still reachable: a student with nobody addressable on her roster
+  entry opens on somebody with no address, and the draft is blocked exactly as it was.
+
+  **THE PRIMARY CANNOT COME OFF EITHER**, which is how "exactly one primary at all times" is held
+  without a rule about what happens to a message with nobody on it. Taking her off would also be
+  the one membership tap that DID rebuild the draft — the primary would have to pass to somebody
+  else — and that would put a confirm inside a control whose whole claim is that it never needs
+  one. Promote somebody else first; then she comes off in silence.
+
+  BOTH REFUSALS SPEAK, in the status line and through announce(), which is copyRefused()'s pair and
+  is taken for its reason: a control that declines without saying so is the dead button
+  openOutreach() refuses to open on.
+*/
+export function toggleOutreachRecipient(key) {
+  const model = outreachModel();
+  const want = String(key || '');
+  const row = model.recipients.filter((r) => r.key === want)[0] || null;
+  if (!model.open || !row) return false;
+  if (!row.has) {
+    return refuseRecipient('There is no email address on file for '
+      + (row.name || row.label.toLowerCase()) + ', so ' + row.label + ' cannot go on this '
+      + 'message. Add one on the roster and the chip comes to life.');
+  }
+  if (row.primary) {
+    return refuseRecipient(row.label + ' is who this message is written to, so it cannot come off '
+      + (model.copies.length
+        ? 'it. Write to one of the others first, under “Which of them it is written to”.'
+        : 'it. Put somebody else on the message and write to them instead.'));
+  }
+  recipientKeys = row.chosen ? recipientKeys.filter((k) => k !== want)
+    : recipientKeys.concat([want]);
+  /* THE SENTENCE SAYS THE THING THAT MAKES THIS TAP FREE — the draft did not move — because a
+     teacher who has typed four lines and just tapped a chip has every reason to look. Every other
+     act in this flow reports through this line; this one reports that nothing happened to the
+     part she cares about. */
+  const who = row.name || row.label;
+  status = row.chosen
+    ? who + ' is off this message. The draft itself is untouched.'
+    : who + ' is copied on this message. The draft itself is untouched — it is still written to '
+      + (model.recipient ? (model.recipient.name || model.recipient.label) : 'the same person')
+      + '.';
+  /* `fields: false`, like every repaint in this file that is not a rebuild: the two boxes hold
+     what the teacher left in them and writing their values back would move her caret. */
+  renderOutreach({ fields: false });
+  announce(status);
+  return true;
+}
+
+/* WHAT A REFUSED CHIP SAYS. copyRefused()'s shape, one function further along and for its reason:
+   the two controls refuse for different causes and a screen reader should hear the cause, not the
+   mechanism. It writes no flow state but the sentence. */
+function refuseRecipient(sentence) {
+  status = sentence;
+  renderOutreach({ fields: false });
+  announce(sentence);
+  return false;
+}
+
+/*
+  ── ROW TWO: WHICH OF THEM IT IS WRITTEN TO ──
+
+  UNCHANGED IN EVERY RESPECT THAT WO-5.6 CARES ABOUT. Same function, same `kind: 'recipient'`
+  proposal, same applyRecipient() on the far side of the confirm — what changed is which control
+  reaches it (`data-outreach-primary`, the second row) and the one guard below.
+*/
 export function setOutreachRecipient(key, opener) {
   const model = outreachModel();
   const want = String(key || '');
@@ -1283,6 +1564,11 @@ export function setOutreachRecipient(key, opener) {
      app's five short strings and names nobody; the line under the chips names a guardian and
      carries her address, and that is the half this dialog must never quote. */
   const row = model.recipients.filter((r) => r.key === want)[0] || null;
+  /* ONLY SOMEBODY ALREADY ON THE MESSAGE CAN BE WRITTEN TO (WO-5.8), and that is structural rather
+     than a property of what row two happens to draw: this is an exported function reached through
+     a delegated listener, so "the markup only offers the chosen ones" is the same kind of answer
+     recordHandoff() declines to accept about a missing `href`. */
+  if (!row || !row.chosen || !row.has) return;
   const label = row ? row.label : 'that recipient';
   if (askBeforeRebuild({ kind: 'recipient', value: want,
     /* "FROM A TEMPLATE WRITTEN FOR THEM" CAME OFF THIS SENTENCE WITH THE FILTER (WO-5.13). It is
@@ -1297,7 +1583,12 @@ export function setOutreachRecipient(key, opener) {
 
 function applyRecipient(key, replaced) {
   const doc = getDoc();
-  recipientKey = String(key);
+  primaryKey = String(key);
+  /* THE PRIMARY IS ALWAYS ON THE MESSAGE, HELD HERE RATHER THAN ASSUMED (WO-5.8). Every path that
+     reaches this function comes off a chip drawn from the selection, so the key is in the list
+     already — but this is the one place the pointer moves, and a `to` header built from somebody
+     the picker says is off the message is the disagreement worth one line to make impossible. */
+  if (recipientKeys.indexOf(primaryKey) < 0) recipientKeys = recipientKeys.concat([primaryKey]);
   const next = outreachModel();
   /* THE TEMPLATE SURVIVES THE SWITCH NOW, AND THAT IS THE WHOLE OF WO-5.13 ON THIS PATH. The list
      was filtered by the audience until 2026-09-20, so a template written for a guardian dropped off
@@ -1439,6 +1730,14 @@ export function setOutreachMailDoor(id) {
   The audience, the subject and the body exactly as they stand in the two boxes — what the teacher
   is looking at is what the mail app receives and what the log records, which is the same rule that
   made `mailtoUrl()` read the boxes rather than the resolver's output.
+
+  `audience` IS THE PRIMARY'S AND SAYS NOTHING ABOUT THE COPIES, AND THAT IS WO-5.15's ROW RATHER
+  THAN AN OVERSIGHT HERE (WO-5.8). src/log.js's `contact` carries a scalar enum, and a message
+  written to a guardian and copied to the counselor has no single value for it. The picker now
+  builds such a draft; this writer records the audience of the person it was WRITTEN to, which is
+  today's behaviour left standing on purpose rather than widened under a work order that was not
+  asked to touch the log. Read it as a known limit of the contact log — the cooldown keys on the
+  student and the rule, not on the audience, so nothing in WO-5.4's flow is wrong because of it.
 
   `ruleId` IS `hitFor(tone)`'s OWN `hit.ruleId`, UNCHANGED. It is the same call `{{grade.delta}}`
   resolves against, so the signal the draft SPEAKS from is the signal the cooldown will silence —

@@ -13,6 +13,28 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### One draft can go to several people, and one of them is primary — 2026-09-20
+
+A message to both guardians, or to a guardian and the counselor, used to be the same draft written
+twice. Now you pick as many of them as you want from the same list, and mark one **primary**: the
+primary is who the message is addressed to and who `{{guardian.name}}` and every other merge field
+resolves against, and everyone else rides in Cc, with your own copy last. The row asking *which of
+them is it written to* only appears once two people are on the message — with one person the
+question has a single answer, and the line under the list already names her.
+
+**Someone with no address on file can no longer be chosen at all.** She is still drawn, still says
+what is missing, but the tap is declined where your thumb is rather than taken and then blocking the
+whole draft. That was the right behaviour when a draft went to exactly one person — choosing her was
+a question, and the dead draft was the answer — and it is the wrong one over a finished message to
+two other people. The app still never opens a mail window with an empty To field, and it still never
+quietly drops a recipient to make a draft work.
+
+Putting somebody on or off the copy list leaves what you have typed alone. Changing who the message
+is *written to* still asks first, as it has since the draft learned to survive a change of mind. One
+thing not yet done: the contact log still records the primary's audience alone, so a note to two
+guardians and the counselor is filed under the primary — incomplete rather than wrong, and booked.
+(WO-5.8)
+
 ### Every compose door can carry several addresses — 2026-09-20
 
 Nothing a teacher sees yet. The three compose doors — the default mail client, Gmail and Outlook

@@ -904,7 +904,7 @@ deepens it. Booking the repair is the owner's call.
 
 ## WO-5.8 — Several recipients, and one of them is primary
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-5.13, WO-5.14, WO-5.6
+**Ship** — · **Status** ✅ DONE — 2026-09-20 · **Size** M · **Depends on** WO-5.13, WO-5.14, WO-5.6
 
 *(**Cut in four on 2026-09-20, the owner's call, before it was ever dispatched** — it was the last
 `Size L` row in the directory, and one L is roughly a whole five-hour window against session-limit
@@ -949,18 +949,36 @@ which is what `primary` is for.
   consumer downstream assumes one. It becomes a selection plus a primary.
 
 **Acceptance**
-- [ ] Two guardians and a counselor can be chosen for one draft, with exactly one primary at all
-      times, and the primary changeable without losing the selection.
-- [ ] `{{guardian.name}}` and every other merge field resolve against the primary, and the draft
-      says who that is.
-- [ ] Every chosen recipient reaches the compose URL, in the header WO-5.14 ruled on, and
+- [x] Two guardians and a counselor can be chosen for one draft, with exactly one primary at all
+      times, and the primary changeable without losing the selection. *(Two chip rows: row one is
+      membership, row two is which of them it is written to and is not drawn until two people are on
+      the message. `chosen 3, primary guardian-0` → promote Guardian 3 → still three chosen, the
+      demoted primary in `copies`. M4 — the primary pointer ignored — reddens six checks and
+      correctly leaves the opening state green, because with one recipient `picked[0]` IS the
+      primary.)*
+- [x] `{{guardian.name}}` and every other merge field resolve against the primary, and the draft
+      says who that is. *(Asserted as a pair — `Dear Wo53Guardian Three,` in the body **and** the
+      first guardian's name gone from it — because a resolver that appended would pass a search for
+      the first alone. Three places say who: the line under each row and the block strip.)*
+- [x] Every chosen recipient reaches the compose URL, in the header WO-5.14 ruled on, and
       copy-to-self behaves as WO-5.3 proved. *(The second half of the line that read "The `mailto:`
       URL carries every chosen recipient" until the cut; the builders' half went to WO-5.14.)*
-- [ ] A recipient with no address on file cannot be chosen, and says why — WO-5.3's rule, unchanged.
-- [ ] Changing the recipients obeys WO-5.6's confirm rather than a second rule of its own.
+      *(`to = wo53guardian1@…` alone, `cc = wo53guardian3@…,wo53counselor@…,wo53teacher@…` with
+      literal commas, and the clipboard block saying the same in the same order. The teacher's own
+      copy is last because it is the one addressee who is not being told anything. M2 red.)*
+- [x] A recipient with no address on file cannot be chosen, and says why — WO-5.3's rule, unchanged.
+      *(**Genuinely unchoosable, decided here — see the block below, which this landing answers.**
+      The chip reads `guardian-1|Guardian 2|off|refused`, the tap LANDS on a live button, and the
+      door declines it in the status line and out loud. M1 red.)*
+- [x] Changing the recipients obeys WO-5.6's confirm rather than a second rule of its own.
+      *(Row two rebuilds and asks; row one rebuilds nothing and does not — `toggleOutreachCopy()`'s
+      posture, not a second rule. Asserted as a pair over one edited draft. M3 reddens exactly this
+      check and nothing else.)*
 
 **Traps** — The accommodation fence does not move: the picker still reads `students[].counselor` and
 never `supports.caseManager`, and `AUDIENCES` is not widened to make a recipient list work.
+*(Held: `src/outreach.js` was not opened at all, `AUDIENCES` is untouched, and the section's
+six-secret leak check is green over a modal now drawing two chip rows.)*
 
 **And one thing the fourth Acceptance line hides.** Today an addressless recipient is **choosable
 and then blocked**, not unchoosable — `src/outreach.js:112-117` argues for that deliberately, and
@@ -970,6 +988,24 @@ drives `ready = false`. **The harness clicks the addressless chip and asserts th
 choose-then-block as the rule this row leaves standing. If multi-select makes it genuinely
 unchoosable, that `.click()` becomes a no-op and the check must be **rewritten, not re-asserted**.
 Decide which, and say so at the point of departure.
+
+*(**Decided 2026-09-20: genuinely unchoosable, refused at the door.** The argument is at
+`src/outreach-view.js`'s `toggleOutreachRecipient()` and is short. Under one selection, choosing her
+was a QUESTION — what about Guardian 2? — and the dead draft was the answer, in place of a draft that
+could not have existed. Under a selection the same tap means* also send this to her*, over a message
+to Guardian 1 and the counselor that is finished, and blocking there kills a working message to
+answer a request the app can decline — with the reason buried in a strip of things to fix rather than
+where the thumb is.* **The third answer, take the tap and drop her from the URL, is the forbidden
+one**: *a teacher who believes a message went to both parents and finds it went to one is the silent
+failure this app refuses everywhere it can see one.* **Everything WO-5.3 argued is intact** — *she is
+drawn, in her own position, saying what is missing, and the app still never opens a mail window with
+an empty To field. The refusal is* `aria-disabled` *and a* **live** *button, never the* `disabled`
+*attribute, because a chip that swallowed the tap is the dead button* `openOutreach()` *refuses to
+open on. The harness check was* **rewritten, not re-asserted** *— it reads the refusal, and it does
+it over an* **edited** *draft, which is a claim nothing else in the file makes.* **And the
+`kind: 'recipient'` reason did not become vacuous:** *a student with nobody addressable opens on
+somebody with no address, and the last check in the section is that draft. Without it this work order
+would have deleted a check's subject without deleting the check.)*
 
 Second: `tools/verify/outreach.mjs:356-366` asserts `recipients.length === 5` and five exact
 `key:label:has|none` strings **in order**, plus `chips.length === 5`. Any change to row shape or

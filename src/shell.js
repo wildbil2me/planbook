@@ -580,7 +580,17 @@
       data-outreach-to="<key>"        who the message goes to — one guardian, another guardian, the
                                       counselor, the administrator or the student. A recipient is a
                                       person with an address; the AUDIENCE a template is filed under
-                                      is a different list and src/outreach.js maps one to the other
+                                      is a different list and src/outreach.js maps one to the other.
+                                      SEVERAL AT ONCE SINCE WO-5.8, so this is a membership toggle
+                                      and rebuilds nothing — it never raises the confirm, because
+                                      the draft resolved against the primary and the primary has
+                                      not moved. It can REFUSE a tap: a recipient with no address,
+                                      and the primary herself
+      data-outreach-primary="<key>"   which of the chosen recipients the draft is WRITTEN to
+                                      (WO-5.8). Every merge field resolves against that one and the
+                                      rest ride in Cc, so this IS a rebuild and goes through the
+                                      same confirm the tone and the template do. The row is drawn
+                                      only when two or more are on the message
       data-outreach-copy              whether this draft copies the teacher. It starts from
                                       `teacher.defaultCc` and writes nothing back: a change here is
                                       about this message, and *Your details* is where the default
@@ -3071,9 +3081,20 @@ document.addEventListener('click', (e) => {
     outreachView.setOutreachTone(outreachTone.getAttribute('data-outreach-tone'), outreachTone);
     return;
   }
+  /* TWO HOOKS SINCE WO-5.8, AND THE OPENER IS PASSED TO ONLY ONE OF THEM. The first row is
+     membership and raises no dialog at all — adding the counselor to the Cc rebuilds nothing, so
+     there is nothing for src/modal.js to hand focus back to. The second row changes who the draft
+     is WRITTEN to, which is a rebuild, which is the confirm above's reason for wanting the
+     control itself. */
   const outreachTo = e.target.closest('[data-outreach-to]');
   if (outreachTo) {
-    outreachView.setOutreachRecipient(outreachTo.getAttribute('data-outreach-to'), outreachTo);
+    outreachView.toggleOutreachRecipient(outreachTo.getAttribute('data-outreach-to'));
+    return;
+  }
+  const outreachPrimary = e.target.closest('[data-outreach-primary]');
+  if (outreachPrimary) {
+    outreachView.setOutreachRecipient(
+      outreachPrimary.getAttribute('data-outreach-primary'), outreachPrimary);
     return;
   }
   /* The two answers to that dialog. Beside the controls that raise it rather than with the other

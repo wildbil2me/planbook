@@ -1214,6 +1214,19 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 }
 .toggle-btn:hover { border-color: #5b6fcc; color: #5b6fcc; }
 .toggle-btn.active { background: #eef2ff; border-color: #b0bcf0; color: #5b6fcc; }
+/* A TOGGLE THAT CANNOT BE TURNED ON, and it is `aria-disabled` rather than the `disabled`
+   attribute because the tap still has to LAND (WO-5.8). The send flow's recipient chips are the
+   first and so far only row to use it: a guardian with no email on the roster is drawn, in her own
+   position, and refused with a sentence when she is tapped — a chip that swallowed the click would
+   be a dead button, and src/outreach-view.js's openOutreach() records what a dead button in this
+   flow teaches. So the floor, the padding and the 44px in the coarse block below all still apply;
+   what changes is the dashed edge and the greyed word, which is the same "there is nothing here"
+   treatment `.roster-hint` wears one line down the panel. There is no hover lift, because there is
+   nothing to hover toward. */
+.toggle-btn[aria-disabled='true'] {
+  border-style: dashed; border-color: #e0e4ea; color: #9aa6b5; cursor: default;
+}
+.toggle-btn[aria-disabled='true']:hover { border-color: #e0e4ea; color: #9aa6b5; }
 
 /* The paste box and its preview. The textarea is a real one rather than a growing div: a paste of
    thirty names has to be scrollable, selectable and undoable, and every one of those comes free. */

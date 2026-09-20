@@ -3617,8 +3617,15 @@ list**, and the head read off the DOM. Three routes exist and the implementer pi
 which:
 
 - **A recipient with no address.** A template whose body resolves fully for the fixture student, and
-  a chosen recipient carrying a name and no `email` — `kind: 'recipient'`. The route WO-5.8 leaves
-  standing: its own fifth Acceptance line keeps WO-5.3's rule unchanged.
+  a chosen recipient carrying a name and no `email` — `kind: 'recipient'`. *(**How you reach it
+  changed on 2026-09-20 and the route did not close** — WO-5.8, whose fourth Acceptance line asked
+  for a decision and got *genuinely unchoosable*: an addressless recipient is now refused at the
+  chip, so **tapping her no longer blocks anything**. The reason is still built and still reachable,
+  by the state it was always really about — a student with **nobody addressable on her roster entry
+  at all**, who opens on somebody with no address because `openOutreach()` falls back to the first
+  row. `tools/verify/outreach.mjs` drives exactly that at the foot of its section, on the fixture's
+  Cal, and it has to blank `teacher.adminEmail` first or the *Admin* row has an address and the
+  draft is ready. Lift that fixture rather than re-deriving one.)*
 - **No template offered for the pair.** `templateId = offered[0].id` on open, so this needs a
   tone/audience pair with nothing saved — `kind: 'template'`.
 - **`Copy me` on with no address in Your details** — `kind: 'cc'`.

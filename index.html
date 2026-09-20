@@ -2698,10 +2698,34 @@
         <!-- The chips are POSITIONS — Guardian 1, Guardian 2, Counselor, Admin, Student — and the
              person behind the chosen one is named on the line under them, where a long name can
              wrap. src/outreach.js says why a recipient and a template's audience are two different
-             lists, and why nobody with no address on file is quietly left out. -->
+             lists, and why nobody with no address on file is quietly left out.
+
+             SINCE WO-5.8 SEVERAL OF THEM CAN BE ON AT ONCE — one message to both guardians and the
+             counselor, rather than the same message written three times (the owner, 2026-08-29).
+             A tap here adds or removes; it does not decide who the message is WRITTEN to, which is
+             the row below and is a second question rather than a second tap on this one. A chip
+             for somebody with no address on file is drawn `aria-disabled` and stays a live button:
+             the tap lands and src/outreach-view.js's toggleOutreachRecipient() refuses it in a
+             sentence, because a chip that swallowed the tap would be a dead button and a dead
+             button teaches that the feature is broken. -->
         <div class="roster-actions" id="outreachRecipients" role="group"
              aria-label="Who this message goes to"></div>
         <p class="roster-hint" id="outreachRecipientNote"></p>
+
+        <!-- WHICH OF THEM IT IS WRITTEN TO (WO-5.8). The whole block is `.hidden` until there are
+             two recipients on the message, because with one there is nothing to ask and the line
+             above already names her — src/outreach-view.js's paintPrimary() argues it, and argues
+             why the WRAPPER is what moves rather than the heading and the row separately. The
+             chips are drawn from the selection, so this row can only ever offer somebody the row
+             above says is on the message; the primary is the one every merge field resolves
+             against and the one the salutation names, and the others ride in Cc (src/outreach.js
+             § "which header the non-primary recipients ride in", WO-5.14). -->
+        <div id="outreachPrimaryRow" class="hidden">
+          <div class="modal-section-label">Which of them it is written to</div>
+          <div class="roster-actions" id="outreachPrimary" role="group"
+               aria-label="Which of them this message is written to"></div>
+          <p class="roster-hint" id="outreachPrimaryNote"></p>
+        </div>
 
         <div class="modal-section-label">Which of your templates</div>
         <select class="student-select" id="outreachTemplate" data-outreach-template

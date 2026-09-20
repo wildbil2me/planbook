@@ -37,6 +37,25 @@
  * DOM-read check in this section is byte-identical across that work order, which is its own claim:
  * a one-element list serialises to the string the screen carried before.
  *
+ * WO-5.8 ADDED SEVEN AND REWROTE SIX, and the rewrites are the half worth reading. Six of the seven
+ * sit in one block directly after the picker is first read, because that is the one moment in this
+ * section where the state is known exactly; the seventh runs last, at the foot, after everything
+ * that depends on Ada's draft. The fixture gained a THIRD guardian, with an address, so that *two
+ * guardians and a counselor* is a thing this section can express — the second keeps her missing
+ * address, which is Acceptance line 4's whole case — and the picker is therefore six rows rather
+ * than five, in three places.
+ *
+ * WHAT WAS REWRITTEN, AND WHY IT IS NOT RE-ASSERTION. The addressless recipient is refused at the
+ * door now rather than chosen-and-then-blocking, so the check that clicked her chip and read the
+ * draft going dead would have been a `.click()` that did nothing passing a check about a block —
+ * it reads the refusal instead, and over an EDITED draft, which is a claim the new block cannot
+ * make. Three checks that drove `[data-outreach-to]` to change who a draft was WRITTEN to now
+ * drive `[data-outreach-primary]`, because row one is a membership toggle and never asks; a
+ * `[data-outreach-to]` left standing in front of a `confirmPanel()` would have been asserting a
+ * dialog over a control with no reason to raise one. And WO-5.10's projector check gained a second
+ * claim for free: the second chip row is drawn AND naming a guardian at the moment the mode goes
+ * on, so its emptying is asserted by a check that was already searching the whole modal's text.
+ *
  * Nothing here launches a browser, a server or a document of its own: the entry file owns all three
  * and hands them over on `h`. `tools/README.md` § "Driving a browser over CDP" says where a new
  * check goes.
@@ -81,6 +100,13 @@ if (!seam) {
   const TEACHER_EMAIL = 'wo53teacher@example.invalid';
   const ADMIN_EMAIL = 'wo53admin@example.invalid';
   const G1_EMAIL = 'wo53guardian1@example.invalid';
+  /* WO-5.8's addition, and it is a THIRD guardian rather than an address put on the second one:
+     the second guardian having a name and no email is the whole of Acceptance line 4 and the case
+     src/outreach.js was written around. A third with an address is what makes *two guardians and a
+     counselor on one draft* — Acceptance line 1, word for word — a thing this fixture can express,
+     and it puts the addressless chip BETWEEN two choosable ones, which is a better shape for the
+     refusal than an addressless chip at the end of the row. */
+  const G3_EMAIL = 'wo53guardian3@example.invalid';
   const COUNSELOR_EMAIL = 'wo53counselor@example.invalid';
   /* Every one of these is on the roster and none of them may ever appear in this modal, in the URL,
      or in the recipient list. The counselor beside them is the point of the first six: a counselor
@@ -124,9 +150,20 @@ if (!seam) {
     Array.prototype.forEach.call(block.querySelectorAll('.mf-reason'), function(r){
       reasons.push(r.textContent.replace(/\\s+/g, ' ').trim()); });
     var head = block.querySelector('.mf-block-head');
+    /* FOUR SEGMENTS SINCE WO-5.8 — key, words, in-the-selection, and whether the chip is one the
+       door will refuse. The third used to mean "this is the one the draft is written to"; it means
+       "on this message" now, which is what the active class and aria-pressed mean on every other
+       toggle-btn row in the app, and who it is WRITTEN to is the second row below.
+       (No backticks in here; it is inside a template literal and one would close it.) */
     var chips = Array.prototype.map.call(
       document.querySelectorAll('#outreachRecipients .toggle-btn'), function(b){
         return b.getAttribute('data-outreach-to') + '|' + b.textContent + '|'
+          + (b.classList.contains('active') ? 'on' : 'off') + '|'
+          + (b.getAttribute('aria-disabled') === 'true' ? 'refused' : 'live'); });
+    var primaryRow = document.getElementById('outreachPrimaryRow');
+    var primaryChips = Array.prototype.map.call(
+      document.querySelectorAll('#outreachPrimary .toggle-btn'), function(b){
+        return b.getAttribute('data-outreach-primary') + '|' + b.textContent + '|'
           + (b.classList.contains('active') ? 'on' : 'off'); });
     var options = Array.prototype.map.call(
       document.getElementById('outreachTemplate').options, function(o){ return o.textContent; });
@@ -141,6 +178,10 @@ if (!seam) {
       reasons: reasons,
       clear: block.classList.contains('clear'),
       chips: chips,
+      primaryShown: !primaryRow.classList.contains('hidden'),
+      primaryChips: primaryChips,
+      primaryNote: document.getElementById('outreachPrimaryNote').textContent,
+      status: document.getElementById('outreachStatus').textContent,
       options: options,
       toNote: document.getElementById('outreachRecipientNote').textContent,
       ccLabel: document.getElementById('outreachCc').textContent,
@@ -207,6 +248,8 @@ if (!seam) {
           { name:'Wo53Guardian One', relation:'Mother', email:'${G1_EMAIL}',
             phone:'', phone2:'', language:'en', preferred:true },
           { name:'Wo53Guardian Two', relation:'Father', email:'',
+            phone:'', phone2:'', language:'en', preferred:false },
+          { name:'Wo53Guardian Three', relation:'Grandmother', email:'${G3_EMAIL}',
             phone:'', phone2:'', language:'en', preferred:false }],
         counselor:{ name:'Wo53Counselor', email:'${COUNSELOR_EMAIL}' }, notes:'',
         supports:{ plan:'IEP',
@@ -278,8 +321,9 @@ if (!seam) {
         return String(p.id).indexOf('s_wo53') === 0; }).length,
       templates:(now.templates || []).length,
       log:(now.log || []).length }; })()`);
-  check('WO-5.3 fixture: one class, two students — one with two guardians of whom the SECOND has a '
-    + 'name and no email, a counselor, an address of her own and a full `supports` block whose '
+  check('WO-5.3 fixture: one class, two students — one with THREE guardians of whom the SECOND has '
+    + 'a name and no email and the third has one (WO-5.8, so that two guardians and a counselor '
+    + 'can be on one draft), a counselor, an address of her own and a full `supports` block whose '
     + 'every field holds a string that appears nowhere else in this repository, one with nobody to '
     + 'write to at all — and five templates written through the model’s own writer',
     !!plant && plant.ok === true && plant.students === 2 && plant.templates === 5,
@@ -358,20 +402,28 @@ if (!seam) {
         subject: arrived.subjectField }));
 
     /*
-      THE PICKER IS FIVE PEOPLE AND FOUR AUDIENCES, which is src/outreach.js's whole mapping made
-      visible. Guardian 2 is on the list with no address rather than left off it — an absence and a
-      bug look identical, and what she must do is block, not disappear.
+      THE PICKER IS SIX PEOPLE AND FOUR AUDIENCES, which is src/outreach.js's whole mapping made
+      visible — five until WO-5.8 gave this fixture a third guardian, and the mapping itself has
+      not moved: three guardian rows still fold onto the one `guardian` audience, which is why
+      `AUDIENCES` was not widened and must not be.
+
+      Guardian 2 is on the list with no address rather than left off it — an absence and a bug look
+      identical. What she must DO changed on 2026-09-20 and is asserted further down, at the tap:
+      she is refused rather than chosen-and-then-blocking, argued at src/outreach-view.js's
+      toggleOutreachRecipient(). What she must not do — vanish — is asserted right here, and that
+      half of WO-5.3's ruling is untouched.
     */
-    check('the audience picker offers every person on this student’s roster entry — both '
+    check('the audience picker offers every person on this student’s roster entry — all three '
       + 'guardians by POSITION, the counselor, the administrator from Settings and the student '
       + 'herself — and the one with no address on file is on the list rather than quietly missing',
-      arrived.recipients.length === 5
+      arrived.recipients.length === 6
         && arrived.recipients[0] === 'guardian-0:Guardian 1:has'
         && arrived.recipients[1] === 'guardian-1:Guardian 2:none'
-        && arrived.recipients[2] === 'counselor:Counselor:has'
-        && arrived.recipients[3] === 'admin:Admin:has'
-        && arrived.recipients[4] === 'student:Student:has'
-        && arrived.chips.length === 5 && /Wo53Guardian One/.test(arrived.toNote)
+        && arrived.recipients[2] === 'guardian-2:Guardian 3:has'
+        && arrived.recipients[3] === 'counselor:Counselor:has'
+        && arrived.recipients[4] === 'admin:Admin:has'
+        && arrived.recipients[5] === 'student:Student:has'
+        && arrived.chips.length === 6 && /Wo53Guardian One/.test(arrived.toNote)
         && arrived.toNote.indexOf(G1_EMAIL) >= 0,
       arrived.recipients.join(' · ') + ' :: ' + arrived.toNote);
 
@@ -396,6 +448,305 @@ if (!seam) {
       leak.found.length === 0,
       leak.found.length ? 'LEAKED: ' + leak.found.join(', ')
         : 'none of the ' + SECRETS.length + ' planted strings reached the screen or the URL');
+
+    /*
+      ─────────── SEVERAL RECIPIENTS, AND ONE OF THEM IS PRIMARY (WO-5.8) ───────────
+
+      SIX CHECKS, DRIVEN THROUGH THE TWO REAL CHIP ROWS AND PUT BACK WHERE THEY WERE FOUND. They
+      sit here, immediately after the picker is first read, because this is the one moment in the
+      section where the state is known exactly: the flow has just opened on Ada from the signal
+      card, on a praise draft to Guardian 1, with nothing typed into it. The last of the six
+      restores that state, so everything below reads the draft it always read.
+
+      THE FIXTURE'S THIRD GUARDIAN IS WHAT MAKES ACCEPTANCE LINE 1 EXPRESSIBLE — *two guardians and
+      a counselor* — and the second guardian keeps her missing address, so the row a tap must
+      refuse sits between two rows a tap must take.
+
+      WHAT IS ASKED HERE THAT THE MODULE CHECKS AT THE FOOT OF THIS FILE CANNOT. WO-5.14 proved the
+      three builders carry a list; nothing on the screen could hand them one. These six prove the
+      screen now does: that the primary is alone in `to` and the rest join the copy-to-self in
+      `cc`, in the picker's order, in the URL the operating system would actually receive.
+    */
+    const several = await evalJs(`(function(){
+      ${DRAWN}
+      var was = drawn();
+      /* Both taps through the real chips and the one delegated listener in src/shell.js. */
+      document.querySelector('[data-outreach-to="guardian-2"]').click();
+      document.querySelector('[data-outreach-to="counselor"]').click();
+      var d = drawn();
+      var m = window.planbook.outreachView.outreachModel();
+      var href = d.href || '';
+      var q = href.indexOf('?');
+      var params = {};
+      (q < 0 ? '' : href.slice(q + 1)).split('&').forEach(function(pair){
+        var at = pair.indexOf('=');
+        if (at > 0) params[pair.slice(0, at)] = pair.slice(at + 1); });
+      return { asked: !document.getElementById('outreachConfirmModal')
+          .classList.contains('hidden'),
+        chosen: m.recipients.filter(function(r){ return r.chosen; }).length,
+        primaries: m.recipients.filter(function(r){ return r.primary; }).length,
+        recipient: m.recipient ? m.recipient.key : '',
+        copies: m.copies.map(function(r){ return r.key + ':' + r.email; }),
+        chips: d.chips, primaryShown: d.primaryShown, primaryChips: d.primaryChips,
+        primaryNote: d.primaryNote, toNote: d.toNote, status: d.status,
+        ready: m.ready, head: d.head, reasons: d.reasons,
+        bodySame: d.bodyField === was.bodyField, subjectSame: d.subjectField === was.subjectField,
+        to: href.slice('mailto:'.length, q < 0 ? href.length : q), cc: params.cc || '',
+        /* THE ADDRESS PARTS ONLY, and that is the difference between a real draft and the
+           hand-built ones at the foot of this file. encodeURIComponent turns every comma into
+           %2C, and a body that opens "Dear Wo53Guardian One," has one — so a search over the
+           whole URL is a search that can never pass here. What RFC 6068 § 2 is about is the
+           separator BETWEEN addresses, so that is what is read. */
+        pctComma: /%2c/i.test(href.slice('mailto:'.length, q < 0 ? href.length : q)
+          + '|' + (params.cc || '')),
+        clip: m.clipboard.split('\\n').slice(0, 2) }; })()`);
+    check('two guardians and a counselor go on ONE draft — the third guardian and the counselor '
+      + 'tapped onto a message already written to the first — with exactly one of the three marked '
+      + 'primary, the second chip row appearing because there is now something to ask, and NOT ONE '
+      + 'CHARACTER of the subject or the body moving: a recipient joining the Cc rebuilds nothing, '
+      + 'because the resolve ran against the primary and the primary has not changed (Acceptance '
+      + 'line 1)',
+      several.asked === false && several.chosen === 3 && several.primaries === 1
+        && several.recipient === 'guardian-0'
+        && several.bodySame === true && several.subjectSame === true && several.ready === true
+        && several.chips[0] === 'guardian-0|Guardian 1|on|live'
+        && several.chips[1] === 'guardian-1|Guardian 2|off|refused'
+        && several.chips[2] === 'guardian-2|Guardian 3|on|live'
+        && several.chips[3] === 'counselor|Counselor|on|live'
+        && several.chips[4] === 'admin|Admin|off|live'
+        && several.primaryShown === true
+        && several.primaryChips.join(' · ') === 'guardian-0|Guardian 1|on · '
+          + 'guardian-2|Guardian 3|off · counselor|Counselor|off',
+      'chosen ' + several.chosen + ', primary ' + several.recipient + ', row two = '
+        + several.primaryChips.join(' · ') + '; draft untouched = '
+        + String(several.bodySame && several.subjectSame));
+    /*
+      THE SELECTION REACHES THE URL, IN THE HEADER WO-5.14 RULED ON (Acceptance line 3). The
+      primary alone in the `to` part; the other two recipients and then the copy-to-self in `cc=`,
+      comma-separated with the comma LITERAL — which is the defect that fixture cannot see with one
+      address and the reason the `cc` string is compared whole rather than searched. The clipboard
+      block is read in the same breath because it is a second serialiser of the same four fields
+      and its `Cc:` line is built from the same list: the two doors disagreeing about who is on the
+      message is exactly the shape src/outreach.js's one-draft-object rule exists to prevent.
+    */
+    check('and every chosen recipient reaches the compose URL, in Cc, in the picker’s own order '
+      + 'with the teacher’s own copy last: the primary is ALONE in the `to` part, `cc=` carries '
+      + 'Guardian 3, the counselor and the teacher joined by literal commas with no %2C anywhere, '
+      + 'and the clipboard block’s `To:` and `Cc:` lines say the same thing in the same order. '
+      + 'The %2C is looked for in the address parts alone, because a body that opens "Dear '
+      + 'Wo53Guardian One," puts one in the URL by construction (Acceptance line 3)',
+      several.to === G1_EMAIL
+        && several.cc === G3_EMAIL + ',' + COUNSELOR_EMAIL + ',' + TEACHER_EMAIL
+        && several.pctComma === false
+        && several.clip[0] === 'To: Wo53Guardian One <' + G1_EMAIL + '>'
+        && several.clip[1] === 'Cc: ' + G3_EMAIL + ', ' + COUNSELOR_EMAIL + ', ' + TEACHER_EMAIL
+        /* AND THE STRIP SAYS WHO IS ON IT BEFORE SHE TAPS, which is the sentence a teacher reads
+           in place of reading a URL. */
+        && several.reasons.some((r) => /addressed to Wo53Guardian One, copying Wo53Guardian Three and Wo53Counselor, copied to you/.test(r)),
+      'to = ' + several.to + ' :: cc = ' + several.cc + ' :: ' + several.clip.join(' / '));
+
+    /*
+      THE PRIMARY MOVES AND THE SELECTION DOES NOT (Acceptance lines 1 and 2). Guardian 3 is
+      promoted from row two; the other two stay on the message and the demoted primary joins the
+      Cc. `{{guardian.name}}` is the whole of Acceptance line 2 and is asserted as a PAIR — the new
+      name in the salutation AND the old one gone from the body — because a resolver that appended
+      rather than replaced would pass a search for the first alone.
+    */
+    const promoted = await evalJs(`(function(){
+      ${DRAWN}
+      document.querySelector('[data-outreach-primary="guardian-2"]').click();
+      var d = drawn();
+      var m = window.planbook.outreachView.outreachModel();
+      var href = d.href || '';
+      var q = href.indexOf('?');
+      var params = {};
+      (q < 0 ? '' : href.slice(q + 1)).split('&').forEach(function(pair){
+        var at = pair.indexOf('=');
+        if (at > 0) params[pair.slice(0, at)] = pair.slice(at + 1); });
+      return { asked: !document.getElementById('outreachConfirmModal')
+          .classList.contains('hidden'),
+        chosen: m.recipients.filter(function(r){ return r.chosen; }).length,
+        primaries: m.recipients.filter(function(r){ return r.primary; }).length,
+        recipient: m.recipient ? m.recipient.key : '',
+        copies: m.copies.map(function(r){ return r.key + ':' + r.email; }),
+        body: d.bodyField, reasons: d.reasons, toNote: d.toNote,
+        primaryNote: d.primaryNote, primaryChips: d.primaryChips, status: d.status,
+        to: href.slice('mailto:'.length, q < 0 ? href.length : q), cc: params.cc || '',
+        ready: m.ready }; })()`);
+    check('promoting Guardian 3 in the second row re-resolves every merge field against HER — the '
+      + 'salutation reads "Dear Wo53Guardian Three" and the first guardian’s name is gone from the '
+      + 'body altogether — while the selection is untouched: all three are still on the message, '
+      + 'the demoted primary simply moves into Cc and the To part becomes the new primary’s '
+      + 'address alone. And three separate places on the panel say who that is — the line under '
+      + 'row one, the line under row two and the block strip (Acceptance lines 1 and 2)',
+      promoted.asked === false && promoted.chosen === 3 && promoted.primaries === 1
+        && promoted.recipient === 'guardian-2' && promoted.ready === true
+        && /Dear Wo53Guardian Three,/.test(promoted.body)
+        && promoted.body.indexOf('Wo53Guardian One') < 0
+        && promoted.copies.join(' · ') === 'guardian-0:' + G1_EMAIL + ' · counselor:'
+          + COUNSELOR_EMAIL
+        && promoted.to === G3_EMAIL
+        && promoted.cc === G1_EMAIL + ',' + COUNSELOR_EMAIL + ',' + TEACHER_EMAIL
+        && promoted.primaryChips.join(' · ') === 'guardian-0|Guardian 1|off · '
+          + 'guardian-2|Guardian 3|on · counselor|Counselor|off'
+        && promoted.toNote.indexOf('Wo53Guardian Three · ' + G3_EMAIL) === 0
+        && /copied to Wo53Guardian One, Wo53Counselor/.test(promoted.toNote)
+        && /Addressed to Wo53Guardian Three/.test(promoted.primaryNote)
+        && promoted.reasons.some((r) => /addressed to Wo53Guardian Three/.test(r))
+        && /rebuilt for Wo53Guardian Three/.test(promoted.status)
+        && /nothing was lost/i.test(promoted.status),
+      'primary ' + promoted.recipient + ', copies ' + promoted.copies.join(' · ')
+        + '; to = ' + promoted.to + ', cc = ' + promoted.cc + '; "'
+        + String(promoted.body).slice(0, 34) + '…"');
+
+    /*
+      WO-5.6's CONFIRM, AND THE PAIR IS THE POINT (Acceptance line 5). The same edited draft is
+      tapped twice: once on a row-one chip, which must go straight through because it changes
+      nothing in either box, and once on a row-two chip, which must ask because it rebuilds both.
+      A check that only asserted the second half would pass over a build that had put a dialog on
+      every tap — which is the thing WO-5.6's own header warns teaches people to dismiss dialogs —
+      and one that only asserted the first would pass over a build that had stopped asking at all.
+
+      THE PANEL STILL NAMES NOBODY, checked here as well as at the check further down that owns the
+      claim, because this is the first time it can be raised from a row that did not exist when
+      that one was written.
+    */
+    const asking = await evalJs(`(function(){
+      ${TYPE}
+      ${DRAWN}
+      var was = drawn().bodyField;
+      var mine = was + ' A sentence I typed myself.';
+      type('outreachBody', mine);
+      document.querySelector('[data-outreach-to="student"]').click();
+      var member = drawn();
+      var memberAsked = !document.getElementById('outreachConfirmModal')
+        .classList.contains('hidden');
+      document.querySelector('[data-outreach-primary="guardian-0"]').click();
+      var panel = document.getElementById('outreachConfirmModal');
+      var primaryAsked = !panel.classList.contains('hidden');
+      var lead = document.getElementById('outreachConfirmLead').textContent;
+      var panelText = panel.textContent;
+      document.querySelector('[data-outreach-rebuild-cancel]').click();
+      var after = drawn();
+      var m = window.planbook.outreachView.outreachModel();
+      type('outreachBody', was);
+      return { memberAsked: memberAsked, memberBody: member.bodyField, mine: mine,
+        memberChosen: member.chips.filter(function(c){ return c.indexOf('|on|') >= 0; }).length,
+        memberStatus: member.status,
+        primaryAsked: primaryAsked, lead: lead, panelText: panelText,
+        stillPrimary: m.recipient ? m.recipient.key : '', stillBody: after.bodyField,
+        chosenAfter: m.recipients.filter(function(r){ return r.chosen; }).length }; })()`);
+    check('changing the recipients obeys WO-5.6’s confirm and adds no second rule of its own — '
+      + 'over one edited draft, a row-one tap that puts the student on the Cc goes straight '
+      + 'through and leaves both boxes byte-identical, and a row-two tap that would write the '
+      + 'message to somebody else ASKS. Cancelling leaves the primary, the selection and the '
+      + 'teacher’s own sentence exactly where they were, and the panel quotes the chip’s POSITION '
+      + 'and names no student, no guardian and no address (Acceptance line 5)',
+      asking.memberAsked === false && asking.memberBody === asking.mine
+        && asking.memberChosen === 4 && /untouched/.test(asking.memberStatus)
+        && asking.primaryAsked === true && /Guardian 1/.test(asking.lead)
+        && asking.stillPrimary === 'guardian-2' && asking.stillBody === asking.mine
+        && asking.chosenAfter === 4
+        && SECRETS.every((w) => asking.panelText.indexOf(w) < 0)
+        && asking.panelText.indexOf('Wo53Guardian') < 0
+        && asking.panelText.indexOf('Wo53Counselor') < 0
+        && asking.panelText.indexOf('Wo53Full') < 0
+        && asking.panelText.indexOf(G1_EMAIL) < 0 && asking.panelText.indexOf(G3_EMAIL) < 0,
+      'row one asked = ' + asking.memberAsked + ' (draft intact = '
+        + String(asking.memberBody === asking.mine) + '), row two asked = ' + asking.primaryAsked
+        + '; lead “' + String(asking.lead).slice(0, 70) + '…”');
+
+    /*
+      THE SECOND ROW AT 390px UNDER A COARSE POINTER. The touch pass further down measures every
+      control in this modal, but it runs over a draft with ONE recipient on it — which is exactly
+      when this row is not drawn, so it would count four chips that were not there and pass. Four
+      are on the message at this instant, so the row is real, and it is measured by its own hook
+      rather than by a count for the reason that pass gives about WO-5.7's copy control: a floor
+      that reached every control except the new one passes a count and fails a thumb.
+    */
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+    await new Promise(r => setTimeout(r, 300));
+    const primaryTouch = await evalJs(`(function(){
+      var out = [];
+      document.querySelectorAll('#outreachPrimary [data-outreach-primary], '
+        + '#outreachRecipients [data-outreach-to]').forEach(function(e){
+          var r = e.getBoundingClientRect();
+          out.push({ row: e.hasAttribute('data-outreach-primary') ? 'primary' : 'to',
+            key: e.getAttribute('data-outreach-primary') || e.getAttribute('data-outreach-to'),
+            w: Math.round(r.width * 100) / 100, h: Math.round(r.height * 100) / 100 }); });
+      var doc = document.documentElement;
+      return { controls: out, under: out.filter(function(m){ return m.h < 44 || m.w < 44; }),
+        primaryCount: out.filter(function(m){ return m.row === 'primary'; }).length,
+        shown: !document.getElementById('outreachPrimaryRow').classList.contains('hidden'),
+        coarse: matchMedia('(pointer: coarse)').matches,
+        sideways: doc.scrollWidth - doc.clientWidth }; })()`);
+    check('every chip in BOTH recipient rows measures at least 44px on both axes at 390px under a '
+      + 'coarse pointer — the six in row one, including the dashed one a tap is refused on, and '
+      + 'the four in the row WO-5.8 added, which is drawn here because four people are on this '
+      + 'message — and the second row puts the panel into no sideways scroll',
+      primaryTouch.coarse === true && primaryTouch.shown === true
+        && primaryTouch.primaryCount === 4 && primaryTouch.controls.length === 10
+        && primaryTouch.under.length === 0 && primaryTouch.sideways <= 0,
+      primaryTouch.controls.length + ' chip(s) measured across the two rows, '
+        + primaryTouch.primaryCount + ' of them in the new one, ' + primaryTouch.under.length
+        + ' under 44px' + (primaryTouch.under.length
+          ? ': ' + JSON.stringify(primaryTouch.under) : '')
+        + ', sideways scroll ' + primaryTouch.sideways + 'px');
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await new Promise(r => setTimeout(r, 200));
+
+    /*
+      AND THE BLOCK PUTS THE FLOW BACK WHERE IT FOUND IT, which every block in this section that
+      moves state does. The last tap is the one that proves the other half of "exactly one primary
+      at all times": the primary's own row-one chip is tapped and REFUSED, because taking her off
+      would leave a message written to nobody and would be the one membership tap that had to
+      rebuild. That refusal names a POSITION and no person, so it is safe on a line a projector can
+      reach — asserted rather than assumed.
+    */
+    const restored = await evalJs(`(function(){
+      ${DRAWN}
+      document.querySelector('[data-outreach-primary="guardian-0"]').click();
+      var backAsked = !document.getElementById('outreachConfirmModal').classList.contains('hidden');
+      document.querySelector('[data-outreach-to="student"]').click();
+      document.querySelector('[data-outreach-to="counselor"]').click();
+      document.querySelector('[data-outreach-to="guardian-2"]').click();
+      var alone = drawn();
+      document.querySelector('[data-outreach-to="guardian-0"]').click();
+      var d = drawn();
+      var m = window.planbook.outreachView.outreachModel();
+      var href = d.href || '';
+      var q = href.indexOf('?');
+      var params = {};
+      (q < 0 ? '' : href.slice(q + 1)).split('&').forEach(function(pair){
+        var at = pair.indexOf('=');
+        if (at > 0) params[pair.slice(0, at)] = pair.slice(at + 1); });
+      return { backAsked: backAsked,
+        chosen: m.recipients.filter(function(r){ return r.chosen; }).length,
+        recipient: m.recipient ? m.recipient.key : '', copies: m.copies.length,
+        rowShown: alone.primaryShown, rowChips: alone.primaryChips.length,
+        rowNote: alone.primaryNote, status: d.status, toNote: d.toNote,
+        body: d.bodyField, ready: m.ready, hasHref: d.hasHref,
+        to: href.slice('mailto:'.length, q < 0 ? href.length : q), cc: params.cc || '' }; })()`);
+    check('and the block leaves the flow as it found it — written to Guardian 1, nobody else on '
+      + 'the message, the second row and its line of type gone because there is nothing left to '
+      + 'ask, and `cc=` back to the teacher’s own copy alone. The last tap is on the primary’s own '
+      + 'chip and is REFUSED in a sentence that quotes her position and names no person: taking '
+      + 'the primary off is the one membership tap that would have had to rebuild, and it is '
+      + 'refused rather than made an exception for',
+      restored.backAsked === false && restored.chosen === 1 && restored.copies === 0
+        && restored.recipient === 'guardian-0' && restored.ready === true
+        && restored.hasHref === true && restored.to === G1_EMAIL
+        && restored.cc === TEACHER_EMAIL
+        && restored.rowShown === false && restored.rowChips === 0 && restored.rowNote === ''
+        && /Dear Wo53Guardian One,/.test(restored.body)
+        && /^Guardian 1 is who this message is written to/.test(restored.status)
+        && restored.status.indexOf('Wo53Guardian') < 0,
+      'chosen ' + restored.chosen + ', primary ' + restored.recipient + ', cc = ' + restored.cc
+        + '; refusal “' + String(restored.status).slice(0, 90) + '…”');
 
     /*
       ─────────── WO-5.3's SEVENTH ACCEPTANCE LINE, AS WO-5.13 REVERSED HALF OF IT ───────────
@@ -892,44 +1243,68 @@ if (!seam) {
         + ', instruction row(s) left = '
         + fixedUp.reasons.filter((r) => /unblocks the draft/.test(r)).length);
 
-    /* ── a recipient with no address ── */
+    /* ── a recipient with no address ──
+       REWRITTEN AT WO-5.8, NOT RE-ASSERTED. Until 2026-09-20 this check clicked the addressless
+       chip through agree() and read the draft going DEAD: she was choosable and then blocked,
+       which src/outreach.js:114 argued for and which was the right answer while the picker held
+       exactly one person. With several, that tap means *send this to her too* over a message that
+       is finished, so the refusal moved to the door — src/outreach-view.js's
+       toggleOutreachRecipient() argues the departure in full. A `.click()` that had been left
+       standing would now be a no-op passing a check about a block, which is why this reads the
+       refusal instead.
+
+       IT IS DRIVEN OVER AN **EDITED** DRAFT ON PURPOSE, and that is the half the check in the
+       WO-5.8 block above cannot make: the check before this one typed a sentence in place of a
+       merge field, so a refusal that rebuilt on its way out would take that sentence with it and
+       nothing else in this file would notice. */
     const noAddress = await evalJs(`(function(){
       ${DRAWN}
+      var was = drawn();
+      document.querySelector('[data-outreach-to="guardian-1"]').click();
+      var d = drawn();
+      var m = window.planbook.outreachView.outreachModel();
+      return { asked: !document.getElementById('outreachConfirmModal').classList.contains('hidden'),
+        chosen: m.recipients.filter(function(r){ return r.chosen; }).length,
+        chip: d.chips[1], recipient: m.recipient ? m.recipient.key : '',
+        hasHref: d.hasHref, head: d.head, reasons: d.reasons, ready: m.ready, clear: d.clear,
+        bodySame: d.bodyField === was.bodyField, status: d.status, toNote: d.toNote }; })()`);
+    check('a recipient with no email address on file CANNOT go on the message — the chip is drawn '
+      + 'in her own position and stays a live button, the tap LANDS, and the door refuses it in a '
+      + 'sentence that names what is missing. So the app never opens a mail window with an empty '
+      + 'To field and never quietly drops somebody the teacher believes she wrote to, which is the '
+      + 'third answer and the only forbidden one. The draft she had typed into is byte-identical '
+      + 'afterwards: a refusal is not a rebuild (Acceptance line 4)',
+      noAddress.asked === false && noAddress.chosen === 1
+        && noAddress.recipient === 'guardian-0'
+        && noAddress.chip === 'guardian-1|Guardian 2|off|refused'
+        && /no email address on file for Wo53Guardian Two/.test(noAddress.status)
+        && /cannot go on this message/.test(noAddress.status)
+        && noAddress.bodySame === true
+        && noAddress.hasHref === true && noAddress.ready === true && noAddress.clear === true,
+      'chip = ' + noAddress.chip + ', still ' + noAddress.chosen + ' on the message; draft intact = '
+        + noAddress.bodySame + '; “' + String(noAddress.status).slice(0, 110) + '…”');
+
+    /* ── the ceiling ──
+       THE TEMPLATE PICK GOES THROUGH agree() SINCE WO-5.8, and the reason is the check directly
+       above: the addressless tap used to rebuild the draft on its way past and so left it
+       unedited, and it does not rebuild anything any more. The sentence typed two checks up is
+       still in the body, so the picker asks — which is WO-5.6 working, not a new behaviour — and
+       the answer is yes. What agree() hands back is asserted below rather than dropped. The chip
+       tap that used to stand here has gone with it: it was putting the recipient back from
+       Guardian 2, and nothing moved it. */
+    const long = await evalJs(`(function(){
+      ${DRAWN}
       ${AGREE}
-      /* The check above typed over the refused token, so this recipient tap asks first (WO-5.6)
-         and the answer is yes. What agree() hands back is asserted below rather than dropped.
-         (No backticks in here; it is inside a template literal and one would close it.) */
+      var ids = window.planbook.store.getDoc().templates.filter(function(t){
+        return t.name.indexOf('long') >= 0; })[0].id;
       var askedFirst = agree(function(){
-        document.querySelector('[data-outreach-to="guardian-1"]').click(); });
+        var n = document.getElementById('outreachTemplate');
+        n.value = ids;
+        n.dispatchEvent(new Event('change', { bubbles: true })); });
       var d = drawn();
       var m = window.planbook.outreachView.outreachModel();
       return { askedFirst: askedFirst,
-        hasHref: d.hasHref, head: d.head, reasons: d.reasons, ready: m.ready,
-        toNote: d.toNote }; })()`);
-    check('and a recipient with no email address blocks the handoff too, in this flow’s own '
-      + 'words rather than the resolver’s — it has never heard of a recipient — so the app '
-      + 'never opens a mail window with an empty To field',
-      noAddress.ready === false && noAddress.hasHref === false
-        && noAddress.reasons.some((r) => /no email address on file/.test(r))
-        && /Wo53Guardian Two/.test(noAddress.toNote) && noAddress.askedFirst === true,
-      /* This flow's own recipient row, by name and not by position — the rebuild puts the
-         template's merge fields back, so the strip is carrying WO-5.5's instruction line and a
-         field row as well by the time this reads it. */
-      (noAddress.reasons.filter((r) => /no email address on file/.test(r))[0] || '').slice(0, 120)
-        + ' :: asked before rebuilding = ' + noAddress.askedFirst);
-
-    /* ── the ceiling ── */
-    const long = await evalJs(`(function(){
-      ${DRAWN}
-      document.querySelector('[data-outreach-to="guardian-0"]').click();
-      var ids = window.planbook.store.getDoc().templates.filter(function(t){
-        return t.name.indexOf('long') >= 0; })[0].id;
-      var n = document.getElementById('outreachTemplate');
-      n.value = ids;
-      n.dispatchEvent(new Event('change', { bubbles: true }));
-      var d = drawn();
-      var m = window.planbook.outreachView.outreachModel();
-      return { shown: d.lengthShown, text: d.lengthText, length: m.length, long: m.long,
+        shown: d.lengthShown, text: d.lengthText, length: m.length, long: m.long,
         ceiling: window.planbook.outreach.MAILTO_CEILING, hasHref: d.hasHref,
         bodyLength: d.bodyField.length }; })()`);
     check('a body long enough to pass the practical `mailto:` ceiling WARNS BEFORE THE FACT and '
@@ -938,9 +1313,14 @@ if (!seam) {
       long.long === true && long.shown === true && long.hasHref === true
         && long.length > long.ceiling && long.ceiling === 2000
         && String(long.text).indexOf(String(long.ceiling)) >= 0
-        && /Outlook/.test(long.text) && /does not shorten/.test(long.text),
+        && /Outlook/.test(long.text) && /does not shorten/.test(long.text)
+        /* The draft was still the teacher's own sentence when this pick arrived (WO-5.8's note at
+           the fixture above), so the picker asked first and the answer was yes. Asserted rather
+           than dropped, which is what the two other agree() sites in this section do. */
+        && long.askedFirst === true,
       long.length + ' encoded characters over a ceiling of ' + long.ceiling + ' (the body itself is '
-        + long.bodyLength + '), link still live = ' + long.hasHref);
+        + long.bodyLength + '), link still live = ' + long.hasHref + ', asked before rebuilding = '
+        + long.askedFirst);
     check('and the ceiling is measured on the ENCODED URL rather than on what the teacher typed, '
       + 'which is the only number that has anything to do with what gets cut: every line break '
       + 'costs six characters and every em dash nine',
@@ -1029,7 +1409,7 @@ if (!seam) {
         formHidden: d.formHidden }; })()`);
     check('and turning the projector off brings the same draft back, because what the mode '
       + 'suppressed was the drawing rather than the work',
-      backOn.formHidden === false && backOn.hasHref === true && backOn.chips === 5
+      backOn.formHidden === false && backOn.hasHref === true && backOn.chips === 6
         && backOn.body > 0,
       JSON.stringify(backOn));
 
@@ -1043,44 +1423,63 @@ if (!seam) {
        person.
 
        TWO OF THE SENTENCES THIS LINE CAN HOLD DO NAME ONE — applyRecipient()'s *rebuilt for Wo53-
-       Guardian Two…* and recordHandoff()'s *logged on Ada…'s record* — so this fixture SWITCHES
+       Guardian Three…* and recordHandoff()'s *logged on Ada…'s record* — so this fixture SWITCHES
        RECIPIENT FIRST and flips second. The sentence is read on the glass BEFORE the flip as well
        as after it: a check that only asserted the empty half would go green on a fixture that had
        quietly stopped writing a status at all, which is this file's own rule about a check that
        cannot express its failure.
 
+       IT TAKES TWO TAPS SINCE WO-5.8 AND IT PAYS FOR A SECOND CLAIM. A recipient is put on the
+       message first and written to second, because the two are two controls now — and the second
+       row is therefore POPULATED, and its own line of type is naming a guardian, at the moment the
+       projector goes on. So `statusOut.name` is asserting the emptying of that row as well as of
+       the status line: it searches the whole modal's text, and paintPrimary()'s *Addressed to
+       Wo53Guardian Three…* is in it until renderOutreach()'s blocked branch empties it. The row
+       and its chip count are read as well, by name, so a red says which of the two broke.
+
        The recipient is put back afterwards so the rest of the section reads the draft it always
        read — the same courtesy the Gmail ceiling check above pays the mail door. */
     const said = await evalJs(`(function(){
-      document.querySelector('[data-outreach-to="guardian-1"]').click();
+      ${DRAWN}
+      document.querySelector('[data-outreach-to="guardian-2"]').click();
+      document.querySelector('[data-outreach-primary="guardian-2"]').click();
       var line = document.getElementById('outreachStatus');
       var hay = document.getElementById('outreachModal').textContent;
+      var d = drawn();
       return { status: line.textContent, hidden: line.classList.contains('hidden'),
-        named: hay.indexOf('Wo53Guardian Two') >= 0 }; })()`);
+        named: hay.indexOf('Wo53Guardian Three') >= 0,
+        rowShown: d.primaryShown, rowChips: d.primaryChips.length,
+        rowNamed: hay.indexOf('Addressed to Wo53Guardian Three') >= 0 }; })()`);
     await evalJs(`(function(){
       document.querySelector('header [data-presentation-toggle]').click(); return 1; })()`);
     await new Promise(r => setTimeout(r, 250));
     const statusOut = await evalJs(`(function(){
+      ${DRAWN}
       var line = document.getElementById('outreachStatus');
       var hay = document.getElementById('outreachModal').textContent;
       var m = window.planbook.outreachView.outreachModel();
+      var d = drawn();
       return { status: line.textContent, hidden: line.classList.contains('hidden'),
         model: m.status, blocked: m.blocked,
+        rowShown: d.primaryShown, rowChips: d.primaryChips.length, rowNote: d.primaryNote,
         name: hay.indexOf('Wo53Full') >= 0 || hay.indexOf('Wo53Guardian') >= 0,
-        address: hay.indexOf('${G1_EMAIL}') >= 0 }; })()`);
+        address: hay.indexOf('${G1_EMAIL}') >= 0 || hay.indexOf('${G3_EMAIL}') >= 0 }; })()`);
     check('and the STATUS LINE is emptied with the rest of the panel rather than left in it — a '
-      + 'recipient switched, the sentence naming that guardian read off the glass, and THEN the '
-      + 'projector: outreachModel() hands the projected model an empty `status`, so the line the '
-      + 'teacher was just reading holds nothing at all and no guardian’s name is anywhere in the '
-      + 'modal’s text, hidden or not. The old fixture flips before any sentence names a person and '
-      + 'cannot reach this (WO-5.10, Acceptance line 1)',
+      + 'recipient put on the message and written to, the sentence naming that guardian read off '
+      + 'the glass with the second chip row drawn and naming her too, and THEN the projector: '
+      + 'outreachModel() hands the projected model an empty `status`, so the line the teacher was '
+      + 'just reading holds nothing at all, the second row is emptied and hidden, and no '
+      + 'guardian’s name is anywhere in the modal’s text, hidden or not. The old fixture flips '
+      + 'before any sentence names a person and cannot reach this (WO-5.10, Acceptance line 1)',
       said.named === true && said.hidden === false
-        && /Wo53Guardian Two/.test(said.status) && /rebuilt for/.test(said.status)
+        && /Wo53Guardian Three/.test(said.status) && /rebuilt for/.test(said.status)
+        && said.rowShown === true && said.rowChips === 2 && said.rowNamed === true
         && statusOut.blocked === true && statusOut.model === '' && statusOut.status === ''
         && statusOut.hidden === true
+        && statusOut.rowShown === false && statusOut.rowChips === 0 && statusOut.rowNote === ''
         && statusOut.name === false && statusOut.address === false,
-      'before: “' + String(said.status).slice(0, 80) + '…”; projected: '
-        + JSON.stringify(statusOut));
+      'before: “' + String(said.status).slice(0, 80) + '…” with ' + said.rowChips
+        + ' chip(s) in the second row; projected: ' + JSON.stringify(statusOut));
 
     /* AND THE FLIP BACK, READ AND NOT ASSERTED. The module variable behind that sentence is flow
        state and the mode does not write to it — nothing does, on a flip: renderOutreach() is handed
@@ -1094,16 +1493,31 @@ if (!seam) {
       document.querySelector('header [data-presentation-toggle]').click(); return 1; })()`);
     await new Promise(r => setTimeout(r, 250));
     const statusBack = await evalJs(`(function(){
+      ${DRAWN}
       var line = document.getElementById('outreachStatus');
       var was = { status: line.textContent, hidden: line.classList.contains('hidden') };
-      document.querySelector('[data-outreach-to="guardian-0"]').click();
-      return { was: was, restored: document.getElementById('outreachStatus').textContent }; })()`);
+      /* Written back to the first guardian, and then the third taken off the message — in that
+         order, because the primary is the one recipient a row-one tap refuses to remove
+         (src/outreach-view.js's toggleOutreachRecipient()). */
+      document.querySelector('[data-outreach-primary="guardian-0"]').click();
+      var restored = document.getElementById('outreachStatus').textContent;
+      document.querySelector('[data-outreach-to="guardian-2"]').click();
+      var d = drawn();
+      var m = window.planbook.outreachView.outreachModel();
+      return { was: was, restored: restored,
+        chosen: m.recipients.filter(function(r){ return r.chosen; }).length,
+        recipient: m.recipient ? m.recipient.key : '',
+        rowShown: d.primaryShown, chips: d.chips.length }; })()`);
     check('and the fixture puts the recipient back where the rest of this section expects it — the '
       + 'flip cost the flow nothing, so the switch back rebuilds in silence and the line names the '
-      + 'first guardian again',
-      /Wo53Guardian One/.test(statusBack.restored),
+      + 'first guardian again, and the third guardian comes back off the message so the second row '
+      + 'goes away with her',
+      /Wo53Guardian One/.test(statusBack.restored)
+        && statusBack.chosen === 1 && statusBack.recipient === 'guardian-0'
+        && statusBack.rowShown === false && statusBack.chips === 6,
       'status on the way back out = “' + String(statusBack.was.status).slice(0, 80)
-        + '” (hidden = ' + statusBack.was.hidden + ')');
+        + '” (hidden = ' + statusBack.was.hidden + '); back to ' + statusBack.chosen
+        + ' recipient on the message');
 
     /*
       ─────────── NO GOOGLE SCOPE IS REQUESTED ANYWHERE IN THIS FLOW ───────────
@@ -1529,7 +1943,12 @@ if (!seam) {
         return t.name.indexOf('praise to a guardian') >= 0; })[0];
       pick('outreachTemplate', praise.id); step('template');
       document.querySelector('#outreachTones [data-outreach-tone="concern"]').click(); step('tone');
-      document.querySelector('[data-outreach-to="counselor"]').click(); step('recipient');
+      /* TWO TAPS FOR THE THIRD STEP SINCE WO-5.8, and only the second of them is a rebuild. Row
+         one puts the counselor ON the message and is not a step at all — it changes neither box,
+         which is the claim the WO-5.8 block above owns. Row two writes the draft to him, which is
+         what this check has always been about, and it must still go through in silence. */
+      document.querySelector('[data-outreach-to="counselor"]').click();
+      document.querySelector('[data-outreach-primary="counselor"]').click(); step('recipient');
       return { steps: steps }; })()`);
     check('an untouched draft rebuilds with NO PROMPT AT ALL on all three controls — the template '
       + 'picker, the tone pill and the recipient chip — and each of the three really did rebuild. '
@@ -1566,12 +1985,19 @@ if (!seam) {
       ${CONFIRM}
       var was = drawn().bodyField;
       type('outreachBody', was + 'z');
-      document.querySelector('[data-outreach-to="guardian-0"]').click();
+      /* ROW TWO SINCE WO-5.8 — the control that changes who the draft is WRITTEN to, which is the
+         one this check has always been driving. Row one is a membership toggle and never asks, so
+         a data-outreach-to chip left standing here would be asserting a confirm over a control
+         that has no reason to raise one. The first guardian is still on the message (the step
+         above only moved the primary to the counselor), so this chip is there to tap.
+         (No backticks in here; it is inside a template literal and a PAIR of them closes and
+         reopens it, which is a ReferenceError at run time and not a syntax error at parse time.) */
+      document.querySelector('[data-outreach-primary="guardian-0"]').click();
       var withZ = confirmPanel();
       document.querySelector('[data-outreach-rebuild-cancel]').click();
       var mid = window.planbook.outreachView.outreachModel();
       type('outreachBody', was);
-      document.querySelector('[data-outreach-to="guardian-0"]').click();
+      document.querySelector('[data-outreach-primary="guardian-0"]').click();
       var without = confirmPanel();
       var m = window.planbook.outreachView.outreachModel();
       return { withZ: withZ.open, panelText: withZ.text, panelLead: withZ.lead,
@@ -1808,15 +2234,23 @@ if (!seam) {
         contacts: (d.log || []).filter(function(e){ return e.kind === 'contact'; }).length }; })()`);
 
     /* ── the state this block needs, driven through the real controls ──
-       The recipient is put back to the first guardian — the one with an address — through the chip
-       a teacher taps, and through agree(), because the draft above has been typed into and WO-5.6's
-       confirm stands between an edited draft and a rebuild. *Copy me* is turned ON if a check
-       further up left it off, so the `Cc:` line is a fact of this run rather than an inheritance.
-       Then the two boxes are typed, which rebuilds nothing: WO-5.3's own rule. */
+       The draft is put back to ONE recipient, the first guardian, through the chips a teacher taps
+       and through agree(), because the draft above has been typed into and WO-5.6's confirm stands
+       between an edited draft and a rebuild. *Copy me* is turned ON if a check further up left it
+       off, so the `Cc:` line is a fact of this run rather than an inheritance. Then the two boxes
+       are typed, which rebuilds nothing: WO-5.3's own rule.
+
+       TWO CHIPS SINCE WO-5.8 AND THE ORDER IS FIXED. The counselor is still on the message from
+       the silent-rebuild block above, and `COPY_WANT` below says the `Cc:` line is the teacher's
+       own address and nothing else — so he has to come off, and the primary has to be moved back
+       to the first guardian FIRST, because a row-one tap refuses to take the primary off the
+       message (src/outreach-view.js's toggleOutreachRecipient()). Only the first of the two is a
+       rebuild, so only the first goes through agree(). */
     await evalJs(`(function(){
       ${AGREE}
       agree(function(){
-        document.querySelector('#outreachRecipients [data-outreach-to="guardian-0"]').click(); });
+        document.querySelector('#outreachPrimary [data-outreach-primary="guardian-0"]').click(); });
+      document.querySelector('#outreachRecipients [data-outreach-to="counselor"]').click();
       var m = window.planbook.outreachView.outreachModel();
       if (!m.cc.on) document.getElementById('outreachCc').click();
       return 1; })()`);
@@ -2432,6 +2866,68 @@ if (!seam) {
       { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
     await send('Emulation.setTouchEmulationEnabled', { enabled: false });
     await new Promise(r => setTimeout(r, 200));
+
+    /*
+      ─────────── AND THE BLOCK THAT SURVIVED THE REFUSAL MOVING (WO-5.8) ───────────
+
+      THIS CHECK EXISTS BECAUSE WO-5.8 COULD HAVE DELETED A CHECK'S SUBJECT WITHOUT DELETING THE
+      CHECK. `outreachModel()` still builds a `reasons` entry of `kind: 'recipient'` for a draft
+      whose recipient has no address, and until 2026-09-20 the only thing in this file that reached
+      it was the tap on Guardian 2's chip — which is now refused at the door, so that path is gone.
+      The entry is not dead: a student with nobody addressable on her roster entry OPENS on
+      somebody with no address, because openOutreach() takes the first recipient with an email and
+      falls back to the first row when there is none. Cal has no guardians, no counselor address
+      and no address of her own; the administrator's is the teacher's own Settings field and is
+      cleaned off with the fixture. So the draft opens BLOCKED, in this flow's own words rather
+      than the resolver's — it has never heard of a recipient — and the app still never opens a
+      mail window with an empty To field.
+
+      IT IS OPENED THROUGH openOutreach() RATHER THAN THROUGH A DOOR, and that is the one thing in
+      this section that skips wiring. Both doors are driven and asserted above — the signal card
+      and the student record, each in its own check — and Cal has no signal, so the card cannot
+      reach her and the record would cost this section a four-hop navigation away from the modal
+      every check above it left open. What is read afterwards is the DOM and the model, which is
+      what this block is about.
+
+      THE ADMINISTRATOR'S ADDRESS COMES OFF THE FIXTURE FIRST, and without that this check would
+      quietly assert nothing: `teacher.adminEmail` is set for the whole section, so Cal's *Admin*
+      row HAS an address, openOutreach() would seed the draft on it and the draft would be ready.
+      Blanking it is the state the reason is about — nobody on this roster entry and no
+      administrator either — and it is a write to the FIXTURE rather than by the flow, which is why
+      it is safe here and only here: it is after the last `rev` reading in this section, and the
+      cleanup below puts the whole `teacher` block back as it was found regardless. It runs last,
+      after every reading that depends on Ada's draft, and the cleanup closes what it opens.
+    */
+    const nobody = await evalJs(`(function(){
+      ${DRAWN}
+      window.planbook.store.update(function(doc){ doc.teacher.adminEmail = ''; });
+      window.planbook.outreachView.openOutreach(
+        { studentId: '${ORPHAN}', classId: '${CLS}', termId: '${TERM}', hits: [] });
+      var d = drawn();
+      var m = window.planbook.outreachView.outreachModel();
+      return { open: d.open, name: m.name,
+        chips: d.chips, primaryShown: d.primaryShown,
+        chosen: m.recipients.filter(function(r){ return r.chosen; }).length,
+        recipient: m.recipient ? m.recipient.key : '', ready: m.ready,
+        hasHref: d.hasHref, clear: d.clear, reasons: d.reasons,
+        kinds: m.reasons.map(function(r){ return r.kind; }) }; })()`);
+    check('and a student with nobody addressable on her roster entry still opens BLOCKED, with '
+      + 'this flow’s own sentence about a recipient rather than the resolver’s — every chip in the '
+      + 'row is drawn and every one of them is refused, the draft opens on one of them anyway '
+      + 'because a message has to be written to somebody, and there is no href. That is the '
+      + '`kind: "recipient"` reason still doing its job after WO-5.8 moved the addressless tap to '
+      + 'the door: the rule that the app never opens a mail window with an empty To field is '
+      + 'unchanged, and it is asserted on the path that can still reach it',
+      nobody.open === true && nobody.name === 'Cal Wo53Orphan'
+        && nobody.chosen === 1 && nobody.recipient === 'counselor'
+        && nobody.chips.length === 3
+        && nobody.chips.every((c) => /\|refused$/.test(c))
+        && nobody.primaryShown === false
+        && nobody.ready === false && nobody.hasHref === false && nobody.clear === false
+        && nobody.kinds.indexOf('recipient') >= 0
+        && nobody.reasons.some((r) => /no email address on file for counselor/i.test(r)),
+      'chips ' + nobody.chips.join(' · ') + '; ready = ' + nobody.ready + ', reasons '
+        + JSON.stringify(nobody.kinds));
 
     /* ── and the fixture comes back off ──
        OFF THE SCREEN FIRST, for the reason templates.mjs leaves its own screen before it takes its

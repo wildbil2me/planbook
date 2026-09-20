@@ -10105,7 +10105,154 @@ pre-existing prose.
 
 ---
 
-## Phase 6 — Calendar & the glance page
+### WO-5.8 — Several recipients, and one of them is primary
+
+**What this adds.** The picker itself, and it is **two chip rows rather than one control answering
+two questions**. Row one — `#outreachRecipients`, the row WO-5.3 built — is now a genuine
+multi-select: `.toggle-btn` with `aria-pressed` moving with the class, which is what that component
+already means on the roster's *which classes is this student in* row. Row two —
+`#outreachPrimaryRow`, new — asks *which of them it is written to*, is drawn from the selection, and
+**is not drawn at all until two people are on the message**, because with one the question has a
+single answer and the line under row one already names her. `recipientKey`, one string, became
+`recipientKeys` (a list) and `primaryKey` (a pointer into it), kept as two variables so that
+promoting somebody is not a reorder of the Cc line. The primary is alone in `to`; every other chosen
+recipient joins the copy-to-self in `cc`, in the picker's order with the teacher's copy last — which
+is WO-5.14's ruling consumed, not re-opened. `CACHE` v123 → v124.
+
+**The decision the work order asked for: an addressless recipient is now genuinely unchoosable.**
+WO-5.3 made her **choosable and then blocking** — argued at `src/outreach.js:114` — and that was
+right while the picker held exactly one person: choosing her was a *question* (**what about Guardian
+2?**) and the dead draft was the answer, in place of a draft that could not have existed anyway.
+With a selection the same tap means something else — *also send this to her* — over a message to
+Guardian 1 and the counselor that is finished and ready, and blocking there kills a working message
+to answer a request the app can simply decline, with the reason buried in a strip of things to fix
+rather than put where the thumb is. **The third answer — take the tap and drop her from the URL — is
+the forbidden one**: a teacher who believes a message went to both parents and finds it went to one
+is the silent failure this app refuses everywhere it can see one.
+
+**What did not move is everything WO-5.3 argued.** She is still drawn, still in her own position,
+still saying what is missing — *an absence and a bug look identical* is untouched — and the app still
+never opens a mail window with an empty To field. The refusal is `aria-disabled` and a **live**
+button, not the `disabled` attribute, because a chip that swallowed the tap would be the dead button
+`openOutreach()` already refuses to open on; the tap lands, `toggleOutreachRecipient()` declines it,
+and the status line and `announce()` say why — `copyRefused()`'s pair. **The primary's own chip is
+refused too**, which is how *exactly one primary at all times* is held without a rule about a message
+with nobody on it, and it keeps row one free of confirms.
+
+**WO-5.6's confirm is applied rather than extended.** The two gestures split: writing the draft to
+somebody else rebuilds both boxes and asks (`setOutreachRecipient()`, unchanged in name, wiring and
+`kind: 'recipient'` proposal, now reached from row two); putting somebody on or off the Cc rebuilds
+nothing and asks nothing. That is not a second rule — it is `toggleOutreachCopy()`'s posture, which
+has put an address on the same header since WO-5.3 without raising a dialog, and it is provable:
+`draftEdited()` compares the boxes against the snapshot and neither box moves.
+
+**`writeContact({ audience })` is still the primary's alone, on purpose.** That is
+[WO-5.15](plans/work-orders/phase-5-outreach.md#wo-515--one-contact-several-audiences), left standing
+and noted at the point of departure in both `outreachModel()` and `recordHandoff()`. Incomplete
+rather than false: the message is addressed to the primary.
+
+**The harness.** Seven new `check()` sites and six rewritten. Six of the seven sit in one block
+directly after the picker is first read, and the seventh runs last. The fixture gained a **third
+guardian with an address**, so *two guardians and a counselor* is expressible and the addressless
+chip sits between two choosable ones; the picker is six rows rather than five in three places. The
+rewrites are the half worth naming: the addressless check reads the refusal instead of the block, and
+does it **over an edited draft**, which the new block cannot; three checks that drove
+`[data-outreach-to]` to change who a draft was written to now drive `[data-outreach-primary]`,
+because a `[data-outreach-to]` in front of a `confirmPanel()` would be asserting a dialog over a
+control with no reason to raise one; and WO-5.10's projector check gained a claim for free — the
+second row is drawn **and naming a guardian** when the mode goes on, so its emptying is asserted by a
+check that already searched the whole modal's text.
+
+**The one check that exists because this work order could have deleted a check's subject.**
+`outreachModel()` still builds a `reasons` entry of `kind: 'recipient'`, and the only thing in the
+file that reached it was the tap now refused. It is not dead — a student with nobody addressable
+opens on somebody with no address — so the last check in the section opens Cal's draft with
+`teacher.adminEmail` blanked and reads the block. Without that fixture write the *Admin* row has an
+address and the draft is ready, and the check would have asserted nothing.
+
+**Both tools green on the delivered tree.** `verify-shell.mjs`: `1435 checks · 1435 passed · 0
+failed · 0 skipped`, 45,265 lines, 31.5 lines per check, 496s, exit 0 — up seven from 1428, the seven
+new sites, none in a loop and none a failure arm. `wo-sweep.mjs`: `42 checks · 39 passed · 0 failed ·
+3 to review`, the three to-review items the same three as before the work, the `check()` call-site
+count 1426 and matching `tools/README.md`.
+
+**The first run of it was RED, and the defect was the harness rather than the app.** It died at
+`ReferenceError: data is not defined` 49 checks into the section, with 14 lost and named as lost —
+a **pair** of backticks inside an `evalJs()` template literal, in a comment. `tools/README.md` warns
+about backticks there three times and every warning says *one would close it*, which is the easy
+case: one is a parse error. Two closes and reopens the literal, the file parses, `node --check` is
+happy, and the text between them runs as an expression. A running-parity scan over the file finds it
+immediately; nothing else in this repository looks for it. Recorded in `tools/README.md` beside the
+count.
+
+**The mutation round — four, run in parallel in four scratch copies of the tree** rather than by
+mutating the working tree (the WO-5.13 method): each copy was made by an exact string replacement
+that aborts unless the target occurs exactly once, all four in `src/outreach-view.js`, and
+`grep -rn MUTATION` over the delivered tree returns nothing this work order put there.
+
+| # | Mutation | Predicted | Result |
+|---|---|---|---|
+| M1 | `toggleOutreachRecipient()`: the `!row.has` refusal taken out, so an addressless recipient goes on the message | the addressless check red — the tap taken, two on the message, no sentence | `1435 checks · 1432 passed · 3 failed`, exit 1 — the one, **and two more downstream**: Guardian 2 stays in the selection, so the second row appears where WO-5.10's fixture expects one recipient and the restore check counts two |
+| M2 | `outreachModel()`: `ccList` back to the copy-to-self alone, the pre-WO-5.8 line | the URL check red — `cc=` carrying the teacher only | `1435 checks · 1433 passed · 2 failed`, exit 1 — that one and the promotion check, which asserts the `cc` string after the primary moves |
+| M3 | `toggleOutreachRecipient()`: `buildDraft()` before the repaint, so a membership tap rebuilds | the Acceptance-5 check red on `memberBody === mine` and nothing else, because the rebuilt body is the same text for the same primary and only the teacher's own sentence is lost | `1435 checks · 1434 passed · 1 failed`, exit 1 — exactly the one |
+| M4 | `outreachModel()`: `chosen = picked[0]`, the primary pointer ignored | the promotion check red, and every confirm check that changes who a draft is written to | `1435 checks · 1429 passed · 6 failed`, exit 1 — promotion, the Acceptance-5 pair, WO-5.10's status line, WO-5.6's silent-rebuild and round-trip checks, and *the panel names nobody* |
+
+**What M3 is worth reading for, and it is the opposite of the usual lesson.** It is the narrowest of
+the four — one check, one conjunct — and that is the evidence the claim is real rather than
+incidental. A membership tap that rebuilt would produce **the same subject and the same body**,
+because the resolve runs against the primary and the primary has not moved; every check that compares
+the draft to itself stays green, the URL stays right, the log stays right, and the only thing lost is
+whatever the teacher had typed. That is a defect a fixture without a typed sentence in it cannot see
+at all, and it is exactly the loss WO-5.6 exists to prevent.
+
+**And what M4 says about the two variables.** Six red, and none of them is the first check in the
+block — with one recipient on the message `picked[0]` *is* the primary, so the opening state is
+indistinguishable. Everything that breaks breaks at the moment a second person joins, which is the
+shape of a defect that would have shipped green under a single-recipient fixture.
+
+`grep -rn MUTATION` over the delivered tree after the round: the four scratch copies are outside the
+repository and were never in it; the working tree's only hits are pre-existing prose in
+`tools/verify/keys-legend-guards.mjs` and `tools/verify/outreach.mjs`.
+
+**Acceptance**
+- [x] Two guardians and a counselor can be chosen for one draft, with exactly one primary at all
+      times, and the primary changeable without losing the selection. *(Guardian 3 and the counselor
+      tapped onto a draft already written to Guardian 1: `chosen 3, primary guardian-0`, one row
+      carrying `primary`, row two drawn with `guardian-0|Guardian 1|on · guardian-2|Guardian 3|off ·
+      counselor|Counselor|off`. Promoting Guardian 3: still three chosen, the demoted primary in
+      `copies`, row two `off · on · off`. M4 reddens the promotion half and correctly leaves the
+      first half green — with one recipient on the message `picked[0]` is the primary, so the
+      opening state is indistinguishable and only the second person exposes it.)*
+- [x] `{{guardian.name}}` and every other merge field resolve against the primary, and the draft says
+      who that is. *(Asserted as a PAIR — the body reads `Dear Wo53Guardian Three,` **and** the first
+      guardian's name is gone from it altogether, because a resolver that appended rather than
+      replaced would pass a search for the first alone. Three places say who: the line under row one
+      (`Wo53Guardian Three · wo53guardian3@… · copied to Wo53Guardian One, Wo53Counselor`), the line
+      under row two (`Addressed to Wo53Guardian Three…`) and the block strip. M4 red, and M2 red on
+      the same check for its `cc` conjunct.)*
+- [x] Every chosen recipient reaches the compose URL, in the header WO-5.14 ruled on, and
+      copy-to-self behaves as WO-5.3 proved. *(`to = wo53guardian1@example.invalid`,
+      `cc = wo53guardian3@…,wo53counselor@…,wo53teacher@…` — literal commas, no `%2C` in the address
+      parts — and the clipboard's `To:` and `Cc:` lines saying the same thing in the same order.
+      Copy-to-self: WO-5.3's own toggle check and WO-5.7's `COPY_WANT` block are unchanged and green.
+      M2 red.)*
+- [x] A recipient with no address on file cannot be chosen, and says why — WO-5.3's rule, unchanged.
+      *(The chip reads `guardian-1|Guardian 2|off|refused`, the tap lands, one recipient is still on
+      the message, and the status line says `There is no email address on file for Wo53Guardian Two,
+      so Guardian 2 cannot go on this message.` Driven over an **edited** draft, byte-identical
+      afterwards: a refusal is not a rebuild. The half of WO-5.3's rule that is about the blocked
+      draft is asserted on the path that can still reach it — Cal, with nobody addressable, every
+      chip in her row `refused`, the draft open on one of them anyway and no `href`. M1 red here and
+      on two downstream checks its leaked selection breaks.)*
+- [x] Changing the recipients obeys WO-5.6's confirm rather than a second rule of its own. *(One
+      edited draft, two taps: the row-one tap goes straight through and leaves both boxes
+      byte-identical, the row-two tap asks, and cancelling leaves the primary, the selection and the
+      teacher's sentence exactly where they were. The panel quotes `Guardian 1` and names no student,
+      guardian or address. M3 red on exactly this check and nothing else, which is the evidence the
+      claim is real: a membership tap that rebuilt would produce the same subject and the same body,
+      and the only thing lost would be what the teacher had typed. M4 red here too.)*
+
+
 
 *Phase goal: open the app at 7:40am and know what the day asks of you.*
 

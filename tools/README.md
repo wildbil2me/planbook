@@ -1210,7 +1210,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1419 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1426 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1793,6 +1793,55 @@ hands in a draft — the `draftText()` edge case — moved from `to:'a@b.test'` 
 list serialises to the string the screen carried before. The run prints **1428**: `1428 checks · 1428
 passed · 0 failed · 0 skipped`, 44,769 lines, 31.4 lines per check, 504s, exit 0, measured 2026-09-20
 on the real clock. The mutations are tabulated in `TESTING.md` § WO-5.14.
+
+**WO-5.8 moved it from 1419 to 1426, and the executed count from 1428 to 1435 — seven sites, seven
+results.** All seven are literal call sites inside the existing § *"the send flow (WO-5.3)"*, none in
+a loop and none a failure arm, standing on that section's own fixture guard, so the gap between sites
+and results stays at −9. Six of them sit in one block directly after the picker is first read —
+several recipients chosen with the draft not moving; the whole selection reaching `cc=` in the
+picker's order; the primary promoted and every merge field re-resolving against her; WO-5.6's confirm
+asked by row two and not by row one over the same edited draft; both chip rows measured at 390px; and
+the block putting the flow back where it found it, with the primary's own chip refused on the way
+out. **The seventh runs last, at the foot of the section, and exists because this work order could
+otherwise have deleted a check's subject without deleting the check**: the `kind: 'recipient'` block
+reason was reachable only through the tap that is now refused at the door, so the last check opens a
+draft for a student with nobody addressable — `teacher.adminEmail` blanked first, or the *Admin* row
+has an address and the draft is ready and the check asserts nothing. **Six existing checks were
+rewritten rather than added to the count**, and three of those are the WO-5.5 rule applied again — a
+check that goes red on a behaviour change is rewritten to the new behaviour, never relaxed to fit it.
+The addressless check reads the refusal instead of the block, and does it over an **edited** draft,
+which is a claim the new block cannot make; three checks that drove `[data-outreach-to]` to change
+who a draft was written to now drive `[data-outreach-primary]`, because row one is a membership
+toggle and a `[data-outreach-to]` in front of a `confirmPanel()` would assert a dialog over a control
+with no reason to raise one; the picker is six rows rather than five in three places, the fixture
+having gained a third guardian with an address; and WO-5.10's projector check gained a claim for
+free — the second chip row is drawn and naming a guardian at the moment the mode goes on, so its
+emptying is asserted by a check that already searched the whole modal's text. The run prints
+**1435**: `1435 checks · 1435 passed · 0 failed · 0 skipped`, 45,265 lines, 31.5 lines per check,
+496s, exit 0, measured 2026-09-20 on the real clock, on the delivered tree. *(An earlier green run of
+the same 1435 printed 506s over a tree one no-op line different — a `removeAttribute()` on an element
+that had just been created. The figure quoted is the one taken after that came out, because a run
+quoted about a tree is a run of that tree.)* The mutations are tabulated in `TESTING.md`
+§ WO-5.8. *(It adds one `byHand`-free 44px measurement of its own rather than a row in
+`verify/touch-targets.mjs`'s `VIEW_PLAN`, for the reason the pass above it gives: this is a modal
+over two screens and that loop walks views in `<main>`. It is measured separately from the existing
+modal-wide pass because that pass runs over a draft with ONE recipient on it, which is exactly when
+the second row is not drawn — it would have counted four chips that were not there and passed. The
+one new stylesheet rule is `.toggle-btn[aria-disabled='true']` in `src/shell.css`, which changes a
+border and a colour and touches no dimension, so the 44px floor in the coarse block still reaches
+it — asserted rather than read.)*
+
+**A defect this file should record, because it cost a whole harness run and is invisible to a syntax
+check.** The first run of WO-5.8's harness died at `ReferenceError: data is not defined`, 49 checks
+into a section of 63, with 14 checks lost and counted as lost (WO-1.44 containment working exactly as
+designed). The cause was a **pair** of backticks inside an `evalJs()` template literal — a comment
+reading ``a `[data-outreach-to]` chip``. This file already warns about backticks in that position
+three times, and every one of those warnings says *one would close it* — which is true and is the
+easy case, because one backtick is an unterminated template and a parse error. **Two is the case
+nobody wrote down**: the literal closes at the first and reopens at the second, the file parses
+cleanly, `node --check` is happy, and the text between them is evaluated as an expression. Scanning
+for running backtick parity over the file finds it in a second and finds nothing else; a syntax check
+finds nothing at all.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not
