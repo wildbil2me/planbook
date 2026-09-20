@@ -452,3 +452,31 @@ export function lastEntryDate(doc, studentId, throughISO) {
     .filter((e) => String(e.at || '').slice(0, 10) <= throughISO)[0];
   return found ? String(found.at).slice(0, 10) : '';
 }
+
+/*
+  THE OLDEST BEHAVIOR ENTRY ABOUT ANY OF THESE STUDENTS, ON OR BEFORE A DAY — a date, or '' (WO-4.6).
+
+  The one reading src/signals.js's notYetRules() takes of this file, and it is here for the reason
+  behaviorCountSince() is: the turnaround rule asks whether a student WAS on the concern list
+  `turnaroundDays` ago, and the behavior rule is one of the four that can put her there on a date in
+  the past — so "could any turnaround fire yet" has to know whether a behavior entry exists that far
+  back. A DATE crosses and nothing else, the same firewall the three readers above hold: no entry,
+  no subject, no body, and the caller cannot narrow to one student and print a per-child answer,
+  because the question is about a roster and the argument is a list.
+
+  OLDEST rather than newest, because the caller measures how far back the dated record REACHES —
+  the oldest entry is the edge of it. `throughISO` clips the far end so an as-of pass asks about the
+  day it names, exactly as every other reader here does.
+*/
+export function firstBehaviorDate(doc, studentIds, throughISO) {
+  if (!throughISO) return '';
+  const ids = Array.isArray(studentIds) ? studentIds : [];
+  let first = '';
+  entriesIn(doc).forEach((e) => {
+    if (e.kind !== 'behavior' || ids.indexOf(e.studentId) < 0) return;
+    const on = String(e.at || '').slice(0, 10);
+    if (!on || on > throughISO) return;
+    if (!first || on < first) first = on;
+  });
+  return first;
+}

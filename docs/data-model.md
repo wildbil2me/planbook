@@ -624,6 +624,39 @@ Three rulings in it are decisions rather than plumbing:
   "no missing work, no absences", because each of those is a rule the engine already has, run a
   second time outside the pass that owns it, to report that it did not fire.
 
+### Not enough term yet
+
+**A rule that cannot fire *yet* is a different sentence from a rule that is not built** *(WO-4.6)*.
+`src/signals.js`'s `inertRules()` answers the second — registered, and the code behind it does not
+exist — and has answered `[]` since WO-4.4. `notYetRules(doc, cls, termId, { through })` answers
+the first: the rules whose own thresholds ask for more assignments, recorded meetings or days of
+dated record than **this class and term** hold on that date, so a thin column in week one can be
+told apart from a column nobody qualified for. Both return the same shape — `{ id, direction, text,
+why }` — and the second adds the measured `have`, `want` and `unit` its `why` was built from. They
+are two functions on purpose and no rule carries an `inert` string to mean "early".
+
+Three rulings inside it:
+
+- **It is about the term, not about a student.** It counts what the class has produced — the
+  term's assignments, the class's recorded meetings, how far back anything dated reaches — and
+  those counts bound what any one student can have. So a rule it names is one `evaluate()` cannot
+  return a hit for that morning, for anybody, and it **under-names rather than over-claims**: a rule
+  that could fire and has not is "nobody qualified", which the column already says by being short.
+- **Ten rules can be early and four cannot**, read off each rule's own null arms and written down
+  beside them. The two level rules (`grade-below`, `attendance-below`) fire on the first graded
+  cell or the first recorded meeting; `attendance-window` fires on any non-empty window; and the
+  behavior window is days over the log rather than term data — two entries on day two fire it.
+  A rule is listed because the data it wants cannot exist yet, never because its unit is a window.
+- **The turnaround's bound is the dated record, not the term's age.** `absence-window` is not
+  term-bounded, so in the first week of a second term a student absent at the end of the first
+  and present since *is* a turnaround. What the rule cannot do is fire while nothing dated — no
+  recorded meeting of the class, no behavior entry about anyone on its roster — reaches back
+  `turnaroundDays`, and that is the distance it measures.
+
+It does not simulate: no day of the term is walked to find when a window fills, and the pass is
+not re-run to learn what it already said. It reads through the same context and the same helpers
+the pass does and, like everything else in that file, writes nothing.
+
 ## Outreach templates
 
 A template is subject + body with **merge fields**, resolved against one student at send time.

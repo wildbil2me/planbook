@@ -451,6 +451,236 @@ console.log('\n--- the signal engine and its thresholds (WO-4.1) ---');
           + JSON.stringify(engine.d.map((h) => h.explanation)) + ' :: lastMeetings returned '
           + JSON.stringify(engine.windowD));
     }
+
+    /* ───────── a rule that cannot fire YET is a different sentence from a rule that is not built (WO-4.6) ─────────
+     *
+     * notYetRules() is the engine's second answer beside inertRules(): the rules whose own thresholds
+     * ask for more term than this class holds on this date. It is proved BOTH WAYS here — a thin
+     * term names exactly the expected set, a full term returns [] — and against the pass itself: no
+     * rule the answer names is one evaluate() fired the same morning, which is the title's whole
+     * claim and the property a mutation that named a full window would break.
+     *
+     * FOUR CLASSES, and each exists to make one arm falsifiable:
+     *
+     *   T  THIN — a term four days old with three assignments and three recorded meetings, and one
+     *      student who has three low scores and three absences in a row. Three is the shipped
+     *      threshold for low-score-run, missing-count, absence-run and high-score-run, so this class
+     *      sits EXACTLY ON the edge of four rules: a build that named a rule at `have === want` would
+     *      name two rules the pass is firing for this very student. The six it must name are the
+     *      ones whose thresholds ask for four, five, eight, or twenty-one.
+     *   F  FULL — nine assignments and twenty-five meetings reaching back thirty-four days. Nothing
+     *      is short of anything and the answer must be [].
+     *   E  EMPTY — a dated term starting today with nothing in it. All ten window-shaped rules are
+     *      early, and the turnaround's sentence takes its "nothing dated yet" arm.
+     *   R  REACH — two meetings this week and no assignments, whose one student gets a behavior
+     *      entry dated twenty-five days back part-way through. Before the entry the turnaround is
+     *      early (the record reaches back three days); after it the answer must NOT name the
+     *      turnaround, because a behavior entry that old is a dated fact the concern list could have
+     *      been reading three weeks ago. That is the log probe, and the reason it is a class-level
+     *      reader rather than a per-student count.
+     *
+     * EVERY EXPECTED SENTENCE AND FIGURE IS A LITERAL, hand-derived from the shipped defaults in
+     * docs/data-model.md and the rules' own null arms, for the reason the block above states.
+     * Same fixture discipline as above: one synchronous page-side block, arrays grown and truncated,
+     * score keys deleted by name, the log put back to the length it was found at. NO BACKTICKS IN
+     * THIS COMMENT OR THE CODE BELOW.
+     */
+    const notYet = await evalJs(`(function(){
+      var s = window.planbook.signals, d = window.planbook.store.getDoc();
+      if (!Array.isArray(d.students) || !Array.isArray(d.attendance)
+        || !Array.isArray(d.assignments) || !d.scores || typeof d.scores !== 'object') {
+        return { fixture: false,
+          why: 'the open document is missing one of students, attendance, assignments, scores' };
+      }
+      var students0 = d.students.length, attendance0 = d.attendance.length,
+        assignments0 = d.assignments.length;
+      var hadLog = Array.isArray(d.log);
+      if (!hadLog) d.log = [];
+      var log0 = d.log.length;
+      var scoreKeys = [];
+      var THROUGH = '2026-10-05';
+      var TERM = 'wo46-t';
+
+      function meet(classId, date, marks){
+        d.attendance.push({ classId: classId, date: date, marks: marks || {} });
+      }
+      function graded(classId, n, studentId, score){
+        var id = classId + '-a' + n;
+        d.assignments.push({ id: id, classId: classId, termId: TERM, categoryId: 'only',
+          points: 100 });
+        if (studentId) { d.scores[id] = {}; d.scores[id][studentId] = { v: score }; scoreKeys.push(id); }
+      }
+      function person(id, first){ d.students.push({ id: id, first: first, last: 'Wo46' }); }
+      function room(id, name, roster, start){
+        return { id: id, name: name, roster: roster,
+          categories: [{ id: 'only', name: 'All work', weight: 100 }],
+          terms: [{ id: TERM, name: 'Term', start: start, end: '2026-12-18' }] };
+      }
+      function ask(cls){ return s.notYetRules(d, cls, TERM, { through: THROUGH }); }
+      function fired(cls){
+        return s.evaluate(d, cls, TERM, { through: THROUGH }).map(function(h){ return h.ruleId; });
+      }
+
+      /* T — thin: three assignments, three meetings, one student on the edge of four rules. */
+      person('wo46-s-t', 'Tam');
+      var clsT = room('wo46-c-t', 'WO-4.6 Thin', ['wo46-s-t'], '2026-10-01');
+      graded('wo46-c-t', 1, 'wo46-s-t', 50);
+      graded('wo46-c-t', 2, 'wo46-s-t', 40);
+      graded('wo46-c-t', 3, 'wo46-s-t', 30);
+      meet('wo46-c-t', '2026-10-01', { 'wo46-s-t': { code: 'A' } });
+      meet('wo46-c-t', '2026-10-02', { 'wo46-s-t': { code: 'A' } });
+      meet('wo46-c-t', '2026-10-05', { 'wo46-s-t': { code: 'A' } });
+
+      /* F — full: nine assignments, twenty-five meetings from Sep 1. */
+      person('wo46-s-f', 'Fay');
+      var clsF = room('wo46-c-f', 'WO-4.6 Full', ['wo46-s-f'], '2026-09-01');
+      for (var i = 1; i <= 9; i++) graded('wo46-c-f', i, 'wo46-s-f', 90);
+      for (var m = 1; m <= 25; m++) meet('wo46-c-f', '2026-09-' + (m < 10 ? '0' : '') + m);
+
+      /* E — empty: a term that starts today and holds nothing. */
+      person('wo46-s-e', 'Eve');
+      var clsE = room('wo46-c-e', 'WO-4.6 Empty', ['wo46-s-e'], '2026-10-05');
+
+      /* R — reach: two meetings this week, and a behavior entry planted between two readings. */
+      person('wo46-s-r', 'Rae');
+      var clsR = room('wo46-c-r', 'WO-4.6 Reach', ['wo46-s-r'], '2026-10-01');
+      meet('wo46-c-r', '2026-10-02');
+      meet('wo46-c-r', '2026-10-05');
+
+      var before = JSON.stringify(d);
+      var t = ask(clsT), f = ask(clsF), e = ask(clsE), rBefore = ask(clsR);
+      var tFired = fired(clsT);
+      var after = JSON.stringify(d);
+
+      d.log.push({ id: 'wo46-log-1', studentId: 'wo46-s-r', at: '2026-09-10T08:00:00',
+        kind: 'behavior', subject: 'WO-4.6 fixture', body: '' });
+      var rAfter = ask(clsR);
+
+      var inert = s.inertRules();
+      var wearing = s.signalRules().filter(function(r){ return r.inert; }).map(function(r){ return r.id; });
+
+      d.students.length = students0;
+      d.attendance.length = attendance0;
+      d.assignments.length = assignments0;
+      scoreKeys.forEach(function(k){ delete d.scores[k]; });
+      if (hadLog) d.log.length = log0; else delete d.log;
+
+      return { fixture: true, t: t, f: f, e: e, rBefore: rBefore, rAfter: rAfter,
+        tFired: tFired, same: before === after, inert: inert, wearing: wearing,
+        restored: d.students.length === students0 && d.attendance.length === attendance0
+          && d.assignments.length === assignments0
+          && scoreKeys.every(function(k){ return !(k in d.scores); })
+          && (hadLog ? d.log.length === log0 : !('log' in d)) };
+    })()`);
+
+    check('the WO-4.6 fixture installed on the open document and was taken back off it again — '
+      + 'four classes, their scores and one log entry',
+      !!notYet && notYet.fixture === true && notYet.restored === true,
+      notYet ? (notYet.why || ('restored: ' + notYet.restored)) : 'the block did not run at all');
+
+    if (notYet && notYet.fixture) {
+      const ids = (list) => list.map((r) => r.id);
+      const figures = (list) => list.map((r) => r.id + ' ' + r.have + '/' + r.want + ' ' + r.unit);
+
+      /* Registry order, which is the order inertRules() answers in and the order the settings
+         panel draws. Each have/want pair is derived by hand: three assignments against a fall
+         window of four that needs one more before it (5); three meetings inside an absence window
+         wanting four absences; three term meetings against five tardies; four days of dated record
+         (Oct 1 to Oct 5) against a look-back of twenty-one; three assignments against eight. */
+      const T_IDS = ['grade-fell', 'absence-window', 'tardy-count', 'grade-rose', 'turnaround',
+        'no-missing'];
+      const T_FIGURES = ['grade-fell 3/5 assignments', 'absence-window 3/4 recorded meetings',
+        'tardy-count 3/5 recorded meetings', 'grade-rose 3/5 assignments', 'turnaround 4/21 days',
+        'no-missing 3/8 assignments'];
+      const T_WHY = [
+        'the term has 3 assignments so far; this rule wants 5 — 4 to measure across and one before them',
+        'the class has 3 recorded meetings in this window so far; this rule wants 4 absences',
+        'the term has 3 recorded meetings so far; this rule wants 5 tardies',
+        'the term has 3 assignments so far; this rule wants 5 — 4 to measure across and one before them',
+        'the dated record reaches back 4 days; this rule looks back 21 days',
+        'the term has 3 assignments so far; this rule wants 8',
+      ];
+      const T_TEXT = ['Grade fell over recent work', 'Absences in a recent window', 'Tardies',
+        'Grade rose over recent work', 'Came off the concern list',
+        'Nothing missing over recent work'];
+      const T_DIR = ['concern', 'concern', 'concern', 'praise', 'praise', 'praise'];
+      const shaped = notYet.t.every((r) => typeof r.id === 'string' && typeof r.direction === 'string'
+        && typeof r.text === 'string' && typeof r.why === 'string' && r.why.length > 0
+        && Number.isFinite(r.have) && Number.isFinite(r.want) && typeof r.unit === 'string');
+      check('a term four days old names exactly the six rules whose windows are not full — in '
+        + 'registry order, each with its measured have/want and the unit they are counted in — and '
+        + 'names none of the four rules whose threshold the term has exactly reached',
+        JSON.stringify(ids(notYet.t)) === JSON.stringify(T_IDS)
+          && JSON.stringify(figures(notYet.t)) === JSON.stringify(T_FIGURES)
+          && JSON.stringify(notYet.t.map((r) => r.direction)) === JSON.stringify(T_DIR)
+          && shaped,
+        JSON.stringify(figures(notYet.t)));
+
+      /* inertRules()' own four fields, and the sentence in them written out — the `why` a screen
+         would print beside an inert rule's `why`, and the `text` that is ruleText()'s word for
+         word, so the chip on the list and the line under it cannot come to say different things. */
+      check('each entry carries the rule’s text from the settings table and a measured sentence '
+        + 'a screen can print beside inertRules()’ own — six literal sentences, not one of them '
+        + 'a placeholder',
+        JSON.stringify(notYet.t.map((r) => r.text)) === JSON.stringify(T_TEXT)
+          && JSON.stringify(notYet.t.map((r) => r.why)) === JSON.stringify(T_WHY),
+        JSON.stringify(notYet.t.map((r) => r.text + ' — ' + r.why)));
+
+      /* THE TITLE'S CLAIM, against the pass itself. Tam has three low scores and three absences in
+         a row, so low-score-run and absence-run FIRE this morning — and both sit at exactly their
+         threshold, so a build that compared with <= instead of < would name two rules the pass just
+         returned hits for. The four fired ids are asserted so that an empty intersection cannot be
+         an empty pass. */
+      const overlap = ids(notYet.t).filter((id) => notYet.tFired.indexOf(id) >= 0);
+      check('no rule the answer names is one evaluate() fired the same morning — the thin class’s '
+        + 'student trips four concern rules, two of them at exactly the threshold the term has just '
+        + 'reached, and none of the four is on the not-yet list',
+        overlap.length === 0
+          && JSON.stringify(notYet.tFired.slice().sort())
+            === JSON.stringify(['absence-run', 'attendance-below', 'grade-below', 'low-score-run']),
+        'fired ' + JSON.stringify(notYet.tFired) + ' :: overlap ' + JSON.stringify(overlap));
+
+      check('a full term behind the same date returns [] — and inertRules() is [] beside it, with '
+        + 'no rule in the registry wearing an inert string to mean "early"',
+        Array.isArray(notYet.f) && notYet.f.length === 0
+          && Array.isArray(notYet.inert) && notYet.inert.length === 0
+          && notYet.wearing.length === 0,
+        'notYetRules ' + JSON.stringify(figures(notYet.f)) + ' :: inertRules '
+          + JSON.stringify(notYet.inert) + ' :: inert strings on ' + JSON.stringify(notYet.wearing));
+
+      const E_IDS = ['grade-fell', 'low-score-run', 'missing-count', 'absence-window', 'absence-run',
+        'tardy-count', 'grade-rose', 'high-score-run', 'turnaround', 'no-missing'];
+      const eTurn = notYet.e.filter((r) => r.id === 'turnaround')[0];
+      check('a dated term that starts today and holds nothing names all ten window-shaped rules '
+        + 'and no level rule — and the turnaround’s sentence says nothing is dated yet, with a '
+        + 'reach of 0 rather than a NaN',
+        JSON.stringify(ids(notYet.e)) === JSON.stringify(E_IDS)
+          && !!eTurn && eTurn.have === 0 && eTurn.want === 21
+          && eTurn.why === 'nothing about this class is dated yet; this rule looks back 21 days',
+        JSON.stringify(figures(notYet.e)) + ' :: ' + JSON.stringify(eTurn && eTurn.why));
+
+      /* The log probe. The behavior rule is one of the four that can put a student on the concern
+         list on a PAST date, so a behavior entry twenty-five days old is a dated fact the turnaround
+         could have been reading — and the answer must stop calling that rule early the moment the
+         entry exists, without counting anything per student. */
+      const rTurnBefore = notYet.rBefore.filter((r) => r.id === 'turnaround')[0];
+      const rTurnAfter = notYet.rAfter.filter((r) => r.id === 'turnaround')[0];
+      check('the turnaround is early while the dated record reaches back three days, and is NOT '
+        + 'early once one roster student has a behavior entry dated twenty-five days back — the '
+        + 'reach is the older of the first meeting and the first behavior entry, not the term’s age',
+        !!rTurnBefore && rTurnBefore.have === 3 && rTurnBefore.want === 21
+          && rTurnBefore.why === 'the dated record reaches back 3 days; this rule looks back 21 days'
+          && !rTurnAfter
+          && JSON.stringify(ids(notYet.rAfter))
+            === JSON.stringify(ids(notYet.rBefore).filter((id) => id !== 'turnaround')),
+        'before ' + JSON.stringify(rTurnBefore && rTurnBefore.why) + ' :: after '
+          + JSON.stringify(ids(notYet.rAfter)));
+
+      check('asking the not-yet answer about four classes writes NOTHING — the fixture-bearing '
+        + 'document is byte-identical either side of the four calls (WO-4.3’s no-writer invariant)',
+        notYet.same === true,
+        notYet.same ? 'identical' : 'THE DOCUMENT MOVED');
+    }
   }
 }
 }

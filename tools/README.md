@@ -1210,7 +1210,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1405 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1413 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1750,6 +1750,26 @@ term edge walked past a neighbour's record would assert something the app does n
 term. The run prints **1414**: `1414 checks · 1414 passed · 0 failed · 0 skipped`, 44,287 lines,
 31.3 lines per check, 494s, exit 0, measured 2026-09-19 on the real clock, a Saturday. The three
 weekdays and the mutation are tabulated in `TESTING.md` § WO-1.46.
+
+**WO-4.6 moved it from 1405 to 1413, and the executed count from 1414 to 1422 — eight sites, eight
+results.** All eight are literal call sites in a new block at the foot of `verify/signal-engine.mjs`,
+inside the existing `if (signalSeam)` branch, none in a loop and none a failure arm, so the gap
+between sites and results stays at −16. The block drives `window.planbook.signals.notYetRules()` —
+the engine's second answer beside `inertRules()`, *built and cannot fire yet* as against *not built*
+— over four planted classes and takes them back off: a **thin** term four days old that must name
+exactly six rules with literal have/want figures and literal sentences, and whose one student trips
+four concern rules so that the title's claim is asserted against the pass itself (no named rule is a
+fired rule, and two of the fired rules sit at exactly their threshold, which is what a `<=` in the
+comparison would get wrong); a **full** term that must return `[]` beside an `inertRules()` that is
+still `[]` and a registry wearing no `inert` string; an **empty** dated term that must name all ten
+window-shaped rules and take the turnaround's *nothing dated yet* arm; and a **reach** class whose
+turnaround stops being early the moment one roster student gains a behavior entry twenty-five days
+old, which is the log probe and the reason the turnaround's bound is the dated record rather than
+the term's age. The eighth is the no-writer line, a byte comparison of the fixture-bearing document
+either side of the four calls. `THROUGH` is a literal date, so the block reads the same in any
+month. The run prints **1422**: `1422 checks · 1422 passed · 0 failed · 0 skipped`, 44,517 lines,
+31.3 lines per check, 496s, exit 0, measured 2026-09-20 on the real clock. The two mutations are
+tabulated in `TESTING.md` § WO-4.6.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not

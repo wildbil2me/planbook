@@ -50,6 +50,14 @@
   the rule was not running took itself off the screen the day the log landed, rather than needing to
   be found and deleted.
 
+  A RULE THAT CANNOT FIRE *YET* IS A DIFFERENT SENTENCE, AND SINCE WO-4.6 IT HAS ITS OWN FUNCTION.
+  inertRules() answers "not built"; notYetRules() answers "not enough term yet" — the rules whose
+  own thresholds ask for more assignments, meetings or days than this class and term hold on this
+  date. They are two exports and never one arm of the other, and no rule carries an `inert` string
+  to mean "early": that field is read by a screen that says *not running yet* in those words, and a
+  teacher told a rule is unbuilt when it is merely week one has been told the wrong thing. The
+  reasoning, rule by rule, is at notYetRules() beside inertRules() below.
+
   AND THE LIST SCREEN IS NOT HERE. src/signals-view.js draws it, the same split
   src/signal-settings.js makes with the editor and for the same reason: this module owns the
   answers, a surface over it owns the pixels, and the import runs one way.
@@ -167,7 +175,14 @@ import { formatPercent, scoreMark } from './scores.js';
    the quiet middle's two: has anybody been written to about this student this term, and when was
    anything last written down about her at all. No subject and no body crosses this import, exactly
    as no entry crosses it for the behavior rule. */
-import { behaviorCountSince, lastContactAbout, lastContactDate, lastEntryDate } from './log.js';
+/* A FIFTH AT WO-4.6, and it is a date too: the oldest behavior entry about anyone on a roster, on
+   or before a day. notYetRules() needs it for one rule — the turnaround asks whether a student was
+   on the concern list `turnaroundDays` ago, and a behavior entry is one of the dated facts that can
+   have put her there — so "could a turnaround fire yet" has to know how far back the log reaches
+   for this class, and it must not find out by counting per student. Still no entry, no subject, no
+   body. */
+import { behaviorCountSince, lastContactAbout, lastContactDate, lastEntryDate,
+  firstBehaviorDate } from './log.js';
 import { formatWeight } from './categories.js';
 
 /* ────────────────────────────── the thresholds ──────────────────────────────
@@ -408,6 +423,16 @@ function sayNumber(value) { return formatWeight(Number(value)); }
 
 function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
+/* WHAT A RULE'S early() HANDS BACK when the class has produced less than the rule wants (WO-4.6):
+   the two figures the comparison was made on, the unit they are counted in, and the sentence.
+   Null when `have` reaches `want`, which is the one arm every early() below shares and the reason
+   it is one function — a rule that reported itself early while its window was full would be the
+   rounded lie one field over. `why` is a string a screen can print beside inertRules()'s `why`. */
+function shortOf(have, want, unit, why) {
+  if (!(have < want)) return null;
+  return { have: have, want: want, unit: unit, why: why };
+}
+
 /* ────────────────────────────── the rules ──────────────────────────────
 
    FOURTEEN SINCE WO-4.3 — the nine concern rules the data model tabulates and all five praise
@@ -535,6 +560,19 @@ const gradeFell = {
     return { value: -numbers.fell, text: '−' + Number(numbers.fell).toFixed(2),
       unit: 'points', tone: 'down' };
   },
+  /* EARLY UNTIL THE TERM HOLDS ONE MORE ASSIGNMENT THAN THE WINDOW ASKS FOR (WO-4.6). The window is
+     slice(-asked) whatever its length — but `before` is the grade with the window taken out, and
+     the paragraph above says a student whose whole counted history IS the window has no `before`
+     and does not fire. So the smallest history that can fire this is `asked + 1` counted cells,
+     and a term with fewer assignments than that cannot supply them to anybody. A threshold of 0
+     is the rule switched off, not the rule early. */
+  early(t, has) {
+    const asked = Math.max(0, Math.floor(Number(t.gradeFellAssignments) || 0));
+    if (!asked) return null;
+    return shortOf(has.assignments, asked + 1, 'assignments',
+      'the term has ' + plural(has.assignments, 'assignment', 'assignments') + ' so far; this rule '
+      + 'wants ' + (asked + 1) + ' — ' + asked + ' to measure across and one before them');
+  },
 };
 
 /*
@@ -591,6 +629,15 @@ const lowScoreRun = {
   figure(numbers) {
     return { value: numbers.run, text: String(numbers.run), unit: 'in a row', tone: 'flat' };
   },
+  /* EARLY UNTIL THE TERM HOLDS `need` ASSIGNMENTS WORTH POINTS (WO-4.6). A run is read off
+     scorePercents(), and zero-point work is not in that list (the rule above), so the bound is the
+     assignments a score could be a percentage OF — not every assignment in the term. */
+  early(t, has) {
+    const need = t.lowScoreRun;
+    return shortOf(has.worthPoints, need, 'assignments worth points',
+      'the term has ' + plural(has.worthPoints, 'assignment', 'assignments') + ' worth points so '
+      + 'far; this rule wants ' + sayNumber(need) + ' scores in a row');
+  },
 };
 
 /*
@@ -621,6 +668,15 @@ const missingCount = {
   figure(numbers) {
     return { value: numbers.missing, text: String(numbers.missing), unit: 'missing',
       tone: 'flat' };
+  },
+  /* EARLY UNTIL THE TERM HOLDS `need` ASSIGNMENTS (WO-4.6). A missing mark sits on an assignment,
+     zero-point ones included (openWork() pushes a `missing` row whatever the points), so the bound
+     is every assignment of the term. */
+  early(t, has) {
+    const need = t.missingCount;
+    return shortOf(has.assignments, need, 'assignments',
+      'the term has ' + plural(has.assignments, 'assignment', 'assignments') + ' so far; this rule '
+      + 'wants ' + sayNumber(need) + ' marked missing');
   },
 };
 
@@ -695,6 +751,23 @@ const absenceWindow = {
     return { value: numbers.absences, text: String(numbers.absences), unit: 'absences',
       tone: 'flat' };
   },
+  /* EARLY UNTIL THE WINDOW HOLDS `need` MEETINGS (WO-4.6). The window is never padded and the rule
+     fires on a short one — but `need` absences want `need` meetings to be absent from, and the
+     window holds min(asked, meetings the class has recorded), which is exactly what
+     ctx.meetings(asked).length would be. The count is the CLASS's meetings and not the term's,
+     because lastMeetings() is not term-bounded (the rule above): in the first week of Quarter 2 the
+     window is full of Quarter 1. A window of 0 is the rule switched off, not early. A window
+     narrower than `need` can never fill, and that is reported as what it is — 20 meetings in the
+     window against 25 absences wanted reads as the setting it is. */
+  early(t, has) {
+    const need = t.absenceCount;
+    const asked = Math.max(0, Math.floor(Number(t.absenceWindowMeetings) || 0));
+    if (!asked) return null;
+    const have = Math.min(has.meetings, asked);
+    return shortOf(have, need, 'recorded meetings',
+      'the class has ' + plural(have, 'recorded meeting', 'recorded meetings') + ' in this window '
+      + 'so far; this rule wants ' + sayNumber(need) + ' absences');
+  },
 };
 
 /*
@@ -741,6 +814,15 @@ const absenceRun = {
   figure(numbers) {
     return { value: numbers.run, text: String(numbers.run), unit: 'in a row', tone: 'flat' };
   },
+  /* EARLY UNTIL THE TERM HOLDS `need` RECORDED MEETINGS (WO-4.6). The run is walked over
+     termMarks(), which is one row per recorded meeting inside the term's range — so the term's own
+     meeting count bounds the longest run anybody can have. */
+  early(t, has) {
+    const need = t.absenceRun;
+    return shortOf(has.termMeetings, need, 'recorded meetings',
+      'the term has ' + plural(has.termMeetings, 'recorded meeting', 'recorded meetings')
+      + ' so far; this rule wants ' + sayNumber(need) + ' absences in a row');
+  },
 };
 
 /*
@@ -770,6 +852,14 @@ const tardyCount = {
   figure(numbers) {
     return { value: numbers.tardies, text: String(numbers.tardies), unit: 'tardies',
       tone: 'flat' };
+  },
+  /* EARLY UNTIL THE TERM HOLDS `need` RECORDED MEETINGS (WO-4.6) — a tardy is a mark on a meeting,
+     counted over the term's range, so the term's meeting count bounds it. */
+  early(t, has) {
+    const need = t.tardyCount;
+    return shortOf(has.termMeetings, need, 'recorded meetings',
+      'the term has ' + plural(has.termMeetings, 'recorded meeting', 'recorded meetings')
+      + ' so far; this rule wants ' + sayNumber(need) + ' tardies');
   },
 };
 
@@ -900,6 +990,17 @@ const gradeRose = {
     return { value: numbers.rose, text: '+' + Number(numbers.rose).toFixed(2),
       unit: 'points', tone: 'up' };
   },
+  /* EARLY ON EXACTLY `grade-fell`'s TERMS (WO-4.6) — the same window, the same `before`, so the
+     same smallest history: `asked + 1` counted cells, which a term of fewer assignments cannot
+     supply. Written out rather than shared so that each rule's early() sits beside the null arm it
+     mirrors and reads its own key. */
+  early(t, has) {
+    const asked = Math.max(0, Math.floor(Number(t.gradeRoseAssignments) || 0));
+    if (!asked) return null;
+    return shortOf(has.assignments, asked + 1, 'assignments',
+      'the term has ' + plural(has.assignments, 'assignment', 'assignments') + ' so far; this rule '
+      + 'wants ' + (asked + 1) + ' — ' + asked + ' to measure across and one before them');
+  },
 };
 
 /*
@@ -947,6 +1048,14 @@ const highScoreRun = {
   },
   figure(numbers) {
     return { value: numbers.run, text: String(numbers.run), unit: 'in a row', tone: 'flat' };
+  },
+  /* EARLY ON `low-score-run`'s TERMS (WO-4.6): `need` assignments worth points, read off the same
+     scorePercents() list, which zero-point work is not in. */
+  early(t, has) {
+    const need = t.highScoreRun;
+    return shortOf(has.worthPoints, need, 'assignments worth points',
+      'the term has ' + plural(has.worthPoints, 'assignment', 'assignments') + ' worth points so '
+      + 'far; this rule wants ' + sayNumber(need) + ' scores in a row');
   },
 };
 
@@ -1038,6 +1147,32 @@ const turnaround = {
   figure(numbers) {
     return { value: numbers.cleared, text: String(numbers.cleared), unit: 'cleared', tone: 'up' };
   },
+  /*
+    EARLY UNTIL THE DATED RECORD REACHES BACK `days` (WO-4.6), and the bound is the record, not the
+    term. The rule fires only if some concern rule was firing at `through − days`, and only four
+    concern rules can differ between then and now — the paragraph above: the three attendance rules
+    read a ledger with a date on every row, and the behavior rule a log with a stamp on every entry.
+    The other five read nothing dated, so if one of them fired then it fires now and concernNow()
+    empties this rule anyway. So the earliest day anybody could have been on the list is the older
+    of the class's first recorded meeting and the first behavior entry about anyone on its roster —
+    and while that day is later than `through − days`, no student was on the list then and nobody
+    can have come off it. `has.reach` is that distance in days.
+
+    IT IS NOT "THE TERM STARTED FEWER THAN 21 DAYS AGO", which is the obvious reading and is
+    wrong: absence-window's window is not term-bounded, so in the first week of Quarter 2 a
+    student absent four times at the end of Quarter 1 and present since IS a turnaround, and an
+    answer that called the rule early that morning would be naming a rule the pass just fired.
+  */
+  early(t, has) {
+    const days = Math.max(0, Math.floor(Number(t.turnaroundDays) || 0));
+    if (!days) return null;
+    const reach = has.reach;
+    const record = reach === null ? 'nothing about this class is dated yet'
+      : reach === 0 ? 'the dated record starts today'
+        : 'the dated record reaches back ' + plural(reach, 'day', 'days');
+    return shortOf(reach === null ? 0 : reach, days, 'days',
+      record + '; this rule looks back ' + plural(days, 'day', 'days'));
+  },
 };
 
 /*
@@ -1086,6 +1221,17 @@ const noMissing = {
   figure(numbers) {
     return { value: numbers.assignments, text: String(numbers.assignments), unit: 'in a row',
       tone: 'flat' };
+  },
+  /* EARLY UNTIL THE TERM HOLDS `asked` ASSIGNMENTS (WO-4.6) — this is the rule whose measure()
+     already refuses a short window (`rows.length < asked → null`, the paragraph above), so the
+     bound is the plainest of the ten: nobody's counted rows can outnumber the term's assignments.
+     A threshold of 0 is the rule switched off. */
+  early(t, has) {
+    const asked = Math.max(0, Math.floor(Number(t.noMissingAssignments) || 0));
+    if (!asked) return null;
+    return shortOf(has.assignments, asked, 'assignments',
+      'the term has ' + plural(has.assignments, 'assignment', 'assignments') + ' so far; this rule '
+      + 'wants ' + asked);
   },
 };
 
@@ -1327,6 +1473,108 @@ export function inertRules() {
   return RULES.filter((rule) => rule.inert)
     .map((rule) => ({ id: rule.id, direction: rule.direction, text: ruleText(rule.id),
       why: rule.inert }));
+}
+
+/*
+  ──────── THE RULES THAT ARE BUILT, REGISTERED, AND CANNOT FIRE *YET* — the other sentence ────────
+
+  inertRules() above answers "not built". This answers "not enough term yet" (WO-4.6): the rules
+  whose own thresholds ask for more assignments, meetings or days than this class and term hold on
+  this date, so that a teacher reading a thin column in the first week can tell "nobody qualified"
+  from "the term has two assignments". Two functions and never one, because the two sentences
+  differ and a screen that merged them would tell her a rule is unbuilt when it is merely early —
+  the trap this work order names. Each entry is inertRules()' own shape, { id, direction, text,
+  why }, plus the measured `have`, `want` and `unit` the sentence was built from, so a caller that
+  draws one can draw the other and a caller that wants the figures has them.
+
+  ── IT IS ABOUT THE CLASS AND THE TERM, NOT ABOUT A STUDENT ──
+
+  "Not enough term yet" is a fact about the term, so this counts what the class has produced — the
+  term's assignments, the class's recorded meetings, how far back anything dated reaches — and asks
+  each rule's early() whether that is less than its thresholds want. Every count is an UPPER BOUND
+  on what any one student can have: nobody's counted work outnumbers the term's assignments, and
+  nobody's marks outnumber its recorded meetings. So a rule this names is one evaluate() cannot
+  return a hit for on the same morning, for anybody; and the answer UNDER-NAMES rather than
+  over-claims, deliberately — a rule that could fire and merely has not is "nobody qualified",
+  which is the other sentence and the one the column already says by being short.
+
+  ── WHICH RULES CAN BE EARLY, READ OFF THEIR OWN NULL ARMS ──
+
+  Ten of the fourteen carry early(t, has) beside their measure(), and the reason each is in sits at
+  the rule, next to the null arm it mirrors — so an edit to one cannot miss the other. The four
+  that have none, and why:
+
+    grade-below        A LEVEL. Its threshold names a percentage, not a quantity of work; the rule
+                       fires on the first graded cell, and a term with nothing graded has no grade
+                       rather than an early one. There is no "full" to measure against.
+    attendance-below   A level too, over meetings: one recorded meeting with one absence fires it.
+    attendance-window  Fires on any non-empty window, unpadded (its own comment), so one recorded
+                       meeting is enough — its unit is a window, but the data it wants exists on
+                       the first day.
+    behavior-window    A window in DAYS over the log rather than over term data; two entries on day
+                       two fire it. A rule is listed because the data it wants cannot exist yet,
+                       never because its unit is a window.
+
+  ── HANDED NUMBERS, LIKE say() ──
+
+  early(t, has) receives the resolved thresholds and the class-level counts and nothing else — not
+  the document, not the context, not the clock — the same fence say() stands behind, and WO-4.6's
+  fourth acceptance line. It does not run measure(), and this function does not run evaluate():
+  whether a rule FIRED is a different question with its own answer, and asking it here would be the
+  pass run twice to learn what the pass already said.
+
+  ── AND IT DOES NOT SIMULATE ──
+
+  The obvious way to find out when each window fills is to walk every day of the term, which is
+  WO-2.13's defect reached from a fifth direction. This asks the thresholds what they want and
+  counts what exists: one context, no per-student reader touched, one meetings resolution, one
+  walk of the log for a single date. It is also why it takes the pass's own `{ through }` — an
+  as-of answer is a count as of that day, not a replay up to it.
+
+  ── NO WRITER, STILL ──
+
+  WO-4.3's line holds: this reads the document and the ledger through the same helpers the pass
+  does and returns an array. The document is byte-identical either side of it.
+*/
+export function notYetRules(doc, cls, termId, options) {
+  if (!doc || !cls) return [];
+  const opts = options || {};
+  const through = opts.through || todayISO();
+  const ctx = makeContext(doc, cls, termId, through);
+  const range = termRangeOf(cls, termId, through);
+  const work = ctx.termWork();
+  const every = ctx.everyMeeting();
+
+  /* THE EDGE OF THE DATED RECORD, for the turnaround: the older of the class's first recorded
+     meeting and the first behavior entry about anyone on its roster, both clipped to `through`.
+     Meetings come out newest first, so the oldest is the last one. */
+  const oldestMeeting = every.length ? every[every.length - 1] : '';
+  const oldestNote = firstBehaviorDate(doc, rosterOf(cls), through);
+  const earliest = [oldestMeeting, oldestNote].filter(Boolean).sort()[0] || '';
+
+  const has = {
+    assignments: work.length,
+    worthPoints: work.filter((a) => {
+      const points = Number(a.points);
+      return Number.isFinite(points) && points > 0;
+    }).length,
+    meetings: every.length,
+    /* The same range clip meetingDates() makes for termTotals() and termMarks(), applied to the
+       same list, so this is the row count those two walks see — not a second definition of which
+       days a term covers. */
+    termMeetings: every.filter((d) => (!range.from || d >= range.from) && d <= range.to).length,
+    reach: earliest ? daysBetween(earliest, through) : null,
+  };
+
+  const out = [];
+  RULES.forEach((rule) => {
+    if (typeof rule.early !== 'function') return;
+    const short = rule.early(ctx.t, has);
+    if (!short) return;
+    out.push({ id: rule.id, direction: rule.direction, text: ruleText(rule.id), why: short.why,
+      have: short.have, want: short.want, unit: short.unit });
+  });
+  return out;
 }
 
 /* What a rule is CALLED, read off the settings table rather than written a second time here. The
@@ -1673,6 +1921,21 @@ function makeContext(doc, cls, termId, through, historical) {
       }
       return missing.get(studentId);
     },
+
+    /* ── the two WO-4.6 added, and both are CLASS-LEVEL: no studentId, and no per-student walk ── */
+
+    /* The class-and-term's assignments in the document's order — `sequence` itself, which every
+       per-student reader above is a projection of. Handed out so that notYetRules() counts the
+       same list the rules measure over rather than filtering `assignments[]` a second time. */
+    termWork() { return sequence; },
+
+    /* EVERY recorded meeting of the class through `through`, newest first. `Infinity` is a count
+       lastMeetings() accepts — Math.floor(Infinity) is Infinity and slice(0, Infinity) is the whole
+       list — and it costs exactly what a window of 20 costs, because meetingDates() does the same
+       walk of the ledger for any count and only the slice differs. Memoized under its own key like
+       any other window. What is read off it is a length, a term-range count and the oldest date;
+       nothing here reads a mark. */
+    everyMeeting() { return this.meetings(Infinity); },
   };
 }
 

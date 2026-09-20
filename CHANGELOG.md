@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The signal engine can say a rule is early rather than silent — 2026-09-20
+
+Nothing a teacher sees yet. A concern column that is thin in week one and a concern column that is
+thin because a rule was never built read exactly the same on screen, and the engine could only
+speak to the second: `inertRules()` answers *which rules are not built*, and has answered an empty
+list since the last unbuilt rule landed in August. `notYetRules()` now answers the other question —
+which rules cannot fire because the term has not yet produced enough of the thing they measure —
+and it is a second reader rather than a widened one, because a list mixing *not built* with *not
+yet* is a list a teacher cannot act on. Ten of the fourteen rules carry their own reading of
+*enough*; each is handed its own measured numbers and nothing else, no document reaches a rule, and
+nothing re-runs the rules to find out. No screen wears the sentence yet — which surface should, if
+any, is a room argument still to be had.
+
 ### The last fixture that guessed a date off the calendar now derives it — 2026-09-20
 
 Nothing a teacher sees. The four verification fixtures WO-1.44 left guessing a future date off the

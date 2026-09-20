@@ -8549,6 +8549,95 @@ the checks that carry the acceptance lines red.
 
 ---
 
+### WO-4.6 — A rule that cannot fire *yet* is a different sentence from a rule that is not built
+
+**What this adds.** One exported function in `src/signals.js`, `notYetRules(doc, cls, termId,
+{ through })`, beside `inertRules()` and never folded into it. `inertRules()` answers *not built*
+and has answered `[]` since WO-4.4; this answers *not enough term yet* — the rules whose own
+thresholds ask for more assignments, recorded meetings or days of dated record than this class and
+term hold on that date. Same entry shape, `{ id, direction, text, why }`, plus the measured `have`,
+`want` and `unit` the sentence was built from. **No screen changed**: `src/signals-view.js`,
+`src/glance.js`, `index.html` and every stylesheet are byte-identical to `HEAD`, which is the fifth
+Acceptance line and is deliberate — which surface wears this is a separate room argument, and
+WO-6.7's `Open` line records it being made once already.
+
+**It is about the term, not about a student.** The function counts what the class has produced —
+the term's assignments, the assignments worth points, the class's recorded meetings, the term's
+recorded meetings, and how far back anything dated reaches — and hands each rule's `early(t, has)`
+those numbers and the resolved thresholds, nothing else. Every count is an upper bound on what any
+one student can have, so a rule this names is one `evaluate()` cannot return a hit for that morning,
+for anybody. It **under-names rather than over-claims**: a rule that could fire and has not is
+"nobody qualified", the other sentence.
+
+**Ten rules can be early and four cannot, read off each rule's own null arms.** The reasoning sits
+at each `early()` beside the `measure()` it mirrors, and the four without one are listed at
+`notYetRules()`: `grade-below` and `attendance-below` are levels that fire on the first graded
+cell or the first recorded meeting; `attendance-window` fires on any non-empty window; and
+`behavior-window` is days over the log, not term data. Two readings that were not the brief's:
+**`grade-fell` and `grade-rose` want `asked + 1`**, not `asked` — the window is `slice(-asked)`
+whatever its length, but `before` is the grade with the window taken out, and a student whose whole
+counted history is the window has no `before` and does not fire (the rule's own paragraph), so a
+term of exactly four assignments can supply a fall to nobody; and **the turnaround's bound is the
+dated record, not the term's age** — `absence-window` is not term-bounded, so in the first week of
+Quarter 2 a student absent at the end of Quarter 1 and present since *is* a turnaround, and an
+answer that called the rule early that morning would name a rule the pass just fired. The record's
+reach is the older of the class's first recorded meeting and the first behavior entry about anyone
+on its roster, the second through one new date reader in `src/log.js` (`firstBehaviorDate()`),
+because a behavior entry is one of the four dated facts that can put a student on the list on a
+past date. A date crosses and nothing else.
+
+**It does not simulate and it writes nothing.** One `makeContext()` per class-and-term, no
+per-student reader touched, one meetings resolution (`ctx.everyMeeting()`, which costs what a
+window of 20 costs) and one walk of the log for a single date. The fixture-bearing document is
+byte-identical either side of four calls.
+
+- [x] Against a document in the first week of a term, the new answer names the rules whose windows
+      are not full and no others; against a document with a full term behind it, it returns `[]`.
+      *(Measured both ways in `verify/signal-engine.mjs`: a term four days old with three
+      assignments and three meetings names exactly `grade-fell 3/5`, `absence-window 3/4`,
+      `tardy-count 3/5`, `grade-rose 3/5`, `turnaround 4/21`, `no-missing 3/8` — in registry order,
+      six literal sentences — and names none of the four rules whose shipped threshold is exactly
+      three; a full term of nine assignments and twenty-five meetings reaching back thirty-four
+      days returns `[]`. And against the pass: the thin class's student trips `grade-below`,
+      `low-score-run`, `attendance-below` and `absence-run`, and the intersection with the not-yet
+      list is empty. Mutation-proved both ways, below.)*
+- [x] `inertRules()` is unchanged and still returns `[]` — the two answers are separate functions
+      with separate meanings, and no caller has to know which it is holding. *(`git diff` on
+      `src/signals.js` deletes one line, the `log.js` import that re-wrapped; the body of
+      `inertRules()` is untouched. The harness asserts `inertRules()` is `[]` beside the full
+      term's `[]`, and that `signalRules()` reports no `inert` string on any of the fourteen.)*
+- [x] `src/signals.js` still holds **no writer of any kind** (WO-4.3's invariant) — the new answer
+      reads the document and the clock through the pass's existing `{ through }`, and stores
+      nothing. *(No `update(`, no store import, no `setPref` anywhere in the file — grepped — and
+      the harness's byte comparison of the whole fixture-bearing document either side of the four
+      calls reads `identical`. `through` is `opts.through || todayISO()`, the same line
+      `evaluate()`, `applyCooldown()` and `quietMiddle()` use.)*
+- [x] A rule is handed its own measured numbers and nothing else: the new answer does not pass a
+      rule the document, and does not re-run `evaluate()` to find out whether a rule fired.
+      *(`notYetRules()` calls `rule.early(ctx.t, has)` — the resolved thresholds and five numbers —
+      and nothing else on a rule; the function body contains no `evaluate(` and no `measure(`.
+      Read off disk.)*
+- [x] No screen is changed by this row. *(`git diff --stat`: `src/signals-view.js`,
+      `src/glance.js`, `index.html` and every `.css` file absent from it. `sw.js` bumped v120 → v121
+      because `src/signals.js` and `src/log.js` are `SHELL` entries.)*
+
+**Mutation round**, each planted by an exact-string edit against a fully staged tree, run through
+the whole harness, and reverted with `git checkout --`; `grep -rn MUTATION src tools` after the
+second revert lists the same thirteen prose mentions `HEAD` already carries and no plant:
+
+| Mutation | Run | What went red |
+|---|---|---|
+| **A** — `shortOf()` compares `<=` rather than `<`, so a rule whose window is *exactly* full is named | `1422 · 1419 · 3 failed` | the thin-term set (nine names where six were expected, `low-score-run 3/3`, `missing-count 3/3`, `absence-run 3/3`, `high-score-run 3/3` among them); the literal sentences; and **the title's own check** — overlap `["low-score-run","absence-run"]` between what the answer named and what `evaluate()` fired that morning |
+| **B** — `notYetRules()` returns `[]` before consulting a rule | `1422 · 1418 · 4 failed` | the thin-term set, its sentences, the empty term's ten, and the reach class's turnaround; the full-term `[]` and the no-writer line stayed green, correctly — `[]` is their right answer |
+
+**Where this stands.** Both tools are green on the delivered tree: `1422 checks · 1422 passed ·
+0 failed · 0 skipped`, 44,517 lines, 496s, exit 0, on the real clock (2026-09-20), and the sweep at
+`42 checks · 39 passed · 0 failed · 3 to review` with the same three reviews as `HEAD`. Nothing
+here is 👤 or 📆: the deliverable is an engine answer with no surface, so there is no iPad reading
+to take until a screen wears it.
+
+---
+
 ## Phase 5 — Outreach
 
 *Phase goal: from "this student needs a conversation" to a sent message, without a mail scope.*

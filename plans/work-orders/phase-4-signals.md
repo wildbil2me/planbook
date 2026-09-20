@@ -550,7 +550,7 @@ measurement**: *timing it from outside would want* `home` *and* `views` *on the*
 
 ## WO-4.6 — A rule that cannot fire *yet* is a different sentence from a rule that is not built
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-4.1, WO-4.3
+**Ship** — · **Status** ✅ DONE — 2026-09-20 · **Size** S · **Depends on** WO-4.1, WO-4.3
 
 **Why it exists.** `inertRules()` answers one question — *which rules are registered and cannot fire
 because the code behind them does not exist* — and it has answered `[]` since WO-4.4 landed and the
@@ -584,15 +584,15 @@ afterwards if it earns the room.
   ask for is not there, read through `thresholdsOf()` like every other threshold read.
 
 **Acceptance**
-- [ ] Against a document in the first week of a term, the new answer names the rules whose windows
+- [x] Against a document in the first week of a term, the new answer names the rules whose windows
       are not full and no others; against a document with a full term behind it, it returns `[]`.
-- [ ] `inertRules()` is unchanged and still returns `[]` — the two answers are separate functions
+- [x] `inertRules()` is unchanged and still returns `[]` — the two answers are separate functions
       with separate meanings, and no caller has to know which it is holding.
-- [ ] `src/signals.js` still holds **no writer of any kind** (WO-4.3's invariant) — the new answer
+- [x] `src/signals.js` still holds **no writer of any kind** (WO-4.3's invariant) — the new answer
       reads the document and the clock through the pass's existing `{ through }`, and stores nothing.
-- [ ] A rule is handed its own measured numbers and nothing else: the new answer does not pass a
+- [x] A rule is handed its own measured numbers and nothing else: the new answer does not pass a
       rule the document, and does not re-run `evaluate()` to find out whether a rule fired.
-- [ ] No screen is changed by this row. *(Deliberate. The engine answer is the deliverable; which
+- [x] No screen is changed by this row. *(Deliberate. The engine answer is the deliverable; which
       surface wears it — the signals screen's existing `.sig-inert` line, the glance page's quiet
       panel, or neither — is a separate call with its own room argument, and WO-6.7's `Open` line is
       the record of that call being made once already.)*
@@ -602,3 +602,36 @@ fills, which is WO-2.13's defect reached from a fifth direction. Ask the thresho
 and count what exists; do not simulate. And **do not give a rule an `inert` string to mean "early"** —
 that field means *not built*, it is read by a screen that says so in those words, and overloading it
 makes the one sentence this row exists to separate impossible to write.
+
+*(**Built 2026-09-20. All five boxes closed by the harness and the diff; nothing here is 👤 or 📆.**
+`notYetRules(doc, cls, termId, { through })` sits beside `inertRules()` in `src/signals.js`, and the
+readings under it are in `TESTING.md` § WO-4.6. Three things in it were decisions the work order
+left to the implementer, and each is written down at the point it bites.*
+
+*— **Ten rules carry `early(t, has)` beside their `measure()` and four do not**, and the split is
+read off each rule's own null arms rather than off its unit: the two level rules fire on the first
+graded cell or the first recorded meeting, `attendance-window` fires on any non-empty window, and
+the behavior window is days over the log, not term data. The four are listed with their reasons at
+`notYetRules()`; the ten say why at the rule, next to the arm they mirror. Every count handed to
+`early()` is an upper bound on what any one student can have — the term's assignments bound
+everyone's counted work, its recorded meetings bound everyone's marks — so a named rule is one the
+pass cannot return a hit for that morning, and the harness asserts that against `evaluate()`
+itself. It under-names rather than over-claims, on purpose.*
+
+*— **`grade-fell` and `grade-rose` want `asked + 1`, not `asked`.** The brief read them as
+partial-window rules, and the window is `slice(-asked)` whatever its length — but `before` is the
+grade with the window taken out, and a student whose whole counted history is the window has no
+`before` and does not fire, by the rule's own paragraph. So a term of exactly four assignments can
+supply a fall to nobody, and the sentence says so: "wants 5 — 4 to measure across and one before
+them".*
+
+*— **The turnaround's bound is the dated record and not the term's age**, which is the obvious
+reading and is wrong: `absence-window` is not term-bounded, so in the first week of Quarter 2 a
+student absent at the end of Quarter 1 and present since* is *a turnaround, and "the term started
+fewer than 21 days ago" would name a rule the pass had just fired. What the rule cannot do is fire
+while nothing dated reaches back `turnaroundDays` — no recorded meeting of the class, and no
+behavior entry about anyone on its roster, because a behavior entry is one of the four dated facts
+that can put a student on the list on a past date. That second half is one new reader in
+`src/log.js`, `firstBehaviorDate(doc, studentIds, throughISO)`, a date and nothing else, taken
+over a roster rather than per student. The harness plants a twenty-five-day-old entry between two
+readings and watches the turnaround stop being early.)*
