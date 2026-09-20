@@ -2,7 +2,9 @@
   The send flow's model — who a draft can be addressed to, the `mailto:` URL that hands it over to
   the teacher's own mail client (WO-5.3), the same draft as plain text for a clipboard (WO-5.7), and
   the same draft as a Gmail or Outlook compose URL for a teacher whose mail is a browser tab
-  (WO-5.12).
+  (WO-5.12). Since WO-5.14 every one of those takes a LIST of addresses in `to` and in `cc`, and the
+  header the non-primary recipients ride in is ruled on here, before the picker that will fill it
+  exists — § "which header the non-primary recipients ride in", below.
 
   ── WHAT THIS FILE IS, AND THE ONE IT IS NOT ──
 
@@ -218,15 +220,57 @@ export function tokensLeftIn(source) {
 */
 
 /*
+  ONE SHAPE ONLY: `to` AND `cc` ARE LISTS, AND A STRING IS REFUSED RATHER THAN WRAPPED (WO-5.14).
+  Every builder below takes a draft whose `to` and `cc` are arrays of addresses — one element each
+  for the draft the screen builds today, several once WO-5.8's picker exists — and there is
+  deliberately no branch that also accepts a bare string "so nothing breaks". A builder that took
+  both would be two truths about what a draft is, and the string one is the one that rots: it stays
+  green on every one-recipient fixture while the picker hands over a list, and on the day the two
+  disagree nothing in this file can say which it meant. So a string is a `TypeError` naming the
+  field, and so is anything else that is not an array.
+
+  THAT IS A THROW IN A FILE WHOSE OWN HEADER ARGUES FOR TOLERANCE, and the two are not in tension.
+  `arrayOf()` above forgives a collection missing from a hand-edited or restored DOCUMENT, because a
+  teacher's file is not this app's to refuse. A draft object is not a document: it is built by
+  src/outreach-view.js in exactly two places, and a wrong shape there is a programming error the
+  harness drives on every run. The one silent alternative — read a string as no addresses — is a
+  `mailto:` with an empty To, which recipientsFor() above says is the one thing never done. An
+  ABSENT field (`undefined`, `null`) IS an empty list, because an absent header is a header left
+  out, which is the rule mailtoUrl() has kept about `cc` since WO-5.3.
+
+  BLANKS ARE DROPPED, so `['a@x', '']` is one address and `['']` is no header at all: a trailing
+  comma in a `to` list is a malformed list, and an empty `cc=` is the header some clients read as a
+  recipient called "".
+*/
+function addressList(value, field) {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) {
+    throw new TypeError('draft.' + field + ' must be a list of addresses, not ' + typeof value);
+  }
+  return value.map((a) => text(a).trim()).filter(Boolean);
+}
+
+/*
   ADDRESSES. Percent-encoded like everything else and then the `@` is put back, because RFC 6068's
   grammar for the `to` part and for a `cc` header value is a bare addr-spec — `local@domain` with
   the `@` literal. `encodeURIComponent` escapes it to `%40`, which every modern client decodes and
   which older Windows handlers have historically mangled. The encoding still runs, so a space, a
   comma or a stray `?` in a field a teacher typed cannot break the URL apart; only the one character
   the grammar wants literal is restored.
+
+  A LIST IS ENCODED ONE ADDRESS AT A TIME AND JOINED AFTER, AND THE ORDER OF THOSE TWO STEPS IS THE
+  WHOLE OF IT (WO-5.14). RFC 6068 § 2 gives `to = addr-spec *("," addr-spec)`: several addresses in
+  one header are separated by a comma the grammar wants LITERAL, exactly as it wants the `@`.
+  Encoding a comma-joined string and restoring only the `@` hands back `a@x%2Cb@y`, which a client
+  reads as ONE address with a `%2C` in the middle of it — so the map runs first and the join runs on
+  what it produced. Nothing restores a `%2C` the way the `@` is restored, because a comma INSIDE an
+  address a teacher typed is precisely the character that must not survive as a separator. Both
+  compose pages take the same comma-separated list in `to=` and `cc=` and are handed the same
+  string; an empty list is the empty string, and every caller leaves that header out before it
+  gets here.
 */
-function encodeAddress(address) {
-  return encodeURIComponent(text(address).trim()).replace(/%40/g, '@');
+function encodeAddresses(list) {
+  return list.map((a) => encodeURIComponent(a).replace(/%40/g, '@')).join(',');
 }
 
 /*
@@ -251,8 +295,61 @@ function encodeField(value) {
 }
 
 /*
-  ONE DRAFT AS A `mailto:` URL. `to` and `cc` are addresses, `subject` and `body` are the teacher's
-  own text as it stands in the box in front of her.
+  ──────────── WHICH HEADER THE NON-PRIMARY RECIPIENTS RIDE IN (WO-5.14) ────────────
+
+  **Cc.** The primary is alone in To; every other recipient of the same message — the second
+  guardian, the counselor, the teacher's own copy — rides in Cc; and there is no Bcc anywhere in
+  this file, which is a choice and not an omission. WO-5.8's picker is built to this and does not
+  re-open it. The argument is a disclosure one — who, among the people on one message, can see
+  whose address — and it is made here rather than in the picker because this is the file in which a
+  header is a header: the three serialisers below are the only code that ever writes `cc=` or
+  `Cc:`, and a ruling kept beside the thing it governs is one a later reader can disagree with on
+  its own terms.
+
+  WHAT EACH HEADER DISCLOSES. To and Cc are both visible to everyone on the message, so between
+  those two nothing is hidden and the difference is what the header SAYS: To says "this is written
+  to you", Cc says "you were told too". Bcc is the only header that hides anything, and what it
+  hides is asymmetric — the Bcc'd person sees who the message was To, and the To person never
+  learns the Bcc'd one exists.
+
+  WHOSE ADDRESS IS ACTUALLY AT STAKE. A guardian and a counselor are not peers, but the address
+  each would see is not a secret from the other. A counselor's or an administrator's address is a
+  school address: institutional, in the directory, the address a guardian is meant to be able to
+  write to. A guardian's address is on the roster because the school already holds it, so a
+  counselor reading it off a Cc line learns nothing the school did not have. The one pair for whom
+  a shared line CAN be a disclosure is two guardians of one student who are not one household — a
+  separated parent, a guardian with an order in place — and that is not a question a header
+  answers. It is the question of whether those two belong on ONE message at all, which is the
+  teacher's judgment per message and the picker's to leave with her: a message that must not join
+  two people is two messages, which is what this flow has done since WO-5.3. Bcc would make that
+  mistake invisible rather than impossible — the second guardian still reads the first's address
+  off the To line — and would hide it from the teacher's own sent-mail record as well.
+
+  WHY NOT BCC, EVEN SO. This is a message about a child, and the primary is usually her parent. A
+  copy to the counselor is worth sending precisely because the guardian should know the counselor
+  is in the loop, and the counselor should know the guardian was told — "these people were told
+  too" is what a counselor copy is FOR. Bcc'ing a counselor on a note home is a teacher quietly
+  telling a third party about a family's business under a header the family cannot see, which is
+  its own kind of dishonesty on a message about somebody's child. It is honest either way round:
+  a copy that should not be seen is a separate message written to the counselor, and a copy that
+  should be seen is a Cc.
+
+  WHY NOT SEVERAL IN TO. The body is written to ONE person — every merge field resolves against
+  the primary and the salutation names her, which is WO-5.8's second Acceptance line — so a To line
+  naming three people over a "Dear Ms Okafor" is a message whose header disagrees with its own
+  first line. Cc is the header whose meaning matches the text.
+
+  WHAT THIS DOES TO THE CODE: NOTHING A BUILDER CAN SEE. `to` is a list below because RFC 6068's
+  `to` is a list, and `cc` is a list because a header is; WHICH addresses go in which is decided by
+  whoever builds the draft — src/outreach-view.js, one primary and the copy-to-self today — and the
+  three serialisers carry what they are handed. That is deliberate: a reader who reverses this
+  ruling changes two lines in the view and touches no encoder. A `bcc` would be a third list field
+  carried through all three builders under the same empty-header rule, and nothing here needs one.
+*/
+
+/*
+  ONE DRAFT AS A `mailto:` URL. `to` and `cc` are lists of addresses, `subject` and `body` are the
+  teacher's own text as it stands in the box in front of her.
 
   A HEADER WITH NOTHING IN IT IS LEFT OUT ALTOGETHER rather than sent empty: `?cc=&subject=…` is a
   legal URL that some clients read as a recipient called "" and others as a header they should
@@ -261,13 +358,14 @@ function encodeField(value) {
 export function mailtoUrl(draft) {
   const d = draft || {};
   const parts = [];
-  const cc = text(d.cc).trim();
+  const to = addressList(d.to, 'to');
+  const cc = addressList(d.cc, 'cc');
   const subject = text(d.subject);
   const body = text(d.body);
-  if (cc) parts.push('cc=' + encodeAddress(cc));
+  if (cc.length) parts.push('cc=' + encodeAddresses(cc));
   if (subject) parts.push('subject=' + encodeField(subject));
   if (body) parts.push('body=' + encodeField(body));
-  return 'mailto:' + encodeAddress(d.to) + (parts.length ? '?' + parts.join('&') : '');
+  return 'mailto:' + encodeAddresses(to) + (parts.length ? '?' + parts.join('&') : '');
 }
 
 /*
@@ -293,7 +391,11 @@ export function mailtoUrl(draft) {
   receives: a body of plain ASCII is close to its own length, but every line break costs six
   characters (`%0D%0A`) and every em dash costs nine, so a 1,400-character message with paragraphs
   in it can be over this line. Counting the teacher's typing instead would report a number that has
-  nothing to do with what gets cut.
+  nothing to do with what gets cut. And since WO-5.14 the addresses are in the same budget: every
+  recipient in `to` and `cc` is in the string the shell receives, so a draft that fits with one
+  guardian can be over the line with two and the counselor, and it is overCeiling() — measured on
+  the whole URL, not on the body — that says so. Nothing is recounted; the URL contains every
+  address, so the count is right by construction.
 
   **NOTHING HERE TRUNCATES ANYTHING.** The whole URL is handed over whatever its length; the warning
   says what some clients will do with it and leaves the decision where every other decision in this
@@ -350,8 +452,11 @@ export function overCeiling(url) {
     · **Everything else is `encodeURIComponent`**, for encodeField()'s reason: `&`, `?` and `#`
       are the characters that must not survive into a query component, and `#3 on the worksheet`
       is a thing a teacher types.
-    · **The address keeps its `@` literal**, through encodeAddress(), because both compose pages
+    · **The address keeps its `@` literal**, through encodeAddresses(), because both compose pages
       accept either form and the readable one is the one a teacher can check in the address bar.
+      Several addresses are the same comma-separated list the `mailto:` carries (WO-5.14): both
+      compose pages read `to=a@x,b@y` as two recipients, and one string for three doors is one
+      fewer thing for the doors to disagree about.
 
   THERE IS NO KNOWN CEILING, AND THE WARNING SAYS SO RATHER THAN INVENTING ONE. MAILTO_CEILING is
   `ShellExecute`'s documented limit on a string the operating system is handed, and a browser
@@ -410,17 +515,18 @@ export function composeUrl(draft, mail) {
   const id = mailDoorOf(mail);
   if (id === 'default') return mailtoUrl(draft);
   const d = draft || {};
-  const cc = text(d.cc).trim();
+  const to = addressList(d.to, 'to');
+  const cc = addressList(d.cc, 'cc');
   const subject = text(d.subject);
   const body = text(d.body);
-  const parts = ['to=' + encodeAddress(d.to)];
+  const parts = ['to=' + encodeAddresses(to)];
   if (id === 'gmail') {
-    if (cc) parts.push('cc=' + encodeAddress(cc));
+    if (cc.length) parts.push('cc=' + encodeAddresses(cc));
     if (subject) parts.push('su=' + encodeComposeField(subject));
     if (body) parts.push('body=' + encodeComposeField(body));
     return 'https://mail.google.com/mail/?view=cm&fs=1&' + parts.join('&');
   }
-  if (cc) parts.push('cc=' + encodeAddress(cc));
+  if (cc.length) parts.push('cc=' + encodeAddresses(cc));
   if (subject) parts.push('subject=' + encodeComposeField(subject));
   if (body) parts.push('body=' + encodeComposeField(body));
   return 'https://outlook.office.com/mail/deeplink/compose?' + parts.join('&');
@@ -465,12 +571,22 @@ export function ceilingFor(mail) {
   WHAT IT PUTS IN, AND THE ONE HEADER THAT IS CONDITIONAL. The recipient, the subject and the body,
   in the order a compose window asks for them, with a blank line between the headers and the message
   — that blank line is what makes the block read as a message rather than as three fields run
-  together. `Cc:` appears only when the draft actually copies the teacher, which is the rule
-  mailtoUrl() already keeps about an empty header and for its reason. A recipient with a name gets
+  together. `Cc:` appears only when the list has somebody in it, which is the rule mailtoUrl()
+  already keeps about an empty header and for its reason. A recipient with a name gets
   `Name <address>`, the form a To field parses when the whole line is pasted into it; a recipient
   whose "name" IS the address gets the address once, because `admin@school <admin@school>` is this
   app's own admin row (src/outreach.js's recipientsFor(), where an administrator has an address and
   no name anywhere) read back as a mistake.
+
+  THE NAME BELONGS TO THE PRIMARY AND TO NOBODY ELSE ON THE LINE (WO-5.14). `to` and `cc` are lists
+  here as they are at the other two doors, and `name` stays ONE string, because the primary is one
+  person — the one the merge fields resolved against and the one the salutation names. So
+  `Name <address>` is written for the FIRST address in `to` only, and any further To addresses ride
+  bare after it, comma-separated, which is the form a compose window's To field parses when the
+  line is pasted in whole. A name per address would mean a list of names beside a list of
+  addresses and the two drifting apart by one position, and the screen has no second name to give
+  in any case: it draws the primary's under the chips and nobody else's. Which addresses are in
+  `cc` at all is the ruling above mailtoUrl(), and it is not re-decided here.
 
   A HEADER IS ONE LINE BY DEFINITION, so a line break inside the recipient or the subject is folded
   to a space. Neither box can produce one by typing — the subject is an `<input>` — but a template
@@ -491,12 +607,15 @@ function oneLine(value) {
 
 export function draftText(draft) {
   const d = draft || {};
-  const to = oneLine(d.to);
+  const to = addressList(d.to, 'to').map(oneLine);
   const name = oneLine(d.name);
-  const cc = oneLine(d.cc);
+  const cc = addressList(d.cc, 'cc').map(oneLine);
+  const primary = to[0] || '';
   const lines = [];
-  lines.push('To: ' + (name && to && name !== to ? name + ' <' + to + '>' : (name || to)));
-  if (cc) lines.push('Cc: ' + cc);
+  /* The primary with her name, then the rest of `to` bare — see the section header. */
+  const first = name && primary && name !== primary ? name + ' <' + primary + '>' : (name || primary);
+  lines.push('To: ' + [first].concat(to.slice(1)).filter(Boolean).join(', '));
+  if (cc.length) lines.push('Cc: ' + cc.join(', '));
   lines.push('Subject: ' + oneLine(d.subject));
   /* The blank line, and then the message exactly as it stands in the box — LF, and nothing else
      touched. See this section's header for why that is the opposite of encodeField()'s answer. */

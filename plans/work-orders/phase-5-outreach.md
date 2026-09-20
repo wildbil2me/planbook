@@ -1492,7 +1492,7 @@ scar, where a green tree turned the sweep red on work being done.
 
 ## WO-5.14 — The compose doors take a list, and which header the others ride in
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-5.3
+**Ship** — · **Status** ✅ DONE — 2026-09-20 · **Size** M · **Depends on** WO-5.3
 
 **The dependency is WO-5.3 and not WO-5.12, deliberately.** WO-5.12 built two of the three doors
 this row changes, so it is the obvious id to name — and naming it would gate this row on a 👤 line
@@ -1532,15 +1532,27 @@ over a hand-built draft object.
   does. The warning at `src/outreach-view.js:787-810` must count what is actually on the wire.
 
 **Acceptance**
-- [ ] All three doors — default, Gmail and Outlook — carry several addresses, each correctly
+- [x] All three doors — default, Gmail and Outlook — carry several addresses, each correctly
       encoded, and copy-to-self behaves as WO-5.3 proved. *(The builders' half of WO-5.8's line
       "The `mailto:` URL carries every chosen recipient", moved here at the cut of 2026-09-20; the
-      picker's half stayed with WO-5.8.)*
-- [ ] The header the non-primary recipients ride in is chosen, and the disclosure argument for it is
+      picker's half stayed with WO-5.8.)* *(Two direct-call checks in `verify/outreach.mjs`: two
+      addresses in `to` and two in `cc` on the `mailto:` and on both compose doors, a literal comma
+      between, `%2B` inside, no `%2C` anywhere; M1 — join-then-encode — red on both. Copy-to-self is
+      WO-5.3's and WO-5.12's own `cc=` checks, byte-identical and green. `TESTING.md` § WO-5.14.)*
+- [x] The header the non-primary recipients ride in is chosen, and the disclosure argument for it is
       written down where the code makes it. *(The argument WO-5.8's Deliverables said that row owed,
-      moved here at the cut.)*
-- [ ] The ceiling warning counts every address on the wire, and still **warns rather than
-      truncates** — nothing truncates today and nothing starts to here.
+      moved here at the cut.)* *(**Cc**, and no Bcc: `src/outreach.js` § "which header the
+      non-primary recipients ride in", directly above `mailtoUrl()`. The builders take `to` and `cc`
+      as lists and cannot see the ruling; reversing it is two lines in the view.)*
+- [x] The ceiling warning counts every address on the wire, and still **warns rather than
+      truncates** — nothing truncates today and nothing starts to here. *(`overCeiling()` is
+      unchanged and reads the whole URL, which now contains every address: a fixture body at 1,962
+      encoded with one recipient is 2,433 with six long addresses, over, and all six are still on
+      the URL at the `mailto:` and at Gmail; `ceilingFor()` still `null` for both webmail doors.)*
+
+**Built 2026-09-20.** `to` and `cc` are lists at all three builders, refused as strings; the view
+makes the list in one place. Both tools green — `1428 checks · 1428 passed · 0 failed · 0 skipped`,
+sweep `42 · 39 · 0 · 3` — and three mutations red where predicted (`TESTING.md` § WO-5.14).
 
 **Traps** — **One shape only.** Do not let the builders accept both a string and a list "so nothing
 breaks"; this repo does not keep two truths, and the second one is what rots.

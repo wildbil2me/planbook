@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Every compose door can carry several addresses — 2026-09-20
+
+Nothing a teacher sees yet. The three compose doors — the default mail client, Gmail and Outlook
+— and the copied draft now each take a list of addresses rather than one, encoded as RFC 6068's
+comma-separated list rather than a single escaped string. Nothing on screen changes: the app still
+addresses one person until the recipient picker lands. Everyone after the first rides in **Cc**,
+never Bcc — a message that must not join two people is two messages, and Bcc would make that
+mistake invisible rather than impossible — and the disclosure argument is written where the code
+picks the header. The length warning counts every address and still warns rather than truncates, so
+no recipient is ever dropped to fit. (WO-5.14)
+
 ### Every template, whatever the recipient — 2026-09-20
 
 The draft window used to show only the templates written for whoever the message was going to, so

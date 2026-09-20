@@ -10019,6 +10019,92 @@ cleared both mutations. **M2 is the guard on the half that stayed**: with the to
 
 ---
 
+### WO-5.14 — The compose doors take a list, and which header the others ride in
+
+**What it changed, and the screen cannot show it.** The three serialisers in `src/outreach.js` —
+`mailtoUrl()`, `composeUrl()` for the Gmail and Outlook doors, and `draftText()` for the clipboard —
+take a **list** of addresses in `to` and in `cc`, one shape only: a bare string is a `TypeError`
+naming the field, an absent field is an empty list, and a blank inside a list is dropped. The
+encoder is `encodeAddresses()`, **map then join** — each address through `encodeURIComponent` with
+its `@` restored, then a literal comma between, which is RFC 6068 § 2's `addr-spec *("," addr-spec)`;
+the old `encodeAddress()` over a joined string would have put `%2C` between them. `src/outreach-view.js`
+is where the string becomes a list, in `outreachModel()` and nowhere else: `toList = [to]` and
+`ccList = [cc.email]` or `[]`, so the app behaves exactly as it did — every DOM-read check in
+`verify/outreach.mjs` is byte-identical — and the multi-address behaviour is proved by six fixtures
+that hand hand-built drafts to the builders through the seam. `CACHE` v122 → v123.
+
+**The ruling, and where it lives.** The non-primary recipients ride in **Cc**, the primary alone in
+To, and there is no Bcc — written at its own section above `mailtoUrl()` in `src/outreach.js`
+(*"which header the non-primary recipients ride in"*), where a header is a header. The argument in
+short: To and Cc hide nothing from anybody and differ only in what they say; the addresses actually
+at stake are institutional (a counselor's, an admin's) or already the school's (a guardian's), so the
+one real disclosure — two guardians who are not one household — is a question of whether they belong
+on one message at all, which a header cannot answer and Bcc would only make invisible; Bcc'ing a
+counselor on a note home is telling a third party about a family's business under a header the
+family cannot see; and several names in To over a "Dear Ms Okafor" is a header disagreeing with its
+own first line. **The builders cannot see the ruling**: `to` and `cc` are both lists, which addresses
+go in which is the caller's, and a reader who reverses it changes two lines in the view and no
+encoder. `draftText()`'s `name` stays one string because the primary is one person; `Name <primary>`
+is written for the first `to` address and the rest ride bare after it.
+
+**The ceiling is not recounted, and that is the claim.** `overCeiling()` still measures the whole
+encoded URL; the URL now contains every address, so the count is right by construction, and the
+fixture proves it the only honest way — a body at 1,962 encoded with one recipient, 2,433 with six
+long addresses and nothing else changed, `overCeiling()` false then true, all six still on the URL
+at the `mailto:` and at Gmail. `ceilingFor()` still returns `null` for both webmail doors, and
+`encodeField()` (CRLF) and `encodeComposeField()` (LF) are untouched — the round-trip checks at both
+doors are green and the two new URL checks assert the split beside the list.
+
+**Both tools green on the delivered tree.** `verify-shell.mjs`: `1428 checks · 1428 passed · 0
+failed · 0 skipped`, 44,769 lines, 31.4 lines per check, 504s, exit 0 — up six from 1422, the six
+new sites, none in a loop and none a failure arm. `wo-sweep.mjs`: `42 checks · 39 passed · 0 failed
+· 3 to review`, the three to-review items the same three as before the work, the `check()` call-site
+count 1419 and matching `tools/README.md`.
+
+**The mutation round — three, run in parallel in three scratch copies of the tree** rather than by
+mutating the working tree (the WO-5.12 method): each copy was made by an exact string replacement
+that aborts unless the target occurs exactly once, and `git diff` on the delivered tree contains the
+word `MUTATION` nowhere. Predicted reds are the ones that fired; nothing else in the run moved.
+
+| # | Mutation | Predicted | Result |
+|---|---|---|---|
+| M1 | `src/outreach.js` `encodeAddresses()`: join first, then encode, then restore `@` — the `%2C` shape the deliverable names | the two multi-address URL checks red (`%2C present = true`, `to` part mismatched) at the `mailto:` and at both compose doors; the one-address checks unmoved | `1428 checks · 1426 passed · 2 failed`, exit 1 — the two, and nothing else in the run |
+| M2 | `addressList()`: `if (typeof value === 'string') return addressList([value], field)` — a string quietly wrapped, the second truth the Traps line forbids | the string-refused check red (`wrapped: 2`, no TypeError) and nothing else, because a wrapped string produces a perfectly good one-address URL everywhere else | `1428 checks · 1427 passed · 1 failed`, exit 1 — the one |
+| M3 | `src/outreach-view.js` `outreachModel()`: `const toList = to` — the view hands the builders a bare string again | `outreachModel()` throws at the first ready draft; § `verify/outreach.mjs` and § `verify/contact-log.mjs` are contained (WO-1.44) and reported red with their remaining checks named as lost | `1349 checks · 1347 passed · 2 failed`, exit 1 — both sections *threw after 2 of its own checks*, `TypeError: draft.to must be a list of addresses, not string`, 79 checks lost and counted as lost |
+
+**What M3 is worth reading for.** M1 and M2 are the two claims the brief asked to be proved; M3 is
+the contract between the view and the builders proved *through the screen*: a build that put the
+string back at the call site cannot draw one ready draft, and the harness says so in the builder's
+own words rather than going quietly green on a one-address URL. That is the cost of "one shape
+only" being a throw rather than a wrap, and it is the right cost — the failure is loud on the
+laptop, where a wrap would have been silent on the laptop and wrong on the day the picker lands.
+
+`grep -rn MUTATION` over the delivered diff after the round: zero hits. The two hits in
+`tools/verify/keys-legend-guards.mjs` and the one in `tools/verify/outreach.mjs:1158` are
+pre-existing prose.
+
+**Acceptance**
+- [x] All three doors — default, Gmail and Outlook — carry several addresses, each correctly
+      encoded, and copy-to-self behaves as WO-5.3 proved. *(The two multi-address URL checks: `to =
+      wo514primary@…,wo514second%2Btag@…`, `cc = wo53counselor@…,wo53teacher@…`, `%2C present =
+      false`, on the `mailto:` and on both compose doors, each part decoding back to the fixture
+      list; M1 red on both. Copy-to-self: WO-5.3's own `cc=` toggle check and WO-5.12's Gmail `cc`
+      check are byte-identical and green through the view's one-element list.)*
+- [x] The header the non-primary recipients ride in is chosen, and the disclosure argument for it is
+      written down where the code makes it. *(**Cc**, argued at `src/outreach.js` § "which header the
+      non-primary recipients ride in", directly above `mailtoUrl()`; the view's call site and
+      `draftText()`'s header point at it rather than restating it. A ruling is prose, so no check
+      closes this line — what the harness proves is the shape it rests on: `cc` is a list at all
+      three doors, and the clipboard's `Cc:` is the comma-joined list.)*
+- [x] The ceiling warning counts every address on the wire, and still **warns rather than
+      truncates** — nothing truncates today and nothing starts to here. *(`1962 alone → 2433 with
+      six addresses, over = true, carried 6/6, ceilingFor gmail = null` — the fixture crosses 2,000
+      on addresses alone and every address is still on the URL; WO-5.3's long-draft check and
+      WO-5.12's no-ceiling-under-Gmail check are unchanged and green, and the view reads
+      `url.length`, which is the whole string.)*
+
+---
+
 ## Phase 6 — Calendar & the glance page
 
 *Phase goal: open the app at 7:40am and know what the day asks of you.*

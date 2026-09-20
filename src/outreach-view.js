@@ -542,9 +542,16 @@ export function outreachModel() {
      the choice of door changes the string and nothing else — not the gate, not the fields, not
      the clipboard beside it. Built here rather than in paintOpen() because the one thing the
      `target` decision needs is whether this string is https, and that is the model's to know. */
+  /* THE STRING BECOMES A LIST HERE, AND NOWHERE ELSE (WO-5.14). The builders take a list of
+     addresses in `to` and in `cc` and refuse a bare string — one shape, so the day WO-5.8's picker
+     hands over several there is no second branch for it to miss. Today the primary is alone in
+     `to` and the copy-to-self is the whole of `cc`; the picker's other recipients JOIN `cc`, per
+     the ruling written above mailtoUrl() in src/outreach.js, which this file does not re-decide. */
+  const toList = [to];
+  const ccList = cc.on && cc.ok ? [cc.email] : [];
   const url = ready ? outreach.composeUrl({
-    to: to,
-    cc: cc.on && cc.ok ? cc.email : '',
+    to: toList,
+    cc: ccList,
     subject: draft.subject,
     body: draft.body,
   }, mail) : '';
@@ -558,11 +565,13 @@ export function outreachModel() {
      (RFC 6068), so the person's name is not in the URL at all; a pasted block is read by a human
      and by a compose window's To field, and both of them want "Jane Okafor <jane@…>". It is the
      name that is already on the line under the chips, which presentation mode empties with
-     everything else — this is the same string, not a second reach into the roster. */
+     everything else — this is the same string, not a second reach into the roster. And it stays
+     ONE string while `to` is a list (WO-5.14): the name is the primary's, written against the
+     first address only, and draftText() says so at its own header. */
   const clipboard = ready ? outreach.draftText({
-    to: to,
+    to: toList,
     name: chosen ? chosen.name : '',
-    cc: cc.on && cc.ok ? cc.email : '',
+    cc: ccList,
     subject: draft.subject,
     body: draft.body,
   }) : '';
@@ -809,6 +818,9 @@ function paintOpen(model) {
     /* THE WARNING IS BEFORE THE FACT, because truncation leaves no gap and no error — see
        src/outreach.js's MAILTO_CEILING for where 2,000 comes from and why it is measured on the
        encoded URL rather than on what the teacher typed. Nothing in this app cuts the message.
+       `model.length` is that whole URL's length, so every address in `to` and `cc` is in the
+       number (WO-5.14) — there is no separate count of recipients to keep in step, because the
+       string the shell receives already contains them.
 
        AND IT KNOWS WHICH DOOR IS OPEN (WO-5.12). The 2,000 is a fact about a `mailto:` handed to
        the operating system; a webmail compose page has no figure anybody has documented, so on

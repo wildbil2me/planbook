@@ -1210,7 +1210,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1413 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1419 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1770,6 +1770,29 @@ either side of the four calls. `THROUGH` is a literal date, so the block reads t
 month. The run prints **1422**: `1422 checks · 1422 passed · 0 failed · 0 skipped`, 44,517 lines,
 31.3 lines per check, 496s, exit 0, measured 2026-09-20 on the real clock. The two mutations are
 tabulated in `TESTING.md` § WO-4.6.
+
+**WO-5.14 moved it from 1413 to 1419, and the executed count from 1422 to 1428 — six sites, six
+results.** All six are literal call sites inside the existing § *"the send flow (WO-5.3)"*, directly
+after the `draftText()` edge fixture, none in a loop and none a failure arm, standing on that section's
+own fixture guard, so the gap between sites and results stays at −9. **None of them drives the
+screen**: nothing on it can address a draft to two people until WO-5.8 builds the picker, so each
+hands the builders a hand-built draft through `window.planbook.outreach` — which is the work order's
+own design (*it lands invisibly*) and what `wo-sweep.mjs` § 24 makes honest, the module reading no
+store. The six: `mailtoUrl()` with two addresses in `to` and two in `cc`, each encoded on its own and
+joined by a **literal** comma (a `+` arrives as `%2B` inside, no `%2C` anywhere, every `@` literal,
+each part decoding back to the fixture list, the body still CRLF); both compose doors carrying the
+same two lists with the body LF; a blank inside a list dropped and a list of blanks producing no header
+on any door, with an absent `cc` the same as an empty one and no `Cc:` line on the clipboard; a
+**string** handed to any of the four builders refused with a `TypeError` naming the field and nothing
+produced; `draftText()` writing `Name <primary>, other` and `Cc: a, b`, with the admin row's second
+address beside her; and the ceiling — a body at 1,962 encoded with one recipient, 2,433 with six long
+addresses and nothing else changed, `overCeiling()` true, all six still on the URL at the `mailto:` and
+at Gmail, and `ceilingFor()` still `null` for both webmail doors. The one pre-existing fixture that
+hands in a draft — the `draftText()` edge case — moved from `to:'a@b.test'` to `to:['a@b.test']` and
+`cc:''` to `cc:[]`; **every DOM-read check in the section is byte-identical**, because a one-element
+list serialises to the string the screen carried before. The run prints **1428**: `1428 checks · 1428
+passed · 0 failed · 0 skipped`, 44,769 lines, 31.4 lines per check, 504s, exit 0, measured 2026-09-20
+on the real clock. The mutations are tabulated in `TESTING.md` § WO-5.14.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not

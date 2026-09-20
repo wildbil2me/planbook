@@ -28,6 +28,15 @@
  * `rev` reading (the handoff pressed under Gmail writes one `contact`; the chips at 390px). The
  * handoff is pressed here for the first time in this file, which is why those two are last.
  *
+ * WO-5.14 ADDED SIX CHECKS THAT DRIVE NOTHING ON THE SCREEN, directly after the draftText() edge
+ * fixture, because nothing on the screen can address a draft to two people until WO-5.8 builds the
+ * picker. The builders take lists in `to` and `cc` now, and the six hand them lists of two and of
+ * six through the seam: the literal comma between addresses on all three doors, the blank dropped
+ * and the empty header left out, the string refused with a TypeError rather than wrapped, the
+ * clipboard's `Name <primary>, other` line, and the 2,000 crossed by addresses alone. Every
+ * DOM-read check in this section is byte-identical across that work order, which is its own claim:
+ * a one-element list serialises to the string the screen carried before.
+ *
  * Nothing here launches a browser, a server or a document of its own: the entry file owns all three
  * and hands them over on `h`. `tools/README.md` § "Driving a browser over CDP" says where a new
  * check goes.
@@ -1900,11 +1909,15 @@ if (!seam) {
     */
     const copyEdges = await evalJs(`(function(){
       var f = window.planbook.outreach.draftText;
+      /* to and cc are LISTS since WO-5.14 — one element here, because these four claims are about
+         the body, the header fold and the admin row, not about several addresses; the block after
+         this one is where the lists are more than one long. (No backticks in here; it is inside a
+         template literal and one would close it.) */
       return {
-        crlf: f({ to:'a@b.test', subject:'S', body:'one\\r\\ntwo\\rthree\\nfour' }),
-        folded: f({ to:'a@b.test', name:'Gr\\nace Hopper', subject:'two\\nlines', body:'b' }),
-        admin: f({ to:'${ADMIN_EMAIL}', name:'${ADMIN_EMAIL}', subject:'S', body:'b' }),
-        noCc: f({ to:'a@b.test', cc:'', subject:'S', body:'b' }).indexOf('Cc:') >= 0 }; })()`);
+        crlf: f({ to:['a@b.test'], subject:'S', body:'one\\r\\ntwo\\rthree\\nfour' }),
+        folded: f({ to:['a@b.test'], name:'Gr\\nace Hopper', subject:'two\\nlines', body:'b' }),
+        admin: f({ to:['${ADMIN_EMAIL}'], name:'${ADMIN_EMAIL}', subject:'S', body:'b' }),
+        noCc: f({ to:['a@b.test'], cc:[], subject:'S', body:'b' }).indexOf('Cc:') >= 0 }; })()`);
     check('draftText() folds every line ending in the BODY to LF — a CRLF and a lone CR alike — '
       + 'folds a break inside a header onto the one line a header is, writes an administrator’s '
       + 'address once rather than as its own display name, and leaves an empty `Cc:` out '
@@ -1914,6 +1927,191 @@ if (!seam) {
         && copyEdges.admin === 'To: ' + ADMIN_EMAIL + '\nSubject: S\n\nb'
         && copyEdges.noCc === false,
       JSON.stringify(copyEdges));
+
+    /*
+      ─────────── WO-5.14: THE THREE DOORS TAKE A LIST, ASKED OF THE MODULE DIRECTLY ───────────
+
+      NOTHING ON THE SCREEN CAN PRODUCE A DRAFT WITH TWO RECIPIENTS YET — the picker is WO-5.8 —
+      so every claim here is made against the builders with a hand-built draft, in the shape the
+      four claims above already use. That is the work order's own design ("it lands invisibly"):
+      the view passes one-element lists, every DOM-read check in this section stays byte-identical,
+      and the multi-address behaviour is proved where it lives. `wo-sweep.mjs` § 24 is what makes
+      that honest — the module imports no store and mutates nothing, so a draft object is the whole
+      of its input.
+
+      THE ADDRESSES ARE FIXTURE LITERALS AND THE URLS ARE TAKEN APART BY THE SAME SPLIT THE CHECKS
+      ABOVE USE, so a wrong join lands in the `to` part where a check can name it. The one
+      character these fixtures are about is the comma: RFC 6068's list separator, which must arrive
+      LITERAL between addresses and must never arrive as `%2C` — that is the shape of the defect
+      the deliverable names (encode the joined string, restore only the `@`), and a fixture with
+      one address cannot see it. The `+` in the second address is there so that the encoding still
+      demonstrably RUNS per address: `%2B` inside, a bare `,` between.
+    */
+    const LIST_TO = ['wo514primary@example.invalid', 'wo514second+tag@example.invalid'];
+    const LIST_CC = [COUNSELOR_EMAIL, TEACHER_EMAIL];
+    const listed = await evalJs(`(function(){
+      var o = window.planbook.outreach;
+      var to = ${JSON.stringify(LIST_TO)}, cc = ${JSON.stringify(LIST_CC)};
+      var draft = { to: to, cc: cc, subject: 'S & #3', body: 'one\\ntwo\\n\\nthree' };
+      var take = function(href, scheme){
+        var q = href.indexOf('?');
+        var params = {};
+        (q < 0 ? '' : href.slice(q + 1)).split('&').forEach(function(pair){
+          var at = pair.indexOf('=');
+          if (at > 0) params[pair.slice(0, at)] = pair.slice(at + 1); });
+        var toPart = scheme === 'mailto' ? href.slice('mailto:'.length, q < 0 ? href.length : q)
+          : (params.to || '');
+        return { href: href, to: toPart, cc: params.cc || '', keys: Object.keys(params),
+          toList: toPart.split(',').map(decodeURIComponent),
+          ccList: (params.cc || '').split(',').map(decodeURIComponent),
+          pctComma: href.indexOf('%2C') >= 0 || href.indexOf('%2c') >= 0,
+          pctAt: href.indexOf('%40') >= 0,
+          body: params.body || '' }; };
+      return { mailto: take(o.mailtoUrl(draft), 'mailto'),
+        gmail: take(o.composeUrl(draft, 'gmail'), 'https'),
+        outlook: take(o.composeUrl(draft, 'outlook'), 'https') }; })()`);
+    check('WO-5.14: mailtoUrl() carries TWO addresses in the `to` part and two in `cc=`, each '
+      + 'percent-encoded on its own and joined by a LITERAL comma — the `+` in the second address '
+      + 'arrives as %2B, no %2C appears anywhere in the URL, every `@` is literal, and each part '
+      + 'decodes back to the fixture list address for address (RFC 6068 § 2, `addr-spec *("," '
+      + 'addr-spec)`); the body is still CRLF, because the split with the compose doors is not '
+      + 'this work order’s to collapse',
+      /^mailto:/.test(listed.mailto.href) && listed.mailto.pctComma === false
+        && listed.mailto.pctAt === false
+        && listed.mailto.to === 'wo514primary@example.invalid,wo514second%2Btag@example.invalid'
+        && listed.mailto.cc === COUNSELOR_EMAIL + ',' + TEACHER_EMAIL
+        && JSON.stringify(listed.mailto.toList) === JSON.stringify(LIST_TO)
+        && JSON.stringify(listed.mailto.ccList) === JSON.stringify(LIST_CC)
+        && listed.mailto.body.indexOf('%0D%0A') >= 0
+        && listed.mailto.body.replace(/%0D%0A/g, '').indexOf('%0A') < 0,
+      'to = ' + listed.mailto.to + ', cc = ' + listed.mailto.cc + ', %2C present = '
+        + listed.mailto.pctComma);
+    check('and both compose doors carry the same two lists in `to=` and `cc=`, the same literal '
+      + 'comma between and the same %2B inside, decoding to the same addresses — with the body '
+      + 'LF at both, so the list changed nothing about the line-break split either way',
+      /^https:\/\/mail\.google\.com\//.test(listed.gmail.href)
+        && /^https:\/\/outlook\.office\.com\//.test(listed.outlook.href)
+        && listed.gmail.to === listed.mailto.to && listed.outlook.to === listed.mailto.to
+        && listed.gmail.cc === listed.mailto.cc && listed.outlook.cc === listed.mailto.cc
+        && listed.gmail.pctComma === false && listed.outlook.pctComma === false
+        && listed.gmail.pctAt === false && listed.outlook.pctAt === false
+        && JSON.stringify(listed.gmail.toList) === JSON.stringify(LIST_TO)
+        && JSON.stringify(listed.outlook.ccList) === JSON.stringify(LIST_CC)
+        && listed.gmail.keys.indexOf('su') >= 0 && listed.outlook.keys.indexOf('subject') >= 0
+        && listed.gmail.body.indexOf('%0A') >= 0 && listed.gmail.body.indexOf('%0D') < 0
+        && listed.outlook.body.indexOf('%0A') >= 0 && listed.outlook.body.indexOf('%0D') < 0,
+      'gmail to = ' + listed.gmail.to + '; outlook cc = ' + listed.outlook.cc);
+
+    /* THE EMPTY-HEADER RULE, PER ELEMENT NOW. A blank inside a list is dropped rather than joined
+       as a trailing comma, a list of blanks is no header at all, and an ABSENT `cc` is the same
+       as an empty one — mailtoUrl()'s rule since WO-5.3, kept at all three doors. */
+    const blanks = await evalJs(`(function(){
+      var o = window.planbook.outreach;
+      var d = { to: ['a@b.test', '', '   '], cc: ['', ' '], subject: 'S', body: 'b' };
+      var absent = { to: ['a@b.test'], subject: 'S', body: 'b' };
+      return {
+        mailto: o.mailtoUrl(d), gmail: o.composeUrl(d, 'gmail'), outlook: o.composeUrl(d, 'outlook'),
+        absentMailto: o.mailtoUrl(absent), absentGmail: o.composeUrl(absent, 'gmail'),
+        text: o.draftText({ to: ['a@b.test', ''], cc: [' '], subject: 'S', body: 'b' }) }; })()`);
+    check('a blank inside a list is dropped and a list of blanks is no header: `to` of one address '
+      + 'and two blanks is `mailto:a@b.test` with no trailing comma, `cc` of two blanks puts no '
+      + '`cc=` on any of the three doors, an absent `cc` is the same as an empty one, and the '
+      + 'clipboard block writes no `Cc:` line for it either',
+      blanks.mailto === 'mailto:a@b.test?subject=S&body=b'
+        && /[?&]to=a@b\.test&/.test(blanks.gmail) && !/[?&]cc=/.test(blanks.gmail)
+        && /\?to=a@b\.test&/.test(blanks.outlook) && !/[?&]cc=/.test(blanks.outlook)
+        && blanks.absentMailto === 'mailto:a@b.test?subject=S&body=b'
+        && !/[?&]cc=/.test(blanks.absentGmail)
+        && blanks.text === 'To: a@b.test\nSubject: S\n\nb',
+      JSON.stringify({ mailto: blanks.mailto, text: blanks.text }));
+
+    /* ONE SHAPE ONLY. The Traps line forbids a builder that accepts a string as well "so nothing
+       breaks", and the only way to assert an absence of tolerance is to hand it the string and
+       require the refusal: every builder, both fields, a TypeError that names the field, and no
+       URL or block produced. A builder that quietly wrapped the string would return a perfectly
+       good one-address URL here, which is exactly why the check reads the throw and not the
+       output. */
+    const stringRefused = await evalJs(`(function(){
+      var o = window.planbook.outreach;
+      var doors = { mailto: function(d){ return o.mailtoUrl(d); },
+        gmail: function(d){ return o.composeUrl(d, 'gmail'); },
+        outlook: function(d){ return o.composeUrl(d, 'outlook'); },
+        text: function(d){ return o.draftText(d); } };
+      var out = {};
+      Object.keys(doors).forEach(function(k){
+        var asTo = null, asCc = null, wrapped = [];
+        try { wrapped.push(doors[k]({ to: 'a@b.test', cc: [], subject: 'S', body: 'b' })); }
+        catch (e) { asTo = e.name + ': ' + e.message; }
+        try { wrapped.push(doors[k]({ to: ['a@b.test'], cc: 'c@d.test', subject: 'S', body: 'b' })); }
+        catch (e) { asCc = e.name + ': ' + e.message; }
+        out[k] = { asTo: asTo, asCc: asCc, wrapped: wrapped.length }; });
+      return out; })()`);
+    check('and a STRING handed to any of the four builders is refused rather than quietly wrapped '
+      + '— a TypeError naming `draft.to` or `draft.cc`, from mailtoUrl(), both compose doors and '
+      + 'draftText(), and not one URL or block produced (the Traps line: one shape only)',
+      ['mailto', 'gmail', 'outlook', 'text'].every((k) => stringRefused[k]
+        && /^TypeError: draft\.to must be a list/.test(stringRefused[k].asTo || '')
+        && /^TypeError: draft\.cc must be a list/.test(stringRefused[k].asCc || '')
+        && stringRefused[k].wrapped === 0),
+      JSON.stringify(stringRefused));
+
+    /* THE CLIPBOARD BLOCK: the name is the PRIMARY's and nobody else's, further To addresses ride
+       bare after her, and `Cc:` is the list comma-joined. The admin row — an address standing in
+       for a name — is asserted with a second address beside it, because that is the case where
+       `admin@school <admin@school>, other` would read as a mistake twice over. */
+    const listedText = await evalJs(`(function(){
+      var f = window.planbook.outreach.draftText;
+      return {
+        named: f({ to: ${JSON.stringify(LIST_TO)}, name: 'Jane Okafor', cc: ${JSON.stringify(LIST_CC)},
+          subject: 'S', body: 'b' }),
+        admin: f({ to: ['${ADMIN_EMAIL}', 'x@y.test'], name: '${ADMIN_EMAIL}', cc: [],
+          subject: 'S', body: 'b' }) }; })()`);
+    check('draftText() writes `Name <primary>` for the first address only, the second To address '
+      + 'bare after a comma, and `Cc:` as the comma-joined list; an administrator with a second '
+      + 'address beside her is written `admin, other` and never as her own display name',
+      listedText.named === 'To: Jane Okafor <' + LIST_TO[0] + '>, ' + LIST_TO[1] + '\n'
+          + 'Cc: ' + LIST_CC.join(', ') + '\nSubject: S\n\nb'
+        && listedText.admin === 'To: ' + ADMIN_EMAIL + ', x@y.test\nSubject: S\n\nb',
+      JSON.stringify(listedText));
+
+    /* THE CEILING COUNTS THE ADDRESSES, BY CONSTRUCTION AND NOT BY A SECOND COUNT. The claim is
+       that overCeiling() reads the whole URL and the URL now contains every address — so the
+       fixture is a body that fits under 2,000 encoded on its own and crosses it ONLY when six long
+       addresses are added, and the long URL is asserted to still carry all six, because "warns
+       rather than truncates" is the half of the line that must not move. ceilingFor() is read for
+       the two webmail doors in the same breath: the count is correct on the one door that has a
+       ceiling, and the other two still have none (the third Traps line). */
+    const ceilingList = await evalJs(`(function(){
+      var o = window.planbook.outreach;
+      var body = '';
+      while (body.length < 1400) body += 'A sentence of ordinary length about the term. ';
+      var more = [];
+      for (var i = 0; i < 6; i++) {
+        more.push('wo514.a.long.guardian.address.number.' + i + '@a.long.district.domain.example.invalid'); }
+      var alone = o.mailtoUrl({ to: ['p@example.invalid'], cc: [], subject: 'S', body: body });
+      var crowd = o.mailtoUrl({ to: ['p@example.invalid', more[0], more[1]], cc: more.slice(2),
+        subject: 'S', body: body });
+      var crowdGmail = o.composeUrl({ to: ['p@example.invalid', more[0], more[1]], cc: more.slice(2),
+        subject: 'S', body: body }, 'gmail');
+      return { aloneLength: alone.length, aloneOver: o.overCeiling(alone),
+        crowdLength: crowd.length, crowdOver: o.overCeiling(crowd),
+        carried: more.filter(function(a){ return crowd.indexOf(a) >= 0; }).length,
+        carriedGmail: more.filter(function(a){ return crowdGmail.indexOf(a) >= 0; }).length,
+        ceiling: o.MAILTO_CEILING, forDefault: o.ceilingFor('default'),
+        forGmail: o.ceilingFor('gmail'), forOutlook: o.ceilingFor('outlook') }; })()`);
+    check('the ceiling counts every address on the wire: a body that is under 2,000 encoded with '
+      + 'one recipient is OVER it with six long addresses in `to` and `cc` and nothing else '
+      + 'changed, overCeiling() says so, the long URL still carries all six on the mailto: and on '
+      + 'the Gmail door (nothing truncates), and ceilingFor() is still 2000 for the default door '
+      + 'and null for both webmail doors',
+      ceilingList.aloneOver === false && ceilingList.aloneLength < ceilingList.ceiling
+        && ceilingList.crowdOver === true && ceilingList.crowdLength > ceilingList.ceiling
+        && ceilingList.carried === 6 && ceilingList.carriedGmail === 6
+        && ceilingList.ceiling === 2000 && ceilingList.forDefault === 2000
+        && ceilingList.forGmail === null && ceilingList.forOutlook === null,
+      ceilingList.aloneLength + ' alone → ' + ceilingList.crowdLength + ' with six addresses, over = '
+        + ceilingList.crowdOver + ', carried ' + ceilingList.carried + '/6, ceilingFor gmail = '
+        + JSON.stringify(ceilingList.forGmail));
 
     /*
       AND THE TAP ACTUALLY WRITES IT. Two readings, because one alone is weak. The spy WRAPS the
