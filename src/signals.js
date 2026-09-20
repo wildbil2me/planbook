@@ -112,8 +112,9 @@
   COUNT of one kind and never a word of what was written.
 
   THE COOLDOWN AND THE QUIET MIDDLE READ ONE FIELD MORE, AND IT IS STILL NOT A WORD ANYBODY TYPED
-  (WO-4.5). What crosses out of src/log.js is three DATES and the `audience` enum — no subject, no
-  body, no entry. A suppressed row has to say which contact silenced it, and *you emailed his
+  (WO-4.5). What crosses out of src/log.js is three DATES and the `audience` enum — plus, since
+  WO-5.15, the `audiences` list beside it, which is more of the same four words and not a wider
+  hole — no subject, no body, no entry, no name and no address. A suppressed row has to say which contact silenced it, and *you emailed his
   guardian about this on Sep 6* is that sentence with nothing of the teacher's own writing in it.
   Neither function is a rule, so neither can put any of it into an explanation Phase 5 drafts into
   mail; the suppression record is a wrapper AROUND a hit and the hit is unchanged.
@@ -170,7 +171,8 @@ import { formatPercent, scoreMark } from './scores.js';
    src/grade-engine.js above. */
 /* THREE MORE JOINED AT WO-4.5, and every one of them hands back a date. `lastContactAbout` is the
    cooldown's whole reading — when this student was last written to about THIS rule, plus the
-   `audience` the suppressed row names — and it refuses an empty rule id, which is this work order's
+   `audience` the suppressed row names and (WO-5.15) every audience that contact reached — and it
+   refuses an empty rule id, which is this work order's
    trap made structural in the file that owns the record. `lastContactDate` and `lastEntryDate` are
    the quiet middle's two: has anybody been written to about this student this term, and when was
    anything last written down about her at all. No subject and no body crosses this import, exactly
@@ -2045,9 +2047,17 @@ export function evaluate(doc, cls, termId, options) {
 
   ── WHAT CROSSES OUT OF THE LOG, AND WHAT DOES NOT ──
 
-  A date and the `audience` enum. Not the subject, not the body: a suppressed row says *you emailed
-  his guardian about this on Sep 6*, which is what makes the suppression checkable, and it says
-  nothing a teacher typed. That is src/log.js's firewall holding one function further out.
+  A date and the `audience` enum — and, since WO-5.15, the `audiences` list beside it. Not the
+  subject, not the body: a suppressed row says *you emailed his guardian about this on Sep 6*, which
+  is what makes the suppression checkable, and it says nothing a teacher typed. That is src/log.js's
+  firewall holding one function further out, and the list is more of the same word rather than a
+  wider hole — four possible strings out of an enum, carrying no name, no address and no count of
+  people.
+
+  **AND THE AUDIENCE IS STILL NOT IN THE KEY.** What silences a rule is `studentId + ruleId`, read
+  by src/log.js's lastContactAbout(); both audience fields ride out of it for the SENTENCE the
+  screen prints and for nothing else. A message to a guardian, the counselor and an administrator
+  suppresses exactly the row a message to the guardian alone would.
 */
 export function applyCooldown(doc, hits, options) {
   const opts = options || {};
@@ -2073,6 +2083,11 @@ function silencedBy(doc, hit, through, days) {
     hit: hit,
     on: seen.on,
     audience: seen.audience,
+    /* EVERY DRAWER THAT CONTACT REACHED (WO-5.15), and the screen names them all in one sentence —
+       src/signals-view.js's cooldownWhy(). A contact written before that row has no list of its
+       own and src/log.js hands back `[audience]` for it, so a suppressed row from an older
+       document reads exactly as it always did. */
+    audiences: seen.audiences,
     until: shiftDays(seen.on, days),
     days: daysBetween(seen.on, through),
     span: days,

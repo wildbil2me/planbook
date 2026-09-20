@@ -142,6 +142,8 @@ nag, and nothing noticed until a verifier read the line for another reason.
   "log": [{ "id": "l_…", "studentId": "s_…", "at": "…",
             "kind": "behavior|contact|note",
             "audience": "guardian|counselor|admin|student",
+            "audiences": ["guardian", "counselor"],  // `contact` only — every drawer it reached,
+                                                     //   the `audience` above first. See § log
             "subject": "", "body": "",
             "ruleId": "" }],   // `contact` only — which signal prompted it. See § log below.
 
@@ -269,6 +271,22 @@ Seven shape decisions that matter:
   back the whole array**. The second half of that firewall is `audience`: an entry written by the
   teacher for herself carries `audience: ""` — it went to nobody, which is the truth — rather than a
   value the cooldown could count as outreach.
+- **A `contact` records TWO audience fields under several recipients, and the second is an addition
+  rather than a widening** *(WO-5.15, 2026-09-20)*. A draft goes to several people since WO-5.8 —
+  both guardians, or a guardian and the counselor — and has no single drawer, so the record carries
+  **`audience`, the primary's**, which is the one the words were written for and every merge field
+  resolved against, and **`audiences`, every drawer the message reached, that one first**. The
+  scalar keeps its type, its meaning and its three readers; nothing in the app rewrites an entry,
+  and one written by an earlier build has no `audiences` at all, so `src/log.js`'s
+  `contactAudiences()` reads it back as `[audience]` — the truth about a message that went to one
+  drawer. **The list counts drawers and never people**: both guardians are the `guardian` audience,
+  so a draft to the two of them records `["guardian"]` where a draft to a guardian and the counselor
+  records two, and the duplicate is taken out on the write. Every `contact` carries the field,
+  including a single-recipient one, so no reader has to ask which build wrote a row; a `note` or a
+  `behavior` entry carries `""` and `[]`, which is the emptiness rule above read on both halves.
+  **Neither field is ever part of the cooldown's key** — that is `studentId + ruleId`, so a message
+  to three people silences exactly what a message to one would, and both fields cross out of
+  `src/log.js` for a sentence and for nothing else.
 - **`ruleId` is on a `contact` entry and on nothing else, and it is what makes the cooldown
   possible** *(named WO-4.5, 2026-08-27; written by WO-5.4, 2026-08-29 — this line said WO-5.3
   until that day, and that work order built the flow without writing anything at all)*. It carries `src/signals.js`'s own
@@ -776,8 +794,9 @@ her own client.
 **It writes exactly one thing, and only on the handoff** *(WO-5.4)*. Drafting is a read: picking a
 recipient, switching the tone, typing in either box, cycling the projector and changing your mind
 about a rebuild leave the document byte-identical, and `newYearDocument()` gained nothing. **The
-click on the `mailto:` link appends one `contact` to `log[]`** — the audience, the subject, the
-body and the `ruleId` the cooldown keys on — through `src/log.js`'s `writeContact()`, and nothing
+click on the `mailto:` link appends one `contact` to `log[]`** — the audience the words were
+written for, every audience the message reaches, the subject, the body and the `ruleId` the cooldown
+keys on — through `src/log.js`'s `writeContact()`, and nothing
 in the app calls `preventDefault()` on that click: the navigation stays the browser's, because iOS
 opens a link more reliably than a scripted one. **A blocked draft has no `href` and writes
 nothing.**
@@ -786,7 +805,8 @@ nothing.**
 record and a section on the signal card, both newest first. It is a **second** card rather than a
 widening of *"What you have written down"*: that card promises the teacher nothing on it was sent
 anywhere, which stops being true the moment a message she sent appears under it. A row shows the
-audience, the subject, the day and the rule; **it does not show the body**, which is in the record
+audience — one chip per drawer since WO-5.15, primary first — the subject, the day and the rule;
+**it does not show the body**, which is in the record
 and in the backup but would put four full emails on a card a guardian may be sitting beside. Both
 surfaces read the contacts through `logKindVisible()`, so **presentation mode empties them** — the
 list arrives short, there is no *"N hidden"* line, and the empty sentence is the same sentence a
@@ -800,7 +820,9 @@ Five rulings there are decisions rather than plumbing:
   the student herself. All of them map onto the four `AUDIENCES` values, both guardians onto
   `guardian`, and **that enum is not widened**: what makes a message personal is
   `{{guardian.name}}`, which resolves to the guardian the teacher picked rather than to the
-  preferred one.
+  preferred one. The `contact` the handoff writes files the DRAWERS and not the people — see the
+  two audience fields in § log — so a message to both guardians records one audience, and no name
+  and no address ever reaches `log[]`.
 - **`students[].counselor` is a roster contact and `supports.caseManager` is not.** They are two
   different people in this schema and one of them is behind the fence in § Accommodations. Nothing
   in the send flow reads a support block, and there is no path from the picker to one.

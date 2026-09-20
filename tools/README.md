@@ -1210,7 +1210,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1426 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1432 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1842,6 +1842,46 @@ nobody wrote down**: the literal closes at the first and reopens at the second, 
 cleanly, `node --check` is happy, and the text between them is evaluated as an expression. Scanning
 for running backtick parity over the file finds it in a second and finds nothing else; a syntax check
 finds nothing at all.
+
+**WO-5.15 moved it from 1426 to 1432, and the executed count from 1435 to 1441 — six sites, six
+results.** All six are literal call sites, none in a loop and none a failure arm, standing on their
+sections' own fixture guards, so the gap between sites and results stays at −9. **Five of them are a
+new block at the foot of § *"the contact log and the history over it (WO-5.4)"***, running after
+WO-5.9's for that block's own stated reason: three checks above it count contacts rather than name
+them, so a third contact of Ada's written any earlier would move numbers that belong to other claims.
+They plant one contact in the PRE-WO-5.15 shape and assert it is that shape; then drive a draft to a
+guardian AND the counselor through the picker's own `[data-outreach-to]` toggle and read back the
+record (the scalar unmoved, the list carrying both drawers in picker order, the nine fields in
+`docs/data-model.md`'s order), the history card (one chip per drawer on the newest row, one on the
+two under it, and the planted row drawing its drawer off the scalar alone), what the cooldown
+silenced (her second rule and nothing else, with the hitless student still held by nothing), and the
+sentence on the suppressed row. **The sixth is in § *"the cooldown and the quiet middle (WO-4.5)"***,
+on a PLANTED record, and the pairing is the point: Ada's planted contact deliberately has no
+`audiences` key at all — the shape of every entry in a document older than this row, which nothing in
+the app rewrites — and Ben's has one, so the same expanded list proves the fallback and the list in
+one reading. **One existing check was rewritten rather than added to the count**: the eight-field
+key-order assertion in `verify/contact-log.mjs` is now nine, with `audiences` between `audience` and
+`subject`, which is WO-5.5's rule applied again — a check that goes red on a shape change is rewritten
+to the new shape, never relaxed to fit it. The fixture gained one field, a counselor with an address
+on Ada, because a draft cannot reach two audiences unless two recipients have one; it moves no
+assertion above it, since the picker opens with the first recipient chosen and the first recipient is
+still *Guardian 1*. The run prints **1441**: `1441 checks · 1441 passed · 0 failed · 0 skipped`,
+45,511 lines, 31.6 lines per check, 498s, exit 0, measured 2026-09-20 on the real clock, on the
+delivered tree. This work order adds **no control**, so it declares no 44px rule and adds no
+touch-target measurement. The mutations are tabulated in `TESTING.md` § WO-5.15.
+
+*(Two things about it worth keeping. **A run before the green one died at check 18 of this section**
+on `nothing to click for #signalsList [data-signal-row="s_wo54ada"]`: `data-signal-row` carries the
+signal ROW key — `student|rule|class`, `src/signals-view.js:598` — and not a student id, so the
+selector wants a `^=` prefix match. WO-1.44's containment did its job: the section was reported and
+counted, its remaining checks were named as lost, and every later section still ran.* **And the
+planted pre-WO-5.15 contact exists because a mutation round said it had to.** *M2 — the old-entry
+fallback taken out of `contactAudiences()` — ran GREEN the first time, on a delivered tree whose
+back-compat claim nothing asserted: every contact the harness can DRIVE is written by this build and
+carries the field, and `cooldownWhy()` had a second `|| AUDIENCE_TEXT[row.audience]` behind the list
+that covered for the emptied reader. The fallback now lives in exactly one place, the plant gives the
+harness a row only an earlier build could have written, and M2 reddens three checks. A mutation that
+passes is worth more than one that fails when what it finds is a claim nobody was making.)*
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not

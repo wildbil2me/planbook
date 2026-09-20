@@ -642,14 +642,40 @@ function rowButton(row) {
   recipient rather than to `undefined`, which is what a restored file from a later build would
   otherwise put on the screen.
 
-  NOTHING ELSE OF THE ENTRY REACHES HERE. src/signals.js hands the screen a date and this enum and
-  nothing more — no subject, no body — so this function could not print what a teacher wrote if it
-  wanted to.
+  NOTHING ELSE OF THE ENTRY REACHES HERE. src/signals.js hands the screen a date and this enum —
+  one value and, since WO-5.15, a list of them — and nothing more: no subject, no body, no name and
+  no address, so this function could not print what a teacher wrote if it wanted to.
 */
 const AUDIENCE_TEXT = {
   guardian: 'their guardian', counselor: 'their counselor',
   admin: 'an administrator', student: 'them',
 };
+
+/*
+  THE SAME TABLE OVER THE LIST A CONTACT NOW CARRIES (WO-5.15), and it is one sentence rather than
+  a second line: *you wrote to their guardian and their counselor about this on Sep 6*.
+
+  WHY THE ROW SAYS ALL OF THEM. This sentence exists so that a suppression can be CHECKED — WO-4.5's
+  "3 suppressed with no names is indistinguishable from a list that has quietly lost three
+  students", one level down. A teacher reading *you wrote to their guardian* about a message that
+  also went to the counselor is being told something true and is being told it in a way that invites
+  the second message this whole feature exists to prevent.
+
+  A WORD THIS BUILD HAS NEVER HEARD OF DROPS OUT rather than reaching the screen as `undefined` —
+  the table's own rule one block up, applied per item, which matters more here because a restored
+  file from a later build could carry several. If every word falls through, the list is empty and
+  the sentence below takes its no-recipient form.
+
+  IT IS A JOIN AND NOT A COUNT. Two drawers read "A and B", three read "A, B and C", and no number
+  appears: `audiences` is a set of drawers and both guardians share one, so *2 people* would be
+  wrong exactly as often as it was right.
+*/
+function audienceSentence(audiences) {
+  const words = (Array.isArray(audiences) ? audiences : [])
+    .map((a) => AUDIENCE_TEXT[a] || '').filter(Boolean);
+  if (words.length < 2) return words[0] || '';
+  return words.slice(0, -1).join(', ') + ' and ' + words[words.length - 1];
+}
 
 /*
   THE SENTENCE UNDER A SUPPRESSED NAME, and it is the screen's rather than a rule's — which is a
@@ -664,7 +690,19 @@ const AUDIENCE_TEXT = {
   Sep 6" would be the cooldown's bookkeeping arriving in a guardian's inbox.
 */
 function cooldownWhy(row) {
-  const who = AUDIENCE_TEXT[row.audience] || '';
+  /* THE LIST WHERE THE SCALAR WAS (WO-5.15), AND THERE IS NO SECOND FALLBACK BEHIND IT. An entry
+     written before that row carries no list, and src/log.js's contactAudiences() already answers
+     for it with `[audience]` — the one place that absence is ever interpreted. An
+     `|| AUDIENCE_TEXT[row.audience]` here would be a second opinion about the same missing field,
+     which is this repository's "two askers is two answers" one screen over; it was written, and it
+     silently covered for a mutation that emptied the reader, which is exactly the defect. The
+     scalar stays on the cooldown record because it is a distinct fact — who the words were written
+     for — and this sentence is about who the message reached.
+
+     NAMING SEVERAL AUDIENCES IS A DECISION ABOUT A SENTENCE AND STAYS ON THIS SCREEN:
+     `hit.explanation` is drafted into mail through `{{signals.list}}`, and the block above this
+     function is the whole of why none of this may live on the hit. */
+  const who = audienceSentence(row.audiences);
   const when = row.days === 0 ? 'today'
     : row.days === 1 ? 'yesterday'
       : 'on ' + (shortDate(row.on) || row.on) + ', ' + row.days + ' days ago';

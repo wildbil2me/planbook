@@ -10252,6 +10252,105 @@ repository and were never in it; the working tree's only hits are pre-existing p
       claim is real: a membership tap that rebuilt would produce the same subject and the same body,
       and the only thing lost would be what the teacher had typed. M4 red here too.)*
 
+---
+
+### WO-5.15 — One contact, several audiences
+
+**The decision, which is the whole of this row.** `writeContact({ audience })` recorded a scalar
+enum, and a draft to two guardians and the counselor — which WO-5.8's picker builds — has no single
+value for it. The answer is **one field added and not one widened**: `audience` keeps its type, its
+meaning and its three readers and is still **the primary's** — the drawer the words were written
+for, what every merge field resolved against — and a ninth field, **`audiences`**, records **every
+drawer the message reached, that one first**. The three alternatives and why each was refused:
+
+- **Widening `audience` to an array.** It reaches all three readers at once, it makes `''` and `[]`
+  two ways of saying the same thing, and it has no answer at all for the rows already in a teacher's
+  document — `src/log.js` holds no updater and no delete, so those are never rewritten.
+- **A joined string, `"guardian,counselor"`.** It passes every `String()` coercion and every reader
+  silently: `AUDIENCE_LABEL['guardian,counselor']` falls through to the raw string and prints it in a
+  10px pill, and `AUDIENCE_TEXT[…]` falls through to `''` and drops the recipient from the sentence.
+  A shape whose failure mode is a plausible-looking screen is the wrong shape.
+- **Recording the recipients rather than the drawers.** Names and addresses in `log[]`, on a card a
+  guardian may be sitting beside, to answer a question the drawers already answer.
+
+**The list counts drawers and never people**, which is the one thing a later reader will get wrong:
+both guardians are the `guardian` audience, so a draft to the two of them records `["guardian"]` and
+a draft to a guardian and the counselor records two. The dedupe is in `src/outreach.js`'s
+`audiencesOf()`, beside the `audienceOf()` it is built on, because recipient → audience is made in
+exactly one place. **Neither field is in the cooldown's key** — that is `studentId + ruleId`, and
+both audience fields cross out of `src/log.js` for a sentence and nothing else, so a message to
+three people silences exactly the row a message to one would. `CACHE` v124 → v125.
+
+**What the readers gained.** The history card draws **one chip per drawer**, primary first, the
+existing `.log-entry-kind` repeated rather than a new element — `.log-entry-top` already wraps and
+the chip is already `flex: 0 0 auto`, where a joined string inside one pill grows a 10px chip into a
+paragraph. **Nothing marks which chip was the primary**: the order is the claim, everyone on the row
+received the message, and a second chip style would have the card reporting a To/Cc split it never
+reads back. The suppressed signal row names them all in one sentence — *you wrote to their guardian
+and their counselor about this today* — built on this screen and never on the hit, because
+`hit.explanation` is drafted into mail through `{{signals.list}}`. An entry written by an earlier
+build has no list, and `contactAudiences()` reads it back as `[audience]` — **in one place**, which
+is what M2 below is about. The `kind` filter is untouched: no reader gained a kind, `LOG_KINDS` is
+the two the sheet writes, and there is still no exported reader that hands back all three.
+
+**The harness.** Five checks at the foot of § *the contact log* (`verify/contact-log.mjs`), driving
+the picker's own `[data-outreach-to]` toggle and pressing the real handoff, plus one in
+§ *the cooldown and the quiet middle* (`verify/cooldown-quiet.mjs`) on a planted record. The fixture
+gained a counselor with an address on Ada — a draft cannot reach two drawers unless two recipients
+have one — and one contact planted in the **pre-WO-5.15 shape**, eight fields and no list, which is
+the only way that claim can be made at all: everything the harness can drive is written by this
+build. `1441 checks · 1441 passed · 0 failed · 0 skipped`, 498s, exit 0, and
+`node tools/wo-sweep.mjs` — 42 checks · 39 passed · 0 failed · 3 to review, the same three standing
+reviews as before this row.
+
+**The mutation round — three, in the working tree against a fully staged index**, each reverted with
+`git checkout -- src/log.js` before anything else was written.
+
+| # | Mutation | Predicted | Result |
+|---|---|---|---|
+| M1 | `newContactEntry()`: `audiences: []`, the field written empty | the record, the chips and the cooldown sentence red | `1440 checks · 1435 passed · 5 failed`, exit 1 — the eight/nine-field record check, the multi-audience record, the chips, the cooldown record and the sentence |
+| M2 | `contactAudiences()`: the `[audience]` fallback for an entry with no list taken out | the rows an earlier build wrote losing their chip and their sentence | **GREEN the first time** — `1440 checks · 1440 passed`, exit 0. See below. After the repair: `1441 checks · 1438 passed · 3 failed`, exit 1 — the chips, and both suppressed-row sentences |
+| M3 | `lastContactAbout()`: `&& contactAudiences(e).length === 1`, the audience let into the cooldown's key | the multi-audience contact silencing nothing | `1441 checks · 1431 passed · 10 failed`, exit 1 — this row's two, and eight of WO-4.5's, because Ben's planted contact reaches two drawers too |
+
+**M2 is the one worth reading, and it is the reason two things in the delivered tree look like
+belt-and-braces and are not.** It ran green on a tree that had **no assertion of the back-compat
+claim at all**. Two things hid it. Every contact the harness can DRIVE is written by this build and
+carries the field, so the only rows that exercise the fallback are ones a fixture has to PLANT — and
+the one planted row that did (Ada's, in `cooldown-quiet.mjs`) was covered by the second thing:
+`cooldownWhy()` had an `|| AUDIENCE_TEXT[row.audience]` behind the list, a second opinion about the
+same missing field one screen away from the function that owns it. **The repair was to take the
+second fallback out, not to add a third**, and to plant a contact in the old shape where the history
+card reads it. **A mutation that passes is worth more than one that fails when what it finds is a
+claim nobody was making.**
+
+`grep -rn MUTATION` over the changed files after the round: no hit this work order put there; the
+repository's only matches are pre-existing prose in `tools/README.md`,
+`tools/verify/keys-legend-guards.mjs` and one unrelated comment in `src/shell.js`.
+
+**Acceptance**
+- [x] A contact written to several recipients records what the cooldown needs to silence the right
+      rule and nothing else, and the history card says who it went to. *(Driven: a draft to
+      Guardian 1 with the counselor added through row one writes ONE entry reading
+      `audience: "guardian"` / `audiences: ["guardian","counselor"]`, nine fields in
+      `docs/data-model.md`'s order. It silences the rule the draft spoke from — her second concern
+      rule, beside the one two contacts earlier had already taken off the list — and nothing else:
+      the hitless student's contact still holds nothing. M3, which lets the audience into the key,
+      reddens ten checks; M1, which empties the field, reddens five. The card draws
+      `["Guardian","Counselor"]` on that row and one chip on each of the three under it.)*
+- [x] The `kind` filter is untouched: no reader gains a kind, and there is still no exported reader
+      that hands back all three. *(`LOG_KINDS` and `ALL_KINDS` are byte-identical; the only new
+      export in `src/log.js` is `contactAudiences(entry)`, which takes an entry rather than a
+      document, hands back strings out of a four-word enum and reads no collection.
+      `verify/contact-log.mjs`'s standing structural check is green: no unfiltered `contactsFor()`,
+      no `presentationMode()` test in `src/contact-history.js`, and its imports are
+      `visibleContactsFor, contactAudiences`. The new sentence on the suppressed row carries no
+      subject, no body, no name and no address, asserted by name.)*
+- [x] `docs/data-model.md` records the field's shape under several recipients. *(The `log[]` literal
+      carries `"audiences"` with its own comment; a new bullet in § log states the two fields, the
+      primary-first order, the dedupe, the `[audience]` fallback for rows earlier builds wrote, the
+      `''`/`[]` emptiness rule and that neither field is ever in the cooldown's key. The send-flow
+      section and the RECIPIENT/AUDIENCE ruling both name it, in the same sitting as the code.)*
+
 
 
 *Phase goal: open the app at 7:40am and know what the day asks of you.*

@@ -176,14 +176,24 @@ if (!seam) {
          cannot fire and the two hits are exactly the two this check names. */
       for (var g = 1; g <= 8; g++) put('a_wo45_' + g, '${GUS}', { v: 95 });
 
-      /* THE RECORDS WO-5.4's HANDOFF WRITES. Seven fields plus "ruleId", exactly as
-         docs/data-model.md § log documents them, and "audience" carrying a real value on every
-         "contact" — which is the half of the firewall that keeps a note to self from ever being
-         counted as outreach. */
+      /* THE RECORDS WO-5.4's HANDOFF WRITES. Seven fields plus "ruleId" — and, on one of them,
+         plus "audiences" (WO-5.15) — exactly as docs/data-model.md § log documents them, and
+         "audience" carrying a real value on every "contact", which is the half of the firewall
+         that keeps a note to self from ever being counted as outreach. */
+      /* ADA'S RECORD CARRIES NO "audiences" AT ALL, AND THAT IS THE OLD-ENTRY CASE (WO-5.15).
+         Nothing in the app rewrites a log entry, so a document a teacher has been using since
+         before that row is full of contacts shaped exactly like this one. src/log.js reads it back
+         as one-item list off the scalar, and the check below asserts her suppressed row still says
+         "you wrote to their guardian" word for word. Do not add the field to this record. (No
+         backticks in here; it is inside a template literal and one would close it.) */
       doc.log.push({ id:'l_wo45_a', studentId:'${ADA}', at:stamp(back(3)), kind:'contact',
         audience:'guardian', subject:'Grade check-in', body:'', ruleId:'grade-below' });
+      /* AND BEN'S CARRIES ONE, which is what a contact written by this build looks like when the
+         draft went to two people: the scalar is the drawer the words were written for and the list
+         is every drawer it reached, that one first. */
       doc.log.push({ id:'l_wo45_b', studentId:'${BEN}', at:stamp(back(2)), kind:'contact',
-        audience:'counselor', subject:'Missing work', body:'', ruleId:'missing-count' });
+        audience:'counselor', audiences:['counselor','guardian'],
+        subject:'Missing work', body:'', ruleId:'missing-count' });
       doc.log.push({ id:'l_wo45_c', studentId:'${CAL}', at:stamp(back(20)), kind:'contact',
         audience:'guardian', subject:'Missing work', body:'', ruleId:'missing-count' });
       doc.log.push({ id:'l_wo45_e', studentId:'${EVE}', at:stamp(back(4)), kind:'note',
@@ -336,6 +346,33 @@ if (!seam) {
         && /You wrote to their guardian about this on /.test(adaHeld.why || '')
         && /, 3 days ago\. Back on the list on /.test(adaHeld.why || ''),
       JSON.stringify(opened));
+
+    /*
+      AND THE TWO SHAPES A `contact` CAN CARRY, READ OFF THE SAME LIST (WO-5.15).
+
+      Ada's planted record has no `audiences` at all — the shape every entry in a document older
+      than that row has, and one nothing in the app will ever rewrite — so her sentence above is
+      the fallback proved: src/log.js reads it back as `[audience]` and the row says "their
+      guardian" exactly as it did. Ben's carries the list, and his row says both drawers in one
+      sentence rather than naming the primary and quietly dropping the other.
+
+      IT IS A JOIN AND NEVER A COUNT. "2 people" would be wrong every time a draft went to both
+      guardians, which are one drawer; the sentence names the drawers and leaves counting alone.
+    */
+    const benHeld = opened.rows.filter((r) => r.name.indexOf(BEN_N) >= 0)[0] || {};
+    check('a contact that went to several people is named in full on the suppressed row — "you '
+      + 'wrote to their counselor and their guardian about this" — in the order the record '
+      + 'carries, primary first, while a contact written before `audiences` existed still reads '
+      + 'as '
+      + 'the one drawer its scalar names. Half of who a message went to is what invites the second '
+      + 'message, and a suppression a teacher cannot check is the defect this sentence exists '
+      + 'against',
+      /You wrote to their counselor and their guardian about this /.test(benHeld.why || '')
+        && /, 2 days ago\. Back on the list on /.test(benHeld.why || '')
+        && /You wrote to their guardian about this /.test(adaHeld.why || '')
+        && / and /.test(adaHeld.why || '') === false,
+      'Ben’s row reads ' + JSON.stringify(benHeld.why)
+        + ' and Ada’s ' + JSON.stringify(adaHeld.why));
 
     /*
       *WRITE ANYWAY* — the owner's ruling of 2026-08-20 — AND THE THING IT MUST NOT DO.

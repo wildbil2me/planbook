@@ -3,8 +3,8 @@
 
   ── WHAT IS IN `log[]`, AND WHY THE `kind` FILTER IS THE WHOLE OF THE FIREWALL ──
 
-  docs/data-model.md gives one collection, `{ id, studentId, at, kind, audience, subject, body }`,
-  and three kinds share it: `behavior` and `note` are WO-4.4's and `contact` is WO-5.4's — this file
+  docs/data-model.md gives one collection, `{ id, studentId, at, kind, audience, subject, body }`
+  — plus `ruleId` and `audiences` on a `contact` and on nothing else — and three kinds share it: `behavior` and `note` are WO-4.4's and `contact` is WO-5.4's — this file
   writes all three, through two writers that share nothing but the `push` — and the contact is the
   record of outreach that actually left the building, which the cooldown (WO-4.5) reads and
   `{{behavior.recent}}` does not. **Nothing else in the app reads `log[]`**; a grep for `doc.log`
@@ -19,6 +19,14 @@
   away from being counted as outreach, and the cooldown's whole job is to count outreach. A
   `contact` carries a real one, which is the same rule read from the other side: it went to
   somebody, and the suppressed row on the signal list says which.
+
+  **AND SINCE WO-5.15 THERE ARE TWO OF THEM, WHICH IS ONE FIELD ADDED AND NOT ONE WIDENED.** A
+  draft goes to several people now (WO-5.8) and has no single drawer, so a `contact` carries
+  `audience` — the primary's, the one the words were written for and the merge fields resolved
+  against — AND `audiences`, every drawer it reached with that one first. The scalar keeps its
+  meaning, its type and its readers; the list is what "who did this go to" is asked of. The
+  emptiness rule is unchanged and now reads on both: a note to self carries `''` and `[]`, because
+  it still went to nobody.
 
   ── APPEND-ONLY, AND THERE IS NOTHING HERE TO EDIT WITH ──
 
@@ -207,10 +215,64 @@ export function writeEntry(studentId, kind, subject, body) {
   `audience` is written as it is handed over and is not checked against `AUDIENCES`: that vocabulary
   is src/templates.js's — it is the drawer a TEMPLATE is filed under — and importing it here would
   put the template model inside the log's. The caller maps a recipient onto it (src/outreach.js's
-  audienceOf), which is the one place in the app that mapping is made.
+  audienceOf), which is the one place in the app that mapping is made. **`audiences` is handed over
+  the same way and checked the same amount** (WO-5.15): src/outreach.js's audiencesOf() maps the
+  chosen recipients onto the enum, this file puts the list in order and takes the duplicates out,
+  and neither end asks src/templates.js whether the words are ones it knows.
 */
+/*
+  ONE LIST OF DRAWERS, PRIMARY FIRST, DEDUPED — the whole of the shape WO-5.15 decided, written
+  once so that the WRITER and the READER below cannot come to disagree about it.
+
+  IT COUNTS DRAWERS AND NEVER PEOPLE, and the two-guardian case is exactly where a reader who
+  assumed otherwise would be wrong: a draft to both guardians is two people and ONE audience, where
+  a draft to a guardian and the counselor is two of each. `['guardian','guardian']` would invite a
+  count that is wrong half the time, so the duplicate comes out here and the field is a set in
+  picker order.
+
+  THE PRIMARY LEADS BECAUSE THE WORDS WERE WRITTEN FOR HER. `{{guardian.name}}` resolved against
+  the primary, so the first entry of this list is the drawer the message actually reads as; the
+  rest were copied. Nothing on either surface distinguishes them — see contactRow() — and the
+  order is the only claim this field makes about it.
+
+  IT TAKES THE SCALAR AS ITS FIRST ARGUMENT, which is what makes an entry written by an earlier
+  build read sensibly: that entry has no `audiences` at all, and `[audience]` is the truth about it
+  — it went to one drawer and the field beside this one says which. src/log.js has no updater and
+  no delete, so entries already in a teacher's document are never rewritten and this is the only
+  place that absence is ever answered.
+
+  NO `.push(` ANYWHERE IN IT, and that is deliberate rather than stylistic: tools/verify/
+  log-entries.mjs pins this module at exactly two pushes — one per writer — so that appending is
+  provably all either of them can do. A loop building a list with `push` reads as a third writer to
+  the one check that makes append-only structural.
+*/
+function audienceList(primary, list) {
+  const all = [String(primary == null ? '' : primary).trim()]
+    .concat(Array.isArray(list) ? list.map((v) => String(v == null ? '' : v).trim()) : []);
+  return all.filter((v, at) => !!v && all.indexOf(v) === at);
+}
+
+/*
+  EVERY DRAWER ONE CONTACT WENT TO — the reader half of the rule above, and the one thing this
+  module exports that takes an entry rather than a document.
+
+  It hands back STRINGS OUT OF AN ENUM and nothing else: no name, no address, no subject, no body.
+  src/contact-history.js already holds whole entries (visibleContactsFor() gives it them), so this
+  crosses no line that file was not already on; what it must never become is a reader that lets a
+  caller who holds an entry get at anything else, which is why it returns a list of four possible
+  words rather than the recipients they were computed from.
+
+  A `note` or a `behavior` entry yields `[]`, for the same reason its `audience` is `''`: it went
+  to nobody. That is the firewall's second half read through this function rather than around it.
+*/
+export function contactAudiences(entry) {
+  const e = entry || {};
+  return audienceList(e.audience, e.audiences);
+}
+
 export function newContactEntry(contact) {
   const c = contact || {};
+  const audience = String(c.audience == null ? '' : c.audience).trim();
   return {
     id: newId('l'),
     studentId: String(c.studentId || ''),
@@ -219,10 +281,31 @@ export function newContactEntry(contact) {
     /* THE OTHER HALF OF THE FIREWALL, FILLED RATHER THAN EMPTIED. An entry written by the sheet
        carries `audience: ''` because it went to nobody; this one went to somebody, and the
        cooldown's suppressed row says which — "you wrote to their guardian about this on Sep 6". */
-    audience: String(c.audience == null ? '' : c.audience).trim(),
+    audience: audience,
+    /* THE NINTH FIELD ON A `contact` AND THE SIXTH IN ORDER, AND IT IS WO-5.15's WHOLE DECISION
+       (2026-09-20). A draft to two guardians
+       and the counselor has no single value for the scalar above, and the answer is NOT to widen
+       that field: three readers key off it, one of them is the cooldown, and an array arriving
+       where a string was would reach every one of them at once — including entries written by
+       every earlier build, which nothing here may rewrite.
+
+       SO THE SCALAR KEEPS ITS MEANING AND GAINS A NEIGHBOUR. `audience` is still the drawer the
+       words were written for — the primary's, which is what the merge fields resolved against and
+       what the message actually reads as — and `audiences` is every drawer it reached, that one
+       first. A single-recipient contact therefore writes `['guardian']` beside `'guardian'`: one
+       shape for every row, so no reader has to ask which build wrote it (src/calendar.js's
+       newEvent() rule).
+
+       IT CHANGES NOTHING ABOUT WHAT IS SILENCED. The cooldown keys on `studentId + ruleId` and has
+       never read this field for anything but a sentence — lastContactAbout() below hands it on for
+       exactly that — so a message to three people silences precisely what a message to one would.
+       Widening the key by audience is the mistake WO-4.5's Traps line is about, one field over. */
+    audiences: audienceList(audience, c.audiences),
     subject: String(c.subject == null ? '' : c.subject).trim(),
     body: String(c.body == null ? '' : c.body).trim(),
-    /* THE EIGHTH FIELD, AND IT CARRIES src/signals.js's OWN `hit.ruleId` UNCHANGED. No mapping and
+    /* THE FIELD THE COOLDOWN KEYS ON — the eighth when WO-5.4 wrote it and the ninth in the record
+       since WO-5.15 put `audiences` above — AND IT CARRIES src/signals.js's OWN `hit.ruleId`
+       UNCHANGED. No mapping and
        no second vocabulary — docs/data-model.md § log says so, and lastContactAbout() below reads
        exactly this string. A draft opened with no hit in its direction has no rule and writes `''`,
        which silences nothing: the under-fire posture the block at the foot of this file argues. */
@@ -391,8 +474,11 @@ export function behaviorCountSince(doc, studentId, throughISO, days) {
 
   A reader here still names the kinds it wants, and there is still no exported reader that hands
   back an entry. What crosses these three functions is a DATE, and — for the cooldown alone — the
-  `audience` enum, because the suppressed row on the list has to say *which* contact silenced it and
-  "you emailed his guardian" is the useful half of that sentence. A subject and a body do not cross:
+  `audience` enum and, since WO-5.15, the `audiences` list beside it, because the suppressed row on
+  the list has to say *which* contact silenced it and "you emailed his guardian" is the useful half
+  of that sentence. **The list is more of the same word rather than a new kind of thing**: four
+  possible strings out of an enum this app already prints, with no name, no address and no count of
+  people in them. A subject and a body do not cross:
   the list screen would then be one careless template away from putting what a teacher wrote about a
   child into an email about that child.
 */
@@ -419,6 +505,17 @@ const ALL_KINDS = ['behavior', 'note', 'contact'];
 
   Newest first out of entriesOfKind(), so the first match is the most recent contact about that
   signal, which is the one the cooldown counts from.
+
+  IT HANDS BACK BOTH HALVES OF THE AUDIENCE AND STILL KEYS ON NEITHER (WO-5.15). `audience` is the
+  drawer the words were written for and `audiences` is every drawer the message reached; the filter
+  above reads neither, because what silences a rule is `studentId + ruleId` and nothing else. So a
+  message to a guardian, the counselor and an administrator silences exactly the row a message to
+  the guardian alone would — over-silencing is the thing the block at the foot of this file refuses,
+  and an audience in the key is how it would arrive.
+
+  THE SECOND IS COMPUTED RATHER THAN READ, which is what makes an entry written by an earlier build
+  answer this question at all: contactAudiences() falls back to `[audience]`, so a row with no
+  `audiences` on it reads as the one drawer it went to instead of as nothing.
 */
 export function lastContactAbout(doc, studentId, ruleId, throughISO) {
   const rule = String(ruleId || '');
@@ -427,7 +524,8 @@ export function lastContactAbout(doc, studentId, ruleId, throughISO) {
     .filter((e) => String(e.ruleId || '') === rule
       && String(e.at || '').slice(0, 10) <= throughISO)[0];
   return found
-    ? { on: String(found.at).slice(0, 10), audience: String(found.audience || '') }
+    ? { on: String(found.at).slice(0, 10), audience: String(found.audience || ''),
+      audiences: contactAudiences(found) }
     : null;
 }
 

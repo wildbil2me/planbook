@@ -27,8 +27,8 @@
   changing your mind about a rebuild leave the document byte-identical, and the harness asserts that
   on `rev` across the whole of it. **What writes is the handoff** — recordHandoff() below, on the
   click that opens the mail app — and what it writes is one `contact` in `log[]` through
-  src/log.js's writeContact(): the audience, the subject, the body and the `ruleId` the cooldown
-  keys on. This file holds no `update()` of its own and knows nothing about the shape of a log
+  src/log.js's writeContact(): the audience the words were written for, every audience the message
+  reaches (WO-5.15), the subject, the body and the `ruleId` the cooldown keys on. This file holds no `update()` of its own and knows nothing about the shape of a log
   entry; the split is src/log-sheet.js's with the sheet it draws.
 
   **AND COPYING IS STILL A READ (WO-5.7).** The second door writes nothing — not a log entry, not a
@@ -225,7 +225,8 @@ import { orderHits } from './signals.js';
    for why the words are shared where the pixels already were, in src/shell.css § UNRESOLVED. */
 import { UNDEFINED_FIELD_HEAD, FIELD_FIX_SENTENCE, blockHead } from './block-strip.js';
 /* THE ONE WRITER THIS FLOW REACHES (WO-5.4), and the whole of what this file knows about `log[]`.
-   It is handed five named fields and hands back the record it appended; the shape, the timestamp,
+   It is handed six named fields — five since WO-5.4 and `audiences` since WO-5.15 — and hands back
+   the record it appended; the shape, the timestamp,
    the id and the append-only rule are all src/log.js's, exactly as they are for the sheet in
    src/log-sheet.js. Nothing else from that module is imported — no reader, no kind list — because
    this screen has no reason to read the log it writes to. */
@@ -451,7 +452,10 @@ export function outreachModel() {
        one, unchanged in name and in meaning since WO-5.3 because every reader of it wants the
        same thing it always wanted; and `copies` (WO-5.8) is the rest of the selection, in the
        picker's own order, which is what rides in Cc. */
-    recipients: [], recipient: null, copies: [], audience: '',
+    /* `audiences` (WO-5.15) is empty here for the same reason `audience` is, and the pair is what
+       recordHandoff() files a `contact` under: a projected screen resolves nobody, so there is
+       nothing to say about who a draft would have gone to. */
+    recipients: [], recipient: null, copies: [], audience: '', audiences: [],
     templates: [], templateId: '', templateName: '',
     subject: '', body: '',
     cc: { on: false, email: '', ok: false },
@@ -501,12 +505,22 @@ export function outreachModel() {
      student with nobody on her roster entry still gets a named recipient and a reason below. */
   const chosen = outreach.recipientByKey(picked, primaryKey) || picked[0] || recipients[0] || null;
   const copies = chosen ? picked.filter((r) => r.key !== chosen.key) : [];
-  /* ONE AUDIENCE, AND IT IS THE PRIMARY'S — WO-5.15's, NOT THIS WORK ORDER'S. `writeContact()`
-     files a `contact` under a scalar enum, and a draft to two guardians and the counselor has no
-     single value for it. That is booked as its own row; today's behaviour stands, which is that
-     the log records the audience of the person the message was written TO. Read it as a known
-     limit of the contact log rather than a claim about who the message reached. */
+  /* ONE AUDIENCE AND A LIST BESIDE IT, AND WO-5.15 IS THE ROW THAT SETTLED THE SECOND (2026-09-20).
+     `audience` is unchanged and still the PRIMARY'S: it is the drawer the words were written for,
+     what every merge field resolved against, and what the sentence on a suppressed signal row is
+     about. `audiences` is every drawer this draft reaches, that one first and the copies in chip
+     order — the picker's order, so the log reads back in the order the teacher was looking at.
+
+     THE MAPPING IS ASKED FOR ONCE, in src/outreach.js, which is where recipient → audience is made
+     and where the dedupe lives: both guardians are the `guardian` drawer, so a draft to two of them
+     reaches ONE audience and this list is a set rather than a count of people. Nothing here
+     re-decides that, and a second `.map(audienceOf)` on this screen is how it would come to.
+
+     WHAT THE LIST IS NOT: it is not a key. src/log.js's cooldown silences on `studentId + ruleId`
+     and reads this field only to say who a message went to, so a draft to three people silences
+     exactly what a draft to one would — see that file at lastContactAbout(). */
   const audience = chosen ? outreach.audienceOf(chosen) : '';
+  const audiences = chosen ? outreach.audiencesOf([chosen].concat(copies)) : [];
   /* THE TONE AND NOT THE AUDIENCE, AND THE SECOND HALF OF THAT IS A REVERSAL (WO-5.13). This read
      filtered on BOTH until 2026-09-20 — WO-5.3's seventh Acceptance line, inherited from WO-5.2's
      first, proved and mutation-tested — and the audience half came out on the owner's ruling:
@@ -658,6 +672,7 @@ export function outreachModel() {
       email: chosen.email } : null,
     copies: copies.map((r) => ({ key: r.key, label: r.label, name: r.name, email: r.email })),
     audience: audience,
+    audiences: audiences,
     templates: offered.map((t) => ({ id: t.id, name: t.name, active: !!record && t.id === record.id })),
     templateId: record ? record.id : '',
     templateName: record ? record.name : '',
@@ -1731,13 +1746,18 @@ export function setOutreachMailDoor(id) {
   is looking at is what the mail app receives and what the log records, which is the same rule that
   made `mailtoUrl()` read the boxes rather than the resolver's output.
 
-  `audience` IS THE PRIMARY'S AND SAYS NOTHING ABOUT THE COPIES, AND THAT IS WO-5.15's ROW RATHER
-  THAN AN OVERSIGHT HERE (WO-5.8). src/log.js's `contact` carries a scalar enum, and a message
-  written to a guardian and copied to the counselor has no single value for it. The picker now
-  builds such a draft; this writer records the audience of the person it was WRITTEN to, which is
-  today's behaviour left standing on purpose rather than widened under a work order that was not
-  asked to touch the log. Read it as a known limit of the contact log — the cooldown keys on the
-  student and the rule, not on the audience, so nothing in WO-5.4's flow is wrong because of it.
+  `audience` IS STILL THE PRIMARY'S, AND `audiences` BESIDE IT IS EVERY DRAWER THE MESSAGE REACHED
+  (WO-5.15, 2026-09-20 — the row WO-5.8 left this question to). The scalar was never wrong, only
+  incomplete: the message IS addressed to the primary, every merge field resolved against her, and
+  the sentence on a suppressed signal row is about the words rather than about the distribution. So
+  it keeps its meaning and its type and a LIST joins it, primary first, deduped by src/outreach.js
+  — which is what the history card reads back when it says who a contact went to.
+
+  **NEITHER FIELD IS A KEY AND NOTHING HERE MADE ONE OF THEM ONE.** The cooldown silences on
+  `studentId + ruleId`; both audience fields cross out of src/log.js for a sentence and for nothing
+  else. A message to a guardian, the counselor and an administrator therefore silences exactly the
+  row a message to the guardian alone would — which is the under-fire posture that file's foot
+  argues, held one field over from where WO-4.5 argued it.
 
   `ruleId` IS `hitFor(tone)`'s OWN `hit.ruleId`, UNCHANGED. It is the same call `{{grade.delta}}`
   resolves against, so the signal the draft SPEAKS from is the signal the cooldown will silence —
@@ -1761,6 +1781,7 @@ export function recordHandoff() {
   const entry = writeContact({
     studentId: subject.studentId,
     audience: model.audience,
+    audiences: model.audiences,
     subject: draft.subject,
     body: draft.body,
     ruleId: hit ? hit.ruleId : '',

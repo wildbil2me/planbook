@@ -19,7 +19,10 @@
 
   ── WHAT A ROW SHOWS, AND THE ONE THING IT DELIBERATELY DOES NOT ──
 
-  The audience, the subject, the day, and the signal that prompted it. **Not the body.** The record
+  Every audience it went to (WO-5.15 — one chip each, primary first), the subject, the day, and the
+  signal that prompted it. **Not the body**, and not a name or an address either: the drawers are
+  four fixed words out of src/templates.js's enum, so a card read beside a guardian says *Counselor*
+  and never who the counselor is. The record
   carries the whole message — WO-5.4's first Deliverable, and the backup carries it too — but a card
   holding four full emails is a card nobody reads, and the message itself is already in the
   teacher's own sent mail, which is the entire reason *Copy me* exists in the send flow. One line
@@ -58,8 +61,12 @@
 
 import { getDoc } from './store.js';
 /* The reader, and the whole of what this file asks of the model: one student's contacts, newest
-   first, with whatever may not be on screen already taken out. */
-import { visibleContactsFor } from './log.js';
+   first, with whatever may not be on screen already taken out. Plus, since WO-5.15, the one
+   question a caller holding an entry may ask about its SHAPE — which drawers it went to, with an
+   entry written before that row falling back to the single `audience` it carries. That fallback
+   lives in src/log.js because src/log.js owns the record; a `entry.audiences || [entry.audience]`
+   written here would be this file deciding what an old row means. */
+import { visibleContactsFor, contactAudiences } from './log.js';
 /* What a rule is CALLED, out of the engine's own settings table — the same call the signal card
    makes for the same string. A second list of rule names here would be a second thing to keep in
    step with SIGNAL_SETTINGS, and the first disagreement would be a card saying a teacher wrote
@@ -121,11 +128,32 @@ function el(tag, className, text) {
 }
 
 /*
-  ONE CONTACT. The audience chip, the subject, the day — and the rule that prompted it underneath.
+  ONE CONTACT. The audience chips, the subject, the day — and the rule that prompted it underneath.
 
   THE CHIP IS THE NEUTRAL ONE. `.log-entry-kind` without the `behavior` modifier, which src/detail.css
   reserves for the one kind that carries a colour, because a message home is a thing the teacher did
   and not a finding about a child.
+
+  ── ONE CHIP PER AUDIENCE, AND THAT IS WO-5.15's HALF OF THE ROW (2026-09-20) ──
+
+  A draft goes to several people now (WO-5.8) and the record carries every drawer it reached, so
+  this card says every one of them: *Guardian · Counselor · Missing work · Sep 6*. A contact with
+  one audience draws exactly the row it drew before, because the list holds one word.
+
+  **IT IS THE EXISTING CHIP REPEATED AND NOT A NEW ELEMENT.** `.log-entry-top` is a wrapping flex
+  row and `.log-entry-kind` is `flex: 0 0 auto`, so several of them line up and wrap on a narrow
+  iPad without a rule being written; a joined string inside one pill would grow a 10px chip into a
+  paragraph and is the thing that actually breaks the layout. No control is added here — these are
+  `<span>`s, as they have always been — so this file still declares no touch target.
+
+  **NOTHING MARKS WHICH ONE WAS THE PRIMARY, AND THAT IS A RULING.** The list is written primary
+  first and the order is the whole of the claim. A second chip style would have this card reporting
+  a To/Cc split it never reads back from anywhere — the log records who a message went to, not what
+  the headers looked like — and every one of these people received it. If a later work order wants
+  that distinction on screen it wants a decision first, not a modifier class.
+
+  A CONTACT THAT REACHED NOBODY THE APP CAN NAME still gets one chip, reading *Contact* — a row
+  with no chip at all would lose the alignment the card is read down.
 
   A CONTACT WITH NO RULE PRINTS NO LINE, rather than a line saying so. A draft opened from the
   student record about a student nothing has fired for is about no signal, `ruleId` is `''`, and the
@@ -138,7 +166,11 @@ function el(tag, className, text) {
 function contactRow(entry) {
   const row = el('div', 'log-entry');
   const top = el('div', 'log-entry-top');
-  top.append(el('span', 'log-entry-kind', audienceLabel(entry.audience) || 'Contact'));
+  const drawers = contactAudiences(entry);
+  if (!drawers.length) top.append(el('span', 'log-entry-kind', 'Contact'));
+  drawers.forEach((audience) => {
+    top.append(el('span', 'log-entry-kind', audienceLabel(audience) || 'Contact'));
+  });
   /* A SUBJECT LINE THAT IS EMPTY IS STILL A MESSAGE THAT WENT OUT — src/log.js's writeContact()
      records it where writeEntry() would refuse it, so the card needs a stand-in rather than a blank
      first line. */

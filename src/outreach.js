@@ -108,6 +108,30 @@ export function audienceOf(recipient) {
 }
 
 /*
+  THE SAME MAPPING OVER A LIST, DEDUPED, IN THE ORDER HANDED OVER (WO-5.15).
+
+  It is here rather than in src/outreach-view.js for the reason the header gives about the line
+  above: recipient → audience is made in exactly one place, and a second `.map(audienceOf)` in the
+  screen would be that place becoming two the first time somebody tightened one of them.
+
+  **THE DEDUPE IS THE WHOLE POINT AND IT IS WHY THIS IS NOT A ONE-LINE `map`.** Both guardians are
+  the `guardian` drawer — the header says so three paragraphs up, and `AUDIENCES` is deliberately
+  not widened — so a draft to Guardian 1 and Guardian 2 reaches ONE audience and a draft to Guardian
+  1 and the counselor reaches two. A list that kept the duplicate would read as a count of people,
+  which it is not, and the contact log would file a message under the same drawer twice.
+
+  THE ORDER IS THE CALLER'S AND IS NOT SORTED. src/outreach-view.js hands the primary first and the
+  copies in chip order, which is the order a teacher is looking at; src/log.js writes that order
+  down and both screens read it back. Sorting here would put the counselor above a guardian on one
+  contact and below her on the next, for no reason anybody could see — WO-5.8's own argument about
+  the Cc line, one field over.
+*/
+export function audiencesOf(recipients) {
+  const all = arrayOf(recipients).filter(Boolean).map((r) => audienceOf(r));
+  return all.filter((a, at) => all.indexOf(a) === at);
+}
+
+/*
   EVERY PERSON THIS STUDENT CAN BE WRITTEN TO, in the order WO-5.3's Deliverables name them:
   guardians in roster order, then the counselor, then the administrator, then the student.
 

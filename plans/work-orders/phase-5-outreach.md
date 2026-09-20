@@ -1607,7 +1607,7 @@ doors a ceiling while making the count correct for the one that has one.
 
 ## WO-5.15 — One contact, several audiences
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-5.8
+**Ship** — · **Status** ✅ DONE — 2026-09-20 · **Size** S · **Depends on** WO-5.8
 
 **Why it exists.** **Booked out of the reading, not out of WO-5.8's Deliverables, which never
 mentioned it.** `writeContact({ audience })` (`src/outreach-view.js:1417` → `src/log.js:222` →
@@ -1635,11 +1635,28 @@ decides whether the cooldown and the history should say more, and what.
   `behavior` firewall by so much as one reader.
 
 **Acceptance**
-- [ ] A contact written to several recipients records what the cooldown needs to silence the right
-      rule and nothing else, and the history card says who it went to.
-- [ ] The `kind` filter is untouched: no reader gains a kind, and there is still no exported reader
-      that hands back all three.
-- [ ] `docs/data-model.md` records the field's shape under several recipients.
+- [x] A contact written to several recipients records what the cooldown needs to silence the right
+      rule and nothing else, and the history card says who it went to. *(**The decision:
+      `audience` keeps its type and its meaning — the primary's, the drawer the words were written
+      for — and a ninth field `audiences` records every drawer the message reached, that one first,
+      deduped.** A draft to Guardian 1 with the counselor added writes one entry reading
+      `audience: "guardian"` / `audiences: ["guardian","counselor"]`, and silences her second
+      concern rule and nothing else: neither field is in the cooldown's key. M3 — the audience let
+      into that key — reddens ten checks; M1 — the field written empty — reddens five. The card
+      draws one chip per drawer, `["Guardian","Counselor"]`, with the three single-audience rows
+      under it intact.)*
+- [x] The `kind` filter is untouched: no reader gains a kind, and there is still no exported reader
+      that hands back all three. *(`LOG_KINDS` and `ALL_KINDS` byte-identical; the one new export
+      in `src/log.js` is `contactAudiences(entry)`, which takes an entry rather than a document and
+      hands back strings out of a four-word enum. The standing structural check over
+      `src/contact-history.js` is green — no unfiltered `contactsFor()`, no `presentationMode()`
+      test — and the new suppressed-row sentence carries no subject, no body, no name and no
+      address, asserted by name.)*
+- [x] `docs/data-model.md` records the field's shape under several recipients. *(The `log[]` literal
+      carries `"audiences"`; a new bullet in § log states both fields, the primary-first order, the
+      dedupe that counts drawers and never people, the `[audience]` fallback for rows earlier builds
+      wrote, the `''`/`[]` emptiness rule, and that neither field is ever in the cooldown's key. The
+      send-flow section and the RECIPIENT/AUDIENCE ruling name it too, in the same sitting.)*
 
 **Traps** — **The under-fire posture at the foot of `src/log.js` governs this row.** Praise not sent
 is a missed opportunity; **a rule silenced by a message that was never about it is how a teacher

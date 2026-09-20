@@ -75,12 +75,22 @@ if (!seam) {
   const TEACHER_EMAIL = 'wo54teacher@example.invalid';
   const G1_EMAIL = 'wo54guardian@example.invalid';
   const G2_EMAIL = 'wo59guardian@example.invalid';
+  /* ADA'S COUNSELOR, ADDED BY WO-5.15, and the one thing the fixture needed for that row: a draft
+     cannot reach two audiences unless two recipients have addresses. It changes nothing above the
+     WO-5.15 block — the picker opens with the FIRST recipient chosen and the first recipient is
+     still Guardian 1, so every `audience === 'guardian'` in this file is the same assertion it
+     was, and a chip that is merely offered is not a chip that is on the message. */
+  const C_EMAIL = 'wo515counselor@example.invalid';
   /* Strings nothing else in this repository contains, so "is this on the page" is a search over
      everything that was rendered rather than an inspection of the fields somebody remembered to
      look at — WO-6.3's technique, borrowed here as the two sections above it borrow it. */
   const SUBJECT_MARK = 'Wo54SubjectLine';
   const BODY_MARK = 'Wo54BodyParagraph';
   const SECOND_SUBJECT = 'Wo54SecondSubjectLine';
+  /* WO-5.15's planted old-shape contact, which needs a mark of its own: the check that reads it
+     back has to name the row it is looking at, and every other mark in this file belongs to a
+     contact the app wrote. */
+  const OLD_SUBJECT = 'Wo515OldShapeSubject';
 
   const onView = async () => await evalJs(
     "(function(){var e=document.querySelector('main > :not(.hidden)');return e?e.id:'';})()");
@@ -150,7 +160,10 @@ if (!seam) {
         email:'', phone:'', phone2:'',
         guardians:[{ name:'Wo54Guardian One', relation:'Mother', email:'${G1_EMAIL}',
           phone:'', phone2:'', language:'en', preferred:true }],
-        counselor:{ name:'', email:'' }, notes:'' });
+        /* WO-5.15: a second addressable recipient, and the only reason she has one. A COUNSELOR
+           rather than a second guardian, because two guardians are ONE audience and the check at
+           the foot of this file is about a contact reaching two. */
+        counselor:{ name:'Wo515Counselor One', email:'${C_EMAIL}' }, notes:'' });
       doc.students.push({ id:'${BEN}', first:'Ben', last:'Wo54Never', nickname:'',
         email:'', phone:'', phone2:'', guardians:[], counselor:{ name:'', email:'' }, notes:'' });
       /* THE THIRD STUDENT (WO-5.9): Ben plus one guardian with an address, and nothing else. The
@@ -294,13 +307,18 @@ if (!seam) {
         status: document.getElementById('outreachStatus').textContent,
         stillOpen: !document.getElementById('outreachModal').classList.contains('hidden') }; })()`);
     check('pressing the handoff appends exactly ONE entry, and it is the record docs/data-model.md '
-      + '§ log documents — the eight fields in order, `kind: "contact"`, the AUDIENCE the template '
-      + 'was filed under, and a local `at` stamp carrying its offset rather than a Z',
+      + '§ log documents — the nine fields in order (eight until WO-5.15 put `audiences` beside '
+      + 'the scalar), `kind: "contact"`, the AUDIENCE the template was filed under with a '
+      + 'single-item list beside it, and a local `at` stamp carrying its offset rather than a Z',
       handoff.ready === true && handoff.pressed.had === true && handoff.entries === 1
         && !!handoff.entry && handoff.entry.kind === 'contact'
         && handoff.entry.studentId === ADA && handoff.entry.audience === 'guardian'
+        /* ONE SHAPE FOR EVERY ROW (WO-5.15): a single-recipient contact writes the list too, so no
+           reader ever has to ask which build wrote a row. The list is not an alternative to the
+           scalar and never empty beside a filled one. */
+        && JSON.stringify(handoff.entry.audiences) === JSON.stringify(['guardian'])
         && JSON.stringify(handoff.keys) === JSON.stringify(
-          ['id', 'studentId', 'at', 'kind', 'audience', 'subject', 'body', 'ruleId'])
+          ['id', 'studentId', 'at', 'kind', 'audience', 'audiences', 'subject', 'body', 'ruleId'])
         && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/.test(handoff.entry.at)
         && handoff.rev > before.rev,
       handoff.entries + ' entr(y/ies) written, rev ' + before.rev + ' → ' + handoff.rev
@@ -813,6 +831,197 @@ if (!seam) {
         + ', the draft is still up = ' + onRecord.stillOpen
         + ', and the window still carries the mark set before the press = '
         + onRecord.sameDocument);
+
+    /* ── ONE CONTACT, SEVERAL AUDIENCES (WO-5.15) ──
+
+       WO-5.8 gave the picker several recipients and left the log a scalar. This section drives a
+       draft that reaches TWO drawers and reads back the three things that had to stay true: what
+       the record says, what the cooldown silences, and what the card says it went to.
+
+       IT RUNS LAST, AFTER WO-5.9's, FOR THE REASON THAT BLOCK GIVES ABOUT ITSELF. Three checks
+       above count contacts rather than name them — the blocked draft's `entries === 2` and the
+       projector's `inDoc === 2` — and a third contact of Ada's written earlier would move numbers
+       that belong to other claims. Everything it writes is swept by the cleanup below, which
+       filters on the same `s_wo54` prefix.
+
+       AND IT IS ADA'S THIRD CONTACT, ON HER SECOND RULE. Two handoffs above already silenced the
+       rule the card led on, so the row she is still drawn for leads on the OTHER one — which is
+       what makes "silences the right rule and nothing else" a claim with something to be wrong
+       about here: a build that let an audience into the cooldown's key would move a rule nobody
+       wrote about, and a build that silenced on the student would have taken her off the list two
+       contacts ago. */
+    await evalJs(`(function(){
+      document.querySelectorAll('.modal-overlay:not(.hidden) [data-modal-close]').forEach(
+        function(b){ b.click(); });
+      return 1; })()`);
+    await new Promise(r => setTimeout(r, 200));
+    /* ONE CONTACT IN THE PRE-WO-5.15 SHAPE, PLANTED, AND IT IS THE ONLY WAY THIS CLAIM CAN BE MADE.
+       Every contact the app writes now carries `audiences`, so nothing the harness can DRIVE
+       produces the row every entry in a teacher's existing document has: the eight fields and no
+       list. src/log.js has no updater and no delete, so those rows are never rewritten and
+       contactAudiences() reading them back as `[audience]` is what keeps a year of history on the
+       card. **Do not add `audiences` to this record.** It carries `ruleId: ''` so that it silences
+       nothing and moves no claim two checks below, and it is dated five days back so it sorts under
+       the three written today. */
+    const planted = await evalJs(`(async function(){
+      var s = window.planbook.store;
+      var on = window.planbook.calendar.shiftDays(
+        window.planbook.attendance.todayISO(), -5) + 'T09:00:00-04:00';
+      s.update(function(doc){
+        if (!Array.isArray(doc.log)) doc.log = [];
+        doc.log.push({ id:'l_wo515old', studentId:'${ADA}', at:on, kind:'contact',
+          audience:'admin', subject:'${OLD_SUBJECT}', body:'', ruleId:'' });
+      });
+      await s.flush();
+      var e = (s.getDoc().log || []).filter(function(x){ return x.id === 'l_wo515old'; })[0];
+      return { there: !!e,
+        hasList: !!e && Object.prototype.hasOwnProperty.call(e, 'audiences'),
+        keys: e ? Object.keys(e).length : -1 }; })()`);
+    check('the pre-WO-5.15 record shape is on the document to be read back: eight fields, an '
+      + '`audience` and NO `audiences` key at all — the row every contact in a teacher’s existing '
+      + 'year has, which nothing in the app rewrites because src/log.js holds no updater',
+      planted.there === true && planted.hasList === false && planted.keys === 8,
+      JSON.stringify(planted));
+    await openSignals();
+    /* THE ROW KEY IS `student|rule|class` AND NOT A STUDENT ID (src/signals-view.js:598), so this
+       is a prefix match: which of her rules is still drawn is the thing under test two checks
+       down, and naming one here would make the click depend on the answer. */
+    await clickSel('#signalsList [data-signal-row^="' + ADA + '|"]');
+    await new Promise(r => setTimeout(r, 300));
+    await clickSel('#signalCardModal [data-signal-card-draft]');
+    await new Promise(r => setTimeout(r, 350));
+    const several = await evalJs(`(async function(){
+      ${PRESS}
+      var s = window.planbook.store;
+      var opening = window.planbook.outreachView.outreachModel();
+      /* THE MEMBERSHIP ROW, WHICH IS THE DOOR A TEACHER HAS. data-outreach-to is the toggle WO-5.8
+         built; driving the model directly would prove the writer and skip the picker, and the
+         picker is half of what this row is about. */
+      document.querySelector('[data-outreach-to="counselor"]').click();
+      var m = window.planbook.outreachView.outreachModel();
+      var pressed = press();
+      await s.flush();
+      var d = s.getDoc();
+      /* THE NEWEST BY WRITE ORDER RATHER THAN BY STAMP: all three of Ada's contacts are written in
+         the same sitting and localStamp() is second-granular, so the last element of the ARRAY is
+         the one just appended. (No backticks in here; it is inside a template literal and one
+         would close it.) */
+      var all = (d.log || []).filter(function(e){ return e.studentId === '${ADA}'; });
+      var entry = all[all.length - 1] || null;
+      var box = document.getElementById('signalCardContacts');
+      var rows = box ? Array.prototype.map.call(box.querySelectorAll('.log-entry'), function(r){
+        return { chips: Array.prototype.map.call(r.querySelectorAll('.log-entry-kind'),
+          function(e){ return e.textContent; }),
+          subject: (r.querySelector('.log-entry-subject') || {}).textContent || '' }; }) : [];
+      return { openingAudience: opening.audience, openingAudiences: opening.audiences,
+        audience: m.audience, audiences: m.audiences,
+        chosen: m.recipients.filter(function(r){ return r.chosen; })
+          .map(function(r){ return r.key; }),
+        primary: m.recipient ? m.recipient.key : '',
+        copies: m.copies.map(function(r){ return r.key; }),
+        pressed: pressed, count: all.length, entry: entry,
+        keys: entry ? Object.keys(entry) : [],
+        rows: rows }; })()`);
+    check('a draft sent to a guardian AND the counselor writes ONE contact carrying both: '
+      + '`audience` is still the scalar the words were written for \u2014 the primary\u2019s, unmoved by '
+      + 'adding a copy \u2014 and `audiences` is every drawer it reached, that one first, in the '
+      + 'picker\u2019s own order (WO-5.15). The nine fields are in the order docs/data-model.md gives '
+      + 'them, and the list is a real array rather than a joined string',
+      several.pressed.had === true && several.count === 4 && !!several.entry
+        && JSON.stringify(several.chosen) === JSON.stringify(['guardian-0', 'counselor'])
+        && several.primary === 'guardian-0'
+        && JSON.stringify(several.copies) === JSON.stringify(['counselor'])
+        && several.openingAudience === 'guardian'
+        && JSON.stringify(several.openingAudiences) === JSON.stringify(['guardian'])
+        && several.audience === 'guardian'
+        && JSON.stringify(several.audiences) === JSON.stringify(['guardian', 'counselor'])
+        && several.entry.audience === 'guardian'
+        && Array.isArray(several.entry.audiences)
+        && JSON.stringify(several.entry.audiences) === JSON.stringify(['guardian', 'counselor'])
+        && JSON.stringify(several.keys) === JSON.stringify(
+          ['id', 'studentId', 'at', 'kind', 'audience', 'audiences', 'subject', 'body', 'ruleId']),
+      'the model went ' + JSON.stringify(several.openingAudiences) + ' \u2192 '
+        + JSON.stringify(several.audiences) + ' when the counselor was added, chosen '
+        + JSON.stringify(several.chosen) + ' with primary ' + JSON.stringify(several.primary)
+        + '; the entry reads ' + JSON.stringify(several.entry && several.entry.audience) + ' / '
+        + JSON.stringify(several.entry && several.entry.audiences)
+        + ', keys ' + JSON.stringify(several.keys));
+    check('and the history card says who it went to \u2014 one chip per drawer on the newest row, the '
+      + 'primary first, while the two rows under it are single-audience contacts written before '
+      + 'the counselor was added and the fourth is the planted PRE-WO-5.15 row, which draws its '
+      + 'drawer off the scalar alone. A joined string inside one pill would grow a 10px chip into '
+      + 'a paragraph; these are the existing chip repeated, and the card gains no control',
+      several.rows.length === 4
+        && JSON.stringify(several.rows[0].chips) === JSON.stringify(['Guardian', 'Counselor'])
+        && JSON.stringify(several.rows[1].chips) === JSON.stringify(['Guardian'])
+        && JSON.stringify(several.rows[2].chips) === JSON.stringify(['Guardian'])
+        /* AND THE PLANTED PRE-WO-5.15 ROW DRAWS ITS DRAWER ANYWAY, off the scalar alone: a build
+           that read `audiences` and stopped would put the *Contact* stand-in here and quietly lose
+           every chip in a teacher's existing year. */
+        && JSON.stringify(several.rows[3].chips) === JSON.stringify(['Admin'])
+        && several.rows[3].subject === OLD_SUBJECT,
+      JSON.stringify(several.rows));
+
+    await evalJs(`(function(){
+      document.querySelectorAll('.modal-overlay:not(.hidden) [data-modal-close]').forEach(
+        function(b){ b.click(); });
+      return 1; })()`);
+    await new Promise(r => setTimeout(r, 300));
+    const silenced = await evalJs(`(function(){
+      var m = window.planbook.signalsView.signalsModel();
+      var held = m.concern.suppressed.filter(function(r){
+        return r.hit.studentId === '${ADA}'; });
+      return { rules: held.map(function(r){ return r.hit.ruleId; }).sort(),
+        drawn: m.concern.rows.filter(function(r){ return r.studentId === '${ADA}'; }).length,
+        caraHeld: m.concern.suppressed.filter(function(r){
+          return r.hit.studentId === '${CARA}'; }).length,
+        byRule: held.map(function(r){ return { rule: r.hit.ruleId, audience: r.audience,
+          audiences: r.audiences }; }) }; })()`);
+    const heldOn = (rule) => silenced.byRule.filter((r) => r.rule === rule)[0] || {};
+    check('the contact silences the rule the DRAFT SPOKE FROM and nothing else \u2014 her second '
+      + 'concern rule goes quiet beside the one two contacts above already took off the list, and '
+      + 'the student whose contact carries an empty `ruleId` is still suppressed by nothing. '
+      + 'Reaching two audiences instead of one changed WHAT IS SILENCED not at all: the cooldown '
+      + 'keys on `studentId + ruleId` and reads the audience only for a sentence',
+      silenced.drawn === 0 && silenced.caraHeld === 0
+        && JSON.stringify(silenced.rules) === JSON.stringify([before.led, before.other].sort())
+        && heldOn(before.other).audience === 'guardian'
+        && JSON.stringify(heldOn(before.other).audiences)
+          === JSON.stringify(['guardian', 'counselor'])
+        /* AND THE EARLIER ROW IS UNMOVED: the contact pressed at the top of this section went to
+           one drawer, and the record it silences on still reads as that one drawer. */
+        && JSON.stringify(heldOn(before.led).audiences) === JSON.stringify(['guardian']),
+      'she is suppressed on ' + JSON.stringify(silenced.rules) + ' against her two rules '
+        + JSON.stringify([before.led, before.other]) + ', drawn ' + silenced.drawn
+        + ' time(s); the cooldown records read ' + JSON.stringify(silenced.byRule)
+        + '; the hitless student is held ' + silenced.caraHeld + ' time(s)');
+
+    await clickSel('#signalsConcernHidden');
+    await new Promise(r => setTimeout(r, 250));
+    const sentence = await evalJs(`(function(){
+      var box = document.getElementById('signalsConcernQuiet');
+      var rows = Array.prototype.map.call(box.querySelectorAll('.sig-muted'), function(n){
+        return { key: n.getAttribute('data-signal-held'),
+          why: ((n.querySelector('.sig-row-why') || {}).textContent || '')
+            .replace(/\\s+/g, ' ').trim() }; });
+      return { rows: rows,
+        placeholder: /\\{\\{|undefined|NaN|\\[object/.test(box.textContent || '') }; })()`);
+    const bothWhy = sentence.rows.filter((r) => /their guardian and their counselor/.test(r.why));
+    const oneWhy = sentence.rows.filter(
+      (r) => /You wrote to their guardian about this/.test(r.why));
+    check('and the suppressed row NAMES every audience in one sentence rather than the primary '
+      + 'alone \u2014 "you wrote to their guardian and their counselor about this today" \u2014 while the '
+      + 'row silenced by a single-audience contact reads exactly as it always did. A suppression a '
+      + 'teacher cannot check is the defect this sentence exists against, and half of who a '
+      + 'message went to is what invites the second message. Nothing a teacher typed is in it, and '
+      + 'no name and no address either',
+      sentence.rows.length === 2 && sentence.placeholder === false
+        && bothWhy.length === 1 && oneWhy.length === 1
+        && /about this today\. Back on the list on /.test(bothWhy[0].why)
+        && bothWhy[0].why.indexOf(SUBJECT_MARK) === -1
+        && bothWhy[0].why.indexOf('Wo515Counselor') === -1
+        && bothWhy[0].why.indexOf(C_EMAIL) === -1,
+      JSON.stringify(sentence.rows));
 
     /* ── and the fixture comes back off ──
        OFF THE SCREEN FIRST, for the reason outreach.mjs and templates.mjs both give: the class

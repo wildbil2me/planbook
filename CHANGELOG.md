@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A contact to several people is filed under all of them — 2026-09-20
+
+The entry written to the contact log when a message leaves used to name one audience — whoever the
+draft was addressed to — so a note to both guardians and the counselor read as a note to a guardian.
+It now records every drawer it reached, primary first, and the history card shows one chip per
+drawer. The sentence on a signal card that says *you wrote to their guardian about this on Sep 6*
+names all of them too. The cooldown reads neither field: a message silences only the rule it was
+about, exactly as before. Entries written by earlier builds read back unchanged, and nothing already
+in your log has been rewritten — the log still has no way to edit or delete anything. This closes
+the thing the entry below said was not yet done. (WO-5.15)
+
 ### One draft can go to several people, and one of them is primary — 2026-09-20
 
 A message to both guardians, or to a guardian and the counselor, used to be the same draft written
