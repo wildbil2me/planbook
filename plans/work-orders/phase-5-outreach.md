@@ -189,6 +189,19 @@ one behind the live preview.
       half this work order cannot finish — the send flow is WO-5.3 — so what is closed here is that
       the collection can hold the pair and offers them apart; the button that reads it is that work
       order's.)*
+      *(**Half of what the send flow inherited from this line was reversed on 2026-09-20 —*
+      [WO-5.13](#wo-513--every-template-whatever-the-recipient)*, the owner's call — and this box
+      stays closed on what it always proved.** The line reads two claims at once: that the
+      COLLECTION holds a concern and a praise template for one audience and hands them back apart,
+      and that the SEND FLOW offers them that way. The first is untouched and still measured —
+      `templatesFor(doc, tone, audience)` still filters on both when it is asked to, `verify/templates.mjs`
+      § Acceptance line 1 still reads the same numbers off it, and nothing in `src/templates.js`
+      moved. What changed is that the send flow **stopped asking the audience half**: every template
+      she has saved is offered whatever the recipient is, and `src/outreach-view.js` passes `''`.
+      **The tone half is exactly as this line left it** — a concern template is still never offered
+      for a praise draft, which is the half of "offered separately" that was ever about the words in
+      the message. Read WO-5.3's seventh line below for the reversal in full; this note exists so
+      that a reader who starts here does not build on the sentence above.)*
 - [x] The live preview shows unresolved fields visibly, exactly as the send flow will. *(**"Exactly"
       is asked as an identity rather than as a screenshot**: what the column draws is character for
       character what `resolveDraft()` returned for the same request, and WO-5.3 renders the same
@@ -313,7 +326,11 @@ mail record — which is what a school asks for when it asks — stays intact th
 - [x] A blocked draft (unresolved field) cannot reach the handoff.
 - [x] A concern template and a praise template written for the same audience are offered
       **separately** in the picker — read through `templatesFor(doc, tone, audience)` with both
-      arguments, never audience alone. *(**This line is WO-5.2's first Acceptance line finishing
+      arguments, never audience alone. ***Half-reversed on 2026-09-20 by***
+      [WO-5.13](#wo-513--every-template-whatever-the-recipient) ***— the tone half stands and the
+      audience half is gone. The sentence above is what this box closed on 2026-08-28 and is left
+      standing as that record; the third note below is what the tree does now.***
+      *(**This line is WO-5.2's first Acceptance line finishing
       here, and it is not a re-homed box** — no `**Owes**` pointer, because nothing was moved and
       that box closed honestly. It reads "…and are offered separately **at send time**," and at send
       time there was no send flow: what WO-5.2 could close is that the collection holds the pair and
@@ -329,6 +346,23 @@ mail record — which is what a school asks for when it asks — stays intact th
       the three praise templates, tapping Concern replaces them with the one concern template
       written for the same guardian, and the draft is rebuilt from it rather than left as the old
       words under a new heading.)*
+      *(**The audience half came out on 2026-09-20 — the owner's ruling, built as*
+      [WO-5.13](#wo-513--every-template-whatever-the-recipient)*, and this box is not being
+      unticked: it closed honestly on the tree of 2026-08-28 and the two notes above are that
+      record.** What the send flow reads now is `templatesFor(doc, tone, '')` at all four call
+      sites in `src/outreach-view.js`, so **every template a teacher has saved is offered whatever
+      the recipient is** — the counselor's words are available for a message to a guardian, which
+      is what the filter used to withhold. **The tone half is untouched and is still measured**: a
+      concern template is never offered for a praise draft, which is the half of this line that was
+      ever about what the message says rather than who it goes to. Two consequences worth carrying.
+      **The picker no longer changes when the recipient does**, so the template a teacher chose
+      survives a switch from a guardian to the counselor and is re-resolved for him, where it used
+      to be replaced by whatever was first for the new pair — `applyRecipient()` says so at its own
+      line. And **the numbers this box was closed on are still green**, because `src/templates.js`
+      did not move: `verify/templates.mjs` still reads the collection with both arguments, and
+      `verify/outreach.mjs` now asks the collection and the send flow separately — the four numbers
+      for the first, `concern/any-audience` → 2 and a two-row picker on a draft addressed to a
+      guardian for the second. Cited anywhere else, this line means the tone half.)*
 
 **Traps** — Line breaks and non-ASCII characters in `mailto:` bodies need correct percent-encoding,
 and getting it wrong produces a mangled email a teacher sends without noticing. Test with an
@@ -1368,7 +1402,7 @@ the gap lasts.
 
 ## WO-5.13 — Every template, whatever the recipient
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-5.3
+**Ship** — · **Status** ✅ DONE — 2026-09-20 · **Size** S · **Depends on** WO-5.3
 
 **Why it exists.** The owner, 2026-08-29: *"all templates should be available regardless of
 recipient."* That is the half of [WO-5.8](#wo-58--several-recipients-and-one-of-them-is-primary)'s
@@ -1391,7 +1425,10 @@ so the send flow simply stops passing the third argument. **Four call sites**, a
 `:1263` (`applyRecipient`). The fifth, `src/templates-view.js:302`, already passes `''`.
 
 `model.audience` (`src/outreach-view.js:451`, `:563`) **stays**: it still feeds the note under the
-picker and `writeContact()`. Only the filter goes. **`AUDIENCES` is not widened and `audienceOf()`
+picker and `writeContact()`. Only the filter goes. *(As built, 2026-09-20: it feeds `writeContact()`
+and no longer the note — the note names the tone and says* all of them, whoever this is going to*,
+because a count "for a guardian" under a list that no longer filters by guardian is the stale
+sentence this row exists to remove.)* **`AUDIENCES` is not widened and `audienceOf()`
 is not removed** — `tools/wo-sweep.mjs` § 24 pins seven exports of `src/outreach.js` by name,
 `audienceOf` among them, and drops a vacuity guard if one goes missing.
 
@@ -1406,20 +1443,43 @@ is not removed** — `tools/wo-sweep.mjs` § 24 pins seven exports of `src/outre
   (§ WO-5.2 and § WO-5.3), and `docs/data-model.md:725`.
 
 **Acceptance**
-- [ ] Every saved template is offered whatever the recipient is; a concern template is still never
+- [x] Every saved template is offered whatever the recipient is; a concern template is still never
       offered for a praise draft. *(Moved here from WO-5.8 at the cut of 2026-09-20, reworded from
       "whatever the recipients are" because multi-select does not exist yet and this row does not
       wait for it.)*
-- [ ] WO-5.2's first Acceptance line, WO-5.3's seventh, both `TESTING.md` twins and
+      *(**Closed on the picker a teacher taps, not on the call.** All four send-flow call sites in
+      `src/outreach-view.js` pass `''` for the audience, and the evidence is the `<select>` itself:
+      with the draft addressed to **guardian 1**, tapping *Concern* draws two rows — the guardian's
+      concern template **and the counselor's**, which is the row a build that had kept the filter
+      cannot draw — and no praise template survives the tap, which is the second half of the line.
+      `verify/outreach.mjs` § WO-5.3's seventh Acceptance line, `1422 checks · 1422 passed · 0
+      failed`. Mutation-proved both ways: the filter put back reddens the picker check and the
+      silent-rebuild check; the tone argument blanked as well reddens the picker check on its praise
+      half. Both mutations were run in scratch copies of the tree and no delivered file ever carried
+      one.)*
+- [x] WO-5.2's first Acceptance line, WO-5.3's seventh, both `TESTING.md` twins and
       `docs/data-model.md` all record the reversal, amended in place rather than left disagreeing.
       *(Moved here from WO-5.8 at the cut, and widened: the line named WO-5.3 and `TESTING.md`
       only, but WO-5.3's own text says it inherited the rule from WO-5.2, and the data model states
       it a third time.)*
+      *(**Five places, all amended in place and no box unticked or deleted.** WO-5.2's first line
+      and WO-5.3's seventh keep their `[x]` and their original sentences — WO-5.3's carries a dated
+      half-reversal marker on the line itself, since the sentence names the rule — each with a note
+      saying which half went, what replaced it and where the evidence moved. Both `TESTING.md`
+      twins the same. `docs/data-model.md` § "Where a template is written" no longer calls
+      `templatesFor()` "the question the send flow asks" and carries a paragraph on what did and did
+      not change. One more that the line does not name and that said the same thing: the
+      `plans/ROADMAP.md` Phase 5 line for WO-5.2. Two code comments that stated the old rule went
+      with them — `src/templates.js`'s module header and its block over `templatesFor()` — because
+      a comment left asserting it is the same disagreement one file further in.)*
 
 **Traps** — `tools/verify/templates.mjs:420` asserts the audience filter and **will go red on work
 being done**. Rewrite it to assert the tone half and the *absence* of the audience half rather than
 deleting it; a claim deleted because it went red is a claim nobody replaces. Harness prose at
-`tools/verify/outreach.mjs:391-417` says the same thing in words and needs the same treatment.
+`tools/verify/outreach.mjs:391-417` says the same thing in words and needs the same treatment. *(Correction,
+2026-09-20: `templates.mjs:420` did **not** go red — it reads the collection through `templatesFor()`
+directly, with both arguments, and stayed green under both mutations. The rewrite was done anyway,
+for the reason above; the claim that actually went red was `outreach.mjs`'s picker check.)*
 
 Second: `CLAUDE.md:206` mentions `templatesFor` and is **not** about this filter — it is the WO-6.6
 class-tab ruling that templates are global. Leave it alone.

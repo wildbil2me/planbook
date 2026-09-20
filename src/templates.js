@@ -17,8 +17,9 @@
 
   ── WHY WO-5.3 IS THE REASON THIS IS A MODULE AND NOT PART OF THE SCREEN ──
 
-  The send flow has to ask *which templates are there for this tone and this audience* while
-  standing on the signal card, with the editor nowhere on screen. A send flow that imported the
+  The send flow has to ask *which templates are there for this tone* while standing on the signal
+  card, with the editor nowhere on screen. (*…and this audience* until WO-5.13, 2026-09-20 — see
+  the block over `templatesFor()` below.) A send flow that imported the
   editor to ask would be importing a screen to read a list. So `templatesFor()` lives here, the
   editor calls the same function to draw its own list, and the two cannot come to disagree about
   what is on offer — which is severityOrder()'s argument in src/signals.js, applied to a much
@@ -145,12 +146,23 @@ export function templateById(doc, id) {
 
   *A concern template and a praise template can exist for the same audience and are offered
   separately.* Both halves are here: nothing in the writers below is unique on audience, and this
-  read is filtered on BOTH — so `templatesFor(doc, 'praise', 'guardian')` can never hand back the
-  concern template a teacher wrote for the same recipient, whatever order they were written in.
+  read is filtered on BOTH when it is asked to be — so `templatesFor(doc, 'praise', 'guardian')` can
+  never hand back the concern template a teacher wrote for the same recipient, whatever order they
+  were written in.
 
-  An audience of '' means every audience of that tone, which is the editor's own list rather than a
-  send-time question. A tone of '' means every template, which is what the *All* filter on the list
-  asks for. The two defaults are separate on purpose: WO-5.3 always names a tone.
+  **AND SINCE WO-5.13 (2026-09-20) THE SEND FLOW DOES NOT ASK THE AUDIENCE HALF.** The owner's
+  ruling — *"all templates should be available regardless of recipient"* — took the third argument
+  out of src/outreach-view.js's four call sites, which now pass `''` the way the editor always has.
+  **Nothing here changed**: the capability stays, because the record is still filed under an
+  audience, the editor still lists by one, and WO-5.8's several-recipients draft has no single
+  audience to filter on anyway. So this function is the same function and the FLOW asks it a
+  narrower question — which is why the reversal is recorded there, at the call, and only noted here.
+
+  An audience of '' means every audience of that tone. That is the editor's own list, and since
+  WO-5.13 it is also what the send flow asks for. A tone of '' means every template, which is what
+  the *All* filter on the list asks for. The two defaults are separate on purpose: the send flow
+  always names a tone, because a concern template read out for a praise draft is a message that
+  says the opposite of the row the teacher tapped.
 
   ROSTER ORDER IS DOCUMENT ORDER and nothing here sorts. The teacher's own list is in the order she
   wrote it in, and a list that re-sorted itself alphabetically would move a template out from under

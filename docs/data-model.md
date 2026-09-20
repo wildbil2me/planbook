@@ -721,12 +721,25 @@ Five rulings inside it are decisions rather than plumbing:
 ### Where a template is written, and where the eight come from
 
 **`src/templates.js` owns the record and `src/templates-view.js` is the screen over it** *(WO-5.2)*.
-The model holds what a record is, the two vocabularies it is filed under, three writers, and the
-question the send flow asks — `templatesFor(doc, tone, audience)`, filtered on **both**, which is
-what makes "a concern template and a praise template for the same audience are offered separately"
-a property of the collection rather than of a screen. The editor is reached from the **fourth icon
+The model holds what a record is, the two vocabularies it is filed under, three writers, and
+`templatesFor(doc, tone, audience)`, which filters on **both** — what makes "a concern template and
+a praise template for the same audience are offered separately" a property of the collection rather
+than of a screen. The editor is reached from the **fourth icon
 in the header**, not from the class switcher: a template is about no class at all, and
 `{{class.name}}` resolves per draft at send time.
+
+**That function is no longer the question the SEND FLOW asks, and the change is the owner's**
+*(WO-5.13, 2026-09-20)*. This paragraph read "the question the send flow asks" until that day,
+when *"all templates should be available regardless of recipient"* took the audience argument out
+of all four call sites in `src/outreach-view.js`: the draft picker now reads
+`templatesFor(doc, tone, '')`, so **every template a teacher has saved is offered whatever the
+recipient is**, and the one she has chosen survives a switch from a guardian to the counselor
+rather than being replaced. **The tone half stands** — a concern template is never offered for a
+praise draft. **Nothing about the record or the collection changed**: `templatesFor()` keeps its
+signature, `audience` is still a field on every template, the editor still lists by it, and the
+`contact` entry the handoff writes is still filed under the audience of the person it went to. The
+filter had to go before WO-5.8 in any case, because a draft addressed to several recipients at once
+has no single audience to filter on.
 
 Four rulings there are decisions rather than plumbing:
 

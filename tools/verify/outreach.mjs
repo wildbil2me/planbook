@@ -389,18 +389,31 @@ if (!seam) {
         : 'none of the ' + SECRETS.length + ' planted strings reached the screen or the URL');
 
     /*
-      ─────────── WO-5.3's SEVENTH ACCEPTANCE LINE, AND IT IS FOUR NUMBERS ───────────
+      ─────────── WO-5.3's SEVENTH ACCEPTANCE LINE, AS WO-5.13 REVERSED HALF OF IT ───────────
 
-      A concern template and a praise template written for the same audience are offered SEPARATELY.
-      The read is `templatesFor(doc, tone, audience)` with BOTH arguments, so:
+      IT WAS SIX NUMBERS ABOUT ONE CALL AND IT IS NOW TWO CLAIMS ABOUT TWO CALLERS, because on
+      2026-09-20 the owner ruled that "all templates should be available regardless of recipient"
+      and src/outreach-view.js stopped passing the third argument. What did NOT change is
+      src/templates.js, so the two halves are asked of the two different things that hold them:
 
-        praise/guardian   3   the pair's praise half, plus the long one and the refused one
-        concern/guardian  1   the pair's concern half — a different record, never handed back above
-        concern/counselor 1   written for somebody else and never offered to a guardian
-        praise/counselor  0   THE NUMBER THAT CATCHES A TONE-ONLY FILTER, which would answer 3 here
+        THE COLLECTION still files by audience and still answers on it when it is asked — WO-5.2's
+        first Acceptance line, unchanged, and the reason `templatesFor()` kept its signature:
 
-      And the same question asked of the picker on screen, because a collection that hands back the
-      right list and a `<select>` that draws the other one are the same bug to a teacher.
+          praise/guardian   3   the pair's praise half, plus the long one and the refused one
+          concern/guardian  1   the pair's concern half — a different record, never handed back above
+          concern/counselor 1   written for somebody else
+          praise/counselor  0   THE NUMBER THAT CATCHES A TONE-ONLY COLLECTION, which answers 3 here
+
+        THE SEND FLOW asks the tone and nothing else, which is the reversal itself:
+
+          concern/''        2   BOTH concern templates — including the counselor's, which is the one
+                                the old filter withheld from a draft addressed to a guardian
+          praise/''         3   and no concern template among them, which is the half that stayed
+
+      A tone-only read is the right answer here and was the WRONG answer one build ago, so the
+      numbers alone cannot say which build they came from. The picker check below is what settles
+      it: it asks the `<select>` a teacher taps, with the draft addressed to a guardian, and a build
+      that had kept the filter draws one row where this one draws two.
     */
     const pairs = await evalJs(`(function(){
       var d = window.planbook.store.getDoc();
@@ -408,21 +421,29 @@ if (!seam) {
       var ids = function(list){ return list.map(function(r){ return r.id; }); };
       var pg = t.templatesFor(d, 'praise', 'guardian');
       var cg = t.templatesFor(d, 'concern', 'guardian');
+      var cAll = t.templatesFor(d, 'concern', '');
+      var pAll = t.templatesFor(d, 'praise', '');
       return { pg: pg.length, cg: cg.length,
         cc: t.templatesFor(d, 'concern', 'counselor').length,
         pc: t.templatesFor(d, 'praise', 'counselor').length,
         anyGuardian: t.templatesFor(d, '', 'guardian').length,
+        cAll: cAll.length, pAll: pAll.length,
+        toneOverlap: ids(cAll).filter(function(id){ return ids(pAll).indexOf(id) >= 0; }).length,
         overlap: ids(pg).filter(function(id){ return ids(cg).indexOf(id) >= 0; }).length }; })()`);
-    check('a concern template and a praise template written for the SAME audience are two records '
-      + 'and are offered separately — the send flow reads templatesFor(doc, tone, audience) with '
-      + 'both arguments, so praise/guardian and concern/guardian hand back different records and '
-      + 'praise/counselor hands back NONE, which is the number a tone-only filter would fail '
-      + '(Acceptance line 7)',
+    check('the COLLECTION still tells a concern template and a praise template for the same '
+      + 'audience apart — praise/guardian and concern/guardian hand back different records and '
+      + 'praise/counselor hands back NONE (WO-5.2, unchanged) — and the read the SEND FLOW makes '
+      + 'since WO-5.13 names the tone and not the audience, so concern/any-audience hands back BOTH '
+      + 'concern templates including the counselor’s, with no praise record anywhere in it (Acceptance '
+      + 'line 7, as reversed)',
       pairs.pg === 3 && pairs.cg === 1 && pairs.cc === 1 && pairs.pc === 0
-        && pairs.anyGuardian === 4 && pairs.overlap === 0,
+        && pairs.anyGuardian === 4 && pairs.overlap === 0
+        && pairs.cAll === 2 && pairs.pAll === 3 && pairs.toneOverlap === 0,
       'praise/guardian ' + pairs.pg + ', concern/guardian ' + pairs.cg + ', concern/counselor '
         + pairs.cc + ', praise/counselor ' + pairs.pc + ', any-tone/guardian ' + pairs.anyGuardian
-        + ', shared records ' + pairs.overlap);
+        + ', shared records ' + pairs.overlap + ' :: the send flow’s own read — concern/any '
+        + pairs.cAll + ', praise/any ' + pairs.pAll + ', shared across the two tones '
+        + pairs.toneOverlap);
 
     const toned = await evalJs(`(function(){
       ${DRAWN}
@@ -431,16 +452,22 @@ if (!seam) {
       var now = drawn();
       var m = window.planbook.outreachView.outreachModel();
       return { was: was, now: now.options, tone: m.tone, name: m.templateName,
+        to: m.recipient ? m.recipient.key : '', audience: m.audience,
         rebuilt: now.bodyField, status: document.getElementById('outreachStatus').textContent,
         ready: m.ready }; })()`);
-    check('and the picker on screen says the same thing: tapping Concern replaces the three praise '
-      + 'templates with the one concern template written for the same guardian, and rebuilds the '
-      + 'draft from it rather than leaving the old words under a new heading',
-      toned.was.length === 3 && toned.now.length === 1 && toned.tone === 'concern'
+    check('and the picker on screen says the same thing, with the draft still addressed to a '
+      + 'guardian: tapping Concern replaces the three praise templates with BOTH concern ones — '
+      + 'the guardian’s and the counselor’s, which is the row a build that had kept the audience '
+      + 'filter cannot draw — no praise template survives the tap, and the draft is rebuilt from '
+      + 'the first of them rather than left as the old words under a new heading',
+      toned.was.length === 3 && toned.now.length === 2 && toned.tone === 'concern'
+        && toned.to === 'guardian-0' && toned.audience === 'guardian'
+        && toned.now.indexOf('WO-5.3 to the counselor') >= 0
+        && toned.now.every((n) => toned.was.indexOf(n) < 0)
         && toned.name === 'WO-5.3 concern to a guardian'
         && /pieces of work marked missing/.test(toned.rebuilt) && toned.ready === true
         && /rebuilt/i.test(toned.status),
-      JSON.stringify({ was: toned.was, now: toned.now, name: toned.name }));
+      JSON.stringify({ was: toned.was, now: toned.now, to: toned.to, name: toned.name }));
 
     /*
       ─────────── THE URL, WHICH IS THE WHOLE OF WHAT THE OPERATING SYSTEM RECEIVES ───────────
@@ -1465,6 +1492,17 @@ if (!seam) {
 
       The tone step is the one worth naming: it changes which templates are on offer and therefore
       which one is selected, so it replaces the draft without anything having named a template.
+
+      AND THE RECIPIENT STEP IS THE ONE WO-5.13 CHANGED. It used to swap the template as well —
+      the list was filtered by the audience, so the guardian's concern template fell off it on the
+      tap and the counselor's took its place — which made "three different templates, three
+      different bodies" the natural thing to assert. Since 2026-09-20 the list does not move, so
+      the teacher's chosen message SURVIVES the switch and is re-resolved for the new person: two
+      bodies across the three steps, not three, and the third step's evidence that it really did
+      rebuild is its own status sentence rather than a body that changed. That is asserted here as
+      an equality (`steps[2].template === steps[1].template`) rather than by naming the record
+      twice, because the claim is survival and not identity — a build that re-selected the same
+      template for some other reason would be a different thing saying the same words.
     */
     const silent = await evalJs(`(function(){
       ${TYPE}
@@ -1485,16 +1523,21 @@ if (!seam) {
       document.querySelector('[data-outreach-to="counselor"]').click(); step('recipient');
       return { steps: steps }; })()`);
     check('an untouched draft rebuilds with NO PROMPT AT ALL on all three controls — the template '
-      + 'picker, the tone pill and the recipient chip — and each of the three really did rebuild: '
-      + 'three different templates, three different bodies. The tone tap is the one that hides '
-      + 'here, because it changes which templates are on offer and so replaces the draft without '
-      + 'anything having named a template (Acceptance line 3)',
+      + 'picker, the tone pill and the recipient chip — and each of the three really did rebuild. '
+      + 'The tone tap is the one that hides here, because it changes which templates are on offer '
+      + 'and so replaces the draft without anything having named a template; the recipient tap no '
+      + 'longer does (WO-5.13), so the teacher’s concern template SURVIVES the switch to the '
+      + 'counselor and is re-resolved for him — two bodies across the three steps, and the third '
+      + 'rebuild is witnessed by its own status line (Acceptance line 3)',
       silent.steps.length === 3 && silent.steps.every((s) => s.asked === false)
         && silent.steps[0].template === 'WO-5.3 praise to a guardian'
         && silent.steps[1].template === 'WO-5.3 concern to a guardian'
-        && silent.steps[2].template === 'WO-5.3 to the counselor'
+        && silent.steps[2].template === silent.steps[1].template
         && silent.steps[1].tone === 'concern' && silent.steps[2].to === 'counselor'
-        && new Set(silent.steps.map((s) => s.body)).size === 3
+        && silent.steps[0].body !== silent.steps[1].body
+        && silent.steps[2].body === silent.steps[1].body
+        && /rebuilt from a concern template/i.test(silent.steps[1].status)
+        && /rebuilt for /i.test(silent.steps[2].status)
         && silent.steps.every((s) => /nothing was lost/i.test(s.status)),
       silent.steps.map((s) => s.name + ': asked=' + s.asked + ' → ' + s.template).join(' · '));
 

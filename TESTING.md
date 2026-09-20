@@ -8827,6 +8827,13 @@ element a screenshot or an accessibility tree can reach.
       narrows it to one and back, taking the eight starters with it. **"At send time" is the half
       this work order cannot finish** — the button that reads this is WO-5.3's — so what is closed
       here is that the collection holds the pair and offers them apart.)*
+      *(**The send-time half was half-reversed on 2026-09-20 — WO-5.13, the owner's ruling — and
+      the numbers above are unchanged.** `templatesFor(doc, tone, audience)` still filters on both
+      and `verify/templates.mjs` still reads it that way; what stopped asking the audience half is
+      `src/outreach-view.js`, so every template a teacher has saved is offered whatever the
+      recipient is. A concern template is still never offered for a praise draft. The evidence for
+      the send flow's own read moved with the question, to `verify/outreach.mjs` § WO-5.3's seventh
+      Acceptance line.)*
 - [x] The live preview shows unresolved fields visibly, exactly as the send flow will.
       *(**"Exactly" is asked as an identity rather than as a screenshot.** What the column draws is
       character for character what `resolveDraft()` returned for the same request — subject and body
@@ -8990,6 +8997,17 @@ rather than by promising. Tapping it is the one thing a harness must never do.
       question of the `<select>` a teacher taps: three praise templates in it, tapping *Concern*
       replaces them with the one concern template written for the same guardian, and the draft is
       rebuilt from it rather than left as the old words under a new heading.)*
+      *(**Half-reversed 2026-09-20 — WO-5.13, the owner: "all templates should be available
+      regardless of recipient".** The box stays closed on the tree it was closed on; what the
+      harness reads today is two claims of two different things. **The collection** is unchanged and
+      still answers the four numbers above. **The send flow** asks the tone and nothing else:
+      `concern/any-audience` hands back both concern templates, and on screen — with the draft still
+      addressed to a guardian — tapping *Concern* now draws **two** rows, the guardian's template
+      and the counselor's, which is the row a build that had kept the filter cannot draw. No praise
+      template survives the tap, which is the tone half, untouched. One behaviour changed with it:
+      switching the recipient no longer swaps the template, so the teacher's chosen message is
+      re-resolved for the new person instead of being replaced — the silent-rebuild check reads two
+      bodies across its three steps now, and the third rebuild is witnessed by its status line.)*
 
 **Presentation mode closes this flow outright**, which is `src/signals-view.js`'s refusal rather than
 the template screen's one-column suppression — there is no half of this modal that does not name a
@@ -9901,6 +9919,103 @@ a bare compose pane with no inbox, sidebar or thread list around it**, which rea
 half-loaded. It is the correct rendering of `view=cm&fs=1` and the reason the reading paused to
 check. A later reader taking this line again will see the same thing and should not treat it as a
 failure.)*
+
+---
+
+### WO-5.13 — Every template, whatever the recipient
+
+**What it changed, and it is four arguments.** `templates.templatesFor(doc, tone, audience)` read
+the audience at all four send-flow call sites in `src/outreach-view.js` — `outreachModel()`,
+`openOutreach()`, `applyTone()` and `applyRecipient()` — and now reads `templatesFor(doc, tone, '')`
+at each, which is the argument `src/templates-view.js` has always passed. **The owner's ruling,
+2026-08-29**: *"all templates should be available regardless of recipient."* **`src/templates.js`
+did not move**: the function keeps its signature, `audience` is still a field on every record, the
+editor still lists by it, and `templatesFor(doc, 'praise', 'guardian')` still answers exactly what
+it answered before — what stopped asking is the flow, not the collection. `model.audience` stays
+too: it is what `recordHandoff()` files the `contact` entry under. `CACHE` v121 → v122.
+
+**It reverses a verified Acceptance line, on purpose.** WO-5.3's seventh — proved and
+mutation-tested on 2026-08-28, inherited from WO-5.2's first — said the read is on both arguments,
+never audience alone. **The tone half stands**; a concern template is still never offered for a
+praise draft, which is the half that was ever about what the message says rather than who it goes
+to. The audience half is gone, and it had to go before WO-5.8 in any case: a draft addressed to
+both guardians *and* the counselor has no single audience to filter on, so keeping it would mean
+building the several-recipients picker on top of a rule already known to be wrong. Neither box was
+unticked — both are amended in place, here and in
+`plans/work-orders/phase-5-outreach.md`, with `docs/data-model.md` § "Where a template is written"
+and one `plans/ROADMAP.md` line carrying the same correction.
+
+**Two sentences on screen moved with it**, because both described a filter that is no longer there.
+The note under the picker read *"3 templates written for a guardian in the concern tone"* and now
+reads *"3 templates in the concern tone — all of them, whoever this is going to."* The block-strip
+reason read *"You have not saved a concern template for a guardian yet"* and now names no audience,
+because nothing is on offer only when the teacher has saved no template in that tone at all. **A
+third, which the work order did not name**: the rebuild confirm said *"Writing to Guardian 1 instead
+rebuilds this draft from a template written for them"* — it is the same template now, re-resolved
+for somebody else, so the clause came off. The dialog still quotes the chip's position and never
+the person.
+
+**The behaviour change a teacher will notice first is on the recipient chip.** The picker no longer
+changes when the recipient does, so **the message she chose survives a switch from a guardian to the
+counselor** and is re-resolved for him, where it used to be replaced by whatever was first for the
+new pair. `{{guardian.name}}` in a template read to a non-guardian falls back to the preferred
+guardian, which is `src/merge-fields.js`'s own documented answer and not a decision this work order
+made.
+
+**Both tools green on the delivered tree.** `verify-shell.mjs`: `1422 checks · 1422 passed · 0
+failed · 0 skipped`, exit 0 — the same total as the before-run taken on the unchanged tree at the
+top of the sitting, because three claims were **rewritten** rather than added or deleted.
+`wo-sweep.mjs`: `42 checks · 39 passed · 0 failed · 3 to review`, the three to-review items
+unchanged from before the work, and the `check()` call-site count still 1413 and still matching
+`tools/README.md:1213` — no call site moved, so that figure needed no edit.
+
+**The three harness claims, and what each asks now.** `verify/outreach.mjs` § WO-5.3's seventh
+Acceptance line was one question about one call and is now two questions of two different things:
+the **collection** still answers praise/guardian 3, concern/guardian 1, concern/counselor 1,
+praise/counselor **0** (WO-5.2's numbers, unchanged), and the **send flow's own read** answers
+concern/any-audience **2** and praise/any-audience 3 with no record shared across the tones. That
+pair of numbers cannot say which build it came from on its own — a tone-only read is the right
+answer now and was the wrong answer one build ago — so the picker check beside it is what settles
+it: with the draft **still addressed to a guardian**, tapping *Concern* draws **two** rows, the
+guardian's template and the counselor's, which is the row a build that kept the filter cannot draw,
+and no praise template survives the tap. The third is the silent-rebuild check, which asserted
+"three different templates, three different bodies" and now asserts that the third step's template
+**equals the second's** — survival — with two bodies across the three steps and the third rebuild
+witnessed by its own status line. `verify/templates.mjs` § Acceptance line 1 is **unchanged as
+code**: its prose said it was asking the question the send flow asks, which is no longer true, and
+it now says it is asking the collection and names where the send flow's own read is measured.
+*(Worth recording: the work order's Traps line predicted that check would go red on work being done.
+It did not, and could not — it calls `templatesFor()` directly rather than through the view, so the
+model's unchanged behaviour keeps it green. The claim that actually went red is the picker check one
+file over.)*
+
+**The mutation round — two, run in scratch copies of the tree** rather than by mutating the working
+tree, so the delivered files never carried one (`tools/README.md`'s WO-5.12 method). Each copy was
+made by an exact string replacement that aborts unless the target occurs exactly once.
+
+| # | Mutation | Predicted | Result |
+|---|---|---|---|
+| M1 | `outreachModel()`: `templatesFor(doc, tone, '')` → `templatesFor(doc, tone, audience)` — the filter put back | the picker check red (one row where two are asserted); the silent-rebuild check red (the recipient tap swaps the template again) | **2 red**: `1422 checks · 1420 passed · 2 failed`, exit 1 — the two predicted, and nothing else in the run moved. The picker drew `["WO-5.3 concern to a guardian"]` where two rows are asserted |
+| M2 | `outreachModel()`: `templatesFor(doc, tone, '')` → `templatesFor(doc, '', '')` — the tone half dropped too | the picker check red (praise templates survive a tap on *Concern*) | **1 red**: `1422 checks · 1421 passed · 1 failed`, exit 1 — the picker drew all five templates, praise ones included, after a tap on *Concern* |
+
+**What M1 is really worth reading for.** It is the only mutation available that turns this work
+order back into the build it replaced, and it reddens **two** claims rather than one — the picker
+and the silent rebuild — which is the pair of surfaces WO-5.3's own mutation round found it needed:
+the direct `templatesFor()` numbers stayed green under both mutations, because that call is the
+collection's and the collection did not change. A round that had only asked the model would have
+cleared both mutations. **M2 is the guard on the half that stayed**: with the tone blanked, a
+*Concern* tap leaves every praise template on offer and the check says so, which is the failure
+`CLAUDE.md`'s praise/concern split exists to prevent arriving in a guardian's inbox.
+
+**Acceptance**
+- [x] Every saved template is offered whatever the recipient is; a concern template is still never
+      offered for a praise draft. *(The picker, with the draft addressed to guardian 1: two rows on
+      a *Concern* tap — the guardian's template and the counselor's — and no praise template among
+      them. M1 and M2 red on the two halves respectively.)*
+- [x] WO-5.2's first Acceptance line, WO-5.3's seventh, both `TESTING.md` twins and
+      `docs/data-model.md` all record the reversal, amended in place rather than left disagreeing.
+      *(Five places including one the line does not name — `plans/ROADMAP.md`'s Phase 5 line for
+      WO-5.2 — plus two comments in `src/templates.js`. No box unticked, no ticked line deleted.)*
 
 ---
 

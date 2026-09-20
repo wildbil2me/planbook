@@ -13,6 +13,14 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Every template, whatever the recipient — 2026-09-20
+
+The draft window used to show only the templates written for whoever the message was going to, so
+a good note about missing work had to be written again for the counselor. Now every template you
+have saved in that tone is on the list, and the one you picked stays picked when you change who it
+goes to — it is just re-addressed. Concern and praise are still kept apart: a concern template is
+never offered for a praise draft. (WO-5.13)
+
 ### The signal engine can say a rule is early rather than silent — 2026-09-20
 
 Nothing a teacher sees yet. A concern column that is thin in week one and a concern column that is

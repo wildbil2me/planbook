@@ -449,18 +449,30 @@ export function outreachModel() {
   const recipients = outreach.recipientsFor(doc, student);
   const chosen = outreach.recipientByKey(recipients, recipientKey) || recipients[0] || null;
   const audience = chosen ? outreach.audienceOf(chosen) : '';
-  /* THE SEVENTH ACCEPTANCE LINE, AND IT IS ONE CALL WITH BOTH ARGUMENTS. A concern template and a
-     praise template written for the same audience are two records and are offered separately,
-     because this read is filtered on the tone AND the audience — never on the audience alone, which
-     would hand a guardian's concern template back for a praise draft. src/templates.js owns that
-     question so that this flow and the editor cannot come to disagree about what is on offer.
+  /* THE TONE AND NOT THE AUDIENCE, AND THE SECOND HALF OF THAT IS A REVERSAL (WO-5.13). This read
+     filtered on BOTH until 2026-09-20 — WO-5.3's seventh Acceptance line, inherited from WO-5.2's
+     first, proved and mutation-tested — and the audience half came out on the owner's ruling:
+     "all templates should be available regardless of recipient". A teacher who has written one good
+     message about missing work should not have to write it again for the counselor, and the filter
+     was deciding on her behalf which of her own words she was allowed to see. It also cannot
+     survive WO-5.8: a draft addressed to both guardians AND the counselor has no single audience
+     to filter on, so the rule would have had to go then anyway, after a picker had been built on
+     top of it. `audience` is still computed and still rides on the model: it is what recordHandoff()
+     files the `contact` entry under, which is a record of who this message went to and never a
+     question about what was on offer. And `templatesFor()` keeps its signature — `''` means every
+     audience of that tone, which is the argument src/templates-view.js has always passed.
+
+     THE TONE HALF STAYS, AND IT IS THE HALF THAT WAS EVER ABOUT THE WORDS. A concern template read
+     out for a praise draft is a message that says the opposite of what the row she tapped said, and
+     src/templates.js still owns that question so that this flow and the editor cannot come to
+     disagree about what is on offer.
 
      THE EIGHT STARTERS ARE NOT HERE, AND THAT IS THE OWNER'S RULING RATHER THAN AN OVERSIGHT
      (2026-08-28, WO-5.2). They are shipped TEXT offered in the editor's list, and a Save is what
      makes one a record — "the one keystroke between a shipped sentence and a hundred guardians
      reading it in the same words". Offering them at send time would be that keystroke removed. A
-     teacher with nothing saved for this pair is told so and pointed at the door. */
-  const offered = templates.templatesFor(doc, tone, audience);
+     teacher with nothing saved in this tone is told so and pointed at the door. */
+  const offered = templates.templatesFor(doc, tone, '');
   const record = offered.filter((t) => t.id === templateId)[0] || null;
 
   const cc = {
@@ -480,9 +492,12 @@ export function outreachModel() {
       kind: 'template',
       text: offered.length
         ? 'Pick which message this is, above.'
-        : 'You have not saved a ' + templates.toneLabel(tone).toLowerCase() + ' template for a '
-          + templates.audienceLabel(audience).toLowerCase() + ' yet. Write one on the Message '
-          + 'templates screen — Planbook ships one you can start from.',
+        /* NO AUDIENCE IN THIS SENTENCE SINCE WO-5.13, because there is no longer an audience in the
+           question. Nothing is on offer only when the teacher has saved no template in this tone at
+           all, and naming a guardian here would send her to write a second copy of a message she
+           may already have. */
+        : 'You have not saved a ' + templates.toneLabel(tone).toLowerCase() + ' template yet. '
+          + 'Write one on the Message templates screen — Planbook ships one you can start from.',
     });
   }
   if (!chosen) {
@@ -650,11 +665,16 @@ function paintTemplates(model) {
   }
   const note = document.getElementById(TEMPLATE_NOTE_ID);
   if (note) {
+    /* WHAT THIS LINE COUNTS CHANGED WITH THE FILTER (WO-5.13). It read "3 templates written for a
+       guardian in the concern tone", which was a true description of a list this flow no longer
+       draws — every template she has saved in this tone is on offer now, whoever the message is
+       going to, and a note still naming the recipient would read as a filter that is not there.
+       The audience is not on the line at all rather than being named and then contradicted. */
     note.textContent = model.templates.length
       ? model.templates.length + (model.templates.length === 1 ? ' template' : ' templates')
-        + ' written for a ' + templates.audienceLabel(model.audience).toLowerCase() + ' in the '
-        + templates.toneLabel(model.tone).toLowerCase() + ' tone.'
-      : 'Nothing saved for this pair yet.';
+        + ' in the ' + templates.toneLabel(model.tone).toLowerCase() + ' tone — all of them, '
+        + 'whoever this is going to.'
+      : 'Nothing saved in this tone yet.';
   }
 }
 
@@ -937,9 +957,9 @@ export function renderOutreach(opts) {
     const picker = document.getElementById(TEMPLATE_ID);
     if (picker) picker.textContent = '';
     /* The two lines of type under the pickers go with them. Neither names a student, and both are
-       emptied anyway: what a projected room learns from "3 templates written for a guardian" is
-       that somebody is being written about, and the teacher's own address is not a thing to leave
-       on a wall either. */
+       emptied anyway: what a projected room learns from "3 templates in the concern tone" is that
+       somebody is being written about — and that it is not good news — and the teacher's own
+       address is not a thing to leave on a wall either. */
     const templateNote = document.getElementById(TEMPLATE_NOTE_ID);
     if (templateNote) templateNote.textContent = '';
     const ccNote = document.getElementById(CC_NOTE_ID);
@@ -1115,7 +1135,11 @@ export function openOutreach(where, opener) {
   const people = outreach.recipientsFor(doc, student);
   const first = people.filter((r) => r.email)[0] || people[0] || null;
   recipientKey = first ? first.key : '';
-  const offered = templates.templatesFor(doc, tone, first ? outreach.audienceOf(first) : '');
+  /* THE TONE AND NOTHING ELSE (WO-5.13). This read asked `audienceOf(first)` as well until
+     2026-09-20 — the reversal is argued at outreachModel()'s own call, which is the one a teacher's
+     every repaint goes through — so which recipient opened first no longer decides which of her
+     templates she is shown. The draft still opens on the first of them. */
+  const offered = templates.templatesFor(doc, tone, '');
   templateId = offered.length ? offered[0].id : '';
   copySelf = !!(doc && doc.teacher && doc.teacher.defaultCc !== false);
   status = '';
@@ -1228,8 +1252,10 @@ export function setOutreachTone(next, opener) {
 function applyTone(next, replaced) {
   tone = next;
   const doc = getDoc();
-  const model = outreachModel();
-  const offered = templates.templatesFor(doc, tone, model.audience);
+  /* THE TONE IS THE WHOLE OF THE QUESTION NOW (WO-5.13). This read passed `model.audience` too, and
+     with the audience half gone the model was only being built to be asked for it — so the call
+     went with the argument rather than being left standing with an unused answer. */
+  const offered = templates.templatesFor(doc, tone, '');
   templateId = offered.length ? offered[0].id : '';
   buildDraft();
   status = rebuiltNote('from a ' + templates.toneLabel(tone).toLowerCase() + ' template', replaced);
@@ -1247,7 +1273,11 @@ export function setOutreachRecipient(key, opener) {
   const row = model.recipients.filter((r) => r.key === want)[0] || null;
   const label = row ? row.label : 'that recipient';
   if (askBeforeRebuild({ kind: 'recipient', value: want,
-    lead: 'Writing to ' + label + ' instead rebuilds this draft from a template written for them. '
+    /* "FROM A TEMPLATE WRITTEN FOR THEM" CAME OFF THIS SENTENCE WITH THE FILTER (WO-5.13). It is
+       the same template as before now — the list does not change with the recipient — resolved for
+       somebody else, and a dialog promising a different template would be describing a flow that no
+       longer exists. What it is warning about is unchanged: the boxes are rebuilt either way. */
+    lead: 'Writing to ' + label + ' instead rebuilds this draft for them. '
       + 'Planbook keeps no copy of what is in the boxes now, so what you have written here goes.',
     action: 'Rebuild for ' + label }, opener)) return;
   applyRecipient(want, false);
@@ -1257,10 +1287,15 @@ function applyRecipient(key, replaced) {
   const doc = getDoc();
   recipientKey = String(key);
   const next = outreachModel();
-  /* The template list is filtered by the audience, so a template written for a guardian cannot
-     survive a switch to the counselor — it is not on offer any more. Whichever is first for the new
-     pair is what the draft is rebuilt from. */
-  const offered = templates.templatesFor(doc, tone, next.audience);
+  /* THE TEMPLATE SURVIVES THE SWITCH NOW, AND THAT IS THE WHOLE OF WO-5.13 ON THIS PATH. The list
+     was filtered by the audience until 2026-09-20, so a template written for a guardian dropped off
+     it on a switch to the counselor and the draft was rebuilt from whatever was first for the new
+     pair — the teacher's chosen message replaced by a different one because she changed who it was
+     going to. The list no longer moves, so the selection no longer moves either, and the rebuild
+     below resolves the same words for the new person. The guard stays: it is the one line that
+     answers a selection that has genuinely stopped being on offer — nothing saved in this tone at
+     all, or a template deleted on the other screen while this modal was open. */
+  const offered = templates.templatesFor(doc, tone, '');
   if (!offered.filter((t) => t.id === templateId)[0]) {
     templateId = offered.length ? offered[0].id : '';
   }

@@ -381,8 +381,19 @@ if (!seam) {
 
     /*
       ACCEPTANCE LINE 1 — a concern template and a praise template for the SAME audience, offered
-      separately. Both are written through the real controls, and what is asked afterwards is the
-      question WO-5.3 will ask from the signal card: `templatesFor(doc, tone, audience)`.
+      separately. Both are written through the real controls, and what is asked afterwards is
+      `templatesFor(doc, tone, audience)` with both arguments.
+
+      THAT IS A CLAIM ABOUT THE COLLECTION AND IT SURVIVED WO-5.13 UNCHANGED, which is worth a
+      sentence because the work order that reversed the other half named this line. This section
+      read "the question WO-5.3 will ask from the signal card" until 2026-09-20, and the send flow
+      stopped asking it that day: src/outreach-view.js passes `''` for the audience now, on the
+      owner's ruling that every template is available whatever the recipient. `templatesFor()` kept
+      its signature and the record is still filed under an audience — the editor one screen over
+      lists by it — so every number below is the number it always was, and NOTHING here is evidence
+      about what the send flow asks. That question is asked where it is now answered, in
+      verify/outreach.mjs § WO-5.3's seventh Acceptance line, which is also where a build that had
+      kept the filter goes red.
     */
     const saved = await evalJs(`(function(){
       ${TYPE}

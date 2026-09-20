@@ -533,6 +533,9 @@ granting a mail scope.
       concern message.
       *(WO-5.2. `tone` is a field on the record and `templatesFor(doc, tone, audience)` filters on
       both, so the same audience can hold one of each and the send flow cannot offer the wrong one.
+      **The send flow asks only the tone half since WO-5.13** (2026-09-20, the owner): every
+      template is offered whatever the recipient is, and a concern template is still never offered
+      for a praise draft — which is this line's own claim and the only one it ever made.
       **Eight starters ship filled in** — both tones × each of the four audiences — as shipped TEXT
       rather than document rows: the editor opens empty, opening one fills it, and a Save is what
       writes a record, because identical sentences one keystroke from a hundred guardians is the
