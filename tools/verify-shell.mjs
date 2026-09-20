@@ -261,8 +261,13 @@ const h = {
      seam checks themselves make — a second reading is a second answer. `classesBooted` and
      `classSeam` are `tools/verify/classes-terms.mjs`'s, read by categories, letter grades, the
      grade engine and assignments. All three were module-scope `const`s before WO-1.26 and are on
-     the harness for the same reason they were module-scope: one reading, many readers. */
-  seam: false, classesBooted: false, classSeam: false,
+     the harness for the same reason they were module-scope: one reading, many readers.
+     `residue` is a fourth, since WO-1.53: the one attendance record `classes-terms.mjs` leaves in
+     the document ON PURPOSE — `{ classId, date, student, code }` — planted on a date derived off
+     `lib-dates.mjs` three pages of ◀ Earlier back, so that no window the run draws can reach it.
+     `attendance.mjs` asserts at its first read that it is still there and still out of reach; the
+     alternative was that section re-deriving the date, and a second derivation is a second answer. */
+  seam: false, classesBooted: false, classSeam: false, residue: null,
 };
 
 const STATIC_SECTIONS = [

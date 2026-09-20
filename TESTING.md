@@ -1920,6 +1920,94 @@ pass over an empty grep, was mutation-proved four ways.)*
 
 ---
 
+### WO-1.53 — the residue meets the register's earlier page for a week every September
+
+**What this changes.** Nothing a teacher sees, and nothing a device gets. `src/`, `index.html`,
+`sw.js`, `privacy.html`, `manifest.json` and `icons/` are **byte-identical to HEAD** — `git diff HEAD
+-- src/ index.html sw.js privacy.html manifest.json icons/` is empty — so **no `CACHE` bump is owed**.
+Four fixture records in `tools/verify/classes-terms.mjs`'s archive-then-delete block stop being
+hard-coded on 2026-09-09, -10 and -11 and are derived off `tools/verify/lib-dates.mjs` instead —
+`nodeColumns(6, 3)`, the oldest three columns three taps of ◀ Earlier back — and the one that
+survives the block is handed forward on the harness object as `h.residue` and asserted, at the
+attendance section's first read, to be present, on a class on the bar, not today, and older than
+every column of the earlier page. **Of the three shapes the work order's Open section names, this is
+the first — the residue moves and the window does not** — and the reasoning is written at the plant
+site in `classes-terms.mjs`, at the `offWeek` line in `attendance-passes.mjs`, and at the
+precondition in `attendance.mjs`, whose "if a run ever happens to fall on one of those dates" was
+half true and now says which half.
+
+- [x] **The reproduction, on the untouched tree, before any file moved.** `--today=2026-09-17`
+      read **`1396 checks · 1391 passed · 5 failed · 0 skipped`**, 43,961 lines, 487s, `EXIT=1`: the
+      WO-2.3 precondition red (*"2026-09-03 .. 2026-09-09 holds 1 record(s)"*), three checks measuring
+      a non-empty week, and the section line *"it threw after 146 of its own checks, and the rest of
+      that section did not run — Error: nothing to click for #attendanceHead [data-dayoff-panel]"* —
+      fifteen checks lost against 1411, every later section run. `--today=2026-09-24` read
+      **`1411 checks · 1410 passed · 1 failed · 0 skipped`**, 494s, `EXIT=1`, no throw: the one-event
+      check alone, the edge column `2026-09-09` reading `["dropped","taken","not-taken",…]`. Both
+      logs were read to their `EXIT=` line before the first edit.
+- [x] **Five dates green on the delivered tree, each read to its own `EXIT=` line.** **Thu
+      `--today=2026-09-17`** (first day of the range) `1412 checks · 1412 passed · 0 failed · 0
+      skipped`, 44,090 lines, 494s, exit 0 · **Wed `--today=2026-09-23`** (last day) 1412/1412,
+      502s, exit 0 · **Thu `--today=2026-09-24`** (the edge) 1412/1412, 495s, exit 0 · **Wed
+      `--today=2026-09-09`** (the day-of window at the precondition) 1412/1412, 501s, exit 0 ·
+      **real clock, Sat 2026-09-19, no flag — inside the window, so a fifth reproduction and a fifth
+      proof** 1412/1412, 500s, exit 0, with no "clock was moved" line. On each, the residue check printed where the residue sat and where the
+      earlier page ran: `2026-08-17` against `2026-09-02 .. 2026-09-09`, `2026-08-21` against
+      `2026-09-08 .. 2026-09-15`, `2026-08-24` against `2026-09-09 .. 2026-09-16`, `2026-08-07`
+      against `2026-08-25 .. 2026-09-01`, and `2026-08-19` against `2026-09-04 .. 2026-09-11`.
+- [x] **The residue survives, and a check says so.** *"the residue the class manager left is still in
+      the document at this section's first read — on a class that is on the bar, on a day that is
+      not today, and older than every column of the earlier page"* is a `check()` in
+      `verify/attendance.mjs`, directly under the section's first precondition and before its first
+      *attendance* write — the section creates a class through the UI ahead of it and marks
+      nothing. On every date above it read *"the document holds 1 record(s) matching it … and the
+      document holds 1 attendance record(s) in total"* — the neighbour's record is the **only**
+      attendance record in the document when § attendance opens, byte for byte as planted
+      (`keys: classId,date,marks`, `marks: {"s_v1":{"code":"T"}}`), so `attendance.mjs:174`'s
+      reason for keeping it — the one thing in the run that can catch a screen writing onto the
+      wrong date or reading the array unfiltered — is true of the document rather than of a comment.
+- [x] **The check has teeth, and so does the WO-2.3 precondition — proved by one mutation, reverted
+      before anything else was written.** `const farPage = nodeColumns(6, 1)` in
+      `classes-terms.mjs` — the residue planted ON the earlier page — under a `MUTATION WO-1.53`
+      comment, run with `--today=2026-09-10`, a day the untouched tree was green: **`1412 checks ·
+      1410 passed · 2 failed`**, `EXIT=1`, no throw. The residue check went red naming the residue on
+      `2026-08-26` against an earlier page of `2026-08-26 .. 2026-09-02`, and the one-event check
+      went red with the edge column reading `["dropped","taken",…]` — the 2026-09-24 shape, on a
+      September day it never used to reach. The repair was staged before the plant (a `git checkout`
+      against an unstaged tree reverts the work with the mutation); the mutation came out by hand
+      the moment the run had imported its modules, and `grep -rn "MUTATION WO-1.53" tools/ src/`
+      returns nothing.
+- [x] **The WO-2.3 site still asserts an empty five-day range, and the range did not move.**
+      `offWeek = nodeColumns(6, 1)` is untouched, `emptyRange.length === 0` is still the first clause
+      of the fixture check, and the comment above the line says how the range can no longer hold the
+      residue — the residue is derived three pages back with a whole undriven page between — and
+      why the window was never the side free to move. `nodeColumns(6, 2)` appears nowhere.
+- [x] **The count in `tools/README.md` is a number a run produced.** Call sites **1402 → 1403** and
+      the executed count **1411 → 1412** — one site, one result, none in a loop and none a failure
+      arm. `node tools/wo-sweep.mjs` reads `1403 check() call site(s) across 70 harness file(s),
+      matching tools/README.md:1213` and prints **`42 checks · 39 passed · 0 failed · 3 to
+      review`**, exit 0 — the same three standing REVIEW lines as before (sensitive field names,
+      due-date/late-missing, the mockup banner), none of which this work order touches. `node
+      tools/wo-gate.mjs --audit` is **PASS**, exit 0.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.* **Two limits worth
+carrying.** The residue is now derived from the clock at a fixed distance — twenty-three weekdays
+back, the victim's three at twenty-one to twenty-three — which is outside every window the harness
+draws today (`nodeColumns(6, 0)` and `(6, 1)`, and the
+`daysApart >= 14` clause in § attendance's paging check) and is asserted so at § attendance's first
+read; a future section that pages ◀ Earlier three times, or plants its own fixture on the calendar
+a month back, will meet it — **and this check is not where that will say so.** Its guard is
+`residue.date < lastWeek[lastWeek.length - 1]`, which a residue sitting on a *third* page satisfies
+just as happily as one out of reach altogether, so it stays green and the failure lands back in
+whichever block drew the page — the shape this work order was booked to fix, one page further out.
+The fence is real for the two pages the harness draws today, which is what the Acceptance line
+asked for, and it is no wider than that. And the derived residue sits
+*before* the neighbour's first fixture term (MESSY opens 2026-08-26) on most days of the year; the
+delete confirm does not care, because `deletionCounts()` in `src/classes.js` filters by `classId`
+and `exception` alone, and the plant site says what to do if that ever changes.
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*

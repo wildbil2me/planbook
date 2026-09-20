@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The harness stops going red for a week every September — 2026-09-19
+
+Nothing a teacher sees. The verification harness plants one attendance record on purpose and leaves
+it behind — later sections use it to catch a screen writing onto the wrong date, or reading the
+whole attendance array without filtering by class. It sat on a hard-coded September 9th, and the
+register's ◀ Earlier page reached back far enough to touch it from the 17th through the 24th: for
+eight days every September the run went red in a block that had never heard of the fixture, fifteen
+checks lost to a throw, with the app innocent throughout. The record's date is now worked out from
+the harness's own clock — three pages of ◀ Earlier back, the far side of a page nothing draws — and
+the attendance section asserts at its first read that it is still there, still on a class you can
+see, and still out of reach of every page the run pages to. The window it collides with was left
+exactly where it was; it was never the side free to move.
+
 ### The review count's tap lands on a page that says where the window ends — 2026-09-19
 
 Tapping *N review coming up* on the home screen opened this month's calendar, and when the grades

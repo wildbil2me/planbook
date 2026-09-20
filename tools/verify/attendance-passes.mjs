@@ -2168,6 +2168,29 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
     DROPPED rather than left empty because a covered day and a dropped day are the two quiet greys
     in this palette — the pair a refactor collapses into one by accident — and the only way to
     measure that they are still two is to have one of each on screen at the same time.
+
+    ── WHY THE RANGE CAN NO LONGER HOLD THE RESIDUE, AND WHY THE RANGE DID NOT MOVE (WO-1.53) ──
+
+    `offWeek` is the register's earlier page — the page the app draws for the clock it is given —
+    and for a year the class manager's surviving fixture sat on a hard-coded 2026-09-09. By
+    arithmetic the five-day range below held that date on every run from 2026-09-17 through
+    2026-09-23, and on 2026-09-24 it was `offEdge` instead: the column dropped by hand on the
+    MARKING class while the residue's `taken` sat on the neighbour, so the edge read one `taken`
+    the one-event check never budgeted for. Seven days by cascade — the precondition red, three
+    checks measuring a non-empty week, a click into a control that was not there, fifteen checks
+    lost — and the eighth by a single quiet red line. WO-1.44's collision at a third site, found
+    by a run rather than reasoned about, and the first that a walk-forward could not repair:
+    `preDropDayFrom()` below is free to pick any future day, and this page is not free to pick
+    anything. A range routed around the residue would stop being the earlier page.
+
+    So the range is exactly where it was — DERIVED, NOT WIDENED; `nodeColumns(6, 2)` is a page
+    nobody has driven — and it is the residue that moved: tools/verify/classes-terms.mjs derives
+    its date off the same clock, `nodeColumns(6, 3)`, the oldest column three taps of ◀ Earlier
+    back, with the whole of page 2 untouched between it and anything below. The precondition
+    still asserts the five-day range empty, because a range that is empty by construction is still
+    a range some future fixture could land in; and tools/verify/attendance.mjs asserts, at its
+    first read, that the residue is present, on a class that is on the bar, not today, and older
+    than every column of this page. This block reads `emptyRange` and trusts nothing.
   */
   const offWeek = nodeColumns(6, 1);            /* the six weekdays before this week's six */
   const offEdge = offWeek[offWeek.length - 1];  /* nodeColumns is most-recent-first: the oldest */
@@ -2183,14 +2206,15 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
      ── AND IT IS THE FIRST FUTURE DAY THE DOCUMENT HAS NOTHING ON, NOT `today + 9` (WO-1.44) ──
 
      This read `today + 9` off `new Date()` for a year, and on 2026-08-31 that arithmetic landed on
-     2026-09-09 — the date `tools/verify/classes-terms.mjs` hard-codes a surviving attendance record
-     on, for `ids[1]`, which is one of the two classes `twoClasses` below names. The app then did
-     exactly what it is built to do: `clashingMeetings()` found a recorded meeting under the event,
-     so `openConfirm()` raised the retroactive-snow-day warning and wrote NOTHING. The check read
-     that as "the event was not authored", and the four checks after it read the confirm dialog that
-     was still up as their own — every click landing on an overlay this section did not know was
-     there — until `dropEvent.id` came out `undefined`, `clickSel` threw, and 766 checks in the
-     sections after this one did not run. One day of the year, and the whole harness stopped
+     2026-09-09 — the date `tools/verify/classes-terms.mjs` hard-coded a surviving attendance record
+     on until WO-1.53 (it is derived off the clock now, three pages back — see the note above
+     `offWeek`), for `ids[1]`, which is one of the two classes `twoClasses` below names. The app
+     then did exactly what it is built to do: `clashingMeetings()` found a recorded meeting under
+     the event, so `openConfirm()` raised the retroactive-snow-day warning and wrote NOTHING. The
+     check read that as "the event was not authored", and the four checks after it read the confirm
+     dialog that was still up as their own — every click landing on an overlay this section did not
+     know was there — until `dropEvent.id` came out `undefined`, `clickSel` threw, and 766 checks
+     in the sections after this one did not run. One day of the year, and the whole harness stopped
      reporting on it. The reader at `tools/verify/attendance.mjs`'s `window.__att` had NAMED this
      collision in advance — *"if a run ever happens to fall on one of those dates the two collide"* —
      and named the date; what it had not imagined is that a date DERIVED from the clock could reach
@@ -2300,12 +2324,12 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
     `aheadDay` is the day the block at the foot of this section authors *Teacher institute day* on
     and then pages forward to. It read `nodeWeekdayAhead(4)` off the calendar, which is the same
     trap `preDropDay` was in one door along: on Thursday 2026-09-03 four weekdays ahead is
-    **2026-09-09**, the residue date, so the add raised the retroactive-meeting confirm instead of
-    committing — the form kept its values, the list stayed empty, the forward pager had nothing to
-    page to, and `.id` was read off an event that was never written. **This second site was found by
-    the `--today` flag rather than reasoned about**, on the Thursday run of the three this work
-    order's acceptance line asks for, and it is the argument for the flag in one sentence: the first
-    site cost 766 checks and a day of diagnosis, and the second cost one run.
+    **2026-09-09**, the residue date as it then was, so the add raised the retroactive-meeting
+    confirm instead of committing — the form kept its values, the list stayed empty, the forward
+    pager had nothing to page to, and `.id` was read off an event that was never written. **This
+    second site was found by the `--today` flag rather than reasoned about**, on the Thursday run of
+    the three this work order's acceptance line asks for, and it is the argument for the flag in one
+    sentence: the first site cost 766 checks and a day of diagnosis, and the second cost one run.
 
     Walked in WEEKDAYS, because the pager walks weekdays and a Saturday could not be paged to. The
     two-weekday reach for the `To` field is derived from it rather than from the clock for the same

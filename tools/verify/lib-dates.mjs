@@ -39,9 +39,13 @@
 
   WHAT IT IS FOR. WO-1.44 found the attendance section reading a future date off the real clock —
   `today + 9` — and colliding, on exactly one day of the year, with a fixture an earlier section
-  hard-codes on 2026-09-09. That collision is repaired where it lives, by deriving the date from
+  hard-coded on 2026-09-09. That collision is repaired where it lives, by deriving the date from
   the document instead of from the clock. This flag is what lets the repair be PROVED on more than
-  the one day it was written on, rather than reasoned about in a comment.
+  the one day it was written on, rather than reasoned about in a comment. (WO-1.53 found the same
+  fixture meeting the register's earlier page — `nodeColumns(6, 1)` — for eight days every
+  September, a window no walk-forward can route around because the page is not the fixture's to
+  choose; the fixture's date is derived off THIS module now, three pages back, and the flag is
+  again what proved it, on five dates.)
 
   IT SHIFTS BY WHOLE DAYS AND IT SHIFTS, IT DOES NOT FREEZE. Everything in this app that measures an
   elapsed time — the hall-pass clock most of all — goes on working, because `Date.now()` on both

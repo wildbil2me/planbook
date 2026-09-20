@@ -1210,7 +1210,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1402 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1403 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1708,6 +1708,26 @@ this section drives; the file imports `node:fs` and `node:path` for it, as `atte
 does. The run prints **1411**: `1411 checks · 1411 passed · 0 failed · 0 skipped`, 43,961 lines, 31.2
 lines per check, 503s, exit 0, measured 2026-09-16 on the delivered tree — green on the first run.
 Mutations are tabulated in `TESTING.md` § WO-6.9.
+
+**WO-1.53 moved it from 1402 to 1403, and the executed count from 1411 to 1412 — one site, one
+result.** One literal call site in `verify/attendance.mjs`, directly under the section's first
+precondition and before its first *attendance* write — the section creates a class through the UI
+ahead of it and marks nothing: *the residue the class manager left is still in the
+document at this section's first read*. It asserts the one attendance record `classes-terms.mjs`
+leaves behind on purpose is present once, byte for byte as planted, on a class that is on the bar, on
+a day that is not today, and older than every column of the register's earlier page — which is the
+Acceptance line that wanted a check rather than a comment. **Nothing else in the count moved, and
+the thing that moved is a date, not a check**: the four fixture records in `classes-terms.mjs`'s
+archive-then-delete block were hard-coded on 2026-09-09, -10 and -11, and are derived off
+`lib-dates.mjs` now — `nodeColumns(6, 3)`, the oldest three columns three taps of ◀ Earlier back —
+because the surviving one met `attendance-passes.mjs`'s WO-2.3 range, `nodeColumns(6, 1)`, for eight
+days every September and the day-of precondition for a ninth. The reading travels on the harness
+object as `h.residue`, a fourth alongside `seam`, `classesBooted` and `classSeam`, so the attendance
+section re-derives nothing. The run prints **1412**: `1412 checks · 1412 passed · 0 failed · 0
+skipped`, 44,090 lines, 31.2 lines per check, 494s, exit 0, measured 2026-09-19 with
+`--today=2026-09-17` — the first day of the window, on which the untouched tree read
+`1396 · 1391 · 5 failed` with fifteen checks lost. The other four dates and the mutation are
+tabulated in `TESTING.md` § WO-1.53.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not

@@ -12,7 +12,8 @@ import { nodeToday, thisWeek, lastWeek, daysApart, tomorrow } from './lib-dates.
 import { passes } from './attendance-passes.mjs';
 
 export async function run(h) {
-const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, seam,
+  residue } = h;
 
 /* ───────────────── attendance ─────────────────
  *
@@ -171,12 +172,14 @@ const INSTALL_ATT_READER = `(function(){
         return { classId: r.classId, date: r.date, exception: r.exception,
                  keys: Object.keys(r).sort().join(','),
                  marks: r.marks ? JSON.parse(JSON.stringify(r.marks)) : null }; }),
-      /* Today's, separately. The document arrives here already holding records on 2026-09-09 and
-         after: the class manager section pushes a fixture onto a class it is about to delete and
-         onto a neighbour it is not, so that "it deleted the right one" is falsifiable, and the
+      /* Today's, separately. The document arrives here already holding records that are not this
+         section's: the class manager section pushes a fixture onto a class it is about to delete
+         and onto a neighbour it is not, so that "it deleted the right one" is falsifiable, and the
          neighbour's survives. That residue is kept rather than cleaned away, because it is the only
          thing in the run that can catch a screen which writes onto the wrong date or reads the
-         array without filtering. (No backticks in this comment: it is inside a template literal.) */
+         array without filtering. It sat on 2026-09-09 until WO-1.53; it sits three pages of Earlier
+         back now, derived off the clock, and the precondition below asserts where it is.
+         (No backticks in this comment: it is inside a template literal.) */
       today: doc.attendance.filter(function(r){ return r.date === a.todayISO(); })
         .map(function(r){
           return { classId: r.classId, date: r.date, exception: r.exception,
@@ -652,12 +655,23 @@ if (!attBooted || !attSeam) {
   /* ── the day loads showing all classes, and the third state is the one they are all in ── */
 
   /*
-    `start.today` rather than `start.records`: the residue named in the reader above sits on
-    2026-09-09 and after, and a section that demanded an empty attendance array would be asserting
-    that no earlier section left anything behind rather than that this screen has written nothing
-    yet. The residue is also why this is worth stating as a precondition at all — if a run ever
-    happens to fall on one of those dates the two collide, and this line is where that says so out
-    loud instead of turning into six confusing failures further down.
+    `start.today` rather than `start.records`: the residue named in the reader above is in the
+    document before this section reads it, and a section that demanded an empty attendance array
+    would be asserting that no earlier section left anything behind rather than that this screen
+    has written nothing yet. The residue is also why this is worth stating as a precondition at all.
+
+    This comment used to end "if a run ever happens to fall on one of those dates the two collide,
+    and this line is where that says so out loud instead of turning into six confusing failures
+    further down" — written for a residue hard-coded on 2026-09-09 and a run taken ON that day. It
+    was half true (WO-1.53). The residue meets the clock TWO ways, and only one of them is today:
+    the WO-2.3 block in attendance-passes.mjs reads the register's earlier page off the same clock,
+    and for eight days every September that page held the residue without today being anywhere near
+    it. This line said nothing on those days, because it only ever asked about today; the failures
+    landed a hundred and forty checks further down, in a block that had never heard of the fixture.
+    Since WO-1.53 the residue's date is DERIVED from the clock three pages of Earlier back — the far
+    side of a page the harness does not draw — so it is never today and never on a page, and the
+    check after this one asserts BOTH out loud, here, rather than trusting the derivation. That is
+    what makes this sentence true again on every day of the year rather than on all but eight.
   */
   check('every class on the home screen carries today\'s state, and a day nobody has marked is six untaken classes',
     ids.length === 6 && start.cards.length === 6 && start.today.length === 0
@@ -667,6 +681,42 @@ if (!attBooted || !attSeam) {
     start.cards.length + ' card(s) ' + JSON.stringify(start.cards.map((c) => c.state))
       + '; records already on ' + nodeToday + ' = ' + start.today.length
       + ', on other dates = ' + (start.records.length - start.today.length));
+
+  /*
+    ── THE RESIDUE IS STILL HERE, AND STILL OUT OF REACH (WO-1.53) ──
+
+    The reason the reader keeps it is only true of a document that actually holds it: a residue that
+    an intermediate section had swept away, or that the class manager had planted on a date some
+    page below draws, would leave every wrong-date claim in this file passing vacuously — the exact
+    shape the residue exists to refuse. So it is asserted, not assumed, at the first read this
+    section takes and before it marks anything — it has created a class through the UI by now, but
+    the attendance array is still nobody's work but the class manager's. Four things, in one
+    breath: the record the class
+    manager says it left is in the document, once, byte for byte as planted; its class is one of
+    the six on the bar, so a screen reading the array without a class filter WOULD show it; its date
+    is not today, so the precondition above is not passing on luck; and its date is older than the
+    oldest column of the earlier page, `lastWeek`, so no page this run draws — this week's, or the
+    one the WO-2.3 block pages back to and asserts empty — can hold it. `residue` is the class
+    manager's own reading, handed forward on the harness, so this file re-derives nothing.
+  */
+  const residueRecords = residue ? start.records.filter((r) => r.classId === residue.classId
+    && r.date === residue.date) : [];
+  const residueRecord = residueRecords[0] || null;
+  const residueMarks = residue ? JSON.stringify({ [residue.student]: { code: residue.code } }) : '';
+  check('the residue the class manager left is still in the document at this section\'s first read — on a class that is on the bar, on a day that is not today, and older than every column of the earlier page — so every wrong-date read below has something real to catch',
+    !!residue && residueRecords.length === 1 && !!residueRecord
+      && residueRecord.keys === 'classId,date,marks'
+      && JSON.stringify(residueRecord.marks) === residueMarks
+      && ids.indexOf(residue.classId) >= 0
+      && residue.date !== nodeToday
+      && residue.date < lastWeek[lastWeek.length - 1]
+      && thisWeek.indexOf(residue.date) === -1 && lastWeek.indexOf(residue.date) === -1,
+    (residue ? 'the class manager left ' + JSON.stringify(residue) : 'the class manager handed forward NO residue')
+      + '; the document holds ' + residueRecords.length + ' record(s) matching it'
+      + (residueRecord ? ', reading ' + JSON.stringify(residueRecord) : '')
+      + '; today is ' + nodeToday + ', the earlier page runs ' + lastWeek[lastWeek.length - 1]
+      + ' .. ' + lastWeek[0] + ', and the document holds ' + start.records.length
+      + ' attendance record(s) in total');
 
   /* ── the way in, and the fact that looking is not marking ── */
 

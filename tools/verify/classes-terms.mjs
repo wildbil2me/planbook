@@ -10,7 +10,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { nodeToday } from './lib-dates.mjs';
+import { nodeToday, nodeColumns } from './lib-dates.mjs';
 
 /* Everything this section reads, in one page-side helper, so that a check is one round trip and
    the reads cannot drift between checks. Re-installed after every reload, like the walker. */
@@ -156,6 +156,11 @@ function homeVsDoc(live) {
 
 const classSeam = await evalJs("!!(window.planbook && window.planbook.classes"
   + " && typeof window.planbook.classes.getSelectedTermId === 'function')");
+/* The third reading this section hands forward (see the harness object in tools/verify-shell.mjs):
+   the one attendance record this section leaves in the document on purpose — which class, which
+   date, which cell. Taken at the plant site under "Archive, then delete", and null if this section
+   skipped, so attendance.mjs can tell "never planted" from "planted and lost". */
+let residue = null;
 
 if (!classesBooted || !classSeam) {
   skip('classes & terms: create, reorder, rename, per-class term structures, archive, delete',
@@ -685,9 +690,51 @@ if (!classesBooted || !classSeam) {
     that the confirm counts real records rather than printing zeroes.
 
     A neighbouring class gets records of its own, so "it deleted the right one" is falsifiable.
+
+    ── THE DATES ARE DERIVED FROM THE CLOCK, AT A DISTANCE NO WINDOW THIS RUN DRAWS CAN REACH (WO-1.53) ──
+
+    These four records were hard-coded on 2026-09-09, -10 and -11 for a year. The victim's three are
+    destroyed eight checks down; the neighbour's SURVIVES, on purpose — tools/verify/attendance.mjs
+    keeps it as the one record in the run that can catch a screen writing onto the wrong date or
+    reading the array without a filter. A hard-coded date and a clock-derived window are two things
+    that cross once a year, and the harness draws every window off the clock: attendance.mjs reads
+    today, and attendance-passes.mjs's WO-2.3 block reads the register's EARLIER page —
+    nodeColumns(6, 1) — and asserts five of its six columns empty before it authors over them. The
+    first crossing is one day, a run taken ON 2026-09-09. The second is eight — every run from
+    2026-09-17 to 2026-09-24, seven by cascade and the eighth by one quiet red line on the dropped
+    edge — and it was found by a run, not reasoned about (WO-1.53's own Why; WO-1.44's `--today`
+    is what reproduces it on demand).
+
+    THREE SHAPES WERE ON THE TABLE, AND THIS IS THE FIRST: THE RESIDUE MOVES AND THE WINDOW DOES NOT.
+    The earlier page is whatever page the app draws for the clock it is given, so a range routed
+    around the residue would stop being the earlier page — the window was never the side free to
+    move. Cleaning the residue out at the WO-2.3 site would be a second document write in a block
+    whose comment promises exactly one, and it would cost every later section its wrong-date catch
+    on precisely the days the catch would fire. So the residue's date is taken off the same clock
+    the windows are, THREE taps of ◀ Earlier back: the harness pages back once (offset 1), WO-1.53's
+    Traps name offset 2 as the page nobody has driven, and offset 3 sits behind both with a whole
+    untouched page between. Derived, not widened — the window is left exactly where the app draws
+    it. It comes from lib-dates.mjs and never from a fresh `new Date()` (a second answer to "what
+    day is it" is the defect that module guards), and it reaches the page the way `victimId` does —
+    interpolated — rather than by asking the page's clock. Measured from today, it is never today
+    either, which closes the day-of window in the same stroke; attendance.mjs asserts both at its
+    first read, through the `residue` reading handed forward at the foot of this section.
+
+    THE VICTIM'S THREE MOVE WITH IT, and did not have to — they never reach another section. They
+    move so the fixture keeps its shape: the neighbour's record shares a date with the victim's
+    first, so "it deleted the right one" stays a question about classId and never about date. The
+    confirm's counts do not care where any of these sit — deletionCounts() in src/classes.js filters
+    by classId and by `exception` alone, with no term edge and no date in it — so a record before
+    the neighbour's own first term (MESSY opens 2026-08-26) counts exactly as one inside it would.
+    Were that ever to change, these dates would have to sit inside the class's fixture term rather
+    than on the calendar's, and this paragraph is where that would be said.
   */
   const victimId = remembered.ids[6];
   const neighbourId = remembered.ids[1];
+  const farPage = nodeColumns(6, 3);       /* three taps of ◀ Earlier back, most-recent-first */
+  const residueDate = farPage[5];          /* its oldest column: the neighbour's, and the victim's first */
+  const victimDates = [farPage[5], farPage[4], farPage[3]];
+  residue = { classId: neighbourId, date: residueDate, student: 's_v1', code: 'T' };
   await evalJs(`(async function(){ var s = window.planbook.store;
     s.update(function(d){
       d.students = [{ id:'s_v1', first:'Ada', last:'Probe' }, { id:'s_v2', first:'Bo', last:'Probe' }];
@@ -696,13 +743,13 @@ if (!classesBooted || !classSeam) {
          further down that no cell in the document is a bare string would go red about this line
          rather than about the app. (Bare strings ARE tested — deliberately, in the migration and
          restore fixtures, where the point is that they get converted.) */
-      d.attendance.push({ classId:${JSON.stringify(victimId)}, date:'2026-09-09', marks:{ s_v1:{ code:'A' } } });
-      d.attendance.push({ classId:${JSON.stringify(victimId)}, date:'2026-09-10', marks:{} });
+      d.attendance.push({ classId:${JSON.stringify(victimId)}, date:${JSON.stringify(victimDates[0])}, marks:{ s_v1:{ code:'A' } } });
+      d.attendance.push({ classId:${JSON.stringify(victimId)}, date:${JSON.stringify(victimDates[1])}, marks:{} });
       /* A day the class did not meet. It is destroyed too, and it is NOT a meeting — everything in
          this app counts recorded meetings (plans/rotating-schedule.md), so the confirm names the
          two kinds separately and this record is what makes that falsifiable. */
-      d.attendance.push({ classId:${JSON.stringify(victimId)}, date:'2026-09-11', exception:'dropped' });
-      d.attendance.push({ classId:${JSON.stringify(neighbourId)}, date:'2026-09-09', marks:{ s_v1:{ code:'T' } } });
+      d.attendance.push({ classId:${JSON.stringify(victimId)}, date:${JSON.stringify(victimDates[2])}, exception:'dropped' });
+      d.attendance.push({ classId:${JSON.stringify(neighbourId)}, date:${JSON.stringify(residueDate)}, marks:{ s_v1:{ code:'T' } } });
       d.assignments.push({ id:'a_v1', classId:${JSON.stringify(victimId)}, name:'Quiz', points:100 });
       d.assignments.push({ id:'a_n1', classId:${JSON.stringify(neighbourId)}, name:'Lab', points:50 });
       d.scores['a_v1'] = { s_v1:{ v:87 }, s_v2:{ v:null, flag:'missing' } };
@@ -1165,4 +1212,5 @@ if (!classesBooted || !classSeam) {
 
 h.classesBooted = classesBooted;
 h.classSeam = classSeam;
+h.residue = residue;
 }

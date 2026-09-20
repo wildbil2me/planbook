@@ -5010,7 +5010,7 @@ whole of the work is asking whether a sentence somewhere else disagrees with it.
 
 ## WO-1.53 — the residue meets the register's earlier page for a week every September
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.44 ✅ · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-09-19 · **Size** S · **Depends on** WO-1.44 ✅ · **Blocks** nothing
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.52 made.
 Booked 2026-09-17 out of WO-6.9's verdict, whose verifier ran the harness twice on the same tree:
 `--today=2026-09-16` at 1411/1411 and the real clock at 1396 · 1391 · 5 failed · EXIT=1. The tree
@@ -5097,18 +5097,18 @@ two of them are wrong in a way the Traps name:
   closed seven days of eight.
 
 **Acceptance**
-- [ ] On the **pre-repair** tree, `node tools/verify-shell.mjs --today=2026-09-17` reproduces the
+- [x] On the **pre-repair** tree, `node tools/verify-shell.mjs --today=2026-09-17` reproduces the
       failure: the WO-2.3 precondition red, and the section reporting checks lost. *(That is the
       reproduction this row has; use it before touching anything.)*
-- [ ] After the repair, `node tools/verify-shell.mjs` is green with `--today` on **2026-09-17,
+- [x] After the repair, `node tools/verify-shell.mjs` is green with `--today` on **2026-09-17,
       2026-09-23, 2026-09-24 and 2026-09-09** — the first day of the range, the last, the edge, and
       the day-of window at `attendance.mjs:648` — and on the real clock the day of the sitting.
-- [ ] The residue survives: on every date driven, a record planted by an earlier section is still in
+- [x] The residue survives: on every date driven, a record planted by an earlier section is still in
       `doc.attendance` when § attendance takes its first read, and `attendance.mjs:174`'s reason for
       keeping it is still true of the document. A check asserts it rather than a comment.
-- [ ] The WO-2.3 site still asserts an empty five-day range as its precondition, and a comment at
+- [x] The WO-2.3 site still asserts an empty five-day range as its precondition, and a comment at
       the line says how the range can no longer hold the residue — derived, not widened, per the
       first trap.
-- [ ] Which of the three shapes was taken and why is written at the site that moved, and the comment
+- [x] Which of the three shapes was taken and why is written at the site that moved, and the comment
       at `attendance.mjs:656` is re-read and either still true or corrected.
-- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+- [x] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
