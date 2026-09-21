@@ -1,6 +1,6 @@
 # Mockups
 
-Four rooms. **The gradebook drawings** were made 2026-08-09, before any Phase 3 screen was built;
+Five rooms. **The gradebook drawings** were made 2026-08-09, before any Phase 3 screen was built;
 **the Phase 6 drawings** were made 2026-08-19, before any of Phase 6 existed at all; **the Phase 4
 drawings** were made 2026-08-20, three days before the work order they are for was due to start; and
 **the Phase 5 drawing** was made 2026-08-28, the same day its resolver landed with no screen on it.
@@ -573,3 +573,34 @@ the palette is below the fold, and tapping it may well dismiss the field it is m
 Nothing about it is measured. It wants a reading on the real tablet before WO-5.2 is dispatched, and
 the alternative worth having in hand is a palette that opens as a sheet over the keyboard rather than
 a column under it.
+
+---
+
+# The printed pages — WO-8.4, drawn 2026-09-21
+
+**The fifth room, and the first drawn of paper rather than a screen.** [`print.html`](print.html)
+lays the four sheets the app can already print on a desk at US Letter size (8.5 × 11 in, the calendar
+landscape), at the pt and mm the shipped print blocks use.
+
+## What the drawing proposes
+
+**One thing: a header band on every sheet** — what the sheet is, the class, the term, and the day it
+was printed — styled in [`proposed-phase8.css`](proposed-phase8.css) § PRINT HEADER, bound for
+`src/shell.css` and carrying the `not yet lifted` token. Everything else on the sheets is a picture
+of print rules that already shipped (WO-2.6, 3.7, 3.9, 6.3), drawn in `mk-` classes so nothing about
+them lifts. **The calendar is the sheet the band fixes**: its only title today is
+`Planbook · September 2026`, with no class, term or print date.
+
+## The open questions, collected
+
+Each is an amber note on the page and an item in WO-8.4's **Surface** line.
+
+- **One shared `#printHeader`, or four heads restyled to match?** Same paper either way.
+- **A continuation line at the page breaks the app forces** — is that enough, given a true running
+  header on every page does not print reliably across Chrome and Safari?
+- **The grade sheet's letter scale** — at the foot, as drawn, or back in the header if it is read
+  while typing into the SIS?
+- **Landscape for the month only**, via a named `@page`, which Safari on the iPad ignores?
+- **What the band says about class and term on a calendar showing several classes.**
+- **One ungated support-dot belt in `src/shell.css`** for a plain Ctrl+P from a non-print screen.
+- **Whether the four per-surface gates already meet the `data-modal-print` deliverable.**

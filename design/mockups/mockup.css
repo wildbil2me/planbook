@@ -92,6 +92,99 @@ body { padding-bottom: 60px; }
 .mk-index-list span { font-size: 12px; color: #6b7a8d; display: block; margin-top: 3px; line-height: 1.5; }
 .mk-index-list em { font-style: normal; color: #8a9bb0; font-size: 11px; font-weight: 700; }
 
+/* ══ THE PAPER (print.html, 2026-09-21) ══════════════════════════════════════════
+
+   The desk and the sheets on it. A PICTURE of what the four shipped @media print
+   blocks already produce, drawn at their own pt and mm so a sheet on screen is
+   the size it comes off the printer — and every rule here stays behind, because
+   the thing it pictures has already landed in src/. The only half of print.html
+   that lifts is proposed-phase8.css § PRINT HEADER.
+
+   A Letter sheet is 8.5in × 11in; the 10mm inset is the one src/attendance.css
+   declares for the whole app. Landscape is drawn for the calendar only, and that
+   is a question on the page rather than a decision here. */
+.mk-desk {
+  background: #cfd4dc; padding: 28px 16px; overflow-x: auto;
+  display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; align-items: flex-start;
+}
+.mk-sheet {
+  flex: none; width: 8.5in; min-height: 11in; padding: 10mm; background: #fff; color: #000;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25); position: relative;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.mk-sheet.landscape { width: 11in; min-height: 8.5in; }
+.mk-sheet-tag {
+  position: absolute; top: -20px; left: 0;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 11px; color: #3a4250;
+}
+.mk-p-label { font-size: 8pt; font-weight: 700; margin: 6mm 0 2mm; }
+.mk-p-label:first-child { margin-top: 0; }
+.mk-p-note { font-size: 7pt; color: #333; line-height: 1.5; margin-top: 4mm; }
+.mk-p-table { border-collapse: collapse; width: 100%; font-size: 8pt; }
+.mk-p-table th, .mk-p-table td {
+  padding: 1mm 1.5mm; border-bottom: 0.2mm solid #999; text-align: left; font-weight: 400;
+}
+.mk-p-table thead th { font-size: 7pt; font-weight: 700; border-bottom: 0.4mm solid #000; vertical-align: bottom; }
+.mk-p-table tbody th { font-weight: 600; white-space: nowrap; }
+.mk-p-table .num { text-align: right; }
+.mk-p-table .mid { text-align: center; }
+.mk-p-table.tight th, .mk-p-table.tight td { padding: 0.8mm 0.5mm; }
+.mk-p-table.small { font-size: 7pt; }
+.mk-p-table.small thead th { font-size: 6pt; }
+.mk-p-day { display: block; font-size: 6pt; font-weight: 400; }
+.mk-p-sub { display: block; font-size: 5.5pt; font-weight: 400; color: #333; }
+.mk-p-mark {
+  display: inline-block; min-width: 4.5mm; padding: 0.3mm 1mm; border-radius: 1mm;
+  font-size: 7.5pt; font-weight: 700; text-align: center; border: 1px solid transparent;
+}
+.mk-p-mark.P { background: #eafaf1; color: #27ae60; border-color: #a3e4bc; }
+.mk-p-mark.T { background: #fef5ea; color: #e67e22; border-color: #f5cfa0; }
+.mk-p-mark.A { background: #fdeaea; color: #e74c3c; border-color: #f5b7b1; }
+.mk-p-mark.E { background: #eef2ff; color: #5b6fcc; border-color: #b0bcf0; }
+.mk-p-mark.D { background: #f3eefe; color: #7c3aed; border-color: #d4c2fa; }
+.mk-p-rate { font-size: 9pt; font-weight: 700; }
+.mk-p-rate.ok { color: #27ae60; } .mk-p-rate.warn { color: #e67e22; } .mk-p-rate.bad { color: #e74c3c; }
+.mk-p-key {
+  border: 0.2mm solid #999; padding: 2mm; margin-top: 3mm; font-size: 6.5pt;
+  display: flex; flex-wrap: wrap; gap: 1mm 5mm;
+}
+.mk-p-key span { flex: 1 1 60mm; }
+.mk-p-hero {
+  display: flex; justify-content: space-between; align-items: flex-end; gap: 14px;
+  border-bottom: 2px solid #000; padding-bottom: 4mm; margin-bottom: 4mm;
+}
+.mk-p-hero-name { font-size: 14pt; font-weight: 700; }
+.mk-p-hero-sub { font-size: 9pt; color: #333; }
+.mk-p-hero-grade { text-align: right; }
+.mk-p-hero-big { font-size: 20pt; font-weight: 800; line-height: 1; }
+.mk-p-cols { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 4mm; align-items: start; }
+.mk-p-card { border: 0.4mm solid #999; padding: 3mm; }
+.mk-p-card + .mk-p-card { margin-top: 4mm; }
+.mk-p-card.move { border-left: 1mm solid #000; }
+.mk-p-card-title { font-size: 7pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4pt; margin-bottom: 2mm; }
+.mk-p-card p { font-size: 8pt; line-height: 1.45; margin: 0 0 1.5mm; }
+.mk-p-card .mk-p-note { margin-top: 2mm; }
+.mk-p-row { display: flex; justify-content: space-between; gap: 3mm; font-size: 8pt; padding: 1mm 0; border-bottom: 0.2mm solid #ddd; }
+.mk-p-row small { display: block; font-size: 7pt; color: #333; }
+.mk-p-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5mm; }
+.mk-p-stat { border: 0.2mm solid #999; padding: 1.5mm; text-align: center; }
+.mk-p-stat b { display: block; font-size: 11pt; }
+.mk-p-stat span { font-size: 6pt; color: #333; text-transform: uppercase; }
+.mk-p-cal { border-collapse: collapse; width: 100%; table-layout: fixed; }
+.mk-p-cal th { font-size: 7pt; font-weight: 700; padding: 1mm; border-bottom: 0.4mm solid #000; text-align: left; }
+.mk-p-cal td { border: 0.2mm solid #999; vertical-align: top; height: 27mm; padding: 1mm; }
+.mk-p-cal td.out { color: #999; }
+.mk-p-cal .n { font-size: 8pt; font-weight: 700; display: block; margin-bottom: 0.5mm; }
+.mk-p-chip {
+  display: block; border: 0.2mm solid #999; padding: 0.3mm 1mm; margin-top: 0.6mm;
+  font-size: 6.5pt; line-height: 1.25;
+}
+.mk-p-chip.quiet { border-style: dashed; color: #333; }
+.mk-p-gone {
+  display: block; margin-top: 0.6mm; padding: 0.3mm 1mm; font-size: 6.5pt;
+  border: 0.3mm dashed #e74c3c; color: #e74c3c; font-family: ui-monospace, Consolas, monospace;
+}
+
 @media (pointer: coarse) {
   .mk-nav a { min-height: 44px; display: flex; align-items: center; }
   .mk-index-list a { min-height: 44px; }

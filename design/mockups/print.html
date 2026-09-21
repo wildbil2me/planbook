@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — The printed pages (WO-8.4)</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="proposed-phase8.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWINGS, NOT THE APP.</strong>
+  <span>Static HTML, drawn 2026-09-21. Four sheets of paper on a desk — no printer was involved, and every figure is typed in.</span>
+  <span>Printed pages · <a href="../../plans/work-orders/phase-8-packaging.md#wo-84--print-stylesheets">WO-8.4</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="print.html" class="here">Printed pages</a>
+  <a href="outreach.html">Outreach templates</a>
+  <a href="signals.html">Who needs you</a>
+  <a href="behavior.html">Behavior log</a>
+  <a href="calendar.html">Calendar</a>
+  <a href="glance.html">Glance page</a>
+  <a href="scores.html">Score grid</a>
+  <a href="assignments.html">Assignment list</a>
+  <a href="student.html">Student detail</a>
+  <a href="class-manager.html">Class manager</a>
+</nav>
+
+<!--
+  WHAT IS DRAWN, AND WHAT IS PROPOSED. All four surfaces WO-8.4 names already print — each has a gated
+  @media print block in its own stylesheet, and the sheets below are a picture of what those blocks
+  produce today, drawn at their own pt and mm in mk- classes. The ONE thing on this page that is a
+  proposal is the band at the head of every sheet, styled by proposed-phase8.css § PRINT HEADER. That
+  is the whole visible difference WO-8.4 makes; the rest of it is rules nobody sees.
+-->
+
+<div class="mk-section">What WO-8.4 changes on paper</div>
+<p class="mk-caption"><strong>Four surfaces already print.</strong> The attendance record (WO-2.6), one
+  student’s report (WO-3.7), the grade sheet (WO-3.9) and the calendar (WO-6.3) each have a gated
+  <code>@media print</code> block. The sheets below show what those blocks produce today, redrawn at
+  their own sizes. <strong>The new part is the band at the top of each sheet:</strong> what the sheet
+  is, the class, the term, and the date it was printed, laid out the same way on all four.</p>
+<p class="mk-caption"><strong>What the band replaces.</strong> Today each surface titles itself in its
+  own way. The record and the grade sheet print the class name, a caption, and a
+  <code>Printed … · Planbook</code> line. The student report puts a date stamp under the hero. The
+  calendar prints <code>Planbook · September 2026</code>, with <strong>no class, no term and no print
+  date</strong>, so it is the only sheet that fails the first Acceptance line today. In this drawing
+  the band takes over those jobs on all four, and each surface keeps only what is its own.</p>
+<p class="mk-caption ask"><strong>ASK — one shared <code>#printHeader</code>, or four heads that just
+  match?</strong> The style guide’s idiom is one hidden <code>#printHeader</code> in
+  <code>index.html</code> that becomes visible in print. That means one element filled from four
+  places, and each surface’s own head hidden under its gate. The alternative is to keep each
+  surface’s head where it is and restyle all four to this layout. Both print the same page. The first
+  is the idiom the work order names. The second keeps the screen and the sheet as one element, which
+  is what <code>src/attendance-report.js</code> argues for at its own header (“it is the same element
+  on screen”).</p>
+
+<div class="mk-section">1 · The attendance record — English III, Period 2</div>
+<div class="mk-desk">
+
+  <div class="mk-sheet">
+    <span class="mk-sheet-tag">sheet 1 of 2 · Letter, portrait</span>
+    
+    <div class="print-header">
+      <div class="print-header-who">
+        <div class="print-header-title">Attendance record</div>
+        <div class="print-header-class">English III — Period 2</div>
+        <div class="print-header-term">Quarter 1 · September 2 – November 6, 2026 · 12 recorded meetings · 22 students</div>
+      </div>
+      <div class="print-header-stamp"><b>Printed September 21, 2026</b><br>Planbook</div>
+    </div>
+    <div class="mk-p-label">Attendance by student</div>
+    <table class="mk-p-table">
+      <thead><tr><th>Student</th><th class="num">P</th><th class="num">T</th><th class="num">A</th><th class="num">E</th><th class="num">D</th><th class="num">Meetings</th><th class="num">Attendance</th></tr></thead>
+      <tbody>
+          <tr><th>Aaliyah Brooks</th><td class="num">11</td><td class="num"></td><td class="num">1</td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate warn">91.7%</span></td></tr>
+          <tr><th>Marcus Chen</th><td class="num">11</td><td class="num">1</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate ok">100.0%</span></td></tr>
+          <tr><th>Sofia Delgado</th><td class="num">11</td><td class="num"></td><td class="num"></td><td class="num">1</td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate ok">100.0%</span></td></tr>
+          <tr><th>Ethan Fitzgerald</th><td class="num">11</td><td class="num">1</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate ok">100.0%</span></td></tr>
+          <tr><th>Grace Hwang</th><td class="num">11</td><td class="num">1</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate ok">100.0%</span></td></tr>
+          <tr><th>Jamal Ingram</th><td class="num">12</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate ok">100.0%</span></td></tr>
+          <tr><th>Keira Johansson</th><td class="num">11</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">1</td><td class="num">12</td><td class="num"><span class="mk-p-rate ok">100.0%</span></td></tr>
+          <tr><th>Liam O’Connell</th><td class="num">10</td><td class="num">2</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate ok">100.0%</span></td></tr>
+          <tr><th>Maya Okafor</th><td class="num">9</td><td class="num">1</td><td class="num">2</td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate bad">83.3%</span></td></tr>
+          <tr><th>Noah Patel</th><td class="num">11</td><td class="num"></td><td class="num">1</td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate warn">91.7%</span></td></tr>
+          <tr><th>Olivia Quinn</th><td class="num">11</td><td class="num"></td><td class="num">1</td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate warn">91.7%</span></td></tr>
+          <tr><th>Priya Raman</th><td class="num">8</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">1</td><td class="num">12</td><td class="num"><span class="mk-p-rate warn">91.7%</span></td></tr>
+          <tr><th>Rafael Santos</th><td class="num">11</td><td class="num"></td><td class="num">1</td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate warn">91.7%</span></td></tr>
+          <tr><th>Sadie Thompson</th><td class="num">7</td><td class="num">3</td><td class="num">2</td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate bad">83.3%</span></td></tr>
+          <tr><th>Tyler Underwood</th><td class="num">12</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate ok">100.0%</span></td></tr>
+          <tr><th>Valentina Vargas</th><td class="num">11</td><td class="num"></td><td class="num">1</td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate warn">91.7%</span></td></tr>
+          <tr><th>Wesley Ward</th><td class="num">10</td><td class="num">1</td><td class="num"></td><td class="num">1</td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate ok">100.0%</span></td></tr>
+          <tr><th>Ximena Xu</th><td class="num">9</td><td class="num">1</td><td class="num">2</td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate bad">83.3%</span></td></tr>
+          <tr><th>Yusuf Yilmaz</th><td class="num">9</td><td class="num">1</td><td class="num">1</td><td class="num"></td><td class="num">1</td><td class="num">12</td><td class="num"><span class="mk-p-rate warn">91.7%</span></td></tr>
+          <tr><th>Zoe Zimmerman</th><td class="num">11</td><td class="num">1</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate ok">100.0%</span></td></tr>
+          <tr><th>Ben Abernathy</th><td class="num">10</td><td class="num">2</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate ok">100.0%</span></td></tr>
+          <tr><th>Hannah Lowe</th><td class="num">9</td><td class="num">1</td><td class="num">2</td><td class="num"></td><td class="num"></td><td class="num">12</td><td class="num"><span class="mk-p-rate bad">83.3%</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="mk-sheet">
+    <span class="mk-sheet-tag">sheet 2 of 2 · the slice starts a page of its own</span>
+    <div class="print-header-running"><span><b>Attendance record</b> · English III — Period 2 · Quarter 1</span><span>Printed September 21, 2026 · continued</span></div>
+    <div class="mk-p-label">Day by day</div>
+    <table class="mk-p-table tight small">
+      <thead><tr><th>Student</th><th class="mid"><span class="mk-p-day">Wed</span>9/2</th><th class="mid"><span class="mk-p-day">Thu</span>9/3</th><th class="mid"><span class="mk-p-day">Fri</span>9/4</th><th class="mid"><span class="mk-p-day">Tue</span>9/8</th><th class="mid"><span class="mk-p-day">Wed</span>9/9</th><th class="mid"><span class="mk-p-day">Thu</span>9/10</th><th class="mid"><span class="mk-p-day">Fri</span>9/11</th><th class="mid"><span class="mk-p-day">Mon</span>9/14</th><th class="mid"><span class="mk-p-day">Tue</span>9/15</th><th class="mid"><span class="mk-p-day">Thu</span>9/17</th><th class="mid"><span class="mk-p-day">Fri</span>9/18</th><th class="mid"><span class="mk-p-day">Mon</span>9/21</th></tr></thead>
+      <tbody>
+          <tr><th>Aaliyah Brooks</th><td class="mid"><span class="mk-p-mark A">A</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+          <tr><th>Marcus Chen</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark T">T</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+          <tr><th>Sofia Delgado</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark E">E</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+          <tr><th>Ethan Fitzgerald</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark T">T</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+          <tr><th>Grace Hwang</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark T">T</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+          <tr><th>Jamal Ingram</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+          <tr><th>Keira Johansson</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark D">D</span></td></tr>
+          <tr><th>Liam O’Connell</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark T">T</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark T">T</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+          <tr><th>Maya Okafor</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark A">A</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark T">T</span></td><td class="mid"><span class="mk-p-mark A">A</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+          <tr><th>Noah Patel</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark A">A</span></td></tr>
+          <tr><th>Olivia Quinn</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark A">A</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+          <tr><th>Priya Raman</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark T">T</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark E">E</span></td><td class="mid"><span class="mk-p-mark A">A</span></td><td class="mid"><span class="mk-p-mark D">D</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+          <tr><th>Rafael Santos</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark A">A</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+          <tr><th>Sadie Thompson</th><td class="mid"><span class="mk-p-mark A">A</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark T">T</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark T">T</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark A">A</span></td><td class="mid"><span class="mk-p-mark T">T</span></td></tr>
+          <tr><th>Tyler Underwood</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+          <tr><th>Valentina Vargas</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark A">A</span></td></tr>
+          <tr><th>Wesley Ward</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark E">E</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark T">T</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+          <tr><th>Ximena Xu</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark A">A</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark A">A</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark T">T</span></td></tr>
+          <tr><th>Yusuf Yilmaz</th><td class="mid"><span class="mk-p-mark D">D</span></td><td class="mid"><span class="mk-p-mark T">T</span></td><td class="mid"><span class="mk-p-mark A">A</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+          <tr><th>Zoe Zimmerman</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark T">T</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+          <tr><th>Ben Abernathy</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark T">T</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark T">T</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+          <tr><th>Hannah Lowe</th><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark A">A</span></td><td class="mid"><span class="mk-p-mark A">A</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark T">T</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td><td class="mid"><span class="mk-p-mark P">P</span></td></tr>
+      </tbody>
+    </table>
+    <p class="mk-p-note">P present · T tardy · A absent · E at an event · D dismissed. Wednesday
+      September 16 is not a column: the class was dropped for the assembly, and a dropped meeting is
+      not a recorded one.</p>
+    <p class="mk-p-note">This is attendance and nothing else: names, marks and the dates the class
+      actually met. Nothing from a student’s support details is on this page or in the CSV, in either
+      mode — those live on the roster and go nowhere but your own backup file.</p>
+  </div>
+</div>
+<p class="mk-caption"><strong>Two sheets, because the app asks for two.</strong> The day-by-day slice
+  starts with <code>break-before: page</code>, so the summary gets its own page and the grid gets the
+  next one. Twelve meetings fit in one slice. The grid breaks onto a third page after twenty-four.</p>
+<p class="mk-caption"><strong>The mark colours stay</strong>, as they do today. On this sheet the
+  letter is the data, and <code>print-color-adjust: exact</code> keeps the five fills.</p>
+<p class="mk-caption ask"><strong>ASK — the continuation line on sheet 2.</strong> A slice that
+  starts a new page today starts with a bare “Day by day” label, so a loose sheet 2 does not say whose
+  class it is. The drawing adds one line, <code>.print-header-running</code>, but only at the two
+  breaks the app forces (this one and the grade sheet’s slices). It is not a true running header on
+  every page. That would need <code>position: fixed</code> plus a reserved top margin, and Chrome and
+  Safari handle that differently enough that a long roster could print a header over its own first
+  row. <em>Is a line at the forced breaks enough?</em></p>
+
+<div class="mk-section">2 · The grade sheet — the one the SIS is typed off</div>
+<div class="mk-desk">
+
+  <div class="mk-sheet">
+    <span class="mk-sheet-tag">sheet 1 of 1 · Letter, portrait · seven columns, so one slice</span>
+    
+    <div class="print-header">
+      <div class="print-header-who">
+        <div class="print-header-title">Grade sheet</div>
+        <div class="print-header-class">English III — Period 2</div>
+        <div class="print-header-term">Quarter 1 · September 2 – November 6, 2026 · 22 students · 7 assignments</div>
+      </div>
+      <div class="print-header-stamp"><b>Printed September 21, 2026</b><br>Planbook<br>Letter scale · the year’s bands</div>
+    </div>
+    <div class="mk-p-label">Grades by student <span style="font-weight:400;color:#333">— in the SIS entry screen’s order (WO-3.9)</span></div>
+    <table class="mk-p-table small">
+      <thead><tr><th style="width:42mm">Student</th><th class="mid" style="width:16mm">Summer reading quiz<span class="mk-p-sub">due 9/4</span><span class="mk-p-sub">out of 20</span></th><th class="mid" style="width:16mm">Diagnostic essay<span class="mk-p-sub">due 9/9</span><span class="mk-p-sub">out of 50</span></th><th class="mid" style="width:16mm">Vocabulary 1<span class="mk-p-sub">due 9/11</span><span class="mk-p-sub">out of 10</span></th><th class="mid" style="width:16mm">The Crucible, Act I questions<span class="mk-p-sub">due 9/15</span><span class="mk-p-sub">out of 25</span></th><th class="mid" style="width:16mm">Socratic seminar 1<span class="mk-p-sub">due 9/17</span><span class="mk-p-sub">out of 30</span></th><th class="mid" style="width:16mm">Vocabulary 2<span class="mk-p-sub">due 9/18</span><span class="mk-p-sub">out of 10</span></th><th class="mid" style="width:16mm">Personal narrative draft<span class="mk-p-sub">due 9/23</span><span class="mk-p-sub">out of 40</span></th><th class="num" style="width:16mm">Grade</th></tr></thead>
+      <tbody>
+          <tr><th>Aaliyah Brooks</th><td class="mid">15</td><td class="mid">35</td><td class="mid">7</td><td class="mid">19</td><td class="mid">23</td><td class="mid">8</td><td class="mid"></td><td class="num"><b>73.8%</b><span class="mk-p-sub">C</span></td></tr>
+          <tr><th>Marcus Chen</th><td class="mid">17</td><td class="mid">39</td><td class="mid">9</td><td class="mid">19</td><td class="mid">23 L</td><td class="mid">8</td><td class="mid"></td><td class="num"><b>79.3%</b><span class="mk-p-sub">C+</span></td></tr>
+          <tr><th>Sofia Delgado</th><td class="mid">19</td><td class="mid">39</td><td class="mid">9</td><td class="mid">23</td><td class="mid">26</td><td class="mid">8</td><td class="mid"></td><td class="num"><b>85.5%</b><span class="mk-p-sub">B</span></td></tr>
+          <tr><th>Ethan Fitzgerald</th><td class="mid">19</td><td class="mid">48</td><td class="mid">9</td><td class="mid">22</td><td class="mid">27</td><td class="mid">10</td><td class="mid"></td><td class="num"><b>93.1%</b><span class="mk-p-sub">A</span></td></tr>
+          <tr><th>Grace Hwang</th><td class="mid">18</td><td class="mid">50</td><td class="mid">9</td><td class="mid">21</td><td class="mid">28</td><td class="mid">M</td><td class="mid">36</td><td class="num"><b>87.6%</b><span class="mk-p-sub">B+</span></td></tr>
+          <tr><th>Jamal Ingram</th><td class="mid">16</td><td class="mid">34</td><td class="mid">8</td><td class="mid">17</td><td class="mid">19</td><td class="mid">8</td><td class="mid"></td><td class="num"><b>70.3%</b><span class="mk-p-sub">C-</span></td></tr>
+          <tr><th>Keira Johansson</th><td class="mid">14</td><td class="mid">42</td><td class="mid">8</td><td class="mid">21</td><td class="mid">25</td><td class="mid">7</td><td class="mid"></td><td class="num"><b>80.7%</b><span class="mk-p-sub">B-</span></td></tr>
+          <tr><th>Liam O’Connell</th><td class="mid">17 L</td><td class="mid">43</td><td class="mid">8</td><td class="mid">22</td><td class="mid">24</td><td class="mid">8</td><td class="mid"></td><td class="num"><b>84.1%</b><span class="mk-p-sub">B</span></td></tr>
+          <tr><th>Maya Okafor</th><td class="mid">17</td><td class="mid">46</td><td class="mid">8</td><td class="mid">M</td><td class="mid">29</td><td class="mid">10</td><td class="mid"></td><td class="num"><b>78.0%</b><span class="mk-p-sub">C+</span></td></tr>
+          <tr><th>Noah Patel</th><td class="mid">20</td><td class="mid">50</td><td class="mid">10</td><td class="mid">22</td><td class="mid">30</td><td class="mid">9 L</td><td class="mid">36</td><td class="num"><b>95.7%</b><span class="mk-p-sub">A</span></td></tr>
+          <tr><th>Olivia Quinn</th><td class="mid">17</td><td class="mid">42</td><td class="mid">7</td><td class="mid">M</td><td class="mid">23</td><td class="mid">7</td><td class="mid"></td><td class="num"><b>66.2%</b><span class="mk-p-sub">D</span></td></tr>
+          <tr><th>Priya Raman</th><td class="mid">15</td><td class="mid">35 L</td><td class="mid">8</td><td class="mid">21</td><td class="mid">24</td><td class="mid">8</td><td class="mid"></td><td class="num"><b>76.6%</b><span class="mk-p-sub">C</span></td></tr>
+          <tr><th>Rafael Santos</th><td class="mid">19</td><td class="mid">47</td><td class="mid">9</td><td class="mid">19</td><td class="mid">27 L</td><td class="mid">8</td><td class="mid"></td><td class="num"><b>89.0%</b><span class="mk-p-sub">B+</span></td></tr>
+          <tr><th>Sadie Thompson</th><td class="mid">12</td><td class="mid">26</td><td class="mid">5 L</td><td class="mid">M</td><td class="mid">16</td><td class="mid">M</td><td class="mid"></td><td class="num"><b>40.7%</b><span class="mk-p-sub">F</span></td></tr>
+          <tr><th>Tyler Underwood</th><td class="mid">17</td><td class="mid">M</td><td class="mid">10</td><td class="mid">25 L</td><td class="mid">28</td><td class="mid">10</td><td class="mid"></td><td class="num"><b>62.1%</b><span class="mk-p-sub">F</span></td></tr>
+          <tr><th>Valentina Vargas</th><td class="mid">M</td><td class="mid">34</td><td class="mid">7</td><td class="mid">17 L</td><td class="mid">24</td><td class="mid">8</td><td class="mid"></td><td class="num"><b>62.1%</b><span class="mk-p-sub">F</span></td></tr>
+          <tr><th>Wesley Ward</th><td class="mid">15</td><td class="mid">37</td><td class="mid">Ex</td><td class="mid">22</td><td class="mid">24</td><td class="mid">9</td><td class="mid"></td><td class="num"><b>79.3%</b><span class="mk-p-sub">C+</span></td></tr>
+          <tr><th>Ximena Xu</th><td class="mid">18</td><td class="mid">44</td><td class="mid">9</td><td class="mid">23</td><td class="mid">27</td><td class="mid">9</td><td class="mid"></td><td class="num"><b>89.7%</b><span class="mk-p-sub">B+</span></td></tr>
+          <tr><th>Yusuf Yilmaz</th><td class="mid">19</td><td class="mid">40</td><td class="mid">8</td><td class="mid">M</td><td class="mid">29</td><td class="mid">10</td><td class="mid"></td><td class="num"><b>73.1%</b><span class="mk-p-sub">C</span></td></tr>
+          <tr><th>Zoe Zimmerman</th><td class="mid">20</td><td class="mid">48</td><td class="mid">9</td><td class="mid">25</td><td class="mid">28</td><td class="mid">9</td><td class="mid"></td><td class="num"><b>95.9%</b><span class="mk-p-sub">A</span></td></tr>
+          <tr><th>Ben Abernathy</th><td class="mid">16</td><td class="mid">35</td><td class="mid">8</td><td class="mid">19</td><td class="mid">23</td><td class="mid">8</td><td class="mid"></td><td class="num"><b>75.2%</b><span class="mk-p-sub">C</span></td></tr>
+          <tr><th>Hannah Lowe</th><td class="mid">14</td><td class="mid">36</td><td class="mid">8</td><td class="mid">20</td><td class="mid">23</td><td class="mid">7</td><td class="mid"></td><td class="num"><b>74.5%</b><span class="mk-p-sub">C</span></td></tr>
+      </tbody>
+    </table>
+    <div class="mk-p-key">
+      <span><b>18 L</b> a score you marked late — it counts in full; late is a record, not a penalty</span>
+      <span><b>M</b> marked missing by you, and counted as zero out of the full points</span>
+      <span><b>Ex</b> excused — out of the grade entirely, neither earned nor possible</span>
+      <span><b>(empty)</b> not graded yet. A blank counts toward nothing and is never a zero</span>
+    </div>
+    <p class="mk-p-note">Letter scale · the year’s bands · A 93 · A- 90 · B+ 87 · B 83 · B- 80 · C+ 77 · C 73 · C- 70 · D 65 · F 0</p>
+    <p class="mk-p-note">This is grades and nothing else: names, the work in this term, and the marks
+      you made. Nothing from a student’s support details is on this page or in the CSV, in either mode
+      — those live on the roster and go nowhere but your own backup file. Nothing on this sheet was
+      worked out from a due date either: late and missing are only ever there because you marked them.</p>
+  </div>
+</div>
+<p class="mk-caption decided"><strong>The order is not WO-8.4’s to change.</strong> Rows and columns
+  come out in the order WO-3.9 recorded and you checked against the live SIS on 2026-08-13. The band
+  goes on top of the sheet and nothing else moves. The fourth Acceptance line was closed before this
+  drawing.</p>
+<p class="mk-caption"><strong>The letter scale moved into the band’s stamp</strong> as “the year’s
+  bands”, with the full scale in a line at the foot. Today it is the fourth line of the head. The
+  <em>whose</em> part matters on a sheet a teacher types from, and the numbers do not need to be at the
+  top.</p>
+<p class="mk-caption ask"><strong>ASK — does the scale stay at the top?</strong> If you read the
+  scale off the sheet while typing into the SIS, the foot is the wrong place for it and it goes back
+  into the header.</p>
+
+<div class="mk-section">3 · One student — the sheet a guardian leaves the conference holding</div>
+<div class="mk-desk">
+
+  <div class="mk-sheet">
+    <span class="mk-sheet-tag">sheet 1 of 1 · Letter, portrait · the conference handout</span>
+    
+    <div class="print-header">
+      <div class="print-header-who">
+        <div class="print-header-title">Student report</div>
+        <div class="print-header-class">English III — Period 2</div>
+        <div class="print-header-term">Quarter 1 · September 2 – November 6, 2026</div>
+      </div>
+      <div class="print-header-stamp"><b>Printed September 21, 2026</b><br>Planbook</div>
+    </div>
+    <div class="mk-p-hero">
+      <div>
+        <div class="mk-p-hero-name">Maya Okafor</div>
+        <div class="mk-p-hero-sub">1 piece outstanding · 1 missing</div>
+      </div>
+      <div class="mk-p-hero-grade">
+        <div class="mk-p-hero-big">78.0%</div>
+        <div class="mk-p-hero-sub">C+ · next B- at 80%</div>
+      </div>
+    </div>
+    <div class="mk-p-cols">
+      <div>
+        <div class="mk-p-card">
+          <div class="mk-p-card-title">Where the grade comes from</div>
+          <table class="mk-p-table">
+            <thead><tr><th>Category</th><th class="num">Weight</th><th class="num">Earned</th><th class="num">Score</th></tr></thead>
+            <tbody>
+              <tr><th>Essays</th><td class="num">40%</td><td class="num">46 / 50</td><td class="num">92.0%</td></tr>
+              <tr><th>Quizzes &amp; vocabulary</th><td class="num">25%</td><td class="num">35 / 40</td><td class="num">87.5%</td></tr>
+              <tr><th>Discussion</th><td class="num">20%</td><td class="num">29 / 30</td><td class="num">96.7%</td></tr>
+              <tr><th>Homework</th><td class="num">15%</td><td class="num">0 / 25</td><td class="num">0.0%</td></tr>
+            </tbody>
+          </table>
+          <p class="mk-p-note">Weights are this class’s own. A category with nothing graded in it yet hands its weight to the others.</p>
+        </div>
+        <div class="mk-p-card move">
+          <div class="mk-p-card-title">What it would take to move</div>
+          <p>Turning in <b>The Crucible, Act I questions</b> — 25 points, marked missing on September 15 —
+            at 80% or better would bring the grade to about 90%, an A-.</p>
+          <p>The personal narrative draft, due September 23, is the one other piece still open.</p>
+        </div>
+        <div class="mk-p-card">
+          <div class="mk-p-card-title">Missing work · 25 points at stake</div>
+          <div class="mk-p-row"><span>The Crucible, Act I questions<small>due September 15 · Homework</small></span><span>25 pts</span></div>
+          <p class="mk-p-note">Missing is marked by you and is never worked out from a due date, so nothing on this list got here by a date rolling over.</p>
+        </div>
+      </div>
+      <div>
+        <div class="mk-p-card">
+          <div class="mk-p-card-title">Attendance · 83.3%</div>
+          <div class="mk-p-stats">
+            <div class="mk-p-stat"><b>9</b><span>Present</span></div>
+            <div class="mk-p-stat"><b>1</b><span>Tardy</span></div>
+            <div class="mk-p-stat"><b>2</b><span>Absent</span></div>
+            <div class="mk-p-stat"><b>12</b><span>Meetings</span></div>
+          </div>
+          <p class="mk-p-note">Counted over the meetings this class actually held, not the calendar.</p>
+        </div>
+        <div class="mk-p-card">
+          <div class="mk-p-card-title">Hall passes</div>
+          <table class="mk-p-table small">
+            <thead><tr><th>Day</th><th>Type</th><th class="num">Out</th></tr></thead>
+            <tbody>
+              <tr><th>Tue 9/8</th><td>Restroom</td><td class="num">4 min</td></tr>
+              <tr><th>Mon 9/14</th><td>Nurse</td><td class="num">18 min</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mk-p-card" style="border-style:dashed;border-color:#e74c3c;color:#e74c3c">
+          <div class="mk-p-card-title" style="font-family:ui-monospace,Consolas,monospace">[ not on the sheet ]</div>
+          <p style="font-family:ui-monospace,Consolas,monospace;font-size:7pt">“What you have written down” —
+            the behavior log card. Hidden from every print since WO-4.4, both modes. Drawn here only so
+            you can see where it is not.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="mk-caption"><strong>The hero stays; its class line moves up.</strong> Today the hero’s
+  second line reads <code>English III — Period 2 · Quarter 1 · 1 piece outstanding · 1 missing</code>
+  and the print date sits alone under it. With the band carrying class, term and date, the hero keeps
+  what a guardian reads first: the name, the grade, and the band.</p>
+<p class="mk-caption decided"><strong>The behavior log is not on the sheet</strong>, as today, in
+  both modes (WO-4.4). The dashed red card marks where it would be and is not part of the printout.</p>
+<p class="mk-caption"><strong>Card contents are drawn in the shipped cards’ shape and titles</strong>
+  from <code>src/detail.js</code>, but not re-read line by line. The band is the thing to judge on this
+  sheet.</p>
+
+<div class="mk-section">4 · The calendar — September, every class showing</div>
+<div class="mk-desk">
+
+  <div class="mk-sheet landscape">
+    <span class="mk-sheet-tag">sheet 1 of 1 · Letter, LANDSCAPE — see the question below</span>
+    
+    <div class="print-header">
+      <div class="print-header-who">
+        <div class="print-header-title">Calendar</div>
+        <div class="print-header-class">September 2026</div>
+        <div class="print-header-term">All five classes · Quarter 1 runs September 2 – November 6</div>
+      </div>
+      <div class="print-header-stamp"><b>Printed September 21, 2026</b><br>Planbook</div>
+    </div>
+    <table class="mk-p-cal">
+      <thead><tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr></thead>
+      <tbody>
+        <tr><td class="out"><span class="n">30</span></td><td class="out"><span class="n">31</span></td><td class=""><span class="n">1</span></td><td class=""><span class="n">2</span><span class="mk-p-chip quiet">Quarter 1 begins</span></td><td class=""><span class="n">3</span></td><td class=""><span class="n">4</span><span class="mk-p-chip ">Due · Summer reading quiz · Eng III</span><span class="mk-p-chip ">Due · Summer reading response · AP Lit</span></td><td class=""><span class="n">5</span></td></tr>
+        <tr><td class=""><span class="n">6</span></td><td class=""><span class="n">7</span><span class="mk-p-chip ">Labor Day — no school</span></td><td class=""><span class="n">8</span></td><td class=""><span class="n">9</span><span class="mk-p-chip ">Due · Diagnostic essay · Eng III</span></td><td class=""><span class="n">10</span></td><td class=""><span class="n">11</span><span class="mk-p-chip ">Due · Vocabulary 1 · Eng III</span><span class="mk-p-chip quiet">Field trip — Folger (3 students)</span></td><td class=""><span class="n">12</span></td></tr>
+        <tr><td class=""><span class="n">13</span></td><td class=""><span class="n">14</span></td><td class=""><span class="n">15</span><span class="mk-p-chip ">Due · Crucible Act I questions · Eng III</span></td><td class=""><span class="n">16</span><span class="mk-p-chip quiet">Assembly — P2 and P5 dropped</span></td><td class=""><span class="n">17</span><span class="mk-p-chip ">Due · Socratic seminar 1 · Eng III</span><span class="mk-p-chip ">Due · Poetry explication · AP Lit</span></td><td class=""><span class="n">18</span><span class="mk-p-chip ">Due · Vocabulary 2 · Eng III</span></td><td class=""><span class="n">19</span></td></tr>
+        <tr><td class=""><span class="n">20</span></td><td class=""><span class="n">21</span></td><td class=""><span class="n">22</span></td><td class=""><span class="n">23</span><span class="mk-p-chip ">Due · Personal narrative draft · Eng III</span></td><td class=""><span class="n">24</span><span class="mk-p-chip ">Back-to-school night, 6 pm</span></td><td class=""><span class="n">25</span><span class="mk-p-chip ">Due · Hamlet I–II reading log · AP Lit</span></td><td class=""><span class="n">26</span></td></tr>
+        <tr><td class=""><span class="n">27</span></td><td class=""><span class="n">28</span></td><td class=""><span class="n">29</span><span class="mk-p-gone">[ review-date chip — not printed ]</span></td><td class=""><span class="n">30</span><span class="mk-p-chip ">Due · Vocabulary 3 · Eng III</span></td><td class="out"><span class="n">1</span></td><td class="out"><span class="n">2</span><span class="mk-p-chip ">Progress grades due to the office</span></td><td class="out"><span class="n">3</span></td></tr>
+      </tbody>
+    </table>
+    <p class="mk-p-note">Every class is showing, so no day says which classes met — filter to one class for its meetings, or print the week.</p>
+  </div>
+</div>
+<p class="mk-caption"><strong>This is the sheet the band fixes.</strong> Today its only title is
+  <code>Planbook · September 2026</code>. With the band it names what it covers, which classes are
+  showing, and when it was printed.</p>
+<p class="mk-caption decided"><strong>The review-date chip is not printed</strong>, in either mode.
+  WO-6.3 removes it twice, once under the gate and once with an ungated rule. The dashed red box on
+  the 29th marks where it would be and is not part of the printout.</p>
+<p class="mk-caption ask"><strong>ASK — landscape.</strong> A month is wider than it is tall, and
+  portrait Letter gives each day about 26mm, where two chips already wrap to four lines. The drawing
+  shows landscape. Chrome and Edge honour a named page (<code>@page calendar { size: landscape }</code>
+  with <code>page: calendar</code> on the view), so the calendar can come out sideways while the other
+  three sheets stay upright. Safari on the iPad ignores it, so there the teacher turns the preview
+  herself. <em>Landscape for the month only, or leave orientation to the print dialog?</em></p>
+<p class="mk-caption ask"><strong>ASK — the band’s class and term lines on a calendar.</strong> The
+  calendar is not a class screen. Its filter can show every class, one class, or several, and terms
+  belong to classes, so five classes can have five different Quarter 1s. The drawing prints the filter
+  as words (“All five classes”) and prints the term only when every showing class has the same one.
+  With a single class, it would read <code>English III — Period 2</code> in the class slot, like the
+  other three sheets. <em>Is that the rule?</em></p>
+
+<div class="mk-section">Presentation mode, on paper</div>
+<p class="mk-caption decided"><strong>Every sheet above is the same with presentation mode on and
+  off</strong>, which is the fourth deliverable. None of the four surfaces shows a support field.
+  The record and the grade sheet say in their own footers that nothing from a student’s support
+  details is on them, the student report has no import path to <code>supports</code>, and the calendar’s one support-derived chip is removed twice. That is why no second copy of any
+  sheet is drawn in the other mode: it would be identical.</p>
+<p class="mk-caption ask"><strong>ASK — the belt for everything else.</strong> What the four gated
+  blocks do not cover is a plain Ctrl+P from a screen that is not a print surface, such as the roster,
+  where the <code>.support-dot</code> is. That prints the screen as it stands, with presentation mode
+  deciding what is on it. <code>src/assignments.css</code> and <code>src/calendar-view.css</code>
+  already each carry an ungated, hide-only print rule for their own sensitive element. The deliverable
+  reads as one more of the same in <code>src/shell.css</code>: an ungated <code>@media print</code>
+  that hides every support indicator in the app, whatever the mode. It is not drawn because it has no
+  look, only an absence. <em>Is one belt in the shell the shape, or should each screen with a
+  support element keep its own?</em></p>
+<p class="mk-caption ask"><strong>ASK — <code>body[data-modal-print]</code>.</strong> The second
+  deliverable asks for the style guide’s single-modal gate. The app has four per-surface gates in
+  <code>src/print-gate.js</code> instead, and the header of that file explains why one shared attribute
+  would print the wrong surface. That deliverable may already be met in a better form, and closing it
+  needs your ruling rather than new code. Nothing here to draw.</p>
+
+</body>
+</html>

@@ -139,6 +139,13 @@ centralised the mechanism in `src/print-gate.js`. What is genuinely undone is `#
 - `body[data-modal-print]` to print a single modal, per the style guide.
 - **Presentation-mode rules apply to print unconditionally** — a printout left on a desk is the same
   disclosure as a projected screen, and there is no toggle to remember.
+- **Surface:** [`design/mockups/print.html`](../../design/mockups/print.html), drawn 2026-09-21 — all
+  four sheets as they print today, with `#printHeader` drawn on top of each (`proposed-phase8.css`
+  § PRINT HEADER). **Read it before building**: its amber notes are open questions for the owner.
+  Shared element or four matching heads, a continuation line at slice breaks, where the grade sheet's
+  letter scale goes, landscape for the month, what the band says about class and term on a calendar
+  that shows several classes, one support-dot belt in `src/shell.css`, and whether the per-surface
+  gates in `src/print-gate.js` already meet the `data-modal-print` deliverable.
 
 **Acceptance**
 - [ ] Each printable surface produces a clean page with a title, class, term, and date.

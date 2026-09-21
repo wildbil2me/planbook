@@ -1,0 +1,75 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   PROPOSED STYLES — Phase 8, the printed page: what every sheet says at its head.
+
+   Fifth room, and the first drawn of paper rather than of a screen. `proposed.css`
+   is Phase 3, `proposed-phase6.css` Phase 6, `proposed-phase4.css` Phase 4,
+   `proposed-phase5.css` Phase 5, and this is WO-8.4 — drawn 2026-09-21, before a
+   line of `#printHeader` exists.
+
+   IT PROPOSES ONE THING, because one thing is all WO-8.4 has left to add to the
+   look of a sheet. All four print surfaces the work order names ALREADY PRINT:
+   src/attendance.css (WO-2.6), src/detail.css (WO-3.7), src/scores.css (WO-3.9)
+   and src/calendar-view.css (WO-6.3) each carry a gated `@media print` block, and
+   the work order's own correction says so. What does not exist is the header that
+   makes the four of them one app's sheets instead of four work orders' sheets:
+   today each surface titles itself its own way, and the calendar's says
+   "Planbook · September 2026" and nothing about class, term or date printed. So
+   the page drawings in print.html are drawn in `mk-` classes — a picture of what
+   the shipped blocks already produce, which lifts nothing because it has already
+   landed — and the ONLY thing styled here is the band on top.
+
+   WHAT THE LIFT ADDS THAT THIS FILE CANNOT DRAW. The band is invisible on screen
+   and visible under each surface's gate — `.print-header { display: none }` at
+   rest, and `body[data-*-print] .print-header { display: block }` inside the four
+   existing blocks (or one block in src/shell.css naming all four gates). Drawn
+   here it would have to be hidden to be correct, so the display half is left to
+   the lift and this file styles only how the band looks once shown. Sizes are in
+   pt and mm, the units the four shipped blocks already use, so what is on screen
+   is the size it comes off the printer.
+
+   THE RULE THIS FILE OBEYS, from design/mockups/PROTOCOL.md rule 5: a pending
+   section styles no class src/*.css already styles. Every class below is prefixed
+   `print-header`; nothing in src/ uses it.
+
+   WHERE IT SPLITS ON LIFT:
+
+     § PRINT HEADER   →  src/shell.css   (WO-8.4 — not yet lifted)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § PRINT HEADER   →  src/shell.css   (WO-8.4 — not yet lifted)
+
+   One band, the same on all four sheets: what the sheet IS on the left, large;
+   the class under it; the term line under that; and the day it came off the
+   printer on the right, where a hand leafing through a folder looks first. The
+   2px black rule under it is the one all three shipped heads already draw
+   (`.attendance-report-head`, `.grades-report-head`, `.detail-hero` in print), so
+   the band inherits a decision rather than making one.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.print-header {
+  display: flex; justify-content: space-between; align-items: flex-end; gap: 6mm;
+  border-bottom: 2px solid #000; padding-bottom: 3mm; margin-bottom: 5mm;
+  color: #000;
+}
+.print-header-who { min-width: 0; }
+.print-header-title {
+  font-size: 8pt; font-weight: 700; letter-spacing: 0.6pt; text-transform: uppercase;
+  color: #333;
+}
+.print-header-class { font-size: 15pt; font-weight: 700; line-height: 1.2; margin-top: 0.5mm; }
+.print-header-term { font-size: 9pt; color: #333; margin-top: 0.8mm; }
+.print-header-stamp {
+  flex: none; text-align: right; font-size: 8pt; color: #333; line-height: 1.5;
+}
+.print-header-stamp b { color: #000; }
+
+/* The continuation line, for a sheet the surface breaks onto a second page. One
+   line, no rule weight to speak of: it says whose page this is, not the whole
+   title again. Only drawn where a surface starts a page on purpose — the two
+   slice breaks — because those are the only page breaks the app itself asks for. */
+.print-header-running {
+  display: flex; justify-content: space-between; gap: 6mm;
+  border-bottom: 0.4mm solid #000; padding-bottom: 1.5mm; margin-bottom: 4mm;
+  font-size: 7.5pt; color: #333;
+}
+.print-header-running b { color: #000; }
