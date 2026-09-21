@@ -1210,7 +1210,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1432 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1437 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1882,6 +1882,29 @@ carries the field, and `cooldownWhy()` had a second `|| AUDIENCE_TEXT[row.audien
 that covered for the emptied reader. The fallback now lives in exactly one place, the plant gives the
 harness a row only an earlier build could have written, and M2 reddens three checks. A mutation that
 passes is worth more than one that fails when what it finds is a claim nobody was making.)*
+
+**WO-8.13 moved it from 1432 to 1437, and the executed count from 1441 to 1446 — five sites, five
+results.** All five are literal call sites inside § *"which build this device is running
+(WO-8.10)"* in `verify/build-line.mjs`, on the first About open that section already makes — not a
+new section and not a second open — so none is in a loop, none is a failure arm, and no fixture
+guard is added; the gap between sites and results stays at −9. They read every `.doc-link` in the
+modal and assert the set: three rows at three hrefs in document order (the licence on GitHub, not a
+`.md` off this origin), `target="_blank"` and a `rel` carrying `noopener` on all three, the licence
+row's text naming *Apache License 2.0*, the row sitting under a label of its own above `#drivePanel`
+that is not *Privacy and student data*, and that label following an `<a>` and still measuring a
+computed 16px `margin-top` — the second selector on `src/shell.css`'s adjacency rule, read as a
+number rather than off the sheet. The two rows that landed on 2026-08-21 outside a work order were
+asserted nowhere before this; the same check covers them now. The run prints **1446**:
+`1446 checks · 1446 passed · 0 failed · 0 skipped`, 45,579 lines, 31.5 lines per check, 509s, exit
+0, measured 2026-09-20 on the real clock, on the delivered tree. This work order adds **one control**
+— an `<a class="doc-link">` — and declares no new 44px rule for it, because `.modal-body .doc-link`'s
+entry in the coarse block already covers the class; it adds no touch-target measurement, and the
+modal sweep in `verify/touch-targets.mjs` selects `button, input` and so does not measure any of the
+three rows — named in TESTING.md § WO-8.13 as a gap that predates this row rather than one it opened.
+The mutation — the licence row deleted for one run, its label left in place — reads
+`1446 checks · 1441 passed · 5 failed · 0 skipped`, exit 1: **all five go red**, the fifth because it
+finds the label through the row and a missing row leaves it nothing to measure. Restored by hand
+immediately, and `grep -rn MUTATION` over the changed files was read after.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not

@@ -1016,7 +1016,7 @@ is indistinguishable from a wrong URL.**)*
 
 ## WO-8.13 — the About modal names two documents and not the licence
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing
+**Ship** — · **Status** 🔍 AWAITING VERDICT — 2026-09-20 · **Size** S · **Depends on** nothing
 **Closes roadmap** *(no box. The same call WO-8.9 through WO-8.11 made: this is the app reporting a
 fact about itself rather than a feature the roadmap costed. Booked 2026-08-21, owner-directed, out
 of the sitting that added `LICENSE.md`.)*
@@ -1052,10 +1052,10 @@ this, run it for their own department, or sell it. **One row. It stays one row.*
 - **A `TESTING.md` line of its own**, and the 👤 reading below.
 
 **Acceptance**
-- [ ] The About modal names the licence and links `LICENSE.md`, and the link text says *which*
+- [x] The About modal names the licence and links `LICENSE.md`, and the link text says *which*
       licence.
-- [ ] The row is **not** inside the **Privacy and student data** section.
-- [ ] **No new CSS for the row.** It reuses `.modal-body .doc-link`, including that rule's
+- [x] The row is **not** inside the **Privacy and student data** section.
+- [x] **No new CSS for the row.** It reuses `.modal-body .doc-link`, including that rule's
       `(pointer: coarse)` entry in `src/shell.css`, which is what gives it 44px. **A row that needs
       a new rule is the wrong shape** — say so in the result rather than adding one quietly.
       **The label is the one exception, ruled here on 2026-09-20 rather than left for the dispatch
@@ -1066,10 +1066,10 @@ this, run it for their own department, or sell it. **One row. It stays one row.*
       selector to the existing adjacency rule** — `.modal-body .doc-link + .modal-section-label` —
       rather than a second declaration, and say why in that rule's comment. Nothing else in
       `src/shell.css` moves, and `touch-targets.mjs` measures the row, not the gap.
-- [ ] `target="_blank" rel="noopener"`, matching the two rows beside it, for the reason written
+- [x] `target="_blank" rel="noopener"`, matching the two rows beside it, for the reason written
       above them in `index.html`.
 - [ ] `sw.js` `CACHE` bumped in the same commit that edits `index.html`.
-- [ ] `node tools/verify-shell.mjs` green, carrying a check that goes **red** when the row is
+- [x] `node tools/verify-shell.mjs` green, carrying a check that goes **red** when the row is
       deleted — proved by deleting it once, not by reasoning about it.
 - [ ] 👤 On a **force-quit and relaunched** install: the row is there, tapping it opens the licence
       in the browser, and Planbook is still where you left it when you come back.

@@ -11964,6 +11964,101 @@ was ever going to.
 **never write the comment delimiters as literal text inside an HTML comment.** Name the thing
 without them.
 
+### WO-8.13 — the About modal names two documents and not the licence
+
+**What a teacher sees.** A third row in About, under a section label of its own — **Source and
+licence** — sitting after the two privacy rows and above the Drive section and the build line:
+*"Released under the Apache License 2.0 →"*. Tapping it opens `LICENSE.md` on GitHub in the
+browser and leaves Planbook where it was. That is the whole of it: no copyright line, no version
+line, no sentence about what the licence allows.
+
+**Why the row says the licence's name and nothing more.** A row reading *Licence* tells the reader
+nothing until she opens it, so the name is in the link text — and the wording is the sentence both
+public documents already use (*"It is released under the Apache License 2.0"*, `privacy.html`'s
+footer and `docs/FERPA.md`'s *"The source is public"* bullet), lifted rather than re-derived. A
+summary of what Apache 2.0 permits was refused for the Traps line's reason: it would be a licence
+term this project did not write and cannot honour. The copyright holder stays stated in `LICENSE.md`
+and nowhere else, and the build line under the row stays generated from `caches.keys()`.
+
+**Why its own label.** *Privacy and student data* is an argument about student records, and a
+licence filed under it reads as a privacy term. The label is the third `modal-section-label` in the
+modal, in the grammar of the two before it, with one row under it and no prose.
+
+**The one CSS change, and it is the gap and not the row.** The row takes `.modal-body .doc-link`
+unchanged, including its `(pointer: coarse)` entry — 44px from the rule the two rows beside it
+already wear, no new rule. The label is the exception the work order ruled on: a section label gets
+its 16px from `.modal-body p + .modal-section-label`, and this one follows the FERPA row's `<a>`,
+not a `<p>`, so it got nothing — the same adjacency break the `.drive-panel` comment in
+`src/shell.css` records for WO-7.1, at a second seam. One selector was added to that existing rule,
+`.modal-body .doc-link + .modal-section-label`, and its comment says why; nothing else in the sheet
+moved, and the two rows above the label did not move either.
+
+**`sw.js` `CACHE` bumped `v125` → `v126`** in the same change as `index.html` — `./` is entry one in
+`SHELL`, and without the bump no installed device sees the row at all.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-8-packaging.md` § WO-8.13.*
+
+- [x] **Acceptance 1 — names the licence, links `LICENSE.md`, and the text says which.** Read by
+      the harness on the About open `verify/build-line.mjs` already makes: href
+      `https://github.com/wildbil2me/planbook/blob/main/LICENSE.md`, text *"Released under the
+      Apache License 2.0 →"*. The target answered **200, `text/html`** to a `curl` on 2026-09-20 —
+      the file has been pushed since 2026-08-21 — so unlike the FERPA row on the day it landed, this
+      one was testable as written, and was tested.
+- [x] **Acceptance 2 — not inside *Privacy and student data*.** The harness walks back from the
+      licence row through its siblings to the nearest `.modal-section-label` and reads *"Source and
+      licence"*, and asserts that label precedes `#drivePanel` in document order.
+- [x] **Acceptance 3 — no new CSS for the row; one selector on the adjacency rule for the label.**
+      `git diff src/shell.css` is one rule's comment extended and one selector added to its list —
+      `.modal-body .doc-link + .modal-section-label` — and nothing else. The harness reads the
+      label's computed `margin-top` as `16px` with its previous sibling an `<a>` carrying
+      `.doc-link`, which is that selector doing its work — `.modal-section-label` declares no
+      `margin-top` of its own and the rule's only other selector wants a `<p>` before it, so
+      without the added selector that reading is `0px` (reasoned from the sheet, not run: the one
+      mutation the work order asked for was the row's deletion). **Not measured by any tool: the
+      row's 44px on a coarse pointer.** The
+      class's coarse entry exists at `src/shell.css` (`.modal-body .doc-link { min-height: 44px; …
+      }` in the `(pointer: coarse)` block) and this row is the same class as the two that wear it,
+      but the modal sweep in `verify/touch-targets.mjs` selects `button, input` and so has never
+      measured a `.doc-link` — the work order's parenthetical says that sweep *measures the row*,
+      and it does not, for any of the three. A gap that predates this row, named rather than closed
+      here: closing it means widening a sweep that is not this work order's.
+- [x] **Acceptance 4 — `target="_blank" rel="noopener"`.** Asserted on all three rows at once, not
+      only the new one; the harness reads `[{"target":"_blank","rel":"noopener"}]` three times.
+- [ ] **Acceptance 5 — `CACHE` bumped in the same commit.** `sw.js:37` reads `planbook-shell-v126`
+      on disk beside the `index.html` edit, and `wo-sweep.mjs` § 9 reports the bump as uncommitted,
+      which is the rule being followed. **Left open by the implementer on purpose:** the line says
+      *same commit*, the dispatch does not commit, and a tick on a commit that does not exist yet
+      is a prediction. It closes at the landing, by whoever makes the commit, on `git show --stat`
+      naming both files.
+- [x] **Acceptance 6 — `verify-shell.mjs` green, with a check that goes red when the row is
+      deleted.** Five checks inside § *"which build this device is running (WO-8.10)"*, on the first
+      About open that section already makes. Green on the delivered tree:
+      **`1446 checks · 1446 passed · 0 failed · 0 skipped`, 45,579 lines, 31.5 lines per check,
+      509s, exit 0**, measured 2026-09-20 on the real clock. Proved by deleting the licence row once
+      (its label left in place, the deletion marked `MUTATION`):
+      **`1446 checks · 1441 passed · 5 failed · 0 skipped`, exit 1** — all five, and the evidence
+      lines name the loss in the terms the row was written in: `hrefs = ["./privacy.html",
+      ".../docs/FERPA.md"]`, `text = null`, `label = null`, `computed margin-top = null`. The row
+      was restored by hand immediately, before a word of this entry, and `grep -rn MUTATION` over
+      the changed files reads nothing.
+- [ ] 👤 **Acceptance 7 — on a force-quit and relaunched install: the row is there, tapping it opens
+      the licence in the browser, and Planbook is still where you left it when you come back.**
+      Owed to the iPad, the way every 👤 line in this file since WO-1.3 has been run: serve from
+      `tools/serve-https.mjs`, **force-quit Planbook from the app switcher first** — a reload is not
+      enough and neither is a pull-to-refresh, and iOS resumes a backgrounded app without loading a
+      document at all (WO-8.11's own reading) — relaunch, open About, and read *Source and licence*
+      above the build line with the build line naming `v126`. Tap the row: Safari opens the
+      licence on GitHub, and switching back finds Planbook on the screen it was on with About still
+      open. If the standalone window swallows it instead, the fix is the one the FERPA row's comment
+      already rules — a way back on the far page, not dropping the target.
+
+*What the desk cannot pay off, beyond the 👤 line. The harness reads the row on a page in headless
+Edge, not in an installed standalone window; it can prove the anchor carries `target="_blank"` and
+cannot prove where iOS sends it. And the mutation deleted the row and left the label: a mutation
+that deleted the label and left the row would redden the fourth and fifth checks and leave the first
+three green, which is the right shape — the row would still be reachable and correctly linked, filed
+under the wrong heading — and was not run, because the work order asked for the row's deletion once.*
+
 ---
 
 ---

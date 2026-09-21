@@ -651,8 +651,19 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 }
 /* Roll Call! spaces this with an inline `style="margin-top:18px"` at each use site
    (dashboard.html ~1394). Here it is a rule, because a label following prose always wants
-   the gap and a stylesheet is a better place to say so once. */
-.modal-body p + .modal-section-label { margin-top: 16px; }
+   the gap and a stylesheet is a better place to say so once.
+
+   THE SECOND SELECTOR IS THE ADJACENCY BREAK'S SECOND INSTANCE (WO-8.13). The first is written
+   under `.drive-panel` below: a label that follows something other than a <p> gets nothing from
+   this rule, and #drivePanel paid for its gap with a declaration of its own because a wrapper
+   <div> is what it follows. About's licence label follows the FERPA row — a `.doc-link` <a>, not a
+   <p> — so it is the same break at a different seam, and it is paid for HERE rather than with a
+   third declaration: a block link ending a section is prose in every sense this rule cares about,
+   so the label after one wants the same 16px for the same reason. One selector on the existing
+   rule, so the gap after prose and the gap after a link can never drift apart. Not a margin on the
+   row, which would move the two rows above it that this sheet has no reason to move. */
+.modal-body p + .modal-section-label,
+.modal-body .doc-link + .modal-section-label { margin-top: 16px; }
 /* Left-aligned, because that is what `.modal-actions` is in Roll Call! (dashboard.html
    ~651). The right-aligned footer over there is `.config-actions` and belongs to the
    settings modal tier, which Planbook has no instance of yet. Shared class names are what

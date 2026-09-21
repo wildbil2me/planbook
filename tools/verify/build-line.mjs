@@ -124,6 +124,75 @@ console.log('\n--- which build this device is running (WO-8.10) ---');
       && one.cls.indexOf('warn') === -1,
     'names = ' + JSON.stringify(one.names) + ', class = ' + JSON.stringify(one.cls)
       + ', line = ' + JSON.stringify(one.text));
+
+  /* THE THREE ROWS THAT OPEN OUT OF THE APP (WO-8.13), read on the open this section already has
+     rather than on a second one. The policy and administrators'-guide rows landed on 2026-08-21
+     outside any work order and were asserted nowhere — only TESTING.md records them — so the check
+     reads EVERY `.doc-link` in the modal and asserts the set, which closes all three at once.
+
+     What is asked, and why each clause is there. The count and the hrefs, in document order, so a
+     row that vanished or pointed at `./LICENSE.md` on this origin (a `.md` some browsers download
+     rather than render — the argument written above the FERPA row in index.html) goes red by name.
+     `target="_blank"` and a `rel` carrying `noopener` on every row, because an installed PWA has no
+     back button and a same-window navigation strands the teacher in a document. The licence row's
+     TEXT naming Apache License 2.0 — a row reading "Licence" tells the reader nothing until she
+     opens it. And the label the licence row sits under, walked back through its own siblings: it
+     must be its own label and not "Privacy and student data", because a licence filed under a
+     heading about student records reads as a privacy term. The last reading is the ruling in
+     WO-8.13's third Acceptance line, measured: that label follows an <a> rather than a <p>, and
+     `.modal-body .doc-link + .modal-section-label` in src/shell.css is what gives it the 16px the
+     `p +` rule gives every other label — read as a computed margin rather than off the sheet, the
+     way the amber above is read as a colour. Proved by deleting the licence row once: all five
+     below go red on that mutation — the last one too, because it finds the label THROUGH the row
+     and a missing row leaves it nothing to measure — recorded in TESTING.md § WO-8.13. */
+  const links = await evalJs(`(function(){
+    var modal = document.getElementById('aboutModal');
+    var rows = Array.prototype.slice.call(modal.querySelectorAll('.doc-link'));
+    var drive = document.getElementById('drivePanel');
+    function labelAbove(el) {
+      var p = el.previousElementSibling;
+      while (p && !p.classList.contains('modal-section-label')) p = p.previousElementSibling;
+      return p;
+    }
+    var lic = rows.filter(function(a){ return /LICENSE\\.md/.test(a.getAttribute('href') || ''); })[0] || null;
+    var licLabel = lic ? labelAbove(lic) : null;
+    return {
+      rows: rows.map(function(a){ return { href: a.getAttribute('href'), target: a.getAttribute('target'),
+        rel: a.getAttribute('rel'), text: a.textContent.trim() }; }),
+      lic: lic ? { text: lic.textContent.trim(),
+        label: licLabel ? licLabel.textContent.trim() : null,
+        labelPrevTag: licLabel && licLabel.previousElementSibling ? licLabel.previousElementSibling.tagName : null,
+        labelPrevIsDocLink: !!(licLabel && licLabel.previousElementSibling
+          && licLabel.previousElementSibling.classList.contains('doc-link')),
+        labelMarginTop: licLabel ? getComputedStyle(licLabel).marginTop : null,
+        labelBeforeDrive: !!(licLabel && drive
+          && (licLabel.compareDocumentPosition(drive) & Node.DOCUMENT_POSITION_FOLLOWING)) } : null }; })()`);
+  const HREFS = ['./privacy.html',
+    'https://github.com/wildbil2me/planbook/blob/main/docs/FERPA.md',
+    'https://github.com/wildbil2me/planbook/blob/main/LICENSE.md'];
+  check('the About modal holds exactly three .doc-link rows — the policy, the administrators\' guide '
+    + 'and the licence — at these hrefs in this order, the licence on GitHub and not a .md off this origin',
+    links.rows.length === 3 && links.rows.every((r, i) => r.href === HREFS[i]),
+    'hrefs = ' + JSON.stringify(links.rows.map(r => r.href)));
+  check('every one of them opens out of the app: target="_blank" and a rel carrying noopener, on all three',
+    links.rows.length === 3 && links.rows.every(r => r.target === '_blank' && /\bnoopener\b/.test(r.rel || '')),
+    JSON.stringify(links.rows.map(r => ({ target: r.target, rel: r.rel }))));
+  check('the licence row\'s own text says WHICH licence — it names Apache License 2.0',
+    !!links.lic && /Apache License 2\.0/.test(links.lic.text),
+    'text = ' + JSON.stringify(links.lic ? links.lic.text : null));
+  check('the licence row sits under a section label of its own, above #drivePanel, and that label is '
+    + 'not "Privacy and student data"',
+    !!links.lic && !!links.lic.label && links.lic.label !== 'Privacy and student data'
+      && links.lic.labelBeforeDrive === true,
+    'label = ' + JSON.stringify(links.lic ? links.lic.label : null)
+      + ', before #drivePanel = ' + (links.lic ? links.lic.labelBeforeDrive : null));
+  check('that label follows the FERPA row — an <a>, not a <p> — and still measures the 16px gap every '
+    + 'label after prose gets, which is the second selector on the adjacency rule doing its work',
+    !!links.lic && links.lic.labelPrevTag === 'A' && links.lic.labelPrevIsDocLink === true
+      && links.lic.labelMarginTop === '16px',
+    'previous sibling = ' + (links.lic ? links.lic.labelPrevTag : null)
+      + ', .doc-link = ' + (links.lic ? links.lic.labelPrevIsDocLink : null)
+      + ', computed margin-top = ' + JSON.stringify(links.lic ? links.lic.labelMarginTop : null));
   await closeAbout();
 
   try {
