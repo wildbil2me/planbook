@@ -2097,9 +2097,10 @@
          target="_blank" rel="noopener">Released under the Apache License 2.0 →</a>
 
       <!-- GOOGLE DRIVE SIGN-IN (WO-7.1), AND IT IS HIDDEN ON ALMOST EVERY DEVICE THAT LOADS THIS
-           FILE. src/auth.js decides, from the page's own hostname: the OAuth client's only
-           authorized JavaScript origin is `https://localhost:8443`, so the sign-in is reachable
-           exactly where the handshake can succeed and nowhere else. On the deployed app this whole
+           FILE. src/auth.js decides, from the page's own hostname: hostAllowsSignIn() returns true
+           for `localhost` and `127.0.0.1` and nothing else, so the sign-in is reachable only there.
+           THAT IS THIS CODE HOLDING ITSELF BACK, NOT A LIMIT GOOGLE IMPOSES — see the last sentence
+           of this paragraph before you read it as one. On the deployed app this whole
            block stays `hidden`, no Google script is ever fetched, and privacy.html's flat claim
            that Planbook loads no third-party code of any kind stays true word for word. That is
            the flag docs/sync.md asks for; WO-7.3 widens the one function in src/auth.js, and that

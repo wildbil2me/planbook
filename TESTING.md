@@ -12022,14 +12022,27 @@ moved, and the two rows above the label did not move either.
       measured a `.doc-link` — the work order's parenthetical says that sweep *measures the row*,
       and it does not, for any of the three. A gap that predates this row, named rather than closed
       here: closing it means widening a sweep that is not this work order's.
+      *(Confirmed by hand at the landing, 2026-09-21: the string `doc-link` does not appear in
+      `tools/verify/touch-targets.mjs` at all, and every modal sweep in it selects `button, input`
+      — a `.doc-link` is an `<a>` and falls outside all of them by construction. **Booked as
+      WO-8.14**, which is this note's only correction: it is now closed somewhere rather than only
+      named. The consequence to carry until it lands — deleting
+      `.modal-body .doc-link { min-height: 44px }` from the coarse block leaves all 1446 checks
+      green and three sub-thumb rows in the modal a teacher opens to find the privacy policy.)*
 - [x] **Acceptance 4 — `target="_blank" rel="noopener"`.** Asserted on all three rows at once, not
       only the new one; the harness reads `[{"target":"_blank","rel":"noopener"}]` three times.
-- [ ] **Acceptance 5 — `CACHE` bumped in the same commit.** `sw.js:37` reads `planbook-shell-v126`
+- [x] **Acceptance 5 — `CACHE` bumped in the same commit.** `sw.js:37` reads `planbook-shell-v126`
       on disk beside the `index.html` edit, and `wo-sweep.mjs` § 9 reports the bump as uncommitted,
       which is the rule being followed. **Left open by the implementer on purpose:** the line says
       *same commit*, the dispatch does not commit, and a tick on a commit that does not exist yet
       is a prediction. It closes at the landing, by whoever makes the commit, on `git show --stat`
       naming both files.
+      *(Closed 2026-09-21 at the landing: `509b38f` — `git show --stat` names `index.html`,
+      `src/shell.css` and `sw.js` together. **The constant is `v127` on disk now, not the `v126` in
+      the line above**, and that is the rule working rather than drifting: a second commit in the
+      same sitting repaired a self-contradicting comment in `index.html` — `SHELL` entry one — and
+      took its own bump. The 👤 reading below was taken at `v126`, before that commit, and what it
+      read is unaffected by it.)*
 - [x] **Acceptance 6 — `verify-shell.mjs` green, with a check that goes red when the row is
       deleted.** Five checks inside § *"which build this device is running (WO-8.10)"*, on the first
       About open that section already makes. Green on the delivered tree:
@@ -12041,7 +12054,7 @@ moved, and the two rows above the label did not move either.
       ".../docs/FERPA.md"]`, `text = null`, `label = null`, `computed margin-top = null`. The row
       was restored by hand immediately, before a word of this entry, and `grep -rn MUTATION` over
       the changed files reads nothing.
-- [ ] 👤 **Acceptance 7 — on a force-quit and relaunched install: the row is there, tapping it opens
+- [x] 👤 **Acceptance 7 — on a force-quit and relaunched install: the row is there, tapping it opens
       the licence in the browser, and Planbook is still where you left it when you come back.**
       Owed to the iPad, the way every 👤 line in this file since WO-1.3 has been run: serve from
       `tools/serve-https.mjs`, **force-quit Planbook from the app switcher first** — a reload is not
@@ -12051,6 +12064,15 @@ moved, and the two rows above the label did not move either.
       licence on GitHub, and switching back finds Planbook on the screen it was on with About still
       open. If the standalone window swallows it instead, the fix is the one the FERPA row's comment
       already rules — a way back on the far page, not dropping the target.
+      *(**Read on the iPad 2026-09-21, owner, green.** Build line `v126`, *Source and licence* its
+      own heading below *Privacy and student data* and above the build line with a visible gap.
+      **One departure from what this line predicted, and it is the better outcome:** the licence
+      opens in the **in-app browser**, not by switching to Safari, and Back returns to Planbook with
+      About still open. The line was written expecting an app switch; an in-app sheet is what you
+      want here, because a full switch risks iOS reloading the PWA behind you and losing the screen
+      the teacher was on. The standalone window did not swallow it, so the FERPA comment's fallback
+      was not needed. All three doc rows read comfortably thumb-sized — **which is the only check on
+      that anywhere in this project** — see Acceptance 3 above and WO-8.14.)*
 
 *What the desk cannot pay off, beyond the 👤 line. The harness reads the row on a page in headless
 Edge, not in an installed standalone window; it can prove the anchor carries `target="_blank"` and

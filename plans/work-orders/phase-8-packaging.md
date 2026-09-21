@@ -1016,7 +1016,7 @@ is indistinguishable from a wrong URL.**)*
 
 ## WO-8.13 — the About modal names two documents and not the licence
 
-**Ship** — · **Status** 🔍 AWAITING VERDICT — 2026-09-20 · **Size** S · **Depends on** nothing
+**Ship** — · **Status** ✅ DONE — 2026-09-21 · **Size** S · **Depends on** nothing
 **Closes roadmap** *(no box. The same call WO-8.9 through WO-8.11 made: this is the app reporting a
 fact about itself rather than a feature the roadmap costed. Booked 2026-08-21, owner-directed, out
 of the sitting that added `LICENSE.md`.)*
@@ -1066,13 +1066,27 @@ this, run it for their own department, or sell it. **One row. It stays one row.*
       selector to the existing adjacency rule** — `.modal-body .doc-link + .modal-section-label` —
       rather than a second declaration, and say why in that rule's comment. Nothing else in
       `src/shell.css` moves, and `touch-targets.mjs` measures the row, not the gap.
+      *(**That last clause is false and was false when it was written**, found by the verifier
+      2026-09-21 and confirmed by hand: every modal sweep in `tools/verify/touch-targets.mjs`
+      selects `button, input`, a `.doc-link` is an `<a>`, and the string `doc-link` does not appear
+      in that file at all — it measures neither the row nor the gap, and never has. The criterion
+      itself still holds, which is why this line is ✅: the row verifiably reuses the coarse-pointer
+      rule. What the clause was doing was reassuring a reader that a regression would be caught, and
+      it would not be. [WO-8.14](#wo-814--the-three-doc-links-in-about-are-measured-by-nothing)
+      closes that.)*
 - [x] `target="_blank" rel="noopener"`, matching the two rows beside it, for the reason written
       above them in `index.html`.
-- [ ] `sw.js` `CACHE` bumped in the same commit that edits `index.html`.
+- [x] `sw.js` `CACHE` bumped in the same commit that edits `index.html`.
 - [x] `node tools/verify-shell.mjs` green, carrying a check that goes **red** when the row is
       deleted — proved by deleting it once, not by reasoning about it.
-- [ ] 👤 On a **force-quit and relaunched** install: the row is there, tapping it opens the licence
+- [x] 👤 On a **force-quit and relaunched** install: the row is there, tapping it opens the licence
       in the browser, and Planbook is still where you left it when you come back.
+      *(Read on the iPad 2026-09-21, owner. The licence opens in the **in-app browser** rather than
+      by switching to Safari, and back returns to Planbook with About still open — which is the
+      better outcome than this line anticipated: a full app switch risks iOS reloading the PWA
+      behind you. All three doc rows read comfortably thumb-sized, which is the only check on that
+      anywhere — see the Acceptance line above about `touch-targets.mjs`, whose parenthetical is
+      false, and [WO-8.14](#wo-814--the-three-doc-links-in-about-are-measured-by-nothing).)*
 
 **Traps** — **The GitHub URL, not `./LICENSE.md`.** A `.md` served off this origin is a file some
 browsers download rather than a page they render; GitHub renders it. That argument and the one about
@@ -1086,3 +1100,68 @@ to them here lands in a commit whose message is about something else. **Do not a
 copyright line beside it.** The build line under it is generated from `caches.keys()` for the reason
 WO-8.10 gives, and the copyright holder is stated in `LICENSE.md` and nowhere else — a second copy in
 the modal is a second thing to keep true.
+
+---
+
+## WO-8.14 — the three doc links in About are measured by nothing
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing
+**Closes roadmap** *(no box. A harness gap, the same call WO-8.9 made: this is the project checking
+something it already claimed rather than a feature the roadmap costed. Booked 2026-09-21 out of
+WO-8.13's landing, owner-directed.)*
+
+**Why it exists.** `src/shell.css` carries `.modal-body .doc-link { min-height: 44px; … }` inside its
+`(pointer: coarse)` block, and three rows in the About modal depend on it: the privacy policy, the
+FERPA document, and — since WO-8.13 — the licence. **No tool has ever measured any of them.** Every
+modal sweep in `tools/verify/touch-targets.mjs` selects `button, input` (a few widen to
+`select, textarea`), a `.doc-link` is an `<a>`, and the string `doc-link` does not appear in that
+file at all. The rows fall outside the sweep by construction, not by an oversight in one selector.
+
+**What that costs, stated plainly:** deleting that one declaration from the coarse block leaves all
+1446 checks green and puts three sub-thumb targets in the modal a teacher opens to find the privacy
+policy. The 44px rule under `@media (pointer: coarse)` is a stated convention of this project
+(`CLAUDE.md` § Conventions), and this is the third seam where it is load-bearing and unasserted.
+
+**It was found by a false sentence, and that is worth recording.** WO-8.13's Acceptance line 3
+contains the parenthetical *"`touch-targets.mjs` measures the row, not the gap"* — written into the
+work order on 2026-09-20 to explain why the row needed no new check. It was false when it was
+written. The criterion it sat on was still honestly met, so the line is ✅; what the clause was
+doing was assuring a reader that a regression here would be caught. **A work order's own reasoning
+is not a fence**, and this is the instance to point at next time one is read as one.
+
+**Deliverables**
+- **One `.doc-link` measurement under a coarse pointer**, reading **every** `.doc-link` in the About
+  modal rather than the licence row alone — the shape WO-8.13's own harness check used, and for the
+  same reason: all three rows are unasserted, and one selector closes all three.
+- **It goes in `tools/verify/touch-targets.mjs`**, in the modal sweep that already opens
+  `#aboutModal`, widened to reach anchors. Do not add a section to open that modal a second time.
+  *(`tools/verify/build-line.mjs` also opens it and is where WO-8.13's checks live — this one is a
+  measurement under an emulated coarse pointer, which is `touch-targets.mjs`'s whole apparatus, so
+  it goes there even though the neighbouring assertions about these rows do not.)*
+- **`tools/README.md`'s check count updated** to whatever the run emits.
+- **A `TESTING.md` line of its own.** No 👤: this is a measurement a headless browser makes better
+  than a thumb, which is the point of closing it.
+
+**Acceptance**
+- [ ] Every `.doc-link` in the About modal is measured at ≥44px under an emulated coarse pointer —
+      all three rows, named individually in the evidence line, not counted in aggregate.
+- [ ] The check goes **red** when `min-height: 44px` is deleted from `.modal-body .doc-link` in the
+      `(pointer: coarse)` block — proved by deleting it once, not by reasoning about it, and
+      restored before anything is written.
+- [ ] `node tools/verify-shell.mjs` green, and `node tools/wo-sweep.mjs` green with its own recorded
+      count matching the run.
+- [ ] `tools/README.md`'s check count matches the run.
+- [ ] WO-8.13's Acceptance line 3 and its `TESTING.md` entry both already carry the correction; this
+      work order's `TESTING.md` line **links back to them** rather than restating the story.
+
+**Traps** — **Widen the existing sweep; do not write a second one.** The modal sweeps in
+`touch-targets.mjs` share one shape and one evidence format, and a parallel anchor sweep beside them
+is a second opinion about the same question — the defect `CLAUDE.md` § glance-reader names in
+general terms. **Measure, do not read the sheet.** Asserting that the declaration exists in
+`src/shell.css` is a grep and belongs in `wo-sweep.mjs` if anywhere; what is missing here is a
+*computed* height on a real element under a coarse pointer, which is the only thing that survives
+the rule being overridden by something later in the cascade. **Do not widen to every `<a>` in every
+modal.** The claim being closed is about `.doc-link`, three rows, one declaration; a sweep of every
+anchor in the app will find link text that is legitimately inline prose and turn a fence into a
+backlog. **The 28px month chip is not a precedent here** — that departure is ruled and asserted *as*
+a departure in `src/calendar-view.css`, and these rows have no such ruling.

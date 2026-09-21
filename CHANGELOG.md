@@ -13,6 +13,18 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### About says what licence the app is released under — 2026-09-21
+
+About already linked the privacy policy and the FERPA document. It now names the third one: a
+**Source and licence** heading with a single row under it, *Released under the Apache License 2.0*,
+which opens the licence on GitHub and leaves Planbook where you left it. It sits under a heading of
+its own rather than under *Privacy and student data*, because a licence filed beside the student-data
+documents reads as a term about student data.
+
+The row says the licence's name and nothing else — no copyright line, no version, and no summary of
+what the licence permits. A summary would be a licence term this project did not write and cannot
+honour, and the one place the copyright holder is stated stays `LICENSE.md`. (WO-8.13)
+
 ### A contact to several people is filed under all of them — 2026-09-20
 
 The entry written to the contact log when a message leaves used to name one audience — whoever the
