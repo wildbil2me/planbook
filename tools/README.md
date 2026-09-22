@@ -1210,14 +1210,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1437 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1450 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the sixty-nine files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the seventy files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -1905,6 +1905,30 @@ The mutation — the licence row deleted for one run, its label left in place �
 `1446 checks · 1441 passed · 5 failed · 0 skipped`, exit 1: **all five go red**, the fifth because it
 finds the label through the row and a missing row leaves it nothing to measure. Restored by hand
 immediately, and `grep -rn MUTATION` over the changed files was read after.
+
+**WO-8.4 moved it from 1437 to 1450, and the executed count from 1446 to 1461 — thirteen sites,
+fifteen results.** All thirteen are in one new section, `verify/print-sheets.mjs`, run directly after
+`verify/print-gate.mjs`: the four printed sheets under the one shared `#printHeader`, in both
+presentation modes, plus the named landscape page, the calendar band's filter-in-words rule and the
+ungated belt in `src/shell.css`. **Two of the thirteen are not one-for-one**: the fixture guard's
+failure arm never fires on a green run, and the Acceptance-1 check is one call site inside a loop
+over the four surfaces, which fires four times — so thirteen sites give fifteen results and the gap
+between sites and results moves from −9 to −11. Its one guard for a missing seam is a `skip()` and
+moves nothing; the PDF check has a `skip()` alternative for an engine without `Page.printToPDF`,
+which does not fire in Edge. **Three existing checks were rewritten rather than added to the
+count**, because WO-8.4 moved what titles a sheet: the grade sheet's print snapshot in
+`verify/grade-sheet.mjs` and the student report's in `verify/grade-detail.mjs` now exclude
+`#printHeader` from their "nothing outside the sheet has a box" sweeps by name and read the class,
+term and date off it — with the dialog's own head asserted to have NO box — and
+`verify/calendar-drawn.mjs`'s review-chip check reads the band where it read `#calendarPrintStamp`,
+which is deleted. Each is rewritten to the new shape, never relaxed: the head that used to be
+asserted drawn is now asserted absent. The run prints **1461**:
+`1461 checks · 1461 passed · 0 failed · 0 skipped`, 46,181 lines, 31.6 lines per check, 528s, exit
+0, measured 2026-09-21 on the real clock, on the delivered tree. This work order adds **no control**,
+so it declares no 44px rule and adds no touch-target measurement; `wo-sweep.mjs` raises its new
+`.print-header*` classes and the belt's `.supports-panel` as a REVIEW, and none of them is a touch
+target. The mutations are tabulated in `TESTING.md` § WO-8.4 — four, each red on the check written
+for it, each reverted by hand before a word of this entry.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not

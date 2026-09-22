@@ -456,13 +456,20 @@ console.log('\n--- the class\'s grade sheet, printed and exported (WO-3.9) ---')
            IN THIS COMMENT: it is inside a template literal. */
         var box = function(sel){ var e = document.querySelector(sel);
           return e ? Math.round(e.getBoundingClientRect().height) : -1; };
+        /* #printHeader IS THE ONE THING OUTSIDE THE DIALOG THAT PRINTS (WO-8.4): the shared band that
+           titles every sheet, first in <body> and shown under this gate by src/shell.css. It is
+           excluded from the sweep by name and read on its own below. NO BACKTICKS. */
+        var hdr = document.getElementById('printHeader');
         var outside = [];
         Array.prototype.forEach.call(document.querySelectorAll('body *'), function(e){
           if (m && (m.contains(e) || e.contains(m))) return;
+          if (hdr && hdr.contains(e)) return;
           var r = e.getBoundingClientRect();
           if (r.height > 0 || r.width > 0) outside.push(e.tagName + '.' + (e.className || ''));
         });
         window.__wo39print = {
+          printHeaderH: hdr ? Math.round(hdr.getBoundingClientRect().height) : -1,
+          printHeaderText: hdr ? (hdr.textContent || '') : '',
           attr: document.body.hasAttribute('data-grades-print'),
           /* THE OTHER TWO GATES, read at the same instant (WO-2.25). One mechanism answers all three
              now, and the claim that it keeps three attributes rather than sharing one is a claim
@@ -555,28 +562,34 @@ console.log('\n--- the class\'s grade sheet, printed and exported (WO-3.9) ---')
       + ' delete window.__wo39print; delete window.__wo39printErr; delete window.__wo39called; 1');
     await send('Emulation.setEmulatedMedia', { media: '' });
 
-    check('the printed sheet carries the class, the term and the date, and the app\'s chrome and '
-      + 'the dialog\'s own furniture are NOT on it — nothing outside the sheet has a box at all',
+    /* SINCE WO-8.4 THE CLASS, THE TERM AND THE DATE ARE CARRIED BY #printHeader, not by the dialog's
+       own head — the owner's ruling of 2026-09-21 — so the head is asserted to have NO box on the
+       sheet and the band to have one, carrying the same words and the letter scale (ruling 3). */
+    check('the printed sheet carries the class, the term, the date and the letter scale in '
+      + '#printHeader, and the app\'s chrome, the dialog\'s own furniture and its own head are NOT on '
+      + 'it — nothing outside the sheet and that band has a box at all',
       !!sheet && sheet.attr === true
-        && sheet.headText.indexOf('WO-3.9 Sheet') !== -1
-        && sheet.headText.indexOf(LABEL) !== -1
-        && sheet.headText.indexOf('Printed ') !== -1
+        && sheet.printHeaderText.indexOf('WO-3.9 Sheet') !== -1
+        && sheet.printHeaderText.indexOf(LABEL) !== -1
+        && sheet.printHeaderText.indexOf('Printed ') !== -1
+        && sheet.printHeaderText.indexOf('this class’s own bands') !== -1
+        && sheet.printHeaderH > 0
         && sheet.header === 'none' && sheet.main === 'none'
         && sheet.modalHeader === 'none' && sheet.actions === 'none'
         && sheet.headerH === 0 && sheet.mainH === 0 && sheet.scoresViewH === 0
         && sheet.modalHeaderH === 0 && sheet.actionsH === 0
         && sheet.outsideCount === 0
-        && sheet.headH > 0 && sheet.tableH > 0 && sheet.keyH > 0,
+        && sheet.headH === 0 && sheet.tableH > 0 && sheet.keyH > 0,
       sheet ? JSON.stringify({ attr: sheet.attr, header: sheet.header, main: sheet.main,
         modalHeader: sheet.modalHeader, actions: sheet.actions,
         headerHeight: sheet.headerH, mainHeight: sheet.mainH,
         scoresViewDisplay: sheet.scoresView, scoresViewHeight: sheet.scoresViewH,
         modalHeaderHeight: sheet.modalHeaderH, actionsHeight: sheet.actionsH,
-        headHeight: sheet.headH, tableHeight: sheet.tableH,
+        headHeight: sheet.headH, printHeaderHeight: sheet.printHeaderH, tableHeight: sheet.tableH,
         keyHeight: sheet.keyH }) + '; ' + sheet.outsideCount
         + ' element(s) still drawn outside the sheet'
         + (sheet.outsideCount ? ': ' + JSON.stringify(sheet.outside) : '')
-        + ' :: ' + JSON.stringify(sheet.headText.slice(0, 120))
+        + ' :: ' + JSON.stringify(sheet.printHeaderText.slice(0, 160))
         : 'no snapshot :: the stub took = ' + stubbed + ', the control was clicked = '
           + JSON.stringify(clicked));
     /* THE THREE ATTRIBUTES STAY THREE (WO-2.25). One module answers all of them now, which is what

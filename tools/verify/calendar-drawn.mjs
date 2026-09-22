@@ -537,27 +537,36 @@ if (!seam) {
       review: r ? getComputedStyle(r).display : 'no chip',
       other: o ? getComputedStyle(o).display : 'no chip' }; })()`);
   const gated = await evalJs(`(function(){
-    document.body.setAttribute('data-calendar-print', '1');
+    /* The gate is set by the app's own answer — a beforeprint event, which src/print-gate.js turns
+       into the attribute AND the filled #printHeader — rather than by hand, so the band has words in
+       it. The old #calendarPrintStamp is gone (WO-8.4); the band titles this sheet now. */
+    window.dispatchEvent(new Event('beforeprint'));
     var r = document.querySelector('#calendarGrid .calendar-chip.review');
     var o = document.querySelector('#calendarGrid .calendar-chip.due');
     var v = document.getElementById('calendarView');
-    var stamp = document.getElementById('calendarPrintStamp');
-    var out = { review: r ? getComputedStyle(r).display : 'no chip',
+    var band = document.getElementById('printHeader');
+    var out = { gateSet: document.body.hasAttribute('data-calendar-print'),
+      review: r ? getComputedStyle(r).display : 'no chip',
       other: o ? getComputedStyle(o).display : 'no chip',
       view: getComputedStyle(v).display,
-      stamp: getComputedStyle(stamp).display,
+      stamp: band ? getComputedStyle(band).display : '(absent)',
+      stampText: band ? band.textContent : '',
+      stampGone: !document.getElementById('calendarPrintStamp'),
       toolbar: getComputedStyle(document.querySelector('#calendarView .calendar-toolbar')).display };
+    window.dispatchEvent(new Event('afterprint'));
     document.body.removeAttribute('data-calendar-print');
     return out; })()`);
   await send('Emulation.setEmulatedMedia', { media: '' });
   await new Promise(r => setTimeout(r, 150));
   check('no printout of a calendar month emits a review date, whatever presentation mode says: '
     + 'with the gate on the review chip computes to display:none while the due-date chip beside it '
-    + 'is still drawn, the sheet keeps its own stamp and loses its toolbar — and with the gate OFF '
+    + 'is still drawn, the sheet is titled by #printHeader (WO-8.4; the old stamp is gone) and loses its toolbar — and with the gate OFF '
     + 'the review chip is still gone, which is the one ungated rule in that stylesheet',
     sheet.atRest === false && sheet.screen.review !== 'none' && sheet.screen.other !== 'none'
       && gated.review === 'none' && gated.other !== 'none'
-      && gated.view === 'block' && gated.stamp === 'block' && gated.toolbar === 'none'
+      && gated.gateSet === true && gated.view === 'block' && gated.stamp === 'flex'
+      && gated.stampText.indexOf('Calendar') === 0 && gated.stampGone === true
+      && gated.toolbar === 'none'
       && ungated.gate === false && ungated.review === 'none',
     'on screen: ' + JSON.stringify(sheet.screen) + ' (gate on <body> at rest: ' + sheet.atRest
       + '); print media with the gate: ' + JSON.stringify(gated)

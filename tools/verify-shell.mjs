@@ -121,6 +121,7 @@ import { run as gradeSheet } from './verify/grade-sheet.mjs';
 import { run as pastDue } from './verify/past-due.mjs';
 import { run as accommodationPrompts } from './verify/accommodation-prompts.mjs';
 import { run as printGate } from './verify/print-gate.mjs';
+import { run as printSheets } from './verify/print-sheets.mjs';
 import { run as buildLine } from './verify/build-line.mjs';
 import { run as workerTakeover } from './verify/worker-takeover.mjs';
 import { run as copyClass } from './verify/copy-class.mjs';
@@ -327,6 +328,10 @@ const BROWSER_SECTIONS = [
   { file: 'verify/past-due.mjs', run: pastDue },
   { file: 'verify/accommodation-prompts.mjs', run: accommodationPrompts },
   { file: 'verify/print-gate.mjs', run: printGate },
+  /* WO-8.4, directly after the gate it prints through: the four sheets under one #printHeader, in
+     both presentation modes, and the belt in src/shell.css. It seeds its own class and takes it back
+     out at its foot, so it depends on its neighbours in neither direction. */
+  { file: 'verify/print-sheets.mjs', run: printSheets },
   { file: 'verify/build-line.mjs', run: buildLine },
   { file: 'verify/worker-takeover.mjs', run: workerTakeover },
   { file: 'verify/copy-class.mjs', run: copyClass },

@@ -536,9 +536,14 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
            it does not have is a BOX. NO BACKTICKS IN THIS COMMENT: it is inside a template. */
         var box = function(sel){ var e = document.querySelector(sel);
           return e ? Math.round(e.getBoundingClientRect().height) : -1; };
+        /* #printHeader IS THE ONE THING OUTSIDE THE VIEW THAT PRINTS (WO-8.4): the shared band that
+           titles every sheet, first in <body> and shown under this gate by src/shell.css. It is
+           excluded from the sweep by name and read on its own below. NO BACKTICKS. */
+        var hdr = document.getElementById('printHeader');
         var outside = [];
         Array.prototype.forEach.call(document.querySelectorAll('body *'), function(e){
           if (v && (v.contains(e) || e.contains(v))) return;
+          if (hdr && hdr.contains(e)) return;
           var r = e.getBoundingClientRect();
           if (r.height > 0 || r.width > 0) outside.push(e.tagName + '.' + (e.className || ''));
         });
@@ -555,13 +560,18 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
           header: d('header.header'), classView: d('#classView'), scoresView: d('#scoresView'),
           panelHeader: d('#detailView .detail-header'),
           actions: d('#detailView .detail-actions'),
-          stamp: d('#detailView .detail-print-stamp'),
+          /* THE STAMP IS GONE (WO-8.4) — #printHeader carries the print date, and the class and the
+             term, so the band is what is read here. The hero's class-and-term span is asserted to
+             have NO box on paper: the band carries both, and the hero keeps the name. */
           stripH: box('#detailView [data-screen-nav]'),
           headerH: box('header.header'),
           actionsH: box('#detailView .detail-actions'),
           heroH: box('#detailView .detail-hero'), tableH: box('#detailView .detail-break'),
-          stampH: box('#detailView .detail-print-stamp'),
-          stampText: (document.querySelector('#detailView .detail-print-stamp') || {}).textContent || '',
+          stampGone: !document.querySelector('.detail-print-stamp'),
+          bandDisplay: hdr ? getComputedStyle(hdr).display : '(absent)',
+          bandH: hdr ? Math.round(hdr.getBoundingClientRect().height) : -1,
+          bandText: hdr ? (hdr.textContent || '') : '',
+          whereH: box('#detailView .detail-hero-where'),
           heroText: (document.querySelector('#detailView .detail-hero') || {}).textContent || '',
           outside: outside.slice(0, 8), outsideCount: outside.length,
           text: v ? v.textContent : '' };
@@ -654,14 +664,20 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
     /* ACCEPTANCE LINE 6, as far as a laptop can see it: the sheet carries the student, the class,
        the term and the day it was printed, and the app's own chrome is not on it. Whether the result
        is ONE page stays owed to a human with a printer — no emulator has one. */
-    check('the printed sheet carries the student, the class, the term and the date it was printed',
+    check('the printed sheet carries the student on its hero, and the class, the term and the date '
+      + 'it was printed in #printHeader above it (WO-8.4) — with the old stamp gone and the hero\'s '
+      + 'own class-and-term span off the paper',
       !!sheet && sheet.attr === true
         && sheet.heroText.indexOf(S1_FULL) !== -1
-        && sheet.heroText.indexOf('WO-3.7 Detail') !== -1
-        && sheet.heroText.indexOf(LABEL) !== -1
-        && sheet.stamp === 'block' && sheet.stampH > 0
-        && sheet.stampText.indexOf('Printed ' + today) === 0,
-      sheet ? 'attribute on = ' + sheet.attr + ', stamp ' + JSON.stringify(sheet.stampText)
+        && sheet.bandDisplay === 'flex' && sheet.bandH > 0
+        && sheet.bandText.indexOf('Student report') === 0
+        && sheet.bandText.indexOf('WO-3.7 Detail') !== -1
+        && sheet.bandText.indexOf(LABEL) !== -1
+        && sheet.bandText.indexOf('Printed ' + today) !== -1
+        && sheet.stampGone === true && sheet.whereH === 0,
+      sheet ? 'attribute on = ' + sheet.attr + ', band ' + sheet.bandDisplay + ' ' + sheet.bandH
+        + 'px ' + JSON.stringify(sheet.bandText) + ', stamp gone = ' + sheet.stampGone
+        + ', hero class-and-term span ' + sheet.whereH + 'px'
         + ' :: ' + JSON.stringify(sheet.heroText.slice(0, 140))
         : 'no snapshot :: the stub took = ' + stubbed + ', the control was clicked = '
           + JSON.stringify(clicked) + ' — window.print() was never called, so either the Print '

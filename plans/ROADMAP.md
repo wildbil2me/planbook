@@ -94,8 +94,8 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 5 | Outreach | 🔨 IN PROGRESS | 9/9 `[██████████] 100%` |
 | 6 | Calendar & the glance page | 🔨 IN PROGRESS | 8/8 `[██████████] 100%` |
 | 7 | Drive sync (opt-in) | 🔨 IN PROGRESS — launch needs OAuth verification | 6/7 `[█████████░] 86%` |
-| 8 | 1.0 packaging | 🔨 IN PROGRESS | 2/8 `[██░░░░░░░░] 25%` |
-| | | **Overall** | **71/81 `[█████████░] 88%`** · ⏳ 1 deferred |
+| 8 | 1.0 packaging | 🔨 IN PROGRESS | 3/8 `[████░░░░░░] 38%` |
+| | | **Overall** | **72/81 `[█████████░] 89%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -701,7 +701,7 @@ phase is WO-6.5, a tapped day opening on that day, which closes no box here.)*
       the README quotes rather than re-words.
 - [x] `docs/FERPA.md` — stronger than Roll Call!'s (no vendor server, no account required) and it
       **must address accommodation and medical data directly**, not only grades.
-- [ ] Print stylesheets for every printable surface.
+- [x] Print stylesheets for every printable surface.
 - [ ] Onboarding: install → marking attendance with no documentation.
 - [x] Name and distribution channel decided. *Roll Call! sat at 0.9.0-beta with every engineering
       blocker closed, held up by exactly this. It isn't an engineering task and it doesn't resolve

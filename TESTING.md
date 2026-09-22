@@ -11421,6 +11421,126 @@ real form; the harness models it with a ten-second token.
 WO-8.1 through WO-8.6 append their acceptance lines as they land. WO-8.8's are below, because a
 check that nobody watched fail is not evidence and the place that record goes is here.
 
+### WO-8.4 — print stylesheets
+
+**What a teacher sees.** On screen, nothing new. On paper, every one of the four printable sheets —
+the attendance record, the grade sheet, one student's report and the calendar — now opens with the
+same band: what the sheet is in small capitals (*ATTENDANCE RECORD*, *GRADE SHEET*, *STUDENT
+REPORT*, *CALENDAR · MAY 2027*), the class large under it, the term with its dates under that, and
+*Printed September 21, 2026 · Planbook* on the right. The grade sheet's band carries a second line,
+the letter scale in force, because it is read off the sheet while typing into the SIS. A second page
+the app forces — the attendance record's day-by-day grid, the grade sheet's second and later slices
+— opens with one thin line naming the sheet, the class, the term and *Printed … · continued*. The
+month prints sideways on Chrome and Edge. **The grade sheet no longer breaks before its first
+slice** — before this it printed its head alone on page one, so a class whose term fits one slice
+came out on two sheets. Measured on a two-slice sheet (three pages before, two after); the one-slice
+case is the same rule and was measured only before the change, at two pages — **closed on paper by
+the owner on 2026-09-21, who also ruled the line kept.** It is worth knowing it was ruled on rather
+than waved through: **no ruling and no deliverable asked for it**, and it changes the pagination of
+[WO-3.9](plans/work-orders/phase-3-gradebook.md#wo-39--grades-print--csv)'s sheet — the surface read
+against the live SIS on 2026-08-13. It is one line, `src/scores.css`'s
+`body[data-grades-print] .grades-report-label + .grades-report-slice { break-before: auto }`,
+declared in three places rather than slipped in, and reversing it is one line if a later reading
+disagrees.
+
+**What changed underneath, in the owner's seven rulings of 2026-09-21.** (1) One `#printHeader`, the
+first child of `<body>`, filled by `src/print-gate.js` at `beforeprint` from whichever surface's gate
+is on; each surface's own head is hidden under its gate, and the calendar's and the student report's
+print-only stamps were deleted rather than left hidden. (2) `.print-header-running` at the forced
+breaks only. (3) The scale in the band. (4) `@page calendar { size: landscape }`, with `page:
+calendar` set on `<body>` under the calendar gate — **not on the view, as the ruling words it**,
+because `#printHeader` is a sibling of `<main>` and a change of page name between two siblings is a
+forced break: the band would have printed alone on a portrait page ahead of a landscape month. (5)
+The calendar's class slot is the filter in words — one class's own name, *Both classes*, *All eight
+classes* (counted) — and the term line only when every class showing has the same one over the
+window. (6) One ungated belt in `src/shell.css` hiding `.support-dot`, `.supports-panel` (which both
+accommodation prompts wear) and anything marked `data-support-indicator` — the calendar's review chip
+and the home page's review count — on any print whatever the mode; the per-screen rules in
+`src/assignments.css` and `src/calendar-view.css` stay as defence in depth, and the belt's comment
+says so. (7) `body[data-modal-print]` is discharged by the four gates, noted at the top of
+`src/print-gate.js`; nothing was built beside them.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-8-packaging.md` § WO-8.4. Everything
+ticked below was read by `tools/verify/print-sheets.mjs` under an emulated print medium, in headless
+Edge, on the delivered tree — `1461 checks · 1461 passed · 0 failed · 0 skipped`, 46,181 lines,
+528s, exit 0, 2026-09-21, real clock. What the page RENDERS is `document.body.innerText` there, which
+leaves out everything `display: none` took off — the difference between a sheet and a DOM.*
+
+- [x] **Acceptance 1 — each printable surface produces a clean page with a title, class, term and
+      date.** **Closed by the owner on paper, 2026-09-21** — all four sheets printed from their 🖨
+      buttons and read as a stranger would read them. It was held open until then because "clean
+      page" is a reading of paper and no harness can take it. What the harness did
+      read, on all four sheets in both modes: `#printHeader` is `display: flex`, has a box, is
+      `<body>`'s first element, and reads the right title, the class, the term with its dates and
+      *Printed \<today\>*; each surface's own head has no box; and Chromium's own print pipeline
+      (`Page.printToPDF`, CSS page size preferred) puts the month on **one 792×612 landscape page**
+      and a two-slice grade sheet on **two 612×792 portrait pages**, header and first slice
+      together on page one. The calendar's term line is absent when the classes showing do not share
+      one term — that is ruling 5, not a gap. The reading this line owed a human — print each of
+      the four from its 🖨 button and read each page as a stranger would — was taken on 2026-09-21
+      and is the first 👤 line below.
+- [x] **Acceptance 2 — no app chrome, navigation or button on any printout.** On all four sheets in
+      both modes, no `button`, `input`, `select`, `textarea`, `a[href]`, `nav` or `role=button/tab/
+      navigation` element has a box — **with one named exception, the calendar's chips**, which are
+      `<button>`s on screen and on paper a line of text inside a hairline border, their print rule
+      having taken the wash off. The grade sheet's and the student report's sections separately
+      assert that nothing outside the sheet and the band has a box at all.
+- [x] **Acceptance 3 — no accommodation, medical or plan data in any printout, regardless of
+      presentation mode.** The fixture plants an accommodation, a medical note, a behaviour plan, a
+      case manager, an attendance clause, a plan type and a review date in the month on show, proves
+      all of them are in the year document first, then searches all eight sheets' rendered text for
+      each of them and for the review chip's own *Review ·* — **none on any sheet, with presentation
+      mode OFF as well as on.** And the belt: with presentation mode OFF and **no gate on `<body>`**,
+      the roster's support dot, the student editor's open support panel and the home page's review
+      count all have a box on screen and none on paper, and no empty band prints either.
+- [x] **Acceptance 4 — the gradebook printout is ordered to match the SIS entry screen (WO-3.9).**
+      The match itself is the owner's reading of 2026-08-13 against the live SIS, recorded in WO-3.9.
+      What this work order owed was not to move it, and the harness shows it did not: rows
+      `Abbott, Ben · Okafor-Wo84, Nia · Zed, Rev` and columns in due-date order over a roster and an
+      assignment list stored in neither, in both modes — and WO-3.9's own section, which asserts the
+      order in far more detail over its own fixture, is green on the same run. The letter scale moved
+      and nothing else did: `gradesRecord()` is untouched.
+
+**The mutation round**, run on a subset of the harness (the WO-8.4 section and the one that sets
+the seam), each mutation marked `MUTATION` and reverted by hand, `grep -rn MUTATION src` reading
+nothing after each:
+
+| Mutation | What went red |
+|---|---|
+| the belt's selector list emptied in `src/shell.css` | the belt check — the support dot drew 22px on paper |
+| the attendance record's own head re-shown under its gate | ruling 1 — `record` 89px in both modes |
+| both calendar review-chip rules and the chip's `data-support-indicator` taken out | Acceptance 3 — `calendar-off … LEAKS ["Review ·"]` |
+| the first grade slice's `break-before: auto` taken out | the PDF check — the grade sheet came back at **3** pages |
+
+The first three ran together in one subset run (`49 checks · 46 passed · 3 failed`); the fourth
+alone (`49 · 48 · 1`).
+
+- [x] 👤 **Print all four on paper, from a laptop, and read them.** Chrome or Edge. Each sheet's first
+      page opens with the band; the class, term and date are right; nothing that looks like a button
+      or a toolbar is on any page; a grade sheet of eight or fewer assignments is one page; the attendance record's
+      day-by-day grid starts page two under its continuation line; the month comes out landscape
+      without touching the dialog's orientation. **Read on paper by the owner, 2026-09-21: all four
+      good.** That reading also settles the one-page grade sheet, which the harness could only
+      measure before the change, and the owner ruled that line kept — see the opening paragraph.
+- [x] 👤 **Print the month from the iPad.** Safari ignores named pages, so the preview arrives
+      portrait: turn it to landscape by hand in the print sheet and confirm the month fits the page.
+      That is ruling 4's accepted limit and not a defect — the line exists so the limit is seen once
+      rather than assumed. **Read by the owner, 2026-09-21: good** — the limit is confirmed as a
+      limit, turned by hand, and the month fits.
+- [x] 👤 **Ctrl+P from the roster with presentation mode OFF**, on a class with a student who has a
+      support dot: the preview shows the roster with no dot and no empty band at the top.
+      **Read by the owner, 2026-09-21: good** — no dot, no empty band.
+
+*What the desk cannot pay off. Everything above is Chromium: the named page, the forced breaks and
+the PDF page counts are this engine's answers, and the iPad's engine is the one that ignores the
+named page. **Two things this work order did not change and a reader may expect it to have.** The
+student report prints the hall-pass card as it draws on screen — the trips with presentation mode
+off, a sentence saying they are hidden with it on — because WO-2.26 ruled the card prints and pass
+data is not support data; so that sheet is not byte-identical across the two modes, whatever the
+drawing's "decided" caption says. And a Ctrl+P of the home page or the concern list with
+presentation mode off still prints the names those screens show — ruling 6 scoped the belt to
+support indicators, and a wider rule is the owner's call rather than this work order's.*
+
 ### WO-8.8 — read the deployment, not the repository
 
 **What this changes.** Nothing a teacher sees and nothing any other tool prints: `src/`,

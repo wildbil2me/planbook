@@ -185,6 +185,15 @@
 </head>
 <body>
 
+<!-- THE PRINTED PAGE'S TITLE (WO-8.4) — design/style-guide.md's hidden `#printHeader`, one element for
+     all four printable surfaces. Never on screen, and on paper only under a print gate: each
+     surface's block hides every child of <body> but its own surface, and src/shell.css § PRINT
+     HEADER re-shows this one beside it. It is FIRST in <body> so that it prints at the top of the
+     sheet whichever surface is under it. Empty here on purpose: src/print-gate.js fills it at the
+     moment the browser serialises the page, from the surface whose gate is on — class, term and the
+     print date, and never a student's support details, which no surface hands it. -->
+<div class="print-header" id="printHeader"></div>
+
 <!-- Covers the app until boot finishes. WO-1.4 made that real: it comes down in src/shell.js
      once the year document is out of IndexedDB and in memory.
 
@@ -1459,11 +1468,6 @@
     </div>
 
     <div class="calendar-body">
-      <!-- The printed sheet's own title. Never on screen — src/calendar-view.css shows it only
-           under the print gate, because the panel header above is the app talking to the teacher
-           and none of it belongs on paper. -->
-      <p class="calendar-print-stamp" id="calendarPrintStamp"></p>
-
       <table class="calendar-table month" id="calendarGrid"></table>
 
       <!-- Why a month with every class showing draws no per-class day. src/calendar-view.js writes

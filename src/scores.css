@@ -749,6 +749,12 @@
   body[data-grades-print] .grades-report-head {
     border-bottom: 2px solid #000; padding-bottom: 6mm; margin-bottom: 4mm;
   }
+  /* THE DIALOG'S OWN HEAD IS NOT ON THE SHEET (WO-8.4). The shared #printHeader titles it instead,
+     shown by src/shell.css under this gate — and carries the letter scale at the TOP, which is the
+     owner's ruling of 2026-09-21: the scale is read off the sheet while typing into the SIS, so the
+     foot is the wrong place for it. Nothing about the rows or columns moves with it; WO-3.9's order
+     is decided in src/grades-report.js's gradesRecord() and this rule cannot reach it. */
+  body[data-grades-print] .grades-report-head { display: none !important; }
   body[data-grades-print] .grades-report-name { font-size: 14pt; color: #000; }
   body[data-grades-print] .grades-report-sub { font-size: 9pt; color: #333; }
   body[data-grades-print] .grades-report-scale { font-size: 8pt; color: #333; }
@@ -779,6 +785,13 @@
   body[data-grades-print] .grades-report-slice {
     overflow: visible !important; break-before: page; margin-bottom: 0;
   }
+  /* EXCEPT THE FIRST, WHICH FOLLOWS THE HEADER ON PAGE ONE (WO-8.4). Until then every slice broke,
+     the first included, so page one held the dialog's head and a label and nothing else — a class
+     whose whole term is one slice printed on two sheets. The first slice is the one straight after
+     the "Grades by student" label, and that adjacency is the whole selector: src/grades-report.js
+     appends the label and then the slices, with nothing between. Slices two onward still start a
+     page each, and those are the pages that carry the continuation line. */
+  body[data-grades-print] .grades-report-label + .grades-report-slice { break-before: auto; }
   body[data-grades-print] .grades-report-slice-label { font-size: 8pt; color: #000; }
   /* The millimetres ASSIGNMENTS_PER_SLICE is computed from, declared where the browser can act on
      them: 42 + 16 + 8 x 16 = 186mm inside A4's 190. The name is clipped rather than allowed to

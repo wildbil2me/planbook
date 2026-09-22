@@ -1523,6 +1523,13 @@
   body[data-attendance-print] .attendance-report-head {
     border-bottom: 2px solid #000; padding-bottom: 6mm; margin-bottom: 4mm;
   }
+  /* THE DIALOG'S OWN HEAD IS NOT ON THE SHEET (WO-8.4). The shared #printHeader titles it instead —
+     the style guide's one hidden element, laid out the same way on all four printable surfaces and
+     shown by src/shell.css under this gate. src/attendance-report.js's "it is the same element on
+     screen" argument is heard and overruled for print by the owner's ruling of 2026-09-21, and it
+     says so at the head it built. The class is this surface's own print hook; the history dialog's
+     head wears `.attendance-report-head` without it and never prints. */
+  body[data-attendance-print] .attendance-report-print-head { display: none !important; }
   body[data-attendance-print] .attendance-report-name { font-size: 14pt; color: #000; }
   body[data-attendance-print] .attendance-report-sub { font-size: 9pt; color: #333; }
   body[data-attendance-print] .attendance-report-label {

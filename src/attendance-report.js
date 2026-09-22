@@ -190,6 +190,11 @@ const RECORD_BODY = 'attendanceRecordBody';
    surface. */
 const PRINT_ATTR = 'data-attendance-print';
 
+/* The words #printHeader carries for the record that is open (WO-8.4), set by openRecord() and read
+   by src/print-gate.js at `beforeprint`. Class, term, range and count — the same sentences the
+   dialog's own head prints, and nothing about any one student. */
+let printHead = null;
+
 /*
   HOW MANY DATE COLUMNS GO ON ONE PRINTED PAGE, and the arithmetic is the whole of it.
 
@@ -563,6 +568,15 @@ export function openRecord(opener) {
   body.textContent = '';
 
   const record = classRecord();
+  /* What #printHeader says when this dialog prints — taken now, from the record the dialog is
+     drawn from, so the band and the page under it are one reading of the ledger. The print DATE is
+     not in it: that is asked at the moment of printing (headOfRecord() below). */
+  printHead = record ? {
+    title: 'Attendance record',
+    subject: record.className,
+    lines: [recordCaption(record)],
+    brief: record.termLabel,
+  } : null;
   if (!record) {
     body.append(el('p', 'attendance-report-empty',
       'No class is open, so there is no record to print. Open a class first.'));
@@ -572,7 +586,15 @@ export function openRecord(opener) {
 
   /* THE PRINTED HEADER, and it is the same element on screen. Class, term, date range and the
      count of recorded meetings, plus the day it was printed — which is what makes a sheet found in
-     a folder next June mean anything at all. */
+     a folder next June mean anything at all.
+
+     HEARD AND OVERRULED FOR PRINT (WO-8.4, the owner's ruling of 2026-09-21). The argument above —
+     one element, so the screen and the sheet cannot say two things — is sound, and it still governs
+     the SCREEN: this head is what the dialog shows. On paper it is hidden under this surface's gate
+     (src/attendance.css), and the sheet is titled instead by the one shared #printHeader the style
+     guide names, laid out the same way on all four printable surfaces. What keeps the two from
+     saying different things is that both are built from the same sentences in this file —
+     recordCaption() below and in printHead — rather than that they are one element. */
   const head = el('div', 'attendance-report-head attendance-report-print-head');
   const who = el('div', 'attendance-report-who');
   who.append(el('div', 'attendance-report-name', record.className));
@@ -634,6 +656,10 @@ export function openRecord(opener) {
    label about nothing. */
 function slice(record, dates, from, total) {
   const wrap = el('div', 'attendance-report-slice');
+  /* THE CONTINUATION LINE (WO-8.4). Every slice starts a printed page (src/attendance.css), so a
+     loose page of dates would otherwise say nothing about whose class it is. Empty here and hidden
+     on screen: src/print-gate.js writes it at `beforeprint` from the same words as #printHeader. */
+  wrap.append(el('div', 'print-header-running'));
   if (total > dates.length) {
     wrap.append(el('div', 'attendance-report-slice-label',
       'Meetings ' + (from + 1) + '–' + (from + dates.length) + ' of ' + total));
@@ -688,7 +714,13 @@ function recordOnScreen() {
 /* Registered at module scope, not around each print: the Ctrl+P a teacher presses with this dialog
    already open never comes through printRecord() and wants the same gate. src/shell.js imports this
    module at startup, so it is live from the first paint. */
-const syncPrintGate = registerPrintGate(PRINT_ATTR, recordOnScreen);
+const syncPrintGate = registerPrintGate(PRINT_ATTR, recordOnScreen, headOfRecord);
+
+/* The header's words for the open record, with the print date asked NOW — the moment the page is
+   serialised, which is the moment src/print-gate.js calls this. */
+function headOfRecord() {
+  return printHead ? Object.assign({}, printHead, { printed: plainDate(todayISO()) }) : null;
+}
 
 export function printRecord() {
   const body = document.body;

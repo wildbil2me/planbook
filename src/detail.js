@@ -136,7 +136,7 @@ import { announce } from './live-region.js';
    attendance history all already wear — imported rather than re-derived, because the colour is
    part of how a teacher recognises a person and there is one answer per student, not one per
    screen. */
-import { getSelectedClass, getSelectedTerm, initials, avatarClass } from './classes.js';
+import { getSelectedClass, getSelectedTerm, termIsDated, initials, avatarClass } from './classes.js';
 /* "Mary Van Dyke" in a sentence, and "Van Dyke, Mary" on a row. One shape, owned by src/roster.js,
    worn by every screen that prints a name. */
 import { fullName, rosterName } from './roster.js';
@@ -231,6 +231,12 @@ const EMPTY_ID = 'detailEmpty';
    to <body>: one string doing both jobs matched every click on screen for as long as the gate was on.
    src/print-gate.js states the invariant; this is the surface it was found on. */
 const PRINT_ATTR = 'data-detail-print';
+
+/* The words #printHeader carries for the student on screen (WO-8.4), set by renderDetail() and read
+   by src/print-gate.js at `beforeprint`: "Student report", the class, and the term with its dates.
+   NOT the student's name — the hero under the band carries that, which is the element a guardian
+   reads — and nothing from any support block, which this file has no path to. */
+let printHead = null;
 
 /*
   WHOSE DETAIL IS ON SCREEN. An id and never a student object, for the reason src/scores.js gives
@@ -638,6 +644,7 @@ export function renderDetail() {
   const empty = document.getElementById(EMPTY_ID);
   if (!content) return;
   content.textContent = '';
+  printHead = null;
 
   /* The breadcrumb is re-set from what was actually drawn rather than from what was asked for, so a
      student who has left this class's roster takes their name off the strip on the same repaint
@@ -676,10 +683,25 @@ export function renderDetail() {
   avatar.setAttribute('aria-hidden', 'true');
   const who = el('div', 'detail-hero-who');
   who.append(el('div', 'detail-hero-name', person));
-  who.append(el('div', 'detail-hero-sub', cls.name + ' · ' + (termLabel || 'No term set')
-    + ' · ' + plural(rows.filter((r) => r.state === 'open').length, 'piece', 'pieces')
+  /* Two spans making the one line the screen has always shown. The first is the class and the term,
+     and on paper it is hidden (src/detail.css) because #printHeader carries both at the top of the
+     sheet (WO-8.4) — the hero keeps what a guardian reads first: the name, the work outstanding, the
+     grade and the band. */
+  const sub = el('div', 'detail-hero-sub');
+  sub.append(el('span', 'detail-hero-where', cls.name + ' · ' + (termLabel || 'No term set') + ' · '));
+  sub.append(el('span', '',
+    plural(rows.filter((r) => r.state === 'open').length, 'piece', 'pieces')
     + ' outstanding · ' + plural(rows.filter((r) => r.state === 'missing').length, 'missing', 'missing')));
+  who.append(sub);
   hero.append(avatar, who);
+  printHead = {
+    title: 'Student report',
+    subject: cls.name,
+    lines: [!term ? 'No term set'
+      : termLabel + (termIsDated(term)
+        ? ' · ' + plainDate(term.start) + ' – ' + plainDate(term.end) : ' (term dates not set)')],
+    brief: termLabel,
+  };
 
   const box = el('div', 'detail-hero-grade');
   if (grade.percentage === null) {
@@ -698,13 +720,11 @@ export function renderDetail() {
   hero.append(box);
   content.append(hero);
 
-  /* THE PRINTED HEADER'S SECOND LINE, and the only element on this screen that exists for the
-     printer. The name, the class and the term are in the hero above and are on the sheet because
-     the hero is; what a sheet needs and a screen does not is the day it came off the printer, which
-     is what makes a page found in a folder next June mean anything at all. Hidden at rest by
-     src/detail.css and shown by the same gated block that hides everything else. */
-  content.append(el('div', 'detail-print-stamp',
-    'Printed ' + plainDate(todayISO()) + ' · Planbook'));
+  /* THERE WAS A PRINT STAMP HERE UNTIL WO-8.4 — `.detail-print-stamp`, "Printed <date> · Planbook",
+     the one element on this screen that existed only for the printer. The shared #printHeader
+     carries the print date now, at the top of the sheet with the class and the term, so the stamp
+     was deleted rather than left hidden: an element whose comment says it is on the sheet, sitting
+     under a rule that keeps it off, is the stale-census failure in DOM form. */
 
   if (grade.percentage === null && grade.reason === 'weights-unbalanced') {
     /* § SHARED's banner, worn from src/scores.css exactly as that screen wears it: there is no
@@ -784,7 +804,14 @@ function detailOnScreen() {
 /* Registered at module scope, not around each print: the Ctrl+P a teacher presses while standing on
    this screen never comes through printDetail() and wants the same gate. src/shell.js imports this
    module at startup, so it is live from the first paint. */
-const syncPrintGate = registerPrintGate(PRINT_ATTR, detailOnScreen);
+const syncPrintGate = registerPrintGate(PRINT_ATTR, detailOnScreen, headOfDetail);
+
+/* The header's words for the student on screen, with the print date asked NOW — the moment the page
+   is serialised, which is the moment src/print-gate.js calls this. Null when no student is open, and
+   then the sheet carries no band, which is right for a page that says "No student open". */
+function headOfDetail() {
+  return printHead ? Object.assign({}, printHead, { printed: plainDate(todayISO()) }) : null;
+}
 
 export function printDetail() {
   const body = document.body;

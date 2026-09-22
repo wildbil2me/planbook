@@ -13,6 +13,29 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The four printable sheets print as sheets — 2026-09-21
+
+The attendance record, the grade sheet, a student's report and the calendar month now come off the
+printer looking like documents rather than like screenshots of the app. Each opens with a band
+naming what the sheet is, the class, the term with its dates, and the date you printed it; the
+grade sheet's band carries the letter scale in force, because that is read off the page while
+re-keying into the SIS. No button, tab or toolbar prints on any of them. Where the app forces a
+second page — the attendance record's day-by-day grid, the grade sheet's later slices — that page
+opens with one thin line naming the sheet again. The month prints landscape on a laptop; on the
+iPad, Safari ignores the instruction, so turn the preview sideways by hand.
+
+**No printout carries accommodation, medical or plan data — in either mode, from any screen.**
+Presentation mode does not have to be on: a support dot, an open supports panel and a review count
+are hidden on paper unconditionally, including on a plain Ctrl+P of a screen that is not a print
+surface. A printout left on a desk is the same disclosure as a projected screen, and there is no
+setting to remember.
+
+The grade sheet also stopped printing its heading alone on page one, so a class whose whole term
+fits one slice now comes out on one sheet. Two things this did not change, named so they are not
+read as gaps: a student's report still prints the hall-pass card as it draws on screen, and a
+Ctrl+P of the home page or the concern list still prints the names those screens are showing.
+(WO-8.4)
+
 ### About says what licence the app is released under — 2026-09-21
 
 About already linked the privacy policy and the FERPA document. It now names the third one: a

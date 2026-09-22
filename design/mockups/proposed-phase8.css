@@ -33,11 +33,20 @@
 
    WHERE IT SPLITS ON LIFT:
 
-     § PRINT HEADER   →  src/shell.css   (WO-8.4 — not yet lifted)
+     § PRINT HEADER   →  src/shell.css   (WO-8.4 — lifted 2026-09-21)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § PRINT HEADER   →  src/shell.css   (WO-8.4 — not yet lifted)
+   § PRINT HEADER   →  src/shell.css   (WO-8.4 — lifted 2026-09-21)
+
+   LIFTED WHOLE, NAMES UNCHANGED: every class below is in src/shell.css § PRINT HEADER with the
+   values drawn here. What the lift added that this file could not draw is the display half — the
+   band is `display: none` at rest and `flex` under each of the four print gates — and one use the
+   drawing did not show: `.print-header-term` is repeated for a second line on the grade sheet,
+   which carries the letter scale in the band rather than at the foot (the owner's ruling of
+   2026-09-21 on the drawing's third ASK). The calendar's band carries the month in the title slot
+   and the filter in the class slot, per the fifth ruling. The drawing is left as drawn; where it
+   and WO-8.4's Rulings disagree, the Rulings are what shipped.
 
    One band, the same on all four sheets: what the sheet IS on the left, large;
    the class under it; the term line under that; and the day it came off the

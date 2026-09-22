@@ -81,8 +81,11 @@
   A class fits DOWN a page: one row per student at 7pt, and a roster of ordinary size lands on one
   sheet. It is the ASSIGNMENTS that do not fit across one — the arithmetic is at
   ASSIGNMENTS_PER_SLICE below — so the grid is drawn in slices, each repeating the student column
-  and the grade column so that every page is a page you can read a total off, and each starting on a
-  fresh sheet.
+  and the grade column so that every page is a page you can read a total off, and each after the
+  first starting on a fresh sheet. (Every one of them did until WO-8.4, the first included, which
+  printed the dialog's head alone on page one and the grid on page two — for a class whose whole
+  term fits one slice, two sheets where the drawing of it shows one. The first slice now follows
+  the header on page one.)
 */
 
 import { getDoc } from './store.js';
@@ -142,6 +145,12 @@ const RECORD_BODY = 'gradesRecordBody';
    would hide the app and reveal something that is not on screen — a blank sheet by a different
    route. One idiom, one gate per surface. */
 const PRINT_ATTR = 'data-grades-print';
+
+/* The words #printHeader carries for the sheet that is open (WO-8.4), set by openGrades() and read by
+   src/print-gate.js at `beforeprint`. Class, term, what the sheet holds, and the letter scale in
+   force — the owner's ruling of 2026-09-21 put the scale in the header, at the top, because it is
+   read off the sheet while typing into the SIS. Nothing about any one student is on it. */
+let printHead = null;
 
 /*
   HOW MANY ASSIGNMENT COLUMNS GO ON ONE PRINTED PAGE, and the arithmetic is the whole of it.
@@ -372,6 +381,12 @@ function scaleText(record) {
 function slice(record, from) {
   const columns = record.assignments.slice(from, from + ASSIGNMENTS_PER_SLICE);
   const wrap = el('div', 'grades-report-slice');
+  /* THE CONTINUATION LINE (WO-8.4), on every slice after the first. Those are the pages this sheet
+     forces (src/scores.css), and a loose page of columns would otherwise say nothing about whose
+     class it is. The FIRST slice prints on page one under #printHeader itself, so it carries none —
+     a second title two lines under the first is noise. Empty here and hidden on screen:
+     src/print-gate.js writes it at `beforeprint` from the same words as #printHeader. */
+  if (from > 0) wrap.append(el('div', 'print-header-running'));
   if (record.assignments.length > columns.length) {
     wrap.append(el('div', 'grades-report-slice-label',
       'Assignments ' + (from + 1) + '–' + (from + columns.length)
@@ -442,6 +457,16 @@ export function openGrades(opener) {
   body.textContent = '';
 
   const record = gradesRecord();
+  /* Taken now, from the record this dialog is drawn from, so the band and the grid under it are one
+     reading. The print DATE is asked at the moment of printing (headOfSheet() below). The ORDER of
+     anything is not in it — the header names the sheet, and WO-3.9's row and column order is decided
+     in gradesRecord() and nowhere else. */
+  printHead = record ? {
+    title: 'Grade sheet',
+    subject: record.className,
+    lines: [recordCaption(record), scaleText(record)],
+    brief: record.termLabel,
+  } : null;
   if (!record) {
     body.append(el('p', 'grades-report-empty',
       'No class is open, so there is no grade sheet to print. Open a class first.'));
@@ -449,9 +474,11 @@ export function openGrades(opener) {
     return;
   }
 
-  /* THE PRINTED HEADER, and it is the same element on screen. Class, term, range, what it holds and
-     the scale in use, plus the day it was printed — which is what makes a sheet found in a folder
-     next June mean anything at all. */
+  /* THE DIALOG'S HEADER. Class, term, range, what it holds and the scale in use, plus the day it was
+     printed. It was the printed header too until WO-8.4, and it is not any more: on paper it is
+     hidden under this surface's gate (src/scores.css) and the sheet is titled by the one shared
+     #printHeader, carrying the same two sentences — recordCaption() and scaleText() — out of
+     printHead above. src/attendance-report.js records the owner's ruling at the same seam. */
   const head = el('div', 'grades-report-head');
   const who = el('div', 'grades-report-who');
   who.append(el('div', 'grades-report-name', record.className));
@@ -538,7 +565,13 @@ function gradesOnScreen() {
 /* Registered at module scope, not around each print: the Ctrl+P a teacher presses with this dialog
    already open never comes through printGrades() and wants the same gate. src/shell.js imports this
    module at startup, so it is live from the first paint. */
-const syncPrintGate = registerPrintGate(PRINT_ATTR, gradesOnScreen);
+const syncPrintGate = registerPrintGate(PRINT_ATTR, gradesOnScreen, headOfSheet);
+
+/* The header's words for the open sheet, with the print date asked NOW — the moment the page is
+   serialised, which is the moment src/print-gate.js calls this. */
+function headOfSheet() {
+  return printHead ? Object.assign({}, printHead, { printed: plainDate(todayISO()) }) : null;
+}
 
 export function printGrades() {
   const body = document.body;

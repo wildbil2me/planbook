@@ -101,7 +101,7 @@
 */
 
 import { getDoc } from './store.js';
-import { getActiveClasses } from './classes.js';
+import { getActiveClasses, getTerms, termIsDated } from './classes.js';
 import { shortDate, weekdayShortDate } from './date-text.js';
 import { announce } from './live-region.js';
 import { currentView } from './views.js';
@@ -116,7 +116,7 @@ import * as derived from './calendar-derived.js';
    src/attendance.js's own sentence rather than a second wording of it, for the reason src/home.js
    gives about the card: the calendar and the screen it opens are one answer about one class, and
    they must not say it two ways. */
-import { stateSummary, todayISO } from './attendance.js';
+import { stateSummary, todayISO, plainDate } from './attendance.js';
 
 const RANGE_ID = 'calendarRange';
 const GRID_ID = 'calendarGrid';
@@ -127,7 +127,6 @@ const EMPTY_ID = 'calendarEmpty';
 const EMPTY_LEAD_ID = 'calendarEmptyLead';
 const SCALE_MONTH_ID = 'calendarScaleMonth';
 const SCALE_WEEK_ID = 'calendarScaleWeek';
-const STAMP_ID = 'calendarPrintStamp';
 
 /* The <body> attribute src/calendar-view.css's @media print block is selected under. NEVER a click
    hook: `closest()` walks up to <body>, so one string doing both jobs matches every click on screen
@@ -452,6 +451,10 @@ function chipButton(item) {
   button.setAttribute('data-calendar-date', item.date);
   button.title = item.said;
   button.setAttribute('aria-label', item.said + ' — ' + weekdayShortDate(item.date));
+  /* A review chip is a support indicator, so src/shell.css's print belt takes it off paper as well
+     as this screen's own two rules (WO-8.4). A valueless marker, and never a click hook: nothing in
+     src/shell.js's delegated census reads it. */
+  if (item.tone === 'review') button.setAttribute('data-support-indicator', '');
   return button;
 }
 
@@ -472,12 +475,11 @@ export function renderCalendar() {
 
   const heading = document.getElementById(RANGE_ID);
   if (heading) heading.textContent = model.label;
-  const stamp = document.getElementById(STAMP_ID);
-  /* The printed sheet's own title. It is in the markup all the time and only visible under the
-     print gate, which is src/detail.css's `.detail-print-stamp` arrangement: the panel header is
-     the app talking to the teacher and none of it belongs on paper, so the sheet has to say what it
-     is of somewhere else. */
-  if (stamp) stamp.textContent = 'Planbook · ' + model.label;
+  /* THERE WAS A PRINT STAMP HERE UNTIL WO-8.4 — #calendarPrintStamp, "Planbook · September 2026",
+     and it was the only title the printed month had: no class, no term, no print date, which made
+     this the one sheet that failed WO-8.4's first acceptance line. The shared #printHeader titles
+     the sheet now, from headOfCalendar() at the foot of this file, and the stamp was deleted rather
+     than left hidden. */
 
   paintScale();
   paintClassFilter();
@@ -751,7 +753,63 @@ function calendarOnScreen() {
 /* Registered at module scope, not around each print: the Ctrl+P a teacher presses while standing on
    this screen never comes through printCalendar() and wants the same gate. src/shell.js imports
    this module at startup, so it is live from the first paint. */
-const syncPrintGate = registerPrintGate(PRINT_ATTR, calendarOnScreen);
+const syncPrintGate = registerPrintGate(PRINT_ATTR, calendarOnScreen, headOfCalendar);
+
+/*
+  WHAT #printHeader SAYS OVER A PRINTED CALENDAR (WO-8.4), asked at the moment of printing — this
+  screen is live rather than opened once, so the moment the page is serialised is the one reading
+  of it there is. The owner's ruling of 2026-09-21, in the drawing's own terms:
+
+    title     "Calendar", with the window the heading names — "September 2026", or the week's edges.
+    subject   THE FILTER, IN WORDS. One class reads like the other three sheets — its own name. Every
+              class showing reads "All five classes", and "five" is COUNTED, never written: the
+              roster turns over every year and nothing here may assume a class list. A year with one
+              class reads that class's name and a year with two reads "Both classes", since "all one
+              classes" and "all two classes" are not sentences.
+    term      only when every class showing has THE SAME ONE across the window on screen — exactly
+              one dated term overlapping it per class, and the same label and the same two dates on
+              all of them. Terms belong to classes, five classes can have five different Quarter 1s,
+              and a term printed over a month it only half describes is the sheet disagreeing with
+              itself. Otherwise the line is simply absent.
+
+  Nothing here reads a student, and nothing here asks whether support details may be shown — the
+  review chip leaves the sheet through src/calendar-view.css, twice, and through src/shell.css's
+  belt, and this file's header says why the question is never asked in this file.
+*/
+const COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
+  'ten', 'eleven', 'twelve'];
+
+function headOfCalendar() {
+  const model = calendarModel();
+  const classes = getActiveClasses();
+  const filtered = model.classId ? classes.filter((c) => c.id === model.classId)[0] || null : null;
+  const showing = filtered ? [filtered] : classes;
+  let subject = '';
+  if (filtered || classes.length === 1) subject = showing[0].name || 'Untitled class';
+  else if (classes.length === 2) subject = 'Both classes';
+  else if (classes.length) {
+    subject = 'All ' + (COUNT_WORDS[classes.length] || String(classes.length)) + ' classes';
+  }
+
+  /* One term per showing class, overlapping the window, or no term line at all. */
+  const each = showing.map((cls) => getTerms(cls.id).filter((t) => termIsDated(t)
+    && t.start <= model.to && t.end >= model.from));
+  const one = each.length && each.every((list) => list.length === 1) ? each[0][0] : null;
+  const same = !!one && each.every((list) => list[0].start === one.start
+    && list[0].end === one.end && String(list[0].label || '') === String(one.label || ''));
+  const term = same
+    ? (String(one.label || '').trim() || 'Unnamed term') + ' · '
+      + plainDate(one.start) + ' – ' + plainDate(one.end)
+    : '';
+
+  return {
+    title: 'Calendar · ' + model.label,
+    subject: subject,
+    lines: term ? [term] : [],
+    brief: '',
+    printed: plainDate(todayISO()),
+  };
+}
 
 export function printCalendar() {
   const body = document.body;

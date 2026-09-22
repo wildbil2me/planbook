@@ -59,11 +59,10 @@
    on `title`: the same arrangement `.class-card-name` has in src/home.css, for the same reason. */
 .calendar-class-btn { max-width: 40vw; overflow: hidden; text-overflow: ellipsis; }
 
-/* What the printed sheet says it is of. In the markup all the time, visible only under the
-   print gate — src/detail.css's `.detail-print-stamp` arrangement, and for its reason: the
-   panel header is the app talking to the teacher and none of it belongs on paper, so the
-   sheet needs its title from somewhere that is not the header. */
-.calendar-print-stamp { display: none; }
+/* `.calendar-print-stamp` WAS HERE UNTIL WO-8.4 — the printed month's only title, "Planbook ·
+   September 2026", with no class, no term and no print date. The shared #printHeader
+   (src/shell.css § PRINT HEADER) titles the sheet now, and the element and its three rules went
+   with it rather than staying behind hidden. */
 
 /* ── THE GRID ── */
 /* `table-layout: fixed` is the whole of "no horizontal scrolling": the seven columns divide
@@ -306,9 +305,6 @@
   .calendar-empty-lead { font-size: 15px; }
   .calendar-empty-text { font-size: 14px; }
   .calendar-empty-actions { gap: 10px; }
-  /* Never on screen — it is the printed sheet's title, and it is named here only so that no
-     class in this file is absent from this block. */
-  .calendar-print-stamp { font-size: 12px; }
   .calendar-panel { padding-bottom: 2px; }
 }
 
@@ -392,16 +388,21 @@
   }
   /* The panel header is the app talking to the teacher — the title row, the way back, the
      print button itself, the span switch, the pager and the class filter — and none of it is
-     the sheet. The stamp below is what titles the printout instead. */
+     the sheet. The shared #printHeader titles the printout instead (WO-8.4; src/shell.css). */
   body[data-calendar-print] .calendar-header,
   body[data-calendar-print] .calendar-toolbar,
   body[data-calendar-print] .calendar-hint,
   body[data-calendar-print] .calendar-through { display: none !important; }
   body[data-calendar-print] .calendar-body { padding: 0 !important; }
-  body[data-calendar-print] .calendar-print-stamp {
-    display: block !important;
-    font-size: 11pt; font-weight: 700; color: #000; margin: 0 0 4mm;
-  }
+  /* LANDSCAPE, AND FOR THIS SHEET ONLY (WO-8.4, the owner's ruling of 2026-09-21). A month is wider
+     than it is tall: portrait Letter gives a day about 26mm, where two chips already wrap to four
+     lines. The named page is set on <body> rather than on the view, because #printHeader is a
+     sibling of <main> and a change of page name between two siblings is a forced page break — the
+     band would print alone on a portrait sheet ahead of a landscape month. The other three sheets
+     name no page and stay portrait. SAFARI ON THE iPAD IGNORES NAMED PAGES, so there the teacher
+     turns the preview by hand; that is an accepted limit, not a defect to chase. The @page rule it
+     names is at the foot of this file, outside any media block, beside the reason. */
+  body[data-calendar-print] { page: calendar; }
 
   /* Colours go quiet, the call src/detail.css makes: nothing on this grid is encoded in a
      colour alone — every chip says its word — so the washes print as a hairline and black
@@ -433,3 +434,9 @@
 @media print {
   .calendar-chip.review { display: none !important; }
 }
+
+/* The page the rule above names. Outside @media print for the reason src/attendance.css gives about
+   the app's one other @page rule — an @page inside @media print is honoured unevenly — and inert on
+   screen. It inherits that rule's 10mm margin, because an unnamed @page matches every page, named or
+   not. */
+@page calendar { size: landscape; }

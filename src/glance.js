@@ -756,6 +756,10 @@ function closingPanel(items, classes, doc, today) {
       /* The window's `to`, off the record closingIn() already carries — never a review's date, and
          never a month comparison made here. The header says why on both counts (WO-6.9). */
       row.setAttribute('data-calendar-through', item.to);
+      /* A count of plan reviews is a support indicator — it is absent under a projector for that
+         reason — so src/shell.css's print belt takes it off a Ctrl+P of this page in either mode
+         (WO-8.4). A valueless marker and never a click hook. */
+      row.setAttribute('data-support-indicator', '');
       built.list.append(row);
       return;
     }

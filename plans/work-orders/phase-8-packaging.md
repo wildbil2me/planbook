@@ -106,7 +106,7 @@ done.* **Run the pass, don't assert it.**
 
 ## WO-8.4 — Print stylesheets
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.6, WO-3.9
+**Ship** — · **Status** ✅ DONE — 2026-09-21 · **Size** S · **Depends on** WO-2.6, WO-3.9
 **Closes roadmap** Phase 8 → "Print stylesheets for every printable surface."
 
 *(**This read `**Ship** 2` for one commit on 2026-08-19 and was corrected the same day** — WO-1.24,
@@ -132,6 +132,13 @@ kind of wait is its own work order rather than a line in a correction.*
 centralised the mechanism in `src/print-gate.js`. What is genuinely undone is `#printHeader`, which
 `grep` finds nowhere outside comments, the calendar surface, and the sweep itself.)*
 
+*(**Corrected 2026-09-21, before dispatch: the paragraph above is stale on the calendar.**
+[WO-6.3](phase-6-calendar-glance.md) has been ✅ DONE since **2026-08-19**, the same day that
+paragraph was written. The month is built, and `src/calendar-view.css` carries its own `@media print`
+blocks, so **all four surfaces exist and all four are in scope**. Nothing here waits on Phase 6.
+The rest of the paragraph still holds: `#printHeader` is still the undone part, and a grep of `src/`
+and `index.html` still finds no element carrying it.)*
+
 **Deliverables**
 - `@media print` on every printable surface: gradebook, attendance record, student detail,
   calendar month.
@@ -141,18 +148,68 @@ centralised the mechanism in `src/print-gate.js`. What is genuinely undone is `#
   disclosure as a projected screen, and there is no toggle to remember.
 - **Surface:** [`design/mockups/print.html`](../../design/mockups/print.html), drawn 2026-09-21 — all
   four sheets as they print today, with `#printHeader` drawn on top of each (`proposed-phase8.css`
-  § PRINT HEADER). **Read it before building**: its amber notes are open questions for the owner.
-  Shared element or four matching heads, a continuation line at slice breaks, where the grade sheet's
-  letter scale goes, landscape for the month, what the band says about class and term on a calendar
-  that shows several classes, one support-dot belt in `src/shell.css`, and whether the per-surface
-  gates in `src/print-gate.js` already meet the `data-modal-print` deliverable.
+  § PRINT HEADER). **Read it before building.** Its seven amber `ASK` notes were answered by the owner
+  on 2026-09-21, and the answers are the rulings below. **Where the drawing and this list disagree,
+  this list wins**: the amber stays on the page as the record of what was asked.
+
+**Rulings** *(the owner, 2026-09-21, one per `ASK` on the drawing, in page order)*
+1. **One shared `#printHeader`.** It is the single hidden element in `index.html` that the style
+   guide names, filled from whichever surface is printing, and each surface's own head is hidden
+   under its gate. `src/attendance-report.js`'s "it is the same element on screen" argument is heard
+   and overruled for print. Say so at that header rather than deleting the comment.
+2. **A continuation line at the forced breaks is enough.** Use `.print-header-running` at the two
+   breaks the app forces: the attendance record's day-by-day slice and the grade sheet's slices.
+   **No true running header on every page.** The `position: fixed` plus reserved-margin route stays
+   refused for the reason the drawing gives: Chrome and Safari disagree enough to print a header
+   over a long roster's first row.
+3. **The grade sheet's letter scale goes in the header**, at the top, because the owner reads it
+   off the sheet while typing into the SIS. It moves out of the foot, where the drawing shows it.
+4. **The month prints landscape**, and only the month: `@page calendar { size: landscape }` with
+   `page: calendar` on the view. The other three sheets stay portrait. Safari on the iPad ignores
+   named pages, so there the teacher turns the preview by hand. That is an accepted limit, not a
+   defect to chase.
+5. **The calendar's band follows the drawing's rule.** The class slot prints the filter as words
+   ("All five classes"). With one class it reads like the other three sheets
+   (*English III — Period 2*). The term prints only when every class showing has the same one.
+6. **One belt, in `src/shell.css`.** An ungated `@media print` that hides every support indicator
+   in the app whatever the mode, so a plain Ctrl+P from a screen that is not a print surface (the
+   roster) prints no `.support-dot`. The per-screen hide-only rules in `src/assignments.css` and
+   `src/calendar-view.css` may stay as defence in depth, or fold into the belt if they become
+   redundant. The implementer decides, and writes down which at the belt.
+7. **`body[data-modal-print]` is met by the four per-surface gates in `src/print-gate.js`**, which
+   is the owner's ruling rather than new code. That file's header explains why one shared attribute
+   would print the wrong surface. The deliverable is discharged in a better form. Do not build the
+   style guide's single gate beside it, and note the ruling at the top of `src/print-gate.js`.
 
 **Acceptance**
-- [ ] Each printable surface produces a clean page with a title, class, term, and date.
-- [ ] No app chrome, navigation, or button appears in any printout.
-- [ ] No printout contains accommodation, medical, or plan data, regardless of presentation-mode
+- [x] Each printable surface produces a clean page with a title, class, term, and date.
+      *(Held open until the paper was read, because "clean page" is a reading of paper: the harness
+      read the band on all four sheets in both modes — title, class, term with dates, print date —
+      and Chromium's PDF puts the month on one landscape page and a two-slice grade sheet on two
+      portrait ones. **Closed by the owner on 2026-09-21**, who printed all four and read them, took
+      the iPad's month under ruling 4's accepted limit, read an ungated roster Ctrl+P clean, and
+      **ruled `src/scores.css`'s un-asked-for `break-before: auto` kept** — the one line here that
+      changes WO-3.9's pagination. `TESTING.md` § WO-8.4.)*
+- [x] No app chrome, navigation, or button appears in any printout.
+      *(`verify/print-sheets.mjs`, all four sheets, both modes; the calendar's chips are the one
+      named exception — `<button>`s on screen, a line of text on paper.)*
+- [x] No printout contains accommodation, medical, or plan data, regardless of presentation-mode
       state.
-- [ ] The gradebook printout is ordered to match the SIS entry screen (WO-3.9).
+      *(Six planted support values and the review chip, searched for in what all eight sheets
+      render — none; and the `src/shell.css` belt read on an ungated Ctrl+P from the roster, the
+      student editor and the home page with the mode off. Mutation-proved; `TESTING.md` § WO-8.4.)*
+- [x] The gradebook printout is ordered to match the SIS entry screen (WO-3.9).
+      *(The match is the owner's reading of 2026-08-13, recorded at WO-3.9; this work order's part
+      was not to move it, and the harness shows rows and columns unchanged in both modes with
+      `gradesRecord()` untouched.)*
+
+**Two departures from the Rulings' wording, both at their own point of departure in the code.**
+Ruling 4 says `page: calendar` *on the view*; it is set on `<body>` under the calendar's gate,
+because `#printHeader` is a sibling of `<main>` and a change of page name between siblings forces a
+break — the band would have printed alone on a portrait page (`src/calendar-view.css`). And the
+grade sheet's first slice no longer breaks before itself, which no ruling asked for: every slice
+broke until now, so page one held the head and a label and nothing else, and the drawing's own grade
+sheet is one sheet (`src/scores.css`; measured three pages → two on a two-slice fixture).
 
 ---
 

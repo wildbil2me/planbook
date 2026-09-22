@@ -64,11 +64,9 @@
 .detail-note { font-size: 11px; color: #8a9bb0; line-height: 1.6; margin-top: 16px; }
 .detail-card-note { font-size: 11px; color: #8a9bb0; line-height: 1.6; margin-top: 10px; }
 
-/* THE DAY THIS CAME OFF THE PRINTER, and the only element on this screen that exists
-   for the printer. Hidden at rest, shown by the gated block at the foot of this file —
-   which is why the rule that reveals it lives there and not here. A screen does not
-   need a date stamp; a sheet in a folder next June is meaningless without one. */
-.detail-print-stamp { display: none; }
+/* `.detail-print-stamp` WAS HERE UNTIL WO-8.4 — the print date, alone under the hero. The shared
+   #printHeader (src/shell.css § PRINT HEADER) carries it now, at the top of the sheet beside the
+   class and the term, and the element went with it rather than staying behind hidden. */
 
 /* THE HERO. Name, grade, band — the three things a guardian looks at first, and the
    reason this screen is not a dialog: it is read across a desk with somebody sitting
@@ -294,10 +292,10 @@
   body[data-detail-print] .detail-actions { display: none !important; }
   body[data-detail-print] .detail-body { padding: 0 !important; }
 
-  body[data-detail-print] .detail-print-stamp {
-    display: block !important;
-    font-size: 8pt; color: #333; margin: 0 0 4mm;
-  }
+  /* The class and the term come off the hero's second line on paper, because #printHeader carries
+     both at the top of the sheet (WO-8.4). The hero keeps the name, the work outstanding, the grade
+     and the band — what a guardian reads first. */
+  body[data-detail-print] .detail-hero-where { display: none !important; }
 
   body[data-detail-print] .detail-hero {
     border: none !important; border-bottom: 2px solid #000 !important; border-radius: 0 !important;

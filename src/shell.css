@@ -1666,6 +1666,101 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
   border: 1.5px solid #f0dfa8; background: #fff8e6; color: #8a6d1a;
 }
 
+/* ── PRINT HEADER (WO-8.4) ──
+   Lifted from design/mockups/proposed-phase8.css § PRINT HEADER, class for class and value for
+   value. The style guide's `#printHeader`: one hidden element in index.html, the first child of
+   <body>, that titles every printout the same way — what the sheet IS, the class, the term, and the
+   day it came off the printer, with the 2px black rule under it that the four surfaces' own heads
+   already drew. Sizes in pt and mm, the units the four shipped print blocks use, so what the
+   drawing shows is the size it prints.
+
+   IT IS FILLED BY src/print-gate.js AT `beforeprint`, from whichever surface's gate is on, and the
+   reason it is filled there rather than by each surface is written out at that file's head: one
+   element, four surfaces, and the answer to "which one is printing" already lives in that module.
+
+   HIDDEN EVERYWHERE UNTIL A GATE CLAIMS IT — on screen, and on a print no gate claimed, so a Ctrl+P
+   from the roster prints no empty band. The four rules that show it are in the @media print block
+   below, one per gate and each selected under that gate: the same rule every print rule in this app
+   obeys, because an ungated rule that turns something ON is the blank-sheet regression. They sit
+   here rather than in the four surfaces' stylesheets because the class and the id are this sheet's
+   (the header of this file: two stylesheets never style the same class). Each surface's own
+   `body[…] > *` rule hides every child of <body>; the id selector is what outranks it. */
+.print-header, .print-header-running { display: none; }
+.print-header {
+  justify-content: space-between; align-items: flex-end; gap: 6mm;
+  border-bottom: 2px solid #000; padding-bottom: 3mm; margin-bottom: 5mm;
+  color: #000;
+}
+.print-header-who { min-width: 0; }
+.print-header-title {
+  font-size: 8pt; font-weight: 700; letter-spacing: 0.6pt; text-transform: uppercase;
+  color: #333;
+}
+.print-header-class { font-size: 15pt; font-weight: 700; line-height: 1.2; margin-top: 0.5mm; }
+.print-header-term { font-size: 9pt; color: #333; margin-top: 0.8mm; }
+.print-header-stamp {
+  flex: none; text-align: right; font-size: 8pt; color: #333; line-height: 1.5;
+}
+.print-header-stamp b { color: #000; }
+
+/* The continuation line, at the head of a slice the surface breaks onto a page of its own. Only the
+   two surfaces that force page breaks carry one — the attendance record's day-by-day slices and the
+   grade sheet's slices — and that is the owner's ruling (2026-09-21): a line at the forced breaks is
+   enough, and a true running header on every page is refused because `position: fixed` plus a
+   reserved margin prints over a long roster's first row on one engine or the other. */
+.print-header-running {
+  justify-content: space-between; gap: 6mm;
+  border-bottom: 0.4mm solid #000; padding-bottom: 1.5mm; margin-bottom: 4mm;
+  font-size: 7.5pt; color: #333;
+}
+.print-header-running b { color: #000; }
+
+@media print {
+  body[data-attendance-print] > #printHeader { display: flex !important; }
+  body[data-detail-print] > #printHeader { display: flex !important; }
+  body[data-grades-print] > #printHeader { display: flex !important; }
+  body[data-calendar-print] > #printHeader { display: flex !important; }
+  body[data-attendance-print] .print-header-running { display: flex !important; }
+  body[data-grades-print] .print-header-running { display: flex !important; }
+}
+
+/* ── THE PRINT BELT: NO SUPPORT INDICATOR REACHES PAPER, IN EITHER MODE (WO-8.4) ──
+
+   THE ONE UNGATED PRINT RULE IN THIS SHEET, AND IT IS UNGATED ON PURPOSE (the owner's ruling of
+   2026-09-21). WO-8.4's fourth deliverable is that presentation mode's rules apply to print
+   unconditionally — a printout left on a desk is the same disclosure as a projected screen, and
+   there is no toggle to remember. The four print surfaces meet that by construction: none of them
+   has a path to a support field. What they do not cover is a plain Ctrl+P from a screen that is not
+   a print surface — the roster, the home page, a student editor left open — where no gate is set
+   and the page prints as it stands, with presentation mode deciding what is on it. This rule is
+   what decides instead, whatever the mode.
+
+   WHY IT CAN BE UNGATED WHEN NOTHING ELSE CAN. Every other print rule is gated because an ungated
+   rule that hides the app, or turns a hidden surface on, prints a blank sheet from every other
+   screen. This one does neither: it hides three things that are never the whole of any page, and
+   it reveals nothing. The cost of it firing when it need not is a dot missing from a sheet; the
+   cost of it not existing is a student's plan status on paper.
+
+   WHAT IT NAMES, and the sheet rule it keeps. `.support-dot` (the roster row's indicator) and
+   `.supports-panel` are this sheet's classes — and `.supports-panel` is also what both
+   accommodation prompts wear (src/assignments.css, index.html), so it covers the student editor's
+   whole support section and both prompts in one name. A support indicator styled by ANOTHER sheet
+   is reached through `[data-support-indicator]`, a valueless marker the screen puts on it — the
+   calendar's review chip (src/calendar-view.js) and the home page's review count
+   (src/glance.js) — so that this file names no class it does not own. A new indicator on a later
+   screen takes the marker and is covered on the day it lands.
+
+   THE PER-SCREEN RULES STAY, AS DEFENCE IN DEPTH (the ruling left it to the implementer; this is
+   the choice, written down where the belt is). src/assignments.css § THE ACCOMMODATION PROMPT NEVER
+   PRINTS is now redundant with `.supports-panel` here and costs one line; src/calendar-view.css's
+   ungated review-chip rule is redundant with the marker here. Both are kept rather than folded: each
+   sits beside the element it protects, each has its own harness reading, and a belt that is one
+   selector list is one typo from not covering something — two independent rules have to be wrong
+   together before a review date or an accommodation reaches paper. */
+@media print {
+  .support-dot, .supports-panel, [data-support-indicator] { display: none !important; }
+}
+
 /* ── RESPONSIVE ── */
 /* Declaration order is from design/style-guide.md §6 and is not alphabetical or
    arbitrary: coarse pointer first, then 1024, then 640. */
