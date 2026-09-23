@@ -58,10 +58,13 @@ box has named since it was written.)*
 *(**Two things to know before reading `next` again.** Taking WO-3.18 out of § Ship 2 promoted*
 **WO-G2** *into its slot, and `next` stops at the first* `⬜` *in document order — so for part of that
 day the tool answered with a gate nobody can work until Sep 2, hiding seven* `⬜` *work orders behind
-it. **WO-G2 is now** `🔒 GATED`, which is the word the vocabulary already had and whose gate report
-reads "do not start it"; `next` returns* **WO-4.2** *again, the head of § Ship 3.* **Put it back to**
-`⬜` **when there are real grades to run it against** *— `--tick` refuses the status, so the gate
-cannot close while wearing it. And the one piece of WO-3.18 that is not blocked is its* **privacy
+it. **WO-G2 wore** `🔒 GATED` **that day, and does not now** — the word the vocabulary already had,
+whose gate report reads "do not start it"; `next` returned* **WO-4.2** *instead, the head of § Ship 3.*
+**The lock came off at** `3149bea` **on 2026-09-07, when the calendar it waited on arrived: WO-G2 is**
+`⬜` **and `next` answers it today** *— so read the two sentences before this one as history. The
+instruction that stood here, put it back to* `⬜` *when there are real grades to run it against, is
+discharged;* `--tick` *still refuses the status, so a gate cannot close while wearing one. And the
+one piece of WO-3.18 that is not blocked is its* **privacy
 policy**, *which is now* [WO-8.12](plans/work-orders/phase-8-packaging.md#wo-812--the-privacy-policy-and-the-ferpa-document)
 *together with* `docs/FERPA.md`*.* **Both landed 2026-08-21 and WO-8.12 is** ✅ **DONE** *— the policy
 is live at* `/privacy`*, the FERPA document is in the tree, and § Accommodations below no longer
@@ -620,11 +623,12 @@ unwriteable. **`🚧 BLOCKED` is outside the rule**, with its own vocabulary row
 every non-`⬜` status is how a small fence becomes a large one. And **the check asks whether a gate is
 *stated*, never whether it is still *live*** — no grep reads the second. WO-3.18's lock was stated,
 discharged on 2026-09-07 and still on the row five days later; a person lifted it on this check's
-evidence rather than the check lifting it. *(**Which is also the correction to the status block at the
-top of this file.** It says* **"WO-G2 is now `🔒 GATED`"** *and that has been false since* `3149bea`*;
-the calendar it waited on arrived and* `next` *answers WO-G2 today. Read it as the second instance of
-the same failure the paragraph above describes —* **a gate stated, discharged, and outliving the
-condition anyway** *— in the one file nothing in this repository checks for contradiction.)*
+evidence rather than the check lifting it. *(**The status block at the top of this file carried the second
+instance.** It said* **"WO-G2 is now `🔒 GATED`"** *for the fifteen days after* `3149bea` *lifted the
+lock on 2026-09-07.* **Repaired 2026-09-22** *— that block now names the lift where the claim used to
+be. The failure was the one the paragraph above describes —* **a gate stated, discharged, and
+outliving the condition anyway** *— and it happened here, in the one file nothing in this repository
+checks for contradiction.)*
 
 **Before any 👤 iPad reading, force-quit the app from the app switcher.** A reload is not enough and
 neither is a pull-to-refresh. `sw.js` uses `skipWaiting` + `clients.claim`, so a new worker takes over

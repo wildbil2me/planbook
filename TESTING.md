@@ -12191,8 +12191,9 @@ moved, and the two rows above the label did not move either.
       About still open. The line was written expecting an app switch; an in-app sheet is what you
       want here, because a full switch risks iOS reloading the PWA behind you and losing the screen
       the teacher was on. The standalone window did not swallow it, so the FERPA comment's fallback
-      was not needed. All three doc rows read comfortably thumb-sized — **which is the only check on
-      that anywhere in this project** — see Acceptance 3 above and WO-8.14.)*
+      was not needed. All three doc rows read comfortably thumb-sized — **which was the only check
+      on that anywhere in this project until WO-8.14 landed the next day** — see Acceptance 3
+      above and WO-8.14.)*
 
 *What the desk cannot pay off, beyond the 👤 line. The harness reads the row on a page in headless
 Edge, not in an installed standalone window; it can prove the anchor carries `target="_blank"` and
