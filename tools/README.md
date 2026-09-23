@@ -1210,7 +1210,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1450 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1451 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1232,7 +1232,7 @@ accounting instead.
 `verify/merge-fields.mjs` — a file that work order created — none of them inside a loop and none a
 failure arm, so the section contributes nineteen executed results to a green run. Its two guards are
 `skip()` calls again (no `window.planbook`, and a fixture that did not install), on the WO-4.5
-pattern directly above; the harness's one `else check(` is in `verify/touch-targets.mjs` and not
+pattern directly above; the harness's two `else check(` sites are in `verify/touch-targets.mjs` and not
 here. **This entry was written three work orders late, at WO-1.33, and its run figures are recovered
 rather than measured at the time**: `1194 checks · 1194 passed · 0 failed · 0 skipped`, 407s, exit 0
 — WO-1.33's before-run, which is this harness unchanged, since 1179 is what the sweep asserted on
@@ -1930,10 +1930,34 @@ so it declares no 44px rule and adds no touch-target measurement; `wo-sweep.mjs`
 target. The mutations are tabulated in `TESTING.md` § WO-8.4 — four, each red on the check written
 for it, each reverted by hand before a word of this entry.
 
+**WO-8.14 moved it from 1450 to 1451, and the executed count from 1461 to 1462 — one site, one
+result.** It is a literal call site inside the About-modal block of `verify/touch-targets.mjs`, on
+the `[data-modal-open]` click that block already makes — not a new section and not a second open, so
+it is in no loop and is no failure arm, and the gap between sites and results stays at −11. What it
+measures is the one thing the paragraph two above says this file could not: the three `.doc-link`
+rows under an emulated coarse pointer, named one by one in the evidence rather than counted —
+`"Privacy policy →" (./privacy.html) 440x44`, the administrators' guide `440x44`, the licence
+`440x44`. It **counts nothing and asserts no href**: that the rows are exactly three, in order, with
+`target` and `rel` on each, is `verify/build-line.mjs`'s question and is asked there only. The run
+prints **1462**: `1462 checks · 1462 passed · 0 failed · 0 skipped`, 46,234 lines, 31.6 lines per
+check, 527s, exit 0, measured 2026-09-22 on the real clock, on the delivered tree. This work order
+adds **no control** — it measures three that were already there and that no sweep in this file could
+see, because every modal sweep selects `button, input` and a `.doc-link` is an `<a>`. The mutation is
+the one the work order named: `min-height: 44px` deleted from `.modal-body .doc-link` in
+`src/shell.css`'s `(pointer: coarse)` block for exactly one run, which reads
+`1462 checks · 1461 passed · 1 failed · 0 skipped`, exit 1 — **one red, and the evidence line names
+all three rows at `440x33`**, which is the rows' natural line box with the floor taken away.
+Restored by hand immediately, before a word of this entry; `git diff src/shell.css` is empty and
+`grep -rn MUTATION` over both changed files reads nothing.
+
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
-call, the one `else check(` in the harness — grep it, there is exactly one — is why the pattern is not
-line-anchored, and comment lines are excluded because the harness quotes call names in its prose
-constantly. WO-3.12 moved it from 592 to 596, four literal
+call, the `else check(` sites in the harness — grep them, there are exactly two, both in
+`verify/touch-targets.mjs`'s About-modal block, where a `skip()` stands in when the modal never
+opened — are why the pattern is not line-anchored, and comment lines are excluded because the
+harness quotes call names in its prose constantly. *(It read "the one `else check(` … there is
+exactly one" until WO-8.14 added the second beside the first, in the same `if (!mm.length)` shape
+and for the same reason. A count in prose that invites a grep is a count that has to be re-taken
+when the thing it counts moves.)* WO-3.12 moved it from 592 to 596, four literal
 call sites (case 8's third
 direction and cases 13-15) added to the grade-engine block, none inside a loop; WO-2.24 moved it from
 596 to 599, three literal call sites in three different sections, likewise none inside a loop; WO-3.7
@@ -2090,7 +2114,7 @@ then `:10773`, and then stopped moving while the call site kept going — `:1083
 `:10941` after, and thousands of lines past that by the time WO-2.39 looked. The number was
 illustration rather than something either tool resolves, and it
 sat in two files that had to be corrected in step or read as disagreeing — so both name the text now,
-and there is exactly one `else check(` in the harness for a grep to find. Noted here so the next reader
+and there are two `else check(` sites in the harness for a grep to find. Noted here so the next reader
 who misses the number does not think the allowlist has stopped applying.)* **WO-3.20 moved it from 781
 to 783**:
 two literal call sites in a new static block beside the precache one near the head of the file,
@@ -3448,8 +3472,11 @@ enough to look right* — eleven lines above the `check()` a reference named, an
 of a fixture rather than the student the reference was about — so even a careful correction lands the
 reader in the neighbourhood instead of on the thing. So: **name the referent in the target file's own
 text** — a unique identifier, a check's quoted name, a literal line of code — and let the reader
-grep. `else check(` occurs once in 22,000 lines; `doc.students.push(person('wo38-s1', 'Ashdown'`
-occurs once.
+grep. `else check(` lands a grep on its two sites in 22,000 lines;
+`doc.students.push(person('wo38-s1', 'Ashdown'`
+occurs once. *(The first example read “occurs once” until WO-8.14 put a second `else check(`
+beside the first. **The referent did not rot** — the grep still lands on the code it names — but the
+count written beside it did, in the section arguing against counts. Name the text; do not number it.)*
 Those cost a keystroke to follow and cannot rot with an insertion, and they fail *loudly* when the code
 they quote is reworded: an empty grep says "this is gone, go and look", where a wrong number says
 nothing at all. It is what several comments inside `verify-shell.mjs` already do — the marking-keys

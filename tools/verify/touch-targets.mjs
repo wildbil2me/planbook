@@ -418,6 +418,59 @@ if (coarse !== true) {
         + JSON.stringify(mm.filter(m => m.hidden).map(m => m.t))
         + '; under 44 = ' + JSON.stringify(under) + '; of those, collapsed with no hidden class = '
         + JSON.stringify(collapsed));
+
+    /*
+      THE THREE `.doc-link` ROWS, ON THE SAME OPEN (WO-8.14).
+
+      The sweep above selects `button, input`. A `.doc-link` is an `<a>`, so the About modal's three
+      document rows — the privacy policy, the administrators' guide, and since WO-8.13 the licence —
+      fell outside it by construction, and the string `doc-link` did not appear in this file at all.
+      They are not outside this file's IDEA of a control: `CONTROL_SEL` at the top has carried
+      `a[href]` since WO-2.21. They are outside every sweep that could SEE them while they are
+      drawn — the whole-page `measureIn()` at the head of this section runs with the modal shut,
+      where `display: none` skips them for the reason written at that expression.
+
+      What that cost, before this: deleting `min-height: 44px` from `.modal-body .doc-link` in
+      src/shell.css's `(pointer: coarse)` block left the whole run green and put three sub-thumb
+      targets in the modal a teacher opens to find the privacy policy.
+
+      IT IS THE SAME OPEN, DELIBERATELY. This block has already clicked `[data-modal-open]` and the
+      About modal is on screen; a second section that opened it again would be a second apparatus
+      for one measurement. And it is HERE rather than in verify/build-line.mjs, where WO-8.13's
+      other assertions about these rows live, because this is a computed height under an emulated
+      coarse pointer and that emulation is this whole section's apparatus.
+
+      A CHECK OF ITS OWN RATHER THAN THREE MORE ROWS IN `mm`, for two reasons and neither is style.
+      The check above splits its set three ways around controls that come and go with state — the
+      Drive section's Connect/Disconnect — and names only the failures; folding these rows in would
+      measure them and name none of them, and the acceptance line wants all three NAMED, because a
+      row that silently stopped being measured is the failure this work order exists to close.
+
+      IT COUNTS NOTHING AND ASSERTS NO HREF. That `.doc-link` rows are exactly three, at three
+      hrefs, in document order, with `target` and `rel` on each, is asked once already —
+      verify/build-line.mjs, on its own About open. One asker per question: this one measures, and
+      the guard below is only against measuring an empty set.
+
+      The scar worth carrying: WO-8.13's third acceptance line says in a parenthetical that
+      "touch-targets.mjs measures the row, not the gap". It was false the day it was written, and
+      nothing in the repository could notice — a work order's own reasoning is not a fence.
+    */
+    const dl = await evalJs(`(function(){ var out=[];
+      document.querySelectorAll('.modal-overlay:not(.hidden) .doc-link').forEach(function(e){
+        var r=e.getBoundingClientRect();
+        out.push({t:e.textContent.trim(), href:e.getAttribute('href'),
+                  w:Math.round(r.width*100)/100, h:Math.round(r.height*100)/100});
+      }); return out; })()`);
+    const dlUnder = dl.filter(m => m.h < 44 || m.w < 44);
+    if (!mm.length) skip('every .doc-link row in the open About modal measures >=44px on a coarse '
+      + 'pointer', 'no modal opened');
+    else check('every .doc-link row in the open About modal measures >=44px on a coarse pointer — '
+      + 'the policy, the administrators\' guide and the licence, each named here rather than '
+      + 'counted in aggregate',
+      dl.length > 0 && dlUnder.length === 0,
+      'measured ' + dl.length + ': '
+        + dl.map(m => JSON.stringify(m.t) + ' (' + m.href + ') ' + m.w + 'x' + m.h).join('; ')
+        + '; under 44 = ' + JSON.stringify(dlUnder));
   }
 
   /* The year picker's rows and its "start another year" field are built at open time, so the

@@ -12203,6 +12203,74 @@ under the wrong heading — and was not run, because the work order asked for th
 
 ---
 
+### WO-8.14 — the three doc links in About are measured by nothing
+
+**Nothing a teacher sees changed.** No file under `src/` moved and `sw.js` did not bump, because the
+three rows already measured 44px — what was missing was anything that would notice if they stopped.
+`tools/verify/touch-targets.mjs` gained **one** `check()`, inside the About-modal block that already
+clicks `[data-modal-open]`: it reads every `.doc-link` in the open overlay and asserts each one's
+measured box under the emulated coarse pointer this whole section runs on.
+
+**Why the story behind it is not retold here.** It was found by a sentence in WO-8.13's own
+Acceptance line 3 that was false the day it was written, and both halves of that correction are
+already on disk: § WO-8.13's Acceptance 3 above, and the same line in
+`plans/work-orders/phase-8-packaging.md` § WO-8.13. Read it there. The one sentence worth repeating
+is the one they end on — **a work order's own reasoning is not a fence.**
+
+**Why one check and not three rows added to the sweep beside it.** The sweep above it splits its set
+three ways around controls that come and go with state — the Drive section draws *Connect* or
+*Disconnect*, never both — and its evidence names only what failed. Folding the anchors into it
+would have measured them and named none of them, and the acceptance line wants all three named,
+because a row that quietly stopped being measured is the whole of the defect. It is the same open
+and the same section all the same: a second block that re-opened About would be a second apparatus
+for one measurement.
+
+**What it does not ask.** No count, no href, no `target`, no `rel` — that the rows are exactly
+three, at three hrefs, in document order, is `verify/build-line.mjs`'s question and stays asked
+there only. The guard here is against measuring an empty set, nothing more.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-8-packaging.md` § WO-8.14.*
+
+- [x] **Acceptance 1 — every `.doc-link` measured under a coarse pointer, all three named.** The
+      evidence line, verbatim from the run: `measured 3: "Privacy policy →" (./privacy.html) 440x44;
+      "Planbook and student-data privacy — the guide for administrators →"
+      (https://github.com/wildbil2me/planbook/blob/main/docs/FERPA.md) 440x44; "Released under the
+      Apache License 2.0 →" (https://github.com/wildbil2me/planbook/blob/main/LICENSE.md) 440x44;
+      under 44 = []`. Three rows, each with its own href and its own measured box; the aggregate
+      count is there to guard a vacuous pass, not to stand in for them. The pointer really is
+      coarse: the section's first check asserts `matchMedia('(pointer: coarse)')` before any
+      measurement below it is allowed to mean anything.
+- [x] **Acceptance 2 — red when the declaration goes.** `min-height: 44px` deleted from
+      `.modal-body .doc-link` in the `(pointer: coarse)` block of `src/shell.css` — the deletion
+      marked `MUTATION` — for exactly one run:
+      **`1462 checks · 1461 passed · 1 failed · 0 skipped`, exit 1.** One red, and it is this check;
+      its evidence names all three rows at `440x33`, which is the natural line box with the floor
+      taken away, and repeats all three inside `under 44 = [...]`. Restored by hand immediately,
+      before a word of this entry was written: `git diff src/shell.css` is empty and
+      `grep -rn MUTATION src/shell.css tools/verify/touch-targets.mjs` reads nothing.
+- [x] **Acceptance 3 — both tools green.** `node tools/verify-shell.mjs` on the delivered tree:
+      **`1462 checks · 1462 passed · 0 failed · 0 skipped`, 46,234 lines, 31.6 lines per check,
+      527s, exit 0**, measured 2026-09-22 on the real clock. `node tools/wo-sweep.mjs`:
+      **42 checks · 39 passed · 0 failed · 3 to review**, the three REVIEWs the pre-existing ones
+      (sensitive field names, due-date-beside-late, the mockup banner), and § 11 reading
+      `1451 check() call sites` against the line it greps in `tools/README.md`.
+- [x] **Acceptance 4 — `tools/README.md` matches the run.** The greppable sentence reads
+      **1451** call sites, taken from `node tools/wo-sweep.mjs`'s own count and not by arithmetic,
+      and the ledger paragraph beside it records the executed **1462** from the run above, the
+      mutation's `1461 passed · 1 failed`, and the −11 gap between sites and results unchanged.
+- [x] **Acceptance 5 — this entry links back rather than restating.** Second paragraph above: it
+      points at § WO-8.13's Acceptance 3 and at the same line in the phase file, and tells the story
+      in neither place twice.
+
+*What the desk cannot pay off. Nothing here is owed to a thumb — that is the point of closing it
+this way, and the work order says so in as many words. Two honest limits all the same. The
+measurement is taken at the harness's emulated 1024×768 with a device scale of 2, so it proves the
+rule engages and the rows clear it there; a real iPad in portrait is narrower, and what changes with
+width on these rows is the wrap, which can only make them taller. And the check measures what is
+DRAWN — if a future change put a `.doc-link` somewhere that is `display: none` at the moment the
+modal opens, it would leave this set the way a hidden button leaves the sweep above it, and that
+sweep names its hidden ones where this one has never had any to name.*
+
 ---
 
 This phase's first roadmap item is *this file, complete and fully passing* — which is the

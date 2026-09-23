@@ -13,6 +13,16 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The three document links in About are measured — 2026-09-22
+
+Nothing a teacher sees. The About modal's three document rows — the privacy policy, the guide for
+administrators, and the licence — depend on a `min-height: 44px` under `(pointer: coarse)` that no
+tool had ever measured; every modal sweep selects `button, input`, and a `.doc-link` is an `<a>`.
+Deleting that one declaration left every check green and put three sub-thumb targets in the modal a
+teacher opens to find the privacy policy. The harness now measures all three on a coarse pointer and
+names each row with its own link, so a missing floor reddens the line instead of passing silently.
+Proved by deleting the declaration: exactly one check went red, with all three rows at 33px. (WO-8.14)
+
 ### The four printable sheets print as sheets — 2026-09-21
 
 The attendance record, the grade sheet, a student's report and the calendar month now come off the

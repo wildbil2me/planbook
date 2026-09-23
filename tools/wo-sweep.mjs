@@ -647,8 +647,9 @@ function commentLines(file) {
      name. It is the only occurrence of `check(` in the harness that is not a call. The modules'
      `const { check, … } = h;` lines are not matched either — the pattern wants a `(` after the
      name — so the split added no call sites and took none away: 1141 before it and 1141 after.
-   - The one `else check(` in the harness — `grep -rn 'else check(' tools/verify-shell.mjs tools/verify/`,
-     exactly one hit — is the one call site not first on its line. The pattern is therefore NOT line-anchored; it
+   - The two `else check(` sites in the harness — `grep -rn 'else check(' tools/verify-shell.mjs tools/verify/`,
+     two hits, both in `verify/touch-targets.mjs`'s About-modal block — are the call sites not
+     first on their line. The pattern is therefore NOT line-anchored; it
      matches `check(` anywhere a call could be written. (Cited by line here until WO-2.39 — `:10570`,
      then `:10773` — while the call site went on to `:10838`, `:10941`, and thousands of lines past
      that. The number was illustration rather than something either tool resolves, and it lived in two

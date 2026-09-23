@@ -1169,7 +1169,7 @@ the modal is a second thing to keep true.
 
 ## WO-8.14 — the three doc links in About are measured by nothing
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** nothing
+**Ship** — · **Status** ✅ DONE — 2026-09-22 · **Size** S · **Depends on** nothing
 **Closes roadmap** *(no box. A harness gap, the same call WO-8.9 made: this is the project checking
 something it already claimed rather than a feature the roadmap costed. Booked 2026-09-21 out of
 WO-8.13's landing, owner-directed.)*
@@ -1202,20 +1202,29 @@ is not a fence**, and this is the instance to point at next time one is read as 
   *(`tools/verify/build-line.mjs` also opens it and is where WO-8.13's checks live — this one is a
   measurement under an emulated coarse pointer, which is `touch-targets.mjs`'s whole apparatus, so
   it goes there even though the neighbouring assertions about these rows do not.)*
+  *(**“Widened” turned out to mean a second `check()` in the same block, not a widened selector.**
+  The `button, input` sweep names only the rows that FAIL, and Acceptance 1 wants all three named
+  whether they pass or not — so widening `mm` could not have met it, and doing both would have put
+  two askers on one question. The Traps line is honoured in the thing it was protecting — one modal
+  open, one block, no second section — rather than in the selector. **It cost four false sentences**:
+  the harness now holds two `else check(` sites where `tools/README.md` (×3) and `tools/wo-sweep.mjs`
+  said one, three of them inviting the grep that would disprove them. The implementer repaired one
+  and reported all of them done; a second verifier caught the other four and they were fixed at the
+  tick. **The count was not the rot — the referent held.** See `tools/README.md` § the allowlist.)*
 - **`tools/README.md`'s check count updated** to whatever the run emits.
 - **A `TESTING.md` line of its own.** No 👤: this is a measurement a headless browser makes better
   than a thumb, which is the point of closing it.
 
 **Acceptance**
-- [ ] Every `.doc-link` in the About modal is measured at ≥44px under an emulated coarse pointer —
+- [x] Every `.doc-link` in the About modal is measured at ≥44px under an emulated coarse pointer —
       all three rows, named individually in the evidence line, not counted in aggregate.
-- [ ] The check goes **red** when `min-height: 44px` is deleted from `.modal-body .doc-link` in the
+- [x] The check goes **red** when `min-height: 44px` is deleted from `.modal-body .doc-link` in the
       `(pointer: coarse)` block — proved by deleting it once, not by reasoning about it, and
       restored before anything is written.
-- [ ] `node tools/verify-shell.mjs` green, and `node tools/wo-sweep.mjs` green with its own recorded
+- [x] `node tools/verify-shell.mjs` green, and `node tools/wo-sweep.mjs` green with its own recorded
       count matching the run.
-- [ ] `tools/README.md`'s check count matches the run.
-- [ ] WO-8.13's Acceptance line 3 and its `TESTING.md` entry both already carry the correction; this
+- [x] `tools/README.md`'s check count matches the run.
+- [x] WO-8.13's Acceptance line 3 and its `TESTING.md` entry both already carry the correction; this
       work order's `TESTING.md` line **links back to them** rather than restating the story.
 
 **Traps** — **Widen the existing sweep; do not write a second one.** The modal sweeps in
