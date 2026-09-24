@@ -172,6 +172,16 @@
     color: #1a1a2e;
   }
   .callout p { color: #4c5a6d; font-size: 15px; }
+  /* A reading this page made and no longer makes — lifted from plans/wo-3-18-video-runbook.html's
+     `.note p.was`. Kept rather than deleted, and `wo-sweep.mjs` § 26 excuses a `class="was"`
+     passage, so a status quoted inside one is history and not a claim about today. */
+  .callout p.was {
+    color: #5a6172; font-size: 14px;
+  }
+  .callout p:not(.was) + p.was {
+    margin-top: 4px; padding-top: 12px; border-top: 1px dashed #b0bcf0;
+  }
+  .callout p.was em { color: #6b7280; }
 
   /* ── Steps ────────────────────────────────────────────────── */
   .steps { display: flex; flex-direction: column; gap: 0; }
@@ -380,14 +390,13 @@
     <p class="standfirst">
       Six steps, in a fixed order. <strong>Two of them are build work you dispatch, three are yours in
       a browser, and the last one is Google's queue.</strong> Nothing here is hard; the order is the
-      whole difficulty, because one of the four dependencies does not exist yet and another is
-      half-landed.
+      whole difficulty. All four dependencies are done now, and steps 1 to 3 with them.
     </p>
     <div class="band-meta">
       <span><b>Status</b> ⬜ NOT STARTED</span>
-      <span><b>Gate</b> 1 dependency open · 1 in flight</span>
+      <span><b>Gate</b> all 4 dependencies done</span>
       <span><b>Blocks</b> a stranger seeing a clean consent screen</span>
-      <span><b>Read on</b> 2026-08-20, evening</span>
+      <span><b>Read on</b> 2026-08-20, evening · strips updated 2026-09-24</span>
     </div>
   </div>
 </header>
@@ -408,15 +417,15 @@
         <div class="dep-what">The name, the host and the domain — <code>planbook.hwgteach.com</code>, live on Cloudflare Pages.</div>
         <div class="dep-state is-done">✅ done 2026-08-12</div>
       </div>
-      <div class="dep flight">
+      <div class="dep done">
         <div class="dep-id">WO-8.12</div>
-        <div class="dep-what">The privacy policy and <code>docs/FERPA.md</code>. <strong>Built and verified at the desk, uncommitted and undeployed</strong> — and the contact line is still a placeholder.</div>
-        <div class="dep-state is-flight">🔨 in progress · 3 of 7</div>
+        <div class="dep-what">The privacy policy and <code>docs/FERPA.md</code>. <strong>Live at <code>/privacy</code></strong>, with a real contact address, and it pays this work order's first Acceptance box.</div>
+        <div class="dep-state is-done">✅ done 2026-08-21</div>
       </div>
-      <div class="dep open">
+      <div class="dep done">
         <div class="dep-id">WO-7.1</div>
-        <div class="dep-what">Auth — the sign-in the demo video has to film. Nothing in the app touches the scope today.</div>
-        <div class="dep-state is-open">⬜ not started · M</div>
+        <div class="dep-what">Auth — the sign-in the demo video has to film. <strong>Built</strong>, and since WO-7.2 the app uploads through the scope too, so there is a handshake and a file transfer to film.</div>
+        <div class="dep-state is-done">✅ done 2026-08-24</div>
       </div>
     </div>
   </section>
@@ -426,6 +435,19 @@
     <div class="callout">
       <h3>Where the work actually is right now</h3>
       <p>
+        <strong>Steps 1, 2 and 3 are done.</strong> What is left is the video, the form and Google's
+        queue — steps 4 to 6. The video has its own runbook,
+        <a href="wo-3-18-video-runbook.html">plans/wo-3-18-video-runbook.html</a>; this page still
+        holds the console click-path and the scope justification, and both are still accurate.
+      </p>
+      <p class="was">
+        <b>What this section said on 2026-08-20, and why it is kept:</b> the strips above had WO-8.12
+        at <em>"🔨 in progress · 3 of 7 — built and verified at the desk, uncommitted and undeployed,
+        and the contact line is still a placeholder"</em>, and WO-7.1 at <em>"⬜ not started · M —
+        nothing in the app touches the scope today"</em>. The three paragraphs below are that
+        evening's reading, unchanged. They are why the steps are in the order they are.
+      </p>
+      <p class="was">
         <strong>Step 1 is built and needs a deploy and one decision from you.</strong> A WO-8.12 dispatch
         landed on the evening of 2026-08-20 with <code>privacy.html</code>, <code>docs/FERPA.md</code>,
         the <code>sw.js</code> navigate fix and twelve new harness checks. It sits at
@@ -433,11 +455,11 @@
         <code>--tick</code> refused <code>✅ DONE</code> over an open list — and the four open boxes are
         owed to a deploy, to hardware, to a reader, and to you.
       </p>
-      <p>
+      <p class="was">
         <strong>Step 3 can start today</strong> and depends on no code at all. Domain verification in
         particular is worth clearing early, because it is the step with a known way to go wrong.
       </p>
-      <p>
+      <p class="was">
         Everything else waits on <strong>WO-7.1</strong>, and WO-7.1 is an M of token flow with no date on
         it. That is the long pole, and it is the honest reason this work order has no submit-by.
       </p>
@@ -789,7 +811,7 @@
         <div class="txt">The privacy policy is <strong>live at the verified domain</strong> and says the three
           things in plain words: no vendor server ever receives student data, no account is required, and Drive
           holds only files this app created.</div>
-        <div class="by">step 1 → WO-8.12<br>written; needs a deploy</div>
+        <div class="by">step 1 → WO-8.12<br>paid 2026-08-21</div>
       </div>
       <div class="accept-row">
         <div class="box"></div>

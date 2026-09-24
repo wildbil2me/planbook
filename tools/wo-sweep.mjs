@@ -3137,7 +3137,8 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
    - A DATED SENTENCE: one that says `until YYYY-MM-DD`, `what this said` or `this read`.
    - A DATED DOCUMENT, named below with the sentence in which it says so itself. A return brief is a
      snapshot by construction, and `plans/return-brief.html` says it is kept "because this is a dated
-     brief". The anchor has to match: if it is reworded out, the document is read as live and the
+     brief"; `plans/wo-7-1-runbook.html` is the runbook of a landed work order and says it is kept "as
+     a dated record of the build". The anchor has to match: if it is reworded out, the document is read as live and the
      result says so on both branches — § 21's lost-region note — rather than going quietly unread.
    - Read over the words BETWEEN the id and its status, not the whole sentence, because the neighbour
      of a claim in these files is often a different claim: a DENIAL (`not`, `no longer`, `never` …),
@@ -3190,6 +3191,9 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
   ];
   const DATED_DOCUMENTS = [
     { file: 'plans/return-brief.html', says: /kept\s+because\s+this\s+is\s+a\s+dated\s+brief/ },
+    // Added 2026-09-24, on § 26's first run: a runbook for a work order that has landed is a record of
+    // how it was built, and updating its strips would rewrite what it records.
+    { file: 'plans/wo-7-1-runbook.html', says: /as\s+a\s+dated\s+record\s+of\s+the\s+build/ },
   ];
 
   // Nine glyphs and their words, so a claim can be written either way and still be compared with the
