@@ -3,6 +3,7 @@
 //
 //   node tools/wo-sweep.mjs            exits non-zero if anything FAILs
 //   node tools/wo-sweep.mjs --verbose  prints every hit, not just the count
+//   node tools/wo-sweep.mjs --claims-in=<file.html>   points § 26 at that file instead (repeatable)
 //
 // `plans/verification-tooling.md` directs grep-shaped checks away from the browser harness:
 // "Anything a grep settles correctly should be settled by grep, in the verifier's standing sweep."
@@ -34,6 +35,9 @@ import { execFileSync } from 'node:child_process';
 // root.
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const VERBOSE = process.argv.includes('--verbose');
+// § 26 only: read these HTML files instead of the planning documents it names, so a file out of git
+// history can be checked against today's tracker without being checked out over the working copy.
+const CLAIMS_IN = process.argv.filter(a => a.startsWith('--claims-in=')).map(a => a.slice('--claims-in='.length));
 
 /* ────────────────────────────── result bookkeeping ──────────────────────────────
    Same shape as tools/verify-shell.mjs, so a verifier reads one format from two commands. */
@@ -2271,6 +2275,22 @@ function commentLines(file) {
   }
 }
 
+/* ────────────────────────────── prose helpers, § 21 and § 26 ──────────────────────────────
+   Written for § 21 (WO-1.40) and hoisted out of its block by WO-1.52, which reads HTML planning
+   documents with the same sentence rule rather than a second one — that work order's Traps say
+   *lift it, do not re-derive it*. Moved, not changed: § 21 reads exactly as it did. */
+
+const lineAt = (text, index) => text.slice(0, index).split('\n').length;
+
+// A sentence ends at `.`, `;`, `!` or `?` followed by whitespace or a closing mark, or at a blank
+// line. The closing marks matter more here than they look: half the sentences in both files end
+// `.**`, and a splitter that misses those runs three instructions together and reads the negation
+// in the first as covering the third.
+const SENTENCE_END = /[.;!?](?=[\s*_"'’)\]]|$)|\n\s*\n/g;
+
+const within = (ranges, i) => ranges.some(([a, b]) => i >= a && i < b);
+const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
+
 /* ══════ 21. the file a human types does not contradict the file that dispatches ══════
    WO-1.40. `.claude/commands/wo.md` is the file a human types to start a dispatch, and until this
    section nothing in the repository read it — no work order named it, `--audit` never opened it, and
@@ -2507,8 +2527,6 @@ function commentLines(file) {
     ],
   }];
 
-  const lineAt = (text, index) => text.slice(0, index).split('\n').length;
-
   // Every literal space in a `settled`, `token`, `unless` or region pattern above means WHITESPACE,
   // newline included. Both files are hard-wrapped near 100 columns and neither wraps in the same
   // place twice: the sentence that settles claim 2 sits as "it marks no\nAcceptance list"
@@ -2516,11 +2534,6 @@ function commentLines(file) {
   // hide is a claim nothing makes, and both anchors below went red exactly that way on first run.
   const wrapped = re => new RegExp(re.source.replace(/ /g, '\\s+'), re.flags);
 
-  // A sentence ends at `.`, `;`, `!` or `?` followed by whitespace or a closing mark, or at a blank
-  // line. The closing marks matter more here than they look: half the sentences in both files end
-  // `.**`, and a splitter that misses those runs three instructions together and reads the negation
-  // in the first as covering the third.
-  const SENTENCE_END = /[.;!?](?=[\s*_"'’)\]]|$)|\n\s*\n/g;
   function sentenceAround(text, index) {
     let start = 0;
     for (const m of text.matchAll(SENTENCE_END)) {
@@ -2533,9 +2546,6 @@ function commentLines(file) {
     }
     return text.slice(start, end).replace(/\s+/g, ' ').trim();
   }
-
-  const within = (ranges, i) => ranges.some(([a, b]) => i >= a && i < b);
-  const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
 
   for (const pair of DRIFT_PAIRS) {
     const anchorName = `${pair.subject} — the shared-claim list still matches ${pair.reference}`;
@@ -3069,6 +3079,351 @@ function commentLines(file) {
     check(NAME, !faults.length,
       faults.length ? faults.join(' · ')
         : `runSection() at ${at(from)}-${to + 1} awaits the one \`.run(\` in the file between a \`try\` and a \`catch\` that records a \`check(…, false, …)\` with no \`return\` ahead of it and rethrows nothing, and both STATIC_SECTIONS and BROWSER_SECTIONS are handed to it — the SHAPE of WO-1.44's containment. Not proof that it works: whether a throw reaches that catch, what the FAIL records, and whether recoverPage() tells the truth are read by no grep, and only a verify-shell.mjs run with a planted throw shows them (see § 25's banner)`);
+  }
+}
+
+/* ══════ 26. a planning document does not contradict the tracker about a work order's status ══════
+   WO-1.52, and it sits ABOVE § 22 for § 23's reason: § 22's census has to be the last thing that
+   pushes a result. The number is the order this section was written in.
+
+   WHAT IT IS FOR. `plans/` holds hand-written HTML planning documents — runbooks, a return brief —
+   and every one of them is free to state a work order's status and be wrong about it forever. On
+   2026-09-12 `plans/wo-3-18-video-runbook.html` carried FOUR such statements, five days stale: its
+   band read `WO-3.18 🔒 GATED on WO-7.2`, its dependency strip had WO-7.2 `⬜ not started`, its
+   Blocker 1 said WO-7.2 `is 🔒 GATED and unbuilt`, and its shot list called WO-7.2's shots `the
+   ones that do not exist yet` — while the tracker had WO-3.18 unlocked and WO-7.2 ✅ DONE. Nothing
+   in the repository could have said so: the walk above reads `src/` and the trackers as their own
+   subjects, and `--audit` reads `plans/work-orders/` and nothing else. Repaired by hand in
+   `a16b87c`. This is the check that would have reported them.
+
+   THE TRACKER IS THE REFERENCE HALF, ALWAYS. A status is taken from `wo-gate.mjs --list`, which
+   prints what `parseFile()` read out of `plans/work-orders/*.md`, and from nowhere else — never
+   from an HTML file, and never from a second parser here. That is a DEPARTURE from § 19's rule
+   that this file imports nothing from the other tools, and it is taken on purpose: § 19 needed a
+   work order's BODY, which `parseFile()` does not hand out; this needs its STATUS, which is exactly
+   what `parseFile()` normalises, and a second status parser in this file would be a second opinion
+   about the reference half — the one thing this section exists to refuse. `--list` is a read-only
+   branch of that script (it prints and exits before any writer is reached), so the sweep still
+   writes nothing and still depends on nothing that writes. If the two ever disagree, the document
+   is wrong: nothing here is ever resolved the other way.
+
+   THE FILES ARE REACHED BY PATH, AND NEITHER WALK IS WIDENED. `IGNORE_DIRS` at the head of this
+   file is untouched and so is `--audit`'s directory walk in `wo-gate.mjs`. What is read is the HTML
+   directly in `plans/` — not `plans/work-orders/`, not anything below — plus `tools/data-viewer.html`
+   by name, because WO-1.52's own account of the problem names it beside them. `design/mockups/`,
+   `.claude/dispatch/` and the other two pages in `tools/` are left out deliberately: they are
+   documents whose whole job is to record what was true when they were written, and a check that
+   read them would drown in its own genre on the first run. Widen this by adding a NAME, not a walk.
+
+   A PLANNING DOCUMENT IS ALLOWED TO BE HISTORICAL, AND THAT IS THE WHOLE DIFFICULTY. These files are
+   dated drawings and much of their value is what was true when they were drawn, so what is reported
+   is a contradicted claim IN A LIVE VOICE and nothing else — and SILENCE IS THE GREEN STATE, which
+   is § 21's rule lifted whole. A claim is a work-order id followed, in the same sentence, by a status
+   before the next id: one of the nine status glyphs, a status word in capitals, `not started`, or
+   one of three ways of saying unbuilt (`unbuilt`, `not built`, `does not exist yet`), the last of
+   which contradicts only a work order that has been built. Several ids joined by `,` or `and` share
+   the status after the last of them — `WO-7.2 and WO-7.3 stay 🔒 GATED` is a claim about both.
+   A claim is ALSO read as a CARD — an id cell and a later status cell of one element, with prose in
+   the cells between that may hold full stops of its own. That second reading is WO-1.52's first
+   correction round, and `cards()` below says what counts as a cell and why the span excuses are not
+   read across one.
+
+   ALLOWLIST — what makes a claim historical, so the next reader does not re-derive it:
+   - AN EXCLUDED PASSAGE. Two shapes, both § 21's idea in this directory's markup: an ITALIC
+     PARENTHETICAL, `<em>(` … `)</em>`, which is the HTML spelling of § 21's `*(` … `)*` note about a
+     rule; and any element carrying the class `was`, which is how the repaired video runbook keeps
+     "what this said until 2026-09-12" — a passage that QUOTES the false status verbatim on purpose,
+     and is the repair working rather than the defect coming back.
+   - A DATED SENTENCE: one that says `until YYYY-MM-DD`, `what this said` or `this read`.
+   - A DATED DOCUMENT, named below with the sentence in which it says so itself. A return brief is a
+     snapshot by construction, and `plans/return-brief.html` says it is kept "because this is a dated
+     brief". The anchor has to match: if it is reworded out, the document is read as live and the
+     result says so on both branches — § 21's lost-region note — rather than going quietly unread.
+   - Read over the words BETWEEN the id and its status, not the whole sentence, because the neighbour
+     of a claim in these files is often a different claim: a DENIAL (`not`, `no longer`, `never` …),
+     the PAST TENSE (`was`, `were`, `had been`, `used to` …), a HYPOTHETICAL (`if`, `when`, `once`,
+     `the moment` …), or ANOTHER CLAUSE (`and`, `but`, `so`, `because` …) — the last because
+     "WO-3.18 reports PASS | gates clear and all five declared dependencies are ✅ DONE" is a claim
+     about the dependencies. This UNDER-FIRES rather than over-claims, on purpose: a REVIEW that is
+     wrong half the time is read by nobody, which is § 21's reason for its excuse words too.
+
+   AND IT IS REPORTED AS A `REVIEW`, NOT A `FAIL` — which is also why it lives here and not in
+   `wo-gate.mjs --audit`. `--audit` is the tracker's own consistency report and it exits non-zero; a
+   stale sentence in a drawing is a thing for a person to read and correct, not a failure that should
+   stop a dispatch, and the heuristics above cannot tell a live voice from a historical one with the
+   certainty a FAIL owes. THE MECHANICAL HALF IS A SEPARATE CHECK AND IT DOES FAIL: whether the
+   tracker could be read, whether every named document is where this expects it, whether the tag
+   stripper still strips, and whether a status claim was read IN EACH DOCUMENT — a claim pattern that
+   has stopped matching is silence, and silence is this section's green, so a zero is § 11's
+   green-from-a-distance failure and goes red. Per document, not in aggregate: the first cut counted
+   across all of them, and `plans/wo-3-18-runbook.html` read as zero claims inside a green run
+   because its neighbours read plenty. A document that genuinely states no status is named in
+   `STATES_NO_STATUS` with the words that show it.
+
+   `--claims-in=<file>` POINTS THIS SECTION AT OTHER FILES, which is how WO-1.52's reproduction runs
+   without disturbing the tree: `git show 06bfa06:plans/wo-3-18-video-runbook.html` into a scratch
+   file, then `node tools/wo-sweep.mjs --claims-in=<that file>` — four findings against today's
+   tracker. The same against `a16b87c` is clean. Never `git checkout` an old version over the working
+   file to do this; a checkout reverts unstaged edits, including your own.
+
+   IT CANNOT SEE ITSELF. This section reads HTML under `plans/` and one page in `tools/`. It does not
+   read this banner, the row for it in `tools/README.md`, WO-1.52's own text, or `CLAUDE.md` — every
+   one of which quotes a false status on purpose to explain this check, and any of which can go stale
+   about this check in a live voice with nothing to notice. WO-1.41's fence could not catch the first
+   false statement made about WO-1.41's fence; this one is built the same way and has the same blind
+   spot. Nor can it see a status stated in words it does not know (`landed`, `shipped`, `finished`),
+   a claim whose id is implied by the page rather than written in the sentence, or a date that has
+   gone stale where the status has not. */
+
+{
+  const NAME_READ = 'planning documents — the tracker and every document § 26 names can be read';
+  const NAME_CLAIMS = 'planning documents — no live status claim contradicts the tracker';
+
+  // The dated documents, each with the sentence in which it calls itself one. See the allowlist.
+  // The documents that state no work order's status at all, each with the words that show why — so the
+  // per-document "a claim was read" check below can stand without reddening a page that has nothing
+  // to claim. `tools/data-viewer.html` is a tool, not a planning document: it names a work order only
+  // inside an HTML comment, which is masked before anything is read. Reword the anchor and the
+  // document is held to the rule again, which is the loud failure rather than a quiet pass.
+  const STATES_NO_STATUS = [
+    { file: 'tools/data-viewer.html', says: /A\s+viewer\s+for\s+one\s+year\s+document/ },
+  ];
+  const DATED_DOCUMENTS = [
+    { file: 'plans/return-brief.html', says: /kept\s+because\s+this\s+is\s+a\s+dated\s+brief/ },
+  ];
+
+  // Nine glyphs and their words, so a claim can be written either way and still be compared with the
+  // tracker's normalised status. This is a VOCABULARY, not a parser: `wo-gate.mjs` owns what a status
+  // is, and a status it adds that this table lacks is a claim this section does not read, never a
+  // status it reads wrongly.
+  const BY_GLYPH = {
+    '✅': '✅ DONE', '⬜': '⬜ NOT STARTED', '🔨': '🔨 IN PROGRESS', '🤖': '🤖 CLAIMED',
+    '🔍': '🔍 AWAITING VERDICT', '🚧': '🚧 BLOCKED', '🔒': '🔒 GATED', '🚫': '🚫 STRUCK', '⏳': '⏳ DEFERRED',
+  };
+  const BY_WORD = Object.fromEntries(Object.values(BY_GLYPH).map(s => [s.slice(s.indexOf(' ') + 1), s]));
+  const UNBUILT = 'unbuilt';
+  const BUILT = new Set(['✅ DONE', '🔨 IN PROGRESS', '🔍 AWAITING VERDICT']);
+  const CLAIM = new RegExp(`(${Object.keys(BY_GLYPH).join('|')})|\\b(${Object.keys(BY_WORD).sort((a, b) => b.length - a.length).join('|')})\\b|\\b([Nn]ot started)\\b|\\b(unbuilt|not (?:yet )?built|(?:does|do) not exist yet)\\b`, 'gu');
+  const WO_ID = /\bWO-(?:\d+\.\d+|G\d+)\b/g;
+  const JOINED = /^[\s,&/·]*(?:and|or)?[\s,&/·]*$/;
+
+  const DATED_SENTENCE = /\buntil \d{4}-\d{2}-\d{2}\b|\bwhat this (?:said|read)\b|\bthis (?:said|read)\b/i;
+  const SPAN_EXCUSES = [
+    ['a denial', /\b(no longer|not|never|no|nothing|without|isn't|aren't|wasn't)\b/i],
+    ['the past tense', /\b(was|were|had been|used to|became|went|stayed|remained)\b/i],
+    ['a hypothetical', /\b(if|when|once|until|unless|the moment|after|before|would|will|could|should)\b/i],
+    ['another clause', /\b(and|but|so|while|whereas|because)\b/i],
+  ];
+
+  // Tags become blanks and block-level tags become a full stop, so offsets — and so line numbers —
+  // survive the strip, and a paragraph or a list item ends a sentence the way § 21's blank line does.
+  // `div` and `span` are NOT sentence ends: these documents write a key and its value as sibling
+  // cells in one box — `WO-7.2 · transfer` over `⬜ not started` — and that is a claim.
+  const blankOut = s => s.replace(/[^\n]/g, ' ');
+  const BLOCK_TAG = /^(p|li|ul|ol|h[1-6]|section|header|footer|main|nav|article|aside|table|thead|tbody|tfoot|tr|blockquote|pre|br|hr|figure|figcaption|dl|dt|dd|body|html|head|title)$/i;
+  const ENTITIES = { mdash: '—', ndash: '–', amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', hellip: '…', middot: '·', rsquo: '’', lsquo: '‘', ldquo: '“', rdquo: '”', rarr: '→', larr: '←', times: '×' };
+  // Two steps, so the stripper can be checked BEFORE entities are decoded — a document that writes
+  // `&lt;p&gt;` to show a tag is prose, and must not read as markup the stripper missed.
+  const masked = html => html.replace(/<(style|script)\b[\s\S]*?<\/\1\s*>/gi, blankOut).replace(/<!--[\s\S]*?-->/g, blankOut);
+  function untagged(html) {
+    const t = masked(html);
+    return t.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>/gi, (m, name) => (BLOCK_TAG.test(name) ? '.' + blankOut(m.slice(1)) : blankOut(m)));
+  }
+  function decoded(t) {
+    return t.replace(/&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi, (m, dec, hex, name) => {
+      const c = dec ? String.fromCodePoint(Number(dec)) : hex ? String.fromCodePoint(parseInt(hex, 16)) : ENTITIES[name.toLowerCase()];
+      return c && c.length <= m.length ? c + ' '.repeat(m.length - c.length) : m;
+    });
+  }
+  function excludedPassages(html) {
+    const out = [];
+    for (const m of html.matchAll(/<(em|i)\b[^>]*>\s*\([\s\S]*?\)\s*<\/\1\s*>/gi)) out.push([m.index, m.index + m[0].length]);
+    for (const m of html.matchAll(/<([a-z][a-z0-9]*)\b[^>]*\bclass="[^"]*\bwas\b[^"]*"[^>]*>/gi)) {
+      const tag = new RegExp(`<(/?)${m[1]}\\b[^>]*>`, 'gi');
+      tag.lastIndex = m.index + m[0].length;
+      let depth = 1, end = html.length, t;
+      while ((t = tag.exec(html))) { depth += t[1] ? -1 : 1; if (!depth) { end = t.index + t[0].length; break; } }
+      out.push([m.index, end]);
+    }
+    return out;
+  }
+  const shown = s => s.replace(/\s+/g, ' ').replace(/(?:^|\s)\.(?=\s|$)/g, '').trim();
+
+  // THE SECOND READING: A CARD, whose id and status sit in separate cells of one element. Added by
+  // WO-1.52's first correction round, because the sentence reading above cannot see this shape when a
+  // description cell stands BETWEEN the two and holds a full stop — `plans/wo-3-18-runbook.html`'s
+  // dependency strip is `WO-7.1` / "…has to film. Nothing in the app touches the scope today." /
+  // `⬜ not started · M`, the sentence ends before the status, and the whole file read as zero claims.
+  // The `06bfa06` fixture could not show it: there the state cell came before the description.
+  //   What counts, kept narrow so the genre problem does not come back in through a wider door:
+  //   - A CELL is a `div`, `span`, `td`, `th`, `dt` or `dd` — never a `p`, `li` or heading, whose
+  //     siblings are running prose, and where a paragraph opening on an id and a later one opening on
+  //     a glyph are two sentences, not a key and its value.
+  //   - An ID CELL is a cell whose text OPENS with a work-order id; a STATE CELL is a later cell of
+  //     the same parent whose text OPENS with a status token. The first state cell after an id cell
+  //     is its status, and an id cell reached first ends the search — the same "before the next id"
+  //     bound as the sentence reading.
+  //   - The words in the cells between are NOT read for § 21's span excuses. They are another cell's
+  //     prose, not a clause joining the id to its status — "Nothing in the app touches…" is a denial
+  //     about the app, and letting it excuse the strip would be exactly the miss this was added for.
+  //     The excluded-passage, dated-sentence (read over the whole card) and dated-document excuses
+  //     all still apply.
+  //   - An id the sentence reading already took a claim for is left to it, so a card whose cells sit
+  //     id-then-status with no full stop between is read once, not twice.
+  const VOID_TAG = /^(area|base|br|col|embed|hr|img|input|link|meta|source|track|wbr)$/i;
+  const CELL_TAG = /^(div|span|td|th|dt|dd)$/i;
+  const ID_AT = new RegExp(WO_ID.source, 'y');
+  const CLAIM_AT = new RegExp(CLAIM.source, 'uy');
+  function cards(html, text, claimAt) {
+    const root = { children: [] }, stack = [root], out = [];
+    for (const m of masked(html).matchAll(/<(\/?)([a-z][a-z0-9]*)\b[^>]*>/gi)) {
+      const name = m[2].toLowerCase();
+      if (m[1]) {
+        const at = stack.map(n => n.name).lastIndexOf(name);
+        if (at > 0) { while (stack.length > at) stack.pop().end = m.index; }
+      } else if (!VOID_TAG.test(name) && !m[0].endsWith('/>')) {
+        const node = { name, start: m.index, inner: m.index + m[0].length, end: html.length, children: [] };
+        stack[stack.length - 1].children.push(node);
+        stack.push(node);
+      }
+    }
+    const lead = n => n.inner + /^[\s.]*/.exec(text.slice(n.inner, n.end))[0].length;
+    const opensWith = (n, re) => { re.lastIndex = lead(n); const m = re.exec(text); return m && m.index === lead(n) && m.index < n.end ? m : null; };
+    (function visit(node) {
+      const cells = node.children.filter(c => CELL_TAG.test(c.name));
+      for (let i = 0; i < cells.length; i++) {
+        const id = opensWith(cells[i], ID_AT);
+        if (!id || claimAt.has(id.index)) continue;
+        for (let j = i + 1; j < cells.length; j++) {
+          if (opensWith(cells[j], ID_AT)) break;
+          const tok = opensWith(cells[j], CLAIM_AT);
+          if (tok) { out.push({ id, tok, unit: [node.inner || 0, node.end || text.length], state: [cells[j].inner, cells[j].end] }); break; }
+        }
+      }
+      node.children.forEach(visit);
+    })(root);
+    return out;
+  }
+
+  const faults = [];
+
+  // The reference half.
+  const tracker = new Map();
+  try {
+    const listed = execFileSync(process.execPath, [path.join(REPO, 'tools', 'wo-gate.mjs'), '--list'], { cwd: REPO, encoding: 'utf8' });
+    const unread = [];
+    for (const line of listed.split(/\r?\n/)) {
+      if (!line.trim()) continue;
+      const m = /^(WO-[\dG][\w.]*)\s+(\S+(?: [A-Z]+)+|\(none\))(?:\s|$)/u.exec(line);
+      if (m) tracker.set(m[1], m[2]); else unread.push(line.trim());
+    }
+    if (unread.length) faults.push(`${unread.length} line(s) of \`wo-gate.mjs --list\` did not read as an id and a status — first: "${clip(unread[0])}". Its format has moved; re-point the pattern in § 26 rather than reading statuses anywhere else`);
+    if (!tracker.size) faults.push('`wo-gate.mjs --list` named no work order at all, so there is nothing to hold a planning document against');
+  } catch (e) {
+    faults.push(`\`node tools/wo-gate.mjs --list\` failed (${clip(String(e.message || e).split('\n')[0])}) — the tracker is the reference half of this check and it could not be read`);
+  }
+
+  // The documents, by path. See the banner for what is left out and why.
+  let documents;
+  if (CLAIMS_IN.length) {
+    documents = CLAIMS_IN.map(p => ({ shownAs: p.replace(/\\/g, '/'), abs: path.resolve(p) }));
+    console.log(`       § 26 is pointed at ${documents.map(d => d.shownAs).join(', ')} by --claims-in, not at the planning documents it names`);
+  } else {
+    const plansDir = path.join(REPO, 'plans');
+    const html = fs.existsSync(plansDir)
+      ? fs.readdirSync(plansDir, { withFileTypes: true }).filter(e => e.isFile() && /\.html$/i.test(e.name)).map(e => 'plans/' + e.name).sort()
+      : [];
+    if (!html.length) faults.push('there is no `.html` file directly in plans/ — either the planning documents moved, or the path this section reads them by is wrong');
+    documents = [...html, 'tools/data-viewer.html'].map(r => ({ shownAs: r, abs: path.join(REPO, ...r.split('/')) }));
+  }
+  const missing = documents.filter(d => !fs.existsSync(d.abs));
+  if (missing.length) faults.push(`${missing.map(d => d.shownAs).join(', ')} is not where § 26 expects it — it is read by path, so a moved document is a document nothing is checking. Restore it, or re-point § 26`);
+
+  const findings = [], lostAnchors = [];
+  const excused = new Map();
+  let claimsRead = 0, agreeing = 0;
+  const silent = [], statesNone = [];
+  for (const doc of documents.filter(d => fs.existsSync(d.abs))) {
+    const readBefore = claimsRead;
+    const html = fs.readFileSync(doc.abs, 'utf8');
+    const stripped = untagged(html);
+    const text = decoded(stripped);
+    if (/<\/?(?:p|div|span|code|strong)\b[^>]*>/i.test(stripped)) faults.push(`${doc.shownAs} still holds markup after § 26's tag stripper ran — it has stopped working, and every sentence it reads is being read with its tags in`);
+    const dated = DATED_DOCUMENTS.find(d => d.file === rel(doc.abs));
+    const datedHere = dated && dated.says.test(html);
+    if (dated && !datedHere) lostAnchors.push(`${doc.shownAs} no longer says /${dated.says.source}/, so it was read as a live document`);
+    const passages = excludedPassages(html);
+
+    let from = 0;
+    const units = [];
+    for (const m of text.matchAll(SENTENCE_END)) { units.push([from, m.index + 1]); from = m.index + m[0].length; }
+    units.push([from, text.length]);
+
+    // One judgement for both readings: `ids` are absolute-offset id matches sharing the status `tok`.
+    const judge = (ids, tok, why, quoted) => {
+      const claimed = tok[1] ? BY_GLYPH[tok[1]] : tok[2] ? BY_WORD[tok[2]] : tok[3] ? '⬜ NOT STARTED' : UNBUILT;
+      for (const g of ids) {
+        claimsRead++;
+        const real = tracker.get(g[0]);
+        const contradicts = !real || (claimed === UNBUILT ? BUILT.has(real) : claimed !== real);
+        if (!contradicts) { agreeing++; continue; }
+        if (why) { excused.set(why, (excused.get(why) || 0) + 1); continue; }
+        findings.push(`${doc.shownAs}:${lineAt(html, g.at)} "${clip(shown(quoted))}" claims ${g[0]} is ${claimed === UNBUILT ? `unbuilt (as "${tok[0]}")` : `${claimed} (as "${tok[0]}")`}, and ${real ? `the tracker says ${real}` : 'no work-order file holds that id'}`);
+      }
+    };
+    const claimAt = new Set();
+
+    for (const [a, b] of units) {
+      const sentence = text.slice(a, b);
+      const ids = [...sentence.matchAll(WO_ID)];
+      if (!ids.length) continue;
+      const tokens = [...sentence.matchAll(CLAIM)];
+      for (let k = 0; k < ids.length; k++) {
+        const end = k + 1 < ids.length ? ids[k + 1].index : sentence.length;
+        const tok = tokens.find(t => t.index >= ids[k].index + ids[k][0].length && t.index < end);
+        if (!tok) continue;
+        const group = [ids[k]];
+        for (let g = k - 1; g >= 0 && JOINED.test(sentence.slice(ids[g].index + ids[g][0].length, group[0].index)); g--) group.unshift(ids[g]);
+        const between = sentence.slice(ids[k].index + ids[k][0].length, tok.index);
+        let why = null;
+        if (datedHere) why = 'a dated document';
+        else if (within(passages, a + tok.index) || group.some(g => within(passages, a + g.index))) why = 'an excluded passage';
+        else if (DATED_SENTENCE.test(sentence)) why = 'a dated sentence';
+        else why = (SPAN_EXCUSES.find(([, re]) => re.test(between)) || [null])[0];
+        for (const g of group) { g.at = a + g.index; claimAt.add(g.at); }
+        judge(group, tok, why, sentence);
+      }
+    }
+
+    // The second reading — see `cards()` above for what it reads and why it skips § 21's span excuses.
+    for (const { id, tok, unit, state } of cards(html, text, claimAt)) {
+      const card = text.slice(unit[0], unit[1]);
+      id.at = id.index;
+      let why = null;
+      if (datedHere) why = 'a dated document';
+      else if (within(passages, id.index) || within(passages, tok.index)) why = 'an excluded passage';
+      else if (DATED_SENTENCE.test(card)) why = 'a dated sentence';
+      judge([id], tok, why, `${id[0]} … ${text.slice(state[0], state[1])}`);
+    }
+
+    // Counted per document, not across them: an aggregate count let a named document that yielded
+    // nothing pass beside one that yielded plenty — which is how `plans/wo-3-18-runbook.html` read as
+    // zero claims inside a green run. See `STATES_NO_STATUS` for the one kind of document excused.
+    if (claimsRead === readBefore) {
+      if (STATES_NO_STATUS.some(s => s.file === rel(doc.abs) && s.says.test(html))) statesNone.push(doc.shownAs); else silent.push(doc.shownAs);
+    }
+  }
+  if (silent.length) faults.push(`not one status claim was read in ${silent.join(', ')} — silence is this section's green state, so a claim pattern that has stopped matching, or a shape it has never read, would read as a clean document. Check § 26 against the status that document plainly states; if it genuinely states none, name it in \`STATES_NO_STATUS\` with the words that show it`);
+
+  check(NAME_READ, !faults.length, faults.length ? faults.join(' · ')
+    : `${tracker.size} work order(s) read from \`wo-gate.mjs --list\` as the reference half; ${documents.length} document(s) read by path (${documents.map(d => d.shownAs).join(', ')}) and ${claimsRead} status claim(s) found in them — at least one in each${statesNone.length ? `, except ${statesNone.join(', ')}, which states none and says so (\`STATES_NO_STATUS\`)` : ''}`);
+
+  const lostNote = lostAnchors.join('; ');
+  const excusedNote = [...excused].map(([k, n]) => `${n} by ${k}`).join(', ') || 'none';
+  if (findings.length) {
+    review(NAME_CLAIMS, `${lostNote ? `${lostNote} · ` : ''}${findings.join(' · ')} — read each and decide. A planning document is allowed to be historical: if the sentence records what was true when it was written, mark it so (an \`<em>(…)</em>\` note or a \`class="was"\` passage) rather than rewording history; if it describes today, the DOCUMENT is wrong — the tracker is the reference half and never the other way round`);
+  } else {
+    check(NAME_CLAIMS, true, `${claimsRead} status claim(s) read: ${agreeing} agree with the tracker, and the contradicted ones were historical — excused ${excusedNote}${lostNote ? ` — but ${lostNote}` : ''}; silence is the green state, and this reads nothing but the documents named above`);
   }
 }
 

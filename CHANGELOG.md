@@ -13,6 +13,16 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The sweep checks what the planning documents say about work orders — 2026-09-24
+
+Nothing a teacher sees. The runbooks under `plans/` state work orders' statuses in their bands and
+dependency strips, and until now nothing checked them: a runbook could say a work order was still
+locked, or not started, long after it had landed. The sweep now reads the status claims in those
+documents and compares each one with the tracker, and a claim that disagrees is reported for a
+person to review, with the file, the line and both values. A passage that records what used to be
+true is left alone. The first run found four out-of-date strips in two runbooks, repaired in the same
+sitting. (WO-1.52)
+
 ### The sweep notices if the browser harness stops containing its sections — 2026-09-24
 
 Nothing a teacher sees. Since WO-1.44, a section of `verify-shell.mjs` that throws is contained by
