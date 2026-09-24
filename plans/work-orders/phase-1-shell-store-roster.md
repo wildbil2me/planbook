@@ -5137,3 +5137,37 @@ two of them are wrong in a way the Traps name:
 - [x] Which of the three shapes was taken and why is written at the site that moved, and the comment
       at `attendance.mjs:656` is re-read and either still true or corrected.
 - [x] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+
+---
+
+## WO-1.54 — the line that keeps two strips apart is proved by nothing
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-1.52 ✅ · **Blocks** nothing
+**Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.53 made.
+Booked 2026-09-24 out of WO-1.52's verdict, whose verifier found the surviving mutation and declined
+to widen a work order already verified.)*
+
+**Why it exists.** WO-1.52's correction round gave `wo-sweep.mjs` § 26 a cell reader: when a work
+order's id and its state sit in separate cells of one strip, it walks forward from the id cell to the
+first cell that opens with a status. The walk stops early at another id cell —
+`if (opensWith(cells[j], ID_AT)) break;`, at `tools/wo-sweep.mjs:3302` when this was booked — so that
+one strip's state is never read as the claim of the id before it. **Deleting that line leaves the
+sweep green**, because every strip in every document § 26 reads today holds exactly one id, so the
+case the line exists for never occurs. The day a document puts two ids in one strip, with the state
+only beside the second, the first id inherits it silently.
+
+**Traps**
+
+- **Do not edit a planning document to make the case occur.** Those documents are what § 26 reads,
+  and planting a shape in one to test the checker is the check learning from the documents. Use
+  `--claims-in=<scratch file>`, the route WO-1.52's own reproduction took.
+- **Prove it with the mutation, not by reading it.** The line is only worth a check if deleting it
+  turns something red.
+
+**Acceptance**
+- [ ] A scratch document with two id cells in one strip, the state beside only the second, is read by
+      `node tools/wo-sweep.mjs --claims-in=<file>` as one claim for the second id and none for the first.
+- [ ] With the break line deleted, that same run reports a claim for the first id — the mutation is
+      caught — and the line is restored before anything else is written.
+- [ ] How to re-run it is written where the next reader of § 26 will find it, and `node tools/wo-sweep.mjs`
+      is green with its recorded check count matching `tools/README.md`.
