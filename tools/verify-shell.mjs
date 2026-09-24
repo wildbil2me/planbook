@@ -131,6 +131,7 @@ import { run as ungradedCount } from './verify/ungraded-count.mjs';
 import { run as calendarEvents } from './verify/calendar-events.mjs';
 import { run as calendarDerived } from './verify/calendar-derived.mjs';
 import { run as calendarDrawn } from './verify/calendar-drawn.mjs';
+import { run as calendarOpensOnDay } from './verify/calendar-opens-on-day.mjs';
 import { run as concernList } from './verify/concern-list.mjs';
 import { run as praiseColumn } from './verify/praise-column.mjs';
 import { run as glanceQuiet } from './verify/glance-quiet.mjs';
@@ -341,6 +342,10 @@ const BROWSER_SECTIONS = [
   { file: 'verify/calendar-events.mjs', run: calendarEvents },
   { file: 'verify/calendar-derived.mjs', run: calendarDerived },
   { file: 'verify/calendar-drawn.mjs', run: calendarDrawn },
+  /* WO-6.5, straight after the section whose tap-through line could only prove the SCREEN: this one
+     proves the day. It seeds its own class, reloads, and takes the class back out at its foot, so it
+     depends on its neighbours in neither direction. */
+  { file: 'verify/calendar-opens-on-day.mjs', run: calendarOpensOnDay },
   { file: 'verify/concern-list.mjs', run: concernList },
   { file: 'verify/praise-column.mjs', run: praiseColumn },
   /* AFTER THE THREE SIGNALS SECTIONS AND BEFORE THE RESTORE (WO-6.7). It reads the card's two chips

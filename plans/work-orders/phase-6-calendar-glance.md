@@ -579,7 +579,7 @@ call added in this panel's code is the second answer arriving by the front door.
 
 ## WO-6.5 — A tapped day opens on that day
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-6.3
+**Ship** — · **Status** ✅ DONE — 2026-09-23 · **Size** S · **Depends on** WO-6.3
 
 Tapping a class's recorded day in the calendar opens that class's register — **on today**, not on the
 day that was tapped. Every other item on that screen carries its own subject through the tap: a
@@ -598,22 +598,42 @@ calendar: the register is the screen five classes are marked on every morning, a
 critical path by the working agreements. That is a row of its own, not a rider.
 
 **Acceptance**
-- [ ] Tapping a recorded day in the calendar opens that class's register **on the tapped day**, with
-      that day's marks on screen — not on today, and not on the term's first day.
-- [ ] The date arrives through an argument, not through a module-level variable or a `data-` attribute
+- [x] Tapping a recorded day in the calendar opens that class's register **on the tapped day**, with
+      that day's marks on screen — not on today, and not on the term's first day. *(`tools/verify/
+      calendar-opens-on-day.mjs`, real clicks on meeting chips: landscape, three weekdays back, newest
+      of six columns is the tapped day with Ada `A` and Ben `P`; portrait, a day in the term that
+      ended, the one column is that day with `T` and `E` and that term's tab active. A
+      MutationObserver on the head saw no column for today painted at any point during either tap.)*
+- [x] The date arrives through an argument, not through a module-level variable or a `data-` attribute
       read back off the DOM: `editDay()` (or whatever entry point is added beside it) takes the day it
-      is to open on, so two callers cannot disagree about which day is current.
-- [ ] Opening the register the way it has always been opened — from the class screen, with no date —
+      is to open on, so two callers cannot disagree about which day is current. *(The entry point is
+      `resetRegistry(date)` — the arrival function, beside `editDay()` rather than inside it, because
+      opening on a day is not unlocking one. `openCalendarItem()` → `openClassOn(classId, 'class',
+      item.date)` → `attendance.resetRegistry(date)`. The chip's own `data-calendar-date` is read once
+      by `itemAt()` as the chip's subject, the way `data-calendar-ref` is, and the register never reads
+      any attribute for its day. Dropping the argument at the call site turns four checks red.)*
+- [x] Opening the register the way it has always been opened — from the class screen, with no date —
       still lands on **today**. The new argument is additive and the old path does not go through a
-      date that happens to be right most of the time.
-- [ ] A tapped day that is outside the class's current term still opens correctly, or is refused with
+      date that happens to be right most of the time. *(Tapped day, then the class grid and the card:
+      today, no band, `Today` greyed; tapped day, then the header's class tab: today on the running
+      term. A mutation keeping the last arrival when none is handed turns the first of these red.)*
+- [x] A tapped day that is outside the class's current term still opens correctly, or is refused with
       a message that says which term it is in. Silently landing on some other day is the failure this
-      row exists to remove.
-- [ ] No new state: nothing about *which day the register is on* is stored in the document, in
+      row exists to remove. *(It opens. A day in the term that ended opens with that term selected —
+      the column and the tab agree, and a mutation rolling the term to today's instead turns that
+      check red. A recorded day in NO term opens on itself, and the band says* "— outside every term —
+      between WO-6.5 ended and WO-6.5 running" *in the column head's own words.)*
+- [x] No new state: nothing about *which day the register is on* is stored in the document, in
       `localStorage`, or on `window`. It is an argument and then it is the screen's own business.
-- [ ] `verify-shell.mjs` asserts the tapped day and the tapped day's marks, not just that the register
+      *(Across a tap: the year document byte-identical, the tapped date in no `localStorage` value, no
+      new key on `window`. The register holds it as a seventh view value, `arrival`, beside
+      `editingDay`, reset by every `resetRegistry()` and let go by `Today`, the band's button and a
+      tab on another term.)*
+- [x] `verify-shell.mjs` asserts the tapped day and the tapped day's marks, not just that the register
       opened — the check WO-6.3's could not make, which is why its own line passed on *the source* and
-      this row exists for *the day*.
+      this row exists for *the day*. *(Thirteen checks in `verify/calendar-opens-on-day.mjs`; the run
+      prints `1475 checks · 1475 passed · 0 failed · 0 skipped`, exit 0, 2026-09-23. Five mutations,
+      each red on its own check — `TESTING.md` § WO-6.5.)*
 
 **Traps** — The tempting shortcut is to have the calendar write the date somewhere the register reads
 on the way up. That is the second truth this phase has refused six times over, at one-value scale: two

@@ -1667,7 +1667,7 @@ function stateChip(state, unconfirmed, cover, future, offTerm) {
 function openClass() { return getSelectedClass(); }
 
 /* ── THE VIEW STATE ──
-   Six values, none of them student data and none of them persisted. They are reset on every
+   Seven values, none of them student data and none of them persisted. They are reset on every
    arrival (see resetRegistry): a teacher who left a past column unlocked yesterday should not find
    it still unlocked when she opens the screen with a class walking in.
    (The count said five until WO-2.5 made it seven, and it is six from WO-2.53 — that work order
@@ -1691,6 +1691,13 @@ let filterCode = 'all';    /* 'all' or one of P T A E D */
 let sortBy = 'last';       /* 'last' or 'first' */
 let selectedId = '';       /* the student the KEYBOARD is on, or '' — WO-2.5, and see that block
                               below for why it is a row rather than a cell */
+let arrival = null;        /* the day this screen was OPENED ON from outside it, or null — WO-6.5.
+                              `{ date, classId, termId }`, written by resetRegistry() out of its own
+                              argument and by nothing else, so the calendar that tapped a day never
+                              writes it: the date comes in as an argument and is the screen's own
+                              business from there. The class and the term it was opened in are kept
+                              beside it because the arrival is SPENT the moment either moves — see
+                              anchorDate(), which is where it is read and where it is let go. */
 
 /*
   ────────────────────── THE THREE DERIVED DATES (WO-2.52) ──────────────────────
@@ -1706,7 +1713,9 @@ let selectedId = '';       /* the student the KEYBOARD is on, or '' — WO-2.5, 
   NONE OF THEM IS STORED. They are re-derived on every paint, exactly as forwardLimit() already is,
   so nothing here can go stale across a midnight, a year switch, a restore, or a term-date edit made
   in the dialog on top of this screen. The only state under them is `editingDay`, which is the one
-  ISO date the teacher unlocked with a ✏️ and nothing else.
+  ISO date the teacher unlocked with a ✏️ and nothing else — and, since WO-6.5, `arrival`, the one
+  date the screen was opened on, which resetRegistry() writes from its own argument and
+  anchorDate() lets go of the moment it stops describing the screen.
 
   ON AN ORDINARY DAY ALL THREE ARE TODAY, which is the reading to keep in mind: a class whose term
   dates are typed and whose selected term contains today behaves exactly as it did before this work
@@ -1738,16 +1747,62 @@ let selectedId = '';       /* the student the KEYBOARD is on, or '' — WO-2.5, 
   thing WO-2.50's own Traps line forbids: a locked column you can see is the feature.
 */
 function anchorDate() {
-  const today = todayISO();
   const cls = openClass();
-  if (!cls) return today;
+  if (!cls) return todayISO();
   const term = getSelectedTerm();
+  const home = homeDate(term);
+  /*
+    AND A DAY THE SCREEN WAS OPENED ON BEATS THE CLOCK (WO-6.5). A recorded day tapped on the
+    calendar arrives through resetRegistry()'s argument, and this is the one place it is read: the
+    strip is BUILT FROM it, so portrait's single column is that day — portrait does not page, so
+    paging to it was never available — and landscape's window is the one that day ends. It is where
+    the strip OPENS, which is exactly the question the soft wall above answers, so it is answered
+    before the wall rather than clamped by it: a recorded day outside every term (WO-2.50's decision
+    2 — a record the terms were typed around) opens on itself, and the column says where it is.
+
+    IT IS SPENT, NOT KEPT, and the three tests are what spend it. A class opened some other way (a
+    tab, an archive behind this screen) is not the class it was opened in; a term tapped on the term
+    nav is a teacher choosing where the strip stands, and the arrival must not outvote her — the
+    paintRenderedTotals() guard sees the anchor move and repaints, so a term tap leaves an arrival
+    exactly as it leaves any other off-today window; and an arrival on the day the strip would open
+    on anyway is no arrival at all, which is what keeps a calendar tap on TODAY's chip from reaching
+    a screen that is quietly different from the ordinary one (editDate() below reads this). Cleared
+    here rather than trusted, the way editDate() clears an `editingDay` that has stopped meaning
+    anything — re-derived on every paint, so nothing about it can go stale across a midnight.
+  */
+  if (arrival) {
+    if (arrival.classId === cls.id && arrival.termId === ((term && term.id) || '')
+      && arrival.date !== home) return arrival.date;
+    arrival = null;
+  }
+  return home;
+}
+
+/* THE ANCHOR A TERM GIVES, with no arrival in it — today inside the term, else the term's near
+   edge. Split out of anchorDate() above (WO-6.5) because two things now ask it about two different
+   terms: the anchor about the SELECTED one, and todayLanding() below about the one `Today` would
+   move to. One clamp, asked twice; a second copy of it would be two opinions about where a term's
+   strip stands. */
+function homeDate(term) {
+  const today = todayISO();
   /* An undated term bounds nothing, here as everywhere else in this app — a teacher part way
      through typing her dates must not find the screen jumping somewhere on half of them. */
   if (!termIsDated(term)) return today;
   if (today < term.start) return term.start;
   if (today > term.end) return term.end;
   return today;
+}
+
+/* WHERE `Today` WILL LAND, asked before it is pressed (WO-6.5) — the anchor of the term nearest
+   today, which is the term pageDays('today') moves to, else the selected term's. The band and the
+   pager name the way back, and once a screen can stand on a day it was opened on, the anchor is no
+   longer that way back: "Back to Sep 15" on a button over a strip standing on Sep 15 is the band
+   lying about the one thing it exists to do. Asked ONLY while an arrival stands — every other state
+   keeps naming the anchor, which is WO-2.52's ruling about those sentences. */
+function todayLanding() {
+  const cls = openClass();
+  const near = cls ? termNearest(cls.id, todayISO()) : null;
+  return homeDate(near || getSelectedTerm());
 }
 
 /*
@@ -1792,8 +1847,21 @@ function focusDate() {
 function editDate() {
   const anchor = anchorDate();
   /* The day the anchor opens on its own — nothing when the anchor is behind today, because a past
-     day stays locked until it is unlocked whether or not the strip is standing on it. */
-  const open = anchor >= todayISO() ? anchor : '';
+     day stays locked until it is unlocked whether or not the strip is standing on it.
+
+     AND NOTHING WHEN THE STRIP WAS OPENED ON A DAY, WHICHEVER SIDE OF TODAY IT IS (WO-6.5). A calendar
+     tap is a READING gesture: the teacher asked to see what happened on a day, and the Acceptance is
+     that day and its marks on screen — which a locked column shows in full, glyph, time and note.
+     Unlocking it on arrival would put a write on a past day one tap from a month grid, the mis-tap
+     the one-column-at-a-time ✏ exists to prevent; and a future arrival is refused the same way
+     rather than argued separately, because "a tap on the calendar never unlocks" is a rule a
+     teacher can hold and "it unlocks if the day is ahead" is not. The ✏ on the column is one tap
+     away either way. `arrival` is read AFTER anchorDate(), which is what let it go if it was spent.
+     TODAY IS THE ONE EXCEPTION and it is not an unlock: today has never needed a ✏ on this screen,
+     and an arrival standing on today (reachable only when today is outside every term and carries a
+     record) must not be the one way to make today read-only. */
+  const today = todayISO();
+  const open = (!arrival || anchor === today) && anchor >= today ? anchor : '';
   if (editingDay && editingDay === open) editingDay = null;
   return editingDay || open;
 }
@@ -2669,6 +2737,11 @@ export function pageDays(direction) {
   const before = pageDaysBack;
   let jumped = false;
   if (direction === 'today') {
+    /* AND A DAY THE SCREEN WAS OPENED ON IS LET GO HERE (WO-6.5), FIRST, for the reason the term
+       moves first below: everything after it reads the anchor. A day the teacher arrived on from
+       the calendar is not a day she is pinned to, and this is the button that says so — in
+       portrait it is the only way off it, because portrait does not page. */
+    arrival = null;
     jumped = openTermNearToday(todayISO());
     if (jumped) refreshClassBar();
     pageDaysBack = 0;
@@ -3970,19 +4043,38 @@ function paintBanner(columns) {
      WO-2.52, rather than a comparison of the edit date with today: the edit date is the anchor on
      an unpaged September 2 and that is not a day anybody unlocked, so `on !== today` would have
      announced an edit the teacher never asked for. */
-  if (editingDay || !anchorShown) {
+  if (editingDay || !anchorShown || arrival) {
     /* One column is one date rather than "Tuesday to Tuesday" — the same sentence the pager and
        pageDays() make, and the same reason: portrait draws a one-day window (WO-2.12). */
     const range = columns.length === 1 ? spokenDate(columns[0])
       : spokenDate(columns[columns.length - 1]) + ' to ' + spokenDate(columns[0]);
     /* BAND 2 — the anchor is not among the columns. The way back is the anchor and the button says
        so: "Back to today" over a strip that goes back to September 2 would be the band lying about
-       the one thing it exists to do. */
-    const home = anchor === today ? 'today' : plainDate(anchor);
-    const text = editingDay
+       the one thing it exists to do.
+
+       AND ON A STRIP OPENED ON A DAY (WO-6.5) THE WAY BACK IS WHERE `Today` LANDS, because the
+       anchor there is the tapped day itself, on screen, and "Back to Sep 15" over Sep 15 is the
+       same lie from the other side. ONLY THERE: every other state keeps naming the anchor, which
+       is WO-2.52's ruling about this sentence and is asserted by the term-ended section. */
+    const landing = arrival ? todayLanding() : anchor;
+    const home = landing === today ? 'today' : plainDate(landing);
+    /* BAND 2's THIRD WAY IN (WO-6.5) — the strip was opened on a day that is not today, and is still
+       standing on it. It names THAT day rather than the window's range, because the day is what the
+       teacher tapped; and when the day is outside every term of the class — a record her term dates
+       were typed around, which opens normally (WO-2.50 decision 2) and whose column therefore wears
+       no Off-term chip — this is the one place on screen that says where it is, in the words the
+       column head would have used. */
+    const cls = openClass();
+    const gap = arrival && cls ? outOfTermGap(cls.id, arrival.date) : null;
+    const text = (editingDay
       ? 'You are editing ' + spokenDate(on) + ' — not today.'
-      : 'Showing ' + range + '. ' + (anchor === today ? 'Today' : plainDate(anchor))
-        + ' is not on screen.';
+      : (arrival && anchorShown
+        ? 'Showing ' + spokenDate(arrival.date) + (gap ? ' — ' + offTermSaid(gap) : '') + '. '
+        : 'Showing ' + range + '. ')
+        /* Said only when true: a strip opened on a day AHEAD of today ends on that day and can
+           have today in it, in landscape. */
+        + (columns.indexOf(landing) >= 0 ? ''
+          : (landing === today ? 'Today' : plainDate(landing)) + ' is not on screen.')).trim();
     banner.append(el('span', 'attendance-banner-text', text));
     const back = actionButton('Back to ' + home, 'data-attendance-page', 'today');
     back.classList.add('attendance-banner-btn');
@@ -4361,7 +4453,9 @@ function paintPager(columns) {
   */
   const near = openClass() ? termNearest(openClass().id, todayISO()) : null;
   const wouldJump = !!near && near.id !== ((getSelectedTerm() || {}).id || '');
-  today.disabled = pageDaysBack === 0 && !editingDay && !wouldJump;
+  /* `arrival` is read after visibleColumns() has asked anchorDate(), which let it go if it was
+     spent, so a live `Today` here is always a `Today` with somewhere to go (WO-6.5). */
+  today.disabled = pageDaysBack === 0 && !editingDay && !wouldJump && !arrival;
   /* WHERE "BACK" GOES IS THE ANCHOR (WO-2.52), which is today on every ordinary day and the term's
      own edge when today is outside the selected term. The label stays `Today` — it is the control a
      thumb has learned to find, and on the one screen measured in seconds a button that renames
@@ -4369,7 +4463,10 @@ function paintPager(columns) {
      disabled sentence *You are on …* is unchanged and is now true whenever it is shown: the state
      it used to be able to lie about — you are on the wrong term's edge and this button would fix
      it — is a state in which the button is live. */
-  const anchor = anchorDate();
+  /* WHERE IT LANDS, NOT WHERE THE STRIP STANDS, on a strip opened on a day (WO-6.5) — there the
+     anchor IS the tapped day, and "Back to" it would name the screen she is already on. Every other
+     state names the anchor exactly as before. */
+  const anchor = arrival ? todayLanding() : anchorDate();
   const home = anchor === todayISO() ? 'today' : plainDate(anchor);
   today.title = today.disabled ? 'You are on ' + home
     : many ? 'Back to the week ending ' + home : 'Back to ' + home;
@@ -4742,11 +4839,14 @@ export function renderAttendance() {
     /* The table's own description, and it has to survive a one-column window (WO-2.12): "the last 1
        weekdays are the columns after it" is what the sentence below used to read as in portrait, to
        the one user who cannot see the grid and check. */
+    /* "Starting with today" is asked of the newest column rather than of `pageDaysBack`: since
+       WO-6.5 an unpaged strip can be standing on a day it was opened on, and "0 weekdays back" has
+       not meant "today" since WO-2.52 moved the origin to the anchor. */
     const days = columns.length === 1
-      ? (pageDaysBack === 0 ? 'and today is the one day column after it.'
+      ? (columns[0] === today ? 'and today is the one day column after it.'
         : 'and one day column follows it.')
       : 'and the last ' + columns.length + ' weekdays are the columns after it, most recent first'
-        + (pageDaysBack === 0 ? ', starting with today.' : '.');
+        + (columns[0] === today ? ', starting with today.' : '.');
     caption.textContent = 'Attendance for ' + (cls ? cls.name : 'no class')
       + '. Students are rows. The first column after the name holds hall passes, ' + days;
   }
@@ -4792,13 +4892,19 @@ export function renderAttendance() {
   that is where it was left an hour ago, would cost the seconds this whole design is about. That is
   why this is called on every arrival and NOT on a repaint: a mark made half way down the list must
   not put the screen back to the top of it.
+
+  OR ON THE DAY IT IS HANDED (WO-6.5). A calendar chip about a class's recorded day passes that day,
+  and the screen then opens on it — built from it on the FIRST paint, because this runs before any
+  paint does. There is no second call that moves the strip once it is up: WO-2.17's scar is that a
+  repaint of the screen you are sitting on is not the same as opening on a day, and a flash through
+  today on the way is worse than landing on today would have been.
 */
-export function resetRegistry() {
+export function resetRegistry(date) {
   /*
     AND THE TERM ROLLS OVER HERE, ON ARRIVAL (WO-2.52). WO-2.51 ruled that nothing switches by
     itself and this narrows that ruling rather than deleting it: what it was protecting is a teacher
     part way through entering the last week of Quarter 1, and arrival is the one moment nobody is
-    part way through anything. It goes here, beside the six values every arrival already puts back,
+    part way through anything. It goes here, beside the seven values every arrival already puts back,
     because this is THE arrival function and it has two callers — one place to add it is one place to
     forget it, and two is two. (Seven of them until WO-2.53 took the row panel's student out of the
     view state; counted off the lines below, the way that block's own header says to.)
@@ -4814,7 +4920,7 @@ export function resetRegistry() {
     on those days now, and anchorDate() — which is not touched — puts the strip on that term's near
     edge.
 
-    FIRST, BEFORE THE SIX BELOW, because everything under it and every paint that follows reads the
+    FIRST, BEFORE THE SEVEN BELOW, because everything under it and every paint that follows reads the
     selected term: the anchor is derived from it, the totals are scoped to it, and the strip is
     drawn from the anchor.
 
@@ -4826,7 +4932,30 @@ export function resetRegistry() {
     year the answer changes and nothing at all on every other arrival, which is what the boolean is
     for.
   */
-  if (openTermNearToday(todayISO())) refreshClassBar();
+  /*
+    AND THE DAY IT OPENS ON CAN COME IN AS AN ARGUMENT (WO-6.5), which is the whole of that work
+    order's entry point: src/shell.js hands the day a calendar chip was about, and every other caller
+    hands nothing and lands on today exactly as before — the ordinary path does not go through a
+    date at all, so it cannot go through one that is merely right most of the time.
+
+    THE TERM ROLLS TO THE DAY RATHER THAN TO TODAY WHEN THERE IS ONE. That is the precedence, and
+    this is where it is decided: a recorded day from last quarter has to open with last quarter's tab
+    up, or the column shows October under a term nav, totals and banner describing November — the
+    exact mismatch the paintRenderedTotals() guard exists to prevent. openTermNearToday() takes the
+    date it walks from as an argument for WO-2.54's own reason, so handing it the tapped day is the
+    same walk asked about a different day; a day in no term gets the nearest term, the way today in a
+    gap does, and the day itself is still what the strip is built from (anchorDate()).
+
+    WRITTEN BEFORE IT IS RECORDED, because `arrival.termId` is the term the roll-over just chose.
+    Anything that is not a date — a stale chip, a foreign document — is not an arrival, and the
+    screen opens the ordinary way rather than somewhere a bad string happened to parse to.
+  */
+  const on = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date) && parseISO(date)
+    ? date : '';
+  if (openTermNearToday(on || todayISO())) refreshClassBar();
+  const cls = openClass();
+  arrival = on && cls
+    ? { date: on, classId: cls.id, termId: (getSelectedTerm() || {}).id || '' } : null;
   editingDay = null;
   pageDaysBack = 0;
   searchText = '';

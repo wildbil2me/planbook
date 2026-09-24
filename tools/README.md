@@ -1210,14 +1210,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1451 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1464 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the seventy files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the seventy-one files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -1949,6 +1949,21 @@ the one the work order named: `min-height: 44px` deleted from `.modal-body .doc-
 all three rows at `440x33`**, which is the rows' natural line box with the floor taken away.
 Restored by hand immediately, before a word of this entry; `git diff src/shell.css` is empty and
 `grep -rn MUTATION` over both changed files reads nothing.
+
+**WO-6.5 moved it from 1451 to 1464, and the executed count from 1462 to 1475 — thirteen sites,
+thirteen results.** All thirteen are in one new section, `verify/calendar-opens-on-day.mjs`, run
+directly after `verify/calendar-drawn.mjs`, whose tap-through line could prove a recorded day lands on
+the register and could not prove the day. None is inside a loop and none is a failure arm, so the gap
+between sites and results stays at −11; its one guard for a missing seam is a `skip()` and moves
+nothing. Every tap in it is a real click on a meeting chip reached through the class's own Calendar
+pill and the month pager, and what it reads is the newest column, the marks in it, the term tab over
+it, and every day-column head ADDED during the tap — a MutationObserver's list, which is what makes
+*no flash through today* a measurement rather than a hope. The run prints **1475**:
+`1475 checks · 1475 passed · 0 failed · 0 skipped`, 46,563 lines, 31.6 lines per check, 543s, exit
+0, measured 2026-09-23 on the real clock, on the delivered tree. This work order adds **no control**,
+so it declares no 44px rule. The mutations are tabulated in `TESTING.md` § WO-6.5 — five, over three
+runs, each red on the check written for it, each reverted by copying the pre-mutation file back
+before a word of this entry.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

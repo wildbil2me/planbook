@@ -11217,6 +11217,66 @@ about the window) plus the disk-read line-4 check, which caught the mutation's o
 `reviewDatesIn(` call site. Neither mutated run hung in teardown; no headless `msedge.exe` was left
 behind.
 
+### WO-6.5 — A tapped day opens on that day
+
+**What this adds.** A class's recorded day on the calendar — the meeting chip, taken or dropped in
+the ledger — used to open that class's register on today. It now opens on the day that was tapped.
+The day travels as an argument: `openCalendarItem()` hands the chip's date to `openClassOn()`, which
+hands it to `src/attendance.js`'s `resetRegistry(date)`, the arrival function, before anything paints.
+The register holds it as its own seventh view value, `arrival`, which `anchorDate()` builds the strip
+from, so portrait's single column IS the day and landscape's window ends on it. The term rolls to the
+tapped day's term rather than to today's, so the tab and the column agree. It is let go by `Today`,
+by the band's *Back to today*, by a tab on another term, and by every ordinary arrival.
+`CACHE` is `planbook-shell-v129`.
+
+**The judgment the brief asked for: arrival does not unlock.** A past day opened from the calendar is
+drawn exactly as a past day reached by paging is — every mark on screen, the cells locked, the ✏ on
+its column — and `editDate()` says why at the line: a calendar tap is a reading gesture, and a write
+on a past day one tap from a month grid is the mis-tap the one-column ✏ exists to stop. A day ahead of
+today is refused the same way, so the rule is one sentence. Today itself stays live, because today has
+never needed a ✏.
+
+- [x] Landscape, a recorded day three weekdays back in the running term: the newest of six columns is
+      the tapped day, Ada `A` and Ben `P` in it, the running term's tab active, and no column for today
+      painted at any point during the tap (a MutationObserver on `#attendanceHead`).
+- [x] The day opens read-only — both cells `<span>`, the ✏ on the column — and the band reads
+      *Showing Friday, September 18, 2026. Today is not on screen.* with *Back to today* on it.
+- [x] Across that tap the year document is byte-identical, no `localStorage` value holds the date, and
+      `window` gains no key.
+- [x] A tab on the ended term then moves the strip to that term's last day, and the running term's tab
+      back to today — the arrival does not pin the strip against the term nav.
+- [x] Tapped day, then the class grid and the class card: today, no band, `Today` greyed. Tapped day,
+      then the band's *Back to today*: the week ending today, no band.
+- [x] Portrait, a recorded day in the term that ENDED: one column, that day, `T` and `E`, that term's
+      tab active. `Today` then lands on today on the running term; the header's class tab does too.
+- [x] A recorded day in no term opens on itself with Ben's `A`, and the band names where it is:
+      *— outside every term — between WO-6.5 ended and WO-6.5 running*.
+- [x] 👤 On the iPad, force-quit first: tap a class's recorded day on the calendar (filter to the class,
+      or use the week view) in both orientations, and the register opens on that day with its marks,
+      no flash through today; `Today` gets back. *(The owner, on hardware, 2026-09-23, CACHE v129 —
+      all three readings good.)*
+
+*Desk pass 2026-09-23, on the delivered tree: `verify-shell.mjs` **1475 of 1475, 0 failed, 0
+skipped**, 46,563 lines, 31.6 lines per check, 543s, exit 0 — up from 1462: thirteen literal call sites
+in one new section, `tools/verify/calendar-opens-on-day.mjs`, all firing.* `wo-sweep.mjs` *is 42
+checks, 39 passed, 0 failed, 3 to review — the same three reviews as on the tree this work order
+arrived on.*
+
+**Five mutations over three runs, each red on the check written for it, each reverted by copying the
+pre-mutation file back (`cmp` identical after; `grep -n "MUTATION M"` over both files empty).**
+
+| Run | Mutation | Result | Red |
+|---|---|---|---|
+| A | M1 — `openClassOn(item.classId, 'class')`, the date dropped at the call site | 1470 · 1465 passed · 5 failed | landscape day, no-flash (today's heads painted), read-only, ordinary-way (the tap never left today), and the section's contained throw when the band's button was not there to press — which cost the section's last six checks, hence 1470 |
+| B | M2 — `resetRegistry()` rolls the term to today's instead of the tapped day's | 1475 · 1472 passed · 3 failed (with M4) | portrait: the ended term's day drawn under the running term's tab |
+| B | M4 — `resetRegistry()` unlocks the day it opens on (`editingDay = on`) | (same run) | read-only (cells were buttons, band read *You are editing*), and the no-term day's band sentence |
+| C | M3 — an ordinary arrival keeps the last arrival instead of clearing it | 1475 · 1473 passed · 2 failed (with M5) | ordinary-way after a tapped day |
+| C | M5 — `Today` no longer lets the arrival go | (same run) | the band's *Back to today* from a day in today's own term |
+
+M5 on its own is invisible to the portrait `Today` check, and that is the design rather than a hole:
+there the press moves the term, and a moved term spends the arrival in `anchorDate()` whether or not
+`Today` clears it. The same-term check exists because of that.
+
 ---
 
 

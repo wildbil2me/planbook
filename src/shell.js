@@ -1524,12 +1524,16 @@ function showTemplates() {
   mode at all, because the chip that carries it is not drawn — src/calendar-derived.js returns no
   review while the mode is on, and there is no other door here.
 
-  WHAT IT DOES NOT DO, said out loud so the gap is a decision rather than an oversight: a taken or
-  dropped class day opens that class's registry on TODAY rather than on the day that was tapped.
-  src/attendance.js's editDay() unlocks a column inside the strip that screen is already showing,
-  and there is no entry point that anchors the strip on a date from outside it. Opening the ledger
-  the chip is a fact about is the honest half of the answer; anchoring it is a follow-up with an
-  owner (src/attendance.js) rather than something to improvise from here.
+  A CLASS'S DAY OPENS ON THAT DAY (WO-6.5). This paragraph used to record the gap — the registry
+  opened on TODAY, because nothing there could be anchored on a date from outside it — and the gap
+  is gone the only way it could honestly go: the chip's date is handed to openClassOn() as an
+  argument and from there to src/attendance.js's resetRegistry(), the one arrival function, which
+  builds the strip from it before the first paint. Nothing is written on the way — not to the
+  document, not to a preference, not to a `data-` attribute the register reads back — so there is
+  exactly one place that knows which day the register is on, and it is the register. The day opens
+  READ-ONLY when it is not today: a calendar tap is a reading gesture, and the ✏ on the column is
+  where a write starts, exactly as it is for a day reached by paging (src/attendance.js's
+  editDate() carries the argument).
 */
 function openCalendarItem(button) {
   const item = calendarView.itemAt(button);
@@ -1559,7 +1563,7 @@ function openCalendarItem(button) {
   }
   if (item.kind === calendarDerived.MEETING_STATE) {
     if (item.ref) { daysOff.openDaysOff(button); return; }
-    openClassOn(item.classId, 'class');
+    openClassOn(item.classId, 'class', item.date);
   }
 }
 
@@ -1593,11 +1597,16 @@ function openScoreColumn(button) {
   Answers false for a class that is not there — a chip can outlive the class it names by exactly as
   long as it takes to archive one behind this screen — and the caller then opens nothing rather than
   navigating somewhere blank.
+
+  `date` IS WO-6.5's, and additive: the day the registry is to open on, handed straight through to
+  resetRegistry() — the arrival — so it is in place before showClassScreen() paints anything, and
+  there is one paint, on the right day. Every caller that names no date lands on today, as before;
+  the other screens ignore it, because resetRegistry() is the registry's reset and nothing else's.
 */
-function openClassOn(classId, screen) {
+function openClassOn(classId, screen, date) {
   if (!classId || !classes.getActiveClasses().some((c) => c.id === classId)) return false;
   classes.selectClass(classId);
-  attendance.resetRegistry();
+  attendance.resetRegistry(date);
   home.refreshHome();
   showClassScreen(screen);
   return true;
