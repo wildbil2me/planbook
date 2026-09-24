@@ -2917,6 +2917,161 @@ function commentLines(file) {
   }
 }
 
+/* ══════ 25. the harness still routes every section through its containment ══════
+   WO-1.45, and it sits ABOVE § 22 for § 23's reason: § 22's census has to be the last thing that
+   pushes a result. The number is the order this section was written in.
+
+   WHAT IT IS FOR. WO-1.44 put every section of `tools/verify-shell.mjs` inside `runSection()`, so a
+   section that throws costs its own checks rather than every check after it — on 2026-08-31 one
+   missing selector took 766 checks with it and no summary line printed. The containment is visible
+   ONLY when something throws, which is the one condition nobody runs on purpose: restore the bare
+   `for (const s of BROWSER_SECTIONS) await s.run(h)` and a healthy run still prints
+   `1284 · 1284 · 0 · 0`, because a green run is exactly what a contained harness and an uncontained
+   one both produce. Until this section nothing in the repository could tell them apart.
+
+   **WHAT THIS IS: A TRIPWIRE ON THE SHAPE, NOT A PROOF OF THE BEHAVIOUR.** It is stronger than a grep
+   for `runSection(` — which catches only the call being deleted — and it is still a reading of text.
+   It asserts, from `tools/verify-shell.mjs` and nothing else:
+     1. ONE top-level `async function runSection(`, with a body this check can bound by brace count.
+     2. BOTH `STATIC_SECTIONS` and `BROWSER_SECTIONS` appear on a code line that also calls
+        `runSection(` — the static half is covered too, because a throw there loses all 1,284 checks
+        rather than 766 and the argument for the fence is the same one a size larger.
+     3. NO `.run(` call anywhere in the file outside that body. This is the clause the bare loop
+        trips, and it also trips `forEach(s => s.run(h))`, a `Promise.all` over `.map(s => s.run(h))`,
+        or a second, uncontained loop left beside the contained one.
+     4. INSIDE the body, exactly one `.run(` call, AWAITED, after a `try {` and before a `catch` — an
+        un-awaited call returns a promise whose rejection lands nowhere near the catch.
+     5. THE CATCH records a result: a `check(` whose arguments include a literal `false`, somewhere
+        between the `catch` and the end of the body, with no `return` in front of it. A catch that
+        swallowed the throw, recorded it as a pass, or returned before recording it, fails here.
+        (The `return` rule is textual, not a control-flow reading: a `return` inside a nested
+        callback ahead of the record would redden this falsely. None exists; if one arrives, this is
+        the clause to re-cut.)
+     6. NO `throw` in the body — a rethrow is the uncontained harness spelled with extra steps.
+
+   **WHAT A GREEN RESULT HERE DOES NOT MEAN, in terms specific enough to stop anyone reading it as
+   "the containment works":**
+     - It does not see whether a throw REACHES the catch. A section that starts a promise it does not
+       await, or throws from inside a CDP event callback, escapes `try` at runtime whatever the text
+       says; this reads the shape of the call site, never the control flow of a section.
+     - It does not see WHAT the catch records. `results.length - before`, the file name, the stack —
+       a catch that pushed `false` with a wrong count or a misleading detail passes every clause, and
+       so does a `check(…, false, …)` sitting in a branch that never runs (`if (0) check(…)`).
+     - It does not see `recoverPage()` or the stop-and-name block after the browser loop. A recovery
+       that always answers `true` over a dead page, a browser loop handed a `null` recover, or a
+       stop block that names the wrong sections, all pass.
+     - It does not see an ALIASED call. `const go = s.run; await go(h)` or a destructured `run(h)`
+       has no `.run(` in it and slips past clause 3.
+     - It does not see the exit code or the summary line — whether a contained FAIL still turns the
+       run red is `verify-shell.mjs`'s own business and this reads none of it.
+   The one thing that proves the containment is a run of `verify-shell.mjs` with a throw PLANTED in a
+   section, which WO-1.44 took once (`tools/README.md` § the WO-1.44 planted round: 1260 · 1248 · 12
+   failed, exit 1, summary reached). That run is not standing: **anybody who edits `runSection()`'s
+   body, `recoverPage()` or the browser loop owes it again**, and a green § 25 does not discharge it.
+   It stays out of this file on purpose — a section here that launched a browser would have crossed
+   the line the two tools exist either side of (`plans/verification-tooling.md`).
+
+   IT IS A FAIL AND NOT A REVIEW, § 22's call and for § 22's reason: a `.run(` outside the body is
+   present or it is not, and nobody is being asked to decide anything.
+
+   THE BODY IS BOUNDED BY BRACE COUNTING FROM ITS DECLARATION, over code lines only — § 23's method,
+   and sound here for § 23's reason: this repo writes top-level functions with the closing brace in
+   column 0, the body holds no brace inside a string, and a body that never closes FAILs rather than
+   being read as running to the end of the file. It is not a parser and does not need to be.
+
+   EVERY ANCHOR FAILS LOUDLY WHEN IT MOVES, because each clause above except 1 is partly an absence,
+   and an absence is what a pattern that has stopped matching also reports. Rename `runSection`, the
+   two lists or the harness's path and this goes red saying which; re-point it here. */
+
+{
+  const NAME = 'verify-shell.mjs routes both section lists through runSection(), and its catch has the shape of the containment';
+  const harnessPath = path.join(REPO, 'tools', 'verify-shell.mjs');
+  if (!fs.existsSync(harnessPath)) {
+    check(NAME, false, 'tools/verify-shell.mjs is not where this check expects it — nothing is watching whether a section that throws is still contained. Restore the file or point this check at the new path.');
+  } else {
+    const lines = fs.readFileSync(harnessPath, 'utf8').split('\n');
+    const prose = commentLines(harnessPath);
+    const code = (i) => (prose.has(i + 1) ? '' : lines[i]);
+    const at = (i) => `tools/verify-shell.mjs:${i + 1}`;
+    const faults = [];
+
+    // Clause 1 — the function, and the bounds of its body.
+    const decls = [];
+    lines.forEach((l, i) => { if (/^async\s+function\s+runSection\s*\(/.test(code(i))) decls.push(i); });
+    let from = -1;
+    let to = -1;
+    if (decls.length !== 1) {
+      faults.push(decls.length
+        ? `${decls.length} top-level \`async function runSection(\` declarations (${decls.map(at).join(', ')}) — this check bounds one body and cannot say which of these the sections run through`
+        : 'no top-level `async function runSection(` in tools/verify-shell.mjs — the containment WO-1.44 built is gone or renamed, and every clause below is now reading nothing. Restore it, or re-point tools/wo-sweep.mjs § 25 if it was renamed');
+    } else {
+      let depth = 0;
+      for (let i = decls[0]; i < lines.length; i++) {
+        for (const ch of code(i)) {
+          if (ch === '{') depth++;
+          else if (ch === '}') depth--;
+        }
+        if (depth <= 0 && i > decls[0]) { from = decls[0]; to = i; break; }
+      }
+      if (to < 0) faults.push(`\`runSection()\` opens at ${at(decls[0])} and its body never closes — the brace count in tools/wo-sweep.mjs § 25 ran off the end of the file`);
+    }
+    const inBody = (i) => from >= 0 && i > from && i <= to;
+
+    // Clause 2 — both lists handed to it. The declarations are required first, so a renamed list
+    // reads as a moved anchor rather than as "nothing routes it".
+    for (const list of ['STATIC_SECTIONS', 'BROWSER_SECTIONS']) {
+      if (!lines.some((l, i) => new RegExp(`^const\\s+${list}\\s*=\\s*\\[`).test(code(i)))) {
+        faults.push(`no \`const ${list} = [\` in tools/verify-shell.mjs — the run order this check follows has been renamed or removed. Re-point tools/wo-sweep.mjs § 25`);
+        continue;
+      }
+      const routed = lines.some((l, i) => !inBody(i) && i !== from
+        && new RegExp(`\\b${list}\\b`).test(code(i)) && /(^|[^A-Za-z0-9_$.])runSection\s*\(/.test(code(i)));
+      if (!routed) faults.push(`no code line in tools/verify-shell.mjs names \`${list}\` and calls \`runSection(\` — the ${list === 'BROWSER_SECTIONS' ? 'browser' : 'static'} half of the run is no longer routed through the containment, so a section there that throws takes every check after it with it and no summary line prints (WO-1.44, 2026-08-31: 766 checks)`);
+    }
+
+    // Clause 3 — nothing calls a section's run outside the body.
+    const RUN = /\.run\s*\(/;
+    const bypass = [];
+    lines.forEach((l, i) => {
+      if (inBody(i) || !RUN.test(code(i))) return;
+      bypass.push({ file: 'tools/verify-shell.mjs', line: i + 1, text: code(i).trim() });
+    });
+    if (bypass.length) faults.push(`${report(bypass)} — a \`.run(\` call outside \`runSection()\`${from >= 0 ? ` (${at(from)}-${to + 1})` : ''}. A section run from here is uncontained: if it throws, the process dies there, every check after it is lost, and the summary that would say so never prints — while a healthy run of the same tree prints the same green total. Route it through \`runSection()\``);
+
+    // Clauses 4 to 6 — the body's shape.
+    if (to >= 0) {
+      const body = [];
+      for (let i = from + 1; i < to; i++) if (code(i)) body.push({ i, text: code(i) });
+      const tryAt = body.findIndex(r => /\btry\s*\{/.test(r.text));
+      const catchAt = body.findIndex(r => /\bcatch\b/.test(r.text));
+      const runs = body.map((r, k) => ({ ...r, k })).filter(r => RUN.test(r.text));
+      if (runs.length !== 1) {
+        faults.push(`${runs.length} \`.run(\` call(s) inside \`runSection()\` at ${at(from)}-${to + 1} — the containment wraps exactly one section's run, once`);
+      } else {
+        const run = runs[0];
+        if (!/\bawait\s+[A-Za-z_$][\w$]*\.run\s*\(/.test(run.text)) faults.push(`${at(run.i)} "${run.text.trim()}" is not awaited — a section's run returns a promise, and a rejection from an un-awaited one lands nowhere near the \`catch\`, so the throw WO-1.44 contained escapes it`);
+        if (tryAt < 0 || catchAt < 0 || !(tryAt < run.k && run.k < catchAt)) faults.push(`the \`.run(\` at ${at(run.i)} is not between a \`try {\` and a \`catch\` inside \`runSection()\`${tryAt < 0 ? ' — there is no `try {` in the body' : ''}${catchAt < 0 ? ' — there is no `catch` in the body' : ''}. That is the whole of the containment`);
+      }
+      if (catchAt >= 0) {
+        const handler = body.slice(catchAt).map(r => r.text).join('\n');
+        // Only the text after the word `catch` counts, so the `}` closing the try on the same line
+        // is not read as part of the handler.
+        const afterCatch = handler.slice(handler.search(/\bcatch\b/));
+        const recordAt = afterCatch.search(/(^|[^A-Za-z0-9_$.])check\s*\([^;]*?,\s*false\s*,/);
+        if (recordAt < 0) faults.push(`the \`catch\` in \`runSection()\` at ${at(body[catchAt].i)} holds no \`check(\` with a literal \`false\` — a throw that is caught and not recorded as a FAIL is a section that quietly did not happen, the silent-skip lie the head of verify-shell.mjs says the containment was shaped to refuse`);
+        else if (/\breturn\b/.test(afterCatch.slice(0, recordAt))) faults.push(`the \`catch\` in \`runSection()\` at ${at(body[catchAt].i)} can \`return\` before it reaches its \`check(…, false, …)\` — an early return there swallows the throw exactly as a catch with no record in it would`);
+      }
+      const rethrow = body.filter(r => /\bthrow\b/.test(r.text))
+        .map(r => ({ file: 'tools/verify-shell.mjs', line: r.i + 1, text: r.text.trim() }));
+      if (rethrow.length) faults.push(`${report(rethrow)} — a \`throw\` inside \`runSection()\`. Rethrowing from the containment is the uncontained harness with a detour`);
+    }
+
+    check(NAME, !faults.length,
+      faults.length ? faults.join(' · ')
+        : `runSection() at ${at(from)}-${to + 1} awaits the one \`.run(\` in the file between a \`try\` and a \`catch\` that records a \`check(…, false, …)\` with no \`return\` ahead of it and rethrows nothing, and both STATIC_SECTIONS and BROWSER_SECTIONS are handed to it — the SHAPE of WO-1.44's containment. Not proof that it works: whether a throw reaches that catch, what the FAIL records, and whether recoverPage() tells the truth are read by no grep, and only a verify-shell.mjs run with a planted throw shows them (see § 25's banner)`);
+  }
+}
+
 /* ══════ 22. the count of checks in tools/README.md is the number this run emits ══════
    WO-1.42. § 11 holds `tools/README.md`'s figures for `verify-shell.mjs` against what the tree
    actually contains. This is that census turned on the sweep itself. The same file records how many

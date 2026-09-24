@@ -13,6 +13,16 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The sweep notices if the browser harness stops containing its sections — 2026-09-24
+
+Nothing a teacher sees. Since WO-1.44, a section of `verify-shell.mjs` that throws is contained by
+`runSection()` instead of taking the rest of the run with it — but only as long as every section is
+actually run through it, and a green run cannot tell. The sweep now fails if the harness goes back to
+calling sections directly. It checks the shape of the loop, not that containment works: a planted
+throw is still the only proof of that, and whoever edits `runSection()`, `recoverPage()` or the loop
+owes one. The paragraph in `tools/README.md` that still said nothing wraps a section was rewritten in
+the same sitting. (WO-1.45)
+
 ### The fence between paired pipeline files says what it is actually checking — 2026-09-23
 
 Nothing a teacher sees. The sweep's check that holds the pipeline's paired files to each other now

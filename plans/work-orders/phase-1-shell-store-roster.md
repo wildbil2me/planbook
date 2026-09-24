@@ -4300,7 +4300,7 @@ weekday line is third and may slide past 2026-09-02 without costing anything.
 
 ## WO-1.45 — a green run cannot say whether the containment is still there
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.44 ✅ · **Blocks** nothing;
+**Ship** — · **Status** ✅ DONE — 2026-09-24 · **Size** S · **Depends on** WO-1.44 ✅ · **Blocks** nothing;
 it protects every reading of `verify-shell.mjs` after it
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.44
 made. Booked 2026-08-31, owner-directed, on WO-1.44's verifier's first proposal.)*
@@ -4339,14 +4339,14 @@ describe the containment, and not one of them fails a build.
   WO-1.42: change that one number and change nothing inside the tool. The sweep will tell you.
 
 **Acceptance**
-- [ ] `wo-sweep.mjs` goes **red** when `verify-shell.mjs` no longer routes `BROWSER_SECTIONS` through
+- [x] `wo-sweep.mjs` goes **red** when `verify-shell.mjs` no longer routes `BROWSER_SECTIONS` through
       `runSection()` — driven against a planted restoration of the bare loop, reverted after.
-- [ ] What the check does **not** prove is written down where a reader of a green run will meet it —
+- [x] What the check does **not** prove is written down where a reader of a green run will meet it —
       in the section comment and in `tools/README.md` — in terms specific enough that nobody reads it
       as proof the containment works.
-- [ ] The check stays inside the grep half: no browser, no `verify-shell.mjs` invocation, no section
+- [x] The check stays inside the grep half: no browser, no `verify-shell.mjs` invocation, no section
       that cannot answer from the file's text.
-- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree, with the count in
+- [x] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree, with the count in
       `tools/README.md` moved to match.
 
 ---
