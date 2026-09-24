@@ -1581,6 +1581,63 @@ Acceptance line of WO-1.42 asks for it**: *the fourth names* `wo-sweep.mjs` *and
 
 ---
 
+### WO-1.43 — a broken excuse reads as a contradiction, and a vanished claim reads as green
+
+**What this changes.** Nothing a teacher sees. `src/`, `index.html`, `sw.js` and every stylesheet are
+byte-identical to HEAD, and no `CACHE` bump is owed. `tools/wo-sweep.mjs` § 21 changes **two
+messages and one tally**: the `REVIEW` branch now says when a named passage was not found — and
+which claims were confined to it — where only the green branch used to; and the green detail line
+counts occurrences **per claim** (`by claim #1 0, #2 5, #3 2`) where it used to print one total.
+Claims are labelled by their place in the list, the numbering § 21's comments already use, never by
+their text. No check was added or removed, so the count stays **42**. Which occurrences are found and
+which are excused is WO-1.40's walk unchanged: the only line inside the loop that moved is the
+counter.
+
+**The clean tree already shows what the second message is for.** Pair 1 reads `#1 0` today —
+`relay the report in full`, the single-return instruction claim 1 was written against, is no longer
+in `wo.md` at all, so claim 1 is checking nothing. The old line said `7 occurrence(s)`. It stays
+green, which is the ruling: absent is green, and the number is printed without being called wrong.
+
+Every fixture below was driven by one script over **two copies of the tree in the session
+scratchpad** — one with this change, one with `git show HEAD:tools/wo-sweep.mjs` — planting each
+fixture into both and comparing the exit code, the summary line, the status of both pairs' four
+checks and every `file:line` a finding cites. **21 fixtures, 0 differences between the two engines**
+on any of those. The tracked tree was only ever read. *(The copies are not git repositories, so two
+git-backed checks outside § 21 report `REVIEW` there — `42 · 37 · 0 · 5` on a clean copy against
+`42 · 39 · 0 · 3` in the repo — identically under both engines.)*
+
+- [x] **A lost region is named on the `REVIEW` branch, per pair.** Pair 1: `**Second invocation`
+      renamed and F8a's sentence planted into what was the verifier's passage → `REVIEW` opening *"the
+      passage "the verifier's stop" was not found, so every occurrence of claim #2, #3 was read as
+      unscoped — read a finding for a claim named here as the excuse breaking before reading it as
+      the files disagreeing, and restore the passage in .claude/commands/wo.md or re-point the region
+      in § 21 · .claude/commands/wo.md:45 …"*. Pair 2: `The date may still **ask**` reworded to
+      `**prompt**` → `REVIEW` opening *"the passage "the past-due exception" was not found, so every
+      occurrence of claim #3 was read as unscoped — …"* then `AGENTS.md:51`. HEAD's engine, same
+      plants: the same `REVIEW`s at the same lines with no word about the passage.
+- [x] **Per-claim counts, a zero visible.** Every `localStorage` in `AGENTS.md` replaced with
+      `browser storage` → `by claim #1 7, #2 0, #3 5, #4 5`. HEAD's engine on the same plant:
+      `17 occurrence(s)`, the zero invisible.
+- [x] **A zero stays green.** That same plant: `PASS`, `42 · 37 · 0 · 5`, exit 0 — identical to the
+      clean copy under both engines. Pair 1's live `#1 0` is `PASS` in the repo itself.
+- [x] **WO-1.40's and WO-1.41's fixtures re-run, not reasoned about.** F1 (historical `wo.md` from
+      `63c5e00`) `REVIEW`, all three claims at `:23`, `:24`, `:25` against `:346`, `:399`, `:408`, now
+      prefixed by the lost-passage clause because that file has no *Second invocation*. F2 `REVIEW` at
+      `:35`. F3 and F4 `PASS`, F4 at `#2 3, #3 1` (WO-1.40's "4 occurrences"). F5, F6, F7 `FAIL`, exit
+      1. F8a `PASS`, F8b `REVIEW` at `:37`. F9 `PASS`. F10a `PASS`, F10b `REVIEW`. WO-1.41's four
+      plants: `REVIEW` naming all four claims. The past-due plant inside the region `PASS`. The
+      asymmetry fixture `PASS`. The 👤 anchor reworded → `FAIL`, exit 1. *F2 was re-staged: flipping
+      only the bold words leaves "there is nothing to mark one from" in the same sentence, which reads
+      as a denial under both engines, so the fixture replaces the whole sentence. WO-1.41's four
+      plants were planted side by side, so their line numbers differ from that entry's.*
+- [x] `node tools/wo-sweep.mjs` is **`42 checks · 39 passed · 0 failed · 3 to review`**, exit 0 —
+      identical to the run before the change. `node tools/wo-gate.mjs --audit` is `PASS`, exit 0.
+
+*No 👤 line and no 📆 line. Nothing here renders and nothing reaches a device, so
+`verify-shell.mjs` was not run: it never loads `tools/wo-sweep.mjs`.*
+
+---
+
 ### WO-1.44 — the browser harness dies at check 518 and 766 checks never run
 
 **What this changes.** Nothing a teacher sees, and nothing a device gets. `src/`, `index.html`,

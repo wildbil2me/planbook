@@ -4085,7 +4085,7 @@ is documented by hand.*
 
 ## WO-1.43 — a broken excuse reads as a contradiction, and a vanished claim reads as green
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.41 ✅ · **Blocks** nothing;
+**Ship** — · **Status** ✅ DONE — 2026-09-23 · **Size** S · **Depends on** WO-1.41 ✅ · **Blocks** nothing;
 it protects every reading of § 21 after it
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.42
 made. Booked 2026-08-30, owner-directed, on WO-1.41's verifier's two proposals, taken as one row
@@ -4130,16 +4130,16 @@ rewritten most.
   fixtures rather than reasoning that a message change is safe.
 
 **Acceptance**
-- [ ] A pair whose `confinedTo` region cannot be found reports that fact in the **`REVIEW`** branch
+- [x] A pair whose `confinedTo` region cannot be found reports that fact in the **`REVIEW`** branch
       as well as the green one — driven against a planted missing region, with the message read.
-- [ ] The green detail line reports occurrences **per claim** rather than as one total, and a claim
+- [x] The green detail line reports occurrences **per claim** rather than as one total, and a claim
       contributing zero is visible in it — driven against a compared file with one claim's token
       removed.
-- [ ] A zero-occurrence claim leaves the check **green**: no `FAIL`, no `REVIEW`, and the exit code
+- [x] A zero-occurrence claim leaves the check **green**: no `FAIL`, no `REVIEW`, and the exit code
       is unchanged.
-- [ ] Both existing pairs still behave as WO-1.40 and WO-1.41 left them, proved by re-running their
+- [x] Both existing pairs still behave as WO-1.40 and WO-1.41 left them, proved by re-running their
       fixtures rather than by inspection.
-- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+- [x] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
 
 ---
 

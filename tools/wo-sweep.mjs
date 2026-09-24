@@ -2590,10 +2590,14 @@ function commentLines(file) {
     const retrospect = [...againstText.matchAll(/^\*\([\s\S]*?\)\*$/gm)].map(m => [m.index, m.index + m[0].length]);
 
     const found = [];
-    let occurrences = 0;
+    // Counted PER CLAIM, not as one total (WO-1.43). A claim whose token has been reworded out of
+    // `against` contributes zero and a pair-wide sum still reads healthy — 18 across four claims and
+    // 18 across three are the same number. The tally is the only thing in this loop that moved:
+    // what is found and what is excused is WO-1.40's walk, byte for byte.
+    const occurrences = new Map(pair.claims.map(c => [c, 0]));
     for (const c of pair.claims) {
       for (const m of againstText.matchAll(wrapped(c.token))) {
-        occurrences++;
+        occurrences.set(c, occurrences.get(c) + 1);
         if (within(retrospect, m.index)) continue;
         const sentence = sentenceAround(againstText, m.index);
         if (c.denies && c.denies.test(sentence)) continue;
@@ -2607,10 +2611,25 @@ function commentLines(file) {
     }
 
     const lost = [...regions].filter(([, v]) => !v).map(([k]) => k);
+    // One sentence, said on BOTH branches (WO-1.43). It was green-only, and the green branch is the
+    // one nobody acts on: a lost region reads every occurrence it held as unscoped, so on the REVIEW
+    // branch each of them arrives as a contradiction, and a reader sent to compare two files that
+    // agree had no hint that the excuse is what broke. Message only — the walk above already treats
+    // a lost region correctly, as no region at all. It names the claims confined to the passage,
+    // because a pair can report a finding for an unconfined claim in the same run and that one is
+    // not the excuse breaking.
+    const confinedClaims = name => pair.claims.map((c, i) => (c.confinedTo === name ? `#${i + 1}` : null)).filter(Boolean).join(', ') || 'none';
+    const lostNote = lost.map(name => `the passage "${name}" was not found, so every occurrence of claim ${confinedClaims(name)} was read as unscoped`).join('; ');
+    // Claims are labelled by their 1-based place in the list, the numbering this section's comments
+    // already use ("Claim 1 names one instruction", "Claim 4 is the only one…"), and never by their
+    // text: a person reads this under a summary line. A zero is printed like any other count and
+    // asserts nothing — absent is green, per the allowlist — so it is visible without being called
+    // wrong, and whether a claim checking nothing is fine is left to whoever reads it.
+    const perClaim = pair.claims.map((c, i) => `#${i + 1} ${occurrences.get(c)}`).join(', ');
     if (found.length) {
-      review(compareName, `${found.map(f => `${pair.against}:${f.at} "${clip(f.sentence)}" against ${pair.reference}:${settledAt.get(f.claim) || '?'}, which settles that ${f.claim.claim}`).join(' · ')} — read both and decide. This is evidence, not a verdict: the two files are SUPPOSED to differ, and only a contradiction about ${pair.subject} is a defect. If it is one, the caller's file is the one to change`);
+      review(compareName, `${lostNote ? `${lostNote} — read a finding for a claim named here as the excuse breaking before reading it as the files disagreeing, and restore the passage in ${pair.against} or re-point the region in § 21 · ` : ''}${found.map(f => `${pair.against}:${f.at} "${clip(f.sentence)}" against ${pair.reference}:${settledAt.get(f.claim) || '?'}, which settles that ${f.claim.claim}`).join(' · ')} — read both and decide. This is evidence, not a verdict: the two files are SUPPOSED to differ, and only a contradiction about ${pair.subject} is a defect. If it is one, the caller's file is the one to change`);
     } else {
-      check(compareName, true, `${pair.claims.length} shared claim(s) about ${pair.subject}, ${occurrences} occurrence(s) read in ${pair.against}, none of them an instruction ${pair.reference} forbids${lost.length ? ` — but the passage "${lost.join('", "')}" was not found, so every occurrence was read as unscoped` : ''}; ${retrospect.length} italic parenthetical(s) and ${(pair.regions || []).length - lost.length} named passage(s) excluded, and silence is the green state — this pair may tell less than the other, never the opposite`);
+      check(compareName, true, `${pair.claims.length} shared claim(s) about ${pair.subject}, occurrence(s) read in ${pair.against} by claim ${perClaim}, none of them an instruction ${pair.reference} forbids${lostNote ? ` — but ${lostNote}` : ''}; ${retrospect.length} italic parenthetical(s) and ${(pair.regions || []).length - lost.length} named passage(s) excluded, and silence is the green state — this pair may tell less than the other, never the opposite`);
     }
   }
 }

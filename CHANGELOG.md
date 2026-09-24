@@ -13,6 +13,15 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The fence between paired pipeline files says what it is actually checking — 2026-09-23
+
+Nothing a teacher sees. The sweep's check that holds the pipeline's paired files to each other now
+says when an excuse has lost the passage it depends on, including on a result a person is asked to
+review, where it used to say nothing. It also counts occurrences per claim instead of in one total,
+so a claim that has stopped checking anything shows as a zero. A zero stays green. The first run
+found one: `.claude/commands/wo.md` no longer contains the phrase its first claim looks for.
+(WO-1.43)
+
 ### A tapped day on the calendar opens on that day — 2026-09-23
 
 Tapping a class's recorded day on the calendar opens that class's register on that day, with its
