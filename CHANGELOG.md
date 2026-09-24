@@ -13,6 +13,14 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A tapped day on the calendar opens on that day — 2026-09-23
+
+Tapping a class's recorded day on the calendar opens that class's register on that day, with its
+marks, instead of on today. It lands there directly, with no flash of today on the way. The day opens
+read-only, as any past day does, and `Today` brings you back. A day in a term that has ended opens
+with that term selected; a day between terms opens on itself, and the band says where it is. Opening
+the register any other way still lands on today. (WO-6.5)
+
 ### The three document links in About are measured — 2026-09-22
 
 Nothing a teacher sees. The About modal's three document rows — the privacy policy, the guide for
