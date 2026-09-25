@@ -13,6 +13,18 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Starting a work order shows how much of the five-hour usage window is spent — 2026-09-25
+
+Nothing a teacher sees. Dispatches have been killed by the account's five-hour usage limit several
+times, and the only warning was a guess made by feel. `node tools/wo-cost.mjs --window` now adds up
+the usage recorded in session transcripts over the last five hours, across every project on the
+machine rather than just this one. It prints that total beside the typical size of a dispatch and the
+sizes at which dispatches have died. The figure is labelled an estimate wherever it prints, because
+it is built from transcripts rather than from the limit itself. A missing or empty transcript folder
+is an error, not a reading of zero, so "no data" and "nothing used" look different.
+`--swapped` records an account swap so the count starts over. `wo-gate.mjs --start` now prints the
+line too, as advice only: a start is never refused on it. (WO-1.39)
+
 ### The send flow's other block heading is checked — 2026-09-24
 
 Nothing a teacher sees. When a draft can't be sent, the strip above it has two headings: one for an
