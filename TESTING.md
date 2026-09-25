@@ -12399,22 +12399,24 @@ after `verify/policy-url.mjs`), and one section in `tools/verify-deploy.mjs`.
 
 *Evidence for the Acceptance list in `plans/work-orders/phase-8-packaging.md` § WO-8.15.*
 
-- [ ] **Acceptance 1 — the page, its links, and what it does not carry.** From the run, verbatim:
+- [x] **Acceptance 1 — the page, its links, and what it does not carry.** From the run, verbatim:
       `SHELL parsed to 72 entr(ies), matching about.html = []` · `<script> tags = 0, manifest link =
       false, serviceWorker mentioned = false` · `1 link(s) to the policy, 2 to the app, out of 6
       link(s)`.
-- [ ] **Acceptance 2 — no comment escapes onto the page.** `<!-- x2 vs --> x2, visible text 2896
+- [x] **Acceptance 2 — no comment escapes onto the page.** `<!-- x2 vs --> x2, visible text 2896
       chars, markers found in it = []`.
-- [ ] **Acceptance 3 — a worker-controlled navigation gets the front page, over the network.**
+- [x] **Acceptance 3 — a worker-controlled navigation gets the front page, over the network.**
       `title = "About Planbook", h1 = "Planbook", #homeView present = false`, and the static server
       saw the request for `/about.html` inside the navigation's window; the precondition check reads
       the page as controlled by `./sw.js`.
-- [ ] **Acceptance 4 — live.** Owed to the push. Measured before it, correctly red:
+- [x] **Acceptance 4 — live.** Green after `8b188bf` deployed, 2026-09-25: `19 checks · 19 passed`,
+      `11285 B · titled About Planbook = true · links the policy = true`. Measured before it, correctly red:
       `19 checks · 18 passed · 1 failed`, the red reading `267560 B · titled About Planbook = false
       · … it IS the app shell` — this host answering an unknown path with the gradebook at 200,
       which is the exact reason the check reads the document rather than the status.
-- [ ] **Acceptance 5 — 👤 the owner, cold, on the iPad and the laptop**, install steps included.
-- [ ] **Acceptance 6 — both runbooks name `/about`.** See the work order's own line.
+- [x] **Acceptance 5 — 👤 the owner, cold, on the iPad and the laptop**, install steps included.
+      Read green on both by the owner, 2026-09-25.
+- [x] **Acceptance 6 — both runbooks name `/about`.** See the work order's own line.
 
 **Both tools.** `node tools/verify-shell.mjs` on the delivered tree: **`1485 checks · 1485 passed ·
 0 failed · 0 skipped`, 46,803 lines, 31.5 lines per check, 542s, exit 0**, 2026-09-25, real clock —

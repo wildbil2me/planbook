@@ -1247,7 +1247,7 @@ a departure in `src/calendar-view.css`, and these rows have no such ruling.
 
 ## WO-8.15 — the homepage Google is given is an empty gradebook
 
-**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-8.7, WO-8.12 — the domain to
+**Ship** — · **Status** ✅ DONE — 2026-09-25 · **Size** S · **Depends on** WO-8.7, WO-8.12 — the domain to
 serve it at and the policy it links · **Blocks** WO-3.18 — a verification form whose Homepage field
 would otherwise point at "No classes yet."
 **Closes roadmap** *(no box. The roadmap costs the policy and the submission; the page Google reads
@@ -1298,7 +1298,7 @@ an app change with its own traps, booked separately so the submission does not w
 - [x] `node tools/verify-deploy.mjs` is green at `/about` against the live origin: titled *About
       Planbook*, not the app shell, linking the policy. *(Red before the deploy, correctly —
       measured 2026-09-25: `267560 B · titled About Planbook = false` — the shell. Green after `8b188bf` deployed the same day: `11285 B · titled About Planbook = true · links the policy = true`, 19/19.)*
-- [ ] 👤 The owner reads it on the iPad and on the laptop, cold, and the install steps are right on
+- [x] 👤 The owner reads it on the iPad and on the laptop, cold, and the install steps are right on
       both — Safari's *Share → Add to Home Screen*, and the address-bar icon in Edge.
 - [x] Both WO-3.18 runbooks name `https://planbook.hwgteach.com/about` as the Homepage.
 
