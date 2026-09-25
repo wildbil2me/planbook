@@ -3585,7 +3585,7 @@ reader is least able to tell a real refusal from a malformed one.
 
 ## WO-1.37 — the strip's other head is asserted nowhere, and no fixture can reach it
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-5.5 ✅ · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-09-24 · **Size** S · **Depends on** WO-5.5 ✅ · **Blocks** nothing
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.36 made.
 Booked 2026-08-29 by WO-5.5's own verifier, which found this and correctly declined to close it
 inside the row that made it.)*
@@ -3656,15 +3656,15 @@ build finds a `src/` change is needed, that is a finding to hand back rather tha
   that already names the head and `FIELD_FIX_SENTENCE`.
 
 **Acceptance**
-- [ ] A fixture draft in `tools/verify/outreach.mjs` is blocked with **no `kind: 'field'` reason on
+- [x] A fixture draft in `tools/verify/outreach.mjs` is blocked with **no `kind: 'field'` reason on
       the list**, and the check's own text names which of the three non-field reasons it used.
-- [ ] That strip's head is asserted **whole and anchored** —
+- [x] That strip's head is asserted **whole and anchored** —
       `This draft cannot be sent · N thing(s) to fix` — and the sentence `UNDEFINED_FIELD_HEAD`
       carries is asserted **absent** from it.
-- [ ] `FIELD_FIX_SENTENCE` is asserted absent from the same strip.
-- [ ] Making the head unconditional turns the new checks **red** and leaves WO-5.5's two existing
+- [x] `FIELD_FIX_SENTENCE` is asserted absent from the same strip.
+- [x] Making the head unconditional turns the new checks **red** and leaves WO-5.5's two existing
       head checks **green**, recorded in `tools/README.md`'s mutation table.
-- [ ] `node tools/verify-shell.mjs` is green with its count up by the number of checks added, and
+- [x] `node tools/verify-shell.mjs` is green with its count up by the number of checks added, and
       `node tools/wo-sweep.mjs` is green with `tools/README.md`'s call-site count recomputed by it.
 
 ---

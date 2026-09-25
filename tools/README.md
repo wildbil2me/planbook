@@ -1210,7 +1210,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1464 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1467 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -1366,6 +1366,20 @@ mutation that cannot express a failure is not evidence about it, which is why th
 rather than counted.)* Reverted by name — `git checkout -- src/block-strip.js src/templates-view.js`
 with both staged first, per the standing note about a revert eating unstaged work in the same file —
 and `grep -rn MUTATION src/` was run after, not before, the revert.
+
+**And the round above could not see the head's other arm, which WO-1.37 paid for on 2026-09-24.**
+Every blocked draft `verify/outreach.mjs` built carried a merge field, so `fields` was true on every
+strip it read and an unconditional head was green at 1265. WO-1.37 added a field-free blocked draft
+(see its count entry below) and proved it with two single-run mutations of `src/outreach-view.js`'s
+`paintBlock()`, each marked `MUTATION`, each restored by copying the pre-mutation file back:
+
+| Mutation | Result |
+|---|---|
+| the head made unconditional — `blockHead(UNDEFINED_FIELD_HEAD, …)` for every blocked draft, the edit the work order names | `1478 checks · 1477 passed · 1 failed`, exit 1: **one red**, the new head check, reading `"This draft has at least one undefined field · 1 thing to fix" over 1 reason(s)`. **WO-5.5's two head checks stay green** — the refused draft's in this file and the template preview's in `verify/templates.mjs` — because both read the true arm, which this edit leaves as it was. The instruction-row check stays green too, correctly: the instruction is appended under its own `if (fields)`, which this edit does not touch |
+| the boolean itself — `const fields = true` — so the head and the instruction row both go unconditional | `1478 checks · 1476 passed · 2 failed`, exit 1: **two red**, the head check and the instruction-row check, the one mutation paying for both claims as the work order's Traps line says it can. WO-5.5's two head checks and the new block's own precondition check stay green |
+
+`git diff --stat src/` was empty after each restore, and `grep -rn MUTATION src/ tools/` read only
+prose — the fifteen hits `git grep` finds at `HEAD`, and after this paragraph was written its own two.
 
 **WO-5.9 moved it from 1267 to 1269**: two literal call sites, added *inside* the existing
 § *"the contact log and the history over it (WO-5.4)"* rather than as a section of its own — it is a
@@ -1964,6 +1978,26 @@ it, and every day-column head ADDED during the tap — a MutationObserver's list
 so it declares no 44px rule. The mutations are tabulated in `TESTING.md` § WO-6.5 — five, over three
 runs, each red on the check written for it, each reverted by copying the pre-mutation file back
 before a word of this entry.
+
+**WO-1.37 moved it from 1464 to 1467, and the executed count from 1475 to 1478 — three sites, three
+results.** All three are literal call sites at the foot of `verify/outreach.mjs`'s send-flow section,
+directly after WO-5.8's *nobody addressable* check and before the teardown, none in a loop and none a
+failure arm, so the gap between sites and results stays at −11. They assert the **false** arm of the
+send flow's block-strip head for the first time: a draft blocked with no `kind: 'field'` reason reads
+*This draft cannot be sent · N thing(s) to fix*, whole and anchored with N equal to the reason count,
+and carries neither `UNDEFINED_FIELD_HEAD`'s sentence nor `FIELD_FIX_SENTENCE` anywhere in the strip —
+both sentences read out of `src/block-strip.js` by an in-page `import()` of the module the app is
+running, so a reworded constant cannot turn an absence check off by ceasing to match. **The route is
+the recipient with no address, and it was not field-free as the work order assumed**: Cal's draft
+reads `["recipient","field"]` on the unchanged tree, because the template it opens on begins *Dear
+{{guardian.name}}* and Cal has no guardian. So the block types every `{{…}}` left in the subject and
+body out through the real input path — one, `guardian.name` — and its first check asserts no `field`
+reason survives, which is the precondition the other two stand on. It plants nothing in the document,
+so the section's existing teardown check covers it unchanged. The run prints **1478**:
+`1478 checks · 1478 passed · 0 failed · 0 skipped`, 46,662 lines, 31.6 lines per check, 540s, exit 0,
+measured 2026-09-24 on the real clock. This work order adds **no control** and touches nothing under
+`src/`. Its mutations are recorded under WO-5.5's mutation round above, where the head and
+`FIELD_FIX_SENTENCE` are already named.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

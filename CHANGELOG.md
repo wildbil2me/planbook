@@ -13,6 +13,18 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The send flow's other block heading is checked — 2026-09-24
+
+Nothing a teacher sees. When a draft can't be sent, the strip above it has two headings: one for an
+undefined merge field, and a plainer *This draft cannot be sent* for the other three reasons — no
+address for the recipient, no message chosen, or *Copy me* with nowhere to copy to. Only the first had
+ever been checked, because every blocked draft in the test harness had a bad field in it. So a change
+that told a teacher whose only problem was a missing guardian address that her draft had an undefined
+field would have passed. The harness now builds a draft blocked only by its recipient and checks that
+the strip says *This draft cannot be sent*, gives the right count, and does not tell her to fix a
+field. Deliberately breaking the heading now makes the new check fail, while WO-5.5's two checks
+still pass. (WO-1.37)
+
 ### The sweep checks what the planning documents say about work orders — 2026-09-24
 
 Nothing a teacher sees. The runbooks under `plans/` state work orders' statuses in their bands and

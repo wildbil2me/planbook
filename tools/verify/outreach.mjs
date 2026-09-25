@@ -2929,6 +2929,105 @@ if (!seam) {
       'chips ' + nobody.chips.join(' · ') + '; ready = ' + nobody.ready + ', reasons '
         + JSON.stringify(nobody.kinds));
 
+    /*
+      ─────────── AND THE STRIP'S OTHER HEAD, ON THE SAME DRAFT (WO-1.37) ───────────
+
+      paintBlock() heads a blocked strip with UNDEFINED_FIELD_HEAD only when a `kind: 'field'` reason
+      is on the list, and with *This draft cannot be sent* otherwise — WO-5.5's ruling, argued at
+      its own point of departure, because the owner's sentence is about a merge field and three of
+      the four things that block a draft are not one. The instruction row, FIELD_FIX_SENTENCE, rides
+      on the same boolean. Until this block the false arm of both was asserted nowhere, and no
+      fixture here could reach it: every blocked draft the section built carried a merge field, so
+      `fields` was true on every strip ever read. An unconditional head stayed green while telling
+      a teacher whose only fault is a missing address that her draft had an undefined field.
+
+      THIS IS THE ROUTE OF THE THREE: A RECIPIENT WITH NO ADDRESS (`kind: 'recipient'`), on Cal's
+      draft as the check above left it open. **It was NOT field-free as it stood**, and that is the
+      WO-1.37 defect in miniature: the check above reads `["recipient","field"]`, because the
+      template Cal's draft opens on begins *Dear {{guardian.name}}* and Cal has no guardian — so the
+      one merge field left in the boxes is TYPED OUT through the real input
+      path — every `{{…}}` still in the subject or the body replaced with the teacher's own words,
+      which is exactly what a teacher does and exactly what the strip's instruction row tells her
+      to do. That edits the draft and writes nothing to the document; the other two routes (no
+      template for the pair, *Copy me* with no address of her own) would each have needed a plant
+      in `templates[]` or `teacher` and a teardown to match, and this one needs neither. The first
+      check below is what makes the other two mean anything: it asserts there is no `kind:
+      'field'` reason left, so a template change that put an unresolvable field back somewhere
+      this replace cannot reach turns THAT check red rather than letting the head checks assert
+      the true arm under this block's name.
+
+      THE TWO SENTENCES ARE READ OUT OF THE MODULE THE APP IS RUNNING, not typed here. An absence
+      asserted against a literal is a check a reworded constant turns off silently — the literal
+      stops matching anything and "absent" goes on being true. `import()` of the same URL hands
+      back the same module instance src/outreach-view.js imported, and both are guarded non-empty,
+      because `indexOf('')` is 0 and an empty constant would make every absence here fail for the
+      wrong reason. WO-5.5's two head checks — the refused draft's above and the template
+      preview's in templates.mjs — are untouched: they assert the TRUE arm whole and anchored, and
+      the mutation that proves this block leaves both of them green (tools/README.md, WO-1.37).
+      (No backticks in the evaluated string; it is a template literal.)
+    */
+    const otherHead = await evalJs(`(async function(){
+      ${TYPE}
+      var strip = await import(new URL('src/block-strip.js', document.baseURI).href);
+      var typedOut = [];
+      var plain = function(id){
+        var was = document.getElementById(id).value;
+        var now = was.replace(/\\{\\{\\s*([^}]*?)\\s*\\}\\}/g, function(all, name){
+          typedOut.push(name); return 'what I would say about it'; });
+        if (now !== was) type(id, now); };
+      plain('outreachSubject');
+      plain('outreachBody');
+      var block = document.getElementById('outreachBlock');
+      var head = block.querySelector('.mf-block-head');
+      var m = window.planbook.outreachView.outreachModel();
+      return { open: !document.getElementById('outreachModal').classList.contains('hidden'),
+        name: m.name, ready: m.ready, typedOut: typedOut,
+        kinds: m.reasons.map(function(r){ return r.kind; }),
+        count: m.reasons.length,
+        heads: block.querySelectorAll('.mf-block-head').length,
+        head: head ? head.textContent : '',
+        rows: Array.prototype.map.call(block.querySelectorAll('.mf-reason'), function(r){
+          return r.textContent.replace(/\\s+/g, ' ').trim(); }),
+        stripText: block.textContent,
+        undefinedHead: strip.UNDEFINED_FIELD_HEAD,
+        fixSentence: strip.FIELD_FIX_SENTENCE }; })()`);
+    check('and that draft is blocked with NO merge field on its list — the route is a recipient '
+      + 'with no address (`kind: "recipient"`), the first of WO-1.37’s three non-field reasons, on '
+      + 'Cal’s draft as the check above left it open, with the merge field her draft’s template '
+      + 'leaves unresolved — {{guardian.name}}, for a student with no guardian — typed out through '
+      + 'the real input path. This is the precondition '
+      + 'that makes the two checks after it about the strip’s OTHER head rather than the one WO-5.5 '
+      + 'already asserts',
+      otherHead.open === true && otherHead.name === 'Cal Wo53Orphan'
+        && otherHead.ready === false && otherHead.count >= 1
+        && otherHead.kinds.indexOf('recipient') >= 0
+        && otherHead.kinds.indexOf('field') === -1,
+      'reasons ' + JSON.stringify(otherHead.kinds) + ' on ' + otherHead.name + ' after typing out '
+        + JSON.stringify(otherHead.typedOut));
+    const otherMatch = /^This draft cannot be sent · (\d+) things? to fix$/.exec(otherHead.head);
+    check('and its head is the OTHER sentence, whole and anchored — “This draft cannot be sent · N '
+      + 'thing(s) to fix”, with N the length of the reason list and the noun agreeing with it — and '
+      + 'the sentence UNDEFINED_FIELD_HEAD carries, read out of the module the app is running, '
+      + 'appears nowhere on the strip: a draft whose only fault is a missing address is not told it '
+      + 'has an undefined field (WO-5.5’s ruling, asserted for the first time by WO-1.37)',
+      otherHead.heads === 1 && !!otherMatch
+        && Number(otherMatch[1]) === otherHead.count
+        && /thing to fix$/.test(otherHead.head) === (otherHead.count === 1)
+        && typeof otherHead.undefinedHead === 'string' && otherHead.undefinedHead.length > 0
+        && otherHead.head.indexOf(otherHead.undefinedHead) === -1
+        && otherHead.stripText.indexOf(otherHead.undefinedHead) === -1,
+      JSON.stringify(otherHead.head) + ' over ' + otherHead.count + ' reason(s)');
+    check('and the instruction row — FIELD_FIX_SENTENCE, “Remove the field or type what it should '
+      + 'say over it…”, read out of the same module — is absent from the same strip, because it '
+      + 'rides on the same boolean as the head and there is no field on this draft to remove '
+      + '(WO-1.37)',
+      typeof otherHead.fixSentence === 'string' && otherHead.fixSentence.length > 0
+        && otherHead.rows.length === otherHead.count
+        && otherHead.rows.every((r) => r.indexOf(otherHead.fixSentence) === -1)
+        && otherHead.stripText.indexOf(otherHead.fixSentence) === -1,
+      otherHead.rows.length + ' row(s) under ' + otherHead.count + ' reason(s): '
+        + otherHead.rows.map((r) => r.slice(0, 60)).join(' | '));
+
     /* ── and the fixture comes back off ──
        OFF THE SCREEN FIRST, for the reason templates.mjs leaves its own screen before it takes its
        class apart: the class being removed is the one the screen behind this modal is drawn from,
