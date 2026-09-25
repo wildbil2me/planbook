@@ -23,6 +23,15 @@ only ever compared against itself: dispatch cost and usage-at-the-limit are meas
 scale, so the ratio is meaningful even though the absolute figure is invented. Read a single
 "20.3M" as *the size of the hole*, never as a published ceiling.
 
+*(**"Per API response" is looser than what was measured, found 2026-09-24 by WO-1.39.** A streamed
+response writes one transcript line per content block, each repeating the same usage, and the figures
+in this file count every such line: the eight-row table under P1 reproduces to the decimal that way,
+and reads roughly half with duplicate `message.id`/`requestId` pairs removed — WO-5.5 3.6 rather than
+6.8, WO-5.2 9.1 rather than 15.7. So the unit is **per transcript line carrying usage**, and
+`wo-cost.mjs --window` counts it that way on purpose, because a deduplicated reading beside these
+reference points would under-read by half. Nothing above changes: every figure here is in the same
+unit as every other, which is the only property the ratio needed.)*
+
 ## Four findings
 
 ### 1. Every documented death is at a handoff. Ten for ten.
@@ -135,6 +144,14 @@ this cannot become a gate in `wo-gate.mjs`. What `wo-gate.mjs` could do is print
 beside the size on `--start` — "Size L, median 12.9M units, budget accordingly" — so the number is
 in front of whoever is deciding. Cheap, and it makes the rule visible at the only moment it can
 be obeyed.
+
+*(**Built 2026-09-24 as [WO-1.39](work-orders/phase-1-shell-store-roster.md#wo-139--the-window-is-spent-by-measure-and-read-by-feel), in a different shape from the sentence above.** Not the
+expected cost of a size — the size column does not predict cost, as the table below shows — but the
+window's own spend: `node tools/wo-cost.mjs --window` sums the last five hours across every project
+directory in the unit above, beside this file's median dispatch and death cluster, and
+`wo-gate.mjs --start` prints one line of it. Advisory, never refusing; it does not read `/usage` and
+does not approximate it. An account swap is recorded by hand with `--swapped`, because nothing in a
+transcript says which account served it.)*
 
 **Objection worth taking seriously:** this converts a capacity problem into a scheduling
 constraint, and Ship 3 is calendar-pressed against Sep 2. The answer is that it is already costing

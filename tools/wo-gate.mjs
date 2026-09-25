@@ -4,8 +4,9 @@
 //   node tools/wo-gate.mjs WO-1.7          gate report for one work order; non-zero if blocked
 //   node tools/wo-gate.mjs next            first NOT STARTED row in the Ship 1 table
 //   node tools/wo-gate.mjs --list          every work order and its status
-//   node tools/wo-gate.mjs --start WO-1.7 [--dispatch <label>] [--dry-run]
-//                                                         claim it: ⬜ NOT STARTED → 🤖 CLAIMED
+//   node tools/wo-gate.mjs --start WO-1.7 [--dispatch <label>] [--dry-run] [--window-root <dir>]
+//                                                         claim it: ⬜ NOT STARTED → 🤖 CLAIMED, with
+//                                                         one advisory line of the usage window
 //   node tools/wo-gate.mjs --release WO-1.7 [--dry-run]   the way back: 🤖 CLAIMED → ⬜ NOT STARTED
 //   node tools/wo-gate.mjs --handoff WO-1.7 [--dispatch <label>] [--dry-run]
 //                              the implementer returned: 🤖 CLAIMED → 🔍 AWAITING VERDICT
@@ -1299,7 +1300,42 @@ function printEdit(file, e) {
 // `--dispatch <label>` overrides it for a caller that has something better to say, and a label
 // carrying a `·` is refused rather than written, because `·` is what separates one header field from
 // the next and a status that swallows the field after it is worse than no label at all.
-function applyStart(id, wos, dryRun, label) {
+// The window line (WO-1.39): one line of `wo-cost.mjs --window`, printed where the decision is made.
+//
+// **It can never fail a claim, and every path out of this function is a string.** A missing
+// wo-cost.mjs, a missing transcript directory, a parse error, a slow walk — each becomes words on the
+// line ("window  unavailable — <reason>") and --start goes on to exit 0. That is not a softer version
+// of --window's own non-zero exit, it is the same refusal to print a number it does not have: neither
+// path ever prints `0.0M`. It is advisory for the reason the work order gives — the threshold is the
+// owner's and the unit is a proxy — and on the precedent of --audit's 🎒 NOTE, where only a person
+// can pick.
+//
+// SPAWNED, NOT IMPORTED: no script in tools/ imports another, and the window's arithmetic lives in
+// exactly one file. `--window-root <dir>` on --start is passed through as --root, which is the seam
+// --self-check drives a fixture past the death cluster through; with no flag it reads the real
+// ~/.claude/projects. The timeout is the "slow walk" case, and it is generous: the real walk over
+// fifteen project directories measured under 100 ms on 2026-09-24.
+function windowLine(root) {
+  try {
+    const cost = path.join(REPO, 'tools', 'wo-cost.mjs');
+    if (!fs.existsSync(cost)) return 'window  unavailable — no tools/wo-cost.mjs beside this script';
+    const r = spawnSync(process.execPath, [cost, '--window', '--line', ...(root ? ['--root', root] : [])],
+                        { encoding: 'utf8', timeout: 20000 });
+    if (r.error) {
+      return `window  unavailable — ${r.error.code === 'ETIMEDOUT' ? 'the transcript walk took longer than 20s' : r.error.message}`;
+    }
+    const line = (r.stdout || '').split('\n').map(l => l.trim()).find(l => l.startsWith('window'));
+    if (r.status !== 0 || !line) {
+      const why = (r.stderr || '').split('\n').map(l => l.trim()).find(Boolean) || `wo-cost.mjs exited ${r.status} and said nothing`;
+      return `window  unavailable — ${why.replace(/^FAIL\s*\|\s*/, '')}`;
+    }
+    return line;
+  } catch (err) {
+    return `window  unavailable — ${err.message}`;
+  }
+}
+
+function applyStart(id, wos, dryRun, label, windowRoot) {
   const wo = wos.get(id);
   if (!wo) { console.error(`FAIL | no work order ${id}`); return 1; }
 
@@ -1340,6 +1376,7 @@ function applyStart(id, wos, dryRun, label) {
   if (!e) { console.error(`FAIL | no **Status** line found under ${id}`); return 1; }
 
   console.log(`start ${id} — ${wo.title}${dryRun ? '   (DRY RUN — nothing written)' : ''}`);
+  console.log(`  ${windowLine(windowRoot)}`);
   console.log('');
   printEdit(wo.file, e);
 
@@ -2877,6 +2914,56 @@ function runPlants(subject, sandbox) {
   const BOLD_PROSE = '**Not a go-live blocker.** Added out of the verification above, at the head of a header line.';
   const NOTE_PROSE = '*(no roadmap line for the note itself — see **Why it exists** below)* ';
   const TAKES_FROM = `**Takes from ${CHAIN_ID}**`;
+
+  // WO-1.39's fixture: a transcript tree, written into the sandbox and handed to --start through
+  // `--window-root`, which is passed on to wo-cost.mjs as --root. Never the real ~/.claude/projects:
+  // the plants below assert on exact figures, and the swap marker wo-cost.mjs writes sits beside the
+  // root it is given, so a plant pointed at the real one would write into the real ~/.claude.
+  //
+  // wo-cost.mjs is copied in beside the subject ONLY for these plants and removed after each, so every
+  // earlier plant's --start keeps reading "window unavailable — no tools/wo-cost.mjs", which is the
+  // quiet, fast path. It is copied from REPO rather than beside the subject: --against names a copy of
+  // THIS script, and there is no older wo-cost.mjs for it to pair with.
+  //
+  // The entries are built to be read back to the decimal: output tokens only, at x5, so 3,000,000
+  // output is 15.0M units. Two project directories, because "every directory" is the claim, and one
+  // line seven hours old inside a freshly-written file, because the mtime filter lets that file
+  // through and only the line's own timestamp can keep it out.
+  const WINDOW_BASE = path.join(sandbox, 'window');
+  const WINDOW_ROOT = path.join(WINDOW_BASE, 'projects');
+  const SWAP_MARKER = path.join(WINDOW_BASE, 'wo-cost-swap.json');
+  const COST = path.join(sandbox, 'tools', 'wo-cost.mjs');
+  const windowFixture = (entries) => {
+    fs.rmSync(assertOutsideRepo(WINDOW_BASE), { recursive: true, force: true });
+    fs.mkdirSync(assertOutsideRepo(WINDOW_ROOT), { recursive: true });
+    entries.forEach(({ project, hoursAgo, output }, n) => {
+      const dir = assertOutsideRepo(path.join(WINDOW_ROOT, project));
+      fs.mkdirSync(dir, { recursive: true });
+      const line = JSON.stringify({ type: 'assistant', timestamp: new Date(Date.now() - hoursAgo * 3600e3).toISOString(),
+        requestId: `req_fixture_${n}`, message: { id: `msg_fixture_${n}`,
+        usage: { input_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0, output_tokens: output } } });
+      fs.appendFileSync(assertOutsideRepo(path.join(dir, 'session.jsonl')), `${line}\n`);
+    });
+    return WINDOW_ROOT;
+  };
+  // 15.0M + 10.0M inside the window across two projects, and 50.0M outside it: 25.0M is past the
+  // death cluster's median (20.3M), 75.0M is the figure an mtime-only filter would print, and 10.0M
+  // is what a swap recorded an hour ago leaves.
+  const PAST_THE_CLUSTER = [
+    { project: 'c--fixture-one', hoursAgo: 7, output: 10000000 },
+    { project: 'c--fixture-one', hoursAgo: 3, output: 3000000 },
+    { project: 'c--fixture-two', hoursAgo: 1 / 3, output: 2000000 },
+  ];
+  const withCost = fn => {
+    fs.copyFileSync(path.join(REPO, 'tools', 'wo-cost.mjs'), assertOutsideRepo(COST));
+    try { return fn(); } finally { fs.rmSync(COST, { force: true }); fs.rmSync(WINDOW_BASE, { recursive: true, force: true }); }
+  };
+  const runCost = args => {
+    const r = spawnSync(process.execPath, [COST, ...args], { cwd: sandbox, encoding: 'utf8' });
+    return { code: r.status === null ? 1 : r.status, out: `${r.stdout || ''}${r.stderr || ''}` };
+  };
+  const windowOf = out => out.split('\n').map(l => l.trim()).find(l => /^window\s/.test(l)) || '';
+
   const plants = [
     {
       name: 'an unticked Acceptance line holds --tick at 🔨 IN PROGRESS instead of ✅ DONE',
@@ -4149,6 +4236,111 @@ function runPlants(subject, sandbox) {
         return bad;
       },
     },
+    // WO-1.39's three. They run last and need nothing from the plants above: --start reads no
+    // dispatch file, so WO-1.38's `.claude/dispatch/` leavings are invisible to them.
+    {
+      name: '--start prints the window line and the claim clears on any figure — driven at 25.0M, past the death cluster, across two project directories',
+      run: () => withCost(() => {
+        const bad = [];
+        const root = windowFixture(PAST_THE_CLUSTER);
+        for (const dry of [true, false]) {
+          reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+          const before = snapshot();
+          const r = run(['--start', FIXTURE_ID, '--window-root', root, ...(dry ? ['--dry-run'] : [])]);
+          const how = dry ? '--start --dry-run' : '--start';
+          const w = windowOf(r.out);
+          if (r.code !== 0) bad.push(`${how} exited ${r.code} with the window at 25.0M — the line is advisory and may never refuse:`, ...verdict(r.out));
+          if (!w) { bad.push(`${how} printed no window line`); continue; }
+          if (!/\b25\.0M\b/.test(w)) bad.push(`${how}'s window line does not read 25.0M, the sum of both project directories inside five hours: "${clip(w, 140)}"`);
+          if (/\b75\.0M\b/.test(w)) bad.push(`${how}'s window counted a line seven hours old — the mtime filter let the file in and nothing checked the line's own timestamp`);
+          if (!/\bproxy\b/.test(w)) bad.push(`${how}'s window line does not name its unit as a proxy where the number prints`);
+          if (!/6\.0M/.test(w) || !/20\.3M/.test(w)) bad.push(`${how}'s window line does not carry the median dispatch and the death cluster beside the figure`);
+          if (!/--swapped/.test(w)) bad.push(`${how}'s window line does not name the command that records an account swap`);
+          if (!/2 project dirs/.test(w)) bad.push(`${how}'s window line does not say it read both project directories`);
+          const moved = changedSince(before);
+          if (dry && moved.length) bad.push(`--start --dry-run wrote ${moved.join(', ')}`);
+          if (!dry && !fixtureStatus().startsWith(CLAIM)) bad.push(`--start past the death cluster left the status at "${fixtureStatus()}" — the claim must go through on any figure`);
+          if (!dry && moved.some(f => !f.endsWith(FIXTURE_FILE))) bad.push(`--start also wrote ${moved.filter(f => !f.endsWith(FIXTURE_FILE)).join(', ')}`);
+        }
+        if (fs.existsSync(SWAP_MARKER)) bad.push('--start wrote a swap marker — only --swapped may record one');
+        return bad;
+      }),
+    },
+    {
+      name: 'a window that cannot be read says so in words — --window exits non-zero, --start still claims, and neither prints 0.0M',
+      run: () => {
+        const bad = [];
+        // Three ways to have no data, each driven: no wo-cost.mjs at all, a root that does not exist,
+        // and a root that exists and holds no transcript. The last is the trap in the work order —
+        // an empty directory summed is a zero, and a zero is what a fresh window also reads.
+        const cases = [
+          ['no tools/wo-cost.mjs', false, () => path.join(sandbox, 'window', 'projects')],
+          ['a root that does not exist', true, () => path.join(sandbox, 'window', 'no-such-projects')],
+          ['a root with project directories and no transcripts', true, () => {
+            fs.mkdirSync(assertOutsideRepo(path.join(WINDOW_ROOT, 'c--fixture-empty')), { recursive: true });
+            return WINDOW_ROOT;
+          }],
+        ];
+        for (const [what, cost, rootOf] of cases) {
+          const once = () => {
+            const root = rootOf();
+            if (cost) {
+              const direct = runCost(['--window', '--root', root]);
+              if (direct.code === 0) bad.push(`wo-cost.mjs --window exited 0 over ${what}`);
+              if (!/FAIL \|/.test(direct.out)) bad.push(`wo-cost.mjs --window over ${what} did not say FAIL`);
+              if (/0\.0M/.test(direct.out)) bad.push(`wo-cost.mjs --window printed 0.0M over ${what} — no data dressed as a fresh window`);
+            }
+            reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+            const r = run(['--start', FIXTURE_ID, '--window-root', root]);
+            const w = windowOf(r.out);
+            if (r.code !== 0) bad.push(`--start exited ${r.code} over ${what} — a window it cannot read may not fail a claim:`, ...verdict(r.out));
+            if (!fixtureStatus().startsWith(CLAIM)) bad.push(`--start over ${what} left the status at "${fixtureStatus()}"`);
+            if (!/^window\s+unavailable\s+—\s+\S/.test(w)) bad.push(`--start over ${what} did not say "window  unavailable — <reason>": "${clip(w, 120)}"`);
+            if (/0\.0M/.test(r.out)) bad.push(`--start printed 0.0M over ${what}`);
+          };
+          if (cost) withCost(once); else once();
+        }
+        return bad;
+      },
+    },
+    {
+      name: 'a recorded account swap restarts the count, --start names it on the line, and the marker lands beside the root it was given',
+      run: () => withCost(() => {
+        const bad = [];
+        const root = windowFixture(PAST_THE_CLUSTER);
+
+        // 1. Recorded now: everything in the fixture is older than the swap, so the count is empty —
+        //    and an empty count after a swap is a fresh window, said in words and never as 0.0M.
+        const rec = runCost(['--swapped', '--root', root]);
+        if (rec.code !== 0) bad.push(`wo-cost.mjs --swapped exited ${rec.code}:`, ...verdict(rec.out));
+        if (!fs.existsSync(SWAP_MARKER)) bad.push(`--swapped did not write its marker beside the root, at ${SWAP_MARKER}`);
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        let r = run(['--start', FIXTURE_ID, '--window-root', root]);
+        let w = windowOf(r.out);
+        if (r.code !== 0) bad.push(`--start exited ${r.code} after a swap:`, ...verdict(r.out));
+        if (/25\.0M/.test(w)) bad.push('a swap recorded now did not restart the count — the window still reads 25.0M');
+        if (!/nothing used since the swap recorded/.test(w)) bad.push(`a restarted, empty window was not said in words: "${clip(w, 140)}"`);
+        if (/0\.0M/.test(r.out)) bad.push('a restarted window printed 0.0M');
+        if (!/count restarted by node tools\/wo-cost\.mjs --swapped/.test(w)) bad.push('the line does not say the count was restarted, and by what');
+
+        // 2. Recorded an hour ago: the 20-minute-old 10.0M is inside it and the 3-hour-old 15.0M is not.
+        //    Written by hand, because the flag records NOW and a plant cannot wait an hour.
+        fs.writeFileSync(assertOutsideRepo(SWAP_MARKER), JSON.stringify({ at: new Date(Date.now() - 3600e3).toISOString() }));
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        r = run(['--start', FIXTURE_ID, '--window-root', root]);
+        w = windowOf(r.out);
+        if (!/\b10\.0M\b/.test(w)) bad.push(`a swap an hour ago should leave 10.0M; the line reads "${clip(w, 140)}"`);
+
+        // 3. And one six hours ago restarts nothing: the marker expires by itself.
+        fs.writeFileSync(assertOutsideRepo(SWAP_MARKER), JSON.stringify({ at: new Date(Date.now() - 6 * 3600e3).toISOString() }));
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        r = run(['--start', FIXTURE_ID, '--window-root', root]);
+        w = windowOf(r.out);
+        if (!/\b25\.0M\b/.test(w)) bad.push(`a swap six hours old still restarted the count — it should have expired: "${clip(w, 140)}"`);
+        if (!/swapped accounts\? node tools\/wo-cost\.mjs --swapped/.test(w)) bad.push('with no swap active, the line does not name the command that records one');
+        return bad;
+      }),
+    },
   ];
 
   // The subject and sandbox lines are printed before the copy is made, up at step 1, so that the
@@ -4248,6 +4440,17 @@ function runPlants(subject, sandbox) {
   console.log('  a lock whose reasoning had been demolished a fortnight earlier, and WO-3.18\'s was a');
   console.log('  gate that had been discharged for five days. Both are a person\'s reading, and what a');
   console.log('  stated gate buys is that the person can be somebody other than the author.');
+  console.log('  And WO-1.39\'s THREE, the first here to run a SECOND script and the first to write a');
+  console.log('  transcript tree: --start prints one line of `wo-cost.mjs --window` and the claim');
+  console.log('  clears at 25.0M, past the death cluster, reading two project directories and not a line');
+  console.log('  seven hours old, with the unit named a proxy and both reference points on the line;');
+  console.log('  a window it cannot read — no wo-cost.mjs, no root, a root with no transcript — is');
+  console.log('  "window  unavailable — <reason>" and still a claim, while --window itself exits 1, and');
+  console.log('  neither prints 0.0M; and a swap recorded with --swapped restarts the count, lands its');
+  console.log('  marker beside the root it was given, and expires after five hours. NOT covered by');
+  console.log('  them: the real walk over ~/.claude/projects, which no plant reads on purpose, and');
+  console.log('  whether the reference points are still TRUE — they are calibration, and nothing here');
+  console.log('  re-measures them.');
   console.log('  NOT covered: the Acceptance parser otherwise. It is still never run');
   console.log('  against a real work order\'s list, and one terminator is one way it can go blind and');
   console.log('  not the class of them — a narrowed gap, not a closed one. Nor is gate()\'s');
@@ -4272,9 +4475,13 @@ if (!argv.length || argv.includes('--help') || argv.includes('-h')) {
   node tools/wo-gate.mjs WO-1.7               gate report; exits non-zero if blocked
   node tools/wo-gate.mjs next [--quiet]       first NOT STARTED in the running order
   node tools/wo-gate.mjs --list               every work order and its status
-  node tools/wo-gate.mjs --start WO-1.7 [--dispatch <label>] [--dry-run]
+  node tools/wo-gate.mjs --start WO-1.7 [--dispatch <label>] [--dry-run] [--window-root <dir>]
                                                         claim it — ⬜ NOT STARTED → 🤖 CLAIMED —
-                                                        <label, or today's date>
+                                                        <label, or today's date>. Prints one line of
+                                                        wo-cost.mjs --window first (WO-1.39):
+                                                        ADVISORY, the claim clears on any figure and
+                                                        on no figure. --window-root reads transcripts
+                                                        from <dir> instead of ~/.claude/projects
   node tools/wo-gate.mjs --release WO-1.7 [--dry-run]   the way back, for a dispatch that died.
                                                         🤖 CLAIMED only; it refuses every other status
   node tools/wo-gate.mjs --handoff WO-1.7 [--dispatch <label>] [--dry-run]
@@ -4380,7 +4587,8 @@ if (argv[0] === '--start') {
   const id = argv[1];
   if (!id || !/^WO-/.test(id)) { console.error('FAIL | --start needs an explicit work order ID, e.g. --start WO-1.7'); process.exit(1); }
   const d = argv.indexOf('--dispatch');
-  process.exit(applyStart(id, wos, argv.includes('--dry-run'), d >= 0 ? argv[d + 1] : ''));
+  const w = argv.indexOf('--window-root');
+  process.exit(applyStart(id, wos, argv.includes('--dry-run'), d >= 0 ? argv[d + 1] : '', w >= 0 ? argv[w + 1] : ''));
 }
 
 if (argv[0] === '--release') {

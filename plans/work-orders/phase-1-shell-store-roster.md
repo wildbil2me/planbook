@@ -3760,7 +3760,7 @@ this does not narrow by one turn — see the third trap.
 
 ## WO-1.39 — the window is spent by measure and read by feel
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-09-25 · **Size** M · **Depends on** — · **Blocks** nothing
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.38
 made. Booked 2026-08-30, owner-directed, alongside WO-1.38.)*
 
@@ -3825,17 +3825,17 @@ approximate it, it measures something else and says so.
   in as many words, because it makes the pipeline look ten times more expensive than it is.
 
 **Acceptance**
-- [ ] `node tools/wo-cost.mjs --window` reports rolling-5h weighted usage across **every** directory
+- [x] `node tools/wo-cost.mjs --window` reports rolling-5h weighted usage across **every** directory
       under `~/.claude/projects/`, with the median-dispatch and death-cluster figures beside it.
-- [ ] It names its unit as a proxy at the point it prints the number.
-- [ ] An unreadable or empty transcript path exits non-zero with a message and never prints `0.0M`;
+- [x] It names its unit as a proxy at the point it prints the number.
+- [x] An unreadable or empty transcript path exits non-zero with a message and never prints `0.0M`;
       the failure is driven, not asserted.
-- [ ] An account swap can be recorded so the count restarts, and the mechanism is named where the
+- [x] An account swap can be recorded so the count restarts, and the mechanism is named where the
       number prints.
-- [ ] `node tools/wo-gate.mjs --start <WO>` prints the window line, and **the gate still clears on
+- [x] `node tools/wo-gate.mjs --start <WO>` prints the window line, and **the gate still clears on
       any number** — driven at a figure past the death cluster and proved to clear.
-- [ ] `--self-check` is green with a plant behind each new check and its own count up by that many.
-- [ ] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
+- [x] `--self-check` is green with a plant behind each new check and its own count up by that many.
+- [x] `node tools/wo-sweep.mjs` is green and `--audit` is green on a clean tree.
 
 ---
 

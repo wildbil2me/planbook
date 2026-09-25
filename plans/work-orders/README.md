@@ -447,7 +447,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 54 | 49 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 54 | 50 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 52 | 51 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 6 | 4 | — | 🔨 IN PROGRESS |
@@ -456,7 +456,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 3 | 2 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 14 | 9 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 1 | — | WO-G2 ⬜ **workable 2026-09-07** — the term opened Sep 2 and first grades go in Sep 8; WO-G3 🔒 on four weeks after it |
-| | **181** | **162** | **3** | `[█████████░] 90%` |
+| | **181** | **163** | **3** | `[█████████░] 90%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)
