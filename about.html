@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<!--
+  Planbook — the public front page. WO-8.15.
+
+  THIS IS THE HOMEPAGE GOOGLE IS GIVEN during OAuth verification (WO-3.18), and the page a teacher,
+  a principal or a technology director lands on before the app means anything to them. Google's
+  branding review wants a homepage that says what the app does and links its privacy policy; the
+  app itself, opened cold, says "No classes yet." and keeps its policy link inside a modal. So the
+  URL in the form is this page's, `/about`, and `/` stays the app.
+
+  IT IS SHAPED EXACTLY LIKE privacy.html AND FOR THE SAME REASONS — read that file's header before
+  changing anything structural here. In short:
+
+    1. NOT IN sw.js's SHELL LIST, AND IT MUST NOT BE ADDED. It is read once, online, by somebody
+       who has not installed anything yet. sw.js's navigate branch already lets every path that is
+       not the app's own document through to the network, so this page needed no worker change.
+    2. THE STYLES ARE IN THIS FILE, quoted literally from design/style-guide.md the way
+       privacy.html quotes them: one request, nothing to fail independently of it, colors inline,
+       no custom properties, no dark mode.
+    3. NO manifest, NO service-worker registration, NO JavaScript of any kind. Linking the manifest
+       here would offer to install the front page instead of the app. The install steps below
+       send the reader INTO the app to install it, because a PWA is installed from the page it is.
+
+  IT CARRIES NO DATA-FLOW STATEMENT OF ITS OWN. privacy.html and docs/FERPA.md carry that
+  statement word for word, and a third copy is a third place for it to drift. The three short
+  claims below are privacy.html's own "short version", compressed, and every one is followed by
+  the link to the document that argues it. Change a claim there and read this page in the same
+  sitting.
+
+  NO CONTACT ADDRESS, deliberately. The policy carries the one address this project publishes,
+  inside the Cloudflare wrapper that keeps the host from rewriting it; a second copy here would
+  need the same wrapper and the same check in verify-deploy.mjs, and would buy nothing a reader
+  cannot reach in one tap.
+
+  DO NOT WRITE A COMMENT DELIMITER AS LITERAL TEXT INSIDE THIS COMMENT. privacy.html's header
+  escaped onto the deployed page once that way, and tools/verify/about-page.mjs now reads this
+  file's visible text for repository vocabulary for the same reason.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d2137">
+  <meta name="description" content="Planbook is a gradebook and classroom assistant for teachers. Attendance, weighted grades, who needs attention, and the messages that follow — all kept on your own device.">
+  <title>About Planbook</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
+  <style>
+    /* design/style-guide.md, quoted literally, and privacy.html's values where the two pages
+       draw the same thing. No custom properties, no dark variants. */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      font-size: 14px;
+      line-height: 1.6;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .band {
+      background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 60%, #2a2a6e 100%);
+      color: #fff;
+      padding: 32px 20px calc(32px + env(safe-area-inset-top, 0px));
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    .band-inner { max-width: 760px; margin: 0 auto; }
+    .band h1 { font-size: 28px; font-weight: 700; }
+    .band p { font-size: 15px; color: rgba(255,255,255,0.7); margin-top: 6px; max-width: 56ch; }
+    /* The one primary control on the page, and it is the app itself. White on the band rather
+       than a filled indigo button, because on the navy gradient the indigo reads as a hole. */
+    .open-app {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 18px;
+      padding: 10px 20px;
+      min-height: 44px;
+      background: #fff;
+      color: #0d2137;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      text-decoration: none;
+    }
+    .open-app:hover { background: #eef2ff; }
+    main { max-width: 760px; margin: 0 auto; padding: 20px; }
+    .panel {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    h2 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    h3 { font-size: 14px; font-weight: 700; margin: 16px 0 4px; }
+    p { margin-bottom: 12px; }
+    p:last-child, ul:last-child, ol:last-child { margin-bottom: 0; }
+    ul, ol { margin: 0 0 12px 20px; }
+    li { margin-bottom: 6px; }
+    .lede { font-size: 15px; }
+    .quiet { color: #6b7a8d; font-size: 13px; }
+    code {
+      font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+      background: #f8f9fc;
+      border: 1px solid #e0e4f0;
+      border-radius: 6px;
+      padding: 1px 4px;
+      font-size: 12px;
+    }
+    /* The caution palette, used once, for the one thing a teacher must not skim past: an iPad
+       that is not installed can lose its data. design/style-guide.md § "Caution banner". */
+    .caution {
+      background: #fff8e6;
+      border: 1.5px solid #f0dfa8;
+      border-radius: 8px;
+      color: #8a6d1a;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+    .caution strong { color: #8a6d1a; }
+    a { color: #5b6fcc; }
+    /* privacy.html's distinction: a link on its own line is a control and takes the 44px floor;
+       a link inside a sentence is text. */
+    .block-link {
+      display: inline-block;
+      font-weight: 600;
+      padding: 8px 0;
+    }
+    footer { max-width: 760px; margin: 0 auto; padding: 0 20px 28px; }
+    :focus-visible { outline: 2px solid #5b6fcc; outline-offset: 2px; }
+
+    @media (pointer: coarse) {
+      body { font-size: 15px; }
+      .block-link { min-height: 44px; display: flex; align-items: center; }
+    }
+    @media (max-width: 640px) {
+      main { padding: 10px; }
+      .panel { padding: 14px; }
+      .band { padding: 22px 14px calc(22px + env(safe-area-inset-top, 0px)); }
+      .band h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="band">
+  <div class="band-inner">
+    <h1>Planbook</h1>
+    <p>
+      A gradebook and classroom assistant for teachers. Attendance, grades, the students who need
+      you, and the messages that follow — all kept on your own device.
+    </p>
+    <a class="open-app" href="./">Open Planbook →</a>
+  </div>
+</div>
+
+<main>
+
+  <section class="panel">
+    <h2>What it does</h2>
+    <ul>
+      <li>
+        <strong>Attendance at the start of every class</strong>, fast enough to mark while students
+        are still walking in.
+      </li>
+      <li>
+        <strong>Grades by weighted category</strong>, set up separately for each class, because no
+        two classes are graded the same way.
+      </li>
+      <li>
+        <strong>The students who need attention, in both directions</strong> — the ones whose
+        grades are falling, who are missing work or missing class, and the ones who have turned
+        a corner and deserve to hear about it.
+      </li>
+      <li>
+        <strong>The message that follows.</strong> Planbook drafts the note to a guardian,
+        counselor or administrator and hands it to your own email to read, change and send.
+      </li>
+      <li>
+        <strong>Accommodations where the work happens.</strong> IEP and 504 details, medical needs
+        and behavior plans sit on the roster, out of sight by default, with a presentation mode
+        that hides them all at once when your screen is on the wall.
+      </li>
+    </ul>
+    <p class="quiet">
+      Planbook works alongside your school's student information system. It does not connect to it
+      and does not replace it.
+    </p>
+  </section>
+
+  <section class="panel">
+    <h2>Where your students' information goes</h2>
+    <ul>
+      <li>
+        <strong>No server of ours ever receives it.</strong> Planbook has no server and no
+        database. Everything you enter stays in the browser on the device you entered it on.
+      </li>
+      <li>
+        <strong>No account is required.</strong> There is nothing to sign up for.
+      </li>
+      <li>
+        <strong>If you choose to turn on Google Drive sync, Drive holds only the file Planbook
+        itself created.</strong> <em>Not in the released app yet.</em>
+      </li>
+    </ul>
+    <!-- `./privacy.html` and not `./privacy`, index.html's reason: the local server answers the
+         file name, and on the deployed host Pages redirects it to the extensionless URL. -->
+    <a class="block-link" href="./privacy.html">Read the privacy policy →</a>
+    <a class="block-link" href="https://github.com/wildbil2me/planbook/blob/main/docs/FERPA.md">
+      Planbook and student-data privacy — the guide for administrators →
+    </a>
+  </section>
+
+  <section class="panel">
+    <h2>Installing it</h2>
+    <p>
+      Planbook runs in a web browser and needs no download from an app store. Installing it puts
+      an icon on your home screen or desktop, opens it in its own window, and lets it work with no
+      internet connection at all.
+    </p>
+    <p class="caution">
+      <strong>On an iPad or iPhone, install it before you enter real grades.</strong> Safari can
+      clear a website's stored information after about a week of not being used. An installed app
+      is exempt from that.
+    </p>
+
+    <h3>iPad or iPhone</h3>
+    <ol>
+      <li>Open Planbook in <strong>Safari</strong>.</li>
+      <li>Tap the <strong>Share</strong> button, then <strong>Add to Home Screen</strong>.</li>
+      <li>Open it from the new icon from then on, not from Safari.</li>
+    </ol>
+
+    <h3>Chrome or Edge, on a laptop or a Chromebook</h3>
+    <ol>
+      <li>Open Planbook.</li>
+      <li>
+        Choose the install icon at the right-hand end of the address bar, or look for
+        <strong>Install Planbook</strong> in the browser's menu. Browsers move that item between
+        versions; the address-bar icon is the one that stays put.
+      </li>
+    </ol>
+
+    <h3>Anything else</h3>
+    <p>
+      Some browsers cannot install web apps, and some school-managed devices have installing turned
+      off. Planbook still works in an ordinary browser tab.
+    </p>
+    <p>
+      <strong>Whichever way you use it, download a backup regularly</strong> from the ⤓ button in
+      the app. It is the copy that can bring a school year back.
+    </p>
+    <a class="block-link" href="./">Open Planbook →</a>
+  </section>
+
+</main>
+
+<footer>
+  <p class="quiet">
+    Planbook is built and maintained by one classroom teacher. Its source code is public at
+    <a href="https://github.com/wildbil2me/planbook">github.com/wildbil2me/planbook</a>, and it is
+    released under the
+    <a href="https://github.com/wildbil2me/planbook/blob/main/LICENSE.md">Apache License 2.0</a>.
+  </p>
+</footer>
+
+</body>
+</html>

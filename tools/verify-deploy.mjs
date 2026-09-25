@@ -406,6 +406,35 @@ try {
       + `was never deployed is the shell document — read this beside the check above rather than as `
       + `a second opinion about it.`);
 
+  /* ── the front page (WO-8.15) ──
+     `/about` is the homepage URL in the Google verification form, and the policy's lesson applies
+     to it unchanged: this host answers a path it does not recognize with the app shell at 200, so
+     only the document itself can say whether the front page is deployed. It must be the front page
+     and not the app, and it must link the policy — the one link a homepage is asked for. */
+  console.log('\n── the front page (WO-8.15) ──');
+  const aboutUrl = ORIGIN + '/about';
+  const about = await get(aboutUrl);
+  say('/about', about);
+  let aboutDoc = about;
+  if (isRedirect(about) && about.location) {
+    aboutDoc = await get(new URL(about.location, aboutUrl).href);
+    say(about.location, aboutDoc);
+  }
+  check('the front page answers 200 at /about — the homepage URL that goes in the Google '
+    + 'verification form', about.status === 200,
+    isRedirect(about)
+      ? `${about.status} → ${about.location}; ${await chainOf(aboutUrl)} — paste the URL that answers `
+        + `200 into the form, or serve the page at this one`
+      : String(about.status));
+  const isAboutDoc = /<title>\s*About Planbook\s*<\/title>/i.test(aboutDoc.text)
+    && !/id="homeView"/.test(aboutDoc.text);
+  const aboutLinksPolicy = /<a\b[^>]*href="(\.\/privacy(\.html)?|\/privacy)"/i.test(aboutDoc.text);
+  check('the document at /about is the FRONT PAGE, not the app shell, and it links the privacy '
+    + 'policy', isAboutDoc && aboutLinksPolicy,
+    `${aboutDoc.bytes} B · titled About Planbook = ${isAboutDoc} · links the policy = `
+      + `${aboutLinksPolicy}${/id="homeView"/.test(aboutDoc.text) ? ' · it IS the app shell — the '
+        + 'front page is not deployed at this path' : ''}`);
+
   /* ── the service worker ── */
   console.log('\n── the service worker ──');
   const swUrl = ORIGIN + '/sw.js';

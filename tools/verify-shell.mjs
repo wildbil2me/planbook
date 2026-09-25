@@ -136,6 +136,7 @@ import { run as concernList } from './verify/concern-list.mjs';
 import { run as praiseColumn } from './verify/praise-column.mjs';
 import { run as glanceQuiet } from './verify/glance-quiet.mjs';
 import { run as policyUrl } from './verify/policy-url.mjs';
+import { run as aboutPage } from './verify/about-page.mjs';
 import { run as driveSignIn } from './verify/drive-sign-in.mjs';
 import { run as driveSync } from './verify/drive-sync.mjs';
 import { run as logEntries } from './verify/log-entries.mjs';
@@ -355,6 +356,7 @@ const BROWSER_SECTIONS = [
      `verify/cooldown-quiet.mjs` is: it replaces nothing, and its own fixture is put back by hand. */
   { file: 'verify/glance-quiet.mjs', run: glanceQuiet },
   { file: 'verify/policy-url.mjs', run: policyUrl },
+  { file: 'verify/about-page.mjs', run: aboutPage },
   { file: 'verify/drive-sign-in.mjs', run: driveSignIn },
   /* DIRECTLY AFTER THE SIGN-IN, because it depends on that section in one direction and
      repays it in the other. It seeds a token through the same seam and it hands the page

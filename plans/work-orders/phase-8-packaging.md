@@ -266,8 +266,12 @@ discovered by a user." *(The FERPA half of this paragraph moved to WO-8.12 with 
 
 ## WO-8.6 — Onboarding
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.5, WO-8.7
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.5, WO-8.7, WO-8.16
 **Closes roadmap** Phase 8 → "Onboarding: install → marking attendance with no documentation."
+
+*(**WO-8.16 added 2026-09-25.** This path starts at* install*, and a stranger who types the domain
+arrives before that — in the app, with nothing in it. WO-8.16 is the front door that step walks
+through; this work order is the walk.)*
 
 **Narrowed on 2026-08-10.** This carried the name and the distribution channel until then, and its own
 note said why that was wrong: *"If sync is wanted before 1.0, the naming decision is on Phase 3's
@@ -1238,3 +1242,142 @@ modal.** The claim being closed is about `.doc-link`, three rows, one declaratio
 anchor in the app will find link text that is legitimately inline prose and turn a fence into a
 backlog. **The 28px month chip is not a precedent here** — that departure is ruled and asserted *as*
 a departure in `src/calendar-view.css`, and these rows have no such ruling.
+
+---
+
+## WO-8.15 — the homepage Google is given is an empty gradebook
+
+**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-8.7, WO-8.12 — the domain to
+serve it at and the policy it links · **Blocks** WO-3.18 — a verification form whose Homepage field
+would otherwise point at "No classes yet."
+**Closes roadmap** *(no box. The roadmap costs the policy and the submission; the page Google reads
+before either was never named.)*
+
+**Booked 2026-09-25**, owner-directed, out of a fresh-eyes read of WO-3.18 and its two runbooks.
+Built the same sitting.
+
+**Why it exists.** Google's branding review reads the homepage URL on the verification form, and a
+homepage is expected to say what the app does and to link its privacy policy. Both runbooks put
+`https://planbook.hwgteach.com/` in that field. **A reviewer opening it cold sees the app with no
+data: "No classes yet." and an *Add your first class* button** — no description of Planbook anywhere
+on the screen, and the only privacy link inside the About modal (`index.html`, the *Privacy and
+student data* row). Neither runbook named the risk; it surfaced only when the question was asked of
+the page rather than of the form. **A rejection costs a round trip in a queue nobody here controls**,
+which is the whole reason WO-3.18 is scheduled early.
+
+**The shape decided, and the two it was chosen over.** A static `about.html` at the root, served at
+`/about`, and **`/` stays the app**. *Landing page at `/`, app moved to `/app/`* was refused: the
+installed iPad and laptop open `./` (`manifest.webmanifest`'s `start_url` and `scope`), the service
+worker is scoped to the same path, and moving both mid-term, on devices in daily classroom use, is
+not a trade to make for a form field. *The app shows its own front door to a first-time visitor* is
+right and is [WO-8.16](#wo-816--a-first-time-visitor-meets-the-front-page-not-an-empty-gradebook) —
+an app change with its own traps, booked separately so the submission does not wait on it.
+
+**Deliverables**
+- **`about.html` at the repository root**, shaped exactly like `privacy.html` — inline styles quoted
+  from `design/style-guide.md`, no manifest, no worker, no JavaScript — saying what Planbook does,
+  the three short privacy claims with a link to the policy and to the administrators' guide, how to
+  install it on an iPad and in Chrome or Edge, and a way into the app.
+- **No `sw.js` change.** The navigate branch answers only `APP_DOCUMENT` since WO-8.12, so a second
+  document at this origin already falls through to the network. `about.html` is not in `SHELL`, for
+  `privacy.html`'s reason.
+- **`tools/verify/about-page.mjs`** — `verify/policy-url.mjs`'s three questions asked of a second
+  page, plus the two links the page exists to carry.
+- **A `verify-deploy.mjs` section for `/about`**, because this host answers an unknown path with the
+  app shell at 200 and only the document can say the page is deployed.
+- **The Homepage field in both WO-3.18 runbooks reads `/about`.**
+
+**Acceptance**
+- [x] `about.html` is at the root, says what Planbook does, links the privacy policy and opens the
+      app, carries no script, manifest link or worker registration, and is not in `sw.js`'s `SHELL`.
+      `tools/verify/about-page.mjs`.
+- [x] Its visible text carries no repository vocabulary and its comment delimiters balance —
+      `privacy.html`'s header leaked onto the deployed page once, and only an absence check sees that.
+- [x] On a page `sw.js` controls, navigating to it renders the front page over the network, not the
+      gradebook out of Cache Storage.
+- [ ] `node tools/verify-deploy.mjs` is green at `/about` against the live origin: titled *About
+      Planbook*, not the app shell, linking the policy. *(Red before the deploy, correctly —
+      measured 2026-09-25: `267560 B · titled About Planbook = false` — the shell.)*
+- [ ] 👤 The owner reads it on the iPad and on the laptop, cold, and the install steps are right on
+      both — Safari's *Share → Add to Home Screen*, and the address-bar icon in Edge.
+- [x] Both WO-3.18 runbooks name `https://planbook.hwgteach.com/about` as the Homepage.
+
+**Traps** — **Do not give it a data-flow statement of its own.** `privacy.html` and `docs/FERPA.md`
+carry one word for word; a third copy is a third place for it to drift. The page compresses the
+policy's *short version* and links the documents that argue it. **Do not claim more than the policy
+does** — WO-8.12's trap 3 governs every sentence here too: no encryption, no retention promise, and
+nothing about sync being available that the policy's own *not in the released app yet* would
+contradict. **No contact address** — the policy carries the one this project publishes, inside the
+wrapper that stops Cloudflare rewriting it; a second copy would need both again. **Do not redirect
+`/` to `/about`.** That breaks every installed icon and every offline launch, which is the failure
+`sw.js`'s navigate branch exists to prevent.
+
+---
+
+## WO-8.16 — a first-time visitor meets the front page, not an empty gradebook
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.15 — the words it shows ·
+**Blocks** WO-8.6 — onboarding's path starts at *install*, and this is the step before it
+**Closes roadmap** *(no box. It is the front half of Phase 8's "Onboarding: install → marking
+attendance with no documentation", and WO-8.6 closes that one.)*
+
+**Booked 2026-09-25**, owner-directed, the same sitting as WO-8.15.
+
+**Why it exists.** A stranger who types the domain lands in the app with nothing in it. WO-8.15
+fixes that for Google by giving the form a different URL; it does nothing for a teacher a colleague
+sent the bare address to. **And the stranger on an iPad is the one this project already knows can
+lose a term of grades**: `CLAUDE.md` § Data — iOS evicts a non-installed site's IndexedDB after about
+a week of non-use, so *the install prompt is data safety*. The install banner says so, but only once
+the teacher is already using the app in a tab, which is the state it is warning about.
+
+**The ruling this work order starts from: a front door, not a gate.** Installing cannot be made a
+precondition. Firefox on the desktop cannot install a web app at all, school-managed Chromebooks
+often have installing switched off, and a teacher on either is the customer *the app must work fully
+signed-out* exists to keep. Chrome and Edge on a laptop do not evict the way iOS Safari does, so a
+gate there costs something and buys nothing. **A PWA is installed from the page it is**, so the
+front door can only explain and send the teacher into the app to install it.
+
+**Deliverables**
+- **`/` shows WO-8.15's front page content to a visitor who is both not running installed**
+  (`src/install-banner.js`'s own `display-mode: standalone` / `navigator.standalone` test — one
+  asker, not two) **and has no school year stored.** Anybody installed, or with data, goes straight
+  into the app exactly as today.
+- **A way past it that is always on the screen** — *Use it in this browser* — and the install steps
+  for the device the visitor is on.
+- **The words come from `about.html` and are not retyped.** How — fetched, or the front page's
+  sections lifted into the shell with `about.html` reduced to them — is the implementer's to argue
+  at dispatch, against trap 1.
+
+**Open — the owner's before dispatch**
+- **How firm on iPad Safari.** Proposed: the same door, with the install steps above the *use it in
+  this browser* link rather than below it. The alternative — no browser path on iOS Safari at all —
+  is the only gate that pays for itself, and it is still a gate.
+- **Whether *use it in this browser* is remembered**, under the `planbook_` prefix as a UI
+  preference. Proposed: yes, once; a door that reappears on every visit to an empty year is a nag.
+
+**Acceptance**
+- [ ] A cold, non-installed visit with no stored year shows the front door; an installed launch, and
+      a browser visit to a device that already holds a year, both open the app with no flash of it.
+- [ ] The door is never the only way forward: *use it in this browser* is present on every device.
+- [ ] An offline launch of the installed app is unchanged — `/` is still answered from Cache Storage.
+- [ ] Detecting "no school year stored" writes nothing: no IndexedDB database is created by the probe
+      and no `localStorage` key is set until the teacher chooses.
+- [ ] 👤 On the iPad, in Safari and then installed, and on the laptop in Edge, the owner walks in
+      cold and meets the right screen each time.
+
+**Traps** — **1. The decision is made in the app, never in the worker.** The navigate branch answers
+`/` from the cache so an installed app opens offline; teaching the worker to choose between two
+documents is WO-8.12's defect in reverse. **2. Opening IndexedDB creates it.** A probe that calls
+`indexedDB.open()` on a fresh origin leaves an empty database behind, and whatever asks "has this
+device got data" next reads that. Ask the store module what it already knows; do not open a second
+connection to find out. **3. It is not a warning screen.** WO-8.6's Acceptance says the onboarding
+path has none; a front door that leads with *you could lose your data* is one. The caution is one
+paragraph, on iOS, beside the steps that fix it. **4. "No school year stored" is not "new here".** A
+teacher who has cleared a device to restore a backup onto it has no year and is not a stranger; the
+door must not stand between her and *Restore*. *Use it in this browser* landing on the home screen,
+where restore already is, is the proposed answer — check it rather than assume it.
+
+**Out of scope, and unbooked** — asking the browser to keep this site's storage
+(`navigator.storage.persist()`, called nowhere in `src/` today). It is a cheap second belt for a
+teacher who stays in a Chrome or Edge tab and does not stop iOS's eviction, so it is not this work
+order's fix; it is worth a row of its own if the owner wants one.

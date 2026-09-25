@@ -1419,11 +1419,22 @@ the thing the no-timetable rule actually forbids.
 ## WO-3.18 — verification submitted 🔒
 
 **Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.10, WO-8.7, WO-7.1, WO-7.2,
-WO-8.12 — the client to verify, the domain to verify it at, the sign-in the demo video has to film,
-**the file transfer it has to film being used**, and the policy whose URL goes in the form ·
+WO-8.12, WO-8.15 — the client to verify, the domain to verify it at, the sign-in the demo video has
+to film, **the file transfer it has to film being used**, the policy whose URL goes in the form, and
+**the homepage whose URL goes beside it** ·
 **Blocks** a stranger seeing a clean consent screen
 **Closes roadmap** *(no box. Phase 7's **Verification complete.** is WO-7.3's, and a box is closed by
 one work order, never two.)*
+
+*(**WO-8.15 became the sixth dependency on 2026-09-25**, from a fresh-eyes read of this work order and
+its runbooks before a weekend submission. Both runbooks put `https://planbook.hwgteach.com/` in the
+form's Homepage field, and that URL is the app — which, opened cold by a reviewer, says **"No classes
+yet."**, describes nothing, and keeps its privacy link inside a modal. Google's branding review reads
+the homepage for exactly those two things. **So the gate report goes red until `/about` is deployed
+and WO-8.15 is ticked**, and that is the dependency doing its job rather than a new blocker: the
+page is built, and what it waits for is a push and a reading. The seventh ordering constraint on
+this work order to be found somewhere other than this field, and the first found by asking what the
+reviewer would *see* rather than what the form would *accept*.)*
 
 *(**`**Ship** —` until 2026-08-19, WO-1.24.** It has had a row in
 [`README.md`](README.md) § Ship 2 since 2026-08-11 and

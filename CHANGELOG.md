@@ -13,6 +13,21 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A front page at /about, for Google's reviewer and for anyone new — 2026-09-25
+
+Nothing changes inside the app. Opened cold, the bare domain is the app with nothing in it: *No
+classes yet.*, with no word about what Planbook is and the privacy link tucked inside About. That is
+the page the Google verification form was going to name as the homepage, and a homepage is read for
+exactly those two things. `about.html` now says what Planbook does, gives the privacy position in
+three lines with links to the policy and the administrators' guide, explains how to install it on an
+iPad and in Chrome or Edge — and why an iPad should be installed before real grades go in — and
+opens the app. It is plain prose like the privacy policy: no script, not precached, and nothing an
+installed app ever loads. Both WO-3.18 runbooks now give `/about` as the homepage, and WO-3.18 waits
+on this page being live. The browser harness checks that the page is not precached, carries no
+script, leaks no internal notes onto the screen, and is fetched over the network. `verify-deploy.mjs`
+checks that the live `/about` is this page and not the app. A second work order, WO-8.16, is booked
+to show the same front door to a first-time visitor who types the bare domain. (WO-8.15)
+
 ### Starting a work order shows how much of the five-hour usage window is spent — 2026-09-25
 
 Nothing a teacher sees. Dispatches have been killed by the account's five-hour usage limit several

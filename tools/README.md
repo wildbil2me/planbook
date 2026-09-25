@@ -1223,14 +1223,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1467 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1474 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the seventy-one files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the seventy-two files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -2011,6 +2011,17 @@ so the section's existing teardown check covers it unchanged. The run prints **1
 measured 2026-09-24 on the real clock. This work order adds **no control** and touches nothing under
 `src/`. Its mutations are recorded under WO-5.5's mutation round above, where the head and
 `FIELD_FIX_SENTENCE` are already named.
+
+**WO-8.15 moved it from 1467 to 1474, and the executed count from 1478 to 1485 — seven sites, seven
+results.** All seven are literal call sites in one new section, `verify/about-page.mjs`, registered
+directly after `verify/policy-url.mjs` because it asks that section's questions of a second document:
+`about.html` is not in `SHELL`, carries no script, manifest link or worker registration, leaks no
+repository vocabulary onto the page, links the policy and the app, and — on a page `sw.js` controls —
+is fetched over the network rather than answered with the gradebook, with the teardown asserted at
+its foot. None in a loop and none a failure arm, so the gap between sites and results stays at −11.
+The file count this ledger's head names is **seventy-two**. The run prints **1485**:
+`1485 checks · 1485 passed · 0 failed · 0 skipped`, 46,803 lines, 31.5 lines per check, 542s, exit 0,
+measured 2026-09-25 on the real clock. It touches nothing under `src/` and bumps no `CACHE`.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

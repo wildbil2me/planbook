@@ -12389,6 +12389,51 @@ DRAWN — if a future change put a `.doc-link` somewhere that is `display: none`
 modal opens, it would leave this set the way a hidden button leaves the sweep above it, and that
 sweep names its hidden ones where this one has never had any to name.*
 
+### WO-8.15 — the homepage Google is given is an empty gradebook
+
+**Nothing inside the app changed.** No file under `src/` moved, `index.html` did not, and `sw.js`
+did not bump: the navigate branch has answered only `APP_DOCUMENT` since WO-8.12, so a second
+document at this origin already falls through to the network. What is new is `about.html` at the
+root, one section in the browser harness (`tools/verify/about-page.mjs`, seven checks, registered
+after `verify/policy-url.mjs`), and one section in `tools/verify-deploy.mjs`.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-8-packaging.md` § WO-8.15.*
+
+- [ ] **Acceptance 1 — the page, its links, and what it does not carry.** From the run, verbatim:
+      `SHELL parsed to 72 entr(ies), matching about.html = []` · `<script> tags = 0, manifest link =
+      false, serviceWorker mentioned = false` · `1 link(s) to the policy, 2 to the app, out of 6
+      link(s)`.
+- [ ] **Acceptance 2 — no comment escapes onto the page.** `<!-- x2 vs --> x2, visible text 2896
+      chars, markers found in it = []`.
+- [ ] **Acceptance 3 — a worker-controlled navigation gets the front page, over the network.**
+      `title = "About Planbook", h1 = "Planbook", #homeView present = false`, and the static server
+      saw the request for `/about.html` inside the navigation's window; the precondition check reads
+      the page as controlled by `./sw.js`.
+- [ ] **Acceptance 4 — live.** Owed to the push. Measured before it, correctly red:
+      `19 checks · 18 passed · 1 failed`, the red reading `267560 B · titled About Planbook = false
+      · … it IS the app shell` — this host answering an unknown path with the gradebook at 200,
+      which is the exact reason the check reads the document rather than the status.
+- [ ] **Acceptance 5 — 👤 the owner, cold, on the iPad and the laptop**, install steps included.
+- [ ] **Acceptance 6 — both runbooks name `/about`.** See the work order's own line.
+
+**Both tools.** `node tools/verify-shell.mjs` on the delivered tree: **`1485 checks · 1485 passed ·
+0 failed · 0 skipped`, 46,803 lines, 31.5 lines per check, 542s, exit 0**, 2026-09-25, real clock —
+1478 plus the seven new. `node tools/wo-sweep.mjs`: green bar its three standing REVIEWs, with
+§ 11 reading 1474 call sites against `tools/README.md`.
+
+**The mutation round — one run, three breaks, three reds.** Applied from scratchpad copies rather
+than by `git checkout`, each marked `MUTATION WO-8.15`: `./about.html` added to `SHELL`; a paragraph
+reading *see plans/work-orders* added to the visible page; the policy link replaced by a comment.
+**`1485 checks · 1482 passed · 3 failed · 0 skipped`, exit 1**, and the three reds are exactly the
+three aimed at — `matching about.html = ["./about.html"]`, `markers found in it = ["plans/", …]`,
+`0 link(s) to the policy`. Nothing else moved: precaching the page does not make the navigation
+check go red, correctly, because the navigate branch still answers only the app's own document —
+the SHELL check is the one that owns that ruling. Reverted from the copies before a word of this
+entry was written; `grep -rn "MUTATION WO-8.15"` reads nothing and `git diff sw.js` is empty.
+
+*What the desk cannot pay off: whether the words work on a stranger, and whether the install steps
+match what Safari and Edge actually draw this month. Both are line 5.*
+
 ---
 
 This phase's first roadmap item is *this file, complete and fully passing* — which is the
