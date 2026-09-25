@@ -1295,9 +1295,9 @@ an app change with its own traps, booked separately so the submission does not w
       `privacy.html`'s header leaked onto the deployed page once, and only an absence check sees that.
 - [x] On a page `sw.js` controls, navigating to it renders the front page over the network, not the
       gradebook out of Cache Storage.
-- [ ] `node tools/verify-deploy.mjs` is green at `/about` against the live origin: titled *About
+- [x] `node tools/verify-deploy.mjs` is green at `/about` against the live origin: titled *About
       Planbook*, not the app shell, linking the policy. *(Red before the deploy, correctly —
-      measured 2026-09-25: `267560 B · titled About Planbook = false` — the shell.)*
+      measured 2026-09-25: `267560 B · titled About Planbook = false` — the shell. Green after `8b188bf` deployed the same day: `11285 B · titled About Planbook = true · links the policy = true`, 19/19.)*
 - [ ] 👤 The owner reads it on the iPad and on the laptop, cold, and the install steps are right on
       both — Safari's *Share → Add to Home Screen*, and the address-bar icon in Edge.
 - [x] Both WO-3.18 runbooks name `https://planbook.hwgteach.com/about` as the Homepage.
