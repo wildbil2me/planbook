@@ -27,6 +27,9 @@ on this page being live. The browser harness checks that the page is not precach
 script, leaks no internal notes onto the screen, and is fetched over the network. `verify-deploy.mjs`
 checks that the live `/about` is this page and not the app. A second work order, WO-8.16, is booked
 to show the same front door to a first-time visitor who types the bare domain. (WO-8.15)
+The page's Google Drive line now also says why Planbook would ask for Drive at all — to keep one
+gradebook the same on a teacher's laptop and iPad — and that the app works fully without it, both in
+the privacy policy's own words.
 
 ### Starting a work order shows how much of the five-hour usage window is spent — 2026-09-25
 

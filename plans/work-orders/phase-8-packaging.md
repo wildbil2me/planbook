@@ -1312,6 +1312,15 @@ wrapper that stops Cloudflare rewriting it; a second copy would need both again.
 `/` to `/about`.** That breaks every installed icon and every offline launch, which is the failure
 `sw.js`'s navigate branch exists to prevent.
 
+*(**Corrected 2026-09-25, after close, the owner's call.** The sync item said what Drive could
+reach and never why the app asks — the question a Google homepage is read for. It now gives the
+reason, the one permission and that Planbook works without it, **every clause taken from
+`privacy.html`** (the short version's `drive.file` sentence, the actions list's "your laptop and your
+iPad show the same gradebook", and the sync section's "carry one file between a teacher's own
+devices" and "fully usable with no Google account"), so the first Trap still holds: the page
+compresses the policy and states nothing of its own. *Not in the released app yet* stays, because
+removing it is a change to `hostAllowsSignIn()` and to the policy, not to this page.)*
+
 ---
 
 ## WO-8.16 — a first-time visitor meets the front page, not an empty gradebook
