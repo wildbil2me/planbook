@@ -182,7 +182,7 @@ and it is a second reader rather than a widened one, because a list mixing *not 
 yet* is a list a teacher cannot act on. Ten of the fourteen rules carry their own reading of
 *enough*; each is handed its own measured numbers and nothing else, no document reaches a rule, and
 nothing re-runs the rules to find out. No screen wears the sentence yet — which surface should, if
-any, is a room argument still to be had.
+any, is a room argument still to be had. (WO-4.6)
 
 ### The last fixture that guessed a date off the calendar now derives it — 2026-09-20
 
@@ -192,7 +192,7 @@ that cost 766 checks — now derives its date from the document over a record th
 purpose, and asserts the walk at the site on every run. The other three plant term edges, which no
 per-class gate reads against a neighbour's record; each says so at its own line. The walk itself
 lives once, in `lib-dates.mjs`, with a sixty-day ceiling. Green on four days, one of them a real
-weekend; a mutation that stopped the walk reddened exactly the line built to catch it.
+weekend; a mutation that stopped the walk reddened exactly the line built to catch it. (WO-1.46)
 
 ### The harness stops going red for a week every September — 2026-09-19
 
@@ -205,7 +205,7 @@ checks lost to a throw, with the app innocent throughout. The record's date is n
 the harness's own clock — three pages of ◀ Earlier back, the far side of a page nothing draws — and
 the attendance section asserts at its first read that it is still there, still on a class you can
 see, and still out of reach of every page the run pages to. The window it collides with was left
-exactly where it was; it was never the side free to move.
+exactly where it was; it was never the side free to move. (WO-1.53)
 
 ### The review count's tap lands on a page that says where the window ends — 2026-09-19
 
@@ -366,7 +366,7 @@ the check reads whether a gate is **stated** and never whether it is still **liv
 second. A green `--audit` is not a claim that every lock is still earning its glyph.
 
 *Nothing a teacher sees: `src/`, `index.html`, `sw.js`, `privacy.html`, `manifest.json` and `icons/`
-are untouched, and no `CACHE` bump is owed.*
+are untouched, and no `CACHE` bump is owed.* (WO-1.31)
 
 ### A `Depends on` that names no work order is refused, unless it says so in one of six ways — 2026-09-08
 
@@ -391,7 +391,7 @@ refusal arm was written.
 after and diffed: **27 changed, 142 byte-identical**, and 26 of the 27 are work orders losing exactly
 the spurious prose `NOTE` this row removes. The twenty-seventh is WO-G4. `--audit` is byte-identical —
 it does not read this field — and `--self-check` goes 37 → 39, one plant per arm, with the naive fix
-reddening five of them.
+reddening five of them. (WO-1.30)
 
 ### An Owes field that names no work order is refused, and the audit prints every row it counts — 2026-09-07
 
@@ -454,7 +454,7 @@ have been wrong on the day it was built.
 twelve — one more than the file holds, and the exact wrong figure this row is named after, arriving
 by a second route inside the command written to replace it. Verification caught it. The pattern is
 anchored to column 0 now, every real listener is there, and the anchor says so at the line so nobody
-tidies it away.
+tidies it away. (WO-1.49)
 
 ### Every date field has a Clear — 2026-09-06
 
@@ -511,7 +511,7 @@ cursor to take.
 date and immediately tapping the same day again still does nothing — you have to leave the field and
 come back first. That was working before and it is not any more; it is the smaller of the two
 problems and it loses no data. **An explicit Clear button is coming**, which removes the guesswork
-underneath both.
+underneath both. (WO-1.47)
 
 ### The harness stops at the first section that throws, and 766 checks never run — 2026-08-31
 
@@ -706,7 +706,7 @@ the entry altogether — and the mail app still opens, so the teacher writes and
 logged, a silent loss the evidence line now names. Inventing a rule id instead writes a contact that
 would silence a rule nobody wrote about. Both were run for real and reverted by hand. A handoff made
 from the student record is also asserted to appear on that screen immediately, which had been reached
-by an earlier work order and never checked.
+by an earlier work order and never checked. (WO-5.9)
 
 ### The app remembers who you have written to — 2026-08-29
 
@@ -773,7 +773,7 @@ Two smaller things that follow from the rules this app already keeps: the questi
 position and never a person** — *Guardian 1*, not the guardian — because it is an overlay inside the
 panel presentation mode empties, and switching the projector on while it is up closes the question
 with it. No stylesheet was opened for any of this; every control in the panel is one the shell
-already owns, and the 44px floor under a coarse pointer was measured rather than assumed.
+already owns, and the 44px floor under a coarse pointer was measured rather than assumed. (WO-5.6)
 
 ### The message actually leaves — pick who it goes to, edit it, hand it to your own mail app — 2026-08-29
 
@@ -874,7 +874,7 @@ wore the mark; the implementer and the verifier walked the table separately and 
 WO-1.27, six `⬜` rows short of it — and reaching WO-5.2 needs every one of those marked, which the
 work order's own fourth trap forbids for a row whose note is a date rather than a fold-it-in
 argument. A correction round would have spent a build arriving back at the same place. The
-mis-derivation is recorded at the line it broke.
+mis-derivation is recorded at the line it broke. (WO-1.35)
 
 ### § 20's claim 5 now reads the whole file, and the header stopped overclaiming — twice — 2026-08-28
 
@@ -963,7 +963,7 @@ its own line would pass — no spelling this codebase uses, and all three are bo
 It changes nothing about the recovery rule the incident wrote: claim 5 is about one file,
 deliberately, because every other module here indexes by computed keys legitimately — so a mutation
 anywhere else still names nothing a grep is looking for, and `grep -rn MUTATION` is still the first
-move on a dead dispatch.
+move on a dead dispatch. (WO-1.32)
 
 ### The machinery that writes home, and the door it cannot open — 2026-08-28
 
@@ -1044,7 +1044,7 @@ on the far side of the wait. Every hop of a chain is named out loud, so a two-ho
 as a one-hop pass. The mark is defined in `plans/work-orders/README.md` § "Acceptance-line marks",
 which is also the first place 👤 is written down; the reasoning for enforcing it in the tool rather
 than stating it in a table is in `plans/verification-tooling.md`. `--self-check` went 18 plants to
-**24**.
+**24**. (WO-1.28)
 
 ### The harness stops being one file — 2026-08-25
 
@@ -1073,7 +1073,7 @@ that broke into a section that quietly did not happen.
 Lines-per-check is now summed across the whole harness rather than the entry file — measuring only
 the entry would report ~700 lines over 1,156 checks, which is not a smaller number, it is a false
 one. The reasoning is `plans/verification-tooling.md` § "Splitting the harness"; where a new check
-goes is `tools/README.md` § "Driving a browser over CDP". **A green harness still closes no 👤 item.**
+goes is `tools/README.md` § "Driving a browser over CDP". **A green harness still closes no 👤 item.** (WO-1.26)
 
 ### Praise, beside concern, ranked by how far someone came — 2026-08-24
 
@@ -1767,7 +1767,7 @@ IEP, a behaviour plan or medical text comes through an import with that block id
 field.
 
 **Students and guardians can now hold two phone numbers**, which is what the export carries and what
-the student editor and the guardian card now show.
+the student editor and the guardian card now show. (WO-1.23)
 
 ### A score cell takes a score — 2026-08-18
 
@@ -1823,7 +1823,7 @@ another — the same guard WO-3.3 put on duplicate-to-another-class, approached 
 The work order argued in as many words that its value was spent if it landed second, and it landed
 second; the reasoning and the correction are both left standing in `plans/work-orders/README.md`
 § Ship 2. What was lost is one keying of one year's setup. The case for the button never rested on
-that ordering.
+that ordering. (WO-1.22)
 
 ### The term opened in a fresh year — 2026-08-17
 
@@ -2745,7 +2745,7 @@ open in a fresh year, with the test data left in one labelled unmistakably.
   had been aimed at a shell version nobody could still be running until WO-1.21 repointed it.)*
 
 - **One date formatter instead of five, and no two functions named `shortDate` that answer
-  differently.** The duplication was the boring half. The trap was the name: `src/attendance.js`
+  differently.** (WO-3.20) The duplication was the boring half. The trap was the name: `src/attendance.js`
   **exported** a `shortDate` producing `9/4`, while three other files defined their own producing
   `Sep 4` and a fifth produced `Thu, Sep 4`. Any future gradebook screen reaching for a date
   formatter would find the export first, in good faith, and render `9/4` in a column beside one
