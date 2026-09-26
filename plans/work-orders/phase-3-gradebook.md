@@ -1419,12 +1419,19 @@ the thing the no-timetable rule actually forbids.
 ## WO-3.18 — verification submitted 🔒
 
 **Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.10, WO-8.7, WO-7.1, WO-7.2,
-WO-8.12, WO-8.15 — the client to verify, the domain to verify it at, the sign-in the demo video has
-to film, **the file transfer it has to film being used**, the policy whose URL goes in the form, and
-**the homepage whose URL goes beside it** ·
+WO-8.12, WO-8.15, WO-7.4 — the client to verify, the domain to verify it at, the sign-in the demo
+video has to film, **the file transfer it has to film being used**, the policy whose URL goes in the
+form, **the homepage whose URL goes beside it**, and **that sign-in reachable on the domain the form
+names** ·
 **Blocks** a stranger seeing a clean consent screen
 **Closes roadmap** *(no box. Phase 7's **Verification complete.** is WO-7.3's, and a box is closed by
 one work order, never two.)*
+
+*(**WO-7.4 became the seventh dependency on 2026-09-25, the same day, owner-directed.** The
+deployed app drew no Drive section, so a reviewer following the form's own Homepage and privacy URLs
+would find a permission requested and never used. The video runbook had named turning the flag on
+ahead of approval as one of three ways out and assumed the middle one; the owner chose this one, and
+WO-7.3's flag deliverable moved to [WO-7.4](phase-7-sync.md#wo-74--the-deployed-app-has-no-sign-in-for-googles-reviewer-to-find) to do it.)*
 
 *(**WO-8.15 became the sixth dependency on 2026-09-25**, from a fresh-eyes read of this work order and
 its runbooks before a weekend submission. Both runbooks put `https://planbook.hwgteach.com/` in the

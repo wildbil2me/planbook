@@ -357,6 +357,85 @@ backup** — Drive holds one live copy that sync will happily overwrite. WO-1.5 
 
 ---
 
+## WO-7.4 — the deployed app has no sign-in for Google's reviewer to find
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.2, WO-8.15 — the transfer the
+sign-in exists for, and the front page whose sync sentence changes with the policy's · **Blocks**
+WO-3.18 — a submission whose homepage would otherwise lead to an app that never uses the scope
+**Closes roadmap** *(no box. Phase 7's **Verification complete.** is WO-7.3's, and a box is closed by
+one work order, never two.)*
+
+**Booked 2026-09-25**, owner-directed, out of the question *"why not turn on sign-in for the live
+site?"* asked after WO-8.15 closed. **This is WO-7.3's fourth deliverable — "Sync taken out from
+behind its flag" — split off and moved ahead of the submission**, which is the first of the three ways
+out that [`plans/wo-3-18-video-runbook.html`](../wo-3-18-video-runbook.html) § "Decide before you shoot"
+names. The owner picked it over the middle path the shot list assumed.
+
+**Why it exists.** `hostAllowsSignIn()` answers `true` for `localhost` and `127.0.0.1` and nothing
+else, so on `https://planbook.hwgteach.com` — the domain on the verification form, and the homepage
+WO-8.15 built for it — **there is no Connect control anywhere**. A reviewer who opens the submitted
+app finds a permission requested and never used, which is the shape of the two commonest rejection
+reasons the video runbook names: *insufficient functionality relative to requested scopes*, and
+*demo app differs from submitted application*. A rejection is another round trip in a queue nobody
+here controls. The flag held the code back so the deployed app contacted Google not at all; the
+submission now needs the opposite, and **the cost is smaller than the old reasoning assumed**:
+`loadGis()` in `src/auth.js` appends Google's script only when Connect is tapped, so a teacher who
+never taps it sees the network behave exactly as it does today.
+
+**The console half is already paid.** The OAuth client has carried `https://planbook.hwgteach.com`
+beside `https://localhost:8443` since 2026-08-21 (WO-3.10's table, confirmed 2026-08-24). Widening
+the list does not risk `origin_mismatch`.
+
+**Deliverables**
+- **`hostAllowsSignIn()` answers `true` for `planbook.hwgteach.com`**, and still `false` for the LAN
+  address and anything else. The comments in `src/auth.js` that say the deployed host is shut, or that
+  this is WO-7.3's edit, say what is true instead.
+- **The Drive panel says, while the client is in Testing, that sign-in is limited.** Until Google
+  approves the client, an account that is not a listed test user meets Google's *Access blocked*
+  page. The panel says so before Connect is tapped, in plain words — for example *"Google is still
+  reviewing Planbook's Drive sign-in. Until it approves, only accounts the developer has added can
+  connect."* — and the sentence is one constant, easy to delete when WO-7.3 closes.
+- **`privacy.html` and `docs/FERPA.md`, in the same sitting and word for word where they share a
+  sentence.** "No third-party code of any kind" becomes true again as a narrower claim — none unless
+  the teacher connects Google Drive, when Google's own sign-in library loads from
+  `accounts.google.com`. Every *not in the released app yet* comes out of both. The date at the top of
+  the policy changes, as the policy's own sync section promises.
+- **`about.html`'s sync item loses *Not in the released app yet*** and stays a compression of the
+  policy (WO-8.15's first Trap).
+- **`tools/verify/drive-sign-in.mjs`'s truth table** flips for `planbook.hwgteach.com` and keeps the
+  LAN address shut. `verify-deploy.mjs`'s policy and `/about` checks are re-read for anything that
+  asserted the old wording.
+- **`docs/sync.md`, WO-7.3, both WO-3.18 runbooks and `CLAUDE.md`/`AGENTS.md`**: every sentence that
+  says the deployed app draws no Drive section or contacts Google not at all. WO-7.3 keeps approval,
+  the demo video and the no-warning consent screen, and loses the flag deliverable and its third
+  Acceptance line to this work order. The video runbook's Blocker 2 is discharged, and its shot list
+  can film the flow at the real domain.
+- **`CACHE` in `sw.js` bumped** — `src/auth.js` is in `SHELL`.
+
+**Acceptance**
+- [ ] `hostAllowsSignIn('planbook.hwgteach.com')` is `true`; the LAN address, `hwgteach.com` and an
+      unrelated host are `false`; the harness asserts the whole table.
+- [ ] A signed-out page makes no request to `accounts.google.com` until Connect is tapped — asserted
+      in the harness, since this is now the whole of the policy's third-party claim.
+- [ ] `privacy.html` and `docs/FERPA.md` carry the narrowed third-party sentence identically, and
+      neither they nor `about.html` says sync is unreleased. `verify-deploy.mjs` green after the push.
+- [ ] The Drive panel names the Testing-mode limit before Connect is tapped.
+- [ ] 👤 On the deployed app, cold, on the laptop: Connect reaches the consent screen with one
+      permission line, the owner's own year uploads, and Disconnect leaves the app as it was.
+- [ ] 👤 On the iPad, force-quit first: the Drive section is drawn and the app is otherwise unchanged.
+      Download a backup before connecting the classroom year.
+
+**Traps** — **Only the deployed origin.** Widening to "any HTTPS host" or to the LAN address sends a
+live handshake to an origin the client does not list and teaches the list nothing. **Do not change
+the scope, the token's lifetime or where it lives** — this work order moves a door, and adding a scope
+after WO-3.18 submits restarts Google's review. **The two privacy documents change together or not at
+all**, per `CLAUDE.md` § Accommodations; a policy that claims less third-party code than the app
+loads is the one sentence here a district would hold against us. **And sync is still not a backup**:
+the panel's existing wording on that stays exactly as it is, and the real classroom year is the one
+most at risk from a first live sync.
+
+---
+
 ## WO-7.3 — Verification complete
 
 **Ship** — · **Status** 🔒 GATED — Google's verdict on a submission nobody has made yet · **Size** S · **Depends on** WO-3.18, WO-7.2 — approval cannot
