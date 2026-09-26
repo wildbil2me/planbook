@@ -532,7 +532,7 @@ the same way: the code is the half that is behind, so nothing can reach a live h
 
 ## WO-7.5 — the header says how fresh this device's sync is
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-7.2 — the transfer whose state the button reads, and the bookmark it counts from
+**Ship** — · **Status** 🔍 AWAITING VERDICT — 2026-09-26 · **Size** M · **Depends on** WO-7.2 — the transfer whose state the button reads, and the bookmark it counts from
 **Closes roadmap** *(no box. Phase 7's boxes are closed by WO-7.1, WO-7.2 and WO-7.3; this is a surface on top of them.)*
 
 **Booked 2026-09-26**, owner-directed, out of a conversation that started at *"what about making the
@@ -618,21 +618,34 @@ the drawing carries the same answers in green where it asked them in amber.)*
    renders either way, offline included, and *lapsed* is drawn only when the attempt fails.
 
 **Acceptance**
-- [ ] A device that has never connected draws the header exactly as today, and makes no request to
+- [x] A device that has never connected draws the header exactly as today, and makes no request to
       `accounts.google.com` — asserted from the network in the harness, as WO-7.4's second line was.
-- [ ] Connect sets the opt-in, Disconnect clears it, it survives a reload, and nothing but a boolean
+      *(`verify/sync-button.mjs`, 2026-09-26: `0 request(s) to accounts.google.com and 69 to this
+      origin`, five controls laid out, no badge — and opted in, the same reload asks `/gsi/client`.)*
+- [x] Connect sets the opt-in, Disconnect clears it, it survives a reload, and nothing but a boolean
       reaches `localStorage` — asserted in the harness.
-- [ ] Each of the six states draws its reading and does its tap, asserted in the harness; *ahead*
+      *(Real Connect and Disconnect taps: `"true"`, kept across a reload, then `"false"`; no token in
+      the store. `TESTING.md` § WO-7.5.)*
+- [x] Each of the six states draws its reading and does its tap, asserted in the harness; *ahead*
       appears after a save that has not synced and clears after one that has.
-- [ ] At 390×844 the header draws no fifth button and the About button carries the badge in every
+      *(All six read and tapped; the lapsed tap's one visible request is made in the click listener's
+      own stack, which a mutation one `.then` late turns red. `TESTING.md` § WO-7.5.)*
+- [x] At 390×844 the header draws no fifth button and the About button carries the badge in every
       state but *up to date*; at iPad width the sync button sits last before About. `verify-shell.mjs`
       measures the row at both widths, and its existing 390px slack figure does not move.
-- [ ] A last sync on an earlier calendar day draws the stale state on first launch, asserted with
+      *(Slack 5.92px opted out and 5.92px in all six states; at 834×1194 the button is 44×44 and
+      immediately before About in all six. The "~8px" in ruling 2 is the remembered figure.)*
+- [x] A last sync on an earlier calendar day draws the stale state on first launch, asserted with
       `--today` moved a day past the bookmark's `at`.
+      *(A real sync's bookmark, then a relaunch under `--today`'s own `Date` proxy moved one day on:
+      `"Last synced yesterday at 8:05 AM."`; back on the real clock, up to date. Installed for that
+      relaunch rather than taken from a whole `--today` run — a bookmark cannot outlive a run.)*
 - [ ] 👤 On the iPad, force-quit first, **with Safari's pop-up blocker left on**: let the sign-in
       lapse, tap the button, and Google's sign-in opens and reconnects.
 - [ ] 👤 On the laptop and the iPad: a save shows *ahead*, a tap brings it back to *up to date*, and
       the reading is legible at arm's length without hovering.
+      *(**Laptop half read by the owner 2026-09-26** on `localhost:8443`, before the push: working
+      as intended. The iPad half is owed on the deployed app, so the line stays open.)*
 
 **Traps** — **The reconnect tap must open Google's window inside the gesture.** `connect()` in
 `src/auth.js` awaits the silent attempt and only then asks visibly, so on the iPad the visible
@@ -648,3 +661,70 @@ ticking in the header. **`rev − baseRev` counts saves, not grades**: one save 
 so a number on the badge reads as grades and is not — say *changes* without a count, or count
 something that is what it says. **And sync is still not a backup** — the About panel's wording on that
 does not move.
+
+---
+
+## WO-7.6 — the privacy documents say Google loads only on the Connect tap, and since WO-7.5 it also loads at launch
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.4 — the narrowed third-party sentence this re-words
+**Closes roadmap** *(no box. A correction to two public documents and the notes that quote them.)*
+
+**Booked 2026-09-26**, owner-directed, out of WO-7.5's verdict. The verifier returned PASS WITH
+MANUAL CHECKS and named, outside the Acceptance list, one finding to settle **before the tree is
+committed**: WO-7.5's ruling 5 made opting in the consent to reconnect at launch, so **a device that
+has connected now loads Google's sign-in library and asks `accounts.google.com` for a token silently
+on every launch and every return to the app, with no tap.** The public sentence in `privacy.html` and
+`docs/FERPA.md` — *"Nothing is fetched from Google until Connect is tapped."* — survives only if
+*until* is read as *before the first time*, and a policy a district reads should not need that
+reading. Four internal notes say something flatly false.
+
+**Why it is its own work order and does not wait for WO-7.5 to close.** WO-7.5's two open lines are
+👤 iPad readings, and the iPad can only take them on the deployed app — `hostAllowsSignIn()` keeps the
+LAN address shut — so WO-7.5 closes *after* a push. The owner ruled the wording lands *before* that
+push. So this work order names WO-7.4 as its dependency rather than WO-7.5, which would make the two
+wait on each other; **its subject is WO-7.5's launch-time renewal as it stands in the tree**, and
+`src/sync-button.js` and `src/auth.js`'s `loadGis()` are the facts to describe. If WO-7.5's tree is
+still uncommitted when this starts, read it as it is; do not change its code.
+
+**Deliverables**
+- **`privacy.html` and `docs/FERPA.md`, in the same sitting and identically in the shared data-flow
+  statement** (`CLAUDE.md` § Accommodations). The third-party sentence says what happens now, in words
+  a teacher and a technology director can both read: Google's sign-in library loads from
+  `accounts.google.com` **only on a device where Google Drive sync has been connected — first when
+  Connect is tapped, and after that each time Planbook opens or comes back to the screen on that
+  device, until Disconnect is tapped** — and a device that has never connected fetches nothing from
+  Google. The exact words are the implementer's; the claim is not. The policy's *Last updated* date
+  changes.
+- **The comment above each copy** of the statement (`privacy.html` ~276-278, `docs/FERPA.md` ~80-85)
+  names both ways the library is reached, not only the Connect tap.
+- **The notes that claim the old sentence is "still true word for word"** say what is true instead:
+  `src/auth.js` (`loadGis()`'s comment), `src/sync-button.js` (the launch-renewal comment),
+  `docs/sync.md` (~68-71 and the WO-7.5 section ~478-479), and `index.html`'s Drive block comment
+  (~2135). **`CLAUDE.md`'s WO-7.4 parenthetical** ("Google's library loads only on the Connect tap")
+  and the WO-7.1 block's *"a reload is a sign-out"* are corrected there, and `AGENTS.md` is checked for
+  a twin in the same sitting. Dated history — WO-7.4's own record in this file, `CHANGELOG.md`, old
+  `TESTING.md` sections — stays as written.
+- **`about.html` is read and left alone unless it now overclaims**: its sync item names the scope and
+  says nothing about when the library loads, which is WO-8.15's first Trap working as meant.
+- **`CACHE` in `sw.js` bumped** only if a file in `SHELL` moves (a comment in `index.html` or
+  `src/auth.js` counts). WO-7.5 already bumped it once in the uncommitted tree; one bump per deploy is
+  enough, so check whether the tree's value has shipped before bumping again.
+
+**Acceptance**
+- [ ] The shared data-flow statement in `privacy.html` and `docs/FERPA.md` is identical after tags,
+      backticks and whitespace are normalised, names both the Connect tap and the launch-time
+      renewal, and says a device that never connected fetches nothing from Google.
+- [ ] No file outside dated history still says the library loads only on the Connect tap, or that the
+      public sentence is still true word for word — shown by a grep, quoted in `TESTING.md`.
+- [ ] The existing network assertions still hold: a device never connected makes no request to
+      `accounts.google.com` (WO-7.4's and WO-7.5's first lines), and `verify-shell.mjs` is green.
+- [ ] `verify-deploy.mjs` green after the push, with its policy claims re-read for anything that
+      asserted the old wording.
+
+**Traps** — **Change the words, never the behaviour.** Ruling 5 is the owner's and this work order does
+not revisit it; a sentence that describes a narrower app than the one shipped is the thing being
+fixed, not a licence to narrow the app. **The two documents change together or not at all.** **Do not
+say "connected" and mean "signed in"**: since WO-7.5 a device can be opted in with its sign-in lapsed,
+and it still loads the library at launch — the sentence is about the opt-in. **And no new claims**: the
+policy is a public promise a district may hold us to, so it says what the app does and nothing about
+what it might do next.

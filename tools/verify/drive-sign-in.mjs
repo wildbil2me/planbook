@@ -184,13 +184,19 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
      second one that is not `src/drive-sync.js` — which is the edit that would actually break the
      line: the roster, the score grid or the signal engine learning whether a teacher is connected.
   */
-  const AUTH_IMPORTERS = ['src/shell.js', 'src/drive-sync.js'];
+  /* AND THREE SINCE WO-7.5, for the same reason and with the same argument: `src/sync-button.js` is
+     the header's freshness reading, Phase 7's own surface on top of the transfer, and it imports
+     this module to make the silent renewal at launch and the visible reconnect on a tap. It is still
+     an allowlist of named Phase 7 files and still red for a fourth — the roster, the score grid or
+     the signal engine learning whether a teacher is connected is the edit this exists to catch. */
+  const AUTH_IMPORTERS = ['src/shell.js', 'src/drive-sync.js', 'src/sync-button.js'];
   const importerFiles = [...new Set(authImporters.map(a => a.split(':')[0]))].sort();
   check('the only files in the app that import src/auth.js are Phase 7’s own — src/shell.js, which '
-    + 'draws the panel, and src/drive-sync.js, which spends the token — so nothing OUTSIDE this '
+    + 'draws the panel, src/drive-sync.js, which spends the token, and src/sync-button.js, which '
+    + 'renews it at launch and reconnects on a tap — so nothing OUTSIDE this '
     + 'phase can tell whether a teacher is signed in, which is what makes "works identically '
     + 'signed-out" a fact about the import graph rather than a claim about a green run',
-    importerFiles.length === 2
+    importerFiles.length === 3
       && importerFiles.every(f => AUTH_IMPORTERS.indexOf(f) >= 0),
     authImporters.length + ' import(s) in ' + importerFiles.length + ' file(s): '
       + JSON.stringify(authImporters) + '; the allowed set is ' + JSON.stringify(AUTH_IMPORTERS));

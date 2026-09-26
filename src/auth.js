@@ -350,9 +350,22 @@ export function acceptTokenResponse(resp) {
   second likeliest is a school network that blocks accounts.google.com — which is a real
   configuration and not a bug, and the app has to keep working under it.
 */
+/* Is the library already on the page, so that a request can be made in THIS call stack rather than
+   after a promise settles. Split out of loadGis() at WO-7.5 because reconnect() below has to ask it
+   synchronously — see that function for why the answer decides whether a tap can open a window. */
+function gisReady() {
+  return !!(window.google && window.google.accounts && window.google.accounts.oauth2);
+}
+
 function loadGis() {
-  const ready = () => !!(window.google && window.google.accounts && window.google.accounts.oauth2);
+  const ready = gisReady;
   if (ready()) return Promise.resolve();
+  /* THE ONLY APPEND OF GOOGLE'S SCRIPT IN THE APP, and since WO-7.5 it has two ways to be reached:
+     the Connect tap, as before, and the launch-time renewal src/sync-button.js makes — which runs
+     only on a device where a Connect tap already SUCCEEDED and Disconnect has not been pressed
+     since. So "nothing is fetched from Google until Connect is tapped" (privacy.html) is still
+     true word for word; a device that never connected still fetches nothing, and
+     tools/verify/sync-button.mjs asserts that from the wire. */
   if (gisLoading) return gisLoading;
 
   gisLoading = new Promise((resolve, reject) => {
@@ -403,49 +416,58 @@ function settle(outcome) {
   explanation, which is the silent failure this work order's fifth acceptance line is about.
 */
 function requestToken(silent) {
-  if (pending) {
-    return Promise.resolve({
-      ok: false,
-      why: 'Planbook is already waiting for Google. Finish or close that window first.',
-    });
-  }
+  if (pending) return Promise.resolve(alreadyWaiting());
 
-  return loadGis().then(() => {
-    if (!tokenClient) {
-      tokenClient = window.google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        /* THE ONE PLACE THE SCOPE IS REQUESTED. One string, one call site — see the header. */
-        scope: SCOPE,
-        callback: (resp) => {
-          if (resp && resp.access_token) {
-            settle({ ok: acceptTokenResponse(resp), why: lastError });
-            return;
-          }
-          /* GIS reports some refusals through the success callback with an `error` field. */
-          settle({ ok: false, why: describe(resp && resp.error) });
-        },
-        error_callback: (err) => settle({ ok: false, why: describe(err && err.type) }),
-      });
-    }
-
-    return new Promise((resolve) => {
-      pending = resolve;
-      busy = true;
-      pendingTimer = setTimeout(
-        () => settle({ ok: false, why: 'Google did not answer. Nothing was connected — try again.' }),
-        silent ? SILENT_TIMEOUT_MS : VISIBLE_TIMEOUT_MS
-      );
-      try {
-        tokenClient.requestAccessToken(silent ? { prompt: '' } : {});
-      } catch (e) {
-        settle({ ok: false, why: 'Planbook could not open the Google sign-in window.' });
-      }
-    });
-  }, () => ({
+  return loadGis().then(() => ask(silent), () => ({
     ok: false,
     why: 'Planbook could not reach Google to sign in. Check the network — and note that some '
       + 'school networks block it. Everything else in Planbook works either way.',
   }));
+}
+
+function alreadyWaiting() {
+  return { ok: false, why: 'Planbook is already waiting for Google. Finish or close that window first.' };
+}
+
+/*
+  THE REQUEST ITSELF, AND IT IS SYNCHRONOUS UP TO requestAccessToken() — which is the only reason it
+  is a function of its own (WO-7.5). A promise executor runs in the caller's stack, so when this is
+  called from a tap handler with the library already loaded, Google's window is asked for inside the
+  tap. requestToken() above always reaches it through a `.then`, which is one microtask too late for
+  Safari's pop-up blocker; reconnect() below calls it directly. Requires gisReady().
+*/
+function ask(silent) {
+  if (pending) return Promise.resolve(alreadyWaiting());
+  if (!tokenClient) {
+    tokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      /* THE ONE PLACE THE SCOPE IS REQUESTED. One string, one call site — see the header. */
+      scope: SCOPE,
+      callback: (resp) => {
+        if (resp && resp.access_token) {
+          settle({ ok: acceptTokenResponse(resp), why: lastError });
+          return;
+        }
+        /* GIS reports some refusals through the success callback with an `error` field. */
+        settle({ ok: false, why: describe(resp && resp.error) });
+      },
+      error_callback: (err) => settle({ ok: false, why: describe(err && err.type) }),
+    });
+  }
+
+  return new Promise((resolve) => {
+    pending = resolve;
+    busy = true;
+    pendingTimer = setTimeout(
+      () => settle({ ok: false, why: 'Google did not answer. Nothing was connected — try again.' }),
+      silent ? SILENT_TIMEOUT_MS : VISIBLE_TIMEOUT_MS
+    );
+    try {
+      tokenClient.requestAccessToken(silent ? { prompt: '' } : {});
+    } catch (e) {
+      settle({ ok: false, why: 'Planbook could not open the Google sign-in window.' });
+    }
+  });
 }
 
 /* Google's own words are identifiers, not sentences. The ones a teacher can act on get a sentence;
@@ -497,6 +519,54 @@ export async function connect() {
 }
 
 /*
+  Reconnect — THE HEADER'S TAP ON A LAPSED SIGN-IN, and visible straight away (WO-7.5).
+
+  NOT connect() ABOVE, and the difference is the whole of that work order's first Trap. connect()
+  awaits a silent attempt and only then asks visibly, so on the iPad the visible request lands after
+  the tap's gesture has been spent and Safari blocks the window — WO-7.4's last hardware reading
+  recorded exactly that. By the time the header draws its lapsed state the silent attempt has
+  ALREADY been made, at launch or when the app came back into view (src/sync-button.js), and it
+  failed; making it again here would buy nothing and cost the window.
+
+  SO THE REQUEST IS MADE IN THIS CALL STACK. An async function runs synchronously up to its first
+  `await`, and ask() is synchronous up to requestAccessToken(), so when the library is already on the
+  page Google's window is asked for inside the click handler that called this. When it is NOT — the
+  launch-time load failed, which is a device that was offline or on a network that blocks Google —
+  the library has to be fetched first, the request lands outside the tap, and a browser that blocks
+  it gets told so in words that name the fix: the library is on the page now, so the SECOND tap is
+  inside its own gesture and opens. That is the one path on which this takes two taps, and it is
+  said rather than hidden.
+*/
+export async function reconnect() {
+  if (!signInAvailable()) {
+    lastError = 'Google Drive sync is not switched on in this build of Planbook.';
+    refreshAuthChrome();
+    return false;
+  }
+  if (busy) return false;
+
+  lastError = '';
+  const loadedFirst = !gisReady();
+  /* Evaluated before the await, which is the point: ask() reaches requestAccessToken() right here. */
+  const asking = loadedFirst ? requestToken(false) : ask(false);
+  busy = true;
+  refreshAuthChrome();
+
+  const out = await asking;
+  busy = false;
+  lastError = out.ok ? '' : (out.why || describe(null));
+  if (!out.ok && loadedFirst && lastError === describe('popup_failed_to_open')) {
+    lastError = 'Planbook had to fetch Google’s sign-in first, so the browser blocked its window. '
+      + 'It is ready now — tap again and it will open.';
+  }
+  refreshAuthChrome();
+  announce(out.ok
+    ? 'Reconnected to Google Drive.'
+    : 'Planbook is not connected to Google Drive. ' + lastError);
+  return out.ok;
+}
+
+/*
   Disconnect.
 
   THE LOCAL STATE GOES FIRST AND THE REVOKE SECOND, which is the order that makes the acceptance
@@ -537,9 +607,15 @@ export function disconnect() {
   `syncing` state as the same shape: a thing built for the next work order and unreachable until it
   arrived. Both were true for WO-7.1 and both stopped being true in the same landing.
   src/drive-sync.js calls this once per tap of Sync, before it reads or writes anything, so a
-  sign-in that lapsed is found at the top of the flow rather than in the middle of a transfer — and
-  it is still the only caller. The half of Phase 7 that owns the token is this file; the half that
-  spends it is that one, and the dependency points from there to here and never back.
+  sign-in that lapsed is found at the top of the flow rather than in the middle of a transfer. The
+  half of Phase 7 that owns the token is this file; the half that spends it is that one, and the
+  dependency points from there to here and never back.
+
+  A SECOND CALLER SINCE WO-7.5, and it spends nothing: src/sync-button.js makes the same silent
+  attempt at launch and when the app comes back into view, on a device that has opted into sync and
+  on no other — which is what lets the header try the renewal BEFORE it draws "your sign-in has
+  ended" rather than after (docs/sync.md § "What actually happens at the hour"). Its dependency
+  points here too, and nothing here imports it back.
 
   SILENT ONLY, AND NEVER A POPUP. A visible Google window with no tap behind it is blocked by every
   browser worth supporting, and one that got through mid-lesson would be worse than the failure it

@@ -316,12 +316,37 @@
           <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
         </svg>
       </button>
-      <button class="hdr-icon-btn" data-modal-open="aboutModal" title="About Planbook" aria-label="About Planbook">
+      <!-- THE SYNC BUTTON (WO-7.5): how fresh this device's Google Drive sync is, and the tap that
+           does what that state needs. HIDDEN IN THE MARKUP AND ON EVERY DEVICE THAT HAS NOT OPTED
+           IN — a teacher who never connected Drive sees exactly the header she had before, and
+           src/sync-button.js is the only thing that ever un-hides it. Its label, its icon and its
+           state class are all written there from the state; nothing here is a claim about sync.
+
+           LAST BEFORE ABOUT, the owner's ruling 3 — the drawing put it beside the year, and the
+           ruling moved it here so that at phone width it can fold into its neighbour rather than
+           move somewhere else. BELOW 640px IT IS NOT LAID OUT AT ALL (ruling 2, src/shell.css's
+           640px block): the row has 5.92px of slack at 390px after the fourth control (measured;
+           the ruling said ~8) and a fifth 44px one does not fit, so the About button beside it
+           wears the badge instead. The row's
+           width at 390px does not move, and tools/verify/sync-button.mjs measures that it does not.
+
+           Icon-only with a corner badge (ruling 1). The reading lives in the label. -->
+      <button class="hdr-icon-btn hdr-sync-btn hidden" id="syncBtn" data-sync-button
+              title="Google Drive sync" aria-label="Google Drive sync">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-sync-icon></svg>
+        <span class="hdr-sync-badge hidden" data-sync-badge aria-hidden="true"></span>
+      </button>
+      <!-- About carries an id and a badge since WO-7.5, and nothing else about it changed. The badge
+           is the sync button's, worn here only below the phone breakpoint where the sync button is
+           not laid out (ruling 2); src/shell.css hides it at every wider width, and
+           src/sync-button.js writes the label to match what is on the glass. -->
+      <button class="hdr-icon-btn hdr-about-btn" id="aboutBtn" data-modal-open="aboutModal" title="About Planbook" aria-label="About Planbook">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="10"/>
           <line x1="12" y1="16" x2="12" y2="12"/>
           <line x1="12" y1="8" x2="12.01" y2="8"/>
         </svg>
+        <span class="hdr-sync-badge hdr-about-badge hidden" id="aboutSyncBadge" aria-hidden="true"></span>
       </button>
     </div>
   </div>

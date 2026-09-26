@@ -1223,14 +1223,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1477 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1502 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the seventy-two files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the seventy-three files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -2037,6 +2037,22 @@ one run, four reds. The run prints **1488**:
 exit 0, measured 2026-09-25 on the real clock. The same work order added
 `server.closeAllConnections()` to the teardown — see the comment there for the socket that held a
 finished run open for ten minutes.
+
+**WO-7.5 moved it from 1477 to 1502, and the executed count from 1488 to 1513 — twenty-five sites,
+twenty-five results.** All twenty-five are literal call sites in one new section,
+`verify/sync-button.mjs`, registered directly after `verify/drive-sync.mjs`; none in a loop and none
+a failure arm, so the gap between sites and results stays at −11. The file count this ledger's head
+names is **seventy-three**. Two existing checks were rewritten in place rather than added to, so
+they move nothing here: `verify/drive-sign-in.mjs`'s importer allowlist gained `src/sync-button.js`
+(three Phase 7 files, still red for a fourth), and `verify/drive-sync.mjs`'s "PREF_DEFAULTS gained
+nothing" became "exactly one sync-shaped key, the boolean opt-in, defaulting to `false`". The
+section stands Google's library in with a page-start script (`Page.addScriptToEvaluateOnNewDocument`,
+inert unless its sessionStorage key is set) and records, per request, whether it was silent and
+**whether it was made in the click listener's own stack** — read off `new Error().stack`, because
+`window.event` is still the click inside a microtask the listener queued, which the mutation round
+proved by passing a one-`.then`-late reconnect straight through it. The run prints **1513**:
+`1513 checks · 1513 passed · 0 failed · 0 skipped`, 47,660 lines, 31.5 lines per check, 573s, exit
+0, measured 2026-09-26 on the real clock. Mutation round in `TESTING.md` § WO-7.5.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

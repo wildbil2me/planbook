@@ -211,7 +211,9 @@ const storeText = await readIf('src/store.js');
      can leave an earlier session standing. */
   const farEnd = /connect\(\)\s*\.then\(\s*afterDriveAuthChange\s*,\s*afterDriveAuthChange\s*\)/
     .test(onConnect);
-  const helper = /function afterDriveAuthChange\s*\(\s*\)\s*\{[^}]*?refreshSyncChrome\s*\([^}]*?primeSyncChrome\s*\(/
+  /* `(\w*)` rather than `()` since WO-7.5: the helper now takes connect()'s own answer, which is what
+     sets the header's opt-in, and that changes nothing about the two painters it must call. */
+  const helper = /function afterDriveAuthChange\s*\(\s*\w*\s*\)\s*\{[^}]*?refreshSyncChrome\s*\([^}]*?primeSyncChrome\s*\(/
     .test(code);
   check('both of the controls that flip a Google sign-in repaint the sync half of the Drive panel '
     + 'as well as their own — the Connect branch and the Disconnect branch in src/shell.js each '
@@ -258,19 +260,28 @@ const storeText = await readIf('src/store.js');
   const declared = prefsKeys ? [...prefsKeys[1].matchAll(/^\s{2}([A-Za-z_]\w*)\s*:/gm)]
     .map((m) => m[1]) : [];
   const seedsBookmark = /baseRev|\bsync\b/.test(seedBody);
+  /* ONE SYNC-SHAPED KEY SINCE WO-7.5, AND IT IS NAMED. That work order's first deliverable is a
+     boolean in PREF_DEFAULTS — "this device has opted into Drive sync" — which is a choice and not
+     a bookmark: it holds no rev, no stamp and no document id. So the clause is narrowed from "none"
+     to "exactly that one, defaulting to `false`", and the bookmark half of it is unchanged: a second
+     sync-shaped key, or the one key holding anything but a boolean, is still red. */
   const prefHolds = declared.filter((k) => /rev|sync|drive/i.test(k));
+  const optInDefault = (codeOnly(prefsText).match(/^\s{2}driveSyncOptIn\s*:\s*([^,\n]+)/m) || [])[1];
   const touchesLocalStorage = /localStorage/.test(codeOnly(syncText));
   check('the sync bookmark is in IndexedDB and in neither of the two places it was refused — '
     + 'newYearDocument() gained nothing, so every backup written by every earlier build still '
-    + 'restores, and PREF_DEFAULTS gained nothing, so localStorage is still UI preferences and '
-    + 'nothing else',
+    + 'restores, and PREF_DEFAULTS gained one sync-shaped key only, WO-7.5’s boolean opt-in, so '
+    + 'localStorage is still UI preferences and nothing else',
     seedBody.length > 200 && declared.length > 5
       && /createObjectStore\(SYNC_STORE/.test(storeText)
-      && seedsBookmark === false && prefHolds.length === 0 && touchesLocalStorage === false,
+      && seedsBookmark === false && touchesLocalStorage === false
+      && prefHolds.length === 1 && prefHolds[0] === 'driveSyncOptIn'
+      && String(optInDefault).trim() === 'false',
     'store creates the sync object store = ' + /createObjectStore\(SYNC_STORE/.test(storeText)
       + '; newYearDocument() is ' + seedBody.length + ' chars of code and seeds a bookmark = '
       + seedsBookmark + '; PREF_DEFAULTS declares ' + declared.length + ' key(s), '
-      + prefHolds.length + ' of them sync-shaped; src/drive-sync.js touches localStorage in code = '
+      + prefHolds.length + ' of them sync-shaped (' + JSON.stringify(prefHolds) + ', default '
+      + optInDefault + '); src/drive-sync.js touches localStorage in code = '
       + touchesLocalStorage);
 }
 

@@ -88,7 +88,7 @@ input[type="date"] { -webkit-appearance: none; appearance: none; }
    here in the same pass that adds it — same rule as the (pointer: coarse) block. */
 button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class-action-btn,
 .install-banner-dismiss, .hdr-year-btn, .year-row, .backup-nag-btn, .loading-error-btn,
-.toggle-btn, .support-dot, .hdr-mode-btn, .presentation-strip-btn,
+.toggle-btn, .support-dot, .hdr-mode-btn, .hdr-sync-btn, .presentation-strip-btn,
 .log-door, .log-quick, .log-kind {
   touch-action: manipulation;
   user-select: none;
@@ -220,6 +220,51 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 .hdr-mode-btn.active:hover {
   background: #fff; border-color: #fff; color: #0d2137;
 }
+
+/* ── THE SYNC BUTTON (WO-7.5) ──
+   Lifted from design/mockups/proposed-phase7.css § SYNC BUTTON, variant A (the owner's ruling 1),
+   and — like the mode switches above — it wears `.hdr-icon-btn` for its 32px square, its wash, its
+   hairline and its hover, and this block adds only what that class cannot say: a state, and a badge.
+   src/sync-button.js writes the state word; this block draws it.
+
+   CURRENT IS DELIBERATELY THE QUIET STATE, and there is no rule for it: the same wash as every other
+   header button, and NO GREEN ANYWHERE. A green dot is "your gradebook is safe in the cloud" rendered
+   as a standing reassurance — the misconception docs/sync.md § What sync is not exists to correct. */
+.hdr-sync-btn { position: relative; }
+/* AHEAD and STALE — an errand rather than an alarm, so amber. Stale is drawn like ahead and told
+   apart by its reading (ruling 4). */
+.hdr-sync-btn.ahead, .hdr-sync-btn.stale { color: #fff; border-color: rgba(230,126,34,0.9); }
+/* LAPSED — the one state where nothing can sync until the teacher acts. The inverted fill is
+   `.hdr-mode-btn.active`'s grammar, the loudest thing a square on the navy can do; the hover rule is
+   restated for that rule's reason (a translucent wash over solid white shows nothing). */
+.hdr-sync-btn.lapsed { background: #fff; border-color: #fff; color: #e67e22; }
+.hdr-sync-btn.lapsed:hover { background: #fff; border-color: #fff; color: #c0651a; }
+/* FAILED — a red OUTLINE, not a red fill: every failure path in src/drive-sync.js leaves the document
+   on this device untouched, which is the same reason the save chip refuses to say "Save failed". */
+.hdr-sync-btn.failed { color: #fff; border-color: rgba(231,76,60,0.95); }
+/* SYNCING — transient, for the length of a transfer or a sign-in. The icon turns on the shell's own
+   `spin` keyframes, and the button is disabled, so a second tap does nothing until it settles. */
+.hdr-sync-btn.syncing svg { animation: spin 1s linear infinite; }
+.hdr-sync-btn:disabled { cursor: default; }
+
+/* The corner badge — on the sync button, and on About where About wears it (ruling 2). A dot when
+   ahead or stale and never a count (WO-7.5's Traps: `rev − baseRev` counts saves, and one save can
+   carry a column of scores, so a number would read as grades and would not be); a mark when failed
+   or lapsed. It sits on the navy, so it carries a navy ring to part it from the button's border, and
+   it takes no pointer events — it is part of the button a thumb is pressing, not a target. */
+.hdr-about-btn { position: relative; }
+.hdr-sync-badge {
+  position: absolute; top: -5px; right: -5px;
+  min-width: 16px; height: 16px; padding: 0 4px;
+  border-radius: 8px; border: 2px solid #1a3c5e;
+  font-size: 9px; font-weight: 800; line-height: 12px; text-align: center;
+  color: #fff; background: #e67e22; pointer-events: none;
+}
+.hdr-sync-badge.bad { background: #e74c3c; }
+/* About's copy, which is not laid out above the phone breakpoint — the sync button is carrying the
+   state there. The 640px block below is the one place it is drawn. */
+.hdr-about-badge { display: none; }
+.hdr-about-badge.syncing { background: rgba(255,255,255,0.55); }
 
 /* The class tab row. Empty until WO-1.6 creates classes; `.hdr-empty` is what stands
    in, because a blank navy strip reads as a bug and "No classes yet." is the truth. */
@@ -1838,6 +1883,16 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
      control does, and a control that is only covered by another class's rule is a control the next
      reader has to go and prove is covered. */
   .hdr-mode-btn { width: 44px; height: 44px; border-radius: 10px; }
+  /* WO-7.5's sync button, by name, for the reason `.hdr-mode-btn` is named above — it takes its
+     44x44 from `.hdr-icon-btn` too. It is NOT a fifth control in this row at 390px: the 640px block
+     takes it out of the layout there, so the gap above is unchanged and the slack it leaves is too.
+     The badge moves in by a pixel, because the square it sits on grew by twelve. */
+  .hdr-sync-btn { width: 44px; height: 44px; border-radius: 10px; }
+  /* About gained a class of its own at the same work order (for its badge's positioning), so it is
+     named here too, with the values `.hdr-icon-btn` already gives it. The badge is not a control —
+     it takes no pointer events — and has no floor to state. */
+  .hdr-about-btn { width: 44px; height: 44px; border-radius: 10px; }
+  .hdr-sync-badge { top: -4px; right: -4px; }
   .presentation-strip { font-size: 13.5px; }
   .presentation-strip-btn { padding: 8px 16px; font-size: 13px; min-height: 44px; }
   .hdr-empty { font-size: 13px; }
@@ -2242,6 +2297,22 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
   */
   .hdr-divider { display: none; }
   .hdr-term-nav { min-width: 64px; }
+  /*
+    THE FIFTH BUTTON IS NOT LAID OUT AT PHONE WIDTH, and About wears its badge instead (WO-7.5, the
+    owner's ruling 2). The top row has 5.92px of slack at 390px under a coarse pointer after WO-2.29's
+    fourth control (the coarse block's `.header-actions` note), and a 44px control plus its gap wants
+    50. Three other ways to pay were declined at the ruling and are recorded so they are not
+    re-proposed: hiding the 📓 frees ~42px against a 50px need, which is no slack at all; a sub-44px
+    button is a departure that needs its own reading (CLAUDE.md § Conventions); and the title the
+    subtitle lived in was already spent here by WO-1.9.
+
+    THIS IS THE ONE PLACE THE BREAKPOINT IS WRITTEN. src/sync-button.js never names a width — it
+    asks the page whether the sync button got a box, and hands About the badge and the label when it
+    did not — so the stylesheet and the script cannot disagree about where phone width begins. The
+    row's width is unchanged in every state, and tools/verify/sync-button.mjs measures that.
+  */
+  .header-actions .hdr-sync-btn { display: none; }
+  .hdr-about-badge { display: block; }
   .install-banner {
     padding-left: max(12px, env(safe-area-inset-left, 0px));
     padding-right: max(12px, env(safe-area-inset-right, 0px));

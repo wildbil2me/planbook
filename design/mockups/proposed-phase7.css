@@ -16,7 +16,17 @@
 
 .hdr-sync-btn { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 
-/* ══ § SYNC BUTTON   →  src/shell.css   (WO-7.5 — not yet lifted) ══════════ */
+/* ══ § SYNC BUTTON   →  src/shell.css   (WO-7.5 — lifted 2026-09-26) ════════ */
+
+/* WHAT THE LIFT TOOK AND WHAT IT DID NOT (PROTOCOL.md § When the drawing lands).
+   Taken under the same names: `.hdr-sync-btn` and its four state words, the
+   `spin` on syncing, and `.hdr-sync-badge` / `.bad`. ADDED by the build: `.stale`
+   beside `.ahead` (ruling 4, not drawn), `.hdr-about-btn` and `.hdr-about-badge`
+   for the phone-width fold onto About (ruling 2, not drawn), and the 640px rule
+   that takes the button out of the layout there. DECLINED: `.labelled`, variant
+   B — ruling 1 chose A — so it stays drawn here and styles nothing in src/. And
+   every header in sync-button.html shows the button beside the year, where
+   ruling 3 put it last before About; the drawing was not redrawn. */
 
 /* The button is positioned so the badge can sit on its corner. Everything else —
    32px square, translucent wash, hairline, hover — comes from `.hdr-icon-btn`. */

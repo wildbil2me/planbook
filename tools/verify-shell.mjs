@@ -69,7 +69,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 /* ── the sections, in run order ─────────────────────────────────────────────────────────────
- * Sixty-three files, named after the surface they drive rather than after the work order that added
+ * Seventy-three files, named after the surface they drive rather than after the work order that added
  * them, so that a reader looking for "where do I put a check about the score grid" answers it
  * from the list. Two of them are not sections: lib-dates.mjs is a pure helper library, and
  * attendance-passes.mjs is the second half of the attendance section, called by the first half
@@ -139,6 +139,7 @@ import { run as policyUrl } from './verify/policy-url.mjs';
 import { run as aboutPage } from './verify/about-page.mjs';
 import { run as driveSignIn } from './verify/drive-sign-in.mjs';
 import { run as driveSync } from './verify/drive-sync.mjs';
+import { run as syncButton } from './verify/sync-button.mjs';
 import { run as logEntries } from './verify/log-entries.mjs';
 import { run as mergeFields } from './verify/merge-fields.mjs';
 import { run as templates } from './verify/templates.mjs';
@@ -364,6 +365,11 @@ const BROWSER_SECTIONS = [
      last for the reason `verify/cooldown-quiet.mjs` is, even though it drives a real
      document swap: it puts its own fixture back at the foot and asserts that it did. */
   { file: 'verify/drive-sync.mjs', run: driveSync },
+  /* AND THE HEADER'S READING OF THE TWO SECTIONS ABOVE (WO-7.5), directly after them for their
+     reason: it reads the bookmark the transfer section left as "a device that synced before". It
+     reloads the page nine times and installs two page-start scripts of its own, and it takes both
+     away and hands the page back reloaded, signed out and opted out, asserting that it did. */
+  { file: 'verify/sync-button.mjs', run: syncButton },
   { file: 'verify/log-entries.mjs', run: logEntries },
   { file: 'verify/merge-fields.mjs', run: mergeFields },
   /* AFTER THE RESOLVER AND BEFORE THE RESTORE (WO-5.2). It drives the screen over

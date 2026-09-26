@@ -254,6 +254,11 @@ whether or not sync is on.
 
 ## Wanting it to be seamless — the conversation of 2026-09-07
 
+*(The sentence after this one was true until 2026-09-26, when
+[WO-7.5](../plans/work-orders/phase-7-sync.md#wo-75--the-header-says-how-fresh-this-devices-sync-is)
+built the three subsections headed "a status on the glass", "what actually happens at the hour" and
+"the one thing … already a build" — each now ends in a dated record of what shipped. Syncing without
+a tap is still none of it.)*
 **Nothing here is decided and none of it is a work order.** It is the shape of a conversation the
 owner and a session had the day WO-7.2 landed, written down because the next person to want
 invisible sync will re-derive the whole argument otherwise — and because two of the turns in it
@@ -358,6 +363,32 @@ implementation detail.
 persistent freshness reading is a third kind of thing, state rather than event. Nor onto the home
 screen's critical path, for the reason the section above gives about attendance.
 
+**Built 2026-09-26 —
+[WO-7.5](../plans/work-orders/phase-7-sync.md#wo-75--the-header-says-how-fresh-this-devices-sync-is),
+and it was built BEFORE rung 1 rather than with it, on purpose.** Sync is still a tap; the button is
+what makes the step to syncing without one safe to take, not that step. What the paragraphs above
+proposed and what shipped, so the two are not confused:
+
+- **Freshness, not connection — six states rather than four.** `src/sync-button.js` draws *up to
+  date* (*"Synced with Google Drive at 9:41."*), *ahead* (*"Changes on this device are not in Google
+  Drive yet."*), *stale*, *lapsed*, *failed* and *syncing*, and every tap does what its state needs:
+  sync now, Google's sign-in visibly, or About at the Drive section. Signed-out-and-never-connected is
+  not a state at all — the button is simply not drawn, so the header of a teacher who never opted in
+  is exactly what it was.
+- **The time, not "2 min ago".** The reading is a clock time for the reason the Drive panel's *"ends at
+  2:47"* is one: it stays true without a timer, and there is no timer in the header.
+- **No count.** *"3 changes not synced"* above was the one proposal that did not survive: `rev −
+  baseRev` counts saves, one save can carry a column of scores, and a number on a badge reads as
+  grades. The badge is a dot.
+- **Stale by the calendar.** The owner's ruling 4: a last sync on an earlier calendar day turns the
+  button amber on its own — *"Last synced yesterday at 3:12."* — because the other device is picked up
+  the next morning, and a fixed number of hours would go amber mid-lesson for no reason.
+  `freshnessOf()` in `src/drive-sync.js` owns that comparison, so the header holds no second opinion
+  about it.
+- **Where it went.** The header, last before About (ruling 3). At phone width there is no room for a
+  fifth control, so the button is not laid out there and **About wears its badge instead** and opens
+  at the Drive section (ruling 2). Not the save chip, and not the home screen.
+
 ### What actually happens at the hour — checked 2026-09-07, and it corrects the block above
 
 **Silent renewal is already built.** `ensureFreshToken()` calls `requestToken(true)` — `prompt: ''`
@@ -386,6 +417,18 @@ that moment she is told. **It stops holding the day sync runs without a tap** �
 failure, no indicator, and an app that has quietly stopped syncing looks exactly like one that is
 working. That is the hole the freshness reading above closes, which is why it belongs *with*
 rung 1 rather than after it.
+
+**The decision this section asked for was taken on 2026-09-26 (WO-7.5), on a device that has opted
+in.** There the silent renewal is now tried **before** anything says the sign-in has ended — at launch
+and when the app comes back into view, never on a timer and never on the tap — and the header draws
+*lapsed* only when it fails. The About panel is unchanged: it still retires Sync and offers Connect
+the moment `signedIn` reads false, because it is a panel she opens rather than a reading she
+glances at. **The reconnect tap does not go through `connect()`**, which awaits the silent attempt
+and only then asks visibly — on the iPad that lands outside the tap's gesture window and Safari
+blocks the pop-up, which is what WO-7.4's last hardware reading recorded. `reconnect()` in
+`src/auth.js` asks visibly inside the tap instead, since the silent attempt has already been made.
+**Expect the renewal to carry the laptop and not the iPad** — the paragraph above that says so is
+unchanged by building it; the button makes the iPad's one tap per session a predictable, cheap one.
 
 ### The one thing in this conversation that is already a build — 2026-09-07
 
@@ -423,6 +466,20 @@ deliberately switches sync off keeps seeing an indicator about it. And whether o
 
 **It is the cheapest item in this whole conversation and the only one that is a prerequisite rather
 than a feature** — no architecture, no new permission, no new scope.
+
+**Built 2026-09-26 (WO-7.5), and both decisions are taken.** The key is `planbook_driveSyncOptIn`,
+declared in `PREF_DEFAULTS` with a default of `false` and holding a boolean and nothing else. **A
+Connect that succeeds sets it** — `connect()`'s own answer, so a refusal or a closed window sets
+nothing — **and Disconnect clears it**, and nothing else does: a reconnect that fails leaves a teacher
+opted in, because she is. **Opting in is also the consent to try reconnecting at launch — one consent,
+not two** (the owner's ruling 5): a device holding `true` makes the silent attempt when the app opens
+and when it regains visibility, never blocking — the app renders either way, offline included — and a
+device holding `false` or nothing asks Google for nothing at all, which the harness asserts from the
+network. So *"nothing is fetched from Google until Connect is tapped"* in `privacy.html` and
+[`FERPA.md`](FERPA.md) is still true word for word: the launch-time fetch happens only on a device where
+Connect was tapped and succeeded and Disconnect has not been pressed since. The three things the key
+unlocked are all three built: the indicator's condition, *lapsed* told apart from *never connected*,
+and a launch-time renewal aimed only at the teachers who want it.
 
 ### A second Google account makes a latent hole reachable — found 2026-09-07
 

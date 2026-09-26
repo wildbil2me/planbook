@@ -660,6 +660,12 @@
                                       A TAP AND NEVER A TIMER: a browser token flow has no
                                       refresh token, so nothing in this app may be built on sync
                                       happening while the teacher is not looking
+      data-sync-button                the header's sync button (WO-7.5), drawn only on a device
+                                      that has opted into sync. Its state decides the tap —
+                                      sync now, reconnect VISIBLY inside this gesture, or open
+                                      About at the Drive section — and src/sync-button.js owns
+                                      that table. Still a tap and never a timer: it reports
+                                      freshness, it does not sync on its own
 
     Delegation also means markup rendered later needs no re-binding, which is what makes it
     the right default for a screen whose rows come from the year document. The year rows are
@@ -875,6 +881,11 @@ import * as auth from './auth.js';
    is hidden on and for the same reason — it asks that module whether the flag is open rather than
    reading the hostname a second time, which is src/supports.js's rule about one asker per fact. */
 import * as driveSync from './drive-sync.js';
+/* The header's sync button (WO-7.5). Imported for its boot, its tap, the opt-in the two About
+   controls set and clear, and the repaint after a sync from the About panel's own button. It is
+   drawn only on a device that has opted in, and it decides nothing about freshness itself — it asks
+   the two modules above, which is the one-asker rule again. */
+import * as syncButton from './sync-button.js';
 
 /* WO-5.2, and it is TWO modules for the reason `signals` and `signalsView` are two: `templates` is
    the model — what a record is, which templates exist for a tone and an audience, and the eight the
@@ -2002,9 +2013,36 @@ function clearDateField(btn) {
   primeSyncChrome() reads the sync bookmark out of IndexedDB and fills in the one line that needs
   it. The read is not awaited by either caller.
 */
-function afterDriveAuthChange() {
+function afterDriveAuthChange(connected) {
   driveSync.refreshSyncChrome();
   driveSync.primeSyncChrome();
+  /* AND THE OPT-IN (WO-7.5), set on connect()'s OWN ANSWER and on nothing else. The promise hands
+     that answer to its fulfilment arm, which is this function, so `connected` is `true` only after
+     a Connect that succeeded — never after a refusal, never on the Disconnect branch (which calls
+     this with nothing), and never because a session happened to be standing when a failed tap
+     settled, which is what reading authState() here instead would have got wrong. Disconnect
+     clears it in its own branch below. */
+  if (connected === true) syncButton.rememberOptIn();
+  syncButton.refreshSyncButton();
+}
+
+/*
+  OPEN ABOUT, painted first — the one overlay with something to read before it is on screen. Lifted
+  out of the click listener at WO-7.5 because a second control now opens it: the header sync
+  button's tap on a failed sync, which has to arrive AT THE DRIVE SECTION rather than at the top.
+  `atDrive` is that, and the About button itself asks for it when it is the one wearing the sync
+  badge at phone width (ruling 2). The two paints and the build line are exactly as they were; the
+  comments on them are in the listener, where they were written.
+*/
+function openAbout(opener, atDrive) {
+  auth.refreshAuthChrome();
+  driveSync.refreshSyncChrome();
+  driveSync.primeSyncChrome();
+  const land = () => {
+    openModal('aboutModal', opener);
+    if (atDrive) syncButton.revealDriveSection();
+  };
+  paintBuildLine().then(land, land);
 }
 
 /* One click listener for the whole document. Order matters only in that the first hook to
@@ -2029,7 +2067,6 @@ document.addEventListener('click', (e) => {
          index.html. It is BEFORE the await for the flicker reason above — both halves of this panel
          are true the moment it appears — and outside the .then arms because it cannot fail: the
          module returns early when the section is not on the page or the flag is shut. */
-      auth.refreshAuthChrome();
       /* And the transfer's own half beside it (WO-7.2), in the same breath and for the same
          reason. Two calls rather than one because they answer at two speeds: refreshSyncChrome()
          is synchronous and paints the button state off a module variable, so the section is whole
@@ -2037,10 +2074,13 @@ document.addEventListener('click', (e) => {
          fills in the one line that needs it. THE SECOND IS NOT AWAITED, deliberately — a modal
          that waits on a database before appearing is a modal that hangs on a slow device, and the
          line it fills is a footnote rather than the panel's subject. It starts blank rather than
-         guessing, so nothing false is ever on the glass while it lands. */
-      driveSync.refreshSyncChrome();
-      driveSync.primeSyncChrome();
-      paintBuildLine().then(() => openModal(overlayId, open), () => openModal(overlayId, open));
+         guessing, so nothing false is ever on the glass while it lands.
+
+         All three calls and the build line live in openAbout() since WO-7.5, which a second
+         control reaches as well. The About button asks for the Drive section when it is the one
+         wearing the sync badge, which only happens at phone width (ruling 2) — asked here, at tap
+         time, of what is on the glass. */
+      openAbout(open, syncButton.aboutOpensAtDrive());
       return;
     }
     openModal(overlayId, open);
@@ -2100,6 +2140,10 @@ document.addEventListener('click', (e) => {
   }
   if (e.target.closest('[data-drive-disconnect]')) {
     auth.disconnect();
+    /* The opt-in goes with it (WO-7.5) — Disconnect is the deliberate way to switch sync off, and a
+       teacher who has done it must not keep seeing a button about it. It is the ONLY thing that
+       clears it: a failed reconnect leaves her opted in, because she is. */
+    syncButton.forgetOptIn();
     afterDriveAuthChange();
     return;
   }
@@ -2109,7 +2153,25 @@ document.addEventListener('click', (e) => {
      subscribers do that, because adopting a downloaded document goes through the store like any
      other write and notify() is what every screen in this app already listens to. A repaint
      chained on here would be a second one, racing the first. */
-  if (e.target.closest('[data-drive-sync]')) { driveSync.syncNow(); return; }
+  if (e.target.closest('[data-drive-sync]')) {
+    /* The header button follows a sync from this door too (WO-7.5): `syncing` while it runs, and
+       whatever it settled into after. afterSync() is a repaint of that one button and nothing else,
+       so it is not the second screen repaint the paragraph above refuses. */
+    driveSync.syncNow().then(syncButton.afterSync, syncButton.afterSync);
+    syncButton.refreshSyncButton();
+    return;
+  }
+
+  /* THE HEADER'S SYNC BUTTON (WO-7.5). Its state decides the tap and src/sync-button.js owns that
+     table; the one outcome it hands back here is About, because the path that paints About before
+     it appears lives in this file. NOTHING IS AWAITED BEFORE THE TAP REACHES GOOGLE: on a lapsed
+     sign-in tapSyncButton() calls src/auth.js's reconnect() in this same stack, which is the only
+     way Safari lets the sign-in window open. */
+  const syncBtn = e.target.closest('[data-sync-button]');
+  if (syncBtn) {
+    if (syncButton.tapSyncButton() === 'about') openAbout(syncBtn, true);
+    return;
+  }
 
   const picker = e.target.closest('[data-year-picker]');
   if (picker) { openYearPicker(picker); return; }
@@ -3787,6 +3849,12 @@ document.addEventListener('DOMContentLoaded', async () => {
        mode above. */
     teacher.refreshHeaderIdentity();
     document.getElementById('loadingScreen').classList.add('hidden');
+    /* AFTER the loading screen comes down, and not awaited (WO-7.5): the header's sync button, and
+       on a device that has opted into sync, the silent renewal ruling 5 makes part of that consent.
+       It must never stand between a teacher and her registry — the app is on the glass before
+       Google is asked anything, offline included. On a device that never opted in it paints the
+       button hidden and returns, so the header is exactly what it was. */
+    syncButton.start();
   } catch (e) {
     showBootFailure(e);
   }

@@ -118,9 +118,17 @@ const UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files';
   format that has been written the same way in every file in this repository since WO-2.1.
 */
 function todayLocal() {
-  const now = new Date();
+  return localDayOf(new Date());
+}
+
+/* The same four lines for any moment rather than for now — split out at WO-7.5, whose stale rule is
+   a comparison of two CALENDAR DAYS (the owner's ruling 4) and never a subtraction of hours. Two
+   instants 90 minutes apart can be on different days and two 23 hours apart on the same one, and
+   only the first pair is "not synced today". Exported for src/sync-button.js, which writes the
+   "yesterday" in a reading from it rather than keeping a fourth copy. */
+export function localDayOf(when) {
   const pad = (n) => (n < 10 ? '0' : '') + n;
-  return now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+  return when.getFullYear() + '-' + pad(when.getMonth() + 1) + '-' + pad(when.getDate());
 }
 
 /* How long to wait before the one retry. Short, because the teacher is standing there watching
@@ -612,8 +620,13 @@ async function sendUp(token, doc, remote, localRev, isFirst) {
   if (isFirst) await createFile(token, name, text, props);
   else await withOneRetry(() => updateFile(token, remote.id, name, text, props));
 
-  await store.writeSyncState(doc.docId, doc.year, localRev);
-  mark = { docId: doc.docId, year: doc.year, baseRev: localRev, at: new Date().toISOString() };
+  /* THE RECORD THAT WAS STORED, NOT A SECOND ONE BUILT BESIDE IT (WO-7.5). This read
+     `mark = { …, at: new Date().toISOString() }` until the header began drawing the stamp: that was
+     a second clock reading a few milliseconds after writeSyncState()'s own, so the time on the
+     glass in this session and the time read back after a reload were two facts about one sync.
+     writeSyncState() returns the record it put, and this call site and the two below hold exactly
+     that. */
+  mark = await store.writeSyncState(doc.docId, doc.year, localRev);
   markFor = doc.docId;
 
   return settle('uploaded', isFirst
@@ -658,8 +671,7 @@ async function bringDown(token, doc, remote) {
   }
 
   await store.adoptRemoteDocument(incoming);
-  await store.writeSyncState(doc.docId, doc.year, remote.rev);
-  mark = { docId: doc.docId, year: doc.year, baseRev: remote.rev, at: new Date().toISOString() };
+  mark = await store.writeSyncState(doc.docId, doc.year, remote.rev);
   markFor = doc.docId;
 
   return settle('downloaded', 'This device now has the copy of ' + doc.year + ' from Google Drive, '
@@ -709,8 +721,7 @@ async function keepBoth(token, doc, remote, localRev) {
   await withOneRetry(() => updateFile(token, remote.id, live, JSON.stringify(doc),
     propertiesFor(doc.docId, localRev)));
 
-  await store.writeSyncState(doc.docId, doc.year, localRev);
-  mark = { docId: doc.docId, year: doc.year, baseRev: localRev, at: new Date().toISOString() };
+  mark = await store.writeSyncState(doc.docId, doc.year, localRev);
   markFor = doc.docId;
 
   /* THE THIRD ACCEPTANCE LINE, and it is the only message in this app that has to do four things
@@ -744,6 +755,10 @@ export function syncState() {
     busy: busy,
     outcome: outcome ? outcome.kind : '',
     message: outcome ? outcome.message : '',
+    /* Whether the last outcome was a failure, which is the panel's red box and — since WO-7.5 — the
+       header button's "the last sync did not finish". Carried rather than re-derived from `outcome`
+       so the two surfaces cannot disagree about which kinds count as failures. */
+    bad: outcome ? outcome.bad : false,
     year: doc ? doc.year : '',
     docId: doc ? doc.docId : '',
     localRev: doc ? (Number(doc.rev) || 0) : 0,
@@ -755,6 +770,40 @@ export function syncState() {
     lastSyncedAt: known && mark ? mark.at : '',
     bookmarkRead: known,
   };
+}
+
+/*
+  HOW FRESH THIS DEVICE'S SYNC IS, as one word — the header button's question (WO-7.5), answered
+  HERE rather than in the header's own module, because this is the file that owns the bookmark and
+  the comparison. src/sync-button.js combines the answer with the sign-in and the last outcome to
+  pick one of its six states, and it asks this function rather than holding a second opinion about
+  what "up to date" means.
+
+    'unknown'  the bookmark for the open document has not been read yet. A third state from "read,
+               and there is none", for syncState()'s reason — saying "not synced" for one frame and
+               correcting it would put a false sentence on the glass.
+    'ahead'    the document on this device has saves the bookmark does not — including a document
+               this device has never synced at all, whose every save is in that position. It says
+               CHANGES and never how many: `rev − baseRev` counts saves, and one save can carry a
+               whole column of scores, so a number would be read as grades and would not be
+               (WO-7.5's Traps).
+    'stale'    nothing is ahead, but the last sync was on an EARLIER CALENDAR DAY than today — the
+               owner's ruling 4. A day, not a number of hours: the other device is picked up the
+               next morning, which is when a stale reading matters, and a fixed number of hours
+               would turn amber in the middle of a teaching day for no reason. localDayOf() on both
+               sides, never a 24-hour subtraction.
+    'current'  synced today, and nothing since.
+
+  `now` is a parameter for the reason it is anywhere: a caller can ask about a moment. The app
+  passes nothing and gets the clock.
+*/
+export function freshnessOf(state, now) {
+  if (!state || !state.bookmarkRead) return 'unknown';
+  if (state.baseRev === null || state.localRev !== state.baseRev) return 'ahead';
+  if (!state.lastSyncedAt) return 'ahead';
+  const at = new Date(state.lastSyncedAt);
+  if (Number.isNaN(at.getTime())) return 'ahead';
+  return localDayOf(at) < localDayOf(now || new Date()) ? 'stale' : 'current';
 }
 
 /*

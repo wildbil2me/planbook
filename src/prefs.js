@@ -208,6 +208,29 @@ export const PREF_DEFAULTS = {
      nothing from inside a message. src/outreach-view.js is the only reader and owns the three
      chips that write it. */
   mailDoor: 'default',
+
+  /* This device has opted into Google Drive sync: `true` from the first Connect that succeeds, and
+     back to `false` the moment Disconnect is tapped (WO-7.5). src/sync-button.js is the only reader
+     and the only writer, and it is what the header's sync button is drawn on.
+
+     IT IS NOT A CREDENTIAL, and that is the whole of why it may live here. It records that the
+     teacher CHOSE sync on this device — never a token, never an account, never anything she could
+     authenticate with. The access token stays in memory and only in memory (src/auth.js, decision
+     1), so a reload is still a sign-out; what this adds is that after the reload the app can tell a
+     teacher who syncs every day from one who has never connected, which until this key existed it
+     could not (docs/sync.md § "The one thing in this conversation that is already a build").
+
+     ONE BOOLEAN AND NOTHING BESIDE IT. Not when she last synced — that is the bookmark in
+     IndexedDB, keyed by document (src/store.js readSyncState()), which WO-7.2 refused to put here —
+     and not which account, which this app cannot know by construction (it asks Google for no
+     identity scope). A fact about this browser, like every key above it: the laptop can be opted in
+     while a borrowed tablet is not.
+
+     OPTING IN IS ALSO THE CONSENT TO TRY RECONNECTING AT LAUNCH — one consent, not two, the
+     owner's ruling 5 on WO-7.5. A device holding `true` makes the silent renewal when the app opens
+     and when it comes back into view; a device holding `false` or nothing makes no request to
+     Google at all. */
+  driveSyncOptIn: false,
 };
 
 /* Reads never throw: Safari in private mode can make localStorage itself throw on access,

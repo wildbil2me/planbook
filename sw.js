@@ -34,7 +34,7 @@
 /* Bump on every deploy that changes any file in SHELL. The name is the version: `activate`
    deletes every cache that is not this one, which is what makes a deploy replace the shell
    rather than layer on top of it. */
-const CACHE = 'planbook-shell-v130';
+const CACHE = 'planbook-shell-v131';
 
 /* Relative to this file, which is why sw.js lives at the repo root: a service worker can only
    control pages at or below its own directory (src/README.md). Kept relative rather than
@@ -159,6 +159,11 @@ const SHELL = [
      Drive would put a second copy of a gradebook in Cache Storage, where nothing in this app
      knows to look for one or to clear it. */
   './src/drive-sync.js',
+  /* WO-7.5. The sync button in the header. Reached only through an import from src/shell.js, which is
+     exactly as absent offline as one named in index.html and easier to forget
+     (tools/verify/precache.mjs) — and it is the module that paints the header on every launch of a
+     device that has opted into sync, offline launches included. */
+  './src/sync-button.js',
   './icons/icon-152.png',
   './icons/icon-167.png',
   './icons/icon-180.png',

@@ -11591,6 +11591,91 @@ eager load, correctly: it asks only that the tap is followed by a request, and i
 the inverse edit before a word of this entry was written; `git diff src/auth.js` against the staged
 tree is empty and a search for the marker over every delivered file reads nothing.
 
+
+### WO-7.5 — the header says how fresh this device's sync is
+
+**One button, one preference, one reconnect.** `src/sync-button.js` draws `#syncBtn` last before
+About on a device holding `planbook_driveSyncOptIn = true` (set by a Connect that succeeded, cleared
+by Disconnect), in six states whose freshness comes from `freshnessOf()` in `src/drive-sync.js`;
+`reconnect()` in `src/auth.js` asks Google visibly inside the tap; below 640px the button is not laid
+out and About wears its badge. `CACHE` is `planbook-shell-v131`.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-7-sync.md` § WO-7.5, all from the final
+run of `node tools/verify-shell.mjs` on the delivered tree, § "the header sync button (WO-7.5)".*
+
+- [x] **Acceptance 1 — never connected.** `0 request(s) to accounts.google.com and 69 to this origin;
+      sync button hidden = true, About badge = false, About label = "About Planbook", laid-out
+      controls = ["yearButton","hdr-icon-btn","presentationBtn","soundsBtn","aboutBtn"]`, through a
+      reload and a return to view with the Network domain on and no stand-in. The positive control
+      beside it: the same reload opted in asks `https://accounts.google.com/gsi/client` (blocked at
+      the browser) and lands on *lapsed*.
+- [x] **Acceptance 2 — the opt-in.** The real Connect button, answered by the stand-in library,
+      stores `"true"`; a reload keeps it and makes exactly one silent request; the store holds no
+      token and every key is `planbook_`; Disconnect stores `"false"` and hides the button in the
+      same tap, and a reload after it asks the library for nothing.
+- [x] **Acceptance 3 — six states, each read and each tapped.** *Up to date* `"Synced with Google
+      Drive at 8:05 AM. Tap to sync now."` after a tap that synced; *ahead* after a save
+      (`localRev 309 over baseRev 308`, badge a dot with no number) and gone after the next tap;
+      *syncing* caught with Drive held (`disabled = true`, a second tap made no request); *failed*
+      after a planted 500, whose tap opened About with the Drive section on the glass; *lapsed* after
+      a silent renewal on a return to view was refused, whose tap made one visible request **in the
+      click listener's own stack** (`"inClick":true,"inListener":true`); *stale* on the first launch
+      after a bookmark planted yesterday (`"Last synced yesterday at 3:12 PM."`) and three days back
+      (`"Last synced on Sep 23 at 9:12 AM."`), and its tap synced.
+- [x] **Acceptance 4 — the widths.** At 390×844 coarse, in all six states: five controls laid out,
+      no sync button, About's badge in every state but *up to date*, slack **5.92px** in every state
+      against 5.92px on a device that never opted in. At 834×1194 coarse: the button 44×44 and the
+      element immediately before About in all six. *(The work order's "~8px" is the ruling's
+      remembered figure; 5.92 is the measurement, and it did not move.)*
+- [x] **Acceptance 5 — the calendar day.** Written as the literal line: a real sync stamps the
+      bookmark (`2026-09-26T12:05:35.396Z`), the page is relaunched under the same `Date` proxy
+      `--today` installs, moved one day on (`page day = 2026-9-27`), and the first launch reads
+      `"Last synced yesterday at 8:05 AM."`; relaunched on the real clock the same bookmark reads up
+      to date. It is installed for that one relaunch and removed, rather than taken from a whole
+      `--today` run, because a bookmark cannot outlive a harness run (a fresh profile each time).
+- [ ] 👤 **Acceptance 6 — the iPad, pop-up blocker ON.** Force-quit from the app switcher first.
+      Connect once in About (on the iPad that is the one step still wanting the blocker off — it
+      goes through `connect()`, silent first), then wait out the hour or relaunch: the button should
+      read *Your Google sign-in has ended*. **Turn the pop-up blocker back on**, tap the button, and
+      Google's window should open and reconnect. If it does not, note whether About's status line
+      says the window was blocked.
+- [ ] 👤 **Acceptance 7 — laptop and iPad, arm's length.** Grade something: the button turns amber
+      with a dot. Tap it: back to the quiet state. Read it from where you stand at the board.
+
+**Both tools.** `node tools/verify-shell.mjs`: **`1513 checks · 1513 passed · 0 failed · 0 skipped`,
+47,660 lines, 31.5 lines per check, 573s, exit 0**, 2026-09-26, real clock — 1488 plus the
+twenty-five new. `node tools/wo-sweep.mjs`: `45 checks · 41 passed · 0 failed · 4 to review`, § 11
+reading 1502 call sites; the fourth review is `.hdr-about-badge` with no coarse-block rule, which is
+correct — it is an `aria-hidden` span with `pointer-events: none`, not a control.
+
+**The mutation round — three runs.** Each mutation carried a `MUTATION WO-7.5` marker, was applied
+over a backed-up copy and reverted by restoring it; after each, a search for the marker over `src/`,
+`tools/`, `index.html`, `sw.js` and `docs/` read zero.
+
+1. **All four at once** (reconnect one `.then` late; the renewal made on every launch regardless of
+   the opt-in; stale by 24 hours instead of by calendar day; a count in the ahead badge) —
+   **`1485 passed · 28 failed`**. The launch-renewal break was aimed at and caught — Acceptance 1
+   read `1 request(s) to accounts.google.com`, and the stand-in check read a silent request on a
+   device never opted in — but it cascaded: a signed-in page hides Connect, so the opt-in was
+   never set and every later check in the section went red, and Google's real library loaded early
+   reddened three older checks (the focus-ring sheet walk, WO-7.1's arrival reading, WO-7.4's wire).
+   So the other three were re-run without it.
+2. **The other three** — **`1509 passed · 4 failed`**. Caught: the count in the badge (`badge =
+   true reading "1"`), and stale-by-hours (the planted yesterday-at-3:12 read *up to date* 16 hours
+   later, and the phone-width badge check went red with it). **Not caught: the late reconnect** —
+   the stand-in recorded `inClick: true`, because `window.event` is still the click during the
+   microtask checkpoint the listener's return triggers. The fourth red was Acceptance 5's
+   `lastSyncedAt` comparison — its stale and up-to-date readings were both right — and it is read
+   as **a real inconsistency rather than the mutation** (inferred, not isolated: the same clause
+   passed in the first green run, which fits a millisecond race and nothing else): `src/drive-sync.js`
+   stamped the in-memory bookmark with its own `new Date()` a few milliseconds after
+   `writeSyncState()` stamped the stored one, so the time drawn this session and the time read back
+   after a reload were two facts. Fixed — the three call sites now hold the record
+   `writeSyncState()` returns — and the stand-in now also reads the stack.
+3. **The late reconnect alone, against the new reading** — **`1512 passed · 1 failed`**: `requests
+   made by the tap = [{"silent":false,"inClick":true,"inListener":false}]`. Reverted; the final run
+   above is on the tree after it.
+
 ---
 
 ## Phase 8 — 1.0 packaging
