@@ -7,7 +7,7 @@ it to, no account to create, and every record stays in the browser on the teache
 **not** your school's official record. The authoritative record remains your student information
 system; Planbook does not connect to it, does not read from it and does not replace it.
 
-**Last updated 13 September 2026.** The teacher-facing version of the same facts is the
+**Last updated 25 September 2026.** The teacher-facing version of the same facts is the
 [privacy policy](https://planbook.hwgteach.com/privacy), and the two are kept in step by hand: this
 document is written for a district review, that one for a teacher and for Google's OAuth
 verification. Neither restates the other's argument, and where they state the same fact — what
@@ -71,20 +71,25 @@ nowhere for it to go.
 The one third party in the picture is the **static web host** that serves the app's own files
 (HTML, JavaScript, stylesheets and icons). Like any web server it logs requests for those files —
 an IP address and a file path — which is the ordinary record of a browser fetching a web page. It
-never receives student data, because student data is never part of a request.
+never receives student data, because student data is never part of a request. The one other
+company a teacher can bring in is Google, and only by connecting Google Drive sync herself — see
+the second of the three acts below.
 
 ## What leaves the device, when, and to where
 
 <!-- THE DATA-FLOW STATEMENT. privacy.html carries this same statement, deliberately: WO-8.12
      exists because two documents that describe what leaves the device in two different sets of
      words are two documents that will eventually disagree in public. Change it here and change it
-     there in the same sitting. Phase 7 rewrites both the day sync comes out from behind its
-     flag. -->
+     there in the same sitting. Phase 7 rewrote both the day sync came out from behind its
+     flag — WO-7.4, 2026-09-25 — and the third-party sentence below is the narrower claim that
+     replaced "no third-party code of any kind". -->
 
 **Nothing leaves it on its own.** Loading the page fetches Planbook's own files from the website,
 the way any web page does, and the browser checks those same files for updates. Beyond that,
-Planbook makes no network requests at all: no analytics, no usage tracking, no error reporting, no
-advertising, and no third-party code of any kind.
+Planbook makes no network requests at all — no analytics, no usage tracking, no error reporting, no
+advertising, and no third-party code of any kind — unless Google Drive sync is connected, when
+Google's own sign-in library loads from accounts.google.com. Nothing is fetched from Google until
+Connect is tapped.
 
 Student information moves only when the teacher moves it, and there are three ways to do that. Each
 is a deliberate act, and it is visible as it happens:
@@ -93,8 +98,7 @@ is a deliberate act, and it is visible as it happens:
    teacher's browser saves downloads. It is a file on the teacher's disk and it is not sent
    anywhere.
 2. **Turning on Google Drive sync** — optional, off unless switched on, uploading the year's file
-   to the *teacher's own* Google Drive so that a laptop and an iPad show the same gradebook. *Not
-   in the released app yet.*
+   to the *teacher's own* Google Drive so that a laptop and an iPad show the same gradebook.
 3. **Sending a message the teacher drafted** — Planbook drafts an email to a guardian, counselor
    or administrator and hands it over unsent, through one of two doors chosen in the draft itself
    and remembered by the browser it was chosen in, nowhere else. The default door is the device's

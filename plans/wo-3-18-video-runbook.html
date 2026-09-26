@@ -318,7 +318,9 @@
       <div class="cell">
         <span class="k">WO-7.3 · the flag</span>
         <span class="v hold">🔒 gated · one function</span>
-        <span class="n"><code>hostAllowsSignIn()</code> still answers false for the deployed host.</span>
+        <span class="n">No longer holds the flag: <strong>WO-7.4 took it on 2026-09-25</strong> and
+          widened <code>hostAllowsSignIn()</code> to the deployed host. What stays here is Google's
+          approval, the video and the clean consent screen.</span>
       </div>
     </div>
 
@@ -346,20 +348,31 @@
       </p>
     </div>
 
-    <div class="note stop">
-      <h4>Blocker 2 — the deployed app has no sign-in to film</h4>
+    <div class="note go">
+      <h4>Blocker 2 — discharged 2026-09-25, by WO-7.4</h4>
       <p>
-        <code>hostAllowsSignIn()</code> at <code>src/auth.js:209</code> returns true for
-        <code>localhost</code> and <code>127.0.0.1</code> and nothing else. On
-        <code>planbook.hwgteach.com</code> the Drive section is never drawn, Google's script is
-        never fetched, and that is exactly what keeps <code>privacy.html</code>'s "no third-party
-        code of any kind" true word for word.
+        <code>hostAllowsSignIn()</code> in <code>src/auth.js</code> now answers true for
+        <code>planbook.hwgteach.com</code> beside the two loopback names, and false for the LAN
+        address and everything else. <strong>Once that deploy is live, the whole flow films at the
+        real domain</strong> — the same origin the form's Homepage and privacy URLs name — and the
+        About modal's Drive section is drawn there. The privacy policy and <code>docs/FERPA.md</code>
+        narrowed their third-party sentence in the same sitting: no third-party code unless a
+        teacher connects Google Drive, when Google's own sign-in library loads from
+        <code>accounts.google.com</code>.
       </p>
       <p>
-        The console half is already paid — both origins registered 2026-08-21, confirmed 2026-08-24.
-        What is left is the one function, and it belongs to WO-7.3, <strong>which depends on
-        WO-3.18</strong>. The paperwork wants a recording of a screen the code will not draw until
-        the paperwork clears.
+        One thing a shoot should know: the client is still in <strong>Testing</strong>, so the Drive
+        panel now carries a line saying only accounts the developer has added can connect. The demo
+        account must be a listed test user or the flow ends at Google's "Access blocked" page — and
+        the line is on screen in any take of the About modal, which is honest rather than a blemish.
+      </p>
+      <p class="was">
+        <b>What this said until 2026-09-25, and why it is kept:</b> <em>"<code>hostAllowsSignIn()</code>
+        … returns true for <code>localhost</code> and <code>127.0.0.1</code> and nothing else. On
+        <code>planbook.hwgteach.com</code> the Drive section is never drawn … What is left is the one
+        function, and it belongs to WO-7.3, which depends on WO-3.18. The paperwork wants a recording
+        of a screen the code will not draw until the paperwork clears."</em> That circle is what the
+        owner broke by choosing the first way out below.
       </p>
     </div>
 
@@ -413,7 +426,9 @@
       <div class="col you">
         <h3>Decide before you shoot</h3>
         <span class="tag">owner's call, not mine</span>
-        <p>Blocker 2 has three ways out and they are not equal:</p>
+        <p>Blocker 2 had three ways out and they were not equal. <strong>Decided 2026-09-25: the
+          first</strong>, as WO-7.4 — built, with the policy change it costs made in the same
+          sitting. The other two are kept below as the record.</p>
         <ul>
           <li><strong>Split WO-7.3's function off</strong> and widen
             <code>hostAllowsSignIn()</code> ahead of approval. Cost:
@@ -423,7 +438,8 @@
           <li><strong>Film entirely at <code>https://localhost:8443</code></strong> and narrate the
             difference. Cheapest, and carries the real rejection risk.</li>
           <li><strong>Film the homepage at the real domain</strong> (shot 02) and the flow at
-            localhost. The middle path, and what the shot list below assumes.</li>
+            localhost. The middle path, and what the shot list below assumed until 2026-09-25 — it
+            now films every shot at <code>https://planbook.hwgteach.com</code>.</li>
         </ul>
       </div>
     </div>
@@ -509,9 +525,11 @@
         on playback, it is not readable for a reviewer.</li>
       <li>OBS: display capture, 1920×1080, 30 fps, mic track recording — narration is the cheapest
         thing you can do to help a reviewer, and Google asks for it by name.</li>
-      <li><code>node tools/serve-https.mjs</code> running and the app reachable at
-        <code>https://localhost:8443</code>. Accept the certificate warning <em>before</em> you
-        start recording.</li>
+      <li>The app open at <code>https://planbook.hwgteach.com</code> with WO-7.4 deployed — open
+        About and confirm the <em>Google Drive sync</em> section is drawn before you start
+        recording. (Until 2026-09-25 this item was <code>node tools/serve-https.mjs</code> at
+        <code>https://localhost:8443</code>, and that is still the fallback if the deploy is not
+        live.)</li>
     </ul>
   </section>
 
@@ -894,7 +912,9 @@
           </tr>
           <tr>
             <td><strong>Demo app differs from submitted application</strong></td>
-            <td>Blocker 2. The homepage field says <code>planbook.hwgteach.com</code> and the footage
+            <td>Blocker 2, discharged by WO-7.4: film every shot at <code>planbook.hwgteach.com</code>
+              and the footage and the form name one origin. What this row said before: the homepage
+              field says <code>planbook.hwgteach.com</code> and the footage
               says <code>localhost:8443</code>. Shot 02 is the mitigation; narrating the difference
               out loud is the rest of it.</td>
           </tr>

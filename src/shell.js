@@ -647,8 +647,9 @@
                                       browser — the distinct name is for the reader
       data-drive-connect              signs in to Google Drive — silent first, a visible Google
                                       prompt when that fails (WO-7.1). It lives in the About
-                                      modal and is HIDDEN on every origin but loopback, which
-                                      is the flag src/auth.js owns; the handler here still
+                                      modal and is HIDDEN on every origin but loopback and
+                                      the deployed host (WO-7.4), which is the flag
+                                      src/auth.js owns; the handler here still
                                       asks that module rather than trusting the markup
       data-drive-disconnect           signs out. Clears the in-memory token, asks Google to
                                       revoke it, and touches no year document — src/auth.js
@@ -864,8 +865,9 @@ import * as detail from './detail.js';
 import * as gradesReport from './grades-report.js';
 /* The Drive sign-in (WO-7.1). Imported for two calls and nothing more — the two controls in the
    About modal's Drive section, and the paint on the path that opens it. It is the ONE module here
-   that is hidden from almost every device that loads this file: src/auth.js decides from the page's
-   own hostname whether the section exists at all, and that decision is not repeated here for
+   whose section is not drawn on every origin: src/auth.js decides from the page's own hostname
+   (loopback and the deployed host since WO-7.4) whether the section exists at all, and that
+   decision is not repeated here for
    src/supports.js's reason — one asker, so the screen cannot disagree with the rule. */
 import * as auth from './auth.js';
 /* The Drive transfer (WO-7.2). Imported for three calls: the Sync control in the same section,

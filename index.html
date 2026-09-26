@@ -2024,7 +2024,7 @@
         others on every class, ranking the students a rule caught — attendance trouble first, then
         whoever changed the most — with the numbers behind each one on the row and the thresholds
         yours to move. The praise half of that list, the behaviour log one of its rules is waiting
-        on, and outreach and Drive sync all come after it.
+        on, and outreach all come after it.
       </p>
       <p>
         The backup file that gets everything back out of the browser is already here, under the ⤓
@@ -2100,16 +2100,16 @@
       <a class="doc-link" href="https://github.com/wildbil2me/planbook/blob/main/LICENSE.md"
          target="_blank" rel="noopener">Released under the Apache License 2.0 →</a>
 
-      <!-- GOOGLE DRIVE SIGN-IN (WO-7.1), AND IT IS HIDDEN ON ALMOST EVERY DEVICE THAT LOADS THIS
-           FILE. src/auth.js decides, from the page's own hostname: hostAllowsSignIn() returns true
-           for `localhost` and `127.0.0.1` and nothing else, so the sign-in is reachable only there.
-           THAT IS THIS CODE HOLDING ITSELF BACK, NOT A LIMIT GOOGLE IMPOSES — see the last sentence
-           of this paragraph before you read it as one. On the deployed app this whole
-           block stays `hidden`, no Google script is ever fetched, and privacy.html's flat claim
-           that Planbook loads no third-party code of any kind stays true word for word. That is
-           the flag docs/sync.md asks for; WO-7.3 widens the one function in src/auth.js, and that
-           is the whole of what is left — the client already carries the deployed origin beside the
-           loopback one, registered 2026-08-21 and confirmed 2026-08-24.
+      <!-- GOOGLE DRIVE SIGN-IN (WO-7.1), DRAWN ON THE DEPLOYED APP SINCE WO-7.4 (2026-09-25).
+           src/auth.js decides, from the page's own hostname: hostAllowsSignIn() returns true for
+           `localhost`, `127.0.0.1` and `planbook.hwgteach.com` — the OAuth client's two origins
+           plus the harness's own — and nothing else, so on the LAN address the iPad reaches a laptop
+           on, or on any other host, this whole block stays `hidden`. Until WO-7.4 the list was
+           loopback only and the deployed app drew nothing here; Google's reviewer needed to find
+           the permission in use, so the door moved. Drawing this block fetches nothing: Google's
+           sign-in library is appended only when Connect is tapped (loadGis() in src/auth.js), which
+           is what keeps privacy.html's narrowed claim — no third-party code unless a teacher
+           connects Google Drive — true for every teacher who never does.
 
            IN THIS MODAL AND NOT IN THE BACKUP PANEL, which was the other candidate and lost on one
            sentence: SYNC IS NOT A BACKUP. Drive holds one live copy that sync will overwrite with a
@@ -2156,6 +2156,13 @@
              fact about a sign-in that lasts about an hour, and a sentence typed here would be a
              claim rather than the state. Same reason #buildCaches below is empty. -->
         <p class="class-hint" id="driveStatus"></p>
+        <!-- WHILE GOOGLE'S REVIEW IS OPEN (WO-7.4), and empty here for #driveStatus's reason: the
+             words are TESTING_MODE_NOTE in src/auth.js, one constant, drawn while nobody is signed
+             in and hidden once somebody is. Above the Connect button on purpose — a teacher whose
+             account is not a listed test user reads it BEFORE she meets Google's "Access blocked"
+             page, not after. Delete the constant when WO-7.3 records the approval, and this
+             paragraph with it. -->
+        <p class="class-hint hidden" id="driveTestingNote"></p>
         <div class="modal-actions">
           <button class="class-action-btn primary" id="driveConnectBtn" data-drive-connect>Connect Google Drive</button>
           <!-- WO-7.2's one new control, and it is a deliberate tap rather than anything automatic.

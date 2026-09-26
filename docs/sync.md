@@ -22,7 +22,12 @@ never see it.
 `drive.file` is still a *sensitive* scope, so the OAuth client needs Google verification before
 public launch — a privacy policy, a verified domain, and a demo video. Days, not months, and no
 CASA security assessment (that's restricted scopes only). Until it's verified, sync stays behind a
-flag; the local-first app ships without it.
+flag; the local-first app ships without it. *(**The flag was taken down on 2026-09-25, ahead of
+verification rather than after it** — WO-7.4, owner-directed: Google's reviewer has to find the
+permission in use on the submitted domain, and a deployed app with no Connect control reads as a
+scope requested and never used. What stands in its place until approval is Google's own Testing
+mode — only accounts listed as test users can connect — and the Drive panel says so before Connect
+is tapped. See "The flag is the origin" below.)*
 
 ## Auth
 
@@ -52,16 +57,21 @@ loses on one sentence from this document: *sync is not a backup.* A Connect butt
 a backup" teaches the misconception that costs a term of grades. About already carries the sentence
 a sign-in qualifies — "There is no account and no server" — and that is where the footnote belongs.
 
-**The flag is the origin.** `hostAllowsSignIn()` answers for loopback and nothing else, and **that
-is the code holding itself back rather than a limit Google imposes** — the client's authorized-origin
-list has carried `https://planbook.hwgteach.com` beside `https://localhost:8443` since 2026-08-21,
-confirmed 2026-08-24. Loopback is simply where a handshake can succeed with the code's list as it
-stands. On the deployed app the section is not drawn, no Google script is ever fetched, and
-[`../privacy.html`](../privacy.html)'s claim that Planbook loads no third-party code of any kind
-stays true word for word — **which is what the hold buys, and what widening the list costs.**
-**WO-7.3 widens that one function, and that is all that is left of the pair**; the console half was
-paid on the dates above. Either half alone gives a button that ends in `origin_mismatch`, and today
-the code is the half that is behind, which is the safe direction.
+**The flag is the origin.** `hostAllowsSignIn()` answers for `localhost`, `127.0.0.1` and — since
+WO-7.4, 2026-09-25 — `planbook.hwgteach.com`, and nothing else: the two hosts the client's
+authorized-origin list carries (`https://localhost:8443`, and `https://planbook.hwgteach.com` since
+2026-08-21, confirmed 2026-08-24), plus `127.0.0.1`, which is the harness's origin and not the
+client's. The LAN address the iPad reaches a laptop on stays shut, because
+Google will not register a raw IP. **Until WO-7.4 the list was loopback only** — the code holding
+itself back rather than a limit Google imposed — and the deployed app drew no Drive section and
+fetched no Google script, which kept [`../privacy.html`](../privacy.html)'s "no third-party code of
+any kind" true word for word. The submission needed the opposite, so the door moved and the policy
+narrowed in the same sitting: **no third-party code unless a teacher connects Google Drive**, when
+Google's own sign-in library loads from `accounts.google.com`. That narrower claim is true because
+`loadGis()` appends the script only when Connect is tapped, and `tools/verify-shell.mjs` asserts it
+from the Network domain rather than from the source. The pairing rule stands for any origin added
+later: widen the code's list and not the client's and the button ends in `origin_mismatch`, so the
+list names hosts exactly and never a pattern.
 
 *(This paragraph read* "the OAuth client's **only** authorized JavaScript origin (`https://localhost:8443`)"
 *until 2026-09-07, four lines above the sentence naming the second origin — a contradiction inside one
@@ -304,8 +314,11 @@ the normal one there rather than the fallback.
 launch competes with that directly. Whatever this becomes belongs beside the home screen, never in
 front of it.
 
-None of this is reachable until [WO-7.3](../plans/work-orders/phase-7-sync.md) opens the flag on the
-deployed origin, so there is time for the shape to settle.
+*(This read "none of this is reachable until WO-7.3 opens the flag on the deployed origin" until
+2026-09-25, when [WO-7.4](../plans/work-orders/phase-7-sync.md) opened it instead, ahead of Google's
+approval. The tap-to-sync flow is live on the deployed app from that day; nothing above is built,
+and there is still time for the shape to settle — but the argument that it was unreachable anyway
+is gone.)*
 
 ### And if it becomes automatic, it needs a status on the glass
 

@@ -120,7 +120,13 @@ rather than a limit Google imposes**: *the client's authorized-origin list has c
 `https://planbook.hwgteach.com` *beside* `https://localhost:8443` *since 2026-08-21. So the deployed
 app and the iPad show the About modal exactly as before, fetch no Google script, and contact Google
 not at all — which is what keeps* `privacy.html`*'s "no third-party code of any kind" true word for
-word, and it is what widening the list costs.* **(This block said** *"the OAuth client's only
+word, and it is what widening the list costs.* **(The two sentences before this one are history as of
+2026-09-25:** [WO-7.4](plans/work-orders/phase-7-sync.md#wo-74--the-deployed-app-has-no-sign-in-for-googles-reviewer-to-find)
+*widened the list to* `planbook.hwgteach.com` *ahead of Google's approval, so the deployed app draws
+the section — the iPad's LAN address stays shut — and* `privacy.html` *and* `docs/FERPA.md` *narrowed
+in the same sitting to* **no third-party code unless a teacher connects Google Drive**, *true because
+Google's library loads only on the Connect tap, which* `verify-shell.mjs` *asserts from the network.)*
+**(This block said** *"the OAuth client's only
 authorized JavaScript origin" until 2026-09-07, and it was false the day it was written:* `0f77a37`
 *swept that instruction out of eight files the same afternoon and this file was not one of them — the
 ninth place. Read it as the standing warning about this one:* **a fact copied out of** `docs/sync.md`

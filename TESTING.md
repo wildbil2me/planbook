@@ -11515,7 +11515,8 @@ the procedure above, and nothing at a desk can tick them.*
 
 **Worth doing on hardware even though no box asks for it.** The iPad still shows the released app,
 where `hostAllowsSignIn()` is shut and the whole Drive section is absent — so there is nothing new
-to read there until WO-7.3. **Force-quit from the app switcher first** if you look anyway: this
+to read there until WO-7.3. *(True until 2026-09-25: WO-7.4 opened the deployed host, so the iPad
+draws the Drive section from that deploy on — see § WO-7.4 below.)* **Force-quit from the app switcher first** if you look anyway: this
 build changes `SHELL` and bumps `CACHE`, so a reload draws the old document under a build line
 reporting honestly.
 
@@ -11528,6 +11529,63 @@ first build of this work order repainted neither — the modal had to be closed 
 the control a teacher had just enabled existed.)* Then sync, wait past the hour, and tap Sync: the
 panel should say the sign-in ran out and put **Connect Google Drive** back. That is the fifth line's
 real form; the harness models it with a ten-second token.
+
+### WO-7.4 — the deployed app has no sign-in for Google's reviewer to find
+
+**One function, one panel line, and the two public documents.** `hostAllowsSignIn()` in
+`src/auth.js` now answers `true` for `planbook.hwgteach.com` beside the two loopback names, by exact
+string; `TESTING_MODE_NOTE` is drawn above Connect while nobody is signed in; `privacy.html` and
+`docs/FERPA.md` carry the narrowed third-party sentence word for word; `about.html` and both privacy
+documents no longer say sync is unreleased. `CACHE` is `planbook-shell-v130`.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-7-sync.md` § WO-7.4.*
+
+- [x] **Acceptance 1 — the truth table.** From the run, verbatim: `hostAllowsSignIn =
+      {"localhost":true,"127.0.0.1":true,"planbook.hwgteach.com":true,"192.168.50.142":false,
+      "hwgteach.com":false,"www.planbook.hwgteach.com":false,"evil-planbook.hwgteach.com":false,
+      "planbook.hwgteach.com.example":false,…}; every row as expected`. Fourteen rows, each asserted
+      against an expected answer written in the harness.
+- [x] **Acceptance 2 — the wire.** `0 request(s) to accounts.google.com and 68 to this origin in the
+      5630ms since the reload; section drawn = true, GIS <script> tags = 0`, then after the tap
+      `1 request(s) to accounts.google.com after the tap: ["https://accounts.google.com/gsi/client"]`.
+- [ ] **Acceptance 3 — the documents, and live.** The desk half is met: the narrowed sentence is
+      identical in both files after tags, backticks and whitespace are normalised, and none of the
+      three pages matches `released app|not built into`. **`verify-deploy.mjs` after the push is
+      owed** — the push is the owner's call.
+- [x] **Acceptance 4 — the Testing-mode line.** `drawn = true, above Connect = true, matches the
+      constant = true`, and hidden again once a sign-in is held.
+- [ ] 👤 **Acceptance 5 — on the deployed app, cold, on the laptop.** Push, wait for Pages, open
+      `https://planbook.hwgteach.com` in a fresh window, About ▸ the Drive section is drawn with the
+      Testing-mode line above *Connect Google Drive*. Connect → the consent screen shows **one**
+      permission line. Sync this year now → the file appears in My Drive. Disconnect → the panel is
+      back to *Not connected* and the app is otherwise as it was.
+- [ ] 👤 **Acceptance 6 — on the iPad.** **Download a backup first.** Force-quit from the app
+      switcher, relaunch, open About: the Drive section is drawn, and nothing else on any screen has
+      moved. Do not connect the classroom year until that backup is in hand.
+
+**Both tools.** `node tools/verify-shell.mjs` on the delivered tree: **`1488 checks · 1488 passed ·
+0 failed · 0 skipped`, 46,915 lines, 31.5 lines per check, 531s, exit 0**, 2026-09-25, real clock —
+1485 plus the three new, on the final tree. *(The first green run of this work order printed the same
+1488 and then did not exit for over ten minutes: a request-less browser socket that `server.close()`
+does not end, held open by an Edge process `proc.kill()` does not reach. The teardown now calls
+`server.closeAllConnections()`; the surviving browser process is recorded in the result file as a
+separate defect. A baseline run of the pre-WO tree the same evening exited on its own after about
+a minute and a half, so the hang is timing rather than anything this work order's checks do.)* `node tools/wo-sweep.mjs`: `45 checks · 42 passed · 0 failed · 3 to
+review`, § 11 reading 1477 call sites against `tools/README.md`.
+
+**The mutation round — one run, two breaks, four reds.** Both applied to `src/auth.js` by a script
+edit over a fully staged tree, each carrying a marker comment: `hostAllowsSignIn()` rewritten as
+`/hwgteach\.com$/` plus the two loopback names (the check flipped wide), and a module-level
+`loadGis()` whenever the flag is open (Google's library loaded eagerly at boot). **`1488 checks ·
+1484 passed · 4 failed · 0 skipped`, exit 1.** The four reds: the truth table, `WRONG for
+["hwgteach.com","www.planbook.hwgteach.com","evil-planbook.hwgteach.com","localhost.hwgteach.com"]`;
+the wire, `1 request(s) to accounts.google.com ["https://accounts.google.com/gsi/client"] and 68 to
+this origin` before the tap; and, for the eager load, two older checks that were not aimed at — the section's own
+arrival reading (`GIS <script> tags = 1`) and WO-5.3's outreach check (`google scripts on the page =
+1`), which is defence in depth rather than noise. The wire's second half stayed green under the
+eager load, correctly: it asks only that the tap is followed by a request, and it was. Reverted by
+the inverse edit before a word of this entry was written; `git diff src/auth.js` against the staged
+tree is empty and a search for the marker over every delivered file reads nothing.
 
 ---
 

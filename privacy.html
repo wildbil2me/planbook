@@ -200,7 +200,7 @@
 <div class="band">
   <div class="band-inner">
     <h1>Planbook — Privacy Policy</h1>
-    <p>Last updated 13 September 2026</p>
+    <p>Last updated 25 September 2026</p>
   </div>
 </div>
 
@@ -272,13 +272,17 @@
     <!-- THE DATA-FLOW STATEMENT. docs/FERPA.md carries this same statement, deliberately: WO-8.12
          exists because two documents that say what leaves the device in two different sets of
          words are two documents that will eventually disagree in public. Change it here and change
-         it there in the same sitting. Phase 7 rewrites both the day sync comes out from behind its
-         flag (WO-8.12, trap 5). -->
+         it there in the same sitting. Phase 7 rewrote both the day sync came out from behind its
+         flag (WO-8.12, trap 5; done by WO-7.4 on 2026-09-25): the third-party sentence became the
+         narrower claim below, and it is true because src/auth.js fetches Google's library only
+         when Connect is tapped — which tools/verify-shell.mjs asserts from the network itself. -->
     <p>
       <strong>Nothing leaves it on its own.</strong> Loading the page fetches Planbook's own files
       from this website, the way any web page does, and the browser checks those same files for
-      updates. Beyond that, Planbook makes no network requests at all: no analytics, no usage
-      tracking, no error reporting, no advertising, and no third-party code of any kind.
+      updates. Beyond that, Planbook makes no network requests at all — no analytics, no usage
+      tracking, no error reporting, no advertising, and no third-party code of any kind — unless
+      Google Drive sync is connected, when Google's own sign-in library loads from
+      accounts.google.com. Nothing is fetched from Google until Connect is tapped.
     </p>
     <p>
       Student information moves only when <em>you</em> move it, and there are three ways to do
@@ -293,7 +297,7 @@
       <li>
         <strong>Turning on Google Drive sync.</strong> Optional, off unless you switch it on, and
         it uploads the year's file to <em>your</em> Google Drive so your laptop and your iPad show
-        the same gradebook. <em>Not in the released app yet — see below.</em>
+        the same gradebook.
       </li>
       <li>
         <strong>Sending a message you drafted.</strong> Planbook drafts an email to a guardian,
@@ -336,9 +340,8 @@
       sends email at all.
     </p>
     <p class="quiet">
-      Sync is not built into the released app yet. When it ships it will behave exactly as
-      described here; if it ever needs a different permission, this page changes first, and the
-      date at the top changes with it.
+      If sync ever needs a different permission, this page changes first, and the date at the top
+      changes with it.
     </p>
   </section>
 

@@ -254,7 +254,7 @@ const h = {
 
   /* Filled in below. Declared here rather than assigned out of nowhere, so that the whole shared
      surface of this harness is one object literal a reader can take in at a glance. */
-  PORT: 0, SERVED: null, udd: '', consoleLog: null,
+  PORT: 0, SERVED: null, udd: '', consoleLog: null, netLog: null,
   send: null, evalJs: null, has: null, clickSel: null, clickVisible: null, openCalendarPanel: null,
   KILL_ANIM: '', INSTALL_WALKER: '', dateResetOn: null, waitForBoot: null, load: null,
 
@@ -539,11 +539,21 @@ const pending = new Map();
    REPORTED and not only handled — "does not silently swallow" is an acceptance line, and the
    console is where a swallowed error would have gone. */
 const consoleLog = [];
+/* Every request the PAGE sent while the Network domain was on — URL and the moment it was seen, and
+   nothing else. Empty for almost the whole run: `Network.enable` is sent by exactly one section,
+   `verify/drive-sign-in.mjs`, around the stretch where it has to prove a negative from the wire
+   rather than from the source — that a signed-out page asks accounts.google.com for nothing until
+   Connect is tapped (WO-7.4). It is on `h` for that section and read by no other. */
+const netLog = [];
 ws.onmessage = (m) => {
   const msg = JSON.parse(m.data);
   if (msg.method === 'Runtime.consoleAPICalled') {
     const args = (msg.params.args || []).map(a => (a.value !== undefined ? String(a.value) : (a.description || '')));
     consoleLog.push({ type: msg.params.type, text: args.join(' ') });
+    return;
+  }
+  if (msg.method === 'Network.requestWillBeSent') {
+    netLog.push({ url: String((msg.params.request && msg.params.request.url) || ''), at: Date.now() });
     return;
   }
   if (msg.id && pending.has(msg.id)) {
@@ -872,7 +882,7 @@ if (booted < 20) bail('the page did not render — is index.html a placeholder?'
 
 /* The browser half of the harness, now that all of it exists. */
 Object.assign(h, {
-  PORT, SERVED, udd, consoleLog,
+  PORT, SERVED, udd, consoleLog, netLog,
   send, evalJs, has, clickSel, clickVisible, openCalendarPanel,
   KILL_ANIM, INSTALL_WALKER, dateResetOn, waitForBoot, load,
 });
@@ -941,6 +951,18 @@ console.log('the iPad checks stay owed to a human no matter how green this run i
 try { ws.close(); } catch {}
 proc.kill();
 server.close();
+/* AND EVERY SOCKET STILL OPEN ON IT, including the one server.close() never touches: a socket the
+   browser PRECONNECTED and never sent a request on. Node's close() ends idle keep-alive sockets but
+   treats a request-less one as neither idle nor finished, and stops the timer that would otherwise
+   reap it — so it lives until the browser drops it. Normally that is soon, because the browser is
+   dead. It is not always dead: on this machine Edge's launcher hands off to a second browser process
+   that `proc.kill()` does not reach, and on 2026-09-25 (WO-7.4) two runs printed a green or a red
+   summary and then held the process open for over ten minutes on exactly one such socket — found by
+   reading the port table, and reproduced in isolation with a socket that had carried zero requests.
+   Destroying the sockets here is what makes the exit code arrive; the surviving browser process is
+   a separate defect, recorded in the WO-7.4 result file rather than fixed from inside a work order
+   about the Drive sign-in. */
+server.closeAllConnections();
 await fs.rm(udd, { recursive: true, force: true }).catch(() => {});
 /* Set, not called. `process.exit()` while undici still holds a socket aborts the process on Windows
    (0xC0000409) AFTER the output above has printed — a run that said 628 of 628 and then handed the

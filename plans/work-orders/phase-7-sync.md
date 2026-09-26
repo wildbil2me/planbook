@@ -15,10 +15,13 @@ paperwork clears — the unverified-app screen is a click-through for one person
 was drivable on the laptop only until
 [WO-8.7](phase-8-packaging.md#wo-87--the-name-and-the-host-decided) settled a domain — **which it
 has.** `https://planbook.hwgteach.com` has sat in the client's authorized origins beside
-`https://localhost:8443` since 2026-08-21, so what keeps the handshake on the laptop today is
-`hostAllowsSignIn()`'s own list and nothing else; widening it is WO-7.3's one edit. The rest of the
-protocol is ordinary code and tests anywhere. *(This paragraph said the client had one authorized
-origin until 2026-09-07.)*
+`https://localhost:8443` since 2026-08-21, and **since 2026-09-25 `hostAllowsSignIn()` accepts it
+too** — [WO-7.4](#wo-74--the-deployed-app-has-no-sign-in-for-googles-reviewer-to-find) widened the
+code's list to match the client's, ahead of approval, so the deployed app draws the Drive section and
+Google's Testing mode (listed test users only) is what limits who can connect until approval. The
+rest of the protocol is ordinary code and tests anywhere. *(This paragraph said the client had one
+authorized origin until 2026-09-07, and that keeping the handshake on the laptop was the code's own
+list and widening it WO-7.3's one edit until 2026-09-25.)*
 
 ***The dependency runs the other way too, and nobody had written that down until 2026-08-20.*** *WO-3.18's
 third deliverable is a demo video* **showing the scope in use** *— and until this phase builds a sign-in
@@ -96,7 +99,12 @@ both is that one is the decision and the other is the protocol a later work orde
   and **the released app draws no sign-in and fetches no Google script at all**, which keeps
   `privacy.html`'s flat claim that Planbook loads no third-party code of any kind true word for word.
   A preference-shaped flag would have put a Google script one toggle away from every teacher and made
-  that sentence conditional; that is the argument that settled it. **WO-7.3 widens that one function, and the
+  that sentence conditional; that is the argument that settled it. *(**Superseded 2026-09-25 by
+  [WO-7.4](#wo-74--the-deployed-app-has-no-sign-in-for-googles-reviewer-to-find)**, which widened the
+  function to the deployed host ahead of approval — the record below is WO-7.1's as it was decided.
+  The deployed app now draws the section, and the policy's claim narrowed in the same sitting to "no
+  third-party code unless a teacher connects Google Drive", true because the library loads only on the
+  Connect tap.)* **WO-7.3 widens that one function, and the
   console half of the pair is already paid** — both origins have been registered since 2026-08-21. Either
   half alone gives a button that ends in `origin_mismatch`, and today it is the code that is behind,
   which is why `connect()` refuses off-flag rather than trusting the markup to stay hidden.
@@ -282,7 +290,9 @@ the shipped module has no injectable transport and no test hook at all.
 - [x] Edit on device A, sync, open on device B: B has A's changes. 👤
       *(**Owed to a human and not tickable at a desk**, and the reason is `hostAllowsSignIn()`
       rather than Google: the released app never draws this panel, so there is no iPad reading to
-      take until WO-7.3. The runnable form is **two browser profiles at `https://localhost:8443`**,
+      take until WO-7.3. *(WO-7.4 opened the deployed host on 2026-09-25, a work order early — the
+      iPad reading is possible on the deployed app from that deploy, and WO-7.4's own last 👤 line
+      takes the first of it.)* The runnable form is **two browser profiles at `https://localhost:8443`**,
       which are two devices as far as IndexedDB and the sync bookmark are concerned — the procedure
       is in `TESTING.md` § WO-7.2. What IS driven at the desk is every decision the line rests on,
       against a Drive `tools/verify/drive-sync.mjs` stands up in `window.fetch`: an upload creates
@@ -359,7 +369,7 @@ backup** — Drive holds one live copy that sync will happily overwrite. WO-1.5 
 
 ## WO-7.4 — the deployed app has no sign-in for Google's reviewer to find
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.2, WO-8.15 — the transfer the
+**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-7.2, WO-8.15 — the transfer the
 sign-in exists for, and the front page whose sync sentence changes with the policy's · **Blocks**
 WO-3.18 — a submission whose homepage would otherwise lead to an app that never uses the scope
 **Closes roadmap** *(no box. Phase 7's **Verification complete.** is WO-7.3's, and a box is closed by
@@ -413,13 +423,27 @@ the list does not risk `origin_mismatch`.
 - **`CACHE` in `sw.js` bumped** — `src/auth.js` is in `SHELL`.
 
 **Acceptance**
-- [ ] `hostAllowsSignIn('planbook.hwgteach.com')` is `true`; the LAN address, `hwgteach.com` and an
+- [x] `hostAllowsSignIn('planbook.hwgteach.com')` is `true`; the LAN address, `hwgteach.com` and an
       unrelated host are `false`; the harness asserts the whole table.
-- [ ] A signed-out page makes no request to `accounts.google.com` until Connect is tapped — asserted
+      *(Fourteen rows in `tools/verify/drive-sign-in.mjs`, each against an expected answer, including
+      a subdomain, both-ends near misses and a case variant. Red under a suffix-match mutation —
+      `TESTING.md` § WO-7.4.)*
+- [x] A signed-out page makes no request to `accounts.google.com` until Connect is tapped — asserted
       in the harness, since this is now the whole of the policy's third-party claim.
+      *(From the Network domain across a reload: `0 request(s) to accounts.google.com and 68 to this
+      origin` before the tap, `["https://accounts.google.com/gsi/client"]` after it. Red under an
+      eager-load mutation.)*
 - [ ] `privacy.html` and `docs/FERPA.md` carry the narrowed third-party sentence identically, and
       neither they nor `about.html` says sync is unreleased. `verify-deploy.mjs` green after the push.
-- [ ] The Drive panel names the Testing-mode limit before Connect is tapped.
+      *(**Desk half met, push half owed — so open.** The sentence is identical in both files after
+      tags, backticks and whitespace are normalised, and none of the three pages matches
+      `released app|not built into`. `verify-deploy.mjs`'s three policy claims and its `/about`
+      check were re-read and assert nothing the rewrite removed, so no edit there. The live run
+      waits on the owner's push.)*
+- [x] The Drive panel names the Testing-mode limit before Connect is tapped.
+      *(`TESTING_MODE_NOTE` in `src/auth.js`, drawn into `#driveTestingNote` above Connect while
+      nobody is signed in; the harness asserts drawn, above Connect, equal to the constant, and
+      hidden again once a sign-in is held.)*
 - [ ] 👤 On the deployed app, cold, on the laptop: Connect reaches the consent screen with one
       permission line, the owner's own year uploads, and Disconnect leaves the app as it was.
 - [ ] 👤 On the iPad, force-quit first: the Drive section is drawn and the app is otherwise unchanged.
@@ -456,7 +480,17 @@ without the submission, which is where the deadline always belonged.)*
 - Verification approved by Google, recorded here with the date.
 - Privacy policy live at the verified domain and linked from the app.
 - Demo video accepted.
-- Sync taken out from behind its flag.
+- ~~Sync taken out from behind its flag.~~ **Moved to
+  [WO-7.4](#wo-74--the-deployed-app-has-no-sign-in-for-googles-reviewer-to-find) on 2026-09-25**,
+  owner-directed: Google's reviewer has to find the permission in use on the submitted domain, so the
+  flag had to come down ahead of approval rather than after it. What this work order keeps is the
+  approval itself, the demo video, and the no-warning consent screen. When the approval lands, one
+  thing here is owed that WO-7.4 left behind on purpose: **delete `TESTING_MODE_NOTE` in
+  `src/auth.js`** (and the `#driveTestingNote` paragraph in `index.html`), the Drive panel's line
+  saying only listed test accounts can connect — it goes false the day Google approves.
+
+*(**Both halves are paid now — the second by WO-7.4 on 2026-09-25, which widened the function; the
+note below is the record of the first, kept as written.**)*
 
 *(**One half of "sync taken out from behind its flag" is already paid — 2026-08-24.** `src/auth.js`
 says twice that this work order widens `hostAllowsSignIn()` *in the same sitting as* it adds the
@@ -474,4 +508,8 @@ the same way: the code is the half that is behind, so nothing can reach a live h
 - [ ] A teacher signing in from a clean Google account sees one scope and **no unverified-app
       warning**. Verify on an account that has never used the app.
 - [ ] The privacy policy is reachable from inside the app.
-- [ ] Sync is available without a flag, and still off by default.
+- *(Third line, "Sync is available without a flag, and still off by default", **moved to
+  [WO-7.4](#wo-74--the-deployed-app-has-no-sign-in-for-googles-reviewer-to-find) on 2026-09-25**
+  with the deliverable it tested — that work order's first four Acceptance lines are its form, and
+  a box is closed by one work order, never two. Not a checkbox here any more so that it cannot be
+  ticked twice or left open by accident.)*

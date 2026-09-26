@@ -1223,7 +1223,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1474 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1477 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2022,6 +2022,21 @@ its foot. None in a loop and none a failure arm, so the gap between sites and re
 The file count this ledger's head names is **seventy-two**. The run prints **1485**:
 `1485 checks · 1485 passed · 0 failed · 0 skipped`, 46,803 lines, 31.5 lines per check, 542s, exit 0,
 measured 2026-09-25 on the real clock. It touches nothing under `src/` and bumps no `CACHE`.
+
+**WO-7.4 moved it from 1474 to 1477, and the executed count from 1485 to 1488 — three sites, three
+results.** All three are literal call sites in `verify/drive-sign-in.mjs`, none in a loop and none a
+failure arm: the Drive panel's Testing-mode line (`TESTING_MODE_NOTE`, drawn above Connect while
+signed out), and the two halves of the wire — zero requests to `accounts.google.com` from a reload
+with the Network domain on up to the Connect tap, and at least one, for `/gsi/client`, after it. The
+truth-table check was rewritten in place rather than added to (fourteen hosts, the deployed one now
+`true`), so it moves nothing here. To watch the wire the entry file gained a `netLog` on `h`, filled
+from `Network.requestWillBeSent` and switched on by that one section only. Mutation round in
+`TESTING.md` § WO-7.4: the host check widened to a suffix match and Google's library loaded at boot,
+one run, four reds. The run prints **1488**:
+`1488 checks · 1488 passed · 0 failed · 0 skipped`, 46,915 lines, 31.5 lines per check, 531s,
+exit 0, measured 2026-09-25 on the real clock. The same work order added
+`server.closeAllConnections()` to the teardown — see the comment there for the socket that held a
+finished run open for ten minutes.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
@@ -3285,7 +3300,8 @@ both controls are measured in the state each is actually drawn in, by two of the
 **The new section is shaped by one fact stated at its top: the success path of the handshake is
 unreachable from this file and always will be.** No headless browser has a Google account, a Google
 session or a consent screen, so *"a sign-in completes"* and *"the consent screen shows exactly one
-scope"* are 👤 lines against `https://localhost:8443` — the only origin `hostAllowsSignIn()` accepts — and no
+scope"* are 👤 lines against `https://localhost:8443` — the only origin `hostAllowsSignIn()` accepted
+until WO-7.4 added the deployed `planbook.hwgteach.com` on 2026-09-25 — and no
 run here closes either. What the section does instead is take everything around them, and it is most
 of the risk. **Five sites are static, in Node**: the scope string occurs exactly once in all 54 files
 the app itself *runs* — `index.html`, `sw.js` and all of `src/`, which is not the same set as

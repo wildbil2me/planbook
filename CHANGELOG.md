@@ -13,6 +13,20 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The deployed app can connect Google Drive — 2026-09-26
+
+Until now the Google Drive section in About appeared only on a development machine, so the live app
+had no sign-in for Google's reviewer to find. It now appears at `planbook.hwgteach.com` too; the
+iPad's local-network address still does not draw it. Google's sign-in library is not loaded until a
+teacher taps **Connect**, and a signed-out page contacts Google not at all — the browser harness
+records the page's network traffic to prove both. While Google's review is pending, a line above
+Connect says the app is in Google's testing mode, so a teacher who is not on the test list knows why
+the consent screen turns her away. The privacy policy and the administrators' FERPA guide now say
+*no third-party code unless a teacher connects Google Drive*, in the same words, and About no longer
+claims Drive sync is part of this build. `drive.file` is still the only permission asked for. The
+harness's teardown also closes the local server's open connections, so a finished run exits
+promptly. (WO-7.4 — built and verified; the reading on the laptop and the iPad is still owed.)
+
 ### A front page at /about, for Google's reviewer and for anyone new — 2026-09-25
 
 Nothing changes inside the app. Opened cold, the bare domain is the app with nothing in it: *No

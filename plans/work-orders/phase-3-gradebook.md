@@ -840,7 +840,12 @@ by `verify-shell.mjs` as a deliberate departure — so the deployed app draws no
 Google would now accept the handshake from it. That half is WO-7.3's, and the console half of the pair
 it names is already paid. The two failure modes read differently and it is worth knowing which is
 which before opening a console: *"The given origin is not allowed for the given client ID"* is the
-list; **no Drive section on the screen at all** is the flag.
+list; **no Drive section on the screen at all** is the flag. *(**Reachable since 2026-09-25**:
+[WO-7.4](phase-7-sync.md#wo-74--the-deployed-app-has-no-sign-in-for-googles-reviewer-to-find) took
+WO-7.3's flag half and widened `hostAllowsSignIn()` to `planbook.hwgteach.com`, so the deployed app
+draws the Drive section and `verify-shell.mjs` asserts **true** for that host now. The paragraph above
+is the record of the gap as it stood; the diagnostic in its last sentence still holds for any origin
+added later.)*
 
 **The account that owns this project was never written down, and WO-8.7 is where that started to
 cost — 2026-08-12.** The table records what the client *is* and nothing about *whose* it is. That was
@@ -1498,7 +1503,8 @@ film a stub was never discharged; it was moved. **This is the sixth time a real 
 has turned up somewhere other than `Depends on`**, and the second time on this work order — which is
 the argument for reading the count rather than the field. Two smaller things a shoot should know
 before it books a room:* `hostAllowsSignIn()` *still answers false for the deployed host, so the flow
-can only be filmed at* `https://localhost:8443` *until WO-7.3 widens it — and the GIS* **popup**
+can only be filmed at* `https://localhost:8443` *until WO-7.3 widens it* ***(discharged 2026-09-25:
+WO-7.4 widened it instead, so the flow films at the real domain once that deploy is live)*** *— and the GIS* **popup**
 *shows a truncated origin bar, so the* `client_id` *Google asks to see in the address bar cannot
 appear there and has to be filmed off the console instead. Both are written up, with a shot list, in*
 [`plans/wo-3-18-video-runbook.html`](../wo-3-18-video-runbook.html)*.)*

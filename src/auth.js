@@ -61,30 +61,32 @@
      under a coarse pointer at ~46px, and presentation mode spent it.
 
   3. THE FLAG IS THE ORIGIN. docs/sync.md says sync stays behind a flag until the client is
-     verified, and WO-7.3's deliverable is "sync taken out from behind its flag" — so the flag had
-     to be defined here, and it had to leave the sign-in reachable by the owner on the laptop today,
-     because WO-3.18 cannot film a demo video of a control nobody can get to. `signInAvailable()`
-     below answers with the page's own hostname, and three things fall out of that at once:
-       · The owner reaches it. `tools/serve-https.mjs` serves `https://localhost:8443`, which is
-         the client's ONLY authorized JavaScript origin (WO-3.10) — so the flag is open exactly
-         where the handshake can succeed and shut everywhere it cannot.
-       · The released app is untouched. On `planbook.hwgteach.com` this returns false, the section
-         stays hidden, no Google script is ever fetched, and privacy.html's strongest sentence —
-         "Planbook makes no network requests at all ... and no third-party code of any kind" —
-         stays literally true for every teacher. A preference-shaped flag would have put a Google
-         script one toggle away from all of them and made that sentence conditional. That is the
-         argument that settled it.
-       · The iPad shows the released app's About panel, which is correct: Google will not register
-         a raw LAN address, so the handshake is drivable on the laptop only until a real origin is
-         added to the client (WO-3.10 says so in as many words).
-     WO-7.3 WIDENS THIS ONE FUNCTION, AND THAT IS ALL THAT IS LEFT OF THE PAIR. The two halves are
-     this function and the OAuth client's authorized-origin list, and the console half is already
-     paid: the client has carried `https://planbook.hwgteach.com` beside the loopback origin since
-     2026-08-21 (confirmed 2026-08-24, recorded in WO-3.10's table). Do not book a console trip for
-     it. The pairing rule still holds for any origin added later — widen one and not the other and
-     you get a button that ends in Google's `origin_mismatch` — and today it is the code that is
-     behind, which is the safe direction: nothing can reach a live handshake early. That is why
-     `connect()` below refuses off-flag rather than trusting the section to stay hidden.
+     verified — so the flag had to be defined here, and it had to leave the sign-in reachable by
+     the owner on the laptop, because WO-3.18 cannot film a demo video of a control nobody can get
+     to. `signInAvailable()` below answers with the page's own hostname, from a list of three:
+       · `localhost` and `127.0.0.1` — `tools/serve-https.mjs` serves `https://localhost:8443`, one
+         of the OAuth client's two authorized origins, and the harness serves 127.0.0.1, which the
+         client does not list: a handshake from there ends in `origin_mismatch`, and the harness
+         measures the state machine rather than a handshake, so that is correct.
+       · `planbook.hwgteach.com` — the client's other authorized origin, and THE DEPLOYED ONE, OPEN
+         SINCE WO-7.4 (2026-09-25). Until that day this list was loopback only and the deployed
+         app drew no Drive section at all, which
+         kept privacy.html's flat "no third-party code of any kind" literally true. The submission
+         to Google needed the opposite: a reviewer opening the submitted app found a permission
+         requested and never used, which is the shape of the two commonest rejection reasons. What
+         the policy now says is the narrower claim that stays true — no third-party code UNLESS a
+         teacher connects Drive, when Google's own sign-in library loads — and it stays true
+         because of loadGis() below: the library is appended only after Connect is tapped, so a
+         teacher who never taps it gets exactly the network she got before. The harness asserts
+         that from the network itself, not from the source.
+       · Nothing else, and in particular NOT THE LAN ADDRESS the iPad reaches the laptop on: Google
+         will not register a raw IP, so a handshake from it can only end in `origin_mismatch`.
+     A preference-shaped flag was the other design and it lost: it would have put a Google script
+     one toggle away from every teacher, on every origin, with the client list teaching the code
+     nothing. THE PAIRING RULE STILL HOLDS for any origin added later — widen this list and not the
+     client's and you get a button that ends in Google's `origin_mismatch` — which is why the list
+     names hosts exactly rather than matching a pattern, and why `connect()` below refuses
+     off-flag rather than trusting the section to stay hidden.
 
   ── THE ONE SCOPE, IN THE ONE PLACE ──
 
@@ -170,8 +172,24 @@ let tokenClient = null;
 let pending = null;
 let pendingTimer = null;
 
+/*
+  WHILE THE CLIENT IS IN TESTING, SAID BEFORE CONNECT IS TAPPED (WO-7.4). Until Google approves the
+  OAuth client, an account that is not one of its listed test users meets Google's "Access
+  blocked" page — a dead end that looks like Planbook broke. So the panel says so up front, in
+  plain words, for as long as nobody is signed in.
+
+  ONE CONSTANT, AND DELETING IT IS THE WHOLE REMOVAL. When WO-7.3 records Google's approval, set
+  this to '' (or delete it and the element in index.html): refreshAuthChrome() below hides the
+  line when the string is empty, so nothing else has to change. It is exported so the harness
+  compares the panel against this string rather than against a second copy of the words.
+*/
+export const TESTING_MODE_NOTE = 'Google is still reviewing Planbook’s Drive sign-in. Until it '
+  + 'approves, only accounts the developer has added can connect — any other account will see '
+  + 'Google’s “Access blocked” page instead.';
+
 const PANEL_ID = 'drivePanel';
 const STATUS_ID = 'driveStatus';
+const TESTING_ID = 'driveTestingNote';
 const CONNECT_ID = 'driveConnectBtn';
 const DISCONNECT_ID = 'driveDisconnectBtn';
 
@@ -180,19 +198,19 @@ const DISCONNECT_ID = 'driveDisconnectBtn';
 /*
   Is the sign-in reachable on this origin at all — decision 3 in the header.
 
-  Loopback and nothing else — and IT IS THIS LIST THAT IS NARROW, NOT THE CLIENT'S. The client has
-  authorized `https://planbook.hwgteach.com` beside `https://localhost:8443` since 2026-08-21, so
-  the deployed origin would handshake today if this function let it; WO-7.3 is that one edit, and
-  what it costs is privacy.html's "no third-party code of any kind" on the deployed origin.
-  (WO-3.10, and `tools/make-cert.mjs` writes both loopback names into the certificate so that
-  server answers this laptop's own browser); `127.0.0.1` is additionally what
+  Loopback and the deployed origin, and nothing else. The two the OAuth client authorizes are
+  `https://localhost:8443` and `https://planbook.hwgteach.com` (WO-3.10's table records both; the
+  second added 2026-08-21, confirmed 2026-08-24). `tools/make-cert.mjs` writes both loopback names
+  into the certificate so the local server answers this laptop's own browser, and `127.0.0.1` is
+  additionally what
   tools/verify-shell.mjs serves the app from, so the harness can drive every state below. A real
   handshake attempted from the harness's origin would come back `origin_mismatch`, which is
   correct and is not what the harness measures — it measures the state machine, which is the half
   no browser without a Google account can be made to reach.
 
-  Loopback is a secure context by definition, which is GIS's own requirement, so a true answer
-  here never means a script that will refuse to run.
+  Every host on the list is a secure context — loopback by definition, the deployed origin by
+  HTTPS — which is GIS's own requirement, so a true answer here never means a script that will
+  refuse to run.
 */
 export function signInAvailable() {
   return hostAllowsSignIn(location.hostname);
@@ -200,17 +218,20 @@ export function signInAvailable() {
 
 /*
   The flag as a pure function of a hostname, split out for one reason: A PAGE CANNOT CHANGE ITS OWN
-  HOSTNAME, so the arm that matters most — the SHUT one, which is the arm every teacher on the
-  released app meets — is unreachable from a harness that can only ever measure the origin it was
-  served from. Written this way, the whole truth table is drivable: tools/verify-shell.mjs asks it
-  about `planbook.hwgteach.com` and about the LAN address the iPad uses, and gets false for both.
+  HOSTNAME, so the two arms a harness cannot be served from — the deployed host, which is OPEN,
+  and the LAN address the iPad uses, which is SHUT — are unreachable from a page that can only ever
+  measure its own origin. Written this way, the whole truth table is drivable:
+  tools/verify-shell.mjs asks it about both, and about the near misses that a pattern would let
+  through (`hwgteach.com`, a longer host that merely ends in or starts with the right one).
 
-  WO-7.3's "sync taken out from behind its flag" is an edit to this list and to the OAuth client's
-  authorized origins in the Cloud console. Neither half works alone — and the console half is done,
-  as of 2026-08-21: both origins are registered. So what WO-7.3 has left here is this list.
+  EXACT STRINGS, NEVER A SUFFIX OR A PATTERN (WO-7.4's first Trap). Every true answer here but the
+  harness's own `127.0.0.1` is a host the OAuth client lists; a host it does not list can only be
+  sent a live handshake that fails, and "any HTTPS host" would teach the client's list nothing. A new origin is a new line here AND a new
+  row in the Cloud console, in the same sitting.
 */
 export function hostAllowsSignIn(hostname) {
-  return hostname === 'localhost' || hostname === '127.0.0.1';
+  return hostname === 'localhost' || hostname === '127.0.0.1'
+    || hostname === 'planbook.hwgteach.com';
 }
 
 /* ────────────────────────────── reading the state ────────────────────────────── */
@@ -549,9 +570,13 @@ export async function ensureFreshToken() {
   writes the build line, for the same reason: a panel that opens and then fills in is a panel that
   flickers.
 
-  The whole section is hidden when the flag is shut, and that is the flag a teacher meets. Nothing
-  in the About prose contradicts it — that modal already says Drive sync "comes after" the screens
-  this build has.
+  The whole section is hidden when the flag is shut — which, since WO-7.4, is every origin but
+  loopback and the deployed one: the LAN address the iPad reaches a laptop on, a preview deploy,
+  a fork served somewhere else.
+
+  THE TESTING-MODE LINE is drawn whenever nobody is signed in — before the first tap, and again
+  after a failed one, which is exactly when a teacher who just met "Access blocked" needs it — and
+  hidden once a sign-in succeeds, since by then it has nothing to warn about.
 
   THE EXPIRY IS A CLOCK TIME AND NOT A COUNTDOWN. "Expires at 2:47" stays true while the panel sits
   open; "expires in 58 minutes" is wrong a minute later, and a stale number in the one place that
@@ -586,6 +611,12 @@ export function refreshAuthChrome() {
     } else {
       status.textContent = 'Not connected. Planbook works exactly the same either way.';
     }
+  }
+
+  const testing = document.getElementById(TESTING_ID);
+  if (testing) {
+    testing.textContent = TESTING_MODE_NOTE;
+    testing.classList.toggle('hidden', state.signedIn || !TESTING_MODE_NOTE);
   }
 
   if (connectBtn) {

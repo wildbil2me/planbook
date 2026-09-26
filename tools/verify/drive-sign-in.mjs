@@ -13,7 +13,7 @@ import path from 'node:path';
 
 export async function run(h) {
 const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, evalJs, has, clickSel,
-  KILL_ANIM } = h;
+  KILL_ANIM, netLog, load } = h;
 
 /*
   ══════════ THE DRIVE SIGN-IN (WO-7.1) ══════════
@@ -22,10 +22,10 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
   has no Google account, no Google session and no consent screen, so **the success path of the real
   handshake is unreachable from this file** and always will be. The work order's first two
   acceptance lines — a sign-in completes and the app receives a token, and the consent screen shows
-  exactly one scope — are 👤 lines against `https://localhost:8443` on the owner's laptop, which is
-  the only origin `hostAllowsSignIn()` accepts (WO-3.10; the client itself has also authorized
-  `https://planbook.hwgteach.com` since 2026-08-21). Nothing here closes either of them, and
-  a green run below is not a sign-in.
+  exactly one scope — are 👤 lines, read on the owner's laptop against `https://localhost:8443` or,
+  since WO-7.4, against the deployed `https://planbook.hwgteach.com`: the two origins the OAuth
+  client authorizes (WO-3.10) and the two `hostAllowsSignIn()` accepts beside `127.0.0.1`. Nothing
+  here closes either of them, and a green run below is not a sign-in.
 
   WHAT IS MEASURABLE IS EVERYTHING AROUND IT, and it is most of the risk:
 
@@ -38,9 +38,13 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
       argument for it is at that function and it is src/backup.js's restoreFromText() argument
       exactly: a page cannot be handed a real file either, and the read is the only part that
       differs.
-    · the flag. The arm that matters is the SHUT one, which is the arm every teacher on the
-      released app meets — and a page cannot change its own hostname, so hostAllowsSignIn() is
-      asked directly about the two hostnames this run can never be served from.
+    · the flag. A page cannot change its own hostname, so hostAllowsSignIn() is asked directly
+      about the hostnames this run can never be served from — the deployed host, OPEN since WO-7.4,
+      and the LAN address and the near misses, which stay SHUT.
+    · the wire. Since WO-7.4 the deployed app draws this section, so the privacy policy's
+      third-party claim is now "none unless a teacher connects Drive" — and that is asserted from
+      the Network domain rather than from the source: a signed-out load with the section drawn asks
+      accounts.google.com for nothing, and the Connect tap is what asks.
     · the two controls, tapped, at 44px, under a coarse pointer.
 
   AND ONE THING THE WHOLE FILE MEASURES WITHOUT MENTIONING IT: every check before this section ran
@@ -262,6 +266,7 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
     var status = document.getElementById('driveStatus');
     var connect = document.getElementById('driveConnectBtn');
     var disconnect = document.getElementById('driveDisconnectBtn');
+    var testing = document.getElementById('driveTestingNote');
     function box(el) {
       if (!el) return null;
       var r = el.getBoundingClientRect();
@@ -280,6 +285,13 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
         return !!(m && !m.classList.contains('hidden')); })(),
       statusText: status ? status.textContent.trim() : null,
       statusClass: status ? status.className : null,
+      /* WO-7.4's Testing-mode line: whether it is drawn, what it says, the constant it must say,
+         and whether it sits ABOVE Connect in document order — "before Connect is tapped" is a
+         claim about reading order as well as about time. */
+      testing: testing ? { shown: !testing.classList.contains('hidden'),
+        text: (testing.textContent || '').trim(), note: a.TESTING_MODE_NOTE,
+        aboveConnect: !!(connect && (testing.compareDocumentPosition(connect)
+          & Node.DOCUMENT_POSITION_FOLLOWING)) } : null,
       connect: box(connect), disconnect: box(disconnect) }; })()`;
 
   const arrived = await evalJs(READ_AUTH);
@@ -298,27 +310,59 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
   /* The flag's truth table, asked of the function rather than of this origin — see the note at
      hostAllowsSignIn() in src/auth.js for why it is a function of a hostname at all. The deployed
      host and the LAN address the iPad reaches are the two answers that matter and the two this run
-     can never be served from. */
+     can never be served from. WO-7.4 flipped the first to true and kept the second false, and the
+     rows after them are the near misses a pattern would let through: the bare parent domain, a
+     subdomain of the deployed host, a longer host that merely CONTAINS it at either end, and a
+     case variant (a browser lower-cases `location.hostname`, so an upper-case host never reaches
+     this function from a page — but a function that answered true for it would be matching
+     something other than exact strings). THE WHOLE TABLE IS ASSERTED, row by row, against the
+     expected answer written here, so a row added to one side and not the other is red. */
+  const EXPECT74 = {
+    'localhost': true, '127.0.0.1': true, 'planbook.hwgteach.com': true,
+    '192.168.50.142': false, 'hwgteach.com': false, 'www.planbook.hwgteach.com': false,
+    'evil-planbook.hwgteach.com': false, 'planbook.hwgteach.com.example': false,
+    'planbook.hwgteach.com.evil.example': false, 'PLANBOOK.HWGTEACH.COM': false,
+    'localhost.hwgteach.com': false, 'notlocalhost': false, 'example.com': false, '(empty)': false,
+  };
   const flag71 = await evalJs(`(function(){
     var f = window.planbook.auth.hostAllowsSignIn;
-    var hosts = ['localhost', '127.0.0.1', 'planbook.hwgteach.com', '192.168.50.142',
-      'localhost.hwgteach.com', 'notlocalhost', ''];
+    var hosts = ${JSON.stringify(Object.keys(EXPECT74))};
     var out = {};
-    hosts.forEach(function(h){ out[h || '(empty)'] = f(h); });
+    hosts.forEach(function(h){ out[h] = f(h === '(empty)' ? '' : h); });
     return { table: out, here: window.planbook.auth.signInAvailable(),
       hostname: location.hostname }; })()`);
-  check('the flag is the origin, and it is shut everywhere but loopback: the deployed host and the '
-    + 'iPad’s LAN address both answer false, so the released app draws no sign-in and fetches no '
-    + 'Google script at all — which is what keeps privacy.html’s "no third-party code of any kind" '
-    + 'true word for word (WO-7.3 widens this one function; the client’s origin list already carries the deployed origin, so the code is the half that is behind)',
-    flag71.table['localhost'] === true && flag71.table['127.0.0.1'] === true
-      && flag71.table['planbook.hwgteach.com'] === false
-      && flag71.table['192.168.50.142'] === false
-      && flag71.table['localhost.hwgteach.com'] === false
-      && flag71.table['notlocalhost'] === false && flag71.table['(empty)'] === false
-      && flag71.here === true,
-    'hostAllowsSignIn = ' + JSON.stringify(flag71.table) + '; this page is '
-      + JSON.stringify(flag71.hostname) + ' and reads ' + flag71.here);
+  const wrong74 = Object.keys(EXPECT74).filter(k => flag71.table[k] !== EXPECT74[k]);
+  check('the flag is the origin, and it is open on loopback and, since WO-7.4, on the deployed '
+    + 'planbook.hwgteach.com — the client’s two origins plus this harness’s own — and shut on the iPad’s LAN '
+    + 'address, on hwgteach.com, and on every longer or near-miss host, so the list is exact strings '
+    + 'and never a pattern (a host the client does not list can only be sent a handshake that fails)',
+    Object.keys(EXPECT74).length === 14 && !wrong74.length && flag71.here === true,
+    'hostAllowsSignIn = ' + JSON.stringify(flag71.table) + '; '
+      + (wrong74.length ? 'WRONG for ' + JSON.stringify(wrong74) : 'every row as expected')
+      + '; this page is ' + JSON.stringify(flag71.hostname) + ' and reads ' + flag71.here);
+
+  /*
+    THE WIRE, WATCHED FROM A SIGNED-OUT LOAD (WO-7.4). Since the deployed app draws the Drive
+    section, privacy.html and docs/FERPA.md claim no third-party code UNLESS a teacher connects
+    Google Drive — and the only thing making that true is that loadGis() in src/auth.js appends
+    Google's script when Connect is tapped and at no other moment. A grep for a <script> tag cannot
+    see a script appended at boot by a module, so this asks the browser's own Network domain.
+
+    The page is RELOADED with the domain on, so the reading covers a whole boot, the About modal
+    opening with the section drawn, and everything this section does up to the Connect tap near its
+    foot — synthetic sign-ins and a real Disconnect tap included. Both halves are asserted there,
+    around that tap: zero requests to accounts.google.com before it, and at least one after, so the
+    check cannot pass by watching nothing. The recorder being live is asserted too, from the
+    reload's own requests to this origin. The "arrived" reading above was taken BEFORE this reload
+    on purpose: its claim is about the thousand checks that ran first, which a fresh page would not
+    be evidence of.
+  */
+  netLog.length = 0;
+  await send('Network.enable');
+  const netSince74 = Date.now();
+  await load();
+  const googleIn74 = () => netLog.filter(r => /^https?:\/\/accounts\.google\.com\//i.test(r.url));
+  const ownIn74 = () => netLog.filter(r => r.url.indexOf('http://127.0.0.1:') === 0);
 
   const openAbout71 = async () => {
     await evalJs("(function(){ Array.prototype.forEach.call("
@@ -347,6 +391,18 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
     'panel shown = ' + resting.panelShown + ', Connect = ' + JSON.stringify(resting.connect)
       + ', Disconnect = ' + JSON.stringify(resting.disconnect) + ', status = '
       + JSON.stringify(resting.statusText) + ' (' + resting.statusClass + ')');
+
+  const t74 = resting.testing;
+  check('and before Connect is tapped the panel says the client is still in Google’s Testing mode — '
+    + 'that only accounts the developer has added can connect — in the one constant '
+    + 'TESTING_MODE_NOTE, drawn above the Connect button, so a teacher reads it before she meets '
+    + 'Google’s "Access blocked" page rather than after (WO-7.4)',
+    !!t74 && t74.shown === true && typeof t74.note === 'string' && t74.note.length > 40
+      && t74.text === t74.note && /only accounts/i.test(t74.text) && /Access blocked/.test(t74.text)
+      && t74.aboveConnect === true && !!resting.connect && resting.connect.shown === true,
+    t74 ? 'drawn = ' + t74.shown + ', above Connect = ' + t74.aboveConnect + ', matches the constant = '
+      + (t74.text === t74.note) + ', says ' + JSON.stringify(t74.text)
+      : '#driveTestingNote is not in the document');
 
   /* Both controls under a coarse pointer, which is the only way to read the 44px rule: they are
      `.class-action-btn`, so the floor they clear is one src/shell.css already owns — and that is
@@ -383,9 +439,13 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
     + 'this work order wrote',
     coarseIn.coarse === true && coarseIn.disconnect && coarseIn.disconnect.shown === true
       && coarseIn.disconnect.h >= 44 && coarseIn.disconnect.w >= 44
-      && coarseIn.connect.shown === false,
+      && coarseIn.connect.shown === false
+      /* WO-7.4: the Testing-mode line goes with Connect — once a sign-in has worked it has nothing
+         left to warn about. */
+      && !!coarseIn.testing && coarseIn.testing.shown === false,
     'pointer is ' + (coarseIn.coarse ? 'coarse' : 'FINE') + ', Disconnect = '
-      + JSON.stringify(coarseIn.disconnect) + ', Connect now shown = ' + coarseIn.connect.shown);
+      + JSON.stringify(coarseIn.disconnect) + ', Connect now shown = ' + coarseIn.connect.shown
+      + ', Testing-mode line shown = ' + (coarseIn.testing && coarseIn.testing.shown));
 
   await send('Emulation.setDeviceMetricsOverride',
     { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
@@ -585,6 +645,22 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
     behind, which the last check below is what settles.
   */
   const beforeTap = await openAbout71();
+  /* The first half of THE WIRE (see the reload above the About block): everything since that
+     reload — a boot, the section drawn, synthetic sign-ins, a lapse and a Disconnect tap — and not
+     one request to Google. */
+  const google74Before = googleIn74();
+  const own74Before = ownIn74();
+  check('a signed-out page asks accounts.google.com for nothing until Connect is tapped — measured '
+    + 'on the wire, from a reload with the Network domain on, through a whole boot, the About modal '
+    + 'drawn with the Drive section in it, and a Disconnect tap: this is now the whole of the '
+    + 'privacy policy’s third-party claim (WO-7.4)',
+    google74Before.length === 0 && own74Before.length > 5 && beforeTap.panelShown === true
+      && beforeTap.gisScripts === 0,
+    google74Before.length + ' request(s) to accounts.google.com '
+      + (google74Before.length ? JSON.stringify(google74Before.map(r => r.url)) + ' ' : '')
+      + 'and ' + own74Before.length + ' to this origin in the ' + (Date.now() - netSince74)
+      + 'ms since the reload; section drawn = ' + beforeTap.panelShown + ', GIS <script> tags = '
+      + beforeTap.gisScripts);
   await clickSel('[data-drive-connect]');
   const tapUntil = Date.now() + 4000;
   let tapped = await evalJs(READ_AUTH);
@@ -592,6 +668,20 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
     await new Promise(r => setTimeout(r, 100));
     tapped = await evalJs(READ_AUTH);
   }
+  /* The other half, and what keeps the first from passing by watching nothing: the tap is what
+     asks. Polled, never slept — the event arrives over the socket after the script tag goes in. */
+  const netUntil74 = Date.now() + 3000;
+  while (Date.now() < netUntil74 && !googleIn74().length) {
+    await new Promise(r => setTimeout(r, 100));
+  }
+  const google74After = googleIn74();
+  check('and the Connect tap is what asks — the request for Google’s sign-in library appears on the '
+    + 'wire once the tap lands, so the zero above was a recorder that could see it and did not',
+    google74After.length >= 1
+      && google74After.some(r => r.url.indexOf('https://accounts.google.com/gsi/client') === 0),
+    google74After.length + ' request(s) to accounts.google.com after the tap: '
+      + JSON.stringify(google74After.map(r => r.url).slice(0, 4)));
+  await send('Network.disable');
   check('one tap of Connect reaches the module and changes the line — either "waiting for Google" '
     + 'or a sentence naming what went wrong, never the resting text and never a silent nothing — '
     + 'and it signs nobody in, which is as far as any harness can take a handshake that needs a '
