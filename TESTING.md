@@ -11809,7 +11809,10 @@ line. `CACHE` is `planbook-shell-v133` (v132 had shipped; `index.html`, `src/aut
       button": `0 request(s) to accounts.google.com and 69 to this origin; sync button hidden = true
       … opt-in stored = null`, and its positive control — the opted-in launch asks for
       `/gsi/client` — green beside it.
-- [ ] **Acceptance 4 — `verify-deploy.mjs` after the push.** Not closable before a push. Its policy
+- [x] **Acceptance 4 — `verify-deploy.mjs` after the push.** *Closed 2026-09-26 after `95ede66`:
+      `19 checks · 19 passed · 0 failed` against `planbook-shell-v133`, and the live `/privacy`, tags
+      stripped, carries "Last updated 26 September 2026" and "It loads first when Connect is tapped",
+      and the old "Nothing is fetched from Google until Connect is tapped" 0 times.* Not closable before a push. Its policy
       claims were re-read: `CLAIMS` in `tools/verify-deploy.mjs` asserts three sentences — *no server
       of ours ever receives student information*, *no account is required*, *Drive holds only the
       file Planbook itself created* — and none of them is the sentence this work order changed. All
