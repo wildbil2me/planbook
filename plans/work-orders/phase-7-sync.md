@@ -369,7 +369,7 @@ backup** — Drive holds one live copy that sync will happily overwrite. WO-1.5 
 
 ## WO-7.4 — the deployed app has no sign-in for Google's reviewer to find
 
-**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-7.2, WO-8.15 — the transfer the
+**Ship** — · **Status** ✅ DONE — 2026-09-26 · **Size** S · **Depends on** WO-7.2, WO-8.15 — the transfer the
 sign-in exists for, and the front page whose sync sentence changes with the policy's · **Blocks**
 WO-3.18 — a submission whose homepage would otherwise lead to an app that never uses the scope
 **Closes roadmap** *(no box. Phase 7's **Verification complete.** is WO-7.3's, and a box is closed by
@@ -451,8 +451,13 @@ the list does not risk `origin_mismatch`.
       *(Read by the owner on Windows 2026-09-26, after `c775315` was live: all four laptop checks
       green — Drive section with the Testing-mode line above Connect, one permission line, the year
       in My Drive, Disconnect back to Not connected.)*
-- [ ] 👤 On the iPad, force-quit first: the Drive section is drawn and the app is otherwise unchanged.
+- [x] 👤 On the iPad, force-quit first: the Drive section is drawn and the app is otherwise unchanged.
       Download a backup before connecting the classroom year.
+      *(Read by the owner on the iPad 2026-09-26: backup downloaded, force-quit and relaunched, About
+      draws the Drive section with the Testing-mode line above Connect, nothing else moved. Connect
+      was not part of this line; on the iPad it wants Safari's pop-up blocker off, because the
+      visible attempt fires after the silent one fails and lands outside the tap's gesture window —
+      noted by the owner, not yet booked.)*
 
 **Traps** — **Only the deployed origin.** Widening to "any HTTPS host" or to the LAN address sends a
 live handshake to an origin the client does not list and teaches the list nothing. **Do not change

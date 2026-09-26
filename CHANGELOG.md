@@ -25,7 +25,7 @@ the consent screen turns her away. The privacy policy and the administrators' FE
 *no third-party code unless a teacher connects Google Drive*, in the same words, and About no longer
 claims Drive sync is part of this build. `drive.file` is still the only permission asked for. The
 harness's teardown also closes the local server's open connections, so a finished run exits
-promptly. (WO-7.4 — built and verified; the reading on the laptop and the iPad is still owed.)
+promptly. (WO-7.4 — deployed, and read on the laptop and the iPad.)
 
 ### A front page at /about, for Google's reviewer and for anyone new — 2026-09-25
 

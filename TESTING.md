@@ -11548,20 +11548,24 @@ documents no longer say sync is unreleased. `CACHE` is `planbook-shell-v130`.
 - [x] **Acceptance 2 — the wire.** `0 request(s) to accounts.google.com and 68 to this origin in the
       5630ms since the reload; section drawn = true, GIS <script> tags = 0`, then after the tap
       `1 request(s) to accounts.google.com after the tap: ["https://accounts.google.com/gsi/client"]`.
-- [ ] **Acceptance 3 — the documents, and live.** The desk half is met: the narrowed sentence is
+- [x] **Acceptance 3 — the documents, and live.** The desk half is met: the narrowed sentence is
       identical in both files after tags, backticks and whitespace are normalised, and none of the
       three pages matches `released app|not built into`. **`verify-deploy.mjs` after the push is
-      owed** — the push is the owner's call.
+      owed** — the push is the owner's call. *(Paid 2026-09-26: pushed at `c775315`,
+      `verify-deploy.mjs` 19 of 19 green, deployed `CACHE` = `planbook-shell-v130`.)*
 - [x] **Acceptance 4 — the Testing-mode line.** `drawn = true, above Connect = true, matches the
       constant = true`, and hidden again once a sign-in is held.
-- [ ] 👤 **Acceptance 5 — on the deployed app, cold, on the laptop.** Push, wait for Pages, open
+- [x] 👤 **Acceptance 5 — on the deployed app, cold, on the laptop.** Push, wait for Pages, open
       `https://planbook.hwgteach.com` in a fresh window, About ▸ the Drive section is drawn with the
       Testing-mode line above *Connect Google Drive*. Connect → the consent screen shows **one**
       permission line. Sync this year now → the file appears in My Drive. Disconnect → the panel is
       back to *Not connected* and the app is otherwise as it was.
-- [ ] 👤 **Acceptance 6 — on the iPad.** **Download a backup first.** Force-quit from the app
+      *(Read by the owner on Windows 2026-09-26: all four green.)*
+- [x] 👤 **Acceptance 6 — on the iPad.** **Download a backup first.** Force-quit from the app
       switcher, relaunch, open About: the Drive section is drawn, and nothing else on any screen has
       moved. Do not connect the classroom year until that backup is in hand.
+      *(Read by the owner on the iPad 2026-09-26: all green. Connect was not part of the line; on
+      the iPad it wants Safari's pop-up blocker off — noted, not booked.)*
 
 **Both tools.** `node tools/verify-shell.mjs` on the delivered tree: **`1488 checks · 1488 passed ·
 0 failed · 0 skipped`, 46,915 lines, 31.5 lines per check, 531s, exit 0**, 2026-09-25, real clock —
