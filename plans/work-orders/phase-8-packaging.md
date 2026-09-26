@@ -1464,7 +1464,7 @@ window cannot see a deploy (CLAUDE.md).
 
 ## WO-8.18 — a stuck update serves the old copy for ever
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-8.10 — the two-copy line in About that reports this state
+**Ship** — · **Status** 🤖 CLAIMED — 2026-09-26 · **Size** S · **Depends on** WO-8.10 — the two-copy line in About that reports this state
 **Closes roadmap** *(no box. A defect in the offline shell, found on hardware.)*
 
 **Booked 2026-09-26**, owner-reported, during WO-8.17's first 👤 reading. After the v134 deploy and a
@@ -1472,7 +1472,9 @@ force-quit, the iPad's About read, word for word: *"More than one copy of Planbo
 device: planbook-shell-v132 and planbook-shell-v134. The last update did not finish…"* Three more
 force-quits changed nothing. **It is the second time**: the owner hit the same state after an earlier
 update and got out of it only by forcing the update from Safari. WO-8.10's line told the teacher to
-quit and reopen, and that did not work.
+quit and reopen, and that did not work. **The laptop took the same v134 deploy cleanly** (About read
+one copy, owner, the same sitting), so the failure is iOS-only: the harness, which is Chromium, can
+plant the stuck state but will not reproduce how the iPad got into it.
 
 **Why it exists.** Two things in `sw.js` together make the state permanent:
 - **Old copies are deleted only in `activate`.** If that step does not finish, nothing ever runs it
