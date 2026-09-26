@@ -532,7 +532,7 @@ the same way: the code is the half that is behind, so nothing can reach a live h
 
 ## WO-7.5 — the header says how fresh this device's sync is
 
-**Ship** — · **Status** 🔍 AWAITING VERDICT — 2026-09-26 · **Size** M · **Depends on** WO-7.2 — the transfer whose state the button reads, and the bookmark it counts from
+**Ship** — · **Status** ✅ DONE — 2026-09-26 · **Size** M · **Depends on** WO-7.2 — the transfer whose state the button reads, and the bookmark it counts from
 **Closes roadmap** *(no box. Phase 7's boxes are closed by WO-7.1, WO-7.2 and WO-7.3; this is a surface on top of them.)*
 
 **Booked 2026-09-26**, owner-directed, out of a conversation that started at *"what about making the
@@ -640,12 +640,16 @@ the drawing carries the same answers in green where it asked them in amber.)*
       *(A real sync's bookmark, then a relaunch under `--today`'s own `Date` proxy moved one day on:
       `"Last synced yesterday at 8:05 AM."`; back on the real clock, up to date. Installed for that
       relaunch rather than taken from a whole `--today` run — a bookmark cannot outlive a run.)*
-- [ ] 👤 On the iPad, force-quit first, **with Safari's pop-up blocker left on**: let the sign-in
+- [x] 👤 On the iPad, force-quit first, **with Safari's pop-up blocker left on**: let the sign-in
       lapse, tap the button, and Google's sign-in opens and reconnects.
-- [ ] 👤 On the laptop and the iPad: a save shows *ahead*, a tap brings it back to *up to date*, and
+      *(Read by the owner on the iPad 2026-09-26 on the deployed v131, after `61ec569`: the lapsed
+      tap opened Google's window with the blocker on and reconnected.)*
+- [x] 👤 On the laptop and the iPad: a save shows *ahead*, a tap brings it back to *up to date*, and
       the reading is legible at arm's length without hovering.
       *(**Laptop half read by the owner 2026-09-26** on `localhost:8443`, before the push: working
-      as intended. The iPad half is owed on the deployed app, so the line stays open.)*
+      as intended. **iPad half read the same day on the deployed v131** — ahead, back to up to date,
+      legible without hovering. The same sitting found that a sync which DOWNLOADS does not repaint
+      the screen behind it; that is WO-7.2's defect, outside this line, booked as WO-7.7.)*
 
 **Traps** — **The reconnect tap must open Google's window inside the gesture.** `connect()` in
 `src/auth.js` awaits the silent attempt and only then asks visibly, so on the iPad the visible
@@ -728,3 +732,61 @@ say "connected" and mean "signed in"**: since WO-7.5 a device can be opted in wi
 and it still loads the library at launch — the sentence is about the opt-in. **And no new claims**: the
 policy is a public promise a district may hold us to, so it says what the app does and nothing about
 what it might do next.
+
+---
+
+## WO-7.7 — a sync that downloads leaves the screen showing the document it replaced
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.2 — the download path this repaints after
+**Closes roadmap** *(no box. A defect in WO-7.2's download, found reading WO-7.5.)*
+
+**Booked 2026-09-26**, from the owner's iPad reading of WO-7.5 on the deployed v131: *"syncing isn't
+redrawing the screen when it's pulling down information."* WO-7.5 itself passed. This fault is older.
+WO-7.5 just made it easy to hit, because the header button lets a teacher sync while she is looking
+at the gradebook instead of from inside About.
+
+**Why it happens.** When `syncNow()` in `src/drive-sync.js` plans `download`, it calls
+`store.adoptRemoteDocument(incoming)`. That puts the downloaded document in memory and in IndexedDB,
+and then calls the store's `notify()`. **No screen subscribes to the store, on purpose**:
+`src/classes.js`, `src/home.js`, `src/scores.js`, `src/detail.js`, `src/assignments.js` and
+`src/calendar-view.js` each say they do not subscribe, because a subscriber fires on every save.
+The only subscriber is `src/sync-button.js`. So the data changes underneath and the screen keeps
+drawing the document it replaced until something else redraws it: a navigation, a reload, a
+relaunch. **The comment above the `[data-drive-sync]` handler in `src/shell.js` (~2150-2155) says the
+opposite**: *"notify() is what every screen in this app already listens to."* That was false the day
+it was written, and it is why nothing repaints.
+
+**The precedent is already in the file.** A restore also replaces the whole document, and
+`src/shell.js` repaints after it by chaining `afterRestore` onto `backup.confirmRestore()`. A year
+switch does the same with `afterYearChange()` (~912), which redraws the class bar, the open screen
+and the header identity, and empties the template editor. A download is the same kind of event.
+
+**Deliverables**
+- **After a sync whose outcome is `downloaded`, the open screen is redrawn from the new document.**
+  This applies from both doors: the About panel's **Sync** and the header button's tap
+  (`src/sync-button.js` `tapSyncButton()`, which today repaints only the button via `afterSync`).
+  Use the repaint the year switch and the restore already use rather than a new one, chained where
+  those are chained, in `src/shell.js`, not inside `src/drive-sync.js` (the import-loop reason the
+  restore's comment gives). The implementer decides whether that is `afterYearChange()` itself or a
+  named sibling, and says why at the call.
+- **Only on `downloaded`.** An upload, *nothing to do*, a conflict or a failure leaves this device's
+  document as it was, so the screen does not need redrawing and must not flicker.
+- **The false comment in `src/shell.js`** says what is true, and so does any other note that claims
+  screens hear `notify()`.
+- **`CACHE` in `sw.js` bumped**, because `src/shell.js` is in `SHELL`.
+
+**Acceptance**
+- [ ] In the harness, a download from each door changes what the open screen draws. Plant a remote
+      document with a different score or student name, sync, and read the new value off the page
+      with no navigation in between. Mutation-proved: removing the repaint turns the check red.
+- [ ] An upload and an in-sync sync do not redraw the screen, asserted in the harness.
+- [ ] 👤 Laptop and iPad on the deployed app: change a grade on one device, sync; on the other,
+      with the same class's screen open, tap the header button and the new grade appears without
+      leaving the screen.
+
+**Traps** — **Do not subscribe screens to the store** to fix this. Six modules explain why they do
+not: a subscriber fires on every save and redraws while a teacher is typing. **A download never
+lands on unsaved work**: `planFor()` downloads only when this device is unchanged since the last
+sync, so the redraw cannot throw away something she typed. If it looks like it might, that is a
+different bug; report it instead of guarding for it here. **Do not reload the page** to get the
+redraw: it throws away the in-memory token, so every download would also sign her out.

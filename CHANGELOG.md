@@ -13,6 +13,21 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The header says how fresh this device's sync is — 2026-09-26
+
+A device that has connected Google Drive now shows a sync button in the header, last before About.
+It shows whether sync is current, not whether you are signed in. It stays quiet when this device matches
+Drive, and turns amber with a dot when there are changes that are not in Drive yet or the last sync
+was on an earlier day. It shows a white fill when the Google sign-in has ended, and a red outline when
+the last sync did not finish. Tapping it does what that state needs: it syncs, it reconnects (opening
+Google's window straight from the tap, so Safari's pop-up blocker allows it), or it opens About at the
+Drive section. It is never green, because a standing green light reads as *your gradebook is safe in
+the cloud*, and sync is not a backup. On a phone-width screen there is no room for a fifth button, so
+About carries the badge instead. A device that has never connected looks exactly as before and still
+contacts Google not at all. Connecting is now remembered on the device (a yes/no, never the sign-in
+itself), and a connected device quietly renews its sign-in when the app opens or comes back on screen.
+(WO-7.5 — deployed, and read on the laptop and the iPad.)
+
 ### The deployed app can connect Google Drive — 2026-09-26
 
 Until now the Google Drive section in About appeared only on a development machine, so the live app

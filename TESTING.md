@@ -11633,14 +11633,17 @@ run of `node tools/verify-shell.mjs` on the delivered tree, § "the header sync 
       `"Last synced yesterday at 8:05 AM."`; relaunched on the real clock the same bookmark reads up
       to date. It is installed for that one relaunch and removed, rather than taken from a whole
       `--today` run, because a bookmark cannot outlive a harness run (a fresh profile each time).
-- [ ] 👤 **Acceptance 6 — the iPad, pop-up blocker ON.** Force-quit from the app switcher first.
+- [x] 👤 **Acceptance 6 — the iPad, pop-up blocker ON.** Force-quit from the app switcher first.
       Connect once in About (on the iPad that is the one step still wanting the blocker off — it
       goes through `connect()`, silent first), then wait out the hour or relaunch: the button should
       read *Your Google sign-in has ended*. **Turn the pop-up blocker back on**, tap the button, and
       Google's window should open and reconnect. If it does not, note whether About's status line
       says the window was blocked.
-- [ ] 👤 **Acceptance 7 — laptop and iPad, arm's length.** Grade something: the button turns amber
+- [x] 👤 **Acceptance 7 — laptop and iPad, arm's length.** Grade something: the button turns amber
       with a dot. Tap it: back to the quiet state. Read it from where you stand at the board.
+      *(Both read by the owner 2026-09-26 — the laptop on `localhost:8443`, the iPad on the deployed
+      v131 with the pop-up blocker on. All good but one thing outside WO-7.5: a sync that downloads
+      leaves the open screen showing the old document until it is redrawn — WO-7.7.)*
 
 **Both tools.** `node tools/verify-shell.mjs`: **`1513 checks · 1513 passed · 0 failed · 0 skipped`,
 47,660 lines, 31.5 lines per check, 573s, exit 0**, 2026-09-26, real clock — 1488 plus the
