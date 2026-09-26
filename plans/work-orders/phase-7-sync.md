@@ -446,8 +446,11 @@ the list does not risk `origin_mismatch`.
       *(`TESTING_MODE_NOTE` in `src/auth.js`, drawn into `#driveTestingNote` above Connect while
       nobody is signed in; the harness asserts drawn, above Connect, equal to the constant, and
       hidden again once a sign-in is held.)*
-- [ ] 👤 On the deployed app, cold, on the laptop: Connect reaches the consent screen with one
+- [x] 👤 On the deployed app, cold, on the laptop: Connect reaches the consent screen with one
       permission line, the owner's own year uploads, and Disconnect leaves the app as it was.
+      *(Read by the owner on Windows 2026-09-26, after `c775315` was live: all four laptop checks
+      green — Drive section with the Testing-mode line above Connect, one permission line, the year
+      in My Drive, Disconnect back to Not connected.)*
 - [ ] 👤 On the iPad, force-quit first: the Drive section is drawn and the app is otherwise unchanged.
       Download a backup before connecting the classroom year.
 
