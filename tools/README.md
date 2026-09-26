@@ -1223,7 +1223,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1502 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1506 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2053,6 +2053,17 @@ inert unless its sessionStorage key is set) and records, per request, whether it
 proved by passing a one-`.then`-late reconnect straight through it. The run prints **1513**:
 `1513 checks · 1513 passed · 0 failed · 0 skipped`, 47,660 lines, 31.5 lines per check, 573s, exit
 0, measured 2026-09-26 on the real clock. Mutation round in `TESTING.md` § WO-7.5.
+
+**WO-7.7 moved it from 1502 to 1506, and the executed count from 1513 to 1517 — four sites, four
+results.** All four are literal call sites in `verify/sync-button.mjs`, in one block before LAPSED;
+none in a loop and none a failure arm, so the gap stays at −11 and the file count stays at
+seventy-three. The block taps both doors — the header button and About's Sync — against the Drive
+that section already stands up, with the fullest class's register open, and reads a student's name
+planted in the Drive copy off the page with no navigation between. Whether the screen was redrawn at
+all is read with a sentinel rather than a mutation count: the leaf elements carrying the name are
+held before the tap and asked `isConnected` after, and the two download checks are its positive
+control. The run prints **1517**: `1517 checks · 1517 passed · 0 failed · 0 skipped`, 47,843 lines, 31.5 lines per check,
+571s, exit 0, measured 2026-09-26 on the real clock. Mutation round in `TESTING.md` § WO-7.7.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

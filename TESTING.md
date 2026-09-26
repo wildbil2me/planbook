@@ -11679,6 +11679,64 @@ over a backed-up copy and reverted by restoring it; after each, a search for the
    made by the tap = [{"silent":false,"inClick":true,"inListener":false}]`. Reverted; the final run
    above is on the tree after it.
 
+### WO-7.7 — a sync that downloads leaves the screen showing the document it replaced
+
+**One repaint, two doors.** `src/shell.js` gained `afterDownload(result)` beside `afterRestore()`:
+it returns unless the sync's own resolved outcome is `downloaded`, and then runs the backup nag and
+`afterRestore()` whole. About's **Sync** chains it onto `syncNow()`; the header button chains it onto
+the promise `tapSyncButton()` now hands back (`{ door, syncing }` instead of a bare string). No screen
+subscribes to the store — the comment above `[data-drive-sync]` that said they all did is rewritten,
+and so is `src/store.js`'s note above `notify()`. `CACHE` is `planbook-shell-v132`.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-7-sync.md` § WO-7.7, from
+`node tools/verify-shell.mjs`, § "the header sync button (WO-7.5)", the WO-7.7 block before LAPSED.*
+
+- [x] **Acceptance 1 — a download from each door changes what the open screen draws.** The register
+      of the fullest class is open; one student's last name is changed in the Drive copy (rev + 5);
+      the door is tapped; the register is read with no navigation between. Header:
+      `class tab c_b1 with 26 student(s) … outcome = downloaded; after: {"shown":true,"has":true,
+      "stillHasOld":false,"held":1,"kept":0}`. About, read with About still open over the register:
+      `outcome = downloaded; after: {"shown":true,"has":true,"stillHasOld":false,"held":1,"kept":0,
+      "aboutOpen":true}`. Mutation-proved below (M1+M2).
+- [x] **Acceptance 2 — an upload and an in-sync sync do not redraw the screen.** Read with a
+      sentinel: the leaf elements carrying the name before the tap, and whether they are still in the
+      document after. Each run straight after a download, and a failure added: `upload: outcome
+      uploaded, rows kept 1/1 · in-sync: outcome in-sync, kept 1/1 · failure: outcome failed (bad
+      true), kept 1/1`, and About's in-sync `rows kept 1/1`. The download checks are the sentinel's
+      positive control (`kept 0`). Mutation-proved below (M3).
+- [ ] 👤 **Acceptance 3 — laptop and iPad, deployed.** Force-quit the iPad app from the app switcher
+      first (the `CACHE` bump only reaches a cold launch). Change a grade on the laptop and sync.
+      On the iPad, open the same class's score grid, tap the header's sync button, and the new grade
+      should appear without leaving the screen. Then sync again on the iPad with nothing changed: the
+      screen should not blink.
+
+**Both tools.** `node tools/verify-shell.mjs` on the delivered tree: **`1517 checks · 1517 passed ·
+0 failed · 0 skipped`, 47,843 lines, 31.5 lines per check, 571s, exit 0**, 2026-09-26, real clock —
+1513 plus the four new. `node tools/wo-sweep.mjs`: `45 checks · 42 passed · 0 failed · 3 to review` (the three
+standing REVIEWs), § 11 reading 1506 call sites.
+
+**The mutation round — three runs.** Each break was applied over a scratchpad copy of `src/shell.js`
+marked `MUTATION M<n>`, and reverted by copying the file back as soon as the WO-7.7 checks had
+printed; `cmp` read identical each time.
+
+1. **M1+M2 — both `afterDownload` chains deleted** (one run; the doors are independent, so each red
+   belongs to its own door). **`1517 checks · 1513 passed · 4 failed`, exit 1.** Header download:
+   `"has":false,"stillHasOld":true,"held":1,"kept":1`. About download: `"has":false`. The two
+   no-redraw checks went red too, as a knock-on only — `held 0`, because the planted name never
+   reached the page to be tagged.
+2. **M3 — the `downloaded` guard deleted**, so every sync repaints. **`1517 checks · 1515 passed ·
+   2 failed`, exit 1**, and exactly the two aimed at: `upload … kept 0/1 · in-sync … kept 0/1 ·
+   failure … kept 0/1`, and About's in-sync `kept 0/1`. Both download checks stayed green.
+3. **M4 — the guard keyed on `driveSync.syncState().outcome`** (the sticky field the brief warned
+   about) instead of the resolved value. **`1517 checks · 1517 passed · 0 failed`, exit 0 — not
+   caught, and that is a true reading rather than a hole.** `syncNow()` clears its outcome as a
+   transfer starts and settles on every path before it resolves, its own `catch` included, so by the
+   time the chain runs the sticky field already names this sync — the two cannot disagree on the
+   tree as it stands. `afterDownload()` reads the resolved value anyway, so the gate does not rest
+   on that ordering inside another module, and its comment says so rather than claiming a check
+   guards it. (My first draft of both comments claimed the after-a-download ordering would catch
+   this mutant. It did not, and they were rewritten to what was measured.)
+
 ---
 
 ## Phase 8 — 1.0 packaging

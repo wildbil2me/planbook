@@ -23,7 +23,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, load, netLog, KILL_ANIM } = h;
+const { check, skip, send, evalJs, clickSel, clickVisible, load, netLog, KILL_ANIM } = h;
 
 console.log('\n--- the header sync button (WO-7.5) ---');
 
@@ -514,6 +514,189 @@ check('a sync from the About panel’s own button moves the header too — the b
   + 'transfer, not of which door started it',
   viaPanel.state === 'current' && viaPanel.outcome !== '' && viaPanel.bad === false,
   'state = ' + viaPanel.state + ', outcome = ' + viaPanel.outcome);
+
+/* ══════════ WO-7.7 — a download repaints the screen it lands under, and nothing else does ══════════
+
+   HERE RATHER THAN IN drive-sync.mjs because this section is the one that drives BOTH DOORS as
+   doors — the header button and About's Sync, each tapped — against a Drive it controls, and it is
+   standing, opted in and signed in, at `current` by this line. The other section calls syncNow()
+   directly, which is exactly the path that never had a screen repaint to forget.
+
+   WHAT IS READ is the attendance register (#classView) of the class with the most students, and the
+   thing planted is one student's LAST NAME in the Drive copy — the register draws rosterName(), so
+   the new name is on the page or it is not. Read with no navigation between the tap and the reading:
+   the About door's reading is taken with About still open over the register.
+
+   AND WHETHER THE SCREEN WAS REDRAWN AT ALL is read with a sentinel rather than a mutation count,
+   because a count would also see anything on that screen that changes on a schedule of its own and
+   say nothing about which rows were replaced. Before each tap every leaf element carrying the student's name is held in a page
+   variable; a redraw replaces them, so afterwards they are disconnected, and no redraw leaves every
+   one of them in the document. THE DOWNLOAD CHECKS ARE THE SENTINEL'S POSITIVE CONTROL — the same
+   reading goes to zero there — so the no-redraw checks below cannot pass over a sentinel that could
+   never have seen one.
+
+   THE ORDER IS THE BRIEF'S TRAP, AND WHAT IT CAN AND CANNOT CATCH IS MEASURED. The upload, the
+   in-sync pass and the failure all come AFTER a download, so a sync that left the previous outcome
+   standing would repaint here. But syncNow() settles on every path before it resolves, so by the
+   time the repaint's chain runs `syncState().outcome` already names THIS sync — keying the repaint
+   off that sticky field was run as a mutation and stayed green (TESTING.md § WO-7.7). What these
+   three checks do catch is a repaint that is not gated at all. On today's syncNow() the sticky field
+   and the resolved value cannot disagree at chain time; src/shell.js's afterDownload() reads the
+   resolved value so that stays true if syncNow() ever changes. */
+{
+  /* Chosen by class rather than by tab index, and clicked by whichever copy of its tab is on the
+     glass: a class's `data-class-tab` is carried by its home card AND by the header strip, and
+     which of the two is laid out depends on the view the section above left open (clickVisible's
+     trap, tools/verify-shell.mjs). */
+  const pick = await evalJs(`(function(){
+    var doc = window.planbook.store.getDoc();
+    var best = null, n = -1;
+    doc.classes.forEach(function (c) {
+      if (!document.querySelector('[data-class-tab="' + c.id + '"]')) return;
+      var len = c.roster ? c.roster.length : 0;
+      if (len > n) { n = len; best = c; }
+    });
+    var s = best && best.roster.length ? doc.students.filter(function (x) {
+      return x.id === best.roster[0]; })[0] : null;
+    return { tab: best ? best.id : '', students: n, id: s ? s.id : '',
+      last: s ? String(s.last || '') : '', first: s ? String(s.first || '') : '' }; })()`);
+  if (pick.tab) await clickVisible('[data-class-tab="' + pick.tab + '"]');
+  await pause(300);
+
+  const TAG = (name) => evalJs(`(function(){
+    var v = document.getElementById('classView');
+    if (!v || v.classList.contains('hidden')) { window.__wo77 = []; return 0; }
+    window.__wo77 = Array.prototype.filter.call(v.querySelectorAll('*'), function (e) {
+      return e.children.length === 0 && (e.textContent || '').indexOf(${JSON.stringify(name)}) >= 0; });
+    return window.__wo77.length; })()`);
+  const PAGE = (want, gone) => evalJs(`(function(){
+    var v = document.getElementById('classView');
+    var text = v ? v.textContent : '';
+    var held = window.__wo77 || [];
+    var m = document.getElementById('aboutModal');
+    return { shown: !!(v && !v.classList.contains('hidden')),
+      has: text.indexOf(${JSON.stringify(want)}) >= 0,
+      stillHasOld: ${JSON.stringify(gone || '')} !== '' && text.indexOf(${JSON.stringify(gone || '')}) >= 0,
+      held: held.length,
+      kept: held.filter(function (e) { return e.isConnected; }).length,
+      aboutOpen: !!(m && !m.classList.contains('hidden')) }; })()`);
+  const PLANT = (last) => evalJs(`(function(){
+    var doc = window.planbook.store.getDoc();
+    var f = window.__drive.files.filter(function (x) {
+      return x.appProperties && x.appProperties.docId === doc.docId; })[0];
+    if (!f) return { rev: 0, found: false };
+    var body = JSON.parse(f.body);
+    var rev = (Number(doc.rev) || 0) + 5;
+    var found = false;
+    body.rev = rev;
+    body.students.forEach(function (s) {
+      if (s.id === ${JSON.stringify(pick.id)}) { s.last = ${JSON.stringify(last)}; found = true; } });
+    f.body = JSON.stringify(body);
+    f.appProperties = Object.assign({}, f.appProperties, { rev: String(rev), deviceLabel: 'iPad' });
+    return { rev: rev, found: found }; })()`);
+  const settled = async (kind) => {
+    const r = await waitFor((x) => !x.busy && x.outcome === kind, 6000);
+    await pause(150);
+    return r;
+  };
+
+  const HEADER = 'Wosevenseven-Header';
+  const ABOUT = 'Wosevenseven-About';
+
+  /* ── the header door, downloading ── */
+  const before = await PAGE(pick.last);
+  const heldA = await TAG(pick.last);
+  const plantA = await PLANT(HEADER);
+  await tap();
+  const downA = await settled('downloaded');
+  const pageA = await PAGE(HEADER, pick.last);
+  check('WO-7.7 — a sync from the HEADER BUTTON that downloads redraws the open screen from the new '
+    + 'document: a student’s name changed in the Drive copy is on the attendance register with no '
+    + 'navigation between the tap and the reading, the old name is gone, and the rows that carried it '
+    + 'were replaced — which is the sentinel below seeing a redraw when there is one',
+    pick.students > 0 && pick.id !== '' && pick.last !== '' && before.shown === true && before.has === true
+      && plantA.found === true && heldA > 0
+      && downA.outcome === 'downloaded' && pageA.shown === true && pageA.has === true
+      && pageA.stillHasOld === false && pageA.kept === 0,
+    'class tab ' + pick.tab + ' with ' + pick.students + ' student(s); register shown before = '
+      + before.shown + ', old name drawn before = ' + before.has + '; planted = '
+      + JSON.stringify(plantA) + '; outcome = ' + downA.outcome + '; after: ' + JSON.stringify(pageA)
+      + ' (held ' + heldA + ' before the tap)');
+
+  /* ── the header door, not downloading: upload, in-sync, failure — each after a download ── */
+  await save('WO77-UPLOAD');
+  await waitFor((r) => r.state === 'ahead', 3000);
+  const heldUp = await TAG(HEADER);
+  await tap();
+  const up = await settled('uploaded');
+  const pageUp = await PAGE(HEADER);
+
+  const heldSame = await TAG(HEADER);
+  await tap();
+  const same = await settled('in-sync');
+  const pageSame = await PAGE(HEADER);
+
+  const heldFail = await TAG(HEADER);
+  await evalJs('window.__drive.failNext = 500; 1');
+  await tap();
+  const fail = await waitFor((r) => !r.busy && r.state === 'failed', 6000);
+  await pause(150);
+  const pageFail = await PAGE(HEADER);
+  await evalJs('window.__drive.failNext = null; 1');
+
+  check('WO-7.7 — an upload, an in-sync pass and a failure from the header button do NOT redraw the '
+    + 'screen, each of them run directly after a download so the last settled outcome still reads '
+    + '`downloaded` as it starts: every row that carried the name before the tap is still the row in '
+    + 'the document after it',
+    up.outcome === 'uploaded' && same.outcome === 'in-sync' && fail.bad === true
+      && heldUp > 0 && heldSame > 0 && heldFail > 0
+      && pageUp.kept === heldUp && pageSame.kept === heldSame && pageFail.kept === heldFail
+      && pageUp.shown && pageSame.shown && pageFail.shown,
+    'upload: outcome ' + up.outcome + ', rows kept ' + pageUp.kept + '/' + heldUp
+      + ' · in-sync: outcome ' + same.outcome + ', kept ' + pageSame.kept + '/' + heldSame
+      + ' · failure: outcome ' + fail.outcome + ' (bad ' + fail.bad + '), kept ' + pageFail.kept
+      + '/' + heldFail);
+
+  /* ── About's Sync, downloading — read with About still open over the register ── */
+  const plantB = await PLANT(ABOUT);
+  await clickSel('[data-modal-open="aboutModal"]');
+  await pause(300);
+  const heldB = await TAG(HEADER);
+  await clickSel('[data-drive-sync]');
+  const downB = await settled('downloaded');
+  const pageB = await PAGE(ABOUT, HEADER);
+  check('WO-7.7 — a sync from ABOUT’S OWN SYNC BUTTON that downloads redraws the screen behind the '
+    + 'modal: the name changed in Drive is on the register, read while About is still open over it, '
+    + 'and the rows that carried the old one were replaced',
+    plantB.found === true && heldB > 0 && downB.outcome === 'downloaded'
+      && pageB.aboutOpen === true && pageB.shown === true && pageB.has === true
+      && pageB.stillHasOld === false && pageB.kept === 0,
+    'planted = ' + JSON.stringify(plantB) + '; outcome = ' + downB.outcome + '; after: '
+      + JSON.stringify(pageB) + ' (held ' + heldB + ' before the tap)');
+
+  const heldSameB = await TAG(ABOUT);
+  if (!(await PAGE(ABOUT)).aboutOpen) {
+    await clickSel('[data-modal-open="aboutModal"]');
+    await pause(300);
+  }
+  await clickSel('[data-drive-sync]');
+  const sameB = await settled('in-sync');
+  const pageSameB = await PAGE(ABOUT);
+  await shutModals();
+  check('WO-7.7 — and an in-sync pass from About’s Sync, straight after that download, does not '
+    + 'redraw it',
+    sameB.outcome === 'in-sync' && heldSameB > 0 && pageSameB.kept === heldSameB,
+    'outcome ' + sameB.outcome + ', rows kept ' + pageSameB.kept + '/' + heldSameB);
+
+  /* Handed back: the student's own name, synced so the header is at `current` again for LAPSED. */
+  await evalJs(`(function(){ window.planbook.store.update(function (d) {
+    d.students.forEach(function (s) {
+      if (s.id === ${JSON.stringify(pick.id)}) s.last = ${JSON.stringify(pick.last)}; }); });
+    return window.planbook.store.flush().then(function () { return 1; }); })()`);
+  await waitFor((r) => r.state === 'ahead', 3000);
+  await tap();
+  await waitFor((r) => r.state === 'current' && !r.busy, 5000);
+}
 
 /* LAPSED: the token runs out, the silent renewal is tried on the return to view and refused, and the
    tap asks VISIBLY, INSIDE THE CLICK. */

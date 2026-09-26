@@ -456,8 +456,12 @@ let inFlight = null;       /* the promise of the write that is running, for flus
 let debounceTimer = null;
 let maxWaitTimer = null;
 
-/* The store's only outward notification. A screen re-reads getDoc() and re-renders itself;
-   there is deliberately no diffing, no binding, and no framework here. */
+/* The store's only outward notification. A subscriber re-reads getDoc() and repaints itself;
+   there is deliberately no diffing, no binding, and no framework here. NO SCREEN IS A SUBSCRIBER
+   (WO-7.7): this fires on every save, and a screen that redrew on it would redraw under a teacher
+   who is typing. The header's sync button is the only one (src/sync-button.js). Anything that
+   replaces the whole document — a restore, a year switch, a download — is followed by a repaint
+   chained in src/shell.js instead, and a new path that replaces it owes one there too. */
 const listeners = [];
 export function subscribe(fn) {
   listeners.push(fn);

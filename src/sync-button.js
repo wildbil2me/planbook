@@ -314,17 +314,26 @@ export function revealDriveSection() {
 
 /*
   What the tap does, by state — and it is the CALLER in src/shell.js that opens About, because that
-  path already paints the modal before it appears; this returns 'about' and leaves it there.
+  path already paints the modal before it appears; this answers door 'about' and leaves it there.
 
   THE RECONNECT IS SYNCHRONOUS UP TO GOOGLE'S WINDOW, and that is WO-7.5's first Trap: this is called
   from the click listener, auth.reconnect() asks inside the same stack, and nothing is awaited
   before it. The silent attempt is NOT made here — it belongs to launch and to visibility, and it
   has already failed by the time `lapsed` is on the glass.
+
+  IT HANDS THE SYNC BACK, NOT JUST THE DOOR (WO-7.7). The answer is `{ door, syncing }`: which way
+  the tap went, and — when it went to Drive — syncNow()'s own promise, so src/shell.js can chain the
+  screen repaint a download needs exactly where it chains one onto About's Sync. That repaint is not
+  done HERE because it reaches every screen, and this file importing src/shell.js or a screen would
+  close the loop afterYearChange()'s comment refuses; a registered "call me after a download" hook
+  was the other shape, and it was declined because it is a store subscriber by another name — a
+  standing listener this module would own for somebody else's screens. Handing the promise back is
+  one caller, one tap, nothing left registered.
 */
 export function tapSyncButton() {
   const st = syncButtonState();
-  if (!st.drawn || st.state === 'syncing') return 'none';
-  if (st.state === 'failed') return 'about';
+  if (!st.drawn || st.state === 'syncing') return { door: 'none', syncing: null };
+  if (st.state === 'failed') return { door: 'about', syncing: null };
 
   if (st.state === 'lapsed') {
     const asking = auth.reconnect();
@@ -334,13 +343,13 @@ export function tapSyncButton() {
       refreshSyncButton();
       driveSync.refreshSyncChrome();
     }, () => { renewal = 'failed'; refreshSyncButton(); });
-    return 'reconnect';
+    return { door: 'reconnect', syncing: null };
   }
 
   const syncing = driveSync.syncNow();
   refreshSyncButton();
   syncing.then(afterSync, afterSync);
-  return 'sync';
+  return { door: 'sync', syncing: syncing };
 }
 
 /* After a sync from EITHER door — this button or About's "Sync this year now" — which is why it is

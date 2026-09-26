@@ -753,7 +753,7 @@ what it might do next.
 
 ## WO-7.7 — a sync that downloads leaves the screen showing the document it replaced
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.2 — the download path this repaints after
+**Ship** — · **Status** 🔍 AWAITING VERDICT — 2026-09-26 · **Size** S · **Depends on** WO-7.2 — the download path this repaints after
 **Closes roadmap** *(no box. A defect in WO-7.2's download, found reading WO-7.5.)*
 
 **Booked 2026-09-26**, from the owner's iPad reading of WO-7.5 on the deployed v131: *"syncing isn't
@@ -792,13 +792,18 @@ and the header identity, and empties the template editor. A download is the same
 - **`CACHE` in `sw.js` bumped**, because `src/shell.js` is in `SHELL`.
 
 **Acceptance**
-- [ ] In the harness, a download from each door changes what the open screen draws. Plant a remote
+- [x] In the harness, a download from each door changes what the open screen draws. Plant a remote
       document with a different score or student name, sync, and read the new value off the page
       with no navigation in between. Mutation-proved: removing the repaint turns the check red.
-- [ ] An upload and an in-sync sync do not redraw the screen, asserted in the harness.
+- [x] An upload and an in-sync sync do not redraw the screen, asserted in the harness.
 - [ ] 👤 Laptop and iPad on the deployed app: change a grade on one device, sync; on the other,
       with the same class's screen open, tap the header button and the new grade appears without
       leaving the screen.
+
+*(Lines 1 and 2 ticked by the implementer 2026-09-26 on a green run of `verify-shell.mjs` and a
+three-run mutation round; the evidence and the one mutant that is correctly not caught are in
+`TESTING.md` § WO-7.7. The repaint is `afterDownload()` in `src/shell.js`, a named sibling of
+`afterRestore()` — its comment says why that rather than `afterYearChange()`.)*
 
 **Traps** — **Do not subscribe screens to the store** to fix this. Six modules explain why they do
 not: a subscriber fires on every save and redraws while a teacher is typing. **A download never

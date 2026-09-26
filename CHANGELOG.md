@@ -13,6 +13,18 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A sync that brings changes down now shows them — 2026-09-26
+
+Until now, a sync that downloaded a newer gradebook from Drive replaced the data under the screen
+without redrawing it, so the score grid or register you were looking at kept showing the version it
+had just replaced until you left and came back. Now, when a sync brings changes down, the open screen
+redraws. That works from the header's sync button and from **Sync this year now** in About. A sync
+that only uploads, finds nothing to change, or fails leaves the screen exactly as it was, so nothing
+blinks under a teacher who is working. Screens still do not redraw on every save, which would redraw
+under someone typing. The redraw follows a download the same way it already followed a restore or a
+year switch. The browser harness clicks the real button and checks both halves. (WO-7.7 — the
+laptop-and-iPad reading on the deployed app is still owed.)
+
 ### The header says how fresh this device's sync is — 2026-09-26
 
 A device that has connected Google Drive now shows a sync button in the header, last before About.

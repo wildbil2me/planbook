@@ -1757,6 +1757,52 @@ function afterRestore() {
 }
 
 /*
+  A SYNC THAT DOWNLOADED, and the screen redrawn from the document it brought (WO-7.7).
+
+  NOTHING ELSE REDRAWS IT. No screen subscribes to the store, on purpose — src/classes.js,
+  src/home.js, src/scores.js, src/detail.js, src/assignments.js and src/calendar-view.js each say
+  why: a subscriber fires on every save and redraws under a teacher's thumb while she is typing. So
+  store.adoptRemoteDocument()'s notify() reaches the header's sync button and nothing else, and
+  until this landed a download left the open screen drawing the document it had just replaced, until
+  a navigation or a relaunch happened to paint it again. The owner found it on the iPad, WO-7.5's
+  reading of v131.
+
+  IT IS afterRestore() WITH ONE LINE PUT BACK, rather than afterYearChange(), and the choice is about
+  what a download IS. It replaces the whole document the way a restore does — same year, same
+  docId, different contents — so it takes the restore's chain whole, and in particular its
+  resetOutreach(): an open draft is about a student in the document that has just been put away,
+  and afterYearChange() carries no such line. The line put back is the backup nag, which
+  afterRestore() leaves out for a reason that does not hold here — "src/backup.js re-evaluates that
+  itself on the path that just wrote the file" is true of a restore and false of a download, which
+  reaches no line of src/backup.js, while the nag's answer reads the document (hasSomethingToLose).
+
+  ONLY ON `downloaded`, AND ONLY ON THIS SYNC'S. It reads the value syncNow() resolved with and
+  never syncState().outcome, which is the last SETTLED sync's kind and outlives it. Today the two
+  cannot disagree when this runs: syncNow() clears its outcome as a transfer starts and settles
+  before it returns on every path, its own catch included — the mutation round keyed this on the
+  sticky field and the harness stayed green (TESTING.md § WO-7.7), which is that fact measured, not
+  a hole. It reads the resolved value anyway so that "this sync downloaded" is true by construction
+  here rather than by an ordering inside another module that a later edit to syncNow() could break
+  without touching this file. A rejection repaints nothing. Every outcome but `downloaded` leaves
+  this device's document exactly as it was, so the screen is already true and a redraw would be a
+  flicker with no information in it.
+
+  IT CANNOT THROW AWAY TYPING. src/drive-sync.js's planFor() downloads only when this device is
+  unchanged since its last sync, so there is no unsaved work under a redraw to lose. And it is NOT a
+  page reload, which is the other way to get a fresh screen: the token is memory-only (src/auth.js),
+  so a reload would sign the teacher out on every download.
+
+  Chained from both doors in the click listener below — About's Sync, and the header's button through
+  the promise tapSyncButton() hands back — and not from inside src/drive-sync.js, for the reason
+  afterRestore()'s own chain gives: that module would then import the screens.
+*/
+function afterDownload(result) {
+  if (!result || result.kind !== 'downloaded') return;
+  backup.refreshBackupNag();
+  afterRestore();
+}
+
+/*
   Presentation mode flipped, and everything on screen that could be holding support data redrawn
   behind it.
 
@@ -2149,15 +2195,19 @@ document.addEventListener('click', (e) => {
   }
   /* AND THE LINE THE PARAGRAPH ABOVE SAID WO-7.2 WOULD ADD. It is not awaited either, for the
      same reason and one more of its own: a sync moves a document, so the screens behind this
-     modal can change under it — and they are not repainted from here. src/store.js's own
-     subscribers do that, because adopting a downloaded document goes through the store like any
-     other write and notify() is what every screen in this app already listens to. A repaint
-     chained on here would be a second one, racing the first. */
+     modal can change under it — and THIS CHAIN IS WHAT REPAINTS THEM (WO-7.7). No screen listens
+     to the store's notify(): the header's sync button is its only subscriber, and every screen
+     module says why it is not one. This comment said the opposite until 2026-09-26 — that notify()
+     was "what every screen in this app already listens to" and a repaint here would race it — and
+     that was false the day it was written, which is why a download left the screen showing the
+     document it had replaced. afterDownload() above is the repaint, and it does nothing unless
+     this sync's own outcome is `downloaded`. */
   if (e.target.closest('[data-drive-sync]')) {
     /* The header button follows a sync from this door too (WO-7.5): `syncing` while it runs, and
-       whatever it settled into after. afterSync() is a repaint of that one button and nothing else,
-       so it is not the second screen repaint the paragraph above refuses. */
-    driveSync.syncNow().then(syncButton.afterSync, syncButton.afterSync);
+       whatever it settled into after. afterSync() is a repaint of that one button and nothing else. */
+    const syncing = driveSync.syncNow();
+    syncing.then(syncButton.afterSync, syncButton.afterSync);
+    syncing.then(afterDownload, () => {});
     syncButton.refreshSyncButton();
     return;
   }
@@ -2166,10 +2216,14 @@ document.addEventListener('click', (e) => {
      table; the one outcome it hands back here is About, because the path that paints About before
      it appears lives in this file. NOTHING IS AWAITED BEFORE THE TAP REACHES GOOGLE: on a lapsed
      sign-in tapSyncButton() calls src/auth.js's reconnect() in this same stack, which is the only
-     way Safari lets the sign-in window open. */
+     way Safari lets the sign-in window open. And when the tap went to Drive, the sync it started
+     is handed back so the screen repaint a download needs hangs off it here, as it does off About's
+     Sync above (WO-7.7) — src/sync-button.js repaints its own button and nothing else. */
   const syncBtn = e.target.closest('[data-sync-button]');
   if (syncBtn) {
-    if (syncButton.tapSyncButton() === 'about') openAbout(syncBtn, true);
+    const tap = syncButton.tapSyncButton();
+    if (tap.door === 'about') openAbout(syncBtn, true);
+    if (tap.syncing) tap.syncing.then(afterDownload, () => {});
     return;
   }
 
