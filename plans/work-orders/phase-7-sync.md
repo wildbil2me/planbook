@@ -854,3 +854,93 @@ has teeth for part of the day.
 different day for every other section, which is why `SHIFT` is installed for one reload and then
 removed. Do the same. **Local time, not UTC**: `localDayOf()` is local on purpose, and a check
 written in UTC would test a different midnight from the teacher's.
+
+---
+
+## WO-7.9 — a fresh device cannot open the year it already has in Google Drive
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-7.2, WO-7.5, WO-7.7 — the download and its validation, the opt-in a pull must set, and the repaint a pull must trigger
+**Closes roadmap** *(no box. Phase 7's boxes are closed by WO-7.1, WO-7.2 and WO-7.3; this is a door on top of them.)*
+
+**Booked 2026-09-26**, owner-directed. The owner connected a fresh laptop while reading WO-7.5 and found
+**no way to open the year already in Drive**. WO-7.5 had listed *"Pulling a year onto a cold device"* as
+discussed and not booked. **The owner's ruling, the day it was booked: on first run, a fresh device
+offers to open a year from Google Drive *or* from a backup.**
+
+**Why it does not work today.** Sync never searches Drive for "a year". It looks for the one file
+whose `appProperties.docId` matches the document open on this device (`src/drive-sync.js`, the
+`files.list` query ~357). On a fresh device, `boot()` in `src/store.js` finds no year and calls
+`createYear(currentSchoolYear())`, which makes a new, empty document with a new `docId`. So sync
+cannot see the file in Drive, and a tap on Sync uploads the empty year as a second Planbook file. The
+only route now is a backup from the other device, and even that ends in a keep-both conflict on its
+first sync, because this device has no bookmark for that `docId` (`docs/sync.md` § *"What a restore
+from a different device does"*).
+
+**Deliverables**
+- **A first-run offer with two doors: Google Drive and a backup.** It is drawn on the home screen of a
+  device whose **only** document is the untouched year `boot()` just created: no classes, no
+  students, and no save since it was made. It sits alongside the ordinary way forward (add your
+  first class), never in place of it: **sync is an opt-in extra, and a teacher with no Drive year
+  starts exactly as today.** The offer goes away for good the moment the year stops being untouched.
+- **The backup door is the existing restore** (`src/backup.js`), reached from here. No second
+  restore path.
+- **The Drive door lists this account's Planbook years and opens the one she picks.**
+  - **The tap is the Connect.** The sign-in is asked for *inside the gesture*, the way WO-7.5's
+    reconnect does, so Safari's pop-up blocker allows it. A successful sign-in sets the WO-7.5 opt-in,
+    exactly as Connect in About does. It is drawn only where `hostAllowsSignIn()` is true. On the
+    iPad's LAN address only the backup door is drawn. While the client is in Testing mode, the
+    `TESTING_MODE_NOTE` line shows here as it does above Connect.
+  - **The list** is every live Planbook file in Drive the app can see: `appProperties.docId`
+    present, `conflictOf` absent, not trashed. Each row shows its year, the device that last wrote
+    it and when. **Conflict copies are left out**: they are for a teacher to open by hand, not for
+    the app to choose between. With no files the door says so in a sentence and the device carries on
+    as a fresh one. With one file it is still a list of one, which she confirms.
+  - **Opening one** downloads it, validates it through `parseBackup()` as a download already is, and
+    adopts it **with its own `docId`**. It replaces the untouched year only if the two share a year
+    label; otherwise it opens beside it. **It writes the sync bookmark at the remote's `rev` in the
+    same step**, so the next sync is an ordinary one and not a keep-both conflict. That bookmark is
+    the whole difference between this and a restore. The open screen is redrawn by WO-7.7's path.
+- **`docs/sync.md`** gains the section: what a pull is, why it writes the bookmark and a restore does
+  not, and why it is offered only on an untouched device. **`CACHE` in `sw.js` bumped.**
+
+**Not in scope** — **Pulling onto a device that already has data** (in About, after connecting).
+That device's own year would have to be kept, merged or replaced, which is the question the
+keep-both design exists to refuse. It needs its own work order if it is wanted. **Detecting a changed
+Google account** (`docs/sync.md` § *"A second Google account makes a latent hole reachable"*).
+
+**Open** *(the owner's before dispatch)*
+1. *The backup door, then Connect.* A year restored from a backup has a `docId` Drive already knows,
+   and no bookmark here, so its first sync still ends in keep-both: one spare file in Drive, once.
+   **Leave it** (it errs the safe way and is documented), or have the first-run backup door **suggest
+   the Drive door when the backup's `docId` is already in Drive**? The second costs a sign-in before
+   a restore, which is a lot to ask of a teacher who picked the backup door.
+2. *Where the offer sits on the home screen*: a panel above *No classes yet.*, or the empty state's
+   own words gaining two links? Worth drawing before dispatch if the owner wants to see it first
+   (`design/mockups/PROTOCOL.md`).
+
+**Acceptance**
+- [ ] A device whose only document is untouched draws both doors. A device with a class, a student
+      or a second year draws neither. On the LAN host only the backup door is drawn. Asserted in the
+      harness.
+- [ ] The Drive door lists live files only (no conflict copies, no trashed files), and opening one
+      leaves this device holding that document with its own `docId`, current, and a bookmark at the
+      remote's `rev`. **A sync straight after is `in-sync` and writes nothing to Drive.**
+      Mutation-proved: without the bookmark write, that sync turns into a conflict and the check goes
+      red.
+- [ ] A device that never takes either door boots, draws and behaves exactly as today, and makes no
+      request to `accounts.google.com`. Asserted from the network, as WO-7.4 and WO-7.5 do.
+- [ ] A document that fails validation, or belongs to a newer build, is refused in a sentence and
+      leaves the untouched year as it was.
+- [ ] 👤 On the iPad on the deployed app, force-quit first, **pop-up blocker on**, a fresh install
+      (Safari's site data cleared): the Drive door signs in, lists the year the laptop synced, opens
+      it, and the laptop's grades are on screen. The header's sync button then reads up to date.
+- [ ] 👤 The backup door on the same fresh device restores a backup file downloaded from the laptop.
+
+**Traps** — **Never overwrite a year that has anything in it.** "Untouched" is the whole safety of this
+door. If the check is ever in doubt, the answer is *do not offer*. **The sign-in has to be asked for
+inside the tap**, not after an `await`, or the iPad blocks it (WO-7.4's last reading, WO-7.5's
+Traps). **Match on `docId`, never on the file name**, because a teacher can rename a file in Drive.
+**The list names years, devices and dates and nothing from inside a document**: no class names, no
+students, so it is safe on a projector without a presentation-mode branch. **And sync is still not a
+backup.** A teacher who opens her year from Drive has not been told her backups are optional, and
+nothing on this screen may suggest it.
