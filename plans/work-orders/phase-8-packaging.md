@@ -1461,3 +1461,59 @@ that route and its reasons still hold. **Do not reload without asking** (ruling 
 About's amber line as the notice**, because a teacher who does not open About never sees it, which
 is this row's whole defect. **Check the laptop's origin before the 👤 reading**: a `localhost` app
 window cannot see a deploy (CLAUDE.md).
+
+## WO-8.18 — a stuck update serves the old copy for ever
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-8.10 — the two-copy line in About that reports this state
+**Closes roadmap** *(no box. A defect in the offline shell, found on hardware.)*
+
+**Booked 2026-09-26**, owner-reported, during WO-8.17's first 👤 reading. After the v134 deploy and a
+force-quit, the iPad's About read, word for word: *"More than one copy of Planbook is stored on this
+device: planbook-shell-v132 and planbook-shell-v134. The last update did not finish…"* Three more
+force-quits changed nothing. **It is the second time**: the owner hit the same state after an earlier
+update and got out of it only by forcing the update from Safari. WO-8.10's line told the teacher to
+quit and reopen, and that did not work.
+
+**Why it exists.** Two things in `sw.js` together make the state permanent:
+- **Old copies are deleted only in `activate`.** If that step does not finish, nothing ever runs it
+  again for that worker, so the old cache stays. Why it does not finish on iOS is not known yet;
+  finding out is part of this row, but the fix must not depend on the answer.
+- **Lookups search every cache, not the current one.** The `navigate` branch calls
+  `caches.match(INDEX)` and the shell branch calls `caches.match(req)`, both with no cache name
+  (`sw.js:248` and the line after `SHELL_PATHS`). `caches.match` searches every cache in the order
+  they were made, so the oldest copy answers first. One surviving old cache means every launch serves
+  the old build, whichever worker is running.
+
+So the update is downloaded and stored and never used, and About reports it correctly every time.
+
+**Deliverables**
+- **Serve only from the current copy.** Both lookups read from `CACHE` and nothing else, with the
+  network fallback they have now. A surviving old cache is then just wasted space, not the build on
+  screen.
+- **Clean up old copies somewhere that runs again.** Keep the delete in `activate`, and also run it at
+  a point the current, active worker reaches repeatedly (for example, its first fetch in each worker
+  lifetime). It must delete only caches under the shell prefix that are not `CACHE`, and only once
+  this worker is the active one.
+- **The harness plants the stuck state.** Seed an extra `planbook-shell-` cache holding a different
+  `./` and a different module. Assert the page is served from `CACHE`, and that the extra cache is
+  gone after the worker's next fetch. Mutation-prove both: an unscoped `caches.match` turns the first
+  check red, and removing the second cleanup turns the second red.
+- `CACHE` bumped.
+
+**Acceptance**
+- [ ] In the harness, with an old shell cache planted beside the current one, the document and a
+      shell module both come from `CACHE`. Mutation-proved.
+- [ ] In the harness, the planted old cache is deleted without a new worker installing.
+      Mutation-proved.
+- [ ] `skipWaiting` and `clients.claim` are unchanged, and nothing outside the `planbook-shell-`
+      prefix is ever deleted.
+- [ ] 👤 On the stuck iPad (About naming two copies), after this deploys: relaunch, and About reads
+      one copy, the new build, with no Safari step.
+
+**Traps** — **Do not delete the cache the running worker is serving from.** Cleaning up during
+`install` would pull files out from under the old, still-active worker; the cleanup belongs to the
+active worker only. **Do not delete by anything wider than the shell prefix**: other caches at this
+origin are not ours to judge, and IndexedDB, where the grades live, is not a cache at all. **Do not
+touch `skipWaiting`**, for WO-8.11's reasons. **Do not treat WO-8.17's banner as the fix**: it reports a
+takeover, and on a stuck device the takeover already happened and the old files are still served.
+**Keep `./index.html` off `SHELL`** (WO-8.7's white screen), whatever the new lookup looks like.
