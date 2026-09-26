@@ -31,8 +31,8 @@ minutes. When a newer version has taken over, a thin amber strip under the heade
 version of Planbook is ready*, with a **Reload** button. Nothing reloads on its own: the strip waits
 for the tap, and the tap saves any pending work before it reloads. The strip carries no student data,
 but it hides in presentation mode so it doesn't sit on a projector, and it comes back when
-presentation mode is turned off. (WO-8.17 — built and verified in the harness; the reading on the
-iPad and a laptop app window is still owed, so the work order stays in progress.)
+presentation mode is turned off. (WO-8.17 — verified in the harness, and read by the owner on the iPad
+and a laptop app window against the v135 deploy.)
 
 ### The sync button's "yesterday" check no longer depends on the hour it runs — 2026-09-26
 

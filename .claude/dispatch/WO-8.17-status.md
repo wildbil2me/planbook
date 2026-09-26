@@ -10,3 +10,5 @@
 - 2026-09-26T20:32:10Z handoff written: 🔍 AWAITING VERDICT. The verifier is owed and belongs to a fresh session.
 - 2026-09-26T20:40:22Z fresh session entered at 🔍 AWAITING VERDICT; grep MUTATION run; verifier dispatched at Opus as a FIRST pass, awaiting verdict.
 - 2026-09-26T20:51:24Z verdict in: PASS WITH MANUAL CHECKS — Acceptance 1-3 ✅ (harness 1528/1528, sweep 45·41·0·4 re-run by verifier), line 4 🙋 iPad + laptop app window. No tick applied; awaiting owner go.
+
+- 2026-09-26 — ✅ DONE. Line 4 read by the owner on the iPad and the laptop against the v135 deploy (WO-8.18). The v134 attempt found the iPad stuck on two stored copies, booked as WO-8.18.

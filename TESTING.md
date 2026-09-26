@@ -12819,8 +12819,10 @@ CACHE v133 → v134, and nothing else in that file moved. The harness is eleven 
       ["click","landed","pagehide"], new document = true`, and the change read back out of IndexedDB
       on the far side. `location.reload()` is not stubbed because Chromium will not let a page
       redefine it; `tools/README.md` § WO-8.17 says how the order is read instead.
-- [ ] **Acceptance 4 — 👤 the iPad and a laptop app window installed from `planbook.hwgteach.com`.**
-      Owed to the owner. **Deploy WO-8.17 itself (v134) first, then force-quit and relaunch each
+- [x] **Acceptance 4 — 👤 the iPad and a laptop app window installed from `planbook.hwgteach.com`.**
+      **Read by the owner 2026-09-26 against the v135 deploy (WO-8.18's), reported all set.** The
+      first attempt, against v134, found the iPad stuck on two stored copies, which became WO-8.18;
+      the laptop took v134 cleanly and was left open for the v135 deploy to be the second one. **Deploy WO-8.17 itself (v134) first, then force-quit and relaunch each
       device** — the listener that looks for the update ships in this build, so a device still
       running v133 has nothing to notice the second deploy with. **Check the laptop window's origin
       next** — `location.origin` in DevTools
