@@ -976,3 +976,91 @@ Traps). **Match on `docId`, never on the file name**, because a teacher can rena
 students, so it is safe on a projector without a presentation-mode branch. **And sync is still not a
 backup.** A teacher who opens her year from Drive has not been told her backups are optional, and
 nothing on this screen may suggest it.
+
+---
+
+## WO-7.10 — the silent sign-in renewal opens a window, and on the iPad it blocks updates and taps
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.5 — the launch renewal this removes, and the header button whose tap replaces it
+**Closes roadmap** *(no box. Phase 7's boxes are closed by WO-7.1, WO-7.2 and WO-7.3; this reverses one ruling on top of them.)*
+
+**Booked 2026-09-26**, owner-reported, during WO-8.18's device reading. **The owner's ruling, the day it
+was booked: option A — drop the launch renewal. Opting in stays; a sign-in is asked for only by a
+tap.** This reverses the second half of WO-7.5's ruling 5 (*"opting in is also consent to try
+reconnecting at launch"*). The first half, that opting in is remembered, stands.
+
+**What the owner saw, on both devices, against v134–v136.**
+- **iPad (home-screen app):** on launch a Google sign-in window appeared first. After it, taps on
+  About did nothing, through several force-quits. The update from v134 to v135 did not arrive until
+  the owner blocked the pop-up, and **v136 needed the same** — so this is repeatable, not a one-off.
+  With the window blocked and sync reconnected by a tap, sync works both ways.
+- **Laptop:** no window, but About's Drive section shows the red line *"The browser blocked the Google
+  sign-in window. Allow pop-ups for Planbook and try again."* — **while connected and syncing.** The
+  iPad shows the same red line in the same state.
+
+**Why.** `renewSilently()` in `src/sync-button.js` (~383) calls `auth.ensureFreshToken()` at `start()`
+and on every `visibilitychange` to visible. That reaches `requestToken(true)` → `ask(true)` in
+`src/auth.js`, which calls `requestAccessToken({ prompt: '' })`. **The comment above
+`ensureFreshToken()` says "SILENT ONLY, AND NEVER A POPUP", and it is false**: Google's token client
+has no silent path. `prompt: ''` skips the consent screen when it can; it still opens a window to get
+the token.
+- A desktop browser blocks a window with no tap behind it, so the attempt fails with
+  `popup_failed_to_open` and sets `lastError` — the laptop's red line.
+- The iPad's home-screen app lets it open. Closing it returns the app to visible, which fires
+  `renewSilently()` again; a failed renewal is marked `'failed'` and is retried on every return. The
+  owner's account (a window first; About dead; updates stuck until the window was blocked) fits a
+  window reopening over the app, and WO-8.17's update check and the service worker's `load`-time
+  registration (`src/shell.js` ~4022) never getting a clean turn. **That sequence is inferred, not
+  observed** — the build's first job is to confirm or correct it before changing anything.
+- **Why the red line outlives a successful tap is not known.** A tap that signs in sets
+  `lastError = ''`. A plausible cause is a renewal fired after the success — the visibility return
+  when Google's window closes — resetting it. Find the actual sequence; do not assume this one.
+
+**Deliverables**
+- **No sign-in window is ever requested without a tap.** `renewSilently()` and both its call sites
+  (`start()` and the visibility listener) go. Nothing at launch or on regaining visibility calls
+  `ensureFreshToken()`, `requestToken()` or `ask()`. The only callers left are taps: Connect, About's
+  Sync, the header sync button and WO-7.9's Drive door if it has landed.
+- **The header button keeps reading freshness, and "no token" is not an alarm.** Today
+  `renewal === '' && !signedIn` draws *Connecting to Google Drive…*, which under this ruling would be
+  drawn for ever. With no token, the button reads what it would read if signed in — up to date,
+  ahead, stale, failed — from the bookmark, and **its tap signs in and syncs in one gesture**, the
+  sign-in asked for inside the tap as `reconnect()` already does. *Lapsed* as a separate alarm state
+  goes, or is drawn only after a tapped sign-in actually fails; the build argues which, at the point
+  of departure.
+- **Google's library still loads at launch on an opted-in device**, and only there, so the tap can
+  reach `requestAccessToken()` synchronously. If the library is not ready when she taps, that tap
+  loses the gesture and `reconnect()`'s `loadedFirst` message is what she meets. **Keeping the
+  preload is what keeps `privacy.html` and `docs/FERPA.md` true word for word** — WO-7.6's wording
+  says the library loads at launch on an opted-in device. If the build finds the preload can go, both
+  documents change in the same sitting, per `CLAUDE.md` § Accommodations.
+- **A stale error does not survive a success.** After any tapped sign-in or sync that succeeds, About's
+  Drive section shows no red line. The fix is the cause found above, not a blanket clear on paint.
+- **The comment above `ensureFreshToken()` is corrected** to say what the token client actually does.
+  `docs/sync.md` § *"What actually happens at the hour"* and WO-7.5's ruling 5 carry a dated note
+  pointing here; the ruling's text is not rewritten.
+
+**Acceptance**
+- [ ] On an opted-in device, a launch and a return to visible make **no** token request. Asserted in
+      the harness by counting `requestAccessToken` calls (a stub), not by the network: the library
+      itself still loads, and that load is expected.
+- [ ] With no token, the header button reads the bookmark's freshness, never *Connecting…*, and a tap
+      requests a token inside the tap's own stack, then syncs. Asserted in the harness.
+- [ ] A failed silent attempt can no longer set the red line, and a tapped success clears any red line
+      already there. Asserted in the harness, with the sequence the build found as its fixture.
+- [ ] Mutation-proved: putting a launch-time renewal back turns the first line red. **The mutation is
+      reverted before anything else is written** (`AGENTS.md`).
+- [ ] 👤 **iPad, home-screen app, deployed, pop-ups allowed**, force-quit first: no Google window at
+      launch or on return from the background; About opens on the first tap; the header button's tap
+      signs in and syncs; the next deploy's update lands with no pop-up blocked (About names one copy
+      after a relaunch).
+- [ ] 👤 **Laptop, deployed origin** (`location.origin` checked): no red line at launch; a tap on the
+      header button syncs and leaves About's Drive section with no red line.
+
+**Traps** — **Do not look for a silent path through Google's library and keep the launch renewal on
+it.** That is option B, which the owner declined in favour of this one; if the build finds a real
+silent path, it reports it and stops, rather than building it. **Ask for the token inside the tap**,
+never after an `await` (WO-7.4's last reading, WO-7.5's Traps). **The opt-in stays a boolean and the
+token stays in memory** (WO-7.1). **Do not remove the preload to save a request** without the two
+privacy documents changing in the same sitting. **And sync is still not a backup**: nothing on the
+header or in About may read *safe* because a tap now does two things.
