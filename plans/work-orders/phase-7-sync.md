@@ -920,11 +920,12 @@ picks is lifted, and where the drawing and this work order disagree, the work or
    and no bookmark here, so its first sync ends in keep-both: one spare file in Drive, once. Leave it,
    or have the backup door suggest the Drive door when the backup's `docId` is already in Drive?
    **Leave it.** It errs the safe way, it happens once, and `docs/sync.md` already documents it.
-
-**Open** *(the owner's before dispatch)*
 2. *Where the offer sits on the home screen.* Variant A in the drawing is its own panel above
    *Your classes*, with the Drive door as a second primary button. Variant B is inside the empty
-   state, under a hairline below *Add your first class*, with both doors secondary.
+   state, under a hairline below *Add your first class*, with both doors secondary. **B.** One
+   primary button on the screen every new teacher sees first, since pulling a year happens once
+   per device. The doors go when the empty state goes, so hiding them needs no rule of its own.
+   **Lift § FIRST RUN's variant B rules and delete variant A's in the same sitting.**
 
 **Acceptance**
 - [ ] A device whose only document is untouched draws both doors. A device with a class, a student
@@ -942,6 +943,9 @@ picks is lifted, and where the drawing and this work order disagree, the work or
 - [ ] 👤 On the iPad on the deployed app, force-quit first, **pop-up blocker on**, a fresh install
       (Safari's site data cleared): the Drive door signs in, lists the year the laptop synced, opens
       it, and the laptop's grades are on screen. The header's sync button then reads up to date.
+      **Clearing site data erases the year on that device.** Before it, on the iPad: sync, confirm
+      the button reads up to date, and download a backup. Better still, read it on a device or
+      browser profile that is not the classroom one.
 - [ ] 👤 The backup door on the same fresh device restores a backup file downloaded from the laptop.
 
 **Traps** — **Never overwrite a year that has anything in it.** "Untouched" is the whole safety of this

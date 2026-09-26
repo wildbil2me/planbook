@@ -667,6 +667,6 @@ same sitting.
 ## The open questions, collected
 
 - **Variant A or B.** A is louder and puts two primary buttons on one screen. B is quieter and keeps
-  one primary and one empty state. **WO-7.9 Open line 2**, the owner's.
+  one primary and one empty state. **Decided 2026-09-26: B.** WO-7.9 ruling 2.
 - **A backup restored here, then Connect**: its first sync ends in keep-both, once. **Decided 2026-09-26:
   leave it.** WO-7.9 Open line 1.
