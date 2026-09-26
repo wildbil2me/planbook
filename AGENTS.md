@@ -213,7 +213,10 @@ it reports the swap rather than undoing it, so the instruction is unchanged. Two
 line you hand back. If it expects to *see* that stale message, say to pull down to refresh once
 first: **iOS resumes a backgrounded app without loading a document**, so nothing re-registers the
 worker and no update check ever starts. And an app that comes back showing an old build with **no**
-warning has been resumed, not broken.
+warning has been resumed, not broken. **A laptop line on the deployed app also says "check the
+origin first"** (WO-7.7, 2026-09-26): an app window installed from `https://localhost:8443` serves its
+own cache for ever once the dev server is down and never sees a deploy, so a stale build reads as a
+failed feature. `location.origin` in DevTools settles it.
 **If you changed a file in `SHELL`, bump `CACHE` in `sw.js` in the same commit** — `./` is entry one,
 so `index.html` counts. Skip it and the owner verifies your work by looking at the previous build.
 

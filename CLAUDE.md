@@ -150,10 +150,13 @@ sentences describing its consequences do not.* **The public wording is**
 [WO-7.6](plans/work-orders/phase-7-sync.md#wo-76--the-privacy-documents-say-google-loads-only-on-the-connect-tap-and-since-wo-75-it-also-loads-at-launch)*'s
 to fix, and it must land before WO-3.18 submits.* **And one thing a cold reader will need:**
 `src/sync-button.js` **is the store's only subscriber.** *No screen repaints on* `notify()`*, on
-purpose, so a sync that downloads changes the data under a screen that keeps drawing the old
-document — the owner's iPad reading found it, and it is*
-[WO-7.7](plans/work-orders/phase-7-sync.md#wo-77--a-sync-that-downloads-leaves-the-screen-showing-the-document-it-replaced)*.
-The comment in* `src/shell.js` *that says every screen listens to* `notify()` *is the false one.)*
+purpose — a subscriber fires on every save and redraws under a teacher who is typing. So a sync that
+downloads is followed by* `afterDownload()` *in* `src/shell.js`*, a sibling of* `afterRestore()`
+*chained off both doors, and it repaints only when* **this** *sync resolved* `downloaded`*.*
+[WO-7.7](plans/work-orders/phase-7-sync.md#wo-77--a-sync-that-downloads-leaves-the-screen-showing-the-document-it-replaced)
+*is ✅ as of 2026-09-26, read both ways on laptop and iPad, and the* `src/shell.js` *comment that
+said every screen listens to* `notify()` *is corrected.* **A new path that replaces the whole document
+owes a repaint chained there too**, *which is what* `src/store.js` *now says above* `subscribe()`*.)*
 
 *(**Row 4 landed 2026-08-24, a week early, and it is the one row of Ship 3 that cannot close on
 build quality alone.*** [WO-4.3](plans/work-orders/phase-4-signals.md#wo-43--praise-signals) *— the
@@ -669,7 +672,12 @@ force-quit is still the procedure. The same sitting found the other half on hard
 a backgrounded app without loading a document at all**, so nothing re-registers the worker, no
 update is even looked for, and the app comes back as the build you left — honestly, silently, with
 no amber line to say so. Waiting for that line without a force-quit or a deliberate pull-to-refresh
-is waiting for an update check that never started. **And bump `CACHE` in `sw.js` for any change to a
+is waiting for an update check that never started. **On the laptop, check the app's origin before a
+deployed reading** (WO-7.7, 2026-09-26): an app window installed from `https://localhost:8443`
+serves its own cache for ever once the dev server is down, and **never sees a deploy** — it read
+v131 with no amber line an hour after v132 shipped, and a stale build looked like a failed repaint.
+`location.origin` in DevTools (F12 works in an app window) settles it, and each origin holds its own
+copy of the year. **And bump `CACHE` in `sw.js` for any change to a
 file in `SHELL`** — `./` is entry one, so an `index.html` edit counts, and without the bump no
 device sees the change at all.
 
