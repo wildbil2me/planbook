@@ -433,13 +433,15 @@ the list does not risk `origin_mismatch`.
       *(From the Network domain across a reload: `0 request(s) to accounts.google.com and 68 to this
       origin` before the tap, `["https://accounts.google.com/gsi/client"]` after it. Red under an
       eager-load mutation.)*
-- [ ] `privacy.html` and `docs/FERPA.md` carry the narrowed third-party sentence identically, and
+- [x] `privacy.html` and `docs/FERPA.md` carry the narrowed third-party sentence identically, and
       neither they nor `about.html` says sync is unreleased. `verify-deploy.mjs` green after the push.
       *(**Desk half met, push half owed — so open.** The sentence is identical in both files after
       tags, backticks and whitespace are normalised, and none of the three pages matches
       `released app|not built into`. `verify-deploy.mjs`'s three policy claims and its `/about`
-      check were re-read and assert nothing the rewrite removed, so no edit there. The live run
-      waits on the owner's push.)*
+      check were re-read and assert nothing the rewrite removed, so no edit there. **Push half met
+      2026-09-26**: pushed at `c775315`, and `verify-deploy.mjs` against the live origin ran 19 of 19
+      green with the deployed `CACHE` equal to the tree's `planbook-shell-v130` — policy at `/privacy`
+      is the policy with all three claims, `/about` is the front page.)*
 - [x] The Drive panel names the Testing-mode limit before Connect is tapped.
       *(`TESTING_MODE_NOTE` in `src/auth.js`, drawn into `#driveTestingNote` above Connect while
       nobody is signed in; the harness asserts drawn, above Connect, equal to the constant, and
