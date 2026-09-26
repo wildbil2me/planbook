@@ -137,6 +137,24 @@ still* `🔒`*, and the panel says so on screen because a teacher who connects a
 gradebook is in Drive would stop downloading backups. **WO-3.18's demo video is unblocked** — the
 scope is now in use and there is a handshake to film.)*
 
+*(**The header has a sync button as of 2026-09-26, and it makes two sentences in the block above
+history for a device that has connected.**
+[WO-7.5](plans/work-orders/phase-7-sync.md#wo-75--the-header-says-how-fresh-this-devices-sync-is) *is
+✅: a button last before About, drawn only on a device that opted in, reading* **freshness, not
+connection**, *and never green. Opting in is now remembered —* `planbook_driveSyncOptIn`*, a boolean
+and never a credential — and* **the owner ruled that it is also consent to renew the sign-in silently
+at launch and on regaining visibility.** *So on an opted-in device* **a reload is no longer a
+sign-out** *(the token is still memory-only; the renewal fetches a new one), and* **Google's library
+loads at launch as well as on the Connect tap.** *The token-in-memory ruling stands; the two
+sentences describing its consequences do not.* **The public wording is**
+[WO-7.6](plans/work-orders/phase-7-sync.md#wo-76--the-privacy-documents-say-google-loads-only-on-the-connect-tap-and-since-wo-75-it-also-loads-at-launch)*'s
+to fix, and it must land before WO-3.18 submits.* **And one thing a cold reader will need:**
+`src/sync-button.js` **is the store's only subscriber.** *No screen repaints on* `notify()`*, on
+purpose, so a sync that downloads changes the data under a screen that keeps drawing the old
+document — the owner's iPad reading found it, and it is*
+[WO-7.7](plans/work-orders/phase-7-sync.md#wo-77--a-sync-that-downloads-leaves-the-screen-showing-the-document-it-replaced)*.
+The comment in* `src/shell.js` *that says every screen listens to* `notify()` *is the false one.)*
+
 *(**Row 4 landed 2026-08-24, a week early, and it is the one row of Ship 3 that cannot close on
 build quality alone.*** [WO-4.3](plans/work-orders/phase-4-signals.md#wo-43--praise-signals) *— the
 praise column — is* `🔨`*: four of five Acceptance boxes closed and both claims worth mutating

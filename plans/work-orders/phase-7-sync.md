@@ -651,6 +651,20 @@ the drawing carries the same answers in green where it asked them in amber.)*
       legible without hovering. The same sitting found that a sync which DOWNLOADS does not repaint
       the screen behind it; that is WO-7.2's defect, outside this line, booked as WO-7.7.)*
 
+*(**Closed 2026-09-26, and five things came out differently from what the plan predicted.** The
+verifier's findings from outside the Acceptance list, recorded here so none is lost:*
+**1. The privacy wording.** *Ruling 5 made an opted-in device load Google's library at launch, and the
+two public documents still say it loads when Connect is tapped — booked as WO-7.6.* **2. About still
+retires its Sync entry the moment the token lapses.** *The Deliverable said "the screen stops retiring
+the entry point"; the implementer read "the screen" as the header, which is defensible and is an
+interpretation. The header covers it, so nothing is booked.* **3. A token that lapses while the app
+stays open needs two taps on the iPad** *— the first renews silently and fails, the second asks
+visibly inside the gesture (`src/sync-button.js` ~60-63). Documented, not booked.* **4. The harness
+tells "stale by calendar day" from "stale after 24 hours" only before 15:12 local time** *— after that
+the two readings agree. The verifier proposed planting a sync at 23:30 and reading at 00:30; not yet
+booked, and the owner's call.* **5. A sync that downloads does not repaint the screen** *— found by
+the owner on the iPad, WO-7.2's defect, booked as WO-7.7.)*
+
 **Traps** — **The reconnect tap must open Google's window inside the gesture.** `connect()` in
 `src/auth.js` awaits the silent attempt and only then asks visibly, so on the iPad the visible
 request lands outside the tap's gesture window and Safari blocks the pop-up — WO-7.4's last 👤
