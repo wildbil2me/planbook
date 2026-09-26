@@ -686,7 +686,7 @@ does not move.
 
 ## WO-7.6 — the privacy documents say Google loads only on the Connect tap, and since WO-7.5 it also loads at launch
 
-**Ship** — · **Status** 🔍 AWAITING VERDICT — 2026-09-26 · **Size** S · **Depends on** WO-7.4 — the narrowed third-party sentence this re-words
+**Ship** — · **Status** ✅ DONE — 2026-09-26 · **Size** S · **Depends on** WO-7.4 — the narrowed third-party sentence this re-words
 **Closes roadmap** *(no box. A correction to two public documents and the notes that quote them.)*
 
 **Booked 2026-09-26**, owner-directed, out of WO-7.5's verdict. The verifier returned PASS WITH
@@ -742,8 +742,13 @@ still uncommitted when this starts, read it as it is; do not change its code.
 - [x] The existing network assertions still hold: a device never connected makes no request to
       `accounts.google.com` (WO-7.4's and WO-7.5's first lines), and `verify-shell.mjs` is green.
       *(`1517 checks · 1517 passed · 0 failed`, exit 0, 2026-09-26; both zeros read off the wire.)*
-- [ ] `verify-deploy.mjs` green after the push, with its policy claims re-read for anything that
+- [x] `verify-deploy.mjs` green after the push, with its policy claims re-read for anything that
       asserted the old wording.
+      *(`19 checks · 19 passed · 0 failed` against `planbook-shell-v133`, 2026-09-26, after `95ede66`.
+      Its three `CLAIMS` — no server of ours, no account, Drive holds only our file — assert nothing
+      about when the library loads, so none needed changing. The live `/privacy`, tags stripped,
+      carries "Last updated 26 September 2026" and "It loads first when Connect is tapped", and
+      "Nothing is fetched from Google until Connect is tapped" 0 times.)*
 
 **Traps** — **Change the words, never the behaviour.** Ruling 5 is the owner's and this work order does
 not revisit it; a sentence that describes a narrower app than the one shipped is the thing being

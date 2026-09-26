@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The privacy policy says when Google's sign-in library loads — 2026-09-26
+
+The privacy policy and `docs/FERPA.md` said nothing is fetched from Google until Connect is tapped.
+Since the header's sync button, that is no longer the whole story: on a device that has connected,
+the app renews its sign-in at launch and when it comes back on screen, and it loads Google's sign-in
+library to do so. Both documents now say that the library loads first when Connect is tapped, then
+each time the app opens on a device that has connected, until Disconnect. A device where Connect was
+never tapped still contacts Google not at all. The two documents carry the same sentence, word for
+word. The app itself does exactly what it did before; only the words changed. (WO-7.6 — deployed,
+and the live `/privacy` page read after the push.)
+
 ### A sync that brings changes down now shows them — 2026-09-26
 
 Until now, a sync that downloaded a newer gradebook from Drive replaced the data under the screen

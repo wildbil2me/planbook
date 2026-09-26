@@ -150,7 +150,8 @@ sign-out** *(the token is still memory-only; the renewal fetches a new one), and
 loads at launch as well as on the Connect tap.** *The token-in-memory ruling stands; the two
 sentences describing its consequences do not.* **The public wording is**
 [WO-7.6](plans/work-orders/phase-7-sync.md#wo-76--the-privacy-documents-say-google-loads-only-on-the-connect-tap-and-since-wo-75-it-also-loads-at-launch)*'s
-to fix, and it must land before WO-3.18 submits.* **And one thing a cold reader will need:**
+to fix, and it must land before WO-3.18 submits.* **It landed 2026-09-26** *— WO-7.6 ✅, deployed at
+v133 and read off the live* `/privacy`*, so that condition on WO-3.18 is discharged.* **And one thing a cold reader will need:**
 `src/sync-button.js` **is the store's only subscriber.** *No screen repaints on* `notify()`*, on
 purpose — a subscriber fires on every save and redraws under a teacher who is typing. So a sync that
 downloads is followed by* `afterDownload()` *in* `src/shell.js`*, a sibling of* `afterRestore()`
