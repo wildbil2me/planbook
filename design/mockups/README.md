@@ -604,3 +604,37 @@ Each is an amber note on the page and an item in WO-8.4's **Surface** line.
 - **What the band says about class and term on a calendar showing several classes.**
 - **One ungated support-dot belt in `src/shell.css`** for a plain Ctrl+P from a non-print screen.
 - **Whether the four per-surface gates already meet the `data-modal-print` deliverable.**
+
+---
+
+# The sync button — WO-7.5, drawn 2026-09-26
+
+**The sixth room, and the first drawn of a single control.** [`sync-button.html`](sync-button.html)
+puts one new button into the real header — `src/shell.css` linked, every shipped header control drawn
+beside it — in each of the states it can be in, twice: once as a bare icon with a corner badge, once
+with its reading written beside the icon.
+
+## What the drawing proposes
+
+**A header button that reads freshness, not connection**, styled in
+[`proposed-phase7.css`](proposed-phase7.css) § SYNC BUTTON, bound for `src/shell.css` and carrying the
+`not yet lifted` token. It is drawn only on a device that has opted into Drive sync, and the argument
+for its shape is `docs/sync.md` § *And if it becomes automatic, it needs a status on the glass*:
+
+1. **Up to date is the quiet state** — the same wash as its neighbours, no green anywhere, because a
+   green dot reads as *your gradebook is safe in the cloud*.
+2. **Ahead is amber and a dot, never a count** — `rev − baseRev` counts saves, not grades.
+3. **Lapsed is the loud state**, in the presentation button's inverted fill, because it is the one
+   where nothing syncs until the teacher acts — and its tap is the reconnect.
+4. **Failed is a red outline, not a fill**, because nothing on the device is in danger.
+5. **A clock time, not "2 min ago"** — true without a timer, as the Drive panel's *ends at 2:47* is.
+
+## The open questions, collected
+
+Each is an amber note on the page and an **Open** line on WO-7.5 (which adds a fifth, about consent).
+
+- **Variant A or B** — a bare icon, or the reading written beside it?
+- **Phone width** — a fifth 44px control does not fit the 390px row; what gives?
+- **Beside the year, or last before About?**
+- **When does *up to date* go stale** on its own, given the app cannot see the other device?
+

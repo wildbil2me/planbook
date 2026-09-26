@@ -1,0 +1,73 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   PROPOSED STYLES — Phase 7, the sync button in the header.
+
+   Sixth room. Drawn 2026-09-26 in conversation with the owner, and booked the
+   same day as WO-7.5, whose Open lines carry the drawing's four questions.
+
+   IT PROPOSES ONE CONTROL: a fifth button in `.header-actions`, drawn only on a
+   device that has opted into Drive sync. It wears `.hdr-icon-btn` as shipped for
+   its shape and on-dark grammar, and this file adds only what that class cannot
+   say — a state, and a badge. The argument for FRESHNESS rather than CONNECTION
+   is docs/sync.md § "And if it becomes automatic, it needs a status on the
+   glass"; the drawing is that section made visible.
+
+   Colours inline, no custom properties, no dark mode — src/shell.css's rules.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.hdr-sync-btn { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+
+/* ══ § SYNC BUTTON   →  src/shell.css   (WO-7.5 — not yet lifted) ══════════ */
+
+/* The button is positioned so the badge can sit on its corner. Everything else —
+   32px square, translucent wash, hairline, hover — comes from `.hdr-icon-btn`. */
+.hdr-sync-btn { position: relative; }
+
+/* UP TO DATE is deliberately the QUIET state: the same wash as every other
+   header button, and no green anywhere. A green dot is "your gradebook is safe in
+   the cloud" rendered as a standing reassurance — the misconception § What sync
+   is not exists to correct. Calm is what "nothing to do" looks like here. */
+
+/* AHEAD — work on this device that is not in Drive. Amber, because it is an
+   errand rather than an alarm: tap and it goes away. */
+.hdr-sync-btn.ahead { color: #fff; border-color: rgba(230,126,34,0.9); }
+
+/* LAPSED — the sign-in ran out and the silent renewal failed. The inverted fill
+   is `.hdr-mode-btn.active`'s grammar, the loudest thing a 32px square can do,
+   because this is the one state where the teacher must act before sync can. */
+.hdr-sync-btn.lapsed { background: #fff; border-color: #fff; color: #e67e22; }
+.hdr-sync-btn.lapsed:hover { background: #fff; border-color: #fff; color: #c0651a; }
+
+/* FAILED — a sync was attempted and did not complete. Red outline, not a red
+   fill: the document on this device is untouched (WO-7.2's rule for the save
+   chip's refusal to say `error`), so this must not read as data in danger. */
+.hdr-sync-btn.failed { color: #fff; border-color: rgba(231,76,60,0.95); }
+
+/* SYNCING — transient, for the length of a transfer. The icon turns; the
+   shell's own `spin` keyframes, not a second copy. */
+.hdr-sync-btn.syncing svg { animation: spin 1s linear infinite; }
+
+/* The corner badge: a dot when ahead (never a count — WO-7.5's Traps), a mark
+   when failed. Sits on the navy, so
+   it carries a navy ring to separate it from the button's own border. */
+.hdr-sync-badge {
+  position: absolute; top: -5px; right: -5px;
+  min-width: 16px; height: 16px; padding: 0 4px;
+  border-radius: 8px; border: 2px solid #1a3c5e;
+  font-size: 9px; font-weight: 800; line-height: 12px; text-align: center;
+  color: #fff; background: #e67e22;
+}
+.hdr-sync-badge.bad { background: #e74c3c; }
+
+/* VARIANT B — the same button with its reading written beside the icon. Wider,
+   and so the phone-width question below gets harder, not easier. */
+.hdr-sync-btn.labelled {
+  width: auto; padding: 0 10px 0 8px; gap: 6px;
+  font-size: 12px; font-weight: 700; white-space: nowrap;
+}
+
+/* ══ § TOUCH ══════════════════════════════════════════════════════════════════ */
+@media (pointer: coarse) {
+  .hdr-sync-btn { width: 44px; height: 44px; border-radius: 10px; }
+  .hdr-sync-btn.labelled { width: auto; min-height: 44px; }
+  .hdr-sync-badge { top: -4px; right: -4px; }
+}

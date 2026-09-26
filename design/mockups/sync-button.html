@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — The sync button in the header</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="proposed-phase7.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Static HTML. Every reading below is typed in — nothing here signs in, syncs or reads a document.</span>
+  <span>The sync button · Phase 7 · drawn 2026-09-26 · <a href="../../plans/work-orders/phase-7-sync.md">WO-7.5</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="sync-button.html" class="here">Sync button</a>
+</nav>
+
+<!-- The four shipped header buttons, drawn once and referenced by every header below. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <symbol id="ic-backup" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+  <symbol id="ic-screen" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></symbol>
+  <symbol id="ic-sound" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></symbol>
+  <symbol id="ic-about" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+  <symbol id="ic-sync-ok" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/><polyline points="9 14.5 11 16.5 15 12.5"/></symbol>
+  <symbol id="ic-sync-ahead" viewBox="0 0 24 24"><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/></symbol>
+  <symbol id="ic-sync-lapsed" viewBox="0 0 24 24"><path d="M22.61 16.95A5 5 0 0 0 18 10h-1.26a8 8 0 0 0-7.05-6M5 5a8 8 0 0 0 4 15h9a5 5 0 0 0 1.7-.3"/><line x1="1" y1="1" x2="23" y2="23"/></symbol>
+  <symbol id="ic-sync-failed" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/><line x1="12" y1="11" x2="12" y2="14"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+  <symbol id="ic-sync-busy" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+</defs></svg>
+
+<p class="mk-section">0 · Signed out, or never connected</p>
+<div class="mk-frame"><header class="header"><div class="header-top">
+  <div class="header-left"><div class="header-logo" aria-hidden="true">📓</div><div class="header-title"><h1>Planbook</h1><p>Mr Toomey · St John’s High School</p></div></div>
+  <div class="header-actions">
+    <button class="hdr-year-btn"><span>2026-2027</span><span aria-hidden="true">▾</span></button>
+    <button class="hdr-icon-btn" aria-label="Backup and restore"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-backup"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Presentation mode is off"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-screen"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Alert sounds are on"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sound"/></svg></button>
+    <button class="hdr-icon-btn" aria-label="About Planbook"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-about"/></svg></button>
+  </div>
+</div></header></div>
+<p class="mk-caption"><strong>Nothing is drawn.</strong> A teacher who never opted into Drive sync sees exactly today’s header. The button appears only on a device that remembers opting in — the one stored setting from <code>docs/sync.md</code> § “The one thing in this conversation that is already a build.” Disconnecting in About clears it.</p>
+
+<!-- ═══════════════════════════ VARIANT A ═══════════════════════════ -->
+
+<p class="mk-section">Variant A · icon only, with a corner badge</p>
+
+<p class="mk-section">A1 · Up to date</p>
+<div class="mk-frame"><header class="header"><div class="header-top">
+  <div class="header-left"><div class="header-logo" aria-hidden="true">📓</div><div class="header-title"><h1>Planbook</h1><p>Mr Toomey · St John’s High School</p></div></div>
+  <div class="header-actions">
+    <button class="hdr-year-btn"><span>2026-2027</span><span aria-hidden="true">▾</span></button>
+    <button class="hdr-icon-btn hdr-sync-btn" title="Synced with Google Drive at 9:41. Tap to sync now." aria-label="Synced with Google Drive at 9:41. Tap to sync now."><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sync-ok"/></svg></button>
+    <button class="hdr-icon-btn" aria-label="Backup and restore"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-backup"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Presentation mode is off"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-screen"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Alert sounds are on"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sound"/></svg></button>
+    <button class="hdr-icon-btn" aria-label="About Planbook"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-about"/></svg></button>
+  </div>
+</div></header></div>
+<p class="mk-caption"><strong>Tap syncs.</strong> Label: <em>“Synced with Google Drive at 9:41. Tap to sync now.”</em> A clock time, not “2 min ago”: it stays true without a timer ticking in the header — the ruling the Drive panel’s “ends at 2:47” already took. Deliberately the quietest state — the same wash as its neighbours and no green anywhere. A green dot here would read as “your gradebook is safe in the cloud,” which is exactly the belief that stops a teacher downloading backups.</p>
+
+<p class="mk-section">A2 · This device is ahead</p>
+<div class="mk-frame"><header class="header"><div class="header-top">
+  <div class="header-left"><div class="header-logo" aria-hidden="true">📓</div><div class="header-title"><h1>Planbook</h1><p>Mr Toomey · St John’s High School</p></div></div>
+  <div class="header-actions">
+    <button class="hdr-year-btn"><span>2026-2027</span><span aria-hidden="true">▾</span></button>
+    <button class="hdr-icon-btn hdr-sync-btn ahead" title="Changes on this iPad are not in Google Drive yet. Tap to sync now." aria-label="Changes on this iPad are not in Google Drive yet. Tap to sync now."><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sync-ahead"/></svg><span class="hdr-sync-badge" aria-hidden="true"></span></button>
+    <button class="hdr-icon-btn" aria-label="Backup and restore"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-backup"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Presentation mode is off"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-screen"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Alert sounds are on"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sound"/></svg></button>
+    <button class="hdr-icon-btn" aria-label="About Planbook"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-about"/></svg></button>
+  </div>
+</div></header></div>
+<p class="mk-caption"><strong>Tap syncs.</strong> Label: <em>“Changes on this iPad are not in Google Drive yet. Tap to sync now.”</em> Amber, because it is an errand rather than an alarm. This is the state a plain connected light would hide — connected, and work short. The badge is a dot, not a count: <code>rev − baseRev</code> counts saves, and one save can carry several scores, so a number would read as grades and not be.</p>
+
+<p class="mk-section">A3 · Sign-in lapsed</p>
+<div class="mk-frame"><header class="header"><div class="header-top">
+  <div class="header-left"><div class="header-logo" aria-hidden="true">📓</div><div class="header-title"><h1>Planbook</h1><p>Mr Toomey · St John’s High School</p></div></div>
+  <div class="header-actions">
+    <button class="hdr-year-btn"><span>2026-2027</span><span aria-hidden="true">▾</span></button>
+    <button class="hdr-icon-btn hdr-sync-btn lapsed" title="Your Google sign-in has ended. Tap to reconnect." aria-label="Your Google sign-in has ended. Tap to reconnect."><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sync-lapsed"/></svg></button>
+    <button class="hdr-icon-btn" aria-label="Backup and restore"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-backup"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Presentation mode is off"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-screen"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Alert sounds are on"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sound"/></svg></button>
+    <button class="hdr-icon-btn" aria-label="About Planbook"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-about"/></svg></button>
+  </div>
+</div></header></div>
+<p class="mk-caption"><strong>Tap reconnects.</strong> Label: <em>“Your Google sign-in has ended. Tap to reconnect.”</em> Drawn only after the silent renewal has been tried and failed. On the iPad a tap is the only thing iPadOS lets open Google’s sign-in window, so this button is the reliable way back in rather than a shortcut to it. Inverted fill — the presentation-mode button’s “on” grammar — because this is the one state where nothing syncs until the teacher acts.</p>
+
+<p class="mk-section">A4 · Last sync failed</p>
+<div class="mk-frame"><header class="header"><div class="header-top">
+  <div class="header-left"><div class="header-logo" aria-hidden="true">📓</div><div class="header-title"><h1>Planbook</h1><p>Mr Toomey · St John’s High School</p></div></div>
+  <div class="header-actions">
+    <button class="hdr-year-btn"><span>2026-2027</span><span aria-hidden="true">▾</span></button>
+    <button class="hdr-icon-btn hdr-sync-btn failed" title="The last sync did not finish. Nothing on this device changed. Tap for details." aria-label="The last sync did not finish. Nothing on this device changed. Tap for details."><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sync-failed"/></svg><span class="hdr-sync-badge bad" aria-hidden="true">!</span></button>
+    <button class="hdr-icon-btn" aria-label="Backup and restore"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-backup"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Presentation mode is off"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-screen"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Alert sounds are on"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sound"/></svg></button>
+    <button class="hdr-icon-btn" aria-label="About Planbook"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-about"/></svg></button>
+  </div>
+</div></header></div>
+<p class="mk-caption"><strong>Tap opens About at the Drive section</strong>, where the reason is already written. Label: <em>“The last sync did not finish. Nothing on this device changed. Tap for details.”</em> Red outline, not red fill — nothing is in danger, which is the same reason the save chip refuses to say “Save failed” when a sync fails.</p>
+
+<p class="mk-section">A5 · Syncing (for the length of a transfer)</p>
+<div class="mk-frame"><header class="header"><div class="header-top">
+  <div class="header-left"><div class="header-logo" aria-hidden="true">📓</div><div class="header-title"><h1>Planbook</h1><p>Mr Toomey · St John’s High School</p></div></div>
+  <div class="header-actions">
+    <button class="hdr-year-btn"><span>2026-2027</span><span aria-hidden="true">▾</span></button>
+    <button class="hdr-icon-btn hdr-sync-btn syncing" title="Syncing with Google Drive…" aria-label="Syncing with Google Drive…"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sync-busy"/></svg></button>
+    <button class="hdr-icon-btn" aria-label="Backup and restore"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-backup"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Presentation mode is off"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-screen"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Alert sounds are on"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sound"/></svg></button>
+    <button class="hdr-icon-btn" aria-label="About Planbook"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-about"/></svg></button>
+  </div>
+</div></header></div>
+<p class="mk-caption"><strong>Transient.</strong> The icon turns while a transfer runs; a second tap does nothing until it settles.</p>
+
+<!-- ═══════════════════════════ VARIANT B ═══════════════════════════ -->
+
+<p class="mk-section">Variant B · the reading written beside the icon</p>
+<div class="mk-frame"><header class="header"><div class="header-top">
+  <div class="header-left"><div class="header-logo" aria-hidden="true">📓</div><div class="header-title"><h1>Planbook</h1><p>Mr Toomey · St John’s High School</p></div></div>
+  <div class="header-actions">
+    <button class="hdr-year-btn"><span>2026-2027</span><span aria-hidden="true">▾</span></button>
+    <button class="hdr-icon-btn hdr-sync-btn labelled" aria-label="Synced with Google Drive at 9:41. Tap to sync now."><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sync-ok"/></svg><span>Synced 9:41</span></button>
+    <button class="hdr-icon-btn" aria-label="Backup and restore"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-backup"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Presentation mode is off"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-screen"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Alert sounds are on"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sound"/></svg></button>
+    <button class="hdr-icon-btn" aria-label="About Planbook"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-about"/></svg></button>
+  </div>
+</div></header></div>
+<div class="mk-frame"><header class="header"><div class="header-top">
+  <div class="header-left"><div class="header-logo" aria-hidden="true">📓</div><div class="header-title"><h1>Planbook</h1><p>Mr Toomey · St John’s High School</p></div></div>
+  <div class="header-actions">
+    <button class="hdr-year-btn"><span>2026-2027</span><span aria-hidden="true">▾</span></button>
+    <button class="hdr-icon-btn hdr-sync-btn labelled ahead" aria-label="Changes on this iPad are not in Google Drive yet. Tap to sync now."><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sync-ahead"/></svg><span>Not synced</span></button>
+    <button class="hdr-icon-btn" aria-label="Backup and restore"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-backup"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Presentation mode is off"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-screen"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Alert sounds are on"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sound"/></svg></button>
+    <button class="hdr-icon-btn" aria-label="About Planbook"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-about"/></svg></button>
+  </div>
+</div></header></div>
+<div class="mk-frame"><header class="header"><div class="header-top">
+  <div class="header-left"><div class="header-logo" aria-hidden="true">📓</div><div class="header-title"><h1>Planbook</h1><p>Mr Toomey · St John’s High School</p></div></div>
+  <div class="header-actions">
+    <button class="hdr-year-btn"><span>2026-2027</span><span aria-hidden="true">▾</span></button>
+    <button class="hdr-icon-btn hdr-sync-btn labelled lapsed" aria-label="Your Google sign-in has ended. Tap to reconnect."><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sync-lapsed"/></svg><span>Reconnect</span></button>
+    <button class="hdr-icon-btn" aria-label="Backup and restore"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-backup"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Presentation mode is off"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-screen"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Alert sounds are on"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sound"/></svg></button>
+    <button class="hdr-icon-btn" aria-label="About Planbook"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-about"/></svg></button>
+  </div>
+</div></header></div>
+<div class="mk-frame"><header class="header"><div class="header-top">
+  <div class="header-left"><div class="header-logo" aria-hidden="true">📓</div><div class="header-title"><h1>Planbook</h1><p>Mr Toomey · St John’s High School</p></div></div>
+  <div class="header-actions">
+    <button class="hdr-year-btn"><span>2026-2027</span><span aria-hidden="true">▾</span></button>
+    <button class="hdr-icon-btn hdr-sync-btn labelled failed" aria-label="The last sync did not finish. Nothing on this device changed. Tap for details."><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sync-failed"/></svg><span>Sync stopped</span></button>
+    <button class="hdr-icon-btn" aria-label="Backup and restore"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-backup"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Presentation mode is off"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-screen"/></svg></button>
+    <button class="hdr-icon-btn hdr-mode-btn" aria-label="Alert sounds are on"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sound"/></svg></button>
+    <button class="hdr-icon-btn" aria-label="About Planbook"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-about"/></svg></button>
+  </div>
+</div></header></div>
+<p class="mk-caption"><strong>Clearer, and wider.</strong> “Synced 9:41” needs no tooltip — which matters on the iPad, where there is no hover to show one. The cost is width in a row that is already full; see the phone-width question below.</p>
+
+<!-- ═══════════════════════════ QUESTIONS ═══════════════════════════ -->
+
+<p class="mk-section">Questions this drawing cannot answer</p>
+<p class="mk-caption ask"><strong>Variant A or B?</strong> A is the header’s existing grammar — every control up there is a bare icon. B says its state in words, and on a touch screen a title attribute is never seen.</p>
+<p class="mk-caption ask"><strong>Phone width.</strong> The header row measured ~8px of slack at 390px after WO-2.29 added the fourth button (<code>src/shell.css</code>, the coarse block). A fifth 44px control does not fit there. The iPad and the laptop have room; at phone width something has to give — the logo, the subtitle, or the sync button falling back into About.</p>
+<p class="mk-caption ask"><strong>Beside the year, or at the end of the row?</strong> Drawn next to the year button because sync is about the open year. The other candidate is last, beside About, where the Drive section it opens lives.</p>
+<p class="mk-caption ask"><strong>When does “up to date” go stale?</strong> The app cannot see the other device, so “Synced at 9:41” is only a statement about this one. Whether a sync from yesterday should itself turn amber is a rule to decide, not to draw.</p>
+
+</body>
+</html>

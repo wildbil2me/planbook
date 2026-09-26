@@ -40,6 +40,9 @@ body { padding-bottom: 60px; }
 .mk-nav a:hover { background: rgba(255,255,255,0.12); color: #fff; }
 .mk-nav a.here { background: #fff; color: #1a1a2e; border-color: #fff; font-weight: 700; }
 
+/* A drawn header strip, centred like the captions around it. */
+.mk-frame { max-width: 1300px; margin: 8px auto 0; padding: 0 20px; }
+
 /* A label between two drawn states on one page ("with the editor open", "variant B"). */
 .mk-section {
   max-width: 1300px; margin: 28px auto 0; padding: 0 20px;

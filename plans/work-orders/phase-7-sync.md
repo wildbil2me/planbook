@@ -37,6 +37,10 @@ phase was cut.*
 
 Read [`../../docs/sync.md`](../../docs/sync.md) first. The whole protocol is settled there.
 
+**One drawing, for WO-7.5:** [`design/mockups/sync-button.html`](../../design/mockups/sync-button.html),
+drawn 2026-09-26 — the header's sync button in every state. Read it before building that work order;
+its questions are WO-7.5's **Open** lines, and where the two disagree the work order wins.
+
 **Until it lands, the Phase 1 export file is the iPad story: crude, manual, and real.** That is
 acceptable, and it is why sync is last.
 
@@ -523,3 +527,107 @@ the same way: the code is the half that is behind, so nothing can reach a live h
   with the deliverable it tested — that work order's first four Acceptance lines are its form, and
   a box is closed by one work order, never two. Not a checkbox here any more so that it cannot be
   ticked twice or left open by accident.)*
+
+---
+
+## WO-7.5 — the header says how fresh this device's sync is
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-7.2 — the transfer whose state the button reads, and the bookmark it counts from
+**Closes roadmap** *(no box. Phase 7's boxes are closed by WO-7.1, WO-7.2 and WO-7.3; this is a surface on top of them.)*
+
+**Booked 2026-09-26**, owner-directed, out of a conversation that started at *"what about making the
+sync across devices more clean?"* The owner asked for **a connected icon in the top bar that shows
+whether the connection needs refreshing, and could be tapped to refresh it.** This work order is that
+icon, reshaped by the argument [`docs/sync.md`](../../docs/sync.md) already carries: **freshness, not
+connection.** It is the owner's third turn of the 2026-09-07 conversation — § *"And if it becomes
+automatic, it needs a status on the glass"* and § *"The one thing in this conversation that is already
+a build"* — made into a build, and **those two sections are the argument; read them before this one.**
+
+**Why it exists.** Today nothing outside the About modal says anything about sync. The token lapses
+at ~59 minutes with no sign; the Sync button hides and Connect returns, and a teacher learns it only by
+opening About. That is coherent while sync is a tap she chose to make — *the lapse is silent while the
+consequence is loud* — and it stops being coherent the moment she relies on it across two devices,
+which is the whole point of having it. **A plain connected light would not fix it**: *connected* with
+three saves not in Drive is true and useless, and a permanent green dot reads as *your gradebook is safe
+in the cloud*, which is the belief that stops a teacher downloading backups.
+
+**Deliverables**
+- **One preference: this device has opted into Drive sync.** A boolean in `PREF_DEFAULTS`
+  (`src/prefs.js`), set by the first successful Connect and cleared by Disconnect. **It is not a
+  credential** — it records that she opted in, never anything she could authenticate with — so the
+  token-in-memory ruling (WO-7.1) is untouched and the `localStorage` rule is met on its own terms.
+  Without it the app cannot tell after a reload a teacher who syncs every day from one who has never
+  connected, and the button has no condition to be drawn on.
+- **One button in `.header-actions`, drawn only on a device that has opted in.** It wears
+  `.hdr-icon-btn` as shipped and adds a state and a badge. Five states, each with a full-sentence
+  label, and **every tap does what that state needs**:
+
+  | State | Reading | Tap |
+  |---|---|---|
+  | Up to date | *Synced with Google Drive at 9:41.* | Sync now |
+  | This device is ahead | *Changes on this device are not in Google Drive yet.* | Sync now |
+  | Sign-in lapsed | *Your Google sign-in has ended. Tap to reconnect.* | Google's sign-in, visibly |
+  | Last sync failed | *The last sync did not finish. Nothing on this device changed.* | About, at the Drive section |
+  | Syncing | *Syncing with Google Drive…* | Nothing until it settles |
+
+- **The silent renewal is tried before *lapsed* is drawn** — on app open and when the tab regains
+  visibility, never on the tap (see Traps). `ensureFreshToken()` already has the silent arm; the change
+  is that the screen stops retiring the entry point before that arm has run (`docs/sync.md` § *"What
+  actually happens at the hour"*). Expect it to carry the laptop and not the iPad.
+- **Presentation mode changes nothing about it.** Sync state is not student data.
+- **Surface:** [`design/mockups/sync-button.html`](../../design/mockups/sync-button.html), drawn
+  2026-09-26 — every state in the real header, in two variants (`proposed-phase7.css` § SYNC BUTTON).
+  **Read it before building.** Its four amber questions are Open 1–4 below; where the drawing and this
+  list disagree, this list wins.
+- **`docs/sync.md`** — the two sections named above become a record of what was built rather than a
+  proposal, in the same sitting. **`CACHE` in `sw.js` bumped** — `index.html`, `src/shell.css` and
+  `src/auth.js` are all in `SHELL`.
+
+**Not in scope** — **syncing without a tap** (open, visibility, after a save): that is the step after
+this one, and this button is what makes it safe to take, not the step itself. **Pulling a year onto a
+cold device**: discussed the same day, not yet booked. **Detecting a changed Google account**
+(`docs/sync.md` § *"A second Google account makes a latent hole reachable"*).
+
+**Open — the owner's, before dispatch**
+1. **Variant A or B?** A is a bare icon with a corner badge, the header's existing grammar. B writes
+   the reading beside the icon, which the iPad needs more, because a tooltip is never seen under a
+   thumb.
+2. **Phone width.** The top row had ~8px of slack at 390px after WO-2.29's fourth button (the coarse
+   block in `src/shell.css` says so and `verify-shell.mjs` measures it). A fifth 44px control does
+   not fit. Something gives at phone width: the logo, the subtitle, or the button (falling back to
+   About).
+3. **Beside the year, or last before About?** Drawn beside the year, because sync is about the open
+   year.
+4. **When does *up to date* go stale?** The app cannot see the other device, so the reading is only
+   ever about this one. Does a last sync from yesterday turn amber on its own?
+5. **Is opting in also consent to try reconnecting at launch?** Or are those two consents —
+   `docs/sync.md` asks this and leaves it open.
+
+**Acceptance**
+- [ ] A device that has never connected draws the header exactly as today, and makes no request to
+      `accounts.google.com` — asserted from the network in the harness, as WO-7.4's second line was.
+- [ ] Connect sets the opt-in, Disconnect clears it, it survives a reload, and nothing but a boolean
+      reaches `localStorage` — asserted in the harness.
+- [ ] Each of the five states draws its reading and does its tap, asserted in the harness; *ahead*
+      appears after a save that has not synced and clears after one that has.
+- [ ] The header row fits at 390×844 under whatever answer Open 2 gets, and `verify-shell.mjs`
+      measures it.
+- [ ] 👤 On the iPad, force-quit first, **with Safari's pop-up blocker left on**: let the sign-in
+      lapse, tap the button, and Google's sign-in opens and reconnects.
+- [ ] 👤 On the laptop and the iPad: a save shows *ahead*, a tap brings it back to *up to date*, and
+      the reading is legible at arm's length without hovering.
+
+**Traps** — **The reconnect tap must open Google's window inside the gesture.** `connect()` in
+`src/auth.js` awaits the silent attempt and only then asks visibly, so on the iPad the visible
+request lands outside the tap's gesture window and Safari blocks the pop-up — WO-7.4's last 👤
+reading recorded exactly that. The button's reconnect must request visibly straight away; the silent
+attempt belongs to open and visibility, not to the tap. Loading Google's script on the same tap has
+the same problem. **No green, and not in the save chip**: `src/store.js` owns every state about this
+device's own storage, and freshness is a third kind of thing. **A button, not a toggle**: Disconnect
+stays in About, where it is deliberate. **The token stays in memory**: the preference records a
+choice, never a credential. **Write the time, not a countdown** — *Synced at 9:41* stays true without
+a timer, which is the ruling the Drive panel's *"ends at 2:47"* already took; *2 min ago* needs a clock
+ticking in the header. **`rev − baseRev` counts saves, not grades**: one save can carry several scores,
+so a number on the badge reads as grades and is not — say *changes* without a count, or count
+something that is what it says. **And sync is still not a backup** — the About panel's wording on that
+does not move.
