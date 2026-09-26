@@ -22,8 +22,8 @@ redraws. That works from the header's sync button and from **Sync this year now*
 that only uploads, finds nothing to change, or fails leaves the screen exactly as it was, so nothing
 blinks under a teacher who is working. Screens still do not redraw on every save, which would redraw
 under someone typing. The redraw follows a download the same way it already followed a restore or a
-year switch. The browser harness clicks the real button and checks both halves. (WO-7.7 — the
-laptop-and-iPad reading on the deployed app is still owed.)
+year switch. The browser harness clicks the real button and checks both halves. (WO-7.7 — deployed, and
+read on the laptop and the iPad in both directions.)
 
 ### The header says how fresh this device's sync is — 2026-09-26
 

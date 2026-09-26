@@ -11704,11 +11704,16 @@ and so is `src/store.js`'s note above `notify()`. `CACHE` is `planbook-shell-v13
       uploaded, rows kept 1/1 · in-sync: outcome in-sync, kept 1/1 · failure: outcome failed (bad
       true), kept 1/1`, and About's in-sync `rows kept 1/1`. The download checks are the sentinel's
       positive control (`kept 0`). Mutation-proved below (M3).
-- [ ] 👤 **Acceptance 3 — laptop and iPad, deployed.** Force-quit the iPad app from the app switcher
+- [x] 👤 **Acceptance 3 — laptop and iPad, deployed.** Force-quit the iPad app from the app switcher
       first (the `CACHE` bump only reaches a cold launch). Change a grade on the laptop and sync.
       On the iPad, open the same class's score grid, tap the header's sync button, and the new grade
       should appear without leaving the screen. Then sync again on the iPad with nothing changed: the
       screen should not blink.
+      *(Read by the owner 2026-09-26 on the deployed v132, both directions, About's Sync as the second
+      door. **Check the laptop's origin before trusting a laptop reading**: the first laptop pass ran
+      in a PWA installed from `localhost:8443`, which with the dev server down serves its own cache
+      forever and never sees a deploy — About read v131 with no amber line, which is the tell.
+      `location.origin` in DevTools (F12 works in an app window) settles it.)*
 
 **Both tools.** `node tools/verify-shell.mjs` on the delivered tree: **`1517 checks · 1517 passed ·
 0 failed · 0 skipped`, 47,843 lines, 31.5 lines per check, 571s, exit 0**, 2026-09-26, real clock —
