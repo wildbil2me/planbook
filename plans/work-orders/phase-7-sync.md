@@ -661,8 +661,8 @@ interpretation. The header covers it, so nothing is booked.* **3. A token that l
 stays open needs two taps on the iPad** *— the first renews silently and fails, the second asks
 visibly inside the gesture (`src/sync-button.js` ~60-63). Documented, not booked.* **4. The harness
 tells "stale by calendar day" from "stale after 24 hours" only before 15:12 local time** *— after that
-the two readings agree. The verifier proposed planting a sync at 23:30 and reading at 00:30; not yet
-booked, and the owner's call.* **5. A sync that downloads does not repaint the screen** *— found by
+the two readings agree. The verifier proposed planting a sync at 23:30 and reading at 00:30, and it was
+booked as WO-7.8 the same day, owner-directed.* **5. A sync that downloads does not repaint the screen** *— found by
 the owner on the iPad, WO-7.2's defect, booked as WO-7.7.)*
 
 **Traps** — **The reconnect tap must open Google's window inside the gesture.** `connect()` in
@@ -804,3 +804,53 @@ lands on unsaved work**: `planFor()` downloads only when this device is unchange
 sync, so the redraw cannot throw away something she typed. If it looks like it might, that is a
 different bug; report it instead of guarding for it here. **Do not reload the page** to get the
 redraw: it throws away the in-memory token, so every download would also sign her out.
+
+---
+
+## WO-7.8 — the stale-by-day check cannot tell a calendar day from 24 hours after 15:12
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-7.5 — the check this pins to a fixed clock
+**Closes roadmap** *(no box. A hole in a harness check, found by WO-7.5's verifier.)*
+
+**Booked 2026-09-26**, owner-directed, from finding 4 in WO-7.5's closing note. WO-7.5's ruling 4 says
+an old sync turns amber **on a calendar day**, and says specifically that it must not turn amber after a
+fixed number of hours, which "would go amber in the middle of a teaching day for no reason." The
+harness asserts that line, but **only on a real clock that happens to be early enough in the day.**
+
+**Why the check is blind after 15:12.** `tools/verify/sync-button.mjs` asserts the stale state in two
+places, and neither can fail under a 24-hour rule after mid-afternoon:
+- **The planted bookmark** (`PLANT(1, 15)`, ~551-570) is yesterday at 15:12 on the real clock. A run
+  before 15:12 reads it less than 24 hours old, so only a calendar-day rule calls it stale. A run
+  after 15:12 reads it more than 24 hours old, so a 24-hour rule calls it stale too, and the check
+  passes either way.
+- **The shifted-clock check** (`SHIFT`, ~600-632) moves the page clock exactly 24 hours past a real
+  sync. At exactly 24 hours both rules agree at any time of day, so it cannot tell them apart at all.
+
+So `freshnessOf()` in `src/drive-sync.js` could be changed to `now - at > 24h` and any run after 15:12
+would stay green. Nothing is wrong with the app today. The fault is that the check which says so only
+has teeth for part of the day.
+
+**Deliverables**
+- **Both directions pinned to a fixed clock, independent of when the harness runs.** Install the
+  page's `Date` as a fixed moment, by the same page-start-script mechanism `SHIFT` already uses:
+  - **A sync at 23:30 yesterday, read at 00:30 today**, one hour apart and across midnight, must read
+    *stale*. A 24-hour rule reads it as current.
+  - **A sync at 00:30 today, read at 23:30 today**, 23 hours apart and on one day, must read *up to
+    date*. A rule with a threshold shorter than a day reads it as stale.
+- **The existing checks keep what they prove**: the reading's wording, "on Sep 23" for older syncs,
+  and a tap bringing it back. Narrow or replace them in place rather than adding a second copy of
+  the same claim.
+- Harness only. **No file in `src/` moves**, so `sw.js`'s `CACHE` does not move either.
+
+**Acceptance**
+- [ ] Both fixed-clock cases pass, and the run's own output names the two planted times and the two
+      page clocks.
+- [ ] Mutation-proved in both directions: `freshnessOf()` changed to a 24-hour rule turns the
+      midnight case red, and to a 12-hour rule turns the same-day case red. **Both mutations are
+      reverted before anything else is written** (`AGENTS.md`).
+- [ ] The whole browser harness is green on the real clock and again with `--today` moved.
+
+**Traps** — **Do not pin the whole run's clock.** A run on a moved clock is evidence about a
+different day for every other section, which is why `SHIFT` is installed for one reload and then
+removed. Do the same. **Local time, not UTC**: `localDayOf()` is local on purpose, and a check
+written in UTC would test a different midnight from the teacher's.
