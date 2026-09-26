@@ -12789,6 +12789,80 @@ match what Safari and Edge actually draw this month. Both are line 5.*
 
 ---
 
+### WO-8.17 — an open app only looks for an update when it loads a page
+
+`src/shell.js` now calls `registration.update()` when the page comes back to `visible`, at most once
+in `UPDATE_CHECK_EVERY_MS` (five minutes), and shows a one-line strip under the header —
+`#updateBanner`, *A newer version of Planbook is ready* with a **Reload** — once WO-8.11's
+`renderedFromAnOlderBuild` goes true. The strip is hidden in presentation mode and comes back when the
+mode goes off. Reload awaits `store.flush()` and then reloads; nothing reloads on its own. `sw.js`
+CACHE v133 → v134, and nothing else in that file moved. The harness is eleven checks added to
+`tools/verify/worker-takeover.mjs`.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-8-packaging.md` § WO-8.17.*
+
+- [x] **Acceptance 1 — a return calls `update()`, a second return inside the window does not.** From
+      the run, verbatim: `update() calls after each return = [1,1,2], window = 300000ms` — one on the
+      first return, none on a second twenty seconds later, one more on a third past the window.
+      Preconditions green beside it: `getRegistration() resolved to a registration = true`,
+      `UPDATE_CHECK_EVERY_MS = 300000ms`. Mutation-proved below.
+- [x] **Acceptance 2 — a replacement shows the strip, a first install does not.** Both halves driven
+      by a real worker, not a `dispatchEvent`: after `./sw.js?wo811=1` takes the loaded page over,
+      `{"hidden":false,"height":43,… "button":"Reload","presenting":false}` with no modal opened;
+      after every registration is unregistered and the page boots with `controller at document start
+      = null` and is then claimed, `{"hidden":true,"height":0,…}, controllerchange events on this
+      document = 1`. Presentation mode, through the real header button both ways: `projecting =
+      {"presenting":true,"hidden":true}, after = {"presenting":false,"hidden":false}`. The Reload
+      under a coarse pointer: `{"coarse":true,"w":75.77,"h":44}`.
+- [x] **Acceptance 3 — Reload flushes before it reloads.** A change made through the store inside the
+      800ms debounce, then the Reload tapped for real: `log across the reload =
+      ["click","landed","pagehide"], new document = true`, and the change read back out of IndexedDB
+      on the far side. `location.reload()` is not stubbed because Chromium will not let a page
+      redefine it; `tools/README.md` § WO-8.17 says how the order is read instead.
+- [ ] **Acceptance 4 — 👤 the iPad and a laptop app window installed from `planbook.hwgteach.com`.**
+      Owed to the owner. **Deploy WO-8.17 itself (v134) first, then force-quit and relaunch each
+      device** — the listener that looks for the update ships in this build, so a device still
+      running v133 has nothing to notice the second deploy with. **Check the laptop window's origin
+      next** — `location.origin` in DevTools
+      must read `https://planbook.hwgteach.com`, because an app window installed from
+      `localhost:8443` never sees a deploy (CLAUDE.md). Then, on each device: open Planbook and leave
+      it open; deploy a commit that bumps `CACHE`; switch to another app and back (on the laptop,
+      minimise and restore, or switch windows so the page goes hidden and visible); within a few
+      seconds the amber strip *A newer version of Planbook is ready* appears under the header with no
+      force-quit. Tap **Reload**: the page reloads, the strip is gone, and About's last line names the
+      new cache with **no** amber line. Two things to watch while you are there: the check runs at most once
+      every five minutes, and the first switch back after a launch always runs it — so if you switched
+      away and back once before the deploy was live, the next switch inside five minutes of that one
+      is throttled and shows nothing, which is the design and not a defect (wait it out, or relaunch
+      and switch once); and on the iPad, whether About's amber line is gone after the
+      Reload, since that line still tells a teacher that pulling down to refresh does not clear it.
+
+**Both tools.** `node tools/verify-shell.mjs` on the delivered tree: **`1528 checks · 1528 passed ·
+0 failed · 0 skipped`, 48,106 lines, 31.5 lines per check, 574s, exit 0**, 2026-09-26, real clock —
+1517 plus the eleven new, and the same figures again on a second run after the mutation round was
+reverted. `node tools/wo-sweep.mjs`: `45 checks · 41 passed · 0 failed · 4 to review`, § 11 reading
+1517 call sites against `tools/README.md`; the one new REVIEW is `.update-banner-text` having no
+coarse rule, which is a paragraph and not a control.
+
+**The mutation round — one run, four breaks, six reds.** `src/shell.js` staged and copied to the
+scratchpad first; each break marked `MUTATION WO-8.17`. M1: the `visibilitychange` listener never
+attached (`if (false)`). M2: `await store.flush()` commented out of the Reload. M3+M4 on one line:
+the strip keyed off `navigator.serviceWorker.controller` rather than the flag, and deaf to
+presentation mode. **`1528 checks · 1522 passed · 6 failed · 0 skipped`, exit 1**, and the six reds
+are the ones aimed at: M1 turned both throttle checks red at `[0,0,0]`; M4 turned ruling 2 red at
+`projecting = {"presenting":true,"hidden":false}`; M2 turned the order red at `["click","pagehide"]`
+**and lost the change outright** — `stored teacher.adminEmail = "dean@example.edu"`, the write the
+store's own `pagehide` listener started never landing, which is the failure the explicit flush
+exists for; M3 turned the first-install check red at `"hidden":false`. Nothing else moved. Reverted
+by copying the clean file back before a word of this entry was written; `git diff src/shell.js`
+against the staged copy is empty and `grep -rn "MUTATION WO-8.17"` reads nothing.
+
+*What the desk cannot pay off: whether a real deploy is found on a real switch-back, on iOS in
+particular, where the page may be resumed without a `visibilitychange` the way it is resumed
+without a load. That is line 4.*
+
+---
+
 This phase's first roadmap item is *this file, complete and fully passing* — which is the
 argument for filling it in as the work lands rather than at the end. It also carries the
 accessibility pass: screen reader, keyboard-only, contrast. Run it, don't assert it. Roll Call!'s

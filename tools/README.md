@@ -1223,7 +1223,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1506 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1517 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2080,6 +2080,24 @@ today read at 23:30 today (23 hours apart, one calendar day) must read current �
 Acceptance 2 mutation-proves. The run prints **1517**: `1517 checks · 1517 passed · 0 failed ·
 0 skipped`, 47,910 lines, 31.6 lines per check, 564s, exit 0, measured 2026-09-26 on the real clock,
 and again with `--today` moved. Mutation round in `TESTING.md` § WO-7.8.
+
+**WO-8.17 moved it from 1506 to 1517, and the executed count from 1517 to 1528 — eleven sites,
+eleven results.** All eleven are literal call sites added to `verify/worker-takeover.mjs`, inside the
+section WO-8.11 wrote, because the update strip is the second reader of that section's flag and the
+section already drives the two states it must tell apart with a real worker: a replacement and a
+first install. None is in a loop and none a failure arm, so the gap stays at −11 and the file count
+stays at seventy-three. Three things in it are worth lifting. **`registration.update()` is counted
+with a stub on `ServiceWorkerRegistration.prototype`**, and the throttle is crossed by shifting
+`Date.now` rather than by waiting — the window is read out of `src/shell.js`'s own
+`UPDATE_CHECK_EVERY_MS`, guarded against a vacuous read, and three returns are driven because two
+cannot tell a throttle from a listener that fires once. **The barrier after each return is the
+browser's, not a sleep**: the block asks `getRegistration()` itself, and the answers come back in the
+order they were asked. **And `location.reload()` is not stubbed, because in Chromium it cannot be** —
+`location` is unforgeable — so the Reload is tapped for real and the order is read off a log in
+`sessionStorage`, which a reload of the same tab keeps: `click`, then a save transaction's `complete`,
+then `pagehide`. The run prints **1528**: `1528 checks · 1528 passed · 0 failed · 0 skipped`, 48,106
+lines, 31.5 lines per check, 574s, exit 0, measured 2026-09-26 on the real clock. Mutation round in
+`TESTING.md` § WO-8.17.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

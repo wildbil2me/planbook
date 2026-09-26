@@ -21,6 +21,8 @@
       data-modal-close                closes the overlay it sits inside
       data-pill-group                 on a container: its .pill children single-select
       data-install-dismiss            snoozes the install banner
+      data-update-reload              the update strip's Reload (WO-8.17): saves, then reloads onto
+                                      the newer build. Nothing but a tap ever reloads
       data-presentation-toggle        turns presentation mode on or off — on the header button and
                                       on the strip's own "Turn it off", which are the same flip
       data-sounds-toggle              silences the overdue-pass tone, or lets it sound again
@@ -1972,6 +1974,14 @@ function flipPresentationMode() {
     than by anything here.
   */
   accommodationPrompt.clearAbsencePrompt();
+  /*
+    AND THE UPDATE STRIP (WO-8.17), the one entry on this list that is NOT here for support data. It
+    carries none — a sentence about a build and a Reload — and it goes while projecting because it is
+    noise on a wall, the owner's ruling 2. It is chained here rather than repainted by
+    src/presentation.js because that module repaints only its own two elements, and it comes back on
+    the flip off because the newer build is still waiting.
+  */
+  refreshUpdateBanner();
 }
 
 /*
@@ -2141,6 +2151,11 @@ document.addEventListener('click', (e) => {
   }
 
   if (e.target.closest('[data-install-dismiss]')) { dismissInstallBanner(); return; }
+
+  /* The update strip's one control (WO-8.17). This line is the only way a newer build reaches the
+     screen — ruling 1 — so it stays a door and nothing else. */
+  const updateReload = e.target.closest('[data-update-reload]');
+  if (updateReload) { reloadForUpdate(updateReload); return; }
 
   /* The Clear beside a date field (WO-1.48), high in this listener because it is the one hook that
      appears on five different screens and inside four different dialogs — a route matched further
@@ -3981,6 +3996,10 @@ if ('serviceWorker' in navigator) {
        serving it — which is the one thing this flag says. */
     if (controlled) renderedFromAnOlderBuild = true;
     controlled = !!navigator.serviceWorker.controller;
+    /* And the second reader of the flag (WO-8.17): the banner under the header. It reads the flag
+       rather than the event, so the first-install trap above is kept out of it by the same line
+       that keeps it out of About — there is no second test of "was this a replacement" to drift. */
+    refreshUpdateBanner();
   });
 }
 
@@ -4008,6 +4027,98 @@ if ('serviceWorker' in navigator) {
         + 'http instead. Cause: ' + e.message);
     });
   });
+}
+
+/*
+  AN OPEN APP LOOKS FOR AN UPDATE WHEN IT COMES BACK ON SCREEN, AND OFFERS IT ONCE IT HAS ONE
+  (WO-8.17).
+
+  THE CASE. The registration above runs once, on `load`, and a browser looks for a new worker only
+  when a page loads. So a laptop window left open across a deploy never looked; an iPad resumed from
+  the background never looked either, because iOS brings a backgrounded app back without loading a
+  document at all; and even a relaunch showed the old build once, because the shell comes out of the
+  cache and the update is found during that launch. WO-8.11's amber line in About reports the last of
+  those, but only to someone who opens About. On 2026-09-26 v132 went live and neither device moved
+  on its own.
+
+  WHAT THIS ADDS, AND WHAT IT LEAVES ALONE. A CHECK — `registration.update()` when the page comes
+  back to `visible` — and an OFFER once the check has found something: a strip under the header with
+  a Reload control. skipWaiting stays, with every one of the three reasons the WO-8.11 block above
+  gives, so the check needs no "waiting" worker to prompt about: a new worker found here installs,
+  takes over, and fires the `controllerchange` that block already reads, and the flag it sets is the
+  whole of what the strip asks.
+
+  TWO RULINGS, both the owner's, 2026-09-26. OFFER, NEVER RELOAD BY ITSELF: a reload with a modal
+  open throws away an outreach draft or a half-filled form, and the strip costs one tap — so there is
+  no automatic reload when idle either, and nothing here needs a definition of "nothing is open".
+  AND HIDDEN IN PRESENTATION MODE: it carries no student data, so hiding it is about noise on a
+  projector rather than disclosure, and it comes back when the mode is turned off because the newer
+  build is still waiting. The strip asks src/supports.js's presentationMode() and holds no opinion
+  of its own about the mode.
+
+  THE THROTTLE. A teacher flicking between apps would refetch sw.js on every return, so a check runs
+  at most once in UPDATE_CHECK_EVERY_MS. The clock is Date.now() and nothing else, which is also what
+  lets tools/verify/worker-takeover.mjs step past the window without waiting five minutes for it.
+  The first return after a launch always checks: the launch's own navigation looked a moment ago,
+  and one extra fetch of a small file is cheaper than a rule about which looks count.
+
+  A FAILED CHECK IS SILENT. Offline, a dev server that is down, a registration that is not there yet
+  because `load` has not fired — none of those is something a teacher can act on, and the next
+  return tries again.
+*/
+const UPDATE_CHECK_EVERY_MS = 5 * 60 * 1000;
+const UPDATE_BANNER_ID = 'updateBanner';
+let lastUpdateCheckAt = -Infinity;
+/* Once per document. The strip coming back after presentation mode is turned off is not news, and
+   the flip announces itself. */
+let updateAnnounced = false;
+
+function checkForUpdate() {
+  const now = Date.now();
+  if (now - lastUpdateCheckAt < UPDATE_CHECK_EVERY_MS) return;
+  /* Stamped when the check is ATTEMPTED, not when it succeeds, so an iPad with no network is not
+     asked again on every app switch. */
+  lastUpdateCheckAt = now;
+  try {
+    navigator.serviceWorker.getRegistration()
+      .then((registration) => (registration ? registration.update() : null))
+      .catch(() => {});
+  } catch (e) { /* silent, for the reason above */ }
+}
+
+if ('serviceWorker' in navigator) {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') checkForUpdate();
+  });
+}
+
+/* Paint the strip from the two facts it depends on. Called from the `controllerchange` listener
+   above and from flipPresentationMode(), which are the only two moments either fact can change. */
+function refreshUpdateBanner() {
+  const el = document.getElementById(UPDATE_BANNER_ID);
+  if (!el) return;
+  const show = renderedFromAnOlderBuild && !supports.presentationMode();
+  el.classList.toggle('hidden', !show);
+  if (show && !updateAnnounced) {
+    updateAnnounced = true;
+    announce('A newer version of Planbook is ready. Reload when you are ready to use it.');
+  }
+}
+
+/*
+  The strip's Reload. The store already flushes on `visibilitychange` and `pagehide`, and neither is
+  relied on here: a reload fires `pagehide`, but an IndexedDB write STARTED at `pagehide` can be cut
+  off by the unload (src/store.js says so where it listens), so this waits for the write to land and
+  only then reloads. flush() never rejects, which is why there is no catch between the two.
+
+  Disabled on the first tap, because a second tap during the flush would queue a second reload
+  behind the first for no benefit. On a device that opted in to Drive, WO-7.5's silent renewal signs
+  back in after the reload, so this is not a sign-out there.
+*/
+async function reloadForUpdate(button) {
+  if (button) button.disabled = true;
+  await store.flush();
+  window.location.reload();
 }
 
 /*

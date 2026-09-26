@@ -13,6 +13,18 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### An open app now notices a new version when you come back to it — 2026-09-26
+
+Until now an open Planbook only looked for a newer version when it loaded a page. On an iPad that
+resumes the app from the background without loading anything, that meant a deploy could go unseen
+until a force-quit. The app now checks when it comes back on screen, at most once every five
+minutes. When a newer version has taken over, a thin amber strip under the header says *A newer
+version of Planbook is ready*, with a **Reload** button. Nothing reloads on its own: the strip waits
+for the tap, and the tap saves any pending work before it reloads. The strip carries no student data,
+but it hides in presentation mode so it doesn't sit on a projector, and it comes back when
+presentation mode is turned off. (WO-8.17 — built and verified in the harness; the reading on the
+iPad and a laptop app window is still owed, so the work order stays in progress.)
+
 ### The sync button's "yesterday" check no longer depends on the hour it runs — 2026-09-26
 
 The browser harness checks that the header's sync button calls a sync stale once a calendar day has

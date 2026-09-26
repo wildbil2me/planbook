@@ -148,6 +148,85 @@ console.log('\n--- the screen can be older than the worker serving it (WO-8.11) 
       'controller at document start = ' + JSON.stringify(booted.boot)
         + ', controllerchange events since = ' + booted.changes);
 
+    /* ── WO-8.17: coming back on screen looks for an update, at most once a window ──
+
+       THE CHECK IS WHAT MAKES EVERYTHING BELOW ARRIVE ON A DEVICE LEFT OPEN. Without it a browser
+       looks for a new worker only when a page loads, and neither an open laptop window nor an iPad
+       resumed from the background loads one. What is counted is ServiceWorkerRegistration's own
+       update(), stubbed on the prototype for the length of this block so the count is the app's
+       calls and nothing is fetched; `visibilityState` is shadowed and the event dispatched, the
+       way verify/year-document-store.mjs drives the hidden half.
+
+       THE CLOCK IS STEPPED, NOT WAITED ON. The throttle reads Date.now() and nothing else, so
+       Date.now is shifted for the length of the block — an hour past anything this page has done
+       for the first return, then the window read out of src/shell.js plus a second for the third.
+       Three returns, because two cannot tell a throttle from a listener that fires once and dies:
+       the second must be refused and the third, past the window, must be let through.
+
+       THE BARRIER IS THE BROWSER'S OWN, not a sleep. The app asks getRegistration() and calls
+       update() on what comes back; this block asks getRegistration() after each dispatch and reads
+       the count once its own answer is in, and the two answers come back in the order they were
+       asked. Mutation-proved in TESTING.md § WO-8.17: with the listener removed the first check
+       goes red. */
+    const shellText = await fs.readFile(path.join(ROOT, 'src', 'shell.js'), 'utf8');
+    const windowM = shellText.match(/const UPDATE_CHECK_EVERY_MS\s*=\s*([\d\s*]+);/);
+    const WINDOW_MS = windowM ? windowM[1].split('*').reduce((n, f) => n * Number(f.trim()), 1) : 0;
+    check('src/shell.js still declares an UPDATE_CHECK_EVERY_MS this block can read, and it is at '
+      + 'least a minute (guards a vacuous throttle reading)',
+      WINDOW_MS >= 60 * 1000, 'UPDATE_CHECK_EVERY_MS = ' + WINDOW_MS + 'ms');
+    const upd = await evalJs(`(async function(){
+      var proto = ServiceWorkerRegistration.prototype, realUpdate = proto.update;
+      var realNow = Date.now, calls = 0, shift = 0, counts = [];
+      proto.update = function(){ calls++; return Promise.resolve(this); };
+      Date.now = function(){ return realNow.call(Date) + shift; };
+      async function comeBack(){
+        Object.defineProperty(document, 'visibilityState',
+          { configurable: true, get: function(){ return 'visible'; } });
+        document.dispatchEvent(new Event('visibilitychange'));
+        delete document.visibilityState;
+        await navigator.serviceWorker.getRegistration();
+        await new Promise(function(r){ setTimeout(r, 0); });
+        counts.push(calls);
+      }
+      var hasReg = false;
+      try {
+        hasReg = !!(await navigator.serviceWorker.getRegistration());
+        shift = 60 * 60 * 1000;
+        await comeBack();
+        shift += 20 * 1000;
+        await comeBack();
+        shift += ${WINDOW_MS} + 1000;
+        await comeBack();
+      } finally { proto.update = realUpdate; Date.now = realNow; }
+      return { hasReg: hasReg, counts: counts }; })()`);
+    check('the page has a service-worker registration to ask — without one no return could call '
+      + 'update() however the app is written, and the two readings below would be empty',
+      upd.hasReg === true, 'getRegistration() resolved to a registration = ' + upd.hasReg);
+    check('bringing the page back to visible calls registration.update() — once, on the first return',
+      upd.counts[0] === 1, 'update() calls after each return = ' + JSON.stringify(upd.counts));
+    check('a second return twenty seconds later is inside the throttle window and calls nothing, and '
+      + 'a third past the window calls it again — so the silence is the throttle and not a listener '
+      + 'that fired once',
+      upd.counts[1] === 1 && upd.counts[2] === 2,
+      'update() calls after each return = ' + JSON.stringify(upd.counts) + ', window = ' + WINDOW_MS + 'ms');
+
+    /* The strip, read the way a teacher meets it: whether it is hidden, whether it has a box, and
+       what it says. Read before the takeover too, so "it shows after" is a change and not a state. */
+    const READ_BANNER = `(function(){
+      var el = document.getElementById('updateBanner');
+      if (!el) return { found: false };
+      var r = el.getBoundingClientRect();
+      var btn = el.querySelector('[data-update-reload]');
+      var strip = document.getElementById('presentationStrip');
+      return { found: true, hidden: el.classList.contains('hidden'), height: r.height,
+        text: el.textContent.replace(/\\s+/g, ' ').trim(), button: btn ? btn.textContent.trim() : null,
+        presenting: !!(strip && !strip.classList.contains('hidden')) }; })()`;
+    const quietBanner = await evalJs(READ_BANNER);
+    check('on a page that booted controlled and has had nothing replaced, the update strip is in the '
+      + 'markup and hidden (WO-8.17)',
+      quietBanner.found === true && quietBanner.hidden === true && quietBanner.height === 0,
+      JSON.stringify(quietBanner));
+
     const healthy = await openAboutAndRead();
     check('and the line it reads is WO-8.10\'s sentence to the character, with nothing about '
       + 'staleness added to the case that happens every single launch',
@@ -170,6 +249,41 @@ console.log('\n--- the screen can be older than the worker serving it (WO-8.11) 
         && claimed.controller.indexOf('wo811=1') >= 0,
       'controllerchange events = ' + claimed.changes + ', controller = '
         + JSON.stringify(claimed.controller));
+
+    /* ── WO-8.17: the takeover is said on the page, not only in About ──
+       Read BEFORE About is opened, because About is exactly what a teacher who has not been told
+       does not open — the strip has to be up on its own. */
+    const shown = await evalJs(READ_BANNER);
+    check('the replacement shows the update strip under the header with no modal opened — a newer '
+      + 'version is ready, and a Reload to take it',
+      shown.found === true && shown.hidden === false && shown.height > 0 && shown.presenting === false
+        && /newer version/i.test(shown.text) && shown.button === 'Reload',
+      JSON.stringify(shown));
+
+    /* Ruling 2, driven through the real header control both ways. The strip carries no student
+       data, so this is noise on a projector rather than a disclosure — and it has to come BACK,
+       because the newer build is still waiting when the projector goes off. */
+    await clickSel('#presentationBtn');
+    const projecting = await evalJs(READ_BANNER);
+    await clickSel('#presentationBtn');
+    const unprojected = await evalJs(READ_BANNER);
+    check('presentation mode hides the strip, and turning it off brings the strip back (ruling 2)',
+      projecting.presenting === true && projecting.hidden === true && projecting.height === 0
+        && unprojected.presenting === false && unprojected.hidden === false && unprojected.height > 0,
+      'projecting = ' + JSON.stringify({ presenting: projecting.presenting, hidden: projecting.hidden })
+        + ', after = ' + JSON.stringify({ presenting: unprojected.presenting, hidden: unprojected.hidden }));
+
+    /* Its one control, measured under a pointer that really is coarse — the same apparatus
+       verify/touch-targets.mjs uses, set and put back here because that section runs when this strip
+       is hidden and so never sees it. */
+    await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+    const reloadBox = await evalJs("(function(){ var b = document.querySelector('[data-update-reload]');"
+      + " var r = b.getBoundingClientRect(); return { coarse: matchMedia('(pointer: coarse)').matches,"
+      + " w: r.width, h: r.height }; })()");
+    await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    check('the strip\'s Reload measures at least 44px both ways on a coarse pointer',
+      reloadBox.coarse === true && reloadBox.w >= 44 && reloadBox.h >= 44,
+      JSON.stringify(reloadBox));
 
     const stale = await openAboutAndRead();
     /* The count clause from the block above, in this block's shape: the position of the claim
@@ -209,6 +323,77 @@ console.log('\n--- the screen can be older than the worker serving it (WO-8.11) 
         + ', color = ' + stale.color);
     await closeAbout();
 
+    /* ── WO-8.17: the strip's Reload saves before it reloads ──
+
+       WHY NOT A STUBBED location.reload(). The brief suggested one, and in this browser it cannot
+       be done: `location` is unforgeable, its reload() cannot be redefined from the page, and the
+       only way to stub it would be an indirection in src/ that exists for the harness. So the
+       reload is REAL, and the order is read off a log that survives it — sessionStorage, which a
+       reload of the same tab keeps. Three entries are written into it by listeners this block
+       installs: `click` when the Reload is tapped (capture, on window, so before the app's own
+       delegated listener), `landed` when a save transaction COMPLETES (the store resolves on
+       `complete` and so does this), and `pagehide` when the reload begins unloading the page.
+
+       WHAT GREEN MEANS: a change is made through the store and the tap follows inside the 800ms
+       debounce, so the only write that can land is one the tap caused — and the log must read
+       click, landed, pagehide, in that order. With the explicit flush removed the store's own
+       `pagehide` listener still STARTS a write, but it starts it after the unload has begun, so the
+       log reads click, pagehide — and that is the failure this line exists for, because a write
+       started at `pagehide` is the one src/store.js says can be cut off. The change is then read
+       back out of IndexedDB on the far side of the reload, and put back as it was. */
+    const stamp = 'wo817-' + Date.now();
+    const armed = await evalJs(`(function(){
+      sessionStorage.setItem('wo817log', '[]');
+      function log(what){ var l = JSON.parse(sessionStorage.getItem('wo817log') || '[]');
+        l.push(what); sessionStorage.setItem('wo817log', JSON.stringify(l)); }
+      var realPut = IDBObjectStore.prototype.put;
+      IDBObjectStore.prototype.put = function(){
+        var req = realPut.apply(this, arguments);
+        this.transaction.addEventListener('complete', function(){ log('landed'); });
+        return req; };
+      window.addEventListener('click', function(e){
+        if (e.target.closest && e.target.closest('[data-update-reload]')) log('click'); }, true);
+      window.addEventListener('pagehide', function(){ log('pagehide'); });
+      window.__wo817page = true;
+      var s = window.planbook.store;
+      var was = s.getDoc().teacher.adminEmail;
+      s.update(function(d){ d.teacher.adminEmail = ${JSON.stringify(stamp)}; });
+      return { was: was === undefined ? null : was, year: s.getDoc().year }; })()`);
+    await clickSel('[data-update-reload]');
+    await new Promise((r) => setTimeout(r, 600));
+    await waitForBoot();
+    await evalJs(KILL_ANIM);
+    const reloaded = await evalJs(`(async function(){
+      var log = JSON.parse(sessionStorage.getItem('wo817log') || 'null');
+      sessionStorage.removeItem('wo817log');
+      var stored = await new Promise(function(res, rej){
+        var open = indexedDB.open('planbook');
+        open.onerror = function(){ rej(open.error); };
+        open.onsuccess = function(){ var db = open.result;
+          var q = db.transaction('years', 'readonly').objectStore('years').get(${JSON.stringify(armed.year)});
+          q.onsuccess = function(){ res(q.result); db.close(); };
+          q.onerror = function(){ rej(q.error); }; }; });
+      return { log: log, newPage: !window.__wo817page,
+        storedValue: stored && stored.teacher ? stored.teacher.adminEmail : null }; })()`);
+    const L = reloaded.log || [];
+    const at = (w) => L.indexOf(w);
+    check('the strip\'s Reload waited for the save to LAND before it reloaded — a change made inside '
+      + 'the debounce was written after the tap and before the page began to unload',
+      reloaded.newPage === true && at('click') === 0 && at('landed') > at('click')
+        && at('pagehide') > at('landed'),
+      'log across the reload = ' + JSON.stringify(reloaded.log) + ', new document = ' + reloaded.newPage);
+    check('and the change is in IndexedDB on the far side of the reload',
+      reloaded.storedValue === stamp,
+      'stored teacher.adminEmail = ' + JSON.stringify(reloaded.storedValue) + ', expected ' + JSON.stringify(stamp));
+    /* Put back as it was, and let the reload's own re-registration of ./sw.js finish before anything
+       below unregisters it: the reloaded page booted under ?wo811, so src/shell.js's register() on
+       `load` is a different script URL and a real takeover, and unregistering mid-install races it. */
+    await evalJs(`(async function(){ var s = window.planbook.store;
+      s.update(function(d){ if (${JSON.stringify(armed.was)} === null) delete d.teacher.adminEmail;
+        else d.teacher.adminEmail = ${JSON.stringify(armed.was)}; });
+      await s.flush(); return 1; })()`);
+    await waitForClaim(0);
+
     /* ── the first-ever load, which is the Trap written as a check ── */
     const removed = await unregisterAll();
     await flushAndReload();
@@ -237,6 +422,16 @@ console.log('\n--- the screen can be older than the worker serving it (WO-8.11) 
         && /\/sw\.js$/.test(firstClaim.controller),
       'controllerchange events = ' + firstClaim.changes + ', controller = '
         + JSON.stringify(firstClaim.controller));
+
+    /* WO-8.11's trap arriving at a second reader (WO-8.17): the same controllerchange that put the
+       strip up above has just fired again, for the opposite reason, and the strip must not read it
+       as an update. The check above this one is what stops this being an absence. */
+    const firstBanner = await evalJs(READ_BANNER);
+    check('and the update strip stays hidden: a first install is not a newer version, so the day a '
+      + 'teacher installs Planbook it does not open offering to reload (WO-8.17)',
+      firstBanner.found === true && firstBanner.hidden === true && firstBanner.height === 0
+        && firstClaim.changes >= 1,
+      JSON.stringify(firstBanner) + ', controllerchange events on this document = ' + firstClaim.changes);
 
     const firstRun = await openAboutAndRead();
     check('and the line stays WO-8.10\'s quiet sentence: a first install is read as healthy, not '

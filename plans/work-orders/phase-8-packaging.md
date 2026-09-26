@@ -1395,7 +1395,7 @@ order's fix; it is worth a row of its own if the owner wants one.
 
 ## WO-8.17 — an open app only looks for an update when it loads a page
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-8.11 — the stale-screen flag this reports, and the update policy it put out of scope
+**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-8.11 — the stale-screen flag this reports, and the update policy it put out of scope
 **Closes roadmap** *(no box. Instrument, not feature, the call WO-8.7 through WO-8.11 made.)*
 
 **Booked 2026-09-26**, owner-directed, from WO-7.7's hardware reading. v132 went live and neither
@@ -1444,13 +1444,13 @@ reasons. It adds only the **check**, plus a **visible offer** once the check has
   build is still waiting.
 
 **Acceptance**
-- [ ] In the harness, bringing the page back to `visible` calls `registration.update()`, and a
+- [x] In the harness, bringing the page back to `visible` calls `registration.update()`, and a
       second return within the throttle window does not. Mutation-proved: removing the listener
       turns the check red.
-- [ ] In the harness, a `controllerchange` that replaces a controller while the page is running
+- [x] In the harness, a `controllerchange` that replaces a controller while the page is running
       shows the notice, and a first install (a page that booted uncontrolled) does not, which is
       WO-8.11's trap arriving at a second reader.
-- [ ] The reload control flushes the store before it reloads, asserted in the harness.
+- [x] The reload control flushes the store before it reloads, asserted in the harness.
 - [ ] 👤 On the installed iPad and in a laptop app window installed from `planbook.hwgteach.com`:
       with the app left open, deploy a `CACHE` bump, switch away and back, and the notice appears
       without a force-quit. Tapping it lands on the new build, and About reads the new version with

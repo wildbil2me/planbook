@@ -89,7 +89,7 @@ input[type="date"] { -webkit-appearance: none; appearance: none; }
 button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class-action-btn,
 .install-banner-dismiss, .hdr-year-btn, .year-row, .backup-nag-btn, .loading-error-btn,
 .toggle-btn, .support-dot, .hdr-mode-btn, .hdr-sync-btn, .presentation-strip-btn,
-.log-door, .log-quick, .log-kind {
+.update-banner-btn, .log-door, .log-quick, .log-kind {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -393,6 +393,30 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   cursor: pointer; transition: background 0.15s; flex-shrink: 0; white-space: nowrap;
 }
 .presentation-strip-btn:hover { background: #6d28d9; border-color: #6d28d9; }
+
+/* ── UPDATE BANNER (WO-8.17) ── */
+/* A newer build took over while this screen was open. The presentation strip's SHAPE — one line,
+   `align-items: center`, because it says one sentence and a teacher reads it mid-lesson — in the
+   install banner's COLOUR: design/style-guide.md §1's caution banner is the "offline/stale" row, and
+   About's amber line (WO-8.11) already says this same fact in it. Written out rather than sharing a
+   class with either, for the reason `.backup-nag` gives. The button is solid, like `.backup-nag-btn`,
+   because it is the action and not a dismissal. */
+.update-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
+  background: #fff8e6; color: #8a6d1a; border-bottom: 1px solid #f0dfa8;
+  padding: 8px 20px; font-size: 12.5px; line-height: 1.55;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+.update-banner-text { flex: 1 1 320px; min-width: 0; }
+.update-banner-btn {
+  border: 1.5px solid #c9a83f; background: #c9a83f; color: #fff;
+  border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: background 0.15s; flex-shrink: 0; white-space: nowrap;
+}
+.update-banner-btn:hover { background: #8a6d1a; border-color: #8a6d1a; }
+.update-banner-btn:disabled { cursor: default; opacity: 0.6; }
 
 /* ── INSTALL BANNER ── */
 /* The eviction warning, styled as the style guide's caution banner (§1, "Caution banner
@@ -1895,6 +1919,8 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
   .hdr-sync-badge { top: -4px; right: -4px; }
   .presentation-strip { font-size: 13.5px; }
   .presentation-strip-btn { padding: 8px 16px; font-size: 13px; min-height: 44px; }
+  .update-banner { font-size: 13.5px; }
+  .update-banner-btn { padding: 8px 16px; font-size: 13px; min-height: 44px; }
   .hdr-empty { font-size: 13px; }
   /* `min-width` alongside `min-height` on these three, added at WO-1.6 when they stopped being
      shelf specimens with two-word labels: a class called "A", a term called "1", and a reorder
@@ -2318,6 +2344,10 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
     padding-right: max(12px, env(safe-area-inset-right, 0px));
   }
   .presentation-strip {
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+  }
+  .update-banner {
     padding-left: max(12px, env(safe-area-inset-left, 0px));
     padding-right: max(12px, env(safe-area-inset-right, 0px));
   }

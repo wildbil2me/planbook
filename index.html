@@ -466,6 +466,29 @@
   <button class="presentation-strip-btn" data-presentation-toggle>Turn it off</button>
 </aside>
 
+<!-- A newer build has taken over while this screen was open (WO-8.17). Ships `hidden` and is
+     revealed only by src/shell.js, off the same flag WO-8.11's line in About reads — so a first
+     install, which is not an update, never shows it.
+
+     An offer and never an action: nothing reloads until this button is tapped (the owner's ruling
+     1), because a reload with a dialog open throws away whatever was being written in it. Hidden
+     while presentation mode is on (ruling 2) — it carries no student data, it is just noise on a
+     wall — and back when the mode goes off, because the newer build is still waiting.
+
+     No "Not now", unlike the install banner. There is nothing to snooze: the strip is one line, it
+     goes the moment the app is reloaded by any route, and it never returns within one document.
+
+     One line, like the presentation strip, and the style guide's caution banner (offline/STALE)
+     like the install banner and About's own amber line — which says this same fact to a teacher
+     who opens About, so one palette means one thing on both surfaces. -->
+<aside class="update-banner hidden" id="updateBanner" aria-labelledby="updateBannerHeading">
+  <p class="update-banner-text">
+    <strong id="updateBannerHeading"><span aria-hidden="true">↻</span> A newer version of Planbook is ready.</strong>
+    This screen is from the one before it. Reload when you are ready — your work is saved first.
+  </p>
+  <button class="update-banner-btn" data-update-reload>Reload</button>
+</aside>
+
 <!-- The eviction warning. It ships `hidden` and is revealed only by src/install-banner.js, so
      a home-screen launch cannot flash it on the way past.
 
