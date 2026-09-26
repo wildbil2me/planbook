@@ -1427,19 +1427,21 @@ reasons. It adds only the **check**, plus a **visible offer** once the check has
   `sw.js` every time. A failed check (offline, or a dev server that is down) is silent.
 - **Say so on the page, not only in About.** When `renderedFromAnOlderBuild` becomes true while the
   app is running, show a quiet notice outside About: a newer version is ready, with a control that
-  reloads. The notice's wording and placement are the owner's to rule on (see Open).
+  reloads. Placement is ruling 2 below; the wording is the implementer's, in the install banner's
+  voice.
 - **The reload keeps what the teacher has.** The store flushes on `visibilitychange` today; the
   reload control flushes explicitly before it reloads. On a device that opted in to Drive, the
   silent renewal (WO-7.5) signs back in after the reload, so a reload is not a sign-out there.
 - `CACHE` in `sw.js` bumped.
 
-**Open — the owner's before dispatch**
-- **Offer or reload by itself?** Offering is the recommendation. A reload with a modal open throws
-  away an outreach draft or a half-filled form, and the notice costs one tap. An automatic reload
-  only while nothing is open is the alternative, and it needs a definition of "nothing is open" that
-  holds for every modal.
-- **Where the notice sits**, and whether presentation mode hides it. It carries no student data, so
-  hiding it is not required, but it is noise on a projector.
+**Ruled — the owner, 2026-09-26, both before dispatch**
+- **Ruling 1: offer, never reload by itself.** A notice with a Reload control. A reload with a modal
+  open throws away an outreach draft or a half-filled form, and the notice costs one tap. There is no
+  automatic reload when idle either, so nothing here needs a definition of "nothing is open".
+- **Ruling 2: a banner under the header, hidden in presentation mode.** A thin strip under the header,
+  the install banner's kind of surface. It carries no student data, so hiding it is about noise on a
+  projector, not disclosure; it comes back when presentation mode is turned off, because the newer
+  build is still waiting.
 
 **Acceptance**
 - [ ] In the harness, bringing the page back to `visible` calls `registration.update()`, and a
@@ -1455,7 +1457,7 @@ reasons. It adds only the **check**, plus a **visible offer** once the check has
       no amber line.
 
 **Traps** — **Do not drop `skipWaiting`** to get a "waiting" worker to prompt about. WO-8.11 refused
-that route and its reasons still hold. **Do not reload without asking** unless the owner rules for it
-under Open. **Do not reuse About's amber line as the notice**, because a teacher who does not open
-About never sees it, which is this row's whole defect. **Check the laptop's origin before the 👤
-reading**: a `localhost` app window cannot see a deploy (CLAUDE.md).
+that route and its reasons still hold. **Do not reload without asking** (ruling 1). **Do not reuse
+About's amber line as the notice**, because a teacher who does not open About never sees it, which
+is this row's whole defect. **Check the laptop's origin before the 👤 reading**: a `localhost` app
+window cannot see a deploy (CLAUDE.md).
