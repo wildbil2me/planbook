@@ -46,6 +46,9 @@ The three things the protocol above did not answer, decided when the sign-in was
 live in [`src/auth.js`](../src/auth.js), argued at length in its header; this is the short form.
 
 **The token lives in memory and only in memory.** A module variable, so a reload is a sign-out.
+*(Still true of the token; since WO-7.5, on a device that has opted in, the launch-time renewal
+fetches a new one, so a reload need not be a sign-out the teacher sees — see § "The one thing in
+this conversation that is already a build", below.)*
 It is not student data and not a UI preference, so `src/prefs.js`'s `PREF_DEFAULTS` would refuse
 it — but the reason is stronger than the closed door: an access token is a bearer credential, and
 in `localStorage` it outlives the tab and survives a laptop handed to a substitute. Persisting it
@@ -68,8 +71,10 @@ fetched no Google script, which kept [`../privacy.html`](../privacy.html)'s "no 
 any kind" true word for word. The submission needed the opposite, so the door moved and the policy
 narrowed in the same sitting: **no third-party code unless a teacher connects Google Drive**, when
 Google's own sign-in library loads from `accounts.google.com`. That narrower claim is true because
-`loadGis()` appends the script only when Connect is tapped, and `tools/verify-shell.mjs` asserts it
-from the Network domain rather than from the source. The pairing rule stands for any origin added
+`loadGis()` appends the script on the Connect tap — and, since WO-7.5, by the launch-time renewal on
+a device that has opted in, which WO-7.6 (2026-09-26) wrote into the policy's sentence — and never
+on a device where Connect was never tapped, which `tools/verify-shell.mjs` asserts from the Network
+domain rather than from the source. The pairing rule stands for any origin added
 later: widen the code's list and not the client's and the button ends in `origin_mismatch`, so the
 list names hosts exactly and never a pattern.
 
@@ -475,9 +480,13 @@ opted in, because she is. **Opting in is also the consent to try reconnecting at
 not two** (the owner's ruling 5): a device holding `true` makes the silent attempt when the app opens
 and when it regains visibility, never blocking — the app renders either way, offline included — and a
 device holding `false` or nothing asks Google for nothing at all, which the harness asserts from the
-network. So *"nothing is fetched from Google until Connect is tapped"* in `privacy.html` and
-[`FERPA.md`](FERPA.md) is still true word for word: the launch-time fetch happens only on a device where
-Connect was tapped and succeeded and Disconnect has not been pressed since. The three things the key
+network. The launch-time fetch happens only on a device where Connect was tapped and succeeded and
+Disconnect has not been pressed since — but it is a fetch with no tap behind it, so the public
+sentence *"nothing is fetched from Google until Connect is tapped"* was true only if *until* meant
+*before the first time*. **WO-7.6 (2026-09-26) rewrote it** in `privacy.html` and
+[`FERPA.md`](FERPA.md) together: the library loads first on the Connect tap and after that at every
+launch on that device, the sign-in is renewed then and on a return to view with it ended, until
+Disconnect — and a device where Connect was never tapped fetches nothing from Google. The three things the key
 unlocked are all three built: the indicator's condition, *lapsed* told apart from *never connected*,
 and a launch-time renewal aimed only at the teachers who want it.
 

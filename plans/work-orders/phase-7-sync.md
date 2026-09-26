@@ -686,7 +686,7 @@ does not move.
 
 ## WO-7.6 — the privacy documents say Google loads only on the Connect tap, and since WO-7.5 it also loads at launch
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.4 — the narrowed third-party sentence this re-words
+**Ship** — · **Status** 🔍 AWAITING VERDICT — 2026-09-26 · **Size** S · **Depends on** WO-7.4 — the narrowed third-party sentence this re-words
 **Closes roadmap** *(no box. A correction to two public documents and the notes that quote them.)*
 
 **Booked 2026-09-26**, owner-directed, out of WO-7.5's verdict. The verifier returned PASS WITH
@@ -731,13 +731,17 @@ still uncommitted when this starts, read it as it is; do not change its code.
   enough, so check whether the tree's value has shipped before bumping again.
 
 **Acceptance**
-- [ ] The shared data-flow statement in `privacy.html` and `docs/FERPA.md` is identical after tags,
+- [x] The shared data-flow statement in `privacy.html` and `docs/FERPA.md` is identical after tags,
       backticks and whitespace are normalised, names both the Connect tap and the launch-time
       renewal, and says a device that never connected fetches nothing from Google.
-- [ ] No file outside dated history still says the library loads only on the Connect tap, or that the
+      *(`identical: true`, method in `TESTING.md` § WO-7.6; one pre-existing word aligned —
+      "this website" → "the website" in `privacy.html`.)*
+- [x] No file outside dated history still says the library loads only on the Connect tap, or that the
       public sentence is still true word for word — shown by a grep, quoted in `TESTING.md`.
-- [ ] The existing network assertions still hold: a device never connected makes no request to
+      *(Thirteen hits after, each classified there; none live.)*
+- [x] The existing network assertions still hold: a device never connected makes no request to
       `accounts.google.com` (WO-7.4's and WO-7.5's first lines), and `verify-shell.mjs` is green.
+      *(`1517 checks · 1517 passed · 0 failed`, exit 0, 2026-09-26; both zeros read off the wire.)*
 - [ ] `verify-deploy.mjs` green after the push, with its policy claims re-read for anything that
       asserted the old wording.
 

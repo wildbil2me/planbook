@@ -2132,9 +2132,12 @@
            on, or on any other host, this whole block stays `hidden`. Until WO-7.4 the list was
            loopback only and the deployed app drew nothing here; Google's reviewer needed to find
            the permission in use, so the door moved. Drawing this block fetches nothing: Google's
-           sign-in library is appended only when Connect is tapped (loadGis() in src/auth.js), which
-           is what keeps privacy.html's narrowed claim — no third-party code unless a teacher
-           connects Google Drive — true for every teacher who never does.
+           sign-in library (loadGis() in src/auth.js) is appended on the Connect tap, or — since
+           WO-7.5, on a device where a Connect succeeded and Disconnect has not been tapped since —
+           by the silent renewal src/sync-button.js makes at launch and on a return to view. That
+           is what keeps privacy.html's claim — no third-party code unless Google Drive sync is
+           turned on, and nothing from Google on a device where Connect was never tapped — true for
+           every teacher who never does.
 
            IN THIS MODAL AND NOT IN THE BACKUP PANEL, which was the other candidate and lost on one
            sentence: SYNC IS NOT A BACKUP. Drive holds one live copy that sync will overwrite with a

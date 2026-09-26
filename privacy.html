@@ -200,7 +200,7 @@
 <div class="band">
   <div class="band-inner">
     <h1>Planbook — Privacy Policy</h1>
-    <p>Last updated 25 September 2026</p>
+    <p>Last updated 26 September 2026</p>
   </div>
 </div>
 
@@ -274,15 +274,24 @@
          words are two documents that will eventually disagree in public. Change it here and change
          it there in the same sitting. Phase 7 rewrote both the day sync came out from behind its
          flag (WO-8.12, trap 5; done by WO-7.4 on 2026-09-25): the third-party sentence became the
-         narrower claim below, and it is true because src/auth.js fetches Google's library only
-         when Connect is tapped — which tools/verify-shell.mjs asserts from the network itself. -->
+         narrower claim below. WO-7.6 (2026-09-26) re-worded it, because WO-7.5 gave src/auth.js's
+         loadGis() a second way to be reached: the Connect tap, and — on a device where a Connect
+         succeeded and Disconnect has not been tapped since (planbook_driveSyncOptIn) — the silent
+         renewal src/sync-button.js makes when the app opens, and when it comes back into view with
+         the sign-in ended. "Turned on" below is that opt-in, NOT a live sign-in: an opted-in device
+         whose token has lapsed still loads the library at launch. A device where Connect was never
+         tapped fetches nothing from Google, which tools/verify-shell.mjs asserts from the network. -->
     <p>
       <strong>Nothing leaves it on its own.</strong> Loading the page fetches Planbook's own files
-      from this website, the way any web page does, and the browser checks those same files for
+      from the website, the way any web page does, and the browser checks those same files for
       updates. Beyond that, Planbook makes no network requests at all — no analytics, no usage
       tracking, no error reporting, no advertising, and no third-party code of any kind — unless
-      Google Drive sync is connected, when Google's own sign-in library loads from
-      accounts.google.com. Nothing is fetched from Google until Connect is tapped.
+      Google Drive sync is turned on, when Google's own sign-in library loads from
+      accounts.google.com. It loads first when Connect is tapped. After that, on that device, it
+      loads each time Planbook opens, and Planbook asks accounts.google.com to renew the sign-in
+      without a tap — then, and again whenever Planbook comes back onto the screen with the sign-in
+      ended — until Disconnect is tapped. On a device where Connect has never been tapped, nothing
+      is fetched from Google.
     </p>
     <p>
       Student information moves only when <em>you</em> move it, and there are three ways to do

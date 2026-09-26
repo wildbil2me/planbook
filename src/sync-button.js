@@ -110,7 +110,7 @@ ICONS.stale = ICONS.ahead;
   before `lapsed` is drawn". No sign-in is not the same as a lapsed one until a renewal has been
   tried and has failed.
 
-    ''        not tried on this page yet (a reload is a sign-out, so every launch starts here)
+    ''        not tried on this page yet (the token is memory-only, so every launch starts here)
     'trying'  out at Google now
     'failed'  tried and refused — this is what `lapsed` is drawn on
     'ok'      a token came back, from the renewal or from a reconnect tap
@@ -369,8 +369,10 @@ export function afterSync() {
 
   Only on a device that has opted in (ruling 5: one consent). A device that never connected reaches
   the first line and returns, so it fetches nothing from Google at all — which is what keeps
-  privacy.html's "nothing is fetched from Google until Connect is tapped" true, and what
-  tools/verify/sync-button.mjs asserts from the wire.
+  privacy.html's "on a device where Connect has never been tapped, nothing is fetched from Google"
+  true, and what tools/verify/sync-button.mjs asserts from the wire. This function is the second
+  way Google's library is reached, and the policy names it (WO-7.6): on an opted-in device it loads
+  at every launch, and a return to view with the sign-in ended asks Google again.
 
   IT NEVER BLOCKS. It is not awaited by anything: the app is already rendered when this runs, offline
   included, and an attempt that cannot reach Google fails into `lapsed` like any other refusal.

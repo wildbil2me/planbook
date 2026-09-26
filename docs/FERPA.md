@@ -7,7 +7,7 @@ it to, no account to create, and every record stays in the browser on the teache
 **not** your school's official record. The authoritative record remains your student information
 system; Planbook does not connect to it, does not read from it and does not replace it.
 
-**Last updated 25 September 2026.** The teacher-facing version of the same facts is the
+**Last updated 26 September 2026.** The teacher-facing version of the same facts is the
 [privacy policy](https://planbook.hwgteach.com/privacy), and the two are kept in step by hand: this
 document is written for a district review, that one for a teacher and for Google's OAuth
 verification. Neither restates the other's argument, and where they state the same fact — what
@@ -82,14 +82,22 @@ the second of the three acts below.
      words are two documents that will eventually disagree in public. Change it here and change it
      there in the same sitting. Phase 7 rewrote both the day sync came out from behind its
      flag — WO-7.4, 2026-09-25 — and the third-party sentence below is the narrower claim that
-     replaced "no third-party code of any kind". -->
+     replaced "no third-party code of any kind". WO-7.6 (2026-09-26) re-worded it, because WO-7.5
+     gave Google's library a second way to load: the Connect tap, and — on a device where a Connect
+     succeeded and Disconnect has not been tapped since (planbook_driveSyncOptIn) — the silent
+     renewal src/sync-button.js makes when the app opens, and when it comes back into view with the
+     sign-in ended. "Turned on" is that opt-in, not a live sign-in: an opted-in device whose token
+     has lapsed still loads the library at launch. -->
 
 **Nothing leaves it on its own.** Loading the page fetches Planbook's own files from the website,
 the way any web page does, and the browser checks those same files for updates. Beyond that,
 Planbook makes no network requests at all — no analytics, no usage tracking, no error reporting, no
-advertising, and no third-party code of any kind — unless Google Drive sync is connected, when
-Google's own sign-in library loads from accounts.google.com. Nothing is fetched from Google until
-Connect is tapped.
+advertising, and no third-party code of any kind — unless Google Drive sync is turned on, when
+Google's own sign-in library loads from accounts.google.com. It loads first when Connect is tapped.
+After that, on that device, it loads each time Planbook opens, and Planbook asks accounts.google.com
+to renew the sign-in without a tap — then, and again whenever Planbook comes back onto the screen
+with the sign-in ended — until Disconnect is tapped. On a device where Connect has never been
+tapped, nothing is fetched from Google.
 
 Student information moves only when the teacher moves it, and there are three ways to do that. Each
 is a deliberate act, and it is visible as it happens:

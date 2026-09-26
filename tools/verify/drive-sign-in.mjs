@@ -351,7 +351,9 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
     THE WIRE, WATCHED FROM A SIGNED-OUT LOAD (WO-7.4). Since the deployed app draws the Drive
     section, privacy.html and docs/FERPA.md claim no third-party code UNLESS a teacher connects
     Google Drive — and the only thing making that true is that loadGis() in src/auth.js appends
-    Google's script when Connect is tapped and at no other moment. A grep for a <script> tag cannot
+    Google's script, on a device that has not opted in, when Connect is tapped and at no other
+    moment. (An opted-in device also reaches it at launch since WO-7.5, which the policy has said
+    since WO-7.6; that half is tools/verify/sync-button.mjs's.) A grep for a <script> tag cannot
     see a script appended at boot by a module, so this asks the browser's own Network domain.
 
     The page is RELOADED with the domain on, so the reading covers a whole boot, the About modal
@@ -656,10 +658,11 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
      one request to Google. */
   const google74Before = googleIn74();
   const own74Before = ownIn74();
-  check('a signed-out page asks accounts.google.com for nothing until Connect is tapped — measured '
-    + 'on the wire, from a reload with the Network domain on, through a whole boot, the About modal '
-    + 'drawn with the Drive section in it, and a Disconnect tap: this is now the whole of the '
-    + 'privacy policy’s third-party claim (WO-7.4)',
+  check('a page that never opted into sync asks accounts.google.com for nothing until Connect is '
+    + 'tapped — measured on the wire, from a reload with the Network domain on, through a whole boot, '
+    + 'the About modal drawn with the Drive section in it, and a Disconnect tap: this is the privacy '
+    + 'policy’s promise to a device where Connect was never tapped (WO-7.4; the launch-time half '
+    + 'is WO-7.5’s, in the header sync button section)',
     google74Before.length === 0 && own74Before.length > 5 && beforeTap.panelShown === true
       && beforeTap.gisScripts === 0,
     google74Before.length + ' request(s) to accounts.google.com '

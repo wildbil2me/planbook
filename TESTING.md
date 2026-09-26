@@ -11742,6 +11742,86 @@ printed; `cmp` read identical each time.
    guards it. (My first draft of both comments claimed the after-a-download ordering would catch
    this mutant. It did not, and they were rewritten to what was measured.)
 
+### WO-7.6 — the privacy documents say Google loads only on the Connect tap, and since WO-7.5 it also loads at launch
+
+**Words only.** The shared data-flow statement in `privacy.html` and `docs/FERPA.md` names both ways
+Google's library is reached — the Connect tap, and on that device afterwards every launch plus a
+return to view with the sign-in ended, until Disconnect — and says a device where Connect was never
+tapped fetches nothing from Google. "Turned on" replaces "connected" there, because the sentence is
+about the opt-in and not a live sign-in (the work order's third Trap). Both *Last updated* dates read
+26 September 2026. Every other change is a comment or prose; `git diff -U0 src/` moves no executable
+line. `CACHE` is `planbook-shell-v133` (v132 had shipped; `index.html`, `src/auth.js` and
+`src/sync-button.js` are in `SHELL`).
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-7-sync.md` § WO-7.6.*
+
+- [x] **Acceptance 1 — one statement, both halves, the never-connected promise.** Method: from each
+      file take the paragraph that opens *Nothing leaves it on its own.* (in `privacy.html` up to its
+      `</p>`, in `docs/FERPA.md` up to the blank line), strip tags, strip `**` and backticks, collapse
+      whitespace, compare with `===`. Result: `identical: true`. To get there `privacy.html`'s
+      *"from this website"* became *"from the website"* — a difference the two copies had carried
+      since WO-8.12, one word, and the only way the line could be met literally. The normalised text:
+      > …unless Google Drive sync is turned on, when Google's own sign-in library loads from
+      > accounts.google.com. It loads first when Connect is tapped. After that, on that device, it
+      > loads each time Planbook opens, and Planbook asks accounts.google.com to renew the sign-in
+      > without a tap — then, and again whenever Planbook comes back onto the screen with the sign-in
+      > ended — until Disconnect is tapped. On a device where Connect has never been tapped, nothing
+      > is fetched from Google.
+      *"Comes back onto the screen with the sign-in ended"* is narrower than "each return" on purpose:
+      `renewSilently()` returns early when the token is still live, and a return to view reloads no
+      library — the script is already on the page — so the return half is a token request, not a
+      load. *"Where Connect has never been tapped"* rather than *"never connected"*: a Connect tap
+      that fails still loaded the library, so the tap is the true boundary.
+- [x] **Acceptance 2 — no live claim left.** The grep, over the tree minus `.claude/`:
+      ```
+      grep -rnE -i "until Connect is tapped|only (on|when|after) (the )?Connect|still true word for word|when Connect is tapped and at no other" \
+        --include=*.html --include=*.md --include=*.js --include=*.mjs . | grep -v "^./.claude/"
+      ```
+      Before this sitting it hit `privacy.html:285`, `docs/FERPA.md:92`, `docs/sync.md:71` and
+      `:478-479`, `index.html:2135`, `src/auth.js:79` and `:366-367`, `src/sync-button.js:372`,
+      `CLAUDE.md:128`, and `tools/verify/drive-sign-in.mjs:354` (*"when Connect is tapped and at no
+      other moment"*) — every one a live claim, every one reworded. After, thirteen hits outside
+      `TESTING.md` (whose only hits are this section, which quotes the pattern), none live:
+      - `CLAUDE.md:129` — *"The library then loaded only on the Connect tap; since WO-7.5 it also
+        loads at launch"*: past tense, history.
+      - `docs/sync.md:485` — quotes the old sentence to say it was true only on a strained reading.
+      - `plans/work-orders/phase-7-sync.md:398`, `:437` — WO-7.4's own dated record, left as written.
+      - `plans/work-orders/phase-7-sync.md:687`, `:697`, `:720`, `:723`, `:737`, `:738` and
+        `plans/work-orders/README.md:1867` — WO-7.6 itself, its title and its row.
+      - `tools/verify/drive-sign-in.mjs:354` — now qualified *"on a device that has not opted in"*.
+      - Gone from the list: `tools/verify/drive-sign-in.mjs:661`, the check label, now *"a page that
+        never opted into sync asks … for nothing until Connect is tapped"* (wrapped, so the grep no
+        longer sees it) — which is what that fixture measures — and no longer *"this is now the
+        whole of the privacy policy's third-party claim"*.
+      - `tools/verify-shell.mjs:552` — the `netLog` comment, now naming both sections that enable the
+        Network domain (it said *exactly one* — stale since WO-7.5) and the never-opted-in page.
+      Also corrected, outside the grep's pattern: *"a reload is a sign-out"* in `CLAUDE.md`'s WO-7.1
+      block, `docs/sync.md:48`, `src/auth.js` decision 1 and `src/sync-button.js`'s state legend.
+      `AGENTS.md` has no twin of either sentence (`grep -n -i "sign-out\|Connect tap\|word for word"`
+      → nothing). `about.html` read and left alone: its sync item names the scope and says nothing
+      about when the library loads.
+- [x] **Acceptance 3 — the network assertions hold.** `node tools/verify-shell.mjs` on the final
+      tree: **`1517 checks · 1517 passed · 0 failed · 0 skipped`, 47,848 lines, 31.5 lines per check,
+      572s, exit 0**, 2026-09-26, real clock — the same count as WO-7.7's, since no check was added or
+      removed. WO-7.4's wire, § "Google Drive sign-in": `0 request(s) to
+      accounts.google.com and 69 to this origin … section drawn = true, GIS <script> tags = 0`, then
+      `1 request(s) to accounts.google.com after the tap`. WO-7.5's first line, § "the header sync
+      button": `0 request(s) to accounts.google.com and 69 to this origin; sync button hidden = true
+      … opt-in stored = null`, and its positive control — the opted-in launch asks for
+      `/gsi/client` — green beside it.
+- [ ] **Acceptance 4 — `verify-deploy.mjs` after the push.** Not closable before a push. Its policy
+      claims were re-read: `CLAIMS` in `tools/verify-deploy.mjs` asserts three sentences — *no server
+      of ours ever receives student information*, *no account is required*, *Drive holds only the
+      file Planbook itself created* — and none of them is the sentence this work order changed. All
+      three still match the edited `privacy.html` under the same whitespace collapse. A pre-push run
+      read `19 checks · 18 passed · 1 failed`, the one being `deployed planbook-shell-v132, working
+      tree planbook-shell-v133`, which is the push not having happened, and the policy's four checks
+      green against the page as deployed.
+
+**Both tools.** `node tools/wo-sweep.mjs`: `45 checks · 42 passed · 0 failed · 3 to review` (the three
+standing REVIEWs). No mutation round: nothing here is code a check could be proved against — the one
+check whose text moved is a label, and its predicate is unchanged.
+
 ---
 
 ## Phase 8 — 1.0 packaging

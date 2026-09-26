@@ -546,10 +546,12 @@ const pending = new Map();
    console is where a swallowed error would have gone. */
 const consoleLog = [];
 /* Every request the PAGE sent while the Network domain was on — URL and the moment it was seen, and
-   nothing else. Empty for almost the whole run: `Network.enable` is sent by exactly one section,
-   `verify/drive-sign-in.mjs`, around the stretch where it has to prove a negative from the wire
-   rather than from the source — that a signed-out page asks accounts.google.com for nothing until
-   Connect is tapped (WO-7.4). It is on `h` for that section and read by no other. */
+   nothing else. Empty for almost the whole run: `Network.enable` is sent by two sections, each
+   around a stretch where it has to prove a negative from the wire rather than from the source —
+   `verify/drive-sign-in.mjs`, that a page which never opted into sync asks accounts.google.com for
+   nothing until Connect is tapped (WO-7.4), and `verify/sync-button.mjs`, that such a page asks
+   nothing at launch or on a return to view either, while an opted-in one does (WO-7.5). It is on
+   `h` for those two sections and read by no other. */
 const netLog = [];
 ws.onmessage = (m) => {
   const msg = JSON.parse(m.data);

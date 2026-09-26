@@ -110,8 +110,8 @@ Identity Services token flow — is* `🔨 IN PROGRESS`*: built, both harnesses 
 screen read on the laptop by the owner the same day showing* **one permission line**, *and its own
 first two Acceptance boxes ticked on that reading. What holds it open is an hour nobody can hurry — a
 real token lapsing at ~3,600s — and one glance at the iPad.* **Three things about it that are
-decisions, not details.** *The token lives* **in memory and only in memory**, *so a reload is a
-sign-out: there is no refresh token in a browser flow, so persisting a bearer credential would buy the
+decisions, not details.** *The token lives* **in memory and only in memory**, *so a reload discards
+it — which was a sign-out until WO-7.5's launch-time renewal, below: there is no refresh token in a browser flow, so persisting a bearer credential would buy the
 tail of one hour and cost a laptop handed to a substitute.* **The control is in the About modal, not
 the backup panel** — *sync is not a backup, and a Connect button under "Download a backup" teaches the
 one misconception that costs a term of grades.* **And the flag** `docs/sync.md` **asks for is the
@@ -124,8 +124,10 @@ word, and it is what widening the list costs.* **(The two sentences before this 
 2026-09-25:** [WO-7.4](plans/work-orders/phase-7-sync.md#wo-74--the-deployed-app-has-no-sign-in-for-googles-reviewer-to-find)
 *widened the list to* `planbook.hwgteach.com` *ahead of Google's approval, so the deployed app draws
 the section — the iPad's LAN address stays shut — and* `privacy.html` *and* `docs/FERPA.md` *narrowed
-in the same sitting to* **no third-party code unless a teacher connects Google Drive**, *true because
-Google's library loads only on the Connect tap, which* `verify-shell.mjs` *asserts from the network.)*
+in the same sitting to* **no third-party code unless a teacher connects Google Drive**, *true because a
+device where Connect was never tapped loads no Google library, which* `verify-shell.mjs` *asserts from
+the network. The library then loaded only on the Connect tap; since WO-7.5 it also loads at launch on
+an opted-in device, and WO-7.6 re-worded both documents to say so on 2026-09-26.)*
 **(This block said** *"the OAuth client's only
 authorized JavaScript origin" until 2026-09-07, and it was false the day it was written:* `0f77a37`
 *swept that instruction out of eight files the same afternoon and this file was not one of them — the

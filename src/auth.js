@@ -42,7 +42,10 @@
      sign-in silent is the teacher's Google session — which is Google's cookie, not our storage.
      So: memory only, and a page reload is a sign-out. Argued rather than decided by omission,
      because "we never got round to persisting it" and "persisting it is wrong" read identically
-     in a diff.
+     in a diff. (Since WO-7.5 a reload still discards the token, but on a device that opted into
+     sync it need not be a sign-out: src/sync-button.js renews silently at launch, off that same
+     Google session, and where that fails — usually, on the iPad — the header says so. The
+     memory-only ruling is unchanged.)
 
   2. THE CONTROL LIVES IN THE ABOUT MODAL, and the Backup & restore panel lost. Backup was the
      tempting answer — it is the app's other "what leaves this device" surface, and it has a
@@ -76,7 +79,8 @@
          requested and never used, which is the shape of the two commonest rejection reasons. What
          the policy now says is the narrower claim that stays true — no third-party code UNLESS a
          teacher connects Drive, when Google's own sign-in library loads — and it stays true
-         because of loadGis() below: the library is appended only after Connect is tapped, so a
+         because of loadGis() below: the library is appended on the Connect tap, or (since
+         WO-7.5) by the launch-time renewal on a device where a Connect already succeeded, so a
          teacher who never taps it gets exactly the network she got before. The harness asserts
          that from the network itself, not from the source.
        · Nothing else, and in particular NOT THE LAN ADDRESS the iPad reaches the laptop on: Google
@@ -363,9 +367,11 @@ function loadGis() {
   /* THE ONLY APPEND OF GOOGLE'S SCRIPT IN THE APP, and since WO-7.5 it has two ways to be reached:
      the Connect tap, as before, and the launch-time renewal src/sync-button.js makes — which runs
      only on a device where a Connect tap already SUCCEEDED and Disconnect has not been pressed
-     since. So "nothing is fetched from Google until Connect is tapped" (privacy.html) is still
-     true word for word; a device that never connected still fetches nothing, and
-     tools/verify/sync-button.mjs asserts that from the wire. */
+     since. privacy.html and docs/FERPA.md used to say only "nothing is fetched from Google until
+     Connect is tapped", which that renewal outgrew; since WO-7.6 (2026-09-26) their shared
+     data-flow statement names both ways in, and what it still promises is that a device where
+     Connect was never tapped fetches nothing — which tools/verify/sync-button.mjs asserts from
+     the wire. */
   if (gisLoading) return gisLoading;
 
   gisLoading = new Promise((resolve, reject) => {
