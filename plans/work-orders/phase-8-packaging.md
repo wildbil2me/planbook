@@ -1464,7 +1464,7 @@ window cannot see a deploy (CLAUDE.md).
 
 ## WO-8.18 — a stuck update serves the old copy for ever
 
-**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-8.10 — the two-copy line in About that reports this state
+**Ship** — · **Status** ✅ DONE — 2026-09-26 · **Size** S · **Depends on** WO-8.10 — the two-copy line in About that reports this state
 **Closes roadmap** *(no box. A defect in the offline shell, found on hardware.)*
 
 **Booked 2026-09-26**, owner-reported, during WO-8.17's first 👤 reading. After the v134 deploy and a
@@ -1509,8 +1509,12 @@ So the update is downloaded and stored and never used, and About reports it corr
       Mutation-proved.
 - [x] `skipWaiting` and `clients.claim` are unchanged, and nothing outside the `planbook-shell-`
       prefix is ever deleted.
-- [ ] 👤 On the stuck iPad (About naming two copies), after this deploys: relaunch, and About reads
+- [x] 👤 On the stuck iPad (About naming two copies), after this deploys: relaunch, and About reads
       one copy, the new build, with no Safari step.
+      *(Read by the owner 2026-09-26: one copy, `planbook-shell-v136`. Neither v135 nor v136 installed
+      until the owner blocked the Google sign-in pop-up WO-7.5's launch renewal opens — booked as
+      [WO-7.10](phase-7-sync.md#wo-710--the-silent-sign-in-renewal-opens-a-window-and-on-the-ipad-it-blocks-updates-and-taps).
+      `TESTING.md` § WO-8.18.)*
 
 **Traps** — **Do not delete the cache the running worker is serving from.** Cleaning up during
 `install` would pull files out from under the old, still-active worker; the cleanup belongs to the

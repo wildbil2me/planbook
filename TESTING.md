@@ -12897,7 +12897,7 @@ new section, `tools/verify/stuck-update.mjs`.
       Driven: `planbook-wo818-not-the-shell` (outside the prefix) and `planbook-shell-v1135` (inside
       it, newer than this worker) both survive the cleanup. `git diff sw.js` shows the install
       listener untouched and the activate chain's `.then(() => self.clients.claim())` unchanged.
-- [ ] **Acceptance 4 — 👤 the stuck iPad.** Owed to the owner. **Do this on the iPad that is stuck
+- [x] **Acceptance 4 — 👤 the stuck iPad.** Owed to the owner. **Do this on the iPad that is stuck
       now, before anything else clears it** — no Safari step, no deleting the app, no clearing
       website data, because any of those destroys the state this line reads. Deploy WO-8.18 (v135).
       Open Planbook, force-quit it from the app switcher, and open it again; do that twice, because
@@ -12908,6 +12908,13 @@ new section, `tools/verify/stuck-update.mjs`.
       still be serving v135, so the screen is the new build); a list with **no** v135 in it means the
       new worker never installed, which this work order does not reach. Either is worth writing
       down word for word.
+      **Read by the owner 2026-09-26: About names one copy.** It took two deploys and a workaround to
+      get there, and both belong on the record. Against v135 the iPad first still named v132 and v134
+      — the *no v135* case — and v135 arrived only once the owner blocked the Google sign-in pop-up
+      that opened at every launch. A plain v136 bump the same day needed the same, and after it About
+      read `planbook-shell-v136` alone. So this work order's cleanup did its job once the new worker
+      installed; what kept it from installing was WO-7.5's launch renewal opening a window, booked as
+      WO-7.10.
 
 **Both tools.** `node tools/verify-shell.mjs` on the delivered tree: **`1538 checks · 1538 passed ·
 0 failed · 0 skipped`, 48,369 lines, 31.4 lines per check, 567s, exit 0**, 2026-09-26, real clock —

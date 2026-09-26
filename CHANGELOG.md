@@ -19,8 +19,8 @@ An update that did not finish no longer leaves Planbook serving the old version.
 only from the current copy stored on the device, and every launch tidies away older copies — so an
 iPad whose About screen named two copies should settle to one on the next relaunch, with no trip
 through Safari. Only Planbook's own copies are ever removed, and never one newer than the running
-version. (WO-8.18 — built and verified in the harness; the reading on the stuck iPad is still owed,
-so the work order stays in progress.)
+version. (WO-8.18 — read on the stuck iPad at v136, one copy. On that iPad the update installed only once
+the Google sign-in pop-up at launch was blocked; that is WO-7.10's to fix.)
 
 ### An open app now notices a new version when you come back to it — 2026-09-26
 
