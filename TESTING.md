@@ -11825,6 +11825,61 @@ line. `CACHE` is `planbook-shell-v133` (v132 had shipped; `index.html`, `src/aut
 standing REVIEWs). No mutation round: nothing here is code a check could be proved against — the one
 check whose text moved is a label, and its predicate is unchanged.
 
+### WO-7.8 — the stale-by-day check cannot tell a calendar day from 24 hours after 15:12
+
+**Harness only, and the two checks it touches were pinned rather than added to.** `PLANT(1, 15)`'s
+"yesterday at 15:12" and `SHIFT`'s exact-24-hours-past-a-real-sync were both boundary cases where a
+calendar-day rule and an hour-count rule agree — the first agreed after 15:12 on the real clock, the
+second at exactly 24 hours no matter the time of day — so neither could fail under the mutation this
+work order books against. `tools/verify/sync-button.mjs` gained `FIXED_CLOCK(y, mo, d, hh, mm)`, the
+`SHIFT` proxy generalised to an absolute local moment rather than a relative offset (same page-start
+mechanism, same fixed-base-plus-elapsed-real-time so nothing in the app that times itself stalls),
+and `PLANT_AT(y, mo, d, hh, mm)` beside the existing `PLANT`, writing the bookmark at an explicit
+moment rather than an offset from "now" so it never depends on the page's Date at all. The midnight
+case (23:30 yesterday, read 00:30 today, one hour apart, across midnight) replaced the `PLANT(1, 15)`
+block; the same-day case (00:30 today, read 23:30 today, 23 hours apart, one calendar day) replaced
+the `SHIFT` block, Acceptance 5. Both directions are read off the page's own `new Date()` for `y`/
+`mo`/`d` before either fixed clock installs, so they compose under `--today` without pinning the
+whole run — installed for one reload, read, removed, reloaded, exactly as `SHIFT` did. `CACHE` does
+not move; nothing in `src/` does either.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-7-sync.md` § WO-7.8, from
+`node tools/verify-shell.mjs`, § "the header sync button (WO-7.5)".*
+
+- [x] **Acceptance 1 — both fixed-clock cases pass, and the run names both planted times and both
+      page clocks.** Midnight: `bookmark planted at 2026-09-26T03:30:00.000Z, page clock pinned to
+      2026-09-26T04:30:00.801Z; state = stale, label = "Last synced yesterday at 11:30 PM. Tap to
+      sync now."`. Same-day: `bookmark planted at 2026-09-26T04:30:00.000Z, page clock pinned to
+      2026-09-27T03:30:00.812Z; state = current; back on the real clock the state is current`.
+- [x] **Acceptance 2 — mutation-proved in both directions, each reverted before anything else was
+      written.** Both mutations were made directly in `src/drive-sync.js`, marked `MUTATION WO-7.8
+      M<n>`, with the harness edits staged first (`git add tools/verify/sync-button.mjs
+      tools/README.md`) so a `git checkout -- src/drive-sync.js` could not clobber them; each was
+      reverted the same way immediately after its run printed. `freshnessOf()` to a 24-hour rule
+      (`now - at > 24h`): **`1517 checks · 1515 passed · 2 failed`, exit 1** — the midnight case aimed
+      at (`state = current, label = "Synced with Google Drive at 11:30 PM. Tap to sync now."`), plus
+      one knock-on (the phone-width badge reading taken right after it, which inherited the wrong
+      state). The same-day case stayed green. `freshnessOf()` to a 12-hour rule (`now - at > 12h`):
+      **`1517 checks · 1515 passed · 2 failed`, exit 1** — the same-day case aimed at (`state = stale`,
+      wanted `current`), plus the midnight case, which a 12-hour rule also reads wrong in the other
+      direction (1 hour apart is "current" under any hour-count rule, wanted `stale`). Both mutations
+      reverted with `git checkout -- src/drive-sync.js`; `git diff --stat src/drive-sync.js` and
+      `grep -rn MUTATION src tools` (17 hits, all pre-existing, none in this work order's two files)
+      read clean after each.
+- [x] **Acceptance 3 — the whole browser harness is green on the real clock and again with `--today`
+      moved.** Real clock: **`1517 checks · 1517 passed · 0 failed · 0 skipped`, 47,910 lines,
+      31.6 lines per check, 564s, exit 0**, 2026-09-26 — the same count as WO-7.7's and WO-7.6's,
+      since the two rewritten checks moved the call-site total by nothing (§ 11 confirms 1506).
+      `--today=2026-10-15`: **`1517 checks · 1517 passed · 0 failed · 0 skipped`, 47,910 lines,
+      31.6 lines per check, 564s, exit 0** — the same day arithmetic pinned nineteen days later:
+      midnight case `bookmark planted at 2026-10-15T03:30:00.000Z, page clock pinned to
+      2026-10-15T04:30:00.804Z`, same-day case `bookmark planted at 2026-10-15T04:30:00.000Z, page
+      clock pinned to 2026-10-16T03:30:00.800Z`.
+
+**Both tools.** `node tools/wo-sweep.mjs`: `45 checks · 42 passed · 0 failed · 3 to review` (the same
+three standing REVIEWs — none of them about this work order's two files), § 11 reading 1506 call
+sites, unmoved.
+
 ---
 
 ## Phase 8 — 1.0 packaging

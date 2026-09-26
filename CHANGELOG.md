@@ -13,6 +13,18 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The sync button's "yesterday" check no longer depends on the hour it runs — 2026-09-26
+
+The browser harness checks that the header's sync button calls a sync stale once a calendar day has
+passed, not once 24 hours have gone by. The old check planted its last-sync time relative to
+whenever the harness happened to run, so after 15:12 it could no longer tell the two rules apart.
+The button could have regressed to "24 hours" and every afternoon run would have stayed green. Both
+checks now run against a pinned local clock: a sync at 11:30 PM read at 12:30 AM must say stale
+("Last synced yesterday at 11:30 PM"), and a sync at 12:30 AM read at 11:30 PM the same day must
+not. A 24-hour rule and a 12-hour rule were each planted in the app and each turned one check red.
+The app itself is unchanged; only the harness moved. (WO-7.8 — harness only, nothing to read on a
+device.)
+
 ### The privacy policy says when Google's sign-in library loads — 2026-09-26
 
 The privacy policy and `docs/FERPA.md` said nothing is fetched from Google until Connect is tapped.

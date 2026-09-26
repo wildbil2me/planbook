@@ -831,7 +831,7 @@ redraw: it throws away the in-memory token, so every download would also sign he
 
 ## WO-7.8 — the stale-by-day check cannot tell a calendar day from 24 hours after 15:12
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-7.5 — the check this pins to a fixed clock
+**Ship** — · **Status** ✅ DONE — 2026-09-26 · **Size** XS · **Depends on** WO-7.5 — the check this pins to a fixed clock
 **Closes roadmap** *(no box. A hole in a harness check, found by WO-7.5's verifier.)*
 
 **Booked 2026-09-26**, owner-directed, from finding 4 in WO-7.5's closing note. WO-7.5's ruling 4 says
@@ -865,12 +865,12 @@ has teeth for part of the day.
 - Harness only. **No file in `src/` moves**, so `sw.js`'s `CACHE` does not move either.
 
 **Acceptance**
-- [ ] Both fixed-clock cases pass, and the run's own output names the two planted times and the two
+- [x] Both fixed-clock cases pass, and the run's own output names the two planted times and the two
       page clocks.
-- [ ] Mutation-proved in both directions: `freshnessOf()` changed to a 24-hour rule turns the
+- [x] Mutation-proved in both directions: `freshnessOf()` changed to a 24-hour rule turns the
       midnight case red, and to a 12-hour rule turns the same-day case red. **Both mutations are
       reverted before anything else is written** (`AGENTS.md`).
-- [ ] The whole browser harness is green on the real clock and again with `--today` moved.
+- [x] The whole browser harness is green on the real clock and again with `--today` moved.
 
 **Traps** — **Do not pin the whole run's clock.** A run on a moved clock is evidence about a
 different day for every other section, which is why `SHIFT` is installed for one reload and then

@@ -747,17 +747,87 @@ const PLANT = (daysBack, hour) => `(function(){
       t.onerror = function () { rej(t.error); };
     };
   }); })()`;
+
+/* WO-7.8 — the same write as `PLANT` above, but at an EXPLICIT {y, month, day, hour, minute} rather
+   than an offset from "now": the two fixed-clock cases below plant relative to a page clock they
+   are about to pin, never to whatever real moment the harness happens to run at, so this never
+   reads the page's current Date at all. */
+const PLANT_AT = (y, mo, d, hh, mm) => `(function(){
+  var doc = window.planbook.store.getDoc();
+  var at = new Date(${y}, ${mo}, ${d}, ${hh}, ${mm}, 0);
+  return new Promise(function (res, rej) {
+    var open = indexedDB.open('planbook');
+    open.onerror = function () { rej(open.error); };
+    open.onsuccess = function () {
+      var db = open.result;
+      var t = db.transaction('sync', 'readwrite');
+      t.objectStore('sync').put({ docId: doc.docId, year: doc.year, baseRev: doc.rev, at: at.toISOString() });
+      t.oncomplete = function () { db.close(); res(at.toISOString()); };
+      t.onerror = function () { rej(t.error); };
+    };
+  }); })()`;
+
+/* WO-7.8 — a page clock pinned to one absolute LOCAL moment (never UTC: `localDayOf()` is local on
+   purpose), independent of whatever real time the harness happens to be run at — as opposed to
+   a relative offset from wherever the run's own clock already sits, which is what these two checks
+   used before WO-7.8 and why a run after 15:12 could not see the defect at all. Same page-start-script
+   mechanism, and the same composition `tools/verify-shell.mjs`'s own
+   SHIFT_PAGE_CLOCK relies on for `--today`: by the time this script runs, `Date` may ALREADY be that
+   file's shifting proxy rather than the native constructor, so `Real` here can itself be that proxy.
+   Passing explicit arguments (never zero) forwards straight through any such nesting to a literal
+   local date, which is what lets `y`/`mo`/`d`/`hh`/`mm` name the same wall-clock moment whether or
+   not `--today` is in play — `y`/`mo`/`d` are read off the page's own `new Date()` below for exactly
+   that reason. A FIXED BASE PLUS ELAPSED REAL TIME, never a frozen `Date.now()`: a frozen clock can
+   stall anything in the app that times itself, and an hour of drift is far more slack than either
+   check below needs. */
+const FIXED_CLOCK = (y, mo, d, hh, mm) => `(function(){
+  var Real = Date;
+  var target = new Real(${y}, ${mo}, ${d}, ${hh}, ${mm}, 0).getTime();
+  var installedAt = Real.now();
+  window.Date = new Proxy(Real, {
+    construct: function (t, args, nt) {
+      return args.length ? Reflect.construct(t, args, nt)
+        : Reflect.construct(t, [target + (Real.now() - installedAt)], nt);
+    },
+    apply: function () { return new Real(target + (Real.now() - installedAt)).toString(); },
+    get: function (t, key, recv) {
+      if (key === 'now') return function () { return target + (Real.now() - installedAt); };
+      return Reflect.get(t, key, recv);
+    }
+  });
+})();`;
+
+/* The reference day, off the page's OWN clock (already reflecting --today if it is in play) —
+   read once and reused by both fixed-clock cases below, per the Traps' instruction to build the
+   fixed clock from absolute local components taken from the page's own `new Date()`. */
+const todayYMD = () => evalJs('(function(){ var n = new Date(); '
+  + 'return { y: n.getFullYear(), mo: n.getMonth(), d: n.getDate() }; })()');
+
+/* ── the midnight case (WO-7.8): 23:30 yesterday, read at 00:30 today — one hour apart, across
+   midnight, independent of when the harness runs. A 24-hour rule would read this pair as current;
+   only a calendar-day rule reads it stale. Installed for one reload and removed immediately after
+   (the Traps: a whole run on a moved clock is evidence about a different day for every other
+   section), and the bookmark is written BEFORE the fixed clock installs, so it never depends on the
+   page's Date at all. */
 await evalJs('window.planbook.store.flush().then(function(){ return 1; })');
 await setFake('grant', 'grant');
-const plantedAt = await evalJs(PLANT(1, 15));
+const { y: my, mo: mmo, d: md } = await todayYMD();
+const midnightPlantedAt = await evalJs(PLANT_AT(my, mmo, md - 1, 23, 30));
+const midnightScript = await send('Page.addScriptToEvaluateOnNewDocument',
+  { source: FIXED_CLOCK(my, mmo, md, 0, 30) });
 await reload();
 const stale = await waitFor((r) => r.state === 'stale', 4000);
-check('a last sync on an earlier calendar day draws the stale state on the first launch — "Last '
-  + 'synced yesterday at 3:12." — amber and a dot, like ahead, and told apart by its reading',
+const midnightPageClock = await evalJs('new Date().toISOString()');
+check('a sync at 23:30 yesterday, read at 00:30 today — one hour apart, across midnight, on a page '
+  + 'clock pinned to that moment — draws the stale state: "Last synced yesterday at 11:30 PM." A '
+  + '24-hour rule would read this pair as current, and only a calendar-day rule reads it stale '
+  + '(WO-7.8)',
   stale.state === 'stale' && /^Last synced yesterday at .+\. Tap to sync now\.$/.test(stale.label)
     && stale.badgeShown === true && stale.baseRev === stale.localRev,
-  'bookmark planted at ' + plantedAt + '; state = ' + stale.state + ', label = '
-    + JSON.stringify(stale.label));
+  'bookmark planted at ' + midnightPlantedAt + ', page clock pinned to ' + midnightPageClock
+    + '; state = ' + stale.state + ', label = ' + JSON.stringify(stale.label));
+await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: midnightScript.identifier });
+await reload();
 await measureWidths('stale');
 
 await evalJs(PLANT(3, 9));
@@ -775,43 +845,36 @@ check('and a tap on the stale button syncs, which brings it back to up to date',
   staleCleared.state === 'current' && staleCleared.driveCalls > 0,
   'state = ' + staleCleared.state + ', Drive calls = ' + staleCleared.driveCalls);
 
-/* ══════════ Acceptance 5 — the clock moved a day past the bookmark's `at` ══════════ */
+/* ══════════ Acceptance 5 — a calendar day, never a count of hours (WO-7.5), pinned so the two ══════
+   ══════════ rules can be told apart at any hour the harness runs (WO-7.8)                  ══════ */
 
 /*
-  THE SAME PAGE-SIDE CLOCK `--today` INSTALLS (verify-shell.mjs SHIFT_PAGE_CLOCK), moved one day on
-  from a bookmark written by a real sync a moment ago — so this is the literal line: `--today` a day
-  past `at`, on first launch. It is installed as its own page-start script and taken away again,
-  because a whole run on a moved clock is evidence about a different day for every other section.
+  THE SAME-DAY CASE: a sync at 00:30 today, read at 23:30 today — 23 hours apart, on one calendar
+  day — must still read up to date. WO-7.5's own version of this check moved the page clock a full
+  24 hours past a bookmark written "a moment ago" by a real sync, which is exactly the boundary
+  where a calendar-day rule and a 24-hour rule agree, so it could not tell them apart at all
+  (WO-7.8's finding). Pinned with the same FIXED_CLOCK mechanism as the midnight case above,
+  installed for one reload and removed immediately after — a whole run on a moved clock is evidence
+  about a different day for every other section.
 */
-const syncedAt = (await read()).lastSyncedAt;
-const SHIFT = `(function(){
-  var SHIFT = 24 * 60 * 60 * 1000;
-  var Real = Date;
-  window.Date = new Proxy(Real, {
-    construct: function (t, args, nt) {
-      return args.length ? Reflect.construct(t, args, nt) : Reflect.construct(t, [Real.now() + SHIFT], nt);
-    },
-    apply: function () { return new Real(Real.now() + SHIFT).toString(); },
-    get: function (t, key, recv) {
-      if (key === 'now') return function () { return Real.now() + SHIFT; };
-      return Reflect.get(t, key, recv);
-    }
-  });
-})();`;
-const shiftScript = await send('Page.addScriptToEvaluateOnNewDocument', { source: SHIFT });
+const { y: sy, mo: smo, d: sd } = await todayYMD();
+const sameDayPlantedAt = await evalJs(PLANT_AT(sy, smo, sd, 0, 30));
+const sameDayScript = await send('Page.addScriptToEvaluateOnNewDocument',
+  { source: FIXED_CLOCK(sy, smo, sd, 23, 30) });
 await reload();
-const tomorrow = await waitFor((r) => r.state === 'stale' || r.state === 'lapsed', 4000);
-const pageDay = await evalJs('(function(){ var n = new Date(); return n.getFullYear() + "-" + (n.getMonth() + 1) + "-" + n.getDate(); })()');
-await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: shiftScript.identifier });
+const sameDay = await waitFor((r) => r.state === 'current' || r.state === 'stale', 4000);
+const sameDayPageClock = await evalJs('new Date().toISOString()');
+await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: sameDayScript.identifier });
 await reload();
-const backToday = await waitFor((r) => r.state === 'current', 4000);
-check('with the page clock moved one day past the bookmark’s `at` — the `--today` mechanism — the '
-  + 'first launch draws "Last synced yesterday at …"; put back, the same bookmark reads up to date: '
-  + 'the line is a calendar day, not a count of hours (WO-7.5 Acceptance 5)',
-  tomorrow.state === 'stale' && /^Last synced yesterday at /.test(tomorrow.label)
-    && tomorrow.lastSyncedAt === syncedAt && backToday.state === 'current',
-  'bookmark at ' + syncedAt + '; page day with the clock moved = ' + pageDay + ', label = '
-    + JSON.stringify(tomorrow.label) + '; back on the real clock the state is ' + backToday.state);
+const sameDayBack = await waitFor((r) => r.state === 'current', 4000);
+check('a sync at 00:30 today, read at 23:30 today — 23 hours apart, on one calendar day, on a page '
+  + 'clock pinned to that moment — reads up to date; put back on the real clock the same bookmark '
+  + 'still does. A rule with a threshold shorter than a day would read this pair as stale: the line '
+  + 'is a calendar day, never a count of hours (WO-7.5 Acceptance 5, pinned WO-7.8)',
+  sameDay.state === 'current' && sameDay.baseRev === sameDay.localRev && sameDay.badgeShown === false
+    && sameDayBack.state === 'current',
+  'bookmark planted at ' + sameDayPlantedAt + ', page clock pinned to ' + sameDayPageClock
+    + '; state = ' + sameDay.state + '; back on the real clock the state is ' + sameDayBack.state);
 
 /* Presentation mode changes nothing about it — sync state is not student data. */
 const beforeMode = await read();

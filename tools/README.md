@@ -2065,6 +2065,22 @@ held before the tap and asked `isConnected` after, and the two download checks a
 control. The run prints **1517**: `1517 checks · 1517 passed · 0 failed · 0 skipped`, 47,843 lines, 31.5 lines per check,
 571s, exit 0, measured 2026-09-26 on the real clock. Mutation round in `TESTING.md` § WO-7.7.
 
+**WO-7.8 moves the count by nothing — two checks in `verify/sync-button.mjs` were rewritten in
+place, not added to, so the call-site total stays 1506 and the executed total stays 1517.** The two
+checks it touches were both blind for part of the day: the planted "yesterday at 15:12" bookmark
+read less than 24 hours old before 15:12 and more than 24 hours old after it, so a calendar-day rule
+and a 24-hour rule agreed either way, and the SHIFT check moved the page clock exactly 24 hours past
+a bookmark written "a moment ago," which is the one point where the two rules can never disagree at
+all. Both are now pinned to an absolute local moment with a page-start script (`FIXED_CLOCK`, the
+same composition `tools/verify-shell.mjs`'s own `SHIFT_PAGE_CLOCK` uses for `--today`, with a fixed
+base plus elapsed real time rather than a frozen `Date.now()`) and a bookmark planted at an explicit
+{y, month, day, hour, minute} (`PLANT_AT`) rather than an offset from "now": a sync at 23:30
+yesterday read at 00:30 today (one hour apart, across midnight) must read stale, and a sync at 00:30
+today read at 23:30 today (23 hours apart, one calendar day) must read current — the two directions
+Acceptance 2 mutation-proves. The run prints **1517**: `1517 checks · 1517 passed · 0 failed ·
+0 skipped`, 47,910 lines, 31.6 lines per check, 564s, exit 0, measured 2026-09-26 on the real clock,
+and again with `--today` moved. Mutation round in `TESTING.md` § WO-7.8.
+
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
 `verify/touch-targets.mjs`'s About-modal block, where a `skip()` stands in when the modal never

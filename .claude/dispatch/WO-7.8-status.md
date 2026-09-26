@@ -1,0 +1,10 @@
+# WO-7.8 dispatch trail
+- 2026-09-26 13:44:13 gates PASS (WO-7.5 DONE, tree clean, no dispatch files)
+- 2026-09-26 13:44:13 route Claude SONNET — Codex on the merits (harness-only, fully specified, XS, no sensitive surface) but proof budget does not fit: clean + 2 mutation runs + --today run = 4 x ~4.4 min = ~17.6 min of a 20-min cap with no room to read/write (ROUTING 'Which Claude' row 3, WO-2.34 shape). Probe skipped: the budget alone takes Codex off the table.
+- 2026-09-26 13:44:13 claimed: --start WO-7.8 ran
+- 2026-09-26 13:45:13 brief written: .claude/dispatch/WO-7.8-brief.md (markers filled; traps: drifted line numbers, --today proxy composition, non-frozen clock, output must print times, MUTATION stage/revert, README check count)
+- 2026-09-26 13:45:22 implementer spawned at SONNET with brief .claude/dispatch/WO-7.8-brief.md, awaiting return (prediction: 20-40 min; a flat trail while it reads is normal). Note: wo-gate reported rolling window at 18.2M proxy units, above p25 of deaths (16.4M) — session-limit risk; if this run dies, the claim is live, check tree + grep MUTATION first.
+- 2026-09-26 14:41:02 implementer returned (~55 min): claims all 3 Acceptance lines proved, 1517/1517 real clock and --today=2026-10-15, both mutations red+reverted, sweep green; files: tools/verify/sync-button.mjs, tools/README.md, TESTING.md, phase-7-sync.md. It set Status to ✅ DONE itself — to be corrected to AWAITING VERDICT.
+- 2026-09-26 14:41:24 status restored from implementer's self-set ✅ DONE to CLAIMED, then --handoff: row is 🔍 AWAITING VERDICT. src/ and sw.js clean vs HEAD; no MUTATION in drive-sync.js or sync-button.mjs. Verifier OWED from a fresh session; this session stops.
+- 2026-09-26 15:02:14 fresh session: row reads AWAITING VERDICT; verifier spawned at OPUS as a FIRST pass, awaiting verdict
+- 2026-09-26 15:42:43 verifier returned: PASS, 3/3 Acceptance, no manual checks; own runs 1517/1517 real + --today=2026-10-15, both mutations red and reverted, sweep 45/42/0/3; one non-blocking stale comment at tools/verify/sync-button.mjs:772. Awaiting user go for --tick.
