@@ -75,7 +75,35 @@
   font-size: 12px; font-weight: 700; white-space: nowrap;
 }
 
-/* ══ § TOUCH ══════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════════════════
+     § FIRST RUN     →  src/home.css    (WO-7.9 — not yet lifted)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Drawn 2026-09-26, first-run.html. Two variants of one door, and only ONE of them lifts: the
+   owner picks, and the other variant's rules are deleted in the same sitting as the lift.
+   Everything else on that page wears shipped classes: `.panel`, `.empty-state`, the three
+   `.home-empty-*`, `.class-action-btn`, `.class-hint`, `.modal-*`, `.modal-actions`, and the
+   year picker's `.year-list` / `.year-row` / `.year-row-note` for the Drive list. */
+
+/* VARIANT A — its own panel at the top of the glance stack. The body is padded like the empty
+   state's centred block would be, but left-aligned, because it is a panel with content rather than a
+   zero-data message. The note under the buttons is `.class-hint` worn as shipped,
+   spaced by a class of its own rather than by restyling it (PROTOCOL.md rule 5). */
+.home-pull-body { padding: 16px 20px 18px; }
+.home-pull-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.home-pull-note { margin-top: 12px; }
+
+/* VARIANT B — the same two doors inside the empty state, under a hairline. The hairline is what
+   makes them the secondary way forward: one empty state, one primary button. */
+.home-empty-or {
+  max-width: 460px; margin: 22px auto 0; padding-top: 18px;
+  border-top: 1px solid #eef0f4;
+}
+.home-empty-or-note { margin-top: 12px; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+     § TOUCH
+   ══════════════════════════════════════════════════════════════════════════════ */
 @media (pointer: coarse) {
   .hdr-sync-btn { width: 44px; height: 44px; border-radius: 10px; }
   .hdr-sync-btn.labelled { width: auto; min-height: 44px; }

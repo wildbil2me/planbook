@@ -639,3 +639,34 @@ consent, was never on the page.
 - **Phone width** — **no fifth button**; the About button wears the sync badge.
 - **Beside the year, or last before About?** — **last before About**, which the drawing does not show.
 - **When does *up to date* go stale** — **on a new calendar day**: amber, *Last synced yesterday at 3:12.*
+
+---
+
+# First run — WO-7.9, drawn 2026-09-26
+
+**The seventh room.** [`first-run.html`](first-run.html) draws the home screen of a fresh device (an
+empty 2026-2027, the one `boot()` creates) with a way to bring in the year the teacher already has
+elsewhere: **open it from Google Drive, or restore a backup file.** The owner ruled on 2026-09-26 that
+first run offers both. It is drawn twice, because where the doors sit is the one open question.
+
+## What the drawing proposes
+
+Styled in [`proposed-phase7.css`](proposed-phase7.css) § FIRST RUN, bound for `src/home.css` and
+carrying the `not yet lifted` token. **Only one variant lifts**; the other's rules are deleted in the
+same sitting.
+
+1. **Variant A: its own panel at the top of the glance stack**, titled *Already use Planbook on another
+   device?*, with the Drive door as a primary button and the backup door beside it.
+2. **Variant B: inside the empty state**, under a hairline below *Add your first class*, with both
+   doors as secondary buttons. The empty state keeps one primary.
+3. **Shared by both**: the Drive list is the year picker's `.year-list` worn as shipped, one row per
+   year naming the device that last saved it and when, with conflict copies left out. The confirm
+   names what it replaces and carries the About panel's *sync is not a backup* line.
+4. **On the LAN address** only the backup door is drawn, because `hostAllowsSignIn()` is shut there.
+
+## The open questions, collected
+
+- **Variant A or B.** A is louder and puts two primary buttons on one screen. B is quieter and keeps
+  one primary and one empty state. **WO-7.9 Open line 2**, the owner's.
+- **A backup restored here, then Connect**: its first sync ends in keep-both, once. **Decided 2026-09-26:
+  leave it.** WO-7.9 Open line 1.

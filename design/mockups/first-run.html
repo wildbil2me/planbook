@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — A fresh device opens its year from Drive or a backup</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="../../src/glance.css">
+<link rel="stylesheet" href="../../src/home.css">
+<link rel="stylesheet" href="proposed-phase7.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Static HTML. Nothing here signs in, lists Drive or restores anything. Every year, device and time is typed in.</span>
+  <span>First run · Phase 7 · drawn 2026-09-26 · <a href="../../plans/work-orders/phase-7-sync.md">WO-7.9</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="sync-button.html">Sync button</a>
+  <a href="first-run.html" class="here">First run</a>
+</nav>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <symbol id="ic-backup" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+  <symbol id="ic-screen" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></symbol>
+  <symbol id="ic-sound" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></symbol>
+  <symbol id="ic-about" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+</defs></svg>
+
+<p class="mk-section">What a fresh device looks like today</p>
+<p class="mk-caption">A new install finds no year, so <code>boot()</code> creates an empty 2026-2027 and the home screen draws the empty state below. There is no way from here to the year already in Google Drive. Both variants add the way in <strong>beside</strong> <em>Add your first class</em>, never in its place: a teacher who has no year anywhere else starts exactly as she does today.</p>
+
+<!-- ═══════════════════════════ VARIANT A ═══════════════════════════ -->
+
+<p class="mk-section">Variant A · its own panel, above <em>Your classes</em></p>
+<header class="header">
+  <div class="header-top">
+    <div class="header-left"><div class="header-logo" aria-hidden="true">📓</div><div class="header-title"><h1>Planbook</h1><p>Set up your year</p></div></div>
+    <div class="header-actions">
+      <button class="hdr-year-btn"><span>2026-2027</span><span aria-hidden="true">▾</span></button>
+      <button class="hdr-icon-btn" aria-label="Backup and restore"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-backup"/></svg></button>
+      <button class="hdr-icon-btn hdr-mode-btn" aria-label="Presentation mode is off"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-screen"/></svg></button>
+      <button class="hdr-icon-btn hdr-mode-btn" aria-label="Alert sounds are on"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sound"/></svg></button>
+      <button class="hdr-icon-btn" aria-label="About Planbook"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-about"/></svg></button>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <nav class="hdr-class-tabs" aria-label="Classes"><span class="hdr-empty">No classes yet.</span></nav>
+  </div>
+</header>
+<main class="main">
+  <div class="gl-stack">
+    <div class="panel home-pull">
+      <div class="panel-header">
+        <div class="panel-title-row">
+          <div class="panel-title">
+            <h2>Already use Planbook on another device?</h2>
+            <p>Bring that year here instead of starting an empty one.</p>
+          </div>
+        </div>
+      </div>
+      <div class="home-pull-body">
+        <div class="home-pull-actions">
+          <button class="class-action-btn primary" type="button">Open a year from Google Drive</button>
+          <button class="class-action-btn" type="button">Restore a backup file</button>
+        </div>
+        <p class="class-hint home-pull-note">Google is still reviewing Planbook’s Drive sign-in. Until it approves, only accounts the developer has added can connect — any other account will see Google’s “Access blocked” page instead.</p>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-row">
+          <div class="panel-title">
+            <h2>Your classes</h2>
+            <p>Tap a class to open it — its line says whether today's attendance is done, and its chips say what is waiting on it.</p>
+          </div>
+        </div>
+      </div>
+      <div class="empty-state">
+        <p class="home-empty-lead">No classes yet.</p>
+        <p class="home-empty-text">Planbook keeps one school year's classes at a time, and this year has none in it so far. Add the classes you teach — whatever you call them out loud is the right name — and each one gets a card here, one tap from anywhere in the app.</p>
+        <div class="home-empty-actions">
+          <button class="class-action-btn primary" type="button">Add your first class</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<p class="mk-caption"><strong>Easy to see, easy to skip.</strong> A teacher who already has a year elsewhere can't miss it. One who doesn't reads a question that isn't about her and scrolls past. It uses the glance page's own way of adding something to the home screen, a panel in the stack, and it disappears for good once the year has a class, a student or a save. The cost is <strong>two primary buttons on one screen</strong>: the Drive door competes with <em>Add your first class</em>, and a teacher with no other device has to read a whole panel to learn it isn't for her. The Testing-mode line is the one above Connect in About, <code>TESTING_MODE_NOTE</code>, drawn here while the client is in Testing.</p>
+
+<!-- ═══════════════════════════ VARIANT B ═══════════════════════════ -->
+
+<p class="mk-section">Variant B · inside the empty state, under <em>Add your first class</em></p>
+<header class="header">
+  <div class="header-top">
+    <div class="header-left"><div class="header-logo" aria-hidden="true">📓</div><div class="header-title"><h1>Planbook</h1><p>Set up your year</p></div></div>
+    <div class="header-actions">
+      <button class="hdr-year-btn"><span>2026-2027</span><span aria-hidden="true">▾</span></button>
+      <button class="hdr-icon-btn" aria-label="Backup and restore"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-backup"/></svg></button>
+      <button class="hdr-icon-btn hdr-mode-btn" aria-label="Presentation mode is off"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-screen"/></svg></button>
+      <button class="hdr-icon-btn hdr-mode-btn" aria-label="Alert sounds are on"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sound"/></svg></button>
+      <button class="hdr-icon-btn" aria-label="About Planbook"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-about"/></svg></button>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <nav class="hdr-class-tabs" aria-label="Classes"><span class="hdr-empty">No classes yet.</span></nav>
+  </div>
+</header>
+<main class="main">
+  <div class="gl-stack">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-row">
+          <div class="panel-title">
+            <h2>Your classes</h2>
+            <p>Tap a class to open it — its line says whether today's attendance is done, and its chips say what is waiting on it.</p>
+          </div>
+        </div>
+      </div>
+      <div class="empty-state">
+        <p class="home-empty-lead">No classes yet.</p>
+        <p class="home-empty-text">Planbook keeps one school year's classes at a time, and this year has none in it so far. Add the classes you teach — whatever you call them out loud is the right name — and each one gets a card here, one tap from anywhere in the app.</p>
+        <div class="home-empty-actions">
+          <button class="class-action-btn primary" type="button">Add your first class</button>
+        </div>
+        <div class="home-empty-or">
+          <p class="home-empty-text">Already use Planbook on another device? Bring that year here instead.</p>
+          <div class="home-empty-actions">
+            <button class="class-action-btn" type="button">Open from Google Drive</button>
+            <button class="class-action-btn" type="button">Restore a backup file</button>
+          </div>
+          <p class="class-hint home-empty-or-note">Google is still reviewing Planbook’s Drive sign-in. Until it approves, only accounts the developer has added can connect.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<p class="mk-caption"><strong>One screen, one primary.</strong> <em>Add your first class</em> stays the only primary button, and the other two doors sit under a hairline as the secondary way forward. It is one empty state saying one thing: here is how to fill this year. Nothing new is added to the stack, and it goes away when the empty state does, which is exactly when the year stops being untouched, so the rule for hiding it is free. The cost is <strong>that it is quieter</strong>: a teacher on her second device has to read past the first button to find it. The buttons are real 44px buttons, not text links. A link under 44px would be a departure from <code>CLAUDE.md</code> § Conventions and would need its own ruling.</p>
+
+<!-- ═══════════════════════════ SHARED ═══════════════════════════ -->
+
+<p class="mk-section">Both variants · after the Drive door signs in</p>
+<!-- Drawn inline rather than in a `.modal-overlay`, as assignments.html draws its editor. In the
+     app this is a real dialog. -->
+<div style="max-width:520px;margin:12px auto 0">
+  <div class="modal-panel" style="width:100%;animation:none" role="dialog" aria-modal="true" aria-labelledby="mkPullTitle">
+    <div class="modal-header">
+      <h2 id="mkPullTitle">Open a year from Google Drive</h2>
+      <button class="modal-close" title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>These are the Planbook years in this Google account’s Drive. Pick the one to open on this iPad.</p>
+      <div class="modal-section-label">In Google Drive</div>
+      <div class="year-list">
+        <button class="year-row" type="button"><span>2026-2027</span><span class="year-row-note">Laptop · today at 7:52 AM</span></button>
+        <button class="year-row" type="button"><span>2025-2026</span><span class="year-row-note">Laptop · Jun 14</span></button>
+      </div>
+      <p class="class-hint">Conflict copies are not listed. Open one from Drive by hand if you need it.</p>
+    </div>
+  </div>
+</div>
+<p class="mk-caption"><strong>The shipped year picker, pointed at Drive.</strong> The same <code>.year-list</code> and <code>.year-row</code> as the School year dialog, worn as shipped. Each row names a year, the device that last saved it and when. Nothing from inside a document appears, so it is safe on a projector without a presentation-mode branch.</p>
+
+<p class="mk-section">Both variants · confirming the pick</p>
+<!-- Drawn inline rather than in a `.modal-overlay`, as assignments.html draws its editor. In the
+     app this is a real dialog. -->
+<div style="max-width:520px;margin:12px auto 0">
+  <div class="modal-panel" style="width:100%;animation:none" role="dialog" aria-modal="true" aria-labelledby="mkPullConfirmTitle">
+    <div class="modal-header">
+      <h2 id="mkPullConfirmTitle">Open 2026-2027 from Google Drive?</h2>
+      <button class="modal-close" title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>This iPad’s 2026-2027 is empty, and the one in Drive, last saved on the laptop today at 7:52 AM, will take its place. From then on the two devices sync this year with each other.</p>
+      <p class="class-hint">Sync is not a backup. Keep downloading a backup file now and then; Drive holds only one live copy.</p>
+      <div class="modal-actions">
+        <button class="class-action-btn primary" type="button">Open it</button>
+        <button class="class-action-btn" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="mk-caption"><strong>A list of one is still confirmed.</strong> The sentence names what is being replaced and why that is safe, because it is empty. It carries the backup line the About panel already carries, since the moment a teacher starts relying on sync is the moment she is most likely to stop downloading backups.</p>
+
+<p class="mk-section">On the iPad’s local-network address</p>
+<p class="mk-caption">Google sign-in isn't offered on the LAN address (<code>hostAllowsSignIn()</code>), so only <em>Restore a backup file</em> is drawn. Variant A's panel keeps its title and one button. Variant B's hairline block keeps its sentence and one button. Not drawn separately.</p>
+
+<!-- ═══════════════════════════ QUESTIONS ═══════════════════════════ -->
+
+<p class="mk-section">Questions this drawing asks</p>
+<p class="mk-caption ask"><strong>Variant A or B?</strong> A is louder and adds a second primary button and a panel. B keeps one primary and one empty state, and is quieter. WO-7.9 Open line 2.</p>
+<p class="mk-caption decided"><strong>A backup restored here, then Connect.</strong> Its first sync ends in keep-both, with one spare file in Drive, once. <strong>Decided: leave it.</strong> WO-7.9 Open line 1, ruled 2026-09-26.</p>
+
+</body>
+</html>

@@ -37,9 +37,11 @@ phase was cut.*
 
 Read [`../../docs/sync.md`](../../docs/sync.md) first. The whole protocol is settled there.
 
-**One drawing, for WO-7.5:** [`design/mockups/sync-button.html`](../../design/mockups/sync-button.html),
-drawn 2026-09-26 — the header's sync button in every state. Read it before building that work order;
-its questions are WO-7.5's **Open** lines, and where the two disagree the work order wins.
+**Two drawings, both 2026-09-26.** [`design/mockups/sync-button.html`](../../design/mockups/sync-button.html)
+is WO-7.5's: the header's sync button in every state. [`design/mockups/first-run.html`](../../design/mockups/first-run.html)
+is WO-7.9's: a fresh device's home screen with the Drive and backup doors, in two variants. Read the
+one for a work order before building it. Its questions are that work order's **Open** lines, and where
+a drawing and its work order disagree, the work order wins.
 
 **Until it lands, the Phase 1 export file is the iPad story: crude, manual, and real.** That is
 acceptable, and it is why sync is last.
@@ -908,15 +910,21 @@ That device's own year would have to be kept, merged or replaced, which is the q
 keep-both design exists to refuse. It needs its own work order if it is wanted. **Detecting a changed
 Google account** (`docs/sync.md` § *"A second Google account makes a latent hole reachable"*).
 
-**Open** *(the owner's before dispatch)*
+**Surface:** [`design/mockups/first-run.html`](../../design/mockups/first-run.html), drawn
+2026-09-26: the fresh home screen in two variants, plus the Drive list and its confirm, which both
+share (`proposed-phase7.css` § FIRST RUN). **Read it before building.** Only the variant the owner
+picks is lifted, and where the drawing and this work order disagree, the work order wins.
+
+**Rulings** *(the owner, 2026-09-26)*
 1. *The backup door, then Connect.* A year restored from a backup has a `docId` Drive already knows,
-   and no bookmark here, so its first sync still ends in keep-both: one spare file in Drive, once.
-   **Leave it** (it errs the safe way and is documented), or have the first-run backup door **suggest
-   the Drive door when the backup's `docId` is already in Drive**? The second costs a sign-in before
-   a restore, which is a lot to ask of a teacher who picked the backup door.
-2. *Where the offer sits on the home screen*: a panel above *No classes yet.*, or the empty state's
-   own words gaining two links? Worth drawing before dispatch if the owner wants to see it first
-   (`design/mockups/PROTOCOL.md`).
+   and no bookmark here, so its first sync ends in keep-both: one spare file in Drive, once. Leave it,
+   or have the backup door suggest the Drive door when the backup's `docId` is already in Drive?
+   **Leave it.** It errs the safe way, it happens once, and `docs/sync.md` already documents it.
+
+**Open** *(the owner's before dispatch)*
+2. *Where the offer sits on the home screen.* Variant A in the drawing is its own panel above
+   *Your classes*, with the Drive door as a second primary button. Variant B is inside the empty
+   state, under a hairline below *Add your first class*, with both doors secondary.
 
 **Acceptance**
 - [ ] A device whose only document is untouched draws both doors. A device with a class, a student
