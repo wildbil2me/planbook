@@ -1390,3 +1390,72 @@ where restore already is, is the proposed answer — check it rather than assume
 (`navigator.storage.persist()`, called nowhere in `src/` today). It is a cheap second belt for a
 teacher who stays in a Chrome or Edge tab and does not stop iOS's eviction, so it is not this work
 order's fix; it is worth a row of its own if the owner wants one.
+
+---
+
+## WO-8.17 — an open app only looks for an update when it loads a page
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-8.11 — the stale-screen flag this reports, and the update policy it put out of scope
+**Closes roadmap** *(no box. Instrument, not feature, the call WO-8.7 through WO-8.11 made.)*
+
+**Booked 2026-09-26**, owner-directed, from WO-7.7's hardware reading. v132 went live and neither
+device moved on its own: the iPad was slow to take it, and the laptop's app window read v131 with no
+amber line. (That window was a separate case: it was installed from `localhost:8443` and would never
+have seen a deploy. It found this row, but it is not the fix.)
+
+**Why it exists.** `src/shell.js` calls `navigator.serviceWorker.register('./sw.js')` once, on
+`load`, and nothing ever calls `registration.update()`. A browser looks for a new worker only when a
+page loads. So:
+- **An app left open does not look at all.** A laptop window open across a deploy stays on the old
+  build until it is reloaded.
+- **iOS resumes a backgrounded app without loading a page** (CLAUDE.md, the force-quit paragraph),
+  so the iPad does not look either until something makes it load.
+- **Even a relaunch shows the old build once.** The shell is served from cache, the update is found
+  during that launch, and the page on screen is already the old one. WO-8.11's amber line in About
+  reports that, but only to someone who opens About.
+
+The owner's own procedure (force-quit, relaunch, read About) works around all three, and a teacher
+will not follow it.
+
+**WO-8.11 put the policy out of scope on purpose**, and its comment in `src/shell.js` gives three
+reasons for not dropping `skipWaiting`. This work order keeps `skipWaiting` and every one of those
+reasons. It adds only the **check**, plus a **visible offer** once the check has found something.
+
+**Deliverables**
+- **Look for an update when the app comes back on screen.** On `visibilitychange` to `visible`, call
+  `registration.update()`, at most once every few minutes so switching apps quickly does not refetch
+  `sw.js` every time. A failed check (offline, or a dev server that is down) is silent.
+- **Say so on the page, not only in About.** When `renderedFromAnOlderBuild` becomes true while the
+  app is running, show a quiet notice outside About: a newer version is ready, with a control that
+  reloads. The notice's wording and placement are the owner's to rule on (see Open).
+- **The reload keeps what the teacher has.** The store flushes on `visibilitychange` today; the
+  reload control flushes explicitly before it reloads. On a device that opted in to Drive, the
+  silent renewal (WO-7.5) signs back in after the reload, so a reload is not a sign-out there.
+- `CACHE` in `sw.js` bumped.
+
+**Open — the owner's before dispatch**
+- **Offer or reload by itself?** Offering is the recommendation. A reload with a modal open throws
+  away an outreach draft or a half-filled form, and the notice costs one tap. An automatic reload
+  only while nothing is open is the alternative, and it needs a definition of "nothing is open" that
+  holds for every modal.
+- **Where the notice sits**, and whether presentation mode hides it. It carries no student data, so
+  hiding it is not required, but it is noise on a projector.
+
+**Acceptance**
+- [ ] In the harness, bringing the page back to `visible` calls `registration.update()`, and a
+      second return within the throttle window does not. Mutation-proved: removing the listener
+      turns the check red.
+- [ ] In the harness, a `controllerchange` that replaces a controller while the page is running
+      shows the notice, and a first install (a page that booted uncontrolled) does not, which is
+      WO-8.11's trap arriving at a second reader.
+- [ ] The reload control flushes the store before it reloads, asserted in the harness.
+- [ ] 👤 On the installed iPad and in a laptop app window installed from `planbook.hwgteach.com`:
+      with the app left open, deploy a `CACHE` bump, switch away and back, and the notice appears
+      without a force-quit. Tapping it lands on the new build, and About reads the new version with
+      no amber line.
+
+**Traps** — **Do not drop `skipWaiting`** to get a "waiting" worker to prompt about. WO-8.11 refused
+that route and its reasons still hold. **Do not reload without asking** unless the owner rules for it
+under Open. **Do not reuse About's amber line as the notice**, because a teacher who does not open
+About never sees it, which is this row's whole defect. **Check the laptop's origin before the 👤
+reading**: a `localhost` app window cannot see a deploy (CLAUDE.md).

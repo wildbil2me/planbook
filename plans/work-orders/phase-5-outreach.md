@@ -1671,3 +1671,39 @@ invented.** Do not disturb that while changing the neighbouring field.
 Third: an email's subject line on the card headed *"What you have written down"*, under a footer
 promising the teacher those notes go nowhere, is one missing filter away. That is why the second
 Acceptance line is here and why it is not a formality.
+
+---
+
+## WO-5.16 — a restore closes the outreach draft twice
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-5.3 — the commit that added the second call
+**Closes roadmap** *(no box. A duplicate line, found by WO-7.7's implementer and confirmed by its verifier.)*
+
+**Booked 2026-09-26**, owner-directed, from WO-7.7's verdict. `afterRestore()` in `src/shell.js`
+calls `outreachView.resetOutreach()` twice (~1751 and ~1754), each under its own comment. Both came
+from `46e0fcf` (*Land WO-5.3, and give the template editor a way out*). The first comment extends the
+template editor's reason to "an open draft", and the second restates that reason in full, so this
+looks like one edit landed twice rather than a second call someone meant. WO-7.7's `afterDownload()`
+runs `afterRestore()` whole, so a download inherits the double call too.
+
+**It does no harm today.** Resetting an already-reset draft is a no-op, so nothing on screen shows it.
+It is booked because the next person to change what a restore resets will read two calls and wonder
+which one is load-bearing.
+
+**Deliverables**
+- **One `resetOutreach()` call in `afterRestore()`**, under one comment that keeps both halves of
+  what the two said: the draft is about a student in the document that was just put away, and its
+  modal closes with it.
+- **Nothing else in `afterRestore()` moves**, and neither does `afterDownload()`, which reaches the
+  single call through it.
+- `CACHE` in `sw.js` bumped, because `src/shell.js` is in `SHELL`.
+
+**Acceptance**
+- [ ] `afterRestore()` contains exactly one `resetOutreach()` call, and no comment in it describes a
+      second one.
+- [ ] The whole browser harness is green, including the restore and WO-7.7's download checks, which
+      both reach this function.
+
+**Traps** — **Do not also reorder the chain.** `resetTemplates()` and `resetOutreach()` run before
+`afterClassChange()` so the screen repaints with no stale draft behind it, and that order is the
+reason the calls are where they are.
