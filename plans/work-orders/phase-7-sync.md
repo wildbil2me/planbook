@@ -559,13 +559,14 @@ in the cloud*, which is the belief that stops a teacher downloading backups.
   Without it the app cannot tell after a reload a teacher who syncs every day from one who has never
   connected, and the button has no condition to be drawn on.
 - **One button in `.header-actions`, drawn only on a device that has opted in.** It wears
-  `.hdr-icon-btn` as shipped and adds a state and a badge. Five states, each with a full-sentence
+  `.hdr-icon-btn` as shipped and adds a state and a badge. Six states, each with a full-sentence
   label, and **every tap does what that state needs**:
 
   | State | Reading | Tap |
   |---|---|---|
   | Up to date | *Synced with Google Drive at 9:41.* | Sync now |
   | This device is ahead | *Changes on this device are not in Google Drive yet.* | Sync now |
+  | Stale (ruling 4) | *Last synced yesterday at 3:12.* | Sync now |
   | Sign-in lapsed | *Your Google sign-in has ended. Tap to reconnect.* | Google's sign-in, visibly |
   | Last sync failed | *The last sync did not finish. Nothing on this device changed.* | About, at the Drive section |
   | Syncing | *Syncing with Google Drive…* | Nothing until it settles |
@@ -577,8 +578,10 @@ in the cloud*, which is the belief that stops a teacher downloading backups.
 - **Presentation mode changes nothing about it.** Sync state is not student data.
 - **Surface:** [`design/mockups/sync-button.html`](../../design/mockups/sync-button.html), drawn
   2026-09-26 — every state in the real header, in two variants (`proposed-phase7.css` § SYNC BUTTON).
-  **Read it before building.** Its four amber questions are Open 1–4 below; where the drawing and this
-  list disagree, this list wins.
+  **Read it before building.** Its four amber questions were answered by the owner as rulings 1–4
+  below, and the drawing does not show two of the answers — the stale state and the phone-width
+  fallback onto About — nor ruling 3's position. **Where the drawing and this list disagree, this
+  list wins.**
 - **`docs/sync.md`** — the two sections named above become a record of what was built rather than a
   proposal, in the same sitting. **`CACHE` in `sw.js` bumped** — `index.html`, `src/shell.css` and
   `src/auth.js` are all in `SHELL`.
@@ -588,30 +591,44 @@ this one, and this button is what makes it safe to take, not the step itself. **
 cold device**: discussed the same day, not yet booked. **Detecting a changed Google account**
 (`docs/sync.md` § *"A second Google account makes a latent hole reachable"*).
 
-**Open — the owner's, before dispatch**
-1. **Variant A or B?** A is a bare icon with a corner badge, the header's existing grammar. B writes
-   the reading beside the icon, which the iPad needs more, because a tooltip is never seen under a
-   thumb.
-2. **Phone width.** The top row had ~8px of slack at 390px after WO-2.29's fourth button (the coarse
-   block in `src/shell.css` says so and `verify-shell.mjs` measures it). A fifth 44px control does
-   not fit. Something gives at phone width: the logo, the subtitle, or the button (falling back to
-   About).
-3. **Beside the year, or last before About?** Drawn beside the year, because sync is about the open
-   year.
-4. **When does *up to date* go stale?** The app cannot see the other device, so the reading is only
-   ever about this one. Does a last sync from yesterday turn amber on its own?
-5. **Is opting in also consent to try reconnecting at launch?** Or are those two consents —
-   `docs/sync.md` asks this and leaves it open.
+**Rulings** *(the owner, 2026-09-26, the day it was booked — one per question it was booked with.
+The questions are kept above each answer so the record of there having been a choice survives, and
+the drawing carries the same answers in green where it asked them in amber.)*
+1. *Variant A or B?* **A — a bare icon with a corner badge**, the header's existing grammar. The
+   reading lives in the label, and the badge carries the state a thumb can see.
+2. *Phone width — the top row had ~8px of slack at 390px after WO-2.29's fourth button, and a fifth
+   44px control does not fit.* **Below the phone breakpoint there is no fifth button: the About button
+   wears the sync badge instead**, and its tap opens About at the Drive section, where Sync and
+   Reconnect already are. Ruling 3 is what makes this clean — the button sits beside About, so at
+   phone width it folds into its neighbour rather than moving somewhere else. The row's width is
+   unchanged, so nothing is re-measured and nothing is taken away. Hiding the 📓 was declined (it frees
+   ~42px against a 44px need, which is no slack at all), sub-44px buttons were declined (a departure
+   needs its own reading, `CLAUDE.md` § Conventions), and the subtitle is already spent at 640px.
+   The iPad and the laptop draw the full button.
+3. *Beside the year, or last before About?* **At the end of the row, immediately before About.** The
+   drawing shows it beside the year; this list wins.
+4. *Does an old sync turn amber on its own?* **Yes, and the line is a calendar day: *not synced
+   today*.** From the first launch on a new day the button reads amber, with a reading such as *Last
+   synced yesterday at 3:12.*, and a tap syncs. A day matches how the two devices are actually used —
+   the other one is picked up the next morning, which is when a stale reading matters — where a fixed
+   number of hours would go amber in the middle of a teaching day for no reason. It is a sixth state
+   in the table above, drawn like *ahead* (amber, a dot) and told apart by its reading.
+5. *Is opting in also consent to try reconnecting at launch?* **Yes, one consent.** A device that has
+   opted in makes the silent attempt at launch and on regaining visibility. It never blocks: the app
+   renders either way, offline included, and *lapsed* is drawn only when the attempt fails.
 
 **Acceptance**
 - [ ] A device that has never connected draws the header exactly as today, and makes no request to
       `accounts.google.com` — asserted from the network in the harness, as WO-7.4's second line was.
 - [ ] Connect sets the opt-in, Disconnect clears it, it survives a reload, and nothing but a boolean
       reaches `localStorage` — asserted in the harness.
-- [ ] Each of the five states draws its reading and does its tap, asserted in the harness; *ahead*
+- [ ] Each of the six states draws its reading and does its tap, asserted in the harness; *ahead*
       appears after a save that has not synced and clears after one that has.
-- [ ] The header row fits at 390×844 under whatever answer Open 2 gets, and `verify-shell.mjs`
-      measures it.
+- [ ] At 390×844 the header draws no fifth button and the About button carries the badge in every
+      state but *up to date*; at iPad width the sync button sits last before About. `verify-shell.mjs`
+      measures the row at both widths, and its existing 390px slack figure does not move.
+- [ ] A last sync on an earlier calendar day draws the stale state on first launch, asserted with
+      `--today` moved a day past the bookmark's `at`.
 - [ ] 👤 On the iPad, force-quit first, **with Safari's pop-up blocker left on**: let the sign-in
       lapse, tap the button, and Google's sign-in opens and reconnects.
 - [ ] 👤 On the laptop and the iPad: a save shows *ahead*, a tap brings it back to *up to date*, and

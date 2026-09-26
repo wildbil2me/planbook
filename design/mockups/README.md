@@ -631,10 +631,11 @@ for its shape is `docs/sync.md` § *And if it becomes automatic, it needs a stat
 
 ## The open questions, collected
 
-Each is an amber note on the page and an **Open** line on WO-7.5 (which adds a fifth, about consent).
+All four were answered by the owner on 2026-09-26, the day the drawing was made, and each note on the
+page is now green with its answer in place. WO-7.5's **Rulings** are the record, and a fifth, about
+consent, was never on the page.
 
-- **Variant A or B** — a bare icon, or the reading written beside it?
-- **Phone width** — a fifth 44px control does not fit the 390px row; what gives?
-- **Beside the year, or last before About?**
-- **When does *up to date* go stale** on its own, given the app cannot see the other device?
-
+- **Variant A or B** — **A**, a bare icon with a corner badge.
+- **Phone width** — **no fifth button**; the About button wears the sync badge.
+- **Beside the year, or last before About?** — **last before About**, which the drawing does not show.
+- **When does *up to date* go stale** — **on a new calendar day**: amber, *Last synced yesterday at 3:12.*
