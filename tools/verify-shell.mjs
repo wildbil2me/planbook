@@ -124,6 +124,7 @@ import { run as printGate } from './verify/print-gate.mjs';
 import { run as printSheets } from './verify/print-sheets.mjs';
 import { run as buildLine } from './verify/build-line.mjs';
 import { run as workerTakeover } from './verify/worker-takeover.mjs';
+import { run as stuckUpdate } from './verify/stuck-update.mjs';
 import { run as copyClass } from './verify/copy-class.mjs';
 import { run as contactsImport } from './verify/contacts-import.mjs';
 import { run as signalEngine } from './verify/signal-engine.mjs';
@@ -337,6 +338,10 @@ const BROWSER_SECTIONS = [
   { file: 'verify/print-sheets.mjs', run: printSheets },
   { file: 'verify/build-line.mjs', run: buildLine },
   { file: 'verify/worker-takeover.mjs', run: workerTakeover },
+  /* WO-8.18, after the two sections that read the worker's caches: it plants an old shell cache,
+     rebuilds the current one behind it, and hands both back, so build-line.mjs's one-cache
+     precondition still holds wherever that section sits. */
+  { file: 'verify/stuck-update.mjs', run: stuckUpdate },
   { file: 'verify/copy-class.mjs', run: copyClass },
   { file: 'verify/contacts-import.mjs', run: contactsImport },
   { file: 'verify/signal-engine.mjs', run: signalEngine },

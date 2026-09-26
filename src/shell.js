@@ -3952,7 +3952,7 @@ function showBootFailure(e) {
   `register()` is ever called.
 
   THE CASE, found on 2026-08-16. sw.js uses skipWaiting + clients.claim, so a new worker takes over
-  the moment it activates and deletes every cache but its own — and it does not re-render an open
+  the moment it activates and deletes every older shell cache — and it does not re-render an open
   window. The document on screen was fetched before the swap. For exactly one launch the build line
   below therefore names the NEW cache while every pixel came from the OLD one, and both statements
   are true of different things: Cache Storage answers what the device has STORED, never what this
@@ -4136,7 +4136,9 @@ async function reloadForUpdate(button) {
   WHY A CACHE NAME AND NOT A VERSION NUMBER. After a deploy the only way to learn whether the
   installed iPad took the new shell was Safari Web Inspector over USB from a Mac, which is a
   procedure nobody runs in September. And the useful question is not which version: sw.js uses
-  skipWaiting + clients.claim, so `activate` deletes every cache that is not the current one.
+  skipWaiting + clients.claim, so `activate` deletes every older shell cache — and since WO-8.18 so
+  does every launch, because on iOS `activate` has been seen not to finish, and sw.js now reads only
+  its own cache, so an old one left behind is wasted space rather than the build on screen.
   ONE CACHE IS THE HEALTHY STATE. More than one means `activate` did not finish and the app may be
   serving a mix — the failure that actually breaks a screen, and the one a version string typed
   into index.html would hide, because it would report the new name while the old cache sat beside

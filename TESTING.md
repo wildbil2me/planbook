@@ -12861,6 +12861,75 @@ against the staged copy is empty and `grep -rn "MUTATION WO-8.17"` reads nothing
 particular, where the page may be resumed without a `visibilitychange` the way it is resumed
 without a load. That is line 4.*
 
+### WO-8.18 — a stuck update serves the old copy for ever
+
+`sw.js` reads the shell out of `CACHE` and nothing else — both lookups go through `fromCurrent()`,
+which opens the cache by name — and deletes older shell caches in two places: `activate`, as before,
+and after every navigation to the app's own document, chained behind that navigation's response
+under `waitUntil`. Both go through one helper, `clearOldShells()`, which deletes only names under
+`planbook-shell-` that are not `CACHE` **and not numbered higher than `CACHE`** — a successor's cache,
+which the old worker is still active through while the successor installs. Nothing outside the
+prefix is touched: the old `activate` deleted every name that was not `CACHE`, which was wider.
+`skipWaiting` and `clients.claim` did not move. `CACHE` v134 → v135. The harness is ten checks in a
+new section, `tools/verify/stuck-update.mjs`.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-8-packaging.md` § WO-8.18.*
+
+- [x] **Acceptance 1 — the document and a shell module come from `CACHE` with an old copy planted.**
+      The plant is made OLDER than the current cache (the current one is read out, deleted and
+      rebuilt behind it), and its precondition is read, verbatim: `caches.keys() =
+      ["planbook-shell-v1","planbook-shell-v135","planbook-shell-v1135","planbook-wo818-not-the-shell"],
+      entries re-stored = 73/73, unscoped match: document = "planted", module = "planted"`. Then,
+      through the worker: `./src/shell.js` → `{"status":200,"tag":"current","planted":false,…}`, and
+      the app's document in a same-origin iframe → `{"reachable":true,"tag":"current","isApp":true,
+      "title":"Planbook"}`. Mutation-proved below.
+- [x] **Acceptance 2 — the planted cache is deleted with no new worker installing.** After that one
+      navigation: `caches.keys() = ["planbook-shell-v135","planbook-shell-v1135",
+      "planbook-wo818-not-the-shell"], registration = {"installing":false,"waiting":false,
+      "active":".../sw.js","controller":".../sw.js","changes":0}` — no worker installing or waiting,
+      and no `controllerchange` across the section. Mutation-proved below.
+- [x] **Acceptance 3 — `skipWaiting`/`clients.claim` unchanged, nothing outside the prefix deleted.**
+      Static, in the same section: `skipWaiting( x1, clients.claim( x1, install chain ends in
+      skipWaiting = true, activate chain ends in claim = true`, and `caches.match( x0,
+      caches.open(CACHE) x2, caches.delete( x1` with that one delete over `.filter(isOldShell)`.
+      Driven: `planbook-wo818-not-the-shell` (outside the prefix) and `planbook-shell-v1135` (inside
+      it, newer than this worker) both survive the cleanup. `git diff sw.js` shows the install
+      listener untouched and the activate chain's `.then(() => self.clients.claim())` unchanged.
+- [ ] **Acceptance 4 — 👤 the stuck iPad.** Owed to the owner. **Do this on the iPad that is stuck
+      now, before anything else clears it** — no Safari step, no deleting the app, no clearing
+      website data, because any of those destroys the state this line reads. Deploy WO-8.18 (v135).
+      Open Planbook, force-quit it from the app switcher, and open it again; do that twice, because
+      the first launch after a deploy is usually the one that fetches and installs the new worker and
+      the second is the one it serves. Then open About: its last line should name **one** copy,
+      `planbook-shell-v135`, with **no** amber line. If it still names two, note **which two** — v134
+      and v135 means the new worker is running and a delete is failing (the scoped lookup should
+      still be serving v135, so the screen is the new build); a list with **no** v135 in it means the
+      new worker never installed, which this work order does not reach. Either is worth writing
+      down word for word.
+
+**Both tools.** `node tools/verify-shell.mjs` on the delivered tree: **`1538 checks · 1538 passed ·
+0 failed · 0 skipped`, 48,369 lines, 31.4 lines per check, 567s, exit 0**, 2026-09-26, real clock —
+1528 plus the ten new; and again after the mutation round was reverted, `1538 checks · 1538 passed ·
+0 failed · 0 skipped`, 566s, exit 0. `node tools/wo-sweep.mjs`: `45 checks · 42 passed · 0 failed ·
+3 to review`, § 11 reading 1527 call sites against `tools/README.md`.
+
+**The mutation round — one run, two breaks, four reds.** `sw.js` copied to the scratchpad first; each
+break marked `MUTATION WO-8.18`. M1: `fromCurrent()` returned `caches.match(key)` — the unscoped
+lookup, in both branches at once. M2: the navigation's `event.waitUntil(… clearOldShells …)` line
+deleted. **`1538 checks · 1534 passed · 4 failed · 0 skipped`, exit 1**, and the four reds are the
+ones aimed at: M1 turned the module reading red at `{"status":200,"tag":"planted","planted":true,
+"length":30}`, the document reading red at `{"reachable":true,"tag":"planted","isApp":false,"title":
+"wo818 planted old shell"}`, and the static no-unscoped-lookup check red at `caches.match( x1,
+caches.open(CACHE) x1`; M2 turned the deletion red with `planbook-shell-v1` still first in
+`caches.keys()` and the registration reading unchanged (`installing:false, waiting:false,
+changes:0`). The section's hand-back check stayed green under both. Nothing else moved. Reverted by
+copying the clean file back before a word of this entry was written; `grep -rn MUTATION sw.js src
+tools` reads only prose that was there before.
+
+*What the desk cannot pay off: how the iPad got into this state. The laptop took the same v134 deploy
+cleanly, and Chromium will not reproduce it; the harness builds the state by hand. One clue is in
+`sw.js` above `shellVersion()`: the stuck iPad named v132 and v134 and not v133. That is line 4.*
+
 ---
 
 This phase's first roadmap item is *this file, complete and fully passing* — which is the

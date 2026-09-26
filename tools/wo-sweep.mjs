@@ -424,7 +424,7 @@ function commentLines(file) {
 
 /* ══════════════════════════ 9. a SHELL file changed without a CACHE bump ══════════════════════
    sw.js states the rule in its own header: "Add the file to SHELL and bump CACHE in the same commit
-   that creates it," because `activate` deletes every cache that is not the current one — the name IS
+   that creates it," because `activate` deletes every older shell cache — the name IS
    the version, and an unchanged name means the installed app keeps the shell it already has.
 
    Nothing enforced it, and it had already been broken twice when this check was written. WO-2.4 and

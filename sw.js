@@ -31,10 +31,16 @@
   only reason the "no build step" repo needs a server at all.
 */
 
-/* Bump on every deploy that changes any file in SHELL. The name is the version: `activate`
-   deletes every cache that is not this one, which is what makes a deploy replace the shell
-   rather than layer on top of it. */
-const CACHE = 'planbook-shell-v134';
+/* Bump on every deploy that changes any file in SHELL. The name is the version: every lookup
+   below reads this cache and no other, and every older copy under SHELL_PREFIX is deleted — in
+   `activate`, and again on each launch (clearOldShells) — which is what makes a deploy replace
+   the shell rather than layer on top of it. */
+const CACHE = 'planbook-shell-v135';
+
+/* Every cache this worker has ever made is SHELL_PREFIX plus a version. Nothing outside the prefix
+   is ever deleted: another cache at this origin is not ours to judge, and IndexedDB, where the
+   grades live, is not a cache at all. src/shell.js reads the same prefix for the About line. */
+const SHELL_PREFIX = 'planbook-shell-';
 
 /* Relative to this file, which is why sw.js lives at the repo root: a service worker can only
    control pages at or below its own directory (src/README.md). Kept relative rather than
@@ -196,10 +202,58 @@ self.addEventListener('install', (event) => {
   );
 });
 
+/*
+  WO-8.18. WHICH CACHES MAY GO, and the rule is narrower than "not this one" on two sides.
+
+  Under SHELL_PREFIX only — see the prefix above. And NEVER A NEWER ONE. The cleanup below also runs
+  from the fetch handler, which is to say from the worker that is active RIGHT NOW, and that worker
+  is still the active one while its successor installs: `install` opens the next CACHE and fills it
+  for a second or two before skipWaiting hands over. An old worker that deleted every shell cache but
+  its own would delete the cache its successor is filling, and the successor would activate over an
+  empty cache — fine online, a white screen on the first offline launch. CACHE only ever goes up, so
+  a copy whose number is higher than ours belongs to a worker newer than this one and is left for
+  THAT worker's `activate` to judge. A name under the prefix whose version does not parse is not
+  one this file wrote, and is treated as old.
+
+  WHY `activate` DID NOT FINISH ON iOS IS STILL NOT KNOWN, and nothing here depends on the answer.
+  One fact from the stuck iPad is worth keeping for whoever looks next: About named v132 and v134,
+  and NOT v133, which was deployed between them the same day. Two readings fit, neither proven:
+  the device never saw v133, and v134's `activate` was cut off before any delete landed; or it did
+  see v133, a delete removed it, and v132 survived every delete aimed at it — which is what WebKit
+  declining or deferring the delete of a cache IN USE would look like, and while lookups searched
+  every cache the oldest copy was the one every launch read from, so the survivor was always the one
+  being served. The scoped lookup below ends that loop if it is the real one.
+*/
+function shellVersion(name) {
+  const m = /^planbook-shell-v(\d+)$/.exec(name);
+  return m ? Number(m[1]) : null;
+}
+const THIS_VERSION = shellVersion(CACHE);
+
+function isOldShell(name) {
+  if (name.indexOf(SHELL_PREFIX) !== 0 || name === CACHE) return false;
+  const v = shellVersion(name);
+  return !(v !== null && THIS_VERSION !== null && v > THIS_VERSION);
+}
+
+function clearOldShells() {
+  return caches.keys()
+    .then((names) => Promise.all(names.filter(isOldShell).map((n) => caches.delete(n))));
+}
+
+/* The one read of the shell, and it opens CACHE by name (WO-8.18). `caches.match()` with no cache
+   name searches EVERY cache in the order they were made, so the OLDEST copy answers first, and one
+   surviving old cache meant every launch served the old build whichever worker was running — the
+   update downloaded, stored, reported correctly in About, and never used. Opening by name rather
+   than passing `{ cacheName }` to `caches.match` is deliberate: it is one meaning in every engine,
+   and the engine this was found on is the one nobody here can step through. */
+function fromCurrent(key) {
+  return caches.open(CACHE).then((cache) => cache.match(key));
+}
+
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys()
-      .then((names) => Promise.all(names.filter((n) => n !== CACHE).map((n) => caches.delete(n))))
+    clearOldShells()
       .then(() => self.clients.claim())
   );
 });
@@ -245,7 +299,26 @@ self.addEventListener('fetch', (event) => {
      the failure this branch exists to prevent. Both are the same document. */
   if (req.mode === 'navigate') {
     if (APP_DOCUMENT.has(url.pathname)) {
-      event.respondWith(caches.match(INDEX).then((hit) => hit || fetch(req)));
+      const served = fromCurrent(INDEX).then((hit) => hit || fetch(req));
+      event.respondWith(served);
+      /* WO-8.18. EVERY LAUNCH TIDIES UP, because `activate` runs once per worker and on iOS it has
+         been seen not to finish — twice, on the owner's iPad, with About naming two copies through
+         three force-quits. Nothing ever runs a worker's `activate` again, so a cleanup that lives
+         only there is a cleanup that, once missed, is missed for the life of that build.
+
+         WHY THIS POINT QUALIFIES AS "ONLY ONCE THIS WORKER IS THE ACTIVE ONE": fetch events are
+         dispatched to a registration's ACTIVE worker and to no other — an installing or waiting
+         worker never receives one — so nothing here can run from `install`, and the cache being
+         served from is never the one deleted. A navigation to the app's own document is a launch, a
+         force-quit relaunch, or the WO-8.17 strip's Reload, which is exactly the set of moments the
+         👤 line relaunches through.
+
+         CHAINED AFTER THE RESPONSE SETTLES, NEVER IN FRONT OF IT. The launch is not delayed by a
+         `caches.keys()` round trip, and no delete is ever in flight while this navigation's own
+         lookup is — which also keeps the harness's reading of that lookup deterministic. A failed
+         delete breaks nothing: the lookup above no longer cares what else is stored, so a surviving
+         old copy is wasted space and a line in About, and the next launch tries again. */
+      event.waitUntil(served.catch(() => {}).then(clearOldShells).catch(() => {}));
     }
     return;
   }
@@ -255,5 +328,5 @@ self.addEventListener('fetch', (event) => {
      keep. There is no network-first path because there is nothing on a network to be first
      about — Planbook has no backend. */
   if (!SHELL_PATHS.has(url.pathname)) return;
-  event.respondWith(caches.match(req).then((hit) => hit || fetch(req)));
+  event.respondWith(fromCurrent(req).then((hit) => hit || fetch(req)));
 });

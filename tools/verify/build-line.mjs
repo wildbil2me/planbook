@@ -28,8 +28,8 @@ console.log('\n--- which build this device is running (WO-8.10) ---');
 
   WHAT IS BEING GUARDED. After a deploy, the only way to learn whether the installed iPad took the
   new shell was Safari Web Inspector over USB from a Mac. The interesting question is not the
-  version — sw.js uses skipWaiting + clients.claim, so `activate` deletes every cache that is not
-  the current one, and ONE CACHE IS THE HEALTHY STATE. More than one means the activation did not
+  version — sw.js uses skipWaiting + clients.claim, so `activate` deletes every older shell cache
+  (and, since WO-8.18, so does every launch), and ONE CACHE IS THE HEALTHY STATE. More than one means the activation did not
   finish and the app may be serving a mix, which is the failure that breaks a screen and the one a
   version string typed into index.html would hide.
 

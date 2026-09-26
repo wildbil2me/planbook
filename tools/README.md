@@ -1223,14 +1223,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1517 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1527 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the seventy-three files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the seventy-four files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -2098,6 +2098,25 @@ order they were asked. **And `location.reload()` is not stubbed, because in Chro
 then `pagehide`. The run prints **1528**: `1528 checks · 1528 passed · 0 failed · 0 skipped`, 48,106
 lines, 31.5 lines per check, 574s, exit 0, measured 2026-09-26 on the real clock. Mutation round in
 `TESTING.md` § WO-8.17.
+
+**WO-8.18 moved it from 1517 to 1527, and the executed count from 1528 to 1538 — ten sites, ten
+results.** All ten are literal call sites in one new section, `verify/stuck-update.mjs`, registered
+directly after `verify/worker-takeover.mjs`; none in a loop and none a failure arm, so the gap stays at
+−11 and the file count this ledger's head names moves to **seventy-four**. Three are static, in Node
+(no unscoped `caches.match(` in `sw.js`'s code, one `caches.delete(` over the prefix filter, and
+`skipWaiting`/`clients.claim` once each at the end of the chains they were in); seven are driven.
+**It is the first block here that builds Cache Storage in a particular ORDER**, and the order is the
+whole of the defect: an unscoped `caches.match()` searches caches in the order they were made, so
+the plant reads the current cache out, deletes it, makes the old one, and puts every entry back —
+and then asks an unscoped match *from the page* to find the planted copy first, which is what stops
+the two driven tag readings being true of a scoped and an unscoped lookup alike. The two entries
+under test are re-stored with a `current` tag (a header on the module, a `<meta>` in the document,
+because an iframe's headers cannot be read), so *came from `CACHE`* is told apart from *fell through
+to the network*, which from the page are the same bytes. The navigation is policy-url.mjs's iframe,
+**sandboxed to `allow-same-origin`** so the document still goes through the worker and no second app
+boots in it. The run prints **1538**: `1538 checks · 1538 passed · 0 failed · 0 skipped`, 48,369
+lines, 31.4 lines per check, 567s, exit 0, measured 2026-09-26 on the real clock. Mutation round in
+`TESTING.md` § WO-8.18.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

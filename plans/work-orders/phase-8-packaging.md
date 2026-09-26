@@ -1464,7 +1464,7 @@ window cannot see a deploy (CLAUDE.md).
 
 ## WO-8.18 — a stuck update serves the old copy for ever
 
-**Ship** — · **Status** 🤖 CLAIMED — 2026-09-26 · **Size** S · **Depends on** WO-8.10 — the two-copy line in About that reports this state
+**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-8.10 — the two-copy line in About that reports this state
 **Closes roadmap** *(no box. A defect in the offline shell, found on hardware.)*
 
 **Booked 2026-09-26**, owner-reported, during WO-8.17's first 👤 reading. After the v134 deploy and a
@@ -1503,11 +1503,11 @@ So the update is downloaded and stored and never used, and About reports it corr
 - `CACHE` bumped.
 
 **Acceptance**
-- [ ] In the harness, with an old shell cache planted beside the current one, the document and a
+- [x] In the harness, with an old shell cache planted beside the current one, the document and a
       shell module both come from `CACHE`. Mutation-proved.
-- [ ] In the harness, the planted old cache is deleted without a new worker installing.
+- [x] In the harness, the planted old cache is deleted without a new worker installing.
       Mutation-proved.
-- [ ] `skipWaiting` and `clients.claim` are unchanged, and nothing outside the `planbook-shell-`
+- [x] `skipWaiting` and `clients.claim` are unchanged, and nothing outside the `planbook-shell-`
       prefix is ever deleted.
 - [ ] 👤 On the stuck iPad (About naming two copies), after this deploys: relaunch, and About reads
       one copy, the new build, with no Safari step.
