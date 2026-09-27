@@ -12026,7 +12026,9 @@ and no sign-in —"*, identically, same sitting. `CACHE` v138 → v139.
       at the stand-in) and Acceptance 2 (a request on an offline wire). **M3** — `noteSyncOptIn()`
       without its repaint: `103 · 95 · 8 failed`, Acceptances 1, 2 and 3 — the switch-off stayed on the
       open panel after the tap, which is WO-7.2's "until About is reopened" exactly.
-- [ ] 👤 **iPad, home-screen app, deployed**, force-quit first — owed.
+- [x] 👤 **iPad, home-screen app, deployed**, force-quit first — read by the owner at v139,
+      2026-09-27: all four checks passed (build line v139; the control beside Connect signed out; one
+      tap removed the header button with no Google window; a relaunch drew no header button).
 
 **Both tools.** `node tools/verify-shell.mjs`: `1549 checks · 1546 passed · 3 failed · 0 skipped`,
 576s, exit 1, 2026-09-26 ~22:40 EDT, real clock. **The three are `verify/date-zero-key.mjs`'s**

@@ -1087,7 +1087,7 @@ header or in About may read *safe* because a tap now does two things.
 
 ## WO-7.11 — after a reload, sync cannot be switched off without signing in first
 
-**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-7.1 — the panel whose Disconnect this redraws; WO-7.5 — the opt-in that Disconnect clears
+**Ship** — · **Status** ✅ DONE — 2026-09-27 · **Size** S · **Depends on** WO-7.1 — the panel whose Disconnect this redraws; WO-7.5 — the opt-in that Disconnect clears
 **Closes roadmap** *(no box. Phase 7's boxes are closed by WO-7.1, WO-7.2 and WO-7.3; this repairs a consequence of WO-7.10 on top of them.)*
 
 **Booked 2026-09-26**, owner-directed, from WO-7.10's verdict. **WO-7.10's code is in the tree and
@@ -1132,8 +1132,11 @@ WO-7.10; the laptop's launch renewal usually hid it.
 - [x] Mutation-proved: putting back `!state.signedIn` as the only condition for drawing the control
       turns the first line red. **The mutation is reverted before anything else is written**
       (`AGENTS.md`).
-- [ ] 👤 **iPad, home-screen app, deployed**, force-quit first: About shows the switch-off control at
+- [x] 👤 **iPad, home-screen app, deployed**, force-quit first: About shows the switch-off control at
       launch without signing in; one tap removes the header button; a relaunch shows no header button.
+      *(Read by the owner at v139, 2026-09-27: About named v139 after a force-quit, the control sat
+      beside Connect signed out, one tap removed the header button with no Google window, and a
+      relaunch drew none.)*
 
 **Traps** — **Do not make the switch-off ask Google for anything** — not a sign-in to revoke with,
 not a library load; a teacher offline or blocked by her admin is the case this exists for.

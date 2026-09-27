@@ -21,8 +21,7 @@ on this device** beside Connect whenever this device is opted in. One tap switch
 header's sync button goes away, with no Google window and no network needed. When you are signed in,
 the tap still signs you out of Google as Disconnect did. The privacy policy says so. (WO-7.11 —
 verified in the harness, and drawing the control only when signed in turned it red. Four harness
-checks are red, and they are red on the previous commit too. The iPad reading on the deployed app is
-still owed.)
+checks are red, and they are red on the previous commit too. Read by the owner on the iPad at v139.)
 
 ### Google Drive no longer asks to sign you in by itself — 2026-09-26
 
