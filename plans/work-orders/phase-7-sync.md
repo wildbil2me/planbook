@@ -1306,3 +1306,64 @@ use it. **Do not touch `verify/drive-sign-in.mjs`.** That is WO-7.12, and it wai
 token stays memory-only** (`CLAUDE.md`, WO-7.1's ruling): the repaint reads `authState()` and writes
 nothing. **`src/sync-button.js` is the store's only subscriber**, and it stays that way. This is a
 direct call at settle, not a new `subscribe()`.
+
+## WO-7.14 — a sign-in Google has refused still reads as signed in, and every sync tap refuses again
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.13 — the `signed-out` repaint this makes truthful; WO-7.2 — the `401` arm in `syncNow()`
+**Closes roadmap** *(no box. A defect in WO-7.2's fifth Acceptance line, found by WO-7.13's verifier.)*
+
+**Booked 2026-09-27**, owner-directed, from WO-7.13's verdict. The verifier flagged it as outside
+that work order's Deliverables and as already true before it. The booking session confirmed it by
+reading the code, not by running it.
+
+**What is wrong.** `src/auth.js` decides `signedIn` from the clock and nothing else:
+`fresh()` is `session.expiresAt - Date.now() > FRESH_MARGIN_MS` (~260). When Google answers a Drive
+request with `401`, `src/drive-sync.js` throws `fault('expired', …)` (~297), and `syncNow()` settles
+`signed-out` (~576). **Nothing tells `src/auth.js`.** The session stands, so `authState().signedIn`
+is still `true` until the clock runs out, which can be most of an hour away. Three things follow:
+- **About contradicts itself.** WO-7.13's repaint runs on `signed-out` and draws what `authState()`
+  says: *"Connected to Google Drive. This access ends at …"*, with Connect hidden. The sentence
+  announced beside it says *"Tap Connect Google Drive above, then sync again."*
+- **The header button cannot get out.** `src/sync-button.js` (~374) asks Google for a new token only
+  when `!signedIn`. With the session standing, every tap goes straight to `syncNow()`, which gets
+  another `401`. There is no way to sign in again from either door until the hour runs out, short of
+  *Disconnect* and Connect again, which nothing on screen suggests.
+- **`ensureFreshToken()` keeps handing out the refused token**, because it reads the same clock.
+
+**A teacher can reach it** whenever Google refuses a token before its hour is up: she removes
+Planbook's access at myaccount.google.com, changes her password, or a Workspace admin revokes
+third-party access. That is rarer than a lapse, but when it happens the app has no way out.
+Sync is stuck, not data lost: a `401` wrote nothing at Drive.
+
+**Deliverables**
+- **A `401` ends the session in `src/auth.js`.** One narrow export (for example `refused()`)
+  that drops `session`, which `src/drive-sync.js` calls on the `expired` arm before it settles.
+  It does **not** call `revoke()`, because Google has already refused the token, and it announces
+  nothing, because `syncNow()` already announces. The import stays one-way, `drive-sync.js` into
+  `auth.js` (decision 4 in `src/drive-sync.js`'s header).
+- **Correct any comment that says `signedIn` follows the clock alone**, in `src/auth.js` and
+  `src/sync-button.js`, and name the new writer where the session's writers are listed.
+- **A harness check in `tools/verify/drive-sync.mjs`.** Seed a clock-fresh session, make Drive
+  answer `401`, sync through the delegated listener with About open, then assert that Connect is
+  drawn, the status line does not read *Connected*, and `authState().signedIn` is `false`. It must be
+  red on `HEAD`.
+- **Bump `CACHE` in `sw.js`.** Both `src/` files are in `SHELL`.
+
+**Acceptance**
+- [ ] The new check is red on `HEAD` and green with the change, with both runs recorded in
+      `TESTING.md` § WO-7.14.
+- [ ] Mutation-proved: take out the call that ends the session and the new check goes red. **The
+      mutation is reverted before anything else is written** (`AGENTS.md`).
+- [ ] No comment in `src/auth.js`, `src/drive-sync.js` or `src/sync-button.js` still says `signedIn`
+      follows the clock alone.
+- [ ] The whole browser harness shows no new failure.
+- [ ] 👤 **Laptop, deployed.** Connect, then remove Planbook's access at myaccount.google.com →
+      Security → third-party access. Back in Planbook, tap the header's sync button. The next tap asks
+      Google to sign in again rather than failing again, and About shows Connect.
+
+**Traps** — **The token stays memory-only** (`CLAUDE.md`, WO-7.1's ruling): ending the session
+writes nothing to storage, and **the opt-in survives**. A refused token is not the teacher switching
+sync off, so `planbook_driveSyncOptIn` stays set and the header button stays drawn. **Do not fix it
+in `src/sync-button.js` alone**: the About door and the harness do not go through it, and
+`signedIn` is `src/auth.js`'s to answer. **Do not treat every Drive failure as a refusal**:
+`network` and `drive` faults keep the session, and only a `401` ends it.
