@@ -2207,7 +2207,13 @@ document.addEventListener('click', (e) => {
     auth.disconnect();
     /* The opt-in goes with it (WO-7.5) — Disconnect is the deliberate way to switch sync off, and a
        teacher who has done it must not keep seeing a button about it. It is the ONLY thing that
-       clears it: a failed reconnect leaves her opted in, because she is. */
+       clears it: a failed reconnect leaves her opted in, because she is.
+
+       SIGNED OUT AS WELL AS SIGNED IN, SINCE WO-7.11. The same control is drawn on an opted-in
+       device with no token — every launch since WO-7.10 — reading "Stop syncing on this device",
+       and this is the same branch: disconnect() finds no sign-in and asks Google for nothing, and
+       forgetOptIn() tells src/auth.js, which repaints the panel it had just painted with the opt-in
+       still set. So the switch-off leaves the glass in this tap, not at the next About-open. */
     syncButton.forgetOptIn();
     afterDriveAuthChange();
     return;

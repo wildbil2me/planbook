@@ -2,7 +2,7 @@
  *
  * A section of its own rather than more of `drive-sync.mjs`, for the reason `tools/README.md` gives
  * about where a check goes: this is a different SURFACE — the header — over the same transfer, and
- * it reloads the page nine times, which that section never does. It runs directly after the two
+ * it reloads the page fourteen times, which that section never does. It runs directly after the two
  * Phase 7 sections and depends on them in one direction only: it reads the bookmark the transfer
  * section left in IndexedDB as "a device that synced before", and it hands the page back reloaded,
  * signed out, opted OUT, at the desktop viewport, with every stand-in it installed taken away.
@@ -48,7 +48,7 @@ const FAKE_GIS = `(function(){
   try { raw = sessionStorage.getItem(${JSON.stringify(FAKE_KEY)}); } catch (e) {}
   if (!raw) return;
   var cfg = JSON.parse(raw);
-  var f = window.__fakeGis = { silent: cfg.silent, visible: cfg.visible, calls: [], n: 0 };
+  var f = window.__fakeGis = { silent: cfg.silent, visible: cfg.visible, calls: [], revokes: [], n: 0 };
   window.google = { accounts: { oauth2: {
     initTokenClient: function (c) {
       return { requestAccessToken: function (o) {
@@ -80,7 +80,8 @@ const FAKE_GIS = `(function(){
         }, 60);
       } };
     },
-    revoke: function (t, cb) { if (cb) cb(); }
+    /* Counted since WO-7.11, whose signed-in tap must attempt one and whose signed-out tap none. */
+    revoke: function (t, cb) { f.revokes.push(String(t)); if (cb) cb(); }
   } } };
 })();`;
 const fakeScript = await send('Page.addScriptToEvaluateOnNewDocument', { source: FAKE_GIS });
@@ -185,6 +186,14 @@ const READ = `(function(){
     outcome: s.outcome, busy: s.busy, bad: s.bad, localRev: s.localRev, baseRev: s.baseRev,
     lastSyncedAt: s.lastSyncedAt,
     fake: window.__fakeGis ? window.__fakeGis.calls.slice() : null,
+    revokes: window.__fakeGis ? window.__fakeGis.revokes.slice() : null,
+    /* The switch-off in About's Drive section (WO-7.11): whether it is drawn, laid out, and its word. */
+    off: (function(){ var d = document.getElementById('driveDisconnectBtn');
+      return d ? { shown: !d.classList.contains('hidden'), laid: d.getClientRects().length > 0,
+        text: (d.textContent || '').trim() } : null; })(),
+    gisOnPage: !!(window.google && window.google.accounts),
+    gisScripts: document.querySelectorAll('script[src*="accounts.google.com"]').length,
+    said: ((document.getElementById('srLive') || {}).textContent || '').trim(),
     driveCalls: window.__drive ? window.__drive.calls : null,
     aboutOpen: !!(m && !m.classList.contains('hidden')),
     coarse: !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches),
@@ -383,27 +392,195 @@ check('and what reaches localStorage for it is one key holding a boolean and not
   PREF_KEY + ' = ' + JSON.stringify(storeWith[PREF_KEY]) + '; keys = '
     + JSON.stringify(Object.keys(storeWith)) + '; keys holding a token = ' + JSON.stringify(tokenish));
 
-/* Disconnect is drawn only while signed in (src/auth.js refreshAuthChrome()), and since WO-7.10 a
-   reload leaves an opted-in device signed OUT — there is no launch-time renewal to sign it back in —
-   so the teacher who wants to switch sync off connects first. Recorded as a follow-up in the WO-7.10
-   result file rather than changed here: the panel is WO-7.1's, and this work order does not own it. */
+/* ══════════ WO-7.11 — sync switches off from where a teacher is after every launch: signed out ══════════
+
+   Until WO-7.11 this block connected first, because the switch-off (About's Disconnect) was drawn only
+   while signed in and since WO-7.10 a reload leaves an opted-in device signed OUT — so the teacher who
+   wanted sync off had to finish Google's sign-in to reach the one control that clears the opt-in, and
+   offline could not do it at all. The workaround is gone: the device here is exactly that one —
+   reloaded above, opted in, no token — and the tap is made from there. Four readings, one per
+   Acceptance line the harness can close: signed out and counted at the stand-in (1), the wire after a
+   reload (4), offline with no library on the page (2), and signed in, which must still be today's
+   Disconnect (3). */
+const STOP_WORD = 'Stop syncing on this device';
+
+/* ── WO-7.11 Acceptance 1: signed out, opted in, the stand-in counting every token request ── */
+await clickSel('[data-modal-open="aboutModal"]');
+await pause(300);
+const offBefore = await read();
+
+/* THE SWITCH-OFF IN THE STATE IT IS NOW DRAWN IN, under a thumb. The touch sweep measures this
+   element signed in, as "Disconnect"; signed out it carries a longer word and sits BESIDE Connect,
+   which it never did before, in a row that does not wrap (`.modal-actions` is a plain flex row and
+   `.class-action-btn` is nowrap). So both buttons are measured at a phone and at the iPad, under a
+   coarse pointer: each 44 by 44, and the pair inside the panel with nothing scrolled sideways. */
+const ACTIONS_BOX = `(function(){
+  var p = document.querySelector('#aboutModal .modal-panel');
+  var off = document.getElementById('driveDisconnectBtn');
+  var con = document.getElementById('driveConnectBtn');
+  function b(el) { var r = el.getBoundingClientRect();
+    return { w: Math.round(r.width), h: Math.round(r.height), left: Math.round(r.left),
+      right: Math.round(r.right) }; }
+  var pr = p.getBoundingClientRect();
+  return { off: b(off), connect: b(con), panelLeft: Math.round(pr.left), panelRight: Math.round(pr.right),
+    overflow: document.documentElement.scrollWidth - window.innerWidth }; })()`;
+const offWidths = [];
+for (const [w, hgt] of [[390, 844], [834, 1194]]) {
+  await atWidth(w, hgt);
+  offWidths.push(Object.assign({ at: w }, await evalJs(ACTIONS_BOX)));
+}
+await desktop();
+const offWidthBad = offWidths.filter((m) => !(m.off.w >= 44 && m.off.h >= 44 && m.connect.h >= 44
+  && m.off.left >= m.panelLeft && m.off.right <= m.panelRight
+  && m.connect.left >= m.panelLeft && m.connect.right <= m.panelRight && m.overflow <= 0));
+check('WO-7.11 — signed out, the switch-off and Connect sit side by side, and at 390×844 and at iPad '
+  + 'width (834×1194) under a coarse pointer each is 44px tall (the switch-off 44 wide as well) and '
+  + 'both lie inside the About panel with nothing scrolled sideways',
+  offWidths.length === 2 && offWidthBad.length === 0,
+  offWidths.map((m) => m.at + ': switch-off ' + m.off.w + 'x' + m.off.h + ' at ' + m.off.left + '–'
+    + m.off.right + ', Connect ' + m.connect.w + 'x' + m.connect.h + ' at ' + m.connect.left + '–'
+    + m.connect.right + ', panel ' + m.panelLeft + '–' + m.panelRight + ', overflow ' + m.overflow)
+    .join(' · '));
+
+/* Tapped only if drawn: a click on a hidden control lands at the viewport's corner (tools/README.md
+   trap 3), and a miss must read as the red it is rather than as whatever sits there. */
+if (offBefore.off && offBefore.off.shown) await clickSel('[data-drive-disconnect]');
+const offAfter = await waitFor((r) => r.optIn === 'false' && r.hidden === true, 3000);
+await pause(150);
+const offSaid = await read();
+await shutModals();
+check('WO-7.11 Acceptance 1 — on an opted-in device with NO token, About draws the switch-off, worded for '
+  + 'the state ("Stop syncing on this device", not "Disconnect" under "Not connected"), and one tap clears '
+  + 'the opt-in, takes the header button off in the same tap and the switch-off off the open panel, and '
+  + 'makes NO token request and no revoke — counted at the stand-in, as in WO-7.10',
+  offBefore.aboutOpen === true && offBefore.signedIn === false && offBefore.optIn === 'true'
+    && offBefore.hidden === false && !!offBefore.off && offBefore.off.shown === true
+    && offBefore.off.laid === true && offBefore.off.text === STOP_WORD
+    && /^Not connected\./.test(offBefore.statusText)
+    && offAfter.optIn === 'false' && offAfter.hidden === true && offAfter.aboutOpen === true
+    && offAfter.off.shown === false && offAfter.signedIn === false
+    && Array.isArray(offAfter.fake) && offAfter.fake.length === offBefore.fake.length
+    && offAfter.revokes.length === offBefore.revokes.length
+    && offAfter.authError === '' && offAfter.statusClass === 'class-hint'
+    && /^Google Drive sync is off on this device\./.test(offSaid.said) && !/Signed out/.test(offSaid.said),
+  'before the tap: signed in = ' + offBefore.signedIn + ', opt-in = ' + JSON.stringify(offBefore.optIn)
+    + ', switch-off = ' + JSON.stringify(offBefore.off) + ', status '
+    + JSON.stringify(offBefore.statusText.slice(0, 40)) + '; after: opt-in = ' + JSON.stringify(offAfter.optIn)
+    + ', header button hidden = ' + offAfter.hidden + ', switch-off = ' + JSON.stringify(offAfter.off)
+    + ', token requests ' + (offBefore.fake || []).length + ' → ' + (offAfter.fake || []).length
+    + ', revokes ' + (offBefore.revokes || []).length + ' → ' + (offAfter.revokes || []).length
+    + ', announced ' + JSON.stringify(offSaid.said));
+
+/* ── WO-7.11 Acceptance 4: the next launch is a never-opted-in device's, from the wire ──
+
+   The measurement the never-connected check at the top of this section makes, with no stand-in on the
+   page — and its positive control is the check just after that one: the same reload with the opt-in
+   set asks for /gsi/client, so a zero here is a request that was not made rather than a recorder that
+   was not listening. Google is blocked at the browser either way, so no real Google code runs on this
+   page; a blocked request is still on the wire. */
+await clearFake();
+netLog.length = 0;
+await send('Network.enable');
+await send('Network.setBlockedURLs', { urls: ['*accounts.google.com*'] });
+await reload();
+await visible();
+await pause(1500);
+const offReload = await read();
+const googleOffReload = netLog.filter((r) => /^https?:\/\/accounts\.google\.com\//i.test(r.url));
+const ownOffReload = netLog.filter((r) => r.url.indexOf('http://127.0.0.1:') === 0);
+check('WO-7.11 Acceptance 4 — a reload after switching off fetches nothing from Google: through the launch '
+  + 'and a return to view /gsi/client is absent from the wire (no request to accounts.google.com at all), '
+  + 'no Google script is on the page, and the header has no sync button — exactly a device that never '
+  + 'opted in',
+  googleOffReload.length === 0 && ownOffReload.length > 5 && offReload.optIn === 'false'
+    && offReload.hidden === true && offReload.fake === null && offReload.gisOnPage === false
+    && offReload.gisScripts === 0 && offReload.laidButtons.indexOf('syncBtn') < 0,
+  googleOffReload.length + ' request(s) to accounts.google.com ('
+    + JSON.stringify(googleOffReload.map((r) => r.url).slice(0, 3)) + ') and ' + ownOffReload.length
+    + ' to this origin; opt-in = ' + JSON.stringify(offReload.optIn) + ', header button hidden = '
+    + offReload.hidden + ', Google on the page = ' + offReload.gisOnPage + ', script tags = '
+    + offReload.gisScripts);
+
+/* ── WO-7.11 Acceptance 2: the same tap with the network refused ──
+
+   Opted in again and reloaded with Google still blocked and no stand-in, so the launch's preload fails
+   and the library is NOT on the page — an offline launch on a real device. Then the browser is taken
+   offline outright and the tap is made with the wire recorder cleared: the claim is that the switch-off
+   needs nothing from any network, so the wire during it is asserted EMPTY, not merely free of Google. */
+await setOptIn(true);
+await reload();
+await waitFor((r) => r.hidden === false && ['current', 'ahead', 'stale'].indexOf(r.state) >= 0, 6000);
+const OFFLINE = { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 };
+const ONLINE = { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 };
+await send('Network.emulateNetworkConditions', OFFLINE);
+await clickSel('[data-modal-open="aboutModal"]');
+await pause(300);
+const offlineBefore = await read();
+const onLineFlag = await evalJs('navigator.onLine');
+netLog.length = 0;
+if (offlineBefore.off && offlineBefore.off.shown) await clickSel('[data-drive-disconnect]');
+const offlineAfter = await waitFor((r) => r.optIn === 'false' && r.hidden === true, 3000);
+await pause(300);
+const offlineWire = netLog.slice();
+await shutModals();
+await send('Network.emulateNetworkConditions', ONLINE);
+await send('Network.setBlockedURLs', { urls: [] });
+await send('Network.disable');
+check('WO-7.11 Acceptance 2 — with the network refused (the browser offline, Google’s library never '
+  + 'loaded), the same tap still clears the opt-in and takes the header button away, and the wire is '
+  + 'empty for the length of it: no request of any kind, to Google or anywhere else',
+  onLineFlag === false && offlineBefore.gisOnPage === false && offlineBefore.signedIn === false
+    && offlineBefore.optIn === 'true' && offlineBefore.hidden === false && !!offlineBefore.off
+    && offlineBefore.off.shown === true && offlineBefore.off.text === STOP_WORD
+    && offlineAfter.optIn === 'false' && offlineAfter.hidden === true && offlineAfter.off.shown === false
+    && offlineWire.length === 0 && offlineAfter.gisOnPage === false,
+  'navigator.onLine = ' + onLineFlag + ', Google on the page = ' + offlineBefore.gisOnPage
+    + '; before: opt-in ' + JSON.stringify(offlineBefore.optIn) + ', switch-off '
+    + JSON.stringify(offlineBefore.off) + '; after: opt-in ' + JSON.stringify(offlineAfter.optIn)
+    + ', header button hidden = ' + offlineAfter.hidden + '; requests during the tap = '
+    + JSON.stringify(offlineWire.map((r) => r.url).slice(0, 3)) + ' (' + offlineWire.length + ')');
+
+/* ── WO-7.11 Acceptance 3: signed in, the tap is today's Disconnect ── */
+await setFake('grant', 'grant');
+await reload();
 await clickSel('[data-modal-open="aboutModal"]');
 await pause(300);
 await clickSel('[data-drive-connect]');
-await waitFor((r) => r.signedIn && !r.authBusy, 4000);
+const inBefore = await waitFor((r) => r.signedIn && !r.authBusy && r.optIn === 'true', 4000);
+const heldToken = await evalJs('window.planbook.auth.accessToken()');
 await clickSel('[data-drive-disconnect]');
-const disconnected = await waitFor((r) => r.hidden === true, 3000);
+const inAfter = await waitFor((r) => r.optIn === 'false' && r.hidden === true, 3000);
+await pause(150);
+const inSaid = await read();
+const tokenAfter = await evalJs('window.planbook.auth.accessToken()');
 await shutModals();
+const revoked = (inAfter.revokes || []).slice((inBefore.revokes || []).length);
+check('WO-7.11 Acceptance 3 — signed in, the switch-off reads "Disconnect" and does what Disconnect '
+  + 'always did: the token is dropped, a revoke of THAT token is attempted, the opt-in is cleared, and '
+  + 'the header button leaves in the same tap — with no token request of its own',
+  inBefore.signedIn === true && !!inBefore.off && inBefore.off.shown === true
+    && inBefore.off.text === 'Disconnect' && typeof heldToken === 'string' && heldToken !== ''
+    && inAfter.signedIn === false && tokenAfter === null
+    && revoked.length === 1 && revoked[0] === heldToken
+    && inAfter.optIn === 'false' && inAfter.hidden === true && inAfter.off.shown === false
+    && Array.isArray(inAfter.fake) && inAfter.fake.length === inBefore.fake.length
+    && /^Signed out of Google Drive\./.test(inSaid.said),
+  'before: signed in = ' + inBefore.signedIn + ', switch-off ' + JSON.stringify(inBefore.off)
+    + '; after: signed in = ' + inAfter.signedIn + ', token held = ' + (tokenAfter === null ? 'none' : 'STILL')
+    + ', revokes made by the tap = ' + revoked.length + (revoked.length ? (revoked[0] === heldToken
+      ? ' (of the token that was held)' : ' (of a DIFFERENT token)') : '') + ', opt-in = '
+    + JSON.stringify(inAfter.optIn) + ', header button hidden = ' + inAfter.hidden
+    + ', token requests during the tap = ' + ((inAfter.fake || []).length - (inBefore.fake || []).length)
+    + ', announced ' + JSON.stringify(inSaid.said));
+
 await reload();
 const stayedOut = await read();
-check('Disconnect clears it — the stored value becomes `false`, the button leaves the header in the '
-  + 'same tap, and after a reload the header is today’s and nothing is asked of the library',
-  disconnected.optIn === 'false' && disconnected.hidden === true
-    && stayedOut.optIn === 'false' && stayedOut.hidden === true
+check('and after a reload the header is today’s and nothing is asked of the library — the opt-in still '
+  + 'reads `false`',
+  stayedOut.optIn === 'false' && stayedOut.hidden === true
     && Array.isArray(stayedOut.fake) && stayedOut.fake.length === 0,
-  'after the tap: opt-in = ' + JSON.stringify(disconnected.optIn) + ', hidden = '
-    + disconnected.hidden + '; after a reload: opt-in = ' + JSON.stringify(stayedOut.optIn)
-    + ', hidden = ' + stayedOut.hidden + ', requests = ' + JSON.stringify(stayedOut.fake));
+  'after a reload: opt-in = ' + JSON.stringify(stayedOut.optIn) + ', hidden = ' + stayedOut.hidden
+    + ', requests = ' + JSON.stringify(stayedOut.fake));
 
 /* ══════════ the widths — Acceptance 4, measured in every state as it is reached ══════════ */
 
@@ -1097,11 +1274,24 @@ check('and at phone width a tap on the badged About opens it at the Drive sectio
 await save(originalSchool);
 await clickSel('[data-modal-open="aboutModal"]');
 await pause(300);
-/* Only if it is drawn: after the reloads above this device is signed out (WO-7.10), Disconnect is
-   hidden, and a click on a hidden control lands at the viewport's corner (tools/README.md trap 3).
-   The opt-in is cleared by hand on the next line either way. */
-if ((await read()).signedIn) await clickSel('[data-drive-disconnect]');
+/* Switched off THROUGH THE SWITCH-OFF, from the state the reloads above leave it in: opted in and
+   signed out (WO-7.10). Until WO-7.11 this line clicked Disconnect only if a sign-in happened to be
+   standing, because signed out it was not drawn; now it is, so the hand-back is the teacher's own
+   tap. Still guarded — a click on a hidden control lands at the viewport's corner (tools/README.md
+   trap 3) — and the key is still removed by hand below, because "opted out" and "never opted in" are
+   two different stored states and this section hands back the second. */
+const handOff = await read();
+if (handOff.off && handOff.off.shown) await clickSel('[data-drive-disconnect]');
+const handedOff = await waitFor((r) => r.optIn === 'false' && r.hidden === true, 3000);
 await shutModals();
+check('WO-7.11 — and the section switches sync off the way a teacher now can after any launch: from '
+  + 'signed out, with the switch-off drawn as "Stop syncing on this device", one tap and the header '
+  + 'button is gone',
+  handOff.signedIn === false && handOff.optIn === 'true' && !!handOff.off && handOff.off.shown === true
+    && handOff.off.text === STOP_WORD && handedOff.optIn === 'false' && handedOff.hidden === true,
+  'before: signed in = ' + handOff.signedIn + ', opt-in = ' + JSON.stringify(handOff.optIn)
+    + ', switch-off = ' + JSON.stringify(handOff.off) + '; after: opt-in = '
+    + JSON.stringify(handedOff.optIn) + ', header button hidden = ' + handedOff.hidden);
 await setOptIn(null);
 await clearFake();
 await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: fakeScript.identifier });

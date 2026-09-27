@@ -1087,7 +1087,7 @@ header or in About may read *safe* because a tap now does two things.
 
 ## WO-7.11 — after a reload, sync cannot be switched off without signing in first
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.1 — the panel whose Disconnect this redraws; WO-7.5 — the opt-in that Disconnect clears
+**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-7.1 — the panel whose Disconnect this redraws; WO-7.5 — the opt-in that Disconnect clears
 **Closes roadmap** *(no box. Phase 7's boxes are closed by WO-7.1, WO-7.2 and WO-7.3; this repairs a consequence of WO-7.10 on top of them.)*
 
 **Booked 2026-09-26**, owner-directed, from WO-7.10's verdict. **WO-7.10's code is in the tree and
@@ -1121,15 +1121,15 @@ WO-7.10; the laptop's launch renewal usually hid it.
   signed-out state as well, which is the state a teacher is in after every launch.
 
 **Acceptance**
-- [ ] On an opted-in device with no token, About draws the switch-off control, and a tap clears the
+- [x] On an opted-in device with no token, About draws the switch-off control, and a tap clears the
       opt-in, removes the header button and makes **no** token request (stub count, as in WO-7.10).
       Asserted in the harness.
-- [ ] With the network refused, the same tap still clears the opt-in. Asserted in the harness.
-- [ ] Signed in, the tap behaves exactly as Disconnect does today — token dropped, revoke attempted,
+- [x] With the network refused, the same tap still clears the opt-in. Asserted in the harness.
+- [x] Signed in, the tap behaves exactly as Disconnect does today — token dropped, revoke attempted,
       opt-in cleared. Asserted in the harness.
-- [ ] A reload after switching off fetches nothing from Google (`/gsi/client` absent from the wire).
+- [x] A reload after switching off fetches nothing from Google (`/gsi/client` absent from the wire).
       Asserted in the harness.
-- [ ] Mutation-proved: putting back `!state.signedIn` as the only condition for drawing the control
+- [x] Mutation-proved: putting back `!state.signedIn` as the only condition for drawing the control
       turns the first line red. **The mutation is reverted before anything else is written**
       (`AGENTS.md`).
 - [ ] 👤 **iPad, home-screen app, deployed**, force-quit first: About shows the switch-off control at

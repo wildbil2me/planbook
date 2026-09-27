@@ -372,7 +372,7 @@ const BROWSER_SECTIONS = [
   { file: 'verify/drive-sync.mjs', run: driveSync },
   /* AND THE HEADER'S READING OF THE TWO SECTIONS ABOVE (WO-7.5), directly after them for their
      reason: it reads the bookmark the transfer section left as "a device that synced before". It
-     reloads the page nine times and installs two page-start scripts of its own, and it takes both
+     reloads the page fourteen times and installs two page-start scripts of its own, and it takes both
      away and hands the page back reloaded, signed out and opted out, asserting that it did. */
   { file: 'verify/sync-button.mjs', run: syncButton },
   { file: 'verify/log-entries.mjs', run: logEntries },

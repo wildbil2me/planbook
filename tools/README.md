@@ -1223,7 +1223,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1532 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1538 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2128,6 +2128,20 @@ draws `lapsed` with About in red, the tapped success clears both halves, and the
 the sync half). The run prints **1543**: `1543 checks · 1543 passed · 0 failed · 0 skipped`, 48,531
 lines, 31.5 lines per check, 571s, exit 0, measured 2026-09-26 on the real clock. Mutation round in
 `TESTING.md` § WO-7.10.
+
+**WO-7.11 moved it from 1532 to 1538, and the executed count from 1543 to 1549 — seven sites added and
+one taken out, six results net.** All in `verify/sync-button.mjs`, all literal, none in a loop and none
+a failure arm, so the gap stays at −11 and the file count does not move. The one removed is WO-7.5's
+*"Disconnect clears it"*, which connected first because the switch-off was not drawn signed out; the
+seven are the switch-off measured under a thumb at 390 and 834 beside Connect, the four Acceptance
+readings (signed out at the stand-in, the wire after a reload, offline, signed in), the reload after
+the signed-in tap, and the section's own hand-back, which now switches sync off through the control
+rather than only if a sign-in happened to be standing. The run prints **1549**: `1549 checks · 1546
+passed · 3 failed · 0 skipped`, 576s, exit 1, measured 2026-09-26 at ~22:40 EDT on the real clock —
+**the three failures are `verify/date-zero-key.mjs`'s, and they fail identically on the unmodified
+`HEAD`** (`1543 checks · 1540 passed · 3 failed`, run from a `git worktree` of `8ef1b81` at ~22:15
+EDT the same evening), so they are not this work order's and are recorded in its result file rather
+than repaired here. Mutation round in `TESTING.md` § WO-7.11.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

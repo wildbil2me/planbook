@@ -210,8 +210,10 @@ export const PREF_DEFAULTS = {
   mailDoor: 'default',
 
   /* This device has opted into Google Drive sync: `true` from the first Connect that succeeds, and
-     back to `false` the moment Disconnect is tapped (WO-7.5). src/sync-button.js is the only reader
-     and the only writer, and it is what the header's sync button is drawn on.
+     back to `false` the moment Disconnect is tapped (WO-7.5) — signed in or not since WO-7.11, when
+     the same control reads "Stop syncing on this device". src/sync-button.js is the only reader and
+     the only writer, and it is what the header's sync button is drawn on; src/auth.js is TOLD the
+     value (noteSyncOptIn) and never reads the key.
 
      IT IS NOT A CREDENTIAL, and that is the whole of why it may live here. It records that the
      teacher CHOSE sync on this device — never a token, never an account, never anything she could

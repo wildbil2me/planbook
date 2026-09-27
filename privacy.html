@@ -284,7 +284,12 @@
          WO-7.10 (2026-09-26) took the renewal out — it opened a Google sign-in window with no tap
          behind it — and kept the launch-time load, which now asks Google for nothing; so the clause
          about renewing "without a tap" went, in both documents in the same sitting, and a sign-in is
-         now requested only by a tap (Connect, or the header's sync button). -->
+         now requested only by a tap (Connect, or the header's sync button). WO-7.11 (2026-09-26)
+         made the opt-in withdrawable with no sign-in — About draws the switch-off on an opted-in
+         device whether or not it holds a token ("Disconnect" signed in, "Stop syncing on this
+         device" signed out), and the signed-out tap asks Google for nothing — so "until Disconnect
+         is tapped" became "until sync is switched off in About", in both documents in the same
+         sitting. -->
     <p>
       <strong>Nothing leaves it on its own.</strong> Loading the page fetches Planbook's own files
       from the website, the way any web page does, and the browser checks those same files for
@@ -292,8 +297,9 @@
       tracking, no error reporting, no advertising, and no third-party code of any kind — unless
       Google Drive sync is turned on, when Google's own sign-in library loads from
       accounts.google.com. It loads first when Connect is tapped. After that, on that device, it
-      loads each time Planbook opens, until Disconnect is tapped — and Planbook asks Google for a
-      sign-in only when Connect or the sync button is tapped. On a device where Connect has never
+      loads each time Planbook opens, until sync is switched off in About — which needs no network
+      and no sign-in — and Planbook asks Google for a sign-in only when Connect or the sync button is
+      tapped. On a device where Connect has never
       been tapped, nothing is fetched from Google.
     </p>
     <p>

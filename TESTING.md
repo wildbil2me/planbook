@@ -11976,6 +11976,69 @@ window open and whose teacher closes it unfinished. What it read, step by step:
 `45 checks · 42 passed · 0 failed · 3 to review` (the three standing REVIEWs), § 11 reading 1532 call
 sites.
 
+### WO-7.11 — after a reload, sync cannot be switched off without signing in first
+
+**The switch-off is drawn on an opt-in as well as on a sign-in.** `refreshAuthChrome()` in
+`src/auth.js` draws `#driveDisconnectBtn` on `signedIn || syncOptedIn`, and words it for the state:
+*Disconnect* signed in (unchanged), *Stop syncing on this device* signed out. `src/auth.js` does not
+read the preference — `src/sync-button.js` tells it through a new `noteSyncOptIn()`, at `start()` and
+in `forgetOptIn()`, and that call repaints the panel, so the control leaves the open About in the same
+tap. `disconnect()` revokes only when `fresh()`, so the signed-out path reaches no `window.google`, no
+`loadGis()` and no token request, and it announces *"Google Drive sync is off on this device. Nothing
+here or in your Google Drive changed."* instead of *"Signed out"*. `privacy.html` and `docs/FERPA.md`:
+*"until Disconnect is tapped"* became *"until sync is switched off in About — which needs no network
+and no sign-in —"*, identically, same sitting. `CACHE` v138 → v139.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-7-sync.md` § WO-7.11, from
+`node tools/verify-shell.mjs`, § "the header sync button (WO-7.5)".*
+
+- [x] **Acceptance 1 — opted in, no token: drawn, and the tap clears the opt-in with no token
+      request.** Before: `signed in = false, opt-in = "true", switch-off = {"shown":true,"laid":true,
+      "text":"Stop syncing on this device"}`, status *"Not connected…"*. After, read with About still
+      open: `opt-in = "false", header button hidden = true, switch-off shown = false, token requests
+      0 → 0, revokes 0 → 0`, announced *"Google Drive sync is off on this device…"*. Measured beside
+      Connect under a coarse pointer: `390: switch-off 164x44, Connect 138x44, inside the panel 20–370,
+      overflow 0 · 834: 183x44 / 153x44, inside 177–657, overflow 0`.
+- [x] **Acceptance 2 — network refused.** Reloaded opted in with Google blocked and no stand-in, then
+      `Network.emulateNetworkConditions` offline: `navigator.onLine = false, Google on the page =
+      false`; the tap: `opt-in "false", header button hidden = true; requests during the tap = [] (0)`
+      — the wire empty of every request, not only Google's.
+- [x] **Acceptance 3 — signed in, today's Disconnect.** `switch-off text "Disconnect"`; after: `signed
+      in = false, token held = none, revokes made by the tap = 1 (of the token that was held), opt-in =
+      "false", header button hidden = true, token requests during the tap = 0`, announced *"Signed out
+      of Google Drive. Nothing on this device changed."*.
+- [x] **Acceptance 4 — the reload after.** No stand-in, Google blocked at the browser, a launch and a
+      return to view: `0 request(s) to accounts.google.com ([]) and 69 to this origin; opt-in =
+      "false", header button hidden = true, Google on the page = false, script tags = 0`. Its positive
+      control is the section's WO-7.10 check that the same reload opted in does put `/gsi/client` on
+      the wire.
+- [x] **Acceptance 5 — mutation-proved, each reverted before anything else was written.** Backed up
+      to the scratchpad and restored by copy, each restore checked with `cmp` and `grep -rn MUTATION`.
+      Runs are the Phase 7 sections only (`localstorage-prefs`, `drive-sign-in`, `drive-sync`,
+      `sync-button`) through a scratch copy of the entry outside the repository, taken before the 390/834
+      measurement was added (so one check fewer than the committed section); that subset's
+      unmutated baseline is `103 checks · 98 passed · 5 failed`, the five being the four WO-7.7 checks
+      and the one `drive-sign-in` check that need fixtures from sections that did not run (the same
+      five WO-7.10 named). **M1** — `!state.signedIn` put back as the only condition: `103 · 94 · 9
+      failed`, **Acceptance 1 among them**, and 2, 4 and the hand-back with it (the tap was never
+      made); Acceptance 3 stayed green, as it should. **M2** — the Trap: the handler calls
+      `auth.reconnect()` first when signed out: `103 · 96 · 7 failed`, Acceptance 1 (a token request
+      at the stand-in) and Acceptance 2 (a request on an offline wire). **M3** — `noteSyncOptIn()`
+      without its repaint: `103 · 95 · 8 failed`, Acceptances 1, 2 and 3 — the switch-off stayed on the
+      open panel after the tap, which is WO-7.2's "until About is reopened" exactly.
+- [ ] 👤 **iPad, home-screen app, deployed**, force-quit first — owed.
+
+**Both tools.** `node tools/verify-shell.mjs`: `1549 checks · 1546 passed · 3 failed · 0 skipped`,
+576s, exit 1, 2026-09-26 ~22:40 EDT, real clock. **The three are `verify/date-zero-key.mjs`'s**
+(the `0`-key date-field checks) **and fail identically on unmodified `HEAD`** — `1543 · 1540 · 3
+failed` from a `git worktree` of `8ef1b81` at ~22:15 EDT — so they are not this work order's. One
+more, intermittent: `verify/drive-sync.mjs`'s *"a sign-in that has already run out…"* failed in 2 of
+14 runs of this tree (Connect read hidden) and passed in all 4 of `HEAD`; a trace over eight more runs
+of this tree never caught it, and the likeliest cause is `verify/drive-sign-in.mjs`'s real Connect
+tap, whose `connect()` is still waiting on the live Google library when the next section seeds a
+token. It passed in the counted run. `node tools/wo-sweep.mjs`: `45 checks · 42 passed · 0 failed ·
+3 to review`, § 11 reading 1538 call sites.
+
 ---
 
 ## Phase 8 — 1.0 packaging

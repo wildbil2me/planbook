@@ -2224,6 +2224,10 @@
                sweep in tools/verify-shell.mjs measures it in the state it is drawn in rather than
                the state it rests in. -->
           <button class="class-action-btn primary hidden" id="driveSyncBtn" data-drive-sync>Sync this year now</button>
+          <!-- The switch-off (WO-7.11), painted by src/auth.js refreshAuthChrome(): drawn on a sign-in
+               OR on an opted-in device with no token, and its word is written there — "Disconnect"
+               signed in, "Stop syncing on this device" signed out. The word below is the first one
+               only because the element has to say something before it is painted. -->
           <button class="class-action-btn hidden" id="driveDisconnectBtn" data-drive-disconnect>Disconnect</button>
         </div>
         <!-- Written by src/drive-sync.js and empty here for #driveStatus's reason one element up:

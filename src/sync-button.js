@@ -154,11 +154,17 @@ export function rememberOptIn() {
   refreshSyncButton();
 }
 
-/* Cleared by Disconnect, and by nothing else — a failed reconnect leaves a teacher opted in, because
-   she is: the button stays, and its next tap asks again. */
+/* Cleared by About's switch-off — "Disconnect" signed in, "Stop syncing on this device" signed out,
+   one control (WO-7.11) — and by nothing else. A failed reconnect leaves a teacher opted in, because
+   she is: the button stays, and its next tap asks again.
+
+   AND src/auth.js IS TOLD, both here and in start() (which rememberOptIn() reaches), because the
+   About panel draws that switch-off on the opt-in as well as on a sign-in and auth.js does not read
+   the preference — see `syncOptedIn` there. Told the value READ BACK, for rememberOptIn()'s reason. */
 export function forgetOptIn() {
   setPref(PREF, false);
   tapFailed = false;
+  auth.noteSyncOptIn(optedIn());
   refreshSyncButton();
 }
 
@@ -443,6 +449,8 @@ function prime() {
   its header cannot be moved by anything in this file.
 */
 export function start() {
+  /* Before the early return, so a device that never opted in tells auth.js so too (WO-7.11). */
+  auth.noteSyncOptIn(optedIn());
   refreshSyncButton();
   if (!optedIn()) return;
 

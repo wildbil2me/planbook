@@ -168,6 +168,21 @@ let session = null;
 let lastError = '';
 /* True while a request is out. Guards a second popup, and greys the button. */
 let busy = false;
+/*
+  WHETHER THIS DEVICE HAS OPTED INTO SYNC, AS src/sync-button.js LAST SAID (WO-7.11). Not the opt-in
+  itself — that is the `driveSyncOptIn` preference, and src/sync-button.js is its only reader and
+  writer — but what that module told this one, through noteSyncOptIn() below. The panel needs it
+  because the control that switches sync off has to be drawn on an opted-in device with no token,
+  which since WO-7.10 is every launch; see refreshAuthChrome() for the decision it drives.
+
+  TOLD, NOT READ — and that is the point of departure the header's "imports src/live-region.js and
+  nothing else" forces. The two other shapes both cost that sentence something: importing
+  src/prefs.js puts a second module behind this one's one import, and reading the stored
+  `planbook_driveSyncOptIn` key directly here makes a second reader of a key src/prefs.js says has
+  one — and a second door to browser storage in a file that has never had one. A boolean handed in keeps the dependency pointing from sync-button.js to here, as it always
+  has, and dies with the page like everything else in this block.
+*/
+let syncOptedIn = false;
 
 /* The GIS loader and the token client are each created once and reused. `pending` is the resolve
    of the request in flight — GIS answers through callbacks it was handed at init time, so the
@@ -592,9 +607,18 @@ export async function reconnect() {
 
   It touches no year document, and it cannot: this file imports src/live-region.js and nothing
   else. That is the whole implementation of "sign-out leaves the local document untouched".
+
+  AND WITH NO SIGN-IN IT ASKS GOOGLE FOR NOTHING (WO-7.11). Since WO-7.10 every launch starts with
+  no token, so this is also the tap that switches sync off on a device that is not signed in — and
+  a teacher offline, or whose Workspace admin blocks Google, is the case it exists for. So the revoke
+  is made only when there is a sign-in to revoke, read as fresh() — the same test that draws
+  "Connected" on the panel — and on the other path nothing reaches `window.google`, loadGis() or a
+  token request. A token in its last minute is signed out by that test and is left to lapse on its
+  own, which is what the comment below already accepts of a revoke that fails. The announcement
+  follows the path: "signed out" is the wrong sentence when nothing was signed in.
 */
 export function disconnect() {
-  const token = session && session.token;
+  const token = fresh() ? session.token : null;
   session = null;
   lastError = '';
   busy = false;
@@ -611,8 +635,24 @@ export function disconnect() {
   }
 
   refreshAuthChrome();
-  announce('Signed out of Google Drive. Nothing on this device changed.');
+  announce(token
+    ? 'Signed out of Google Drive. Nothing on this device changed.'
+    : 'Google Drive sync is off on this device. Nothing here or in your Google Drive changed.');
   return true;
+}
+
+/*
+  What src/sync-button.js tells this module about the opt-in — see `syncOptedIn` above. Called at
+  launch (start()), and whenever the preference is set or cleared, and it REPAINTS THE PANEL ITSELF:
+  the Disconnect branch in src/shell.js clears the opt-in after disconnect() has already painted, so
+  a panel that waited for the next About-open to learn the answer would leave the switch-off drawn
+  under a tap that had just taken effect — WO-7.2's "the panel lies until About is reopened", which
+  src/shell.js's click handler records. refreshAuthChrome() returns early when the panel is not on
+  the page, so a call before the modal exists costs nothing.
+*/
+export function noteSyncOptIn(on) {
+  syncOptedIn = on === true;
+  refreshAuthChrome();
 }
 
 /*
@@ -737,5 +777,23 @@ export function refreshAuthChrome() {
     connectBtn.classList.toggle('hidden', state.signedIn);
     connectBtn.disabled = state.busy;
   }
-  if (disconnectBtn) disconnectBtn.classList.toggle('hidden', !state.signedIn);
+  /*
+    THE SWITCH-OFF IS DRAWN ON A SIGN-IN OR ON AN OPT-IN, and the second half is WO-7.11. Until then
+    it was drawn on `state.signedIn` alone, and it is the only thing that clears the opt-in — so after
+    WO-7.10 made every launch a sign-out, a teacher had to finish Google's sign-in in order to switch
+    sync off, and offline or behind an admin's block she could not switch it off at all.
+
+    ONE ELEMENT, TWO WORDS — the point of departure the work order left to the build. Signed in it
+    keeps "Disconnect": it signs out, revokes and switches sync off, and it sits under "Connected to
+    Google Drive", where the word is the plain answer. Signed out it says what it does, "Stop syncing
+    on this device", because "Disconnect" under "Not connected" reads as nonsense and invites a
+    teacher to wonder what it would disconnect. Neither word says delete, remove or Drive-file: the
+    copy in Drive is untouched either way and so is the year on this device, and the words keep that
+    true by never claiming otherwise. Written here rather than in index.html for #driveStatus's
+    reason — it is a fact about the state, and a word typed into the markup would be a claim.
+  */
+  if (disconnectBtn) {
+    disconnectBtn.classList.toggle('hidden', !(state.signedIn || syncOptedIn));
+    disconnectBtn.textContent = state.signedIn ? 'Disconnect' : 'Stop syncing on this device';
+  }
 }

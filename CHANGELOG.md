@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Sync can be switched off without signing in first — 2026-09-27
+
+Since every launch now starts signed out, a device that had opted into Drive sync could only be
+switched off by signing in to Google first, just to press Disconnect. About now shows **Stop syncing
+on this device** beside Connect whenever this device is opted in. One tap switches sync off and the
+header's sync button goes away, with no Google window and no network needed. When you are signed in,
+the tap still signs you out of Google as Disconnect did. The privacy policy says so. (WO-7.11 —
+verified in the harness, and drawing the control only when signed in turned it red. Four harness
+checks are red, and they are red on the previous commit too. The iPad reading on the deployed app is
+still owed.)
+
 ### Google Drive no longer asks to sign you in by itself — 2026-09-26
 
 On a device that syncs, Planbook used to try to renew the Google sign-in every time it opened or came
