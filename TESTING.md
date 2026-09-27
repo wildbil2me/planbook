@@ -12348,10 +12348,10 @@ lines that matter are quoted.*
       drive-sign-in's `connect()` still leaks into the section. `node tools/wo-sweep.mjs`: `45
       checks · 42 passed · 0 failed · 3 to review`, after `tools/README.md`'s call-site line went
       from 1539 to 1540.
-- [ ] 👤 **Laptop, deployed or local.** Owed to the owner. Connect, open About, leave it open until
-      the token lapses (about an hour; `signedIn` turns false a minute early), tap *Sync this year
-      now*. Connect should be drawn and the line should not say Connected. On the laptop, check
-      `location.origin` first (WO-7.7's note in `CLAUDE.md`).
+- [x] 👤 **Laptop, deployed.** Read by the owner on 2026-09-27 at v140 on
+      `https://planbook.hwgteach.com`. Connect, About left open until the token lapsed, then *Sync this
+      year now*. No error. Connect Google Drive was drawn where the sync button had been, and the
+      status line read *Not connected*.
 
 ---
 

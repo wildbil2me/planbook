@@ -1241,7 +1241,7 @@ the first cut refused to land.
 
 ## WO-7.13 — a sign-in that lapses with About open leaves the panel saying Connected
 
-**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-7.2 — the `syncNow()` this repaints from; WO-7.1 — the `refreshAuthChrome()` it calls
+**Ship** — · **Status** ✅ DONE — 2026-09-27 · **Size** S · **Depends on** WO-7.2 — the `syncNow()` this repaints from; WO-7.1 — the `refreshAuthChrome()` it calls
 **Closes roadmap** *(no box. A defect in WO-7.2's fifth Acceptance line, found by WO-7.12's first cut and confirmed by its verifier's reading.)*
 
 **Booked 2026-09-27**, owner-directed, from WO-7.12's verdict. WO-7.12 was booked as a harness race.
@@ -1290,7 +1290,7 @@ a paint made about 340 lines earlier.
       `TESTING.md` § WO-7.13.
 - [x] The whole browser harness shows no new failure. Name WO-7.12's check as the one known flake
       if it goes red; it is no longer expected to.
-- [ ] 👤 **Laptop, deployed or local.** Connect, open About, leave it open past the hour (or until the
+- [x] 👤 **Laptop, deployed or local.** Connect, open About, leave it open past the hour (or until the
       token lapses), tap *Sync this year now*: Connect is drawn and the line does not say Connected.
 
 **Two questions for the owner, not for the build**. The implementer changes neither.

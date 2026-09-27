@@ -19,7 +19,7 @@ If About was open when the hour-long Google sign-in ran out, tapping *Sync this 
 showed "Connected" and kept the Connect button hidden. The sync correctly refused to run, but only
 half of the panel was redrawn. Now every sync redraws the sign-in half as well, so the Connect button
 comes back as soon as it is needed. (WO-7.13 — harness green at 1551/1551 and red with the fix
-removed; mutation-proved. The laptop reading past the hour is still owed.)
+removed; mutation-proved. Read by the owner on the laptop at v140 after the token lapsed.)
 
 ### A harness section that fails no longer changes how later ones run — 2026-09-27
 
