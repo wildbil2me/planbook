@@ -1166,7 +1166,8 @@ about withdrawing the opt-in, both change in the same sitting (`CLAUDE.md` § Ac
 **Closes roadmap** *(no box. A harness race, found by WO-7.11's implementer and confirmed red on unmodified `HEAD` by its verifier.)*
 
 **Booked 2026-09-27**, owner-directed, from WO-7.11's verdict, as a 🎒 on
-`tools/verify/drive-sync.mjs`. `verify/drive-sync.mjs`'s check *"a sign-in that has already run out
+`tools/verify/drive-sync.mjs` — *and taken off it the same day*: it failed again in the next
+whole-harness run, and the owner put it between WO-1.55 and WO-7.9, which builds on these checks. `verify/drive-sync.mjs`'s check *"a sign-in that has already run out
 when the teacher taps Sync produces the re-auth prompt…"* (~906) failed in 2 of 14 runs of WO-7.11's
 tree with **Connect read as hidden**, and once on `8ef1b81` in the verifier's run. The implementer's
 account, **a claim and not a finding**: `verify/drive-sign-in.mjs`, which runs directly before, ends
