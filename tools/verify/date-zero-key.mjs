@@ -182,6 +182,66 @@ console.log('\n--- a `0` typed into a date field (WO-1.47) ---');
       await new Promise(r => setTimeout(r, 250));
       await clickSel('#assignmentsView [data-assignment-edit="a_wo147"]');
       await new Promise(r => setTimeout(r, 250));
+
+      /*
+        THE KEYS ARE TYPED ON A KEYBOARD DEVICE, NOT ON AN EMULATED TABLET (WO-1.55). From Edge
+        154.0.4258.37 — which this machine ran from the evening of 2026-09-26, after WO-7.10's
+        all-green run on 153 — a `<input type="date">` under `Emulation.setTouchEmulationEnabled`
+        receives every keystroke and acts on none: `keydown` and `keypress` reach the element, no
+        `input` or `change` follows, and the value does not move. It is the browser and not this app,
+        measured on `about:blank` with no app loaded (TESTING.md § WO-1.55): 153 with touch on types,
+        154 with touch off types, 154 with touch on does not.
+
+        Turning touch off HERE, after the editor has been opened the way it always was, is also the
+        faithful setting rather than only the one that works. The defect this file guards is a
+        laptop's — known-bugs § 1 calls it the data-loss defect "on the laptop" — and a keyboard is a
+        fine-pointer device; nothing on an iPad types `09032026` into this field. The coarse pointer
+        went on at the top of this block for the CLICKS, and it comes back on at the foot so the page
+        is handed on as it was received.
+
+        The keys are still dispatched with `Input.dispatchKeyEvent` at the page and still read back
+        out of the field and the document. What changed is the device they are typed on, and nothing
+        about what is asserted after them. Do not "repair" a red line below by setting `.value`: the
+        canary check that follows says whether the browser can type into a date field at all, which
+        is the question this work order spent three runs answering by hand.
+      */
+      await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+      await new Promise(r => setTimeout(r, 120));
+
+      /*
+        THE CANARY. A bare date input the harness plants, belonging to no app code, inside the open
+        dialog so the dialog's focus handling has no reason to take the caret back out of it — typed
+        `0` `9` exactly as the fixture is typed, then removed. If this goes red, every red line below
+        it is about the BROWSER: the keys are not being taken by any date field on this page, and the
+        app has been given nothing to get wrong. If it is green and the lines below are red, the
+        difference is the app. That is the split WO-1.55 had to make with a probe written from
+        scratch, and it is a check so that the next Chromium change names itself in one line.
+      */
+      const canaryReady = await evalJs(`(function(){
+        var host = document.querySelector('#assignmentModal .modal-panel');
+        if (!host) return { ok:false };
+        var c = document.createElement('input');
+        c.type = 'date'; c.id = 'wo155Canary'; c.value = '2026-11-20';
+        host.prepend(c);
+        c.focus();
+        return { ok:true, focused: document.activeElement === c,
+          coarse: matchMedia('(pointer: coarse)').matches }; })()`);
+      await digit('0');
+      await digit('9');
+      const canary = await evalJs(`(function(){
+        var c = document.getElementById('wo155Canary');
+        var v = c ? c.value : null;
+        if (c) c.remove();
+        return { value: v, left: !!document.getElementById('wo155Canary') }; })()`);
+      check('the harness can type into a date field at all: a bare date input it plants beside the editor, belonging to no app code, takes `0` `9` as September under the pointer the checks below type with — so a red line below is the app and not the browser (WO-1.55)',
+        canaryReady.ok === true && canaryReady.focused === true && canaryReady.coarse === false
+          && canary.value === '2026-09-20' && canary.left === false,
+        'planted = ' + canaryReady.ok + ', focused = ' + canaryReady.focused + ', coarse pointer = '
+          + canaryReady.coarse + ', value after `0` `9` = ' + JSON.stringify(canary.value)
+          + (canary.value === '2026-11-20'
+            ? ' — THE KEYS REACHED A DATE FIELD AND CHANGED NOTHING, which is this browser, not the app'
+            : '') + ', removed = ' + !canary.left);
+
       const opened = await evalJs(OPEN_AND_TAG);
       const before = await evalJs(READ);
 
@@ -352,6 +412,8 @@ console.log('\n--- a `0` typed into a date field (WO-1.47) ---');
         the reason every teardown in this harness gives: a fixture coming down is not a claim being
         made.
       */
+      /* The coarse pointer back on, which is how this block received the page (WO-1.55). */
+      await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
       await evalJs("window.planbook.closeModal('assignmentModal'); 1");
       await evalJs(`(async function(){
         var s = window.planbook.store, c = window.planbook.classes;

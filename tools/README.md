@@ -1223,7 +1223,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1538 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1539 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2142,6 +2142,16 @@ passed · 3 failed · 0 skipped`, 576s, exit 1, measured 2026-09-26 at ~22:40 ED
 `HEAD`** (`1543 checks · 1540 passed · 3 failed`, run from a `git worktree` of `8ef1b81` at ~22:15
 EDT the same evening), so they are not this work order's and are recorded in its result file rather
 than repaired here. Mutation round in `TESTING.md` § WO-7.11.
+
+**WO-1.55 moved it from 1538 to 1539, and the executed count from 1549 to 1550 — one site, one
+result.** In `verify/date-zero-key.mjs`, literal, not in a loop and not a failure arm, so the gap
+stays at −11 and the file count does not move. It is a canary: a bare date input the harness plants
+beside the assignment editor and types `0` `9` into, so a browser that stops taking keystrokes in a
+date field goes red on its own line instead of on the three WO-1.47 checks below it. Those three were
+the red in WO-7.11's run above, and the cause was the browser — Edge 154 ignores keys into a date
+field under touch emulation; the section now types on a fine pointer. The run prints **1550**:
+`1550 checks · 1550 passed · 0 failed · 0 skipped`, 582s, exit 0, measured 2026-09-27 at ~06:35 EDT on
+the real clock. Diagnosis and mutation round in `TESTING.md` § WO-1.55.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

@@ -2158,6 +2158,102 @@ planted record there too, which this work order did not add.
 
 ---
 
+### WO-1.55 — the date-field checks type into a field that takes no keystrokes
+
+**What this changes.** Nothing a teacher sees, and nothing a device gets. `src/`, `index.html`,
+`sw.js`, `privacy.html`, `manifest.json` and `icons/` are **byte-identical to HEAD**, so **no
+`CACHE` bump is owed**. One section file moves, `tools/verify/date-zero-key.mjs`: it turns touch
+emulation **off** after the editor is opened and before the first key, types on that fine pointer,
+and turns it back on before it hands the page on. It also gains one check, a canary, typed exactly the
+way the fixture is typed.
+
+**The cause: the browser.** Edge **154.0.4258.37**, under `Emulation.setTouchEmulationEnabled`,
+passes every `Input.dispatchKeyEvent` digit to a focused `<input type="date">` and then does nothing
+with it. `keydown` and `keypress` reach the element; no `input` and no `change` follow; the value
+stays put. Neither the app nor the harness caused it. Evidence, all from 2026-09-27, all through a
+scratch copy of `verify-shell.mjs` with a section filter that ran only `localstorage-prefs` (which
+sets `h.seam`) and the section or probe under test:
+
+- [x] **It is not state left by an earlier section.** `date-zero-key` run with only
+      `localstorage-prefs` ahead of it failed the three checks exactly as the whole run does. Every
+      value read `"2026-11-20"`, and the caret was in `INPUT[due]`.
+- [x] **The keys arrive; the field ignores them.** Document-level capture listeners on the real
+      *Due* field, touch emulation **on**, read `keydown:0 · keypress:0 · keyup:0 · keydown:9 ·
+      keypress:9 · keyup:9` with no `input` and no `change`, and the value did not move.
+      `document.hasFocus()` was `true`, `elementFromPoint` over the field was the field, and there was
+      no `readOnly`, no `disabled` and no open `<dialog>`. Same page, same field, touch emulation
+      **off**: `input` and `change` fired on each key and the field read `2026-09-20`.
+- [x] **It happens with no app loaded.** A bare `<input type="date" value="2026-11-20">` on
+      `about:blank`, typed `0` `9`, in each of four emulation states. Edge 154: touch off / mobile off
+      `2026-09-20`, touch off / mobile on `2026-09-20`, **touch on / mobile off `2026-11-20`**, **touch
+      on / mobile on `2026-11-20`**. The same four states in **Chrome 153.0.8010.53** (installed on
+      this machine at `C:/Program Files/Google/Chrome/Application/chrome.exe`) read `2026-09-20` all
+      four times.
+- [x] **The unmodified section passes on the older engine.** `date-zero-key` on the untouched tree,
+      under Chrome 153 through the same scratch runner: `9 checks · 9 passed · 0 failed`. All three
+      WO-1.47 checks were green there, with `09032026` → `2026-09-03` and `10032026` → `2026-10-03`.
+- [x] **The timeline fits, and it corrects the booking's "before the green run".** The 154 folder
+      under `C:/Program Files (x86)/Microsoft/Edge/Application/` was created at **16:00:45 EDT on
+      2026-09-26**. `MicrosoftEdgeUpdate.log` records the install finishing at 16:01:04 with
+      `pv: 154.0.4258.37, opv: 153.0.4234.48`. `msedge.exe`'s own mtime (2026-09-24 04:26) is the
+      build's timestamp, not the install's, and that is where "updated 2026-09-24" came from. The
+      `Application` directory itself was last written at **22:02:10 EDT** on the 26th. That is
+      consistent with Edge's deferred swap of the launcher, which waits until no `msedge.exe` is left
+      running (WO-7.10's result file counts ~36 stray headless ones that day), and the 153 folder is
+      still on disk beside 154. WO-7.10's all-green `1543 · 1543` ran around 20:00–20:49. The first
+      red was ~22:15. **The swap time is inferred from a directory mtime, not read from a log line**,
+      so what is proven is the engine difference above. The timeline is the account that fits it.
+
+*Why touch goes off rather than anything else.* The defect this section guards is a laptop's.
+`plans/known-bugs.md` § 1 calls it the data-loss defect "on the laptop", and a keyboard is a
+fine-pointer device, so typing on a fine pointer is the more faithful setting as well as the one that
+works. The clicks that open the editor still land on the coarse pointer the section always used.
+
+- [x] **The cause is named in `TESTING.md` § WO-1.55, with the evidence.** This section.
+- [x] **The three `date-zero-key` checks are green on the whole harness, real clock.**
+      `node tools/verify-shell.mjs`, no flag, Sun 2026-09-27 ~06:25–06:35 EDT, Edge 154.0.4258.37:
+      **`1550 checks · 1550 passed · 0 failed · 0 skipped`**, 582s, `EXIT=0`, read from the log's own
+      `EXIT=` line. The three read `2026-09-20`, `2026-09-03` and `2026-10-03` in both the field and
+      the document, the same element, with the caret in `INPUT[due]`.
+- [x] **Mutation-proved, and the mutation came out before anything else was written.**
+      `input.replaceWith(dateInput(assignment, field));` was put back into
+      `assignmentDateCommitted()` in `src/assignments.js` under a `MUTATION WO-1.55` comment. That is
+      WO-1.47's rebuild on `change`. The section run under the scratch runner on Edge 154 read
+      **`10 checks · 6 passed · 4 failed`**. All three went red with the reported symptom:
+      `same element = false, caret in BODY, field ""`, and the document left at `2026-01-20` /
+      `2026-10-01`. So did the WO-1.48 no-rebuild check beside them. The canary stayed green, which
+      is correct: it names the app. The line was removed by hand, `git diff -- src/` was empty, and
+      `grep -rn "MUTATION WO-1.55" src tools` returns nothing. **The canary's own teeth, too:** with
+      the new touch-off line changed back to touch-on (same marker, reverted from a saved copy),
+      the canary went red. It read `coarse pointer = true`, value `"2026-11-20"`, with its
+      *"THE KEYS REACHED A DATE FIELD AND CHANGED NOTHING"* clause, and the three WO-1.47 checks
+      went red in the original shape (`2026-11-20`, the same element, the caret in the field).
+- [x] **No other check in the harness changes state.** The `PASS`/`FAIL`/`SKIP` line of every check
+      in a baseline taken before any edit (`1549 checks · 1546 passed · 3 failed · 0 skipped`, 585s,
+      `EXIT=1`, real clock, the three failures exactly these) was diffed against the run above, with
+      detail text stripped. The only differences are the three `FAIL`→`PASS` and the one added canary
+      `PASS`. WO-7.12's `drive-sync` flake did not fire in either run.
+- [x] **The count in `tools/README.md` is a number a run produced.** Call sites **1538 → 1539** and
+      the executed count **1549 → 1550**: one site, one result. `node tools/wo-sweep.mjs` reads
+      `1539 check() call site(s) across 75 harness file(s), matching tools/README.md:1226` and prints
+      **`45 checks · 42 passed · 0 failed · 3 to review`**, exit 0. `node tools/wo-gate.mjs --audit`
+      is **PASS**, exit 0.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.* **Three limits worth
+carrying.** First, **every other section that types into a date field under touch emulation carries
+the same exposure.** This run is green, so none of them does today (`date-clear.mjs` presses a
+button, and the other sections that reach a date field set its value from the page. Both
+`attendance-passes.mjs` and `calendar-events.mjs` say so at the line, for an older version of the same
+reason: `dispatchKeyEvent` into a blank native date field is unfaithful). A new section that types digits into a date field
+should type on a fine pointer, for this reason. Second, **the owner's laptop reading is not
+contradicted**: an installed PWA on a laptop is a fine pointer. Whether a laptop with a touchscreen
+reports `pointer: coarse` to Edge 154, and whether real touch hardware behaves like the emulation,
+was not measured and is not claimed. Third, **this is Edge's behaviour on one build**, and whether
+it is intended (a picker-only date field for touch, as on Android) or a regression was not
+established. The canary is what will say so when it changes again.
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*

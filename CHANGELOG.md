@@ -13,6 +13,15 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The date-field checks are green again — 2026-09-27
+
+Housekeeping, no visible change: nothing under `src/` moved. Since the evening of 2026-09-26, three
+harness checks on typed dates had failed on every run. The browser had changed and the app had not.
+Edge 154 accepts keystrokes into a date field while the harness is pretending to be a touchscreen
+and does nothing with them. Those checks now type on a keyboard, as a laptop does, and a new check
+tells a browser that ignores keys apart from an app that has gone wrong. (WO-1.55 — harness green at
+1550/1550, and putting WO-1.47's defect back turned all three red with the classroom symptom.)
+
 ### Sync can be switched off without signing in first — 2026-09-27
 
 Since every launch now starts signed out, a device that had opted into Drive sync could only be

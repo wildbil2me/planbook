@@ -5176,7 +5176,7 @@ only beside the second, the first id inherits it silently.
 
 ## WO-1.55 — the date-field checks type into a field that takes no keystrokes
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.48 — the date field whose checks these are
+**Ship** — · **Status** ✅ DONE — 2026-09-27 · **Size** S · **Depends on** WO-1.48 — the date field whose checks these are
 **Closes roadmap** *(no box. A harness defect: the app was read working by the owner the same day.)*
 
 **Booked 2026-09-27**, owner-directed, from WO-7.11's verdict. Three checks in
@@ -5209,13 +5209,24 @@ update is not proven either.
 - **Keep the checks as strong as they are.** They exist to catch WO-1.47's defect coming back.
 
 **Acceptance**
-- [ ] The cause is named in `TESTING.md` § WO-1.55, with the evidence.
-- [ ] The three `date-zero-key` checks are green on the whole harness, real clock.
-- [ ] Mutation-proved: putting WO-1.47's defect back (the rebuild on `change`) turns them red again.
+- [x] The cause is named in `TESTING.md` § WO-1.55, with the evidence.
+- [x] The three `date-zero-key` checks are green on the whole harness, real clock.
+- [x] Mutation-proved: putting WO-1.47's defect back (the rebuild on `change`) turns them red again.
       **The mutation is reverted before anything else is written** (`AGENTS.md`).
-- [ ] No other check in the harness changes state.
+- [x] No other check in the harness changes state.
 
 **Traps** — **Do not weaken a check to make it green**: a check that stops typing, or asserts only
 that the field is present, proves nothing about the defect it guards. **Do not assume the most recent
 commit caused it** — `8ef1b81`, which touched no code, fails the same way; WO-1.44's scar is that the
 app was innocent throughout and the first instinct was to look for the commit that broke it.
+
+*(**Closed 2026-09-27, and the cause was none of the four candidates the Deliverables listed.** The
+browser changed and nothing on the page did: Edge 154.0.4258.37 accepts keystrokes into a date input
+under `Emulation.setTouchEmulationEnabled` and does nothing with them. A bare page with no app
+loaded showed Edge 153 typing with touch on, 154 typing with touch off, and 154 with touch on
+ignoring the keys. The note above said a browser update was "not proven either", because the update
+was dated before the green run. The run seems to have picked up the new version later than the
+update date suggests. The fix types on a fine pointer, and a new canary check plants a bare date
+input so that the next Chromium change shows up in one line. The harness reads 1550/1550. The
+verifier noticed a gap the fix opens: a throw between the two toggles leaves touch off for the rest
+of the run. That is booked as WO-1.56.)*
