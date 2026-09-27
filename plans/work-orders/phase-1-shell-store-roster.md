@@ -5233,7 +5233,7 @@ of the run. That is booked as WO-1.56.)*
 
 ## WO-1.56 — a date-field section that throws leaves the rest of the run on a fine pointer
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-1.55 — the toggle this repairs
+**Ship** — · **Status** ✅ DONE — 2026-09-27 · **Size** XS · **Depends on** WO-1.55 — the toggle this repairs
 **Closes roadmap** *(no box. A harness defect with no live symptom yet.)*
 
 **Booked 2026-09-27**, owner-directed, from WO-1.55's verdict. `tools/verify/date-zero-key.mjs`
@@ -5256,13 +5256,13 @@ has nothing to do with them.
   `recoverPage()` restoring a known baseline, which is a larger work order and the owner's to book.
 
 **Acceptance**
-- [ ] A throw injected between the two toggles leaves the next section reading
+- [x] A throw injected between the two toggles leaves the next section reading
       `matchMedia('(pointer: coarse)').matches === true`. The run is recorded in `TESTING.md`
       § WO-1.56 and **the injected throw is reverted before anything else is written** (`AGENTS.md`).
-- [ ] Mutation-proved: the same injected throw with the restore removed leaves the next section on a
+- [x] Mutation-proved: the same injected throw with the restore removed leaves the next section on a
       fine pointer.
-- [ ] The whole harness is green on the real clock, and no check changes state.
-- [ ] `TESTING.md` § WO-1.56 answers the question in the second Deliverable.
+- [x] The whole harness is green on the real clock, and no check changes state.
+- [x] `TESTING.md` § WO-1.56 answers the question in the second Deliverable.
 
 **Traps** — **Do not move the toggle-off earlier or the toggle-on later to shrink the window**. The
 window is not the defect. The missing `finally` is. **Do not turn touch off for the whole section**:

@@ -2254,6 +2254,137 @@ established. The canary is what will say so when it changes again.
 
 ---
 
+### WO-1.56 — a date-field section that throws leaves the rest of the run on a fine pointer
+
+**What this changes.** Nothing a teacher sees, and nothing a device gets. `src/`, `index.html`,
+`sw.js`, `privacy.html`, `manifest.json` and `icons/` are **byte-identical to HEAD**, so **no
+`CACHE` bump is owed**. One section file moves, `tools/verify/date-zero-key.mjs`: the span from
+WO-1.55's touch-off to its touch-on is now the body of a `try`, and the touch-on is its `finally`.
+Neither toggle moved in the sequence a normal run takes. The touch-off still comes after the clicks
+that open the editor, and the touch-on still comes before the modal is closed. No check was added and
+none was removed, so the `check(` count in `tools/README.md` does not move. `git diff -w` on the file
+is 33 insertions and 3 deletions. The whole-file diff is larger only because the span is indented one level deeper.
+
+**The `finally` does not hide the throw it cleans up after.** If the restore throws while the block
+is already throwing (a dead CDP target would do both), the restore's error goes to a console line and
+the original error goes on to `runSection()`. If the block finished and only the restore threw, the
+restore's error is the one thrown, because then it is the cause. In both cases the section is still
+reported as having thrown (WO-1.44).
+
+**One premise of the booking is wrong, and it changes what the defect costs today.** The booking says
+`date-clear.mjs` "sets its own viewport but not its own touch setting". It sets both, at its line 72:
+`Emulation.setTouchEmulationEnabled { enabled: true, maxTouchPoints: 5 }`, straight after its
+viewport and before its reload. So in today's run order, the pointer `date-zero-key` leaves behind
+after a throw lasts only until `date-clear` sets its own, before `date-clear` measures anything. The
+two planted runs below show this. They differ in the probe and in **no check**. The defect is real,
+and the `finally` is the fix, but its live cost in this order is nil. It would stop being nil if
+`date-clear` moved, or if something that inherits the pointer were put between them.
+
+**The reader was a temporary probe, not a permanent check.** One `console.log` at the top of
+`date-clear.mjs`'s `run()`, before that section sets anything of its own, printed
+`matchMedia('(pointer: coarse)').matches` and `navigator.maxTouchPoints`. It was marked
+`MUTATION WO-1.56` and reverted with the planted throw. A permanent check there would be a
+precondition on the neighbour's leftovers, in a section whose own run-order comment says it
+"depends on its neighbours in neither direction". And no permanent check can reach the thrown path
+without a plant.
+
+Evidence, 2026-09-27, Edge 154.0.4258.37, real clock, whole harness each time. `EXIT=` is read from
+each log's own line:
+
+- **Baseline, before any edit:** `1550 checks · 1549 passed · 1 failed · 0 skipped`, 588s,
+  `EXIT=1`. The one failure is WO-7.12's `drive-sync` lapsed-sign-in check (*"Connect shown =
+  false"*), which is that work order's booked flake and not this one's.
+- [x] **A throw injected between the two toggles leaves the next section reading `matchMedia('(pointer:
+      coarse)').matches === true`.** `throw new Error('MUTATION WO-1.56 — …')` went in directly after
+      the canary check, inside the `try`. Result: `1546 checks · 1544 passed · 2 failed`, `EXIT=1`.
+      The section was reported as thrown *"after 1 of its own checks"*, with the planted message and
+      `date-zero-key.mjs:265` at the top of the stack, so the `finally` swallowed nothing. The probe
+      read **`{"coarse":true,"touchPoints":5}`**. The second failure was the same `drive-sync` flake.
+      Both plants were reverted with `git checkout --` against a staged tree before anything else was
+      written. The file then matched a copy saved before the plants byte for byte (`cmp`), and
+      `grep -rn "MUTATION WO-1.56\|WO156-PROBE" tools/ src/` returned nothing (exit 1).
+- [x] **Mutation-proved: the same throw with the restore removed leaves the next section on a fine
+      pointer.** The restoring `send` was commented out under the same marker, and the plant was kept.
+      Result: `1546 checks · 1544 passed · 2 failed`, `EXIT=1`, and the probe read
+      **`{"coarse":false,"touchPoints":0}`**. With the detail text stripped, every PASS/FAIL line of
+      this run is identical to the run above. That identity is `date-clear`'s own line 72 at work, as
+      described above.
+- [x] **The whole harness is green on the real clock, and no check changes state.** The final run,
+      after the revert and with no flag: **`1550 checks · 1550 passed · 0 failed · 0 skipped`**, 587s,
+      `EXIT=0`. The PASS/FAIL/SKIP line of every check, with detail text stripped, was diffed against
+      the baseline. It has the same 1550 names in the same order, and **exactly one line differs**:
+      WO-7.12's `drive-sync` lapsed-sign-in check, `FAIL` in the baseline and `PASS` here. That is the
+      booked flake, not this change. It failed in the baseline on unmodified `HEAD` and in both planted
+      runs, and it sits in a section that neither this file nor its `finally` reaches. No check was
+      added. `node tools/wo-sweep.mjs`: `45 checks · 42 passed · 0 failed · 3 to review`, exit 0,
+      with 1539 call sites matching `tools/README.md:1226`. `node tools/wo-gate.mjs --audit`: PASS,
+      exit 0.
+- [x] **This section answers the question in the second Deliverable.** Below.
+
+**Does any other section leave touch emulation in a changed state across a throw? Yes, several: 21
+of the other 38 files.** What was asked, for each file: does a throw part-way through hand the next
+section a touch setting different from the one a normal exit hands on? Only two of the 39 files have
+a `finally` (`attendance-passes.mjs`, `worker-takeover.mjs`), and neither `finally` touches
+emulation. Every restore is a plain sequential `send`. None of these files was edited.
+
+*No divergence.* Every touch call these files make sets the state they hand on, so a throw hands on
+the same touch setting as a normal exit, apart from a throw before the first line, which changes
+nothing: `attendance.mjs`, `attendance-history.mjs`, `attendance-passes.mjs`, `calendar-derived.mjs`,
+`calendar-events.mjs`, `calendar-opens-on-day.mjs`, `contact-log.mjs`, `log-entries.mjs`,
+`merge-fields.mjs`, `print-sheets.mjs`, `touch-targets.mjs`, `date-clear.mjs`, `assigned-and-due.mjs`,
+`note-panel.mjs`, `pass-card.mjs`, `term-edges-marking.mjs`, `term-ended.mjs` (17).
+
+*A temporary window, restored by a plain later call.* A throw inside the window hands on the other
+setting. Usually that means coarse where fine was meant, which is the reverse of this work order's
+case. `date-zero-key.mjs` was this shape and is fixed here. The rest: `accommodation-prompts.mjs`
+(94→563), `calendar-drawn.mjs` (451→512, 946→1037), `classes-terms.mjs` (1135→1189),
+`concern-list.mjs` (543→569), `cooldown-quiet.mjs` (683→707), `drive-sign-in.mjs` (422→461),
+`drive-sync.mjs` (922→943), `glance-quiet.mjs` (883→906, 1644→1657), `outreach.mjs` (four windows,
+669→699 through 2841→2867), `past-due.mjs` (287→309), `portrait-landscape.mjs` (84→257, 290→362),
+`praise-column.mjs` (436→464), `register-opens-on-term.mjs` (502→514), `sync-button.mjs`
+(`atWidth()`→`desktop()`, three windows), `templates.mjs` (759→797), `today-goes-to-term.mjs`
+(496→526), `ungraded-count.mjs` (345→408), `worker-takeover.mjs` (279→283, one `evalJs` wide)
+(18).
+
+*A late switch that is the hand-on state.* Each turns touch off at the head and back on for a
+coarse block near the foot, which is the state it hands on. A throw before that block hands on fine
+instead: `score-grid.mjs` (68 off → 1608 on), `grade-detail.mjs` (101 → 1075), `grade-sheet.mjs`
+(109 → 911) (3).
+
+**How many of the 21 matter in today's order** depends on the next section. Eleven are followed by a
+section that sets its own touch at its head, which masks the leftover the same way `date-clear`
+masks this one: `register-opens-on-term`, `past-due`, `ungraded-count`, `calendar-drawn`,
+`concern-list`, `praise-column`, `sync-button`, `templates`, `outreach`, `score-grid` and
+`grade-detail`. `cooldown-quiet` runs last. **Nine would hand their leftover to a section that reads
+the pointer without setting it:** `classes-terms` → `categories-weights`, `today-goes-to-term` →
+`keyboard-marking`, `portrait-landscape` → the three sections before `score-grid`, `accommodation-prompts` →
+`print-gate`, `worker-takeover` → `stuck-update` and the three after it, `glance-quiet` →
+`policy-url` / `about-page`, `drive-sign-in` → `drive-sync` (up to its line 922), `drive-sync` →
+`sync-button` (up to its first `atWidth()`), and `grade-sheet` → `past-due` (up to its line 287).
+Nothing here measured whether any of those nine sections' checks would actually change state on a
+wrong pointer. That is a reading of where the setting goes, not a run.
+
+**Viewport, noticed on the way and not audited in full.** The same shape holds for
+`Emulation.setDeviceMetricsOverride` and `clearDeviceMetricsOverride`. Every temporary-window file
+above also changes the viewport inside its window. `note-panel`, `pass-card`, `term-edges-marking`,
+`term-ended`, `attendance-passes` and `assigned-and-due` diverge on the viewport alone.
+
+**So the fix is not more `finally` blocks.** It is `recoverPage()` putting emulation back to a known
+state after a throw. That is the larger work order the booking names, and it is the owner's to book.
+One design note for whoever books it: 29 of the 67 browser sections make no touch call at all
+and run on whatever the section before them handed on. So the "known state" is probably *the
+emulation this section received*, captured by wrapping `send` for `Emulation.*` at section start,
+rather than one fixed baseline for all of them. Whether any of those 29 depends on what it inherits
+was not read.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.* One limit worth
+carrying. A throw between the toggles still skips the section's own teardown, as it always has: the
+`c_wo147` fixture class is left in the document and the previously selected class is not re-selected.
+The two planted runs show no later check changing state because of it. That is out of this work
+order's scope, and it is the same family as the `recoverPage()` proposal above.
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*

@@ -13,6 +13,16 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A harness section that fails no longer changes how later ones run — 2026-09-27
+
+Housekeeping, no visible change: nothing under `src/` moved. The date-field checks turn off the
+harness's touchscreen pretence to type, and turn it back on at the end. If one of them failed in
+between, every later section ran as a laptop instead of a touchscreen, with no sign that anything had
+changed. The switch back now happens however the section ends. An audit of the other sections found
+the same shape in 21 more, left for a decision rather than fixed piecemeal. (WO-1.56 —
+harness green at 1550/1550, and removing the switch-back while forcing a failure left the next
+section on the wrong pointer.)
+
 ### The date-field checks are green again — 2026-09-27
 
 Housekeeping, no visible change: nothing under `src/` moved. Since the evening of 2026-09-26, three

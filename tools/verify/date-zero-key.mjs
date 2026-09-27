@@ -197,7 +197,7 @@ console.log('\n--- a `0` typed into a date field (WO-1.47) ---');
         laptop's — known-bugs § 1 calls it the data-loss defect "on the laptop" — and a keyboard is a
         fine-pointer device; nothing on an iPad types `09032026` into this field. The coarse pointer
         went on at the top of this block for the CLICKS, and it comes back on at the foot so the page
-        is handed on as it was received.
+        is handed on as it was received — on every exit, thrown or not (WO-1.56, just below).
 
         The keys are still dispatched with `Input.dispatchKeyEvent` at the page and still read back
         out of the field and the document. What changed is the device they are typed on, and nothing
@@ -205,206 +205,238 @@ console.log('\n--- a `0` typed into a date field (WO-1.47) ---');
         canary check that follows says whether the browser can type into a date field at all, which
         is the question this work order spent three runs answering by hand.
       */
-      await send('Emulation.setTouchEmulationEnabled', { enabled: false });
-      await new Promise(r => setTimeout(r, 120));
-
       /*
-        THE CANARY. A bare date input the harness plants, belonging to no app code, inside the open
-        dialog so the dialog's focus handling has no reason to take the caret back out of it — typed
-        `0` `9` exactly as the fixture is typed, then removed. If this goes red, every red line below
-        it is about the BROWSER: the keys are not being taken by any date field on this page, and the
-        app has been given nothing to get wrong. If it is green and the lines below are red, the
-        difference is the app. That is the split WO-1.55 had to make with a probe written from
-        scratch, and it is a check so that the next Chromium change names itself in one line.
+        THE COARSE POINTER COMES BACK ON EVERY EXIT FROM HERE, NOT ONLY THE NORMAL ONE (WO-1.56). A
+        throw anywhere between the toggle below and the restore in the `finally` is caught by
+        `runSection()`, and `recoverPage()` then reloads the page — and a reload does not reset CDP
+        emulation, so without the `finally` every section after this one would run on a fine pointer
+        with no touch points, and the ones measuring 44px under `pointer: coarse` would go red or
+        green for a reason that has nothing to do with them.
+
+        The window is not the defect and is not narrowed: the toggle-off stays after the clicks that
+        open the editor, which are meant to land on the coarse pointer, and the restore stays before
+        the modal is closed. What the `finally` adds is that the second edge is on every path.
+
+        AND IT DOES NOT HIDE THE THROW IT IS CLEANING UP AFTER. If the restore itself throws while the
+        block is already throwing — a dead CDP target would do both — the restore's error is logged
+        and the ORIGINAL one goes on to `runSection()`, which names the cause rather than its echo.
+        If the block finished and only the restore threw, that error is the one reported, because
+        then it is the cause. Either way the section is still reported as having thrown.
       */
-      const canaryReady = await evalJs(`(function(){
-        var host = document.querySelector('#assignmentModal .modal-panel');
-        if (!host) return { ok:false };
-        var c = document.createElement('input');
-        c.type = 'date'; c.id = 'wo155Canary'; c.value = '2026-11-20';
-        host.prepend(c);
-        c.focus();
-        return { ok:true, focused: document.activeElement === c,
-          coarse: matchMedia('(pointer: coarse)').matches }; })()`);
-      await digit('0');
-      await digit('9');
-      const canary = await evalJs(`(function(){
-        var c = document.getElementById('wo155Canary');
-        var v = c ? c.value : null;
-        if (c) c.remove();
-        return { value: v, left: !!document.getElementById('wo155Canary') }; })()`);
-      check('the harness can type into a date field at all: a bare date input it plants beside the editor, belonging to no app code, takes `0` `9` as September under the pointer the checks below type with — so a red line below is the app and not the browser (WO-1.55)',
-        canaryReady.ok === true && canaryReady.focused === true && canaryReady.coarse === false
-          && canary.value === '2026-09-20' && canary.left === false,
-        'planted = ' + canaryReady.ok + ', focused = ' + canaryReady.focused + ', coarse pointer = '
-          + canaryReady.coarse + ', value after `0` `9` = ' + JSON.stringify(canary.value)
-          + (canary.value === '2026-11-20'
-            ? ' — THE KEYS REACHED A DATE FIELD AND CHANGED NOTHING, which is this browser, not the app'
-            : '') + ', removed = ' + !canary.left);
+      let typingThrew = true;
+      try {
+        await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+        await new Promise(r => setTimeout(r, 120));
 
-      const opened = await evalJs(OPEN_AND_TAG);
-      const before = await evalJs(READ);
+        /*
+          THE CANARY. A bare date input the harness plants, belonging to no app code, inside the open
+          dialog so the dialog's focus handling has no reason to take the caret back out of it — typed
+          `0` `9` exactly as the fixture is typed, then removed. If this goes red, every red line below
+          it is about the BROWSER: the keys are not being taken by any date field on this page, and the
+          app has been given nothing to get wrong. If it is green and the lines below are red, the
+          difference is the app. That is the split WO-1.55 had to make with a probe written from
+          scratch, and it is a check so that the next Chromium change names itself in one line.
+        */
+        const canaryReady = await evalJs(`(function(){
+          var host = document.querySelector('#assignmentModal .modal-panel');
+          if (!host) return { ok:false };
+          var c = document.createElement('input');
+          c.type = 'date'; c.id = 'wo155Canary'; c.value = '2026-11-20';
+          host.prepend(c);
+          c.focus();
+          return { ok:true, focused: document.activeElement === c,
+            coarse: matchMedia('(pointer: coarse)').matches }; })()`);
+        await digit('0');
+        await digit('9');
+        const canary = await evalJs(`(function(){
+          var c = document.getElementById('wo155Canary');
+          var v = c ? c.value : null;
+          if (c) c.remove();
+          return { value: v, left: !!document.getElementById('wo155Canary') }; })()`);
+        check('the harness can type into a date field at all: a bare date input it plants beside the editor, belonging to no app code, takes `0` `9` as September under the pointer the checks below type with — so a red line below is the app and not the browser (WO-1.55)',
+          canaryReady.ok === true && canaryReady.focused === true && canaryReady.coarse === false
+            && canary.value === '2026-09-20' && canary.left === false,
+          'planted = ' + canaryReady.ok + ', focused = ' + canaryReady.focused + ', coarse pointer = '
+            + canaryReady.coarse + ', value after `0` `9` = ' + JSON.stringify(canary.value)
+            + (canary.value === '2026-11-20'
+              ? ' — THE KEYS REACHED A DATE FIELD AND CHANGED NOTHING, which is this browser, not the app'
+              : '') + ', removed = ' + !canary.left);
 
-      /*
-        THE PRECONDITION, ASSERTED RATHER THAN ASSUMED. Every check below reads a value out of this
-        one field after pressing keys at it, and all three ways this block can be vacuous are silent:
-        an editor that never opened has no field to type into, a field that never took focus swallows
-        every key, and a seed that did not reach the element leaves the check comparing '' to ''.
-      */
-      check('the WO-1.47 fixture is on screen: the editor is open on an assignment whose Due field holds a complete date, and the caret is in that field',
-        !!opened && opened.ok === true && opened.focused === true && before.editorOpen === true
-          && before.value === '2026-11-20' && before.stored.due === '2026-11-20'
-          && before.same === true,
-        'editor open = ' + before.editorOpen + ', field = ' + JSON.stringify(before.value)
-          + ', document = ' + JSON.stringify(before.stored) + ', caret in ' + before.active);
+        const opened = await evalJs(OPEN_AND_TAG);
+        const before = await evalJs(READ);
 
-      /*
-        ── ACCEPTANCE LINE 1 ──
+        /*
+          THE PRECONDITION, ASSERTED RATHER THAN ASSUMED. Every check below reads a value out of this
+          one field after pressing keys at it, and all three ways this block can be vacuous are silent:
+          an editor that never opened has no field to type into, a field that never took focus swallows
+          every key, and a seed that did not reach the element leaves the check comparing '' to ''.
+        */
+        check('the WO-1.47 fixture is on screen: the editor is open on an assignment whose Due field holds a complete date, and the caret is in that field',
+          !!opened && opened.ok === true && opened.focused === true && before.editorOpen === true
+            && before.value === '2026-11-20' && before.stored.due === '2026-11-20'
+            && before.same === true,
+          'editor open = ' + before.editorOpen + ', field = ' + JSON.stringify(before.value)
+            + ', document = ' + JSON.stringify(before.stored) + ', caret in ' + before.active);
 
-        One `0`, which is the whole of the reported bug. Chromium blanks the month segment and waits
-        for a second digit, firing `input` AND `change` on that empty read; the app used to rebuild
-        the field on that `change`. Three things are asserted about the moment AFTER the `0` and
-        before the segment is completed, because that is the moment the old build destroyed: the
-        element carrying the token is still the one in the panel, the caret is still in it, and the
-        assignment still has its date in the DOCUMENT.
+        /*
+          ── ACCEPTANCE LINE 1 ──
 
-        That third clause is the one worth being exact about. `editAssignmentField()` stores the
-        empty read on `input` — a phantom empty date that lives for one keystroke, named at
-        `assignmentDateCommitted()` and deliberately left alone by WO-1.47 — so this reads the store
-        after a flush and asserts what a teacher would find, which is the date coming back. What it
-        cannot claim is that no empty value was ever written; it claims the field survived to receive
-        the commit that undid it, which is the property the whole repair rests on.
-      */
-      await digit('0');
-      const afterZero = await evalJs(READ);
-      await digit('9');
-      const afterNine = await evalJs(READ);
-      check('a `0` typed as the first digit of the month leaves the SAME element in the panel with the caret still in it, and the date is complete again once Chromium commits the second digit',
-        afterZero.present && afterZero.same === true && afterZero.focused === true
-          && afterNine.same === true && afterNine.focused === true
-          && afterNine.value === '2026-09-20' && afterNine.stored.due === '2026-09-20',
-        'after `0`: same element = ' + afterZero.same + ', caret in ' + afterZero.active
-          + ', field ' + JSON.stringify(afterZero.value) + ', document '
-          + JSON.stringify(afterZero.stored.due)
-          + ' :: after `9`: same element = ' + afterNine.same + ', caret in ' + afterNine.active
-          + ', field ' + JSON.stringify(afterNine.value) + ', document '
-          + JSON.stringify(afterNine.stored.due));
+          One `0`, which is the whole of the reported bug. Chromium blanks the month segment and waits
+          for a second digit, firing `input` AND `change` on that empty read; the app used to rebuild
+          the field on that `change`. Three things are asserted about the moment AFTER the `0` and
+          before the segment is completed, because that is the moment the old build destroyed: the
+          element carrying the token is still the one in the panel, the caret is still in it, and the
+          assignment still has its date in the DOCUMENT.
 
-      /*
-        ── ACCEPTANCE LINE 2, THE DATA-LOSS HALF, ASSERTED SEPARATELY ──
+          That third clause is the one worth being exact about. `editAssignmentField()` stores the
+          empty read on `input` — a phantom empty date that lives for one keystroke, named at
+          `assignmentDateCommitted()` and deliberately left alone by WO-1.47 — so this reads the store
+          after a flush and asserts what a teacher would find, which is the date coming back. What it
+          cannot claim is that no empty value was ever written; it claims the field survived to receive
+          the commit that undid it, which is the property the whole repair rests on.
+        */
+        await digit('0');
+        const afterZero = await evalJs(READ);
+        await digit('9');
+        const afterNine = await evalJs(READ);
+        check('a `0` typed as the first digit of the month leaves the SAME element in the panel with the caret still in it, and the date is complete again once Chromium commits the second digit',
+          afterZero.present && afterZero.same === true && afterZero.focused === true
+            && afterNine.same === true && afterNine.focused === true
+            && afterNine.value === '2026-09-20' && afterNine.stored.due === '2026-09-20',
+          'after `0`: same element = ' + afterZero.same + ', caret in ' + afterZero.active
+            + ', field ' + JSON.stringify(afterZero.value) + ', document '
+            + JSON.stringify(afterZero.stored.due)
+            + ' :: after `9`: same element = ' + afterNine.same + ', caret in ' + afterNine.active
+            + ', field ' + JSON.stringify(afterNine.value) + ', document '
+            + JSON.stringify(afterNine.stored.due));
 
-        `09032026` end to end, which is what a teacher types this week. On the old build the first
-        keystroke emptied the field and moved the focus to `BODY`, so the remaining seven digits went
-        nowhere and the assignment was left with no due date at all — silently, which is what makes
-        this the half that matters. The date is re-seeded first so that the run above cannot be what
-        makes this one pass.
-      */
-      await evalJs(`(function(){
-        var f = document.querySelector('#assignmentFields [data-assignment-field="due"]');
-        if (!f) return 0;
-        window.planbook.store.update(function(doc){
-          doc.assignments.forEach(function(a){ if (a.id === 'a_wo147') a.due = '2026-11-20'; }); });
-        f.value = '2026-11-20';
-        f.setAttribute('data-wo147-token', 'seeded');
-        f.focus();
-        return 1; })()`);
-      await new Promise(r => setTimeout(r, 120));
-      await caretHome();
-      await type('09032026');
-      const typedFull = await evalJs(READ);
-      check('typing a full `09032026` into that field leaves the assignment holding 2026-09-03 — the date the teacher typed, not an empty one and not the one she typed over',
-        typedFull.value === '2026-09-03' && typedFull.stored.due === '2026-09-03'
-          && typedFull.same === true,
-        'field ' + JSON.stringify(typedFull.value) + ', document '
-          + JSON.stringify(typedFull.stored.due) + ', same element = ' + typedFull.same
-          + ', caret in ' + typedFull.active);
+        /*
+          ── ACCEPTANCE LINE 2, THE DATA-LOSS HALF, ASSERTED SEPARATELY ──
 
-      /*
-        ── ACCEPTANCE LINE 3, THE DAY SEGMENT, AND IT IS THE CASE THAT OUTLIVES SEPTEMBER ──
+          `09032026` end to end, which is what a teacher types this week. On the old build the first
+          keystroke emptied the field and moved the focus to `BODY`, so the remaining seven digits went
+          nowhere and the assignment was left with no due date at all — silently, which is what makes
+          this the half that matters. The date is re-seeded first so that the run above cannot be what
+          makes this one pass.
+        */
+        await evalJs(`(function(){
+          var f = document.querySelector('#assignmentFields [data-assignment-field="due"]');
+          if (!f) return 0;
+          window.planbook.store.update(function(doc){
+            doc.assignments.forEach(function(a){ if (a.id === 'a_wo147') a.due = '2026-11-20'; }); });
+          f.value = '2026-11-20';
+          f.setAttribute('data-wo147-token', 'seeded');
+          f.focus();
+          return 1; })()`);
+        await new Promise(r => setTimeout(r, 120));
+        await caretHome();
+        await type('09032026');
+        const typedFull = await evalJs(READ);
+        check('typing a full `09032026` into that field leaves the assignment holding 2026-09-03 — the date the teacher typed, not an empty one and not the one she typed over',
+          typedFull.value === '2026-09-03' && typedFull.stored.due === '2026-09-03'
+            && typedFull.same === true,
+          'field ' + JSON.stringify(typedFull.value) + ', document '
+            + JSON.stringify(typedFull.stored.due) + ', same element = ' + typedFull.same
+            + ', caret in ' + typedFull.active);
 
-        `10032026` has a SAFE month — `1` commits as `01` and `0` takes it straight to `10`, with no
-        empty read in between — and a `0` day. So a green line 2 with a red line 3 would mean the
-        repair covers the month segment only, which is a build that looks fixed until October 1st and
-        then goes on losing three dates in ten forever. The two are separate checks for exactly that
-        reason; asserting them together would let either one carry the other.
-      */
-      await evalJs(`(function(){
-        var f = document.querySelector('#assignmentFields [data-assignment-field="due"]');
-        if (!f) return 0;
-        window.planbook.store.update(function(doc){
-          doc.assignments.forEach(function(a){ if (a.id === 'a_wo147') a.due = '2026-11-20'; }); });
-        f.value = '2026-11-20';
-        f.setAttribute('data-wo147-token', 'seeded');
-        f.focus();
-        return 1; })()`);
-      await new Promise(r => setTimeout(r, 120));
-      await caretHome();
-      await type('10032026');
-      const typedDay = await evalJs(READ);
-      check('and typing `10032026` — a safe month with a `0` day — leaves the assignment holding 2026-10-03, which is the half of this bug that does not stop happening when September ends',
-        typedDay.value === '2026-10-03' && typedDay.stored.due === '2026-10-03'
-          && typedDay.same === true,
-        'field ' + JSON.stringify(typedDay.value) + ', document '
-          + JSON.stringify(typedDay.stored.due) + ', same element = ' + typedDay.same
-          + ', caret in ' + typedDay.active);
+        /*
+          ── ACCEPTANCE LINE 3, THE DAY SEGMENT, AND IT IS THE CASE THAT OUTLIVES SEPTEMBER ──
 
-      /*
-        ── AND NO EVENT REPLACES THE ELEMENT ANY MORE, WHICH IS WO-1.48 ASSERTED FROM THIS SIDE ──
+          `10032026` has a SAFE month — `1` commits as `01` and `0` takes it straight to `10`, with no
+          empty read in between — and a `0` day. So a green line 2 with a red line 3 would mean the
+          repair covers the month segment only, which is a build that looks fixed until October 1st and
+          then goes on losing three dates in ten forever. The two are separate checks for exactly that
+          reason; asserting them together would let either one carry the other.
+        */
+        await evalJs(`(function(){
+          var f = document.querySelector('#assignmentFields [data-assignment-field="due"]');
+          if (!f) return 0;
+          window.planbook.store.update(function(doc){
+            doc.assignments.forEach(function(a){ if (a.id === 'a_wo147') a.due = '2026-11-20'; }); });
+          f.value = '2026-11-20';
+          f.setAttribute('data-wo147-token', 'seeded');
+          f.focus();
+          return 1; })()`);
+        await new Promise(r => setTimeout(r, 120));
+        await caretHome();
+        await type('10032026');
+        const typedDay = await evalJs(READ);
+        check('and typing `10032026` — a safe month with a `0` day — leaves the assignment holding 2026-10-03, which is the half of this bug that does not stop happening when September ends',
+          typedDay.value === '2026-10-03' && typedDay.stored.due === '2026-10-03'
+            && typedDay.same === true,
+          'field ' + JSON.stringify(typedDay.value) + ', document '
+            + JSON.stringify(typedDay.stored.due) + ', same element = ' + typedDay.same
+            + ', caret in ' + typedDay.active);
 
-        WO-1.47's own trap said "do not delete the rebuild outright — it is not dead code and it is
-        not the bug; the bug is WHEN it runs", and this check used to assert the move: survive the
-        empty `change`, be replaced on `focusout`. WO-1.48 took the second half away on purpose. The
-        rebuild is not deleted — it hangs off the Clear button now, and tools/verify/date-clear.mjs
-        drives that button and would go red if it had been. What is asserted HERE is the property
-        that replaced it: **an empty value reaches no rebuild at all, on either event.**
+        /*
+          ── AND NO EVENT REPLACES THE ELEMENT ANY MORE, WHICH IS WO-1.48 ASSERTED FROM THIS SIDE ──
 
-        Both clauses now fail in the SAME direction, and that is the point — a build that put a
-        rebuild back on `change` or on `focusout` goes red here, and either one re-opens a defect
-        this app has already shipped once. The sequence is left exactly as it was so that the two
-        halves stay comparable across the re-cut:
+          WO-1.47's own trap said "do not delete the rebuild outright — it is not dead code and it is
+          not the bug; the bug is WHEN it runs", and this check used to assert the move: survive the
+          empty `change`, be replaced on `focusout`. WO-1.48 took the second half away on purpose. The
+          rebuild is not deleted — it hangs off the Clear button now, and tools/verify/date-clear.mjs
+          drives that button and would go red if it had been. What is asserted HERE is the property
+          that replaced it: **an empty value reaches no rebuild at all, on either event.**
 
-          · the field is cleared and `change` is fired on it, and the element must SURVIVE — a build
-            that put the rebuild back on `change` goes red here, and it is the same event shape
-            `assigned-and-due.mjs` uses to imitate the picker's own Clear;
-          · then the field is LEFT, and the element must still be the same one — this clause was
-            inverted by WO-1.48, and it is the half that says the `focusout` rebuild really came
-            back out rather than being left standing beside its replacement.
+          Both clauses now fail in the SAME direction, and that is the point — a build that put a
+          rebuild back on `change` or on `focusout` goes red here, and either one re-opens a defect
+          this app has already shipped once. The sequence is left exactly as it was so that the two
+          halves stay comparable across the re-cut:
 
-        The field is left by focusing the *name* input above it, which is how a teacher leaves it.
-        `blur()` would also fire `focusout`, and it would prove less: what has to work is the real
-        sequence where focus arrives somewhere else.
+            · the field is cleared and `change` is fired on it, and the element must SURVIVE — a build
+              that put the rebuild back on `change` goes red here, and it is the same event shape
+              `assigned-and-due.mjs` uses to imitate the picker's own Clear;
+            · then the field is LEFT, and the element must still be the same one — this clause was
+              inverted by WO-1.48, and it is the half that says the `focusout` rebuild really came
+              back out rather than being left standing beside its replacement.
 
-        The DOCUMENT is still asserted empty at the end, because the WRITE did not move: `change`
-        still stores a date committed empty, and it is only the ELEMENT that no event may replace.
-        Storing what the field says is not the same as deciding what the teacher meant by it.
-      */
-      await evalJs(`(function(){
-        var f = document.querySelector('#assignmentFields [data-assignment-field="due"]');
-        if (!f) return 0;
-        f.setAttribute('data-wo147-token', 'seeded');
-        f.focus();
-        f.value = '';
-        f.dispatchEvent(new Event('input', { bubbles: true }));
-        f.dispatchEvent(new Event('change', { bubbles: true }));
-        return 1; })()`);
-      await new Promise(r => setTimeout(r, 180));
-      const clearedStillThere = await evalJs(READ);
-      await evalJs(`(function(){
-        var n = document.querySelector('#assignmentFields [data-assignment-field="name"]');
-        if (n) n.focus();
-        return 1; })()`);
-      await new Promise(r => setTimeout(r, 180));
-      const afterLeaving = await evalJs(READ);
-      check('an empty date value replaces the element on NEITHER event — not on the `change` fired while the teacher is still in the field, and not on the `focusout` when she leaves it. The write still lands; the rebuild is the Clear button\'s alone (WO-1.48)',
-        clearedStillThere.same === true && clearedStillThere.value === ''
-          && afterLeaving.present === true && afterLeaving.same === true
-          && afterLeaving.value === '' && afterLeaving.stored.due === '',
-        'on the empty `change`: same element = ' + clearedStillThere.same + ', field '
-          + JSON.stringify(clearedStillThere.value)
-          + ' :: after the caret left: still a field = ' + afterLeaving.present
-          + ', same element = ' + afterLeaving.same + ', field '
-          + JSON.stringify(afterLeaving.value) + ', document '
-          + JSON.stringify(afterLeaving.stored.due) + ', caret in ' + afterLeaving.active);
+          The field is left by focusing the *name* input above it, which is how a teacher leaves it.
+          `blur()` would also fire `focusout`, and it would prove less: what has to work is the real
+          sequence where focus arrives somewhere else.
+
+          The DOCUMENT is still asserted empty at the end, because the WRITE did not move: `change`
+          still stores a date committed empty, and it is only the ELEMENT that no event may replace.
+          Storing what the field says is not the same as deciding what the teacher meant by it.
+        */
+        await evalJs(`(function(){
+          var f = document.querySelector('#assignmentFields [data-assignment-field="due"]');
+          if (!f) return 0;
+          f.setAttribute('data-wo147-token', 'seeded');
+          f.focus();
+          f.value = '';
+          f.dispatchEvent(new Event('input', { bubbles: true }));
+          f.dispatchEvent(new Event('change', { bubbles: true }));
+          return 1; })()`);
+        await new Promise(r => setTimeout(r, 180));
+        const clearedStillThere = await evalJs(READ);
+        await evalJs(`(function(){
+          var n = document.querySelector('#assignmentFields [data-assignment-field="name"]');
+          if (n) n.focus();
+          return 1; })()`);
+        await new Promise(r => setTimeout(r, 180));
+        const afterLeaving = await evalJs(READ);
+        check('an empty date value replaces the element on NEITHER event — not on the `change` fired while the teacher is still in the field, and not on the `focusout` when she leaves it. The write still lands; the rebuild is the Clear button\'s alone (WO-1.48)',
+          clearedStillThere.same === true && clearedStillThere.value === ''
+            && afterLeaving.present === true && afterLeaving.same === true
+            && afterLeaving.value === '' && afterLeaving.stored.due === '',
+          'on the empty `change`: same element = ' + clearedStillThere.same + ', field '
+            + JSON.stringify(clearedStillThere.value)
+            + ' :: after the caret left: still a field = ' + afterLeaving.present
+            + ', same element = ' + afterLeaving.same + ', field '
+            + JSON.stringify(afterLeaving.value) + ', document '
+            + JSON.stringify(afterLeaving.stored.due) + ', caret in ' + afterLeaving.active);
+        typingThrew = false;
+      } finally {
+        /* The coarse pointer back on, which is how this block received the page (WO-1.55) — on the
+           thrown exit as well as the normal one (WO-1.56). */
+        try {
+          await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+        } catch (restoreErr) {
+          if (!typingThrew) throw restoreErr;
+          console.log('  (WO-1.56: restoring the coarse pointer threw as well — '
+            + (restoreErr && restoreErr.message) + '; the throw reported below is the original one)');
+        }
+      }
 
       /*
         The fixture comes back out — the class and its assignment — and the class that was open
@@ -412,8 +444,6 @@ console.log('\n--- a `0` typed into a date field (WO-1.47) ---');
         the reason every teardown in this harness gives: a fixture coming down is not a claim being
         made.
       */
-      /* The coarse pointer back on, which is how this block received the page (WO-1.55). */
-      await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
       await evalJs("window.planbook.closeModal('assignmentModal'); 1");
       await evalJs(`(async function(){
         var s = window.planbook.store, c = window.planbook.classes;
