@@ -1162,8 +1162,27 @@ about withdrawing the opt-in, both change in the same sitting (`CLAUDE.md` § Ac
 
 ## WO-7.12 — the lapsed-sign-in check reads Connect before the panel has settled
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-7.2 — the check this steadies
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-7.2 — the check this steadies; WO-7.13 — the repaint the check was reading around
 **Closes roadmap** *(no box. A harness race, found by WO-7.11's implementer and confirmed red on unmodified `HEAD` by its verifier.)*
+
+**Re-cut 2026-09-27**, owner-directed, after its first dispatch **stopped correctly on its own
+second Deliverable**. Verdict: *stopped correctly, not closeable*. No code landed: `src/` and `tools/`
+matched `HEAD` at the verdict. The status went back to `⬜` by hand, because `--release` refuses
+`🔍 AWAITING VERDICT` by design. That refusal protects a finished tree, and there was none here. The
+first cut's brief, result and status are kept as `.claude/dispatch/WO-7.12-cut1-*.md` so a
+re-dispatch does not find a result file and read it as this cut's. **The diagnosis is in
+`WO-7.12-cut1-result.md`, and the verifier confirmed its code reading, not its runs.** There are two
+layers:
+- **The trigger is the harness, as booked.** `auth.disconnect()` clears `busy` and the session. It
+  does not clear `pending`. So drive-sign-in's last `connect()` stays in flight into `drive-sync`. It
+  then settles on `popup_failed_to_open` and runs `refreshAuthChrome()` over the token `drive-sync`
+  seeded, which hides Connect.
+- **The reason that can turn the check red is in `src/`.** A `signed-out` `syncNow()` repaints only
+  the sync half of the panel. So when the check is green, it is reading Connect from a paint made
+  about 340 lines earlier. The fix for that is
+  [WO-7.13](#wo-713--a-sign-in-that-lapses-with-about-open-leaves-the-panel-saying-connected),
+  and this work order waits on it: steadying the harness first would make a false claim steadily
+  green.
 
 **Booked 2026-09-27**, owner-directed, from WO-7.11's verdict, as a 🎒 on
 `tools/verify/drive-sync.mjs` — *and taken off it the same day*: it failed again in the next
@@ -1187,20 +1206,96 @@ verifier cannot learn much from a green whole-harness run, which is the cost thi
 needs the harness to make it. It is booked because a check that is red one run in seven teaches the
 next verifier to shrug at red.
 
-**Deliverables**
-- **Find the cause before fixing it.** If the pending `connect()` is the culprit, the fix belongs at
-  the foot of `verify/drive-sign-in.mjs` — the section hands the page on with nothing in flight — and
-  not in a sleep before the check.
-- **If it turns out to be the app** — a repaint the panel owes and does not make — stop and report it
-  rather than fixing it here; that is a work order in `src/`, not a ride-along.
-- Nothing in `src/` moves.
+**Deliverables** *(re-cut 2026-09-27. The first cut's "find the cause" and "if it is the app, stop"
+are answered above, and the second is WO-7.13.)*
+- **`verify/drive-sign-in.mjs` hands the page on with nothing in flight.** Wait on a named condition
+  **before** the foot's `auth.disconnect()`, not after it. After `disconnect()`, `authState().busy`
+  reads `false` while `pending` still stands, so it says nothing about what is in flight. The first
+  cut's proposal: poll `authState().busy === false`, bounded, and announce a skip if the bound runs
+  out. Google's own timeouts are 25s silent plus 180s visible. It is a proposal, not a ruling.
+- **Correct the foot's comment** at `tools/verify/drive-sign-in.mjs` (~652–654). *"A request that is
+  still out when this file ends is a timer in a browser that is about to be killed"* is false: the
+  next section runs in the same page.
+- Nothing in `src/` moves. That half is WO-7.13's.
 
 **Acceptance**
-- [ ] The cause is named in `TESTING.md` § WO-7.12, with the run that shows it.
+- [ ] The cause is named in `TESTING.md` § WO-7.12, with the run that shows it. Both layers go in:
+      the harness trigger and the `src/` repaint WO-7.13 fixed. The first cut's trace (`t=999`
+      paint over a seeded session) is written to be lifted in.
 - [ ] Twenty consecutive runs of the Phase 7 sections read the check green. *(Or, if they cannot be
       run alone, whole-harness runs enough to say so honestly.)*
 - [ ] The whole browser harness shows no new failure.
 
 **Traps** — **No fixed sleep.** A wait on a named condition (nothing in flight, the panel painted) or
 nothing. **Do not loosen the check** — Connect back on the screen is the re-auth prompt, and it is half
-of what the check exists to prove.
+of what the check exists to prove. **A green run before WO-7.13 lands proves nothing about this
+work order.** It reads the stale paint from `drive-sync`'s own `disconnect()`, which is the reading
+the first cut refused to land.
+
+## WO-7.13 — a sign-in that lapses with About open leaves the panel saying Connected
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.2 — the `syncNow()` this repaints from; WO-7.1 — the `refreshAuthChrome()` it calls
+**Closes roadmap** *(no box. A defect in WO-7.2's fifth Acceptance line, found by WO-7.12's first cut and confirmed by its verifier's reading.)*
+
+**Booked 2026-09-27**, owner-directed, from WO-7.12's verdict. WO-7.12 was booked as a harness race.
+Its implementer stopped on that work order's own *"if it is the app"* branch, and the verifier
+confirmed the `src/` half by reading every caller.
+
+**What is wrong.** `syncNow()` in `src/drive-sync.js` can settle `signed-out` (~545). When it does,
+its `finally` calls `refreshSyncChrome()`, which repaints the sync half of About's Drive section.
+**Nothing on that path calls `refreshAuthChrome()`**, the only writer of Connect's and Disconnect's
+`hidden` class and of the status line. The comment at ~541–544 says Connect *"is back on screen
+because authState() computes `signedIn` from the clock"*. That is false. `signedIn` is computed from
+the clock, but nothing redraws the button from it.
+
+**A teacher can reach it.** She opens About while signed in. The hour runs out with the modal still
+open; on the iPad a resume does not reload the page, so it stays open. Then she taps *Sync this year
+now*. The panel then shows **no Connect button, no Sync button and an empty sync line**, and the
+status line still reads *"Connected to Google Drive. This access ends at …"*. The re-auth sentence
+reaches the live region only, and it points at a button that is not drawn. The first cut drove
+exactly that and captured it (`WO712PROBE` in `.claude/dispatch/WO-7.12-cut1-result.md`).
+**No data is at risk**: nothing was sent, nothing on the device changed, and the header button and
+reopening About both redraw correctly. It is the silent failure WO-7.2's fifth line exists to rule
+out, and the harness check that claims it is covered (`verify/drive-sync.mjs` ~906) has been reading
+a paint made about 340 lines earlier.
+
+**Deliverables**
+- **A `signed-out` `syncNow()` repaints the auth half of the panel, and does it inside
+  `syncNow()`.** Put it on the `signed-out` arm or in the `finally`, whichever reads better, but not
+  in `src/shell.js`'s `[data-drive-sync]` chain. The harness calls `driveSync.syncNow()` directly,
+  and every door should get the repaint, not one. `src/drive-sync.js` already imports from
+  `src/auth.js`, so importing `refreshAuthChrome` keeps the dependency pointing the way `auth.js`
+  requires.
+- **Correct the comment** at `src/drive-sync.js` ~541–544 to say what now puts Connect back.
+- **A harness check that is red on `HEAD` every run, not one run in two.** Open About signed in, let
+  the token lapse with the modal still open, tap Sync through the delegated listener, then assert
+  that Connect is shown and the status line no longer reads *Connected*. The first cut's probe is
+  the shape. The existing check at ~906 stays as it is; WO-7.12 steadies it.
+- **Bump `CACHE` in `sw.js`.** `src/drive-sync.js` is in `SHELL`.
+
+**Acceptance**
+- [ ] The new check is red on `HEAD` in three runs out of three, recorded in `TESTING.md` § WO-7.13,
+      and green with the repaint in.
+- [ ] Mutation-proved: take the new `refreshAuthChrome()` call out and the new check goes red. **The
+      mutation is reverted before anything else is written** (`AGENTS.md`).
+- [ ] The comment at ~541–544 is true, and no other comment in `src/drive-sync.js` or `src/auth.js`
+      claims a repaint that does not happen. Every caller of `refreshAuthChrome()` is named in
+      `TESTING.md` § WO-7.13.
+- [ ] The whole browser harness shows no new failure. Name WO-7.12's check as the one known flake
+      if it goes red; it is no longer expected to.
+- [ ] 👤 **Laptop, deployed or local.** Connect, open About, leave it open past the hour (or until the
+      token lapses), tap *Sync this year now*: Connect is drawn and the line does not say Connected.
+
+**Two questions for the owner, not for the build**. The implementer changes neither.
+- **Should the *"Tap Connect Google Drive above, then sync again"* sentence be on the glass?** Today
+  `refreshSyncChrome()` blanks the sync line whenever sync is off, so a screen reader announces the
+  sentence but it is never drawn.
+- **Tapping *Stop syncing on this device* while a Connect is still waiting** leaves `pending` set.
+  The next Connect then answers *"already waiting for Google"* for up to about 205s. That is noted,
+  not booked.
+
+**Traps** — **Do not fix it in `src/shell.js`.** The tap chain is one door, and the harness does not
+use it. **Do not touch `verify/drive-sign-in.mjs`.** That is WO-7.12, and it waits on this. **The
+token stays memory-only** (`CLAUDE.md`, WO-7.1's ruling): the repaint reads `authState()` and writes
+nothing. **`src/sync-button.js` is the store's only subscriber**, and it stays that way. This is a
+direct call at settle, not a new `subscribe()`.

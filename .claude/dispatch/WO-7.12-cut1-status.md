@@ -1,0 +1,12 @@
+# WO-7.12 — dispatch status
+
+- 2026-09-27 gates PASS (wo-gate WO-7.12, exit 0; depends WO-7.2 DONE; tree clean at 0a76439).
+- 2026-09-27 route Claude Opus — diagnosis with a stop-if-it-is-the-app branch is a judgment trap; Codex set aside because 20 whole-harness runs (~5 min each) cannot fit the 20-min cap. Codex probe not run (not routing there).
+- 2026-09-27 claim: `--start WO-7.12` ran — row reads 🤖 CLAIMED — 2026-09-27. A replacement is resuming, not starting.
+- 2026-09-27 brief written: .claude/dispatch/WO-7.12-brief.md (10.5 KB, no markers).
+- 2026-09-27 implementer spawned at Opus with .claude/dispatch/WO-7.12-brief.md, awaiting return. Expect a long run (many whole-harness passes). A flat trail while it reads is normal. Note: rolling-window meter read 14.0M at --start, near the p25 death line — if this run dies, grep -rn MUTATION tools src first.
+- 2026-09-27 implementer returned (~55 min). Took the work order's own stop branch: cause is harness-triggered (drive-sign-in's last connect() settles after drive-sync seeds a token) but the defect under it is in src/ — a signed-out syncNow() never repaints Connect (refreshAuthChrome), and the comment at src/drive-sync.js:541-544 claims it does. No fix landed; tools/ and src/ equal HEAD (checked); no box ticked; baseline HEAD 1550·1549·1 failed x2. Proposed follow-ups in the result file. Its claims, not findings.
+- 2026-09-27 handoff: `--handoff WO-7.12` run. Verifier owed in a fresh session — its question is whether the stop was right (is the src defect real).
+- 2026-09-27 fresh session: row reads 🔍 AWAITING VERDICT; grep MUTATION src tools clean (prose only); tree = status line only. Verifier spawned at Opus as a FIRST pass, awaiting verdict.
+- 2026-09-27 verdict in: STOPPED CORRECTLY, NOT CLOSEABLE (FAIL for --tick). src defect confirmed real (signed-out syncNow() never calls refreshAuthChrome; comment drive-sync.js:541-544 false). AC1 ❌ no TESTING.md § WO-7.12; AC2 ❌ no counting runs; AC3 ✅ trivially. verify-shell 1550/1550 green once; sweep 42·0·3. Not a correction round — work order needs re-cut behind a src follow-up; owner decision.
+- 2026-09-27 owner ruled: book the src follow-up as WO-7.13 and re-cut WO-7.12 behind it. Row hand-set to ⬜ NOT STARTED (--release refuses 🔍 by design; nothing was built, so nothing is orphaned). These three files renamed to WO-7.12-cut1-*.md so the next dispatch starts clean.
