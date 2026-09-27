@@ -44,6 +44,13 @@
  * catches the case where GIS never loaded; it cannot displace a token client the section above
  * already built, and pretending otherwise would be the more comfortable lie.
  *
+ * (THE PARAGRAPH ABOVE IS HISTORY SINCE WO-7.10, 2026-09-26. `ensureFreshToken()` no longer asks
+ * Google anything — Google's token client has no silent path, so the "silent renewal" it made was a
+ * sign-in window with no tap behind it — and a sync with no usable token now settles `signed-out`
+ * without a request of any kind. Both checks are fast, and the second one's "no request made" now
+ * covers the token client as well as the Drive. The stub below is kept: it costs nothing and it
+ * still turns a regression that brought the request back into a refusal rather than a wait.)
+ *
  * ══════════ THE FIXTURE, AND HOW IT IS PUT BACK ══════════
  *
  * One of the checks below drives a real download, which REPLACES the year document — through

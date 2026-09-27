@@ -226,10 +226,11 @@ export const PREF_DEFAULTS = {
      identity scope). A fact about this browser, like every key above it: the laptop can be opted in
      while a borrowed tablet is not.
 
-     OPTING IN IS ALSO THE CONSENT TO TRY RECONNECTING AT LAUNCH — one consent, not two, the
-     owner's ruling 5 on WO-7.5. A device holding `true` makes the silent renewal when the app opens
-     and when it comes back into view; a device holding `false` or nothing makes no request to
-     Google at all. */
+     OPTING IN WAS ALSO THE CONSENT TO TRY RECONNECTING AT LAUNCH — the owner's ruling 5 on WO-7.5 —
+     and WO-7.10 reversed that half (2026-09-26): the "silent" renewal was a Google window with no tap
+     behind it. A device holding `true` now loads Google's sign-in library when the app opens and asks
+     it for nothing, so the header's tap can sign in inside its own gesture; a device holding `false`
+     or nothing makes no request to Google at all. */
   driveSyncOptIn: false,
 };
 

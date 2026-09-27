@@ -494,7 +494,12 @@ function settle(kind, message, bad) {
       this uploads the old record with the old rev, which is correct. The teacher's unsaved
       change stays unsynced and the save chip is already red about it.
     · the token after that, so that a sign-in that lapsed is found before anything is read or
-      written rather than in the middle.
+      written rather than in the middle. FOUND, NOT RENEWED (WO-7.10): ensureFreshToken() asks
+      Google nothing since that work order. A request from here would land two awaits after the
+      tap that started this, outside its gesture — a Google window with no tap behind it, which a
+      browser blocks and which then put its red line in the About panel. So no token here settles
+      `signed-out`, and the sign-in is asked for by a tap in its own stack: the header's does it
+      before it calls this (src/sync-button.js), About's Connect does it on its own.
     · and `syncing` on the chip only once a transfer is actually about to happen.
 */
 export async function syncNow() {
@@ -534,10 +539,9 @@ export async function syncNow() {
 
     const token = await ensureFreshToken();
     if (!token) {
-      /* THE FIFTH ACCEPTANCE LINE. Not a silent no-op: the panel says the sign-in ran out, the
-         Connect button is back on screen because authState() computes `signedIn` from the clock,
-         and src/auth.js has already repainted its own half with whatever Google said. Nothing on
-         this device changed and nothing was sent. */
+      /* THE FIFTH ACCEPTANCE LINE. Not a silent no-op: the panel says the sign-in ran out, and the
+         Connect button is back on screen because authState() computes `signedIn` from the clock.
+         Nothing on this device changed and nothing was sent. */
       return settle('signed-out', 'Your Google sign-in has run out, so nothing was synced. '
         + 'Nothing on this device changed. Tap Connect Google Drive above, then sync again.', true);
     }
@@ -578,6 +582,28 @@ export async function syncNow() {
     refreshSyncChrome();
     if (outcome && outcome.message) announce(outcome.message);
   }
+}
+
+/*
+  A SIGN-IN SUCCEEDED, SO AN OUTCOME THAT SAID THE SIGN-IN HAD RUN OUT IS NOW FALSE — and it is
+  dropped here, at its cause, rather than hidden when the panel paints (WO-7.10).
+
+  THE RED LINE THIS REMOVES WAS FOUND, NOT GUESSED. The harness drove the old tree against a stub
+  that opens a window only inside a tap's own stack (Safari's rule): the token lapses while the app
+  is open, a tap syncs, this module reaches the token two awaits late, Google's window is blocked, and
+  the outcome settles `signed-out`. The next tap signs in — and the About panel then read "Connected
+  to Google Drive" over this line in red, "Your Google sign-in has run out, so nothing was synced",
+  because `signedIn` had turned the sync half back on and nothing had replaced the outcome it drew.
+  Clearing it on paint would also hide a failure nobody had resolved; clearing it on a SIGN-IN clears
+  exactly the one outcome a sign-in answers. A network failure or a Drive refusal stays standing until
+  a sync replaces it, because a new token does not make either of those less true.
+
+  Called by src/shell.js after a Connect that succeeded and by src/sync-button.js after its tap's
+  sign-in succeeded — both before anything is painted.
+*/
+export function signedInAgain() {
+  if (outcome && outcome.kind === 'signed-out') outcome = null;
+  refreshSyncChrome();
 }
 
 /* Google's own words are identifiers; a teacher gets a sentence. Same split src/auth.js makes,

@@ -22,9 +22,16 @@
       current    Synced with Google Drive at 9:41.                                sync now
       ahead      Changes on this device are not in Google Drive yet.              sync now
       stale      Last synced yesterday at 3:12.                                   sync now
-      lapsed     Your Google sign-in has ended. Tap to reconnect.                 Google's sign-in, visibly
+      lapsed     The Google sign-in did not finish. Tap to try again.             Google's sign-in, then sync
       failed     The last sync did not finish. Nothing on this device changed.    About, at the Drive section
       syncing    Syncing with Google Drive…                                       nothing until it settles
+
+  WITH NO SIGN-IN, THE FIRST THREE READ EXACTLY AS THEY WOULD SIGNED IN (WO-7.10). The token is
+  memory-only, so every launch starts without one, and "no token" is not something to raise an alarm
+  about: the bookmark still says how fresh this device is, and that is what the header reads. The
+  tap is what changes — it asks Google for a sign-in INSIDE ITSELF and syncs when one comes back, one
+  gesture — and the label says so ("Tap to sign in to Google and sync now.") so the window that opens
+  is one she was told about. `lapsed` has changed meaning to match: see its arm in the ladder below.
 
   THE READING IS THE LABEL. Ruling 1 chose a bare icon with a corner badge — the header's existing
   grammar, every control up there is an icon — so the sentence lives in `aria-label` and `title`,
@@ -50,6 +57,11 @@
      button folds into its neighbour rather than moving somewhere else.
   4. Not synced TODAY turns amber on its own — a calendar day, not a number of hours. freshnessOf().
   5. Opting in is also the consent to try reconnecting at launch. One consent, not two.
+     REVERSED IN ITS SECOND HALF BY WO-7.10 (the owner, 2026-09-26): the "silent" reconnect was a
+     Google window with no tap behind it — blocked on the laptop, which put a red line in About, and
+     opened over the app on the iPad at launch and on every return, which left About dead and held
+     the next build back. Opting in is still remembered and still means the library loads at launch;
+     a sign-in is asked for only by a tap.
 
   ── TWO THINGS THAT LOOK LIKE OVERSIGHTS ──
 
@@ -57,10 +69,10 @@
   ticking in the header. It is the ruling the Drive panel's "ends at 2:47" already took, and there is
   no setInterval and no setTimeout anywhere in this file.
 
-  THE LAPSE IS NOT WATCHED. A token that runs out while the app sits open is not noticed until
-  something repaints or the teacher taps — and a tap on a stale-token "current" reading goes through
-  syncNow(), whose own silent renewal either carries it or turns this button to `lapsed`. Watching the
-  clock for it would be the timer above by another name.
+  THE LAPSE IS NOT WATCHED. A token that runs out while the app sits open changes nothing on the
+  header, and does not need to: the reading is freshness, which the lapse does not touch, and the next
+  tap finds no token and signs in inside itself before it syncs. Watching the clock for it would be
+  the timer above by another name.
 
   ── WHAT IT IS NOT ──
 
@@ -105,17 +117,17 @@ ICONS.stale = ICONS.ahead;
 /* ────────────────────────────── state ────────────────────────────── */
 
 /*
-  WHERE THE SILENT RENEWAL HAS GOT TO ON THIS PAGE, which is the one fact this module holds of its
-  own — and it holds it because the rule it serves is about ORDER: "the silent renewal is tried
-  before `lapsed` is drawn". No sign-in is not the same as a lapsed one until a renewal has been
-  tried and has failed.
+  WHETHER THE LAST SIGN-IN THIS BUTTON'S TAP ASKED FOR FAILED — the one fact this module holds of its
+  own (WO-7.10). Until that work order it held where a launch-time "silent renewal" had got to
+  (''/'trying'/'failed'/'ok'), because `lapsed` was drawn only after that renewal had been tried. The
+  renewal is gone — it was a Google window with no tap behind it — and with it the only reason to
+  distinguish "not tried yet" from "no token": both now read the bookmark. What is left is a tap
+  that asked Google and did not get a token, which is a thing she did and is owed an answer to.
 
-    ''        not tried on this page yet (the token is memory-only, so every launch starts here)
-    'trying'  out at Google now
-    'failed'  tried and refused — this is what `lapsed` is drawn on
-    'ok'      a token came back, from the renewal or from a reconnect tap
+    false  nothing to say (every launch starts here: the token is memory-only)
+    true   her tap asked and it failed — this is what `lapsed` is drawn on, until the next success
 */
-let renewal = '';
+let tapFailed = false;
 /* Whether the three listeners have been attached. Once per page; start() is safe to call again. */
 let started = false;
 
@@ -137,16 +149,16 @@ export function optedIn() {
    rather than trusted, for src/presentation.js's reason: localStorage can refuse a write. */
 export function rememberOptIn() {
   setPref(PREF, true);
-  renewal = 'ok';
+  tapFailed = false;
   start();
   refreshSyncButton();
 }
 
 /* Cleared by Disconnect, and by nothing else — a failed reconnect leaves a teacher opted in, because
-   she is: the next launch should try again, and the button should keep saying so. */
+   she is: the button stays, and its next tap asks again. */
 export function forgetOptIn() {
   setPref(PREF, false);
-  renewal = '';
+  tapFailed = false;
   refreshSyncButton();
 }
 
@@ -169,21 +181,29 @@ function staleReading(at, now) {
   THE PRECEDENCE, which is the whole of this module's own judgement and is written as one ladder so
   it can be read in one place:
 
-    1. syncing   a transfer is out (src/drive-sync.js) — or a sign-in is, which reads "Connecting"
+    1. syncing   a transfer is out (src/drive-sync.js) — or a sign-in her tap asked for is, which
+                 reads "Waiting for Google…" (the About panel's own words for the same moment)
                  rather than "Syncing" because nothing is being transferred, and taps the same:
-                 nothing until it settles. BEFORE THE RENEWAL HAS BEEN TRIED this is also where the
-                 button sits, and that is ruling 5's "lapsed is drawn only when the attempt fails".
-    2. lapsed    no live sign-in, and a silent renewal has been tried and refused — or a sync found
-                 the sign-in gone. Above `failed` because it names the one thing that has to happen
-                 before any sync can.
+                 nothing until it settles. It is drawn ONLY while a request is really out. Until
+                 WO-7.10 it was also the resting state of every launch — "Connecting to Google
+                 Drive…" until a renewal had been tried — and with the renewal gone that reading
+                 would have sat on the header for ever.
+    2. lapsed    her tap asked Google for a sign-in and did not get one, and nothing has succeeded
+                 since. THE POINT OF DEPARTURE FROM WO-7.5, argued here because the work order left
+                 it to the build (keep it, or draw it only after a tapped sign-in fails): it is kept,
+                 in that narrow form. Dropping it would leave a tap that did nothing visible — the
+                 button would go back to "Tap to sign in and sync" as though she had never tapped —
+                 and the two commonest causes are ones she can act on: a blocked window (About says
+                 how, and says it in red), and a library that had to be fetched first, which the
+                 SECOND tap cures. What it no longer means is "the sign-in ended": a missing token is
+                 every launch now, and is not an alarm. A sync that found the sign-in gone is not
+                 this state either — syncNow() asks Google nothing, so that outcome is the token's
+                 lapse, not a refusal, and the tap that follows signs in on its own.
     3. failed    the last sync ended badly for any reason but the sign-in.
     4. unknown   the bookmark has not been read yet; drawn as `syncing` for the frame it takes,
                  because an amber "not in Drive yet" corrected a moment later is a false sentence.
-    5. ahead, stale, current — freshnessOf(), unmodified.
-
-  A SIGN-IN THAT LAPSED WHILE THE APP SAT OPEN, with the renewal already `ok` from launch, falls
-  through to 5 on purpose: the header says what the bookmark says, and the tap goes through
-  syncNow(), whose own silent renewal either carries it or lands this button on `lapsed`.
+    5. ahead, stale, current — freshnessOf(), unmodified, SIGNED IN OR NOT. With no token only the
+                 label's last sentence changes, to say that the tap signs in first.
 */
 export function syncButtonState(now) {
   const when = now || new Date();
@@ -196,10 +216,10 @@ export function syncButtonState(now) {
 
   if (s.busy) {
     state = 'syncing'; reading = 'Syncing with Google Drive…';
-  } else if (a.busy || renewal === 'trying' || (renewal === '' && !a.signedIn)) {
-    state = 'syncing'; reading = 'Connecting to Google Drive…';
-  } else if (!a.signedIn && (renewal === 'failed' || s.outcome === 'signed-out')) {
-    state = 'lapsed'; reading = 'Your Google sign-in has ended. Tap to reconnect.';
+  } else if (a.busy) {
+    state = 'syncing'; reading = 'Waiting for Google…';
+  } else if (!a.signedIn && tapFailed) {
+    state = 'lapsed'; reading = 'The Google sign-in did not finish. Tap to try again.';
   } else if (s.bad && s.outcome !== 'signed-out') {
     state = 'failed'; reading = 'The last sync did not finish. Nothing on this device changed.';
   } else {
@@ -217,9 +237,11 @@ export function syncButtonState(now) {
   }
 
   /* The label is the reading and then what a tap will do — the reading alone describes a state, and
-     a teacher about to tap is owed the consequence. `lapsed` already ends in its instruction. */
+     a teacher about to tap is owed the consequence. `lapsed` already ends in its instruction. With no
+     token the tap opens Google's window before it syncs, and she is told that before she taps. */
+  const syncs = state === 'current' || state === 'ahead' || state === 'stale';
   const hint = state === 'failed' ? ' Tap for details.'
-    : (state === 'current' || state === 'ahead' || state === 'stale') ? ' Tap to sync now.' : '';
+    : syncs ? (a.signedIn ? ' Tap to sync now.' : ' Tap to sign in to Google and sync now.') : '';
   return { drawn: true, state: state, reading: reading, label: reading + hint };
 }
 
@@ -316,34 +338,53 @@ export function revealDriveSection() {
   What the tap does, by state — and it is the CALLER in src/shell.js that opens About, because that
   path already paints the modal before it appears; this answers door 'about' and leaves it there.
 
-  THE RECONNECT IS SYNCHRONOUS UP TO GOOGLE'S WINDOW, and that is WO-7.5's first Trap: this is called
-  from the click listener, auth.reconnect() asks inside the same stack, and nothing is awaited
-  before it. The silent attempt is NOT made here — it belongs to launch and to visibility, and it
-  has already failed by the time `lapsed` is on the glass.
+  WITH NO SIGN-IN, THE TAP SIGNS IN AND THEN SYNCS, AND THE SIGN-IN IS ASKED FOR SYNCHRONOUSLY
+  (WO-7.10, and WO-7.5's first Trap before it). This is called from the click listener,
+  auth.reconnect() reaches requestAccessToken() inside the same stack, and nothing is awaited before
+  it. The sync is started only from the far side of that promise. The tempting shape — call
+  syncNow() and let it find no token — is the one WO-7.10's brief warned about: syncNow() flushes and
+  reads the disk before it asks for a token, so a request made there lands two awaits after the tap
+  and the gesture is gone. That is the launch renewal's failure moved onto the tap, and it is why
+  src/auth.js's ensureFreshToken() no longer asks Google anything at all.
+
+  `lapsed` taps the same way: it is a sign-in her last tap asked for and did not get, and the only
+  thing that cures it is another one, inside another tap.
 
   IT HANDS THE SYNC BACK, NOT JUST THE DOOR (WO-7.7). The answer is `{ door, syncing }`: which way
-  the tap went, and — when it went to Drive — syncNow()'s own promise, so src/shell.js can chain the
-  screen repaint a download needs exactly where it chains one onto About's Sync. That repaint is not
-  done HERE because it reaches every screen, and this file importing src/shell.js or a screen would
-  close the loop afterYearChange()'s comment refuses; a registered "call me after a download" hook
-  was the other shape, and it was declined because it is a store subscriber by another name — a
-  standing listener this module would own for somebody else's screens. Handing the promise back is
-  one caller, one tap, nothing left registered.
+  the tap went, and — when it went to Drive — a promise of syncNow()'s own result, so src/shell.js can
+  chain the screen repaint a download needs exactly where it chains one onto About's Sync. On the
+  sign-in door that promise resolves to null if the sign-in failed, which afterDownload() reads as
+  "nothing downloaded". That repaint is not done HERE because it reaches every screen, and this file
+  importing src/shell.js or a screen would close the loop afterYearChange()'s comment refuses; a
+  registered "call me after a download" hook was the other shape, and it was declined because it is
+  a store subscriber by another name — a standing listener this module would own for somebody else's
+  screens. Handing the promise back is one caller, one tap, nothing left registered.
 */
 export function tapSyncButton() {
   const st = syncButtonState();
   if (!st.drawn || st.state === 'syncing') return { door: 'none', syncing: null };
   if (st.state === 'failed') return { door: 'about', syncing: null };
 
-  if (st.state === 'lapsed') {
+  if (!auth.authState().signedIn) {
+    /* Evaluated first, in this stack: reconnect() asks Google before its own first await. */
     const asking = auth.reconnect();
     refreshSyncButton();
-    asking.then((ok) => {
-      renewal = ok ? 'ok' : 'failed';
+    const syncing = asking.then((ok) => {
+      tapFailed = !ok;
+      if (!ok) {
+        refreshSyncButton();
+        driveSync.refreshSyncChrome();
+        return null;
+      }
+      /* A sign-in succeeded, so a sync outcome that said the sign-in had run out is now false —
+         dropped at its cause rather than hidden at paint (src/drive-sync.js signedInAgain()). */
+      driveSync.signedInAgain();
+      const run = driveSync.syncNow();
       refreshSyncButton();
-      driveSync.refreshSyncChrome();
-    }, () => { renewal = 'failed'; refreshSyncButton(); });
-    return { door: 'reconnect', syncing: null };
+      return run;
+    }, () => { tapFailed = true; refreshSyncButton(); return null; });
+    syncing.then(afterSync, afterSync);
+    return { door: 'sign-in', syncing: syncing };
   }
 
   const syncing = driveSync.syncNow();
@@ -353,46 +394,19 @@ export function tapSyncButton() {
 }
 
 /* After a sync from EITHER door — this button or About's "Sync this year now" — which is why it is
-   exported: src/shell.js chains it onto the panel's own tap. A sync that found the sign-in gone is
-   the renewal failing by another route, so it is recorded as one. */
-export function afterSync() {
-  const s = driveSync.syncState();
-  if (s.outcome === 'signed-out') renewal = 'failed';
-  else if (s.outcome && !s.bad) renewal = 'ok';
+   exported: src/shell.js chains it onto the panel's own tap. A sync that landed is a sign-in that
+   works, so it clears a failed tap; a sync that found no token says nothing new about the tap.
+
+   IT READS THE VALUE THIS SYNC RESOLVED WITH, never syncState().outcome — src/shell.js's
+   afterDownload() argument (WO-7.7). Here it is not a nicety: the sign-in door resolves with null
+   when the sign-in failed and no sync ran, and the sticky outcome at that moment is the LAST sync's,
+   usually a success, which would clear the failure this function had just been told about. */
+export function afterSync(result) {
+  if (result && result.kind && !result.bad) tapFailed = false;
   refreshSyncButton();
 }
 
-/* ────────────────────────────── the silent renewal ────────────────────────────── */
-
-/*
-  ON APP OPEN AND WHEN THE TAB COMES BACK INTO VIEW — never on the tap, and never on a timer.
-
-  Only on a device that has opted in (ruling 5: one consent). A device that never connected reaches
-  the first line and returns, so it fetches nothing from Google at all — which is what keeps
-  privacy.html's "on a device where Connect has never been tapped, nothing is fetched from Google"
-  true, and what tools/verify/sync-button.mjs asserts from the wire. This function is the second
-  way Google's library is reached, and the policy names it (WO-7.6): on an opted-in device it loads
-  at every launch, and a return to view with the sign-in ended asks Google again.
-
-  IT NEVER BLOCKS. It is not awaited by anything: the app is already rendered when this runs, offline
-  included, and an attempt that cannot reach Google fails into `lapsed` like any other refusal.
-  EXPECT IT TO CARRY THE LAPTOP AND NOT THE iPad — it renews off the teacher's own Google session,
-  and iOS blocks what that depends on (docs/sync.md § "Wanting it to be seamless"). On the iPad the
-  visible reconnect above is the normal path, not the fallback.
-*/
-function renewSilently() {
-  if (!optedIn()) return;
-  const a = auth.authState();
-  if (a.signedIn) { renewal = 'ok'; refreshSyncButton(); return; }
-  if (a.busy || renewal === 'trying') return;
-  renewal = 'trying';
-  refreshSyncButton();
-  auth.ensureFreshToken().then((token) => {
-    renewal = token ? 'ok' : 'failed';
-    refreshSyncButton();
-    driveSync.refreshSyncChrome();
-  }, () => { renewal = 'failed'; refreshSyncButton(); });
-}
+/* ────────────────────────────── launch ────────────────────────────── */
 
 /* Read the bookmark for the open document if it has not been read, then repaint. The read is
    src/drive-sync.js's own primeSyncChrome() — this file never reads IndexedDB. */
@@ -405,7 +419,24 @@ function prime() {
 /*
   Boot, from src/shell.js once the year document is open. Paints (which for a device that never
   opted in means: stays hidden, and the header is exactly what it was), and on an opted-in device
-  reads the bookmark and makes the silent renewal.
+  reads the bookmark and PUTS GOOGLE'S LIBRARY ON THE PAGE — and asks it for nothing.
+
+  NO SIGN-IN IS REQUESTED HERE, OR ON A RETURN TO VIEW (WO-7.10). Until that work order this function
+  and the visibility listener below made a "silent renewal" — ensureFreshToken(), which reached
+  `requestAccessToken({ prompt: '' })`. Google's token client has no silent path: that call opens a
+  window. On the laptop the browser blocked it and About showed "The browser blocked the Google
+  sign-in window" in red; on the iPad's home-screen app it opened, over the app, at launch — and
+  because a failed renewal was retried on every return to view, closing it brought it straight back
+  (the harness observed the loop against a stub that opens every window: one request per return).
+  The owner's ruling that day was option A: opting in stays, a sign-in is asked for only by a tap.
+
+  THE LIBRARY STILL LOADS HERE, and only on an opted-in device (auth.preloadSignIn()). That is what
+  lets the header's tap reach requestAccessToken() in its own stack; without it the first tap of
+  every session would spend its gesture fetching a script. It is also exactly what privacy.html and
+  docs/FERPA.md say — the library loads each time Planbook opens on a device where Connect
+  succeeded — and a device that never connected fetches nothing, which tools/verify/sync-button.mjs
+  asserts from the wire. A return to view loads it again only if it is still not there (an offline
+  launch), which is a script fetch and never a token request.
 
   THE LISTENERS ARE ATTACHED ONLY ONCE THE DEVICE HAS OPTED IN, here or from rememberOptIn(), so a
   device that never connected carries none of them — no store subscriber, no visibility handler — and
@@ -425,13 +456,13 @@ export function start() {
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState !== 'visible' || !optedIn()) return;
       /* A day may have turned over while the app was in the background, which is `stale` arriving
-         on its own — so this repaints whether or not a renewal is needed. */
+         on its own — so this repaints. It asks Google for nothing. */
       refreshSyncButton();
-      renewSilently();
+      auth.preloadSignIn();
     });
     window.addEventListener('resize', refreshSyncButton);
   }
 
   prime();
-  renewSilently();
+  auth.preloadSignIn();
 }

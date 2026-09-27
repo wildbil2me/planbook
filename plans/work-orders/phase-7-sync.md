@@ -618,6 +618,10 @@ the drawing carries the same answers in green where it asked them in amber.)*
 5. *Is opting in also consent to try reconnecting at launch?* **Yes, one consent.** A device that has
    opted in makes the silent attempt at launch and on regaining visibility. It never blocks: the app
    renders either way, offline included, and *lapsed* is drawn only when the attempt fails.
+   *(**Its second half reversed on 2026-09-26 by [WO-7.10](#wo-710--the-silent-sign-in-renewal-opens-a-window-and-on-the-ipad-it-blocks-updates-and-taps)**,
+   the owner's option A: the "silent attempt" opened a Google window with no tap behind it. Opting in is
+   still remembered and still loads the library at launch; a sign-in is asked for only by a tap. The
+   ruling above is left as it was given.)*
 
 **Acceptance**
 - [x] A device that has never connected draws the header exactly as today, and makes no request to
@@ -981,7 +985,7 @@ nothing on this screen may suggest it.
 
 ## WO-7.10 — the silent sign-in renewal opens a window, and on the iPad it blocks updates and taps
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.5 — the launch renewal this removes, and the header button whose tap replaces it
+**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-7.5 — the launch renewal this removes, and the header button whose tap replaces it
 **Closes roadmap** *(no box. Phase 7's boxes are closed by WO-7.1, WO-7.2 and WO-7.3; this reverses one ruling on top of them.)*
 
 **Booked 2026-09-26**, owner-reported, during WO-8.18's device reading. **The owner's ruling, the day it
@@ -1041,15 +1045,25 @@ the token.
   pointing here; the ruling's text is not rewritten.
 
 **Acceptance**
-- [ ] On an opted-in device, a launch and a return to visible make **no** token request. Asserted in
+- [x] On an opted-in device, a launch and a return to visible make **no** token request. Asserted in
       the harness by counting `requestAccessToken` calls (a stub), not by the network: the library
       itself still loads, and that load is expected.
-- [ ] With no token, the header button reads the bookmark's freshness, never *Connecting…*, and a tap
+      *(`verify/sync-button.mjs`, 2026-09-26: `requests after the launch = [], after two returns to
+      view = []` at a stand-in that refuses every request as a pop-up blocker; `/gsi/client` still on
+      the wire. `TESTING.md` § WO-7.10.)*
+- [x] With no token, the header button reads the bookmark's freshness, never *Connecting…*, and a tap
       requests a token inside the tap's own stack, then syncs. Asserted in the harness.
-- [ ] A failed silent attempt can no longer set the red line, and a tapped success clears any red line
+      *(One visible request, `inClick` and `inListener` true, then Drive called and `current`. While
+      her tapped request is out the button reads "Waiting for Google…", never "Connecting…".)*
+- [x] A failed silent attempt can no longer set the red line, and a tapped success clears any red line
       already there. Asserted in the harness, with the sequence the build found as its fixture.
-- [ ] Mutation-proved: putting a launch-time renewal back turns the first line red. **The mutation is
+      *(The found sequence — a sync two awaits after its tap, refused, then a tapped sign-in leaving
+      "Connected" over a red "run out" line — is in `TESTING.md` § WO-7.10, with the one part the
+      harness could not reproduce.)*
+- [x] Mutation-proved: putting a launch-time renewal back turns the first line red. **The mutation is
       reverted before anything else is written** (`AGENTS.md`).
+      *(Two shapes, both red on line 1 and both reverted by copy and checked with `cmp`: a launch-time
+      `reconnect()`, and WO-7.5's requesting `ensureFreshToken()` put back.)*
 - [ ] 👤 **iPad, home-screen app, deployed, pop-ups allowed**, force-quit first: no Google window at
       launch or on return from the background; About opens on the first tap; the header button's tap
       signs in and syncs; the next deploy's update lands with no pop-up blocked (About names one copy

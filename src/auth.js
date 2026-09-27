@@ -42,10 +42,10 @@
      sign-in silent is the teacher's Google session — which is Google's cookie, not our storage.
      So: memory only, and a page reload is a sign-out. Argued rather than decided by omission,
      because "we never got round to persisting it" and "persisting it is wrong" read identically
-     in a diff. (Since WO-7.5 a reload still discards the token, but on a device that opted into
-     sync it need not be a sign-out: src/sync-button.js renews silently at launch, off that same
-     Google session, and where that fails — usually, on the iPad — the header says so. The
-     memory-only ruling is unchanged.)
+     in a diff. (From WO-7.5 until WO-7.10 a reload on an opted-in device was followed by a launch-
+     time "silent" renewal. WO-7.10 took it out — there is no silent path, see ensureFreshToken() —
+     so a reload is a sign-out again, on every device, and the header's next tap signs back in and
+     syncs in one gesture. The memory-only ruling never moved.)
 
   2. THE CONTROL LIVES IN THE ABOUT MODAL, and the Backup & restore panel lost. Backup was the
      tempting answer — it is the app's other "what leaves this device" surface, and it has a
@@ -80,8 +80,9 @@
          the policy now says is the narrower claim that stays true — no third-party code UNLESS a
          teacher connects Drive, when Google's own sign-in library loads — and it stays true
          because of loadGis() below: the library is appended on the Connect tap, or (since
-         WO-7.5) by the launch-time renewal on a device where a Connect already succeeded, so a
-         teacher who never taps it gets exactly the network she got before. The harness asserts
+         WO-7.5, and as a bare preload with no token request since WO-7.10) at launch on a device
+         where a Connect already succeeded, so a teacher who never taps it gets exactly the network
+         she got before. The harness asserts
          that from the network itself, not from the source.
        · Nothing else, and in particular NOT THE LAN ADDRESS the iPad reaches the laptop on: Google
          will not register a raw IP, so a handshake from it can only end in `origin_mismatch`.
@@ -365,13 +366,15 @@ function loadGis() {
   const ready = gisReady;
   if (ready()) return Promise.resolve();
   /* THE ONLY APPEND OF GOOGLE'S SCRIPT IN THE APP, and since WO-7.5 it has two ways to be reached:
-     the Connect tap, as before, and the launch-time renewal src/sync-button.js makes — which runs
+     the Connect tap, as before, and the launch-time load src/sync-button.js makes — which runs
      only on a device where a Connect tap already SUCCEEDED and Disconnect has not been pressed
      since. privacy.html and docs/FERPA.md used to say only "nothing is fetched from Google until
-     Connect is tapped", which that renewal outgrew; since WO-7.6 (2026-09-26) their shared
+     Connect is tapped", which that load outgrew; since WO-7.6 (2026-09-26) their shared
      data-flow statement names both ways in, and what it still promises is that a device where
      Connect was never tapped fetches nothing — which tools/verify/sync-button.mjs asserts from
-     the wire. */
+     the wire. SINCE WO-7.10 THE LAUNCH-TIME LOAD ASKS FOR NOTHING: it is preloadSignIn() below,
+     it puts the library on the page and stops, and the only thing it buys is that the header's
+     tap can reach requestAccessToken() in its own stack. */
   if (gisLoading) return gisLoading;
 
   gisLoading = new Promise((resolve, reject) => {
@@ -409,9 +412,12 @@ function settle(outcome) {
 /*
   One request to GIS, wrapped in a promise.
 
-  `silent` is the whole of the difference the work order asks for: `prompt: ''` requests a token
-  without showing anything, which succeeds when the teacher has already granted this scope and
-  still has a Google session, and fails immediately when she has not. The visible attempt passes NO
+  `silent` is the whole of the difference the work order asks for — and THE WORD OVERSTATES IT,
+  which WO-7.10 is the scar of: `prompt: ''` still OPENS GOOGLE'S WINDOW to fetch the token. What
+  it skips is the consent screen, when the teacher has already granted this scope and still has a
+  Google session; the window flashes and closes by itself. There is no windowless request in this
+  library. So `silent` means "ask for as little as possible", never "ask without a tap" — a
+  browser blocks it without one exactly as it blocks the visible attempt. The visible attempt passes NO
   prompt at all rather than `prompt: 'consent'` — the library's default shows the account chooser
   and the consent screen where one is needed, while forcing `consent` would re-ask a teacher who
   granted it this morning for no reason.
@@ -525,19 +531,21 @@ export async function connect() {
 }
 
 /*
-  Reconnect — THE HEADER'S TAP ON A LAPSED SIGN-IN, and visible straight away (WO-7.5).
+  Reconnect — THE HEADER'S TAP WITH NO SIGN-IN, and visible straight away (WO-7.5; since WO-7.10
+  the ONLY way this app signs back in after a reload or a lapse).
 
-  NOT connect() ABOVE, and the difference is the whole of that work order's first Trap. connect()
-  awaits a silent attempt and only then asks visibly, so on the iPad the visible request lands after
-  the tap's gesture has been spent and Safari blocks the window — WO-7.4's last hardware reading
-  recorded exactly that. By the time the header draws its lapsed state the silent attempt has
-  ALREADY been made, at launch or when the app came back into view (src/sync-button.js), and it
-  failed; making it again here would buy nothing and cost the window.
+  NOT connect() ABOVE, and the difference is the whole of WO-7.5's first Trap. connect() awaits a
+  silent attempt and only then asks visibly, so on the iPad the visible request lands after the
+  tap's gesture has been spent and Safari blocks the window — WO-7.4's last hardware reading
+  recorded exactly that. Until WO-7.10 the reason given here for skipping the silent attempt was
+  that src/sync-button.js had already made one at launch; that renewal is gone (it opened a window
+  with no tap behind it — see ensureFreshToken()), and the reason that is left is the better one:
+  a silent attempt is a window too, and this tap has exactly one window to spend.
 
   SO THE REQUEST IS MADE IN THIS CALL STACK. An async function runs synchronously up to its first
   `await`, and ask() is synchronous up to requestAccessToken(), so when the library is already on the
   page Google's window is asked for inside the click handler that called this. When it is NOT — the
-  launch-time load failed, which is a device that was offline or on a network that blocks Google —
+  launch-time preload failed, which is a device that was offline or on a network that blocks Google —
   the library has to be fetched first, the request lands outside the tap, and a browser that blocks
   it gets told so in words that name the fix: the library is on the page now, so the SECOND tap is
   inside its own gesture and opens. That is the one path on which this takes two taps, and it is
@@ -617,28 +625,52 @@ export function disconnect() {
   half of Phase 7 that owns the token is this file; the half that spends it is that one, and the
   dependency points from there to here and never back.
 
-  A SECOND CALLER SINCE WO-7.5, and it spends nothing: src/sync-button.js makes the same silent
-  attempt at launch and when the app comes back into view, on a device that has opted into sync and
-  on no other — which is what lets the header try the renewal BEFORE it draws "your sign-in has
-  ended" rather than after (docs/sync.md § "What actually happens at the hour"). Its dependency
-  points here too, and nothing here imports it back.
+  IT ASKS GOOGLE FOR NOTHING, AND THAT IS WO-7.10 (2026-09-26). This comment used to say "SILENT
+  ONLY, AND NEVER A POPUP", over a body that called requestToken(true) — and it was false: Google's
+  token client has NO SILENT PATH. `prompt: ''` skips the consent screen when it can and still
+  OPENS A WINDOW to fetch the token (see requestToken() above). So every "silent renewal" this made
+  was a sign-in window with no tap behind it. A desktop browser blocked it, which set `lastError` to
+  "The browser blocked the Google sign-in window" and put that red line in the About panel; the
+  iPad's home-screen app let it open, over the app, at launch and again on every return to view —
+  and taps on About did nothing and the next build did not arrive until the owner blocked pop-ups.
+  A second caller WO-7.5 added made it at launch and on visibility (src/sync-button.js); that caller
+  is gone. The one left, src/drive-sync.js's syncNow(), reaches this AFTER two awaits — a flush and
+  a disk read — which is outside any tap's gesture, so a request from here was the same unwanted
+  window reached from a tap that could no longer vouch for it.
 
-  SILENT ONLY, AND NEVER A POPUP. A visible Google window with no tap behind it is blocked by every
-  browser worth supporting, and one that got through mid-lesson would be worse than the failure it
-  was avoiding. So this renews quietly or it fails — and when it fails it fails LOUDLY IN THE
-  MODEL: null back, `lastError` set to a sentence, and the panel repainted. Whatever calls this
-  has to show that sentence; a caller that swallows the null is the silent failure the fifth
-  acceptance line forbids, and it will be reviewable as such because the reason is sitting in
-  authState() waiting to be read.
+  WHAT IT DOES NOW: hands back the token this module holds if it is fresh, and null if it is not —
+  never a window, never a request, never a write to `lastError`. A caller that gets null says so in
+  its own words (syncNow() settles `signed-out`, "Tap Connect Google Drive above, then sync again"),
+  and the one place a token is fetched is a tap asking inside its own stack: connect() and
+  reconnect() above. The header's tap on a device with no token calls reconnect() FIRST, in the
+  click listener, and only then syncs (src/sync-button.js tapSyncButton()), so by the time syncNow()
+  asks here the answer is already fresh.
+
+  Kept as a function rather than replaced by accessToken() at its one call site because the name is
+  what src/drive-sync.js's comments and the harness read, and because the day a real windowless
+  path exists — none does today; WO-7.10's Traps say to report one rather than build on it — this
+  is where it would go. Async for the same reason: the caller already awaits it.
 */
 export async function ensureFreshToken() {
-  if (fresh()) return session.token;
-  if (!signInAvailable()) return null;
+  return fresh() ? session.token : null;
+}
 
-  const out = await requestToken(true);
-  lastError = out.ok ? '' : (out.why || describe(null));
-  refreshAuthChrome();
-  return out.ok ? session.token : null;
+/*
+  PUT GOOGLE'S LIBRARY ON THE PAGE AND ASK IT NOTHING (WO-7.10). Called by src/sync-button.js at
+  launch on a device that has opted into sync, and on a return to view if the library is still not
+  there — never anywhere else. It exists for one reason: reconnect() can reach requestAccessToken()
+  inside the tap's own stack only when the library is ALREADY loaded, and a tap that has to fetch it
+  first loses the gesture (reconnect()'s `loadedFirst` sentence). So the load happens ahead of the
+  tap, and the token request waits for the tap.
+
+  This is the preload privacy.html and docs/FERPA.md describe — "it loads each time Planbook opens"
+  on a device where Connect succeeded — and keeping it is what keeps that sentence true. A failure is
+  swallowed on purpose: an offline launch is not an error, and the tap that needs the library says
+  so in words if it is still missing then.
+*/
+export function preloadSignIn() {
+  if (!signInAvailable() || gisReady()) return;
+  loadGis().catch(() => {});
 }
 
 /* ────────────────────────────── the panel ────────────────────────────── */

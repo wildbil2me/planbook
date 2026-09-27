@@ -664,7 +664,8 @@
                                       happening while the teacher is not looking
       data-sync-button                the header's sync button (WO-7.5), drawn only on a device
                                       that has opted into sync. Its state decides the tap —
-                                      sync now, reconnect VISIBLY inside this gesture, or open
+                                      sync now (signing in VISIBLY inside this gesture first
+                                      when there is no token, WO-7.10), or open
                                       About at the Drive section — and src/sync-button.js owns
                                       that table. Still a tap and never a timer: it reports
                                       freshness, it does not sync on its own
@@ -2078,6 +2079,10 @@ function afterDriveAuthChange(connected) {
      settled, which is what reading authState() here instead would have got wrong. Disconnect
      clears it in its own branch below. */
   if (connected === true) syncButton.rememberOptIn();
+  /* And a sync outcome that said the sign-in had run out is false the moment one succeeds (WO-7.10)
+     — without this the panel read "Connected to Google Drive" over that sentence in red. Cleared at
+     its cause in src/drive-sync.js; see signedInAgain() for how the harness found it. */
+  if (connected === true) driveSync.signedInAgain();
   syncButton.refreshSyncButton();
 }
 
@@ -2228,11 +2233,14 @@ document.addEventListener('click', (e) => {
 
   /* THE HEADER'S SYNC BUTTON (WO-7.5). Its state decides the tap and src/sync-button.js owns that
      table; the one outcome it hands back here is About, because the path that paints About before
-     it appears lives in this file. NOTHING IS AWAITED BEFORE THE TAP REACHES GOOGLE: on a lapsed
-     sign-in tapSyncButton() calls src/auth.js's reconnect() in this same stack, which is the only
-     way Safari lets the sign-in window open. And when the tap went to Drive, the sync it started
-     is handed back so the screen repaint a download needs hangs off it here, as it does off About's
-     Sync above (WO-7.7) — src/sync-button.js repaints its own button and nothing else. */
+     it appears lives in this file. NOTHING IS AWAITED BEFORE THE TAP REACHES GOOGLE: with no
+     sign-in — every launch since WO-7.10, which took the launch-time renewal out — tapSyncButton()
+     calls src/auth.js's reconnect() in this same stack, which is the only way Safari lets the
+     sign-in window open, and starts the sync only once a token is back. And when the tap went to
+     Drive, the sync it started is handed back so the screen repaint a download needs hangs off it
+     here, as it does off About's Sync above (WO-7.7) — src/sync-button.js repaints its own button
+     and nothing else. On the sign-in door that promise resolves to null when the sign-in failed,
+     and afterDownload() does nothing with a null. */
   const syncBtn = e.target.closest('[data-sync-button]');
   if (syncBtn) {
     const tap = syncButton.tapSyncButton();
@@ -3918,10 +3926,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     teacher.refreshHeaderIdentity();
     document.getElementById('loadingScreen').classList.add('hidden');
     /* AFTER the loading screen comes down, and not awaited (WO-7.5): the header's sync button, and
-       on a device that has opted into sync, the silent renewal ruling 5 makes part of that consent.
-       It must never stand between a teacher and her registry — the app is on the glass before
-       Google is asked anything, offline included. On a device that never opted in it paints the
-       button hidden and returns, so the header is exactly what it was. */
+       on a device that has opted into sync, Google's library loaded ready for the button's tap —
+       and nothing asked of it. WO-7.5 made a "silent" sign-in renewal here; WO-7.10 took it out,
+       because Google's token client has no silent path and the renewal was a sign-in window with no
+       tap behind it (blocked on the laptop, opened over the app on the iPad). A sign-in is asked for
+       only by a tap now. It must never stand between a teacher and her registry — the app is on the
+       glass before Google's script is even requested, offline included. On a device that never
+       opted in it paints the button hidden and returns, so the header is exactly what it was. */
     syncButton.start();
   } catch (e) {
     showBootFailure(e);
@@ -4111,8 +4122,10 @@ function refreshUpdateBanner() {
   only then reloads. flush() never rejects, which is why there is no catch between the two.
 
   Disabled on the first tap, because a second tap during the flush would queue a second reload
-  behind the first for no benefit. On a device that opted in to Drive, WO-7.5's silent renewal signs
-  back in after the reload, so this is not a sign-out there.
+  behind the first for no benefit. The reload IS a sign-out from Google Drive, on every device: the
+  token is memory-only. From WO-7.5 until WO-7.10 an opted-in device renewed it at launch without a
+  tap; that renewal opened a Google window over the app on the iPad and was taken out, so the
+  header's sync button reads freshness after the reload and its next tap signs in and syncs.
 */
 async function reloadForUpdate(button) {
   if (button) button.disabled = true;

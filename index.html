@@ -2157,7 +2157,8 @@
            the permission in use, so the door moved. Drawing this block fetches nothing: Google's
            sign-in library (loadGis() in src/auth.js) is appended on the Connect tap, or — since
            WO-7.5, on a device where a Connect succeeded and Disconnect has not been tapped since —
-           by the silent renewal src/sync-button.js makes at launch and on a return to view. That
+           at launch by src/sync-button.js, which since WO-7.10 loads it and asks it for nothing: a
+           sign-in is requested only by a tap (the "silent renewal" it replaced opened a window). That
            is what keeps privacy.html's claim — no third-party code unless Google Drive sync is
            turned on, and nothing from Google on a device where Connect was never tapped — true for
            every teacher who never does.

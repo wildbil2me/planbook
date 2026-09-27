@@ -280,7 +280,11 @@
          renewal src/sync-button.js makes when the app opens, and when it comes back into view with
          the sign-in ended. "Turned on" below is that opt-in, NOT a live sign-in: an opted-in device
          whose token has lapsed still loads the library at launch. A device where Connect was never
-         tapped fetches nothing from Google, which tools/verify-shell.mjs asserts from the network. -->
+         tapped fetches nothing from Google, which tools/verify-shell.mjs asserts from the network.
+         WO-7.10 (2026-09-26) took the renewal out — it opened a Google sign-in window with no tap
+         behind it — and kept the launch-time load, which now asks Google for nothing; so the clause
+         about renewing "without a tap" went, in both documents in the same sitting, and a sign-in is
+         now requested only by a tap (Connect, or the header's sync button). -->
     <p>
       <strong>Nothing leaves it on its own.</strong> Loading the page fetches Planbook's own files
       from the website, the way any web page does, and the browser checks those same files for
@@ -288,10 +292,9 @@
       tracking, no error reporting, no advertising, and no third-party code of any kind — unless
       Google Drive sync is turned on, when Google's own sign-in library loads from
       accounts.google.com. It loads first when Connect is tapped. After that, on that device, it
-      loads each time Planbook opens, and Planbook asks accounts.google.com to renew the sign-in
-      without a tap — then, and again whenever Planbook comes back onto the screen with the sign-in
-      ended — until Disconnect is tapped. On a device where Connect has never been tapped, nothing
-      is fetched from Google.
+      loads each time Planbook opens, until Disconnect is tapped — and Planbook asks Google for a
+      sign-in only when Connect or the sync button is tapped. On a device where Connect has never
+      been tapped, nothing is fetched from Google.
     </p>
     <p>
       Student information moves only when <em>you</em> move it, and there are three ways to do

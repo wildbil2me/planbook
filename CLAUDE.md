@@ -144,9 +144,15 @@ history for a device that has connected.**
 [WO-7.5](plans/work-orders/phase-7-sync.md#wo-75--the-header-says-how-fresh-this-devices-sync-is) *is
 ✅: a button last before About, drawn only on a device that opted in, reading* **freshness, not
 connection**, *and never green. Opting in is now remembered —* `planbook_driveSyncOptIn`*, a boolean
-and never a credential — and* **the owner ruled that it is also consent to renew the sign-in silently
-at launch and on regaining visibility.** *So on an opted-in device* **a reload is no longer a
-sign-out** *(the token is still memory-only; the renewal fetches a new one), and* **Google's library
+and never a credential — and* **the owner ruled that it was also consent to renew the sign-in silently
+at launch and on regaining visibility.** *So on an opted-in device* **a reload was no longer a
+sign-out** *(the token is still memory-only; the renewal fetched a new one).* **Both halves of that
+ruling are history as of**
+[WO-7.10](plans/work-orders/phase-7-sync.md#wo-710--the-silent-sign-in-renewal-opens-a-window-and-on-the-ipad-it-blocks-updates-and-taps)
+*(2026-09-26): Google has no silent renewal in a browser — the "silent" request opened a window, which
+on the iPad sat over the app at every launch and blocked taps and updates. Nothing now asks Google for
+a token until a tap;* **every launch starts signed out again**, *the header button still reads
+freshness, and one tap signs in and syncs. What survives is the preload:* **Google's library
 loads at launch as well as on the Connect tap.** *The token-in-memory ruling stands; the two
 sentences describing its consequences do not.* **The public wording is**
 [WO-7.6](plans/work-orders/phase-7-sync.md#wo-76--the-privacy-documents-say-google-loads-only-on-the-connect-tap-and-since-wo-75-it-also-loads-at-launch)*'s

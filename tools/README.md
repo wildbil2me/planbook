@@ -1223,7 +1223,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1527 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1532 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2117,6 +2117,17 @@ to the network*, which from the page are the same bytes. The navigation is polic
 boots in it. The run prints **1538**: `1538 checks · 1538 passed · 0 failed · 0 skipped`, 48,369
 lines, 31.4 lines per check, 567s, exit 0, measured 2026-09-26 on the real clock. Mutation round in
 `TESTING.md` § WO-8.18.
+
+**WO-7.10 moved it from 1527 to 1532, and the executed count from 1538 to 1543 — five sites, five
+results.** All in `verify/sync-button.mjs`, all literal, none in a loop and none a failure arm, so the
+gap stays at −11 and the file count does not move. Two WO-7.5 checks were rewritten in place rather
+than added (the opted-in launch now reads freshness, not `lapsed`, and the reload now makes zero
+token requests rather than one silent one); the five new sites are the About panel read after that
+launch, and four in the replay of the red-line sequence (a no-token sync asks nothing, a blocked tap
+draws `lapsed` with About in red, the tapped success clears both halves, and the Connect door clears
+the sync half). The run prints **1543**: `1543 checks · 1543 passed · 0 failed · 0 skipped`, 48,531
+lines, 31.5 lines per check, 571s, exit 0, measured 2026-09-26 on the real clock. Mutation round in
+`TESTING.md` § WO-7.10.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

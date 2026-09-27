@@ -11891,6 +11891,91 @@ not move; nothing in `src/` does either.
 three standing REVIEWs — none of them about this work order's two files), § 11 reading 1506 call
 sites, unmoved.
 
+### WO-7.10 — the silent sign-in renewal opens a window, and on the iPad it blocks updates and taps
+
+**The launch-time renewal is gone, and so is the only other request that could open Google's window
+without a tap.** `renewSilently()` and both its call sites left `src/sync-button.js`; `start()` and the
+visibility listener now call `auth.preloadSignIn()`, which puts Google's library on the page and asks
+it nothing. `ensureFreshToken()` in `src/auth.js` no longer asks Google anything either — it hands back
+the held token or null — because its one remaining caller, `syncNow()`, reaches it two awaits after the
+tap that started it. The header's tap with no token calls `auth.reconnect()` in the click listener's
+own stack and starts the sync only once a token is back. `lapsed` survives in a narrower meaning —
+*your tap asked for a sign-in and it did not finish* — argued at its arm in `syncButtonState()`.
+`src/drive-sync.js` gained `signedInAgain()`, which drops a `signed-out` outcome when a sign-in
+succeeds. `privacy.html` and `docs/FERPA.md` lost the clause about renewing "without a tap", in the
+same sitting and identically. `CACHE` v137 → v138.
+
+**The red-line sequence, observed rather than inferred.** A scratch section (not committed) drove the
+WO-7.5 tree — a `git archive HEAD` copy — against a stand-in library that modelled three browsers: a
+laptop (a window opens only with `navigator.userActivation.isActive`), an iPad with pop-ups blocked
+(opens only from inside the click listener's own stack), and an iPad home-screen app that lets every
+window open and whose teacher closes it unfinished. What it read, step by step:
+
+- **Launch, every model:** one "silent" request with no activation. Laptop and blocked iPad: refused
+  as `popup_failed_to_open`, the sign-in line red with *"The browser blocked the Google sign-in
+  window…"*, the header `lapsed`. Open iPad: a window over the app, closed unfinished.
+- **Each return to view:** another request, in every model — calls 1, 2, 3 after two returns. On the
+  open-iPad model that is the window reopening every time it is closed, which is the owner's account
+  (a window first; About dead) confirmed as a loop in the harness. Whether it is what held v135/v136
+  back on the device is not something a harness can show.
+- **A tap on `lapsed`:** one visible request inside the click, success, the sign-in line cleared.
+- **The sequence that left a red line under a success** (blocked-iPad model): token lapses while the
+  app is open → the header still reads up to date → a tap syncs → `syncNow()` reaches
+  `ensureFreshToken()` two awaits late → the "silent" request is refused → sign-in line red, outcome
+  `signed-out` → the next tap signs in → **About reads "Connected to Google Drive" over the sync line
+  in red, *"Your Google sign-in has run out, so nothing was synced"*.**
+- **Not reproduced:** the sign-in line's own *"blocked"* sentence surviving a tapped success. Every
+  success path in `src/auth.js` clears `lastError`, and no ordering the three models produced set it
+  again while a fresh session stood. If the owner's devices show exactly that sentence under a live
+  sign-in, the cause is outside what this stand-in models (Google's own callback order) and the 👤
+  readings below are where it would show.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-7-sync.md` § WO-7.10, from
+`node tools/verify-shell.mjs`, § "the header sync button (WO-7.5)".*
+
+- [x] **Acceptance 1 — a launch and a return to view make no token request.** The stand-in set to
+      refuse every request as a pop-up blocker; the reload, then two returns to view: `requests after
+      the launch = [], after two returns to view = []`, the button reading `current` with the label
+      ending *"Tap to sign in to Google and sync now."*. The library itself still loads: the
+      preceding check reads `/gsi/client` on the wire from the same opted-in launch. And the About
+      panel read after it: status `class-hint` *"Not connected…"*, auth error `""`, requests 0.
+- [x] **Acceptance 2 — with no token the button reads freshness, and a tap signs in inside itself and
+      then syncs.** After a lapse and a return to view: zero requests, `state = current`, *"Synced with
+      Google Drive at … Tap to sign in to Google and sync now."*. The tap: `requests made by the tap =
+      [{"silent":false,"inClick":true,"inListener":true,…}]`, then signed in, `state = current`, Drive
+      calls up, `baseRev === localRev`.
+- [x] **Acceptance 3 — the found sequence as the fixture.** A no-token sync settles `signed-out` with
+      zero token requests and auth error `""`; a tap the stand-in blocks draws `lapsed` (*"The Google
+      sign-in did not finish. Tap to try again."*) with About red; the tap that works leaves About's
+      sign-in line `class-hint` *"Connected to Google Drive…"* and the sync line `class-hint` with no
+      *"run out"*; and the Connect door clears the sync half the same way.
+- [x] **Acceptance 4 — mutation-proved, each reverted before anything else was written.** Files
+      backed up to the scratchpad first and restored by copy (not `git checkout`, which would have
+      taken the unstaged work with it); each restore checked with `cmp` against the backup and a
+      `grep -rn "MUTATION M"` over `src/`. Runs are the Phase 7 sections only (`localstorage-prefs`,
+      `drive-sign-in`, `drive-sync`, `sync-button`) through a scratch copy of the entry; the four
+      WO-7.7 checks and one `drive-sign-in` check fail in every such subset run because the class
+      fixtures they need are built by sections that did not run, so they are named and discounted.
+      **M1** — `auth.reconnect()` added to the end of `start()`: `128 checks · 114 passed · 14 failed`,
+      Acceptance 1's check among them. **M2** — WO-7.5 put back: `ensureFreshToken()`'s old requesting
+      body and a call to it at the end of `start()`: `128 checks · 115 passed · 13 failed`, Acceptance
+      1, Acceptance 3's first half and the no-token-sync check among them. **M3** —
+      `driveSync.signedInAgain()` removed from `afterDriveAuthChange()` in `src/shell.js`: `128 checks ·
+      122 passed · 6 failed`, the one new failure the Connect-door check (*"sync line class-error 'Your
+      Google sign-in has run out…'"*). The unmutated subset: `128 checks · 123 passed · 5 failed`, the
+      five being the fixture-dependent ones named above. **Not proved by mutation:** the
+      `signedInAgain()` call inside `tapSyncButton()` — the sync that follows it replaces the outcome
+      anyway, so removing it changes nothing a check can see; it is there so the panel is right in the
+      moment between the sign-in and the sync's own outcome.
+- [ ] 👤 **iPad, home-screen app, deployed, pop-ups allowed** — owed. Force-quit from the app switcher
+      first.
+- [ ] 👤 **Laptop, deployed origin** — owed. Check `location.origin` first.
+
+**Both tools.** `node tools/verify-shell.mjs`: **`1543 checks · 1543 passed · 0 failed · 0 skipped`,
+48,531 lines, 31.5 lines per check, 571s, exit 0**, 2026-09-26, real clock. `node tools/wo-sweep.mjs`:
+`45 checks · 42 passed · 0 failed · 3 to review` (the three standing REVIEWs), § 11 reading 1532 call
+sites.
+
 ---
 
 ## Phase 8 — 1.0 packaging

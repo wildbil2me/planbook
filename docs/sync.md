@@ -48,7 +48,9 @@ live in [`src/auth.js`](../src/auth.js), argued at length in its header; this is
 **The token lives in memory and only in memory.** A module variable, so a reload is a sign-out.
 *(Still true of the token; since WO-7.5, on a device that has opted in, the launch-time renewal
 fetches a new one, so a reload need not be a sign-out the teacher sees — see § "The one thing in
-this conversation that is already a build", below.)*
+this conversation that is already a build", below. **WO-7.10 took that renewal out on 2026-09-26** —
+it opened a Google window with no tap behind it — so a reload is a sign-out again, and the header's
+next tap signs back in and syncs.)*
 It is not student data and not a UI preference, so `src/prefs.js`'s `PREF_DEFAULTS` would refuse
 it — but the reason is stronger than the closed door: an access token is a bearer credential, and
 in `localStorage` it outlives the tab and survives a laptop handed to a substitute. Persisting it
@@ -71,8 +73,9 @@ fetched no Google script, which kept [`../privacy.html`](../privacy.html)'s "no 
 any kind" true word for word. The submission needed the opposite, so the door moved and the policy
 narrowed in the same sitting: **no third-party code unless a teacher connects Google Drive**, when
 Google's own sign-in library loads from `accounts.google.com`. That narrower claim is true because
-`loadGis()` appends the script on the Connect tap — and, since WO-7.5, by the launch-time renewal on
-a device that has opted in, which WO-7.6 (2026-09-26) wrote into the policy's sentence — and never
+`loadGis()` appends the script on the Connect tap — and, since WO-7.5, at launch on a device that
+has opted in (a renewal until WO-7.10, a bare preload that asks Google nothing since), which WO-7.6
+(2026-09-26) wrote into the policy's sentence — and never
 on a device where Connect was never tapped, which `tools/verify-shell.mjs` asserts from the Network
 domain rather than from the source. The pairing rule stands for any origin added
 later: widen the code's list and not the client's and the button ends in `origin_mismatch`, so the
@@ -435,6 +438,20 @@ blocks the pop-up, which is what WO-7.4's last hardware reading recorded. `recon
 **Expect the renewal to carry the laptop and not the iPad** — the paragraph above that says so is
 unchanged by building it; the button makes the iPad's one tap per session a predictable, cheap one.
 
+**Taken out on 2026-09-26, the same day — [WO-7.10](../plans/work-orders/phase-7-sync.md#wo-710--the-silent-sign-in-renewal-opens-a-window-and-on-the-ipad-it-blocks-updates-and-taps).**
+The two paragraphs above are the record of what WO-7.5 built and are left as written; this one says
+what stands now. **The premise of this section's first line was wrong: there is no silent arm.**
+`prompt: ''` skips the consent screen when it can and still **opens a window** to fetch the token, so
+every "silent renewal" was a Google window with no tap behind it. On the laptop the browser blocked
+it and About showed *"The browser blocked the Google sign-in window"* in red; on the iPad's
+home-screen app it opened over the app at launch and again on every return to view, which left About
+dead and held the next build back until the owner blocked pop-ups. The owner's ruling was **option A**:
+opting in is still remembered, and **a sign-in is requested only by a tap**. `ensureFreshToken()` now
+asks Google for nothing — it hands back the held token or null — and the header's button, with no
+token, reads the bookmark's freshness like any other time and **signs in inside its own tap before it
+syncs**. Google's library still loads at launch on an opted-in device, asking it nothing, so that tap
+can reach the sign-in in its own stack. A reload is a sign-out again.
+
 ### The one thing in this conversation that is already a build — 2026-09-07
 
 The owner's conclusion from the section above: **the indicator matters more than the automation,
@@ -486,7 +503,9 @@ sentence *"nothing is fetched from Google until Connect is tapped"* was true onl
 *before the first time*. **WO-7.6 (2026-09-26) rewrote it** in `privacy.html` and
 [`FERPA.md`](FERPA.md) together: the library loads first on the Connect tap and after that at every
 launch on that device, the sign-in is renewed then and on a return to view with it ended, until
-Disconnect — and a device where Connect was never tapped fetches nothing from Google. The three things the key
+Disconnect — and a device where Connect was never tapped fetches nothing from Google. *(**WO-7.10,
+the same day, took the renewal out and the clause about it with it**, in both documents together: the
+library still loads at every launch on that device, and a sign-in is asked for only by a tap.)* The three things the key
 unlocked are all three built: the indicator's condition, *lapsed* told apart from *never connected*,
 and a launch-time renewal aimed only at the teachers who want it.
 

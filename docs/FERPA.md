@@ -87,17 +87,20 @@ the second of the three acts below.
      succeeded and Disconnect has not been tapped since (planbook_driveSyncOptIn) — the silent
      renewal src/sync-button.js makes when the app opens, and when it comes back into view with the
      sign-in ended. "Turned on" is that opt-in, not a live sign-in: an opted-in device whose token
-     has lapsed still loads the library at launch. -->
+     has lapsed still loads the library at launch. WO-7.10 (2026-09-26) took the renewal out — it
+     opened a Google sign-in window with no tap behind it — and kept the launch-time load, which now
+     asks Google for nothing; so the clause about renewing "without a tap" went, in both documents
+     in the same sitting, and a sign-in is now requested only by a tap (Connect, or the header's
+     sync button). -->
 
 **Nothing leaves it on its own.** Loading the page fetches Planbook's own files from the website,
 the way any web page does, and the browser checks those same files for updates. Beyond that,
 Planbook makes no network requests at all — no analytics, no usage tracking, no error reporting, no
 advertising, and no third-party code of any kind — unless Google Drive sync is turned on, when
 Google's own sign-in library loads from accounts.google.com. It loads first when Connect is tapped.
-After that, on that device, it loads each time Planbook opens, and Planbook asks accounts.google.com
-to renew the sign-in without a tap — then, and again whenever Planbook comes back onto the screen
-with the sign-in ended — until Disconnect is tapped. On a device where Connect has never been
-tapped, nothing is fetched from Google.
+After that, on that device, it loads each time Planbook opens, until Disconnect is tapped — and
+Planbook asks Google for a sign-in only when Connect or the sync button is tapped. On a device where
+Connect has never been tapped, nothing is fetched from Google.
 
 Student information moves only when the teacher moves it, and there are three ways to do that. Each
 is a deliberate act, and it is visible as it happens:

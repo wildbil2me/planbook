@@ -72,7 +72,10 @@ const FAKE_GIS = `(function(){
             c.callback({ access_token: 'wo75-fake-token-' + (++f.n), expires_in: 3599,
               scope: c.scope, token_type: 'Bearer' });
           } else {
-            c.error_callback({ type: silent ? 'popup_failed_to_open' : 'popup_closed' });
+            /* 'block' is a browser's pop-up blocker whichever kind of request it was — the sentence
+               WO-7.10 is about; 'deny' keeps WO-7.5's split, a blocked silent attempt and a visible
+               window closed unfinished. */
+            c.error_callback({ type: mode === 'block' || silent ? 'popup_failed_to_open' : 'popup_closed' });
           }
         }, 60);
       } };
@@ -174,7 +177,11 @@ const READ = `(function(){
     aboutBadgeText: ab ? ab.textContent : '',
     beforeAbout: !!(b && b.nextElementSibling === a),
     optIn: raw,
-    signedIn: au.signedIn, authBusy: au.busy,
+    signedIn: au.signedIn, authBusy: au.busy, authError: au.lastError,
+    statusClass: (document.getElementById('driveStatus') || {}).className || '',
+    statusText: ((document.getElementById('driveStatus') || {}).textContent || '').trim(),
+    syncLineClass: (document.getElementById('driveSyncStatus') || {}).className || '',
+    syncLineText: ((document.getElementById('driveSyncStatus') || {}).textContent || '').trim(),
     outcome: s.outcome, busy: s.busy, bad: s.bad, localRev: s.localRev, baseRev: s.baseRev,
     lastSyncedAt: s.lastSyncedAt,
     fake: window.__fakeGis ? window.__fakeGis.calls.slice() : null,
@@ -261,22 +268,27 @@ check('a device that never connected draws the header exactly as it was — no s
   AND THE OPT-IN IS WHAT ASKS — the other half, and what keeps the zero above from passing by
   watching nothing. The same reload with the preference set asks for Google's library at launch. The
   request is BLOCKED at the browser rather than let through, so no real Google code runs on this page;
-  a blocked request is still sent, so it is still on the wire. And a library that cannot load is a
-  renewal that failed, so the button lands on `lapsed` — which is also the offline launch, and the
-  proof that the renewal is tried before `lapsed` is drawn rather than instead of it.
+  a blocked request is still sent, so it is still on the wire.
+
+  WHAT THE BUTTON READS WHEN IT CANNOT LOAD CHANGED AT WO-7.10. It used to land on `lapsed`, because a
+  library that could not load was a launch-time renewal that failed. There is no launch-time renewal
+  now — the load asks Google for nothing — so an offline launch reads what every launch reads with no
+  token: the bookmark's freshness, with a label saying the tap signs in first. Never "Connecting…",
+  which with nothing to connect would sit on the header for ever.
 */
 await send('Network.setBlockedURLs', { urls: ['*accounts.google.com*'] });
 await setOptIn(true);
 netLog.length = 0;
 await reload();
-const blocked = await waitFor((r) => r.state === 'lapsed', 6000);
+const blocked = await waitFor((r) => ['current', 'ahead', 'stale'].indexOf(r.state) >= 0, 6000);
 const googleOpted = netLog.filter((r) => /^https?:\/\/accounts\.google\.com\//i.test(r.url));
-check('and on a device that has opted in, the launch itself asks for Google’s library — the renewal '
-  + 'ruling 5 makes part of opting in — and when that request cannot land (blocked here, offline on '
-  + 'a real device) the app is on the glass anyway and the button says the sign-in has ended',
+check('and on a device that has opted in, the launch itself asks for Google’s library — the preload '
+  + 'that lets a tap reach the sign-in in its own stack — and when that request cannot land (blocked '
+  + 'here, offline on a real device) the app is on the glass anyway and the button reads the '
+  + 'bookmark’s freshness, saying that its tap signs in first (WO-7.10)',
   googleOpted.some((r) => r.url.indexOf('https://accounts.google.com/gsi/client') === 0)
-    && blocked.state === 'lapsed' && blocked.hidden === false
-    && blocked.label === 'Your Google sign-in has ended. Tap to reconnect.',
+    && ['current', 'ahead', 'stale'].indexOf(blocked.state) >= 0 && blocked.hidden === false
+    && blocked.signedIn === false && / Tap to sign in to Google and sync now\.$/.test(blocked.label),
   googleOpted.length + ' request(s) to accounts.google.com: '
     + JSON.stringify(googleOpted.map((r) => r.url).slice(0, 3)) + '; the button reads '
     + JSON.stringify(blocked.state) + ' — ' + JSON.stringify(blocked.label));
@@ -310,16 +322,54 @@ check('a Connect that succeeds — the real button, tapped, answered by the stan
   'stored ' + PREF_KEY + ' = ' + JSON.stringify(connected.optIn) + ', button hidden = '
     + connected.hidden + ', state = ' + connected.state + ', signed in = ' + connected.signedIn);
 
+/*
+  WO-7.10 ACCEPTANCE 1 — A LAUNCH AND A RETURN TO VIEW MAKE NO TOKEN REQUEST, counted at the stand-in's
+  requestAccessToken() rather than on the wire, because the library itself still loads (the wire
+  check above) and that load is expected. The stand-in is set to BLOCK every request it is handed,
+  whichever kind — which is the laptop's browser, and the sequence the build found: under WO-7.5 this
+  exact reload made one "silent" request with no tap behind it, the stand-in refused it as a pop-up
+  blocker does, and the About panel said so in red; a return to view made another, and another. So a
+  request here cannot pass quietly: it is on the count, and it is in red on the panel.
+*/
+await setFake('block', 'block');
 await reload();
-const survived = await waitFor((r) => r.signedIn && r.state !== 'syncing', 4000);
-check('and it survives a reload — which is a sign-out, the token being memory-only — so the button '
-  + 'is drawn again, and the renewal it is now allowed to make is the SILENT one, answered without a '
-  + 'window: one silent request and no visible one',
-  survived.optIn === 'true' && survived.hidden === false && survived.signedIn === true
-    && Array.isArray(survived.fake) && survived.fake.length === 1
-    && survived.fake[0].silent === true,
+const survived = await waitFor((r) => ['current', 'ahead', 'stale'].indexOf(r.state) >= 0, 4000);
+await pause(400);
+const launched = await read();
+await visible();
+await pause(400);
+await visible();
+await pause(400);
+const returned = await read();
+check('WO-7.10 Acceptance 1 — the opt-in survives a reload, which is a sign-out (the token is '
+  + 'memory-only), and on that opted-in device the launch and two returns to view make NO token '
+  + 'request — zero calls to requestAccessToken(), counted at a stand-in that would have refused '
+  + 'each one as a pop-up blocker — and the button is drawn reading the bookmark, never "Connecting…"',
+  survived.optIn === 'true' && survived.hidden === false && survived.signedIn === false
+    && Array.isArray(launched.fake) && launched.fake.length === 0
+    && Array.isArray(returned.fake) && returned.fake.length === 0
+    && ['current', 'ahead', 'stale'].indexOf(returned.state) >= 0
+    && !/Connecting/.test(returned.label) && / Tap to sign in to Google and sync now\.$/.test(returned.label),
   'opt-in = ' + JSON.stringify(survived.optIn) + ', button hidden = ' + survived.hidden
-    + ', state = ' + survived.state + ', requests = ' + JSON.stringify(survived.fake));
+    + '; requests after the launch = ' + JSON.stringify(launched.fake) + ', after two returns to view = '
+    + JSON.stringify(returned.fake) + '; the button reads ' + returned.state + ' — '
+    + JSON.stringify(returned.label));
+
+await clickSel('[data-modal-open="aboutModal"]');
+await pause(300);
+const launchPanel = await read();
+await shutModals();
+check('WO-7.10 Acceptance 3, its first half — a failed silent attempt can no longer set the red line: '
+  + 'after that launch and those returns to view, with a stand-in that turns any request into "The '
+  + 'browser blocked the Google sign-in window", About’s Drive section carries no red line and the '
+  + 'sign-in holds no error — because nothing asked',
+  launchPanel.aboutOpen === true && launchPanel.authError === ''
+    && launchPanel.statusClass === 'class-hint' && /^Not connected\./.test(launchPanel.statusText)
+    && launchPanel.syncLineClass !== 'class-error' && launchPanel.fake.length === 0,
+  'status line ' + JSON.stringify(launchPanel.statusClass) + ' ' + JSON.stringify(launchPanel.statusText)
+    + ', sync line ' + JSON.stringify(launchPanel.syncLineClass) + ', auth error '
+    + JSON.stringify(launchPanel.authError) + ', requests ' + launchPanel.fake.length);
+await setFake('grant', 'grant');
 
 /* Every planbook_ key, and what the opt-in key holds — the "nothing but a boolean" half. */
 const storeWith = await evalJs(`(function(){ var out = {};
@@ -333,8 +383,14 @@ check('and what reaches localStorage for it is one key holding a boolean and not
   PREF_KEY + ' = ' + JSON.stringify(storeWith[PREF_KEY]) + '; keys = '
     + JSON.stringify(Object.keys(storeWith)) + '; keys holding a token = ' + JSON.stringify(tokenish));
 
+/* Disconnect is drawn only while signed in (src/auth.js refreshAuthChrome()), and since WO-7.10 a
+   reload leaves an opted-in device signed OUT — there is no launch-time renewal to sign it back in —
+   so the teacher who wants to switch sync off connects first. Recorded as a follow-up in the WO-7.10
+   result file rather than changed here: the panel is WO-7.1's, and this work order does not own it. */
 await clickSel('[data-modal-open="aboutModal"]');
 await pause(300);
+await clickSel('[data-drive-connect]');
+await waitFor((r) => r.signedIn && !r.authBusy, 4000);
 await clickSel('[data-drive-disconnect]');
 const disconnected = await waitFor((r) => r.hidden === true, 3000);
 await shutModals();
@@ -698,38 +754,133 @@ check('a sync from the About panel’s own button moves the header too — the b
   await waitFor((r) => r.state === 'current' && !r.busy, 5000);
 }
 
-/* LAPSED: the token runs out, the silent renewal is tried on the return to view and refused, and the
-   tap asks VISIBLY, INSIDE THE CLICK. */
-await setFake('deny', 'grant');
+/* ══════════ WO-7.10 — no token is not an alarm, the tap signs in inside itself, and the red line ══════
+   ══════════ that outlived a tapped success                                                     ══════
+
+   THE SEQUENCE THE BUILD FOUND, which is this block's fixture (WO-7.10 Acceptance 3). It was observed
+   by driving the WO-7.5 tree against a stand-in that opens Google's window only from inside a tap's
+   own stack, which is Safari's rule, and reading the About panel after each step:
+     1. the token runs out while the app is open; the header still reads up to date;
+     2. a tap syncs, and syncNow() reaches the token two awaits after the tap — outside its gesture —
+        so the "silent" request is blocked: the auth line goes red ("The browser blocked the Google
+        sign-in window…") and the sync outcome settles `signed-out`;
+     3. the next tap signs in, and the auth line clears — but the About panel then reads "Connected to
+        Google Drive" OVER A RED SYNC LINE, "Your Google sign-in has run out, so nothing was synced",
+        because signing in turned the sync half back on and nothing had replaced its outcome.
+   The launch and the returns to view made the auth line red too, every time (the check above). What
+   the stand-in could NOT make happen, under any of three browsers modelled, is the auth line's own
+   sentence surviving a tapped sign-in: every success path clears it. Recorded in the WO-7.10 result
+   file rather than claimed away.
+
+   Steps 1–3 are replayed below against today's tree: the lapse, then a sync that finds no token (the
+   About panel's Sync door, which is the one way left to reach syncNow() without a token — the panel
+   sat open across the lapse), then a tap the pop-up blocker refuses, then a tap that works. */
+await setFake('block', 'block');
 await evalJs(`window.planbook.auth.acceptTokenResponse({ access_token: 'wo75-short', expires_in: 10,
   scope: ${JSON.stringify(SCOPE_URL)} }); 1`);
 const callsBefore = (await read()).fake.length;
 await visible();
-const lapsed = await waitFor((r) => r.state === 'lapsed', 4000);
-const renewalCalls = lapsed.fake.slice(callsBefore);
-check('a sign-in that has run out is renewed SILENTLY when the app comes back into view, before '
-  + 'anything is drawn — and only when that is refused does the button read "Your Google sign-in has '
-  + 'ended. Tap to reconnect.", in the inverted fill',
-  lapsed.state === 'lapsed' && lapsed.label === 'Your Google sign-in has ended. Tap to reconnect.'
-    && renewalCalls.length === 1 && renewalCalls[0].silent === true
-    && renewalCalls[0].inClick === false && lapsed.badgeShown === false,
-  'requests since the token lapsed = ' + JSON.stringify(renewalCalls) + '; state = ' + lapsed.state
-    + ', label = ' + JSON.stringify(lapsed.label));
+await pause(400);
+const lapsed = await read();
+check('WO-7.10 — a sign-in that has run out while the app sits open is NOT renewed on the return to '
+  + 'view: no token request is made, the button goes on reading the bookmark ("Synced with Google '
+  + 'Drive at …") with a label saying the tap signs in first, and it is never "Connecting…" and never '
+  + 'an alarm',
+  lapsed.signedIn === false && lapsed.fake.length === callsBefore
+    && lapsed.state === 'current'
+    && /^Synced with Google Drive at .+\. Tap to sign in to Google and sync now\.$/.test(lapsed.label)
+    && lapsed.authError === '',
+  'requests since the token lapsed = ' + (lapsed.fake.length - callsBefore) + '; state = '
+    + lapsed.state + ', label = ' + JSON.stringify(lapsed.label));
+
+const outBefore = (await read()).fake.length;
+const noToken = await evalJs('window.planbook.driveSync.syncNow().then(function (r) { return r.kind; })');
+const afterNoToken = await read();
+check('WO-7.10 Acceptance 3 — step 2 of the found sequence no longer asks Google: a sync that finds no '
+  + 'token settles `signed-out` and makes NO token request (it used to make a "silent" one two awaits '
+  + 'after the tap, which a pop-up blocker refused), so the sign-in line gains no red sentence',
+  noToken === 'signed-out' && afterNoToken.fake.length === outBefore && afterNoToken.authError === '',
+  'outcome = ' + noToken + ', token requests = ' + (afterNoToken.fake.length - outBefore)
+    + ', auth error = ' + JSON.stringify(afterNoToken.authError));
+
+const beforeBlocked = (await read()).fake.length;
+await tap();
+const refused = await waitFor((r) => r.state === 'lapsed', 3000);
+const blockedCalls = refused.fake.slice(beforeBlocked);
+await clickSel('[data-modal-open="aboutModal"]');
+await pause(300);
+const refusedPanel = await read();
+await shutModals();
+check('a tap the browser refuses — the stand-in blocking the one window it asked for — draws `lapsed`, '
+  + 'now meaning "your tap asked and it did not finish": "The Google sign-in did not finish. Tap to try '
+  + 'again.", and About says why in red',
+  blockedCalls.length === 1 && blockedCalls[0].silent === false && blockedCalls[0].inListener === true
+    && refused.state === 'lapsed'
+    && refused.label === 'The Google sign-in did not finish. Tap to try again.'
+    && refusedPanel.statusClass === 'class-error'
+    && /blocked the Google sign-in window/.test(refusedPanel.statusText),
+  'requests made by the tap = ' + JSON.stringify(blockedCalls) + '; state = ' + refused.state
+    + ', label = ' + JSON.stringify(refused.label) + '; About: ' + refusedPanel.statusClass + ' '
+    + JSON.stringify(refusedPanel.statusText.slice(0, 80)));
 await measureWidths('lapsed');
 
+await setFake('grant', 'grant');
+await save('WO710-TAP');
 const beforeReconnect = (await read()).fake.length;
+const driveBefore = (await read()).driveCalls;
 await tap();
-const reconnected = await waitFor((r) => r.signedIn && r.state !== 'lapsed' && r.state !== 'syncing', 4000);
+const reconnected = await waitFor((r) => r.signedIn && !r.busy && !r.authBusy
+  && r.state === 'current' && r.driveCalls > driveBefore, 5000);
 const tapCalls = reconnected.fake.slice(beforeReconnect);
-check('and the tap asks for Google’s window VISIBLY and INSIDE THE CLICK — one request, not silent, '
-  + 'made in the click listener’s own synchronous stack rather than a promise later, with no silent '
-  + 'attempt in front of it: the precondition for Safari’s pop-up blocker letting it open (whether '
-  + 'iPadOS does is Acceptance 6, 👤) — and the sign-in comes back',
+check('WO-7.10 Acceptance 2 — with no token, a tap asks for Google’s window VISIBLY and INSIDE THE CLICK '
+  + '— one request, not silent, made in the click listener’s own synchronous stack rather than a '
+  + 'promise later — and THEN SYNCS, in the same gesture: the sign-in comes back, Drive is called, '
+  + 'and the button reads up to date',
   tapCalls.length === 1 && tapCalls[0].silent === false && tapCalls[0].inClick === true
     && tapCalls[0].inListener === true
-    && reconnected.signedIn === true && reconnected.state !== 'lapsed',
+    && reconnected.signedIn === true && reconnected.state === 'current'
+    && reconnected.driveCalls > driveBefore && reconnected.baseRev === reconnected.localRev,
   'requests made by the tap = ' + JSON.stringify(tapCalls) + '; now signed in = '
-    + reconnected.signedIn + ', state = ' + reconnected.state);
+    + reconnected.signedIn + ', state = ' + reconnected.state + ', Drive calls ' + driveBefore
+    + ' → ' + reconnected.driveCalls + ', outcome = ' + reconnected.outcome);
+
+await clickSel('[data-modal-open="aboutModal"]');
+await pause(300);
+const clearedPanel = await read();
+await shutModals();
+check('WO-7.10 Acceptance 3, its second half — a tapped success clears every red line already there: '
+  + 'after the blocked tap and the no-token sync above, the tap that signs in and syncs leaves About’s '
+  + 'Drive section with no red line in EITHER half — the sign-in line says connected, and the sync '
+  + 'line no longer says the sign-in ran out',
+  clearedPanel.statusClass === 'class-hint' && /^Connected to Google Drive\./.test(clearedPanel.statusText)
+    && clearedPanel.syncLineClass === 'class-hint' && !/run out/.test(clearedPanel.syncLineText)
+    && clearedPanel.authError === '',
+  'sign-in line ' + clearedPanel.statusClass + ' ' + JSON.stringify(clearedPanel.statusText.slice(0, 60))
+    + '; sync line ' + clearedPanel.syncLineClass + ' '
+    + JSON.stringify(clearedPanel.syncLineText.slice(0, 80)));
+
+/* THE CONNECT DOOR, same sequence: a no-token sync leaves `signed-out`, and About's own Connect is
+   the tap that signs in. Connect does not sync, so without the fix the panel read "Connected" over the
+   red "run out" line until the next sync — which is step 3 of the found sequence exactly. */
+await evalJs(`window.planbook.auth.acceptTokenResponse({ access_token: 'wo710-short', expires_in: 10,
+  scope: ${JSON.stringify(SCOPE_URL)} }); 1`);
+const viaConnectOut = await evalJs('window.planbook.driveSync.syncNow().then(function (r) { return r.kind; })');
+await clickSel('[data-modal-open="aboutModal"]');
+await pause(300);
+await clickSel('[data-drive-connect]');
+const viaConnect = await waitFor((r) => r.signedIn && !r.authBusy, 4000);
+await pause(150);
+const viaConnectPanel = await read();
+await shutModals();
+check('and the same holds through About’s own Connect: a sync that found no token leaves its red "run '
+  + 'out" line, and the Connect that succeeds takes it away — a sign-in answers that sentence, so the '
+  + 'panel stops saying it (src/drive-sync.js signedInAgain(), at the cause, not on paint)',
+  viaConnectOut === 'signed-out' && viaConnect.signedIn === true
+    && viaConnectPanel.statusClass === 'class-hint' && viaConnectPanel.syncLineClass === 'class-hint'
+    && !/run out/.test(viaConnectPanel.syncLineText),
+  'no-token sync = ' + viaConnectOut + '; after Connect: sign-in line ' + viaConnectPanel.statusClass
+    + ', sync line ' + viaConnectPanel.syncLineClass + ' '
+    + JSON.stringify(viaConnectPanel.syncLineText.slice(0, 80)));
 
 /* STALE: a bookmark from yesterday, read on the first launch of today. */
 const PLANT = (daysBack, hour) => `(function(){
@@ -822,7 +973,7 @@ check('a sync at 23:30 yesterday, read at 00:30 today — one hour apart, across
   + 'clock pinned to that moment — draws the stale state: "Last synced yesterday at 11:30 PM." A '
   + '24-hour rule would read this pair as current, and only a calendar-day rule reads it stale '
   + '(WO-7.8)',
-  stale.state === 'stale' && /^Last synced yesterday at .+\. Tap to sync now\.$/.test(stale.label)
+  stale.state === 'stale' && /^Last synced yesterday at .+\. Tap to sign in to Google and sync now\.$/.test(stale.label)
     && stale.badgeShown === true && stale.baseRev === stale.localRev,
   'bookmark planted at ' + midnightPlantedAt + ', page clock pinned to ' + midnightPageClock
     + '; state = ' + stale.state + ', label = ' + JSON.stringify(stale.label));
@@ -835,7 +986,7 @@ await reload();
 const older = await waitFor((r) => r.state === 'stale', 4000);
 check('and further back than yesterday it names the date — "Last synced on Sep 23 at 9:12." — by '
   + 'the calendar, never "3 days ago"',
-  older.state === 'stale' && /^Last synced on [A-Z][a-z]{2} \d{1,2} at .+\. Tap to sync now\.$/.test(older.label),
+  older.state === 'stale' && /^Last synced on [A-Z][a-z]{2} \d{1,2} at .+\. Tap to sign in to Google and sync now\.$/.test(older.label),
   'label = ' + JSON.stringify(older.label));
 
 await evalJs(INSTALL_DRIVE);
@@ -946,7 +1097,10 @@ check('and at phone width a tap on the badged About opens it at the Drive sectio
 await save(originalSchool);
 await clickSel('[data-modal-open="aboutModal"]');
 await pause(300);
-await clickSel('[data-drive-disconnect]');
+/* Only if it is drawn: after the reloads above this device is signed out (WO-7.10), Disconnect is
+   hidden, and a click on a hidden control lands at the viewport's corner (tools/README.md trap 3).
+   The opt-in is cleared by hand on the next line either way. */
+if ((await read()).signedIn) await clickSel('[data-drive-disconnect]');
 await shutModals();
 await setOptIn(null);
 await clearFake();

@@ -13,6 +13,16 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Google Drive no longer asks to sign you in by itself — 2026-09-26
+
+On a device that syncs, Planbook used to try to renew the Google sign-in every time it opened or came
+back onto the screen. Google has no way to do that without opening a window. On the iPad, that window
+appeared over the app at every launch and blocked taps and updates; on the laptop, it left a red
+"blocked" line in About. Now nothing is asked of Google until you tap. The sync button in the header
+still shows how fresh this device's copy is, and when you are not signed in, one tap signs you in and
+syncs. The privacy policy says so. (WO-7.10 — harness green at 1543/1543, and putting the launch
+request back turned it red. The iPad and laptop readings on the deployed app are still owed.)
+
 ### A restore closes an open outreach draft once, not twice — 2026-09-26
 
 Housekeeping: a restore (and a Drive download, which runs the same chain) now closes an open
