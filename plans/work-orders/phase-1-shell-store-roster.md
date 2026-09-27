@@ -5171,3 +5171,51 @@ only beside the second, the first id inherits it silently.
       caught — and the line is restored before anything else is written.
 - [ ] How to re-run it is written where the next reader of § 26 will find it, and `node tools/wo-sweep.mjs`
       is green with its recorded check count matching `tools/README.md`.
+
+---
+
+## WO-1.55 — the date-field checks type into a field that takes no keystrokes
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.48 — the date field whose checks these are
+**Closes roadmap** *(no box. A harness defect: the app was read working by the owner the same day.)*
+
+**Booked 2026-09-27**, owner-directed, from WO-7.11's verdict. Three checks in
+`tools/verify/date-zero-key.mjs` — WO-1.47's zero-first month, the full `09032026`, and `10032026` —
+have failed on every whole-harness run since the evening of 2026-09-26: WO-7.11's implementer at
+~22:40 EDT, the same on a worktree of unmodified `8ef1b81` at ~22:15, the verifier's run, and a run
+at 05:49 EDT on 2026-09-27. They were green in WO-7.10's `1543 · 1543` run earlier on the 26th.
+
+**What the failures show.** The editor opens, the field holds its seeded `2026-11-20`, and
+`document.activeElement` is the field — and **no keystroke changes it**: after `0`, after `9`, and
+after both eight-digit sequences, field and document both still read `2026-11-20`. That is not the
+WO-1.47 defect (which emptied the field and took focus to `BODY`); it reads as keystrokes not
+arriving at all.
+
+**The app is not at fault, as far as a reading can say.** The owner typed `10032026` into an
+assignment's due date on the laptop on 2026-09-27 and it read Oct 3, 2026. No file under `src/` that
+draws the field has changed since `a78abf9` (2026-09-06). **The implementer's clock theory is out**:
+the 05:49 run had local and UTC on the same date and failed identically. Edge on the machine is
+154.0.4258.37, last updated 2026-09-24 per WO-7.11's implementer — before the green run, so a browser
+update is not proven either.
+
+**Deliverables**
+- **Find why `Input.dispatchKeyEvent` stopped reaching the field**, and name it in `TESTING.md`
+  § WO-1.55 with the run that shows it. Candidates, none proven: a section earlier in the run now
+  leaving focus, a modal or an overlay in a state that eats key events (WO-7.10 and WO-7.11 both
+  changed what the About modal and the Drive section draw at launch); the caret landing on a segment
+  other than the one the check assumes; a Chromium change.
+- **Fix the harness, not the app.** If the cause turns out to be in `src/`, stop and report it — that
+  is a different work order, and the owner's reading says it would be surprising.
+- **Keep the checks as strong as they are.** They exist to catch WO-1.47's defect coming back.
+
+**Acceptance**
+- [ ] The cause is named in `TESTING.md` § WO-1.55, with the evidence.
+- [ ] The three `date-zero-key` checks are green on the whole harness, real clock.
+- [ ] Mutation-proved: putting WO-1.47's defect back (the rebuild on `change`) turns them red again.
+      **The mutation is reverted before anything else is written** (`AGENTS.md`).
+- [ ] No other check in the harness changes state.
+
+**Traps** — **Do not weaken a check to make it green**: a check that stops typing, or asserts only
+that the field is present, proves nothing about the defect it guards. **Do not assume the most recent
+commit caused it** — `8ef1b81`, which touched no code, fails the same way; WO-1.44's scar is that the
+app was innocent throughout and the first instinct was to look for the commit that broke it.
