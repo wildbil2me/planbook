@@ -945,6 +945,13 @@ check('a sign-in that has already run out when the teacher taps Sync produces th
  * landing mid-sync (the leftover Connect's afterDriveAuthChange() is one) would be taken for the
  * settle, and a build WITH the repaint would go red on it. Each batch therefore also notes whether
  * the button is enabled at delivery, which only the settle's batch can say while it is the latest.
+ *
+ * AND THE PREMISE IS ASSERTED, NOT ASSUMED (WO-7.12). "Painted signed in" means the status line read
+ * "Connected" before the lapse. Until WO-7.12 nothing checked that. In a run where drive-sign-in's
+ * leftover connect() was still busy, the line read "Waiting for Google…" the whole time, and the
+ * "no longer Connected" clause below held without testing anything. drive-sign-in now waits for its
+ * tap to settle before handing the page on, so the premise should always hold. If it does not, this
+ * check goes red on the reading before the lapse, and the detail line shows it.
  */
 await shutModals();
 await reset();
@@ -993,6 +1000,7 @@ check('a sign-in that runs out WITH ABOUT OPEN is redrawn by the tap that finds 
   + 'Drive" over no Connect, no Sync and an empty line is the silent failure WO-7.2’s fifth line '
   + 'rules out, and a teacher meets it on an iPad that resumed with the modal still up',
   openIn.aboutOpen === true && openIn.connectBtn.shown === false && openIn.syncBtn.shown === true
+    && typeof openInStatus === 'string' && /^Connected/.test(openInStatus)
     && lapsedIn.state.signedIn === false
     && Array.isArray(settleBatch) && settleBatch.some((m) => m.indexOf('driveStatus:') === 0)
     && openOut.aboutOpen === true && openOut.state.signedIn === false

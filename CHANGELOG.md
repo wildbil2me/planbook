@@ -13,6 +13,16 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The check for a lapsed Google sign-in stops tripping over itself — 2026-09-27
+
+Housekeeping, no visible change: nothing under `src/` moved. The harness check for a sign-in that
+has run out disconnected while Google's sign-in request was still pending, then read the panel before
+it had settled. It now waits, for a bounded time and never a fixed sleep, for that request to finish
+before disconnecting. If the wait runs out, the check skips and names the pending request rather than
+failing at random. WO-7.13's check now also asserts that it starts from *Connected*, the premise it
+had never checked. (WO-7.12 — harness green at 1551/1551 on three verifier runs and twenty implementer
+runs, 0 skipped. With the wait removed, the new skip fires and names the pending request.)
+
 ### About stops saying Connected once the Google sign-in has run out — 2026-09-27
 
 If About was open when the hour-long Google sign-in ran out, tapping *Sync this year now* still

@@ -12353,6 +12353,114 @@ lines that matter are quoted.*
       year now*. No error. Connect Google Drive was drawn where the sync button had been, and the
       status line read *Not connected*.
 
+### WO-7.12 — the lapsed-sign-in check reads Connect before the panel has settled
+
+**The cause has two layers, and only the first is the harness's.**
+
+**Layer 1, the trigger, is in the harness.** `tools/verify/drive-sign-in.mjs` ends on a real tap on
+Connect. That `connect()` is still waiting on Google's library when the section's foot calls
+`auth.disconnect()`. `disconnect()` clears `busy` and the session. It does not clear `pending`, and it
+does not stop `connect()`. So the request is still out when `tools/verify/drive-sync.mjs` starts in the
+same page. The foot's comment said a request still out was *"a timer in a browser that is about to
+be killed"*. That was false, because the next section runs in the same page. Once the library
+loads, the request fails with `popup_failed_to_open`, because a headless browser blocks a window
+opened with no gesture behind it. Then `connect()` runs its closing `refreshAuthChrome()` against
+whatever token drive-sync has seeded by then. That token is nearly always a signed-in one, so the
+paint hides Connect.
+
+**Layer 2, why that paint could turn the check red, was in `src/`, and WO-7.13 fixed it.** Before
+WO-7.13, a `signed-out` `syncNow()` repainted only the sync half of the panel. Nothing repainted
+Connect. So when the ~906 check (*"a sign-in that has already run out when the teacher taps
+Sync…"*) was green, it was reading Connect from the paint drive-sync's own opening `disconnect()` had
+made, about 340 lines earlier. When the leftover `connect()` settled in between, the latest paint
+hid Connect and the check went red. The check was not unsteady; it was reading a stale paint, and
+the race decided which one. Since WO-7.13, `syncNow()` repaints the auth half itself when it
+settles `signed-out`, so the check reads a paint its own sync made.
+
+**The run that shows layer 1, from WO-7.12's first cut** (2026-09-27, trace2.log, on `HEAD` before
+WO-7.13, `1550 · 1549 passed · 1 failed`, `EXIT=1`). A MutationObserver on `#driveConnectBtn` and
+`#driveStatus`, installed at the head of drive-sync right after its own `disconnect()`:
+
+```
+t=566  connect-attr  hidden:false signedIn:false  "Not connected. …"            <- drive-sync's disconnect()
+t=570  seed wo72-synthetic-token-1                                               <- token seeded, no paint
+t=999  connect-attr  hidden:true  signedIn:true   "The browser blocked the Google sign-in window…"
+t=1254 seed-lapsing  hidden:true                                                 <- check reads Connect hidden
+```
+
+Nothing in drive-sync taps Connect before the check. `t=999` is `connect()`'s closing paint from
+drive-sign-in's last tap: the `popup_failed_to_open` sentence, painted over a seeded session. That
+trace is the first cut's, quoted from its result file, not re-observed in this sitting. The first
+cut also turned the check red on demand with one `refreshAuthChrome()` after the seed, which showed
+that any auth paint in that window was enough.
+
+**The run that shows layer 1 in this sitting** is the new wait's own reading, below. In all 20
+counting runs, drive-sign-in's Connect request was still out when its checks finished, and it
+settled between **760ms and 2316ms** later, always on the blocked-window sentence. Before this
+work order, `disconnect()` ran at that moment, with the request still out.
+
+**What changed.** Nothing in `src/`, and no `CACHE` bump.
+- `tools/verify/drive-sign-in.mjs`: before the foot's `auth.disconnect()`, and never after it, the
+  section polls `authState().busy` until it reads `false`. Why that field is true evidence here:
+  the reload above the About block reset the module, and the wire check counted zero requests to
+  Google before the tap, so this tap's `connect()` is the only request the page has made. From the
+  tap until `connect()` returns, `busy` is true, except inside `settle()` between the silent attempt
+  and the visible one. That gap closes in one microtask run, where no CDP evaluate can land.
+  `connect()` then clears `busy` and paints in one synchronous run. After `disconnect()` the same
+  field says nothing, which is the first cut's warning. **The bound** is `src/auth.js`'s own
+  `SILENT_TIMEOUT_MS` + `VISIBLE_TIMEOUT_MS` (25s + 180s), read from the source text the section
+  already holds rather than copied, plus 15s for the library to load. If it runs out, or if the
+  two constants can no longer be read, the run prints a **SKIP** naming it rather than going on
+  quietly. It is a skip and not a failure for `tools/README.md` trap 8's reason: a network that
+  never finishes loading Google's script is not an app defect. The hand-back check's detail line
+  now says whether the tap had settled and how long the wait took. No `check()` call site added.
+- The foot's comment is corrected (it now says the next section runs in the same page, and names
+  both what must not be left behind: a session, and a request).
+- `tools/verify/drive-sync.mjs`: WO-7.13's check now asserts its own premise,
+  `/^Connected/.test(openInStatus)`, before the lapse. Before this, a run with the leftover request
+  still busy read *"Waiting for Google…"* throughout, and the *"no longer Connected"* clause held
+  without testing anything. It is a clause in the existing check, so the call-site count is
+  unchanged at 1540.
+- The ~906 check's assertion is unchanged.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-7-sync.md` § WO-7.12, from
+`node tools/verify-shell.mjs`, real clock, Edge, 2026-09-27 EDT. Logs are in the session
+scratchpad, so the lines that matter are quoted.*
+
+- [x] **Acceptance 1: the cause is named, both layers, with the run that shows it.** See above.
+      Layer 1 is shown twice: by the first cut's `t=999` trace, quoted, and by this sitting's 20
+      readings of how long the tap stayed in flight. Layer 2 is WO-7.13's, and § WO-7.13 has its
+      red-then-green runs.
+- [x] **Acceptance 2: twenty consecutive runs, the check green in all twenty.** The harness has no
+      section filter, so these are whole-harness runs. They ran as two back-to-back streams of ten,
+      in parallel on one machine (16 cores), with the fix in and nothing else changed between
+      runs. **All twenty read `1551 checks · 1551 passed · 0 failed · 0 skipped`, `EXIT=0`, 580–591s.**
+      In every one the ~906 check passed, WO-7.13's check read its premise *"Connected to Google
+      Drive…"*, and the hand-back line read *"the Connect tap was settled when disconnect() ran"*.
+      **What this does and does not prove.** A baseline run on unmodified `HEAD` (after WO-7.13),
+      taken first, was also green: `1551 · 1551 · 0 failed`, 586s, `EXIT=0`, premise *Connected*. So
+      the twenty greens alone cannot tell this fix from WO-7.13's repaint: since that repaint, the
+      ~906 check reads its own sync's paint, and a late paint from the leftover request would draw
+      the lapsed state too. What the twenty runs show is narrower: the request was provably out at
+      the old hand-off point in all twenty (760–2316ms), it is now waited out, and the premise the
+      WO-7.13 check depends on held in all twenty.
+- [x] **Acceptance 3: no new failure in the whole harness.** 20 of 20 at 1551/1551, zero skipped.
+      `node tools/wo-sweep.mjs`: `45 checks · 42 passed · 0 failed · 3 to review` (the three standing
+      reviews), call-site count 1540, unchanged.
+
+**Mutation round** (one run, `mut-1`, both plants marked `MUTATION WO-7.12`, reverted with
+`git checkout` from the staged fix as soon as the run had loaded its modules, before any counting
+run started):
+- The bound set to 1ms. The SKIP fired and was announced: *"the Connect tap was still waiting on
+  Google after 1ms … Status line: "Waiting for Google…""*. The hand-back detail read *"the Connect tap
+  was STILL WAITING when disconnect() ran"*. The skip branch works, and the request was in flight at
+  the hand-off.
+- `#driveStatus` forced to *"Waiting for Google…"* just before WO-7.13's check reads it. That check
+  went red on the premise alone, with the detail *"before the lapse: … status = "Waiting for
+  Google…""*. The rest of the run was green: `1552 checks · 1550 passed · 1 failed · 1 skipped`,
+  585s, `EXIT=1`.
+- `grep -rn "MUTATION WO-7.12" tools src` was empty after the revert.
+
 ---
 
 ## Phase 8 — 1.0 packaging

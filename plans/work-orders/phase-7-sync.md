@@ -1162,7 +1162,7 @@ about withdrawing the opt-in, both change in the same sitting (`CLAUDE.md` § Ac
 
 ## WO-7.12 — the lapsed-sign-in check reads Connect before the panel has settled
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-7.2 — the check this steadies; WO-7.13 — the repaint the check was reading around
+**Ship** — · **Status** ✅ DONE — 2026-09-27 · **Size** XS · **Depends on** WO-7.2 — the check this steadies; WO-7.13 — the repaint the check was reading around
 **Closes roadmap** *(no box. A harness race, found by WO-7.11's implementer and confirmed red on unmodified `HEAD` by its verifier.)*
 
 **Re-cut 2026-09-27**, owner-directed, after its first dispatch **stopped correctly on its own
@@ -1226,12 +1226,12 @@ are answered above, and the second is WO-7.13.)*
 - Nothing in `src/` moves. That half is WO-7.13's.
 
 **Acceptance**
-- [ ] The cause is named in `TESTING.md` § WO-7.12, with the run that shows it. Both layers go in:
+- [x] The cause is named in `TESTING.md` § WO-7.12, with the run that shows it. Both layers go in:
       the harness trigger and the `src/` repaint WO-7.13 fixed. The first cut's trace (`t=999`
       paint over a seeded session) is written to be lifted in.
-- [ ] Twenty consecutive runs of the Phase 7 sections read the check green. *(Or, if they cannot be
+- [x] Twenty consecutive runs of the Phase 7 sections read the check green. *(Or, if they cannot be
       run alone, whole-harness runs enough to say so honestly.)*
-- [ ] The whole browser harness shows no new failure.
+- [x] The whole browser harness shows no new failure.
 
 **Traps** — **No fixed sleep.** A wait on a named condition (nothing in flight, the panel painted) or
 nothing. **Do not loosen the check** — Connect back on the screen is the re-auth prompt, and it is half

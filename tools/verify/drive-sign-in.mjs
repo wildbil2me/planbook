@@ -12,7 +12,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 export async function run(h) {
-const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, evalJs, has, clickSel,
+const { ROOT, results, check, skip, readLocalStore, foreignIn, storeDetail, send, evalJs, has, clickSel,
   KILL_ANIM, netLog, load } = h;
 
 /*
@@ -649,9 +649,16 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
     that demanded one particular message would go red about the network rather than about the app,
     which is trap 8 in tools/README.md.
 
-    Nothing is awaited to completion. A request that is still out when this file ends is a timer in
-    a browser that is about to be killed; what must not happen is this section leaving a SESSION
-    behind, which the last check below is what settles.
+    THE TAP IS AWAITED TO COMPLETION BEFORE THE FOOT'S disconnect(), and that is WO-7.12. This
+    comment said until then that a request still out when this file ended was "a timer in a browser
+    that is about to be killed". It was not: the next section runs in the same page, and it is
+    verify/drive-sync.mjs, which seeds synthetic sessions and reads the Connect button. connect()
+    carries on after disconnect(), because disconnect() clears `busy` and the session but not the
+    request, and when Google's library finished loading the request settled on
+    `popup_failed_to_open` and connect()'s closing refreshAuthChrome() painted the panel over
+    whatever token drive-sync had seeded by then. See the wait below the next check, and
+    TESTING.md § WO-7.12 for the trace. What must not happen is this section leaving a SESSION
+    behind, or a REQUEST: the last check below settles the first and the wait settles the second.
   */
   const beforeTap = await openAbout71();
   /* The first half of THE WIRE (see the reload above the About block): everything since that
@@ -702,6 +709,60 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
       + JSON.stringify(tapped.statusText) + ' (' + tapped.statusClass + '), signedIn = '
       + tapped.state.signedIn + ', GIS <script> tags now = ' + tapped.gisScripts);
 
+  /*
+    NOTHING IN FLIGHT, WAITED FOR BEFORE disconnect() AND NEVER AFTER IT (WO-7.12). The condition is
+    `authState().busy === false`, and it is only true evidence while this tap's connect() is the
+    one request the page has made. That holds here. The reload above the About block reset the
+    module, and the wire check above counted zero requests to Google before the tap. `pending` is
+    set only by ask(), which needs Google's library, so nothing was pending when the tap landed.
+    From the tap until connect() returns, `busy` is true. The one gap is inside settle(), between
+    the silent attempt and the visible one, and it closes in the same microtask run, where no CDP
+    evaluate can land. connect() then clears `busy` and paints in one synchronous run. So `busy`
+    reading false means connect() has returned and its last paint has already happened. AFTER
+    disconnect() the same field says nothing: disconnect() clears `busy` and leaves `pending`
+    standing, which is how the leftover request reached drive-sync in the first place.
+
+    THE BOUND IS src/auth.js's OWN TWO TIMEOUTS, read from the source this file already holds rather
+    than copied, plus fifteen seconds for the library to load. SILENT_TIMEOUT_MS (25s) and
+    VISIBLE_TIMEOUT_MS (180s) are the longest connect() can wait on Google before it gives up and
+    says so, so past their sum the request is not slow, it is stuck. Normally it settles in about a
+    second, on `popup_failed_to_open`. If the bound does run out, the run says so with a SKIP rather
+    than going on quietly, because the next section's readings of Connect are then not about the
+    app. It is a skip and not a failure for tools/README.md trap 8's reason: a network that never
+    finishes loading Google's script is not a defect in this app.
+  */
+  const authSrc712 = source71.get('src/auth.js') || '';
+  const timeoutMs712 = (name) => {
+    const m = authSrc712.match(new RegExp('const ' + name + ' = (\\d+) \\* 1000;'));
+    return m ? Number(m[1]) * 1000 : null;
+  };
+  const silentMs712 = timeoutMs712('SILENT_TIMEOUT_MS');
+  const visibleMs712 = timeoutMs712('VISIBLE_TIMEOUT_MS');
+  const boundMs712 = (silentMs712 && visibleMs712) ? silentMs712 + visibleMs712 + 15000 : null;
+  const idleFrom712 = Date.now();
+  let idle712 = await evalJs(READ_AUTH);
+  while (boundMs712 && Date.now() - idleFrom712 < boundMs712 && idle712.state.busy) {
+    await new Promise(r => setTimeout(r, 100));
+    idle712 = await evalJs(READ_AUTH);
+  }
+  const idleMs712 = Date.now() - idleFrom712;
+  if (!boundMs712) {
+    skip('this section hands the page on with the Connect tap settled — nothing in flight into '
+      + 'verify/drive-sync.mjs (WO-7.12)',
+      'the bound could not be read: SILENT_TIMEOUT_MS or VISIBLE_TIMEOUT_MS is no longer written as '
+      + '`const NAME = N * 1000;` in src/auth.js, so nothing was waited for. Re-point the pattern here '
+      + 'rather than copying the numbers in. The Drive sync section may read a panel painted by this '
+      + 'tap');
+  } else if (idle712.state.busy) {
+    skip('this section hands the page on with the Connect tap settled — nothing in flight into '
+      + 'verify/drive-sync.mjs (WO-7.12)',
+      'the Connect tap was still waiting on Google after ' + idleMs712 + 'ms, past src/auth.js’s '
+      + 'own ' + (silentMs712 / 1000) + 's + ' + (visibleMs712 / 1000) + 's timeouts plus 15s for the '
+      + 'library. The page goes on with a request out, so the Drive sync section’s readings of '
+      + 'Connect may be this tap’s paint and not the app’s. Status line: '
+      + JSON.stringify(idle712.statusText));
+  }
+
   await evalJs('window.planbook.auth.disconnect(); 1');
   await closeAbout71();
   const handedBack71 = await evalJs(READ_AUTH);
@@ -712,6 +773,9 @@ const { ROOT, results, check, readLocalStore, foreignIn, storeDetail, send, eval
       && handedBack71.state.fields.length === 0 && handedBack71.aboutOpen === false
       && handedBack71.coarse === false,
     'authState = ' + JSON.stringify(handedBack71.state) + ', About open = '
-      + handedBack71.aboutOpen + ', pointer coarse = ' + handedBack71.coarse);
+      + handedBack71.aboutOpen + ', pointer coarse = ' + handedBack71.coarse
+      + '; the Connect tap was ' + (idle712.state.busy ? 'STILL WAITING' : 'settled')
+      + ' when disconnect() ran, ' + idleMs712 + 'ms after its check, status then '
+      + JSON.stringify(String(idle712.statusText).slice(0, 60)));
 }
 }
