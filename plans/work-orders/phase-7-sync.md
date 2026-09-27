@@ -1082,3 +1082,63 @@ never after an `await` (WO-7.4's last reading, WO-7.5's Traps). **The opt-in sta
 token stays in memory** (WO-7.1). **Do not remove the preload to save a request** without the two
 privacy documents changing in the same sitting. **And sync is still not a backup**: nothing on the
 header or in About may read *safe* because a tap now does two things.
+
+---
+
+## WO-7.11 — after a reload, sync cannot be switched off without signing in first
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.1 — the panel whose Disconnect this redraws; WO-7.5 — the opt-in that Disconnect clears
+**Closes roadmap** *(no box. Phase 7's boxes are closed by WO-7.1, WO-7.2 and WO-7.3; this repairs a consequence of WO-7.10 on top of them.)*
+
+**Booked 2026-09-26**, owner-directed, from WO-7.10's verdict. **WO-7.10's code is in the tree and
+deployed at v138** — its one open box is a 👤 reading of *the next deploy*, which this work order's
+own deploy can supply. It is left out of **Depends on** for that reason: a dependency on it would
+hold this row until a deploy that this row is the obvious one to make.
+
+**What is wrong.** Since WO-7.10 every launch starts with no token, so on an opted-in device About's
+Drive section draws **Connect** and not **Disconnect**: `refreshAuthChrome()` in `src/auth.js` hides
+Disconnect whenever `!state.signedIn`. And Disconnect is **the only thing that clears the opt-in**
+(`syncButton.forgetOptIn()` in `src/shell.js`'s click handler, WO-7.5). So a teacher who wants sync
+off must tap Connect, finish Google's sign-in, and only then tap Disconnect — and **offline, or with
+Google blocked by a Workspace admin, she cannot switch it off at all**. The header button stays, and
+Google's library keeps loading at every launch, which `privacy.html` and `docs/FERPA.md` describe as
+the consequence of an opt-in she is now unable to withdraw. The iPad already behaved this way before
+WO-7.10; the laptop's launch renewal usually hid it.
+
+**Deliverables**
+- **On an opted-in device, the control that switches sync off is drawn whether or not there is a
+  token.** Signed in, it does what Disconnect does today: drop the token, revoke it, forget the
+  opt-in. Signed out, it forgets the opt-in and repaints — there is no token to revoke, and it
+  **makes no request of any kind**, so it works offline.
+- **The wording tells the two states apart if they need telling apart.** "Disconnect" beside
+  "Not connected" may read as nonsense; the build argues at the point of departure whether the
+  signed-out control keeps the word or says what it does (*Stop syncing on this device*, or the
+  like). **Nothing may read as deleting anything in Drive** — the file in Drive is untouched either way.
+- **After it, the device is exactly a never-opted-in device**: no header button, and the next launch
+  loads no Google library. The first half is visible at once; the second is a reload's business.
+- **The harness workaround comes out.** `tools/verify/sync-button.mjs` connects before its Disconnect
+  checks (~386, ~1100) because Disconnect was unreachable signed out; those checks should run from the
+  signed-out state as well, which is the state a teacher is in after every launch.
+
+**Acceptance**
+- [ ] On an opted-in device with no token, About draws the switch-off control, and a tap clears the
+      opt-in, removes the header button and makes **no** token request (stub count, as in WO-7.10).
+      Asserted in the harness.
+- [ ] With the network refused, the same tap still clears the opt-in. Asserted in the harness.
+- [ ] Signed in, the tap behaves exactly as Disconnect does today — token dropped, revoke attempted,
+      opt-in cleared. Asserted in the harness.
+- [ ] A reload after switching off fetches nothing from Google (`/gsi/client` absent from the wire).
+      Asserted in the harness.
+- [ ] Mutation-proved: putting back `!state.signedIn` as the only condition for drawing the control
+      turns the first line red. **The mutation is reverted before anything else is written**
+      (`AGENTS.md`).
+- [ ] 👤 **iPad, home-screen app, deployed**, force-quit first: About shows the switch-off control at
+      launch without signing in; one tap removes the header button; a relaunch shows no header button.
+
+**Traps** — **Do not make the switch-off ask Google for anything** — not a sign-in to revoke with,
+not a library load; a teacher offline or blocked by her admin is the case this exists for.
+**Sync is still not a backup**, and switching it off must not read as losing anything: the local year
+is untouched and so is the Drive copy. **The token stays in memory and the opt-in stays a boolean**
+(WO-7.1, WO-7.5). **Do not widen this into a Drive-file delete** — removing the file from Drive is a
+different decision, the owner's, and not booked. If `privacy.html` or `docs/FERPA.md` need a word
+about withdrawing the opt-in, both change in the same sitting (`CLAUDE.md` § Accommodations).
