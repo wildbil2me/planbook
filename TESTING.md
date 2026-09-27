@@ -11967,9 +11967,12 @@ window open and whose teacher closes it unfinished. What it read, step by step:
       `signedInAgain()` call inside `tapSyncButton()` — the sync that follows it replaces the outcome
       anyway, so removing it changes nothing a check can see; it is there so the panel is right in the
       moment between the sign-in and the sync's own outcome.
-- [ ] 👤 **iPad, home-screen app, deployed, pop-ups allowed** — owed. Force-quit from the app switcher
-      first.
-- [ ] 👤 **Laptop, deployed origin** — owed. Check `location.origin` first.
+- [x] 👤 **iPad, home-screen app, deployed, pop-ups allowed** — read by the owner at v138,
+      2026-09-26 (no Google window at launch or on return; About on the first tap; the header tap signs
+      in and syncs). The next-deploy half — the update lands with no pop-up blocked and About names
+      one copy after a relaunch — read at v139, 2026-09-27.
+- [x] 👤 **Laptop, deployed origin** — read by the owner at v138, 2026-09-26, `location.origin`
+      checked, with the live `/privacy` carrying the new sentence.
 
 **Both tools.** `node tools/verify-shell.mjs`: **`1543 checks · 1543 passed · 0 failed · 0 skipped`,
 48,531 lines, 31.5 lines per check, 571s, exit 0**, 2026-09-26, real clock. `node tools/wo-sweep.mjs`:

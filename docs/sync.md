@@ -508,6 +508,11 @@ the same day, took the renewal out and the clause about it with it**, in both do
 library still loads at every launch on that device, and a sign-in is asked for only by a tap.)* The three things the key
 unlocked are all three built: the indicator's condition, *lapsed* told apart from *never connected*,
 and a launch-time renewal aimed only at the teachers who want it.
+*(**WO-7.11, 2026-09-27: "Disconnect clears it" now works signed out.** Since WO-7.10 every launch
+starts with no token, and Disconnect was drawn only when signed in — so switching sync off meant
+finishing Google's sign-in first, and offline it could not be done at all. The same control is now
+drawn whenever the device is opted in; signed out it reads *Stop syncing on this device*, clears the
+key and asks Google for nothing. It is still the only thing that clears it.)*
 
 ### A second Google account makes a latent hole reachable — found 2026-09-07
 

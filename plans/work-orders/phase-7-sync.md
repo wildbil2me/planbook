@@ -985,7 +985,7 @@ nothing on this screen may suggest it.
 
 ## WO-7.10 — the silent sign-in renewal opens a window, and on the iPad it blocks updates and taps
 
-**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-7.5 — the launch renewal this removes, and the header button whose tap replaces it
+**Ship** — · **Status** ✅ DONE — 2026-09-27 · **Size** S · **Depends on** WO-7.5 — the launch renewal this removes, and the header button whose tap replaces it
 **Closes roadmap** *(no box. Phase 7's boxes are closed by WO-7.1, WO-7.2 and WO-7.3; this reverses one ruling on top of them.)*
 
 **Booked 2026-09-26**, owner-reported, during WO-8.18's device reading. **The owner's ruling, the day it
@@ -1069,8 +1069,10 @@ the token.
       signs in and syncs.
       *(Read by the owner at v138, 2026-09-26. This line carried the next-deploy clause below until
       that reading; it was split out because it cannot be read until the deploy after v138.)*
-- [ ] 👤 **iPad, the next deploy after v138**: its update lands with no pop-up blocked (About names
+- [x] 👤 **iPad, the next deploy after v138**: its update lands with no pop-up blocked (About names
       one copy after a relaunch).
+      *(Read by the owner at v139, 2026-09-27 — WO-7.11's deploy: About named v139 and one copy after
+      a force-quit, with no Google window at launch.)*
 - [x] 👤 **Laptop, deployed origin** (`location.origin` checked): no red line at launch; a tap on the
       header button syncs and leaves About's Drive section with no red line.
       *(Read by the owner at v138, 2026-09-26, with the live `/privacy` carrying the new sentence.)*
@@ -1137,6 +1139,16 @@ WO-7.10; the laptop's launch renewal usually hid it.
       *(Read by the owner at v139, 2026-09-27: About named v139 after a force-quit, the control sat
       beside Connect signed out, one tap removed the header button with no Google window, and a
       relaunch drew none.)*
+
+*(**Two things the plan did not predict**, 2026-09-27. **Disconnect now revokes only a token
+`fresh()` calls live**, so a token in its last minute is dropped and left to lapse on its own rather
+than revoked — the price of one test deciding both "Connected" on the panel and whether Google is
+asked anything; argued above `disconnect()` in `src/auth.js`. And **the harness was not green on
+either side of this work order**: `verify-shell.mjs` read `1549 · 1545 · 4 failed` on the delivered
+tree, and unmodified `8ef1b81` failed the same four — three in `verify/date-zero-key.mjs` and one
+race in `verify/drive-sync.mjs`, whose "a sign-in that has already run out" check reads Connect before
+the panel repaints. The implementer saw three of the four; the race is intermittent. Neither is this
+work order's, and neither is booked yet.)*
 
 **Traps** — **Do not make the switch-off ask Google for anything** — not a sign-in to revoke with,
 not a library load; a teacher offline or blocked by her admin is the case this exists for.
