@@ -1157,3 +1157,42 @@ is untouched and so is the Drive copy. **The token stays in memory and the opt-i
 (WO-7.1, WO-7.5). **Do not widen this into a Drive-file delete** — removing the file from Drive is a
 different decision, the owner's, and not booked. If `privacy.html` or `docs/FERPA.md` need a word
 about withdrawing the opt-in, both change in the same sitting (`CLAUDE.md` § Accommodations).
+
+---
+
+## WO-7.12 — the lapsed-sign-in check reads Connect before the panel has settled
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-7.2 — the check this steadies
+**Closes roadmap** *(no box. A harness race, found by WO-7.11's implementer and confirmed red on unmodified `HEAD` by its verifier.)*
+
+**Booked 2026-09-27**, owner-directed, from WO-7.11's verdict, as a 🎒 on
+`tools/verify/drive-sync.mjs`. `verify/drive-sync.mjs`'s check *"a sign-in that has already run out
+when the teacher taps Sync produces the re-auth prompt…"* (~906) failed in 2 of 14 runs of WO-7.11's
+tree with **Connect read as hidden**, and once on `8ef1b81` in the verifier's run. The implementer's
+account, **a claim and not a finding**: `verify/drive-sign-in.mjs`, which runs directly before, ends
+on a real Connect tap whose `connect()` is still waiting on Google's live library when
+`drive-sync` seeds its token; when it settles it repaints the panel with that seeded token standing.
+`src/drive-sync.js` never repaints Connect, so the check reads whatever the last paint left. A
+MutationObserver trace over eight more runs never caught it.
+
+**It is harness-only as far as anyone knows.** A teacher cannot seed a token, so the interleaving
+needs the harness to make it. It is booked because a check that is red one run in seven teaches the
+next verifier to shrug at red.
+
+**Deliverables**
+- **Find the cause before fixing it.** If the pending `connect()` is the culprit, the fix belongs at
+  the foot of `verify/drive-sign-in.mjs` — the section hands the page on with nothing in flight — and
+  not in a sleep before the check.
+- **If it turns out to be the app** — a repaint the panel owes and does not make — stop and report it
+  rather than fixing it here; that is a work order in `src/`, not a ride-along.
+- Nothing in `src/` moves.
+
+**Acceptance**
+- [ ] The cause is named in `TESTING.md` § WO-7.12, with the run that shows it.
+- [ ] Twenty consecutive runs of the Phase 7 sections read the check green. *(Or, if they cannot be
+      run alone, whole-harness runs enough to say so honestly.)*
+- [ ] The whole browser harness shows no new failure.
+
+**Traps** — **No fixed sleep.** A wait on a named condition (nothing in flight, the panel painted) or
+nothing. **Do not loosen the check** — Connect back on the screen is the re-auth prompt, and it is half
+of what the check exists to prove.
