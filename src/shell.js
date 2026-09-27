@@ -1748,11 +1748,10 @@ function afterRestore() {
   classes.refreshClassBar();
   /* The template editor, emptied for afterYearChange()'s reason exactly: a restore replaces the
      document, so an open record's id belongs to the file that was just replaced. And an open draft
-     goes with it, for the same reason and by the same argument. */
+     is dropped and its modal closed, by the same argument: a draft is about a student in the
+     document that has just been put away. Both run before afterClassChange() so the screen repaints
+     with nothing stale behind it. */
   templatesView.resetTemplates();
-  outreachView.resetOutreach();
-  /* And an open draft is dropped and its modal closed, for the same reason one line up: a draft is
-     about a student in the document that has just been put away. */
   outreachView.resetOutreach();
   afterClassChange();
   teacher.refreshHeaderIdentity();

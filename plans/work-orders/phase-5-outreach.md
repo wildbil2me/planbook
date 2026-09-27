@@ -1676,7 +1676,7 @@ Acceptance line is here and why it is not a formality.
 
 ## WO-5.16 — a restore closes the outreach draft twice
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-5.3 — the commit that added the second call
+**Ship** — · **Status** ✅ DONE — 2026-09-26 · **Size** XS · **Depends on** WO-5.3 — the commit that added the second call
 **Closes roadmap** *(no box. A duplicate line, found by WO-7.7's implementer and confirmed by its verifier.)*
 
 **Booked 2026-09-26**, owner-directed, from WO-7.7's verdict. `afterRestore()` in `src/shell.js`
@@ -1699,10 +1699,14 @@ which one is load-bearing.
 - `CACHE` in `sw.js` bumped, because `src/shell.js` is in `SHELL`.
 
 **Acceptance**
-- [ ] `afterRestore()` contains exactly one `resetOutreach()` call, and no comment in it describes a
-      second one.
-- [ ] The whole browser harness is green, including the restore and WO-7.7's download checks, which
-      both reach this function.
+- [x] `afterRestore()` contains exactly one `resetOutreach()` call, and no comment in it describes a
+      second one. *(2026-09-26: the function body extracted with `sed '/^function afterRestore/,/^}/p'`
+      counts one `resetOutreach()`; the two comments are merged into one above `resetTemplates()`,
+      keeping the dropped-and-closed half and the put-away-document half. Chain order unchanged.)*
+- [x] The whole browser harness is green, including the restore and WO-7.7's download checks, which
+      both reach this function. *(2026-09-26, real clock: `1538 checks · 1538 passed · 0 failed · 0
+      skipped`, 574s, exit 0 — § "backup & restore" all PASS, and the four WO-7.7 download/no-redraw
+      checks PASS. See `TESTING.md` § WO-5.16.)*
 
 **Traps** — **Do not also reorder the chain.** `resetTemplates()` and `resetOutreach()` run before
 `afterClassChange()` so the screen repaints with no stale draft behind it, and that order is the

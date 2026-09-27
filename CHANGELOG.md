@@ -13,6 +13,13 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A restore closes an open outreach draft once, not twice — 2026-09-26
+
+Housekeeping: a restore (and a Drive download, which runs the same chain) now closes an open
+outreach draft once rather than twice. No visible change. (WO-5.16 — harness green at 1538/1538. No
+check yet opens a draft and then restores, so the run proves nothing broke rather than that the
+draft still closes.)
+
 ### An update that did not finish no longer leaves the old version running — 2026-09-26
 
 An update that did not finish no longer leaves Planbook serving the old version. Planbook now reads

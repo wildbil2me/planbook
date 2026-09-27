@@ -11336,6 +11336,17 @@ there the press moves the term, and a moved term spends the arrival in `anchorDa
 
 ---
 
+### WO-5.16 — a restore closes the outreach draft twice
+
+- [x] `node tools/verify-shell.mjs`, 2026-09-26, real clock, after deleting the second
+      `resetOutreach()` in `afterRestore()` and bumping `CACHE` to v137: **`1538 checks · 1538 passed ·
+      0 failed · 0 skipped`, 48,369 lines, 574s, exit 0** — restore and WO-7.7's download checks
+      included. `node tools/wo-sweep.mjs`: `45 checks · 42 passed · 0 failed · 3 to review` (the
+      standing three). No check asserts that a restore closes an open draft; this run shows only
+      that removing the duplicate broke nothing.
+
+---
+
 
 ## Phase 7 — Drive sync (opt-in) 🔒
 
