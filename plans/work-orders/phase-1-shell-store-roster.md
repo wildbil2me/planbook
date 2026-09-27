@@ -5230,3 +5230,41 @@ update date suggests. The fix types on a fine pointer, and a new canary check pl
 input so that the next Chromium change shows up in one line. The harness reads 1550/1550. The
 verifier noticed a gap the fix opens: a throw between the two toggles leaves touch off for the rest
 of the run. That is booked as WO-1.56.)*
+
+## WO-1.56 — a date-field section that throws leaves the rest of the run on a fine pointer
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-1.55 — the toggle this repairs
+**Closes roadmap** *(no box. A harness defect with no live symptom yet.)*
+
+**Booked 2026-09-27**, owner-directed, from WO-1.55's verdict. `tools/verify/date-zero-key.mjs`
+switches touch emulation off before it types (~line 208) and back on only at its foot (~line 416).
+The two are joined by nothing. If anything between them throws, `runSection()` in
+`tools/verify-shell.mjs` reports the throw and `recoverPage()` reloads the page. **A reload does not
+reset CDP emulation**, so every later section runs with no coarse pointer and no touch points. That
+starts with `date-clear.mjs`, which sets its own viewport but not its own touch setting. The throw is
+reported, because WO-1.44 made sure of that. What is not reported is the second failure it causes:
+the checks after it are measured on the wrong device, and the ones that assume the coarse pointer
+(44px targets under `pointer: coarse`, tools/README.md trap 3) may go red or green for a reason that
+has nothing to do with them.
+
+**Deliverables**
+- **Put the touch setting back on every exit from the block**, not just the normal one. A `finally`
+  around the span from the toggle-off to the toggle-on is the smallest fix that does it.
+- **Say in `TESTING.md` § WO-1.56 whether any other section leaves emulation in a changed state
+  across a throw.** There are 39 files in `tools/verify/` that call `setTouchEmulationEnabled`. List
+  them and record the answer; do not fix them here. If the answer is "several", the fix is
+  `recoverPage()` restoring a known baseline, which is a larger work order and the owner's to book.
+
+**Acceptance**
+- [ ] A throw injected between the two toggles leaves the next section reading
+      `matchMedia('(pointer: coarse)').matches === true`. The run is recorded in `TESTING.md`
+      § WO-1.56 and **the injected throw is reverted before anything else is written** (`AGENTS.md`).
+- [ ] Mutation-proved: the same injected throw with the restore removed leaves the next section on a
+      fine pointer.
+- [ ] The whole harness is green on the real clock, and no check changes state.
+- [ ] `TESTING.md` § WO-1.56 answers the question in the second Deliverable.
+
+**Traps** — **Do not move the toggle-off earlier or the toggle-on later to shrink the window**. The
+window is not the defect. The missing `finally` is. **Do not turn touch off for the whole section**:
+the clicks that open the editor are meant to happen on the coarse pointer, as WO-1.55's comment in
+the file explains.
