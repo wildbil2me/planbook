@@ -1064,12 +1064,16 @@ the token.
       reverted before anything else is written** (`AGENTS.md`).
       *(Two shapes, both red on line 1 and both reverted by copy and checked with `cmp`: a launch-time
       `reconnect()`, and WO-7.5's requesting `ensureFreshToken()` put back.)*
-- [ ] 👤 **iPad, home-screen app, deployed, pop-ups allowed**, force-quit first: no Google window at
+- [x] 👤 **iPad, home-screen app, deployed, pop-ups allowed**, force-quit first: no Google window at
       launch or on return from the background; About opens on the first tap; the header button's tap
-      signs in and syncs; the next deploy's update lands with no pop-up blocked (About names one copy
-      after a relaunch).
-- [ ] 👤 **Laptop, deployed origin** (`location.origin` checked): no red line at launch; a tap on the
+      signs in and syncs.
+      *(Read by the owner at v138, 2026-09-26. This line carried the next-deploy clause below until
+      that reading; it was split out because it cannot be read until the deploy after v138.)*
+- [ ] 👤 **iPad, the next deploy after v138**: its update lands with no pop-up blocked (About names
+      one copy after a relaunch).
+- [x] 👤 **Laptop, deployed origin** (`location.origin` checked): no red line at launch; a tap on the
       header button syncs and leaves About's Drive section with no red line.
+      *(Read by the owner at v138, 2026-09-26, with the live `/privacy` carrying the new sentence.)*
 
 **Traps** — **Do not look for a silent path through Google's library and keep the launch renewal on
 it.** That is option B, which the owner declined in favour of this one; if the build finds a real
