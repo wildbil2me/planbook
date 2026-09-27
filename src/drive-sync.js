@@ -94,7 +94,7 @@
 
 import * as store from './store.js';
 import { parseBackup } from './backup.js';
-import { signInAvailable, authState, ensureFreshToken } from './auth.js';
+import { signInAvailable, authState, ensureFreshToken, refreshAuthChrome } from './auth.js';
 import { showSaveState } from './save-indicator.js';
 import { announce } from './live-region.js';
 
@@ -539,9 +539,12 @@ export async function syncNow() {
 
     const token = await ensureFreshToken();
     if (!token) {
-      /* THE FIFTH ACCEPTANCE LINE. Not a silent no-op: the panel says the sign-in ran out, and the
-         Connect button is back on screen because authState() computes `signedIn` from the clock.
-         Nothing on this device changed and nothing was sent. */
+      /* THE FIFTH ACCEPTANCE LINE. Not a silent no-op: the sign-in ran out, and the Connect button
+         is back on screen because the `finally` below repaints src/auth.js's half of the panel on a
+         `signed-out` outcome (WO-7.13). authState() computes `signedIn` from the clock, but nothing
+         redraws a button from a clock — until that repaint, this comment said the clock was enough,
+         and a sign-in that lapsed with About open left Connect hidden under "Connected to Google
+         Drive". Nothing on this device changed and nothing was sent. */
       return settle('signed-out', 'Your Google sign-in has run out, so nothing was synced. '
         + 'Nothing on this device changed. Tap Connect Google Drive above, then sync again.', true);
     }
@@ -580,6 +583,17 @@ export async function syncNow() {
        the document on this device really is saved. */
     if (touchedChip) showSaveState('saved');
     refreshSyncChrome();
+    /* AND THE SIGN-IN'S HALF, WHEN THIS SYNC IS WHAT FOUND THE SIGN-IN GONE (WO-7.13). Connect,
+       Disconnect and the status line above them are src/auth.js's, painted by refreshAuthChrome()
+       and by nothing else, and no paint follows a token lapsing — `signedIn` changes on the clock
+       and the glass does not. So a teacher who opened About signed in, let the hour run out with it
+       open (an iPad resuming does not reload), and tapped Sync was left with no Connect, no Sync and
+       "Connected to Google Drive". HERE, not in src/shell.js's tap chain, so every door that syncs
+       gets it — About's button, the header's, and a harness calling this directly. Only on
+       `signed-out`: no other outcome is a finding about the sign-in. It reads authState() and
+       writes nothing, and with About shut it paints a hidden panel the next About-open repaints
+       anyway. The import points the way decision 4 requires — this file into auth.js, never back. */
+    if (outcome && outcome.kind === 'signed-out') refreshAuthChrome();
     if (outcome && outcome.message) announce(outcome.message);
   }
 }

@@ -1223,7 +1223,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1539 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1540 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2152,6 +2152,16 @@ the red in WO-7.11's run above, and the cause was the browser — Edge 154 ignor
 field under touch emulation; the section now types on a fine pointer. The run prints **1550**:
 `1550 checks · 1550 passed · 0 failed · 0 skipped`, 582s, exit 0, measured 2026-09-27 at ~06:35 EDT on
 the real clock. Diagnosis and mutation round in `TESTING.md` § WO-1.55.
+
+**WO-7.13 moved it from 1539 to 1540, and the executed count from 1550 to 1551. That is one site and
+one result**, in `verify/drive-sync.mjs`: literal, not in a loop and not a failure arm, so the gap
+stays at −11 and the file count does not move. It is the About-open lapse: a real tap on Sync with
+the modal held open across the token running out. It asserts that the auth half of the panel was
+repainted **in the same MutationObserver batch** as the sync settling, so a late paint from
+drive-sign-in's leftover `connect()` cannot turn it green on a build without the repaint. The run
+prints **1551**: `1551 checks · 1551 passed · 0 failed · 0 skipped`, 585s, exit 0, measured
+2026-09-27 on the real clock. The same count was red 3 of 3 on `HEAD`'s `src/` (`1551 · 1549 · 2
+failed`). Runs and mutation are in `TESTING.md` § WO-7.13.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

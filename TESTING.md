@@ -12271,6 +12271,88 @@ tap, whose `connect()` is still waiting on the live Google library when the next
 token. It passed in the counted run. `node tools/wo-sweep.mjs`: `45 checks · 42 passed · 0 failed ·
 3 to review`, § 11 reading 1538 call sites.
 
+### WO-7.13 — a sign-in that lapses with About open leaves the panel saying Connected
+
+**A `signed-out` sync repaints the sign-in half of the panel, from inside `syncNow()`.**
+`src/drive-sync.js` imports `refreshAuthChrome` from `src/auth.js` (the direction decision 4 already
+runs) and calls it in `syncNow()`'s `finally`, after `refreshSyncChrome()` and before the
+announcement, when the outcome is `signed-out`. That covers both arms that settle it: no fresh token
+at the top of the flow, and a 401 part-way through. It is not in `src/shell.js`'s tap chain, so the
+header's door and a direct call get it too. The comment on the no-token arm (~542) said Connect was
+back *"because authState() computes `signedIn` from the clock"*; it now names the `finally`'s
+repaint. The header of `refreshAuthChrome()` in `src/auth.js` said it was called *"after every
+flip"* and that *"src/shell.js does the calling"*. Both were false (a lapse is a flip nothing
+repaints, and five of the callers are in `auth.js`), so it now lists every caller and says that a
+lapse nobody acts on is still redrawn by nothing. `CACHE` v139 → v140.
+
+**Every caller of `refreshAuthChrome()`, by function** (line numbers on this tree):
+- `src/auth.js` `connect()`: on the off-flag refusal (527), as the request goes out with `busy`
+  set (534), and as it settles (541).
+- `src/auth.js` `reconnect()`: the same three, at 572, 582 and 591.
+- `src/auth.js` `disconnect()`: 637.
+- `src/auth.js` `noteSyncOptIn()`: 655.
+- `src/shell.js` `openAbout()`: 2098, before the modal appears.
+- `src/drive-sync.js` `syncNow()`, its `finally`, when the outcome is `signed-out`: 596. **This is
+  the one WO-7.13 adds.**
+- Outside the app: `tools/verify/drive-sign-in.mjs` 444 calls it through `window.planbook.auth`.
+
+No other comment in `src/drive-sync.js` or `src/auth.js` claims a repaint that does not happen. I
+read every paint, repaint and redraw comment in both files. Two read close and are true. `authState()`'s *"a lapsed token
+therefore reads as signed out everywhere at once"* is about reads, and every reader of
+`authState()` does get it. `refreshSyncChrome()`'s *"src/auth.js's status line directly above
+already says 'Not connected'"* was false on exactly this path until this work order, and is true
+on it now.
+
+**The new check** is in `tools/verify/drive-sync.mjs`, directly after the ~906 check, which is
+unchanged. It runs *"a sign-in that runs out WITH ABOUT OPEN is redrawn by the tap that finds it…"*.
+About is opened on a 3599s token and read painted signed in. A 10s token is seeded with the modal
+still open (`acceptTokenResponse()` paints nothing). Then a real tap on `[data-drive-sync]` goes
+through the delegated listener. **The red does not depend on a late paint.** A MutationObserver on
+`#drivePanel` files records by delivery batch, and each batch notes whether `#driveSyncBtn` is
+enabled at delivery. The check requires that `#driveStatus` was written in the batch where the
+button's `disabled` came off, which is the `finally`. A paint from another task, such as
+drive-sign-in's leftover `connect()`, is a different batch. It can fix the end state and still
+cannot turn the check green.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-7-sync.md` § WO-7.13, from
+`node tools/verify-shell.mjs`, real clock, 2026-09-27 EDT. Logs are in the session scratchpad, so the
+lines that matter are quoted.*
+
+- [x] **Acceptance 1: red on `HEAD` 3 of 3, then green.** Three whole-harness runs with `src/` and
+      `sw.js` as `604db6c` (`git diff --stat -- src sw.js` empty), the new check in place:
+      `red1` `1551 checks · 1549 passed · 2 failed · 0 skipped`, `EXIT=1`; `red2` the same, `EXIT=1`;
+      `red3` the same, 586s, `EXIT=1`. In all three the new check read identically: `the batch the
+      sync settled in = ["driveSyncBtn:disabled","driveSyncStatus:class"]; after the tap: About open
+      = true, outcome = signed-out, calls = 0, Connect shown = false, Sync shown = false, status =
+      "Connected to Google Drive. This access ends at …"`. That is `WO712PROBE`'s state. The other
+      failure in all three was the ~906 check (`Connect shown = false`), WO-7.12's flake. With the
+      repaint in: `green1` `1551 checks · 1551 passed · 0 failed · 0 skipped`, 585s, `EXIT=0`. The
+      settle batch now holds `driveStatus:class`, `driveStatus:childList`, `driveConnectBtn:class`
+      and the rest of the auth half. Afterwards `Connect shown = true, Sync shown = false, status =
+      "Not connected. Planbook works exactly the same either way."`.
+- [x] **Acceptance 2: mutation-proved, and reverted before anything else was written.** The
+      `finally`'s `refreshAuthChrome()` line was commented out under a `MUTATION WO-7.13` marker
+      (`src/drive-sync.js` was backed up to the scratchpad first). `mut1` gave `1551 · 1549 · 2 failed`,
+      587s, `EXIT=1`. The new check went red with the `HEAD` reading exactly (settle batch
+      `["driveSyncBtn:disabled","driveSyncStatus:class"]`, Connect hidden, status "Connected…"),
+      and so did the ~906 check. The file was restored by copy, `cmp` against the backup was clean,
+      and `grep -rn MUTATION src/ tools/ sw.js index.html` read only pre-existing prose, all before
+      any of this section was written.
+- [x] **Acceptance 3: the comments are true, and every caller is named.** See the two paragraphs
+      above.
+- [x] **Acceptance 4: no new failure in the whole harness.** `green1` gave 1551/1551. The
+      confirmation run on the reverted tree, `green2`, gave `1551 checks · 1551 passed · 0 failed · 0
+      skipped`, 585s, `EXIT=0`. WO-7.12's ~906 check was green in both runs and in none of the four
+      without the repaint. That is expected: its own `syncNow()` now repaints Connect, so it no
+      longer reads a stale paint. It is still WO-7.12's check to steady, because
+      drive-sign-in's `connect()` still leaks into the section. `node tools/wo-sweep.mjs`: `45
+      checks · 42 passed · 0 failed · 3 to review`, after `tools/README.md`'s call-site line went
+      from 1539 to 1540.
+- [ ] 👤 **Laptop, deployed or local.** Owed to the owner. Connect, open About, leave it open until
+      the token lapses (about an hour; `signedIn` turns false a minute early), tap *Sync this year
+      now*. Connect should be drawn and the line should not say Connected. On the laptop, check
+      `location.origin` first (WO-7.7's note in `CLAUDE.md`).
+
 ---
 
 ## Phase 8 — 1.0 packaging

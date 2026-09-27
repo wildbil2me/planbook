@@ -915,6 +915,99 @@ check('a sign-in that has already run out when the teacher taps Sync produces th
     + afterLapsed.connectBtn.shown + ', Sync shown = ' + afterLapsed.syncBtn.shown
     + ', message = ' + JSON.stringify(lapsed.message.slice(0, 120)));
 
+/* ── the sign-in lapsing WITH ABOUT OPEN, and the tap that finds it (WO-7.13) ──
+ *
+ * THE CHECK ABOVE CALLS syncNow() WITH THE MODAL SHUT, AND IT HAS BEEN READING A PAINT MADE ABOUT
+ * 340 LINES EARLIER. Connect's `hidden` class and the status line over it are written by
+ * src/auth.js's refreshAuthChrome() and by nothing else, and until WO-7.13 no path through a
+ * signed-out sync called it — so "Connect back on the screen" there was the paint the section's
+ * opening disconnect() left, and it went red only when drive-sign-in.mjs's leftover Connect settled
+ * in between (WO-7.12). This is the teacher's path instead, WO-7.12's first cut's WO712PROBE made
+ * permanent: About opened signed in and PAINTED signed in, the token lapsing with the modal still
+ * open (acceptTokenResponse() paints nothing, which is the point — nothing but the tap can be what
+ * redraws it), and a real tap on Sync through the one delegated listener. On a build without the
+ * repaint the panel is left with no Connect, no Sync, an empty sync line and a status line reading
+ * "Connected to Google Drive".
+ *
+ * THE REPAINT IS ASKED FOR IN THE SAME TASK AS THE SYNC SETTLING, AND THAT IS WHAT MAKES THE RED
+ * DETERMINISTIC. Reading the panel afterwards is not enough on its own: that same leftover Connect
+ * can settle after the tap and draw Connect itself, and a build with no repaint would then pass on
+ * somebody else's paint — the exact flake WO-7.12 is about, reached from the other side. So a
+ * MutationObserver on the Drive panel files its records BY BATCH, one batch per delivery, and a
+ * delivery never spans two tasks. The settle is the batch holding #driveSyncBtn's `disabled` coming
+ * OFF — refreshSyncChrome() in syncNow()'s `finally` — and the claim is that #driveStatus was
+ * written in that batch. A late paint from anywhere else is a different task and a different batch,
+ * so it can make the end state right and still cannot make this check green.
+ *
+ * "COMING OFF" IS READ TWICE, because one reading of it lies. `btn.disabled = true` on a button
+ * that is already disabled is a setAttribute all the same, and it files a `disabled` record whose
+ * old value is '' — the same record the settle files. So a refreshSyncChrome() from somewhere else
+ * landing mid-sync (the leftover Connect's afterDriveAuthChange() is one) would be taken for the
+ * settle, and a build WITH the repaint would go red on it. Each batch therefore also notes whether
+ * the button is enabled at delivery, which only the settle's batch can say while it is the latest.
+ */
+await shutModals();
+await reset();
+await evalJs(SEED('wo713-open-token-' + Date.now(), 3599));
+await clickSel('[data-modal-open="aboutModal"]');
+await new Promise((r) => setTimeout(r, 400));
+const AUTH_LINE = `(function(){ var s = document.getElementById('driveStatus');
+  return s ? s.textContent.trim() : null; })()`;
+const openIn = await evalJs(READ);
+const openInStatus = await evalJs(AUTH_LINE);
+await evalJs(`(function(){
+  var panel = document.getElementById('drivePanel');
+  var seen = window.__wo713 = { batches: [] };
+  var btn = document.getElementById('driveSyncBtn');
+  seen.observer = new MutationObserver(function (records) {
+    seen.batches.push({ enabledNow: !!btn && !btn.disabled, records: records.map(function (r) {
+      var el = r.target.nodeType === 1 ? r.target : r.target.parentElement;
+      return { id: el ? el.id : '', type: r.type, attr: r.attributeName || '', old: r.oldValue };
+    }) });
+  });
+  seen.observer.observe(panel, { subtree: true, childList: true, characterData: true,
+    attributes: true, attributeOldValue: true });
+  return 1; })()`);
+await evalJs(SEED('wo713-lapsing-token', 10));
+const lapsedIn = await evalJs(READ);
+await clickSel('[data-drive-sync]');
+const SETTLE_BATCH = `function (b) { return b.enabledNow && b.records.some(function (m) {
+  return m.id === 'driveSyncBtn' && m.attr === 'disabled' && m.old !== null; }); }`;
+const SETTLED = `(function(){ return window.__wo713.batches.filter(${SETTLE_BATCH}).length; })()`;
+const lapseTapAt = Date.now();
+while (Date.now() - lapseTapAt < 5000 && !(await evalJs(SETTLED))) {
+  await new Promise((r) => setTimeout(r, 50));
+}
+const openOut = await evalJs(READ);
+const openOutStatus = await evalJs(AUTH_LINE);
+const settleBatch = await evalJs(`(function(){
+  var seen = window.__wo713;
+  seen.observer.disconnect();
+  var hit = seen.batches.filter(${SETTLE_BATCH})[0];
+  delete window.__wo713;
+  return hit ? hit.records.map(function (m) { return m.id + ':' + (m.attr || m.type); }) : null;
+  })()`);
+check('a sign-in that runs out WITH ABOUT OPEN is redrawn by the tap that finds it — Connect back '
+  + 'on the panel and the status line no longer saying Connected, painted by the sync itself in the '
+  + 'same task it settled in, with the modal never closed: a panel reading "Connected to Google '
+  + 'Drive" over no Connect, no Sync and an empty line is the silent failure WO-7.2’s fifth line '
+  + 'rules out, and a teacher meets it on an iPad that resumed with the modal still up',
+  openIn.aboutOpen === true && openIn.connectBtn.shown === false && openIn.syncBtn.shown === true
+    && lapsedIn.state.signedIn === false
+    && Array.isArray(settleBatch) && settleBatch.some((m) => m.indexOf('driveStatus:') === 0)
+    && openOut.aboutOpen === true && openOut.state.signedIn === false
+    && openOut.state.outcome === 'signed-out' && openOut.calls.length === 0
+    && openOut.connectBtn.shown === true && openOut.syncBtn.shown === false
+    && typeof openOutStatus === 'string' && !/^Connected/.test(openOutStatus),
+  'before the lapse: About open = ' + openIn.aboutOpen + ', Connect shown = '
+    + openIn.connectBtn.shown + ', Sync shown = ' + openIn.syncBtn.shown + ', status = '
+    + JSON.stringify((openInStatus || '').slice(0, 40)) + '; lapsed untapped, signedIn = '
+    + lapsedIn.state.signedIn + '; the batch the sync settled in = ' + JSON.stringify(settleBatch)
+    + '; after the tap: About open = ' + openOut.aboutOpen + ', outcome = '
+    + openOut.state.outcome + ', calls = ' + openOut.calls.length + ', Connect shown = '
+    + openOut.connectBtn.shown + ', Sync shown = ' + openOut.syncBtn.shown + ', status = '
+    + JSON.stringify((openOutStatus || '').slice(0, 60)));
+
 /* ── the control, in the state it is drawn in ── */
 await evalJs(SEED('wo72-synthetic-token-b-' + Date.now(), 3599));
 await send('Emulation.setDeviceMetricsOverride',

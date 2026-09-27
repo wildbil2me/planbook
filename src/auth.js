@@ -718,11 +718,21 @@ export function preloadSignIn() {
 /*
   Paint the About modal's Drive section from the state above.
 
-  Called when the About modal opens, and after every flip — not at boot, because everything it
-  writes lives inside a modal nobody has opened yet and a fact about an access token goes stale
-  faster than any other line in this app. src/shell.js does the calling, on the same path that
-  writes the build line, for the same reason: a panel that opens and then fills in is a panel that
-  flickers.
+  Not at boot, because everything it writes lives inside a modal nobody has opened yet and a fact
+  about an access token goes stale faster than any other line in this app. Its callers, all of
+  them: src/shell.js's openAbout(), before the modal appears and on the same path that writes the
+  build line, because a panel that opens and then fills in is a panel that flickers; connect() and
+  reconnect() above, on the off-flag refusal, as the request goes out and as it settles;
+  disconnect(); noteSyncOptIn(); and src/drive-sync.js's syncNow(), when a sync settles
+  `signed-out` (WO-7.13).
+
+  NOTHING CALLS IT WHEN A TOKEN LAPSES. `signedIn` is computed from the clock, so authState() is
+  right the moment the hour is up — but the panel is a paint, and a panel left open across the
+  lapse goes on reading "Connected" until one of the calls above. This comment said "after every
+  flip" until WO-7.13, and a lapse is the flip nothing follows: a sync that found one repainted only
+  its own half, and the teacher was left with no Connect under "Connected to Google Drive". The
+  sync now repaints this half too; a lapse nobody acts on is still redrawn by nothing, and the
+  expiry below is a clock time so that the line names the moment it stopped being true.
 
   The whole section is hidden when the flag is shut — which, since WO-7.4, is every origin but
   loopback and the deployed one: the LAN address the iPad reaches a laptop on, a preview deploy,

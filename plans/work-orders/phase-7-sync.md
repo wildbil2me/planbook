@@ -1216,6 +1216,13 @@ are answered above, and the second is WO-7.13.)*
 - **Correct the foot's comment** at `tools/verify/drive-sign-in.mjs` (~652–654). *"A request that is
   still out when this file ends is a timer in a browser that is about to be killed"* is false: the
   next section runs in the same page.
+- **Make WO-7.13's check assert its own premise.** Its comment says About was *painted signed in*
+  before the lapse, and nothing asserts it. In a run where this file's leftover `connect()` is still
+  busy, the status line reads *Waiting for Google…* throughout, and the *no longer Connected* clause
+  holds without testing anything. Assert `/^Connected/.test(openInStatus)` before the lapse. The
+  verifier on WO-7.13 found this and it failed no line there, because the check's other two clauses
+  still turn red. It was handed here by name on 2026-09-27, because this is the work order that
+  empties that busy state.
 - Nothing in `src/` moves. That half is WO-7.13's.
 
 **Acceptance**
@@ -1234,7 +1241,7 @@ the first cut refused to land.
 
 ## WO-7.13 — a sign-in that lapses with About open leaves the panel saying Connected
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.2 — the `syncNow()` this repaints from; WO-7.1 — the `refreshAuthChrome()` it calls
+**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-7.2 — the `syncNow()` this repaints from; WO-7.1 — the `refreshAuthChrome()` it calls
 **Closes roadmap** *(no box. A defect in WO-7.2's fifth Acceptance line, found by WO-7.12's first cut and confirmed by its verifier's reading.)*
 
 **Booked 2026-09-27**, owner-directed, from WO-7.12's verdict. WO-7.12 was booked as a harness race.
@@ -1274,14 +1281,14 @@ a paint made about 340 lines earlier.
 - **Bump `CACHE` in `sw.js`.** `src/drive-sync.js` is in `SHELL`.
 
 **Acceptance**
-- [ ] The new check is red on `HEAD` in three runs out of three, recorded in `TESTING.md` § WO-7.13,
+- [x] The new check is red on `HEAD` in three runs out of three, recorded in `TESTING.md` § WO-7.13,
       and green with the repaint in.
-- [ ] Mutation-proved: take the new `refreshAuthChrome()` call out and the new check goes red. **The
+- [x] Mutation-proved: take the new `refreshAuthChrome()` call out and the new check goes red. **The
       mutation is reverted before anything else is written** (`AGENTS.md`).
-- [ ] The comment at ~541–544 is true, and no other comment in `src/drive-sync.js` or `src/auth.js`
+- [x] The comment at ~541–544 is true, and no other comment in `src/drive-sync.js` or `src/auth.js`
       claims a repaint that does not happen. Every caller of `refreshAuthChrome()` is named in
       `TESTING.md` § WO-7.13.
-- [ ] The whole browser harness shows no new failure. Name WO-7.12's check as the one known flake
+- [x] The whole browser harness shows no new failure. Name WO-7.12's check as the one known flake
       if it goes red; it is no longer expected to.
 - [ ] 👤 **Laptop, deployed or local.** Connect, open About, leave it open past the hour (or until the
       token lapses), tap *Sync this year now*: Connect is drawn and the line does not say Connected.
