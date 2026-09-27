@@ -5268,3 +5268,56 @@ has nothing to do with them.
 window is not the defect. The missing `finally` is. **Do not turn touch off for the whole section**:
 the clicks that open the editor are meant to happen on the coarse pointer, as WO-1.55's comment in
 the file explains.
+
+*(✅ 2026-09-27. The `finally` landed and was mutation-proved by a temporary probe in the next
+section. Harness reads 1550/1550. The audit in `TESTING.md` § WO-1.56 answered the second Deliverable
+"several": 21 of the other 38 files leave touch emulation changed across a throw, and so does the
+viewport in most of them. That larger fix is booked as WO-1.57.)*
+
+## WO-1.57 — a section that throws hands the next one whatever emulation it had changed
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.56 — the audit this acts on
+**Closes roadmap** *(no box. A harness defect with no live symptom yet.)*
+
+**Booked 2026-09-27**, owner-directed, from WO-1.56's verdict. `TESTING.md` § WO-1.56 read the 39
+files in `tools/verify/` that call `Emulation.setTouchEmulationEnabled`. **21 of the 38 it did not
+fix leave touch emulation in a different state after a throw** than after a normal exit, because
+every restore is a plain later `send` and only two files have a `finally`, neither touching
+emulation. Most of the 21 change the viewport in the same window, and six more files diverge on the
+viewport alone. `recoverPage()` in `tools/verify-shell.mjs` reloads the page and **a reload resets
+no CDP emulation**, so whatever the section had changed is handed to the next one. In today's run
+order nine of the 21 hand it to a section that reads the pointer without setting it. The audit gives
+the list and says plainly that it traced where the setting goes and ran nothing. So today it costs
+nothing unless a section throws. When one does, the checks after it can be measured on the wrong
+device with nothing to say so, which is the moment a run most needs to be believed.
+
+**Deliverables**
+- **After a throw, put emulation back to what the failed section started with**, before
+  `recoverPage()` reloads. Touch emulation and device metrics both. Not one fixed baseline for every
+  section: 29 of the 67 browser sections set no touch at all and run on whatever they inherit, so
+  "the state this section received" is the only baseline that means the same thing for all of them.
+  Recording it by wrapping `send` for `Emulation.*` calls is the audit's suggestion, not a ruling.
+- **Say in `TESTING.md` § WO-1.57 how the state is captured and restored**, and what is out of reach
+  (for example emulation set some other way than through `send`, if any section does that).
+- Nothing under `src/` moves, and none of the 21 section files is edited.
+
+**Acceptance**
+- [ ] A throw injected inside a temporary touch window in one of the nine sections the audit names
+      (`classes-terms.mjs` → `categories-weights.mjs` is the suggested pair) leaves the next section
+      reading the same `matchMedia('(pointer: coarse)').matches`, `navigator.maxTouchPoints` and
+      `innerWidth` as it does on a normal run. Recorded in `TESTING.md` § WO-1.57, and **the injected
+      throw is reverted before anything else is written** (`AGENTS.md`).
+- [ ] Mutation-proved: the same injected throw with the restore taken out of the recovery path
+      leaves the next section reading a different value.
+- [ ] The whole harness is green on the real clock, the check list is unchanged in names and order,
+      and no check changes state apart from WO-7.12's named check if it is still open.
+- [ ] `node tools/wo-sweep.mjs` is green, including § 25's reading of `runSection()`'s shape.
+
+**Traps** — **Do not remove WO-1.56's `finally` from `date-zero-key.mjs`**. It is the fix at the
+point of the defect, and this is the net under every other section, not a replacement for it.
+**`recoverPage()` must still never throw**. Its own comment says why: a throw out of the recovery
+from a throw is the one failure that stops the run silently, and a CDP call that fails while
+restoring goes in the same `catch`. **Do not fix the 21 files one `finally` at a time**. The audit
+ruled that out, and the next new section would bring the defect back. **A failed section's leftover
+fixture data** (WO-1.56's limit: `c_wo147` left in the document) is out of scope. It is a different
+family, and the planted runs showed no check changing because of it.

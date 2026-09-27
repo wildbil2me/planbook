@@ -1176,6 +1176,13 @@ on a real Connect tap whose `connect()` is still waiting on Google's live librar
 `src/drive-sync.js` never repaints Connect, so the check reads whatever the last paint left. A
 MutationObserver trace over eight more runs never caught it.
 
+**Worse than booked, 2026-09-27.** WO-1.56's two sessions ran the whole harness eight times on the
+real clock, Edge 154. This check failed in five: the implementer's baseline on unmodified `HEAD` and
+both of its planted runs, then the verifier's baseline and one of its planted runs. Both sessions'
+final runs were green. Neither WO-1.56 file reaches `drive-sign-in` or `drive-sync`, so the change is
+not the cause. The rate went from one run in seven to more often than not. At that rate the next
+verifier cannot learn much from a green whole-harness run, which is the cost this booking names.
+
 **It is harness-only as far as anyone knows.** A teacher cannot seed a token, so the interleaving
 needs the harness to make it. It is booked because a check that is red one run in seven teaches the
 next verifier to shrug at red.
