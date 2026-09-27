@@ -1711,3 +1711,45 @@ which one is load-bearing.
 **Traps** — **Do not also reorder the chain.** `resetTemplates()` and `resetOutreach()` run before
 `afterClassChange()` so the screen repaints with no stale draft behind it, and that order is the
 reason the calls are where they are.
+
+## WO-5.17 — No check opens a draft and then restores
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-5.16 — the single call this pins down
+**Closes roadmap** *(no box. A harness gap, found by WO-5.16's verifier.)*
+
+**Booked 2026-09-26**, owner-directed, from WO-5.16's verdict. `afterRestore()` in `src/shell.js`
+calls `outreachView.resetOutreach()` so that a restore drops an open draft and closes
+`#outreachModal`. The draft is about a student in the document that was just put away. WO-7.7's
+`afterDownload()` runs `afterRestore()` whole, so a Drive sync that downloads is meant to do the
+same. **Nothing in the harness opens a draft and then restores or downloads.** WO-5.16's verifier
+confirmed that deleting the remaining call leaves `verify-shell.mjs` green at 1538/1538. So that
+run proved the deletion of the duplicate broke nothing. It did not prove the draft still closes.
+
+The template editor already has the check this lacks: `tools/verify/templates.mjs` restores through
+`restoreFromText()` and the real confirm button, then reads what is on screen. This work order
+gives the outreach draft the same check, and a second one through the download path.
+
+**Deliverables**
+- **A restore check.** Open a draft through the real outreach entry point, and assert that
+  `#outreachModal` is open with a non-empty body before anything else happens. Restore through
+  `window.planbook.backup.restoreFromText()` and the real confirm button. Then assert that
+  `#outreachModal` is hidden. It lives beside the other outreach checks in
+  `tools/verify/outreach.mjs`, or in `tools/verify/backup-restore.mjs` if the draft helpers travel
+  cleanly. The implementer picks one and says why.
+- **A download check.** The same draft, then a sync that resolves `downloaded`, driven through the
+  plumbing WO-7.7's checks already use in `tools/verify/sync-button.mjs`. Assert the modal is
+  hidden afterwards.
+- **Harness only.** No file under `src/` changes, so `CACHE` in `sw.js` does not move.
+
+**Acceptance**
+- [ ] With the draft open, a restore closes `#outreachModal`, and the check asserts the draft was
+      open before the restore rather than assuming it.
+- [ ] With the draft open, a sync that downloads closes `#outreachModal`.
+- [ ] **Mutation-proved.** Delete `outreachView.resetOutreach();` from `afterRestore()`, and both
+      checks go red. Put it back, and both go green. Record the round in `TESTING.md` § WO-5.17, and
+      **revert the mutation before writing anything else** (`AGENTS.md`).
+- [ ] The whole browser harness is green, and the check count rises by exactly the checks added.
+
+**Traps** — **Do not test `resetOutreach()` by calling it.** A check that calls the function directly
+passes with the call in `afterRestore()` deleted, and that is the gap this work order exists to
+close. Drive the restore and the download, and read the modal.
