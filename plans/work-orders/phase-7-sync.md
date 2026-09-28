@@ -885,7 +885,7 @@ written in UTC would test a different midnight from the teacher's.
 
 ## WO-7.9 — a fresh device cannot open the year it already has in Google Drive
 
-**Ship** — · **Status** 🔍 AWAITING VERDICT — 2026-09-28 · **Size** M · **Depends on** WO-7.2, WO-7.5, WO-7.7 — the download and its validation, the opt-in a pull must set, and the repaint a pull must trigger
+**Ship** — · **Status** ✅ DONE — 2026-09-28 · **Size** M · **Depends on** WO-7.2, WO-7.5, WO-7.7 — the download and its validation, the opt-in a pull must set, and the repaint a pull must trigger
 **Closes roadmap** *(no box. Phase 7's boxes are closed by WO-7.1, WO-7.2 and WO-7.3; this is a door on top of them.)*
 
 **Booked 2026-09-26**, owner-directed. The owner connected a fresh laptop while reading WO-7.5 and found
@@ -964,13 +964,13 @@ picks is lifted, and where the drawing and this work order disagree, the work or
       request to `accounts.google.com`. Asserted from the network, as WO-7.4 and WO-7.5 do.
 - [x] A document that fails validation, or belongs to a newer build, is refused in a sentence and
       leaves the untouched year as it was.
-- [ ] 👤 On the iPad on the deployed app, force-quit first, **pop-up blocker on**, a fresh install
+- [x] 👤 On the iPad on the deployed app, force-quit first, **pop-up blocker on**, a fresh install
       (Safari's site data cleared): the Drive door signs in, lists the year the laptop synced, opens
       it, and the laptop's grades are on screen. The header's sync button then reads up to date.
       **Clearing site data erases the year on that device.** Before it, on the iPad: sync, confirm
       the button reads up to date, and download a backup. Better still, read it on a device or
       browser profile that is not the classroom one.
-- [ ] 👤 The backup door on the same fresh device restores a backup file downloaded from the laptop.
+- [x] 👤 The backup door on the same fresh device restores a backup file downloaded from the laptop.
 
 **Traps** — **Never overwrite a year that has anything in it.** "Untouched" is the whole safety of this
 door. If the check is ever in doubt, the answer is *do not offer*. **The sign-in has to be asked for
@@ -1446,7 +1446,7 @@ WO-7.14's ruling**: the session still ends on a `401`, and the fix is in what is
 
 ## WO-7.16 — the privacy documents say Google loads only on Connect, and since WO-7.9 a fresh device has a second door
 
-**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-7.6 — the wording this re-words
+**Ship** — · **Status** ✅ DONE — 2026-09-28 · **Size** S · **Depends on** WO-7.6 — the wording this re-words
 **Closes roadmap** *(no box. A correction to two public documents and the notes that quote them.)*
 
 **Booked 2026-09-28**, owner-directed, out of WO-7.9's verdict. The verifier returned PASS WITH
@@ -1505,7 +1505,7 @@ WO-7.9, which would make the two wait on each other, and **its subject is WO-7.9
 - [x] The existing network assertions still hold: a device that takes neither door makes no request
       to `accounts.google.com` (WO-7.4's, WO-7.5's and WO-7.9's third line), and `verify-shell.mjs`
       is green.
-- [ ] `verify-deploy.mjs` green after the push that carries this and WO-7.9, with its policy claims
+- [x] `verify-deploy.mjs` green after the push that carries this and WO-7.9, with its policy claims
       re-read for anything that asserted the old wording, and the live `/privacy`, tags stripped,
       carries the new *Last updated* date and names Open from Google Drive.
 

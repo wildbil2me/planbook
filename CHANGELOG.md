@@ -23,8 +23,8 @@ device where neither Connect nor *Open from Google Drive* was ever tapped fetche
 Google. The two documents carry that statement word for word, and both read *Last updated 28
 September 2026*. Nothing the app does changed. Only the words did, including nineteen code comments
 and harness labels that still described the narrower app. (WO-7.16 — harness green at 1572/1572; a
-device that takes neither door makes no request to Google, measured on the network. The check
-against the live `/privacy` is owed after the push that also carries WO-7.9.)
+device that takes neither door makes no request to Google, measured on the network. Read off the
+live `/privacy` at v144 after the push that also carried WO-7.9.)
 
 ### A new device can open the year you already have in Google Drive — 2026-09-28
 
@@ -37,7 +37,7 @@ spare conflict file. *Restore a backup file* opens the usual restore. Both appea
 with nothing on it, and go away for good once you add anything. On the iPad the first tap may only
 load Google's sign-in, so tap *Sign in to Google* once more. Sync is still not a backup. (WO-7.9 —
 harness green at 1572/1572; a device that takes neither door makes no request to Google, measured on
-the network. Two iPad readings on the deployed app are owed.)
+the network. Both doors read by the owner on the iPad at v144 on the deployed app.)
 
 ### A sync Google refused no longer looks like one that worked — 2026-09-28
 

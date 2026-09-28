@@ -12704,7 +12704,7 @@ so the lines that matter are quoted.*
       proof. A teacher name typed during the download (the fake Drive's download hook) is refused at
       the second proof, and the typing is kept. `store.adoptRemoteDocument()` given a guard naming the
       wrong record throws *"…has changed since Planbook checked it was empty…"* and writes nothing.
-- [ ] 👤 **iPad, deployed, pop-up blocker on, fresh install.** Not done by the implementer: it needs
+- [x] 👤 **iPad, deployed, pop-up blocker on, fresh install.** Not done by the implementer: it needs
       the iPad and a real Google account. Before clearing site data, on the iPad: sync, confirm the
       button reads up to date, and download a backup, because **clearing site data erases the year on
       that device**. Better still, use a device or browser profile that is not the classroom one.
@@ -12712,9 +12712,11 @@ so the lines that matter are quoted.*
       *"It is ready now — tap again and it will open"*, then tap *Sign in to Google*. Pick the year the
       laptop synced, then *Open it*. The laptop's grades should be on screen and the header's sync
       button should read *Synced with Google Drive at …*.
-- [ ] 👤 **The backup door on a fresh device.** Not done by the implementer. On the same kind of fresh
+      **Read by the owner on the iPad at v144 on the deployed app, 2026-09-28: as described.**
+- [x] 👤 **The backup door on a fresh device.** Not done by the implementer. On the same kind of fresh
       install, tap *Restore a backup file*, choose a backup downloaded from the laptop in the Files
       picker, and confirm. Its first sync after Connect will keep both copies once (ruling 1).
+      **Read by the owner on the iPad at v144 on the deployed app, 2026-09-28: as described.**
 
 **Two things for whoever reads the policy next.** `privacy.html` and `docs/FERPA.md` say Google's
 library *"loads first when Connect is tapped"*, that a sign-in is asked for *"only when Connect or the
@@ -12890,7 +12892,7 @@ ruling: `origin/main` is at `planbook-shell-v142` and the local v143 (WO-7.9) ha
       `1 request(s) to accounts.google.com after the tap (["https://accounts.google.com/gsi/client"])`.
       One comment-only rewrap in `src/sync-button.js` (a line over-long from this sitting's own edit)
       was made after the run; it moves no executable line.
-- [ ] **Acceptance 4 — `verify-deploy.mjs` after the push.** Owed after the push that carries this and
+- [x] **Acceptance 4 — `verify-deploy.mjs` after the push.** Owed after the push that carries this and
       WO-7.9, which is the owner's. Its policy claims were re-read now: `CLAIMS` in
       `tools/verify-deploy.mjs` asserts *no server of ours ever receives student information*, *no
       account is required* and *Drive holds only the file Planbook itself created* — none of them the
@@ -12898,6 +12900,10 @@ ruling: `origin/main` is at `planbook-shell-v142` and the local v143 (WO-7.9) ha
       file asserts *Connect*, `accounts.google` or *Last updated*, so no claim needed updating. After
       the push: the run, and the live `/privacy` tags-stripped for "Last updated 28 September 2026" and
       "Open from Google Drive".
+      **Paid 2026-09-28 after the push of `155804e`:** the origin served `planbook-shell-v144`,
+      `verify-deploy.mjs` read `19 checks · 19 passed · 0 failed`, its claims were re-read and none
+      names Connect, `accounts.google` or *Last updated*, and the live `/privacy` carries *Last updated
+      28 September 2026* once and *Open from Google Drive* four times.
 
 **Both tools.** `node tools/wo-sweep.mjs`: `45 checks · 41 passed · 1 failed · 3 to review` — the
 three standing REVIEWs, and one FAIL that is the `CACHE` ruling above rather than a defect:
