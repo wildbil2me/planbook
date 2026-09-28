@@ -1139,6 +1139,81 @@ await evalJs(`(function(){ window.__drive.failNext = null;
     else localStorage.setItem('planbook_driveSyncOptIn', ${JSON.stringify(priorOptIn)}); } catch (e) {}
   return 1; })()`);
 
+/* ── the same refusal, met through the HEADER's tap, drawn on the header (WO-7.15) ──
+ *
+ * WO-7.14 ended the session on a 401, and its owner's reading found what that cost: the header's
+ * tap met the refusal and the button went straight back to its freshness wash, `current`, the look
+ * of a sync that worked. `lapsed` needed a failed sign-in tap, `failed` skips `signed-out` on
+ * purpose, and the ladder fell through to freshnessOf(). The check above cannot see it — it taps
+ * About's Sync and reads the header's label, which was always honest about the next tap.
+ *
+ * THE PREMISE IS DRAWN, NOT ASSUMED: a sync through About's door that works, with the opt-in on and
+ * a clock-fresh token, and the header read as `current` before the refused tap. Then Drive answers
+ * 401 to everything and the header button itself is tapped once — the real button, through the one
+ * delegated listener, with About shut. What is asserted is what an arm's-length glance gets: the
+ * button's state is neither `current` nor `stale`, and About's badge follows it. And the tap did not
+ * go to About (`failed`'s door), so the next tap is still WO-7.14's sign-in — src/sync-button.js
+ * routes every `!signedIn` tap there. That the sign-in then succeeds and the button reads fresh again
+ * is `verify/sync-button.mjs`, which has a stand-in library that can grant one; this one refuses.
+ */
+await shutModals();
+await reset();
+const priorOptIn715 = await evalJs(`(function(){ try { return localStorage.getItem('planbook_driveSyncOptIn'); }
+  catch (e) { return null; } })()`);
+await evalJs("window.planbook.setPref('driveSyncOptIn', true); 1");
+const HEADER715 = `(function(){ var b = document.getElementById('syncBtn');
+  var ab = document.getElementById('aboutSyncBadge'); var m = document.getElementById('aboutModal');
+  return { hidden: !b || b.classList.contains('hidden'), state: b ? b.getAttribute('data-sync-state') : null,
+    label: b ? b.getAttribute('aria-label') || '' : '',
+    aboutBadge: ab ? { hidden: ab.classList.contains('hidden'), text: ab.textContent,
+      lapsed: ab.classList.contains('lapsed') } : null,
+    aboutOpen: !!(m && !m.classList.contains('hidden')),
+    signedIn: window.planbook.auth.authState().signedIn,
+    outcome: window.planbook.driveSync.syncState().outcome }; })()`;
+await evalJs(SEED('wo715-header-token-' + Date.now(), 3599));
+await clickSel('[data-modal-open="aboutModal"]');
+await new Promise((r) => setTimeout(r, 400));
+await clickSel('[data-drive-sync]');
+const goodTapAt = Date.now();
+let header715In = await evalJs(HEADER715);
+while (Date.now() - goodTapAt < 5000
+  && !(header715In.state === 'current' && header715In.outcome !== '')) {
+  await new Promise((r) => setTimeout(r, 50));
+  header715In = await evalJs(HEADER715);
+}
+await shutModals();
+await evalJs('window.__drive.failCount = 0; window.__drive.failNext = 401; 1');
+await clickSel('#syncBtn');
+const headerTapAt = Date.now();
+while (Date.now() - headerTapAt < 5000 && !(await evalJs(SETTLED_401))) {
+  await new Promise((r) => setTimeout(r, 50));
+}
+await new Promise((r) => setTimeout(r, 100));
+const header715Out = await evalJs(HEADER715);
+const header715Fails = await evalJs('window.__drive.failCount');
+check('a sync the HEADER’s tap sends into Google’s 401 does not leave that button looking like a '
+  + 'sync that worked — from a drawn `current`, one tap that meets the refusal draws it as neither '
+  + '`current` nor `stale` but `lapsed`, reading that the last sync did not reach Google Drive and '
+  + 'that a tap signs in; About’s badge follows it with its mark; and the tap did not open About, '
+  + 'so the next one is still the sign-in WO-7.14 made work (WO-7.15)',
+  header715In.hidden === false && header715In.state === 'current'
+    && header715In.signedIn === true
+    && header715Fails > 0 && header715Out.outcome === 'signed-out'
+    && header715Out.signedIn === false && header715Out.hidden === false
+    && header715Out.state !== 'current' && header715Out.state !== 'stale'
+    && header715Out.state === 'lapsed'
+    && /did not reach Google Drive/.test(header715Out.label)
+    && /Tap to sign in to Google and sync now\.$/.test(header715Out.label)
+    && !!header715Out.aboutBadge && header715Out.aboutBadge.hidden === false
+    && header715Out.aboutBadge.lapsed === true && header715Out.aboutBadge.text === '!'
+    && header715Out.aboutOpen === false,
+  'before: ' + JSON.stringify(header715In) + '; Drive refused ' + header715Fails
+    + ' request(s); after the header tap: ' + JSON.stringify(header715Out));
+await evalJs(`(function(){ window.__drive.failNext = null;
+  try { if (${JSON.stringify(priorOptIn715)} === null) localStorage.removeItem('planbook_driveSyncOptIn');
+    else localStorage.setItem('planbook_driveSyncOptIn', ${JSON.stringify(priorOptIn715)}); } catch (e) {}
+  return 1; })()`);
+
 /* ── the control, in the state it is drawn in ── */
 await evalJs(SEED('wo72-synthetic-token-b-' + Date.now(), 3599));
 await send('Emulation.setDeviceMetricsOverride',

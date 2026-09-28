@@ -12551,6 +12551,78 @@ are in the scratchpad, so the lines that matter are quoted.*
       (the refusal is announced, not drawn) and is not what this line asks. Booked separately.
       Google's own screen named the app *wjt-planbook*, the Cloud project's name, not *Planbook*.
 
+### WO-7.15 — a sync Google refused leaves the header button looking like one that worked
+
+**`lapsed` gained a second arm; no seventh state.** In `syncButtonState()` (`src/sync-button.js`), a
+new rung after the failed-tap one: `!a.signedIn && s.outcome === 'signed-out'` draws `lapsed`, reading
+*"The last sync did not reach Google Drive, because the Google sign-in had ended. Tap to sign in to
+Google and sync now."* It was reused rather than added because every other part of `lapsed` already
+fits: the tap goes to Google's sign-in (`!signedIn`, WO-7.14's door, never `failed`'s About), About's
+badge already carries `!` for it, and the icon and white fill draw no green. The `!signedIn` guard
+keeps it from telling a signed-in teacher that her tap will sign in. It clears where WO-7.14 left the
+clearing: `signedInAgain()` drops the outcome on a successful sign-in. The file-top table, the ladder
+comment and the `tapSyncButton()` comment are updated with it. `src/auth.js` and `src/drive-sync.js`
+are unchanged. `CACHE` v141 → v142.
+
+**Two checks.** In `tools/verify/drive-sync.mjs`, after WO-7.14's block: opt in, seed a clock-fresh
+token, sync through About's door so the header reads `current` (asserted), then with Drive answering
+401 tap `#syncBtn` once. The assertion: the state is neither `current` nor `stale` (it is `lapsed`), the
+label says the sync did not reach Google Drive and ends in the sign-in instruction, About's badge is
+shown with `!`, and About did not open. In `tools/verify/sync-button.mjs`, after the WO-7.10 Connect
+check, using its stand-in library that can grant a token: a header tap meets 401 and reads `lapsed`;
+the next header tap makes exactly one visible request inside the click listener, About stays shut,
+and once the token comes back and syncs the button reads `current` with *"Synced with Google Drive at
+…. Tap to sync now."* The drive-sync.mjs stand-in only refuses, which is why the second half lives in
+the other file. `tools/README.md`'s call-site line went from 1542 to 1544.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-7-sync.md` § WO-7.15, from
+`node tools/verify-shell.mjs`, real clock, Edge, 2026-09-27 EDT. The `HEAD` and mutation runs used a
+`git worktree` of `f9f4c22` in the session scratchpad, so the main tree never held a mutation. Logs are
+in the scratchpad, so the lines that matter are quoted.*
+
+- [x] **Acceptance 1: red on `HEAD`, then green.** `red`: the worktree with `src/` and `sw.js` exactly
+      as `f9f4c22` and the two harness files copied in. `1555 checks · 1553 passed · 2 failed · 0
+      skipped`, 597s, `EXIT=1`. The two failures were the two new checks and nothing else. The
+      drive-sync check read `before: {"state":"current","label":"Synced with Google Drive at 8:40 PM.
+      Tap to sync now.",…,"signedIn":true,"outcome":"uploaded"}; Drive refused 1 request(s); after the
+      header tap: {"hidden":false,"state":"current","label":"Synced with Google Drive at 8:40 PM. Tap
+      to sign in to Google and sync now.","aboutBadge":{"hidden":true,"text":"","lapsed":false},
+      "aboutOpen":false,"signedIn":false,"outcome":"signed-out"}`. That is the owner's reading: a
+      refused sync drawn as a sync that worked, differing only in the label's last sentence. `green`
+      (this tree): `1555 checks · 1555 passed · 0 failed · 0 skipped`, 590s, `EXIT=0`, the same check
+      reading `after the header tap: {"hidden":false,"state":"lapsed","label":"The last sync did not
+      reach Google Drive, because the Google sign-in had ended. Tap to sign in to Google and sync
+      now.","aboutBadge":{"hidden":false,"text":"!","lapsed":true},"aboutOpen":false,
+      "signedIn":false,"outcome":"signed-out"}`.
+- [x] **Acceptance 2: mutation-proved, and reverted before anything else was written.** In the same
+      worktree, with this change's `src/sync-button.js` and `sw.js` copied in, the new rung was made
+      `false && !a.signedIn && s.outcome === 'signed-out'` under a `MUTATION WO-7.15` marker, which
+      puts `signed-out` back on the freshness path. `mut`: `1555 checks · 1553 passed · 2 failed`,
+      595s, `EXIT=1`. Both new checks went red with the `HEAD` reading (`state = current`, label
+      `"Synced with Google Drive at 9:00 PM. Tap to sign in to Google and sync now."`, About badge
+      hidden). The worktree was removed with `git worktree remove --force`, and
+      `grep -rn "MUTATION WO-7.15" src tools sw.js index.html` in the main tree found nothing before
+      this section or any other prose was written.
+- [x] **Acceptance 3: a sign-in that succeeds after the refusal returns the button to its freshness
+      reading.** The sync-button.mjs check, `green`: `after the refused tap: state = lapsed, signedIn
+      = false, outcome = signed-out, label = "The last sync did not reach Google Drive, because the
+      Google sign-in had ended. Tap to sign in to Google and sync now."; the next tap asked Google
+      [{"silent":false,"inClick":true,"inListener":true,…}], About open = false; then state = current,
+      outcome = in-sync, label = "Synced with Google Drive at 8:51 PM. Tap to sync now."` On `HEAD`
+      the same check was red on the first half only (`state = current` after the refused tap). The
+      second half passed there too, as expected, because `HEAD` never left the freshness reading.
+- [x] **Acceptance 4: the whole harness shows no new failure.** `green`: `1555 · 1555 · 0 failed · 0
+      skipped`, `EXIT=0`. No existing check needed changing. WO-7.14's check still asserts a header
+      label ending *"Tap to sign in to Google and sync now."*, and the new reading ends that way on
+      purpose. WO-7.10's `lapsed` check still reads the failed-tap wording exactly, because that rung
+      comes first. `node tools/wo-sweep.mjs`: `45 checks · 42 passed · 0 failed · 3 to review`.
+- [ ] 👤 **Laptop, deployed.** Not done by the implementer: it needs a real Google account and the
+      deployed build (check that the build line reads v142, or force-quit first). Connect and sync, remove
+      Planbook's access at myaccount.google.com → Security → third-party access, then tap the
+      header's sync button once. It should turn white with the crossed-out cloud and nothing
+      green, and its tooltip should read *"The last sync did not reach Google Drive…"*. Tap again,
+      sign in: it should go back to the plain wash, *"Synced with Google Drive at …"*.
+
 ## Phase 8 — 1.0 packaging
 
 *Phase goal: something a stranger can find, evaluate, install, and trust.*

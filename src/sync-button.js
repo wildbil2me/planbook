@@ -23,6 +23,8 @@
       ahead      Changes on this device are not in Google Drive yet.              sync now
       stale      Last synced yesterday at 3:12.                                   sync now
       lapsed     The Google sign-in did not finish. Tap to try again.             Google's sign-in, then sync
+                 (or) The last sync did not reach Google Drive, because the
+                 Google sign-in had ended. Tap to sign in … (WO-7.15)
       failed     The last sync did not finish. Nothing on this device changed.    About, at the Drive section
       syncing    Syncing with Google Drive…                                       nothing until it settles
 
@@ -207,12 +209,23 @@ function staleReading(at, now) {
                  button would go back to "Tap to sign in and sync" as though she had never tapped —
                  and the two commonest causes are ones she can act on: a blocked window (About says
                  how, and says it in red), and a library that had to be fetched first, which the
-                 SECOND tap cures. What it no longer means is "the sign-in ended": a missing token is
-                 every launch now, and is not an alarm. A sync that found the sign-in gone is not
-                 this state either — syncNow() asks Google nothing, so that outcome is the token's
-                 lapse, or since WO-7.14 Google answering 401 to it (which ends the session in
-                 src/auth.js), never a sign-in her tap asked for, and the tap that follows signs in
-                 on its own.
+                 SECOND tap cures. What it does not mean is "no token": a missing token is every
+                 launch now, and is not an alarm.
+       lapsed,   AND ITS SECOND ARM (WO-7.15): a sync that ended `signed-out` — the token's lapse
+       again     found by About's Sync, or since WO-7.14 Google answering 401 to a token the clock
+                 still called fresh (src/auth.js ends the session on it) — and no sign-in since. It
+                 is a sync that did not reach Drive, and until WO-7.15 it fell through to 5 and drew
+                 `current` or `stale`, the wash a sync that worked leaves; a teacher who tapped once
+                 and walked away read that as her year being in Drive. REUSED RATHER THAN A SEVENTH
+                 STATE because every part of `lapsed` is already right for it: the tap takes
+                 Google's sign-in (tapSyncButton()'s `!signedIn` branch, which is what WO-7.14 made
+                 work — never About, which is why this is not `failed`), About's badge carries its
+                 `!`, and the icon and inverted fill are the header's loudest non-alarm, with no
+                 green. What differs is the reading, which says the sync did not reach Drive and
+                 what a tap will do. It clears at its cause, not here: a sign-in that succeeds calls
+                 signedInAgain() in src/drive-sync.js, which drops the `signed-out` outcome, and
+                 the button returns to 5. `!a.signedIn` guards it so that it can never tell a
+                 signed-in teacher that her tap will sign in.
     3. failed    the last sync ended badly for any reason but the sign-in.
     4. unknown   the bookmark has not been read yet; drawn as `syncing` for the frame it takes,
                  because an amber "not in Drive yet" corrected a moment later is a false sentence.
@@ -234,6 +247,10 @@ export function syncButtonState(now) {
     state = 'syncing'; reading = 'Waiting for Google…';
   } else if (!a.signedIn && tapFailed) {
     state = 'lapsed'; reading = 'The Google sign-in did not finish. Tap to try again.';
+  } else if (!a.signedIn && s.outcome === 'signed-out') {
+    state = 'lapsed';
+    reading = 'The last sync did not reach Google Drive, because the Google sign-in had ended. '
+      + 'Tap to sign in to Google and sync now.';
   } else if (s.bad && s.outcome !== 'signed-out') {
     state = 'failed'; reading = 'The last sync did not finish. Nothing on this device changed.';
   } else {
@@ -361,8 +378,9 @@ export function revealDriveSection() {
   and the gesture is gone. That is the launch renewal's failure moved onto the tap, and it is why
   src/auth.js's ensureFreshToken() no longer asks Google anything at all.
 
-  `lapsed` taps the same way: it is a sign-in her last tap asked for and did not get, and the only
-  thing that cures it is another one, inside another tap.
+  `lapsed` taps the same way: it is a sign-in her last tap asked for and did not get, or (WO-7.15) a
+  sync that found the sign-in ended, and the only thing that cures either is a sign-in, inside
+  another tap. Both arms are `!signedIn` by construction, so neither can reach the `failed` door.
 
   IT HANDS THE SYNC BACK, NOT JUST THE DOOR (WO-7.7). The answer is `{ door, syncing }`: which way
   the tap went, and — when it went to Drive — a promise of syncNow()'s own result, so src/shell.js can

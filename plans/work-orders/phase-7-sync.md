@@ -1378,7 +1378,7 @@ in `src/sync-button.js` alone**: the About door and the harness do not go throug
 
 ## WO-7.15 — a sync Google refused leaves the header button looking like one that worked
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.14 — the `refused()` that makes this state reachable in one tap; WO-7.5 — the header button this draws on
+**Ship** — · **Status** 🔍 AWAITING VERDICT — 2026-09-27 · **Size** S · **Depends on** WO-7.14 — the `refused()` that makes this state reachable in one tap; WO-7.5 — the header button this draws on
 **Closes roadmap** *(no box. A gap in WO-7.5's states, opened by WO-7.14's fix and read on the laptop by the owner.)*
 
 **Booked 2026-09-27**, owner-directed, from WO-7.14's 👤 reading at v141 on the deployed origin. The
@@ -1415,12 +1415,12 @@ is not affected, because the tap takes the sign-in door first.
 - **Bump `CACHE` in `sw.js`.**
 
 **Acceptance**
-- [ ] The new check is red on `HEAD` and green with the change, with both runs recorded in
+- [x] The new check is red on `HEAD` and green with the change, with both runs recorded in
       `TESTING.md` § WO-7.15.
-- [ ] Mutation-proved: put the `signed-out` outcome back on the freshness path and the new check goes
+- [x] Mutation-proved: put the `signed-out` outcome back on the freshness path and the new check goes
       red. **The mutation is reverted before anything else is written** (`AGENTS.md`).
-- [ ] A sign-in that succeeds after the refusal returns the button to its freshness reading.
-- [ ] The whole browser harness shows no new failure.
+- [x] A sign-in that succeeds after the refusal returns the button to its freshness reading.
+- [x] The whole browser harness shows no new failure.
 - [ ] 👤 **Laptop, deployed.** Connect and sync, remove Planbook's access at myaccount.google.com,
       tap the header's sync button once: the button does not look like a sync that worked. Tap
       again, sign in: it reads fresh.

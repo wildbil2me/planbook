@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A sync Google refused no longer looks like one that worked — 2026-09-28
+
+When a sync found the Google sign-in had ended, either because the hour ran out or because Google
+refused the sign-in, the header's sync button went back to the normal colour a successful sync
+leaves. A teacher who tapped once and walked away had no reason to think her year had not reached
+Drive. Now the button stays white with the crossed-out cloud, and its tooltip says *The last sync did not reach
+Google Drive, because the Google sign-in had ended*. One tap signs in again and syncs, and the button
+returns to its normal reading. (WO-7.15 — harness green at 1555/1555; the two new checks were red
+against the old code and red again with the fix switched off. The owner's laptop reading on the
+deployed app is still owed.)
+
 ### A sign-in Google has refused signs you out instead of refusing every tap — 2026-09-27
 
 If Google withdrew Planbook's access partway through the hour, for instance because it was removed

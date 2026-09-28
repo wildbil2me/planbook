@@ -1059,6 +1059,38 @@ check('and the same holds through About’s own Connect: a sync that found no to
     + ', sync line ' + viaConnectPanel.syncLineClass + ' '
     + JSON.stringify(viaConnectPanel.syncLineText.slice(0, 80)));
 
+/* WO-7.15 — A SIGN-IN THAT SUCCEEDS AFTER A REFUSAL RETURNS THE BUTTON TO ITS FRESHNESS READING.
+   `verify/drive-sync.mjs` proves the refused header tap is drawn `lapsed`; its stand-in library only
+   refuses, so the other half is here, where one grants. Signed in and up to date after the Connect
+   above; a header tap meets Drive's 401 (src/auth.js ends the session, the outcome is `signed-out`)
+   and the button is read `lapsed`; then the next header tap is read as the sign-in door — ONE visible
+   request inside the click, About not opened — and once the granted token has synced the button is
+   `current` again, which is signedInAgain() clearing the outcome at its cause followed by a sync. */
+await setFake('grant', 'grant');
+await evalJs('window.__drive.failNext = 401; 1');
+const drive715 = (await read()).driveCalls;
+await tap();
+const refused715 = await waitFor((r) => r.state === 'lapsed' && !r.busy && r.driveCalls > drive715, 5000);
+await evalJs('window.__drive.failNext = null; 1');
+const gis715 = refused715.fake.length;
+await tap();
+const back715 = await waitFor((r) => r.signedIn && !r.busy && !r.authBusy && r.state === 'current', 5000);
+const signIn715 = back715.fake.slice(gis715);
+check('WO-7.15 — a header tap that meets Drive’s 401 is drawn `lapsed`, saying the last sync did not '
+  + 'reach Google Drive; the NEXT header tap is the sign-in (one visible request in the click, About '
+  + 'not opened), and once it succeeds the button is back on its freshness reading, up to date',
+  refused715.state === 'lapsed' && refused715.signedIn === false && refused715.outcome === 'signed-out'
+    && /did not reach Google Drive/.test(refused715.label || '')
+    && signIn715.length === 1 && signIn715[0].silent === false && signIn715[0].inListener === true
+    && back715.aboutOpen === false && back715.signedIn === true && back715.state === 'current'
+    && back715.outcome !== 'signed-out'
+    && /^Synced with Google Drive at .+\. Tap to sync now\.$/.test(back715.label || ''),
+  'after the refused tap: state = ' + refused715.state + ', signedIn = ' + refused715.signedIn
+    + ', outcome = ' + refused715.outcome + ', label = ' + JSON.stringify(refused715.label)
+    + '; the next tap asked Google ' + JSON.stringify(signIn715) + ', About open = '
+    + back715.aboutOpen + '; then state = ' + back715.state + ', outcome = ' + back715.outcome
+    + ', label = ' + JSON.stringify(back715.label));
+
 /* STALE: a bookmark from yesterday, read on the first launch of today. */
 const PLANT = (daysBack, hour) => `(function(){
   var doc = window.planbook.store.getDoc();
