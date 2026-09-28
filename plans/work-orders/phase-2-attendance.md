@@ -5859,3 +5859,196 @@ does, to `anchorDate()`'s rule inside a term, or to the write gate. Sorting or r
 validating one term's dates against another's — `src/classes.js`'s header refuses both by name, and the
 nearest-term walk needs neither. Overlapping terms picking a winner: `termContaining()` already answers
 the first match and this work order does not touch that.
+
+---
+
+## WO-2.55 — a tardy caught late has no way to say when it happened
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.10 — the `at` this edits; WO-2.53 — the history dialog's write block it goes in; WO-2.8 — the pass a `D` can carry
+**Closes roadmap** *(no box. A gap in WO-2.10's timed marks, found by the owner on 2026-09-28.)*
+
+**Booked 2026-09-28**, owner-directed, from a question about what a past-day tardy writes. *"Sometimes
+you just can't catch the tardy in the moment, so some method of editing it will be necessary."*
+
+**What is missing.** `at` is written in exactly one place, `setMark()` in `src/attendance.js`
+(~2196), and only when the column is today. So a `T` or `D` entered on a past day is
+`{ "code": "T" }` with no time (`docs/data-model.md` § Attendance), and a tardy caught ten minutes
+late today carries the moment of the tap, not the moment the student walked in. **Nothing in the app
+can change `at` afterwards.** The history dialog's write block (`writeBlock()`,
+`src/attendance-report.js` ~467) shows the time as part of the mark's label and offers only a note
+field. The one workaround is cycling off `T` and back on today's column, which re-stamps to *now*.
+
+**The rulings, taken with the owner 2026-09-28.**
+1. **Not a dialog on the tap.** The cycle stays one tap per student with a class walking in. The time
+   is corrected afterwards, in the history dialog, beside the note. That is where a mark's details
+   already live, and `editableMark()` already gates which days can be written.
+2. **No flag for a typed time.** A typed time is written to `at` in the same shape as a stamped one.
+   No new field, no schema change, and every existing backup restores unchanged.
+3. **`T` and `D` both get the field. A `D` that carries a `passId` shows its time read-only.** The
+   pass log closed on that same stamp (`setMark()` ~2203), and two clocks for one dismissal would
+   disagree. The field is replaced by a sentence saying the pass owns that time.
+
+**Deliverables**
+- **A writer, `setMarkTime(studentId, text, date)`, in `src/attendance.js`** beside `setNote()`, with
+  the same gates (`writableDate()`, `offTermDay()`, a record, a mark on that student) plus: the code is
+  `T` or `D`, and the cell has no `passId`. It writes `at` as a local ISO timestamp with offset, as
+  `stampNow()` does, built for **the mark's own date** at the typed hour and minute, so a past day gets
+  that day's offset rather than today's. An emptied field deletes `at`. It does not repaint, for
+  `setNote()`'s reason.
+- **`editableMark()` hands over `canTime`** (`T` or `D`, no `passId`) and whether a `passId` locked
+  it. The dialog decides nothing about writability, per WO-2.53's rule.
+- **The history dialog's write block gains a time input** (`type="time"`) for `T` and `D`. It is
+  pre-filled with the stored time when there is one and empty on a past day that has none. It carries
+  its date on the element exactly as the note field does (`data-attendance-time-date`), is wired
+  through `src/shell.js` beside the note listener, and meets the 44px coarse floor. A pass-linked `D`
+  shows the time as text and one sentence instead.
+- **`docs/data-model.md` § Attendance** rewords *"`at` is written only on today's column"*. What is
+  true now is that the tap stamps only on today's column, and the teacher may type a time on any
+  writable day.
+- **Harness checks in `tools/verify/history-dialog-write.mjs`**: a typed time on a past-day `T` lands
+  in the document with that date's offset; a typed time on today's `T` replaces the stamp; an emptied
+  field deletes `at`; a pass-linked `D` draws no input; `A`, `E` and `U` draw no input.
+- **`TESTING.md` § WO-2.55, the `CHANGELOG.md` entry, and bump `CACHE` in `sw.js`.**
+
+**Acceptance**
+- [ ] On an unlocked past day, mark a student `T`, tap the name, type 8:20: the document holds
+      `{ "code": "T", "at": "<that date>T08:20:00<that date's offset>" }` and the cell shows the time.
+      Verify in the document.
+- [ ] On today's column, a typed time replaces the tap's stamp, and cycling the cell off `T` and back
+      still re-stamps it (the cell is rewritten whole, as before).
+- [ ] A `D` carrying a `passId` draws no time input, and nothing writes its `at` except the tap.
+- [ ] `A`, `E`, `P` and `U` draw no time input, and `setMarkTime()` refuses them.
+- [ ] Mutation-proved: build the timestamp with today's offset instead of the mark's date, and the
+      past-day check goes red across a daylight-saving change. **The mutation is reverted before
+      anything else is written** (`AGENTS.md`).
+- [ ] `node tools/verify-shell.mjs` green with its check count recorded and `tools/README.md`
+      reconciled; `node tools/wo-sweep.mjs` green.
+- [ ] 👤 **iPad, force-quit first** (`CLAUDE.md`): tap a tardy student's name, set the time with the
+      iOS time wheel, close the dialog; the cell shows the new time.
+
+**Traps** — **Do not open a dialog from the cell tap.** That is ruling 1, and the attendance flow is
+on the critical path. **Do not route the time through `setMark()`**: that writer rewrites the cell
+whole and would drop the note, and it is the one that owns the pass. **The offset is the mark's
+date's, not the device's today**: a tardy typed in November for a day in October is an EDT time, and
+`new Date(y, m, d, hh, mm)` gives that for free where re-using `stampNow()`'s offset would not.
+**Do not add a field to the cell** (ruling 2). **Do not write on a locked day**: the gate is
+`editableMark()`'s, so the dialog never offers a field the writer would refuse.
+
+**Out of scope.** Editing a pass's own times, or a pass-linked `D`'s time (ruling 3). Any change to
+the cycle, to what a tap writes, or to `U`.
+
+---
+
+## WO-2.56 — the strip above the attendance grid moves under the pointer
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.10 — the unconfirmed note this moves; WO-2.52 — the band precedence this narrows; WO-6.5 — the arrival band it re-homes
+**Closes roadmap** *(no box. Three layout defects on the marking screen, found by the owner on 2026-09-28 in daily use.)*
+
+**Booked 2026-09-28**, owner-directed, as one work order on purpose. The three defects share a cause
+and a fence: **something above the grid appears, disappears or moves while the teacher's pointer is on
+its way to the next control.** One set of measurements proves all three. Split, each piece could pass
+while the strip as a whole still jumps.
+
+**What is wrong.**
+1. **The unconfirmed note pushes the grid down on the first tap.** `paintActions()` (`src/attendance.js`
+   ~4258) un-hides `#attendanceNote` the moment `summary.unconfirmed` is non-zero: *"12 students have
+   no mark yet, and count as absent until you confirm them. Tap a question mark once for present."*
+   Every row moves down under the finger aimed at the second student, and moves back up when the last
+   `?` goes. The amber state line above it already says *"12 unconfirmed"*, so the sentence repeats it.
+2. **Paging or unlocking pushes the pager down under the pointer.** `paintBanner()` (~4020) un-hides
+   `#attendanceBanner`, which sits **above** the state line (`index.html` ~776), on the first
+   `◀ Earlier`. The pager moves down and the second click lands on whatever moved into its place. The
+   band's own *"Back to today"* button (~4079) duplicates the pager's `Today`, which lights up at the
+   same moment.
+3. **The pager's buttons are split across the width and read as misaligned.** `◀ Earlier` sits alone
+   at the left edge; `.attendance-pager-range` carries `margin-right: auto` (`src/attendance.css`
+   ~295) and pushes `Today` and `Later ▶` to the far right. Next to the pale-yellow day columns the
+   owner read Earlier as sitting higher; measured, it is level. The range repeats the dates every
+   column head already prints (`dayHead()` ~3734), and phones already hide it (~1453).
+
+**The rulings, taken with the owner 2026-09-28.**
+1. **The "count as absent" sentence moves into the state line's `title` and `aria-label`**, and the
+   note row is no longer drawn for unconfirmed students. The rule it states is the owner's, from
+   WO-2.10, and stays true: a `U` counts as `A` everywhere. What changes is only where it is said.
+   **WO-2.10's "do not make `U` quieter than it is" still holds**: the count and the amber wash stay
+   on the column head, the state line and the home card. Only the explanation moves.
+2. **The paging and editing band is drawn in the state line's slot, with no button, at the state
+   line's height.** The owner's words: *"Same size, no button, just a new bit of information."*
+   - **Paged away:** *"Today is not on screen."* When the anchor is a term edge rather than today, it
+     names that edge (*"Sep 2 is not on screen."*). No date range: the column heads carry the dates.
+   - **A past day unlocked:** the band and the state merge (*"Editing Mon 9/21 · 3 unconfirmed"*),
+     in amber while any `?` are left on that day. The day's own state must not disappear, because it
+     describes the day the teacher is about to tap.
+   - **Opened on a day from the calendar (WO-6.5):** keeps its off-term clause, which no column head
+     shows.
+   - **Short, numeric dates**, so the line does not wrap on a narrow screen.
+3. **The term-rollover band (WO-2.51) and the off-term band (WO-2.52) keep their slot above the state
+   line, their tone and the rollover's Switch button.** They are present on arrival, not after a
+   click, so they move nothing under the pointer. **They now stay visible while paged**: the
+   precedence *"one band at a time, and the off-today message wins it"* existed because the messages
+   shared one slot, and they no longer do. Hiding them on the first `◀ Earlier` would be defect 2
+   again, and the rollover sentence is still true while the teacher reads older days.
+4. **The pager is `[◀ Earlier] [Today] [Later ▶]`, grouped at the right, with the date range
+   removed.**
+
+**Deliverables**
+- **`paintActions()`** draws no note for unconfirmed students and puts the sentence on the state line's
+  `title` and `aria-label`. The note row stays for the states that still use it (did not meet,
+  covered, locked past day, off term).
+- **`paintBanner()`** writes the paging, editing and arrival messages into the state line rather
+  than the band, merged as ruling 2 says, and draws no *Back to …* button. Its comment block is
+  **rewritten, not trimmed**: the precedence argument (~4012) is replaced with ruling 3 and its
+  reason, and every sentence describing the removed button goes.
+- **`paintPager()`** draws no range span; `.attendance-pager` justifies its buttons to the right; the
+  `.attendance-pager-range` rules in `src/attendance.css` go.
+- **`index.html`'s comment at `#attendanceBanner`** says what the band now carries.
+- **The fence**: a harness check, in a new `tools/verify/` file or in `tools/verify/attendance.mjs`,
+  that records the bounding rect of the three pager buttons and of the first grid row, then does each
+  of: the first tap on a student, `◀ Earlier`, `Later ▶`, the ✏️ on a past column, `Today`, and the
+  last `?` confirmed. After each, every rect is unchanged to the pixel. Run at 1280×800, 1024×768
+  (iPad landscape) and 768×1024 (iPad portrait, where Earlier and Later are disabled and the other
+  four actions still apply).
+- **Existing checks rewritten, not deleted**, wherever they read what moved: the `count as absent`
+  check (`tools/verify/attendance.mjs` ~864) reads the state line's `title`; the band readers in
+  `calendar-opens-on-day.mjs`, `portrait-landscape.mjs`, `register-opens-on-term.mjs`,
+  `term-ended.mjs` and `today-goes-to-term.mjs` read the new slot, and any that click the band's
+  *Back to today* click the pager's `Today`. The spoken *"Back to …"* announcement from `pageDays()`
+  is untouched.
+- **`TESTING.md` § WO-2.56, the `CHANGELOG.md` entry, and bump `CACHE` in `sw.js`** (`index.html` is
+  in `SHELL`).
+
+**Acceptance**
+- [ ] The fence is green at all three sizes: no pager button and no grid row moves by a pixel across
+      the six actions.
+- [ ] Mutation-proved twice: un-hide the unconfirmed note again, and put the band back above the
+      state line; each turns the fence red. **Each mutation is reverted before anything else is
+      written** (`AGENTS.md`).
+- [ ] With 12 students unconfirmed, the state line reads *12 unconfirmed* in amber, its `title`
+      carries *count as absent*, and `#attendanceNote` is hidden.
+- [ ] Paged back: the state line reads *Today is not on screen.*, there is no *Back to* button
+      anywhere on the screen, and one `Today` press returns the strip.
+- [ ] A past day unlocked with `?`s left: the state line reads *Editing <date> · n unconfirmed* in
+      amber; with none left it reads *Editing <date>* beside the day's own state.
+- [ ] With the term-rollover band up, paging back leaves it up and in place, Switch still works, and
+      the pager does not move.
+- [ ] The pager shows its three buttons together at the right edge and no date range.
+- [ ] `node tools/verify-shell.mjs` green with its check count recorded and `tools/README.md`
+      reconciled; `node tools/wo-sweep.mjs` green.
+- [ ] 👤 **iPad, force-quit first** (`CLAUDE.md`), in landscape: take a class from the first tap to the
+      last, page back twice and forward twice, unlock a past day and return. Nothing under the thumb
+      moves.
+
+**Traps** — **Do not touch the rollover or off-term bands' wording, tone or button** (ruling 3); the
+only change to them is that paging no longer hides them. **Do not let *Today is not on screen*
+replace an unlocked day's unconfirmed count.** **Height is the requirement, not a style**: a sentence
+that wraps to two lines at 768px is defect 2 again, which is what the portrait run is for. **A
+disabled `Earlier` in portrait keeps its place in the group**, per `paintPager()`'s own ruling that a
+control that vanishes is one the teacher goes hunting for. **`paintActions()` and `paintBanner()` would
+both write the state line now**: decide which one owns it and say so at the function, or the second
+paint overwrites the first. **Check the diffstat before committing**: this touches several harness
+files, which a CRLF rewrite hides best.
+
+**Out of scope.** The note row for the states that still draw it (did not meet, covered, locked past
+day, off term); those appear on arrival or after a deliberate button, not mid-marking. The direction of
+the columns against the arrows (newest-first from the left while *◀ Earlier* points left), raised at
+booking and not taken up. Any change to what a tap writes.
