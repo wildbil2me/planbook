@@ -1309,7 +1309,7 @@ direct call at settle, not a new `subscribe()`.
 
 ## WO-7.14 — a sign-in Google has refused still reads as signed in, and every sync tap refuses again
 
-**Ship** — · **Status** 🔍 AWAITING VERDICT — 2026-09-27 · **Size** S · **Depends on** WO-7.13 — the `signed-out` repaint this makes truthful; WO-7.2 — the `401` arm in `syncNow()`
+**Ship** — · **Status** ✅ DONE — 2026-09-27 · **Size** S · **Depends on** WO-7.13 — the `signed-out` repaint this makes truthful; WO-7.2 — the `401` arm in `syncNow()`
 **Closes roadmap** *(no box. A defect in WO-7.2's fifth Acceptance line, found by WO-7.13's verifier.)*
 
 **Booked 2026-09-27**, owner-directed, from WO-7.13's verdict. The verifier flagged it as outside
@@ -1357,7 +1357,7 @@ Sync is stuck, not data lost: a `401` wrote nothing at Drive.
 - [x] No comment in `src/auth.js`, `src/drive-sync.js` or `src/sync-button.js` still says `signedIn`
       follows the clock alone.
 - [x] The whole browser harness shows no new failure.
-- [ ] 👤 **Laptop, deployed.** Connect, then remove Planbook's access at myaccount.google.com →
+- [x] 👤 **Laptop, deployed.** Connect, then remove Planbook's access at myaccount.google.com →
       Security → third-party access. Back in Planbook, tap the header's sync button. The next tap asks
       Google to sign in again rather than failing again, and About shows Connect.
 

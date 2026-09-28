@@ -12538,12 +12538,18 @@ are in the scratchpad, so the lines that matter are quoted.*
       green on `HEAD` as well because `HEAD` never ends the session. `node tools/wo-sweep.mjs`: `45
       checks · 42 passed · 0 failed · 3 to review`, after `tools/README.md`'s call-site line went
       from 1540 to 1542.
-- [ ] 👤 **Laptop, deployed.** Not done by the implementer: it needs a real Google account and the
+- [x] 👤 **Laptop, deployed.** Not done by the implementer: it needs a real Google account and the
       deployed build. Connect, then at myaccount.google.com → Security → third-party access remove
       Planbook. Back in Planbook, tap the header's sync button once: that sync meets Google's 401 and
       settles. The next tap should open Google's sign-in window rather than failing again, and About
       should show *Connect Google Drive* with the status line reading *Not connected*. Force-quit or
       check the build line is v141 first.
+      **Read by the owner 2026-09-27 at v141 on the deployed origin:** after the access was removed,
+      the second header tap opened Google's sign-in window, and About moved between *Connected* and
+      *Not connected* correctly. **The first tap drew no failure** — the header went back to its
+      freshness reading, the look of a sync that worked — which is the cost the verifier named
+      (the refusal is announced, not drawn) and is not what this line asks. Booked separately.
+      Google's own screen named the app *wjt-planbook*, the Cloud project's name, not *Planbook*.
 
 ## Phase 8 — 1.0 packaging
 

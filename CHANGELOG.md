@@ -21,8 +21,8 @@ of the sync button went to Google, was refused, and tried again the same way nex
 kept saying *Connected*. Now the first refusal clears the sign-in on this device, so the next tap
 opens Google's sign-in window and About offers *Connect Google Drive*. A sync that fails for any
 other reason leaves the sign-in alone. (WO-7.14 — harness green at 1553/1553; red with the fix
-removed, and red again when every failure was treated as a refusal. The owner's laptop reading on
-the deployed app is still owed.)
+removed, and red again when every failure was treated as a refusal. Read by the owner on the laptop
+at v141 on the deployed app.)
 
 ### The check for a lapsed Google sign-in stops tripping over itself — 2026-09-27
 
