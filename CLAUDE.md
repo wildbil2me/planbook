@@ -365,7 +365,7 @@ and the teacher taps *dropped* on the ones that didn't. A cycle model was design
 same day; the decision record is [`plans/rotating-schedule.md`](plans/rotating-schedule.md), and it
 exists because the next session will want to build one.
 
-Seven things that will bite:
+Things that will bite:
 
 - **iOS evicts IndexedDB after ~7 days of non-use for non-installed sites.** Installed PWAs are
   exempt. A teacher who bookmarks instead of installing can lose a term of grades over a holiday.

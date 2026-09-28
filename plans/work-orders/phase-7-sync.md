@@ -1502,6 +1502,14 @@ WO-7.9, which would make the two wait on each other, and **its subject is WO-7.9
 - [x] No file outside dated history still says the library loads first, or only, on the Connect tap,
       or that a device where Connect was never tapped fetches nothing — shown by a grep, quoted and
       each hit classified in `TESTING.md`.
+      *(**Closed on its fourth verifier pass, and not by a grep.** The three phrase searches each
+      found only the wording the round before had missed — one claim split across two lines, others
+      worded "only after a teacher taps Connect" and "unless a teacher has tapped Connect". The pass
+      that closed it listed every mention of the sign-in machinery (55 files, 1,196 lines) and read
+      each one for what it claims. That found **19 false passages in 12 files**, all comments or
+      check labels, well beyond the two documents and handful of notes this work order was booked
+      for. The table is `TESTING.md` § WO-7.16, "Correction round 4"; the story is
+      `plans/dispatch-retro.md` § "The grep built from the last miss".)*
 - [x] The existing network assertions still hold: a device that takes neither door makes no request
       to `accounts.google.com` (WO-7.4's, WO-7.5's and WO-7.9's third line), and `verify-shell.mjs`
       is green.
@@ -1518,3 +1526,49 @@ about taps, and the sentence about *every launch* is about the opt-in. **Do not 
 deploys this also deploys WO-7.9, and it is the owner's to make. **And no new claims**: the policy is a
 public promise a district may hold us to, so it says what the app does and nothing about what it might
 do next.
+
+---
+
+## WO-7.17 — a first sign-in from the Drive door is announced as a reconnect
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-7.9 — the first-run Drive door that reaches `reconnect()`
+**Closes roadmap** *(no box. A wording defect in WO-7.9's door, found by its implementer and booked by the owner.)*
+
+**Booked 2026-09-28**, owner-directed, from WO-7.9's result and the maintenance check after WO-7.16
+closed. WO-7.9's implementer named it and left it, because the function is shared and the sentence
+is heard, not seen (`TESTING.md` § WO-7.9, "Two things for whoever reads the policy next").
+
+**What is wrong.** *Open from Google Drive* signs in through `auth.reconnect()` (`src/first-run.js`
+~221), because that is the call that asks Google inside the tap. `reconnect()` ends by announcing
+**"Reconnected to Google Drive."** (`src/auth.js` ~648) on every success. Its other caller, the
+header's sync button, is only drawn on a device that has connected before, so the verb was right
+until WO-7.9 gave it a caller on a device that never connected. A teacher using VoiceOver on a new
+iPad hears that she has *re*connected to something she is connecting to for the first time.
+
+**Why it matters.** Small, and screen-reader only, but it is the first thing the app says to her
+about Google on that device, and it says something untrue. No data is at risk.
+
+**Deliverables**
+- **A first sign-in is announced as one.** On a device that was not connected before the tap, the
+  success sentence does not say *Reconnected*; the header button's reconnect keeps its sentence. How
+  `reconnect()` tells the two apart is the implementer's call, argued at the function. The opt-in as
+  it stood *before* the tap is the obvious test, because a successful sign-in sets it.
+- **A harness check in `tools/verify/first-run.mjs`**: take the Drive door on a fresh device and
+  assert the live region does not say *Reconnected*. Beside it, a check that the header button's
+  reconnect still does. The first must be red on `HEAD`.
+- **Bump `CACHE` in `sw.js`.**
+
+**Acceptance**
+- [ ] The new check is red on `HEAD` and green with the change, with both runs recorded in
+      `TESTING.md` § WO-7.17.
+- [ ] Mutation-proved: make the sentence unconditional again and the new check goes red. **The
+      mutation is reverted before anything else is written** (`AGENTS.md`).
+- [ ] The header button's reconnect still announces *Reconnected to Google Drive.*
+- [ ] The whole browser harness shows no new failure.
+
+**Traps** — **Do not move the request.** `reconnect()` reaches `requestAccessToken()` before its first
+`await`, which is what keeps Google's window inside the tap on the iPad (WO-7.5's first Trap); any
+test for the first sign-in is read before or after that call, never ahead of it with an `await`.
+**Do not route the door through `connect()`** to get its wording: `connect()` spends the gesture on a
+silent attempt first, which is the bug WO-7.4's last reading found. **Words only**: nothing about
+when Google is asked changes, so the privacy documents need no edit.

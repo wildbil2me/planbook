@@ -610,6 +610,37 @@ Hence the standing question in the verifier's definition: *name the fixture assu
 hide a bug in this surface, and say whether the harness breaks it.* A green run over a fixture that
 cannot express the failure is not evidence.
 
+## The grep built from the last miss — WO-7.16, 2026-09-28
+
+**WO-7.16 was a words-only S, and it took four verifier passes.** Its second Acceptance line asked
+that no file still claim Google's library loads only on the Connect tap, *"shown by a grep"*. Each
+pass found claims the previous search could not see:
+
+- **Pass 1** failed on three comments the implementer's phrase list did not cover.
+- **Pass 2** failed on `src/auth.js:79-81`, where *"UNLESS a"* and *"teacher connects Drive"* sat on
+  two lines, so a line-by-line grep for the phrase could never match it.
+- **Pass 3** used a search that ignored line breaks and recorded 61 hits, all classified, none live.
+  The verifier re-ran it, matched all 61, and then found three more live claims with its own
+  phrasing: *"only after a teacher taps Connect"*, *"unless a teacher has tapped Connect"*.
+- **Pass 4** abandoned phrase matching. The implementer listed every file that mentions the sign-in
+  machinery (55 files, 1,196 lines), read each mention, and asked whether it makes one tap the only
+  trigger. **It found 19 false passages in 12 files**, where the three phrase rounds had found one
+  to three each. The verifier's own listing by the same method agreed.
+
+**Every round's search was built from the previous round's miss, so it could only ever find that
+miss.** A claim in prose can be worded any number of ways, and a list of phrases converges on the
+wordings someone has already seen. The work order was clear and the implementer was careful; the
+method was the weak part, and the Acceptance line prescribed it.
+
+**When an Acceptance line is about what prose claims, prove it by reading for meaning, not by
+grep.** Grep is the right tool for listing the places to read — every mention of the machinery the
+claim is about — and the wrong tool for deciding which of them are false. The same shape will come
+back for any correction to a public document: a policy sentence copied into comments, labels and
+runbooks over several work orders, each copy worded a little differently.
+
+Cost, for scale: four implementer rounds and four cold verifier passes on a Size S, just under an
+hour of dispatch time across the passes, and three owner rulings in between.
+
 ## The briefing layer was outside the protocol — nine days, ~50 dispatches
 
 **`CLAUDE.md` told every dispatch in the August sprint that the project had no code in it.** Its status
