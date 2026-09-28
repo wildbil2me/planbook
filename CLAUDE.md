@@ -493,6 +493,21 @@ Seven things that will bite:
   the document. **And a kind decision belongs to the engine, not the reader**: when grades-due dates
   were ruled out of the week, `src/calendar.js` gained `scheduledIn()` rather than `weekItems()`
   gaining a filter. The ruling in full is under WO-6.8's sixth Acceptance line.)*
+- **Drive can replace a device's whole year, and only a year with nothing in it** (WO-7.9). Beside
+  `restoreDocument()` there is now `store.adoptRemoteDocument()`, and since WO-7.9 it has a second
+  caller: *Open from Google Drive*, which puts a year from Drive onto a fresh device. **Never
+  overwrite a year that has anything in it** — "untouched" is the whole safety of that door, and if
+  the check is ever in doubt the answer is *do not offer*. `untouchedYear()` is the definition:
+  `rev` 1, no class and no student, the only year on the device, the stored record byte for byte the
+  open one, and nothing waiting to be written. It is asked twice in `src/drive-sync.js` and once more
+  inside the swap as the `onlyOver` guard, **after the last read and before the write**, because the
+  caller's own check is two awaits old by then. **Do not loosen that definition to "no grades yet"
+  or "only a teacher name"** — a teacher who typed one thing has done something, and a pull over it
+  deletes it without asking. Two rules come with the swap. Adoption **keeps the remote's `rev`** and
+  refuses to go backwards — the opposite of a restore, which continues this device's count, and
+  bumping it would make the next sync upload what it had just received. And the swap owes a
+  repaint chained in `src/shell.js`, as `afterDownload()` is, because no screen listens to
+  `notify()`.
 
 ## Accommodations are the most sensitive data here
 

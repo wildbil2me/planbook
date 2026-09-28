@@ -133,6 +133,15 @@ dependencies.
   outside. A **kind decision belongs to the engine**: grades-due dates left the week through
   `scheduledIn()` in `src/calendar.js`, not through a filter in `weekItems()`. The full ruling is
   under WO-6.8's sixth Acceptance line.
+- **Drive can replace a device's whole year, and only a year with nothing in it** (WO-7.9).
+  `store.adoptRemoteDocument()` has two callers since WO-7.9: a sync that downloads, and *Open from
+  Google Drive* on a fresh device. **Never overwrite a year that has anything in it**, and if the
+  check is ever in doubt, do not offer the door. `untouchedYear()` is the definition (`rev` 1, no
+  class, no student, the only year, the stored record identical to the open one, nothing pending).
+  It is asked in `src/drive-sync.js` and again inside the swap as `onlyOver`, after the last read
+  and before the write. Do not loosen it. Adoption **keeps the remote's `rev`** and refuses to go
+  backwards, unlike a restore. The swap owes a repaint chained in `src/shell.js`, as
+  `afterDownload()` is.
 Full schema and grade math: [`docs/data-model.md`](docs/data-model.md).
 
 ## If you were dispatched with a work order
