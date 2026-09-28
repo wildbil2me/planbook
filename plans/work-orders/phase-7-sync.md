@@ -1441,3 +1441,80 @@ decision for the owner, not a fix owed here.)*
 and here the next tap must open Google's sign-in, which WO-7.14 just made work. **Do not re-open
 WO-7.14's ruling**: the session still ends on a `401`, and the fix is in what is drawn, not in
 `src/auth.js`. **Never green**, per WO-7.5: whatever the state, a working sync still draws no green.
+
+---
+
+## WO-7.16 — the privacy documents say Google loads only on Connect, and since WO-7.9 a fresh device has a second door
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.6 — the wording this re-words
+**Closes roadmap** *(no box. A correction to two public documents and the notes that quote them.)*
+
+**Booked 2026-09-28**, owner-directed, out of WO-7.9's verdict. The verifier returned PASS WITH
+MANUAL CHECKS and its implementer declined, correctly, to edit the public documents (WO-7.9's trap 4).
+WO-7.9 put **Open from Google Drive** into the empty state of an untouched device. That tap does what
+Connect does — `src/first-run.js` calls `auth.reconnect()` first inside the gesture, which loads
+Google's sign-in library from `accounts.google.com` and asks for a token, and a successful sign-in
+sets the WO-7.5 opt-in. But `privacy.html` (~299-303) and `docs/FERPA.md` (~104-108) say the library
+**"loads first when Connect is tapped"**, that a sign-in is asked for **"only when Connect or the sync
+button is tapped"**, and that **"on a device where Connect has never been tapped, nothing is fetched
+from Google."** A teacher who opens her year on a new iPad from the first screen never taps Connect,
+and the device has fetched from Google. The sentence is false on the day WO-7.9 deploys.
+
+**Why it is its own work order and ships in the same push as WO-7.9.** WO-7.9 is committed (`665b18c`)
+and verified, and deliberately **not pushed**: a push to `main` is a production deploy, and its two
+open lines are 👤 readings that can only be taken on the deployed app. So WO-7.9 closes *after* a push,
+and the owner ruled that push carries this wording too, so the live `/privacy` is never wrong. This is
+WO-7.5 → WO-7.6 again, and it takes the same shape: it names WO-7.6 as its dependency rather than
+WO-7.9, which would make the two wait on each other, and **its subject is WO-7.9 as committed** —
+`src/first-run.js`, `src/drive-sync.js`'s `listDriveYears()` and `pullYear()`, and `src/auth.js`'s
+`loadGis()` are the facts to describe. It must also land **before WO-3.18 submits**, because
+`/privacy` is the page Google's reviewer reads.
+
+**Deliverables**
+- **`privacy.html` and `docs/FERPA.md`, in the same sitting and identically in the shared data-flow
+  statement** (`CLAUDE.md` § Accommodations). The third-party sentence says what happens now, in words
+  a teacher and a technology director can both read: Google's sign-in library loads **first when the
+  teacher taps Connect in About, or Open from Google Drive on the first screen of a device with
+  nothing on it yet**; after that, on that device, it loads each time Planbook opens until sync is
+  switched off; a sign-in is asked for **only on a tap** (Connect, the sync button, or Open from Google
+  Drive); and **a device where neither Connect nor Open from Google Drive was ever tapped fetches
+  nothing from Google.** The exact words are the implementer's; the claim is not. The policy's *Last
+  updated* date changes.
+- **The comment above each copy** of the statement (`privacy.html` ~272, `docs/FERPA.md` ~80) gains a
+  WO-7.16 sentence naming the first-run door as a third way `loadGis()` is reached, in the same dated
+  style as the WO-7.6, WO-7.10 and WO-7.11 sentences already there.
+- **The notes that say a device where Connect was never tapped fetches nothing** say what is true
+  instead, or are shown to be still true where they read: `index.html` (~2185, the Drive block
+  comment), `src/auth.js` (~430), `src/sync-button.js` (~471), `docs/sync.md` (~79 and ~562), and
+  **`CLAUDE.md`'s WO-7.4 parenthetical** (~128, "a device where Connect was never tapped loads no
+  Google library"), with `AGENTS.md` checked for a twin in the same sitting. Dated history — earlier
+  work orders' own records in this file, `CHANGELOG.md`, old `TESTING.md` sections — stays as written.
+- **`about.html` is read and left alone unless it now overclaims**, as WO-7.6 did.
+- **`CACHE` in `sw.js` bumped** only if a file in `SHELL` moves (a comment in `index.html` or
+  `src/auth.js` counts). WO-7.9 bumped it to v143 and **v143 has not shipped**, so a second bump is
+  not needed if this lands before the push; check `git log origin/main -- sw.js` before deciding.
+
+**Acceptance**
+- [ ] The shared data-flow statement in `privacy.html` and `docs/FERPA.md` is identical after tags,
+      backticks and whitespace are normalised (the method in `TESTING.md` § WO-7.6), names both
+      Connect and Open from Google Drive as the first load, and says a device where neither was ever
+      tapped fetches nothing from Google.
+- [ ] No file outside dated history still says the library loads first, or only, on the Connect tap,
+      or that a device where Connect was never tapped fetches nothing — shown by a grep, quoted and
+      each hit classified in `TESTING.md`.
+- [ ] The existing network assertions still hold: a device that takes neither door makes no request
+      to `accounts.google.com` (WO-7.4's, WO-7.5's and WO-7.9's third line), and `verify-shell.mjs`
+      is green.
+- [ ] `verify-deploy.mjs` green after the push that carries this and WO-7.9, with its policy claims
+      re-read for anything that asserted the old wording, and the live `/privacy`, tags stripped,
+      carries the new *Last updated* date and names Open from Google Drive.
+
+**Traps** — **Change the words, never the behaviour.** WO-7.9's door and its rulings are the owner's
+and this work order does not revisit them; a sentence describing a narrower app than the one shipped
+is the thing being fixed. **The two documents change together or not at all.** **Do not say "sync
+turned on" and mean "the door was tapped"**: a tap on Open from Google Drive that is cancelled at
+Google's window has loaded the library and set no opt-in, so the sentence about the *first* load is
+about taps, and the sentence about *every launch* is about the opt-in. **Do not push.** The push that
+deploys this also deploys WO-7.9, and it is the owner's to make. **And no new claims**: the policy is a
+public promise a district may hold us to, so it says what the app does and nothing about what it might
+do next.
