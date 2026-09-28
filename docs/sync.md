@@ -205,6 +205,62 @@ available on this device says which. Re-pointing and uploading is a guess that o
 both is not a guess at all. **A spare file in Drive is the price of being wrong in the safe
 direction**, and this design has already decided which direction that is.
 
+### A fresh device opens the year it already has in Drive — the pull (WO-7.9, 2026-09-28)
+
+**Why it was needed.** Sync never searches Drive for "a year". It looks for the one file whose
+`appProperties.docId` matches the document open on this device. On a fresh device `boot()` finds no
+year and makes an empty one with a new `docId`, so sync cannot see the year the other device has been
+syncing, and a tap on Sync uploads the empty year as a second Planbook file. The owner met exactly
+that on a fresh laptop on 2026-09-26 and ruled the same day: **on first run, a fresh device offers to
+open a year from Google Drive *or* from a backup.**
+
+**What a pull is.** The Drive door in the home screen's empty state signs in, lists every live
+Planbook year in this account's Drive (`appProperties.docId` present, `conflictOf` absent, not
+trashed), and opens the one the teacher picks. Each row is a year, the device that last wrote it and
+when — read from Drive's metadata, never by downloading a file, so nothing from inside a document is
+on screen. Uploads stamp `appProperties.year` since this work order so the list can name a year
+without trusting the file name; a file written earlier falls back to its name, and nothing is ever
+*decided* by either. Opening one finds the live file again by `docId`, downloads it, validates it
+through `parseBackup()` exactly as a download is validated, and adopts it **with its own `docId` and
+its own `rev`**. If its year label matches the empty year here it takes that year's place; otherwise
+it opens beside it and the empty year stays. `pullYear()` in `src/drive-sync.js` is the whole of it.
+
+**Why it writes the bookmark and a restore does not.** A restore of a backup from the other device
+puts the same document here with no bookmark, so its first sync is *no bookmark + remote exists →
+conflict*, and Drive gains one spare file, once (the section above; the owner's ruling 1 on WO-7.9
+leaves that alone). A pull knows what a restore cannot: the bytes it just read **are** the live file
+for that `docId`, at that `rev`. So it writes the bookmark at the remote's `rev` in the same step as
+the adoption, and the next sync reads `remote == baseRev == local` — `in-sync`, nothing sent. That
+bookmark is the entire difference between the two; without it the pull would be a restore with extra
+steps. It is written *after* the adoption and only after, for `sendUp()`'s reason: a bookmark ahead
+of what is on disk is a claim nothing backs. If that one write fails, the year is here with no
+bookmark and its first sync keeps both copies — the safe direction.
+
+**Why it is offered only on an untouched device.** A device holding work would have to keep, merge
+or replace its own year, and that is the question the keep-both design exists to refuse — it is out
+of scope by name and wants its own work order if it is ever wanted. "Untouched" is a **positive
+proof**, `store.untouchedYear()`: a document open with nothing waiting to be written, `rev` exactly 1
+(`createYear()`'s own first save, so no save since), no class and no student, the only year on the
+device, and the stored record identical to the one in memory. Anything short of proof is *no door*.
+The proof is taken when the doors are drawn, again before the download, again after it, and a last
+time inside `store.adoptRemoteDocument()` — whose guard refuses to replace any record but the one
+proved untouched. Nothing ever makes a year untouched again, because `rev` only rises, so the offer
+goes away for good.
+
+**The sign-in, on a device that has never loaded Google.** The door's tap is the Connect: the sign-in
+is asked for inside the gesture, and a success sets the WO-7.5 opt-in exactly as About's Connect
+does. But Google's library is kept off a device that never opted in, and a fresh device is that
+device, so the first tap has to fetch it. On a laptop the fetch lands inside the browser's activation
+window and Google opens. **On the iPad the first tap loads the library and Safari blocks the
+window**; the dialog says so in `reconnect()`'s own words — *"It is ready now — tap again and it will
+open"* — beside a *Sign in to Google* button, and that second tap opens it. Preloading the library
+when the doors are drawn would have made it one tap, and it was refused: a device that never takes
+either door must ask `accounts.google.com` for nothing, which the harness asserts from the network.
+
+**Sync is still not a backup.** The confirm carries the About panel's sentence saying so, and after a
+pull the backup nag is re-read — so on a year never downloaded on this device the amber strip goes
+up at once.
+
 ### Three cases the table above does not name, and why all three are `conflict`
 
 The table is the whole of the ordering when there is a bookmark and a readable remote rev. The

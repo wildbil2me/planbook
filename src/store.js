@@ -677,6 +677,56 @@ export async function boot() {
   return current;
 }
 
+/*
+  IS THIS A DEVICE THAT HAS NOTHING ON IT BUT THE YEAR boot() JUST MADE — the one question WO-7.9's
+  first-run doors are drawn on, and the whole of their safety. A door that can replace a year is
+  only ever offered over a year with nothing in it, so this is asked as a POSITIVE test, and every
+  answer that is not a proof is null. Doubt draws no door.
+
+  THE PROOF IS SIX FACTS, ALL OF THEM TRUE AT ONCE:
+    · a document is open, and nothing about it is waiting to be written — no debounce pending, no
+      write in the air. An unsaved change is a change, whatever `rev` says yet;
+    · its `rev` is exactly 1. createYear()'s first save is what makes it 1 (newYearDocument() says
+      so), and every save after that adds one — so 1 is "no save since it was made", and it is a
+      number rather than an inference from what the collections happen to hold. A restore, an
+      adoption and a migration all write a rev above 1 (restoreDocument(), adoptRemoteDocument() and
+      openYear() below);
+    · no class and no student, which rev 1 already implies and which is checked anyway, because
+      those two are what the work order names and a check that names them can be read against it;
+    · it is the ONLY year on this device. A second year — even an empty one — is a device a teacher
+      has done something with;
+    · the stored record is that same document, at that same rev 1, byte for byte — the in-memory
+      copy and the disk agreeing is what "nothing waiting to be written" looks like from the other
+      side;
+    · and the open document is still the one all of that was asked about when the answer comes back,
+      since two reads of IndexedDB sit in the middle.
+
+  WHAT IT HANDS BACK is the docId and the year and nothing else, so a caller can later ask "is it
+  STILL that document" — src/drive-sync.js asks exactly that twice before a pull replaces anything,
+  and hands the answer to adoptRemoteDocument() as its guard. It reads; it writes nothing and it
+  notifies nobody.
+*/
+export async function untouchedYear() {
+  try {
+    const doc = current;
+    if (!doc || dirty || saving || inFlight) return null;
+    if (doc.rev !== 1) return null;
+    if (!Array.isArray(doc.classes) || doc.classes.length) return null;
+    if (!Array.isArray(doc.students) || doc.students.length) return null;
+
+    const years = await readYearKeys();
+    if (years.length !== 1 || years[0] !== doc.year) return null;
+    const stored = await readYear(doc.year);
+    if (!stored || stored.docId !== doc.docId || stored.rev !== 1) return null;
+
+    if (current !== doc || dirty || saving || doc.rev !== 1) return null;
+    if (JSON.stringify(stored) !== JSON.stringify(doc)) return null;
+    return { docId: doc.docId, year: doc.year };
+  } catch (e) {
+    return null;
+  }
+}
+
 /* ────────────────────────────── restore ────────────────────────────── */
 
 /* The stored record for a year, exactly as it sits on disk — NOT migrated, NOT opened, and not
@@ -774,8 +824,18 @@ export async function restoreDocument(incoming) {
   nothing here touches the open document until IndexedDB has said the new record is on disk. If
   the write throws, this throws, and the open document, the header and the stored record are all
   exactly as they were. There is no state in which half a download has happened.
+
+  AND A SECOND CALLER SINCE WO-7.9, which is the one case where the arriving document is NOT the
+  same document further along: a first-run pull, which puts a year from Drive onto a device whose
+  only year is the untouched one boot() made. The rev rule above serves it unchanged — the pull must
+  keep the remote's `rev` for exactly this function's reason, or the next sync would upload what it
+  had just received — and what it adds is `onlyOver`: `{ docId, rev }`, the record the caller proved
+  untouched. When a record for the incoming year exists and is not still exactly that one, this
+  refuses before a byte is written. It is checked here, after leaveCurrent() and the read, because
+  that is the last moment before the write — the caller's own check is two awaits older. Every other
+  caller passes nothing and nothing about it changes.
 */
-export async function adoptRemoteDocument(incoming) {
+export async function adoptRemoteDocument(incoming, onlyOver) {
   if (!incoming || !incoming.year) {
     throw new Error('store: that document has no school year in it, so there is nothing to '
       + 'adopt. Nothing on this device has been changed.');
@@ -786,6 +846,12 @@ export async function adoptRemoteDocument(incoming) {
   await leaveCurrent();
 
   const existing = await readYear(incoming.year);
+  if (onlyOver && existing
+      && (existing.docId !== onlyOver.docId || Number(existing.rev) !== Number(onlyOver.rev))) {
+    throw new Error('The ' + incoming.year + ' school year on this device has changed since '
+      + 'Planbook checked it was empty, so it has not been replaced. Nothing on this device has '
+      + 'been changed.');
+  }
   const here = Number(existing && existing.rev) || 0;
   const there = Number(incoming.rev) || 0;
   if (!(there > here)) {

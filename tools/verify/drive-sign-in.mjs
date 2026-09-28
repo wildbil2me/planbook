@@ -190,14 +190,20 @@ const { ROOT, results, check, skip, readLocalStore, foreignIn, storeDetail, send
      visibly on a tap. It is still
      an allowlist of named Phase 7 files and still red for a fourth — the roster, the score grid or
      the signal engine learning whether a teacher is connected is the edit this exists to catch. */
-  const AUTH_IMPORTERS = ['src/shell.js', 'src/drive-sync.js', 'src/sync-button.js'];
+  /* AND FOUR SINCE WO-7.9: `src/first-run.js` is the first-run Drive door — Phase 7's own surface
+     again, a door onto the transfer for a device with nothing on it — and it imports this module for
+     the flag (only the backup door is drawn where it is shut), for TESTING_MODE_NOTE, and to sign in
+     inside the door's tap. The claim is still the set, and a fifth importer — or any importer outside
+     Phase 7 — is still red. */
+  const AUTH_IMPORTERS = ['src/shell.js', 'src/drive-sync.js', 'src/sync-button.js', 'src/first-run.js'];
   const importerFiles = [...new Set(authImporters.map(a => a.split(':')[0]))].sort();
   check('the only files in the app that import src/auth.js are Phase 7’s own — src/shell.js, which '
-    + 'draws the panel, src/drive-sync.js, which spends the token, and src/sync-button.js, which '
-    + 'preloads it at launch and signs in on a tap — so nothing OUTSIDE this '
+    + 'draws the panel, src/drive-sync.js, which spends the token, src/sync-button.js, which '
+    + 'preloads it at launch and signs in on a tap, and src/first-run.js, whose Drive door signs in '
+    + 'on a fresh device — so nothing OUTSIDE this '
     + 'phase can tell whether a teacher is signed in, which is what makes "works identically '
     + 'signed-out" a fact about the import graph rather than a claim about a green run',
-    importerFiles.length === 3
+    importerFiles.length === 4
       && importerFiles.every(f => AUTH_IMPORTERS.indexOf(f) >= 0),
     authImporters.length + ' import(s) in ' + importerFiles.length + ' file(s): '
       + JSON.stringify(authImporters) + '; the allowed set is ' + JSON.stringify(AUTH_IMPORTERS));

@@ -35,7 +35,7 @@
    below reads this cache and no other, and every older copy under SHELL_PREFIX is deleted — in
    `activate`, and again on each launch (clearOldShells) — which is what makes a deploy replace
    the shell rather than layer on top of it. */
-const CACHE = 'planbook-shell-v142';
+const CACHE = 'planbook-shell-v143';
 
 /* Every cache this worker has ever made is SHELL_PREFIX plus a version. Nothing outside the prefix
    is ever deleted: another cache at this origin is not ours to judge, and IndexedDB, where the
@@ -170,6 +170,10 @@ const SHELL = [
      (tools/verify/precache.mjs) — and it is the module that paints the header on every launch of a
      device that has opted into sync, offline launches included. */
   './src/sync-button.js',
+  /* WO-7.9. The first-run doors and their Drive dialog. Reached only through imports from
+     src/home.js and src/shell.js — the same shape as the two above, and the same reason to name it:
+     the first launch of a fresh install, offline, has to draw the backup door. */
+  './src/first-run.js',
   './icons/icon-152.png',
   './icons/icon-167.png',
   './icons/icon-180.png',

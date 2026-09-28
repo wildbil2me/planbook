@@ -1223,14 +1223,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1544 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1561 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the seventy-four files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the seventy-five files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -2172,6 +2172,24 @@ a network failure and a two-files Drive refusal each keep the sign-in. The run p
 `1553 checks · 1553 passed · 0 failed · 0 skipped`, 592s, exit 0, measured 2026-09-27 on the real
 clock. The same count on `HEAD`'s `src/` read `1553 · 1551 passed · 2 failed`. Runs, mutation, and
 the one existing clause that changed are in `TESTING.md` § WO-7.14.
+
+**WO-7.15 moved it from 1542 to 1544** (its own entry is in `TESTING.md` § WO-7.15, which records the
+move; this ledger did not), **and WO-7.9 moved it from 1544 to 1561, and the executed count from 1555
+to 1572 — seventeen sites, seventeen results.** All seventeen are literal call sites in one new
+section, `verify/first-run.mjs`, registered directly after `verify/sync-button.mjs`; none in a loop
+and none a failure arm, so the gap between sites and results stays at −11, and the file count this
+ledger's head names moves to **seventy-five**. Two existing checks were rewritten in place rather than
+added to, so they move nothing here: `verify/drive-sign-in.mjs`'s importer allowlist gained
+`src/first-run.js` (four Phase 7 files, still red for a fifth), and `verify/drive-sync.mjs`'s "no
+merge" check went from one parse and one adopt in the module to one of each **per path** — the
+download and the first-run pull — with none in the keep-both path. **The section drives a second
+origin**, `http://localhost:<port>`, because a first-run door is only drawn on a device holding
+nothing and the run's fixture at 127.0.0.1 holds a thousand checks' worth: a different origin is a
+different IndexedDB, so it is another device as far as the app can tell. It wipes that origin with
+`Storage.clearDataForOrigin` from `about:blank` between arms, and hands the page back through
+`load()` with the fixture asserted untouched. The run prints **1572**: `1572 checks · 1572 passed · 0
+failed · 0 skipped`, 49,955 lines, 31.8 lines per check, 613s, exit 0, measured 2026-09-28 on the real
+clock. Mutation round in `TESTING.md` § WO-7.9.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

@@ -178,6 +178,11 @@ import { currentView } from './views.js';
 /* The rest of the page, under the grid (WO-6.7). One import, one call at the foot of refreshHome();
    that module imports nothing from this one, so the grid is drawn first and the page after it. */
 import { renderGlance, signalReading } from './glance.js';
+/* The first-run doors inside the empty state (WO-7.9). This file says only WHETHER the empty state is
+   on screen with a document behind it; src/first-run.js decides whether the device is untouched and
+   draws the doors. Nothing on them is about a student, so this module stays off the presentation
+   flip list for the reason its header gives. */
+import { refreshFirstRun } from './first-run.js';
 
 const GRID_ID = 'homeGrid';
 const EMPTY_ID = 'homeEmpty';
@@ -217,6 +222,9 @@ export function refreshHome() {
   if (empty) empty.classList.toggle('hidden', list.length > 0);
   if (!list.length) renderEmpty(!!doc);
   else list.forEach((cls) => grid.append(classCard(cls, cls.id === selectedId, reading)));
+  /* On both branches: a grid with a card in it takes the doors down in this call, and an empty
+     state asks for them. (WO-7.9) */
+  refreshFirstRun(!list.length && !!doc);
 
   /* AND THE PANELS UNDER THE GRID (WO-6.7), on both branches: a document whose last class was just
      archived has a quiet panel to take down as well as an empty state to put up, and src/glance.js

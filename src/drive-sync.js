@@ -461,9 +461,18 @@ async function updateFile(token, fileId, name, text, appProperties) {
 /* What every upload stamps on the file. `rev` is here so that the next sync can order the file
    without downloading it, which is the deliverable in one line; `deviceLabel` is here so that a
    conflict copy can be named after the machine that wrote the copy being set aside. Strings,
-   because `appProperties` values are strings at Drive whatever is sent. */
-function propertiesFor(docId, rev) {
-  return { docId: docId, rev: String(rev), deviceLabel: thisDeviceLabel() };
+   because `appProperties` values are strings at Drive whatever is sent.
+
+   `year` SINCE WO-7.9, for the first-run list: a fresh device lists every Planbook year in Drive
+   and names each by its year, and the only other place a year is written is the file NAME, which a
+   teacher can rename. It is the label and nothing else — the same string the file name carries, and
+   nothing from inside a document — and nothing matches on it: the pull goes by `docId`, and what it
+   adopts is decided by the year inside the downloaded document. A file written before this landed
+   has no `year` property until its next upload, and the list falls back to the name for it. */
+function propertiesFor(docId, rev, year) {
+  const props = { docId: docId, rev: String(rev), deviceLabel: thisDeviceLabel() };
+  if (year) props.year = String(year);
+  return props;
 }
 
 /* ────────────────────────────── the flow ────────────────────────────── */
@@ -668,7 +677,7 @@ function sentenceFor(e) {
 */
 async function sendUp(token, doc, remote, localRev, isFirst) {
   const text = JSON.stringify(doc);
-  const props = propertiesFor(doc.docId, localRev);
+  const props = propertiesFor(doc.docId, localRev, doc.year);
   const name = liveFileName(doc.year);
 
   if (isFirst) await createFile(token, name, text, props);
@@ -773,7 +782,7 @@ async function keepBoth(token, doc, remote, localRev) {
 
   const live = liveFileName(doc.year);
   await withOneRetry(() => updateFile(token, remote.id, live, JSON.stringify(doc),
-    propertiesFor(doc.docId, localRev)));
+    propertiesFor(doc.docId, localRev, doc.year)));
 
   mark = await store.writeSyncState(doc.docId, doc.year, localRev);
   markFor = doc.docId;
@@ -789,6 +798,264 @@ async function keepBoth(token, doc, remote, localRev) {
     + 'and is what Drive now holds as \u201C' + live + '\u201D. Nothing was thrown away. Open the '
     + 'conflict file from Drive if you need anything out of it \u2014 it holds everything a '
     + 'backup file holds, including the support details you keep on students.', false);
+}
+
+/* ────────────────────────────── the first-run pull (WO-7.9) ────────────────────────────── */
+
+/*
+  A FRESH DEVICE OPENS THE YEAR IT ALREADY HAS IN DRIVE — the one door in this file that looks for
+  "a year" rather than for THE year. Everything above finds one file, by the `docId` of the document
+  open here; on a fresh device that document is the empty one boot() just made, with a `docId` Drive
+  has never seen, so every search above finds nothing and a Sync uploads the empty year as a second
+  file. These two functions are the way round it, and they are offered on exactly one kind of
+  device: one whose only document is untouched (store.untouchedYear()). Pulling onto a device that
+  holds work is out of scope by name — its own year would have to be kept, merged or replaced, which
+  is the question the keep-both design exists to refuse.
+
+  THE BOOKMARK IS THE WHOLE DIFFERENCE BETWEEN THIS AND A RESTORE. A restore of a backup taken on the
+  other device puts the same document here with no bookmark, so its first sync is `no bookmark +
+  remote exists → conflict` and Drive gains a spare file, once (docs/sync.md, and the owner's ruling 1
+  on WO-7.9 leaves that alone). A pull knows what a restore cannot: the file it just read IS the live
+  file for that `docId`, at that `rev`. So it adopts the document with the remote's own `rev` and
+  writes the bookmark at that `rev` in the same step, and the next sync reads `remote == base ==
+  local` — in-sync, nothing sent.
+*/
+
+/*
+  The year a listed file is for, as a label on a row and never as a key. `appProperties.year` when an
+  upload stamped one (propertiesFor(), since WO-7.9); otherwise read out of the name this module gave
+  the file, "Planbook 2026-2027.json"; otherwise the name as it stands. A name is something a teacher
+  can rename, which is exactly why it is only the fallback and why nothing is decided by it — the
+  pull matches on `docId`, and whether it replaces the empty year or opens beside it is decided by the
+  year written INSIDE the downloaded document.
+*/
+function listedYearOf(f) {
+  const props = f.appProperties || {};
+  if (typeof props.year === 'string' && /^\d{4}-\d{4}$/.test(props.year)) return props.year;
+  const m = /Planbook (\d{4}-\d{4})/.exec(String(f.name || ''));
+  return m ? m[1] : String(f.name || 'A Planbook year');
+}
+
+/*
+  EVERY LIVE PLANBOOK YEAR THIS ACCOUNT'S DRIVE HOLDS, from Drive's metadata alone.
+
+  `drive.file` means the answer can only contain files this app created, so there is no folder to
+  pick and nothing of the teacher's own to see. What counts as a live year is decided HERE, on each
+  file, and not only in the query — the same "Drive said so" versus "this code checked" line
+  findRemote() draws: `appProperties.docId` present, `conflictOf` absent, not trashed. Conflict copies
+  are left out on purpose — they are for a teacher to open by hand, not for the app to choose between
+  — and they are already invisible to findRemote() for the same reason (keepBoth() gives them no
+  `docId`).
+
+  NOTHING IS DOWNLOADED TO BUILD THE LIST, which is the trap it was written against: each row is a
+  year, the device that last wrote it and when, all three read off the file's properties and Drive's
+  own `modifiedTime`. No class name, no student, nothing from inside a document — so the list is safe
+  on a projector without a presentation-mode branch, and it costs one request however many years
+  there are.
+
+  It reads and it writes nothing: no bookmark, no outcome, no chip. A list that failed says so in its
+  own sentence to the dialog that asked, which is where the teacher is looking.
+*/
+export async function listDriveYears() {
+  if (!signInAvailable()) {
+    return { ok: false, rows: [], message: 'Google Drive sync is not switched on in this build of '
+      + 'Planbook.' };
+  }
+  const token = await ensureFreshToken();
+  if (!token) {
+    return { ok: false, signedOut: true, rows: [], message: 'Your Google sign-in has run out, so '
+      + 'Planbook could not look in your Drive. Nothing on this device changed. Sign in again to see '
+      + 'your years.' };
+  }
+  try {
+    const q = "trashed = false and mimeType = 'application/json'";
+    const rows = [];
+    let pageToken = '';
+    /* Bounded, because a loop that follows a server's "there is more" has to stop somewhere. Ten
+       pages of a hundred is a thousand files this app made, which no teacher's Drive holds. */
+    for (let page = 0; page < 10; page++) {
+      const url = API + '?spaces=drive&pageSize=100'
+        + '&fields=' + encodeURIComponent('nextPageToken,files(id,name,appProperties,modifiedTime,trashed)')
+        + '&q=' + encodeURIComponent(q)
+        + (pageToken ? '&pageToken=' + encodeURIComponent(pageToken) : '');
+      const res = await withOneRetry(() => request(token, url, { method: 'GET' }));
+      const body = await res.json();
+      (body.files || []).forEach((f) => {
+        const props = f && f.appProperties;
+        if (!props || typeof props.docId !== 'string' || !props.docId) return;
+        if (props.conflictOf !== undefined) return;
+        if (f.trashed === true) return;
+        rows.push({
+          docId: props.docId,
+          year: listedYearOf(f),
+          deviceLabel: props.deviceLabel || 'another device',
+          modifiedTime: typeof f.modifiedTime === 'string' ? f.modifiedTime : '',
+        });
+      });
+      pageToken = body.nextPageToken || '';
+      if (!pageToken) break;
+    }
+    /* Newest year first, and within one year the most recently written first — the year picker's
+       order, for its reason: the year in progress is the one that wants to be under her thumb. */
+    rows.sort((a, b) => (a.year < b.year ? 1 : a.year > b.year ? -1
+      : (a.modifiedTime < b.modifiedTime ? 1 : a.modifiedTime > b.modifiedTime ? -1 : 0)));
+    return { ok: true, rows: rows, message: '' };
+  } catch (e) {
+    const expired = !!e && e.code === 'expired';
+    if (expired) refused();
+    return { ok: false, signedOut: expired, rows: [], message: expired
+      ? 'Google would not accept the sign-in Planbook was using, so it could not look in your Drive. '
+        + 'Nothing on this device changed. Sign in again to see your years.'
+      : pullSentenceFor(e) };
+  }
+}
+
+/* A pull's failures in a pull's words. The sync sentences above say "nothing was synced" and point
+   at Connect above them; a teacher at the first-run dialog did neither thing and is not in About. */
+function pullSentenceFor(e) {
+  const code = e && e.code;
+  if (code === 'network') {
+    return 'Planbook could not reach Google Drive, so nothing was opened. Nothing on this device '
+      + 'changed. Try again when you are back online.';
+  }
+  if (code === 'drive') return String(e.message);
+  return String((e && e.message) || 'Planbook could not open that year, so nothing was changed.');
+}
+
+/*
+  OPEN ONE OF THOSE YEARS ON THIS DEVICE — by `docId`, never by name.
+
+  THE ORDER IS THE SAFETY, and it is bringDown()'s order with two checks added at the ends:
+
+    1. the device is proved untouched (store.untouchedYear()) before anything is fetched — the door
+       is only drawn on such a device, and the proof is taken again rather than trusted from the
+       paint, which can be minutes old;
+    2. the live file for that `docId` is found again, by findRemote() — the row the teacher tapped is
+       a moment old, and findRemote() is the one place that refuses two files claiming one id;
+    3. its bytes are read and validated by parseBackup(), exactly as a download already is — the
+       migration ladder, the newer-build refusal and the shape check, each with a teacher's sentence
+       that ends "Nothing on this device has been changed.";
+    4. the file has to agree with itself: the document inside carries the `docId` it was listed
+       under, and its own `rev` is the `rev` on the file;
+    5. the device is proved untouched AGAIN, now that the network has had its turn — a teacher who
+       added a class while the list was open has a device this door no longer applies to;
+    6. only then is it adopted, with the proof handed to store.adoptRemoteDocument() as its guard,
+       which checks it once more after its own flush, at the last moment before the write;
+    7. and the bookmark is written at the remote's `rev` in the same step — after the adoption and
+       only after it, for sendUp()'s reason: a bookmark ahead of what is on disk is a claim nothing
+       backs. If that one write fails, the year is here with no bookmark and its first sync keeps
+       both copies, which is the safe direction and costs one spare file.
+
+  REPLACE OR BESIDE is decided by the year inside the document: the same year as the empty one here,
+  and it takes that one's place (the empty year had nothing in it, which is the only reason it may
+  be replaced); a different year, and it opens beside it and the empty year stays on the device,
+  untouched, to be switched to or ignored.
+
+  IT DOES NOT SETTLE AN OUTCOME ON A FAILURE, and that is decision 3's argument one step on: the
+  sentence goes back to the dialog that asked, which is where the teacher tapped. A refused pull left
+  this device exactly as it was, and painting the header's "the last sync did not finish" over it
+  would report a sync nobody started. On success the outcome is cleared, because whatever it said was
+  about the document that has just been put away.
+*/
+export async function pullYear(docId) {
+  if (busy) return { kind: 'busy', message: 'Planbook is already talking to Google Drive. Give it a '
+    + 'moment.', bad: true };
+  if (!signInAvailable()) {
+    return { kind: 'off', message: 'Google Drive sync is not switched on in this build of Planbook.',
+      bad: true };
+  }
+  if (typeof docId !== 'string' || !docId) {
+    return { kind: 'failed', message: 'Planbook could not tell which year that was, so nothing was '
+      + 'opened. Nothing on this device has been changed.', bad: true };
+  }
+
+  busy = true;
+  refreshSyncChrome();
+  let result = null;
+  try {
+    const before = await store.untouchedYear();
+    if (!before) {
+      result = { kind: 'refused', bad: true, message: 'This device already has something in it, so '
+        + 'Planbook will not open a year from Google Drive over it. Nothing on this device has been '
+        + 'changed.' };
+      return result;
+    }
+
+    const token = await ensureFreshToken();
+    if (!token) {
+      result = { kind: 'signed-out', bad: true, message: 'Your Google sign-in has run out, so '
+        + 'nothing was opened. Nothing on this device changed. Sign in again, then pick the year.' };
+      return result;
+    }
+
+    const remote = await withOneRetry(() => findRemote(token, docId));
+    if (!remote) {
+      result = { kind: 'failed', bad: true, message: 'That year is no longer in your Google Drive — '
+        + 'it may have been moved to the bin — so nothing was opened. Nothing on this device has been '
+        + 'changed.' };
+      return result;
+    }
+
+    const text = await withOneRetry(() => downloadRemote(token, remote.id));
+    const incoming = parseBackup(text, remote.name).doc;
+
+    if (incoming.docId !== docId) {
+      result = { kind: 'failed', bad: true, message: 'The file in Google Drive says it belongs to a '
+        + 'different school year document than the one listed, so Planbook has not touched anything '
+        + 'on this device.' };
+      return result;
+    }
+    if (!Number.isFinite(remote.rev) || (Number(incoming.rev) || 0) !== remote.rev) {
+      result = { kind: 'failed', bad: true, message: 'The file in Google Drive does not agree with '
+        + 'itself about which save it is, so Planbook has not touched anything on this device. Sync '
+        + 'again from the device that wrote it, then try this again.' };
+      return result;
+    }
+    const replaces = incoming.year === before.year;
+    if (replaces && remote.rev <= 1) {
+      /* A Drive file at rev 1 is a year that was synced before anything was put in it — exactly the
+         empty year this device already has. Adopting it would change nothing a teacher could see,
+         and store.adoptRemoteDocument() would refuse it anyway as moving the year backwards, in a
+         sentence about saves that would mean nothing to her. */
+      result = { kind: 'failed', bad: true, message: 'The ' + incoming.year + ' in Google Drive is an '
+        + 'empty year that was synced before anything was put in it, so there is nothing in it to '
+        + 'open. Nothing on this device has been changed.' };
+      return result;
+    }
+
+    const again = await store.untouchedYear();
+    if (!again || again.docId !== before.docId) {
+      result = { kind: 'refused', bad: true, message: 'Something was added on this device while '
+        + 'Planbook was fetching the year, so it has not opened it over what is here. Nothing on this '
+        + 'device has been changed.' };
+      return result;
+    }
+
+    await store.adoptRemoteDocument(incoming, { docId: before.docId, rev: 1 });
+    mark = await store.writeSyncState(incoming.docId, incoming.year, remote.rev);
+    markFor = incoming.docId;
+    outcome = null;
+
+    result = { kind: 'pulled', bad: false, year: incoming.year, replaced: replaces,
+      message: replaces
+        ? 'This device now has ' + incoming.year + ' from Google Drive, in place of the empty year '
+          + 'that was here.'
+        : 'This device now has ' + incoming.year + ' from Google Drive, open beside the empty '
+          + before.year + ', which is still here.' };
+    return result;
+  } catch (e) {
+    const expired = !!e && e.code === 'expired';
+    if (expired) refused();
+    result = { kind: expired ? 'signed-out' : 'failed', bad: true, message: expired
+      ? 'Google would not accept the sign-in Planbook was using, so nothing was opened. Nothing on '
+        + 'this device changed. Sign in again, then pick the year.'
+      : pullSentenceFor(e) };
+    return result;
+  } finally {
+    busy = false;
+    refreshSyncChrome();
+    if (result && result.message) announce(result.message);
+  }
 }
 
 /* ────────────────────────────── the panel ────────────────────────────── */
@@ -948,6 +1215,12 @@ export function primeSyncChrome() {
   if (markFor === doc.docId) { refreshSyncChrome(); return Promise.resolve(); }
 
   return store.readSyncState(doc.docId).then((found) => {
+    /* THE DOCUMENT IT ASKED ABOUT MAY BE GONE BY NOW (WO-7.9). A first-run pull signs in — which
+       starts this read for the empty year — and then replaces that year and writes the new one's
+       bookmark itself; an answer about the document that was put away must not land on top of it.
+       Whatever replaced it holds its own bookmark or reads it on the next call. */
+    const open = store.getDoc();
+    if (!open || open.docId !== doc.docId) { refreshSyncChrome(); return; }
     mark = found;
     markFor = doc.docId;
     refreshSyncChrome();

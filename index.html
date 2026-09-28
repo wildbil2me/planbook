@@ -682,6 +682,28 @@
         <button class="class-action-btn primary" type="button" data-class-manage
                 aria-haspopup="dialog">Add your first class</button>
       </div>
+      <!-- THE FIRST-RUN DOORS (WO-7.9), under a hairline below the one primary button — variant B of
+           design/mockups/first-run.html, the owner's ruling 2. HIDDEN IN THE MARKUP AND DRAWN BY
+           src/first-run.js only on a device whose one document is untouched (store.untouchedYear()),
+           so every doubt, every failure and every slow read leaves them off the glass. They go when
+           the empty state goes, which is exactly when the year stops being untouched.
+
+           The Drive door is drawn only where src/auth.js's flag is open — on the iPad's LAN address
+           only the backup door is here — and it is the Connect: its tap asks Google inside the
+           gesture. The backup door is the header's own `data-backup-panel` hook, so it opens the
+           existing restore and there is no second restore path. Both are `.class-action-btn`, whose
+           44px floor is in src/shell.css's coarse block. The note is TESTING_MODE_NOTE, written by
+           the module, empty here for #driveTestingNote's reason. -->
+      <div class="home-empty-or hidden" id="homeFirstRun">
+        <p class="home-empty-text">Already use Planbook on another device? Bring that year here instead.</p>
+        <div class="home-empty-actions">
+          <button class="class-action-btn hidden" type="button" id="firstRunDriveBtn"
+                  data-first-run-drive aria-haspopup="dialog">Open from Google Drive</button>
+          <button class="class-action-btn" type="button" data-backup-panel
+                  aria-haspopup="dialog">Restore a backup file</button>
+        </div>
+        <p class="class-hint home-empty-or-note hidden" id="firstRunTestingNote"></p>
+      </div>
     </div>
   </div>
   <!-- Panels 2–5 and the quiet panel are appended here by src/glance.js — see the comment above
@@ -2265,6 +2287,68 @@
       <p class="build-caches" id="buildCaches"></p>
       <div class="modal-actions">
         <button class="class-action-btn primary" data-modal-close>Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OPEN A YEAR FROM GOOGLE DRIVE (WO-7.9) — the first-run Drive door's dialog. src/first-run.js
+     owns it; the words a teacher reads are here, except the status line, which is a fact about a
+     sign-in and a list and is written by the module (#driveStatus's reason).
+
+     EVERY ROW IS A YEAR, A DEVICE AND A DATE, read off Drive's metadata by src/drive-sync.js's
+     listDriveYears(), and nothing from inside a document — no class, no student — so the dialog is
+     safe on a projector without a presentation-mode branch. #drivePullList is empty in the markup
+     for #yearList's reason, and its rows are the year picker's `.year-row` worn as shipped.
+
+     The Sign in button carries the Drive door's own hook: on the iPad the first tap fetches
+     Google's library and the browser blocks the window, src/auth.js says "tap again", and this is
+     the tap — inside its own gesture, with the library now on the page. -->
+<div class="modal-overlay hidden" id="drivePullModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="drivePullTitle">
+    <div class="modal-header">
+      <h2 id="drivePullTitle">Open a year from Google Drive</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        Planbook looks in this Google account’s Drive for the school years it has synced there, and
+        opens the one you pick on this device.
+      </p>
+      <p class="class-hint" id="drivePullStatus"></p>
+      <div class="modal-actions hidden" id="drivePullSignIn">
+        <button class="class-action-btn primary" type="button" data-first-run-drive>Sign in to Google</button>
+      </div>
+      <div class="modal-section-label hidden" id="drivePullListLabel">In Google Drive</div>
+      <div class="year-list" id="drivePullList"></div>
+      <p class="class-hint hidden" id="drivePullConflictNote">
+        Conflict copies are not listed. Open one from Drive by hand if you need it.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- The pull's confirm, stacked on the dialog above (src/modal.js keeps a stack). A list of one is
+     still confirmed. The lead is written by src/first-run.js from the row and the empty year here;
+     the backup line is not, and it is the About panel's own sentence: the moment a teacher starts
+     relying on sync is the moment she is likeliest to stop downloading backups. -->
+<div class="modal-overlay hidden" id="drivePullConfirmModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="drivePullConfirmTitle">
+    <div class="modal-header">
+      <h2 id="drivePullConfirmTitle">Open this year from Google Drive?</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="drivePullConfirmLead"></p>
+      <p class="class-hint">
+        <strong>Sync is not a backup.</strong> Drive holds one live copy of the year, and the next
+        sync overwrites it with a newer one. Keep downloading the file from the ⤓ button — that is
+        the copy that can bring a year back.
+      </p>
+      <div class="modal-actions">
+        <button class="class-action-btn primary" type="button" id="drivePullConfirmBtn"
+                data-first-run-open>Open it</button>
+        <button class="class-action-btn" type="button" data-first-run-cancel>Cancel</button>
       </div>
     </div>
   </div>

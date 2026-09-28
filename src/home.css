@@ -231,6 +231,20 @@
 }
 .home-empty-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px; }
 
+/* ── THE FIRST-RUN DOORS (WO-7.9) ── */
+/* Lifted from design/mockups/proposed-phase7.css § FIRST RUN, variant B — the owner's ruling 2 —
+   under the drawn names and with the drawn values. The two doors sit inside the empty state under a
+   hairline, and the hairline is what makes them the SECONDARY way forward: one empty state, one
+   primary button (*Add your first class*), and these beneath it. Same measure as `.home-empty-text`
+   so the rule lines up with the paragraph above it. Neither is a control — the doors are
+   `.class-action-btn`, whose 44px floor sits in src/shell.css's coarse block, and the note is
+   `.class-hint` worn as shipped, spaced by a class of its own rather than by restyling it. */
+.home-empty-or {
+  max-width: 460px; margin: 22px auto 0; padding-top: 18px;
+  border-top: 1px solid #eef0f4;
+}
+.home-empty-or-note { margin-top: 12px; }
+
 /* ── RESPONSIVE ── */
 /* Same order design/style-guide.md §6 names and shell.css follows: (pointer: coarse) first,
    then the width blocks. */
@@ -265,6 +279,11 @@
   .home-empty-lead { font-size: 15px; }
   .home-empty-text { font-size: 14px; }
   .home-empty-actions { gap: 10px; }
+  /* `.home-empty-or` and `.home-empty-or-note` take nothing here, on purpose (WO-7.9): the hairline
+     block and its note are not targets, and the two doors inside it are `.class-action-btn`, floored
+     at 44px by src/shell.css's coarse block — and measured under a real coarse pointer by
+     tools/verify/first-run.mjs, so the floor is a reading rather than an inference. The drawing's
+     § TOUCH proposes nothing for them either. */
 }
 @media (max-width: 640px) {
   /* `.main` drops to 10px of gutter at this width, so the grid's own 20px would make 30px of

@@ -76,7 +76,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-     § FIRST RUN     →  src/home.css    (WO-7.9 — not yet lifted)
+     § FIRST RUN     →  src/home.css    (WO-7.9 — lifted 2026-09-28)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* Drawn 2026-09-26, first-run.html. Two variants of one door, and only ONE of them lifts: the
@@ -85,13 +85,13 @@
    `.home-empty-*`, `.class-action-btn`, `.class-hint`, `.modal-*`, `.modal-actions`, and the
    year picker's `.year-list` / `.year-row` / `.year-row-note` for the Drive list. */
 
-/* VARIANT A — its own panel at the top of the glance stack. The body is padded like the empty
-   state's centred block would be, but left-aligned, because it is a panel with content rather than a
-   zero-data message. The note under the buttons is `.class-hint` worn as shipped,
-   spaced by a class of its own rather than by restyling it (PROTOCOL.md rule 5). */
-.home-pull-body { padding: 16px 20px 18px; }
-.home-pull-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.home-pull-note { margin-top: 12px; }
+/* WHAT THE LIFT TOOK AND WHAT IT DID NOT (PROTOCOL.md § When the drawing lands). Ruling 2 chose
+   variant B. Taken under the same names and values: `.home-empty-or` and `.home-empty-or-note`,
+   into src/home.css. VARIANT A'S THREE RULES — `.home-pull-body`, `.home-pull-actions`,
+   `.home-pull-note` — WERE DELETED HERE in the same sitting, as the ruling says, so variant A on
+   first-run.html now draws unstyled and its caption says why. The Drive list and its confirm,
+   which both variants shared, needed no rule of their own: they wear the year picker's classes as
+   shipped. The build did not rename anything. */
 
 /* VARIANT B — the same two doors inside the empty state, under a hairline. The hairline is what
    makes them the secondary way forward: one empty state, one primary button. */

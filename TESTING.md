@@ -12625,6 +12625,106 @@ in the scratchpad, so the lines that matter are quoted.*
       **Read by the owner on the laptop at v142 on the deployed app, 2026-09-28: all five steps
       as described.**
 
+### WO-7.9 — a fresh device cannot open the year it already has in Google Drive
+
+**What landed.** Variant B of `design/mockups/first-run.html` (ruling 2): two secondary doors inside
+the home screen's empty state, under a hairline below *Add your first class*, which stays the one
+primary button. They are drawn by a new module, `src/first-run.js`, only on a device whose one
+document is **untouched** — a positive proof, `store.untouchedYear()` in `src/store.js`: nothing
+waiting to be written, `rev` exactly 1, no class and no student, the only year on the device, and the
+stored record identical to the one in memory. Anything short of proof draws no door. The **backup
+door** carries the header's own `data-backup-panel` hook, so it is the existing restore. The **Drive
+door** is drawn only where `hostAllowsSignIn()` is true, carries `TESTING_MODE_NOTE` under it, signs
+in inside its tap through `auth.reconnect()`, and sets the WO-7.5 opt-in through About's own chain in
+`src/shell.js`. Its dialog lists every live Planbook year from Drive metadata alone
+(`driveSync.listDriveYears()`: `docId` present, `conflictOf` absent, not trashed, checked per file as
+well as in the query), and a confirm opens one (`driveSync.pullYear()`). The pull proves the device
+untouched before the download and again after it, validates through `parseBackup()`, requires the
+file to agree with itself about `docId` and `rev`, adopts with the remote's own `rev` through
+`store.adoptRemoteDocument()` — which gained an `onlyOver` guard that refuses to replace any record but
+the one proved untouched — and writes the bookmark at the remote's `rev` in the same step. Same year
+label: it replaces the empty year. Different label: it opens beside it. `src/shell.js`'s `afterPull()`
+repaints every screen, the year button and the backup nag. Uploads now stamp `appProperties.year`, so
+the list names a year without trusting a renamed file's name. `docs/sync.md` gained § "A fresh device
+opens the year it already has in Drive". `CACHE` v142 → v143, and `src/first-run.js` is in `SHELL`.
+
+**The choice on the brief's trap 1.** Google's library is kept off a device that never opted in, and
+Acceptance 3 asserts that from the wire, so the doors cannot preload it. The Drive tap therefore takes
+`reconnect()`'s `loadedFirst` path whole. On a laptop the fetch lands inside the browser's activation
+window and the first tap opens Google. On the iPad the first tap loads the library and Safari blocks
+the window, and the dialog says so in `reconnect()`'s own sentence (*"It is ready now — tap again and
+it will open"*) beside a *Sign in to Google* button that carries the same hook. That second tap asks
+inside its own gesture with the library on the page. Expect **two taps on the iPad** for Acceptance 5.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-7-sync.md` § WO-7.9, from
+`node tools/verify-shell.mjs`, real clock, Edge, 2026-09-28 EDT. Logs are in the session scratchpad,
+so the lines that matter are quoted.*
+
+- [x] **Acceptance 1.** Whole run: `1572 checks · 1572 passed · 0 failed · 0 skipped`, 613s, `EXIT=0`.
+      `verify/first-run.mjs` drives a fresh device at `http://localhost:<port>` (another origin, so
+      another IndexedDB): both doors drawn, *Add your first class* the only primary, the note equal to
+      `TESTING_MODE_NOTE`, and `untouchedYear()` returning the open `docId` on one year at rev 1. A
+      student, one save of the teacher's name, a second year and a class were each added on a fresh
+      device that had drawn both doors a moment before, then reloaded: `{"student":{"drawnFirst":true,
+      "doors":false,"empty":true,"proof":null},"save":{…"doors":false,"empty":true,"proof":null},
+      "secondYear":{…"doors":false,"empty":true,"proof":null},"klass":{…"doors":false,"empty":false}}`.
+      The run's own fixture (classes, many saves) also reads `untouchedYear() = null` and keeps the
+      doors down even when the paint is told the empty state is up. **The LAN arm is asserted through
+      `firstRun.doorsFor()`, the pure function `paint()` draws for the page's own host**, because no
+      harness page can be served from the iPad's LAN address (WO-7.4's precedent for
+      `hostAllowsSignIn()`): `lan: {"backup":true,"drive":false}` for `192.168.1.50` and `10.0.0.12`,
+      both doors for loopback, localhost and the deployed host.
+- [x] **Acceptance 2.** The list check reads four rows, not six: the conflict copy and the trashed
+      file are both left out, the query carries `trashed = false`, and the fake Drive sends the trashed
+      file anyway so the module's own filter is what drops it. No row carries the class, student or
+      medical sentinels. After opening the live year: `open document = {"docId":"wo79-live","rev":7,
+      "year":"2026-2027","classes":1}, years = ["2026-2027"], bookmark = {"docId":"wo79-live",
+      "baseRev":7,…}, freshness = current`, and the sync straight after `{"kind":"in-sync"}` over one
+      Drive call, `0 of them a write`. **Mutation-proved**, marked `MUTATION WO-7.9`: the
+      `writeSyncState()` line in `pullYear()` commented out, run through a temporary runner holding
+      only `localstorage-prefs`, a one-class plant and this section (deleted afterwards). `50 checks ·
+      47 passed · 3 failed`. The Acceptance 2 check read `bookmark = null, freshness = ahead; the sync
+      after: {"kind":"conflict"} … 2 of them a write [POST, PATCH]`. The header check read `ahead` and
+      the beside check read `bookmark = null`. The file was restored from a copy taken before the edit,
+      and `grep -rn "MUTATION WO-7.9" src tools index.html sw.js` returned nothing before any of this
+      prose was written.
+- [x] **Acceptance 3.** On the fresh device, with the Network domain on, through a launch and a
+      `visibilitychange`: `0 request(s) to accounts.google.com` and more than five to the fresh origin.
+      No Google library on the page, no `accounts.google.com` script tag, no opt-in stored, and the
+      header's sync button hidden. Taking the backup door also made no Google request. The first
+      request to Google is the Drive door's **tap** (checked with Google blocked: one request to
+      `https://accounts.google.com/gsi/client`, then the red sentence and the Sign in button, and no
+      opt-in).
+- [x] **Acceptance 4.** A body that is not JSON, and a year at `schemaVersion: 99`, each refused in the
+      dialog in `parseBackup()`'s own sentence (*"…is not a Planbook backup…"*, *"…written by a newer
+      version of Planbook…"*, both ending *"Nothing on this device has been changed."*). The stored
+      record's digest, `rev`, `docId` and year list were the same before and after, `untouchedYear()`
+      still named the same document, and no bookmark was written. Two more refusals in the same
+      section cover the brief's trap 2. A class added while the list is open is refused at the first
+      proof. A teacher name typed during the download (the fake Drive's download hook) is refused at
+      the second proof, and the typing is kept. `store.adoptRemoteDocument()` given a guard naming the
+      wrong record throws *"…has changed since Planbook checked it was empty…"* and writes nothing.
+- [ ] 👤 **iPad, deployed, pop-up blocker on, fresh install.** Not done by the implementer: it needs
+      the iPad and a real Google account. Before clearing site data, on the iPad: sync, confirm the
+      button reads up to date, and download a backup, because **clearing site data erases the year on
+      that device**. Better still, use a device or browser profile that is not the classroom one.
+      Force-quit, then check About reads v143. Tap *Open from Google Drive*. Expect the dialog to say
+      *"It is ready now — tap again and it will open"*, then tap *Sign in to Google*. Pick the year the
+      laptop synced, then *Open it*. The laptop's grades should be on screen and the header's sync
+      button should read *Synced with Google Drive at …*.
+- [ ] 👤 **The backup door on a fresh device.** Not done by the implementer. On the same kind of fresh
+      install, tap *Restore a backup file*, choose a backup downloaded from the laptop in the Files
+      picker, and confirm. Its first sync after Connect will keep both copies once (ruling 1).
+
+**Two things for whoever reads the policy next.** `privacy.html` and `docs/FERPA.md` say Google's
+library *"loads first when Connect is tapped"*, that a sign-in is asked for *"only when Connect or the
+sync button is tapped"*, and that *"on a device where Connect has never been tapped, nothing is
+fetched from Google"*. The Drive door is a third control that does the same thing as Connect, so the
+sentences are true in spirit and **incomplete word for word**. They were not edited here: the brief
+said to name it as a follow-up instead of widening into those files. And `reconnect()` announces
+*"Reconnected to Google Drive."* on a first-run sign-in, which is the wrong verb for a device that
+never connected. It was left as is, because it is screen-reader only and the function is shared.
+
 ## Phase 8 — 1.0 packaging
 
 *Phase goal: something a stranger can find, evaluate, install, and trust.*

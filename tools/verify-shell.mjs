@@ -69,7 +69,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 /* ── the sections, in run order ─────────────────────────────────────────────────────────────
- * Seventy-three files, named after the surface they drive rather than after the work order that added
+ * Seventy-five files, named after the surface they drive rather than after the work order that added
  * them, so that a reader looking for "where do I put a check about the score grid" answers it
  * from the list. Two of them are not sections: lib-dates.mjs is a pure helper library, and
  * attendance-passes.mjs is the second half of the attendance section, called by the first half
@@ -141,6 +141,7 @@ import { run as aboutPage } from './verify/about-page.mjs';
 import { run as driveSignIn } from './verify/drive-sign-in.mjs';
 import { run as driveSync } from './verify/drive-sync.mjs';
 import { run as syncButton } from './verify/sync-button.mjs';
+import { run as firstRun } from './verify/first-run.mjs';
 import { run as logEntries } from './verify/log-entries.mjs';
 import { run as mergeFields } from './verify/merge-fields.mjs';
 import { run as templates } from './verify/templates.mjs';
@@ -375,6 +376,11 @@ const BROWSER_SECTIONS = [
      reloads the page fourteen times and installs two page-start scripts of its own, and it takes both
      away and hands the page back reloaded, signed out and opted out, asserting that it did. */
   { file: 'verify/sync-button.mjs', run: syncButton },
+  /* AND A FRESH DEVICE'S WAY IN (WO-7.9), directly after the three Phase 7 sections it builds on.
+     It drives the app on a SECOND ORIGIN — http://localhost at the same port, a different
+     IndexedDB — so the run's fixture is never touched, wipes that origin between arms, and hands
+     the page back at 127.0.0.1 through load(), asserting the fixture unchanged. */
+  { file: 'verify/first-run.mjs', run: firstRun },
   { file: 'verify/log-entries.mjs', run: logEntries },
   { file: 'verify/merge-fields.mjs', run: mergeFields },
   /* AFTER THE RESOLVER AND BEFORE THE RESTORE (WO-5.2). It drives the screen over

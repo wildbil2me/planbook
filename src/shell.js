@@ -669,6 +669,15 @@
                                       About at the Drive section — and src/sync-button.js owns
                                       that table. Still a tap and never a timer: it reports
                                       freshness, it does not sync on its own
+      data-first-run-drive            the first-run Drive door in the home screen's empty state,
+                                      and the Sign in button in its dialog (WO-7.9). Signs in
+                                      INSIDE this gesture, then lists this account's Planbook
+                                      years. Drawn only on a device whose one document is
+                                      untouched, and only where src/auth.js's flag is open
+      data-first-run-pick             a year row in that dialog — opens the confirm
+      data-first-run-open             the confirm's "Open it": pulls that year onto this device,
+                                      with its own docId and a sync bookmark at the remote's rev
+      data-first-run-cancel           the confirm's Cancel; writes nothing
 
     Delegation also means markup rendered later needs no re-binding, which is what makes it
     the right default for a screen whose rows come from the year document. The year rows are
@@ -889,6 +898,11 @@ import * as driveSync from './drive-sync.js';
    drawn only on a device that has opted in, and it decides nothing about freshness itself — it asks
    the two modules above, which is the one-asker rule again. */
 import * as syncButton from './sync-button.js';
+/* The first-run doors (WO-7.9). Imported for the taps its dialog carries — the Drive door, a row, the
+   confirm — and for the harness's reading of doorsFor(). It draws its own doors from src/home.js's
+   paint; what lives here is the chain a pull ends in, afterPull(), because a pull replaces the whole
+   document and every screen is this file's to repaint. */
+import * as firstRun from './first-run.js';
 
 /* WO-5.2, and it is TWO modules for the reason `signals` and `signalsView` are two: `templates` is
    the model — what a record is, which templates exist for a tone and an audience, and the eight the
@@ -1805,6 +1819,26 @@ function afterDownload(result) {
 }
 
 /*
+  A FIRST-RUN PULL LANDED (WO-7.9), and the screen redrawn from the year it brought.
+
+  afterDownload() above with the year button put back, and the difference is what a pull can do that
+  a download cannot: a year from Drive whose label differs from the empty one here OPENS BESIDE it, so
+  the open year changes and the header's year button would go on naming the empty one — the one
+  thing confirmRestore() in src/backup.js refreshes for itself and a pull reaches no line of. The nag
+  is re-read for afterDownload()'s reason, and on a pulled year never downloaded on this device it
+  goes up at once, which is the right first thing for a teacher who has just started relying on sync
+  to see. ONLY ON `pulled`, the value this pull resolved with — a refusal left the device exactly as it
+  was, so the screen is already true.
+*/
+function afterPull(result) {
+  if (!result || result.kind !== 'pulled') return;
+  refreshYearButton();
+  backup.refreshBackupNag();
+  afterRestore();
+  syncButton.refreshSyncButton();
+}
+
+/*
   Presentation mode flipped, and everything on screen that could be holding support data redrawn
   behind it.
 
@@ -2252,6 +2286,35 @@ document.addEventListener('click', (e) => {
     const tap = syncButton.tapSyncButton();
     if (tap.door === 'about') openAbout(syncBtn, true);
     if (tap.syncing) tap.syncing.then(afterDownload, () => {});
+    return;
+  }
+
+  /* THE FIRST-RUN DRIVE DOOR (WO-7.9), and the dialog's own Sign in button, which carries the same
+     hook. NOTHING IS AWAITED BEFORE THE TAP REACHES GOOGLE: tapDriveDoor() calls src/auth.js's
+     reconnect() in this stack before it opens the dialog, which is the header sync button's rule
+     above for the same reason. A sign-in that succeeds takes About's Connect chain, whole —
+     afterDriveAuthChange(true) sets the WO-7.5 opt-in and clears a stale signed-out outcome — and
+     only then is the list asked for, so the opt-in is set before anything is read from Drive. */
+  const firstRunDrive = e.target.closest('[data-first-run-drive]');
+  if (firstRunDrive) {
+    const asking = firstRun.tapDriveDoor(firstRunDrive);
+    if (asking) {
+      asking.then((ok) => {
+        afterDriveAuthChange(ok === true);
+        return firstRun.afterSignIn(ok === true);
+      });
+    }
+    return;
+  }
+  const firstRunPick = e.target.closest('[data-first-run-pick]');
+  if (firstRunPick) {
+    firstRun.pickRow(firstRunPick.getAttribute('data-first-run-pick'), firstRunPick);
+    return;
+  }
+  if (e.target.closest('[data-first-run-cancel]')) { firstRun.cancelPick(); return; }
+  if (e.target.closest('[data-first-run-open]')) {
+    /* Not awaited, like every other door here; the repaint hangs off the pull's own answer. */
+    firstRun.confirmPick().then(afterPull, () => {});
     return;
   }
 
@@ -4655,4 +4718,11 @@ window.planbook = {
      Nothing in the app reads window.planbook — see the block above for why the seam outlived the
      shelf. */
   contactHistory,
+  /* `firstRun` joined at WO-7.9, for `auth`'s hostname reason rather than a driving one: every
+     control it owns is on the page, but the arm that matters most — the iPad's LAN address, where
+     only the backup door may be drawn — is a host no page can be served from in a harness.
+     doorsFor() is the pure answer paint() draws for the page's own host, so asking it about the LAN
+     address is asking the same function. Nothing in the app reads window.planbook — see the block
+     above for why the seam outlived the shelf. */
+  firstRun,
 };

@@ -294,9 +294,10 @@ const storeText = await readIf('src/store.js');
 
 /* NO MERGE, WRITTEN AS AN ABSENCE. The work order's Traps line is "if you find yourself writing
    merge logic, stop", and the shape a merge would take here is a read of one document's fields
-   while another is in hand. There is exactly one place in the module that turns Drive bytes into a
-   document — the download — and exactly one that hands a document to the store, and they are the
-   same path; the conflict path calls neither. */
+   while another is in hand. There was exactly one place in the module that turns Drive bytes into a
+   document — the download — and exactly one that hands a document to the store, and they were the
+   same path; since WO-7.9 there are two such paths, each of them one parse and one hand-off in one
+   function (see below), and the conflict path still calls neither. */
 {
   const code = codeOnly(syncText);
   /* The import line names both, so a call site is an occurrence that is not the import. */
@@ -304,13 +305,38 @@ const storeText = await readIf('src/store.js');
   const adopts = (code.match(/store\.adoptRemoteDocument\s*\(/g) || []).length;
   const merges = (code.match(/Object\.assign\s*\(\s*(doc|incoming|local|remote)\b/g) || [])
     .concat(code.match(/\bmerge[A-Z(]/g) || []);
-  check('there is no merge anywhere in the module: one call that turns Drive bytes into a '
-    + 'document, one call that hands a document to the store, and nothing that reads fields off '
-    + 'two documents at once — which is the Traps line asserted as an absence rather than as an '
-    + 'intention',
-    code.length > 2000 && parses === 1 && adopts === 1 && merges.length === 0,
+  /* TWO PATHS SINCE WO-7.9, AND THE CLAIM IS PER PATH. The first-run pull is a second way Drive bytes
+     become a document here — a fresh device opening the year it already has — and it is the same
+     shape as the download: one parse, one hand-off, in one function. So the count went from one of
+     each to two of each, and what is asserted is WHERE they are: exactly one parse and one adopt in
+     bringDown(), exactly one of each in pullYear(), and none at all in keepBoth(), which is the path a
+     merge would hide in. A third call site anywhere, or a parse without its adopt in the same
+     function, is still red. */
+  const bodyOf = (name) => {
+    const at = code.search(new RegExp('async function ' + name + '\\s*\\('));
+    if (at < 0) return '';
+    const next = code.slice(at + 10).search(/\n(export )?(async )?function /);
+    return next < 0 ? code.slice(at) : code.slice(at, at + 10 + next);
+  };
+  const countIn = (body, re) => (body.match(re) || []).length;
+  const per = {};
+  ['bringDown', 'pullYear', 'keepBoth'].forEach((fn) => {
+    const b = bodyOf(fn);
+    per[fn] = { chars: b.length, parse: countIn(b, /parseBackup\s*\(/g),
+      adopt: countIn(b, /store\.adoptRemoteDocument\s*\(/g) };
+  });
+  check('there is no merge anywhere in the module: each of the two paths that turn Drive bytes into '
+    + 'a document — the download and, since WO-7.9, the first-run pull — makes one call to validate '
+    + 'them and one to hand the result to the store, the keep-both path makes neither, and nothing '
+    + 'reads fields off two documents at once — which is the Traps line asserted as an absence '
+    + 'rather than as an intention',
+    code.length > 2000 && parses === 2 && adopts === 2 && merges.length === 0
+      && per.bringDown.chars > 200 && per.bringDown.parse === 1 && per.bringDown.adopt === 1
+      && per.pullYear.chars > 200 && per.pullYear.parse === 1 && per.pullYear.adopt === 1
+      && per.keepBoth.chars > 200 && per.keepBoth.parse === 0 && per.keepBoth.adopt === 0,
     'over ' + code.length + ' chars of code: parseBackup() call sites = ' + parses
-      + ', store.adoptRemoteDocument() call sites = ' + adopts + ', merge-shaped occurrence(s) = '
+      + ', store.adoptRemoteDocument() call sites = ' + adopts + ', per function '
+      + JSON.stringify(per) + ', merge-shaped occurrence(s) = '
       + (merges.length ? JSON.stringify(merges) : 'none'));
 }
 

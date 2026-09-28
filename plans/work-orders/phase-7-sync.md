@@ -885,7 +885,7 @@ written in UTC would test a different midnight from the teacher's.
 
 ## WO-7.9 — a fresh device cannot open the year it already has in Google Drive
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-7.2, WO-7.5, WO-7.7 — the download and its validation, the opt-in a pull must set, and the repaint a pull must trigger
+**Ship** — · **Status** 🔍 AWAITING VERDICT — 2026-09-28 · **Size** M · **Depends on** WO-7.2, WO-7.5, WO-7.7 — the download and its validation, the opt-in a pull must set, and the repaint a pull must trigger
 **Closes roadmap** *(no box. Phase 7's boxes are closed by WO-7.1, WO-7.2 and WO-7.3; this is a door on top of them.)*
 
 **Booked 2026-09-26**, owner-directed. The owner connected a fresh laptop while reading WO-7.5 and found
@@ -952,17 +952,17 @@ picks is lifted, and where the drawing and this work order disagree, the work or
    **Lift § FIRST RUN's variant B rules and delete variant A's in the same sitting.**
 
 **Acceptance**
-- [ ] A device whose only document is untouched draws both doors. A device with a class, a student
+- [x] A device whose only document is untouched draws both doors. A device with a class, a student
       or a second year draws neither. On the LAN host only the backup door is drawn. Asserted in the
       harness.
-- [ ] The Drive door lists live files only (no conflict copies, no trashed files), and opening one
+- [x] The Drive door lists live files only (no conflict copies, no trashed files), and opening one
       leaves this device holding that document with its own `docId`, current, and a bookmark at the
       remote's `rev`. **A sync straight after is `in-sync` and writes nothing to Drive.**
       Mutation-proved: without the bookmark write, that sync turns into a conflict and the check goes
       red.
-- [ ] A device that never takes either door boots, draws and behaves exactly as today, and makes no
+- [x] A device that never takes either door boots, draws and behaves exactly as today, and makes no
       request to `accounts.google.com`. Asserted from the network, as WO-7.4 and WO-7.5 do.
-- [ ] A document that fails validation, or belongs to a newer build, is refused in a sentence and
+- [x] A document that fails validation, or belongs to a newer build, is refused in a sentence and
       leaves the untouched year as it was.
 - [ ] 👤 On the iPad on the deployed app, force-quit first, **pop-up blocker on**, a fresh install
       (Safari's site data cleared): the Drive door signs in, lists the year the laptop synced, opens

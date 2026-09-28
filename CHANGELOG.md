@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A new device can open the year you already have in Google Drive — 2026-09-28
+
+A fresh install had no way into a year that was already in Drive: sync looks only for this device's
+own year, and a fresh install starts a new one. Now, on a device with nothing on it yet, the home
+screen's empty state offers two ways in under *Add your first class*. *Open from Google Drive* signs
+in, lists the Planbook years in your Drive by year, device and date, with no class or student names,
+and opens the one you pick. It is then ready to sync with the other device straight away, with no
+spare conflict file. *Restore a backup file* opens the usual restore. Both appear only on a device
+with nothing on it, and go away for good once you add anything. On the iPad the first tap may only
+load Google's sign-in, so tap *Sign in to Google* once more. Sync is still not a backup. (WO-7.9 —
+harness green at 1572/1572; a device that takes neither door makes no request to Google, measured on
+the network. Two iPad readings on the deployed app are owed.)
+
 ### A sync Google refused no longer looks like one that worked — 2026-09-28
 
 When a sync found the Google sign-in had ended, either because the hour ran out or because Google
