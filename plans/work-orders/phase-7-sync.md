@@ -1446,7 +1446,7 @@ WO-7.14's ruling**: the session still ends on a `401`, and the fix is in what is
 
 ## WO-7.16 — the privacy documents say Google loads only on Connect, and since WO-7.9 a fresh device has a second door
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.6 — the wording this re-words
+**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-7.6 — the wording this re-words
 **Closes roadmap** *(no box. A correction to two public documents and the notes that quote them.)*
 
 **Booked 2026-09-28**, owner-directed, out of WO-7.9's verdict. The verifier returned PASS WITH
@@ -1495,14 +1495,14 @@ WO-7.9, which would make the two wait on each other, and **its subject is WO-7.9
   not needed if this lands before the push; check `git log origin/main -- sw.js` before deciding.
 
 **Acceptance**
-- [ ] The shared data-flow statement in `privacy.html` and `docs/FERPA.md` is identical after tags,
+- [x] The shared data-flow statement in `privacy.html` and `docs/FERPA.md` is identical after tags,
       backticks and whitespace are normalised (the method in `TESTING.md` § WO-7.6), names both
       Connect and Open from Google Drive as the first load, and says a device where neither was ever
       tapped fetches nothing from Google.
-- [ ] No file outside dated history still says the library loads first, or only, on the Connect tap,
+- [x] No file outside dated history still says the library loads first, or only, on the Connect tap,
       or that a device where Connect was never tapped fetches nothing — shown by a grep, quoted and
       each hit classified in `TESTING.md`.
-- [ ] The existing network assertions still hold: a device that takes neither door makes no request
+- [x] The existing network assertions still hold: a device that takes neither door makes no request
       to `accounts.google.com` (WO-7.4's, WO-7.5's and WO-7.9's third line), and `verify-shell.mjs`
       is green.
 - [ ] `verify-deploy.mjs` green after the push that carries this and WO-7.9, with its policy claims

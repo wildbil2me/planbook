@@ -125,9 +125,12 @@ word, and it is what widening the list costs.* **(The two sentences before this 
 *widened the list to* `planbook.hwgteach.com` *ahead of Google's approval, so the deployed app draws
 the section — the iPad's LAN address stays shut — and* `privacy.html` *and* `docs/FERPA.md` *narrowed
 in the same sitting to* **no third-party code unless a teacher connects Google Drive**, *true because a
-device where Connect was never tapped loads no Google library, which* `verify-shell.mjs` *asserts from
-the network. The library then loaded only on the Connect tap; since WO-7.5 it also loads at launch on
-an opted-in device, and WO-7.6 re-worded both documents to say so on 2026-09-26.)*
+device where no sign-in door was ever tapped loads no Google library, which* `verify-shell.mjs` *asserts
+from the network. The library then loaded only on the Connect tap; since WO-7.5 it also loads at launch
+on an opted-in device, and WO-7.6 re-worded both documents to say so on 2026-09-26. Since WO-7.9 there
+is a second door —* **Open from Google Drive**, *in the empty state of an untouched device — whose tap
+loads it too, and WO-7.16 re-worded both documents for it on 2026-09-28: the device that fetches
+nothing is one where neither Connect nor that door was ever tapped.)*
 **(This block said** *"the OAuth client's only
 authorized JavaScript origin" until 2026-09-07, and it was false the day it was written:* `0f77a37`
 *swept that instruction out of eight files the same afternoon and this file was not one of them — the

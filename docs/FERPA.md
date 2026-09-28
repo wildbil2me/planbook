@@ -7,7 +7,7 @@ it to, no account to create, and every record stays in the browser on the teache
 **not** your school's official record. The authoritative record remains your student information
 system; Planbook does not connect to it, does not read from it and does not replace it.
 
-**Last updated 26 September 2026.** The teacher-facing version of the same facts is the
+**Last updated 28 September 2026.** The teacher-facing version of the same facts is the
 [privacy policy](https://planbook.hwgteach.com/privacy), and the two are kept in step by hand: this
 document is written for a district review, that one for a teacher and for Google's OAuth
 verification. Neither restates the other's argument, and where they state the same fact — what
@@ -95,17 +95,27 @@ the second of the three acts below.
      the switch-off on an opted-in device whether or not it holds a token ("Disconnect" signed in,
      "Stop syncing on this device" signed out), and the signed-out tap asks Google for nothing — so
      "until Disconnect is tapped" became "until sync is switched off in About", in both documents in
-     the same sitting. -->
+     the same sitting. WO-7.16 (2026-09-28) re-worded it again, because WO-7.9 gave loadGis() a
+     third way to be reached: Open from Google Drive, the first-run door src/first-run.js draws in
+     the empty state of an untouched device, whose tap calls auth.reconnect() — so a device where
+     Connect was never tapped can still have fetched from Google. The first load is now about TAPS
+     (Connect, or that door), and the every-launch load about the opt-in a successful sign-in sets
+     (src/shell.js afterDriveAuthChange()): a door tap cancelled at Google's window has loaded the
+     library and turned nothing on, so "unless sync is turned on" went as the sentence's condition,
+     in both documents in the same sitting. A device that takes neither door fetches nothing, which
+     tools/verify/first-run.mjs asserts from the network. -->
 
 **Nothing leaves it on its own.** Loading the page fetches Planbook's own files from the website,
 the way any web page does, and the browser checks those same files for updates. Beyond that,
 Planbook makes no network requests at all — no analytics, no usage tracking, no error reporting, no
-advertising, and no third-party code of any kind — unless Google Drive sync is turned on, when
-Google's own sign-in library loads from accounts.google.com. It loads first when Connect is tapped.
-After that, on that device, it loads each time Planbook opens, until sync is switched off in About —
-which needs no network and no sign-in — and Planbook asks Google for a sign-in only when Connect or
-the sync button is tapped. On a device where
-Connect has never been tapped, nothing is fetched from Google.
+advertising, and no third-party code of any kind — except for Google Drive sync, which uses Google's
+own sign-in library from accounts.google.com. That library loads first when Connect is tapped in
+About, or when Open from Google Drive is tapped on the first screen of a device with nothing on it
+yet. Once a sign-in succeeds, sync is turned on for that device, and after that the library loads
+each time Planbook opens, until sync is switched off in About — which needs no network and no
+sign-in. Planbook asks Google for a sign-in only when Connect, the sync button or Open from Google
+Drive is tapped. On a device where neither Connect nor Open from Google Drive has ever been tapped,
+nothing is fetched from Google.
 
 Student information moves only when the teacher moves it, and there are three ways to do that. Each
 is a deliberate act, and it is visible as it happens:

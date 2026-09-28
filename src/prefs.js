@@ -209,7 +209,8 @@ export const PREF_DEFAULTS = {
      chips that write it. */
   mailDoor: 'default',
 
-  /* This device has opted into Google Drive sync: `true` from the first Connect that succeeds, and
+  /* This device has opted into Google Drive sync: `true` from the first sign-in that succeeds — a
+     tap of Connect in About or, since WO-7.9, of the first-run door Open from Google Drive — and
      back to `false` the moment Disconnect is tapped (WO-7.5) — signed in or not since WO-7.11, when
      the same control reads "Stop syncing on this device". src/sync-button.js is the only reader and
      the only writer, and it is what the header's sync button is drawn on; src/auth.js is TOLD the
@@ -232,7 +233,9 @@ export const PREF_DEFAULTS = {
      and WO-7.10 reversed that half (2026-09-26): the "silent" renewal was a Google window with no tap
      behind it. A device holding `true` now loads Google's sign-in library when the app opens and asks
      it for nothing, so the header's tap can sign in inside its own gesture; a device holding `false`
-     or nothing makes no request to Google at all. */
+     or nothing makes no request to Google at launch or on a return to view — only a tap of Connect
+     or Open from Google Drive reaches Google there, and one cancelled at Google's window leaves
+     this `false`. */
   driveSyncOptIn: false,
 };
 

@@ -218,8 +218,9 @@ const storeText = await readIf('src/store.js');
      can leave an earlier session standing. */
   const farEnd = /connect\(\)\s*\.then\(\s*afterDriveAuthChange\s*,\s*afterDriveAuthChange\s*\)/
     .test(onConnect);
-  /* `(\w*)` rather than `()` since WO-7.5: the helper now takes connect()'s own answer, which is what
-     sets the header's opt-in, and that changes nothing about the two painters it must call. */
+  /* `(\w*)` rather than `()` since WO-7.5: the helper now takes connect()'s own answer — and since
+     WO-7.9 the first-run Drive door's too — which is what sets the header's opt-in, and that
+     changes nothing about the two painters it must call. */
   const helper = /function afterDriveAuthChange\s*\(\s*\w*\s*\)\s*\{[^}]*?refreshSyncChrome\s*\([^}]*?primeSyncChrome\s*\(/
     .test(code);
   check('both of the controls that flip a Google sign-in repaint the sync half of the Drive panel '

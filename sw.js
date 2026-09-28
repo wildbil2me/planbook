@@ -35,7 +35,7 @@
    below reads this cache and no other, and every older copy under SHELL_PREFIX is deleted — in
    `activate`, and again on each launch (clearOldShells) — which is what makes a deploy replace
    the shell rather than layer on top of it. */
-const CACHE = 'planbook-shell-v143';
+const CACHE = 'planbook-shell-v144';
 
 /* Every cache this worker has ever made is SHELL_PREFIX plus a version. Nothing outside the prefix
    is ever deleted: another cache at this origin is not ours to judge, and IndexedDB, where the
@@ -155,8 +155,11 @@ const SHELL = [
   './src/date-text.js',
   /* WO-7.1. The Drive sign-in module. The Google Identity Services script it fetches is NOT
      here and never will be: this list is same-origin by rule, the fetch handler below returns
-     early for anything else, and the library is fetched on demand only after a teacher taps
-     Connect. */
+     early for anything else, and the library is fetched on demand: on a tap of Connect in About
+     or of Open from Google Drive on an untouched device's first screen (WO-7.9), and at launch
+     on a device that has opted into sync (WO-7.5 — a bare preload that asks Google nothing since
+     WO-7.10), where the header's sync button can also fetch it on its tap if that preload failed.
+     Never from this cache, by any of those ways. */
   './src/auth.js',
   /* WO-7.2. The Drive transfer. Reached only through an import from src/shell.js, which is
      exactly as absent offline as one named in index.html and easier to forget

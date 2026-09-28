@@ -365,7 +365,8 @@ check('a fresh device — a new origin, whose only document is the empty year bo
 check('and a fresh device that takes neither door boots, draws and behaves as today: through a launch '
   + 'and a return to view it asks accounts.google.com for nothing — measured on the wire — puts no '
   + 'Google library on the page, draws no header sync button and stores no opt-in; the library loads '
-  + 'only when the Drive door is TAPPED, never when it is drawn (WO-7.9 Acceptance 3, Traps 1)',
+  + 'only on a sign-in tap (here, the Drive door), never when the door is drawn (WO-7.9 Acceptance 3, '
+  + 'Traps 1)',
   googleQuiet.length === 0 && ownQuiet.length > 5 && quiet.gisOnPage === false
     && quiet.gisScripts === 0 && quiet.optIn === null && !!quiet.syncBtn && quiet.syncBtn.hidden === true
     && quiet.block === true,

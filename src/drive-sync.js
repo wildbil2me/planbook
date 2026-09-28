@@ -99,8 +99,12 @@ import { showSaveState } from './save-indicator.js';
 import { announce } from './live-region.js';
 
 /* Drive v3. Two hosts because Google splits them: metadata operations go to the API host and
-   anything carrying a file body goes to the upload host. Both are `googleapis.com` and neither
-   is fetched unless a teacher has tapped Connect and then tapped Sync. */
+   anything carrying a file body goes to the upload host. Both are `googleapis.com`, and neither
+   is fetched without a sign-in and a tap behind it: a sync from About's "Sync this year now" or
+   the header's sync button (whose tap signs in first when there is no token), or — since WO-7.9,
+   with neither Connect nor Sync tapped — the first-run door Open from Google Drive, whose
+   successful sign-in lists this account's years (listDriveYears()) and whose confirm pulls one
+   (pullYear()). Nothing in this file reaches either host on a timer or at launch. */
 const API = 'https://www.googleapis.com/drive/v3/files';
 const UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files';
 
@@ -635,8 +639,9 @@ export async function syncNow() {
   exactly the one outcome a sign-in answers. A network failure or a Drive refusal stays standing until
   a sync replaces it, because a new token does not make either of those less true.
 
-  Called by src/shell.js after a Connect that succeeded and by src/sync-button.js after its tap's
-  sign-in succeeded — both before anything is painted.
+  Called by src/shell.js afterDriveAuthChange() after a sign-in that succeeded from About's Connect
+  or (since WO-7.9) the first-run door Open from Google Drive, and by src/sync-button.js after its
+  tap's sign-in succeeded — each before anything is painted.
 */
 export function signedInAgain() {
   if (outcome && outcome.kind === 'signed-out') outcome = null;

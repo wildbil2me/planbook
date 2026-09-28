@@ -2177,13 +2177,17 @@
            on, or on any other host, this whole block stays `hidden`. Until WO-7.4 the list was
            loopback only and the deployed app drew nothing here; Google's reviewer needed to find
            the permission in use, so the door moved. Drawing this block fetches nothing: Google's
-           sign-in library (loadGis() in src/auth.js) is appended on the Connect tap, or — since
-           WO-7.5, on a device where a Connect succeeded and Disconnect has not been tapped since —
-           at launch by src/sync-button.js, which since WO-7.10 loads it and asks it for nothing: a
-           sign-in is requested only by a tap (the "silent renewal" it replaced opened a window). That
-           is what keeps privacy.html's claim — no third-party code unless Google Drive sync is
-           turned on, and nothing from Google on a device where Connect was never tapped — true for
-           every teacher who never does.
+           sign-in library (loadGis() in src/auth.js) is appended on the Connect tap; since WO-7.9
+           on a tap of the first-run door, Open from Google Drive, in the home screen's empty state
+           of an untouched device (src/first-run.js); or — since WO-7.5, on a device where a sign-in
+           succeeded and sync has not been switched off since — at launch by src/sync-button.js,
+           which since WO-7.10 loads it and asks it for nothing: a sign-in is requested only by a tap
+           (the "silent renewal" it replaced opened a window). On that same opted-in device the
+           header's sync button appends it on its tap if the launch-time load has not landed. That
+           is what keeps privacy.html's claim — no third-party code beyond Google Drive sync, and
+           nothing from Google on a device where neither Connect nor Open from Google Drive was
+           ever tapped (WO-7.16) — true for
+           every teacher who never taps either.
 
            IN THIS MODAL AND NOT IN THE BACKUP PANEL, which was the other candidate and lost on one
            sentence: SYNC IS NOT A BACKUP. Drive holds one live copy that sync will overwrite with a

@@ -12725,6 +12725,314 @@ said to name it as a follow-up instead of widening into those files. And `reconn
 *"Reconnected to Google Drive."* on a first-run sign-in, which is the wrong verb for a device that
 never connected. It was left as is, because it is screen-reader only and the function is shared.
 
+### WO-7.16 — the privacy documents say Google loads only on Connect, and since WO-7.9 a fresh device has a second door
+
+**Words only.** The shared data-flow statement in `privacy.html` and `docs/FERPA.md` now names two
+taps as the first load — Connect in About, and *Open from Google Drive* on the first screen of a device
+with nothing on it yet — ties the every-launch load to a sign-in that *succeeded* (the WO-7.5 opt-in,
+set in `src/shell.js` `afterDriveAuthChange(true)` for both doors), names three taps as the only
+sign-in requests, and says a device where neither door was ever tapped fetches nothing from Google.
+The old condition *"unless Google Drive sync is turned on"* went, because a door tap cancelled at
+Google's window has loaded the library and turned nothing on (the work order's third Trap); the
+sentence now reads *"except for Google Drive sync, which uses Google's own sign-in library"*. Both
+*Last updated* dates read 28 September 2026. Every other change is a comment, a doc note or one check
+label; `git diff -U0 src/` moves no executable line. **`CACHE` not bumped**, on the orchestrator's
+ruling: `origin/main` is at `planbook-shell-v142` and the local v143 (WO-7.9) has not shipped.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-7-sync.md` § WO-7.16.*
+
+- [x] **Acceptance 1 — one statement, both doors, the neither-door promise.** WO-7.6's method: from
+      each file take the paragraph that opens *Nothing leaves it on its own.* (in `privacy.html` up to
+      its `</p>`, in `docs/FERPA.md` up to the blank line), strip tags, strip `**` and backticks,
+      collapse whitespace, compare with `===`. Result: `identical: true`. The normalised text's third-
+      party half:
+      > …and no third-party code of any kind — except for Google Drive sync, which uses Google's own
+      > sign-in library from accounts.google.com. That library loads first when Connect is tapped in
+      > About, or when Open from Google Drive is tapped on the first screen of a device with nothing on
+      > it yet. Once a sign-in succeeds, sync is turned on for that device, and after that the library
+      > loads each time Planbook opens, until sync is switched off in About — which needs no network
+      > and no sign-in. Planbook asks Google for a sign-in only when Connect, the sync button or Open
+      > from Google Drive is tapped. On a device where neither Connect nor Open from Google Drive has
+      > ever been tapped, nothing is fetched from Google.
+      Checked against the committed code: `src/first-run.js` `tapDriveDoor()` calls `auth.reconnect()`
+      first, which reaches `loadGis()` via `requestToken()` when the library is absent; the opt-in is
+      set only by `afterDriveAuthChange(true)` in `src/shell.js`, which both Connect and the door's
+      promise chain reach on success; the *Sign in to Google* button inside the door's dialog carries
+      the same `data-first-run-drive` hook, so it is the same door and needs no fourth name.
+- [x] **Acceptance 2 — no live claim left.** The grep, over the tree minus `.claude/` and this file:
+      ```
+      grep -rnE -i "connect (was|has) never|where Connect (was|has)|loads first when Connect|only when Connect|until Connect|loads only on the Connect|only on the Connect tap|appended on the Connect tap|when Connect is tapped|at no other moment|unless a teacher connects|none unless|unless Google Drive sync is turned on|Connect (tap )?is what asks|Connect succeeded|only (thing|tap|door)[^.]*Connect" \
+        --include=*.html --include=*.md --include=*.js --include=*.mjs . | grep -v "^./.claude/" | grep -v "^./TESTING.md"
+      ```
+      *(Widened 2026-09-28 in the correction round, after the verifier found a live claim the first
+      pattern could not match — `tools/verify/drive-sign-in.mjs`'s WIRE comment, "appends Google's
+      script … when Connect is tapped and at no other moment", under a policy it quoted as "UNLESS a
+      teacher connects". The seven alternatives after `appended on the Connect tap` are the widening.
+      Fixed in that round, comments only: `tools/verify/drive-sign-in.mjs:44-49` (header bullet: quoted
+      the WO-7.4 wording and said "the Connect tap is what asks" with no second door; now quotes
+      *"except for Google Drive sync"*, scopes the tap to this section and names `first-run.mjs` for the
+      other door), `:360-368` (the WIRE comment: now "only when a sign-in door is tapped", this section
+      measuring one of two), and `src/auth.js:755-757` (`preloadSignIn()`: quoted the policy as "on a
+      device where Connect succeeded"; now quotes *"Once a sign-in succeeds"*). The line numbers in the
+      classified list below are as of the first round; the new hits the wider pattern adds are
+      classified in the correction note after it.)*
+      Before this sitting the live hits were `privacy.html:299`, `:301-302`, `docs/FERPA.md:104`,
+      `:106-108`, `index.html:2180-2185`, `src/auth.js:82` and `:430`, `src/sync-button.js:471`,
+      `docs/sync.md:79`, `CLAUDE.md:128`, plus two found by reading rather than grepping —
+      `tools/verify-shell.mjs`'s `netLog` comment (*"sent by two sections"*, stale since WO-7.9's
+      `first-run.mjs` became a third) and `tools/verify/drive-sign-in.mjs:678`'s label (*"the policy's
+      promise to a device where Connect was never tapped"*). All reworded. After, every hit classified:
+      - `privacy.html:307`, `:311`, `docs/FERPA.md:112`, `:116` — the new statement itself, naming
+        Connect beside Open from Google Drive.
+      - `privacy.html:282`, `:295`, `docs/FERPA.md:101` — the statement's comment: the WO-7.6 dated
+        sentence as written, and the new WO-7.16 sentence that supersedes it.
+      - `index.html:2180`, `src/auth.js:82` — *"appended on the Connect tap; since WO-7.9 on a tap of
+        the first-run door…"*: Connect named as one way among three, not the only one.
+      - `src/auth.js:429` — quotes the pre-WO-7.6 sentence as what the documents *used to* say.
+      - `CLAUDE.md:129` — *"The library then loaded only on the Connect tap"*: past tense, followed in
+        the same parenthetical by the WO-7.9 door and WO-7.16.
+      - `docs/sync.md:558`, `:560`, `:564` — the WO-7.5 / WO-7.6 dated record of the opt-in paragraph,
+        left as written; the parenthetical closing it now carries a WO-7.16 sentence naming the door.
+      - `tools/verify/drive-sign-in.mjs:675` and `tools/verify-shell.mjs:563` — *"asks … for nothing
+        until Connect is tapped"*: a description of what that fixture measures (a page that never
+        opted in, with no first-run door taken), which is still exactly what it measures.
+      - `tools/verify/drive-sign-in.mjs:725` — `From the tap until connect() returns`: not this claim.
+      - `CHANGELOG.md:151-156` — dated history.
+      - `plans/work-orders/phase-7-sync.md:398`, `:437` (WO-7.4), `:691-755` (WO-7.6), `:1458-1503`
+        (this work order quoting the old text), `plans/work-orders/README.md:1867`, `:1879` — dated
+        records and the rows naming these work orders.
+
+      *Correction round, 2026-09-28 — the wider pattern's further hits, each classified:*
+      - `tools/verify/drive-sign-in.mjs:48` and `:707` — *"the Connect tap is what asks"*: scoped to the
+        fixture in this section, and `:48` now says in the next sentence that it is not the only tap.
+        The label formerly at `:675` is at `:680` after the comment rewrap; its text is unchanged.
+      - `CLAUDE.md:127` and `docs/sync.md:74` — *"no third-party code unless a teacher connects Google
+        Drive"* named as what the policy narrowed to **in WO-7.4's sitting**, each followed in the same
+        passage by WO-7.5, WO-7.9 and WO-7.16. Dated history.
+      - `plans/work-orders/phase-7-sync.md:112` — WO-7.1's record, inside its *Superseded 2026-09-25*
+        parenthetical. Dated history. `:398`, `:415`, `:663`, `:701`, `:727`, `:743`, `:754-755`,
+        `:1458-1503` — WO-7.4, WO-7.6 and this work order quoting the old text.
+      - `CHANGELOG.md:196` — dated history.
+      - `src/auth.js:82`, `index.html:2180`, `privacy.html:282`, `:295`, `docs/FERPA.md:101`,
+        `docs/sync.md:558-564`, `tools/verify-shell.mjs:563` — already classified above.
+
+      *Correction round 3, 2026-09-28 — the search made line-break-insensitive, on the owner's
+      ruling.* The second verifier found a live claim neither grep above could see because it broke
+      across lines: `src/auth.js:79-81`, the `hostAllowsSignIn()` origin-list comment, said the policy
+      now reads *"no third-party code UNLESS a teacher connects Drive, when Google's own sign-in
+      library loads"* — a misquote of the current policy, and false, since a tap on Open from Google
+      Drive cancelled at Google's window loads the library and connects nothing (this work order's
+      third Trap). **Reworded, comment only**: `src/auth.js:79-89` now says the policy narrowed in
+      WO-7.4's sitting and has been re-worded since, quotes the current *"except for Google Drive
+      sync, which uses Google's own sign-in library"*, and names both doors — Connect in About, and
+      Open from Google Drive, whose tap loads the library even when the sign-in is then cancelled —
+      plus the launch-time preload on a device where a sign-in succeeded. The box above is unticked
+      until a verifier reads it again. The search, same file set as before (every `.html`, `.md`,
+      `.js`, `.mjs` under the tree minus `.git/`, `.claude/`, `node_modules/` and this file), each
+      file's whitespace — newlines included — collapsed to one space before matching, every match
+      mapped back to its original line span, and the phrase list widened past the grep above by
+      six alternatives (`unless[^.]{0,60}connects`, `when a teacher connects`, `teacher who
+      connects`, the two `never tapped … Connect` orders, `loads only (on|when)`, `only (on|when) …
+      Connect tap`):
+      ```
+      node -e 'const fs=require("fs"),P=require("path");const RE=/connect (was|has) never|where Connect (was|has)|loads first when Connect|only when Connect|until Connect|loads only on the Connect|only on the Connect tap|appended on the Connect tap|when Connect is tapped|at no other moment|unless a teacher connects|none unless|unless Google Drive sync is turned on|Connect (tap )?is what asks|Connect succeeded|only (thing|tap|door)[^.]*Connect|unless[^.]{0,60}connects|when a teacher connects|teacher who connects|never (been )?tapped[^.]{0,20}Connect|Connect[^.]{0,20}never (been )?tapped|loads only (on|when)|only (on|when)[^.]{0,20}Connect (is )?tap/gi;const walk=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>{const p=P.join(d,e.name);if(e.isDirectory())return[".git",".claude","node_modules"].includes(e.name)?[]:walk(p);return/\.(html|md|js|mjs)$/.test(e.name)&&p!=="TESTING.md"?[p]:[]});for(const f of walk(".")){const s=fs.readFileSync(f,"utf8");let flat="",at=[],ln=1,ws=false;for(let i=0;i<s.length;i++){const c=s[i];if(/\s/.test(c)){if(!ws){flat+=" ";at.push(ln);ws=true}}else{flat+=c;at.push(ln);ws=false}if(c==="\n")ln++}for(const m of flat.matchAll(RE)){const a=at[m.index],b=at[m.index+m[0].length-1];console.log(f.split(P.sep).join("/")+":"+(a===b?a:a+"-"+b)+": "+m[0])}}'
+      ```
+      Run from the repository root after the rewording: 61 hit lines, exit 0, **no live claim**.
+      `src/auth.js:79-89` no longer matches. Every hit, classified:
+      - **The new statement** — `privacy.html:307`, `:311`, `docs/FERPA.md:112`, `:116`: Connect
+        named beside Open from Google Drive.
+      - **The statement's dated comment** — `privacy.html:278-279` and `docs/FERPA.md:86-87`
+        (*"a Connect succeeded"*, WO-7.6's sentence), `privacy.html:282` (*"A device where Connect was
+        never tapped fetches nothing"*, inside WO-7.6's dated sentence and contradicted on purpose by
+        WO-7.16's twelve lines later), `privacy.html:294-295` and `docs/FERPA.md:100-101` (the WO-7.16
+        sentence itself: *"a device where Connect was never tapped can still have fetched"*). History.
+      - **Connect as one way among several** — `index.html:2180` (*"appended on the Connect tap; since
+        WO-7.9 on a tap of the first-run door…"*). Live and true.
+      - **Quote of old wording, marked as such** — `src/auth.js:431` (*"used to say only … until
+        Connect is tapped"*).
+      - **Dated history** — `CLAUDE.md:127`, `:129`; `docs/sync.md:74`, `:558`, `:560`, `:564`;
+        `CHANGELOG.md:151`, `:154`, `:155`, `:196`; `plans/work-orders/phase-7-sync.md:112`, `:112-113`
+        (WO-7.1's superseded parenthetical), `:398`, `:415`, `:437` (WO-7.4), `:663`, `:691`, `:701`,
+        `:717-718`, `:727`, `:743`, `:754`, `:755` (WO-7.5/7.6), `:1447`, `:1458`, `:1459`, `:1486`,
+        `:1489`, `:1503` (this work order's title, booking and Acceptance quoting the old text);
+        `plans/work-orders/README.md:1867` (two matches), `:1879` (two matches).
+      - **`plans/wo-3-18-video-runbook.html:359-360` — dated history, left as written.** It sits under
+        the heading *"Blocker 2 — discharged 2026-09-25, by WO-7.4"* and is past tense: the documents
+        *"narrowed their third-party sentence in the same sitting: no third-party code unless a
+        teacher connects Google Drive"*. That is what WO-7.4 did that day, and it says nothing about
+        what the policy reads now.
+      - **Fixture descriptions** — `tools/verify/drive-sign-in.mjs:48`, `:680`, `:707`,
+        `tools/verify-shell.mjs:563`: what the Connect-door section measures, `:48` naming the other
+        door in its next sentence. Unchanged from the first two rounds.
+      - **Not this claim** (the widened alternatives' noise) — *"teacher who connects"* about the
+        nothing-is-uploaded copy: `CHANGELOG.md:1359`, `CLAUDE.md:141`,
+        `plans/work-orders/phase-7-sync.md:124`, `src/auth.js:22`, `tools/verify/drive-sign-in.mjs:217`;
+        `src/auth.js:456` (*"connects to the wi-fi"*); `plans/work-orders/phase-7-sync.md:829` and
+        `src/shell.js:1806` (*"downloads only when this device is unchanged"*); `src/shell.js:2243-2244`
+        (Disconnect is the *"ONLY thing that clears"* the opt-in); `src/drive-sync.js:556-559` (a
+        `[^.]*` span from *"the only thing that can end a sign-in"* to a quoted button label);
+        `tools/verify/drive-sign-in.mjs:730` (*"until connect() returns"*).
+
+      `AGENTS.md` has no twin (`grep -n -i "never tapped\|Connect tap\|google library\|loads no\|fetches
+      nothing\|Open from Google" AGENTS.md` → nothing). `about.html` read and left alone: its sync item
+      says *"If you choose to turn on Google Drive sync, Drive holds only the file Planbook itself
+      created"* and names the scope — nothing about when the library loads, so nothing it overclaims.
+- [x] **Acceptance 3 — the network assertions hold.** `node tools/verify-shell.mjs` on this tree:
+      **`1572 checks · 1572 passed · 0 failed · 0 skipped`, 49,959 lines, 31.8 lines per check, 615s,
+      `EXIT=0`**, 2026-09-28, real clock. No check was added or removed; one label changed. WO-7.4's
+      wire, § "Google Drive sign-in": `0 request(s) to accounts.google.com and 70 to this origin in the
+      5627ms since the reload`, then `1 request(s) to accounts.google.com after the tap:
+      ["https://accounts.google.com/gsi/client"]`. WO-7.5's, § "the header sync button": *a device that
+      never connected draws the header exactly as it was*, `0 request(s) to accounts.google.com and 70
+      to this origin`, with its opted-in positive control green beside it. WO-7.9's third line, §
+      first-run: *a fresh device that takes neither door … asks accounts.google.com for nothing*,
+      `0 request(s) to accounts.google.com and 70 to http://localhost:60776`, and the door's tap
+      `1 request(s) to accounts.google.com after the tap (["https://accounts.google.com/gsi/client"])`.
+      One comment-only rewrap in `src/sync-button.js` (a line over-long from this sitting's own edit)
+      was made after the run; it moves no executable line.
+- [ ] **Acceptance 4 — `verify-deploy.mjs` after the push.** Owed after the push that carries this and
+      WO-7.9, which is the owner's. Its policy claims were re-read now: `CLAIMS` in
+      `tools/verify-deploy.mjs` asserts *no server of ours ever receives student information*, *no
+      account is required* and *Drive holds only the file Planbook itself created* — none of them the
+      sentence this work order changed, and all three are in `privacy.html`, untouched. Nothing in the
+      file asserts *Connect*, `accounts.google` or *Last updated*, so no claim needed updating. After
+      the push: the run, and the live `/privacy` tags-stripped for "Last updated 28 September 2026" and
+      "Open from Google Drive".
+
+**Both tools.** `node tools/wo-sweep.mjs`: `45 checks · 41 passed · 1 failed · 3 to review` — the
+three standing REVIEWs, and one FAIL that is the `CACHE` ruling above rather than a defect:
+*"src/auth.js, src/sync-button.js changed since planbook-shell-v143 was set at 665b18c — bump CACHE
+in sw.js"*. The check compares against the commit that set the string, not against what has shipped,
+so it cannot see that v143 is still unshipped; it goes green on a bump to v144, and stays red after
+the commit if there is none. No mutation round: nothing here is code a check could be proved against
+— the one check whose text moved is a label, and its predicate is unchanged.
+
+**2026-09-28, after the verifier's first reading.** The owner ruled the `CACHE` bump in, and the
+calling session set `sw.js:38` to `planbook-shell-v144` — the `CACHE` sentences above are the first
+round's record, superseded by this line. The correction round then reworded three comments (listed
+under Acceptance 2; no executable line moved, `node --check` clean on both files) and re-ran
+`node tools/wo-sweep.mjs`: **`45 checks · 42 passed · 0 failed · 3 to review`, exit 0** — the three
+standing REVIEWs. `verify-shell.mjs` was not re-run: no predicate was touched.
+
+**Correction round 4 — 2026-09-28, Acceptance 2, on the owner's ruling.** The third verifier pass
+failed Acceptance 2 on three live claims that the phrase lists above could not match, and flagged two
+more of the same kind. So this round **drops phrase matching**. It builds the candidate set by
+**reading**: every mention of the sign-in machinery, each one read in its sentence and classified.
+The question asked of each is: *does this make Connect, or any single tap, the only trigger for
+loading Google's code, reaching Google's servers, getting a token, or opting in?*
+
+Each trigger was checked against the code before any wording was written. There are four:
+- **About's Connect** (`src/shell.js` → `auth.connect()`).
+- **The first-run door, *Open from Google Drive***, and its dialog's *Sign in* button, which carries
+  the same hook (`src/first-run.js tapDriveDoor()` → `auth.reconnect()`).
+  - The tap loads the library even when the sign-in is then cancelled.
+  - On success, `afterDriveAuthChange(true)` sets the opt-in, then `afterSignIn()` → `listDriveYears()`
+    reaches `googleapis.com` with neither Connect nor Sync tapped. `pullYear()` follows on the confirm.
+- **The header sync button** (`src/sync-button.js tapSyncButton()` → `auth.reconnect()` → `syncNow()`).
+  - It is drawn only on an opted-in device and never sets the opt-in.
+  - Its `reconnect()` fetches the library first when the launch preload has not landed.
+- **WO-7.5's launch-time preload** (`sync-button.js start()` → `auth.preloadSignIn()`).
+  - It runs on an opted-in device only, and on a return to view if the library is still missing.
+  - It loads the library and requests nothing (WO-7.10).
+
+The opt-in has exactly two setters: Connect's answer and the door's answer, both through
+`afterDriveAuthChange`. It has one clearer: About's switch-off.
+
+**The enumeration**, run from the repository root:
+```
+PAT='connect|open from google drive|drive door|first-run door|first-run drive|google.s (sign-in )?library|\bgis\b|accounts\.google|gsi|hostAllowsSignIn|loadGis|preloadSignIn|opt-in|opted.in|driveSyncOptIn|requestToken|requestAccessToken|reconnect|ensureFreshToken|access token'
+grep -rliE "$PAT" src tools sw.js index.html privacy.html about.html docs plans   # the file list
+grep -rniE "$PAT" <file>                                                         # per file, then read
+```
+After this round's edits it returns **55 files and 1,196 hit lines**. The files, with hit lines per file:
+- `about.html` 2
+- `docs/`: `FERPA.md` 19, `data-model.md` 2, `sync.md` 70
+- `index.html` 21
+- `plans/`: `ROADMAP.md` 3, `return-brief.html` 1, `verification-tooling.md` 2, `wo-3-18-runbook.html` 3,
+  `wo-3-18-video-runbook.html` 23, `wo-7-1-runbook.html` 2
+- `plans/work-orders/`: `README.md` 18, `gates.md` 2, `phase-1` 7, `phase-2` 5, `phase-3` 6, `phase-7` 230,
+  `phase-8` 9
+- `privacy.html` 18
+- `src/`:
+  - Drive modules: `auth.js` 122, `drive-sync.js` 24, `first-run.js` 23, `shell.js` 49,
+    `sync-button.js` 34, `prefs.js` 11
+  - Everything else: `alert-sound.js` 3, `attendance.css` 2, `attendance.js` 6, `calendar.js` 2,
+    `classes.js` 1, `detail.css` 1, `home.css` 1, `home.js` 1, `scores.js` 1, `shell.css` 5,
+    `signal-settings.js` 1, `signals-view.css` 2, `store.js` 12
+- `sw.js` 5
+- `tools/`:
+  - Top level: `README.md` 35, `audio-probe.html` 3, `make-cert.mjs` 1, `verify-deploy.mjs` 4,
+    `verify-shell.mjs` 5
+  - `verify/`: `attendance-passes` 3, `calendar-opens-on-day` 2, `keys-legend-guards` 1, `outreach` 1,
+    `score-grid` 3, `term-edges-marking` 1, `touch-targets` 2, `drive-sign-in` 107, `drive-sync` 119,
+    `first-run` 32, `sync-button` 128
+
+I also read `CHANGELOG.md`, `CLAUDE.md` and `AGENTS.md` (which has 0 hits) for completeness.
+
+**Classification.** Hits of the same kind are grouped. Line numbers are after this round's edits.
+Every *live-false* and *live-true claim* row was read line by line. In the bulk rows, the counts
+marked ~ are estimates. The hits in those rows were read in context, but not tallied one by one.
+
+| Group | Hits | Class | Fix / reason |
+|---|---|---|---|
+| `sw.js:156-162`: the library *"fetched on demand only after a teacher taps Connect"* | 1 | **live-false** | Now names Connect, the door, the opted-in launch preload, and the header tap when the preload failed |
+| `tools/verify/drive-sign-in.mjs:148-151`: check label, same words | 1 | **live-false** | Label only, predicate unchanged: *"on a sign-in tap (Connect, Open from Google Drive, or the header sync button when the preload failed) or at launch on an opted-in device"* |
+| `src/drive-sync.js:101-106`: hosts *"not fetched unless a teacher has tapped Connect and then tapped Sync"* | 1 | **live-false** | Now names About's Sync, the header's button (which signs in first), and the door's `listDriveYears()` / `pullYear()` with neither Connect nor Sync |
+| `src/drive-sync.js:642-644`: `signedInAgain()` *"called by src/shell.js after a Connect that succeeded"* | 1 | **live-false** | `afterDriveAuthChange` runs after a door sign-in too, and the comment now names both |
+| `src/shell.js:2111-2118`: opt-in *"set on connect()'s OWN ANSWER … true only after a Connect that succeeded"* | 1 | **live-false** | Now names both setters (Connect, and the door's answer at `:2308`), says a cancelled door tap sets nothing, and says the header never reaches it |
+| `src/shell.js:4677-4679`: token *"only after the teacher tapped Connect in this session"* | 1 | **live-false** | Now *"a sign-in tap … (Connect in About, the header's sync button, or the first-run door)"* |
+| `src/shell.js:897-899`: *"the opt-in the two About controls set and clear"* | 1 | **live-false** | Set by Connect and the door, cleared by About's switch-off |
+| `src/shell.js:660-662`: About's Sync *"hidden until one of them [Connect/Disconnect] has produced a token"* | 1 | **live-false** | *"until there is a token — from Connect, the header's sync button or the first-run Drive door"* |
+| `src/sync-button.js:155-158`: `rememberOptIn()` *"Set by a Connect that SUCCEEDED — shell passes connect()'s own answer"* | 1 | **live-false** | Now names both doors, and says the header tap never sets it |
+| `src/prefs.js:212-213`: opt-in *"`true` from the first Connect that succeeds"* | 1 | **live-false** | *"the first sign-in that succeeds — Connect or … Open from Google Drive"* |
+| `src/prefs.js:235-238`: a device holding `false` *"makes no request to Google at all"* | 1 | **live-false** | Scoped to launch and return to view: a tap of either door reaches Google, and a cancelled one leaves `false` |
+| `src/auth.js:602-605`: `reconnect()` is *"the header's tap … the ONLY way this app signs back in"* | 1 | **live-false** | Narrowed to the header's only way, the door named as a second caller, and Connect via `connect()` named as the other way to a token |
+| `src/auth.js:427-446` (`loadGis()`, *"two ways … a third way"*) and `:82-88` (the append list) | 2 | **live-false** (incomplete) | Added the header's `reconnect()`, which appends the library when the preload has not landed. The added text says this widens nothing, because the button exists only on an opted-in device |
+| `index.html:2179-2190`: the Drive block's append list | 1 | **live-false** (incomplete) | Same header-tap sentence added |
+| `src/first-run.js:49-51`, `docs/sync.md:254-255`: the library *"kept off every device that never opted in"* | 2 | **live-false** | A cancelled Connect or door tap loads it on such a device, so both now say it is kept out of the *launch* and only a tap of either door fetches it |
+| `tools/verify/first-run.mjs:366-369`: label *"the library loads only when the Drive door is TAPPED"* | 1 | **live-false** | Label only: *"only on a sign-in tap (here, the Drive door)"* |
+| `tools/verify/drive-sync.mjs:221-223`: comment, the helper *"takes connect()'s own answer, which is what sets the … opt-in"* | 1 | **live-false** | The door's answer added |
+| `privacy.html:306-313`, `docs/FERPA.md:111-118`: the shared statement | 2 | live-true | Names both doors, the opt-in launch load, and all three sign-in taps |
+| `index.html:692`, `src/first-run.js:44`, `docs/sync.md:252`: *"the door's tap is the Connect"* | 3 | live-true | Equivalence, not exclusivity |
+| `src/auth.js:735-740` (`ensureFreshToken`: *"the one place a token is fetched is a tap … connect() and reconnect()"*), `:752-765` (`preloadSignIn`, *"never anywhere else"*), `src/sync-button.js:467-477`, `src/shell.js:2278-2310` | 4 | live-true | Name functions or callers exhaustively and correctly |
+| `src/drive-sync.js:508-513` (`syncNow`'s token is asked for by *"the header's … About's Connect"*) | 1 | live-true | `syncNow()` is reached only from those two doors, and the pull path is separate |
+| `tools/verify-shell.mjs:559-568`, `tools/verify/drive-sign-in.mjs:44-49`, `:680-685`, `:707`, `tools/verify/sync-button.mjs:241-307`, `tools/verify/first-run.mjs:420` | ~8 | live-true | Fixture descriptions: what that section measures, each naming the other door or scoped to its own section |
+| Fixture state and code: selectors, `driveConnectBtn`, stand-in GIS, `requestAccessToken` stubs, labels about *Connect shown*, and the like, across `drive-sign-in`, `drive-sync`, `sync-button`, `first-run` | ~330 | live-true | No trigger claim |
+| `src/auth.js`, `src/shell.js`, `src/sync-button.js`, `src/drive-sync.js`: UI strings, the panel, Disconnect, `lapsed`/`refused`, the WO-7.10 history paragraphs | ~150 | live-true / dated | No trigger claim, or history marked *"until WO-7.10"* |
+| Noise: *connection*, *alongside*, *connective*, `osc.connect`, `observer.disconnect`, IDB `connect()`, *"does not connect to [the SIS]"*, the alert-sound *opt-in*, and the Cloudflare Git connection, in `about.html`, `src/` non-Drive files, `tools/` non-Drive files, `plans/` phase-1/2/8, `gates.md`, `verification-tooling.md`, `tools/README.md` | ~120 | not this claim | |
+| `privacy.html:272-300`, `docs/FERPA.md:80-106`: the statement's comment. WO-7.6's sentence (incl. `privacy.html:282`, *"A device where Connect was never tapped fetches nothing"*) and WO-7.10/7.11/7.16's | 2 blocks | dated history | Each sentence opens with its date. WO-7.16's sentence corrects `:282` in as many words |
+| `src/auth.js:431-433`: *"used to say only … until Connect is tapped"* | 1 | dated history | Quoted as the old wording |
+| `docs/sync.md:74-81` (*"narrowed in the same sitting … unless a teacher connects"*, WO-7.4), `:486-512` (WO-7.5/7.10 record), `:550-571` (*"Built 2026-09-26 (WO-7.5)"*: *"A Connect that succeeds sets it"*, *"a device holding false … asks Google for nothing at all"*) | 3 passages | dated history | Dated, and each is followed in the same passage by the WO-7.9/7.16 correction (`:79-81`, `:567-569`) |
+| `plans/wo-3-18-video-runbook.html:352-361` | 1 | dated history | Under *"Blocker 2 — discharged 2026-09-25, by WO-7.4"*, in the past tense. The rest of the runbook is a shot script of the Connect flow, which is true |
+| `plans/work-orders/phase-7-sync.md` (230), `plans/work-orders/README.md` rows, `phase-3-gradebook.md:838-845,1505`, `plans/ROADMAP.md`, `wo-3-18-runbook.html`, `wo-7-1-runbook.html`, `return-brief.html` | ~260 | dated history / records | Work-order records, including WO-7.16's own title and quotations of the old text. Also `phase-8-packaging.md:1433` (WO-8.x's deliverable describes the WO-7.5 silent renewal that WO-7.10 removed). That is stale in a different way and outside this claim, so it is noted, not edited |
+| `tools/README.md:2028-2030` and the other count paragraphs | ~10 | dated history | Dated harness-count records |
+| `CHANGELOG.md` (44 hits, e.g. `:151-156`, `:182-191`) | 44 | dated history | Dated release entries |
+| `CLAUDE.md:127-133`, `:158-159` (*"Google's library loads at launch as well as on the Connect tap"*) | 2 | dated history, **not edited** | The owner's file, by the owner's instruction for this round. `:158-159` sits in the WO-7.5/7.10 block dated 2026-09-26. `:130-133` names the door |
+| `docs/FERPA.md:74-75` (*"The one other company a teacher can bring in is Google, and only by connecting Google Drive sync herself"*) | 1 | not this claim | Ruled by the fourth verifier pass: it names the teacher's own choice to reach for Drive, not the Connect tap, and makes no neither-door promise. Tightening it would change a public promise (`privacy.html` has no twin sentence), so it belongs to its own work order, not this one |
+
+**Live-false fixed this round: 19 passages in 12 files**, and the five the verifier named are among
+the 19. By file:
+- `sw.js` 1
+- `src/`: `drive-sync.js` 2, `shell.js` 4, `sync-button.js` 1, `prefs.js` 2, `auth.js` 3, `first-run.js` 1
+- `index.html` 1
+- `docs/sync.md` 1
+- `tools/verify/`: `drive-sign-in.mjs` 1, `first-run.mjs` 1, `drive-sync.mjs` 1
+
+After the fixes, no live-false row is left. Every other hit is live-true, dated history, or not this
+claim.
+
+Every change is comment or check-label text. No executable line or predicate moved. `sw.js`'s
+`CACHE` stays `planbook-shell-v144`. `docs/sync.md` was edited with a byte-level replace that keeps
+its mixed CRLF/LF endings. The Acceptance 2 box stays unticked, for the verifier.
+
+**Verdict, 2026-09-28: PASS WITH MANUAL CHECKS** (fourth verifier pass, Opus, cold, its own
+enumeration by meaning rather than the list above). All 19 fixes checked true against the four
+triggers (Connect in About, the first-run door, the header's `reconnect()`, the opted-in launch
+preload); no live-false hit left; `verify-shell.mjs` re-run to completion at **1572 checks · 1572
+passed · 0 failed**, EXIT=0; `wo-sweep.mjs` 45 · 42 · 0 · 3 (the standing reviews); no `MUTATION`;
+`node --check` clean on all eleven changed JS/MJS files. Acceptance 2 ticked on that verdict.
+Acceptance 4 is owed after the owner's push.
+
 ## Phase 8 — 1.0 packaging
 
 *Phase goal: something a stranger can find, evaluate, install, and trust.*

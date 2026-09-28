@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The privacy policy names the second way Google's sign-in can load — 2026-09-28
+
+Since a fresh device gained *Open from Google Drive*, the privacy policy and the FERPA document
+were one door short: they said Google's sign-in library loads first when Connect is tapped, and that
+a device where Connect was never tapped fetches nothing from Google. Both now name both doors, say
+the library loads each time Planbook opens only once a sign-in has succeeded, and promise that a
+device where neither Connect nor *Open from Google Drive* was ever tapped fetches nothing from
+Google. The two documents carry that statement word for word, and both read *Last updated 28
+September 2026*. Nothing the app does changed. Only the words did, including nineteen code comments
+and harness labels that still described the narrower app. (WO-7.16 — harness green at 1572/1572; a
+device that takes neither door makes no request to Google, measured on the network. The check
+against the live `/privacy` is owed after the push that also carries WO-7.9.)
+
 ### A new device can open the year you already have in Google Drive — 2026-09-28
 
 A fresh install had no way into a year that was already in Drive: sync looks only for this device's

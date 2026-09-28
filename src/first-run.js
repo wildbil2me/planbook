@@ -47,7 +47,8 @@
   WO-7.5 opt-in, exactly as About's Connect does, through the same chain in src/shell.js.
 
   BUT ON A FRESH DEVICE GOOGLE'S LIBRARY IS NOT ON THE PAGE, AND IT MUST NOT BE. WO-7.4 and WO-7.5
-  keep it off every device that never opted in, and this work order's third Acceptance line asserts
+  keep it out of the launch of every device that never opted in — only a tap of Connect or of this
+  door fetches it there — and this work order's third Acceptance line asserts
   that from the network: a device that never takes either door asks accounts.google.com for nothing.
   So the library cannot be preloaded when the doors are drawn, and the first tap has to fetch it —
   which puts the request after an await, where the iPad blocks the window. THE CHOICE: take

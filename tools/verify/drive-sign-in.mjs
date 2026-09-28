@@ -41,10 +41,12 @@ const { ROOT, results, check, skip, readLocalStore, foreignIn, storeDetail, send
     · the flag. A page cannot change its own hostname, so hostAllowsSignIn() is asked directly
       about the hostnames this run can never be served from — the deployed host, OPEN since WO-7.4,
       and the LAN address and the near misses, which stay SHUT.
-    · the wire. Since WO-7.4 the deployed app draws this section, so the privacy policy's
-      third-party claim is now "none unless a teacher connects Drive" — and that is asserted from
-      the Network domain rather than from the source: a signed-out load with the section drawn asks
-      accounts.google.com for nothing, and the Connect tap is what asks.
+    · the wire. Since WO-7.4 the deployed app draws this section, so the privacy policy names
+      Google's library as its one third-party exception ("except for Google Drive sync", since
+      WO-7.16) — and that is asserted from the Network domain rather than from the source: a
+      signed-out load with the section drawn asks accounts.google.com for nothing, and in this
+      section the Connect tap is what asks. (It is not the only tap that can: since WO-7.9 the
+      first-run door's tap asks too, and that is tools/verify/first-run.mjs's to measure.)
     · the two controls, tapped, at 44px, under a coarse pointer.
 
   AND ONE THING THE WHOLE FILE MEASURES WITHOUT MENTIONING IT: every check before this section ran
@@ -145,7 +147,8 @@ const { ROOT, results, check, skip, readLocalStore, foreignIn, storeDetail, send
   const indexHtml71 = source71.get('index.html') || '';
   check('the Google Identity Services library is in no precache list and in no <script> tag in '
     + 'index.html, while src/auth.js IS precached — the app boots and works with no network and no '
-    + 'Google, and the library is fetched on demand only after a teacher taps Connect',
+    + 'Google, and the library is fetched on demand — on a sign-in tap (Connect, Open from Google '
+    + 'Drive, or the header sync button when the preload failed) or at launch on an opted-in device',
     shell71.length > 20 && shell71.some(p => /\/auth\.js$/.test(p))
       && !shell71.some(p => /accounts\.google|gsi/.test(p))
       && !/<script[^>]+accounts\.google/i.test(indexHtml71),
@@ -356,12 +359,15 @@ const { ROOT, results, check, skip, readLocalStore, foreignIn, storeDetail, send
 
   /*
     THE WIRE, WATCHED FROM A SIGNED-OUT LOAD (WO-7.4). Since the deployed app draws the Drive
-    section, privacy.html and docs/FERPA.md claim no third-party code UNLESS a teacher connects
-    Google Drive — and the only thing making that true is that loadGis() in src/auth.js appends
-    Google's script, on a device that has not opted in, when Connect is tapped and at no other
-    moment. (An opted-in device also reaches it at launch since WO-7.5, which the policy has said
-    since WO-7.6; that half is tools/verify/sync-button.mjs's.) A grep for a <script> tag cannot
-    see a script appended at boot by a module, so this asks the browser's own Network domain.
+    section, privacy.html and docs/FERPA.md claim no third-party code except for Google Drive sync,
+    and promise that a device where no sign-in door was ever tapped fetches nothing from Google —
+    true because loadGis() in src/auth.js appends Google's script, on a device that has not opted
+    in, only when a sign-in door is tapped. This section measures one door, Connect in About. (The
+    other door, Open from Google Drive on a fresh device's first screen, loads it too since WO-7.9,
+    which the policy has said since WO-7.16 — that half is tools/verify/first-run.mjs's. An
+    opted-in device also reaches it at launch since WO-7.5, which the policy has said since
+    WO-7.6; that half is tools/verify/sync-button.mjs's.) A grep for a <script> tag cannot see a
+    script appended at boot by a module, so this asks the browser's own Network domain.
 
     The page is RELOADED with the domain on, so the reading covers a whole boot, the About modal
     opening with the section drawn, and everything this section does up to the Connect tap near its
@@ -675,8 +681,9 @@ const { ROOT, results, check, skip, readLocalStore, foreignIn, storeDetail, send
   check('a page that never opted into sync asks accounts.google.com for nothing until Connect is '
     + 'tapped — measured on the wire, from a reload with the Network domain on, through a whole boot, '
     + 'the About modal drawn with the Drive section in it, and a Disconnect tap: this is the privacy '
-    + 'policy’s promise to a device where Connect was never tapped (WO-7.4; the launch-time half '
-    + 'is WO-7.5’s, in the header sync button section)',
+    + 'policy’s promise to a device where no sign-in door was ever tapped (WO-7.4; the launch-time '
+    + 'half is WO-7.5’s, in the header sync button section, and the first-run door’s is WO-7.9’s, '
+    + 'in the first-run section)',
     google74Before.length === 0 && own74Before.length > 5 && beforeTap.panelShown === true
       && beforeTap.gisScripts === 0,
     google74Before.length + ' request(s) to accounts.google.com '

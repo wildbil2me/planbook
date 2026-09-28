@@ -75,9 +75,11 @@ narrowed in the same sitting: **no third-party code unless a teacher connects Go
 Google's own sign-in library loads from `accounts.google.com`. That narrower claim is true because
 `loadGis()` appends the script on the Connect tap — and, since WO-7.5, at launch on a device that
 has opted in (a renewal until WO-7.10, a bare preload that asks Google nothing since), which WO-7.6
-(2026-09-26) wrote into the policy's sentence — and never
-on a device where Connect was never tapped, which `tools/verify-shell.mjs` asserts from the Network
-domain rather than from the source. The pairing rule stands for any origin added
+(2026-09-26) wrote into the policy's sentence — and, since WO-7.9, on a tap of *Open from Google
+Drive*, the first-run door on an untouched device, which WO-7.16 (2026-09-28) wrote into it too. It
+is never appended on a device where neither Connect nor that door was ever tapped, which
+`tools/verify-shell.mjs` asserts from the Network domain rather than from the source.
+The pairing rule stands for any origin added
 later: widen the code's list and not the client's and the button ends in `origin_mismatch`, so the
 list names hosts exactly and never a pattern.
 
@@ -249,7 +251,8 @@ goes away for good.
 
 **The sign-in, on a device that has never loaded Google.** The door's tap is the Connect: the sign-in
 is asked for inside the gesture, and a success sets the WO-7.5 opt-in exactly as About's Connect
-does. But Google's library is kept off a device that never opted in, and a fresh device is that
+does. But Google's library is not loaded at the launch of a device that never opted in — only a
+tap of Connect or of this door fetches it there — and a fresh device is that
 device, so the first tap has to fetch it. On a laptop the fetch lands inside the browser's activation
 window and Google opens. **On the iPad the first tap loads the library and Safari blocks the
 window**; the dialog says so in `reconnect()`'s own words — *"It is ready now — tap again and it will
@@ -561,7 +564,10 @@ sentence *"nothing is fetched from Google until Connect is tapped"* was true onl
 launch on that device, the sign-in is renewed then and on a return to view with it ended, until
 Disconnect — and a device where Connect was never tapped fetches nothing from Google. *(**WO-7.10,
 the same day, took the renewal out and the clause about it with it**, in both documents together: the
-library still loads at every launch on that device, and a sign-in is asked for only by a tap.)* The three things the key
+library still loads at every launch on that device, and a sign-in is asked for only by a tap.
+**WO-7.16, 2026-09-28**, re-worded it once more for WO-7.9's first-run door: the first load is a tap
+on Connect *or* on *Open from Google Drive*, a successful sign-in from either is the opt-in, and the
+device that fetches nothing is one where neither was ever tapped.)* The three things the key
 unlocked are all three built: the indicator's condition, *lapsed* told apart from *never connected*,
 and a launch-time renewal aimed only at the teachers who want it.
 *(**WO-7.11, 2026-09-27: "Disconnect clears it" now works signed out.** Since WO-7.10 every launch

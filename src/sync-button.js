@@ -152,8 +152,10 @@ export function optedIn() {
   return getPref(PREF) === true && auth.signInAvailable();
 }
 
-/* Set by a Connect that SUCCEEDED — src/shell.js passes connect()'s own answer, so a refusal, a
-   closed window or a seeded session that a failed tap left standing all set nothing. Read back
+/* Set by a sign-in that SUCCEEDED from About's Connect or, since WO-7.9, from the first-run door
+   Open from Google Drive — src/shell.js afterDriveAuthChange() passes that tap's own answer, so a
+   refusal, a closed window or a seeded session that a failed tap left standing all set nothing.
+   The header's own tap never sets it: the button is drawn only once it is set. Read back
    rather than trusted, for src/presentation.js's reason: localStorage can refuse a write. */
 export function rememberOptIn() {
   setPref(PREF, true);
@@ -467,9 +469,12 @@ function prime() {
   THE LIBRARY STILL LOADS HERE, and only on an opted-in device (auth.preloadSignIn()). That is what
   lets the header's tap reach requestAccessToken() in its own stack; without it the first tap of
   every session would spend its gesture fetching a script. It is also exactly what privacy.html and
-  docs/FERPA.md say — the library loads each time Planbook opens on a device where Connect
-  succeeded — and a device that never connected fetches nothing, which tools/verify/sync-button.mjs
-  asserts from the wire. A return to view loads it again only if it is still not there (an offline
+  docs/FERPA.md say — the library loads each time Planbook opens on a device where a sign-in
+  succeeded, from Connect or (since WO-7.9) from the first-run door Open from Google Drive. This file
+  loads nothing on a device that never opted in, which tools/verify/sync-button.mjs asserts from the
+  wire; the promise that a device where NEITHER was ever tapped fetches nothing from Google at all is
+  the two taps' to keep, not this file's (WO-7.16). A return to view loads it again only if it is
+  still not there (an offline
   launch), which is a script fetch and never a token request.
 
   THE LISTENERS ARE ATTACHED ONLY ONCE THE DEVICE HAS OPTED IN, here or from rememberOptIn(), so a

@@ -658,7 +658,8 @@
                                       imports the store for nothing at all
       data-drive-sync                 moves the open school year to or from Drive, or keeps both
                                       copies when the two have diverged (WO-7.2). Beside the two
-                                      above and hidden until one of them has produced a token.
+                                      above and hidden until there is a token — from Connect,
+                                      the header's sync button or the first-run Drive door.
                                       A TAP AND NEVER A TIMER: a browser token flow has no
                                       refresh token, so nothing in this app may be built on sync
                                       happening while the teacher is not looking
@@ -893,8 +894,9 @@ import * as auth from './auth.js';
    is hidden on and for the same reason — it asks that module whether the flag is open rather than
    reading the hostname a second time, which is src/supports.js's rule about one asker per fact. */
 import * as driveSync from './drive-sync.js';
-/* The header's sync button (WO-7.5). Imported for its boot, its tap, the opt-in the two About
-   controls set and clear, and the repaint after a sync from the About panel's own button. It is
+/* The header's sync button (WO-7.5). Imported for its boot, its tap, the opt-in that About's Connect
+   and (since WO-7.9) the first-run Drive door set and About's switch-off clears, and the repaint
+   after a sync from the About panel's own button. It is
    drawn only on a device that has opted in, and it decides nothing about freshness itself — it asks
    the two modules above, which is the one-asker rule again. */
 import * as syncButton from './sync-button.js';
@@ -2106,10 +2108,13 @@ function clearDateField(btn) {
 function afterDriveAuthChange(connected) {
   driveSync.refreshSyncChrome();
   driveSync.primeSyncChrome();
-  /* AND THE OPT-IN (WO-7.5), set on connect()'s OWN ANSWER and on nothing else. The promise hands
-     that answer to its fulfilment arm, which is this function, so `connected` is `true` only after
-     a Connect that succeeded — never after a refusal, never on the Disconnect branch (which calls
-     this with nothing), and never because a session happened to be standing when a failed tap
+  /* AND THE OPT-IN (WO-7.5), set on a sign-in tap's OWN ANSWER and on nothing else — connect()'s,
+     from About's Connect, and since WO-7.9 the first-run Drive door's (reconnect()'s answer, or
+     true when a sign-in already stands), passed in below as `ok === true`. Each promise hands that
+     answer to this function, so `connected` is `true` only after one of those two doors has a
+     sign-in behind it (the header's sync button never reaches here: it is drawn only on a device
+     already opted in) — never after a refusal or a door tap cancelled at Google's window, never on
+     the Disconnect branch (which calls this with nothing), and never because a session happened to be standing when a failed tap
      settled, which is what reading authState() here instead would have got wrong. Disconnect
      clears it in its own branch below. */
   if (connected === true) syncButton.rememberOptIn();
@@ -4670,8 +4675,9 @@ window.planbook = {
      THE TOKEN GETTER COMES WITH IT, and that is a deliberate acceptance rather than an oversight.
      A curated object would be the first entry here that hides part of its module, which is a worse
      precedent than the one thing it hides — and what it hides is available for at most an hour,
-     only after the teacher tapped Connect in this session, on an origin whose only script is this
-     app, to anything that could equally have called Google itself. Nothing in the app reads
+     only after a sign-in tap in this session (Connect in About, the header's sync button, or the
+     first-run door Open from Google Drive), on an origin whose only script is this app, to
+     anything that could equally have called Google itself. Nothing in the app reads
      window.planbook — see the block above for why the seam outlived the shelf. */
   auth,
   /* `driveSync` joined at WO-7.2, and its reason is `auth`'s carried one step further. A page

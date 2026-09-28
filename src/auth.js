@@ -76,14 +76,18 @@
          app drew no Drive section at all, which
          kept privacy.html's flat "no third-party code of any kind" literally true. The submission
          to Google needed the opposite: a reviewer opening the submitted app found a permission
-         requested and never used, which is the shape of the two commonest rejection reasons. What
-         the policy now says is the narrower claim that stays true — no third-party code UNLESS a
-         teacher connects Drive, when Google's own sign-in library loads — and it stays true
-         because of loadGis() below: the library is appended on the Connect tap, or (since
-         WO-7.5, and as a bare preload with no token request since WO-7.10) at launch on a device
-         where a Connect already succeeded, so a teacher who never taps it gets exactly the network
-         she got before. The harness asserts
-         that from the network itself, not from the source.
+         requested and never used, which is the shape of the two commonest rejection reasons. So
+         the policy narrowed in WO-7.4's sitting, and has been re-worded since; as of WO-7.16
+         (2026-09-28) it says no third-party code of any kind "except for Google Drive sync, which
+         uses Google's own sign-in library". That stays true because of loadGis() below: the
+         library is appended on a tap of Connect in About, on a tap of the first-run door Open
+         from Google Drive (since WO-7.9, src/first-run.js — and that tap loads it even when the
+         sign-in is then cancelled at Google's window, so a device can hold the library without
+         ever connecting), or (since WO-7.5, and as a bare preload with no token request since
+         WO-7.10) at launch on a device where a sign-in already succeeded — where the header's sync
+         button's tap also appends it if that preload has not landed. A teacher who taps
+         neither door gets exactly the network she got before. The harness asserts that from the
+         network itself, not from the source.
        · Nothing else, and in particular NOT THE LAN ADDRESS the iPad reaches the laptop on: Google
          will not register a raw IP, so a handshake from it can only end in `origin_mismatch`.
      A preference-shaped flag was the other design and it lost: it would have put a Google script
@@ -423,14 +427,22 @@ function loadGis() {
   if (ready()) return Promise.resolve();
   /* THE ONLY APPEND OF GOOGLE'S SCRIPT IN THE APP, and since WO-7.5 it has two ways to be reached:
      the Connect tap, as before, and the launch-time load src/sync-button.js makes — which runs
-     only on a device where a Connect tap already SUCCEEDED and Disconnect has not been pressed
-     since. privacy.html and docs/FERPA.md used to say only "nothing is fetched from Google until
-     Connect is tapped", which that load outgrew; since WO-7.6 (2026-09-26) their shared
-     data-flow statement names both ways in, and what it still promises is that a device where
-     Connect was never tapped fetches nothing — which tools/verify/sync-button.mjs asserts from
-     the wire. SINCE WO-7.10 THE LAUNCH-TIME LOAD ASKS FOR NOTHING: it is preloadSignIn() below,
-     it puts the library on the page and stops, and the only thing it buys is that the header's
-     tap can reach requestAccessToken() in its own stack. */
+     only on a device where a sign-in already SUCCEEDED (a Connect tap, or since WO-7.9 the
+     first-run door named below) and sync has not been switched off since. privacy.html and
+     docs/FERPA.md used to say only "nothing is fetched from Google until Connect is tapped",
+     which that load outgrew; since WO-7.6 (2026-09-26) their shared
+     data-flow statement names both ways in. SINCE WO-7.10 THE LAUNCH-TIME LOAD ASKS FOR NOTHING:
+     it is preloadSignIn() below, it puts the library on the page and stops, and the only thing it
+     buys is that the header's tap can reach requestAccessToken() in its own stack. SINCE WO-7.9
+     THERE IS A THIRD WAY IN, and it is a tap: Open from Google Drive, the first-run door on an
+     untouched device, whose handler calls reconnect() (src/first-run.js tapDriveDoor()). So
+     since WO-7.16 (2026-09-28) the statement names Connect and that door as the first load, and
+     what it promises is that a device where neither was ever tapped fetches nothing. (One more
+     caller reaches this append, and it widens nothing: the header's sync button, whose tap calls
+     reconnect(), which fetches the library first when the launch-time preload has not landed —
+     but that button is drawn only on an opted-in device, which one of the two doors made.) That
+     promise is what tools/verify/first-run.mjs, tools/verify/drive-sign-in.mjs and
+     tools/verify/sync-button.mjs assert from the wire. */
   if (gisLoading) return gisLoading;
 
   gisLoading = new Promise((resolve, reject) => {
@@ -588,7 +600,9 @@ export async function connect() {
 
 /*
   Reconnect — THE HEADER'S TAP WITH NO SIGN-IN, and visible straight away (WO-7.5; since WO-7.10
-  the ONLY way this app signs back in after a reload or a lapse).
+  the only way the header signs back in after a reload or a lapse) — and since WO-7.9 the tap of
+  the first-run door Open from Google Drive too (src/first-run.js tapDriveDoor()). About's Connect,
+  the other way to a token, goes through connect() above instead.
 
   NOT connect() ABOVE, and the difference is the whole of WO-7.5's first Trap. connect() awaits a
   silent attempt and only then asks visibly, so on the iPad the visible request lands after the
@@ -746,8 +760,9 @@ export async function ensureFreshToken() {
   first loses the gesture (reconnect()'s `loadedFirst` sentence). So the load happens ahead of the
   tap, and the token request waits for the tap.
 
-  This is the preload privacy.html and docs/FERPA.md describe — "it loads each time Planbook opens"
-  on a device where Connect succeeded — and keeping it is what keeps that sentence true. A failure is
+  This is the preload privacy.html and docs/FERPA.md describe — "Once a sign-in succeeds … the
+  library loads each time Planbook opens" (WO-7.16's wording, which covers both sign-in doors) —
+  and keeping it is what keeps that sentence true. A failure is
   swallowed on purpose: an offline launch is not an error, and the tap that needs the library says
   so in words if it is still missing then.
 */
