@@ -1564,6 +1564,11 @@ task.)*
 - **The domain verified** in the Cloud console against the host WO-8.7 settles.
 - **Submission**, with the date and reference recorded in this work order.
 - **Publishing status moved off Testing** once it clears.
+- **The consent screen's App name set to *Planbook*.** On 2026-09-27, during WO-7.14's laptop
+  reading, Google's own screen for removing third-party access named the app **wjt-planbook**, the
+  Cloud project's name. The App name is set in the Cloud console, not in this repository. A reviewer
+  compares it with the name on the home page and the privacy policy, and a teacher who sees an
+  unfamiliar name on the consent screen has a reason to stop.
 
 **The overlap worth planning for.** The privacy policy and `docs/FERPA.md` (WO-8.5) say overlapping
 things to different readers — one is a legal artifact at a URL Google will read, the other is the

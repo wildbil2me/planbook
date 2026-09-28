@@ -1367,3 +1367,59 @@ sync off, so `planbook_driveSyncOptIn` stays set and the header button stays dra
 in `src/sync-button.js` alone**: the About door and the harness do not go through it, and
 `signedIn` is `src/auth.js`'s to answer. **Do not treat every Drive failure as a refusal**:
 `network` and `drive` faults keep the session, and only a `401` ends it.
+
+---
+
+## WO-7.15 — a sync Google refused leaves the header button looking like one that worked
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.14 — the `refused()` that makes this state reachable in one tap; WO-7.5 — the header button this draws on
+**Closes roadmap** *(no box. A gap in WO-7.5's states, opened by WO-7.14's fix and read on the laptop by the owner.)*
+
+**Booked 2026-09-27**, owner-directed, from WO-7.14's 👤 reading at v141 on the deployed origin. The
+owner removed Planbook's access at myaccount.google.com and tapped the header's sync button. That
+sync met Google's `401` and **"appears to sync with no flag"**. The second tap opened Google's
+sign-in, so WO-7.14's fix works. WO-7.14's verifier named this cost before the reading: the refusal
+sentence is announced and no longer drawn.
+
+**What is wrong.** After a `401`, `syncNow()` settles `signed-out` and `refused()` ends the session.
+`syncButtonState()` in `src/sync-button.js` (~222) then walks its ladder. `lapsed` needs `tapFailed`,
+which only the sign-in door sets, and this tap went through the sync door. `failed` is skipped on
+purpose for `s.outcome === 'signed-out'` (~237). So the button falls through to `freshnessOf()` and
+draws `current` or `stale`, **the same wash a sync that worked leaves**. The only differences are the
+spoken announcement and the button's label, which now ends *"Tap to sign in to Google and sync
+now."* Neither is visible at arm's length.
+
+**Why it matters.** A teacher who taps once and walks away believes the year reached Drive, and it
+did not. That is the misconception WO-7.5's header exists to prevent: the button reads freshness so
+that it never says *synced* when it is not. No data is lost, because a `401` wrote nothing, but the
+next device she opens will be behind without her knowing it. It is reached whenever Google refuses a
+token before its hour is up (access removed, a password change, a Workspace admin). A plain lapse
+is not affected, because the tap takes the sign-in door first.
+
+**Deliverables**
+- **The header button draws a sync that ended `signed-out` as something other than `current` or
+  `stale`**, until a sign-in succeeds (`signedInAgain()` already clears that outcome at its cause).
+  Whether that is the existing `lapsed` state with its own reading or a new one is the implementer's
+  call, argued at `syncButtonState()`. The reading says, in words, that the last sync did not reach
+  Drive and that a tap signs in.
+- **About's badge follows it**, as it follows every other non-`current` state.
+- **A harness check in `tools/verify/drive-sync.mjs`**: seed a signed-in, clock-fresh session and a
+  `current` bookmark, make Drive answer `401`, tap the header button once, and assert the button is
+  not drawn as `current` or `stale`. It must be red on `HEAD`.
+- **Bump `CACHE` in `sw.js`.**
+
+**Acceptance**
+- [ ] The new check is red on `HEAD` and green with the change, with both runs recorded in
+      `TESTING.md` § WO-7.15.
+- [ ] Mutation-proved: put the `signed-out` outcome back on the freshness path and the new check goes
+      red. **The mutation is reverted before anything else is written** (`AGENTS.md`).
+- [ ] A sign-in that succeeds after the refusal returns the button to its freshness reading.
+- [ ] The whole browser harness shows no new failure.
+- [ ] 👤 **Laptop, deployed.** Connect and sync, remove Planbook's access at myaccount.google.com,
+      tap the header's sync button once: the button does not look like a sync that worked. Tap
+      again, sign in: it reads fresh.
+
+**Traps** — **Do not reach `failed`.** `failed` sends the tap to About (`tapSyncButton()`, ~379),
+and here the next tap must open Google's sign-in, which WO-7.14 just made work. **Do not re-open
+WO-7.14's ruling**: the session still ends on a `401`, and the fix is in what is drawn, not in
+`src/auth.js`. **Never green**, per WO-7.5: whatever the state, a working sync still draws no green.
