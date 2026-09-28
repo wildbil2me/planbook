@@ -1360,6 +1360,12 @@ Sync is stuck, not data lost: a `401` wrote nothing at Drive.
 - [x] 👤 **Laptop, deployed.** Connect, then remove Planbook's access at myaccount.google.com →
       Security → third-party access. Back in Planbook, tap the header's sync button. The next tap asks
       Google to sign in again rather than failing again, and About shows Connect.
+      *(Read by the owner 2026-09-27 at v141 on the deployed origin, and both halves passed. **The
+      tap before it did not read as the line assumed**: the line expected the refused sync to show,
+      and it looked like one that worked, because the header fell back to its freshness reading. The
+      verifier had named that cost before the reading. Booked as
+      [WO-7.15](#wo-715--a-sync-google-refused-leaves-the-header-button-looking-like-one-that-worked)
+      rather than held against this line, which asks only about the next tap.)*
 
 **Traps** — **The token stays memory-only** (`CLAUDE.md`, WO-7.1's ruling): ending the session
 writes nothing to storage, and **the opt-in survives**. A refused token is not the teacher switching
