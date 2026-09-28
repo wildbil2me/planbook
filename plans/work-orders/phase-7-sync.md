@@ -1426,6 +1426,17 @@ is not affected, because the tap takes the sign-in door first.
       again, sign in: it reads fresh. *(Read by the owner on the laptop at v142 on the deployed
       app, 2026-09-28: all five steps as described.)*
 
+*(**Landed 2026-09-27, closed 2026-09-28. The open call went to the existing `lapsed` state, not a
+seventh**: its tap already takes Google's sign-in, About's badge already carries its `!`, and its
+fill is the header's loudest non-alarm with no green. What changed is the reading, and a
+`!a.signedIn` guard keeps it from ever telling a signed-in teacher that a tap will sign her in; the
+argument is at `syncButtonState()`. **One limit the booking did not predict**, named by the verifier
+and not a failure: the `signed-out` outcome lives in memory only (`src/drive-sync.js` ~147), so
+after a relaunch the button goes back to the last good freshness reading. That reading is true for
+this device, since it describes the last sync that did reach Drive, but the "did not reach Drive"
+sentence does not survive a relaunch. Keeping it would mean persisting an outcome, which is a
+decision for the owner, not a fix owed here.)*
+
 **Traps** — **Do not reach `failed`.** `failed` sends the tap to About (`tapSyncButton()`, ~379),
 and here the next tap must open Google's sign-in, which WO-7.14 just made work. **Do not re-open
 WO-7.14's ruling**: the session still ends on a `401`, and the fix is in what is drawn, not in
