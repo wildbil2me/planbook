@@ -12616,12 +12616,14 @@ in the scratchpad, so the lines that matter are quoted.*
       label ending *"Tap to sign in to Google and sync now."*, and the new reading ends that way on
       purpose. WO-7.10's `lapsed` check still reads the failed-tap wording exactly, because that rung
       comes first. `node tools/wo-sweep.mjs`: `45 checks · 42 passed · 0 failed · 3 to review`.
-- [ ] 👤 **Laptop, deployed.** Not done by the implementer: it needs a real Google account and the
+- [x] 👤 **Laptop, deployed.** Not done by the implementer: it needs a real Google account and the
       deployed build (check that the build line reads v142, or force-quit first). Connect and sync, remove
       Planbook's access at myaccount.google.com → Security → third-party access, then tap the
       header's sync button once. It should turn white with the crossed-out cloud and nothing
       green, and its tooltip should read *"The last sync did not reach Google Drive…"*. Tap again,
       sign in: it should go back to the plain wash, *"Synced with Google Drive at …"*.
+      **Read by the owner on the laptop at v142 on the deployed app, 2026-09-28: all five steps
+      as described.**
 
 ## Phase 8 — 1.0 packaging
 

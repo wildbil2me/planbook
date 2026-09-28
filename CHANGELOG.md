@@ -21,8 +21,8 @@ leaves. A teacher who tapped once and walked away had no reason to think her yea
 Drive. Now the button stays white with the crossed-out cloud, and its tooltip says *The last sync did not reach
 Google Drive, because the Google sign-in had ended*. One tap signs in again and syncs, and the button
 returns to its normal reading. (WO-7.15 — harness green at 1555/1555; the two new checks were red
-against the old code and red again with the fix switched off. The owner's laptop reading on the
-deployed app is still owed.)
+against the old code and red again with the fix switched off. Read by the owner on the laptop at
+v142 on the deployed app.)
 
 ### A sign-in Google has refused signs you out instead of refusing every tap — 2026-09-27
 
