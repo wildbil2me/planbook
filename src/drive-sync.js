@@ -94,7 +94,7 @@
 
 import * as store from './store.js';
 import { parseBackup } from './backup.js';
-import { signInAvailable, authState, ensureFreshToken, refreshAuthChrome } from './auth.js';
+import { signInAvailable, authState, ensureFreshToken, refreshAuthChrome, refused } from './auth.js';
 import { showSaveState } from './save-indicator.js';
 import { announce } from './live-region.js';
 
@@ -268,7 +268,9 @@ export function planFor(localRev, remoteRev, baseRev) {
 
 /*
   Every failure below carries a `code`, and there are three of them because the teacher gets a
-  different sentence for each: `expired` (the token lapsed mid-sync — the fifth acceptance line),
+  different sentence for each: `expired` (Google answered 401 — the token lapsed mid-sync, which is
+  the fifth acceptance line, or was revoked before its hour was up, which is WO-7.14; either way
+  syncNow() ends the session in src/auth.js through refused() before it settles),
   `network` (nothing reached Google, which is the only one worth retrying), and `drive` (Google
   answered and said no). A bare Error with a message would collapse the three into one paragraph
   that has to hedge.
@@ -541,8 +543,10 @@ export async function syncNow() {
     if (!token) {
       /* THE FIFTH ACCEPTANCE LINE. Not a silent no-op: the sign-in ran out, and the Connect button
          is back on screen because the `finally` below repaints src/auth.js's half of the panel on a
-         `signed-out` outcome (WO-7.13). authState() computes `signedIn` from the clock, but nothing
-         redraws a button from a clock — until that repaint, this comment said the clock was enough,
+         `signed-out` outcome (WO-7.13). authState() computes `signedIn` from the session and the
+         clock (and since WO-7.14 a 401 below ends the session, so the clock is not the only thing
+         that can end a sign-in), but nothing redraws a button from either — until that repaint,
+         this comment said the clock was enough,
          and a sign-in that lapsed with About open left Connect hidden under "Connected to Google
          Drive". Nothing on this device changed and nothing was sent. */
       return settle('signed-out', 'Your Google sign-in has run out, so nothing was synced. '
@@ -573,7 +577,16 @@ export async function syncNow() {
     }
     return await keepBoth(token, doc, remote, localRev);
   } catch (e) {
-    return settle(e && e.code === 'expired' ? 'signed-out' : 'failed', sentenceFor(e), true);
+    /* A 401 IS GOOGLE SAYING THE SIGN-IN IS OVER, SO src/auth.js IS TOLD BEFORE THIS SETTLES
+       (WO-7.14). Until then only this outcome said so: the session stood, `signedIn` read true
+       until the clock ran it out — up to an hour after a teacher revoked Planbook's access — the
+       repaint in the `finally` below drew "Connected" beside a sentence saying to tap Connect, and
+       the header's tap skipped the sign-in and met the same 401 again. refused() drops the session
+       and nothing else: no revoke, no announcement, no write to storage, and the opt-in stands.
+       ONLY THIS ARM. A `network` or `drive` fault is not a finding about the token and keeps it. */
+    const expired = !!e && e.code === 'expired';
+    if (expired) refused();
+    return settle(expired ? 'signed-out' : 'failed', sentenceFor(e), true);
   } finally {
     busy = false;
     /* The chip goes back to what it says about local storage. `saved` rather than `error` on
@@ -586,8 +599,9 @@ export async function syncNow() {
     /* AND THE SIGN-IN'S HALF, WHEN THIS SYNC IS WHAT FOUND THE SIGN-IN GONE (WO-7.13). Connect,
        Disconnect and the status line above them are src/auth.js's, painted by refreshAuthChrome()
        and by nothing else, and no paint follows a token lapsing — `signedIn` changes on the clock
-       and the glass does not. So a teacher who opened About signed in, let the hour run out with it
-       open (an iPad resuming does not reload), and tapped Sync was left with no Connect, no Sync and
+       (or, since WO-7.14, on refused() in the `catch` above) and the glass does not. So a teacher
+       who opened About signed in, let the hour run out with it open (an iPad resuming does not
+       reload), and tapped Sync was left with no Connect, no Sync and
        "Connected to Google Drive". HERE, not in src/shell.js's tap chain, so every door that syncs
        gets it — About's button, the header's, and a harness calling this directly. Only on
        `signed-out`: no other outcome is a finding about the sign-in. It reads authState() and

@@ -12463,6 +12463,88 @@ run started):
 
 ---
 
+### WO-7.14 — a sign-in Google has refused still reads as signed in, and every sync tap refuses again
+
+**A 401 from Drive now ends the session in `src/auth.js`.** The module gained one export,
+`refused()`, which sets `session = null` and does nothing else: no `revoke()` (Google has already
+refused the token), no announcement and no paint (`syncNow()` announces and, since WO-7.13, repaints
+the auth half in its `finally`), no write to storage, and `lastError` untouched.
+`src/drive-sync.js` calls it in `syncNow()`'s `catch`, on the `expired` arm only, before it settles
+`signed-out`. A `network` or `drive` fault does not reach it. The import stays one-way, from
+`drive-sync.js` into `auth.js`, and `auth.js` still imports `src/live-region.js` and nothing else.
+`src/sync-button.js` is unchanged in code: its tap already asks `authState().signedIn`, which now
+reads `false` after a refusal, so the next header tap takes the sign-in branch.
+
+**Comments.** In `src/auth.js`: the state block now lists the session's three writers
+(`acceptTokenResponse()`, `disconnect()`, `refused()`); `authState()`'s *"`signedIn` is COMPUTED from
+the clock"* now says it is computed from the session and the clock, and why the clock alone was not
+enough; `ensureFreshToken()` notes that a refused token is no longer held; `refreshAuthChrome()`'s
+*"`signedIn` is computed from the clock"* now names the session too. In `src/drive-sync.js`: the
+`fault()` comment's `expired` arm, the no-token arm (~544) and the `finally` repaint (~601), which
+each said `signedIn` follows the clock. In `src/sync-button.js`: the header's *"THE LAPSE IS NOT
+WATCHED"*, the `lapsed` ladder entry, and a line above `tapSyncButton()`'s `!signedIn` branch.
+`CACHE` v140 → v141.
+
+**One existing clause changed, and it was asserting the defect.** The ~877 check (*"a token Google
+refuses part-way through…"*) ended in `afterStale.lineClass === 'class-error'`: the sync line painted
+red with the sentence in it. `refreshSyncChrome()` draws that line only while `signedIn` is true and
+draws nothing signed out, by design (src/auth.js's status line above it says *Not connected*). So
+the red line was reachable only because the 401 left the session standing. With the fix the check
+went red on exactly that clause (`green1`: `line class = class-hint`, everything else as before).
+The clause is replaced, not deleted: it now asserts `signedIn === false`, Connect shown and Sync
+hidden, which is the end state the lapse check below it has asserted since WO-7.13. On `HEAD` the
+replacement is red too (`red2`: `signedIn = true, Connect shown = false, Sync shown = true, line
+class = class-error`). No check after the 401 needed re-seeding: the next one, the lapse, already
+seeds its own token.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-7-sync.md` § WO-7.14, from
+`node tools/verify-shell.mjs`, real clock, Edge, 2026-09-27 EDT. The `HEAD` and mutation runs used
+`git worktree`s of `74bdc30` in the session scratchpad, so the main tree never held a mutation. Logs
+are in the scratchpad, so the lines that matter are quoted.*
+
+- [x] **Acceptance 1: red on `HEAD`, then green.** Two whole-harness runs with `src/` and `sw.js`
+      exactly as `74bdc30` (`git diff --stat -- src sw.js` empty in the worktree) and the new harness
+      file copied in. `red1` (before the ~877 clause was revised): `1553 checks · 1552 passed · 1
+      failed · 0 skipped`, `EXIT=1`; the one failure was the new check, reading `after: outcome =
+      signed-out, signedIn = true, a token to hand out = true, session fields =
+      ["token","expiresAt","granted"], Connect shown = false, Sync shown = true, status = "Connected
+      to Google Drive. This access ends at 8:03 PM…"; header = {"hidden":false,"label":"Changes on
+      this device are not in Google Drive yet. Tap to sync now."}`. That is the work order's three
+      symptoms at once: About saying Connected, the header's tap skipping the sign-in, and a token
+      still handed out. `red2` (final harness): `1553 · 1551 passed · 2 failed`, 591s, `EXIT=1`,
+      the new check reading identically and the revised ~877 clause red as quoted above. With the
+      change, `green2` (final tree): `1553 checks · 1553 passed · 0 failed · 0 skipped`, 592s,
+      `EXIT=0`. The new check read `after: outcome = signed-out, signedIn = false, a token to hand
+      out = false, session fields = [], Connect shown = true, Sync shown = false, status = "Not
+      connected. Planbook works exactly the same either way."; storage unchanged = true` with
+      `planbook_driveSyncOptIn` `"true"` before and after, and `header = {"hidden":false,"label":"Changes
+      on this device are not in Google Drive yet. Tap to sign in to Google and sync now."}`.
+- [x] **Acceptance 2: mutation-proved, and reverted before anything else was written.** In a third
+      worktree holding this change, `if (expired) refused();` was commented out under a `MUTATION
+      WO-7.14` marker. `mut1`: `1553 checks · 1552 passed · 1 failed`, 590s, `EXIT=1`; the new check
+      went red with the `HEAD` reading (`signedIn = true, a token to hand out = true, … Connect shown
+      = false … status = "Connected to Google Drive…"`). (That worktree carried the harness before the
+      ~877 clause was revised, so that clause could not go red in it.) The worktree was removed with
+      `git worktree remove --force`, and `grep -rn "MUTATION WO-7.14" src tools sw.js index.html`
+      in the main tree found nothing, before this section or any other prose was written.
+- [x] **Acceptance 3: no comment in the three files still says `signedIn` follows the clock alone.**
+      See **Comments** above. `grep -n -i "clock" src/auth.js src/drive-sync.js src/sync-button.js`
+      was read line by line. The clock mentions left are about the expiry being a clock time, the
+      one-minute margin, the header's no-countdown rule, and date formatting, plus the new sentences
+      that say the clock is *not* alone.
+- [x] **Acceptance 4: the whole harness shows no new failure.** `green2`: `1553 · 1553 · 0 failed ·
+      0 skipped`, `EXIT=0`. The two new sites are the refusal check and the negative (*"a sync that
+      fails on the network, or on a Drive answer that is not a 401, keeps the sign-in"*), which is
+      green on `HEAD` as well because `HEAD` never ends the session. `node tools/wo-sweep.mjs`: `45
+      checks · 42 passed · 0 failed · 3 to review`, after `tools/README.md`'s call-site line went
+      from 1540 to 1542.
+- [ ] 👤 **Laptop, deployed.** Not done by the implementer: it needs a real Google account and the
+      deployed build. Connect, then at myaccount.google.com → Security → third-party access remove
+      Planbook. Back in Planbook, tap the header's sync button once: that sync meets Google's 401 and
+      settles. The next tap should open Google's sign-in window rather than failing again, and About
+      should show *Connect Google Drive* with the status line reading *Not connected*. Force-quit or
+      check the build line is v141 first.
+
 ## Phase 8 — 1.0 packaging
 
 *Phase goal: something a stranger can find, evaluate, install, and trust.*

@@ -874,6 +874,22 @@ check('and the retry a teacher makes by hand afterwards works — the failure le
   'outcome = ' + recovered.kind + ', baseRev = ' + afterRecovered.state.baseRev
     + ', localRev = ' + afterRecovered.state.localRev);
 
+/* ONLY A 401 ENDS A SIGN-IN (WO-7.14). The 401 check below and the About-open one after WO-7.13's
+   assert that Google refusing the token drops the session in src/auth.js; this is the other
+   direction, read off syncs this section already made. A dead connection and a Drive that answered
+   "two files, will not guess" are findings about the network and about Drive, never about the token,
+   and a build that dropped the session on every failure would send a teacher on a school network
+   back through Google's sign-in for a fault a sign-in cannot fix. The retry-by-hand above is the
+   same fact seen from the far side — it reused the token — and this says it in words. */
+check('a sync that fails on the network, or on a Drive answer that is not a 401, keeps the '
+  + 'sign-in — only Google refusing the token ends it (WO-7.14), so neither failure sends the '
+  + 'teacher back through Google for a fault a sign-in cannot fix',
+  dead.kind === 'failed' && afterDead.state.signedIn === true
+    && twins.kind === 'failed' && afterTwins.state.signedIn === true,
+  'network failure: outcome = ' + dead.kind + ', signedIn after = ' + afterDead.state.signedIn
+    + '; two-files refusal: outcome = ' + twins.kind + ', signedIn after = '
+    + afterTwins.state.signedIn);
+
 /* ── a token Google refuses part-way through ── */
 await reset();
 await evalJs(`(function(){ window.planbook.store.update(function(d){
@@ -882,16 +898,29 @@ await evalJs('window.__drive.failUploads = 401; 1');
 const stale = await sync();
 const afterStale = await evalJs(READ);
 const liveAfterStale = await fileNow(liveId);
+/* ITS LAST CLAUSE CHANGED AT WO-7.14, AND IT WAS ASSERTING THE DEFECT. It read
+   `afterStale.lineClass === 'class-error'` — the sync line painted red with this sentence in it. But
+   refreshSyncChrome() draws that line only while `signedIn` is true, and draws NOTHING signed out,
+   on purpose (src/auth.js's status line above it says "Not connected"; see that function). So the
+   red line was reachable here only because a 401 left the session standing — which is WO-7.14's
+   defect: the panel read "Connected" with Connect hidden. With the session ended, this outcome looks
+   exactly as the lapse below has looked since WO-7.13: no sync line, Connect drawn by the `finally`'s
+   repaint, the sentence announced. The clause now asserts that end state instead, which is the
+   check's own claim — "telling the teacher to connect again" — made against the control she taps. */
 check('a token Google refuses part-way through produces a sentence naming the sign-in and telling '
-  + 'the teacher to connect again — not a silent no-op and not a Google error code — and the '
-  + 'Drive file is exactly as it was, because the refusal landed on the write rather than after it',
+  + 'the teacher to connect again — not a silent no-op and not a Google error code — ends the '
+  + 'sign-in and puts Connect back, and the Drive file is exactly as it was, because the refusal '
+  + 'landed on the write rather than after it',
   stale.kind === 'signed-out' && /sign-in ran out/.test(stale.message)
     && /Connect Google Drive/.test(stale.message)
     && liveAfterStale.marker === 'WO72-LOCAL-E'
     && afterStale.state.baseRev === afterRecovered.state.baseRev
-    && afterStale.lineClass === 'class-error',
+    && afterStale.state.signedIn === false && afterStale.connectBtn.shown === true
+    && afterStale.syncBtn.shown === false,
   'outcome = ' + stale.kind + ', the Drive file still reads ' + JSON.stringify(liveAfterStale.marker)
-    + ', baseRev = ' + afterStale.state.baseRev + ', line class = ' + afterStale.lineClass
+    + ', baseRev = ' + afterStale.state.baseRev + ', signedIn = ' + afterStale.state.signedIn
+    + ', Connect shown = ' + afterStale.connectBtn.shown + ', Sync shown = '
+    + afterStale.syncBtn.shown + ', line class = ' + afterStale.lineClass
     + ', message = ' + JSON.stringify(stale.message));
 
 /* THE TOKEN LAPSING BEFORE THE SYNC RATHER THAN DURING IT — the half of the fifth acceptance line
@@ -1015,6 +1044,100 @@ check('a sign-in that runs out WITH ABOUT OPEN is redrawn by the tap that finds 
     + openOut.state.outcome + ', calls = ' + openOut.calls.length + ', Connect shown = '
     + openOut.connectBtn.shown + ', Sync shown = ' + openOut.syncBtn.shown + ', status = '
     + JSON.stringify((openOutStatus || '').slice(0, 60)));
+
+/* ── a token Google REFUSES before its hour is up, with About open (WO-7.14) ──
+ *
+ * THE CLOCK SAYS SIGNED IN AND GOOGLE SAYS NO. A teacher who removes Planbook's access at her Google
+ * account, changes her password, or whose admin revokes third-party access holds a token that is
+ * fresh by the clock and refused by Drive. Until WO-7.14 src/auth.js decided `signedIn` from the
+ * clock alone, so after the 401 the session stood: WO-7.13's repaint drew "Connected to Google
+ * Drive" with Connect hidden, beside a sync sentence telling her to tap Connect, and the header's
+ * tap skipped the sign-in and went straight back to the 401. The 401 check above cannot see it — it
+ * reads the sync's own outcome and line, which were always right.
+ *
+ * WO-7.13's shape: About opened on a 3599s token and read painted signed in (the premise asserted,
+ * not assumed), then a real tap on Sync through the one delegated listener with the modal never
+ * closed. The difference is the token: it is NOT lapsed. The Drive answers 401 to everything.
+ *
+ * THE RED ON HEAD DOES NOT DEPEND ON A PAINT. `authState().signedIn` and `accessToken()` are read
+ * off the module, and on a build without refused() both still say signed in, whatever any late
+ * paint from drive-sign-in's leftover connect() draws — so the WO-7.13 batch machinery is not needed
+ * here, and a late paint cannot turn this green either: it would read the same standing session.
+ *
+ * THE OPT-IN IS SWITCHED ON FOR THE LENGTH OF THE BLOCK, so the header button is drawn and the two
+ * Traps lines can be read off the glass rather than argued: refused() writes nothing to storage
+ * (every planbook_ key is compared before and after) and the opt-in survives, and the header's next
+ * tap is a sign-in — its label reads "Tap to sign in to Google and sync now", which is
+ * src/sync-button.js drawing the `!signedIn` branch the tap takes. The stored value is put back as
+ * it was at the foot of the block; the header's own paint is left for the Disconnect tap below,
+ * which clears the opt-in and repaints it exactly as it did before this block existed.
+ */
+await shutModals();
+await reset();
+const priorOptIn = await evalJs(`(function(){ try { return localStorage.getItem('planbook_driveSyncOptIn'); }
+  catch (e) { return null; } })()`);
+await evalJs("window.planbook.setPref('driveSyncOptIn', true); 1");
+const STORED = `(function(){ var out = {};
+  for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i);
+    if (k.indexOf('planbook_') === 0) out[k] = localStorage.getItem(k); }
+  return JSON.stringify(out, Object.keys(out).sort()); })()`;
+const HEADER = `(function(){ var b = document.getElementById('syncBtn');
+  return b ? { hidden: b.classList.contains('hidden'), label: b.getAttribute('aria-label') || '' }
+    : null; })()`;
+await evalJs(SEED('wo714-refused-token-' + Date.now(), 3599));
+await clickSel('[data-modal-open="aboutModal"]');
+await new Promise((r) => setTimeout(r, 400));
+const refusedIn = await evalJs(READ);
+const refusedInStatus = await evalJs(AUTH_LINE);
+const storedBefore = await evalJs(STORED);
+await evalJs('window.__drive.failNext = 401; 1');
+await clickSel('[data-drive-sync]');
+const refusedTapAt = Date.now();
+const SETTLED_401 = `(function(){ return !window.planbook.driveSync.syncState().busy
+  && window.__drive.failCount > 0; })()`;
+while (Date.now() - refusedTapAt < 5000 && !(await evalJs(SETTLED_401))) {
+  await new Promise((r) => setTimeout(r, 50));
+}
+const refusedOut = await evalJs(READ);
+const refusedOutStatus = await evalJs(AUTH_LINE);
+const refusedAuth = await evalJs(`(function(){ var a = window.planbook.auth;
+  return { signedIn: a.authState().signedIn, fields: a.authState().fields,
+    token: a.accessToken() !== null }; })()`);
+const storedAfter = await evalJs(STORED);
+const headerAfter = await evalJs(HEADER);
+const refusedFails = await evalJs('window.__drive.failCount');
+check('a token Google refuses BEFORE ITS HOUR IS UP ends the sign-in — with About open and the '
+  + 'clock still saying fresh, one tap on Sync that meets a 401 leaves authState() signed out and '
+  + 'no token to hand out, Connect back on the panel and the status line no longer saying '
+  + 'Connected; and it writes nothing to storage, so the opt-in stands and the header button stays, '
+  + 'reading that its next tap signs in to Google rather than meeting the same refusal again '
+  + '(WO-7.14)',
+  refusedIn.aboutOpen === true && refusedIn.state.signedIn === true
+    && refusedIn.connectBtn.shown === false && refusedIn.syncBtn.shown === true
+    && typeof refusedInStatus === 'string' && /^Connected/.test(refusedInStatus)
+    && refusedFails > 0 && refusedOut.state.outcome === 'signed-out'
+    && refusedOut.aboutOpen === true
+    && refusedAuth.signedIn === false && refusedAuth.token === false
+    && refusedAuth.fields.length === 0
+    && refusedOut.connectBtn.shown === true && refusedOut.syncBtn.shown === false
+    && typeof refusedOutStatus === 'string' && !/^Connected/.test(refusedOutStatus)
+    && storedAfter === storedBefore && /"planbook_driveSyncOptIn":"true"/.test(storedAfter)
+    && !!headerAfter && headerAfter.hidden === false
+    && /Tap to sign in to Google and sync now\.$/.test(headerAfter.label),
+  'before the tap: About open = ' + refusedIn.aboutOpen + ', signedIn = '
+    + refusedIn.state.signedIn + ', Connect shown = ' + refusedIn.connectBtn.shown
+    + ', Sync shown = ' + refusedIn.syncBtn.shown + ', status = '
+    + JSON.stringify((refusedInStatus || '').slice(0, 40)) + '; Drive refused ' + refusedFails
+    + ' request(s); after: outcome = ' + refusedOut.state.outcome + ', signedIn = '
+    + refusedAuth.signedIn + ', a token to hand out = ' + refusedAuth.token + ', session fields = '
+    + JSON.stringify(refusedAuth.fields) + ', Connect shown = ' + refusedOut.connectBtn.shown
+    + ', Sync shown = ' + refusedOut.syncBtn.shown + ', status = '
+    + JSON.stringify((refusedOutStatus || '').slice(0, 60)) + '; storage unchanged = '
+    + (storedAfter === storedBefore) + ' ' + storedAfter + '; header = ' + JSON.stringify(headerAfter));
+await evalJs(`(function(){ window.__drive.failNext = null;
+  try { if (${JSON.stringify(priorOptIn)} === null) localStorage.removeItem('planbook_driveSyncOptIn');
+    else localStorage.setItem('planbook_driveSyncOptIn', ${JSON.stringify(priorOptIn)}); } catch (e) {}
+  return 1; })()`);
 
 /* ── the control, in the state it is drawn in ── */
 await evalJs(SEED('wo72-synthetic-token-b-' + Date.now(), 3599));

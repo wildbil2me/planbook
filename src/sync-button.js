@@ -72,7 +72,13 @@
   THE LAPSE IS NOT WATCHED. A token that runs out while the app sits open changes nothing on the
   header, and does not need to: the reading is freshness, which the lapse does not touch, and the next
   tap finds no token and signs in inside itself before it syncs. Watching the clock for it would be
-  the timer above by another name.
+  the timer above by another name. The clock is not the only way a sign-in ends, though, and this
+  file relied on it being so until WO-7.14: a token Google refuses before its hour is up (access
+  removed at the teacher's Google account, a password change, an admin's revoke) read as signed in
+  here until the clock caught up, so every tap skipped the sign-in and met the same 401. src/auth.js
+  now ends the session on that 401 (refused(), called by src/drive-sync.js), so the next tap finds no
+  token there too. The fix is there and not here on purpose: About's door and the harness do not go
+  through this file, and `signedIn` is src/auth.js's to answer.
 
   ── WHAT IT IS NOT ──
 
@@ -204,7 +210,9 @@ function staleReading(at, now) {
                  SECOND tap cures. What it no longer means is "the sign-in ended": a missing token is
                  every launch now, and is not an alarm. A sync that found the sign-in gone is not
                  this state either — syncNow() asks Google nothing, so that outcome is the token's
-                 lapse, not a refusal, and the tap that follows signs in on its own.
+                 lapse, or since WO-7.14 Google answering 401 to it (which ends the session in
+                 src/auth.js), never a sign-in her tap asked for, and the tap that follows signs in
+                 on its own.
     3. failed    the last sync ended badly for any reason but the sign-in.
     4. unknown   the bookmark has not been read yet; drawn as `syncing` for the frame it takes,
                  because an amber "not in Drive yet" corrected a moment later is a false sentence.
@@ -371,6 +379,8 @@ export function tapSyncButton() {
   if (!st.drawn || st.state === 'syncing') return { door: 'none', syncing: null };
   if (st.state === 'failed') return { door: 'about', syncing: null };
 
+  /* "No sign-in" is no session or a lapsed one — and since WO-7.14 a session Google answered 401 to
+     is no session, so a revoked token lands here rather than in another refused sync. */
   if (!auth.authState().signedIn) {
     /* Evaluated first, in this stack: reconnect() asks Google before its own first await. */
     const asking = auth.reconnect();

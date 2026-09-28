@@ -1309,7 +1309,7 @@ direct call at settle, not a new `subscribe()`.
 
 ## WO-7.14 — a sign-in Google has refused still reads as signed in, and every sync tap refuses again
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-7.13 — the `signed-out` repaint this makes truthful; WO-7.2 — the `401` arm in `syncNow()`
+**Ship** — · **Status** 🔍 AWAITING VERDICT — 2026-09-27 · **Size** S · **Depends on** WO-7.13 — the `signed-out` repaint this makes truthful; WO-7.2 — the `401` arm in `syncNow()`
 **Closes roadmap** *(no box. A defect in WO-7.2's fifth Acceptance line, found by WO-7.13's verifier.)*
 
 **Booked 2026-09-27**, owner-directed, from WO-7.13's verdict. The verifier flagged it as outside
@@ -1350,13 +1350,13 @@ Sync is stuck, not data lost: a `401` wrote nothing at Drive.
 - **Bump `CACHE` in `sw.js`.** Both `src/` files are in `SHELL`.
 
 **Acceptance**
-- [ ] The new check is red on `HEAD` and green with the change, with both runs recorded in
+- [x] The new check is red on `HEAD` and green with the change, with both runs recorded in
       `TESTING.md` § WO-7.14.
-- [ ] Mutation-proved: take out the call that ends the session and the new check goes red. **The
+- [x] Mutation-proved: take out the call that ends the session and the new check goes red. **The
       mutation is reverted before anything else is written** (`AGENTS.md`).
-- [ ] No comment in `src/auth.js`, `src/drive-sync.js` or `src/sync-button.js` still says `signedIn`
+- [x] No comment in `src/auth.js`, `src/drive-sync.js` or `src/sync-button.js` still says `signedIn`
       follows the clock alone.
-- [ ] The whole browser harness shows no new failure.
+- [x] The whole browser harness shows no new failure.
 - [ ] 👤 **Laptop, deployed.** Connect, then remove Planbook's access at myaccount.google.com →
       Security → third-party access. Back in Planbook, tap the header's sync button. The next tap asks
       Google to sign in again rather than failing again, and About shows Connect.

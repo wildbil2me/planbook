@@ -1223,7 +1223,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1540 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1542 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2162,6 +2162,16 @@ drive-sign-in's leftover `connect()` cannot turn it green on a build without the
 prints **1551**: `1551 checks · 1551 passed · 0 failed · 0 skipped`, 585s, exit 0, measured
 2026-09-27 on the real clock. The same count was red 3 of 3 on `HEAD`'s `src/` (`1551 · 1549 · 2
 failed`). Runs and mutation are in `TESTING.md` § WO-7.13.
+
+**WO-7.14 moved it from 1540 to 1542, and the executed count from 1551 to 1553. That is two sites and
+two results**, both in `verify/drive-sync.mjs`, both literal, neither in a loop nor a failure arm, so
+the gap stays at −11 and the file count does not move. One is the refusal with About open: a token
+fresh by the clock, a Drive that answers 401, a real tap on Sync, and `authState().signedIn` read off
+the module afterwards, so its red on `HEAD` does not depend on a paint. The other is the negative:
+a network failure and a two-files Drive refusal each keep the sign-in. The run prints **1553**:
+`1553 checks · 1553 passed · 0 failed · 0 skipped`, 592s, exit 0, measured 2026-09-27 on the real
+clock. The same count on `HEAD`'s `src/` read `1553 · 1551 passed · 2 failed`. Runs, mutation, and
+the one existing clause that changed are in `TESTING.md` § WO-7.14.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

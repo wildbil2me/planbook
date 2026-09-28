@@ -160,7 +160,9 @@ const VISIBLE_TIMEOUT_MS = 180 * 1000;
 
   `session` is null or exactly three fields — see acceptTokenResponse(), which is where the
   three-field rule is the enforcement of "no refresh token is stored" rather than a formatting
-  choice.
+  choice. Its writers, all of them: acceptTokenResponse(), which sets it or clears it; disconnect(),
+  which clears it; and refused(), which clears it when Google has answered a Drive request with 401
+  (WO-7.14). Nothing else in the app can reach it.
 */
 let session = null;
 /* A sentence for the teacher, or ''. Never a raw Google error string on its own: `popup_closed`
@@ -266,10 +268,19 @@ function fresh() {
   carried. accessToken() below is the one door to the string, and it has exactly one intended
   caller — the code WO-7.2 writes.
 
-  `signedIn` is COMPUTED from the clock every time it is read, never stored as a flag. A lapsed
-  token therefore reads as signed out everywhere at once, which is this work order's answer to
-  "token expiry is handled without a silent failure": there is no state in this module that can go
-  on claiming a connection after the token behind it has lapsed.
+  `signedIn` is COMPUTED every time it is read, never stored as a flag — from TWO facts, not one:
+  whether there is a session, and whether the clock has run it out. A lapsed token therefore reads
+  as signed out everywhere at once, which is this work order's answer to "token expiry is handled
+  without a silent failure": there is no state in this module that can go on claiming a connection
+  after the token behind it has lapsed.
+
+  THE CLOCK ALONE WAS NOT ENOUGH, AND WO-7.14 IS THE SCAR. Google can refuse a token before its hour
+  is up — the teacher removes Planbook's access at her Google account, changes her password, or a
+  Workspace admin revokes third-party access — and until that work order nothing told this module.
+  The session stood, `signedIn` read true for up to an hour, About drew "Connected" beside a sync
+  sentence telling her to tap Connect, and the header's tap skipped the sign-in and got another 401
+  every time. So a 401 from Drive now ends the session here, through refused() below, and from that
+  moment the clock is no longer the question: there is no session to be fresh.
 */
 export function authState() {
   return {
@@ -299,6 +310,36 @@ export function authState() {
 */
 export function accessToken() {
   return fresh() ? session.token : null;
+}
+
+/*
+  GOOGLE HAS REFUSED THE TOKEN, SO THERE IS NO SIGN-IN (WO-7.14). src/drive-sync.js calls this on
+  the `expired` arm — a Drive request answered 401 — before it settles `signed-out`, and that is its
+  only caller. It drops the session and does nothing else, and each thing it does not do is a
+  decision:
+
+    · NO revoke(). disconnect() revokes because dropping our reference leaves a token valid at
+      Google for the rest of its hour; here Google has already said the token is no good, so there
+      is nothing to revoke and a request to do it would be a round trip to be told so again.
+    · NO announcement and NO paint. syncNow() settles `signed-out`, announces its own sentence, and
+      repaints this module's half of the panel in its `finally` (WO-7.13). A second sentence from
+      here would be the live region saying one thing twice.
+    · NO write to storage of any kind, and in particular NOT the opt-in. The token was only ever in
+      memory (decision 1), and `planbook_driveSyncOptIn` is src/sync-button.js's: a token Google
+      refused is not the teacher switching sync off, so the header button stays drawn and her next
+      tap on it signs in again — which is the whole point, because with the session standing that
+      tap skipped the sign-in and went straight back to the 401.
+    · `lastError` is left alone. It is this module's words about a sign-in attempt, and no attempt
+      was made; the sentence about the refusal is src/drive-sync.js's.
+
+  Only a 401 reaches here. A `network` or `drive` fault says nothing about the token, and a sync
+  that failed for either keeps its session — the harness asserts both directions.
+
+  The dependency still points one way: src/drive-sync.js imports this, and this file imports
+  src/live-region.js and nothing else.
+*/
+export function refused() {
+  session = null;
 }
 
 /* ────────────────────────────── taking a token ────────────────────────────── */
@@ -679,7 +720,9 @@ export function noteSyncOptIn(on) {
   window reached from a tap that could no longer vouch for it.
 
   WHAT IT DOES NOW: hands back the token this module holds if it is fresh, and null if it is not —
-  never a window, never a request, never a write to `lastError`. A caller that gets null says so in
+  never a window, never a request, never a write to `lastError`. "Holds" is the word that matters
+  since WO-7.14: a token Google answered 401 to is dropped by refused(), so this no longer hands a
+  refused token straight back for the rest of its hour. A caller that gets null says so in
   its own words (syncNow() settles `signed-out`, "Tap Connect Google Drive above, then sync again"),
   and the one place a token is fetched is a tap asking inside its own stack: connect() and
   reconnect() above. The header's tap on a device with no token calls reconnect() FIRST, in the
@@ -726,8 +769,9 @@ export function preloadSignIn() {
   disconnect(); noteSyncOptIn(); and src/drive-sync.js's syncNow(), when a sync settles
   `signed-out` (WO-7.13).
 
-  NOTHING CALLS IT WHEN A TOKEN LAPSES. `signedIn` is computed from the clock, so authState() is
-  right the moment the hour is up — but the panel is a paint, and a panel left open across the
+  NOTHING CALLS IT WHEN A TOKEN LAPSES. `signedIn` is computed from the session and the clock, so
+  authState() is right the moment the hour is up — and, since WO-7.14, the moment Google refuses the
+  token, because refused() ends the session on the 401 — but the panel is a paint, and a panel left open across the
   lapse goes on reading "Connected" until one of the calls above. This comment said "after every
   flip" until WO-7.13, and a lapse is the flip nothing follows: a sync that found one repainted only
   its own half, and the teacher was left with no Connect under "Connected to Google Drive". The
