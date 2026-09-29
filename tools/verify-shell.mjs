@@ -133,6 +133,7 @@ import { run as calendarEvents } from './verify/calendar-events.mjs';
 import { run as calendarDerived } from './verify/calendar-derived.mjs';
 import { run as calendarDrawn } from './verify/calendar-drawn.mjs';
 import { run as calendarOpensOnDay } from './verify/calendar-opens-on-day.mjs';
+import { run as stripHoldsStill } from './verify/strip-holds-still.mjs';
 import { run as concernList } from './verify/concern-list.mjs';
 import { run as praiseColumn } from './verify/praise-column.mjs';
 import { run as glanceQuiet } from './verify/glance-quiet.mjs';
@@ -354,6 +355,11 @@ const BROWSER_SECTIONS = [
      proves the day. It seeds its own class, reloads, and takes the class back out at its foot, so it
      depends on its neighbours in neither direction. */
   { file: 'verify/calendar-opens-on-day.mjs', run: calendarOpensOnDay },
+  /* WO-2.56, directly after the section it borrows its shape from: it seeds its own class, drives
+     the register at three sizes, reloads, takes the class back out and leaves the page on the class
+     grid at 1280x900 — the state calendar-opens-on-day.mjs leaves it in — so the sections either
+     side of it see what they saw before it existed. */
+  { file: 'verify/strip-holds-still.mjs', run: stripHoldsStill },
   { file: 'verify/concern-list.mjs', run: concernList },
   { file: 'verify/praise-column.mjs', run: praiseColumn },
   /* AFTER THE THREE SIGNALS SECTIONS AND BEFORE THE RESTORE (WO-6.7). It reads the card's two chips

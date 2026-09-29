@@ -93,11 +93,18 @@
    ends in a gap. */
 .attendance-body { padding: 0 20px 20px; }
 
-/* ── "YOU ARE NOT ON TODAY" ── */
+/* ── THE BAND ABOVE THE STATE LINE: THE TWO TERM MESSAGES ── */
 /* A band, not a tint. The acceptance line is that this is visible in a glance, on an iPad, in a
-   classroom, and a tint is exactly the fine print this screen keeps refusing. Interactive indigo
-   rather than caution amber: being on a past day is a state the teacher CHOSE, and amber in this
-   app means "something needs doing". */
+   classroom, and a tint is exactly the fine print this screen keeps refusing.
+
+   IT WAS "YOU ARE NOT ON TODAY" FIRST, AND SINCE WO-2.56 IT NEVER SAYS THAT. The paging and editing
+   sentences it was built for moved into the state line's own slot — `.attendance-state.away` below —
+   because a band that un-hid on the first ◀ Earlier pushed the pager down under the second click. What
+   this strip carries now is the rollover and the off-term message, both present on arrival, both in
+   the tones declared under this rule. The base values stay the interactive indigo they were written
+   in, and nothing now draws the band in them: every paint puts one of the two tones on top. Kept
+   rather than moved onto a modifier, because the tone rules below overwrite them on source order and
+   were written to. */
 .attendance-body .attendance-banner {
   display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
   margin: 0 0 10px; padding: 10px 14px;
@@ -149,7 +156,9 @@
 /* Qualified by the container rather than left bare, which is the posture `.roster-hint` and
    `.class-error` take in shell.css — the qualifier was `.modal-body` until WO-1.13 and is this
    screen's own body now. It describes the ONE day that accepts edits, which is today unless a past
-   column has been unlocked. */
+   column has been unlocked — and since WO-2.56 it also says so when that day is not the one on
+   screen, in its own slot and at its own height, which is the whole point of that work order: every
+   variant below changes colour and nothing else, so nothing under this line moves when it does. */
 .attendance-body .attendance-state {
   display: block; margin: 2px 0 10px;
   padding: 8px 12px; border-radius: 8px;
@@ -176,6 +185,12 @@
    greyed, italic head (dashboard.html:573) against nothing dashed at all; this is that distinction
    with Planbook's dropped column, which Roll Call! does not have, kept on the other side of it. */
 .attendance-body .attendance-state.covered { background: #f5f7fa; border-color: #d0d8e4; color: #6b7a8d; }
+/* PAGED AWAY (WO-2.56) — "Today is not on screen." The band's interactive indigo, the same three
+   values `.attendance-banner` above declares, because it is the same sentence moved into this slot
+   and being on another week is a state the teacher CHOSE: amber here means something needs doing.
+   Colours only — no padding, border width or type size — for the reason the header of this rule
+   gives. Values inline, never variables, per CLAUDE.md § Conventions. */
+.attendance-body .attendance-state.away { background: #eef2ff; border-color: #b0bcf0; color: #3a4a8a; }
 .attendance-body .attendance-totals {
   margin: -4px 0 10px; color: #6b7a8d; font-size: 12px; font-weight: 700; line-height: 1.4;
 }
@@ -288,13 +303,18 @@
 .attendance-sort-btn.active { background: #5b6fcc; border-color: #5b6fcc; color: #fff; }
 
 /* ── THE PAGER ── */
-/* Earlier · range · Today · Later, immediately above the columns it moves. "Later" sits disabled
-   at the window that ends today rather than disappearing: a control that is there and greyed says
-   there is no tomorrow to go to, and a control that is absent says nothing at all. */
-.attendance-pager { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
-.attendance-pager-range {
-  font-size: 11px; font-weight: 700; color: #8a9bb0; margin-right: auto;
-  font-variant-numeric: tabular-nums;
+/* Earlier · Today · Later, immediately above the columns it moves, together at the right edge.
+   "Later" sits disabled at the window that ends today rather than disappearing: a control that is
+   there and greyed says there is no tomorrow to go to, and a control that is absent says nothing at
+   all — and portrait's disabled pair keeps its place in the group for the same reason.
+
+   GROUPED AT THE RIGHT SINCE WO-2.56, by `justify-content` rather than by a spacer. A date range sat
+   between Earlier and Today until then, carrying `margin-right: auto`, which parked Earlier alone at
+   the left edge and read as misaligned beside the day columns; the range repeated what every column
+   head prints, and it went with its rules. */
+.attendance-pager {
+  display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 6px;
 }
 
 /* ── THE GRID ── */
@@ -1075,10 +1095,11 @@
   .attendance-body .attendance-banner { font-size: 15px; padding: 12px 16px; }
   .attendance-banner-text { flex-basis: 200px; }
   /* The size comes from `.class-action-btn`'s own coarse rule, which this button also wears; it is
-     named here so the control appears in this block rather than being covered somewhere else. It
-     covers BOTH of the strip's buttons since WO-2.51 — "Back to today" and "Switch to <term>" are
-     the same component with the same class, which is why the rollover added no control class of its
-     own and owes this block no second line. */
+     named here so the control appears in this block rather than being covered somewhere else. It is
+     the strip's ONE button since WO-2.56 — "Switch to <term>" — where it covered two from WO-2.51
+     until then; the other was "Back to today", which went because it duplicated the pager's own
+     `Today`. The rule is kept for the one that is left, and a second button on the band would owe
+     this block nothing new. */
   .attendance-banner-btn { min-height: 44px; min-width: 44px; }
   .attendance-body .attendance-state { font-size: 14px; padding: 10px 14px; }
   .attendance-actions { gap: 10px; margin-bottom: 12px; }
@@ -1125,7 +1146,6 @@
   .attendance-key { min-width: 28px; padding: 4px 9px; font-size: 13px; }
   .attendance-sort-btn { padding: 8px 14px; font-size: 12px; min-height: 44px; min-width: 44px; }
   .attendance-pager { gap: 10px; }
-  .attendance-pager-range { font-size: 12px; }
   .attendance-grid-wrap { margin-top: 2px; }
   .attendance-grid { font-variant-numeric: tabular-nums; }
   .attendance-corner { font-size: 11px; }
@@ -1450,7 +1470,6 @@
      three 44px targets do not get smaller because the screen did, and a phone is where this grid
      already leans on the wrap's sideways-scroll valve. */
   .attendance-passes, .attendance-pass-td { padding-left: 4px; padding-right: 4px; }
-  .attendance-pager-range { display: none; }
 }
 
 /* ══════════════════════════ THE PRINTED PAGE (WO-2.6) ══════════════════════════

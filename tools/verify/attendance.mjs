@@ -359,6 +359,11 @@ const INSTALL_ATT_READER = `(function(){
       dateText: (document.getElementById('attendanceDate') || {}).textContent,
       stateText: (document.getElementById('attendanceState') || {}).textContent,
       stateClass: (document.getElementById('attendanceState') || {}).className,
+      /* The rule a question mark stands for lives on the state line's title since WO-2.56, where
+         it moved from a note that pushed the grid down under the first tap. (No backticks in this
+         comment: it is inside a template literal.) */
+      stateTitle: (function(){ var s = document.getElementById('attendanceState');
+        return s ? s.getAttribute('title') || '' : ''; })(),
       note: (function(){ var n = document.getElementById('attendanceNote');
         return n && !n.classList.contains('hidden') ? n.textContent : ''; })(),
       /* The "you are not on today" strip: whether it is up, and what it says. */
@@ -857,14 +862,20 @@ if (!attBooted || !attSeam) {
   /* The column head and the state line count what is left, which is the surface WO-2.10's Traps
      line demands: a class holding `U`s is a meeting with an absence for every one of them, and the
      failure is silent unless something says so. */
+  /* THE RULE IS ON THE STATE LINE'S TITLE SINCE WO-2.56, AND THE NOTE IS GONE FROM THIS STATE. The
+     sentence used to be a note row un-hidden on the first tap, which pushed every row down under the
+     finger aimed at the second student; the count and the wash are what WO-2.10 demands be loud,
+     and they are unchanged. So the check reads the title for the rule and asserts the note absent,
+     rather than dropping the rule from what it asks. */
   check('and the screen is loud about it — the column head counts what is left and the state line leads with it',
     oneTap.columns[0].chip === '25 to go' && opened.columns[0].chip === 'Not taken'
       && oneTap.stateText === '25 unconfirmed'
       && / unconfirmed\b/.test(oneTap.stateClass)
-      && /count as absent/.test(oneTap.note),
+      && /count as absent/.test(oneTap.stateTitle) && oneTap.note === '',
     'the column head says ' + JSON.stringify(oneTap.columns[0].chip) + ', the state line says '
       + JSON.stringify(oneTap.stateText) + ' with class ' + JSON.stringify(oneTap.stateClass)
-      + ', and the note under it says ' + JSON.stringify(oneTap.note));
+      + ' and title ' + JSON.stringify(oneTap.stateTitle) + ', and the note under it says '
+      + JSON.stringify(oneTap.note));
 
   /* ── WO-2.10 acceptance 4: the unconfirmed state is stored, so it survives a reload ── */
 
@@ -1380,24 +1391,30 @@ if (!attBooted || !attSeam) {
   check('one tap of Earlier reaches the week before, and its oldest column is a fortnight back',
     paged.columns.map((c) => c.date).join(' ') === lastWeek.join(' ')
       && daysApart(nodeToday, twoWeeks) >= 14
-      && paged.banner.shown && paged.banner.text.indexOf('not on screen') > 0,
+      /* The sentence is in the state line's own slot since WO-2.56, and the band above it stays
+         down: a band un-hidden on the first ◀ Earlier is what pushed the pager under the second. */
+      && paged.stateText === 'Today is not on screen.' && !paged.banner.shown,
     'showing ' + JSON.stringify(paged.columns.map((c) => c.date)) + '; the oldest is '
-      + daysApart(nodeToday, twoWeeks) + ' calendar days back; the strip says '
-      + JSON.stringify(paged.banner.text));
+      + daysApart(nodeToday, twoWeeks) + ' calendar days back; the state line says '
+      + JSON.stringify(paged.stateText) + ' with the band up = ' + paged.banner.shown);
 
   await clickSel('[data-attendance-edit="' + twoWeeks + '"]');
   const unlocked = await read();
   /* The desk half of acceptance 8. Whether it reads across a classroom is a 👤 line; whether it is
      on screen, in words, naming the day, is not. */
+  /* SAID ON THE STATE LINE SINCE WO-2.56 — "Editing <weekday> <M/D> · <the day's own state>" — and
+     the way back is the pager's `Today`, live, rather than a second button on a band. The weekday is
+     asked for as three letters and not re-derived here: this file owns no date formatter. */
+  const unlockedAs = new RegExp('^Editing [A-Z][a-z]{2} ' + Number(twoWeeks.slice(5, 7)) + '/'
+    + Number(twoWeeks.slice(8, 10)) + ' · ');
+  const unlockedToday = unlocked.pager.filter((b) => b.value === 'today')[0] || {};
   check('unlocking a past day puts a strip on screen that says which day it is, in words, and offers the way back',
-    unlocked.banner.shown
-      && /You are editing /.test(unlocked.banner.text)
-      && unlocked.banner.text.indexOf('not today') > 0
-      && unlocked.banner.text.indexOf(String(Number(twoWeeks.slice(8, 10)))) > 0
+    unlockedAs.test(unlocked.stateText) && !unlocked.banner.shown && unlockedToday.disabled === false
       && unlocked.dateText.indexOf(String(Number(twoWeeks.slice(8, 10)))) >= 0
       && / attendance-col-editing\b/.test(
         (unlocked.columns.filter((c) => c.date === twoWeeks)[0] || {}).cls || ''),
-    'the strip says ' + JSON.stringify(unlocked.banner.text) + '; the column carries '
+    'the state line says ' + JSON.stringify(unlocked.stateText) + ', the pager’s Today is live = '
+      + (unlockedToday.disabled === false) + '; the column carries '
       + JSON.stringify((unlocked.columns.filter((c) => c.date === twoWeeks)[0] || {}).cls));
 
   /*
@@ -1431,16 +1448,18 @@ if (!attBooted || !attSeam) {
       + ' unconfirmed students; today\'s record is still ' + JSON.stringify(
         marked.records.filter((r) => r.classId === marking && r.date === nodeToday)[0].marks));
 
-  /* Back where a teacher would leave it. "Back to today" is the control on the strip itself, which
-     is the one a teacher reaches for, so it is the one driven here. */
-  await clickSel('#attendanceBanner [data-attendance-page="today"]');
+  /* Back where a teacher would leave it, through the pager's `Today` — the band's own *Back to
+     today* went at WO-2.56, because it duplicated this button and lit up at the same moment. */
+  await clickSel('#attendancePager [data-attendance-page="today"]');
   const home = await read();
   check('the way back is one tap on the strip, and it lands on today with the strip gone',
-    !home.banner.shown && home.columns.map((c) => c.date).join(' ') === thisWeek.join(' ')
+    !home.banner.shown && home.stateText.indexOf('Editing ') !== 0
+      && home.stateText.indexOf('not on screen') < 0
+      && home.columns.map((c) => c.date).join(' ') === thisWeek.join(' ')
       && home.dateText.indexOf(String(Number(nodeToday.slice(8, 10)))) >= 0
       && home.columns.filter((c) => / attendance-col-editing\b/.test(c.cls)).length === 0,
-    'showing ' + JSON.stringify(home.columns.map((c) => c.date)) + ', strip up = '
-      + home.banner.shown);
+    'showing ' + JSON.stringify(home.columns.map((c) => c.date)) + ', band up = '
+      + home.banner.shown + ', state line ' + JSON.stringify(home.stateText));
 
   /* ── search, the filter pills and the sort pair ── */
 
@@ -2339,7 +2358,7 @@ if (!attBooted || !attSeam) {
      check found it — it is a real taken day this section borrowed, not one it invented, so it is
      restored rather than deleted — and that student sent out again, because the section has to END
      with two passes open for the reason below. */
-  await clickSel('#attendanceBanner [data-attendance-page="today"]');
+  await clickSel('#attendancePager [data-attendance-page="today"]');
   await evalJs(`(async function(){
     var s = window.planbook.store;
     s.update(function(d){

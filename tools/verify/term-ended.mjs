@@ -38,11 +38,14 @@ const { check, skip, send, evalJs, has, clickSel, seam } = h;
  * MUST have moved. An unchanged preference on its own would be satisfied by a build that never
  * noticed the rollover at all.
  *
- * AND THE PRECEDENCE IS PROVED IN BOTH DIRECTIONS, THROUGH THE REAL CONTROLS. One band at a time and
- * the off-today message wins it: the pager's own ◀ Earlier takes today off the screen, and the ✏
- * unlocks a past column while today is still on it — two different reasons to be off today, which
- * are the two arms of the condition in `paintBanner()` — and each is followed by the real way back,
- * because a band that goes away and does not come back would satisfy half of that line.
+ * AND THE BAND STAYS UP WHILE THE STRIP IS OFF ITS DAY, PROVED THROUGH THE REAL CONTROLS (WO-2.56).
+ * Until that work order the rule was one band at a time and the off-today message won it; the
+ * off-today message is the state line's now, in a slot of its own, so the precedence had nothing left
+ * to decide — and hiding the rollover on the first ◀ Earlier would move everything under it, which is
+ * the defect that work order fixed. So the pager's own ◀ Earlier takes the strip off its day, and the
+ * ✏ unlocks a past column, and in both the band is asserted STILL UP beside the state line's own
+ * sentence — each followed by the real way back, because a band that goes away and does not come
+ * back would satisfy half of that line.
  *
  * THE LABELS ARE THE LAST PHASE AND THEY ARE THE POINT OF THE WHOLE ROW. The same two terms are
  * relabelled `Trimester 1` and `Trimester 2` with nothing else changed, and the band has to read
@@ -95,6 +98,13 @@ if (!seam) {
   const BTN = 'Switch to ' + LATE;
   const TRI_SAYS = 'Today is in ' + TRI_B + ' — you are still on ' + TRI_A + '.';
   const TRI_BTN = 'Switch to ' + TRI_B;
+  /* The state line's own date since WO-2.56 — a three-letter weekday and the column head's numerals —
+     composed from the ISO string alone, because the claim is about the words on screen. */
+  const lineDate = (iso) => {
+    const [y, m, d] = iso.split('-').map(Number);
+    return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(y, m - 1, d).getDay()]
+      + ' ' + m + '/' + d;
+  };
   /* Two records inside the early term and three inside the late one, so the figures on the three
      surfaces WO-2.18 enumerates have somewhere to move TO. Five in the year under either term,
      which is what makes each pair of strings below a claim about the TERM rather than about a line
@@ -300,9 +310,11 @@ if (!seam) {
        and the class line has to come back describing the term that was tapped rather than the one
        the columns were built from. The ✏ on that last day is pressed first — the route WO-2.52's
        acceptance line 7 describes — so the day the screen is about is a day the teacher unlocked, and
-       the switch is driven from the term NAV rather than from the band, because the band on an
-       unlocked day is the "you are editing" message and carries no term button: one band at a time,
-       which is WO-2.51's own precedence rule still holding.
+       the switch is driven from the term NAV rather than from the band. That reason used to be that
+       the band on an unlocked day was the "you are editing" message and carried no term button; since
+       WO-2.56 the editing message is the state line's and the band keeps its Switch, so the nav is
+       driven here because it is the OTHER route onto the same hook, and the band's own button is
+       asserted by the phases on either side of this one.
 
        IT ASSERTED THE OPEN DETAIL PANEL'S OWN FIGURES UNTIL WO-2.53, on WO-2.18's reasoning that
        paintRenderedTotals() painted a third surface nothing checked. That panel is gone and so is the
@@ -385,7 +397,7 @@ if (!seam) {
         + 'term (WO-2.50 decision 2)');
     await dropToday(true);
 
-    /* ── PHASE D: one band at a time, and the off-today message wins it ── */
+    /* ── PHASE D: the band stays up while paged, and the off-anchor sentence is the state line's ── */
     await arrange([EARLY_TERM, LATE_TERM], EARLY_ID);
     const backOn = await read251();
     await clickSel('#attendancePager [data-attendance-page="earlier"]');
@@ -394,11 +406,13 @@ if (!seam) {
     const returned = await read251();
     await clickSel('#termNav [data-term-select="' + EARLY_ID + '"]');
     const chosenAgain = await read251();
-    /* THE OFF-TODAY BAND IS AN OFF-ANCHOR BAND SINCE WO-2.52, and the sentence names the day the
+    /* THE OFF-TODAY SENTENCE IS AN OFF-ANCHOR SENTENCE SINCE WO-2.52, and it names the day the
        strip is standing on rather than today: with the tab on a term that ended, the strip opens on
        that term's last day and "Today is not on screen" would be true of an arrival nobody paged.
-       The precedence is the one being asserted and it is unchanged — the message about the day on
-       screen beats the message about the term.
+       SINCE WO-2.56 IT IS THE STATE LINE'S AND THE BAND STAYS UP BESIDE IT. The two used to share one
+       slot and the day on screen won it; they no longer share anything, and the rollover sentence is
+       still true while the teacher reads older days. So the paged read asserts BOTH: the band, with
+       its Switch, and the state line naming the anchor in the column heads' own numerals.
 
        AND THE WAY BACK NOW ANSWERS THIS BAND RATHER THAN RETURNING TO IT (WO-2.54). `Today` moved the
        selected term to the one that holds today as it came back, so what used to be the third state
@@ -407,16 +421,17 @@ if (!seam) {
        the check follows it with a real tap on the early term's tab: the rollover is back on the paint
        after it, unpaged, which is the precedence claim this check was written for. Three states, one
        of them new, and none of them dropped. */
-    check('paged back off the day the strip opened on, the band on screen is that one and not this one — the pager’s way back RESOLVES this one by moving the tab, and tapping the early term again gives it straight back',
+    check('paged back off the day the strip opened on, this band stays up with its Switch and the state line says the day is not on screen — the pager’s way back RESOLVES this one by moving the tab, and tapping the early term again gives it straight back',
       backOn.up && backOn.text === SAYS
-        && paged.up && paged.text.indexOf(' is not on screen.') > 0
-        && paged.text.indexOf(', ' + V[3].slice(0, 4) + ' is not on screen.') > 0
-        && paged.hooks === 'data-attendance-page=today'
+        && paged.up && paged.text === SAYS
+        && paged.stateLine === lineDate(V[3]) + ' is not on screen.'
+        && paged.hooks === 'data-term-select=' + LATE_ID
         && returned.term === LATE_ID && !returned.up
         && chosenAgain.term === EARLY_ID && chosenAgain.up && chosenAgain.text === SAYS
         && chosenAgain.hooks === 'data-term-select=' + LATE_ID,
       JSON.stringify(backOn.text) + ' -> paged ' + JSON.stringify(paged.text) + ' ['
-        + paged.hooks + '] -> back on term ' + JSON.stringify(returned.term) + ' with '
+        + paged.hooks + '] over a state line reading ' + JSON.stringify(paged.stateLine)
+        + ' -> back on term ' + JSON.stringify(returned.term) + ' with '
         + JSON.stringify(returned.text) + ' [' + returned.hooks + '] -> the early tab tapped again '
         + JSON.stringify(chosenAgain.text) + ' [' + chosenAgain.hooks + ']');
 
@@ -436,14 +451,16 @@ if (!seam) {
     await evalJs(`(async function(){ var a = window.planbook.attendance;
       a.lockDay(); await window.planbook.store.flush(); return 1; })()`);
     const locked = await read251();
-    check('and with a past column unlocked while the strip is standing where it opened, the editing message wins that too — the band describes the day being edited, and locking it again gives this one back',
+    check('and with a past column unlocked while the strip is standing where it opened, the band stays up with its Switch and the state line names the day being edited beside that day’s own state — and locking it again leaves the band exactly as it was',
       unlocked && editing.up && editing.editDate !== locked.editDate
-        && editing.text === 'You are editing ' + editing.editDate + ' — not today.'
-        && editing.hooks === 'data-attendance-page=today'
-        && locked.up && locked.text === SAYS
+        && editing.text === SAYS
+        && editing.stateLine.indexOf('Editing ' + lineDate(V[4]) + ' · ') === 0
+        && editing.hooks === 'data-term-select=' + LATE_ID
+        && locked.up && locked.text === SAYS && locked.stateLine.indexOf('Editing ') !== 0
         && locked.hooks === 'data-term-select=' + LATE_ID,
       'the ✏ was there to click = ' + unlocked + ' :: editing ' + JSON.stringify(editing.editDate)
-        + ' ' + JSON.stringify(editing.text) + ' [' + editing.hooks + '] -> back on '
+        + ' ' + JSON.stringify(editing.text) + ' over ' + JSON.stringify(editing.stateLine)
+        + ' [' + editing.hooks + '] -> back on '
         + JSON.stringify(locked.editDate) + ' ' + JSON.stringify(locked.text) + ' ['
         + locked.hooks + ']');
 

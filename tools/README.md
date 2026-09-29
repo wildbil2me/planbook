@@ -1223,14 +1223,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1561 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1573 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the seventy-five files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the seventy-six files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -2190,6 +2190,25 @@ different IndexedDB, so it is another device as far as the app can tell. It wipe
 `load()` with the fixture asserted untouched. The run prints **1572**: `1572 checks · 1572 passed · 0
 failed · 0 skipped`, 49,955 lines, 31.8 lines per check, 613s, exit 0, measured 2026-09-28 on the real
 clock. Mutation round in `TESTING.md` § WO-7.9.
+
+**WO-2.56 moved it from 1561 to 1573, and the executed count from 1572 to 1588 — twelve sites,
+sixteen results.** All twelve are in one new section, `verify/strip-holds-still.mjs`, registered
+directly after `verify/calendar-opens-on-day.mjs`, and the file count this ledger's head names moves
+to **seventy-six**. **Two of the twelve sit inside a loop** over the three sizes the fence runs at —
+the "the actions happened" check and the "nothing moved" check, once per size — so they are two sites
+and six results, and **the gap between sites and results widens from −11 to −15**. None is a failure
+arm. The section drives the register at 1280×800, 1024×768 and 768×1024 under touch emulation for the
+two iPad sizes, records the document rects of the three pager buttons and the first grid row once per
+size, and compares every later reading with `===`; it hands the viewport back at 1280×900 with touch
+off from a `finally`, so a throw inside it cannot leave the next section on a coarse pointer. Ten
+existing checks in four files were rewritten in place and move nothing here —
+`verify/attendance.mjs` (four: the *count as absent* clause, the paged and unlocked readings and
+the way back, plus a teardown click on the band's retired *Back to today*),
+`verify/calendar-opens-on-day.mjs` (three), `verify/portrait-landscape.mjs` (one) and
+`verify/term-ended.mjs`'s Phase D (two), whose precedence claim is the one WO-2.56 reversed.
+The run prints **1588**: `1588 checks · 1588 passed · 0 failed · 0 skipped`, 50,451 lines, 31.8
+lines per check, 645s, exit 0, measured 2026-09-28 on the real clock. Mutation round in `TESTING.md`
+§ WO-2.56.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

@@ -6178,6 +6178,113 @@ numbers into `Date.UTC()`, never a parsed date string, never printed, never stor
 why it is not `daysUntil()` (a different question — that one is rounded off local midnight because it
 prints a number a teacher reads) and why it is not exported (one caller).
 
+### WO-2.56 — the strip above the attendance grid moves under the pointer
+
+**What this changes for a teacher: nothing above the grid moves while she is marking.** Owner-reported
+2026-09-28 in daily use, three defects with one cause. The *count as absent* note un-hid on the first
+tap and pushed every row down under the finger aimed at the second student; the *not on today* band
+un-hid **above** the state line on the first `◀ Earlier` and pushed the pager down under the second
+click, with a *Back to today* button duplicating the pager's own `Today`; and the pager's buttons sat
+at opposite edges, which read as misaligned.
+
+**Where things went.** The rule a `?` stands for is on the state line's `title` and accessible name —
+the count and the amber wash, which are what make `U` loud (WO-2.10), are untouched. The paging,
+editing and arrival sentences are **in the state line's own slot**, at its height, with no button:
+*Today is not on screen.* when paged (or the anchor's own date on a term edge, *Wed 9/2 is not on
+screen.*), *Editing Mon 9/21 · 3 unconfirmed* on an unlocked day — merged with the day's own state,
+amber while any `?` are left, *Editing Mon 9/21 · Taken · all present* when none are — and, on a
+day opened from the calendar, the day's state followed by the off-term clause no column head shows.
+The band above keeps the rollover and off-term messages, their tones and the Switch button, and **stays
+up while paged or unlocked** (WO-2.52's one-band-at-a-time precedence retired, the reason written at
+`paintBanner()`). The pager is `[◀ Earlier] [Today] [Later ▶]` at the right edge, with the date range
+gone.
+
+**One owner for the state line.** `paintActions()` writes `#attendanceState` and nothing else does;
+the sentences are composed by `stripPlace()` beside `paintBanner()`, which draws the band and never
+touches the line. Said at both functions.
+
+- [x] **The fence is green at all three sizes.** `tools/verify/strip-holds-still.mjs` records the
+      document rects of `◀ Earlier`, `Today`, `Later ▶` and the first grid row once per size, then
+      drives the first tap on a student, `◀ Earlier`, `Later ▶`, the ✏ on a past column, `Today`, and
+      every remaining `?` to the last, reading all four rects after each action and after each of the
+      eleven taps in between, compared with `===`. 1280×800 (fine pointer) and 1024×768 (touch
+      emulation) do all six; 768×1024 (touch emulation) presses the three disabled pager buttons where
+      a thumb lands and does the two taps — **no ✏ in portrait**, because portrait draws no past
+      column and the two ways onto one stand on a locked day whose note is out of scope. A second
+      check per size asserts the actions happened (the window paged, the ✏ unlocked, the ledger took
+      the marks), so a fence that clicked nothing could not pass.
+- [x] **Mutation-proved twice, each reverted before anything else was written.** Table below.
+- [x] **Twelve unconfirmed**: the state line reads *12 unconfirmed* wearing `taken unconfirmed`, its
+      `title` is *12 students have no mark yet, and count as absent until you confirm them. Tap a
+      question mark once for present.*, its `aria-label` is the visible text and that sentence, and
+      `#attendanceNote` is hidden.
+- [x] **Paged back**: *Today is not on screen.* in the `away` tone — mid-marking and on a clean start —
+      no band, no *Back to* button anywhere on screen, and one `Today` press puts today back as the
+      newest column with the state line reading *Not taken yet* and `Today` disabled again.
+- [x] **A past day unlocked**: *Editing Thu 9/24 · 3 unconfirmed* in the caution wash with the rule on
+      its title; after the three `?` are tapped, *Editing Thu 9/24 · Taken · all present* in the taken
+      palette with no title. *(Dates as on the 2026-09-28 run; the fixture is derived from today.)*
+- [x] **The rollover band while paged**: two `◀ Earlier` and two `Later ▶` leave the band up, its text
+      identical and its rect identical to the pixel, with the pager and the first row unmoved; the
+      Switch pressed from a paged strip selects the term today is in and takes the band away.
+- [x] **The pager** is exactly three buttons in the order Earlier · Today · Later, one gap between
+      each, `Later ▶` ending on the pager's right edge, `◀ Earlier` in the right half, and no
+      `.attendance-pager-range` in the document — at all three sizes, portrait's disabled pair in place.
+- [x] **`node tools/verify-shell.mjs` green** — `1588 checks · 1588 passed · 0 failed · 0 skipped`, 50,451
+      lines, 645s, exit 0 — with `tools/README.md`'s call-site count moved
+      1561 → 1573; `node tools/wo-sweep.mjs` is **45 checks · 42 passed · 0 failed · 3 to review**, the three standing
+      REVIEWs (sensitive field names, due dates beside late/missing, the mockup banners).
+- [x] 👤 **iPad, force-quit first** (`CLAUDE.md`), in landscape: take a class from the first tap to the
+      last, page back twice and forward twice, unlock a past day and return. Nothing under the thumb
+      moves. `sw.js`'s `CACHE` is `planbook-shell-v144` → `v145`, so a cold relaunch is what puts this
+      build on the glass. **Read by the owner on the iPad at v145, served locally, 2026-09-28:
+      behaving as expected.**
+
+**Ten existing checks in four files were rewritten, not deleted**, because each read something that moved:
+
+- **`verify/attendance.mjs`**: the *count as absent* clause reads the state line's `title` and asserts
+  the note empty; the paged check reads *Today is not on screen.* off the state line with the band
+  down; the unlock check reads *Editing <Wkd> <M/D> · …* and asserts the pager's `Today` live instead
+  of a band button; the two clicks on the band's *Back to today* click the pager's `Today`.
+- **`verify/calendar-opens-on-day.mjs`**: the arrival reads *Today is not on screen* off the state line,
+  asserts no band and no *Back to* button, and the off-term arrival reads *outside every term —
+  between …* there; the band's *Back to today* click is the pager's `Today`.
+- **`verify/portrait-landscape.mjs`**: "the *not on today* banner is up / down" reads whether the state
+  line begins *Editing*.
+- **`verify/term-ended.mjs`**: Phase D's precedence check is the new ruling — paged, the rollover band
+  is **still up** with its Switch and the state line reads *Wed 9/23 is not on screen.*; unlocked, the
+  band is still up and the state line reads *Editing Tue 9/22 · …*. The header paragraph that argued
+  one band at a time is rewritten to say why that ended.
+- `register-opens-on-term.mjs` and `today-goes-to-term.mjs` read only the rollover and off-term bands,
+  which did not move, and needed nothing.
+
+*Four full-harness runs and three trimmed ones. The trimmed runs used a scratch copy of
+`tools/verify-shell.mjs` holding twenty of its browser sections — the setup sections the fixtures need,
+every attendance section, the four whose checks were rewritten, and the new fence — to turn a
+mutation round around in about four minutes rather than eleven; it was deleted before the sweep ran,
+and nothing in this entry's green rows rests on it.*
+
+| Tree | Result |
+|---|---|
+| Before any change (`HEAD` `5fdcb3b` plus this work order's claim) | `1572 checks · 1572 passed · 0 failed · 0 skipped`, 614s, exit 0 |
+| First trimmed run, delivered `src/` | `604 checks · 604 passed · 0 failed` — all sixteen of the new section's checks green first time |
+| **Mutation 1**: the unconfirmed note un-hidden again in `paintActions()` (trimmed run) | `604 checks · 598 passed · 6 failed`, exit 1. **The fence is red at all three sizes** — every rect 46px lower after the first tap at 1280×800 and 47.5px lower at both iPad sizes — plus the twelve-unconfirmed check (`note: true`), the editing-line check (the note up on the unlocked day), and `attendance.mjs`'s rewritten *count as absent* check. Reverted by exact string, and the file compared byte-identical (`cmp`) to a copy taken before the mutation |
+| **Mutation 2**: the paging and editing sentence put back into `#attendanceBanner`, above the state line (trimmed run) | `603 checks · 593 passed · 10 failed`, exit 1. **The fence is red at 1280×800 and 1024×768** — ~50px and 55px lower from ◀ Earlier on — and the rollover check (the band's rect and the fence both move while paged), plus the paged and editing checks here and in `attendance.mjs` and `term-ended.mjs`. **Portrait stays green, and should**: it cannot page and has no ✏, so a band that appears only when paged or unlocked never appears there. The section also threw at the Switch, which the mutated band no longer drew; that click now reports rather than throws. Reverted and `cmp`-identical as above |
+| First full run, delivered tree | `1588 checks · 1588 passed · 0 failed · 0 skipped`, 645s, exit 0 |
+| **Delivered**, after the `finally` went into the new section and one CSS comment was corrected | `1588 checks · 1588 passed · 0 failed · 0 skipped`, 50,451 lines, 31.8 lines per check, 645s, exit 0 |
+
+**Decisions the work order left open, taken and written down at the point of departure.**
+`paintActions()` owns the state line; the sentences are composed by `stripPlace()` and written by
+`paintActions()` alone, and `paintBanner()` never touches the line — said at both functions. The date on the line is `Mon 9/21` — the column head's own numerals with a title-case
+weekday, a private `lineDate()` beside `numericDate()` — for both the editing line and the paged
+line, where the booking's example for the second read *Sep 2*: the ruling was *short, numeric dates*,
+and `Sep 2` over a column printing `9/2` is WO-3.20's two-formats defect. **Paged away, the line is the
+sentence alone**, in the band's indigo (`.attendance-state.away`), with no `?` count and no title,
+because the day it would describe is not among the columns; an unlocked day wins over paging and
+keeps its count, which is the Trap. The `aria-label` is the visible text followed by the rule, as the
+Deliverables ask; ARIA 1.2 does not name a plain `<p>`, so some screen readers will read the text and
+not the label, and the title is the half that is certain to be reachable.
+
 ---
 
 ## Phase 3 — Gradebook

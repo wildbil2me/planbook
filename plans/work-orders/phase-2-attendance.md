@@ -5941,7 +5941,7 @@ the cycle, to what a tap writes, or to `U`.
 
 ## WO-2.56 — the strip above the attendance grid moves under the pointer
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.10 — the unconfirmed note this moves; WO-2.52 — the band precedence this narrows; WO-6.5 — the arrival band it re-homes
+**Ship** — · **Status** ✅ DONE — 2026-09-28 · **Size** M · **Depends on** WO-2.10 — the unconfirmed note this moves; WO-2.52 — the band precedence this narrows; WO-6.5 — the arrival band it re-homes
 **Closes roadmap** *(no box. Three layout defects on the marking screen, found by the owner on 2026-09-28 in daily use.)*
 
 **Booked 2026-09-28**, owner-directed, as one work order on purpose. The three defects share a cause
@@ -6018,25 +6018,26 @@ while the strip as a whole still jumps.
   in `SHELL`).
 
 **Acceptance**
-- [ ] The fence is green at all three sizes: no pager button and no grid row moves by a pixel across
+- [x] The fence is green at all three sizes: no pager button and no grid row moves by a pixel across
       the six actions.
-- [ ] Mutation-proved twice: un-hide the unconfirmed note again, and put the band back above the
+- [x] Mutation-proved twice: un-hide the unconfirmed note again, and put the band back above the
       state line; each turns the fence red. **Each mutation is reverted before anything else is
       written** (`AGENTS.md`).
-- [ ] With 12 students unconfirmed, the state line reads *12 unconfirmed* in amber, its `title`
+- [x] With 12 students unconfirmed, the state line reads *12 unconfirmed* in amber, its `title`
       carries *count as absent*, and `#attendanceNote` is hidden.
-- [ ] Paged back: the state line reads *Today is not on screen.*, there is no *Back to* button
+- [x] Paged back: the state line reads *Today is not on screen.*, there is no *Back to* button
       anywhere on the screen, and one `Today` press returns the strip.
-- [ ] A past day unlocked with `?`s left: the state line reads *Editing <date> · n unconfirmed* in
+- [x] A past day unlocked with `?`s left: the state line reads *Editing <date> · n unconfirmed* in
       amber; with none left it reads *Editing <date>* beside the day's own state.
-- [ ] With the term-rollover band up, paging back leaves it up and in place, Switch still works, and
+- [x] With the term-rollover band up, paging back leaves it up and in place, Switch still works, and
       the pager does not move.
-- [ ] The pager shows its three buttons together at the right edge and no date range.
-- [ ] `node tools/verify-shell.mjs` green with its check count recorded and `tools/README.md`
+- [x] The pager shows its three buttons together at the right edge and no date range.
+- [x] `node tools/verify-shell.mjs` green with its check count recorded and `tools/README.md`
       reconciled; `node tools/wo-sweep.mjs` green.
-- [ ] 👤 **iPad, force-quit first** (`CLAUDE.md`), in landscape: take a class from the first tap to the
+- [x] 👤 **iPad, force-quit first** (`CLAUDE.md`), in landscape: take a class from the first tap to the
       last, page back twice and forward twice, unlock a past day and return. Nothing under the thumb
-      moves.
+      moves. *(Read by the owner on the iPad at v145 from the local server, 2026-09-28: behaving as
+      expected.)*
 
 **Traps** — **Do not touch the rollover or off-term bands' wording, tone or button** (ruling 3); the
 only change to them is that paging no longer hides them. **Do not let *Today is not on screen*

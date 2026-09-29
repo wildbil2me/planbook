@@ -116,6 +116,10 @@ if (!seam) {
       var dates = heads.map(function(th){ return th.getAttribute('data-attendance-col'); });
       var tabs = Array.prototype.slice.call(document.querySelectorAll('#termNav [data-term-select]'));
       var band = document.getElementById('attendanceBanner');
+      /* The arrival's sentence is the state line's since WO-2.56 — the band above it carries only
+         the two term messages now — so the words are read where they are drawn.
+         (No backticks in this comment: it is inside a template literal.) */
+      var stateEl = document.getElementById('attendanceState');
       var todayBtn = document.querySelector('#attendancePager [data-attendance-page="today"]');
       var newest = dates[0] || '';
       return {
@@ -130,6 +134,10 @@ if (!seam) {
         pencil: !!document.querySelector('#attendanceHead th[data-attendance-col="' + newest
           + '"] [data-attendance-edit]'),
         band: band && !band.classList.contains('hidden') ? band.textContent : '',
+        state: stateEl ? stateEl.textContent : '',
+        backTo: Array.prototype.slice.call(document.querySelectorAll('button'))
+          .filter(function(b){ return b.getClientRects().length > 0
+            && /^\\s*Back to/.test(b.textContent || ''); }).length,
         todayOff: todayBtn ? !!todayBtn.disabled : null,
         seen: (window.__wo65seen || []).slice() };
     };
@@ -175,6 +183,7 @@ if (!seam) {
   const say = (r) => '#' + r.view + ' in ' + r.open + ', term ' + r.term + ' (tab ' + r.activeTab
     + '), columns ' + JSON.stringify(r.dates) + ', S1 ' + JSON.stringify(r.s1) + ' S2 '
     + JSON.stringify(r.s2) + ', ✏ ' + r.pencil + ', band ' + JSON.stringify(r.band)
+    + ', state line ' + JSON.stringify(r.state)
     + ', heads painted during the tap ' + JSON.stringify(r.seen);
 
   check('WO-6.5 fixture: one class, two students, a term that ended and a term that holds today, '
@@ -205,9 +214,10 @@ if (!seam) {
     'heads added during the tap: ' + JSON.stringify(a.seen) + '; today is ' + TODAY);
   check('a past day opened from the calendar is READ-ONLY until its ✏ is pressed — a calendar tap '
     + 'is a reading gesture, so the marks are drawn as locked cells and the ✏ is on the column — and '
-    + 'the band says the day on screen is not today and offers the way back',
+    + 'the state line says today is not on screen, and the pager’s `Today` is the way back — the '
+    + 'band’s own *Back to today* went at WO-2.56, because it duplicated that button',
     !!a.s1 && a.s1.tag === 'SPAN' && !!a.s2 && a.s2.tag === 'SPAN' && a.pencil === true
-      && a.band.indexOf('Today is not on screen') !== -1 && a.band.indexOf('Back to today') !== -1
+      && a.state.indexOf('Today is not on screen') !== -1 && a.band === '' && a.backTo === 0
       && a.todayOff === false,
     say(a));
   const docAfter = await evalJs('JSON.stringify(window.planbook.store.getDoc())');
@@ -247,16 +257,17 @@ if (!seam) {
       && ordinary.band === '' && ordinary.todayOff === true,
     'tapped: ' + say(b) + ' || then the card: ' + say(ordinary));
 
-  /* And the band's own way back, from a tapped day in the SAME term as today — the case where
-     `Today` moves no term, so nothing but the press itself can let the day go. */
+  /* And the way back, from a tapped day in the SAME term as today — the case where `Today` moves no
+     term, so nothing but the press itself can let the day go. It was the band's own *Back to today*
+     until WO-2.56 took that button off as a duplicate of this one; the claim is unchanged. */
   const e = await tapDay(IN_NOW);
-  await clickSel('#attendanceBanner [data-attendance-page="today"]');
+  await clickSel('#attendancePager [data-attendance-page="today"]');
   const bandBack = await read();
-  check('the band’s *Back to today* lets a tapped day go even when no term has to move: the strip '
+  check('the pager’s `Today` lets a tapped day go even when no term has to move: the strip '
     + 'is back on the week ending today, with no band and `Today` greyed',
     e.dates[0] === IN_NOW && bandBack.dates[0] === TODAY && bandBack.term === NOW_ID
       && bandBack.band === '' && bandBack.todayOff === true,
-    'tapped: ' + say(e) + ' || then the band’s button: ' + say(bandBack));
+    'tapped: ' + say(e) + ' || then the pager’s Today: ' + say(bandBack));
 
   /* ── 4. portrait, a day in the term that ended ── */
   await portrait();
@@ -289,11 +300,11 @@ if (!seam) {
   await landscape();
   const d = await tapDay(OFF);
   check('a recorded day in NO term opens on that day rather than somewhere else: the newest column '
-    + 'is the tapped day with its mark (Ben absent), and the band names where it is in the column '
-    + 'head’s own words',
+    + 'is the tapped day with its mark (Ben absent), and the state line names where it is in the '
+    + 'column head’s own words — the off-term clause WO-2.56 kept, because no column head shows it',
     d.reached === true && d.view === 'classView' && d.dates[0] === OFF
-      && !!d.s2 && d.s2.glyph === 'A' && d.band.indexOf('outside every term') !== -1
-      && d.band.indexOf('between ' + PREV.label + ' and ' + NOW.label) !== -1,
+      && !!d.s2 && d.s2.glyph === 'A' && d.state.indexOf('outside every term') !== -1
+      && d.state.indexOf('between ' + PREV.label + ' and ' + NOW.label) !== -1,
     say(d));
 
   /* ── teardown ── */

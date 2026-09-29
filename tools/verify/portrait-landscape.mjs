@@ -190,8 +190,10 @@ console.log('\n--- portrait shows today, landscape shows the week (WO-2.12) ---'
       at the door cannot mark anybody, and nothing about it looks like a rotation bug.
 
       Driven through the ✏ a teacher taps, in landscape where a past column exists to unlock, and
-      read after the turn as the two things she would actually notice: the "not on today" banner is
-      down, and today's cell is a button again.
+      read after the turn as the two things she would actually notice: the "not on today" line is
+      gone, and today's cell is a button again. (That line is the state line's own since WO-2.56 —
+      "Editing <day> · …" in the slot the day's state is drawn in — where it used to be a band
+      above it. What is read is the words, so the check does not care which element carries them.)
     */
     const past = await evalJs(`(function(){
       var ths = Array.prototype.slice.call(
@@ -204,25 +206,25 @@ console.log('\n--- portrait shows today, landscape shows the week (WO-2.12) ---'
       await clickSel('#attendanceHead [data-attendance-edit="' + past + '"]');
       await new Promise(r => setTimeout(r, 250));
       const unlocked = await evalJs(`(function(){
-        var b = document.getElementById('attendanceBanner');
-        return { banner: b && !b.classList.contains('hidden'),
+        var s = document.getElementById('attendanceState');
+        return { banner: !!s && (s.textContent || '').indexOf('Editing ') === 0,
                  editing: !!document.querySelector('#attendanceHead th[data-attendance-col="'
                    + ${JSON.stringify(past)} + '"] [data-attendance-lock]') }; })()`);
       await send('Emulation.setDeviceMetricsOverride',
         { width: 834, height: 1112, deviceScaleFactor: 2, mobile: true });
       await new Promise(r => setTimeout(r, 500));
       const turned = await evalJs(`(function(){
-        var b = document.getElementById('attendanceBanner');
+        var s = document.getElementById('attendanceState');
         var cell = document.querySelector(${JSON.stringify(CELL_SEL)});
-        return { banner: b && !b.classList.contains('hidden'),
+        return { banner: !!s && (s.textContent || '').indexOf('Editing ') === 0,
                  cols: document.querySelectorAll('#attendanceHead th[data-attendance-col]').length,
                  tappable: !!cell && cell.tagName === 'BUTTON' }; })()`);
       check('turning the iPad upright with a past column unlocked puts the screen back on today — '
         + 'the day being edited is not on screen any more, so it does not go on holding the marks',
         unlocked.banner === true && unlocked.editing === true
           && turned.banner === false && turned.cols === 1 && turned.tappable === true,
-        'landscape: "not on today" banner up = ' + unlocked.banner + ', the column carries a lock = '
-          + unlocked.editing + '; after the turn: banner up = ' + turned.banner + ', '
+        'landscape: the state line says Editing = ' + unlocked.banner + ', the column carries a lock = '
+          + unlocked.editing + '; after the turn: it still says Editing = ' + turned.banner + ', '
           + turned.cols + ' column(s), today\'s cell is tappable = ' + turned.tappable);
     }
 

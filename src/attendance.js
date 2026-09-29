@@ -745,6 +745,21 @@ export function dayAbbr(iso) {
   return d ? DAY_ABBR[d.getDay()] : '';
 }
 
+/* `2026-09-21` → `Mon 9/21`, the date the STATE LINE names a day by since WO-2.56 — "Editing Mon
+   9/21", "Wed 9/2 is not on screen." The owner's ruling was short, numeric dates, so a line that has
+   taken over a band's sentences cannot wrap on a narrow screen: height is the requirement there, and
+   a two-line state line is the pager moving under the pointer again.
+
+   IT IS THE COLUMN HEAD'S TWO HALVES ON ONE LINE, and that is why it lives here and composes
+   numericDate() rather than going into src/date-text.js beside weekdayShortDate(). The line is read
+   against the heads directly under it, and `Mon, Sep 21` over a column printing `9/21` is two correct
+   dates that read as a bug — WO-3.20's whole complaint. The weekday is title case rather than the
+   head's capitals because it sits inside a sentence. Not exported: nothing else says a day this way. */
+function lineDate(iso) {
+  const d = parseISO(iso);
+  return d ? DAY_NAMES[d.getDay()].slice(0, 3) + ' ' + numericDate(iso) : String(iso || '');
+}
+
 /*
   THE COLUMNS, and the one place Roll Call! must not be copied.
 
@@ -1077,9 +1092,9 @@ function visibleColumns() {
   THE ONE THING IT DOES HAVE TO RECONCILE IS AN UNLOCKED PAST COLUMN, and leaving it out ships a
   broken screen rather than an untidy one. Unlock Tuesday in landscape, turn the iPad upright, and
   Tuesday is not a column any more — but `editingDay` still names it, so `editDate()` still answers
-  Tuesday, every cell in today's column comes back NOT EDITABLE, and the banner above them says you
-  are editing a day that is nowhere on screen. A teacher at the door with a class walking in cannot
-  mark anybody. pageDays() already has this rule and states it: the strip that says WHICH day you
+  Tuesday, every cell in today's column comes back NOT EDITABLE, and the state line above them says
+  you are editing a day that is nowhere on screen. A teacher at the door with a class walking in
+  cannot mark anybody. pageDays() already has this rule and states it: the strip that says WHICH day you
   are editing is only honest while that day is on screen. A turn is the second way that day can
   leave, so it takes the same exit — lockDay(), which clears it, repaints and says so out loud.
 
@@ -1794,11 +1809,12 @@ function homeDate(term) {
 }
 
 /* WHERE `Today` WILL LAND, asked before it is pressed (WO-6.5) — the anchor of the term nearest
-   today, which is the term pageDays('today') moves to, else the selected term's. The band and the
-   pager name the way back, and once a screen can stand on a day it was opened on, the anchor is no
-   longer that way back: "Back to Sep 15" on a button over a strip standing on Sep 15 is the band
-   lying about the one thing it exists to do. Asked ONLY while an arrival stands — every other state
-   keeps naming the anchor, which is WO-2.52's ruling about those sentences. */
+   today, which is the term pageDays('today') moves to, else the selected term's. The pager's title
+   and the state line name the way back (the line since WO-2.56, which took that sentence off a band
+   and the band's own button with it), and once a screen can stand on a day it was opened on, the
+   anchor is no longer that way back: "Back to Sep 15" over a strip standing on Sep 15 would be the
+   strip lying about the one thing it exists to do. Asked ONLY while an arrival stands — every other
+   state keeps naming the anchor, which is WO-2.52's ruling about those sentences. */
 function todayLanding() {
   const cls = openClass();
   const near = cls ? termNearest(cls.id, todayISO()) : null;
@@ -3991,112 +4007,126 @@ function termGapBand() {
 }
 
 /*
-  THE STRIP THAT SAYS YOU ARE NOT ON TODAY, and the acceptance line it answers is "visible in a
-  glance, on an iPad, in a classroom". So it is a full-width band above the grid with a coloured
-  edge and a way back on it, not a tint on a column — a tint is what the column already has, and a
-  tint alone is exactly the fine print this work order keeps refusing.
+  WHERE THE STRIP IS STANDING, AS THE STATE LINE SAYS IT (WO-2.56). `{ text, away }`, or null when
+  there is nothing to say beyond the day's own state.
 
-  Two ways to be off today, and both get the same strip: a past column is unlocked, or the window
-  has been paged back so today is not on screen at all.
+  THESE SENTENCES WERE A BAND ABOVE THE STATE LINE UNTIL 2026-09-28, and the band is what moved the
+  pager under the pointer: it un-hid on the first ◀ Earlier, the pager went down by its height, and
+  the second click landed on whatever had moved into its place. So they are drawn IN THE STATE LINE'S
+  OWN SLOT, at its height, with no button — the owner's words were "same size, no button, just a new
+  bit of information." Nothing appears, and so nothing moves; `Today` on the pager is the way back,
+  which is what the band's own *Back to …* duplicated at the moment it lit up.
 
-  AND SINCE WO-2.51 THE SAME STRIP CARRIES A SECOND MESSAGE: today is inside a term of this class
-  that is not the one the term nav has open. Nothing in this app has ever moved a teacher from one
-  term to the next — getSelectedTermId() falls back to the FIRST term, never to the term containing
-  today — so the tab stays where she left it in August, and what she notices is a number: every count
-  on this screen and in both reports is scoped to the selected term, so a week into Quarter 2 the
-  screen is quietly reporting Quarter 1 while she marks Quarter 2. It is this band and not a modal
-  because a modal costs a tap at the classroom door, needs a "don't ask again" to be bearable, and a
-  dismissed reminder is a reminder that has been dismissed. This one has no dismissal at all: it goes
-  when she switches, or when the condition stops being true, and not before.
+  THREE WAYS TO BE OFF THE DAY THE STRIP STANDS ON, and each has its own sentence:
 
-  THE PRECEDENCE, WRITTEN DOWN HERE BECAUSE THIS IS WHERE IT IS DECIDED. ONE BAND AT A TIME, AND THE
-  OFF-TODAY MESSAGE WINS IT. A teacher paging back into October must not be told to move to Quarter 2
-  while she is reading Quarter 1's own days: this strip describes the day on screen, which is the more
-  immediate fact and the one she just acted to produce, and "move to the next term" said over a
-  October column would be an instruction about a screen she is not on. The rollover loses nothing by
-  losing — it holds no state and remembers no dismissal, so it is back on the same paint that brings
-  her back to today.
+    a past day unlocked     "Editing Mon 9/21 · 3 unconfirmed" — MERGED with the day's own state,
+                            because that state describes the day the teacher is about to tap; a
+                            line that said only "Editing" would take the `?` count off the one day
+                            it is about. With none left it reads "Editing Mon 9/21 · Taken · all
+                            present": the day's state is always the second half, whatever it is.
+    paged away              "Today is not on screen." alone — or the anchor's own date when the
+                            strip stands on a term edge, "Wed 9/2 is not on screen." No range: every
+                            column head prints its date. `away` is set, because the day the line
+                            would otherwise describe is not among the columns.
+    opened on a day (WO-6.5) the day's own state, then — when the day is outside every term of the
+                            class, a recorded day the terms were typed around, which wears no
+                            Off-term chip — WHERE it is, in the words the column head would have
+                            used, which is the one clause no column head shows; then "Today is not
+                            on screen" when that is true.
+
+  THE UNLOCKED DAY WINS, and it wins over paging as well: a ✏ can be pressed on a column of a paged
+  window, and "Today is not on screen" said over a day about to be written to would replace the count
+  of that day's `?`s with a fact about a day nobody is touching. That is the work order's own Trap,
+  kept rather than argued again.
+
+  SHORT, NUMERIC DATES — lineDate(), the column head's own two halves — so none of these wraps at
+  768px. Height is the requirement; a sentence that wraps is the band's defect in a new place.
+
+  ASKED BY paintActions() AND BY NOTHING ELSE. That function owns #attendanceState; see it.
 */
-function paintBanner(columns) {
+function stripPlace(columns, on, summary) {
+  /* Read AFTER the caller's editDate(), which normalises `editingDay`, and after anchorDate() has let
+     a spent arrival go — both happen inside the calls below and inside the caller's own. */
+  const anchor = anchorDate();
+  const anchorShown = columns.indexOf(anchor) >= 0;
+  const today = todayISO();
+  const said = (iso) => (iso === today ? 'Today' : lineDate(iso)) + ' is not on screen';
+  if (editingDay) return { text: 'Editing ' + lineDate(on) + ' · ' + summary.text, away: false };
+  /* A day the screen was opened on, still on screen. Where `Today` lands is asked of todayLanding()
+     rather than the anchor, because the anchor here IS the tapped day, on screen — the same
+     substitution the pager's tooltip makes, for the same reason. */
+  if (arrival && anchorShown) {
+    const cls = openClass();
+    const gap = cls ? outOfTermGap(cls.id, arrival.date) : null;
+    const landing = todayLanding();
+    return {
+      text: [summary.text, gap ? offTermSaid(gap) : '',
+        columns.indexOf(landing) >= 0 ? '' : said(landing)].filter(Boolean).join(' · '),
+      away: false,
+    };
+  }
+  if (anchorShown) return null;
+  /* Paged. The sentence names the day `Today` would take her to, and when that day happens to be on
+     screen after all — a strip opened on a day AHEAD of today and paged back past it — it names the
+     day the strip stands on instead, which is the one that has gone. */
+  const landing = arrival ? todayLanding() : anchor;
+  return { text: said(columns.indexOf(landing) < 0 ? landing : anchor) + '.', away: true };
+}
+
+/*
+  THE BAND ABOVE THE STATE LINE, AND SINCE WO-2.56 IT CARRIES THE TWO TERM MESSAGES AND NOTHING ELSE.
+  Both are present on ARRIVAL rather than after a click — they are true of the screen the moment it
+  opens — so neither ever appears under a pointer on its way somewhere. The paging, editing and
+  arrival sentences that used to share this strip are the state line's now (stripPlace(), above).
+
+  THE ROLLOVER (WO-2.51): today is inside a term of this class that is not the one the term nav has
+  open. Nothing in this app has ever moved a teacher from one term to the next — getSelectedTermId()
+  falls back to the FIRST term, never to the term containing today — so the tab stays where she left
+  it in August, and what she notices is a number: every count on this screen and in both reports is
+  scoped to the selected term, so a week into Quarter 2 the screen is quietly reporting Quarter 1
+  while she marks Quarter 2. It is this band and not a modal because a modal costs a tap at the
+  classroom door, needs a "don't ask again" to be bearable, and a dismissed reminder is a reminder
+  that has been dismissed. This one has no dismissal at all: it goes when she switches, or when the
+  condition stops being true, and not before.
+
+  THE OFF-TERM BAND (WO-2.52): today is in no term of this class and the selected term is dated, so
+  the strip is standing on the term's own edge and this is the sentence that explains the date.
+
+  THEY STAY UP WHILE THE STRIP IS PAGED OR A DAY IS UNLOCKED (WO-2.56), AND THAT REVERSES A PRECEDENCE
+  RATHER THAN FORGETTING ONE. Until that work order this function drew one band at a time and the
+  off-today message won it, and the reason was real: the messages SHARED ONE SLOT, and "move to the
+  next term" said in the place where "you are on October" belonged would have been an instruction
+  about a screen she was not on. They no longer share anything. The off-today sentence is in the state
+  line's slot, so there is nothing for the rollover to lose to — and hiding it on the first ◀ Earlier
+  would move the pager down under the second click, which is the defect this band was taken out of.
+  The rollover sentence is also still TRUE while she reads older days: today is still in Quarter 2
+  and she is still on Quarter 1, whichever of Quarter 1's days is on screen.
+*/
+function paintBanner() {
   const banner = document.getElementById(BANNER_ID);
   if (!banner) return;
-  const today = todayISO();
-  /* Called for its answer AND for its normalising of `editingDay`, which is why it comes before the
-     test below reads that variable. */
-  const on = editDate();
-  const anchor = anchorDate();
-  /* THE ANCHOR RATHER THAN TODAY (WO-2.52), and this substitution is the one ordering mistake this
-     band exists to prevent. On the fortnight before a term the anchor is the term's first day and
-     today is nowhere near the window — so a test on `todayShown` would fire the off-today band on
-     an UNPAGED arrival and talk straight over the message that explains the date on screen. What
-     this band is for is "you have paged away from where the strip stands", and where the strip
-     stands is the anchor. */
-  const anchorShown = columns.indexOf(anchor) >= 0;
 
   banner.textContent = '';
-  /* Written from the base class every paint rather than toggled, because this strip now has two
-     messages and a tone for each: a modifier left behind by the previous paint is a band wearing
-     the wrong one, which is a defect that only appears on the second visit to a screen. */
+  /* Written from the base class every paint rather than toggled, because this strip has two messages
+     and a tone for each: a modifier left behind by the previous paint is a band wearing the wrong
+     one, which is a defect that only appears on the second visit to a screen. */
   banner.className = 'attendance-banner';
 
-  /* BAND 1 — a day is deliberately unlocked. The condition is the unlocked day ITSELF since
-     WO-2.52, rather than a comparison of the edit date with today: the edit date is the anchor on
-     an unpaged September 2 and that is not a day anybody unlocked, so `on !== today` would have
-     announced an edit the teacher never asked for. */
-  if (editingDay || !anchorShown || arrival) {
-    /* One column is one date rather than "Tuesday to Tuesday" — the same sentence the pager and
-       pageDays() make, and the same reason: portrait draws a one-day window (WO-2.12). */
-    const range = columns.length === 1 ? spokenDate(columns[0])
-      : spokenDate(columns[columns.length - 1]) + ' to ' + spokenDate(columns[0]);
-    /* BAND 2 — the anchor is not among the columns. The way back is the anchor and the button says
-       so: "Back to today" over a strip that goes back to September 2 would be the band lying about
-       the one thing it exists to do.
-
-       AND ON A STRIP OPENED ON A DAY (WO-6.5) THE WAY BACK IS WHERE `Today` LANDS, because the
-       anchor there is the tapped day itself, on screen, and "Back to Sep 15" over Sep 15 is the
-       same lie from the other side. ONLY THERE: every other state keeps naming the anchor, which
-       is WO-2.52's ruling about this sentence and is asserted by the term-ended section. */
-    const landing = arrival ? todayLanding() : anchor;
-    const home = landing === today ? 'today' : plainDate(landing);
-    /* BAND 2's THIRD WAY IN (WO-6.5) — the strip was opened on a day that is not today, and is still
-       standing on it. It names THAT day rather than the window's range, because the day is what the
-       teacher tapped; and when the day is outside every term of the class — a record her term dates
-       were typed around, which opens normally (WO-2.50 decision 2) and whose column therefore wears
-       no Off-term chip — this is the one place on screen that says where it is, in the words the
-       column head would have used. */
-    const cls = openClass();
-    const gap = arrival && cls ? outOfTermGap(cls.id, arrival.date) : null;
-    const text = (editingDay
-      ? 'You are editing ' + spokenDate(on) + ' — not today.'
-      : (arrival && anchorShown
-        ? 'Showing ' + spokenDate(arrival.date) + (gap ? ' — ' + offTermSaid(gap) : '') + '. '
-        : 'Showing ' + range + '. ')
-        /* Said only when true: a strip opened on a day AHEAD of today ends on that day and can
-           have today in it, in landscape. */
-        + (columns.indexOf(landing) >= 0 ? ''
-          : (landing === today ? 'Today' : plainDate(landing)) + ' is not on screen.')).trim();
-    banner.append(el('span', 'attendance-banner-text', text));
-    const back = actionButton('Back to ' + home, 'data-attendance-page', 'today');
-    back.classList.add('attendance-banner-btn');
-    banner.append(back);
-    return;
-  }
-
-  /* BAND 3 — today is inside a term that is not the selected one (WO-2.51), untouched. It carries
-     an ACTION, so it beats the bare statement below it about the same fact. */
+  /* THE ROLLOVER (WO-2.51), untouched. It carries an ACTION, so it beats the bare statement below it
+     about the same fact. */
   const roll = termRollover();
   if (!roll) {
-    /* BAND 4 — today is inside NO term of this class and the selected term is dated (WO-2.52).
-       Written adjacent to band 3 so a reader can see that the two are mutually exclusive by
-       construction: termGapBand() returns null on exactly the days termRollover() answers on. */
+    /* THE OFF-TERM BAND (WO-2.52). Written adjacent to the rollover so a reader can see that the two
+       are mutually exclusive by construction: termGapBand() returns null on exactly the days
+       termRollover() answers on. */
     const gap = termGapBand();
     if (!gap) { banner.classList.add('hidden'); return; }
     banner.classList.add('off-term');
-    /* NO BUTTON, AND THAT IS THE DIFFERENCE BETWEEN THIS BAND AND THE THREE ABOVE IT. There is
-       nothing to tap: the strip is already standing on the term's own days, and the one thing that
-       would change this sentence is the term dates, whose door the state line already holds on the
-       days that are outside them. A second door here would be the fourth control on a screen whose
-       whole design is a three-control limit. */
+    /* NO BUTTON, AND THAT IS THE DIFFERENCE BETWEEN THIS BAND AND THE ROLLOVER. There is nothing to
+       tap: the strip is already standing on the term's own days, and the one thing that would change
+       this sentence is the term dates, whose door the state line already holds on the days that are
+       outside them. A second door here would be the fourth control on a screen whose whole design is
+       a three-control limit. */
     banner.append(el('span', 'attendance-banner-text', gap.text));
     return;
   }
@@ -4131,8 +4161,19 @@ function paintBanner(columns) {
   are drawn only when that day is also the one accepting edits.
 
   Repainted on its own after a write, because the grid below it must not be rebuilt.
+
+  THIS FUNCTION OWNS #attendanceState, AND IS THE ONLY THING THAT WRITES IT (WO-2.56). Since that work
+  order the state line also carries where the strip is standing — paged away, a past day unlocked, a
+  day the screen was opened on — which used to be paintBanner()'s band, and the obvious move was to
+  let paintBanner() write those sentences into this element. It would have been two writers on one
+  node: renderAttendance() calls paintBanner() and then this, every write calls this and then
+  paintRenderedTotals() → paintBanner(), so whichever ran second would win, and which that was would
+  depend on the path. So the sentences are COMPOSED by stripPlace(), beside paintBanner() where their
+  reasoning lives, and WRITTEN here, once, together with the state they are merged with. paintBanner()
+  draws the band and never touches this line. `columns` defaults to visibleColumns() for the callers
+  that repaint this row alone after a write; renderAttendance() hands over the ones it just drew.
 */
-function paintActions() {
+function paintActions(columns = visibleColumns()) {
   const cls = openClass();
   const on = focusDate();
   /* Whether the day being described is also the day that accepts writes. It is not, on exactly one
@@ -4150,15 +4191,49 @@ function paintActions() {
 
   const summary = cls ? stateSummary(cls.id, on)
     : { state: NOT_TAKEN, text: 'No class is open', marked: 0, unconfirmed: 0 };
-  stateEl.textContent = summary.text;
+  const place = cls ? stripPlace(columns, on, summary) : null;
+  const text = place ? place.text : summary.text;
+  stateEl.textContent = text;
   /* The caution palette while anybody is unconfirmed, on top of the state's own — a green "Taken"
      over twelve students nobody has looked at is the silent failure WO-2.10's Traps line is about.
      A MODIFIER RATHER THAN A STATE, and it stayed one when WO-2.3 added a real fourth: `unconfirmed`
      rides on top of `taken` because the class genuinely IS taken, where `covered` replaces it
      because the class genuinely did not meet. That is the test for anything that wants to be a
-     fifth — if stateOf() would still answer the same word, it is a modifier. */
-  stateEl.className = 'attendance-state ' + summary.state
-    + (summary.unconfirmed ? ' unconfirmed' : '');
+     fifth — if stateOf() would still answer the same word, it is a modifier.
+
+     PAGED AWAY, THE LINE WEARS `away` INSTEAD (WO-2.56) — the interactive indigo the band wore for
+     the same sentence, because being on another week is a state the teacher chose — and none of the
+     day's own palette, because the day that palette describes is not among the columns. An unlocked
+     day keeps its own palette, `?`s and all: "Editing Mon 9/21 · 3 unconfirmed" is amber because
+     that day is three absences until someone taps them. */
+  const away = !!(place && place.away);
+  stateEl.className = 'attendance-state ' + (away ? 'away'
+    : summary.state + (summary.unconfirmed ? ' unconfirmed' : ''));
+  /*
+    THE RULE A `?` STANDS FOR, ON THE LINE'S TITLE AND ACCESSIBLE NAME (WO-2.56). It was a note row
+    under the action row until that work order — "12 students have no mark yet, and count as absent
+    until you confirm them" — un-hidden the moment the first tap made anybody unconfirmed, which
+    pushed every row of the grid down under the finger aimed at the second student and back up when
+    the last `?` went. The line above it already said "12 unconfirmed", so the sentence repeated it.
+
+    WHAT MOVED IS WHERE IT IS SAID, NOT WHETHER IT IS TRUE. A `U` counts as an `A` everywhere, which
+    is WO-2.10's ruling and the owner's; and WO-2.10's "do not make `U` quieter than it is" still
+    holds, because the count and the amber wash are what makes it loud and both are untouched — on
+    the column head, on this line, on the home card. Only the explanation went, and it went to the
+    two places a reader who wants it can still find it. Not on a paged line: that line names no day
+    whose `?`s it could be about.
+  */
+  if (!away && summary.unconfirmed) {
+    const one = summary.unconfirmed === 1;
+    const rule = summary.unconfirmed + (one ? ' student has' : ' students have')
+      + ' no mark yet, and ' + (one ? 'counts' : 'count')
+      + ' as absent until you confirm them. Tap a question mark once for present.';
+    stateEl.title = rule;
+    stateEl.setAttribute('aria-label', text + '. ' + rule);
+  } else {
+    stateEl.removeAttribute('title');
+    stateEl.removeAttribute('aria-label');
+  }
 
   actions.textContent = '';
   note.textContent = '';
@@ -4252,16 +4327,11 @@ function paintActions() {
     return;
   }
 
-  /* The rule in words, on the screen, whenever it is doing something. "They count as absent" is the
-     part a teacher cannot infer from a question mark, and it is the whole reason the count above is
-     not decoration. */
-  if (summary.unconfirmed) {
-    const one = summary.unconfirmed === 1;
-    note.textContent = summary.unconfirmed + (one ? ' student has' : ' students have')
-      + ' no mark yet, and ' + (one ? 'counts' : 'count')
-      + ' as absent until you confirm them. Tap a question mark once for present.';
-    note.classList.remove('hidden');
-  }
+  /* NO NOTE FOR UNCONFIRMED STUDENTS, AND THAT IS A MOVE RATHER THAN A DELETION (WO-2.56): the
+     sentence that stood here is on the state line's title and accessible name, above, for the reason
+     given there. The note row survives for the four states that draw it — did not meet, covered, a
+     locked past day, off term — because each of those appears on arrival or after a deliberate
+     button, never part way through marking a class. */
 
   /*
     THE ACTION ROW, AND THE FIVE STATES IT ANSWERS. Three controls at most, because this row is read
@@ -4394,7 +4464,15 @@ function paintToolbar() {
 }
 
 /* Earlier · Today · Later. "Later" is disabled at the far end of the calendar and says why. Since
-   2026-08-07 "Earlier" is disabled the same way in portrait, for the same kind of reason. */
+   2026-08-07 "Earlier" is disabled the same way in portrait, for the same kind of reason.
+
+   THREE BUTTONS AND NOTHING BETWEEN THEM, GROUPED AT THE RIGHT (WO-2.56). There was a date range
+   between `◀ Earlier` and `Today` until that work order, carrying `margin-right: auto`, so Earlier sat
+   alone at the left edge and the other two at the far right — the owner read Earlier as sitting
+   higher than its neighbours beside the pale-yellow day columns, and measured it is level; what was
+   wrong was the split. The range also repeated what every column head already prints (dayHead()),
+   and phones had already hidden it. So it is gone rather than restyled, and src/attendance.css puts
+   the three together at the right edge. */
 function paintPager(columns) {
   const pager = document.getElementById(PAGER_ID);
   if (!pager) return;
@@ -4422,13 +4500,6 @@ function paintPager(columns) {
     ? 'Portrait shows today. Turn the iPad to read the week or to correct a past day.'
     : many ? 'The ' + columns.length + ' weekdays before these' : 'The weekday before this';
   pager.append(earlier);
-
-  /* And a one-day window is one date rather than "Aug 7 – Aug 7". */
-  pager.append(el('span', 'attendance-pager-range',
-    columns.length
-      ? (many ? numericDate(columns[columns.length - 1]) + ' – ' + numericDate(columns[0])
-        : numericDate(columns[0]))
-      : ''));
 
   /* NOT forced off in portrait, unlike the two page controls either side of it. `Today` is also the
      way out of an unlocked past column, and that is a state this button has to be able to answer
@@ -4804,7 +4875,7 @@ export function paintRenderedTotals() {
     const line = row && row.querySelector('.attendance-student-totals');
     if (line) line.textContent = studentTotalsText(totals, student.id);
   });
-  paintBanner(visibleColumns());
+  paintBanner();
 }
 
 /* The whole screen, from the open document. Called at open and after anything that changes what
@@ -4828,8 +4899,8 @@ export function renderAttendance() {
   if (nameEl) nameEl.textContent = cls ? cls.name : 'no class';
   paintClassTotals(totals);
 
-  paintBanner(columns);
-  paintActions();
+  paintBanner();
+  paintActions(columns);
   paintPassNote();
   paintPassBanner();
   paintToolbar();

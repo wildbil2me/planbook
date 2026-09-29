@@ -792,11 +792,19 @@
     </div>
 
     <div class="attendance-body">
-      <!-- "You are not on today", or — since WO-2.51 — "today is in a term you do not have open",
-           shown only when one of those is true. One band at a time and the first wins it; the
-           precedence is argued at paintBanner(). src/attendance.js fills it. -->
+      <!-- The two TERM messages, and since WO-2.56 nothing else: "today is in a term you do not have
+           open" (WO-2.51, with its Switch button) or "this term opens in n days / ended on …"
+           (WO-2.52), shown only when one is true. Both are true on arrival, so this band never
+           appears under a pointer, and it stays up while the strip is paged or a day is unlocked —
+           paintBanner() argues why. "You are not on today" was this band's first message and is not
+           here any more: paging, editing and arrival are said by the state line below, in its own
+           slot, because a band that un-hid on ◀ Earlier pushed the pager under the next click.
+           src/attendance.js fills it. -->
       <p class="attendance-banner hidden" id="attendanceBanner"></p>
 
+      <!-- The state of the day the screen is about, and — since WO-2.56 — where the strip is
+           standing when that is not today: "Today is not on screen.", "Editing Mon 9/21 · …".
+           Written by paintActions() alone; the count-as-absent rule is on its title. -->
       <p class="attendance-state" id="attendanceState"></p>
       <p class="attendance-totals" id="attendanceTotals"></p>
       <div class="attendance-actions" id="attendanceActions"></div>

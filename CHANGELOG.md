@@ -13,6 +13,29 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Nothing above the attendance grid moves while you mark — 2026-09-28
+
+Three things above the attendance grid used to jump under your finger.
+
+- **The first tap no longer pushes the grid down.** The first tap on a student opened a sentence
+  about unconfirmed students counting as absent, which pushed every row down. That sentence is now
+  the state line's tooltip. The count and the amber colour are unchanged, and a question mark still
+  counts as absent until you tap it.
+- **Paging no longer moves the pager.** Pressing ◀ Earlier opened a band above the state line,
+  which pushed the pager down under your next click, and the band's own *Back to today* button
+  duplicated `Today`. Now the state line itself says *Today is not on screen.*, at the same size and
+  with no button.
+- **An unlocked past day keeps its count.** The state line reads *Editing Mon 9/21 · 3 unconfirmed*,
+  so that day's question marks stay visible.
+- **The term-rollover band stays up while you page.** The band saying today is in another term no
+  longer disappears when you page back, and its Switch button still works.
+- **The pager's buttons sit together.** ◀ Earlier, Today and Later ▶ are grouped at the right, and
+  the date range between them is gone, since every column already shows its date.
+
+(WO-2.56. Harness green at 1588/1588. A new check measures the pager and the first row to the pixel
+across the first tap, paging, unlocking, Today and the last question mark, at laptop, iPad landscape
+and iPad portrait sizes. Read on the iPad at v145 by the owner the same day.)
+
 ### The privacy policy names the second way Google's sign-in can load — 2026-09-28
 
 Since a fresh device gained *Open from Google Drive*, the privacy policy and the FERPA document
