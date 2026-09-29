@@ -1223,7 +1223,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1582 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1584 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2221,6 +2221,16 @@ refusals are read in a loop and asserted by one check after it. The block pins t
 foot, so the past day it picks is across a DST change from today on any machine. The run prints
 **1596**: `1596 checks · 1596 passed · 0 failed · 0 skipped`, 50,699 lines, 31.8 lines per check,
 638s, exit 0, measured 2026-09-28 on the real clock. Mutation round in `TESTING.md` § WO-2.55.
+
+**WO-5.17 moved it from 1582 to 1584, and the executed count from 1596 to 1598 — two sites, two
+results.** One is a new block at the foot of `verify/outreach.mjs`, just before its fixture comes
+off. It is a real restore under an open draft, through `restoreFromText()` and the confirm button. The
+other is a new block in `verify/sync-button.mjs`, directly after WO-7.7's. It is a sync that downloads
+while a draft is open, with the Drive stand-in holding the transfer so the draft can be opened during
+it. Neither sits in a loop and neither is a failure arm, so the gap between sites and results stays at
+−14, and the file count does not move. The run prints **1598**: `1598 checks · 1598 passed · 0 failed
+· 0 skipped`, 50,923 lines, 31.9 lines per check, 653s, exit 0, measured 2026-09-29 on the real clock.
+Mutation round in `TESTING.md` § WO-5.17.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

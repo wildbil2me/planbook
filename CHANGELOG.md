@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A restore or a download now provably closes an open draft — 2026-09-29
+
+A harness change only; nothing in the app moved.
+
+- **Two new checks open an outreach draft and then replace the document under it**: once by a
+  restore through the real Replace button, and once by a sync that downloads while the draft is
+  open. Both read the draft window closed afterwards.
+- **Deleting the call that closes it now turns those two checks red**, where before it turned
+  nothing red. That was proved by taking the call out and putting it back.
+- The harness is 1,598 checks, all green.
+
 ### The first-grades gate, worked — 2026-09-29
 
 WO-G2 was worked at school from its runbook, and six of its eight boxes are closed.

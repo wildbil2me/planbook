@@ -5297,6 +5297,15 @@ device with nothing to say so, which is the moment a run most needs to be believ
   section: 29 of the 67 browser sections set no touch at all and run on whatever they inherit, so
   "the state this section received" is the only baseline that means the same thing for all of them.
   Recording it by wrapping `send` for `Emulation.*` calls is the audit's suggestion, not a ruling.
+- **After a throw, also remove every page-start script the failed section had installed and not
+  yet removed**, before `recoverPage()` reloads. *(Widened 2026-09-29, owner-directed, out of
+  WO-5.17's verdict.)* A reload keeps every `Page.addScriptToEvaluateOnNewDocument` script, so it
+  keeps running in every section after the failed one, just as leftover emulation does. The case
+  that found it: `verify/sync-button.mjs` installs a fake Google sign-in library (line ~87) and two
+  fake-clock scripts, and it removes them only at its foot (~1308, ~1346, ~1448). A throw anywhere
+  before that leaves every later section loading a fake `google.accounts`. The same `send` wrapper
+  can record the identifiers. Nothing asserts this today, and neither does the emulation half. Page
+  memory such as `window.__drive` is not part of this, because the reload already clears it.
 - **Say in `TESTING.md` § WO-1.57 how the state is captured and restored**, and what is out of reach
   (for example emulation set some other way than through `send`, if any section does that).
 - Nothing under `src/` moves, and none of the 21 section files is edited.
@@ -5309,6 +5318,9 @@ device with nothing to say so, which is the moment a run most needs to be believ
       throw is reverted before anything else is written** (`AGENTS.md`).
 - [ ] Mutation-proved: the same injected throw with the restore taken out of the recovery path
       leaves the next section reading a different value.
+- [ ] A throw injected in `sync-button.mjs` after its fake sign-in is installed leaves the next
+      section loading no fake: `window.google` reads the same as on a normal run. It is mutation-proved
+      the same way, and recorded and reverted as the first line says.
 - [ ] The whole harness is green on the real clock, the check list is unchanged in names and order,
       and no check changes state apart from WO-7.12's named check if it is still open.
 - [ ] `node tools/wo-sweep.mjs` is green, including § 25's reading of `runSection()`'s shape.

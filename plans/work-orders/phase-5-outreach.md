@@ -1714,7 +1714,7 @@ reason the calls are where they are.
 
 ## WO-5.17 — No check opens a draft and then restores
 
-**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-5.16 — the single call this pins down
+**Ship** 3 · **Status** ✅ DONE — 2026-09-29 · **Size** XS · **Depends on** WO-5.16 — the single call this pins down
 **Closes roadmap** *(no box. A harness gap, found by WO-5.16's verifier.)*
 
 **Booked 2026-09-26**, owner-directed, from WO-5.16's verdict. `afterRestore()` in `src/shell.js`
@@ -1742,13 +1742,18 @@ gives the outreach draft the same check, and a second one through the download p
 - **Harness only.** No file under `src/` changes, so `CACHE` in `sw.js` does not move.
 
 **Acceptance**
-- [ ] With the draft open, a restore closes `#outreachModal`, and the check asserts the draft was
+- [x] With the draft open, a restore closes `#outreachModal`, and the check asserts the draft was
       open before the restore rather than assuming it.
-- [ ] With the draft open, a sync that downloads closes `#outreachModal`.
-- [ ] **Mutation-proved.** Delete `outreachView.resetOutreach();` from `afterRestore()`, and both
+      *(`tools/verify/outreach.mjs`, at the foot, before the fixture comes off. Green 2026-09-29.)*
+- [x] With the draft open, a sync that downloads closes `#outreachModal`.
+      *(`tools/verify/sync-button.mjs`, after WO-7.7's block. The draft is opened while the stand-in
+      holds the transfer, because a modal covers the header. Green 2026-09-29.)*
+- [x] **Mutation-proved.** Delete `outreachView.resetOutreach();` from `afterRestore()`, and both
       checks go red. Put it back, and both go green. Record the round in `TESTING.md` § WO-5.17, and
       **revert the mutation before writing anything else** (`AGENTS.md`).
-- [ ] The whole browser harness is green, and the check count rises by exactly the checks added.
+      *(`1598 · 1596 passed · 2 failed`, those two, exit 1. Reverted by edit, then `1598 · 1598`.)*
+- [x] The whole browser harness is green, and the check count rises by exactly the checks added.
+      *(1596 → 1598, two call sites and two results. `wo-sweep.mjs` reads 1584 sites, green.)*
 
 **Traps** — **Do not test `resetOutreach()` by calling it.** A check that calls the function directly
 passes with the call in `afterRestore()` deleted, and that is the gap this work order exists to

@@ -11739,6 +11739,49 @@ there the press moves the term, and a moved term spends the arrival in `anchorDa
       standing three). No check asserts that a restore closes an open draft; this run shows only
       that removing the duplicate broke nothing.
 
+### WO-5.17 — No check opens a draft and then restores
+
+**What this adds.** Two checks and nothing in `src/`: the gap WO-5.16's run left open is closed. Each
+opens a draft from the student record's own door and reads it open, with a body, before anything
+else happens. Then it replaces the document under it and reads `#outreachModal`.
+
+- **The restore** is at the foot of `tools/verify/outreach.mjs`, before its fixture comes off. The
+  draft is Ada's, the file is this run's own document from `buildBackup()`, and the restore goes
+  through `restoreFromText()` and a real pointer press on **Replace**. Before the press, the check
+  reads that the confirm dialog, not the draft's backdrop, is what sits under the button's centre.
+- **The download** is in `tools/verify/sync-button.mjs`, directly after WO-7.7's block, using its
+  Drive stand-in. A modal covers the header, so no teacher can tap Sync with a draft already open.
+  What she can do is tap Sync and open a draft while the transfer is still on the wire. The check
+  does exactly that. The stand-in holds every response for 1.2s, the header button is tapped, and
+  the draft is opened during the wait. The draft is read open while the sync reads `busy`, then the
+  sync settles `downloaded`. Two plain templates, one per tone, are uploaded first so the draft has a
+  body, and taken off and synced away at the foot.
+
+Neither check calls `afterDownload()`, `afterRestore()` or `resetOutreach()`.
+
+- [x] With the draft open, a restore closes `#outreachModal`, and the check asserts the draft was
+      open before the restore rather than assuming it.
+      *(Before: `{"open":true,"body":185,"name":"Ada Wo53Full","mode":false,"view":"detailView"}`,
+      and under the confirm button `{"up":true,"hit":true,"draftStillOpen":true}`. After:
+      `{"open":false,"body":0,"name":"","confirmOpen":false}`.)*
+- [x] With the draft open, a sync that downloads closes `#outreachModal`.
+      *(During: `{"open":true,"body":27}`, `busy = true`, outcome `""`. It settled `downloaded`, the
+      planted school name is the one open, and after: `{"open":false,"body":0}`.)*
+- [x] **Mutation-proved**, 2026-09-29, real clock. `outreachView.resetOutreach();` was deleted from
+      `afterRestore()` in `src/shell.js` and `node tools/verify-shell.mjs` was run: **`1598 checks ·
+      1596 passed · 2 failed · 0 skipped`, 665s, exit 1**. The two failures were these two checks
+      and nothing else. The download check read `after: {"open":true,"body":27,…}`, and the restore
+      check read the draft still open after the confirm had gone. The line was put back by an edit.
+      `git diff --stat -- src/` was then empty, and `grep -rn MUTATION src/ tools/` read only
+      pre-existing prose, before anything else was written. The re-run on the restored tree is the
+      line below.
+- [x] The whole browser harness is green, and the check count rises by exactly the checks added.
+      *(Before, on this tree without the two checks: `1596 checks · 1596 passed · 0 failed · 0
+      skipped`, 649s, exit 0. With them: `1598 checks · 1598 passed · 0 failed · 0 skipped`, 655s,
+      exit 0. Two call sites, neither in a loop and neither a failure arm, so two results:
+      1596 + 2 = 1598. After the mutation was reverted: `1598 checks · 1598 passed · 0 failed · 0 skipped`, 50,923 lines, 653s, exit 0,
+      both checks green again.)*
+
 ---
 
 

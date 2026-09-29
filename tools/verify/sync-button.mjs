@@ -931,6 +931,125 @@ check('a sync from the About panel’s own button moves the header too — the b
   await waitFor((r) => r.state === 'current' && !r.busy, 5000);
 }
 
+/* ══════════ WO-5.17 — a sync that downloads under an open draft closes it ══════════
+
+   afterDownload() in src/shell.js runs afterRestore() whole, and afterRestore() calls
+   outreachView.resetOutreach(): a draft is about a student in the document a download has just
+   replaced. `verify/outreach.mjs` proves the restore half; this is the download half, HERE because
+   this section owns the Drive stand-in and the WO-7.7 block above is standing at `current`, opted
+   in and signed in.
+
+   THE ORDER IS THE ONE A TEACHER CAN ACTUALLY PRODUCE. A modal covers the header, so nobody taps
+   Sync with a draft already open — and a pointer event at the button's coordinate would land on the
+   draft's backdrop and close it for the wrong reason. What she can do is tap Sync and open a draft
+   while the transfer is still on the wire. So the stand-in's `delay` holds every Drive response,
+   the header button is tapped (a real pointer event, nothing over it), the draft is opened from the
+   student record's own door during the wait, and the precondition is READ, not assumed: the modal
+   open with a non-empty body while the sync is still busy. Then the sync is let settle `downloaded`
+   and the modal is read. Nothing here calls afterDownload(), afterRestore() or resetOutreach() —
+   the work order's Traps line: a check that called the function would pass with the call deleted.
+
+   THE DRAFT NEEDS A TEMPLATE TO HAVE A BODY, and this document has none until `templates.mjs` runs
+   much later. So two plain ones — one per tone, since which tone a draft opens on is the student's
+   signals' business — are written locally and uploaded first, which puts the device back at
+   `current` so the next sync can download at all (src/drive-sync.js's planFor() downloads only an
+   unchanged device). Both come off at the foot and are synced away, as is the school name the Drive
+   copy is planted with. */
+{
+  const T_CONCERN = 't_wo517concern', T_PRAISE = 't_wo517praise';
+  const MARK = 'WO517-DOWNLOADED';
+  const pick = await evalJs(`(function(){
+    var doc = window.planbook.store.getDoc();
+    var best = null, n = -1;
+    doc.classes.forEach(function (c) {
+      if (!document.querySelector('[data-class-tab="' + c.id + '"]')) return;
+      var len = c.roster ? c.roster.length : 0;
+      if (len > n) { n = len; best = c; }
+    });
+    return { tab: best ? best.id : '', id: best && best.roster.length ? best.roster[0] : '',
+      school: (doc.teacher || {}).school || '' }; })()`);
+  await evalJs(`(function(){ window.planbook.store.update(function (d) {
+    if (!Array.isArray(d.templates)) d.templates = [];
+    d.templates.push({ id: ${JSON.stringify(T_CONCERN)}, name: 'WO-5.17 concern', audience: 'guardian',
+      tone: 'concern', subject: 'WO-5.17 subject', body: 'WO-5.17 draft body, concern.' });
+    d.templates.push({ id: ${JSON.stringify(T_PRAISE)}, name: 'WO-5.17 praise', audience: 'guardian',
+      tone: 'praise', subject: 'WO-5.17 subject', body: 'WO-5.17 draft body, praise.' }); });
+    return window.planbook.store.flush().then(function () { return 1; }); })()`);
+  await waitFor((r) => r.state === 'ahead', 3000);
+  await tap();
+  const seeded = await waitFor((r) => r.state === 'current' && !r.busy, 5000);
+
+  if (pick.tab) await clickVisible('[data-class-tab="' + pick.tab + '"]');
+  await pause(300);
+  await clickSel('#classView [data-class-screen="class"]');
+  await pause(300);
+  if (pick.id) await clickSel('#classView [data-student-detail="' + pick.id + '"]');
+  await pause(350);
+
+  const planted = await evalJs(`(function(){
+    var doc = window.planbook.store.getDoc();
+    var f = window.__drive.files.filter(function (x) {
+      return x.appProperties && x.appProperties.docId === doc.docId; })[0];
+    if (!f) return { found: false };
+    var body = JSON.parse(f.body);
+    var rev = (Number(doc.rev) || 0) + 5;
+    body.rev = rev;
+    body.teacher = Object.assign({}, body.teacher, { school: ${JSON.stringify(MARK)} });
+    f.body = JSON.stringify(body);
+    f.appProperties = Object.assign({}, f.appProperties, { rev: String(rev), deviceLabel: 'iPad' });
+    window.__drive.delay = 1200;
+    return { found: true, rev: rev,
+      templates: (body.templates || []).filter(function (t) { return t.id.indexOf('t_wo517') === 0; }).length };
+  })()`);
+  const DRAFT = `(function(){
+    var m = document.getElementById('outreachModal');
+    return { open: !m.classList.contains('hidden'),
+      body: document.getElementById('outreachBody').value.length,
+      view: (document.querySelector('main > :not(.hidden)') || {}).id || '',
+      school: (window.planbook.store.getDoc().teacher || {}).school || '' }; })()`;
+  const viewBefore = (await evalJs(DRAFT)).view;
+  await tap();
+  await clickSel('#detailActions [data-outreach-draft]');
+  const during = await evalJs(DRAFT);
+  const duringSync = await read();
+  const down = await waitFor((x) => !x.busy && x.outcome === 'downloaded', 8000);
+  let after = await evalJs(DRAFT);
+  for (let i = 0; i < 20 && after.open; i++) {
+    await pause(100);
+    after = await evalJs(DRAFT);
+  }
+  await evalJs('window.__drive.delay = 0; 1');
+  check('WO-5.17 — with a draft open, a sync that DOWNLOADS closes #outreachModal: the header button '
+    + 'was tapped, the draft opened from the student record’s own door while the transfer was still '
+    + 'held on the wire, and read open with a non-empty body while the sync was busy — then the sync '
+    + 'settled `downloaded`, the planted document is the one open, and the draft is gone with the '
+    + 'document it was about',
+    seeded.state === 'current' && pick.id !== '' && viewBefore === 'detailView'
+      && planted.found === true && planted.templates === 2
+      && during.open === true && during.body > 0 && duringSync.busy === true
+      && duringSync.outcome !== 'downloaded'
+      && down.outcome === 'downloaded' && after.school === MARK && after.open === false,
+    'seeded at ' + seeded.state + '; view before the tap = ' + viewBefore + '; planted = '
+      + JSON.stringify(planted) + '; during: ' + JSON.stringify(during) + ', busy = '
+      + duringSync.busy + ', outcome = ' + JSON.stringify(duringSync.outcome)
+      + '; settled ' + down.outcome + '; after: ' + JSON.stringify(after));
+
+  /* Handed back: the draft shut if it is not, the two templates and the planted school off the
+     document, synced so the header is at `current` again for the WO-7.10 block below, and the page
+     back on the register the WO-7.7 block left it on. */
+  await shutModals();
+  await evalJs(`(function(){ window.planbook.store.update(function (d) {
+    d.templates = (d.templates || []).filter(function (t) {
+      return !t || String(t.id).indexOf('t_wo517') !== 0; });
+    d.teacher.school = ${JSON.stringify(pick.school)}; });
+    return window.planbook.store.flush().then(function () { return 1; }); })()`);
+  await waitFor((r) => r.state === 'ahead', 3000);
+  await tap();
+  await waitFor((r) => r.state === 'current' && !r.busy, 5000);
+  await clickVisible('[data-class-screen="class"]');
+  await pause(300);
+}
+
 /* ══════════ WO-7.10 — no token is not an alarm, the tap signs in inside itself, and the red line ══════
    ══════════ that outlived a tapped success                                                     ══════
 

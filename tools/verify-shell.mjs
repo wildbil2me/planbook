@@ -396,8 +396,9 @@ const BROWSER_SECTIONS = [
   { file: 'verify/templates.mjs', run: templates },
   /* AND THE SEND FLOW AFTER THE EDITOR THAT FEEDS IT (WO-5.3). It reads `templatesFor()` the way
      that screen writes it, and it drives the signal card — so it wants both of them behind it. It
-     is not last for the reason the section below is: it restores nothing, and its own fixture is
-     put back by hand at the foot of it. */
+     is not last for the reason the section below is, even though since WO-5.17 it drives one real
+     restore under an open draft: the file it restores is this run's own, taken a moment before, so
+     the content is unchanged, and its own fixture is put back by hand at the foot of it. */
   { file: 'verify/outreach.mjs', run: outreach },
   /* AND THE CONTACT LOG DIRECTLY AFTER THE FLOW THAT WRITES IT (WO-5.4). It is the only section
      that presses the handoff — the section above proves the same flow writes NOTHING while a draft
@@ -406,10 +407,11 @@ const BROWSER_SECTIONS = [
      fixture, including the two contacts it makes the app write, is put back by hand at the foot
      of it. */
   { file: 'verify/contact-log.mjs', run: contactLog },
-  /* LAST, AND ON PURPOSE (WO-4.5). It is the only section that drives a real restore of the whole
-     year document through backup.restoreFromText() and the confirm button — its acceptance line
-     asks for exactly that — and a section that replaces the document is a section nothing should
-     run after. The file it restores is this run's own, so the content is unchanged either way;
+  /* LAST, AND ON PURPOSE (WO-4.5). It drives a real restore of the whole year document through
+     backup.restoreFromText() and the confirm button — its acceptance line asks for exactly that —
+     and a section that replaces the document is a section nothing should run after. It is no
+     longer the only one that restores: `verify/templates.mjs` and `verify/outreach.mjs` do too,
+     and each says above why it need not be last. The file it restores is this run's own, so the content is unchanged either way;
      what this ordering buys is that the claim does not have to be true of the next fixture too. */
   { file: 'verify/cooldown-quiet.mjs', run: cooldownQuiet },
 ];

@@ -56,6 +56,12 @@
  * claim for free: the second chip row is drawn AND naming a guardian at the moment the mode goes
  * on, so its emptying is asserted by a check that was already searching the whole modal's text.
  *
+ * WO-5.17 ADDED ONE, AT THE FOOT, AND IT IS THE ONLY RESTORE IN THIS FILE. A draft opened from the
+ * student record, read open, then a real restore of the run's own document through restoreFromText()
+ * and the confirm button, and the modal read shut: src/shell.js's afterRestore() drops the draft,
+ * and until this check nothing asserted that it does. Its twin — the same draft under a sync that
+ * downloads — is in `sync-button.mjs`, because that is where the Drive stand-in lives.
+ *
  * Nothing here launches a browser, a server or a document of its own: the entry file owns all three
  * and hands them over on `h`. `tools/README.md` § "Driving a browser over CDP" says where a new
  * check goes.
@@ -2895,8 +2901,9 @@ if (!seam) {
       Blanking it is the state the reason is about — nobody on this roster entry and no
       administrator either — and it is a write to the FIXTURE rather than by the flow, which is why
       it is safe here and only here: it is after the last `rev` reading in this section, and the
-      cleanup below puts the whole `teacher` block back as it was found regardless. It runs last,
-      after every reading that depends on Ada's draft, and the cleanup closes what it opens.
+      cleanup below puts the whole `teacher` block back as it was found regardless. It runs after
+      every reading that depends on Ada's draft, and the cleanup closes what it opens. (WO-5.17's
+      restore block sits between this and the cleanup; it opens a fresh draft of Ada's of its own.)
     */
     const nobody = await evalJs(`(function(){
       ${DRAWN}
@@ -3027,6 +3034,103 @@ if (!seam) {
         && otherHead.stripText.indexOf(otherHead.fixSentence) === -1,
       otherHead.rows.length + ' row(s) under ' + otherHead.count + ' reason(s): '
         + otherHead.rows.map((r) => r.slice(0, 60)).join(' | '));
+
+    /*
+      ─────────── AND A RESTORE UNDER AN OPEN DRAFT CLOSES IT (WO-5.17) ───────────
+
+      src/shell.js's afterRestore() calls outreachView.resetOutreach(), because a draft is about a
+      student in the document a restore has just put away. Until this block nothing in the harness
+      opened a draft and then restored: WO-5.16's verifier deleted that call and the run stayed
+      green, so the run proved the call's DUPLICATE could go and said nothing about whether the
+      draft still closes. The template editor has had this check since WO-5.2 (templates.mjs,
+      *a REAL restore*); this is the same shape over the draft.
+
+      HERE RATHER THAN IN backup-restore.mjs because the draft is what has to travel, and it does
+      not: that section runs long before this one, before any template exists, on a document with
+      no student this flow can address, so opening a draft there would mean carrying this file's
+      whole fixture across. Here Ada, her class and five templates are already on the document, and
+      the restore is the section's last act before the fixture comes off — after the last `rev`
+      reading above, because a restore writes. The file restored is this run's own document,
+      written by the download path a moment earlier, so the content is unchanged either way and the
+      cleanup below reads exactly what it read before this block existed.
+
+      THE DRAFT IS OPENED THROUGH A DOOR AND THE RESTORE IS DRIVEN, and neither is optional (the work
+      order's Traps line). A check that called resetOutreach() would pass with the call deleted from
+      afterRestore(), which is the gap this block closes; so the draft comes from the student
+      record's own button, the restore from restoreFromText() and the confirm button a teacher taps,
+      and what is read afterwards is the modal. THE PRECONDITION IS ASSERTED, NOT ASSUMED: the modal
+      is read open, on Ada, with a non-empty body, before the restore starts — a check that only
+      read "hidden" afterwards would pass over a draft that never opened. And the confirm dialog is
+      read as the thing on top at its own button's centre before that button is pressed, because
+      the click is a real pointer event at a coordinate: had the draft's overlay been above it, the
+      press would have landed on the draft's backdrop and closed it for the wrong reason.
+    */
+    await evalJs(`(function(){
+      document.querySelectorAll('.modal-overlay:not(.hidden) [data-modal-close]').forEach(
+        function(b){ b.click(); });
+      return 1; })()`);
+    await new Promise(r => setTimeout(r, 200));
+    if ((await onView()) !== 'homeView') await goHome();
+    await clickSel('#homeGrid [data-class-tab="' + CLS + '"]');
+    await new Promise(r => setTimeout(r, 300));
+    await clickSel('#classView [data-class-screen="class"]');
+    await new Promise(r => setTimeout(r, 300));
+    await clickSel('#classView [data-student-detail="' + FULL + '"]');
+    await new Promise(r => setTimeout(r, 350));
+    await clickSel('#detailActions [data-outreach-draft]');
+    const OUTREACH_STATE = `(function(){
+      var m = document.getElementById('outreachModal');
+      var c = document.getElementById('restoreConfirmModal');
+      return { open: !m.classList.contains('hidden'),
+        body: document.getElementById('outreachBody').value.length,
+        name: window.planbook.outreachView.outreachModel().name,
+        confirmOpen: !c.classList.contains('hidden'),
+        mode: window.planbook.supports.presentationMode(),
+        view: (document.querySelector('main > :not(.hidden)') || {}).id || '' }; })()`;
+    const draftBefore = await evalJs(OUTREACH_STATE);
+    const backupFile = await evalJs(`(async function(){
+      var f = await window.planbook.backup.buildBackup();
+      return { text: f.text, name: f.name }; })()`);
+    const restoreAsked = await evalJs(`(async function(){
+      var ok = await window.planbook.backup.restoreFromText(${JSON.stringify(backupFile.text)},
+        ${JSON.stringify(backupFile.name)});
+      return ok === true ? 1 : 0; })()`);
+    /* Polled, never slept (tools/README.md § CDP trap 5): the dialog is up, and what is under its
+       confirm button's centre is the button. */
+    let underConfirm = null;
+    for (let i = 0; i < 40; i++) {
+      underConfirm = await evalJs(`(function(){
+        var c = document.getElementById('restoreConfirmModal');
+        var b = document.getElementById('restoreConfirmBtn');
+        if (c.classList.contains('hidden') || !b) return { up: false, hit: false };
+        var r = b.getBoundingClientRect();
+        var at = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+        return { up: true, hit: !!(at && at.closest('#restoreConfirmBtn')),
+          draftStillOpen: !document.getElementById('outreachModal').classList.contains('hidden') };
+      })()`);
+      if (underConfirm.up && underConfirm.hit) break;
+      await new Promise(r => setTimeout(r, 100));
+    }
+    await clickSel('[data-backup-confirm]');
+    let draftAfter = await evalJs(OUTREACH_STATE);
+    for (let i = 0; i < 40 && (draftAfter.confirmOpen || draftAfter.open); i++) {
+      await new Promise(r => setTimeout(r, 100));
+      draftAfter = await evalJs(OUTREACH_STATE);
+    }
+    check('WO-5.17 — with a draft open, a REAL restore — restoreFromText() and the confirm button a '
+      + 'teacher taps — closes #outreachModal. The draft was read open first, on Ada, from the '
+      + 'student record’s own door, with a non-empty body and the projector off, and the confirm '
+      + 'dialog was the thing under its own button when it was pressed: so the modal closing is '
+      + 'afterRestore() dropping a draft about the document it put away, and not a draft that never '
+      + 'opened or a press that landed on its backdrop',
+      draftBefore.open === true && draftBefore.body > 0 && draftBefore.name === 'Ada Wo53Full'
+        && draftBefore.mode === false && draftBefore.view === 'detailView'
+        && restoreAsked === 1 && underConfirm.up === true && underConfirm.hit === true
+        && underConfirm.draftStillOpen === true
+        && draftAfter.confirmOpen === false && draftAfter.open === false,
+      'before: ' + JSON.stringify(draftBefore) + '; restore asked = ' + restoreAsked
+        + '; under the confirm button: ' + JSON.stringify(underConfirm)
+        + '; after: ' + JSON.stringify(draftAfter));
 
     /* ── and the fixture comes back off ──
        OFF THE SCREEN FIRST, for the reason templates.mjs leaves its own screen before it takes its
