@@ -3088,7 +3088,7 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
 
    WHAT IT IS FOR. `plans/` holds hand-written HTML planning documents — runbooks, a return brief —
    and every one of them is free to state a work order's status and be wrong about it forever. On
-   2026-09-12 `plans/wo-3-18-video-runbook.html` carried FOUR such statements, five days stale: its
+   2026-09-12 `plans/runbooks/wo-3-18-video-runbook.html` carried FOUR such statements, five days stale: its
    band read `WO-3.18 🔒 GATED on WO-7.2`, its dependency strip had WO-7.2 `⬜ not started`, its
    Blocker 1 said WO-7.2 `is 🔒 GATED and unbuilt`, and its shot list called WO-7.2's shots `the
    ones that do not exist yet` — while the tracker had WO-3.18 unlocked and WO-7.2 ✅ DONE. Nothing
@@ -3109,8 +3109,10 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
 
    THE FILES ARE REACHED BY PATH, AND NEITHER WALK IS WIDENED. `IGNORE_DIRS` at the head of this
    file is untouched and so is `--audit`'s directory walk in `wo-gate.mjs`. What is read is the HTML
-   directly in `plans/` — not `plans/work-orders/`, not anything below — plus `tools/data-viewer.html`
-   by name, because WO-1.52's own account of the problem names it beside them. `design/mockups/`,
+   directly in `plans/` and directly in `plans/runbooks/` — not `plans/work-orders/`, not anything
+   deeper — plus `tools/data-viewer.html` by name, because WO-1.52's own account of the problem names
+   it beside them. `plans/runbooks/` was added by name on 2026-09-29, when the runbooks moved out of
+   `plans/`. Reading only `plans/` would have dropped all of them unread, with the sweep still green. `design/mockups/`,
    `.claude/dispatch/` and the other two pages in `tools/` are left out deliberately: they are
    documents whose whole job is to record what was true when they were written, and a check that
    read them would drown in its own genre on the first run. Widen this by adding a NAME, not a walk.
@@ -3137,7 +3139,7 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
    - A DATED SENTENCE: one that says `until YYYY-MM-DD`, `what this said` or `this read`.
    - A DATED DOCUMENT, named below with the sentence in which it says so itself. A return brief is a
      snapshot by construction, and `plans/return-brief.html` says it is kept "because this is a dated
-     brief"; `plans/wo-7-1-runbook.html` is the runbook of a landed work order and says it is kept "as
+     brief"; `plans/runbooks/wo-7-1-runbook.html` is the runbook of a landed work order and says it is kept "as
      a dated record of the build". The anchor has to match: if it is reworded out, the document is read as live and the
      result says so on both branches — § 21's lost-region note — rather than going quietly unread.
    - Read over the words BETWEEN the id and its status, not the whole sentence, because the neighbour
@@ -3157,7 +3159,7 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
    stripper still strips, and whether a status claim was read IN EACH DOCUMENT — a claim pattern that
    has stopped matching is silence, and silence is this section's green, so a zero is § 11's
    green-from-a-distance failure and goes red. Per document, not in aggregate: the first cut counted
-   across all of them, and `plans/wo-3-18-runbook.html` read as zero claims inside a green run
+   across all of them, and `plans/runbooks/wo-3-18-runbook.html` read as zero claims inside a green run
    because its neighbours read plenty. A document that genuinely states no status is named in
    `STATES_NO_STATUS` with the words that show it.
 
@@ -3193,7 +3195,7 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
     { file: 'plans/return-brief.html', says: /kept\s+because\s+this\s+is\s+a\s+dated\s+brief/ },
     // Added 2026-09-24, on § 26's first run: a runbook for a work order that has landed is a record of
     // how it was built, and updating its strips would rewrite what it records.
-    { file: 'plans/wo-7-1-runbook.html', says: /as\s+a\s+dated\s+record\s+of\s+the\s+build/ },
+    { file: 'plans/runbooks/wo-7-1-runbook.html', says: /as\s+a\s+dated\s+record\s+of\s+the\s+build/ },
   ];
 
   // Nine glyphs and their words, so a claim can be written either way and still be compared with the
@@ -3255,7 +3257,7 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
 
   // THE SECOND READING: A CARD, whose id and status sit in separate cells of one element. Added by
   // WO-1.52's first correction round, because the sentence reading above cannot see this shape when a
-  // description cell stands BETWEEN the two and holds a full stop — `plans/wo-3-18-runbook.html`'s
+  // description cell stands BETWEEN the two and holds a full stop — `plans/runbooks/wo-3-18-runbook.html`'s
   // dependency strip is `WO-7.1` / "…has to film. Nothing in the app touches the scope today." /
   // `⬜ not started · M`, the sentence ends before the status, and the whole file read as zero claims.
   // The `06bfa06` fixture could not show it: there the state cell came before the description.
@@ -3333,11 +3335,18 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
     documents = CLAIMS_IN.map(p => ({ shownAs: p.replace(/\\/g, '/'), abs: path.resolve(p) }));
     console.log(`       § 26 is pointed at ${documents.map(d => d.shownAs).join(', ')} by --claims-in, not at the planning documents it names`);
   } else {
-    const plansDir = path.join(REPO, 'plans');
-    const html = fs.existsSync(plansDir)
-      ? fs.readdirSync(plansDir, { withFileTypes: true }).filter(e => e.isFile() && /\.html$/i.test(e.name)).map(e => 'plans/' + e.name).sort()
-      : [];
-    if (!html.length) faults.push('there is no `.html` file directly in plans/ — either the planning documents moved, or the path this section reads them by is wrong');
+    // Two directories, each read flat and each named: `plans/` for the return brief, and
+    // `plans/runbooks/` since 2026-09-29, when the runbooks moved there. Each must hold at least one
+    // page, so a directory that empties or moves goes red by name instead of dropping out unread.
+    const html = [];
+    for (const dir of ['plans', 'plans/runbooks']) {
+      const abs = path.join(REPO, ...dir.split('/'));
+      const found = fs.existsSync(abs)
+        ? fs.readdirSync(abs, { withFileTypes: true }).filter(e => e.isFile() && /\.html$/i.test(e.name)).map(e => dir + '/' + e.name).sort()
+        : [];
+      if (!found.length) faults.push(`there is no \`.html\` file directly in ${dir}/ — either the planning documents moved, or the path this section reads them by is wrong`);
+      html.push(...found);
+    }
     documents = [...html, 'tools/data-viewer.html'].map(r => ({ shownAs: r, abs: path.join(REPO, ...r.split('/')) }));
   }
   const missing = documents.filter(d => !fs.existsSync(d.abs));
@@ -3411,7 +3420,7 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
     }
 
     // Counted per document, not across them: an aggregate count let a named document that yielded
-    // nothing pass beside one that yielded plenty — which is how `plans/wo-3-18-runbook.html` read as
+    // nothing pass beside one that yielded plenty — which is how `plans/runbooks/wo-3-18-runbook.html` read as
     // zero claims inside a green run. See `STATES_NO_STATUS` for the one kind of document excused.
     if (claimsRead === readBefore) {
       if (STATES_NO_STATUS.some(s => s.file === rel(doc.abs) && s.says.test(html))) statesNone.push(doc.shownAs); else silent.push(doc.shownAs);

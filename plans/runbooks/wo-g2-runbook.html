@@ -1,0 +1,920 @@
+<title>WO-G2 First-Grades Gate</title>
+
+<style>
+  /* design/style-guide.md § 1 and § 8: colours inline, never custom properties, and no dark
+     mode — the suite is light-theme only. Every value below is a literal for that reason, and
+     tools/wo-sweep.mjs reads every .css/.html outside tools/, so a token block here is a red
+     sweep. The masthead, section labels and step cards are lifted from wo-7-1-runbook.html. */
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #eceff4;
+    color: #1a1a2e;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  h1, h2, h3 { text-wrap: balance; margin: 0; line-height: 1.15; }
+
+  code, .mono { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; }
+  code {
+    font-size: 0.86em;
+    background: #f6f8fb;
+    border: 1px solid #eef0f4;
+    border-radius: 3px;
+    padding: 0.1em 0.34em;
+    overflow-wrap: break-word;
+  }
+
+  a { color: #4a5fbb; text-underline-offset: 2px; }
+  a:hover { color: #5b6fcc; }
+  :focus-visible { outline: 2px solid #5b6fcc; outline-offset: 2px; border-radius: 2px; }
+
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── Masthead ─────────────────────────────────────────────── */
+  .band {
+    background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 78%, #2a2a6e 100%);
+    color: #ffffff;
+    padding: 44px 0 40px;
+  }
+  .band .wrap { display: flex; flex-direction: column; gap: 18px; }
+  .eyebrow {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.38);
+  }
+  .band h1 { font-size: clamp(30px, 5.2vw, 46px); font-weight: 700; letter-spacing: -0.015em; }
+  .band .standfirst { color: rgba(255,255,255,0.62); font-size: 17px; max-width: 62ch; margin: 0; }
+  .band .standfirst strong { color: #ffffff; font-weight: 600; }
+  .band-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.14);
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 12px;
+    color: rgba(255,255,255,0.38);
+  }
+  .band-meta b { color: rgba(255,255,255,0.62); font-weight: 500; }
+
+  /* ── Sections ─────────────────────────────────────────────── */
+  main { padding: 40px 0 72px; display: flex; flex-direction: column; gap: 52px; }
+
+  .sec-label {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8a9bb0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .sec-label::after { content: ""; flex: 1; height: 1px; background: #e0e4f0; }
+
+  p { margin: 0 0 14px; max-width: 68ch; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── Warnings ─────────────────────────────────────────────── */
+  .traps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .trap {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-left: 3px solid #f0b0b0;
+    border-radius: 6px;
+    padding: 15px 17px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+  }
+  .trap h3 { font-size: 15.5px; font-weight: 700; margin-bottom: 6px; }
+  .trap p { font-size: 14.5px; color: #4c5a6d; margin: 0; }
+
+  .callout {
+    background: #eef2ff;
+    border: 1px solid #b0bcf0;
+    border-radius: 6px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .callout h3 { font-size: 17px; font-weight: 700; }
+  .callout p { color: #4c5a6d; font-size: 15px; }
+  .callout.warn { background: #fff8e6; border-color: #d8bd63; }
+
+  /* ── Tables ───────────────────────────────────────────────── */
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eef0f4; vertical-align: top; }
+  th {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8a9bb0;
+    white-space: nowrap;
+  }
+  td { color: #4c5a6d; }
+  td.num { font-variant-numeric: tabular-nums; color: #8a9bb0; font-weight: 600; }
+  .glance { background: #ffffff; border: 1px solid #e0e4f0; border-radius: 6px; }
+  .glance a { font-weight: 600; }
+
+  .chip {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid #e0e4f0;
+    background: #f6f8fb;
+    color: #6b7a8d;
+    white-space: nowrap;
+    display: inline-block;
+  }
+  .chip.entry  { color: #4a5fbb; background: #eef2ff; border-color: #b0bcf0; }
+  .chip.real   { color: #1c7a45; background: #eafaf1; border-color: #a3e4bc; }
+  .chip.home   { color: #8a6d1a; background: #fff8e6; border-color: #d8bd63; }
+
+  /* ── Box cards ────────────────────────────────────────────── */
+  .steps { display: flex; flex-direction: column; gap: 22px; }
+  .step { display: grid; grid-template-columns: 74px 1fr; gap: 0 24px; align-items: start; }
+  .step-num {
+    font-size: 34px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #8a9bb0;
+    line-height: 1;
+    padding-top: 18px;
+    text-align: right;
+    padding-right: 4px;
+  }
+  .step-body {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-radius: 6px;
+    padding: 20px 22px 22px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+  }
+  .step.entry .step-body { border-left: 3px solid #b0bcf0; }
+  .step.real .step-body  { border-left: 3px solid #a3e4bc; }
+  .step.home .step-body  { border-left: 3px solid #e0e4f0; background: #f6f8fb; }
+  .step-head { display: flex; flex-direction: column; gap: 8px; }
+  .step h2 { font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
+  .step-body p, .step-body li { font-size: 15.5px; color: #4c5a6d; }
+  .step-body strong { color: #1a1a2e; font-weight: 600; }
+  .step-body ol, .step-body ul { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 7px; max-width: 68ch; }
+
+  .subhead {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8a9bb0;
+  }
+  .note {
+    border-left: 2px solid #e0e4f0;
+    padding-left: 14px;
+    font-size: 14.5px;
+    color: #6b7a8d;
+    font-style: italic;
+    max-width: 66ch;
+  }
+  .note b { font-style: normal; font-weight: 600; color: #4c5a6d; }
+
+  .quote {
+    background: #f6f8fb;
+    border: 1px solid #eef0f4;
+    border-radius: 5px;
+    padding: 12px 14px;
+    font-size: 14.5px;
+    color: #1a1a2e;
+  }
+
+  /* ── Record blocks: what gets filled in ──────────────────── */
+  .record {
+    border: 1px dashed #b0bcf0;
+    border-radius: 6px;
+    background: #fbfcff;
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .record .subhead { color: #4a5fbb; }
+  .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px 14px; }
+  .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #6b7a8d; }
+  .field.wide { grid-column: 1 / -1; }
+  input[type="text"], select, textarea {
+    font: inherit;
+    font-size: 15px;
+    color: #1a1a2e;
+    background: #ffffff;
+    border: 1px solid #c9d1e3;
+    border-radius: 4px;
+    padding: 7px 9px;
+    width: 100%;
+    min-height: 38px;
+  }
+  textarea { min-height: 64px; resize: vertical; }
+  input[type="text"]:focus, select:focus, textarea:focus { border-color: #5b6fcc; box-shadow: 0 0 0 2px #dfe5ff; }
+  td input[type="text"], td select { min-width: 84px; }
+  input[type="checkbox"] { width: 20px; height: 20px; accent-color: #4a5fbb; margin: 0; }
+  td.check { width: 60px; text-align: center; }
+
+  /* ── Bring it back ───────────────────────────────────────── */
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button {
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 5px;
+    padding: 10px 16px;
+    min-height: 44px;
+    cursor: pointer;
+    border: 1px solid #b0bcf0;
+    background: #ffffff;
+    color: #4a5fbb;
+  }
+  button.primary { background: #4a5fbb; border-color: #4a5fbb; color: #ffffff; }
+  button.primary:hover { background: #5b6fcc; }
+  button.danger { color: #a33b3b; border-color: #f0b0b0; }
+  .status { font-size: 14px; color: #1c7a45; }
+  #copyFallback { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 13px; min-height: 220px; }
+
+  footer {
+    border-top: 1px solid #e0e4f0;
+    padding: 22px 0 0;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11.5px;
+    color: #8a9bb0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+  }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 0 16px; }
+    .step { grid-template-columns: 1fr; }
+    .step-num { text-align: left; padding: 0 0 6px; font-size: 26px; }
+    .step-body { padding: 16px 14px 18px; }
+  }
+  @media (pointer: coarse) {
+    input[type="text"], select { min-height: 44px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<header class="band">
+  <div class="wrap">
+    <div class="eyebrow">WO-G2 · ship 2 gate · size S</div>
+    <h1>The first-grades gate, worked at school</h1>
+    <p class="standfirst">
+      Nine boxes. Four want <strong>real grades</strong>, two want <strong>one grade-entry sitting with
+      a stopwatch</strong>, and three are closed at home. Nothing is ticked from this page: fill in the
+      record blocks, then bring the results back to a session at home.
+    </p>
+    <div class="band-meta">
+      <span><b>Status</b> WO-G2 ⬜ NOT STARTED</span>
+      <span><b>Gate</b> PASS, all eleven dependencies done</span>
+      <span><b>Target</b> ~2026-09-15, passed</span>
+      <span><b>Written</b> 21 September 2026</span>
+      <span><b>Revised</b> 29 September 2026</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <div class="sec-label">Before anything else</div>
+    <div class="traps">
+      <div class="trap">
+        <h3>No student names on this page</h3>
+        <p>The repository is public. Use initials, or "student A / B / C", and keep the mapping in your
+        head or on paper. That goes for every box you type into below.</p>
+      </div>
+      <div class="trap">
+        <h3>Nothing here goes on the projector</h3>
+        <p>Boxes 2 to 6 put a whole class's grades on screen. Stop mirroring the laptop before you open a
+        gradebook. Presentation mode hides support details. It does not hide scores.</p>
+      </div>
+      <div class="trap">
+        <h3>Take a backup first</h3>
+        <p>Box 6 wipes storage on purpose. Download a backup and move it off the laptop before you start.
+        The record for it is the first block below.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">What changed on 29 September</div>
+    <div class="callout">
+      <h3>Box 6 changed most: both devices sync now</h3>
+      <p>Wiping a device that syncs has side effects in Drive, so read box 6 in full before starting
+      it. The letter scale (box 3) is in <strong>Classes &amp; terms</strong>, not Settings, and it can be
+      set per class. The grade sheet's button is named in box 5. Every dependency of box 8 is now met.
+      Boxes 1, 2, 4 and 7 are unchanged.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">At a glance</div>
+    <div class="glance scroll">
+      <table>
+        <thead><tr><th>Box</th><th>What it asks</th><th>Kind</th><th>Where</th></tr></thead>
+        <tbody>
+          <tr><td class="num">4</td><td><a href="#box4">One assignment across all five classes in under 20 minutes</a></td><td><span class="chip entry">Entry sitting</span></td><td>Laptop, stopwatch</td></tr>
+          <tr><td class="num">5</td><td><a href="#box5">The printout order matches the SIS entry screen</a></td><td><span class="chip entry">Entry sitting</span></td><td>Laptop and SIS</td></tr>
+          <tr><td class="num">3</td><td><a href="#box3">The letter scale is yours, boundary case included</a></td><td><span class="chip real">Real grades</span></td><td>Laptop, Classes &amp; terms</td></tr>
+          <tr><td class="num">2</td><td><a href="#box2">A real class's grade computed by hand</a></td><td><span class="chip real">Real grades</span></td><td>Laptop, any class</td></tr>
+          <tr><td class="num">6</td><td><a href="#box6">Backup drill, now there are grades to lose</a></td><td><span class="chip real">Real grades</span></td><td>Laptop, then iPad, ~30 min</td></tr>
+          <tr><td class="num">1</td><td><a href="#box1">All 15 cases in the grade-math document checked by hand</a></td><td><span class="chip">Desk</span></td><td>Anywhere</td></tr>
+          <tr><td class="num">7</td><td><a href="#box7">The testing checklist's Phase 3 section fully passing</a></td><td><span class="chip home">Home</span></td><td>By reading</td></tr>
+          <tr><td class="num">8</td><td><a href="#box8">The Google verification paperwork: submit it, or move the line</a></td><td><span class="chip home">Decision</span></td><td>Home</td></tr>
+          <tr><td class="num">9</td><td><a href="#box9">Phases 5 to 8 get a ship number</a></td><td><span class="chip home">Decision</span></td><td>Home</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note" style="margin-top:14px"><b>Boxes 4 and 5 belong together:</b> one sitting, one
+    assignment, a stopwatch, and the SIS open in another tab. Everything else fits around them. The
+    boxes below are in the order you'd work them, which is not their number order.</p>
+  </section>
+
+  <section>
+    <div class="sec-label">The boxes</div>
+    <div class="steps">
+
+      <!-- Backup -->
+      <div class="step" id="backup" data-box="Backup before starting">
+        <div class="step-num">0</div>
+        <div class="step-body">
+          <div class="step-head">
+            <h2>Take a backup before the entry sitting</h2>
+          </div>
+          <p>Download a backup from the backup panel and move it off the laptop, to a USB stick or your
+          own Drive, <strong>before</strong> anything else on this page. Box 6 wipes storage deliberately,
+          and this copy is the one that exists if something goes wrong.</p>
+          <p>Drive sync does not replace this file. Drive holds whatever was last synced, and box 6's wipe
+          changes what Drive holds. The downloaded file does not change.</p>
+          <div class="record">
+            <div class="subhead">Record</div>
+            <div class="fields">
+              <label class="field">Backup taken (date and time)<input type="text" id="bk-when" data-label="Backup taken"></label>
+              <label class="field">Stored at<input type="text" id="bk-where" data-label="Stored at"></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 4 -->
+      <div class="step entry" id="box4" data-box="Box 4: five classes in under 20 minutes">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip entry">Entry sitting</span></div>
+            <h2>Five classes in under 20 minutes</h2>
+          </div>
+          <p>Pick <strong>one</strong> real assignment that all five classes have: the same task, or one
+          assignment per class from the same week. Enter it for real.</p>
+          <ol>
+            <li>Start the stopwatch when you open the first class's grid, not when you sit down.</li>
+            <li>Enter every student's score in all five classes. Mark <code>missing</code>,
+            <code>late</code> and <code>excused</code> as you normally would. The app never infers them
+            from a due date.</li>
+            <li>Stop the stopwatch when the fifth class's last score is in.</li>
+          </ol>
+          <p><strong>The bar is 20 minutes for all five.</strong> If it takes longer, the useful record is
+          <em>where</em> the time went: the grid, the keyboard, looking up who was absent, or the SIS in the
+          other window.</p>
+          <div class="record">
+            <div class="subhead">Record</div>
+            <div class="scroll">
+              <table>
+                <thead><tr><th>Class</th><th>Students</th><th>Minutes</th><th>Anything that slowed you</th></tr></thead>
+                <tbody>
+                  <tr><td class="num">1</td><td><input type="text" id="b4-1-n" data-label="Class 1 students"></td><td><input type="text" id="b4-1-t" data-label="Class 1 minutes"></td><td><input type="text" id="b4-1-s" data-label="Class 1 slowed by"></td></tr>
+                  <tr><td class="num">2</td><td><input type="text" id="b4-2-n" data-label="Class 2 students"></td><td><input type="text" id="b4-2-t" data-label="Class 2 minutes"></td><td><input type="text" id="b4-2-s" data-label="Class 2 slowed by"></td></tr>
+                  <tr><td class="num">3</td><td><input type="text" id="b4-3-n" data-label="Class 3 students"></td><td><input type="text" id="b4-3-t" data-label="Class 3 minutes"></td><td><input type="text" id="b4-3-s" data-label="Class 3 slowed by"></td></tr>
+                  <tr><td class="num">4</td><td><input type="text" id="b4-4-n" data-label="Class 4 students"></td><td><input type="text" id="b4-4-t" data-label="Class 4 minutes"></td><td><input type="text" id="b4-4-s" data-label="Class 4 slowed by"></td></tr>
+                  <tr><td class="num">5</td><td><input type="text" id="b4-5-n" data-label="Class 5 students"></td><td><input type="text" id="b4-5-t" data-label="Class 5 minutes"></td><td><input type="text" id="b4-5-s" data-label="Class 5 slowed by"></td></tr>
+                  <tr><td><strong>Total</strong></td><td></td><td><input type="text" id="b4-total" data-label="Total minutes"></td><td></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="fields">
+              <label class="field wide">First real entry sitting, or a later one?
+                <select id="b4-which" data-label="Which sitting">
+                  <option value=""></option>
+                  <option>The first real entry sitting</option>
+                  <option>A later sitting</option>
+                </select>
+              </label>
+            </div>
+            <p class="note">The box was written for the first sitting, on Sep 8. A later sitting is a weaker
+            measurement because you're faster by now. It still counts, but say which it was.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 5 -->
+      <div class="step entry" id="box5" data-box="Box 5: printout order against the SIS">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip entry">Entry sitting</span></div>
+            <h2>The printout's order against the SIS</h2>
+          </div>
+          <p>Straight after box 4, while the scores are fresh:</p>
+          <ol>
+            <li>On one class's gradebook, tap <strong>🖨 Grade sheet</strong> in the header strip. This is
+            the term as one sheet, in the order the SIS is typed in. Print it, or keep it open on screen.</li>
+            <li>Open the SIS grade-entry screen for the same class and assignment.</li>
+            <li>Re-key the scores from the sheet into the SIS, <strong>top to bottom, without skipping
+            around.</strong></li>
+          </ol>
+          <p>The question is whether the sheet's order of students is the SIS's order, so the re-key is a
+          straight run down both lists. One student out of place is a failure worth recording, because that
+          is how a score lands on the wrong child.</p>
+          <div class="record">
+            <div class="subhead">Record</div>
+            <div class="fields">
+              <label class="field">Class re-keyed (period or course)<input type="text" id="b5-class" data-label="Class re-keyed"></label>
+              <label class="field">Students<input type="text" id="b5-n" data-label="Students"></label>
+              <label class="field">Orders matched top to bottom?
+                <select id="b5-match" data-label="Orders matched"><option value=""></option><option>Yes</option><option>No</option></select>
+              </label>
+              <label class="field wide">If no, where did they diverge? By position, e.g. "rows 14–15 swapped". No names.<input type="text" id="b5-where" data-label="Where they diverged"></label>
+              <label class="field wide">Likely cause (hyphenated surname, preferred name, mid-year add, dropped student still listed)<input type="text" id="b5-cause" data-label="Likely cause"></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 3 -->
+      <div class="step real" id="box3" data-box="Box 3: the letter scale">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip real">Real grades</span></div>
+            <h2>The letter scale is yours</h2>
+          </div>
+          <p>The app ships with this scale:</p>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>A</th><th>A-</th><th>B+</th><th>B</th><th>B-</th><th>C+</th><th>C</th><th>C-</th><th>D+</th><th>D</th><th>D-</th><th>F</th></tr></thead>
+              <tbody><tr class="mono"><td>93</td><td>90</td><td>87</td><td>83</td><td>80</td><td>77</td><td>73</td><td>70</td><td>67</td><td>63</td><td>60</td><td>0</td></tr></tbody>
+            </table>
+          </div>
+          <p><strong>There is no separate rounding rule.</strong> If the school or the SIS treats 89.5 as an
+          A-, the band's minimum is <strong>89.5</strong>, not 90. That is the boundary case this box is
+          about: a student at 89.6 gets a B+ from the app and an A- from the SIS, and a guardian finds out in
+          November.</p>
+          <p>The scale is in <strong>Classes &amp; terms → Letter grades → Letter scale</strong>. The dialog
+          opens on the year's bands, and the row under <strong>These bands are for</strong> switches to one
+          class. <strong>A class can have its own bands</strong>, which replace the year's for that class
+          only, so this check is per class. A class you gave its own bands once and then forgot about is
+          exactly what this box should catch.</p>
+          <ol>
+            <li>Find out what the SIS does at a boundary: round, truncate, or neither. The quickest test is a
+            real student near a line, or the district's grading policy.</li>
+            <li>Compare every band above with the scale you actually use. If they differ, edit the year's
+            bands in the dialog.</li>
+            <li>Step through all five classes under <strong>These bands are for</strong>. Note whether each
+            uses the year's bands or its own. If it has its own, check those too.</li>
+            <li>Find one real student within half a point of a boundary, and check that the app's letter
+            matches the SIS's.</li>
+          </ol>
+          <div class="record">
+            <div class="subhead">Record</div>
+            <div class="fields">
+              <label class="field">SIS at a boundary
+                <select id="b3-sis" data-label="SIS at a boundary"><option value=""></option><option>Rounds</option><option>Truncates</option><option>Neither</option><option>Don't know</option></select>
+              </label>
+              <label class="field">Bands that differ from the table<input type="text" id="b3-diff" data-label="Bands that differ"></label>
+              <label class="field">Classes with their own bands<input type="text" id="b3-own" data-label="Classes with own bands"></label>
+              <label class="field">Those bands correct?
+                <select id="b3-owncorrect" data-label="Own bands correct"><option value=""></option><option>Yes</option><option>No</option><option>No class has its own</option></select>
+              </label>
+              <label class="field">Boundary student's percentage<input type="text" id="b3-pct" data-label="Boundary student %"></label>
+              <label class="field">App letter<input type="text" id="b3-app" data-label="App letter"></label>
+              <label class="field">SIS letter<input type="text" id="b3-sisletter" data-label="SIS letter"></label>
+              <label class="field">Match?
+                <select id="b3-match" data-label="Letters match"><option value=""></option><option>Yes</option><option>No</option></select>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 2 -->
+      <div class="step real" id="box2" data-box="Box 2: one real class, computed by hand">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip real">Real grades</span></div>
+            <h2>One real class, computed by hand</h2>
+          </div>
+          <p>Choose a class where, <strong>this term</strong>:</p>
+          <ul>
+            <li>at least one student has a score marked <code>missing</code>,</li>
+            <li>at least one student has a score marked <code>excused</code>,</li>
+            <li>at least one category has <strong>no assignments yet</strong>, so its weight redistributes.</li>
+          </ul>
+          <p>You mark these yourself and the app never infers them, so if no class has all three yet, this
+          box waits for a week that does. <strong>Don't mark a real score just to close this box.</strong></p>
+          <p>For each of the three students:</p>
+          <ol>
+            <li>Write each category's points earned over points possible. <code>missing</code> counts as
+            <strong>zero earned, full points possible</strong>. <code>excused</code> counts as
+            <strong>neither</strong>: it leaves the category entirely.</li>
+            <li>Turn each category into a percentage.</li>
+            <li>Drop the empty category and scale the remaining weights up to 100. With weights 50/30/20 and
+            the 20 empty, that's <code>50/80</code> and <code>30/80</code>.</li>
+            <li>Weighted sum, then percentage, then letter from box 3's scale.</li>
+            <li>Compare with the app.</li>
+          </ol>
+          <div class="record">
+            <div class="subhead">Record, no names</div>
+            <div class="scroll">
+              <table>
+                <thead><tr><th>Student</th><th>Covers</th><th>Your %</th><th>App %</th><th>Your letter</th><th>App letter</th><th>Match</th></tr></thead>
+                <tbody>
+                  <tr><td class="num">A</td><td><code>missing</code></td><td><input type="text" id="b2-a-my" data-label="A (missing) your %"></td><td><input type="text" id="b2-a-app" data-label="A app %"></td><td><input type="text" id="b2-a-myl" data-label="A your letter"></td><td><input type="text" id="b2-a-appl" data-label="A app letter"></td><td><select id="b2-a-m" data-label="A match"><option value=""></option><option>Yes</option><option>No</option></select></td></tr>
+                  <tr><td class="num">B</td><td><code>excused</code></td><td><input type="text" id="b2-b-my" data-label="B (excused) your %"></td><td><input type="text" id="b2-b-app" data-label="B app %"></td><td><input type="text" id="b2-b-myl" data-label="B your letter"></td><td><input type="text" id="b2-b-appl" data-label="B app letter"></td><td><select id="b2-b-m" data-label="B match"><option value=""></option><option>Yes</option><option>No</option></select></td></tr>
+                  <tr><td class="num">C</td><td>empty category</td><td><input type="text" id="b2-c-my" data-label="C (empty category) your %"></td><td><input type="text" id="b2-c-app" data-label="C app %"></td><td><input type="text" id="b2-c-myl" data-label="C your letter"></td><td><input type="text" id="b2-c-appl" data-label="C app letter"></td><td><select id="b2-c-m" data-label="C match"><option value=""></option><option>Yes</option><option>No</option></select></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="fields">
+              <label class="field">Class used (period or course)<input type="text" id="b2-class" data-label="Class used"></label>
+              <label class="field">Empty category<input type="text" id="b2-empty" data-label="Empty category"></label>
+              <label class="field wide">Anything that disagreed, and by how much<textarea id="b2-diff" data-label="Disagreements"></textarea></label>
+            </div>
+          </div>
+          <p class="note"><b>A disagreement is the most important thing this page can find.</b> Write down
+          the numbers exactly as both sides showed them, and don't correct anything in the app.</p>
+        </div>
+      </div>
+
+      <!-- Box 6 -->
+      <div class="step real" id="box6" data-box="Box 6: backup drill">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip real">Real grades</span> <span class="chip">~30 min</span></div>
+            <h2>The backup drill, with real grades</h2>
+          </div>
+          <p>The drill Ship 1 ran on 2026-08-08, run again now that a wipe would cost grades as well as
+          attendance. <strong>One thing is new: both devices sync through Google Drive.</strong> A wipe also
+          erases the device's sync bookmark and its opt-in. The steps allow for that, including one conflict
+          message you should expect to see.</p>
+
+          <div class="callout">
+            <h3>What the wipe does to sync, so none of it looks like a failure</h3>
+            <p>After the wipe the device is signed out and the header has no sync button. Opting in was
+            stored on the device, and the wipe erased it.</p>
+            <p>The empty screen offers two ways back: <strong>Open from Google Drive</strong> and
+            <strong>Restore a backup file</strong>. <strong>Use Restore a backup file.</strong> This drill tests
+            the file. Opening from Drive would also bring the year back, but it would test Drive, and Drive is
+            not a backup.</p>
+            <p>The first sync after the restore shows a message that begins:</p>
+            <div class="quote">Both copies of … had changed since the last sync, so Planbook kept both and merged nothing.</div>
+            <p>That is correct. The device lost its record of the last sync, so it can't tell which copy is
+            newer, and it keeps both. The restored year becomes the live one, and My Drive gets one extra
+            conflict file, named in the message. You can delete that file once your figures have matched.</p>
+          </div>
+
+          <div class="subhead">Laptop</div>
+          <ol>
+            <li>Tap the header's sync button on <strong>both</strong> devices, one after the other, so the
+            laptop, the iPad and Drive hold the same year. Don't edit on the iPad until the laptop half is
+            done.</li>
+            <li>Download a <strong>fresh</strong> backup on the laptop, not the one from the top of this page.</li>
+            <li>Note a few figures to check afterwards: one class's grade for three students, one class's
+            assignment count, one attendance percentage.</li>
+            <li>Wipe the site's storage. In Edge: DevTools (F12 works in the app window) → Application →
+            <strong>Clear site data</strong>. This removes the service worker too, so the drill also tests a
+            reinstall.</li>
+            <li>Reload. The home screen should read <strong>"No classes yet."</strong> and show the two
+            buttons. Tap <strong>Restore a backup file</strong> and choose the file from step 2.</li>
+            <li>Check the figures from step 3. Then check every class, every student, every score, and every
+            <code>missing</code> and <code>excused</code> mark.</li>
+            <li>Reconnect: <strong>About → Connect Google Drive</strong>. Tap sync and read the conflict
+            message.</li>
+          </ol>
+
+          <div class="subhead">iPad</div>
+          <p>The Ship 1 drill required the iPad, and the iPad is where storage is actually at risk. An
+          installed web app on the iPad has no DevTools, so the wipe is deleting the app and installing it
+          again.</p>
+          <ol>
+            <li>Tap sync on the iPad. It should download the laptop's restored year. Check that one of the
+            laptop's figures is right.</li>
+            <li>Download a fresh backup on the iPad, and note where Files saved it. The file stays in Files
+            after the app is deleted.</li>
+            <li>Force-quit Planbook from the app switcher. Then press and hold its Home Screen icon →
+            <strong>Delete</strong>. Deleting the icon deletes the app's storage too. You've seen this every
+            time you've deleted the app: the year comes back only from a backup or a sync, never by itself.</li>
+            <li>In Safari, open <code>https://planbook.hwgteach.com/</code> → Share → <strong>Add to Home
+            Screen</strong>, and launch Planbook from the new icon.</li>
+            <li>The home screen should read <strong>"No classes yet."</strong> This is a quick confirmation and
+            shouldn't fail. If your classes are still there, something new has happened: record it and stop
+            the iPad half.</li>
+            <li>Tap <strong>Restore a backup file</strong>, pick the file from step 2, and check the same
+            figures.</li>
+            <li>Reconnect from About, and sync. Expect the same conflict message, and a second extra file in
+            Drive.</li>
+          </ol>
+
+          <div class="callout warn">
+            <h3>If a restore fails or a figure is wrong, don't reconnect that device</h3>
+            <p>Sync would upload the wrong year over the good copy in Drive. Leave the device as it is, write
+            down what you saw, and bring it home. The backup from the top of this page is still untouched.</p>
+          </div>
+
+          <div class="record">
+            <div class="subhead">Record</div>
+            <div class="scroll">
+              <table>
+                <thead><tr><th>Device</th><th>Backup file (date/time)</th><th>Empty after wipe</th><th>Restored cleanly</th><th>Figures matched</th><th>Conflict message seen</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Laptop</strong></td>
+                    <td><input type="text" id="b6-l-file" data-label="Laptop backup file"></td>
+                    <td><select id="b6-l-empty" data-label="Laptop empty after wipe"><option value=""></option><option>Yes</option><option>No</option></select></td>
+                    <td><select id="b6-l-rest" data-label="Laptop restored cleanly"><option value=""></option><option>Yes</option><option>No</option></select></td>
+                    <td><select id="b6-l-fig" data-label="Laptop figures matched"><option value=""></option><option>Yes</option><option>No</option></select></td>
+                    <td><select id="b6-l-conf" data-label="Laptop conflict message seen"><option value=""></option><option>Yes</option><option>No</option></select></td></tr>
+                  <tr><td><strong>iPad</strong></td>
+                    <td><input type="text" id="b6-i-file" data-label="iPad backup file"></td>
+                    <td><select id="b6-i-empty" data-label="iPad empty after wipe"><option value=""></option><option>Yes</option><option>No</option></select></td>
+                    <td><select id="b6-i-rest" data-label="iPad restored cleanly"><option value=""></option><option>Yes</option><option>No</option></select></td>
+                    <td><select id="b6-i-fig" data-label="iPad figures matched"><option value=""></option><option>Yes</option><option>No</option></select></td>
+                    <td><select id="b6-i-conf" data-label="iPad conflict message seen"><option value=""></option><option>Yes</option><option>No</option></select></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="fields">
+              <label class="field wide">Notes<textarea id="b6-notes" data-label="Notes"></textarea></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 1 -->
+      <div class="step" id="box1" data-box="Box 1: the fifteen hand-computed cases">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip">Desk</span></div>
+            <h2>The fifteen hand-computed cases</h2>
+          </div>
+          <p><a href="https://github.com/wildbil2me/planbook/blob/main/docs/grade-math-cases.md">docs/grade-math-cases.md</a>
+          holds fifteen worked cases, and the engine's harness already checks the app against them.
+          <strong>This box asks a person to check the arithmetic in the document itself</strong>, because a
+          wrong expected value is a test that passes against a wrong engine.</p>
+          <p>Each case uses its own small scale (A ≥ 90, B ≥ 80, C ≥ 70, F ≥ 0) unless it says otherwise, and
+          percentages are unrounded. Work each one on paper and tick it here.</p>
+          <div class="record">
+            <div class="subhead">Record</div>
+            <div class="scroll">
+              <table>
+                <thead><tr><th>#</th><th>Case</th><th>Checked</th></tr></thead>
+                <tbody>
+                  <tr><td class="num">1</td><td>Three weighted categories</td><td class="check"><input type="checkbox" id="b1-1" data-label="Case 1" aria-label="Case 1 checked"></td></tr>
+                  <tr><td class="num">2</td><td>One assignment in the term</td><td class="check"><input type="checkbox" id="b1-2" data-label="Case 2" aria-label="Case 2 checked"></td></tr>
+                  <tr><td class="num">3</td><td>Category with no assignments</td><td class="check"><input type="checkbox" id="b1-3" data-label="Case 3" aria-label="Case 3 checked"></td></tr>
+                  <tr><td class="num">4</td><td>Every score in a category is excused</td><td class="check"><input type="checkbox" id="b1-4" data-label="Case 4" aria-label="Case 4 checked"></td></tr>
+                  <tr><td class="num">5</td><td>Zero-point assignment adds extra credit</td><td class="check"><input type="checkbox" id="b1-5" data-label="Case 5" aria-label="Case 5 checked"></td></tr>
+                  <tr><td class="num">6</td><td>Extra credit above 100 percent</td><td class="check"><input type="checkbox" id="b1-6" data-label="Case 6" aria-label="Case 6 checked"></td></tr>
+                  <tr><td class="num">7</td><td>Category containing only zero-point assignments</td><td class="check"><input type="checkbox" id="b1-7" data-label="Case 7" aria-label="Case 7 checked"></td></tr>
+                  <tr><td class="num">8</td><td>Weights cross from 95 to 100</td><td class="check"><input type="checkbox" id="b1-8" data-label="Case 8" aria-label="Case 8 checked"></td></tr>
+                  <tr><td class="num">9</td><td>Missing compared with excused</td><td class="check"><input type="checkbox" id="b1-9" data-label="Case 9" aria-label="Case 9 checked"></td></tr>
+                  <tr><td class="num">10</td><td>Late is a record, not a penalty</td><td class="check"><input type="checkbox" id="b1-10" data-label="Case 10" aria-label="Case 10 checked"></td></tr>
+                  <tr><td class="num">11</td><td>Blank cell compared with no key</td><td class="check"><input type="checkbox" id="b1-11" data-label="Case 11" aria-label="Case 11 checked"></td></tr>
+                  <tr><td class="num">12</td><td>Every category empty</td><td class="check"><input type="checkbox" id="b1-12" data-label="Case 12" aria-label="Case 12 checked"></td></tr>
+                  <tr><td class="num">13</td><td>An assignment filed under another class does not count</td><td class="check"><input type="checkbox" id="b1-13" data-label="Case 13" aria-label="Case 13 checked"></td></tr>
+                  <tr><td class="num">14</td><td>An assignment filed under another term does not count</td><td class="check"><input type="checkbox" id="b1-14" data-label="Case 14" aria-label="Case 14 checked"></td></tr>
+                  <tr><td class="num">15</td><td>A second and third student's cells do not count</td><td class="check"><input type="checkbox" id="b1-15" data-label="Case 15" aria-label="Case 15 checked"></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="fields">
+              <label class="field wide">Any case where your answer and the document's disagree<textarea id="b1-diff" data-label="Disagreements"></textarea></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 7 -->
+      <div class="step home" id="box7" data-box="Box 7: TESTING.md Phase 3">
+        <div class="step-num">7</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip home">Home</span></div>
+            <h2>The testing checklist's Phase 3, probably done already</h2>
+          </div>
+          <p>A count on 2026-09-21 found <strong>232 ticked boxes and none open</strong> in
+          <code>TESTING.md</code> § Phase 3, and a second count on 2026-09-29 found the same. The only
+          <code>- [ ]</code> a search turns up sits inside a paragraph about a line deferred to WO-4.4, which
+          is done. This one is closed at home by reading the section properly, not at school.</p>
+        </div>
+      </div>
+
+      <!-- Box 8 -->
+      <div class="step home" id="box8" data-box="Box 8: WO-3.18">
+        <div class="step-num">8</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip home">Decision</span></div>
+            <h2>The verification paperwork: submit it, or move the line</h2>
+          </div>
+          <p>The gate's own note says this box "cannot close from a desk" because the demo video waited on
+          the file transfer. That note is out of date. As of 2026-09-29 <strong>all seven of WO-3.18's
+          dependencies are done</strong>. The last two were the <code>/about</code> homepage and the sign-in
+          on the deployed domain. Its gate report reads <code>PASS</code>, so nothing stands between it and a
+          submission except doing it. The procedures are the
+          <a href="wo-3-18-video-runbook.html">video runbook</a> and the
+          <a href="wo-3-18-runbook.html">form runbook</a>.</p>
+          <p>Two honest answers. Pick one:</p>
+          <ul>
+            <li><strong>Submit.</strong> Film the video, finish the consent screen, submit, and record the
+            date.</li>
+            <li><strong>Move the line to WO-7.3</strong>, on purpose and in writing. WO-7.3 is where the
+            verification promise is actually enforced, and this gate is named for grade arithmetic, not sync.</li>
+          </ul>
+          <p>The one wrong answer is leaving it open without choosing.</p>
+          <div class="record">
+            <div class="subhead">Record</div>
+            <div class="fields">
+              <label class="field">Decision
+                <select id="b8-dec" data-label="Decision"><option value=""></option><option>Submit</option><option>Move the line to WO-7.3</option></select>
+              </label>
+              <label class="field">Submitted on (if submitted)<input type="text" id="b8-date" data-label="Submitted on"></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 9 -->
+      <div class="step home" id="box9" data-box="Box 9: a ship for Phases 5 to 8">
+        <div class="step-num">9</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip home">Decision</span></div>
+            <h2>A ship number for Phases 5 to 8</h2>
+          </div>
+          <p>Phases 5 to 8 and WO-G4 carry <code>**Ship** —</code> because the delivery plan stopped at Ship 3
+          and called everything after it "Then, Nov →". That's even less true now than on 2026-09-21. The
+          counts below were taken 2026-09-29, and none of these work orders has a ship number yet. The box
+          asks for a ship number for each phase, or a deliberate <code>—</code>.</p>
+          <div class="record">
+            <div class="subhead">Record</div>
+            <div class="scroll">
+              <table>
+                <thead><tr><th>Phase</th><th>What it is</th><th>Done</th><th>Left</th><th>Ship</th></tr></thead>
+                <tbody>
+                  <tr><td class="num">5</td><td>Outreach</td><td>14 of 17</td><td>three rows</td><td><input type="text" id="b9-5" data-label="Phase 5 ship"></td></tr>
+                  <tr><td class="num">6</td><td>Calendar and glance</td><td><strong>9 of 9</strong></td><td>nothing</td><td><input type="text" id="b9-6" data-label="Phase 6 ship"></td></tr>
+                  <tr><td class="num">7</td><td>Sync</td><td>15 of 17</td><td>Google's verdict, and one more row</td><td><input type="text" id="b9-7" data-label="Phase 7 ship"></td></tr>
+                  <tr><td class="num">8</td><td>Packaging</td><td>12 of 18</td><td>six rows; four already carry a ship</td><td><input type="text" id="b9-8" data-label="Phase 8 ship"></td></tr>
+                  <tr><td class="num">G4</td><td>The 1.0.0 call</td><td>—</td><td>—</td><td><input type="text" id="b9-g4" data-label="WO-G4 ship"></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p>Phase 6 is finished and Phase 7 is in daily use on two devices, so "Nov →" describes neither.
+          The real question may be whether they belong in a ship of their own that has, in practice, already
+          shipped.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="bring">
+    <div class="sec-label">Bringing it back</div>
+    <div class="callout">
+      <h3>Copy your answers into a session at home</h3>
+      <p>What you type is kept in this browser only, and nothing leaves it. <strong>Copy my answers</strong>
+      puts everything you've filled in on the clipboard as plain text. Paste it into a session at home that
+      starts with "WO-G2 results", and every box is ticked there against what you recorded. A box whose record
+      is blank stays open. That's fine: the gate closes when all nine are true, not by a date.</p>
+      <div class="actions">
+        <button type="button" class="primary" id="copyBtn">Copy my answers</button>
+        <button type="button" class="danger" id="clearBtn">Clear my answers</button>
+        <span class="status" id="status" role="status"></span>
+      </div>
+      <textarea id="copyFallback" hidden readonly aria-label="Your answers as text"></textarea>
+    </div>
+  </section>
+
+  <footer>
+    <span>WO-G2 · <a href="https://github.com/wildbil2me/planbook/blob/main/plans/work-orders/gates.md#wo-g2--ship-2-gate-first-grades">the gate in the tracker</a></span>
+    <span>plans/runbooks/wo-g2-runbook.html</span>
+    <span>Written 2026-09-21 · revised 2026-09-29</span>
+  </footer>
+
+</main>
+
+<script>
+  /* The record blocks remember what was typed, in this browser only, so a page closed between the
+     entry sitting and the backup drill does not lose the first half. Nothing is sent anywhere: the
+     only way out is the Copy button, into a session the owner starts. Storage can be refused (a
+     private window, blocked site data), so every read and write is wrapped and the page works
+     without it. */
+  (function () {
+    var KEY = 'g2-runbook-answers';
+    var fields = Array.prototype.slice.call(document.querySelectorAll('[data-label]'));
+    var status = document.getElementById('status');
+
+    function load() {
+      try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; }
+    }
+    function save() {
+      var out = {};
+      fields.forEach(function (f) { out[f.id] = f.type === 'checkbox' ? f.checked : f.value; });
+      try { localStorage.setItem(KEY, JSON.stringify(out)); } catch (e) { /* kept on screen only */ }
+    }
+    var saved = load();
+    fields.forEach(function (f) {
+      if (f.id in saved) {
+        if (f.type === 'checkbox') f.checked = !!saved[f.id]; else f.value = saved[f.id];
+      }
+      f.addEventListener(f.type === 'checkbox' || f.tagName === 'SELECT' ? 'change' : 'input', save);
+    });
+
+    function asText() {
+      var lines = ['WO-G2 results'];
+      document.querySelectorAll('[data-box]').forEach(function (box) {
+        var own = Array.prototype.slice.call(box.querySelectorAll('[data-label]'));
+        if (!own.length) return;
+        var filled = own.filter(function (f) { return f.type === 'checkbox' ? f.checked : f.value.trim(); });
+        lines.push('', box.getAttribute('data-box'));
+        if (!filled.length) { lines.push('  (nothing recorded)'); return; }
+        var boxes = own.filter(function (f) { return f.type === 'checkbox'; });
+        if (boxes.length) {
+          var ticked = boxes.filter(function (f) { return f.checked; }).map(function (f) { return f.getAttribute('data-label').replace('Case ', ''); });
+          lines.push('  Cases checked: ' + (ticked.length ? ticked.join(', ') : 'none') + ' (' + ticked.length + ' of ' + boxes.length + ')');
+        }
+        filled.filter(function (f) { return f.type !== 'checkbox'; }).forEach(function (f) {
+          lines.push('  ' + f.getAttribute('data-label') + ': ' + f.value.trim().replace(/\s*\n\s*/g, ' / '));
+        });
+      });
+      return lines.join('\n');
+    }
+
+    var fallback = document.getElementById('copyFallback');
+    document.getElementById('copyBtn').addEventListener('click', function () {
+      var text = asText();
+      function showFallback() {
+        fallback.value = text;
+        fallback.hidden = false;
+        fallback.focus();
+        fallback.select();
+        status.textContent = 'Copying was blocked here. The text is selected below: copy it by hand.';
+      }
+      try {
+        navigator.clipboard.writeText(text).then(function () {
+          fallback.hidden = true;
+          status.textContent = 'Copied. Paste it into a session at home.';
+        }, showFallback);
+      } catch (e) { showFallback(); }
+    });
+
+    var clearBtn = document.getElementById('clearBtn');
+    var armed = null;
+    clearBtn.addEventListener('click', function () {
+      if (!armed) {
+        clearBtn.textContent = 'Tap again to clear everything';
+        armed = setTimeout(function () { clearBtn.textContent = 'Clear my answers'; armed = null; }, 4000);
+        return;
+      }
+      clearTimeout(armed); armed = null;
+      fields.forEach(function (f) { if (f.type === 'checkbox') f.checked = false; else f.value = ''; });
+      try { localStorage.removeItem(KEY); } catch (e) { /* nothing stored */ }
+      clearBtn.textContent = 'Clear my answers';
+      fallback.hidden = true;
+      status.textContent = 'Cleared.';
+    });
+  })();
+</script>
