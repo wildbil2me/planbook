@@ -556,6 +556,14 @@ export function clockTime(iso) {
   return (h % 12 || 12) + ':' + m[2] + ' ' + (h < 12 ? 'AM' : 'PM');
 }
 
+/* The same stamp as a time input's value — `08:14` — read out of the string for clockTime()'s
+   reason, and for the history dialog's time field (WO-2.55), which would otherwise hold a second
+   copy of the regex above. `''` for no stamp, which is an empty field. */
+export function wallClock(iso) {
+  const m = /^\d{4}-\d{2}-\d{2}T(\d{2}):(\d{2})/.exec(String(iso || ''));
+  return m ? m[1] + ':' + m[2] : '';
+}
+
 /* The same time in the width a 54px column has for it: `8:14a`. */
 function compactTime(iso) {
   const said = clockTime(iso);
@@ -2403,12 +2411,75 @@ export function setNote(studentId, text, date) {
 }
 
 /*
-  WHAT THE TWO WRITERS ABOVE WOULD ACCEPT FOR ONE STUDENT, RIGHT NOW (WO-2.53) — the read the
+  THE TIME ON A MARK, typed in the same block as the note (WO-2.55) — for the tardy nobody could
+  catch in the moment. The tap still stamps only on today's column and still stamps the moment of
+  the tap; this is how a teacher says afterwards when the student actually walked in, on any day the
+  registry accepts writes on. It is the note's sibling and takes the note's gates, plus two of its
+  own: the code is `T` or `D`, and the cell carries no passId.
+
+  THE PASS OWNS A LINKED DISMISSAL'S TIME. setMark() closed that pass on the very stamp the `D`
+  took, so the two records say one clock reading; a second writer on either half would make two
+  clocks for one dismissal. The dialog does not offer the field there (editableMark()'s `timeLocked`)
+  and this refusal is the same rule stated where it cannot be skipped.
+
+  THE OFFSET IS THE MARK'S DATE'S, NOT TODAY'S. `new Date(y, m, d, hh, mm)` is that wall-clock time
+  on that day in this device's zone, so stampNow() handed THAT instant reads its offset off the
+  day itself: a tardy typed in November for a day in October is an EDT time. Re-using the offset of
+  the moment of typing would store the right hour with the wrong offset — a different instant, and
+  one a reader in another zone would print an hour off.
+
+  NO FLAG AND NO NEW FIELD. A typed time is written to `at` in exactly the shape a stamped one is,
+  so nothing downstream can tell them apart and every backup ever written restores unchanged. An
+  emptied field deletes `at`, which is the shape a past-day tap has always written. Anything else
+  that is not an hour and a minute is refused rather than guessed at.
+
+  IT DOES NOT REPAINT THE DIALOG, for setNote()'s reason — the field it came from is in it. It does
+  repaint the ONE registry column behind the dialog, which is the departure from setNote() and is
+  deliberate: a note is not drawn in the grid and a time is (`8:20a` under the glyph), so without it
+  the cell would go on showing the tap's time after the dialog closed over the typed one. That
+  column is not the surface the field is on, so the caret and the time wheel are untouched.
+*/
+export function setMarkTime(studentId, text, date) {
+  const cls = openClass();
+  const on = date || editDate();
+  if (!cls || !studentId || !getDoc() || !writableDate(on, cls)) return;
+  if (offTermDay(cls.id, on)) return;
+  const record = recordFor(cls.id, on);
+  const entry = record && !record.exception ? marksOf(record)[studentId] : null;
+  if (!entry) return;
+  const code = codeOf(entry);
+  if ((code !== 'T' && code !== 'D') || passIdOf(entry)) return;
+
+  const said = String(text == null ? '' : text).trim();
+  let at = '';
+  if (said) {
+    const hm = /^(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d+)?)?$/.exec(said);
+    if (!hm || Number(hm[1]) > 23 || Number(hm[2]) > 59) return;
+    const [y, m, d] = on.split('-').map(Number);
+    at = stampNow(new Date(y, m - 1, d, Number(hm[1]), Number(hm[2])));
+  }
+  if (at === timeOf(entry)) return;
+
+  update((doc) => {
+    const r = ensureRecord(doc, cls.id, on);
+    const cell = r.marks[studentId];
+    if (!cell) return;
+    /* The bare-string normalisation setNote() makes, for the same hand-edited document. */
+    const next = typeof cell === 'object' ? cell : { code: codeOf(cell) };
+    if (at) next.at = at;
+    else delete next.at;
+    r.marks[studentId] = next;
+  });
+  paintColumn(on);
+}
+
+/*
+  WHAT THE WRITERS ABOVE WOULD ACCEPT FOR ONE STUDENT, RIGHT NOW (WO-2.53) — the read the
   history dialog draws its write block from, and the reason that block is not a second gate.
 
   It is exported for exactly one caller (src/attendance-report.js) and it hands over the state, never
   a decision about markup: the date the writers will default to, the reading in that cell, the time
-  and note already on it, and the two booleans the panel this replaced computed inline —
+  and note already on it, WO-2.55's two about the time, and the two booleans the panel this replaced computed inline —
   `entry && code !== UNCONFIRMED` for the note field, `record && code !== UNCONFIRMED` for the
   un-confirm. `null` means there is nothing to draw at all: no class, no such student, a day with no
   meeting on it (dropped or covered — a day with no mark has no mark to edit), a day outside every
@@ -2441,6 +2512,10 @@ export function editableMark(studentId) {
     canNote: !!entry && code !== UNCONFIRMED,
     /* And nothing can be put back to `?` on a day the class has no record for. */
     canUnconfirm: !!record && code !== UNCONFIRMED,
+    /* WO-2.55. A time belongs to a tardy or a dismissal, and a dismissal that closed a pass has its
+       time owned by that pass — setMarkTime() refuses both, and these two say so to the dialog. */
+    canTime: !!entry && (code === 'T' || code === 'D') && !passIdOf(entry),
+    timeLocked: !!entry && code === 'D' && !!passIdOf(entry),
   };
 }
 

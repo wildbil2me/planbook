@@ -9,7 +9,7 @@
  */
 
 export async function run(h) {
-const { check, evalJs, has, clickSel } = h;
+const { check, evalJs, has, clickSel, send } = h;
 
 /* ───────── the write block in the history dialog, and the row's door out (WO-2.53) ─────────
  *
@@ -386,5 +386,253 @@ console.log('\n--- the history dialog writes, and the row goes to the grades (WO
         + ' record(s) holding one left behind; the first class\'s terms are '
         + cleaned.terms.slice(0, 120));
   }
+}
+
+/* ───────── the time on a mark, typed in the history dialog (WO-2.55) ─────────
+ *
+ * A tardy caught late: the tap stamps the moment of the tap, and only on today's column, so the
+ * dialog's write block carries a time field for a `T` or a `D` and nothing else — and not for a `D`
+ * whose dismissal closed a pass, because the pass owns that time.
+ *
+ * THE PAST DAY IS CHOSEN TO SIT ACROSS A DAYLIGHT-SAVING CHANGE FROM TODAY, and the zone is pinned
+ * to America/New_York for the length of the block so that is true on any machine. That is what makes
+ * the first check able to fail: a writer that built the stamp with the offset of the moment of
+ * typing rather than of the mark's own date writes the right hour with the wrong offset, and on two
+ * dates inside one offset the two are the same string. The block asserts the two offsets differ
+ * before it asserts anything about them.
+ *
+ * Its own students on the first class, its own terms, the whole document snapshotted and put back at
+ * the foot, as the WO-2.53 block above does. The past day is reached the way a teacher reaches it:
+ * a term that ENDED on it, so the strip stands on that day, and its ✏ — editDay() — unlocks it.
+ */
+console.log('\n--- the time on a mark, typed in the history dialog (WO-2.55) ---');
+{
+  let zoned = false;
+  try {
+    await send('Emulation.setTimezoneOverride', { timezoneId: 'America/New_York' });
+    zoned = true;
+  } catch (err) { zoned = false; }
+
+  const plant = await evalJs(`(async function(){
+    var s = window.planbook.store, c = window.planbook.classes, a = window.planbook.attendance;
+    var d = s.getDoc(), cls = (d.classes || [])[0];
+    if (!cls) return { ok:false, why:'no class in the document' };
+    window.__wo255 = { doc: JSON.stringify(d), classId: c.getSelectedClassId(),
+                       termId: c.getSelectedTermId() };
+    var p = function(n){ return (n < 10 ? '0' : '') + n; };
+    var isoOf = function(t){ return t.getFullYear() + '-' + p(t.getMonth() + 1) + '-' + p(t.getDate()); };
+    var offOf = function(t){ var o = -t.getTimezoneOffset(), m = Math.abs(o);
+      return (o < 0 ? '-' : '+') + p(Math.floor(m / 60)) + ':' + p(m % 60); };
+    var today = a.todayISO();
+    var tp = today.split('-').map(Number);
+    var at = function(off, hh, mm){ return new Date(tp[0], tp[1] - 1, tp[2] + off, hh, mm); };
+    /* The offset a stamp taken right now carries, and the nearest weekday behind today whose 08:20
+       carries the other one. */
+    var offNow = offOf(new Date());
+    var k = 1, past = '';
+    for (; k < 400; k++) {
+      var t = at(-k, 8, 20);
+      if (t.getDay() === 0 || t.getDay() === 6) continue;
+      if (offOf(t) !== offNow) { past = isoOf(t); break; }
+    }
+    if (!past) return { ok:false, why:'no weekday within 400 days carries a different offset from today in this zone' };
+    var offPast = offOf(at(-k, 8, 20)), offToday = offOf(at(0, 8, 14));
+    s.update(function(doc){
+      /* Term A ENDS on the past day, so selecting it stands the strip there; term B holds today. */
+      cls.terms = [{ id:'tm_wo255a', label:'WO-2.55 then', start: isoOf(at(-k - 20, 12, 0)), end: past },
+                   { id:'tm_wo255b', label:'WO-2.55 now', start: isoOf(at(-k + 1, 12, 0)),
+                     end: isoOf(at(30, 12, 0)) }];
+      var ids = ['late', 'today', 'pass', 'absent', 'event', 'present', 'waiting'];
+      cls.roster = ids.map(function(x){ return 'wo255-' + x; });
+      doc.students = (doc.students || []).filter(function(x){
+        return String(x.id).indexOf('wo255-') !== 0; });
+      ids.forEach(function(x){ doc.students.push({ id:'wo255-' + x, first: x.charAt(0).toUpperCase()
+        + x.slice(1), last:'Twofiftyfive' }); });
+      doc.attendance = (doc.attendance || []).filter(function(r){ return r.classId !== cls.id; });
+      doc.attendance.push({ classId: cls.id, date: past, marks: {} });
+      doc.attendance.push({ classId: cls.id, date: today, marks: {
+        'wo255-today': { code:'T', at: today + 'T08:14:00' + offToday },
+        'wo255-pass': { code:'D', at: today + 'T09:02:00' + offToday, passId:'pass_wo255' },
+        'wo255-absent': { code:'A' }, 'wo255-event': { code:'E' }, 'wo255-waiting': { code:'U' } } });
+    });
+    await s.flush();
+    c.selectClass(cls.id);
+    c.selectTerm('tm_wo255a');
+    a.setSearch(''); a.setFilter('all');
+    a.renderAttendance();
+    /* The ✏, and then the tap — the real writer, which writes a past-day tardy with no time. */
+    a.editDay(past);
+    a.setMark('wo255-late', 'T', past);
+    await s.flush();
+    return { ok:true, classId: cls.id, today: today, past: past, offPast: offPast,
+             offToday: offToday, offNow: offNow }; })()`);
+
+  /* The entry, the dialog's time field and chip, and the grid cell's time caption, in one read. */
+  const READ = (id, date) => evalJs(`(async function(){
+    await window.planbook.store.flush();
+    var d = window.planbook.store.getDoc(), cls = (d.classes || [])[0];
+    var r = (d.attendance || []).filter(function(x){
+      return x.classId === cls.id && x.date === ${JSON.stringify(date)}; })[0];
+    var modal = document.getElementById('attendanceHistoryModal');
+    var body = document.getElementById('attendanceHistoryBody');
+    var box = body ? body.querySelector('[data-attendance-write]') : null;
+    var field = box ? box.querySelector('[data-attendance-time]') : null;
+    var chip = box ? box.querySelector('.attendance-report-write-mark') : null;
+    var cell = document.querySelector('#attendanceBody tr[data-attendance-row="${id}"] '
+      + 'td[data-attendance-col="${date}"]');
+    var cap = cell ? cell.querySelector('.attendance-cell-time') : null;
+    return {
+      entry: r ? JSON.stringify((r.marks || {})[${JSON.stringify(id)}] || null) : 'no record',
+      dialogUp: !!(modal && !modal.classList.contains('hidden')),
+      block: !!box,
+      hasField: !!field, fields: box ? box.querySelectorAll('input[type="time"]').length : 0,
+      value: field ? field.value : '',
+      fieldDate: field ? field.getAttribute('data-attendance-time-date') : '',
+      same: !!(field && field.__wo255),
+      chip: chip ? (chip.textContent || '').trim() : '',
+      hints: box ? Array.prototype.slice.call(box.querySelectorAll('.attendance-report-write-hint'))
+        .map(function(x){ return (x.textContent || '').trim(); }) : [],
+      caption: cap ? (cap.textContent || '').trim() : '',
+      cellFound: !!cell }; })()`);
+  const openFor = async (id, date) => {
+    await clickSel('#attendanceBody [data-attendance-history="' + id + '"]');
+    return READ(id, date);
+  };
+  const shut = () => clickSel('#attendanceHistoryModal [data-modal-close]');
+  /* What a teacher's wheel does: set the value, and let the page hear both events a browser fires. */
+  const typeTime = (value) => evalJs(`(function(){
+    var f = document.querySelector('#attendanceHistoryBody [data-attendance-time]');
+    if (!f) return false; f.__wo255 = 1; f.focus(); f.value = ${JSON.stringify(value)};
+    f.dispatchEvent(new Event('input', { bubbles: true }));
+    f.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
+  const direct = (id, text, date) => evalJs(`(async function(){
+    window.planbook.attendance.setMarkTime(${JSON.stringify(id)}, ${JSON.stringify(text)},
+      ${JSON.stringify(date)});
+    await window.planbook.store.flush(); return 1; })()`);
+
+  if (!plant.ok) {
+    check('the WO-2.55 fixture is real: a past day across a daylight-saving change from today, unlocked, with a tardy tapped onto it and no time on it',
+      false, plant.why);
+  } else {
+    const PAST = plant.past, TODAY = plant.today;
+
+    /* ── acceptance 1: a past-day tardy, typed at 8:20, lands with THAT day's offset ── */
+    const before = await openFor('wo255-late', PAST);
+    check('the WO-2.55 fixture is real: a past day across a daylight-saving change from today, unlocked, with a tardy tapped onto it and no time on it',
+      zoned && plant.offPast !== plant.offToday && plant.offToday === plant.offNow
+        && before.entry === JSON.stringify({ code: 'T' })
+        && before.hasField && before.value === '' && before.fieldDate === PAST,
+      'zone pinned = ' + zoned + '; ' + PAST + ' is ' + plant.offPast + ', ' + TODAY + ' is '
+        + plant.offToday + ' (now ' + plant.offNow + '); the tap wrote ' + before.entry
+        + '; the dialog\'s field = ' + before.hasField + ' reading ' + JSON.stringify(before.value)
+        + ' for ' + JSON.stringify(before.fieldDate));
+    await typeTime('08:20');
+    const typed = await READ('wo255-late', PAST);
+    await shut();
+    const after = await READ('wo255-late', PAST);
+    const again = await openFor('wo255-late', PAST);
+    await shut();
+    check('a time typed onto a past-day tardy lands in the document as that day at 08:20 with THAT day\'s offset, not today\'s — and the chip, the grid cell and the reopened field all read it',
+      typed.entry === JSON.stringify({ code: 'T', at: PAST + 'T08:20:00' + plant.offPast })
+        && typed.same && typed.chip === 'Tardy at 8:20 AM'
+        && after.cellFound && after.caption === '8:20a'
+        && again.value === '08:20',
+      'the entry is ' + typed.entry + ' (want the offset ' + plant.offPast + ', not '
+        + plant.offToday + '); the field survived = ' + typed.same + '; chip '
+        + JSON.stringify(typed.chip) + '; the cell behind it reads ' + JSON.stringify(after.caption)
+        + ' (cell found = ' + after.cellFound + '); reopened, the field reads '
+        + JSON.stringify(again.value));
+
+    /* ── acceptance 2: today's column — the typed time replaces the stamp, and a cycle re-stamps ── */
+    await evalJs(`(function(){ var c = window.planbook.classes, a = window.planbook.attendance;
+      a.lockDay(); c.selectTerm('tm_wo255b'); a.renderAttendance(); return 1; })()`);
+    const stamped = await openFor('wo255-today', TODAY);
+    await typeTime('07:55');
+    const retimed = await READ('wo255-today', TODAY);
+    await shut();
+    const retimedGrid = await READ('wo255-today', TODAY);
+    const TYPED = TODAY + 'T07:55:00' + plant.offToday;
+    check('on today\'s column a typed time REPLACES the tap\'s stamp, and the cell under the dialog reads the new one',
+      stamped.value === '08:14' && stamped.fieldDate === TODAY
+        && retimed.entry === JSON.stringify({ code: 'T', at: TYPED })
+        && retimedGrid.caption === '7:55a',
+      'the field opened on ' + JSON.stringify(stamped.value) + '; the entry is now '
+        + retimed.entry + '; the cell reads ' + JSON.stringify(retimedGrid.caption));
+    await evalJs(`(async function(){ var a = window.planbook.attendance;
+      a.setMark('wo255-today', 'A'); a.setMark('wo255-today', 'T');
+      await window.planbook.store.flush(); return 1; })()`);
+    const cycled = await READ('wo255-today', TODAY);
+    const cycledAt = (() => { try { return JSON.parse(cycled.entry).at || ''; } catch (e) { return ''; } })();
+    check('and cycling the cell off T and back still re-stamps it — the cell is rewritten whole, so the typed time does not survive',
+      cycledAt !== '' && cycledAt !== TYPED && cycledAt.indexOf(TODAY + 'T') === 0
+        && cycledAt.slice(-6) === plant.offToday,
+      'after A then T the entry is ' + cycled.entry);
+    await openFor('wo255-today', TODAY);
+    await typeTime('');
+    const emptied = await READ('wo255-today', TODAY);
+    await shut();
+    check('an emptied time field deletes `at` and leaves the mark — the shape a past-day tap has always written',
+      emptied.entry === JSON.stringify({ code: 'T' }),
+      'the entry is ' + emptied.entry);
+
+    /* ── acceptance 3: a pass-linked dismissal shows its time and draws no field ── */
+    const PASS = JSON.stringify({ code: 'D', at: TODAY + 'T09:02:00' + plant.offToday,
+                                  passId: 'pass_wo255' });
+    const onPass = await openFor('wo255-pass', TODAY);
+    await shut();
+    await direct('wo255-pass', '10:30', TODAY);
+    const passAfter = await READ('wo255-pass', TODAY);
+    check('a D that closed a hall pass draws NO time field — one sentence says the pass owns its time — and setMarkTime() refuses it',
+      onPass.block && !onPass.hasField && onPass.fields === 0
+        && onPass.chip === 'Dismissed at 9:02 AM'
+        && onPass.hints.some((x) => x.indexOf('the pass owns its time, 9:02 AM') >= 0)
+        && passAfter.entry === PASS,
+      'field = ' + onPass.hasField + ' (' + onPass.fields + ' time input(s)); chip '
+        + JSON.stringify(onPass.chip) + '; ' + JSON.stringify(onPass.hints)
+        + '; after a direct setMarkTime the entry is ' + passAfter.entry);
+
+    /* ── acceptance 4: A, E, P and U draw no field, and the writer refuses every one ── */
+    const others = [['wo255-absent', { code: 'A' }], ['wo255-event', { code: 'E' }],
+                    ['wo255-present', null], ['wo255-waiting', { code: 'U' }]];
+    const seen = [];
+    for (const [id, want] of others) {
+      const onIt = await openFor(id, TODAY);
+      await shut();
+      await direct(id, '10:30', TODAY);
+      const afterIt = await READ(id, TODAY);
+      seen.push({ id, block: onIt.block, fields: onIt.fields, entry: afterIt.entry,
+                  ok: onIt.block && onIt.fields === 0 && afterIt.entry === JSON.stringify(want) });
+    }
+    check('absent, event, present and not-confirmed draw no time field, and setMarkTime() writes nothing onto any of them',
+      seen.every((x) => x.ok),
+      seen.map((x) => x.id + ': block ' + x.block + ', ' + x.fields + ' time input(s), entry '
+        + x.entry).join(' · '));
+
+    /* The document, class, term and screen put back. */
+    await evalJs(`(async function(){
+      var s = window.planbook.store, c = window.planbook.classes, a = window.planbook.attendance;
+      var saved = window.__wo255, d = s.getDoc();
+      var restored = JSON.parse(saved.doc);
+      Object.keys(d).forEach(function(k){ delete d[k]; });
+      Object.assign(d, restored);
+      s.update(function(){});
+      c.selectClass(saved.classId);
+      if (saved.termId) c.selectTerm(saved.termId);
+      a.setSearch(''); a.setFilter('all'); a.resetRegistry(); a.renderAttendance();
+      delete window.__wo255;
+      await s.flush();
+      return 1; })()`);
+  }
+  /* And the zone released, whatever happened above. */
+  if (zoned) await send('Emulation.setTimezoneOverride', { timezoneId: '' });
+  const cleaned = await evalJs(`(function(){
+    var d = window.planbook.store.getDoc();
+    return { students: (d.students || []).filter(function(x){
+               return String(x.id).indexOf('wo255-') === 0; }).length,
+             records: (d.attendance || []).filter(function(r){
+               return JSON.stringify(r.marks || {}).indexOf('wo255-') >= 0; }).length }; })()`);
+  check('the WO-2.55 fixture came back off the document',
+    cleaned.students === 0 && cleaned.records === 0,
+    cleaned.students + ' planted student(s), ' + cleaned.records + ' record(s) holding one');
 }
 }

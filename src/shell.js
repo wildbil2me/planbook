@@ -296,6 +296,9 @@
       data-attendance-note="<id>" + data-attendance-note-date="<iso>": an input; writes the note on
                                       that student's mark as it is typed. In that same block, on the
                                       one day the registry accepts writes on
+      data-attendance-time="<id>" + data-attendance-time-date="<iso>": a time input beside that
+                                      note, on a `T` or a `D` with no pass (WO-2.55); writes the
+                                      mark's `at` on `input` and again on `change`
       data-attendance-history="<id>"  opens that student's own attendance report — every mark they
                                       have in the open term, and since WO-2.26 their hall-pass count
                                       for it. Carried by the name in the registry row
@@ -3726,6 +3729,16 @@ document.addEventListener('input', (e) => {
     return;
   }
 
+  /* The time on that mark (WO-2.55), beside the note and carrying its date the same way. It writes
+     on EVERY `input`, including each notch of the iOS wheel, and that is the choice rather than a
+     cost: the writer stores what the field says, so whatever the field shows when the dialog closes
+     is what the document holds — a half-spun wheel cannot leave the document on a value the field
+     has moved past. Writing only on `change` would bet the last value on an event iOS fires when it
+     chooses; the `change` listener below writes too, for a browser that commits a picker without an
+     `input` first, and an unchanged value is a no-op in the writer. */
+  const attTime = e.target.closest('[data-attendance-time]');
+  if (attTime) { markTimeFrom(attTime); return; }
+
   /* A note on an open hall pass, from the banner card (WO-2.11). It carries no date, and that is
      the difference from the hook above rather than an omission: a mark belongs to one of six days
      on the grid, and a pass is happening now — there is exactly one open pass per student per class
@@ -3761,7 +3774,15 @@ document.addEventListener('input', (e) => {
 /* The file input. A `change` listener rather than a click one for the obvious reason, and
    delegated from the document for the same reason every other hook here is: the control lives
    inside a modal, and binding at load time means binding to markup that may be re-rendered. */
+/* One call for both events that carry a typed time (WO-2.55) — see the `input` listener. */
+function markTimeFrom(field) {
+  attendance.setMarkTime(field.getAttribute('data-attendance-time'), field.value,
+    field.getAttribute('data-attendance-time-date'));
+}
+
 document.addEventListener('change', (e) => {
+  const attTime = e.target.closest('[data-attendance-time]');
+  if (attTime) markTimeFrom(attTime);
   const chooser = e.target.closest('[data-backup-file]');
   if (chooser) backup.handleChosenFile(chooser);
   /* The contact list, on the same event and for the same reason — and like the backup input, the

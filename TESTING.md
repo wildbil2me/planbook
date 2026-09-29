@@ -6285,6 +6285,66 @@ keeps its count, which is the Trap. The `aria-label` is the visible text followe
 Deliverables ask; ARIA 1.2 does not name a plain `<p>`, so some screen readers will read the text and
 not the label, and the title is the half that is certain to be reachable.
 
+### WO-2.55 — a tardy caught late has no way to say when it happened
+
+**What this changes for a teacher: a tardy's time can be corrected afterwards.** Tap the student's
+name, and beside the note in the history dialog's write block there is a time field for a `T` or a
+`D`. It opens on the stored time, or empty on a past day that was never stamped; whatever it says is
+written to the mark's `at`, the chip above it and the grid cell behind the dialog follow, and emptying
+it deletes the time. The cell tap is unchanged — one tap per student, and it still stamps only on
+today's column. A `D` that closed a hall pass shows its time and one sentence instead of the field,
+because the pass closed on that same stamp.
+
+- [x] **A past-day tardy typed at 8:20 lands with that day's offset.** `verify/history-dialog-write.mjs`
+      pins the page to `America/New_York`, picks the nearest weekday behind today whose offset differs
+      from today's (on the 2026-09-28 run: **2026-03-06, `-05:00`**, against today's `-04:00`), unlocks
+      it with its ✏ and marks it `T` through `setMark()` — which writes `{"code":"T"}` — then clicks the
+      name, sets the field to `08:20` and fires `input` and `change`. The document holds
+      `{"code":"T","at":"2026-03-06T08:20:00-05:00"}`, the chip reads *Tardy at 8:20 AM*, the field is
+      the same element it was before the write, the grid cell reads `8:20a` after the dialog closes,
+      and a reopened dialog reads `08:20`.
+- [x] **Today's column: the typed time replaces the stamp, and a cycle re-stamps.** The field opens on
+      `08:14`; typing `07:55` leaves `{"code":"T","at":"2026-09-28T07:55:00-04:00"}` and the cell reads
+      `7:55a`. `setMark()` to `A` and back to `T` — the path every tap takes — leaves a fresh stamp
+      (`21:48:47-04:00` on the run), not the typed one. An emptied field leaves `{"code":"T"}`.
+- [x] **A pass-linked `D` draws no field and cannot be written.** The block shows *Dismissed at
+      9:02 AM* and *This dismissal closed a hall pass, and the pass owns its time, 9:02 AM — one clock
+      reading for both, so it is not edited here.*; no `input[type=time]` in the block; a direct
+      `setMarkTime()` leaves the cell byte-identical, `passId` and all.
+- [x] **`A`, `E`, `P` and `U` draw no field, and `setMarkTime()` refuses each.** Each block is drawn with
+      zero time inputs, and a direct `setMarkTime(…, '10:30', today)` leaves `{"code":"A"}`,
+      `{"code":"E"}`, no entry, and `{"code":"U"}`.
+- [x] **Mutation-proved, reverted before anything else was written.** Table below.
+- [x] **`node tools/verify-shell.mjs` green** — `1596 checks · 1596 passed · 0 failed · 0 skipped`,
+      50,699 lines, 638s, exit 0 — with `tools/README.md`'s call-site count moved 1573 → 1582;
+      `node tools/wo-sweep.mjs` is **45 checks · 42 passed · 0 failed · 3 to review**, the three standing
+      REVIEWs.
+- [x] 👤 **iPad, force-quit first** (`CLAUDE.md`): tap a tardy student's name, set the time with the
+      iOS time wheel, close the dialog; the cell shows the new time. **Read by the owner at v146,
+      2026-09-29: all good**, on today's column and on an unlocked past day, with no flicker as the
+      wheel turns and the field thumb-sized in portrait. `sw.js`'s `CACHE` is
+      `planbook-shell-v145` → `v146`. **Also worth reading while there:** the field at 44px beside the
+      chip in portrait, and whether iOS fires the write as the wheel turns or only on *Done* — the
+      listener writes on both, so either way the cell should show what the wheel shows.
+
+| Tree | Result |
+|---|---|
+| Delivered tree, full run | `1596 checks · 1596 passed · 0 failed · 0 skipped`, 638s, exit 0 — all eight of the new block's results green first time |
+| **Mutation**: `setMarkTime()` builds the stamp with the mark's date and hour but splices on `stampNow()`'s offset — the moment of typing — marked `MUTATION` (trimmed run: a scratch copy of `tools/verify-shell.mjs` ending at `verify/history-dialog-write.mjs`, deleted before the sweep ran) | `376 checks · 375 passed · 1 failed`, exit 1. **The past-day check is red**: `{"code":"T","at":"2026-03-06T08:20:00-04:00"}` against `-05:00`. Today's-column checks stay green, and should — a mark on today's date has today's offset either way. Restored by copying the pre-mutation file back, `cmp`-identical, and `grep -rn MUTATION src tools` read only the standing prose hits |
+
+**Decisions the work order left open, taken and written down at the point of departure.**
+**Which event writes: both.** `src/shell.js` routes the time field on `input` and on `change`, and the
+writer is a no-op when the value is unchanged, so the document always holds what the field shows —
+a half-spun wheel cannot leave a value the field has moved past, whichever event iOS fires last.
+**The writer repaints the one registry column behind the dialog** and never the dialog: a note is not
+drawn in the grid and a time is, so without it the cell would go on showing the tap's time after the
+dialog closed. The chip in the dialog follows through a `window` listener in
+`src/attendance-report.js` that sets one text node and never redraws the block. **`wallClock()`** is a
+new export beside `clockTime()` giving the field its `HH:MM`, so the dialog holds no second copy of
+the stamp's regex. **A typed time that is not an hour and a minute is refused, not guessed at**, and
+a time inside a spring-forward gap (02:30 on the one Sunday) would come out as 03:30 — the `Date`
+constructor's own answer, and not an hour a class meets.
+
 ---
 
 ## Phase 3 — Gradebook

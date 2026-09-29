@@ -13,6 +13,24 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A tardy's time can be corrected afterwards — 2026-09-29
+
+Tap a student's name, and the history dialog now has a time field beside the note for a tardy or a
+dismissal.
+
+- **It opens on the time the tap stamped**, or empty on a past day that was never stamped. Whatever
+  you set is what the mark says, and the grid cell shows it when the dialog closes. Emptying the
+  field removes the time.
+- **A past day keeps its own clock offset**, so an October tardy typed in November is still an EDT
+  time.
+- **The tap is unchanged.** It is still one tap per student, and it still stamps only on today's
+  column.
+- **A dismissal that closed a hall pass keeps the pass's time.** The dialog shows that time and says
+  why it can't be edited.
+
+(WO-2.55. Harness green at 1596/1596, with a check that crosses a daylight-saving change so the two
+offsets differ. Read on the iPad at v146 by the owner on 2026-09-29.)
+
 ### Nothing above the attendance grid moves while you mark — 2026-09-28
 
 Three things above the attendance grid used to jump under your finger.

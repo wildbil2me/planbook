@@ -1223,7 +1223,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1573 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1582 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2209,6 +2209,18 @@ the way back, plus a teardown click on the band's retired *Back to today*),
 The run prints **1588**: `1588 checks · 1588 passed · 0 failed · 0 skipped`, 50,451 lines, 31.8
 lines per check, 645s, exit 0, measured 2026-09-28 on the real clock. Mutation round in `TESTING.md`
 § WO-2.56.
+
+**WO-2.55 moved it from 1573 to 1582, and the executed count from 1588 to 1596 — nine sites, eight
+results.** All nine are one new block at the foot of `verify/history-dialog-write.mjs`, so the file
+count does not move. **One of the nine is a failure arm** — the fixture check written a second time
+under `if (!plant.ok)`, which runs only when no weekday within 400 days of today sits across a
+daylight-saving change — so the block contributes eight executed results to a green run and **the
+gap between sites and results narrows from −15 to −14**. None is inside a loop: the A · E · P · U
+refusals are read in a loop and asserted by one check after it. The block pins the page's zone to
+`America/New_York` with `Emulation.setTimezoneOverride` for its own length and releases it at the
+foot, so the past day it picks is across a DST change from today on any machine. The run prints
+**1596**: `1596 checks · 1596 passed · 0 failed · 0 skipped`, 50,699 lines, 31.8 lines per check,
+638s, exit 0, measured 2026-09-28 on the real clock. Mutation round in `TESTING.md` § WO-2.55.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

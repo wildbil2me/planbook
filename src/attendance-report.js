@@ -140,11 +140,12 @@ import { registerPrintGate } from './print-gate.js';
 /*
   The ledger, and every number on both surfaces.
 
-  READ-ONLY UNTIL WO-2.53, AND NO LONGER — THE HISTORY DIALOG WRITES. Exactly two writers reach the
-  document from this file's surfaces, both of them in src/attendance.js, which is the module that
-  owns the ledger: setNote() and unconfirmStudent(). Neither is imported here and neither is called
-  here. What this file paints is the two elements that carry their hooks —
-  `data-attendance-note` + `data-attendance-note-date` and `data-attendance-unconfirm` — and
+  READ-ONLY UNTIL WO-2.53, AND NO LONGER — THE HISTORY DIALOG WRITES. Exactly three writers reach the
+  document from this file's surfaces, all of them in src/attendance.js, which is the module that
+  owns the ledger: setNote(), unconfirmStudent() and — since WO-2.55 — setMarkTime(). None is
+  imported here and none is called here. What this file paints is the elements that carry their hooks —
+  `data-attendance-note` + `data-attendance-note-date`, `data-attendance-time` +
+  `data-attendance-time-date`, and `data-attendance-unconfirm` — and
   src/shell.js's one delegated listener routes them, exactly as it did while those elements were on
   the registry row. So there is still no second writer, no second hook and no third gate; what moved
   is where the controls are drawn.
@@ -161,7 +162,7 @@ import { registerPrintGate } from './print-gate.js';
 */
 import {
   MARKS, UNCONFIRMED, classRecord, termHistory, termTotals, attendanceTotals, editableMark,
-  percentText, plainDate, numericDate, dayAbbr, spokenDate, clockTime, todayISO,
+  percentText, plainDate, numericDate, dayAbbr, spokenDate, clockTime, wallClock, todayISO,
 } from './attendance.js';
 /*
   THE HALL-PASS COUNT (WO-2.26), drawn by the module that owns the pass log rather than by this one —
@@ -444,7 +445,8 @@ function paintHistory() {
 
 /*
   THE WRITE BLOCK, AND THE FOUR CASES IT CARRIES ARE THE FOUR THE ROW PANEL CARRIED (WO-2.10, moved
-  by WO-2.53). It adds no fifth: the mark in words with its time; the note field when there is a mark
+  by WO-2.53). WO-2.55 put a time field beside the mark for a `T` or a `D` — or, on a `D` that
+  closed a hall pass, one sentence saying the pass owns that time — and added no case: the mark in words with its time; the note field when there is a mark
   for a note to live on; the un-confirm when there is a record to put a student back on; and the two
   hint sentences for the two ways there is nothing to type into — a student nobody has confirmed yet,
   and a confirmed-present student, who HAS no entry because present is stored as no mark at all. A
@@ -476,8 +478,31 @@ function writeBlock(student, person) {
 
   const says = el('span', 'attendance-report-mark attendance-report-write-mark '
     + 'attendance-cell-' + (now.code === UNCONFIRMED ? 'untaken' : now.code),
-    wordFor(now.code) + (now.at ? ' at ' + clockTime(now.at) : ''));
+    markSays(now));
   box.append(says);
+
+  /* THE TIME (WO-2.55), for the tardy nobody could catch in the moment. A native time input, so the
+     iPad gives the teacher its own wheel and a laptop its own segments; empty on a past day that was
+     never stamped, because the tap stamps only on today's column. The date rides on the element for
+     the note field's reason below. editableMark() decides whether it is offered; this only words it. */
+  if (now.canTime) {
+    const time = document.createElement('input');
+    time.type = 'time';
+    time.className = 'attendance-report-write-time';
+    time.setAttribute('data-attendance-time', student.id);
+    time.setAttribute('data-attendance-time-date', now.date);
+    time.value = wallClock(now.at);
+    time.setAttribute('aria-label', 'Time of ' + person + '’s '
+      + wordFor(now.code).toLowerCase() + ' mark on ' + spokenDate(now.date));
+    box.append(time);
+  } else if (now.timeLocked) {
+    /* A dismissal that closed a hall pass. The pass log closed on this same stamp, and a second
+       clock for one dismissal would disagree with it — so the time is shown and not offered. */
+    box.append(el('span', 'attendance-report-write-hint',
+      'This dismissal closed a hall pass, and the pass owns its time'
+        + (now.at ? ', ' + clockTime(now.at) : '') + ' — one clock reading for both, so it is not '
+        + 'edited here.'));
+  }
 
   if (now.canNote) {
     const field = document.createElement('input');
@@ -507,6 +532,31 @@ function writeBlock(student, person) {
   }
   return box;
 }
+
+/* The mark in words with its time — `Tardy at 8:20 AM` — for the chip above and for the listener
+   below that keeps it in step with the time field. */
+function markSays(now) {
+  return wordFor(now.code) + (now.at ? ' at ' + clockTime(now.at) : '');
+}
+
+/*
+  THE CHIP FOLLOWS THE TIME FIELD (WO-2.55), and it is the one thing in the dialog that does.
+  src/shell.js routes the write on `input` and `change` from `document`; this runs after it for the
+  reason the un-confirm listener below gives for being on `window`. It sets ONE text node — the
+  chip's — from editableMark(), and never redraws the block: the field it would replace is the one
+  under the teacher's thumb, with the iOS wheel open on it.
+*/
+function followTime(e) {
+  if (!historyFor || !e.target || !e.target.closest) return;
+  const field = e.target.closest('[data-attendance-time]');
+  const modal = document.getElementById(HISTORY_MODAL);
+  if (!field || !modal || !modal.contains(field)) return;
+  const now = editableMark(historyFor);
+  const chip = modal.querySelector('.attendance-report-write-mark');
+  if (now && chip) chip.textContent = markSays(now);
+}
+window.addEventListener('input', followTime);
+window.addEventListener('change', followTime);
 
 /*
   AND THE FOUR FIGURES THIS DIALOG OWES AN UN-CONFIRM MADE INSIDE IT.

@@ -914,6 +914,16 @@
   font-size: 12px; font-family: inherit; color: #1a1a2e;
 }
 .attendance-report-write-note:focus { border-color: #5b6fcc; }
+/* THE TIME (WO-2.55) wears the note field's frame, so the two inputs in the block read as one kind
+   of thing, and takes only the width its hours and minutes need — it sits between the chip and the
+   note, and the note keeps the rest of the line. */
+.attendance-report-write-time {
+  flex: 0 0 auto;
+  padding: 6px 8px; border-radius: 6px;
+  border: 1.5px solid #b0bcf0; background: #fff;
+  font-size: 12px; font-family: inherit; color: #1a1a2e;
+}
+.attendance-report-write-time:focus { border-color: #5b6fcc; }
 .attendance-report-write-hint { flex: 1 1 220px; font-size: 11px; line-height: 1.5; color: #5a6a9a; }
 
 .attendance-report-who { flex: 1 1 200px; min-width: 0; }
@@ -1377,6 +1387,7 @@
   .attendance-report-write-day { font-size: 13px; }
   .attendance-report-write-mark { font-size: 13px; padding: 4px 11px; }
   .attendance-report-write-note { min-height: 44px; font-size: 14px; padding: 10px 12px; }
+  .attendance-report-write-time { min-height: 44px; min-width: 44px; font-size: 14px; padding: 8px 10px; }
   .attendance-report-write-hint { font-size: 12px; }
   .attendance-report-table { font-size: 13px; }
   .attendance-report-table th, .attendance-report-table td { padding: 8px 9px; }

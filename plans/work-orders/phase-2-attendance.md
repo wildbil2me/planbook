@@ -5864,7 +5864,7 @@ the first match and this work order does not touch that.
 
 ## WO-2.55 — a tardy caught late has no way to say when it happened
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.10 — the `at` this edits; WO-2.53 — the history dialog's write block it goes in; WO-2.8 — the pass a `D` can carry
+**Ship** — · **Status** ✅ DONE — 2026-09-29 · **Size** S · **Depends on** WO-2.10 — the `at` this edits; WO-2.53 — the history dialog's write block it goes in; WO-2.8 — the pass a `D` can carry
 **Closes roadmap** *(no box. A gap in WO-2.10's timed marks, found by the owner on 2026-09-28.)*
 
 **Booked 2026-09-28**, owner-directed, from a question about what a past-day tardy writes. *"Sometimes
@@ -5893,8 +5893,11 @@ field. The one workaround is cycling off `T` and back on today's column, which r
   the same gates (`writableDate()`, `offTermDay()`, a record, a mark on that student) plus: the code is
   `T` or `D`, and the cell has no `passId`. It writes `at` as a local ISO timestamp with offset, as
   `stampNow()` does, built for **the mark's own date** at the typed hour and minute, so a past day gets
-  that day's offset rather than today's. An emptied field deletes `at`. It does not repaint, for
-  `setNote()`'s reason.
+  that day's offset rather than today's. An emptied field deletes `at`. It does not repaint the
+  dialog, for `setNote()`'s reason. *(This read "It does not repaint" until the verdict, 2026-09-29.
+  As built, it repaints the one grid column behind the dialog, because a time is drawn in the cell
+  and a note is not. That column is not the surface the field is on. The verifier accepted it, it
+  is argued above `setMarkTime()`, and the owner read no flicker on the iPad.)*
 - **`editableMark()` hands over `canTime`** (`T` or `D`, no `passId`) and whether a `passId` locked
   it. The dialog decides nothing about writability, per WO-2.53's rule.
 - **The history dialog's write block gains a time input** (`type="time"`) for `T` and `D`. It is
@@ -5911,20 +5914,23 @@ field. The one workaround is cycling off `T` and back on today's column, which r
 - **`TESTING.md` § WO-2.55, the `CHANGELOG.md` entry, and bump `CACHE` in `sw.js`.**
 
 **Acceptance**
-- [ ] On an unlocked past day, mark a student `T`, tap the name, type 8:20: the document holds
+- [x] On an unlocked past day, mark a student `T`, tap the name, type 8:20: the document holds
       `{ "code": "T", "at": "<that date>T08:20:00<that date's offset>" }` and the cell shows the time.
       Verify in the document.
-- [ ] On today's column, a typed time replaces the tap's stamp, and cycling the cell off `T` and back
+- [x] On today's column, a typed time replaces the tap's stamp, and cycling the cell off `T` and back
       still re-stamps it (the cell is rewritten whole, as before).
-- [ ] A `D` carrying a `passId` draws no time input, and nothing writes its `at` except the tap.
-- [ ] `A`, `E`, `P` and `U` draw no time input, and `setMarkTime()` refuses them.
-- [ ] Mutation-proved: build the timestamp with today's offset instead of the mark's date, and the
+- [x] A `D` carrying a `passId` draws no time input, and nothing writes its `at` except the tap.
+- [x] `A`, `E`, `P` and `U` draw no time input, and `setMarkTime()` refuses them.
+- [x] Mutation-proved: build the timestamp with today's offset instead of the mark's date, and the
       past-day check goes red across a daylight-saving change. **The mutation is reverted before
       anything else is written** (`AGENTS.md`).
-- [ ] `node tools/verify-shell.mjs` green with its check count recorded and `tools/README.md`
+- [x] `node tools/verify-shell.mjs` green with its check count recorded and `tools/README.md`
       reconciled; `node tools/wo-sweep.mjs` green.
-- [ ] 👤 **iPad, force-quit first** (`CLAUDE.md`): tap a tardy student's name, set the time with the
-      iOS time wheel, close the dialog; the cell shows the new time.
+- [x] 👤 **iPad, force-quit first** (`CLAUDE.md`): tap a tardy student's name, set the time with the
+      iOS time wheel, close the dialog; the cell shows the new time. **Read by the owner on the
+      teaching iPad at v146, 2026-09-29**, from the local server: today's column and an unlocked past
+      day (8:20 → `8:20a`), no flicker from the column repainting behind the wheel, and the field
+      thumb-sized beside the chip in portrait.
 
 **Traps** — **Do not open a dialog from the cell tap.** That is ruling 1, and the attendance flow is
 on the critical path. **Do not route the time through `setMark()`**: that writer rewrites the cell

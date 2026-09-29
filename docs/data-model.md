@@ -232,9 +232,15 @@ Seven shape decisions that matter:
   Three details that follow, all settled in `src/attendance.js`:
   **`at` is a local ISO timestamp with its offset** (`2026-09-09T08:14:00-04:00`, never a `Z`), so
   the hour read back is the hour the teacher's clock showed.
-  **`at` is written only on today's column**: the device clock is not evidence about a class two
-  weeks ago, and a wrong arrival time beside a student's name is worse than none — a mark entered on
-  a past day is `{ "code": "T" }` and no more.
+  **The tap stamps `at` only on today's column**: the device clock is not evidence about a class two
+  weeks ago, and a wrong arrival time beside a student's name is worse than none — a mark tapped onto
+  a past day is `{ "code": "T" }` and no more. **The teacher may type a time on any writable
+  day** *(WO-2.55, 2026-09-28)*, in the history dialog beside the note, for a `T` or a `D`: a tardy
+  caught ten minutes late today, or one entered after the fact. A typed time is stored in exactly the
+  shape a stamped one is — same field, same local-with-offset form, no flag saying which it was — and
+  **its offset is the mark's own date's**, so an October tardy typed in November reads `-04:00`. An
+  emptied field deletes `at`. A `D` carrying a `passId` is the exception: the pass closed on that
+  same stamp, so only the tap ever writes its time.
   **A `U` carries nothing but its code.** No time, no note; it means nobody has looked at that
   student yet, and its whole entry is deleted the moment somebody does.
   **And a `D` may carry one field more — `passId`** *(added 2026-08-06, WO-2.8)*, the hall pass that
