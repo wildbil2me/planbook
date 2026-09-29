@@ -217,8 +217,19 @@ That is not a failure of the project; it is the reason the fallback exists.
 
 ## WO-G2 — Ship 2 gate: first grades
 
-**Ship** 2 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.5, WO-2.6, WO-3.1, WO-3.2, WO-3.3, WO-3.4, WO-3.5, WO-3.6, WO-3.7, WO-3.8, WO-3.9 · **Owes** WO-3.18
+**Ship** 2 · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-2.5, WO-2.6, WO-3.1, WO-3.2, WO-3.3, WO-3.4, WO-3.5, WO-3.6, WO-3.7, WO-3.8, WO-3.9
 **Target** ~2026-09-15, before the first grades are entered for real
+
+*(**Worked 2026-09-29, from the runbook's record, and six of eight boxes closed.** The owner worked
+[`../runbooks/wo-g2-runbook.html`](../runbooks/wo-g2-runbook.html) at school and brought the answers
+home as pasted text; each box below is ticked against what was recorded there and nothing else.
+**Two stay open, and neither is a failure of the app's arithmetic.** Box 3 is a setting: the SIS
+rounds half up — 89.50 is an A-, 89.49 a B+ — and the app deliberately never rounds, so its bands
+must start at .5, and the record shows no band changed. Box 6, the backup drill, was not run. **The
+status is `🔨 IN PROGRESS`**, not `⬜`: part-worked with nobody in flight, so `next` no longer answers
+with this row and the Ship 3 and After Ship 3 rows are reachable by it again. **`**Owes** WO-3.18`
+came off the header the same day**, because the eighth box it served was moved to WO-7.3 on the
+owner's decision; see that line. The gate had nine boxes and now has eight.)*
 
 *(**`⬜ NOT STARTED` until 2026-08-20**, owner-directed, and the change is about `next` rather than
 about this gate. Every one of the eleven dependencies above is `✅ DONE`, so the gate reported `PASS`
@@ -279,17 +290,48 @@ box it closes.*
 criteria demand grade math "verified against hand-computed cases" — this is where that happens, on
 the owner's real classes, before the numbers matter.
 
-- [ ] Every case in `docs/grade-math-cases.md` (WO-3.4) verified by hand.
-- [ ] A real class's weighted grade computed by hand and matched against the app, including at least
-      one student with a `missing`, one with an `excused`, and one with an empty category.
+- [x] Every case in `docs/grade-math-cases.md` (WO-3.4) verified by hand. *(2026-09-29, all fifteen
+      worked on paper by the owner, and no disagreement with the document was recorded.)*
+- [x] A real class's weighted grade computed by hand and matched against the app, including at least
+      one student with a `missing`, one with an `excused`, and one with an empty category. *(2026-09-29.
+      Students A (`missing`), B (`excused`) and C (empty category) all matched, both percentage and
+      letter. **Only the verdicts came back**: the class, the empty category and the figures themselves
+      were left blank on the runbook, so the match is the owner's word rather than a figure a later
+      reader can re-derive. That is enough for a box that asks whether they matched.)*
 - [ ] The letter scale matches what the owner actually uses, including the boundary case that
-      rounding would have gotten wrong.
-- [ ] Grades entered for one real assignment across all five classes in under 20 minutes.
-- [ ] The printout order matches the SIS entry screen, confirmed against a real re-key.
-- [ ] Backup drill re-run now that grades exist.
-- [ ] `TESTING.md` Phase 3 section fully passing.
-- [ ] WO-3.18 OAuth paperwork **submitted**, with the date recorded.
-      → WO-3.18 "The submission date is written into this work order" *(This line said **WO-3.10**
+      rounding would have gotten wrong. *(**Open on 2026-09-29, and it is a setting to change rather
+      than a defect.** The runbook recorded that the SIS rounds, and the owner defined it: **89.50 is
+      an A-, 89.49 a B+**, which is round-half-up to a whole percent. `src/letter-scale.js` never
+      rounds, by design (WO-3.2), so the app agrees only if every band's minimum sits on the .5 below
+      its whole number: 92.5, 89.5, 86.5, 82.5, 79.5, 76.5, 72.5, 69.5, 66.5, 62.5, 59.5. The record
+      names no changed band and no boundary student, so on the evidence the bands are still the
+      shipped whole numbers, and an 89.6 is an A- in the SIS and a B+ here. "Letters match: Yes" was
+      true of the students checked; none was recorded inside a half-point window. **To close it:** set
+      the year's bands to those minimums, check every class that has its own bands, then find one real
+      student within half a point of a line.)*
+- [x] Grades entered for one real assignment across all five classes in under 20 minutes. *(2026-09-29,
+      the first real entry sitting: 26, 25, 22, 24 and 22 students, four minutes each, **twenty
+      exactly**. It landed on the line rather than under it, and the owner passed it: the bar meant
+      about twenty minutes, and whole-minute readings cannot tell 19:40 from 20:20. The one thing
+      recorded as slowing it was **scrolling**, in the 26-student class, the biggest. Nothing is booked
+      for it; it is the first place to look if a later sitting runs over.)*
+- [x] The printout order matches the SIS entry screen, confirmed against a real re-key. *(2026-09-29,
+      A-Block, 26 students, top to bottom with no divergence.)*
+- [ ] Backup drill re-run now that grades exist. *(Open on 2026-09-29: nothing was recorded, so it was
+      not run. The runbook's box 6 is the procedure, including the conflict message a wiped, synced
+      device should show.)*
+- [x] `TESTING.md` Phase 3 section fully passing. *(2026-09-29, by count: 232 boxes ticked and none
+      open. The one `- [ ]` in the section is inside a paragraph about a line deferred to WO-4.4, which
+      is ✅, and is not a checkbox.)*
+- *(Eighth line, "WO-3.18 OAuth paperwork **submitted**, with the date recorded", **moved to
+  [WO-7.3](phase-7-sync.md#wo-73--verification-complete) on 2026-09-29**, owner-directed. The runbook
+  offered two answers, submit or move the line, and the owner chose to move it. This gate is named for
+  grade arithmetic, and WO-7.3 is where the verification promise is enforced: its `Depends on` has
+  named WO-3.18 since Phase 7 was cut, so it cannot close without the submission. This is no longer a
+  checkbox here, so it cannot be ticked twice or left open by accident, which is
+  WO-7.3's own precedent for its third line. The `**Owes**` field came off the header with it. The
+  history below is kept as written.)*
+      *(This line said **WO-3.10**
       until 2026-08-11. After the 2026-08-10 split WO-3.10 is the client and the consent screen and
       submits nothing — so as written, the box named a work order that could never close it. **Read
       this before Ship 2 rather than at it:** WO-3.18 needs the domain WO-8.7 settles, so if that
@@ -304,13 +346,19 @@ the owner's real classes, before the numbers matter.
       what gates the promise now is
       [WO-7.3](phase-7-sync.md#wo-73--verification-complete), which has depended on WO-3.18 since
       Phase 7 was cut. **This gate is grade arithmetic again, which is what it is named for.**)*
-- [ ] **The `**Ship** —` work orders get a ship, or keep `—` on purpose.** Phases 5–8 and WO-G4 carry
+- [x] **The `**Ship** —` work orders get a ship, or keep `—` on purpose.** Phases 5–8 and WO-G4 carry
       `—` because the delivery table in [`../ROADMAP.md`](../ROADMAP.md) stops at Ship 3 — outreach,
       calendar, sync and packaging are all *"Then | Nov →"*. By the time this gate runs, Ship 3 is
       the next thing in front of you and what follows it is no longer hypothetical, so this is the
       first honest moment to name it. *(Added 2026-08-09, when the field was written into thirty-three
       work orders that had never carried one. A `—` that nobody revisits becomes the same invisible
-      blank it replaced, which is why this is a gate line and not a note.)*
+      blank it replaced, which is why this is a gate line and not a note.)* *(2026-09-29, the owner's
+      call: **Phase 5 → Ship 3, Phase 6 → Ship 2, Phases 7 and 8 → Ship 4, and WO-G4 is Ship 4's
+      gate.** Ship 4 did not exist, and [`../ROADMAP.md`](../ROADMAP.md) § Delivery plan gained its row
+      the same day in place of "Then | Nov →". The four Phase 8 rows already carrying 2 or 3 kept them.
+      **These are ship numbers and not gate dependencies**, also the owner's call: WO-G3 still waits
+      on Phase 4 alone, and Phase 5's open rows do not block it. That is the pattern WO-3.18 set in
+      § Ship 2. WO-3.18 itself keeps `—`: it is Phase 3 and outside this line.)*
 
 ---
 
@@ -362,7 +410,7 @@ stops reading the list has lost the feature permanently — quietly, without any
 
 ## WO-G4 — The 1.0.0 call
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-8.1 — which stands for every
+**Ship** 4 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-8.1 — which stands for every
 work order here: it is the regression gate, its own field names the last work order of the span it
 checks, and there is no 1.0.0 call over a checklist nobody has run
 **Closes roadmap** → the *What 1.0.0 means* section, which is a heading and a set of criteria rather

@@ -8,7 +8,7 @@ The 1.0.0 call itself is [WO-G4](gates.md#wo-g4--the-100-call).
 
 ## WO-8.1 — `TESTING.md` complete and passing
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-7.3 — which stands for every
+**Ship** 4 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-7.3 — which stands for every
 work order from WO-1.1 through WO-7.3, the span the first Acceptance line names
 **Closes roadmap** Phase 8 → "`TESTING.md` complete and fully passing."
 
@@ -50,7 +50,7 @@ decision, not an omission** — which puts all the weight on this checklist bein
 
 ## WO-8.2 — Demo build
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.1
+**Ship** 4 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.1
 **Closes roadmap** Phase 8 → "Demo build with a fake in-memory dataset, no account."
 
 **Why it exists.** A stranger evaluating a gradebook will not type in a roster to find out whether
@@ -78,7 +78,7 @@ they like it. The demo is the top of the adoption funnel, and it doubles as a he
 
 ## WO-8.3 — Accessibility pass
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.2
+**Ship** 4 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.2
 **Closes roadmap** Phase 8 → "Accessibility pass: screen reader (NVDA/VoiceOver), keyboard-only,
 contrast." *(the parenthetical was missing from the fragment until 2026-08-08, WO-2.15, so it
 matched zero boxes — the same rot, and the same shape, as WO-2.5's)*
@@ -106,7 +106,7 @@ done.* **Run the pass, don't assert it.**
 
 ## WO-8.4 — Print stylesheets
 
-**Ship** — · **Status** ✅ DONE — 2026-09-21 · **Size** S · **Depends on** WO-2.6, WO-3.9
+**Ship** 4 · **Status** ✅ DONE — 2026-09-21 · **Size** S · **Depends on** WO-2.6, WO-3.9
 **Closes roadmap** Phase 8 → "Print stylesheets for every printable surface."
 
 *(**This read `**Ship** 2` for one commit on 2026-08-19 and was corrected the same day** — WO-1.24,
@@ -215,7 +215,7 @@ sheet is one sheet (`src/scores.css`; measured three pages → two on a two-slic
 
 ## WO-8.5 — README, FERPA, and known limitations
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-8.1
+**Ship** 4 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-8.1
 **Closes roadmap** Phase 8 → "`README.md` with a Known limitations section"
 
 *(**`docs/FERPA.md` came out of this work order on 2026-08-20**, owner-directed, into
@@ -266,7 +266,7 @@ discovered by a user." *(The FERPA half of this paragraph moved to WO-8.12 with 
 
 ## WO-8.6 — Onboarding
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.5, WO-8.7, WO-8.16
+**Ship** 4 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.5, WO-8.7, WO-8.16
 **Closes roadmap** Phase 8 → "Onboarding: install → marking attendance with no documentation."
 
 *(**WO-8.16 added 2026-09-25.** This path starts at* install*, and a stranger who types the domain
@@ -300,7 +300,7 @@ with acceptance criteria is the only defense.
 
 ## WO-8.7 — the name and the host, decided
 
-**Ship** — · **Status** ✅ DONE — 2026-08-12 · **Size** S · **Depends on** nothing but a decision
+**Ship** 4 · **Status** ✅ DONE — 2026-08-12 · **Size** S · **Depends on** nothing but a decision
 **Blocks** WO-3.18 — there is no domain to verify until this is answered
 **Closes roadmap** Phase 8 → "Name and distribution channel decided."
 
@@ -918,7 +918,7 @@ case is a caveat nobody reads in the abnormal one.
 
 ## WO-8.12 — the privacy policy and the FERPA document
 
-**Ship** — · **Status** ✅ DONE — 2026-08-21 · **Size** M · **Depends on** WO-8.7 — the domain and the host
+**Ship** 4 · **Status** ✅ DONE — 2026-08-21 · **Size** M · **Depends on** WO-8.7 — the domain and the host
 to publish at · **Blocks** WO-3.18 — a verification form with no policy URL to paste
 **Closes roadmap** Phase 8 → "`docs/FERPA.md`."
 
@@ -1084,7 +1084,7 @@ is indistinguishable from a wrong URL.**)*
 
 ## WO-8.13 — the About modal names two documents and not the licence
 
-**Ship** — · **Status** ✅ DONE — 2026-09-21 · **Size** S · **Depends on** nothing
+**Ship** 4 · **Status** ✅ DONE — 2026-09-21 · **Size** S · **Depends on** nothing
 **Closes roadmap** *(no box. The same call WO-8.9 through WO-8.11 made: this is the app reporting a
 fact about itself rather than a feature the roadmap costed. Booked 2026-08-21, owner-directed, out
 of the sitting that added `LICENSE.md`.)*
@@ -1173,7 +1173,7 @@ the modal is a second thing to keep true.
 
 ## WO-8.14 — the three doc links in About are measured by nothing
 
-**Ship** — · **Status** ✅ DONE — 2026-09-22 · **Size** S · **Depends on** nothing
+**Ship** 4 · **Status** ✅ DONE — 2026-09-22 · **Size** S · **Depends on** nothing
 **Closes roadmap** *(no box. A harness gap, the same call WO-8.9 made: this is the project checking
 something it already claimed rather than a feature the roadmap costed. Booked 2026-09-21 out of
 WO-8.13's landing, owner-directed.)*
@@ -1247,7 +1247,7 @@ a departure in `src/calendar-view.css`, and these rows have no such ruling.
 
 ## WO-8.15 — the homepage Google is given is an empty gradebook
 
-**Ship** — · **Status** ✅ DONE — 2026-09-25 · **Size** S · **Depends on** WO-8.7, WO-8.12 — the domain to
+**Ship** 4 · **Status** ✅ DONE — 2026-09-25 · **Size** S · **Depends on** WO-8.7, WO-8.12 — the domain to
 serve it at and the policy it links · **Blocks** WO-3.18 — a verification form whose Homepage field
 would otherwise point at "No classes yet."
 **Closes roadmap** *(no box. The roadmap costs the policy and the submission; the page Google reads
@@ -1325,7 +1325,7 @@ removing it is a change to `hostAllowsSignIn()` and to the policy, not to this p
 
 ## WO-8.16 — a first-time visitor meets the front page, not an empty gradebook
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.15 — the words it shows ·
+**Ship** 4 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.15 — the words it shows ·
 **Blocks** WO-8.6 — onboarding's path starts at *install*, and this is the step before it
 **Closes roadmap** *(no box. It is the front half of Phase 8's "Onboarding: install → marking
 attendance with no documentation", and WO-8.6 closes that one.)*
@@ -1395,7 +1395,7 @@ order's fix; it is worth a row of its own if the owner wants one.
 
 ## WO-8.17 — an open app only looks for an update when it loads a page
 
-**Ship** — · **Status** ✅ DONE — 2026-09-26 · **Size** S · **Depends on** WO-8.11 — the stale-screen flag this reports, and the update policy it put out of scope
+**Ship** 4 · **Status** ✅ DONE — 2026-09-26 · **Size** S · **Depends on** WO-8.11 — the stale-screen flag this reports, and the update policy it put out of scope
 **Closes roadmap** *(no box. Instrument, not feature, the call WO-8.7 through WO-8.11 made.)*
 
 **Booked 2026-09-26**, owner-directed, from WO-7.7's hardware reading. v132 went live and neither
@@ -1464,7 +1464,7 @@ window cannot see a deploy (CLAUDE.md).
 
 ## WO-8.18 — a stuck update serves the old copy for ever
 
-**Ship** — · **Status** ✅ DONE — 2026-09-26 · **Size** S · **Depends on** WO-8.10 — the two-copy line in About that reports this state
+**Ship** 4 · **Status** ✅ DONE — 2026-09-26 · **Size** S · **Depends on** WO-8.10 — the two-copy line in About that reports this state
 **Closes roadmap** *(no box. A defect in the offline shell, found on hardware.)*
 
 **Booked 2026-09-26**, owner-reported, during WO-8.17's first 👤 reading. After the v134 deploy and a

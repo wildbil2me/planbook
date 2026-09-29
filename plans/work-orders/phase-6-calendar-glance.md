@@ -25,7 +25,7 @@ Three rules govern the phase:
 
 ## WO-6.1 — Event model & authoring
 
-**Ship** — · **Status** ✅ DONE — 2026-08-19 · **Size** M · **Depends on** WO-2.3
+**Ship** 2 · **Status** ✅ DONE — 2026-08-19 · **Size** M · **Depends on** WO-2.3
 **Closes roadmap** Phase 6 → "Event model: date or range, title, kind, optional class and student.",
 "Grades-due deadlines", "Recurring events by materializing instances."
 *(the first fragment stopped at the two words `Event model` until 2026-08-08, WO-2.15 — under twelve
@@ -144,7 +144,7 @@ recurrence, and the validation lift. Read the size against that list.
 
 ## WO-6.2 — Derived events
 
-**Ship** — · **Status** ✅ DONE — 2026-08-19 · **Size** S · **Depends on** WO-6.1, WO-3.3
+**Ship** 2 · **Status** ✅ DONE — 2026-08-19 · **Size** S · **Depends on** WO-6.1, WO-3.3
 **Closes roadmap** Phase 6 → "Derived events computed at render from assignments, terms, and the
 schedule — not stored." *(the fragment elided the middle of the box until 2026-08-08, WO-2.15. An
 ellipsis inside a fragment matches nothing: `norm()` strips it rather than wildcarding it, so a
@@ -270,7 +270,7 @@ here.
 
 ## WO-6.3 — Month & week views
 
-**Ship** — · **Status** ✅ DONE — 2026-08-19 · **Size** M · **Depends on** WO-6.2
+**Ship** 2 · **Status** ✅ DONE — 2026-08-19 · **Size** M · **Depends on** WO-6.2
 **Closes roadmap** Phase 6 → "Month and week views, filterable by class.", "IEP/504 review dates"
 
 *(the second fragment came from WO-6.2 on 2026-08-19, the owner's call — its box says review dates
@@ -412,7 +412,7 @@ and a `Depends on` in the other direction would be a cycle the gate would call s
 
 ## WO-6.4 — The glance page
 
-**Ship** — · **Status** ✅ DONE — 2026-09-19 · **Size** M · **Depends on** WO-6.7, WO-6.8, WO-4.5, WO-3.26
+**Ship** 2 · **Status** ✅ DONE — 2026-09-19 · **Size** M · **Depends on** WO-6.7, WO-6.8, WO-4.5, WO-3.26
 **Closes roadmap** Phase 6 → "The glance page"
 
 *(**Cut into three on 2026-09-15, owner-directed, and this row is the last of the three.** It was an
@@ -579,7 +579,7 @@ call added in this panel's code is the second answer arriving by the front door.
 
 ## WO-6.5 — A tapped day opens on that day
 
-**Ship** — · **Status** ✅ DONE — 2026-09-23 · **Size** S · **Depends on** WO-6.3
+**Ship** 2 · **Status** ✅ DONE — 2026-09-23 · **Size** S · **Depends on** WO-6.3
 
 Tapping a class's recorded day in the calendar opens that class's register — **on today**, not on the
 day that was tapped. Every other item on that screen carries its own subject through the tap: a
@@ -648,7 +648,7 @@ flash through today on the way is a worse experience than landing on today would
 
 ## WO-6.6 — The calendar's doors: in from every class screen, out of it to any of them
 
-**Ship** — · **Status** ✅ DONE — 2026-08-20 · **Size** M · **Depends on** WO-6.3
+**Ship** 2 · **Status** ✅ DONE — 2026-08-20 · **Size** M · **Depends on** WO-6.3
 
 **Why it exists.** Three gaps, all owner-reported on 2026-08-19 against the build WO-6.3 shipped that
 morning, and all three are the same gap seen from three sides: **the calendar was built as a
@@ -846,7 +846,7 @@ and adds one has narrowed a route rather than re-homed it.
 
 ## WO-6.7 — The glance page's stack, its readers, and the quiet day
 
-**Ship** — · **Status** ✅ DONE — 2026-09-15 · **Size** M · **Depends on** WO-6.3, WO-3.26, WO-4.5
+**Ship** 2 · **Status** ✅ DONE — 2026-09-15 · **Size** M · **Depends on** WO-6.3, WO-3.26, WO-4.5
 **Closes roadmap** Phase 6 → "Honest empty states."
 
 **Why it exists.** The first third of [WO-6.4](#wo-64--the-glance-page), cut out on 2026-09-15 — the
@@ -953,7 +953,7 @@ address.
 
 ## WO-6.8 — Today and this week, Waiting to be graded, and Closing in
 
-**Ship** — · **Status** ✅ DONE — 2026-09-16 · **Size** M · **Depends on** WO-6.7
+**Ship** 2 · **Status** ✅ DONE — 2026-09-16 · **Size** M · **Depends on** WO-6.7
 
 **Why it exists.** The second third of [WO-6.4](#wo-64--the-glance-page), cut out on 2026-09-15 —
 the three panels whose sources a live term has already confirmed. Panel 2 draws calendar items, panel
@@ -1105,7 +1105,7 @@ step removed.
 
 ## WO-6.9 — The review count opens a page that shows the review
 
-**Ship** — · **Status** ✅ DONE — 2026-09-19 · **Size** S · **Depends on** WO-6.8
+**Ship** 2 · **Status** ✅ DONE — 2026-09-19 · **Size** S · **Depends on** WO-6.8
 
 **Why it exists.** Booked 2026-09-16 out of WO-6.8's verdict. The verifier flagged it, and the owner
 chose to book it rather than hold WO-6.8 open for it. *1 review coming up* under *Closing in* carries

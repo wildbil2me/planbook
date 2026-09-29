@@ -50,7 +50,7 @@ acceptable, and it is why sync is last.
 
 ## WO-7.1 — Auth
 
-**Ship** — · **Status** ✅ DONE — 2026-08-24 · **Size** M · **Depends on** WO-3.10 — the client, not the
+**Ship** 4 · **Status** ✅ DONE — 2026-08-24 · **Size** M · **Depends on** WO-3.10 — the client, not the
 verification: Testing mode issues real tokens · **Blocks** WO-3.18 — the demo video has nothing to film
 until a sign-in exists
 **Closes roadmap** Phase 7 → "Google Identity Services token flow", "Sign-in is opt-in and
@@ -207,7 +207,7 @@ here. Sync is a foreground act, while the app is open and the teacher is signed 
 
 ## WO-7.2 — Document transfer & conflicts
 
-**Ship** — · **Status** ✅ DONE — 2026-09-07 · **Size** L · **Depends on** WO-7.1
+**Ship** 4 · **Status** ✅ DONE — 2026-09-07 · **Size** L · **Depends on** WO-7.1
 **Closes roadmap** Phase 7 → "Upload/download the year document", "`rev`/`baseRev` comparison",
 "Conflict: keep both", "Handle token expiry gracefully."
 
@@ -375,7 +375,7 @@ backup** — Drive holds one live copy that sync will happily overwrite. WO-1.5 
 
 ## WO-7.4 — the deployed app has no sign-in for Google's reviewer to find
 
-**Ship** — · **Status** ✅ DONE — 2026-09-26 · **Size** S · **Depends on** WO-7.2, WO-8.15 — the transfer the
+**Ship** 4 · **Status** ✅ DONE — 2026-09-26 · **Size** S · **Depends on** WO-7.2, WO-8.15 — the transfer the
 sign-in exists for, and the front page whose sync sentence changes with the policy's · **Blocks**
 WO-3.18 — a submission whose homepage would otherwise lead to an app that never uses the scope
 **Closes roadmap** *(no box. Phase 7's **Verification complete.** is WO-7.3's, and a box is closed by
@@ -478,7 +478,7 @@ most at risk from a first live sync.
 
 ## WO-7.3 — Verification complete
 
-**Ship** — · **Status** 🔒 GATED — Google's verdict on a submission nobody has made yet · **Size** S · **Depends on** WO-3.18, WO-7.2 — approval cannot
+**Ship** 4 · **Status** 🔒 GATED — Google's verdict on a submission nobody has made yet · **Size** S · **Depends on** WO-3.18, WO-7.2 — approval cannot
 follow from a client nobody submitted
 **Closes roadmap** Phase 7 → "Verification complete."
 
@@ -491,6 +491,11 @@ which is the same promise in the work order that owns it, and* **this `Depends o
 the re-home from being a quiet drop.** *No box was added here to receive it: WO-3.18's already says it,
 and a second one would be the duplicate reader this repository keeps refusing. Phase 7 cannot complete
 without the submission, which is where the deadline always belonged.)*
+
+*(**And on 2026-09-29 the line left WO-G2 for good.** Working WO-G2, the owner chose **move the line
+to WO-7.3** over submitting first, so the gate no longer carries even the re-homed box or its
+`**Owes**` pointer. Nothing was added here for the same reason given above: the `Depends on WO-3.18`
+already holds the promise, and a second box would duplicate WO-3.18's own.)*
 
 **Deliverables**
 - Verification approved by Google, recorded here with the date.
@@ -534,7 +539,7 @@ the same way: the code is the half that is behind, so nothing can reach a live h
 
 ## WO-7.5 — the header says how fresh this device's sync is
 
-**Ship** — · **Status** ✅ DONE — 2026-09-26 · **Size** M · **Depends on** WO-7.2 — the transfer whose state the button reads, and the bookmark it counts from
+**Ship** 4 · **Status** ✅ DONE — 2026-09-26 · **Size** M · **Depends on** WO-7.2 — the transfer whose state the button reads, and the bookmark it counts from
 **Closes roadmap** *(no box. Phase 7's boxes are closed by WO-7.1, WO-7.2 and WO-7.3; this is a surface on top of them.)*
 
 **Booked 2026-09-26**, owner-directed, out of a conversation that started at *"what about making the
@@ -690,7 +695,7 @@ does not move.
 
 ## WO-7.6 — the privacy documents say Google loads only on the Connect tap, and since WO-7.5 it also loads at launch
 
-**Ship** — · **Status** ✅ DONE — 2026-09-26 · **Size** S · **Depends on** WO-7.4 — the narrowed third-party sentence this re-words
+**Ship** 4 · **Status** ✅ DONE — 2026-09-26 · **Size** S · **Depends on** WO-7.4 — the narrowed third-party sentence this re-words
 **Closes roadmap** *(no box. A correction to two public documents and the notes that quote them.)*
 
 **Booked 2026-09-26**, owner-directed, out of WO-7.5's verdict. The verifier returned PASS WITH
@@ -766,7 +771,7 @@ what it might do next.
 
 ## WO-7.7 — a sync that downloads leaves the screen showing the document it replaced
 
-**Ship** — · **Status** ✅ DONE — 2026-09-26 · **Size** S · **Depends on** WO-7.2 — the download path this repaints after
+**Ship** 4 · **Status** ✅ DONE — 2026-09-26 · **Size** S · **Depends on** WO-7.2 — the download path this repaints after
 **Closes roadmap** *(no box. A defect in WO-7.2's download, found reading WO-7.5.)*
 
 **Booked 2026-09-26**, from the owner's iPad reading of WO-7.5 on the deployed v131: *"syncing isn't
@@ -835,7 +840,7 @@ redraw: it throws away the in-memory token, so every download would also sign he
 
 ## WO-7.8 — the stale-by-day check cannot tell a calendar day from 24 hours after 15:12
 
-**Ship** — · **Status** ✅ DONE — 2026-09-26 · **Size** XS · **Depends on** WO-7.5 — the check this pins to a fixed clock
+**Ship** 4 · **Status** ✅ DONE — 2026-09-26 · **Size** XS · **Depends on** WO-7.5 — the check this pins to a fixed clock
 **Closes roadmap** *(no box. A hole in a harness check, found by WO-7.5's verifier.)*
 
 **Booked 2026-09-26**, owner-directed, from finding 4 in WO-7.5's closing note. WO-7.5's ruling 4 says
@@ -885,7 +890,7 @@ written in UTC would test a different midnight from the teacher's.
 
 ## WO-7.9 — a fresh device cannot open the year it already has in Google Drive
 
-**Ship** — · **Status** ✅ DONE — 2026-09-28 · **Size** M · **Depends on** WO-7.2, WO-7.5, WO-7.7 — the download and its validation, the opt-in a pull must set, and the repaint a pull must trigger
+**Ship** 4 · **Status** ✅ DONE — 2026-09-28 · **Size** M · **Depends on** WO-7.2, WO-7.5, WO-7.7 — the download and its validation, the opt-in a pull must set, and the repaint a pull must trigger
 **Closes roadmap** *(no box. Phase 7's boxes are closed by WO-7.1, WO-7.2 and WO-7.3; this is a door on top of them.)*
 
 **Booked 2026-09-26**, owner-directed. The owner connected a fresh laptop while reading WO-7.5 and found
@@ -985,7 +990,7 @@ nothing on this screen may suggest it.
 
 ## WO-7.10 — the silent sign-in renewal opens a window, and on the iPad it blocks updates and taps
 
-**Ship** — · **Status** ✅ DONE — 2026-09-27 · **Size** S · **Depends on** WO-7.5 — the launch renewal this removes, and the header button whose tap replaces it
+**Ship** 4 · **Status** ✅ DONE — 2026-09-27 · **Size** S · **Depends on** WO-7.5 — the launch renewal this removes, and the header button whose tap replaces it
 **Closes roadmap** *(no box. Phase 7's boxes are closed by WO-7.1, WO-7.2 and WO-7.3; this reverses one ruling on top of them.)*
 
 **Booked 2026-09-26**, owner-reported, during WO-8.18's device reading. **The owner's ruling, the day it
@@ -1089,7 +1094,7 @@ header or in About may read *safe* because a tap now does two things.
 
 ## WO-7.11 — after a reload, sync cannot be switched off without signing in first
 
-**Ship** — · **Status** ✅ DONE — 2026-09-27 · **Size** S · **Depends on** WO-7.1 — the panel whose Disconnect this redraws; WO-7.5 — the opt-in that Disconnect clears
+**Ship** 4 · **Status** ✅ DONE — 2026-09-27 · **Size** S · **Depends on** WO-7.1 — the panel whose Disconnect this redraws; WO-7.5 — the opt-in that Disconnect clears
 **Closes roadmap** *(no box. Phase 7's boxes are closed by WO-7.1, WO-7.2 and WO-7.3; this repairs a consequence of WO-7.10 on top of them.)*
 
 **Booked 2026-09-26**, owner-directed, from WO-7.10's verdict. **WO-7.10's code is in the tree and
@@ -1162,7 +1167,7 @@ about withdrawing the opt-in, both change in the same sitting (`CLAUDE.md` § Ac
 
 ## WO-7.12 — the lapsed-sign-in check reads Connect before the panel has settled
 
-**Ship** — · **Status** ✅ DONE — 2026-09-27 · **Size** XS · **Depends on** WO-7.2 — the check this steadies; WO-7.13 — the repaint the check was reading around
+**Ship** 4 · **Status** ✅ DONE — 2026-09-27 · **Size** XS · **Depends on** WO-7.2 — the check this steadies; WO-7.13 — the repaint the check was reading around
 **Closes roadmap** *(no box. A harness race, found by WO-7.11's implementer and confirmed red on unmodified `HEAD` by its verifier.)*
 
 **Re-cut 2026-09-27**, owner-directed, after its first dispatch **stopped correctly on its own
@@ -1241,7 +1246,7 @@ the first cut refused to land.
 
 ## WO-7.13 — a sign-in that lapses with About open leaves the panel saying Connected
 
-**Ship** — · **Status** ✅ DONE — 2026-09-27 · **Size** S · **Depends on** WO-7.2 — the `syncNow()` this repaints from; WO-7.1 — the `refreshAuthChrome()` it calls
+**Ship** 4 · **Status** ✅ DONE — 2026-09-27 · **Size** S · **Depends on** WO-7.2 — the `syncNow()` this repaints from; WO-7.1 — the `refreshAuthChrome()` it calls
 **Closes roadmap** *(no box. A defect in WO-7.2's fifth Acceptance line, found by WO-7.12's first cut and confirmed by its verifier's reading.)*
 
 **Booked 2026-09-27**, owner-directed, from WO-7.12's verdict. WO-7.12 was booked as a harness race.
@@ -1309,7 +1314,7 @@ direct call at settle, not a new `subscribe()`.
 
 ## WO-7.14 — a sign-in Google has refused still reads as signed in, and every sync tap refuses again
 
-**Ship** — · **Status** ✅ DONE — 2026-09-27 · **Size** S · **Depends on** WO-7.13 — the `signed-out` repaint this makes truthful; WO-7.2 — the `401` arm in `syncNow()`
+**Ship** 4 · **Status** ✅ DONE — 2026-09-27 · **Size** S · **Depends on** WO-7.13 — the `signed-out` repaint this makes truthful; WO-7.2 — the `401` arm in `syncNow()`
 **Closes roadmap** *(no box. A defect in WO-7.2's fifth Acceptance line, found by WO-7.13's verifier.)*
 
 **Booked 2026-09-27**, owner-directed, from WO-7.13's verdict. The verifier flagged it as outside
@@ -1378,7 +1383,7 @@ in `src/sync-button.js` alone**: the About door and the harness do not go throug
 
 ## WO-7.15 — a sync Google refused leaves the header button looking like one that worked
 
-**Ship** — · **Status** ✅ DONE — 2026-09-28 · **Size** S · **Depends on** WO-7.14 — the `refused()` that makes this state reachable in one tap; WO-7.5 — the header button this draws on
+**Ship** 4 · **Status** ✅ DONE — 2026-09-28 · **Size** S · **Depends on** WO-7.14 — the `refused()` that makes this state reachable in one tap; WO-7.5 — the header button this draws on
 **Closes roadmap** *(no box. A gap in WO-7.5's states, opened by WO-7.14's fix and read on the laptop by the owner.)*
 
 **Booked 2026-09-27**, owner-directed, from WO-7.14's 👤 reading at v141 on the deployed origin. The
@@ -1446,7 +1451,7 @@ WO-7.14's ruling**: the session still ends on a `401`, and the fix is in what is
 
 ## WO-7.16 — the privacy documents say Google loads only on Connect, and since WO-7.9 a fresh device has a second door
 
-**Ship** — · **Status** ✅ DONE — 2026-09-28 · **Size** S · **Depends on** WO-7.6 — the wording this re-words
+**Ship** 4 · **Status** ✅ DONE — 2026-09-28 · **Size** S · **Depends on** WO-7.6 — the wording this re-words
 **Closes roadmap** *(no box. A correction to two public documents and the notes that quote them.)*
 
 **Booked 2026-09-28**, owner-directed, out of WO-7.9's verdict. The verifier returned PASS WITH
@@ -1531,7 +1536,7 @@ do next.
 
 ## WO-7.17 — a first sign-in from the Drive door is announced as a reconnect
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-7.9 — the first-run Drive door that reaches `reconnect()`
+**Ship** 4 · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-7.9 — the first-run Drive door that reaches `reconnect()`
 **Closes roadmap** *(no box. A wording defect in WO-7.9's door, found by its implementer and booked by the owner.)*
 
 **Booked 2026-09-28**, owner-directed, from WO-7.9's result and the maintenance check after WO-7.16

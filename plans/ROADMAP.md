@@ -128,9 +128,16 @@ drawn here rather than discovered at 11pm on August 23rd.
 | Gate | By | What must work |
 |---|---|---|
 | **Ship 1 — Day one** 🚩 | ~Aug 24 | Install + backup/restore · classes & terms · roster incl. accommodations · attendance marking with one-tap drop · days off · today's state on the home screen |
-| **Ship 2 — First grades** | ~Sep 15 | Categories & weights · assignments · score entry with late/missing · weighted grade · letter scale |
-| **Ship 3 — Signals** | October | Concern and praise lists, once there are 4–6 weeks of real data to run them against |
-| Then | Nov → | Outreach, calendar & glance page, sync, packaging |
+| **Ship 2 — First grades** | ~Sep 15 | Categories & weights · assignments · score entry with late/missing · weighted grade · letter scale · calendar & glance page (Phase 6) |
+| **Ship 3 — Signals** | October | Concern and praise lists, once there are 4–6 weeks of real data to run them against · outreach (Phase 5) |
+| **Ship 4 — 1.0.0** | Nov → | Drive sync (Phase 7) · packaging (Phase 8) · the 1.0.0 call (WO-G4) |
+
+*(**The last row read `Then | Nov →` until 2026-09-29, and it was WO-G2's ninth box that replaced
+it.** The owner assigned each unshipped phase to a ship: Phase 6 to Ship 2 and Phase 5 to Ship 3, the
+ships they had in practice already gone out with, and Phases 7 and 8 to a new Ship 4 gated by WO-G4.
+**These are ship numbers, not gate dependencies.** WO-G2 and WO-G3 wait on the same work orders they
+did before, so a Phase 5 row still open does not hold Ship 3's gate. The `**Ship**` field on every
+work order in those phases says the same thing.)*
 
 *(**Ship 2's scope line gained "print stylesheets" on 2026-08-19 and lost it again the same day** —
 WO-1.24 and its § Correction. The argument was that WO-8.4 and Ship 2's gate test the same thing, the

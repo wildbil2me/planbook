@@ -1457,6 +1457,11 @@ rather than "in no ship," and it survived in the one work order the correcting s
 on a gate's checklist is being in that ship. **The `—` here was never the WO-3.10 argument**: that one
 came off WO-G2's `Depends on` because a queue nobody controls must not block a grade-arithmetic gate,
 which is about where a **dependency** may sit, not about which ship the paperwork belongs to.)*
+*(**WO-G2's eighth box no longer exists, as of 2026-09-29.** The owner moved it to
+[WO-7.3](phase-7-sync.md#wo-73--verification-complete) while working WO-G2, so no gate's checkbox
+points here any more, and WO-G2 dropped its `**Owes**` field. The submission is still owed, and WO-7.3
+is what holds it: that work order depends on this one and cannot close without it. This work order's
+own third Acceptance line is unchanged.)*
 
 *(**`**Ship** 2` and two dependencies until 2026-08-20**, owner-directed. The third deliverable below is
 **a demo video showing the scope in use**, and **nothing in the app uses the scope**: `accounts.google`,

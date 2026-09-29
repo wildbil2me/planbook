@@ -13,6 +13,24 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The first-grades gate, worked — 2026-09-29
+
+WO-G2 was worked at school from its runbook, and six of its eight boxes are closed.
+
+- **The grade math held.** All fifteen worked cases in `docs/grade-math-cases.md` checked on paper,
+  and a real class's grade computed by hand matched the app for three students: one with a
+  `missing`, one with an `excused`, one with an empty category.
+- **Entry fits the bar, exactly.** One real assignment across all five classes (119 students) took
+  twenty minutes, four per class. Scrolling in the 26-student class was the one thing that slowed it.
+- **The grade sheet's order matched the SIS** on a real 26-student re-key, top to bottom.
+- **Still open: the letter scale and the backup drill.** The SIS rounds half up (89.50 is an A-,
+  89.49 a B+), and the app never rounds, so its bands need to start at 89.5, 86.5 and so on. The
+  drill was not run.
+- **The OAuth-paperwork line moved to WO-7.3**, which already cannot close without the submission, so
+  this gate is about grade arithmetic only.
+- **Every phase has a ship.** Calendar and glance page in Ship 2, outreach in Ship 3, and a new
+  Ship 4 for sync, packaging and the 1.0.0 call. These are ship numbers, not new gate dependencies.
+
 ### A tardy's time can be corrected afterwards — 2026-09-29
 
 Tap a student's name, and the history dialog now has a time field beside the note for a tardy or a

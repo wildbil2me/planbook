@@ -455,7 +455,7 @@ still reading *Nothing* are watched by no one.
 | 6 — Calendar & glance | 9 | 9 | — | 🔨 IN PROGRESS |
 | 7 — Drive sync | 17 | 15 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.4 ✅ DONE 2026-09-26, the sign-in opened on the deployed domain and read on the laptop and the iPad; WO-7.5 ✅ DONE 2026-09-26, the header's sync button; WO-7.6 ✅ DONE 2026-09-26, the privacy documents say when Google's library loads, read off the deployed /privacy; WO-7.7 ✅ DONE 2026-09-26, a download repaints the open screen, read both ways on laptop and iPad; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 18 | 12 | — | 🔨 IN PROGRESS |
-| Gates | 4 | 1 | — | WO-G2 ⬜ **workable 2026-09-07** — the term opened Sep 2 and first grades go in Sep 8; WO-G3 🔒 on four weeks after it |
+| Gates | 4 | 1 | — | WO-G2 🔨 **worked 2026-09-29**: six of eight boxes closed, and the letter-scale setting and the backup drill still open; WO-G3 🔒 on four weeks of real data |
 | | **206** | **184** | **3** | `[████████░░] 89%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***

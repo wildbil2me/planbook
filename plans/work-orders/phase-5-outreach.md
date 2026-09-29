@@ -25,7 +25,7 @@ and which the second rule above is the whole of the specification for. It lifts 
 
 ## WO-5.1 — Merge-field resolver
 
-**Ship** — · **Status** ✅ DONE — 2026-08-28 · **Size** M · **Depends on** WO-3.4, WO-4.1
+**Ship** 3 · **Status** ✅ DONE — 2026-08-28 · **Size** M · **Depends on** WO-3.4, WO-4.1
 **Closes roadmap** Phase 5 → "An unresolved merge field never renders blank" and "No merge field
 ever resolves accommodation, medical, or plan data."
 
@@ -99,7 +99,7 @@ of this shape and is measured against here.)*
 
 ## WO-5.2 — Templates
 
-**Ship** — · **Status** ✅ DONE — 2026-08-28 · **Size** M · **Depends on** WO-5.1
+**Ship** 3 · **Status** ✅ DONE — 2026-08-28 · **Size** M · **Depends on** WO-5.1
 **Closes roadmap** Phase 5 → "Templates with merge fields" and "Separate concern and praise
 templates."
 
@@ -274,7 +274,7 @@ keyboard is up*. Written down here rather than closed quietly.
 
 ## WO-5.3 — Send flow
 
-**Ship** — · **Status** ✅ DONE — 2026-08-29 · **Size** M · **Depends on** WO-5.2
+**Ship** 3 · **Status** ✅ DONE — 2026-08-29 · **Size** M · **Depends on** WO-5.2
 **Closes roadmap** Phase 5 → "Audience picker", "Copy to self", "`mailto:` handoff", "Editable
 before sending."
 
@@ -435,7 +435,7 @@ blocking.
 
 ## WO-5.4 — Contact log & history
 
-**Ship** — · **Status** ✅ DONE — 2026-08-29 · **Size** S · **Depends on** WO-5.3, WO-4.5
+**Ship** 3 · **Status** ✅ DONE — 2026-08-29 · **Size** S · **Depends on** WO-5.3, WO-4.5
 **Closes roadmap** Phase 5 → "Log the contact (append-only) and show contact history per student."
 
 **Why it exists.** The log is what WO-4.5's cooldown reads. Without it the signal lists are
@@ -509,7 +509,7 @@ than as four independent ideas — WO-5.8 in particular reverses something WO-5.
 
 ## WO-5.5 — The two sentences the flow does not say
 
-**Ship** — · **Status** ✅ DONE — 2026-08-29 · **Size** S · **Depends on** WO-5.3
+**Ship** 3 · **Status** ✅ DONE — 2026-08-29 · **Size** S · **Depends on** WO-5.3
 
 **Why it exists.** Two places where the app knows something the teacher does not, and says nothing.
 Both were found by watching one person use it for the first time, which is the only way this kind of
@@ -666,7 +666,7 @@ row 43, rather than widened into this one: the fix is a fixture and a mutation i
 
 ## WO-5.6 — A draft survives a change of mind
 
-**Ship** — · **Status** ✅ DONE — 2026-08-29 · **Size** S · **Depends on** WO-5.3
+**Ship** 3 · **Status** ✅ DONE — 2026-08-29 · **Size** S · **Depends on** WO-5.3
 
 **Why it exists.** Changing the template, the tone or the recipient rebuilds the draft from
 `resolveDraft()` and **throws away whatever the teacher had typed**, with no warning and no undo.
@@ -782,7 +782,7 @@ case sounding like a near miss.
 
 ## WO-5.7 — Copy the draft to the clipboard
 
-**Ship** — · **Status** ✅ DONE — 2026-09-12 · **Size** S · **Depends on** WO-5.3
+**Ship** 3 · **Status** ✅ DONE — 2026-09-12 · **Size** S · **Depends on** WO-5.3
 
 **Why it exists.** `mailto:` opens the machine's **default** mail client, and a teacher whose real
 mail is Gmail in a browser tab has no default worth opening. She can see a finished draft on screen
@@ -904,7 +904,7 @@ deepens it. Booking the repair is the owner's call.
 
 ## WO-5.8 — Several recipients, and one of them is primary
 
-**Ship** — · **Status** ✅ DONE — 2026-09-20 · **Size** M · **Depends on** WO-5.13, WO-5.14, WO-5.6
+**Ship** 3 · **Status** ✅ DONE — 2026-09-20 · **Size** M · **Depends on** WO-5.13, WO-5.14, WO-5.6
 
 *(**Cut in four on 2026-09-20, the owner's call, before it was ever dispatched** — it was the last
 `Size L` row in the directory, and one L is roughly a whole five-hour window against session-limit
@@ -1022,7 +1022,7 @@ survives a multi-select; check it rather than assume it.
 
 ## WO-5.9 — The hitless draft is written but never driven
 
-**Ship** — · **Status** ✅ DONE — 2026-08-30 · **Size** S · **Depends on** WO-5.4
+**Ship** 3 · **Status** ✅ DONE — 2026-08-30 · **Size** S · **Depends on** WO-5.4
 
 **Why it exists.** `recordHandoff()` writes `ruleId: hit ? hit.ruleId : ''`, and **the harness has
 never walked the false branch.** Both contacts `tools/verify/contact-log.mjs` writes are Ada's, and
@@ -1130,7 +1130,7 @@ runs.
 
 ## WO-5.10 — The status line is the one field the projector does not empty
 
-**Ship** — · **Status** ✅ DONE — 2026-09-15 · **Size** XS · **Depends on** WO-5.7
+**Ship** 3 · **Status** ✅ DONE — 2026-09-15 · **Size** XS · **Depends on** WO-5.7
 
 **Why it exists.** `paintOutreach()`'s blocked branch empties the subject, the body, the *To* line,
 its note, the chips, the template options and the reasons list, in as many words: *"emptied rather
@@ -1214,7 +1214,7 @@ is not the audience the mode protects against. Leave it.
 
 ## WO-5.11 — A web mail handler takes the PWA window with it
 
-**Ship** — · **Status** 🚫 STRUCK — 2026-09-12, reversed by the laptop reading · **Size** XS · **Depends on** WO-5.7
+**Ship** 3 · **Status** 🚫 STRUCK — 2026-09-12, reversed by the laptop reading · **Size** XS · **Depends on** WO-5.7
 
 *(**Struck the day it was built, on the reading it had not budgeted for.** The attribute went on,
 both harnesses went green, the verifier passed it with the two 👤 lines open, and the owner read it
@@ -1304,7 +1304,7 @@ app with it.
 
 ## WO-5.12 — A webmail door that is not a `mailto:`
 
-**Ship** — · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-5.7, WO-8.12
+**Ship** 3 · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-5.7, WO-8.12
 
 **Why it exists.** WO-5.11 was struck on 2026-09-12 because `mailto:` has no answer for a teacher
 whose mail is Gmail in a browser tab: with Gmail registered as Chrome's `mailto:` handler, a
@@ -1438,7 +1438,7 @@ the gap lasts.
 
 ## WO-5.13 — Every template, whatever the recipient
 
-**Ship** — · **Status** ✅ DONE — 2026-09-20 · **Size** S · **Depends on** WO-5.3
+**Ship** 3 · **Status** ✅ DONE — 2026-09-20 · **Size** S · **Depends on** WO-5.3
 
 **Why it exists.** The owner, 2026-08-29: *"all templates should be available regardless of
 recipient."* That is the half of [WO-5.8](#wo-58--several-recipients-and-one-of-them-is-primary)'s
@@ -1528,7 +1528,7 @@ scar, where a green tree turned the sweep red on work being done.
 
 ## WO-5.14 — The compose doors take a list, and which header the others ride in
 
-**Ship** — · **Status** ✅ DONE — 2026-09-20 · **Size** M · **Depends on** WO-5.3
+**Ship** 3 · **Status** ✅ DONE — 2026-09-20 · **Size** M · **Depends on** WO-5.3
 
 **The dependency is WO-5.3 and not WO-5.12, deliberately.** WO-5.12 built two of the three doors
 this row changes, so it is the obvious id to name — and naming it would gate this row on a 👤 line
@@ -1607,7 +1607,7 @@ doors a ceiling while making the count correct for the one that has one.
 
 ## WO-5.15 — One contact, several audiences
 
-**Ship** — · **Status** ✅ DONE — 2026-09-20 · **Size** S · **Depends on** WO-5.8
+**Ship** 3 · **Status** ✅ DONE — 2026-09-20 · **Size** S · **Depends on** WO-5.8
 
 **Why it exists.** **Booked out of the reading, not out of WO-5.8's Deliverables, which never
 mentioned it.** `writeContact({ audience })` (`src/outreach-view.js:1417` → `src/log.js:222` →
@@ -1676,7 +1676,7 @@ Acceptance line is here and why it is not a formality.
 
 ## WO-5.16 — a restore closes the outreach draft twice
 
-**Ship** — · **Status** ✅ DONE — 2026-09-26 · **Size** XS · **Depends on** WO-5.3 — the commit that added the second call
+**Ship** 3 · **Status** ✅ DONE — 2026-09-26 · **Size** XS · **Depends on** WO-5.3 — the commit that added the second call
 **Closes roadmap** *(no box. A duplicate line, found by WO-7.7's implementer and confirmed by its verifier.)*
 
 **Booked 2026-09-26**, owner-directed, from WO-7.7's verdict. `afterRestore()` in `src/shell.js`
@@ -1714,7 +1714,7 @@ reason the calls are where they are.
 
 ## WO-5.17 — No check opens a draft and then restores
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-5.16 — the single call this pins down
+**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-5.16 — the single call this pins down
 **Closes roadmap** *(no box. A harness gap, found by WO-5.16's verifier.)*
 
 **Booked 2026-09-26**, owner-directed, from WO-5.16's verdict. `afterRestore()` in `src/shell.js`
