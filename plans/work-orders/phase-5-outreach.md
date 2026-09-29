@@ -1741,6 +1741,16 @@ gives the outreach draft the same check, and a second one through the download p
   hidden afterwards.
 - **Harness only.** No file under `src/` changes, so `CACHE` in `sw.js` does not move.
 
+*(**Landed differently in one place, 2026-09-29.** The download check could not open the draft
+first and then sync, as this list assumed, because the draft window covers the header's sync button.
+So the check starts the sync, holds the transfer with the Drive stand-in's delay, and opens the draft
+while the sync is running. The verifier agreed. The restore check went in `outreach.mjs`, beside the
+draft helpers it uses. Two things surfaced in the verdict and were dealt with in the sitting that
+ticked this. The stale "only section that restores" comment in `verify-shell.mjs` was corrected. A
+throw inside `sync-button.mjs` would leave its page-start scripts running in later sections, and
+that was added to [WO-1.57](phase-1-shell-store-roster.md#wo-157--a-section-that-throws-hands-the-next-one-whatever-emulation-it-had-changed)
+rather than fixed here.)*
+
 **Acceptance**
 - [x] With the draft open, a restore closes `#outreachModal`, and the check asserts the draft was
       open before the restore rather than assuming it.
