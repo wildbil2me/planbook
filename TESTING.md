@@ -2383,6 +2383,146 @@ carrying. A throw between the toggles still skips the section's own teardown, as
 The two planted runs show no later check changing state because of it. That is out of this work
 order's scope, and it is the same family as the `recoverPage()` proposal above.
 
+### WO-1.57 — a section that throws hands the next one whatever emulation it had changed
+
+**What this changes.** Nothing a teacher sees, and nothing a device gets. `src/`, `index.html`,
+`sw.js`, `privacy.html`, `manifest.json` and `icons/` are **byte-identical to HEAD**, so **no
+`CACHE` bump is owed**. One file moves, `tools/verify-shell.mjs`. No section file is edited, none of
+the 21 the WO-1.56 audit named is given a `finally`, and WO-1.56's `finally` in `date-zero-key.mjs`
+is untouched. No check was added or removed, so the `check(` count in `tools/README.md` does not
+move. `runSection()`'s body is unchanged; § 25 reads it at the same lines.
+
+**How the state is captured.** CDP cannot be asked what emulation is in force, so the harness
+watches every call that sets it. The recording is **inside the one `send` in `verify-shell.mjs`**,
+not a wrapper on `h.send`. That choice matters: the sections destructure `send` off `h`, but the
+harness's own helpers (`load`, `evalJs`, `dateResetOn` …) close over the module-level function, and
+a wrapper on `h` would have missed them. Every CDP call in the run goes through that one function, so
+all of them are seen. Five methods are followed, each on its **successful** reply:
+
+- `Emulation.setTouchEmulationEnabled`: `emulation.touch` becomes its parameters when
+  `enabled: true`, and `null` when touch is turned off.
+- `Emulation.setDeviceMetricsOverride` / `clearDeviceMetricsOverride`: `emulation.metrics` becomes the
+  parameters, or `null`.
+- `Page.addScriptToEvaluateOnNewDocument`: the returned `identifier` goes into the running section's
+  set. `Page.removeScriptToEvaluateOnNewDocument` takes it out again, on the send rather than the reply.
+
+`null` means *not set*, and it is a real baseline. Restoring it means the clear call
+(`clearDeviceMetricsOverride`, touch `enabled: false`), not an invented default. The browser loop
+copies `emulation` into `sectionStart` as each section begins, with an empty script set. That copy is
+**the state this section received**. It is the baseline the work order asks for, and it is not one
+fixed baseline for every section. The two run-wide page-start scripts, `CATCH_AUDIO_CONTEXTS` and
+`SHIFT_PAGE_CLOCK` under `--today`, are installed before the first section while `sectionStart` is
+still `null`, so they are never in any section's set and a recovery cannot remove them. A section
+that removed its own script before it threw (`worker-takeover.mjs`'s probe, in its `finally`) has
+already taken it out of the set, so the recovery does not remove it a second time.
+
+**How it is restored.** `putBackWhatTheSectionChanged()` runs first inside `recoverPage()`'s `try`,
+before the reload. It removes every script still in the set, then puts the viewport back, then touch.
+Each emulation call is sent only if the current record differs from the section's start, so a section
+that threw with everything already tidied up costs no CDP call. It lets go of `sectionStart` before
+its first send, so its own calls are not recorded as the section's, and the emulation they set is
+recorded run-wide as the next section's baseline. **`recoverPage()` still cannot throw.** A restore
+call that fails lands in the same `catch` as a failed reload, and the recovery answers *the page did
+not come back*. The run then stops and names the sections it did not run. That is a choice: a restore
+that failed leaves the next section on emulation nobody chose, and carrying on would measure checks
+on a device the harness cannot vouch for.
+
+**What is out of reach, stated rather than claimed away:**
+
+- **Anything set some other way than a CDP call through that `send`.** No section does this today.
+  `grep` for `Target.`, `sessionId` and `ws.send` under `tools/verify/` finds nothing, so no section
+  opens a socket or a target of its own. Nothing here would notice if one started to.
+- **`Emulation.setEmulatedMedia` and `Emulation.setTimezoneOverride` are not put back.** Sections
+  send both: 24 `setEmulatedMedia` call sites, mostly the print tests, and 2 timezone calls in
+  `history-dialog-write.mjs`. A
+  throw while the page is held in `print` would hand `print` on, the same way touch was handed on
+  before this work order. The work order named touch and device metrics. Following two more methods
+  would have been the same few lines, but it would have been scope nobody asked for and nobody
+  verifies. It is a candidate for a follow-up booking. *(Booked 2026-09-30 as WO-1.58, together
+  with `Network.setBlockedURLs`, which this list missed: `sync-button.mjs` and `first-run.mjs` block
+  `*accounts.google.com*` from six places, and a throw while it is blocked hands the block on. The
+  verifier found it.)*
+- **Fixture data and page storage** (WO-1.56's limit, and out of scope here too). A reload keeps
+  `sessionStorage`, `localStorage` and the IndexedDB document. `sync-button.mjs`'s planted throw
+  leaves the stand-in's configuration in `sessionStorage` and the opt-in in `localStorage`, exactly as
+  before. Removing the page-start script is what makes that configuration inert, because the stand-in
+  reads it only if the script runs. `classes-terms.mjs`'s planted throw leaves `h.classesBooted`
+  unset and no `h.residue`. That is why its downstream failures below appear identically in both
+  planted runs.
+- **A normal run is unchanged by construction.** The record is kept on every run and read only in
+  `recoverPage()`, which runs only after a throw.
+
+**The reader was a temporary probe, as in WO-1.56.** One `console.log` at the head of
+`categories-weights.mjs`'s `run()` and one at the head of `first-run.mjs`'s, before either sets
+anything, printed `matchMedia('(pointer: coarse)').matches`, `navigator.maxTouchPoints`,
+`innerWidth`, `!!window.__fakeGis` (the stand-in's own marker) and `typeof window.google`. Both were
+marked `MUTATION WO-1.57`. **This work order edits `recoverPage()` and the browser loop**, so it owed
+§ 25's planted-throw run (`tools/wo-sweep.mjs` § 25's banner). Runs B and C below pay it: the
+containment still reports each throw as a FAIL naming its file, still reaches the summary, and still
+exits 1.
+
+Evidence, 2026-09-29, real clock, whole harness each time. `EXIT=` is read from each log's own line:
+
+- **Run A, baseline: `HEAD` plus the two probes, and nothing else.** `1598 checks · 1598 passed ·
+  0 failed · 0 skipped`, 660s, `EXIT=0`. WO-7.12's flake did not fire. The probes read
+  **categories-weights `{"coarse":false,"touchPoints":0,"innerWidth":750,"fakeGis":false,"google":"undefined"}`**
+  and **first-run `{"coarse":false,"touchPoints":0,"innerWidth":1280,"fakeGis":false,"google":"undefined"}`**.
+  These are the normal-run values.
+- [x] **A throw inside `classes-terms.mjs`'s iPad-portrait touch window leaves `categories-weights`
+      reading what it reads on a normal run.** Run B, with the change and both plants. `throw new
+      Error('MUTATION WO-1.57 — …')` went in directly after the *"emulated iPad-portrait pointer really
+      is coarse"* check. That is after `setDeviceMetricsOverride {768×1024, mobile}` and
+      `setTouchEmulationEnabled {enabled:true, maxTouchPoints:5}`, and before the section's own
+      clear/off pair. Result: `1478 checks · 1463 passed · 11 failed · 4 skipped`, 602s, `EXIT=1`.
+      The section was reported as thrown *"after 52 of its own checks"*, with the planted message and
+      `classes-terms.mjs:1145` at the top of the stack. The probe read
+      **`{"coarse":false,"touchPoints":0,"innerWidth":750}`**, identical to run A on all three.
+      The other failures and skips are the fixture family above and are identical in run C: three
+      sections skip on *"the app did not boot before this section"* (`h.classesBooted` is never set),
+      the attendance section finds no residue, and it and the calendar-events checks find seven classes
+      where their fixtures expect six.
+- [x] **Mutation-proved: the same throw with the restore taken out leaves `categories-weights` on a
+      different device.** Run C: `await putBackWhatTheSectionChanged();` was commented out of
+      `recoverPage()` under the same marker, and both plants were kept. Result: `1478 checks ·
+      1462 passed · 12 failed · 4 skipped`, 594s, `EXIT=1`, and the probe read
+      **`{"coarse":true,"touchPoints":5,"innerWidth":768}`**. All three values differ from run A:
+      `classes-terms`'s iPad portrait was handed on. No check in `categories-weights` could show
+      this, because that section skipped in both planted runs for the fixture reason. The probe is
+      the evidence here, as it was in WO-1.56.
+- [x] **A throw in `sync-button.mjs` after its stand-in library is installed leaves `first-run`
+      loading no stand-in.** The plant went in after the first reload with the stand-in configured
+      (`setFake('grant','grant')` and the opt-in cleared, directly after `const fresh = await read()`),
+      in the same runs B and C. In **run B** the section was reported as thrown *"after 2 of its own
+      checks"*, at `sync-button.mjs:315`. `first-run`'s probe read
+      **`{"fakeGis":false,"google":"undefined"}`**, identical to run A. In **run C**, with the
+      restore taken out, it read **`{"fakeGis":true,"google":"object"}`**. The stand-in had loaded
+      into the next section, and it turned one of `first-run`'s own checks red: *"the run's own
+      device was never touched: … with no stand-in library …"* read `"gis":true`. With the detail
+      text stripped, **that is the only line that differs between runs B and C** (`diff` of the
+      1478 PASS/FAIL/SKIP lines). One run covered both mutations, and the two readings do not
+      confound each other. `classes-terms` adds no page-start script, so its probe reads the
+      emulation half alone. `window.google` and `__fakeGis` come only from a page-start script, so
+      `first-run`'s probe reads the script half alone. `first-run`'s viewport read 1280 in all three
+      runs, because `sync-button` received the same desktop override it hands on normally.
+      All four plants (two throws, two probes) and the commented-out restore were reverted before
+      anything else was written. The four section files were copied back from copies saved before the
+      first edit. The restore line was put back. `grep -rn "MUTATION WO-1.57\|WO157-PROBE" tools/ src/`
+      then returned nothing (exit 1). `grep -rn MUTATION tools/ src/` reads 17 lines, all of them
+      pre-existing prose, the same 17 that `git grep -c MUTATION HEAD -- tools src` counts at `HEAD`.
+- [x] **The whole harness is green on the real clock, the check list is unchanged, and no check
+      changes state.** Run D, the final tree after every revert, no flag:
+      **`1598 checks · 1598 passed · 0 failed · 0 skipped`**, 656s, `EXIT=0`, and no probe line in the
+      log. The PASS/FAIL/SKIP line of every check, with detail text stripped, was diffed against run A.
+      It is **identical**: the same 1598 names in the same order and the same states. WO-7.12's
+      `drive-sync` check did not fire in either run, so there was no exception to use.
+- [x] **`node tools/wo-sweep.mjs` is green, including § 25.** `45 checks · 42 passed · 0 failed ·
+      3 to review`, exit 0. The three reviews are the standing ones, unchanged from the pre-edit sweep.
+      § 25 reads *"runSection() at tools/verify-shell.mjs:461-479 awaits the one `.run(` …"*, the same
+      lines as before the change. § 11 matches 1584 `check()` call sites against `tools/README.md:1226`.
+      `node tools/wo-gate.mjs --audit`: PASS, exit 0.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.*
+
 ---
 
 ## Phase 2 — Attendance

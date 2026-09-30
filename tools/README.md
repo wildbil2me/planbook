@@ -4062,7 +4062,12 @@ of every page-side template literal in the harness for a cosmetic gain. Match it
 run through `runSection()` in `verify-shell.mjs`, which turns a throw into a FAIL named after the
 file, carrying the throw and how many of that section's checks had run, and then reloads the page for
 the next one — so a throw costs its own section rather than every check after it, the run still exits
-1, and a page that will not come back stops the run with the unrun sections named. *(This paragraph
+1, and a page that will not come back stops the run with the unrun sections named. **Before that
+reload, the recovery puts back what the failed section changed that a reload does not undo**
+(WO-1.57): its page-start scripts come off, and the viewport and touch emulation return to what that
+section received. They are recorded inside `send` and not on `h`, so the harness's own helpers are
+seen too, and `setEmulatedMedia` and `setTimezoneOverride` are *not* followed. `TESTING.md` § WO-1.57
+has the record and its limits. *(This paragraph
 said the opposite — "nothing wraps `run(h)` in a `try`/`catch`, on purpose" — from WO-1.26 until
 WO-1.45 on 2026-09-24, four weeks after WO-1.44 had made it false. The reasoning it gave, that a quiet
 catch is a silent skip, is why the containment records a FAIL rather than swallowing anything.)*

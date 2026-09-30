@@ -591,12 +591,67 @@ ws.onmessage = (m) => {
     msg.error ? e.rej(new Error(JSON.stringify(msg.error))) : e.res(msg.result);
   }
 };
+/* ────── what a section changed that a reload does not undo (WO-1.57) ──────
+ *
+ * WHY THIS EXISTS. `recoverPage()` below reloads the page after a section throws, and a reload
+ * resets page memory and NOTHING a CDP call set on the target: device metrics, touch emulation and
+ * every `Page.addScriptToEvaluateOnNewDocument` script all survive it. Sections set those and put
+ * them back with a plain later `send`, so a throw between the two handed the next section whatever
+ * the failed one had changed — a coarse pointer on a 768px viewport where a fine one on the desktop
+ * was meant, or a stand-in Google library loading into every page for the rest of the run. WO-1.56's
+ * audit counted 21 files with a touch window of that shape, six more diverging on the viewport, and
+ * `verify/sync-button.mjs` with its stand-in library; `TESTING.md` § WO-1.57 has the planted runs.
+ *
+ * WHAT IS RECORDED, AND WHY HERE. CDP cannot be asked what emulation is in force, so the only way to
+ * know what a section received is to have watched every call that set it. Every CDP call in this run
+ * goes through the one `send` below — the sections destructure it off `h`, and the harness's own
+ * helpers (`load`, `evalJs`, `dateResetOn` …) close over it directly — so recording INSIDE `send`
+ * sees all of them, where a wrapper put on `h.send` would miss the helpers. Three things are kept:
+ *   - `emulation.touch` / `emulation.metrics`: the parameters of the last SUCCESSFUL
+ *     `setTouchEmulationEnabled` (with `enabled: true`) and `setDeviceMetricsOverride`, run-wide, or
+ *     `null` for "not set" — never set, cleared, or touch turned off. `null` is a real baseline:
+ *     29 of the browser sections set no touch at all and run on what they inherit, and putting back
+ *     "not set" means the clear call, not an invented default.
+ *   - `sectionStart`: a copy of both, taken by the browser loop as each section begins — the state
+ *     THIS section received, which is the only baseline that means the same thing for every section.
+ *   - `sectionStart.scripts`: the identifier of every page-start script added while the section runs,
+ *     minus every one it has since removed. So a section that tidied its own script up before it
+ *     threw is not removed twice, and the two run-wide scripts installed before the first section
+ *     (CATCH_AUDIO_CONTEXTS, and SHIFT_PAGE_CLOCK under --today) are never in the set at all.
+ *
+ * WHAT IT DOES NOT SEE: anything set some other way than a CDP call through this `send`. No section
+ * does that today — none opens a socket or a target of its own — and nothing here would notice if one
+ * started. Nor emulation this block does not follow: `setEmulatedMedia` and `setTimezoneOverride`
+ * are sent by sections and are NOT put back after a throw; the work order that built this named touch
+ * and metrics only, and the gap is written up in `TESTING.md` § WO-1.57.
+ *
+ * It changes nothing on a run where no section throws: a record is kept and never read. It is read
+ * in exactly one place, `putBackWhatTheSectionChanged()` inside `recoverPage()`. */
+const emulation = { touch: null, metrics: null };
+let sectionStart = null;
+function noteWhatItChanges(method, params, reply) {
+  if (method === 'Emulation.setTouchEmulationEnabled') {
+    reply.then(() => { emulation.touch = params.enabled ? { ...params } : null; }, () => {});
+  } else if (method === 'Emulation.setDeviceMetricsOverride') {
+    reply.then(() => { emulation.metrics = { ...params }; }, () => {});
+  } else if (method === 'Emulation.clearDeviceMetricsOverride') {
+    reply.then(() => { emulation.metrics = null; }, () => {});
+  } else if (method === 'Page.addScriptToEvaluateOnNewDocument') {
+    const into = sectionStart;
+    reply.then((r) => { if (into && r && r.identifier) into.scripts.add(r.identifier); }, () => {});
+  } else if (method === 'Page.removeScriptToEvaluateOnNewDocument') {
+    /* On the send, not the reply: a removal that failed is still one nobody should repeat. */
+    if (sectionStart) sectionStart.scripts.delete(params.identifier);
+  }
+}
 function send(method, params = {}, useSession = true) {
   const mid = ++id;
   const payload = { id: mid, method, params };
   if (useSession && sessionId) payload.sessionId = sessionId;
   ws.send(JSON.stringify(payload));
-  return new Promise((res, rej) => pending.set(mid, { res, rej }));
+  const reply = new Promise((res, rej) => pending.set(mid, { res, rej }));
+  noteWhatItChanges(method, params, reply);
+  return reply;
 }
 
 const target = await send('Target.createTarget', { url: 'about:blank' }, false);
@@ -917,16 +972,46 @@ Object.assign(h, {
   KILL_ANIM, INSTALL_WALKER, dateResetOn, waitForBoot, load,
 });
 
+/* What the failed section changed that the reload below would not undo, put back to what it received
+   (WO-1.57 — the record and its limits are at `noteWhatItChanges()`, above `send`). Scripts first,
+   then the viewport, then touch; each is sent only if it differs, so a section that threw with
+   everything already tidied costs no CDP call at all. `sectionStart` is let go of before the first
+   send, so these calls are not recorded as the section's own — the emulation they set is still
+   recorded run-wide, which is what makes it the next section's baseline. Called only from inside
+   `recoverPage()`'s `try`, and deliberately so: a restore that fails leaves the next section on
+   emulation nobody chose, so it answers "the page did not come back" and the run stops and names
+   what it did not run, rather than carrying on over a device it cannot vouch for. */
+async function putBackWhatTheSectionChanged() {
+  const start = sectionStart;
+  sectionStart = null;
+  if (!start) return;
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  for (const identifier of start.scripts) {
+    await send('Page.removeScriptToEvaluateOnNewDocument', { identifier });
+  }
+  if (!same(emulation.metrics, start.metrics)) {
+    if (start.metrics) await send('Emulation.setDeviceMetricsOverride', start.metrics);
+    else await send('Emulation.clearDeviceMetricsOverride');
+  }
+  if (!same(emulation.touch, start.touch)) {
+    await send('Emulation.setTouchEmulationEnabled', start.touch || { enabled: false });
+  }
+}
+
 /* A booted page again, or an honest no. Everything it can throw is caught in here, because the one
-   thing this must never do is throw out of the recovery from a throw. */
+   thing this must never do is throw out of the recovery from a throw — and that includes a CDP call
+   that fails while putting the section's emulation and scripts back (WO-1.57). */
 async function recoverPage() {
   try {
+    await putBackWhatTheSectionChanged();
     await load();
     return (await evalJs("document.querySelectorAll('*').length")) > 20;
   } catch { return false; }
 }
 
 for (let i = 0; i < BROWSER_SECTIONS.length; i++) {
+  /* What this section received, for `recoverPage()` to put back if it throws (WO-1.57). */
+  sectionStart = { touch: emulation.touch, metrics: emulation.metrics, scripts: new Set() };
   if (await runSection(BROWSER_SECTIONS[i], recoverPage)) continue;
   /* The page did not come back. Stopping is right — every section after this one would throw on its
      first `evalJs` and print the same failure over and over — but stopping SILENTLY is the whole of

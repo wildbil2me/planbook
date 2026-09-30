@@ -5276,7 +5276,7 @@ viewport in most of them. That larger fix is booked as WO-1.57.)*
 
 ## WO-1.57 — a section that throws hands the next one whatever emulation it had changed
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.56 — the audit this acts on
+**Ship** — · **Status** ✅ DONE — 2026-09-30 · **Size** S · **Depends on** WO-1.56 — the audit this acts on
 **Closes roadmap** *(no box. A harness defect with no live symptom yet.)*
 
 **Booked 2026-09-27**, owner-directed, from WO-1.56's verdict. `TESTING.md` § WO-1.56 read the 39
@@ -5311,19 +5311,19 @@ device with nothing to say so, which is the moment a run most needs to be believ
 - Nothing under `src/` moves, and none of the 21 section files is edited.
 
 **Acceptance**
-- [ ] A throw injected inside a temporary touch window in one of the nine sections the audit names
+- [x] A throw injected inside a temporary touch window in one of the nine sections the audit names
       (`classes-terms.mjs` → `categories-weights.mjs` is the suggested pair) leaves the next section
       reading the same `matchMedia('(pointer: coarse)').matches`, `navigator.maxTouchPoints` and
       `innerWidth` as it does on a normal run. Recorded in `TESTING.md` § WO-1.57, and **the injected
       throw is reverted before anything else is written** (`AGENTS.md`).
-- [ ] Mutation-proved: the same injected throw with the restore taken out of the recovery path
+- [x] Mutation-proved: the same injected throw with the restore taken out of the recovery path
       leaves the next section reading a different value.
-- [ ] A throw injected in `sync-button.mjs` after its fake sign-in is installed leaves the next
+- [x] A throw injected in `sync-button.mjs` after its fake sign-in is installed leaves the next
       section loading no fake: `window.google` reads the same as on a normal run. It is mutation-proved
       the same way, and recorded and reverted as the first line says.
-- [ ] The whole harness is green on the real clock, the check list is unchanged in names and order,
+- [x] The whole harness is green on the real clock, the check list is unchanged in names and order,
       and no check changes state apart from WO-7.12's named check if it is still open.
-- [ ] `node tools/wo-sweep.mjs` is green, including § 25's reading of `runSection()`'s shape.
+- [x] `node tools/wo-sweep.mjs` is green, including § 25's reading of `runSection()`'s shape.
 
 **Traps** — **Do not remove WO-1.56's `finally` from `date-zero-key.mjs`**. It is the fix at the
 point of the defect, and this is the net under every other section, not a replacement for it.
@@ -5333,3 +5333,73 @@ restoring goes in the same `catch`. **Do not fix the 21 files one `finally` at a
 ruled that out, and the next new section would bring the defect back. **A failed section's leftover
 fixture data** (WO-1.56's limit: `c_wo147` left in the document) is out of scope. It is a different
 family, and the planted runs showed no check changing because of it.
+
+*(**Verified 2026-09-29, ticked 2026-09-30.** It landed as planned, with the record kept inside the
+module-level `send` rather than a wrapper on `h.send`, so the harness's own helpers are seen too.
+What differed was the out-of-reach list: `TESTING.md` § WO-1.57 named `setEmulatedMedia` and
+`setTimezoneOverride`, and the verifier found a third, `Network.setBlockedURLs`, that the record had
+missed. All three are booked as [WO-1.58](#wo-158--a-section-that-throws-still-hands-on-print-media-a-time-zone-and-blocked-urls).
+One verifier run also hung for about 20 minutes inside `glance-quiet.mjs` with stray `edge://` tabs
+open, and a re-run was clean. It is read as the environment and was not proved to be.)*
+
+## WO-1.58 — a section that throws still hands on print media, a time zone and blocked URLs
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-1.57 — the record and the restore this widens
+**Closes roadmap** *(no box. A harness defect with no live symptom yet.)*
+
+**Booked 2026-09-30**, owner-directed, from WO-1.57's verdict. WO-1.57 made `recoverPage()` put back
+touch emulation, device metrics and page-start scripts after a section throws, by recording them
+inside the module-level `send` in `tools/verify-shell.mjs` (`noteWhatItChanges()`) and undoing them
+in `putBackWhatTheSectionChanged()`. **Three more settings survive a reload the same way and are not
+followed.** `TESTING.md` § WO-1.57 names two of them as out of reach:
+
+- **`Emulation.setEmulatedMedia`**, 24 sends from eight section files, mostly print tests
+  (`print-sheets`, `grade-sheet`, `grade-detail` and others). A throw while the page is held in `print` hands `print`
+  to every later section.
+- **`Emulation.setTimezoneOverride`**, sent twice by `history-dialog-write.mjs` (lines ~412 and
+  ~627). A throw between them hands `America/New_York` on.
+
+The verifier found the third one and the record does not list it:
+
+- **`Network.setBlockedURLs`**, sent from six places, four in `sync-button.mjs` (~288/304,
+  ~484/527) and two in `first-run.mjs` (~416/434). A throw while `*accounts.google.com*` is blocked hands the
+  block on. It is the same shape as the stand-in Google library WO-1.57 removes, reached through
+  the network rather than a script.
+
+No section throws today, so this costs nothing yet. When one does, the sections after it can be
+measured in the wrong media, clock zone or network with nothing to say so.
+
+**Deliverables**
+- **Record and restore all three the way WO-1.57 records touch and metrics**: the last successful
+  value, run-wide; the value each section received, copied as it starts; put back after a throw
+  only if it differs. "Not set" is a real baseline (`media: ''`, `timezoneId: ''`, `urls: []`), not
+  an invented default.
+- **Correct the two statements that say these are not put back**: the `noteWhatItChanges()` comment
+  block in `tools/verify-shell.mjs` and the out-of-reach list in `TESTING.md` § WO-1.57. Add
+  `TESTING.md` § WO-1.58 with the planted runs, and state there whatever is still out of reach.
+- Nothing under `src/` moves, and no section file is edited except by a planted, reverted throw.
+
+**Acceptance**
+- [ ] A throw planted inside a print window (for example in `print-sheets.mjs` after
+      `setEmulatedMedia { media: 'print' }`) leaves the next section reading
+      `matchMedia('print').matches` the same as on a normal run. Mutation-proved: with the new
+      restore removed, the same throw leaves it `true`. Recorded in `TESTING.md` § WO-1.58, and **the
+      planted throw is reverted before anything else is written** (`AGENTS.md`).
+- [ ] A throw planted in `history-dialog-write.mjs` between its two timezone calls leaves the next
+      section reading `Intl.DateTimeFormat().resolvedOptions().timeZone` the same as on a normal
+      run, mutation-proved and recorded the same way.
+- [ ] A throw planted in `sync-button.mjs` while `*accounts.google.com*` is blocked leaves the next
+      section with no blocked URLs, shown by a request to a matching URL that a planted probe reads
+      as not blocked. Mutation-proved and recorded the same way.
+- [ ] The whole harness is green on the real clock, the check list is unchanged in names and order,
+      and no check changes state against HEAD.
+- [ ] `node tools/wo-sweep.mjs` is green, including § 25's reading of `runSection()`'s shape.
+
+**Traps** — **`recoverPage()` must still never throw**, and a CDP call that fails while restoring
+goes in its existing `catch`, as WO-1.57's do. **Put back what the section received, never a
+fixed default**: nothing sets these three before the first section today, but if the harness ever
+sets one run-wide, a recovery that cleared it would break the run it is recovering. `--today` works
+through the `SHIFT_PAGE_CLOCK` script, not a time zone, so it is not affected. **`Network.setBlockedURLs` only does anything while `Network.enable` is on**, and only
+three sections send that. Record the URL list regardless, and do not start tracking
+`Network.enable` itself unless a planted run shows it is needed. **Do not fix the files one
+`finally` at a time**, for the reason WO-1.57 gives.

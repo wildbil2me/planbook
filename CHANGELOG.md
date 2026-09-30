@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A section that fails no longer changes what the next one sees — 2026-09-30
+
+A harness change only; nothing in the app moved.
+
+- **When a section of the browser harness throws, the device emulation and page-start scripts it
+  had turned on are now put back** before the page reloads for the next section. Before, a failure
+  while the page was set up as a touch iPad left every later section on a touch iPad, and a failure
+  in the sync checks left a fake Google sign-in loading into every later page.
+- **Proved both ways** by planting a throw, once with the fix and once with it taken out.
+- **Three settings are still not put back** (print media, a time zone and blocked URLs). They are
+  booked as WO-1.58.
+- The harness is 1,598 checks, all green.
+
 ### A restore or a download now provably closes an open draft — 2026-09-29
 
 A harness change only; nothing in the app moved.
