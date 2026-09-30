@@ -289,6 +289,20 @@ const READ = `(function(){
     driveCalls: window.__drive ? window.__drive.calls.slice() : null
   }; })()`;
 const read = () => evalJs(READ);
+/* WO-7.17: every non-empty sentence #srLive is given from here on, in order. src/live-region.js
+   writes a tick after it is called and clears first on a repeat, so an observer — not a read after
+   the fact — is what sees a sentence that a later one replaced. Started fresh on each call. */
+const WATCH_LIVE = `(function(){
+  var el = document.getElementById('srLive');
+  if (window.__srWatch) window.__srWatch.disconnect();
+  window.__srSaid = [];
+  if (!el) return 0;
+  window.__srWatch = new MutationObserver(function () {
+    var t = (el.textContent || '').trim();
+    if (t) window.__srSaid.push(t);
+  });
+  window.__srWatch.observe(el, { childList: true, characterData: true, subtree: true });
+  return 1; })()`;
 async function waitFor(pred, ms) {
   const until = Date.now() + (ms || 5000);
   let r = await read();
@@ -443,8 +457,21 @@ await evalJs(INSTALL_DRIVE);
 const planted = await evalJs(PLANT);
 const beforeRefusals = await evalJs(DIGEST);
 await waitFor((r) => r.drive, 4000);
+await evalJs(WATCH_LIVE);
 await clickSel('#firstRunDriveBtn');
 const listed = await waitFor((r) => r.rows.length > 0 || r.statusBad, 6000);
+
+/* WO-7.17 — WHAT A SCREEN READER HEARS ON THAT TAP. Every sentence the live region held from the tap
+   to the list, not only the last one: the chain after the sign-in may announce again, and the
+   sentence a teacher heard first is the one this is about. RED ON THE BUILD BEFORE IT, which said
+   "Reconnected to Google Drive." to a device that had never been connected. */
+const doorSaid = await evalJs('(window.__srSaid || []).slice()');
+check('WO-7.17 — the Drive door’s first sign-in on a device that was never connected is announced as '
+  + 'a connect, not a reconnect: the live region says “Connected to Google Drive.” and never '
+  + '“Reconnected” (WO-7.17 deliverable 1)',
+  doorSaid.indexOf('Connected to Google Drive.') >= 0 && !doorSaid.some((s) => /Reconnected/.test(s))
+    && listed.optIn === 'true',
+  'the live region said ' + JSON.stringify(doorSaid) + '; opt-in after = ' + JSON.stringify(listed.optIn));
 
 /* THE SIGN-IN, INSIDE THE TAP, AND THE LIST. */
 const listQuery = (listed.driveCalls || []).filter((c) => c.method === 'GET' && !c.media
@@ -547,6 +574,34 @@ check('and the screen is the year that arrived: the class card is drawn, the doo
     && await evalJs("(function(){ var n = document.getElementById('backupNag'); return !!n && !n.classList.contains('hidden'); })()"),
   JSON.stringify({ grid: landed.grid, doors: landed.block, empty: landed.emptyShown,
     syncBtn: landed.syncBtn }));
+
+/* WO-7.17 — AND THE HEADER BUTTON'S RECONNECT KEEPS ITS SENTENCE. The same device, now opted in by the
+   door above: a reload discards the token (memory only), the header's sync button is drawn, and its
+   tap goes through the same reconnect() — on a device that WAS connected, so "Reconnected" is true
+   there and must survive the change. The stand-in library is still granting (sessionStorage outlives
+   the reload); the Drive is stood up again so the sync after the sign-in answers from here. */
+await reloadFresh();
+await evalJs(INSTALL_DRIVE);
+await evalJs(PLANT);
+const headerBefore = await waitFor((r) => !!r.syncBtn && r.syncBtn.hidden === false, 4000);
+const signedOutFirst = await evalJs('window.planbook.auth.authState().signedIn');
+await evalJs(WATCH_LIVE);
+await clickSel('#syncBtn');
+const headerUntil = Date.now() + 5000;
+while (Date.now() < headerUntil
+  && !(await evalJs('window.planbook.auth.authState().signedIn'))) await pause(80);
+await pause(200);
+const headerSaid = await evalJs('(window.__srSaid || []).slice()');
+check('WO-7.17 — the header sync button’s tap, on a device that has connected before and was signed out '
+  + 'by a reload, is still announced “Reconnected to Google Drive.” — the door above changed the first '
+  + 'sign-in’s sentence and not this one (WO-7.17 Acceptance 3)',
+  headerBefore.syncBtn && headerBefore.syncBtn.hidden === false && signedOutFirst === false
+    && headerSaid.indexOf('Reconnected to Google Drive.') >= 0
+    && headerSaid.indexOf('Connected to Google Drive.') < 0,
+  'header button ' + JSON.stringify(headerBefore.syncBtn) + ', signed in before the tap = '
+    + signedOutFirst + '; the live region said ' + JSON.stringify(headerSaid));
+await evalJs("(function(){ if (window.__srWatch) window.__srWatch.disconnect(); return 1; })()");
+await shutModals();
 
 /* ══════════ the arms that make the proof fail closed ══════════ */
 

@@ -1536,7 +1536,7 @@ do next.
 
 ## WO-7.17 — a first sign-in from the Drive door is announced as a reconnect
 
-**Ship** 4 · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-7.9 — the first-run Drive door that reaches `reconnect()`
+**Ship** 4 · **Status** ✅ DONE — 2026-09-30 · **Size** XS · **Depends on** WO-7.9 — the first-run Drive door that reaches `reconnect()`
 **Closes roadmap** *(no box. A wording defect in WO-7.9's door, found by its implementer and booked by the owner.)*
 
 **Booked 2026-09-28**, owner-directed, from WO-7.9's result and the maintenance check after WO-7.16
@@ -1564,12 +1564,12 @@ about Google on that device, and it says something untrue. No data is at risk.
 - **Bump `CACHE` in `sw.js`.**
 
 **Acceptance**
-- [ ] The new check is red on `HEAD` and green with the change, with both runs recorded in
+- [x] The new check is red on `HEAD` and green with the change, with both runs recorded in
       `TESTING.md` § WO-7.17.
-- [ ] Mutation-proved: make the sentence unconditional again and the new check goes red. **The
+- [x] Mutation-proved: make the sentence unconditional again and the new check goes red. **The
       mutation is reverted before anything else is written** (`AGENTS.md`).
-- [ ] The header button's reconnect still announces *Reconnected to Google Drive.*
-- [ ] The whole browser harness shows no new failure.
+- [x] The header button's reconnect still announces *Reconnected to Google Drive.*
+- [x] The whole browser harness shows no new failure.
 
 **Traps** — **Do not move the request.** `reconnect()` reaches `requestAccessToken()` before its first
 `await`, which is what keeps Google's window inside the tap on the iPad (WO-7.5's first Trap); any

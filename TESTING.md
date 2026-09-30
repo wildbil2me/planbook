@@ -13392,6 +13392,48 @@ passed · 0 failed**, EXIT=0; `wo-sweep.mjs` 45 · 42 · 0 · 3 (the standing re
 `node --check` clean on all eleven changed JS/MJS files. Acceptance 2 ticked on that verdict.
 Acceptance 4 is owed after the owner's push.
 
+### WO-7.17 — a first sign-in from the Drive door is announced as a reconnect
+
+**Words only.** `reconnect()` in `src/auth.js` now reads `syncOptedIn` — the opt-in as
+`src/sync-button.js` last told it, set on every boot by `start()` — into `connectedBefore`, on the line
+after the request and before the one `await`, and announces *Reconnected to Google Drive.* only when
+it was true. Otherwise it says *Connected to Google Drive.*, which is `connect()`'s own success
+sentence, so no third wording was coined. The request still goes out first in the stack: the new line
+is a plain variable read after `ask()` / `requestToken()` has been called. No import was added and no
+storage is read. The failure sentence is unchanged. `CACHE` in `sw.js` is v146 → v147.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-7-sync.md` § WO-7.17. Every run below is
+`node tools/verify-shell.mjs` to completion on the real clock, 2026-09-30, read from its own summary
+and `EXIT=` line.*
+
+- [x] **Acceptance 1 — red on `HEAD`, green with the change.** The two new checks are in
+      `tools/verify/first-run.mjs`. Each installs a `MutationObserver` on `#srLive` before its tap,
+      so it catches every sentence the region is given, not only the last one. **On `HEAD`'s `src/`**
+      (harness changed, `src/` untouched): `1600 checks · 1599 passed · 1 failed · 0 skipped`,
+      658s, EXIT=1. The single failure is the door check: *the live region said
+      `["Reconnected to Google Drive."]`; opt-in after = "true"*. The header companion was green on
+      the same run. **With the change:** `1600 checks · 1600 passed · 0 failed · 0 skipped`, 51,064
+      lines, 657s, EXIT=0, with the door check reading `["Connected to Google Drive."]`.
+- [x] **Acceptance 2 — mutation-proved.** `src/auth.js` was copied to the scratchpad. The success
+      branch was then put back to the unconditional `'Reconnected to Google Drive.'`, marked
+      `MUTATION WO-7.17`. Result: `1600 checks · 1599 passed · 1 failed · 0 skipped`, 657s, EXIT=1.
+      The one red was the door check, again reading `["Reconnected to Google Drive."]`. The header
+      check stayed green. The file was then reverted by copying the clean copy back, before any
+      word of this entry was written. `grep -rn "MUTATION WO-7.17" src/ tools/` then exited 1 and
+      found nothing.
+- [x] **Acceptance 3 — the header's reconnect keeps its sentence.** The companion check runs on
+      the fresh device the door just opted in. It reloads (the token is memory-only, so the reload
+      signs it out; `authState().signedIn` was read `false` before the tap), confirms `#syncBtn` is
+      drawn, and taps it. The region said `"Reconnected to Google Drive."`, followed by the
+      sync's own sentence, and never the bare `"Connected to Google Drive."`. It was green on all
+      three runs above: `HEAD`, the change, and the mutation.
+- [x] **Acceptance 4 — no new failure in the whole harness.** The green run above:
+      `1600 · 1600 · 0 · 0`, EXIT=0. The count moved 1598 → 1600, which is exactly the two added
+      sites (`tools/README.md` ledger, WO-7.17).
+
+*Not verified here: what VoiceOver actually speaks on a real iPad. The work order carries no 👤 line
+for it, and the harness reads the live region's text, not the speech.*
+
 ## Phase 8 — 1.0 packaging
 
 *Phase goal: something a stranger can find, evaluate, install, and trust.*

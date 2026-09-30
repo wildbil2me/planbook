@@ -1223,7 +1223,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1584 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1586 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2231,6 +2231,18 @@ it. Neither sits in a loop and neither is a failure arm, so the gap between site
 −14, and the file count does not move. The run prints **1598**: `1598 checks · 1598 passed · 0 failed
 · 0 skipped`, 50,923 lines, 31.9 lines per check, 653s, exit 0, measured 2026-09-29 on the real clock.
 Mutation round in `TESTING.md` § WO-5.17.
+
+**WO-7.17 moved it from 1584 to 1586, and the executed count from 1598 to 1600 — two sites, two
+results.** Both are in `verify/first-run.mjs`, so the file count does not move. One sits directly
+after the Drive door’s granted tap in the Acceptance 4 block and reads every sentence `#srLive` was
+given from the tap to the list, through a `MutationObserver` installed before the click — a read
+after the fact would see only the last sentence, and src/live-region.js clears the region before a
+repeat. The other sits after the Acceptance 2 checks: the same device, now opted in, reloaded so the
+token is gone, and the header’s `#syncBtn` tapped. Neither sits in a loop and neither is a failure
+arm, so the gap between sites and results stays at −14. The run prints **1600**: `1600 checks ·
+1600 passed · 0 failed · 0 skipped`, 51,064 lines, 31.9 lines per check, 657s, exit 0, measured
+2026-09-30 on the real clock. The same count on `HEAD`’s `src/` read `1600 · 1599 passed · 1
+failed`. Runs and mutation in `TESTING.md` § WO-7.17.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

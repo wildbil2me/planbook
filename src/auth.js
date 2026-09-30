@@ -633,6 +633,16 @@ export async function reconnect() {
   const loadedFirst = !gisReady();
   /* Evaluated before the await, which is the point: ask() reaches requestAccessToken() right here. */
   const asking = loadedFirst ? requestToken(false) : ask(false);
+  /* WAS THIS DEVICE CONNECTED BEFORE THE TAP (WO-7.17) — read here, after the request and before the
+     await, so the success sentence is decided by the device as it stood and a sign-in that sets the
+     opt-in cannot change it. The header's button is drawn only on an opted-in device, so its tap
+     reads true and keeps "Reconnected"; the first-run door is drawn on an untouched device, whose
+     launch told this module false (src/sync-button.js start(), which runs on every boot, before the
+     early return), so a first sign-in is announced as one — in connect()'s own words, not a third
+     wording. `syncOptedIn` is TOLD, not read, for the reason at its declaration; this adds no
+     import and no storage read. A device that connected once and is still opted in, then taps the
+     door, is told "Reconnected", which is true. */
+  const connectedBefore = syncOptedIn;
   busy = true;
   refreshAuthChrome();
 
@@ -645,7 +655,7 @@ export async function reconnect() {
   }
   refreshAuthChrome();
   announce(out.ok
-    ? 'Reconnected to Google Drive.'
+    ? (connectedBefore ? 'Reconnected to Google Drive.' : 'Connected to Google Drive.')
     : 'Planbook is not connected to Google Drive. ' + lastError);
   return out.ok;
 }

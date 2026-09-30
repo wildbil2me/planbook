@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A first sign-in is no longer announced as a reconnect — 2026-09-30
+
+- **Signing in from *Open from Google Drive* on a fresh device now says "Connected to Google
+  Drive."** Before, the screen reader heard "Reconnected to Google Drive." on a device that had
+  never connected. The header's sync button, drawn only on a device that has connected, still says
+  "Reconnected", which is true there. The sentence is decided by whether the device had opted in
+  before the tap, so the sign-in cannot change its own announcement.
+- **Proved both ways** by two new harness checks, one per door: 1600 of 1600 with the change, and
+  1599 of 1600 with the old `src/auth.js` put back, the one failure being the door hearing
+  "Reconnected". Build v147.
+
 ### Ships 2 and 3 are closed on the real term — 2026-09-30
 
 - **The first-grades gate is closed.** Its last two boxes closed on the owner's readings: the letter
