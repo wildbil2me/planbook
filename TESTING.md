@@ -9087,12 +9087,13 @@ rather than building Phase 5's outreach flow to make one check possible.
       two of seven students, and the five excluded include the one whose only signal is currently
       SUPPRESSED — flagged and contacted both — and the one who has a note to self, which is not
       contact and moves her clock instead. Mutation-proved by dropping the contact exclusion.)*
-- [ ] 📆 Two consecutive weekly runs on real data produce visibly different concern lists. **→ the
+- [x] 📆 Two consecutive weekly runs on real data produce visibly different concern lists. **→ the
       term.** *(Nothing in a fixture can pay this: it wants the same five classes read a week apart
       with a real email sent in between. The mechanism under it is measured — the same document with
       `cooldownDays` at 0, 14 and 30 returns three different concern lists — but a threshold moved by
       hand is not a week passing. Re-run against the owner's own classes once there are two weeks of
       the term and at least one contact logged in between.)*
+      **Closed 2026-09-30 on the owner's ruling (WO-G3): watched across the term, and the lists move week to week. Nothing recorded, on purpose.**
 - [x] Suppressed hits are recoverable and counted, never silently dropped. *(Measured on the markup:
       the foot says the count in both states, the expansion draws one muted row per suppressed hit
       naming the contact and the return date, each carries its own *Write anyway*, and the big empty
@@ -9105,7 +9106,7 @@ rather than building Phase 5's outreach flow to make one check possible.
 - [x] *Write anyway* at the end of a muted row on a portrait iPad — reachable, and not so reachable
       that it is the thing a thumb hits on the way past. The ruling that pays for the control is
       **where it sits**, and only a thumb can say whether it sits there. 👤
-- [ ] The quiet middle at real length. The fixture holds two rows; a real class holds most of a
+- [x] The quiet middle at real length. The fixture holds two rows; a real class holds most of a
       roster in the first fortnight, and whether that panel is useful or a wall is the reading this
       build cannot take. 👤 *(**Read once, 2026-08-27, on an empty term: "a wall this early", and
       likely useful once student data starts piling in. The owner's call is to WATCH IT RATHER THAN
@@ -9120,6 +9121,7 @@ rather than building Phase 5's outreach flow to make one check possible.
       two cooldown feet on this same screen already teach, and which drops nobody and invents no
       threshold. Capping the list and suppressing it while the ranking is degenerate were both
       considered and both set aside; the reasons are in the same sitting's notes.)*
+      **Closed 2026-09-30 on the owner's ruling (WO-G3): watched across the term, and the panel names the right students. Nothing recorded, on purpose.**
 - [x] The class card with both chips on it, on a portrait iPad, across five classes: the slot still
       holds one row and no card is taller than its neighbour. Measured headless at a 202px card —
       24px slot around a 21px chip — but the coarse block bumps both and nobody has seen it. 👤

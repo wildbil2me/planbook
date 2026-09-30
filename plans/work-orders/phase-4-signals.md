@@ -467,7 +467,7 @@ which puts the judgement where the knowledge is. **Not booked.**)*
 
 ## WO-4.5 — Cooldown & the quiet middle
 
-**Ship** 3 · **Status** 🔨 IN PROGRESS · **Size** M · **Depends on** WO-4.2, WO-4.3
+**Ship** 3 · **Status** ✅ DONE — 2026-09-30 · **Size** M · **Depends on** WO-4.2, WO-4.3
 **Closes roadmap** Phase 4 → "Contact cooldown" and "The quiet middle."
 
 **Why it exists.** Without the cooldown the list is identical every week, the teacher stops reading
@@ -507,7 +507,10 @@ failing nor excelling, and no threshold will ever surface them.
 - [x] The cooldown reads the log rather than a separate suppression store — verify by restoring a
       backup and confirming cooldowns survive.
 - [x] The quiet-middle list excludes anyone flagged, praised, or contacted this term.
-- [ ] 📆 Two consecutive weekly runs on real data produce visibly different concern lists.
+- [x] 📆 Two consecutive weekly runs on real data produce visibly different concern lists.
+      *(**Closed 2026-09-30 on the owner's ruling**, the same reading as WO-G3's third box: watched
+      across the real term and accurate. No list was recorded, on purpose, since a list would carry
+      names.)*
 - [x] Suppressed hits are recoverable and counted, never silently dropped.
 
 **Traps** — Cooldown keyed on the student rather than the *signal* will hide a new problem because

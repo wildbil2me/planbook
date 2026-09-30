@@ -90,12 +90,12 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 1 | Shell, store, roster | ✅ DONE — 2026-08-06 | 12/12 `[██████████] 100%` |
 | 2 | Attendance | 🔨 IN PROGRESS | 15/15 `[██████████] 100%` · ⏳ 1 deferred |
 | 3 | Gradebook | 🔨 IN PROGRESS | 10/10 `[██████████] 100%` |
-| 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 6/8 `[████████░░] 75%` |
+| 4 | Signals — concern **and** praise | ✅ DONE — 2026-09-30 | 8/8 `[██████████] 100%` |
 | 5 | Outreach | 🔨 IN PROGRESS | 9/9 `[██████████] 100%` |
 | 6 | Calendar & the glance page | 🔨 IN PROGRESS | 8/8 `[██████████] 100%` |
 | 7 | Drive sync (opt-in) | 🔨 IN PROGRESS — launch needs OAuth verification | 6/7 `[█████████░] 86%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 3/8 `[████░░░░░░] 38%` |
-| | | **Overall** | **73/81 `[█████████░] 90%`** · ⏳ 1 deferred |
+| | | **Overall** | **75/81 `[█████████░] 93%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -461,10 +461,10 @@ different student every time, and it's the message that actually lands at home.
       the concern list (a turnaround is the highest-value message home) · a clean stretch with no
       missing work · perfect attendance over a window.
 - [x] One evaluator produces both lists. A student can appear on both, and that's information.
-- [ ] **Contact cooldown.** Read the outreach log; suppress anyone contacted about the same signal
+- [x] **Contact cooldown.** Read the outreach log; suppress anyone contacted about the same signal
       within N days. Without this the list is identical every week and the teacher stops reading
       it — which is how these features die.
-- [ ] **The quiet middle.** Students neither flagged nor praised nor contacted all term. The ones a
+- [x] **The quiet middle.** Students neither flagged nor praised nor contacted all term. The ones a
       busy teacher genuinely loses track of.
 - [x] "Why is this student here?" — every flag explains itself in a sentence with the real numbers.
 - [x] Behavior/note logging fast enough to do mid-class, feeding the behavior signals.

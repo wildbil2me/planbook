@@ -13,7 +13,7 @@ records what someone remembered.
 
 ## [Unreleased]
 
-### Ship 2 is closed, and the praise list is proved on a real term — 2026-09-30
+### Ships 2 and 3 are closed on the real term — 2026-09-30
 
 - **The first-grades gate is closed.** Its last two boxes closed on the owner's readings: the letter
   bands now start at the half point below each whole number (89.5 for an A-, 86.5 for a B+, and so
@@ -22,8 +22,12 @@ records what someone remembered.
 - **The praise list moves on real data.** Run two weeks apart on the real term, it surfaces a
   different set of students, which is the test that says the ranking is working. That was the last
   open line on WO-4.3.
-- **A runbook for the Ship 3 gate** is in `plans/runbooks/wo-g3-runbook.html`, for the sitting that
-  checks the concern and praise lists by hand and tunes the thresholds.
+- **The signals gate is closed, and with it all of Phase 4.** The owner has watched both lists over
+  the first four weeks of the term and ruled them accurate: the flags match the numbers, the lists
+  change week to week, climbers outrank steady students, and the quiet middle names the right people.
+  The default thresholds stand. Nothing about the classes was written down, by choice, so the runbook
+  written for this sitting (`plans/runbooks/wo-g3-runbook.html`) stays as a procedure and was not
+  filled in.
 
 ### A section that fails no longer changes what the next one sees — 2026-09-30
 

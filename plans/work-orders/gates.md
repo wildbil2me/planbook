@@ -367,7 +367,7 @@ the owner's real classes, before the numbers matter.
 
 ## WO-G3 — Ship 3 gate: signals
 
-**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-4.1, WO-4.2, WO-4.3, WO-4.4, WO-4.5 — all of Phase 4
+**Ship** 3 · **Status** ✅ DONE — 2026-09-30 · **Size** S · **Depends on** WO-4.1, WO-4.2, WO-4.3, WO-4.4, WO-4.5 — all of Phase 4
 **Target** October 2026, once 4–6 weeks of real data exist
 
 *(**Back to `⬜` on 2026-09-30**, four weeks from the term's first day on Sep 2, which is the condition
@@ -402,16 +402,27 @@ is refused by the gate rather than noted beside a `PASS`.)*
 **Why it exists.** Signals tuned against thin data produce lists nobody trusts, and a teacher who
 stops reading the list has lost the feature permanently — quietly, without anyone deciding to kill it.
 
-- [ ] At least four weeks of real grades and attendance exist before the thresholds are tuned.
-- [ ] **Every flag reproducible by hand** from the numbers it shows — walk all nine concern rules
+- [x] At least four weeks of real grades and attendance exist before the thresholds are tuned.
+- [x] **Every flag reproducible by hand** from the numbers it shows — walk all nine concern rules
       and all five praise rules against real students.
-- [ ] **Two consecutive weekly runs produce visibly different lists.** If they don't, the cooldown
+- [x] **Two consecutive weekly runs produce visibly different lists.** If they don't, the cooldown
       or the delta ranking is wrong, and this is the test that catches it.
-- [ ] The praise list ranks by delta: verify a case where an improving B− student outranks a steady A.
-- [ ] The quiet-middle list names students the owner agrees they had lost track of. Ask them.
-- [ ] Thresholds adjusted from defaults to what the owner actually wants, and the defaults in
+- [x] The praise list ranks by delta: verify a case where an improving B− student outranks a steady A.
+- [x] The quiet-middle list names students the owner agrees they had lost track of. Ask them.
+- [x] Thresholds adjusted from defaults to what the owner actually wants, and the defaults in
       [`../../docs/data-model.md`](../../docs/data-model.md) updated if reality disagreed with them.
-- [ ] `TESTING.md` Phase 4 section fully passing.
+- [x] `TESTING.md` Phase 4 section fully passing.
+
+*(**Closed 2026-09-30 on the owner's ruling, and not on a recorded run.** The owner has watched both
+lists across the first four weeks of the real term and ruled them accurate: the flags match the
+numbers, the lists move week to week, the praise column ranks the climber over the steady student, the
+quiet middle names the right students, and the default thresholds stand. **No class data was written
+down, on purpose** — the owner declined to put anything that could trace back to a class into a page
+in a public repository — so every box above closes on the owner's word rather than on figures a later
+reader can re-derive, and [`../runbooks/wo-g3-runbook.html`](../runbooks/wo-g3-runbook.html) was not
+filled in. "Good for now" is the owner's phrase: the defaults in `docs/data-model.md` are unchanged
+because nothing disagreed with them, and a threshold that turns out wrong later is a setting to move,
+not a reason to reopen this gate.)*
 
 ---
 

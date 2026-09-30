@@ -16,7 +16,7 @@ Built first for its author's own five classes, but intended to be marketable to 
 That second goal is what drives the architecture below.
 
 **Status: Ship 1 delivered; Ship 2 — first grades — delivered, its gate closed 2026-09-30;**
-**Ship 3 building, and Phase 5 opened inside it on 2026-08-28.**
+**Ship 3 — signals — its gate closed 2026-09-30 on the owner's ruling, and Phase 4 is done; WO-5.12 is its one open row.**
 *(This line carried "its first four rows landed" until that day, when a fifth made it wrong. It now
 names no count for the reason stated two paragraphs down —* **take the numbers from the roadmap's
 dashboard** *— because a count written here is one nothing maintains, and this one had already rotted
