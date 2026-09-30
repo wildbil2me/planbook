@@ -1,0 +1,772 @@
+<title>WO-G3 Signals Gate</title>
+
+<style>
+  /* design/style-guide.md § 1 and § 8: colours inline, never custom properties, and no dark
+     mode — the suite is light-theme only. Every value below is a literal for that reason, and
+     tools/wo-sweep.mjs reads every .css/.html outside tools/, so a token block here is a red
+     sweep. The masthead, section labels and step cards are lifted from wo-7-1-runbook.html, by way of
+     wo-g2-runbook.html, whose stylesheet this is, copied whole. */
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #eceff4;
+    color: #1a1a2e;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  h1, h2, h3 { text-wrap: balance; margin: 0; line-height: 1.15; }
+
+  code, .mono { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; }
+  code {
+    font-size: 0.86em;
+    background: #f6f8fb;
+    border: 1px solid #eef0f4;
+    border-radius: 3px;
+    padding: 0.1em 0.34em;
+    overflow-wrap: break-word;
+  }
+
+  a { color: #4a5fbb; text-underline-offset: 2px; }
+  a:hover { color: #5b6fcc; }
+  :focus-visible { outline: 2px solid #5b6fcc; outline-offset: 2px; border-radius: 2px; }
+
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── Masthead ─────────────────────────────────────────────── */
+  .band {
+    background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 78%, #2a2a6e 100%);
+    color: #ffffff;
+    padding: 44px 0 40px;
+  }
+  .band .wrap { display: flex; flex-direction: column; gap: 18px; }
+  .eyebrow {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.38);
+  }
+  .band h1 { font-size: clamp(30px, 5.2vw, 46px); font-weight: 700; letter-spacing: -0.015em; }
+  .band .standfirst { color: rgba(255,255,255,0.62); font-size: 17px; max-width: 62ch; margin: 0; }
+  .band .standfirst strong { color: #ffffff; font-weight: 600; }
+  .band-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.14);
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 12px;
+    color: rgba(255,255,255,0.38);
+  }
+  .band-meta b { color: rgba(255,255,255,0.62); font-weight: 500; }
+
+  /* ── Sections ─────────────────────────────────────────────── */
+  main { padding: 40px 0 72px; display: flex; flex-direction: column; gap: 52px; }
+
+  .sec-label {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8a9bb0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .sec-label::after { content: ""; flex: 1; height: 1px; background: #e0e4f0; }
+
+  p { margin: 0 0 14px; max-width: 68ch; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── Warnings ─────────────────────────────────────────────── */
+  .traps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .trap {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-left: 3px solid #f0b0b0;
+    border-radius: 6px;
+    padding: 15px 17px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+  }
+  .trap h3 { font-size: 15.5px; font-weight: 700; margin-bottom: 6px; }
+  .trap p { font-size: 14.5px; color: #4c5a6d; margin: 0; }
+
+  .callout {
+    background: #eef2ff;
+    border: 1px solid #b0bcf0;
+    border-radius: 6px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .callout h3 { font-size: 17px; font-weight: 700; }
+  .callout p { color: #4c5a6d; font-size: 15px; }
+  .callout.warn { background: #fff8e6; border-color: #d8bd63; }
+
+  /* ── Tables ───────────────────────────────────────────────── */
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eef0f4; vertical-align: top; }
+  th {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8a9bb0;
+    white-space: nowrap;
+  }
+  td { color: #4c5a6d; }
+  td.num { font-variant-numeric: tabular-nums; color: #8a9bb0; font-weight: 600; }
+  .glance { background: #ffffff; border: 1px solid #e0e4f0; border-radius: 6px; }
+  .glance a { font-weight: 600; }
+
+  .chip {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid #e0e4f0;
+    background: #f6f8fb;
+    color: #6b7a8d;
+    white-space: nowrap;
+    display: inline-block;
+  }
+  .chip.entry  { color: #4a5fbb; background: #eef2ff; border-color: #b0bcf0; }
+  .chip.real   { color: #1c7a45; background: #eafaf1; border-color: #a3e4bc; }
+  .chip.home   { color: #8a6d1a; background: #fff8e6; border-color: #d8bd63; }
+
+  /* ── Box cards ────────────────────────────────────────────── */
+  .steps { display: flex; flex-direction: column; gap: 22px; }
+  .step { display: grid; grid-template-columns: 74px 1fr; gap: 0 24px; align-items: start; }
+  .step-num {
+    font-size: 34px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #8a9bb0;
+    line-height: 1;
+    padding-top: 18px;
+    text-align: right;
+    padding-right: 4px;
+  }
+  .step-body {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-radius: 6px;
+    padding: 20px 22px 22px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+  }
+  .step.entry .step-body { border-left: 3px solid #b0bcf0; }
+  .step.real .step-body  { border-left: 3px solid #a3e4bc; }
+  .step.home .step-body  { border-left: 3px solid #e0e4f0; background: #f6f8fb; }
+  .step-head { display: flex; flex-direction: column; gap: 8px; }
+  .step h2 { font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
+  .step-body p, .step-body li { font-size: 15.5px; color: #4c5a6d; }
+  .step-body strong { color: #1a1a2e; font-weight: 600; }
+  .step-body ol, .step-body ul { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 7px; max-width: 68ch; }
+
+  .subhead {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8a9bb0;
+  }
+  .note {
+    border-left: 2px solid #e0e4f0;
+    padding-left: 14px;
+    font-size: 14.5px;
+    color: #6b7a8d;
+    font-style: italic;
+    max-width: 66ch;
+  }
+  .note b { font-style: normal; font-weight: 600; color: #4c5a6d; }
+
+  .quote {
+    background: #f6f8fb;
+    border: 1px solid #eef0f4;
+    border-radius: 5px;
+    padding: 12px 14px;
+    font-size: 14.5px;
+    color: #1a1a2e;
+  }
+
+  /* ── Record blocks: what gets filled in ──────────────────── */
+  .record {
+    border: 1px dashed #b0bcf0;
+    border-radius: 6px;
+    background: #fbfcff;
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .record .subhead { color: #4a5fbb; }
+  .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px 14px; }
+  .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #6b7a8d; }
+  .field.wide { grid-column: 1 / -1; }
+  input[type="text"], select, textarea {
+    font: inherit;
+    font-size: 15px;
+    color: #1a1a2e;
+    background: #ffffff;
+    border: 1px solid #c9d1e3;
+    border-radius: 4px;
+    padding: 7px 9px;
+    width: 100%;
+    min-height: 38px;
+  }
+  textarea { min-height: 64px; resize: vertical; }
+  input[type="text"]:focus, select:focus, textarea:focus { border-color: #5b6fcc; box-shadow: 0 0 0 2px #dfe5ff; }
+  td input[type="text"], td select { min-width: 84px; }
+  input[type="checkbox"] { width: 20px; height: 20px; accent-color: #4a5fbb; margin: 0; }
+  td.check { width: 60px; text-align: center; }
+
+  /* ── Bring it back ───────────────────────────────────────── */
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button {
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 5px;
+    padding: 10px 16px;
+    min-height: 44px;
+    cursor: pointer;
+    border: 1px solid #b0bcf0;
+    background: #ffffff;
+    color: #4a5fbb;
+  }
+  button.primary { background: #4a5fbb; border-color: #4a5fbb; color: #ffffff; }
+  button.primary:hover { background: #5b6fcc; }
+  button.danger { color: #a33b3b; border-color: #f0b0b0; }
+  .status { font-size: 14px; color: #1c7a45; }
+  #copyFallback { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 13px; min-height: 220px; }
+
+  footer {
+    border-top: 1px solid #e0e4f0;
+    padding: 22px 0 0;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11.5px;
+    color: #8a9bb0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+  }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 0 16px; }
+    .step { grid-template-columns: 1fr; }
+    .step-num { text-align: left; padding: 0 0 6px; font-size: 26px; }
+    .step-body { padding: 16px 14px 18px; }
+  }
+  @media (pointer: coarse) {
+    input[type="text"], select { min-height: 44px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<header class="band">
+  <div class="wrap">
+    <div class="eyebrow">WO-G3 · ship 3 gate · size S</div>
+    <h1>The signals gate, worked against the real term</h1>
+    <p class="standfirst">
+      Seven boxes. Four want <strong>the Signals screen and your own judgement</strong>, one wants
+      <strong>two sittings a week apart</strong>, one is <strong>tuning the thresholds</strong>, and one is
+      closed at home. Nothing is ticked from this page: fill in the record blocks, then bring the results
+      back to a session at home.
+    </p>
+    <div class="band-meta">
+      <span><b>Status</b> WO-G3 ⬜ NOT STARTED, unlocked 30 September</span>
+      <span><b>Waits on</b> WO-4.5 🔨 IN PROGRESS, one 📆 line: box 3 below</span>
+      <span><b>Target</b> October 2026</span>
+      <span><b>Written</b> 30 September 2026</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <div class="sec-label">Before anything else</div>
+    <div class="traps">
+      <div class="trap">
+        <h3>No student names on this page</h3>
+        <p>The repository is public. Use initials, or "student A / B / C", and keep the mapping in your
+        head or on paper. That goes for every box you type into below.</p>
+      </div>
+      <div class="trap">
+        <h3>Nothing here goes on the projector</h3>
+        <p>The Signals screen names students beside their grades, absences and behavior entries. Stop
+        mirroring before you open it. Presentation mode hides behavior entries; it does not hide the
+        concern list.</p>
+      </div>
+      <div class="trap">
+        <h3>Take a backup before box 6</h3>
+        <p>Moving a threshold writes to the year. <strong>Put every threshold back</strong> undoes it, but a
+        backup taken first costs a minute and means nothing on this page can lose a grade.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">Where everything is</div>
+    <div class="callout">
+      <h3>One screen, one dialog</h3>
+      <p><strong>Signals</strong> is the last pill on every class screen's switcher, and the home screen's
+      <em>Who needs you</em> panel opens it too. Concern is on the left and praise on the right. The line
+      under each name is the rule's own sentence, built from the numbers that fired it. That sentence is
+      what box 2 checks.</p>
+      <p>The chips above the lists narrow a column to one rule, and <strong>Sorted by</strong> orders the
+      concern list only. The praise column keeps one ranking, the biggest climb first, on purpose.
+      <strong>🔕 Thresholds</strong> in the screen's header opens the numbers behind every rule, which is
+      box 6. The third panel, below the two columns, is <strong>The quiet middle</strong>, which is box 5.</p>
+      <p>A rule the term is still too short for says so under the lists, as not enough term yet. That is
+      different from a rule nobody qualified for, and the record tables below have room for both.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">At a glance</div>
+    <div class="glance scroll">
+      <table>
+        <thead><tr><th>Box</th><th>What it asks</th><th>Kind</th><th>Where</th></tr></thead>
+        <tbody>
+          <tr><td class="num">3</td><td><a href="#box3">Two weekly runs a week apart look different: run 1</a></td><td><span class="chip entry">Two sittings</span></td><td>Signals, today and in a week</td></tr>
+          <tr><td class="num">2</td><td><a href="#box2">Every flag reproducible by hand, all fourteen rules</a></td><td><span class="chip real">Real data</span></td><td>Laptop, Signals and Scores</td></tr>
+          <tr><td class="num">4</td><td><a href="#box4">An improving B− outranks a steady A</a></td><td><span class="chip real">Real data</span></td><td>Signals, praise column</td></tr>
+          <tr><td class="num">5</td><td><a href="#box5">The quiet middle names students you'd lost track of</a></td><td><span class="chip real">Your judgement</span></td><td>Signals, third panel</td></tr>
+          <tr><td class="num">6</td><td><a href="#box6">Thresholds set to what you actually want</a></td><td><span class="chip real">Your judgement</span></td><td>🔕 Thresholds</td></tr>
+          <tr><td class="num">1</td><td><a href="#box1">Four weeks of real data exist</a></td><td><span class="chip home">Home</span></td><td>Already true</td></tr>
+          <tr><td class="num">7</td><td><a href="#box7">The testing checklist's Phase 4 fully passing</a></td><td><span class="chip home">Home</span></td><td>By reading</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note" style="margin-top:14px"><b>Box 3 sets the calendar.</b> Take its first run at the start
+    of the first sitting, before you move any threshold. The second run is a week later, and the thresholds
+    from box 6 should stay put in between, or the two runs measure your edit instead of the week. The boxes
+    below are in the order you'd work them, which is not their number order.</p>
+  </section>
+
+  <section>
+    <div class="sec-label">The boxes</div>
+    <div class="steps">
+
+      <!-- Backup -->
+      <div class="step" id="backup" data-box="Backup before starting">
+        <div class="step-num">0</div>
+        <div class="step-body">
+          <div class="step-head">
+            <h2>Take a backup, and sync both devices</h2>
+          </div>
+          <p>Download a backup from the backup panel and move it off the laptop. Then tap the header's sync
+          button on the laptop and the iPad, so both devices are reading the same year. A list read on a
+          device that is a day behind is a different list.</p>
+          <div class="record">
+            <div class="subhead">Record</div>
+            <div class="fields">
+              <label class="field">Backup taken (date and time)<input type="text" id="bk-when" data-label="Backup taken"></label>
+              <label class="field">Both devices synced?
+                <select id="bk-sync" data-label="Both devices synced"><option value=""></option><option>Yes</option><option>Laptop only</option><option>No</option></select>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 3 -->
+      <div class="step entry" id="box3" data-box="Box 3: two weekly runs">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip entry">Two sittings</span></div>
+            <h2>Two weekly runs, a week apart</h2>
+          </div>
+          <p><strong>Why it matters.</strong> A list that reads the same every week stops being read, and the
+          feature dies without anyone deciding to kill it. Two things should make this week's list differ
+          from next week's: a week of new grades and attendance, and the <strong>cooldown</strong>. A student
+          you contact about a rule drops off the list for that rule for 14 days, then comes back.</p>
+          <p>This is also WO-4.5's last open line, word for word, so closing it here closes both.</p>
+          <div class="subhead">Run 1: today, before box 6</div>
+          <ol>
+            <li>Open Signals with every class showing and <strong>Sorted by</strong> on its first option.</li>
+            <li>Write down how many students are in each column, and the initials of the top five in each.</li>
+            <li>Send at least one real message this week from the concern list, through the send flow, so it
+            is logged. That is the contact the cooldown should act on.</li>
+          </ol>
+          <div class="subhead">Run 2: a week later</div>
+          <ol>
+            <li>Same screen, same settings. Count both columns again and note the top five.</li>
+            <li>The student you contacted should be gone from the rule you wrote about, with a muted
+            suppressed row under the column naming the contact and the date they come back.</li>
+            <li>Decide whether the two runs are <strong>visibly different</strong>, which is the whole question.
+            Different names at the top is the strongest answer.</li>
+          </ol>
+          <div class="record">
+            <div class="subhead">Record, initials only</div>
+            <div class="scroll">
+              <table>
+                <thead><tr><th>Run</th><th>Date</th><th>Concern count</th><th>Concern top five</th><th>Praise count</th><th>Praise top five</th></tr></thead>
+                <tbody>
+                  <tr><td class="num">1</td><td><input type="text" id="b3-1-d" data-label="Run 1 date"></td><td><input type="text" id="b3-1-cn" data-label="Run 1 concern count"></td><td><input type="text" id="b3-1-ct" data-label="Run 1 concern top five"></td><td><input type="text" id="b3-1-pn" data-label="Run 1 praise count"></td><td><input type="text" id="b3-1-pt" data-label="Run 1 praise top five"></td></tr>
+                  <tr><td class="num">2</td><td><input type="text" id="b3-2-d" data-label="Run 2 date"></td><td><input type="text" id="b3-2-cn" data-label="Run 2 concern count"></td><td><input type="text" id="b3-2-ct" data-label="Run 2 concern top five"></td><td><input type="text" id="b3-2-pn" data-label="Run 2 praise count"></td><td><input type="text" id="b3-2-pt" data-label="Run 2 praise top five"></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="fields">
+              <label class="field">Contact sent between runs (initials, rule)<input type="text" id="b3-contact" data-label="Contact between runs"></label>
+              <label class="field">Suppressed row seen in run 2?
+                <select id="b3-supp" data-label="Suppressed row seen"><option value=""></option><option>Yes</option><option>No</option></select>
+              </label>
+              <label class="field">Visibly different?
+                <select id="b3-diff" data-label="Visibly different"><option value=""></option><option>Yes</option><option>No</option></select>
+              </label>
+              <label class="field wide">If not, what stayed the same<textarea id="b3-same" data-label="What stayed the same"></textarea></label>
+            </div>
+          </div>
+          <p class="note"><b>If the lists come back the same,</b> the gate says the cooldown or the delta
+          ranking is wrong. Don't adjust anything to make them differ. Write down what you saw.</p>
+        </div>
+      </div>
+
+      <!-- Box 2 -->
+      <div class="step real" id="box2" data-box="Box 2: every flag reproducible by hand">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip real">Real data</span> <span class="chip">~45 min</span></div>
+            <h2>Every flag, reproduced by hand</h2>
+          </div>
+          <p>For each rule, pick <strong>one</strong> real student it fired for, read the sentence under their
+          name, and check its numbers against the Scores and Attendance screens. The question is not whether
+          you agree the student needs attention. It is whether the sentence's numbers are true.</p>
+          <p>Three things to know while you check:</p>
+          <ul>
+            <li><strong>Windows count meetings, not days.</strong> "4 absences in the last 20 meetings" means
+            the class's last 20 recorded meetings, not the last 20 calendar days. A dropped day is not a
+            meeting.</li>
+            <li><strong>Attendance % is Roll Call!'s formula:</strong> (P + T + E + D) ÷ (P + T + A + E + D).
+            An excused absence and a dismissal count as present.</li>
+            <li><strong>A grade recovery produces "grade rose", not a turnaround.</strong> The turnaround only
+            fires from attendance or behavior, the facts that carry a date.</li>
+          </ul>
+          <div class="record">
+            <div class="subhead">Record, initials only</div>
+            <div class="scroll">
+              <table>
+                <thead><tr><th>Rule</th><th>Default</th><th>Fired for</th><th>Numbers true?</th></tr></thead>
+                <tbody>
+                  <tr><td colspan="4"><span class="subhead">Concern</span></td></tr>
+                  <tr><td>Weighted grade below</td><td class="mono">65%</td><td><input type="text" id="b2-c1-w" data-label="Grade below: fired for"></td><td><select id="b2-c1-m" data-label="Grade below: numbers true"><option value=""></option><option>Yes</option><option>No</option><option>Nobody fired</option><option>Not enough term yet</option></select></td></tr>
+                  <tr><td>Grade fell over recent work</td><td class="mono">10 pts / 4</td><td><input type="text" id="b2-c2-w" data-label="Grade fell: fired for"></td><td><select id="b2-c2-m" data-label="Grade fell: numbers true"><option value=""></option><option>Yes</option><option>No</option><option>Nobody fired</option><option>Not enough term yet</option></select></td></tr>
+                  <tr><td>A run of low scores</td><td class="mono">3 / 60%</td><td><input type="text" id="b2-c3-w" data-label="Low-score run: fired for"></td><td><select id="b2-c3-m" data-label="Low-score run: numbers true"><option value=""></option><option>Yes</option><option>No</option><option>Nobody fired</option><option>Not enough term yet</option></select></td></tr>
+                  <tr><td>Missing assignments</td><td class="mono">3</td><td><input type="text" id="b2-c4-w" data-label="Missing: fired for"></td><td><select id="b2-c4-m" data-label="Missing: numbers true"><option value=""></option><option>Yes</option><option>No</option><option>Nobody fired</option><option>Not enough term yet</option></select></td></tr>
+                  <tr><td>Attendance for the term below</td><td class="mono">90%</td><td><input type="text" id="b2-c5-w" data-label="Attendance below: fired for"></td><td><select id="b2-c5-m" data-label="Attendance below: numbers true"><option value=""></option><option>Yes</option><option>No</option><option>Nobody fired</option><option>Not enough term yet</option></select></td></tr>
+                  <tr><td>Absences in a recent window</td><td class="mono">4 / 20 meetings</td><td><input type="text" id="b2-c6-w" data-label="Absence window: fired for"></td><td><select id="b2-c6-m" data-label="Absence window: numbers true"><option value=""></option><option>Yes</option><option>No</option><option>Nobody fired</option><option>Not enough term yet</option></select></td></tr>
+                  <tr><td>Absences one after another</td><td class="mono">3</td><td><input type="text" id="b2-c7-w" data-label="Absence run: fired for"></td><td><select id="b2-c7-m" data-label="Absence run: numbers true"><option value=""></option><option>Yes</option><option>No</option><option>Nobody fired</option><option>Not enough term yet</option></select></td></tr>
+                  <tr><td>Tardies</td><td class="mono">5</td><td><input type="text" id="b2-c8-w" data-label="Tardies: fired for"></td><td><select id="b2-c8-m" data-label="Tardies: numbers true"><option value=""></option><option>Yes</option><option>No</option><option>Nobody fired</option><option>Not enough term yet</option></select></td></tr>
+                  <tr><td>Behavior log entries</td><td class="mono">2 / 30 days</td><td><input type="text" id="b2-c9-w" data-label="Behavior: fired for"></td><td><select id="b2-c9-m" data-label="Behavior: numbers true"><option value=""></option><option>Yes</option><option>No</option><option>Nobody fired</option><option>Not enough term yet</option></select></td></tr>
+                  <tr><td colspan="4"><span class="subhead">Praise</span></td></tr>
+                  <tr><td>Grade rose over recent work</td><td class="mono">8 pts / 4</td><td><input type="text" id="b2-p1-w" data-label="Grade rose: fired for"></td><td><select id="b2-p1-m" data-label="Grade rose: numbers true"><option value=""></option><option>Yes</option><option>No</option><option>Nobody fired</option><option>Not enough term yet</option></select></td></tr>
+                  <tr><td>A run of strong scores</td><td class="mono">3 / 90%</td><td><input type="text" id="b2-p2-w" data-label="Strong run: fired for"></td><td><select id="b2-p2-m" data-label="Strong run: numbers true"><option value=""></option><option>Yes</option><option>No</option><option>Nobody fired</option><option>Not enough term yet</option></select></td></tr>
+                  <tr><td>Came off the concern list</td><td class="mono">within 21 days</td><td><input type="text" id="b2-p3-w" data-label="Turnaround: fired for"></td><td><select id="b2-p3-m" data-label="Turnaround: numbers true"><option value=""></option><option>Yes</option><option>No</option><option>Nobody fired</option><option>Not enough term yet</option></select></td></tr>
+                  <tr><td>Nothing missing over recent work</td><td class="mono">8</td><td><input type="text" id="b2-p4-w" data-label="No missing: fired for"></td><td><select id="b2-p4-m" data-label="No missing: numbers true"><option value=""></option><option>Yes</option><option>No</option><option>Nobody fired</option><option>Not enough term yet</option></select></td></tr>
+                  <tr><td>Attendance over a recent window</td><td class="mono">100% / 20 meetings</td><td><input type="text" id="b2-p5-w" data-label="Attendance window: fired for"></td><td><select id="b2-p5-m" data-label="Attendance window: numbers true"><option value=""></option><option>Yes</option><option>No</option><option>Nobody fired</option><option>Not enough term yet</option></select></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="fields">
+              <label class="field wide">Any sentence whose numbers were wrong, and what they should have been<textarea id="b2-diff" data-label="Wrong numbers"></textarea></label>
+            </div>
+          </div>
+          <p class="note"><b>The defaults above are the shipped ones.</b> If you have moved a threshold
+          already, the sentence uses your number, and the check is against that. A wrong number is the most
+          important thing this page can find: write down exactly what the screen said, and don't move any
+          threshold to hide it.</p>
+        </div>
+      </div>
+
+      <!-- Box 4 -->
+      <div class="step real" id="box4" data-box="Box 4: delta, not level">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip real">Real data</span></div>
+            <h2>An improving B− outranks a steady A</h2>
+          </div>
+          <p>The praise column ranks by how much a student climbed, never by how high they are. That is the
+          point of the whole phase: "top of the class" names the same four students every week, and "up 14
+          points" names someone new.</p>
+          <ol>
+            <li>In the praise column, find a student in the B− range or below who is there for
+            <strong>Grade rose</strong>.</li>
+            <li>Find a steady A student who is also in the column, most likely for <strong>A run of strong
+            scores</strong>.</li>
+            <li>Check that the climber is above the A student. A run of strong scores is ranked last among the
+            praise rules by design, so it can never head a column that holds a climber.</li>
+          </ol>
+          <div class="record">
+            <div class="subhead">Record, initials only</div>
+            <div class="fields">
+              <label class="field">Climber's grade and rise<input type="text" id="b4-climb" data-label="Climber grade and rise"></label>
+              <label class="field">Climber's position<input type="text" id="b4-climbpos" data-label="Climber position"></label>
+              <label class="field">A student's grade and rule<input type="text" id="b4-a" data-label="A student grade and rule"></label>
+              <label class="field">A student's position<input type="text" id="b4-apos" data-label="A student position"></label>
+              <label class="field">Climber above?
+                <select id="b4-ok" data-label="Climber above"><option value=""></option><option>Yes</option><option>No</option><option>No such pair this week</option></select>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 5 -->
+      <div class="step real" id="box5" data-box="Box 5: the quiet middle">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip real">Your judgement</span></div>
+            <h2>The quiet middle names students you'd lost track of</h2>
+          </div>
+          <p>The third panel lists students who are <strong>not flagged, not praised and not contacted this
+          term</strong>, per class, longest-quiet first. A note to self doesn't take a student off it; it moves
+          them down, because writing yourself a note is not being in touch with anyone.</p>
+          <p>On 27 August the panel read as "a wall this early", because almost nothing had been written down
+          yet. Your call then was to watch it rather than change what qualifies. This box is that re-reading,
+          four weeks in, and it also closes the testing checklist's open "quiet middle at real length" line.</p>
+          <ol>
+            <li>Filter to one class. Read the top of its quiet middle.</li>
+            <li>Ask yourself honestly: are these the students you would have said you'd lost track of?</li>
+            <li>Note whether the panel is still a wall or has become a short list worth reading.</li>
+          </ol>
+          <div class="record">
+            <div class="subhead">Record, initials only</div>
+            <div class="fields">
+              <label class="field">Class read<input type="text" id="b5-class" data-label="Class read"></label>
+              <label class="field">Students in that class's quiet middle<input type="text" id="b5-n" data-label="Quiet middle count"></label>
+              <label class="field">Roster size<input type="text" id="b5-roster" data-label="Roster size"></label>
+              <label class="field">Names you'd lost track of?
+                <select id="b5-agree" data-label="Lost track of them"><option value=""></option><option>Yes, mostly</option><option>Some</option><option>No</option></select>
+              </label>
+              <label class="field">Still a wall?
+                <select id="b5-wall" data-label="Still a wall"><option value=""></option><option>No, it reads</option><option>Still long</option><option>Still a wall</option></select>
+              </label>
+              <label class="field wide">Anything it should or shouldn't be doing<textarea id="b5-notes" data-label="Quiet middle notes"></textarea></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box 6 -->
+      <div class="step real" id="box6" data-box="Box 6: thresholds">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip real">Your judgement</span></div>
+            <h2>The thresholds you actually want</h2>
+          </div>
+          <p>Open <strong>🔕 Thresholds</strong> on the Signals screen. Every number that decides a list is in
+          it. Change any that disagree with how you'd judge your own classes. Leave alone any you're happy
+          with: an unchanged threshold stays the default, so a better default in a later build still reaches
+          you. <strong>Put every threshold back</strong> returns all of them to the defaults.</p>
+          <p>Do this after box 3's first run, and <strong>not between the two runs</strong>, or the second run
+          measures your edit instead of the week. If you'd rather tune now, take box 3's first run again
+          after you finish, and count the week from then.</p>
+          <div class="record">
+            <div class="subhead">Record: fill in only what you changed</div>
+            <div class="scroll">
+              <table>
+                <thead><tr><th>Rule</th><th>Default</th><th>Yours</th><th>Why</th></tr></thead>
+                <tbody>
+                  <tr><td>Weighted grade below</td><td class="mono">65%</td><td><input type="text" id="b6-c1" data-label="Grade below: yours"></td><td><input type="text" id="b6-c1-y" data-label="Grade below: why"></td></tr>
+                  <tr><td>Grade fell over recent work</td><td class="mono">10 pts / 4</td><td><input type="text" id="b6-c2" data-label="Grade fell: yours"></td><td><input type="text" id="b6-c2-y" data-label="Grade fell: why"></td></tr>
+                  <tr><td>A run of low scores</td><td class="mono">3 / 60%</td><td><input type="text" id="b6-c3" data-label="Low-score run: yours"></td><td><input type="text" id="b6-c3-y" data-label="Low-score run: why"></td></tr>
+                  <tr><td>Missing assignments</td><td class="mono">3</td><td><input type="text" id="b6-c4" data-label="Missing: yours"></td><td><input type="text" id="b6-c4-y" data-label="Missing: why"></td></tr>
+                  <tr><td>Attendance for the term below</td><td class="mono">90%</td><td><input type="text" id="b6-c5" data-label="Attendance below: yours"></td><td><input type="text" id="b6-c5-y" data-label="Attendance below: why"></td></tr>
+                  <tr><td>Absences in a recent window</td><td class="mono">4 / 20</td><td><input type="text" id="b6-c6" data-label="Absence window: yours"></td><td><input type="text" id="b6-c6-y" data-label="Absence window: why"></td></tr>
+                  <tr><td>Absences one after another</td><td class="mono">3</td><td><input type="text" id="b6-c7" data-label="Absence run: yours"></td><td><input type="text" id="b6-c7-y" data-label="Absence run: why"></td></tr>
+                  <tr><td>Tardies</td><td class="mono">5</td><td><input type="text" id="b6-c8" data-label="Tardies: yours"></td><td><input type="text" id="b6-c8-y" data-label="Tardies: why"></td></tr>
+                  <tr><td>Behavior log entries</td><td class="mono">2 / 30 days</td><td><input type="text" id="b6-c9" data-label="Behavior: yours"></td><td><input type="text" id="b6-c9-y" data-label="Behavior: why"></td></tr>
+                  <tr><td>Grade rose over recent work</td><td class="mono">8 pts / 4</td><td><input type="text" id="b6-p1" data-label="Grade rose: yours"></td><td><input type="text" id="b6-p1-y" data-label="Grade rose: why"></td></tr>
+                  <tr><td>A run of strong scores</td><td class="mono">3 / 90%</td><td><input type="text" id="b6-p2" data-label="Strong run: yours"></td><td><input type="text" id="b6-p2-y" data-label="Strong run: why"></td></tr>
+                  <tr><td>Came off the concern list</td><td class="mono">21 days</td><td><input type="text" id="b6-p3" data-label="Turnaround: yours"></td><td><input type="text" id="b6-p3-y" data-label="Turnaround: why"></td></tr>
+                  <tr><td>Nothing missing over recent work</td><td class="mono">8</td><td><input type="text" id="b6-p4" data-label="No missing: yours"></td><td><input type="text" id="b6-p4-y" data-label="No missing: why"></td></tr>
+                  <tr><td>Attendance over a recent window</td><td class="mono">100% / 20</td><td><input type="text" id="b6-p5" data-label="Attendance window: yours"></td><td><input type="text" id="b6-p5-y" data-label="Attendance window: why"></td></tr>
+                  <tr><td>Cooldown after a contact</td><td class="mono">14 days</td><td><input type="text" id="b6-cd" data-label="Cooldown: yours"></td><td><input type="text" id="b6-cd-y" data-label="Cooldown: why"></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="fields">
+              <label class="field wide">Any default you think is wrong for every teacher, not just your classes<textarea id="b6-default" data-label="Defaults that are wrong generally"></textarea></label>
+            </div>
+          </div>
+          <p class="note"><b>The second half of this box is done at home:</b> if a default is wrong for teachers
+          generally, and not only for your classes, <code>docs/data-model.md</code>'s table is updated to match.
+          A change you made only for yourself stays in your year and moves nothing in the documents.</p>
+        </div>
+      </div>
+
+      <!-- Box 1 -->
+      <div class="step home" id="box1" data-box="Box 1: four weeks of data">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip home">Home</span></div>
+            <h2>Four weeks of real data, already true</h2>
+          </div>
+          <p>The term started on 2 September, and 30 September is four weeks later. Grades have been entered
+          since the first real sitting and attendance every class day. The one condition worth keeping is
+          that the thresholds are tuned <strong>after</strong> this date rather than before, which box 6's
+          place in the order already guarantees.</p>
+        </div>
+      </div>
+
+      <!-- Box 7 -->
+      <div class="step home" id="box7" data-box="Box 7: TESTING.md Phase 4">
+        <div class="step-num">7</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip home">Home</span></div>
+            <h2>The testing checklist's Phase 4, two lines from done</h2>
+          </div>
+          <p>A count on 30 September found <strong>70 ticked boxes and two open</strong> in
+          <code>TESTING.md</code> § Phase 4. Neither is a new job: both are readings on this page.</p>
+          <ul>
+            <li><strong>Two consecutive weekly runs look different.</strong> This is box 3.</li>
+            <li><strong>The quiet middle at real length.</strong> This is box 5.</li>
+          </ul>
+          <p>The third line open that morning, the praise list two weeks apart, closed on your reading the
+          same day. So box 7 closes at home by reading the section, once boxes 3 and 5 have come back.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="bring">
+    <div class="sec-label">Bringing it back</div>
+    <div class="callout">
+      <h3>Copy your answers into a session at home</h3>
+      <p>What you type is kept in this browser only, and nothing leaves it. <strong>Copy my answers</strong>
+      puts everything you've filled in on the clipboard as plain text. Paste it into a session at home that
+      starts with "WO-G3 results", and every box is ticked there against what you recorded. A box whose record
+      is blank stays open. You can bring it back twice: once after the first sitting, and again after box 3's
+      second run a week later.</p>
+      <div class="actions">
+        <button type="button" class="primary" id="copyBtn">Copy my answers</button>
+        <button type="button" class="danger" id="clearBtn">Clear my answers</button>
+        <span class="status" id="status" role="status"></span>
+      </div>
+      <textarea id="copyFallback" hidden readonly aria-label="Your answers as text"></textarea>
+    </div>
+  </section>
+
+  <footer>
+    <span>WO-G3 · <a href="https://github.com/wildbil2me/planbook/blob/main/plans/work-orders/gates.md#wo-g3--ship-3-gate-signals">the gate in the tracker</a></span>
+    <span>plans/runbooks/wo-g3-runbook.html</span>
+    <span>Written 2026-09-30</span>
+  </footer>
+
+</main>
+
+<script>
+  /* The record blocks remember what was typed, in this browser only, so a page closed between the
+     two sittings a week apart does not lose the first run. Nothing is sent anywhere: the
+     only way out is the Copy button, into a session the owner starts. Storage can be refused (a
+     private window, blocked site data), so every read and write is wrapped and the page works
+     without it. */
+  (function () {
+    var KEY = 'g3-runbook-answers';
+    var fields = Array.prototype.slice.call(document.querySelectorAll('[data-label]'));
+    var status = document.getElementById('status');
+
+    function load() {
+      try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; }
+    }
+    function save() {
+      var out = {};
+      fields.forEach(function (f) { out[f.id] = f.type === 'checkbox' ? f.checked : f.value; });
+      try { localStorage.setItem(KEY, JSON.stringify(out)); } catch (e) { /* kept on screen only */ }
+    }
+    var saved = load();
+    fields.forEach(function (f) {
+      if (f.id in saved) {
+        if (f.type === 'checkbox') f.checked = !!saved[f.id]; else f.value = saved[f.id];
+      }
+      f.addEventListener(f.type === 'checkbox' || f.tagName === 'SELECT' ? 'change' : 'input', save);
+    });
+
+    function asText() {
+      var lines = ['WO-G3 results'];
+      document.querySelectorAll('[data-box]').forEach(function (box) {
+        var own = Array.prototype.slice.call(box.querySelectorAll('[data-label]'));
+        if (!own.length) return;
+        var filled = own.filter(function (f) { return f.type === 'checkbox' ? f.checked : f.value.trim(); });
+        lines.push('', box.getAttribute('data-box'));
+        if (!filled.length) { lines.push('  (nothing recorded)'); return; }
+        var boxes = own.filter(function (f) { return f.type === 'checkbox'; });
+        if (boxes.length) {
+          var ticked = boxes.filter(function (f) { return f.checked; }).map(function (f) { return f.getAttribute('data-label').replace('Case ', ''); });
+          lines.push('  Cases checked: ' + (ticked.length ? ticked.join(', ') : 'none') + ' (' + ticked.length + ' of ' + boxes.length + ')');
+        }
+        filled.filter(function (f) { return f.type !== 'checkbox'; }).forEach(function (f) {
+          lines.push('  ' + f.getAttribute('data-label') + ': ' + f.value.trim().replace(/\s*\n\s*/g, ' / '));
+        });
+      });
+      return lines.join('\n');
+    }
+
+    var fallback = document.getElementById('copyFallback');
+    document.getElementById('copyBtn').addEventListener('click', function () {
+      var text = asText();
+      function showFallback() {
+        fallback.value = text;
+        fallback.hidden = false;
+        fallback.focus();
+        fallback.select();
+        status.textContent = 'Copying was blocked here. The text is selected below: copy it by hand.';
+      }
+      try {
+        navigator.clipboard.writeText(text).then(function () {
+          fallback.hidden = true;
+          status.textContent = 'Copied. Paste it into a session at home.';
+        }, showFallback);
+      } catch (e) { showFallback(); }
+    });
+
+    var clearBtn = document.getElementById('clearBtn');
+    var armed = null;
+    clearBtn.addEventListener('click', function () {
+      if (!armed) {
+        clearBtn.textContent = 'Tap again to clear everything';
+        armed = setTimeout(function () { clearBtn.textContent = 'Clear my answers'; armed = null; }, 4000);
+        return;
+      }
+      clearTimeout(armed); armed = null;
+      fields.forEach(function (f) { if (f.type === 'checkbox') f.checked = false; else f.value = ''; });
+      try { localStorage.removeItem(KEY); } catch (e) { /* nothing stored */ }
+      clearBtn.textContent = 'Clear my answers';
+      fallback.hidden = true;
+      status.textContent = 'Cleared.';
+    });
+  })();
+</script>

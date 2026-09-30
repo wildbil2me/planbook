@@ -217,7 +217,7 @@ That is not a failure of the project; it is the reason the fallback exists.
 
 ## WO-G2 — Ship 2 gate: first grades
 
-**Ship** 2 · **Status** 🔨 IN PROGRESS · **Size** S · **Depends on** WO-2.5, WO-2.6, WO-3.1, WO-3.2, WO-3.3, WO-3.4, WO-3.5, WO-3.6, WO-3.7, WO-3.8, WO-3.9
+**Ship** 2 · **Status** ✅ DONE — 2026-09-30 · **Size** S · **Depends on** WO-2.5, WO-2.6, WO-3.1, WO-3.2, WO-3.3, WO-3.4, WO-3.5, WO-3.6, WO-3.7, WO-3.8, WO-3.9
 **Target** ~2026-09-15, before the first grades are entered for real
 
 *(**Worked 2026-09-29, from the runbook's record, and six of eight boxes closed.** The owner worked
@@ -298,8 +298,10 @@ the owner's real classes, before the numbers matter.
       letter. **Only the verdicts came back**: the class, the empty category and the figures themselves
       were left blank on the runbook, so the match is the owner's word rather than a figure a later
       reader can re-derive. That is enough for a box that asks whether they matched.)*
-- [ ] The letter scale matches what the owner actually uses, including the boundary case that
-      rounding would have gotten wrong. *(**Open on 2026-09-29, and it is a setting to change rather
+- [x] The letter scale matches what the owner actually uses, including the boundary case that
+      rounding would have gotten wrong. *(**Closed 2026-09-30, owner's reading:** the bands are set
+      to the .5 minimums below and a check against the SIS confirmed the letters match. The paragraph
+      that follows is the 2026-09-29 note that said how to close it.)* *(**Open on 2026-09-29, and it is a setting to change rather
       than a defect.** The runbook recorded that the SIS rounds, and the owner defined it: **89.50 is
       an A-, 89.49 a B+**, which is round-half-up to a whole percent. `src/letter-scale.js` never
       rounds, by design (WO-3.2), so the app agrees only if every band's minimum sits on the .5 below
@@ -317,7 +319,8 @@ the owner's real classes, before the numbers matter.
       for it; it is the first place to look if a later sitting runs over.)*
 - [x] The printout order matches the SIS entry screen, confirmed against a real re-key. *(2026-09-29,
       A-Block, 26 students, top to bottom with no divergence.)*
-- [ ] Backup drill re-run now that grades exist. *(Open on 2026-09-29: nothing was recorded, so it was
+- [x] Backup drill re-run now that grades exist. *(**Closed 2026-09-30, owner's reading:** the drill
+      was run with real grades and it worked.)* *(Open on 2026-09-29: nothing was recorded, so it was
       not run. The runbook's box 6 is the procedure, including the conflict message a wiped, synced
       device should show.)*
 - [x] `TESTING.md` Phase 3 section fully passing. *(2026-09-29, by count: 232 boxes ticked and none
@@ -364,8 +367,12 @@ the owner's real classes, before the numbers matter.
 
 ## WO-G3 — Ship 3 gate: signals
 
-**Ship** 3 · **Status** 🔒 GATED — four weeks of a real term's grades and attendance, ~Sep 30 · **Size** S · **Depends on** WO-4.1, WO-4.2, WO-4.3, WO-4.4, WO-4.5 — all of Phase 4
+**Ship** 3 · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-4.1, WO-4.2, WO-4.3, WO-4.4, WO-4.5 — all of Phase 4
 **Target** October 2026, once 4–6 weeks of real data exist
+
+*(**Back to `⬜` on 2026-09-30**, four weeks from the term's first day on Sep 2, which is the condition
+the note below named. The runbook for the sitting is
+[`../runbooks/wo-g3-runbook.html`](../runbooks/wo-g3-runbook.html). Read the note below as history.)*
 
 *(**`🔒 GATED` from 2026-08-28, and what it waits on is the term — put it back to `⬜` when four weeks
 of real grades and attendance exist.** Ship 3's build queue emptied on 2026-08-27 when WO-4.5 landed,

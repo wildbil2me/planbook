@@ -13,6 +13,18 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Ship 2 is closed, and the praise list is proved on a real term — 2026-09-30
+
+- **The first-grades gate is closed.** Its last two boxes closed on the owner's readings: the letter
+  bands now start at the half point below each whole number (89.5 for an A-, 86.5 for a B+, and so
+  on), which is how the SIS rounds, and a check against the SIS confirmed the letters match. The
+  backup drill was run with real grades and worked.
+- **The praise list moves on real data.** Run two weeks apart on the real term, it surfaces a
+  different set of students, which is the test that says the ranking is working. That was the last
+  open line on WO-4.3.
+- **A runbook for the Ship 3 gate** is in `plans/runbooks/wo-g3-runbook.html`, for the sitting that
+  checks the concern and praise lists by hand and tunes the thresholds.
+
 ### A section that fails no longer changes what the next one sees — 2026-09-30
 
 A harness change only; nothing in the app moved.

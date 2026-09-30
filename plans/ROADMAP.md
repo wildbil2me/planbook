@@ -90,12 +90,12 @@ is `✅ DONE` plus a `**Owes**` field on the work order.)*
 | 1 | Shell, store, roster | ✅ DONE — 2026-08-06 | 12/12 `[██████████] 100%` |
 | 2 | Attendance | 🔨 IN PROGRESS | 15/15 `[██████████] 100%` · ⏳ 1 deferred |
 | 3 | Gradebook | 🔨 IN PROGRESS | 10/10 `[██████████] 100%` |
-| 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 5/8 `[██████░░░░] 63%` |
+| 4 | Signals — concern **and** praise | 🔨 IN PROGRESS | 6/8 `[████████░░] 75%` |
 | 5 | Outreach | 🔨 IN PROGRESS | 9/9 `[██████████] 100%` |
 | 6 | Calendar & the glance page | 🔨 IN PROGRESS | 8/8 `[██████████] 100%` |
 | 7 | Drive sync (opt-in) | 🔨 IN PROGRESS — launch needs OAuth verification | 6/7 `[█████████░] 86%` |
 | 8 | 1.0 packaging | 🔨 IN PROGRESS | 3/8 `[████░░░░░░] 38%` |
-| | | **Overall** | **72/81 `[█████████░] 89%`** · ⏳ 1 deferred |
+| | | **Overall** | **73/81 `[█████████░] 90%`** · ⏳ 1 deferred |
 
 ***One box is marked and uncounted, and this is where it went*** *(2026-08-16, WO-1.21). Phase 2's
 **Roll Call! importer** box carries a `⏳` immediately after its checkbox, which takes it out of that
@@ -457,7 +457,7 @@ different student every time, and it's the message that actually lands at home.
 - [x] **Concern signals:** grade below threshold · falling N points over N assignments · N
       consecutive low scores · N missing assignments · attendance below N% · N absences in a
       window of meetings · N consecutive absences · N tardies · N behavior entries in N days.
-- [ ] **Praise signals:** rose N points over N assignments · N consecutive strong scores · came off
+- [x] **Praise signals:** rose N points over N assignments · N consecutive strong scores · came off
       the concern list (a turnaround is the highest-value message home) · a clean stretch with no
       missing work · perfect attendance over a window.
 - [x] One evaluator produces both lists. A student can appear on both, and that's information.

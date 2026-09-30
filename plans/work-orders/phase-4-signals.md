@@ -187,7 +187,7 @@ class*. Three absences across three weeks of a twice-weekly section is still thr
 
 ## WO-4.3 — Praise signals
 
-**Ship** 3 · **Status** 🔨 IN PROGRESS — built 2026-08-24 · **Size** M · **Depends on** WO-4.1
+**Ship** 3 · **Status** ✅ DONE — 2026-09-30 · **Size** M · **Depends on** WO-4.1
 **Closes roadmap** Phase 4 → "Praise signals."
 
 **Why it exists.** "Top of the class" surfaces the same four students every week and is worth
@@ -253,8 +253,10 @@ stale.
       on the roster. **Derived, not stored** — the document is byte-identical either side of the
       pass and carries no key shaped like a remembered flag, which is asserted separately. **Proved
       by mutation**: sampling the window at today instead of at its far edge reddens five checks.)*
-- [ ] 📆 Running the praise list two weeks apart on real data surfaces a materially different set of
+- [x] 📆 Running the praise list two weeks apart on real data surfaces a materially different set of
       students. *(If it doesn't, the ranking is wrong — this is the acceptance test that matters.)*
+      *(**Closed 2026-09-30, owner's reading on the real term:** the list two weeks apart works as
+      expected. The owner gave a verdict rather than a list, since a list would carry names.)*
       *(**Left open deliberately — it wants a real term and there is not one until Sep 2.** What
       exists is the mechanism, measured: the same document evaluated through `{ through }` a
       fortnight apart returns different lists in both directions — the turnaround fires today and

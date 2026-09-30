@@ -15,7 +15,7 @@ gradebook with alarms, and it ranks by **delta, not level** — see `plans/ROADM
 Built first for its author's own five classes, but intended to be marketable to other teachers.
 That second goal is what drives the architecture below.
 
-**Status: Ship 1 delivered; Ship 2 — first grades — build queue empty, gate worked 2026-09-29 with two boxes open;**
+**Status: Ship 1 delivered; Ship 2 — first grades — delivered, its gate closed 2026-09-30;**
 **Ship 3 building, and Phase 5 opened inside it on 2026-08-28.**
 *(This line carried "its first four rows landed" until that day, when a fifth made it wrong. It now
 names no count for the reason stated two paragraphs down —* **take the numbers from the roadmap's
@@ -63,7 +63,8 @@ whose gate report reads "do not start it"; `next` returned* **WO-4.2** *instead,
 **The lock came off at** `3149bea` **on 2026-09-07, when the calendar it waited on arrived: WO-G2 is**
 `⬜` **and `next` answered it until 2026-09-29, when it was worked and went** `🔨 IN PROGRESS` *— six
 of eight boxes closed from the runbook's record, the letter-scale setting and the backup drill still
-open, and the OAuth-paperwork box moved to WO-7.3 on the owner's decision. `next` no longer stops at it.
+open, and the OAuth-paperwork box moved to WO-7.3 on the owner's decision.* **Those two closed on the
+owner's readings on 2026-09-30 and WO-G2 is** `✅ DONE`*, so Ship 2 is delivered. `next` no longer stops at it.
 Read the two sentences before this one as history. The
 instruction that stood here, put it back to* `⬜` *when there are real grades to run it against, is
 discharged;* `--tick` *still refuses the status, so a gate cannot close while wearing one. And the

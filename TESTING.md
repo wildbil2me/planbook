@@ -8868,10 +8868,11 @@ which is the better sentence for it anyway.
 - [x] The turnaround rule fires for a student who was on the concern list and no longer is.
       *(Measured: two rules 21 days ago, none today, `cleared: 2`, and nobody else on the roster.
       Mutation-proved by sampling the wrong end of the window.)*
-- [ ] Running the praise list two weeks apart on real data surfaces a materially different set of
+- [x] Running the praise list two weeks apart on real data surfaces a materially different set of
       students. **→ the term.** *(The mechanism is measured — two passes a fortnight apart return
       different lists in both directions — but a fixture built to move is not evidence that a real
       class moves. Re-run against the owner's own five classes after ~Sep 16.)*
+      **Read by the owner on the real term, 2026-09-30: works as expected.**
 - [x] A student with a perfect record but no improvement does not dominate the list.
       *(Measured: last of five, and still on the column rather than dropped from it.)*
 - [x] Every praise hit's explanation contains the delta and the window it was measured over.
