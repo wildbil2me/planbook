@@ -3397,6 +3397,42 @@ function runPlants(subject, sandbox) {
         return bad;
       },
     },
+    // ------------------------------------------------------------------ WO-1.51's one
+    //
+    // The `\b` in `/^nothing\b/i`, which nothing asserted: with it dropped the run read 39 of 39 on
+    // 2026-09-08, and every word that begins with those seven letters parsed as *no dependencies*.
+    //
+    // **A plant of its own, not more values in the one above, and that is the first Trap's call made
+    // on purpose.** Every assertion in the sentinel plant says its value IS a sentinel; these values
+    // want the opposite of all three, so appending them asserts the defect, and a second loop with
+    // the sense flipped inside that plant would report a failure under a name — *read as no
+    // dependencies* — that is the reverse of what went wrong. Its own plant gets its own name in the
+    // FAIL line, which is how a widened boundary names the arm it broke, and it keeps the pair's
+    // shape from WO-1.30's mutation table: each mutation of the prefix reddens exactly one of the two.
+    //
+    // **The values are the shapes a hand produces, not the joke.** `nothings` and `nothingness` are
+    // word-joined — the eighth character is a letter. `nothing_but_a_hunch` is punctuation-joined, an
+    // underscore where the live instances have a space, and `_` is a WORD character to `\b`, so the
+    // boundary refuses it. A HYPHEN is not here, deliberately: `-` is a non-word character, so
+    // `nothing-but-a-hunch` has a boundary after `nothing` and reads as a sentinel under the rule as
+    // WO-1.30 left it — the same reading `nothing—<reason>` gets with the dash closed up. That is the
+    // rule, not a gap this plant may assert away; changing it is a different work order.
+    {
+      name: 'the sentinel\'s word boundary — `nothings`, `nothingness` and `nothing_but_a_hunch` are REFUSED as clauses naming no work order, not read as `nothing`',
+      run: () => {
+        const bad = [];
+        for (const value of ['nothings', 'nothingness', 'nothing_but_a_hunch']) {
+          reset({ status: OK, fragment: FIXTURE_BOX, open: false, depends: value });
+          const r = run([FIXTURE_ID]);
+          const dependsLine = (r.out.match(/^\s*depends.*$/m) || [''])[0].trim();
+          if (r.code === 0) bad.push(`the gate exited 0 on **Depends on** ${value} — a word that merely begins with "nothing" cleared the gate as if it waited on nothing, which is WO-1.30's defect arriving through its own sentinel`);
+          if (!/^FAIL \|.*names no work order/m.test(r.out)) bad.push(`**Depends on** ${value} was not refused as a clause naming no work order — the \\b after "nothing" is the only thing that tells it from the sentinel`);
+          if (dependsLine === 'depends nothing') bad.push(`**Depends on** ${value} was read as no dependencies — the report printed "depends nothing"`);
+          if (dependsLine !== `depends (prose) ${value}`) bad.push(`the refusal of **Depends on** ${value} did not quote it as prose for a human to read — the report printed "${dependsLine}"`);
+        }
+        return bad;
+      },
+    },
     {
       name: 'the refusal arm — a **Depends on** with no id and no marker is a problem, while ids beside prose still gate on the ids and still draw the NOTE',
       run: () => {
@@ -4429,6 +4465,12 @@ function runPlants(subject, sandbox) {
   console.log('  one. NOT covered by them: any directory-wide reading of **Depends on** — --audit');
   console.log('  does not read that field at all, so nothing here asks whether the tree as a whole');
   console.log('  is clean of the shape, the way the **Owes** plants ask it of theirs.');
+  console.log('  And WO-1.51\'s ONE, the fence on the sentinel\'s word boundary: `nothings`,');
+  console.log('  `nothingness` and `nothing_but_a_hunch` are REFUSED — a FAIL quoting the value as');
+  console.log('  prose — and never read as `nothing`, because the `\\b` in /^nothing\\b/i is the whole');
+  console.log('  of what stops that prefix being a hole and dropping it was green on every plant.');
+  console.log('  NOT covered by it: a hyphen-joined `nothing-<word>`, which the boundary reads as a');
+  console.log('  sentinel by WO-1.30\'s rule as written.');
   console.log('  And WO-1.31\'s ONE, for the other half of 🔒 GATED — the half that was on the document');
   console.log('  and on nothing else: a bare lock is refused a SECOND time, by name and by the');
   console.log('  § "Header fields" rule it breaks, and --audit walks the whole directory for it and');

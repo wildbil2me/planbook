@@ -4880,7 +4880,7 @@ picture makes none of them — and this row's whole risk is in them rather than 
 
 ## WO-1.51 — the word boundary that keeps `nothing` a sentinel is asserted nowhere
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.30 ✅ · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-01 · **Size** S · **Depends on** WO-1.30 ✅ · **Blocks** nothing
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.50 made.
 Booked 2026-09-08 out of WO-1.30's verification, which raised it and correctly declined to widen that
 row with it.)*
@@ -4931,18 +4931,18 @@ against is a future reader's reasonable-looking edit.**
   the count is not predicted here.
 
 **Acceptance**
-- [ ] `--self-check` catches the boundary being dropped: with `/^nothing\b/i` widened to
+- [x] `--self-check` catches the boundary being dropped: with `/^nothing\b/i` widened to
       `/^nothing/i` in a copy, `--self-check --against <copy>` fails and names the arm, where it
       passes 39 of 39 today. *(Nothing in the tree is mutated to prove this — WO-1.30's own plants
       were proved the same way, over copies in the scratchpad.)*
-- [ ] At least two negative values, one word-joined and one punctuation-joined, each asserted to be
+- [x] At least two negative values, one word-joined and one punctuation-joined, each asserted to be
       **refused** rather than read as a sentinel — and the assertions say so, rather than being the
       positive loop's three checks with the sense flipped by hand.
-- [ ] All eight of the sentinel plant's existing values still read as no dependencies, and the two
+- [x] All eight of the sentinel plant's existing values still read as no dependencies, and the two
       standing mutations still bite at 5 of N and 2 of N.
-- [ ] Every one of the 169 work orders' gate reports is byte-identical to the pre-change run — this
+- [x] Every one of the 169 work orders' gate reports is byte-identical to the pre-change run — this
       row changes what the script *proves*, never what it *says*.
-- [ ] `--audit`, `--self-check` and `node tools/wo-sweep.mjs` all green, and `tools/README.md`'s
+- [x] `--audit`, `--self-check` and `node tools/wo-sweep.mjs` all green, and `tools/README.md`'s
       mutation table gains the row for the widening.
 ---
 

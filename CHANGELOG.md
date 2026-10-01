@@ -13,6 +13,20 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The gate's self-check now proves `nothing` is a whole word — 2026-10-01
+
+A tooling change only; nothing in the app moved.
+
+- **`--self-check` now fails if the word boundary after `nothing` is dropped.** A `**Depends on**`
+  that names no work order is accepted only when it says *no dependencies*, and `nothing` followed by
+  a reason is one of those ways. The `\b` after it is what stops `nothings` or `nothingness` passing
+  as the same thing. Until now, deleting it left the self-check fully green.
+- **A new plant, the 44th**, asserts that `nothings`, `nothingness` and `nothing_but_a_hunch` are
+  refused. It is separate from the existing one, which checks values that *should* pass.
+- **No gate report changed.** All 212 work orders report byte for byte as before.
+- **`nothing-x` still reads as no dependencies, deliberately.** A hyphen is how a reason gets written
+  where there is no em-dash key, so refusing it would refuse the shape the rule exists to allow.
+
 ### Print mode, a time zone or a blocked URL no longer leaks past a failing section — 2026-10-01
 
 A harness change only; nothing in the app moved.
