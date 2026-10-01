@@ -5344,7 +5344,7 @@ open, and a re-run was clean. It is read as the environment and was not proved t
 
 ## WO-1.58 — a section that throws still hands on print media, a time zone and blocked URLs
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-1.57 — the record and the restore this widens
+**Ship** — · **Status** ✅ DONE — 2026-10-01 · **Size** XS · **Depends on** WO-1.57 — the record and the restore this widens
 **Closes roadmap** *(no box. A harness defect with no live symptom yet.)*
 
 **Booked 2026-09-30**, owner-directed, from WO-1.57's verdict. WO-1.57 made `recoverPage()` put back
@@ -5380,20 +5380,29 @@ measured in the wrong media, clock zone or network with nothing to say so.
 - Nothing under `src/` moves, and no section file is edited except by a planted, reverted throw.
 
 **Acceptance**
-- [ ] A throw planted inside a print window (for example in `print-sheets.mjs` after
+- [x] A throw planted inside a print window (for example in `print-sheets.mjs` after
       `setEmulatedMedia { media: 'print' }`) leaves the next section reading
       `matchMedia('print').matches` the same as on a normal run. Mutation-proved: with the new
       restore removed, the same throw leaves it `true`. Recorded in `TESTING.md` § WO-1.58, and **the
       planted throw is reverted before anything else is written** (`AGENTS.md`).
-- [ ] A throw planted in `history-dialog-write.mjs` between its two timezone calls leaves the next
+- [x] A throw planted in `history-dialog-write.mjs` between its two timezone calls leaves the next
       section reading `Intl.DateTimeFormat().resolvedOptions().timeZone` the same as on a normal
       run, mutation-proved and recorded the same way.
-- [ ] A throw planted in `sync-button.mjs` while `*accounts.google.com*` is blocked leaves the next
+- [x] A throw planted in `sync-button.mjs` while `*accounts.google.com*` is blocked leaves the next
       section with no blocked URLs, shown by a request to a matching URL that a planted probe reads
       as not blocked. Mutation-proved and recorded the same way.
-- [ ] The whole harness is green on the real clock, the check list is unchanged in names and order,
+- [x] The whole harness is green on the real clock, the check list is unchanged in names and order,
       and no check changes state against HEAD.
-- [ ] `node tools/wo-sweep.mjs` is green, including § 25's reading of `runSection()`'s shape.
+- [x] `node tools/wo-sweep.mjs` is green, including § 25's reading of `runSection()`'s shape.
+
+*(**Verified and ticked 2026-10-01.** The verifier re-ran the harness on the current tree (1600 of
+1600), compared its check list with HEAD's (identical), and took its own mutation round, which
+confirmed all three restores make a real difference. Two corrections followed in the same sitting:
+the `sectionStart` comment said "a copy of both" and now says all five, and `TESTING.md`'s "no
+check turned red" on the time-zone leak was true only for a daytime run, since the verifier's run
+at about 05:00 Eastern turned about 40 red. The one setting still not put back,
+`Network.emulateNetworkConditions`, is booked as
+[WO-1.59](#wo-159--a-section-that-throws-while-offline-hands-an-offline-network-on).)*
 
 **Traps** — **`recoverPage()` must still never throw**, and a CDP call that fails while restoring
 goes in its existing `catch`, as WO-1.57's do. **Put back what the section received, never a
@@ -5403,3 +5412,56 @@ through the `SHIFT_PAGE_CLOCK` script, not a time zone, so it is not affected. *
 three sections send that. Record the URL list regardless, and do not start tracking
 `Network.enable` itself unless a planted run shows it is needed. **Do not fix the files one
 `finally` at a time**, for the reason WO-1.57 gives.
+
+## WO-1.59 — a section that throws while offline hands an offline network on
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-1.58 — the record and the restore this widens
+**Closes roadmap** *(no box. A harness defect with no live symptom yet.)*
+
+**Booked 2026-10-01**, owner-directed, from WO-1.58's verdict. WO-1.58 widened `recoverPage()`'s
+record-and-restore in `tools/verify-shell.mjs` to print media, the time zone and blocked URLs, and
+its own `TESTING.md` § WO-1.58 names one more setting that survives a reload the same way and is
+not followed:
+
+- **`Network.emulateNetworkConditions`**, sent twice, both in `tools/verify/sync-button.mjs`:
+  `OFFLINE` at ~515 and back to `ONLINE` at ~526, inside a `Network.enable` window. A throw between
+  them hands an offline network to every later section, exactly as a throw inside a blocked-URL
+  window handed the block on before WO-1.58.
+
+The verifier confirmed the gap on reading and the record says no planted run was taken against it.
+No section throws today, so this costs nothing yet. When one does, the sections after it are
+measured with the network refused and nothing says so; on the evidence of WO-1.58's time-zone run,
+whether a check goes red on it is luck.
+
+**Deliverables**
+- **Record and restore it the way WO-1.58 records the other three**: the last successful params,
+  kept whole, run-wide; the value each section received, copied into `sectionStart` as it starts;
+  put back after a throw only if it differs. CDP has no clear call for this one, so "not set" is
+  the params a fresh target behaves as — `{ offline: false, latency: 0, downloadThroughput: -1,
+  uploadThroughput: -1 }`, the same as `sync-button.mjs`'s own `ONLINE` — and the work order states
+  where that was confirmed rather than assuming it.
+- **Correct the statements that say it is not put back**: the `noteWhatItChanges()` comment block in
+  `tools/verify-shell.mjs` (including `sectionStart`'s "a copy of all five", which becomes six) and
+  the out-of-reach list in `TESTING.md` § WO-1.58. Add `TESTING.md` § WO-1.59 with the planted runs,
+  and state there whatever is still out of reach.
+- Nothing under `src/` moves, and no section file is edited except by a planted, reverted throw.
+
+**Acceptance**
+- [ ] A throw planted in `sync-button.mjs` between the `OFFLINE` and `ONLINE` sends leaves the next
+      section reading `navigator.onLine` as `true` and reaching the server with a probe request, as
+      on a normal run. Mutation-proved: with the new restore removed, the same throw leaves it
+      `false` and the probe refused. Recorded in `TESTING.md` § WO-1.59, and **the planted throw is
+      reverted before anything else is written** (`AGENTS.md`).
+- [ ] The whole harness is green on the real clock, the check list is unchanged in names and order,
+      and no check changes state against HEAD.
+- [ ] `node tools/wo-sweep.mjs` is green, including § 25's reading of `runSection()`'s shape.
+
+**Traps** — **`recoverPage()` must still never throw**, and a CDP call that fails while restoring
+goes in its existing `catch`, as WO-1.57's and WO-1.58's do. **Put back what the section received,
+never a fixed default** — the "not set" params are the starting record, not what recovery sends
+regardless. **The setting may only bite while `Network.enable` is on**: record it regardless, and do
+not start tracking `Network.enable` itself unless a planted run shows it is needed — WO-1.58's
+planted run found an enabled domain harmless once its list was cleared. **The plant must change
+something a normal run would notice**: the section's own `OFFLINE` is already different from a
+normal run's network, so unlike WO-1.58's time-zone plant no second edit is needed, but say so in
+the record. **Do not fix the file with a `finally`**, for the reason WO-1.57 gives.

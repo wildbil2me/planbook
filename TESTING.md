@@ -2432,7 +2432,10 @@ on a device the harness cannot vouch for.
 - **Anything set some other way than a CDP call through that `send`.** No section does this today.
   `grep` for `Target.`, `sessionId` and `ws.send` under `tools/verify/` finds nothing, so no section
   opens a socket or a target of its own. Nothing here would notice if one started to.
-- **`Emulation.setEmulatedMedia` and `Emulation.setTimezoneOverride` are not put back.** Sections
+- ~~**`Emulation.setEmulatedMedia` and `Emulation.setTimezoneOverride` are not put back.**~~
+  **Put back since WO-1.58, 2026-09-30, together with `Network.setBlockedURLs`** — see § WO-1.58
+  below, which has the planted runs and what is still out of reach. What this bullet said when
+  WO-1.57 landed, kept as the record: sections
   send both: 24 `setEmulatedMedia` call sites, mostly the print tests, and 2 timezone calls in
   `history-dialog-write.mjs`. A
   throw while the page is held in `print` would hand `print` on, the same way touch was handed on
@@ -2520,6 +2523,162 @@ Evidence, 2026-09-29, real clock, whole harness each time. `EXIT=` is read from 
       § 25 reads *"runSection() at tools/verify-shell.mjs:461-479 awaits the one `.run(` …"*, the same
       lines as before the change. § 11 matches 1584 `check()` call sites against `tools/README.md:1226`.
       `node tools/wo-gate.mjs --audit`: PASS, exit 0.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.*
+
+### WO-1.58 — a section that throws still hands on print media, a time zone and blocked URLs
+
+**What this changes.** Nothing a teacher sees, and nothing a device gets. `src/`, `index.html`,
+`sw.js` and every file under `tools/verify/` are **byte-identical to HEAD**, so **no `CACHE` bump is
+owed**. One code file moves, `tools/verify-shell.mjs`. No check was added or removed, so the `check(`
+count in `tools/README.md` does not move, and `runSection()`'s body is untouched — § 25 reads it at
+the same lines.
+
+**How it is recorded.** WO-1.57's record, widened by three methods and nothing else. Inside the one
+`send`, `noteWhatItChanges()` now also follows `Emulation.setEmulatedMedia`,
+`Emulation.setTimezoneOverride` and `Network.setBlockedURLs`, each on its **successful** reply, into
+`emulation.media`, `emulation.timezone` and `emulation.blocked`. Each keeps the **whole params
+object**: every media send in the tree today is `{ media: 'print' }` or `{ media: '' }`, but a later
+one that adds `features` is put back with them rather than flattened to its type. None of the three
+has a clear call of its own — each is cleared by sending it empty — so "not set" is that empty send:
+`{ media: '' }`, `{ timezoneId: '' }`, `{ urls: [] }`. That is what the record starts at, because it
+is what a section that has never sent one received, and it is not a default invented for it. The
+browser loop copies all three into `sectionStart` beside touch and metrics, and
+`putBackWhatTheSectionChanged()` sends each back after the viewport and touch, only if it differs. A
+failed restore call lands in `recoverPage()`'s existing `catch`, as WO-1.57's do, so
+**`recoverPage()` still cannot throw**. No section file gained a `finally`.
+
+**`Network.enable` is not followed, and run B is why.** A blocked-URL list does nothing while the
+Network domain is off, and a throw between `sync-button.mjs`'s `Network.enable` and its
+`Network.disable` leaves the domain on. Clearing the list is what makes that harmless: in run B the
+domain was still on when `first-run` began (nothing between the throw and that section sends
+`Network.disable`), the probe's matching request was **reached**, and every `first-run` check and
+every check after it read the same as in run A. Following `Network.enable` would have been a fourth
+method with nothing to show for it. *That the domain was still on is read from the code path, not
+measured: no probe here asks CDP whether a domain is enabled.*
+
+**The reader was a temporary probe, as in WO-1.56 and WO-1.57.** One `console.log` at the head of
+`run()` in `attendance.mjs`, `build-line.mjs` and `first-run.mjs` — the section after each planted
+throw — printed `matchMedia('print').matches`,
+`Intl.DateTimeFormat().resolvedOptions().timeZone`, and the outcome of
+`fetch('http://localhost:<port>/accounts.google.com-wo158-probe', { mode: 'no-cors' })` together with
+how many times the harness's own server had been asked for that path (`SERVED`). The URL contains
+`accounts.google.com`, so `*accounts.google.com*` matches it, and it is answered by the harness's own
+server rather than by Google, so "reached" and "refused" are both local facts. It is cross-origin to
+the page, so the service worker passes it through untouched. All three probes and every plant carried
+`MUTATION WO-1.58`. **This work order edits `putBackWhatTheSectionChanged()` and the browser loop**,
+so it owed § 25's planted-throw run (`tools/wo-sweep.mjs` § 25's banner); runs B and C pay it — each
+throw is a FAIL naming its file and line, the summary is reached, and the run exits 1.
+
+**One plant is two edits, and why.** This machine is on Eastern time, so a normal run's page reads
+`America/New_York` — the same zone `history-dialog-write.mjs` sets. A throw that handed that override
+on would read exactly like a correct restore, and the mutation proof would prove nothing. So for runs
+B and C the section's own override was changed to `Pacific/Honolulu`, a zone the host is not in,
+under the same marker, and the throw went in after it.
+
+Evidence, 2026-09-30, real clock, whole harness each time. `EXIT=` is read from each log's own line:
+
+- **Run H, `HEAD` before any edit:** `1600 checks · 1600 passed · 0 failed · 0 skipped`, 658s,
+  `EXIT=0`. The comparison baseline for line 4.
+- **Run A, the change plus the three probes, no throws:** `1600 · 1600 · 0 · 0`, 659s, `EXIT=0`. All
+  three probes read **`{"print":false,"tz":"America/New_York","fetch":"reached"}`**, and `SERVED`
+  counted the probe path 1, 2, 3 times — every probe request reached the server. These are the
+  normal-run values. The stripped check list is identical to run H's, so the probes change nothing.
+- [x] **A throw inside a print window leaves the next section reading `matchMedia('print')` as on a
+      normal run.** Run B, the change with all three plants and probes. `throw new Error('MUTATION
+      WO-1.58 — …')` went into `print-sheets.mjs`'s `readOnPaper()` directly after
+      `setEmulatedMedia { media: 'print' }` and the sheet read, before the `{ media: '' }` that ends
+      the window. Result: `1540 checks · 1536 passed · 4 failed · 0 skipped`, 596s, `EXIT=1`. The
+      section was reported as thrown *"after 1 of its own checks"* at `print-sheets.mjs:198`.
+      `build-line`'s probe read **`"print":false`**, as in run A. **Mutation-proved:** run C, the
+      same plants with the three new restore lines commented out of
+      `putBackWhatTheSectionChanged()` under the marker (WO-1.57's three left in place), read
+      **`"print":true`** at `build-line`. Two real checks turned red on it, and they are the only
+      two lines besides the probe readings that differ between runs B and C (`diff` of the 1540
+      PASS/FAIL/SKIP lines with detail text stripped): `calendar-drawn.mjs`'s *"every chip in the
+      MONTH view sits at its documented 28px floor"* (`heights [28.8,28.8,28.8,0,…]`) and its *"no
+      printout of a calendar month emits a review date"* (the "on screen" reading was taken in
+      `print`). `print` was handed through every section from `build-line` to `calendar-drawn`, whose
+      own `{ media: '' }` finally ended it, which is why `first-run` reads `false` in run C.
+- [x] **A throw between `history-dialog-write.mjs`'s two time-zone calls leaves the next section on
+      the normal run's zone.** Same runs. The plant changed the section's override to
+      `Pacific/Honolulu` (above) and threw directly after the `try` that sets it, before line ~627's
+      `{ timezoneId: '' }`. Run B reported the section thrown *"after 12 of its own checks"* at
+      `history-dialog-write.mjs:415`, and `attendance`'s probe read **`"tz":"America/New_York"`**, as
+      in run A. **Mutation-proved:** in run C it read **`"tz":"Pacific/Honolulu"`**, and so did
+      `build-line`'s and `first-run`'s probes — nothing else in the run sends a time zone, so the
+      override sat on the page for all 52 browser sections after it. In this run, taken in Eastern
+      daytime, no check turned red on it. The verifier's re-run of the same plant at about 05:00
+      Eastern turned roughly 40 red, because Honolulu was still on the previous day. So whether the
+      leak is caught depends on the hour of the run, and that is the case for building this: those
+      sections were being measured in a zone nobody chose, and on most runs nothing said so.
+- [x] **A throw in `sync-button.mjs` while `*accounts.google.com*` is blocked leaves the next
+      section with no blocked URLs.** Same runs. The plant went in directly after the
+      `setBlockedURLs { urls: ['*accounts.google.com*'] }` at ~288, with `Network.enable` on since
+      ~254. Run B reported the section thrown *"after 1 of its own checks"* at `sync-button.mjs:289`,
+      and `first-run`'s probe read **`"fetch":"reached"`** with `SERVED` counting the path a third
+      time — the request got to the server. **Mutation-proved:** in run C it read **`"fetch":"refused:
+      Failed to fetch"`**, and `SERVED` stayed at 2: the request never left the page. No `first-run`
+      check turned red on it — that section's checks count requests on the wire, a blocked request
+      is still sent (`sync-button.mjs` says so at its own block), and its own sends at ~430/~448
+      replace the list later — so the probe is the evidence, as in WO-1.56 and WO-1.57.
+- **What else differs in runs B and C, and why it is not this work order's.** Both lose the same 63
+  checks of the three thrown sections. Both turn `praise-column`'s *"evaluating the praise list
+  writes NOTHING to the document"* red, identically, on `flag-shaped keys = ["\"flag\":"]`: that is
+  `history-dialog-write.mjs:121`'s fixture score `{ v: null, flag: 'missing' }`, left in the document
+  because the section threw before its own clean-up. It is the storage family WO-1.56 and WO-1.57
+  both put out of scope, and it is out of scope here. With the restore in place and a fixture this
+  family cannot touch, runs A and B differ in nothing else.
+- **Revert.** The six section files were copied back from copies saved before the first plant, and the
+  three restore lines were restored by copying back `tools/verify-shell.mjs` as saved after the
+  change. `grep -rn "MUTATION WO-1.58" tools/ src/` then printed nothing (exit 1), `grep -rn WO158
+  tools/ src/` likewise, and `git diff --quiet HEAD -- tools/verify src` held. That was before
+  anything else was written.
+- [x] **The whole harness is green on the real clock, the check list is unchanged, and no check
+      changes state against HEAD.** Run D, the final tree after every revert, no flag:
+      **`1600 checks · 1600 passed · 0 failed · 0 skipped`**, 648s, `EXIT=0`, and no probe line in
+      the log. **How it was compared:** run H was taken at `HEAD` *before the first edit* — not by
+      `git stash`, which is unsafe beside concurrent edits — and every `PASS | ` / `FAIL | ` /
+      `SKIP | ` line of runs H and D, cut at the `  :: ` that starts the detail text, was `diff`ed.
+      They are **identical**: the same 1600 names in the same order, all PASS in both. *(The
+      `lines ·` figure printed under run H's summary already includes this change: the counter reads
+      the files from disk when the run ENDS, and the edit landed while run H was in flight. Its
+      checks ran the code loaded at launch, which was `HEAD`'s; every section is a static import.)*
+- [x] **`node tools/wo-sweep.mjs` is green, including § 25.** `45 checks · 42 passed · 0 failed ·
+      3 to review`, exit 0, re-run after the last doc edit. The three reviews are the standing ones
+      WO-1.57 recorded. § 25 reads *"runSection() at tools/verify-shell.mjs:461-479 awaits the one
+      `.run(` …"* — the same lines as before the change.
+
+**What is still out of reach, stated rather than claimed away:**
+
+- **Anything set some other way than a CDP call through that `send`** — WO-1.57's limit, unchanged.
+- **CDP state this record does not follow — and one of it is sent today with the same shape as the
+  blocked list.** `grep -rhoE "send\('[A-Za-z]+\.[A-Za-z]+'" tools/verify/ | sort | uniq -c` lists
+  every method the sections send. Beside the eight followed now, three set state that outlives a
+  reload:
+  - **`Network.emulateNetworkConditions`**, twice, in `sync-button.mjs`: `OFFLINE` at ~515 and back
+    to `ONLINE` at ~526, inside a `Network.enable` window. **A throw between them hands an offline
+    network on**, exactly as a throw inside the block hands the block on. It was not in this work
+    order's list and is not put back. **Booked 2026-10-01 as WO-1.59**, and the fix would
+    be the same few lines with `ONLINE`'s own parameters — whatever "not set" is for this method —
+    as the baseline. Found while writing this list; no planted run was taken against it.
+  - **`Browser.grantPermissions`** (`score-grid.mjs`, `outreach.mjs`) and
+    **`Browser.setDownloadBehavior`** (`backup-restore.mjs`). Neither is ever undone by its section on
+    a normal run either, so a throw hands on nothing a normal run does not; they are named so the
+    list is complete, not because they diverge.
+  A section that starts sending something else that outlives a reload — `setGeolocationOverride`,
+  `setCPUThrottlingRate` — is not put back either, and nothing here would notice.
+- **Domain enables.** `Network.enable` is left on by a throw inside one of its windows (above); so
+  would any other domain a section enables. Nothing in this run shows that costing a later section a
+  check, and it is not followed.
+- **Page events dispatched for a print window.** `print-sheets.mjs` dispatches `beforeprint` before
+  it enters `print`; a throw skips the matching `afterprint`. The reload in `recoverPage()` discards
+  whatever that event set, so nothing survives it — but it is page state, not CDP state, and it is
+  the reload, not this record, that undoes it.
+- **Fixture data and page storage** — WO-1.56's limit, and the one the praise-column failure above
+  is an instance of.
+- **A normal run is unchanged by construction.** The record is kept on every run and read only in
+  `recoverPage()`, which runs only after a throw.
 
 *No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.*
 

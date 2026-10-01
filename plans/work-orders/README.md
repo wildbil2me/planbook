@@ -373,7 +373,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.58 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.59 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.57 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.26 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.6 | Phase 4 |
@@ -447,7 +447,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 58 | 53 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 59 | 54 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 55 | 54 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 25 | 24 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 6 | 6 | — | ✅ DONE — 2026-09-30 |
@@ -456,7 +456,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 17 | 16 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.4 ✅ DONE 2026-09-26, the sign-in opened on the deployed domain and read on the laptop and the iPad; WO-7.5 ✅ DONE 2026-09-26, the header's sync button; WO-7.6 ✅ DONE 2026-09-26, the privacy documents say when Google's library loads, read off the deployed /privacy; WO-7.7 ✅ DONE 2026-09-26, a download repaints the open screen, read both ways on laptop and iPad; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 18 | 12 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 3 | — | WO-G2 ✅ **2026-09-30**: worked 2026-09-29 with six of eight boxes closed, and the letter-scale setting and the backup drill closed the next day on the owner's reading; WO-G3 ✅ **2026-09-30** on the owner's ruling, watched across four weeks of the term with nothing recorded |
-| | **208** | **192** | **3** | `[█████████░] 92%` |
+| | **209** | **193** | **3** | `[█████████░] 92%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)
@@ -1956,6 +1956,7 @@ it, never from a reading taken earlier in the same session.)*
 | 58 | [WO-8.14](phase-8-packaging.md#wo-814--the-three-doc-links-in-about-are-measured-by-nothing) The three doc links in About are measured by nothing | S | — | **At the foot, booked 2026-09-21 out of WO-8.13's landing.** `.modal-body .doc-link { min-height: 44px }` in the `(pointer: coarse)` block carries three rows in the About modal — privacy, FERPA, and the licence — and **no tool has ever measured one of them**: every modal sweep in `tools/verify/touch-targets.mjs` selects `button, input`, a `.doc-link` is an `<a>`, and the string `doc-link` is not in that file at all. Deleting the declaration leaves **all 1446 checks green** and three sub-thumb rows in the modal a teacher opens to find the privacy policy. **How it was found is the part worth keeping:** WO-8.13's own Acceptance line 3 said *"`touch-targets.mjs` measures the row, not the gap"* — written into the work order the day before, false when written, and doing the work of assuring a reader that a regression here would be caught. The criterion was still honestly met, so that line is ✅ and carries a correction rather than a ❌. **A work order's own reasoning is not a fence** — this is the row to point at next time one is read as one. Widens the existing sweep rather than adding a second; no 👤, because a headless coarse-pointer measurement is better than a thumb at exactly this |
 | 104 | [WO-7.17](phase-7-sync.md#wo-717--a-first-sign-in-from-the-drive-door-is-announced-as-a-reconnect) A first sign-in from the Drive door is announced as a reconnect | XS | — | **At the foot, booked 2026-09-28**, owner-directed, with no slot chosen, so move it if it belongs elsewhere. Booked from WO-7.9's result: *Open from Google Drive* signs in through `auth.reconnect()`, which announces *"Reconnected to Google Drive."* on every success, so a first sign-in on a new device is spoken as a reconnect. Screen-reader only, no data at risk. `src/auth.js`, a harness check in `tools/verify/first-run.mjs`, no 👤. Route to Claude, as it is the OAuth code |
 | 105 | [WO-1.58](phase-1-shell-store-roster.md#wo-158--a-section-that-throws-still-hands-on-print-media-a-time-zone-and-blocked-urls) A section that throws still hands on print media, a time zone and blocked URLs | XS | — | **At the foot, booked 2026-09-30**, owner-directed, with no slot chosen, so move it if it belongs elsewhere. Booked from WO-1.57's verdict. WO-1.57's restore follows touch, device metrics and page-start scripts; `setEmulatedMedia`, `setTimezoneOverride` and `Network.setBlockedURLs` survive a reload the same way and are not followed. `TESTING.md` § WO-1.57 names the first two as out of reach, and the verifier found the third. The same record-and-restore, widened to three more methods, each mutation-proved by a planted throw. No live symptom unless a section throws. Harness only; nothing in `src/` moves |
+| 107 | [WO-1.59](phase-1-shell-store-roster.md#wo-159--a-section-that-throws-while-offline-hands-an-offline-network-on) A section that throws while offline hands an offline network on | XS | — | **At the foot, booked 2026-10-01**, owner-directed, with no slot chosen, so move it if it belongs elsewhere. Booked from WO-1.58's verdict. `Network.emulateNetworkConditions` survives a reload the way the three WO-1.58 settings did, and is sent `OFFLINE` then `ONLINE` in `sync-button.mjs`; a throw between them hands an offline network on. `TESTING.md` § WO-1.58 names it as out of reach. The same record-and-restore, widened to one more method, mutation-proved by a planted throw. No live symptom unless a section throws. Harness only; nothing in `src/` moves |
 
 ***Rows 17 through 32 were added 2026-08-28, and the reason is the third occurrence of the failure
 this section exists to prevent.*** *Before that sitting,* **sixteen open work orders had no row in

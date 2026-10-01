@@ -13,6 +13,22 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Print mode, a time zone or a blocked URL no longer leaks past a failing section — 2026-10-01
+
+A harness change only; nothing in the app moved.
+
+- **When a section of the browser harness throws, the print media, time zone and blocked URLs it had
+  set are now put back too**, alongside the emulation WO-1.57 restores. Before, a failure in a print
+  test left every later section rendering as if on paper, a failure in the history-dialog checks left
+  the rest of the run on another time zone, and a failure in the sync checks left Google's sign-in
+  blocked for every later page.
+- **Proved both ways** by planting a throw in each, once with the fix and once with it taken out.
+  The time-zone leak turned about 40 checks red in an early-morning run and none in a daytime one,
+  so whether it was noticed depended on the hour.
+- **One setting is still not put back**: the offline network the sync checks switch on. It is booked
+  as WO-1.59.
+- The harness is 1,600 checks, all green.
+
 ### The overdue tone works on the iPad again, and comes back after a trial — 2026-09-30
 
 - **The two August failures did not come back.** The owner re-ran the 16 August iPad sitting before
