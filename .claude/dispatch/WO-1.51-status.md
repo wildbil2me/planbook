@@ -1,0 +1,11 @@
+# WO-1.51 dispatch status
+
+- 2026-10-01 — gates PASS (`wo-gate.mjs WO-1.51`, exit 0). Depends WO-1.30 ✅. Tree dirty with 5 UNRELATED paths (design/mockups/README.md, index.html, proposed-phase8.css, front-door.html; plans/work-orders/phase-8-packaging.md) — another session's work, not this dispatch's; implementer told not to touch them.
+- 2026-10-01 — route **Claude Opus**, on its own merits. Deciding signal: the first Trap hands the implementer a structural call (new plant vs widening the sentinel plant, "say which and why at the line") and the row's value is honoring WO-1.30's reasoning (keep `\b`, never narrow to whole-value); also writes tools/README.md mutation-table prose. Runner-up set aside: Codex — mechanically checkable, no verify-shell runs needed so the budget fits easily — but ties go to Claude and the sibling tooling rows (WO-1.30, 1.49, 1.58) all went Claude Opus. No Codex probe run: route was never Codex. No Ship 1 pre-routing row.
+- 2026-10-01 — claimed: `--start WO-1.51` ran, row reads 🤖 CLAIMED — 2026-10-01.
+- 2026-10-01 — brief written: .claude/dispatch/WO-1.51-brief.md (~13 KB, no markers). Baseline measured: --self-check PASS 43 of 43 (WO says 39; brief tells implementer to take N on the day).
+- 2026-10-01 — implementer spawned at **Opus** (no model override), handed .claude/dispatch/WO-1.51-brief.md; awaiting return, expect 20–40 min.
+- 2026-10-01 — implementer returned (~8 min): claims 44th self-check plant (nothings, nothingness, nothing_but_a_hunch refused), README mutation row, all 5 boxes ticked; flags hyphen-joined nothing-x still reads as sentinel (out of scope). Result file present. No MUTATION markers in changed files.
+- 2026-10-01 — handoff written: --handoff WO-1.51, row reads 🔍 AWAITING VERDICT — 2026-10-01. Verifier owed from a fresh session; this session stops here.
+- 2026-10-01 — fresh session entered at 🔍 AWAITING VERDICT; gates PASS (exit 0). Verifier spawned at **Opus**, told it is a FIRST pass and the result file is claims-to-check; awaiting verdict.
+- 2026-10-01 — verdict in: **PASS**, 5/5 Acceptance ✅, no 👤. Self-check 44/44, audit PASS, sweep 42·0·3, verify-shell 1600/1600; new plant mutation-proved (widen \b -> 1 of 44 red, the new plant); 212 gate reports byte-identical vs HEAD. Tick awaits owner's go.
