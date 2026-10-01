@@ -670,3 +670,33 @@ same sitting.
   one primary and one empty state. **Decided 2026-09-26: B.** WO-7.9 ruling 2.
 - **A backup restored here, then Connect**: its first sync ends in keep-both, once. **Decided 2026-09-26:
   leave it.** WO-7.9 Open line 1.
+
+---
+
+# Front door — WO-8.16, drawn 2026-10-01
+
+**The eighth room.** [`front-door.html`](front-door.html) draws what `/` shows a visitor who is not
+running installed and has no school year stored, in place of the app's header and main. Everyone
+else goes straight in. It is drawn per device because the right words differ by device.
+
+## What the drawing proposes
+
+Styled in [`proposed-phase8.css`](proposed-phase8.css) § FRONT DOOR, bound for `src/front-door.css`.
+The band is `about.html`'s, value for value, and controls are `.class-action-btn` worn as shipped.
+
+1. **iPad, in Safari**: install steps first, the caution as one paragraph beside them, and *Use it in
+   Safari for now* last, as a secondary button. No primary button, because the next step is Safari's.
+2. **iPad, in Safari, the gate**: the same steps with no browser path, drawn so the choice can be seen.
+3. **Laptop, in Edge or Chrome**: no caution, *Use it in this browser* as the primary, and the install
+   described as the browser's own address-bar control.
+4. **A browser that cannot install**: its own words, if the build can tell it apart.
+5. **After the door**: the home screen as shipped (first-run.html variant B), one tap from *Restore*,
+   which is the answer to trap 4. Nothing new drawn.
+
+## The open questions, collected
+
+- **How firm on iPad Safari**: the door with the browser path last, or no browser path. WO-8.16 Open
+  line 1.
+- **Is *use it in this browser* remembered**: proposed yes, once. WO-8.16 Open line 2.
+- **A browser that cannot install**: its own words if detectable, or the laptop door if not. WO-8.16
+  Open line 3.

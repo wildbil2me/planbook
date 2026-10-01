@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — A first-time visitor meets the front door</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="proposed-phase8.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Static HTML. Nothing here detects a browser, installs anything or reads storage. Every device is typed in.</span>
+  <span>Front door · Phase 8 · drawn 2026-10-01 · <a href="../../plans/work-orders/phase-8-packaging.md">WO-8.16</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="print.html">Printed pages</a>
+  <a href="front-door.html" class="here">Front door</a>
+</nav>
+
+<p class="mk-section">What a stranger meets today</p>
+<p class="mk-caption">Somebody a colleague sent <code>planbook.hwgteach.com</code> lands in the app with nothing in it: <em>Set up your year</em>, an empty 2026-2027, <em>No classes yet.</em> The install banner explains the iPad risk, but only once they are using the app in a tab, which is the state it warns about. The door below is shown <strong>instead of</strong> the app's header and main, and only to a visitor who is both not running installed (<code>isInstalled()</code> in <code>src/install-banner.js</code>) and has no school year stored. Everyone else goes straight in, exactly as today.</p>
+
+<!-- ═══════════════════════════ iPAD SAFARI, AS PROPOSED ═══════════════════════════ -->
+
+<p class="mk-section">iPad, in Safari · as proposed: install steps first, the browser path last</p>
+<div style="max-width:820px;margin:12px auto 0;border:1px solid #c5ccd6;background:#f0f2f5">
+  <div class="front-door-band">
+    <div class="front-door-band-inner">
+      <h1>Planbook</h1>
+      <p>A gradebook and classroom assistant for teachers. Attendance, grades, the students who need you, and the messages that follow — all kept on your own device.</p>
+    </div>
+  </div>
+  <div class="front-door-main">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-row">
+          <div class="panel-title">
+            <h2>Install it on this iPad</h2>
+            <p>About a minute, and nothing to download from an app store.</p>
+          </div>
+        </div>
+      </div>
+      <div class="front-door-body">
+        <ol>
+          <li>Tap the <strong>Share</strong> button in Safari’s toolbar — the square with an arrow coming out of the top.</li>
+          <li>Choose <strong>Add to Home Screen</strong>, then tap <strong>Add</strong>.</li>
+          <li>Open Planbook from the new icon from then on, not from Safari.</li>
+        </ol>
+        <p class="front-door-caution"><strong>Install it before you enter real grades.</strong> Safari can clear a website’s stored information after about a week of not being used. An installed app is exempt from that.</p>
+        <div class="front-door-actions">
+          <button class="class-action-btn" type="button">Use it in Safari for now</button>
+        </div>
+        <p class="front-door-note">You can install it later from the banner inside the app.</p>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title-row"><div class="panel-title"><h2>What it does</h2></div></div></div>
+      <div class="front-door-body">
+        <ul>
+          <li><strong>Attendance at the start of every class</strong>, fast enough to mark while students are still walking in.</li>
+          <li><strong>Grades by weighted category</strong>, set up separately for each class.</li>
+          <li><strong>The students who need attention, in both directions</strong> — falling grades, missing work and missed class, and the ones who have turned a corner.</li>
+          <li><strong>The message that follows</strong>, drafted and handed to your own email to read, change and send.</li>
+          <li><strong>Accommodations where the work happens</strong>, out of sight by default, with a presentation mode that hides them all at once.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title-row"><div class="panel-title"><h2>Where your students’ information goes</h2></div></div></div>
+      <div class="front-door-body">
+        <p><strong>Nowhere but this device.</strong> Planbook has no server and no account. Google Drive sync is optional and holds only the one file Planbook made. The <a href="#">privacy policy</a> and the <a href="#">guide for administrators</a> say it in full.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="mk-caption"><strong>A front door, not a gate.</strong> The steps come first and the way past comes last, so a teacher reads why before she reads how to skip it. The way past is a real 44px button, worded for the device (<em>in Safari</em>), and secondary: there is <strong>no primary button on this panel</strong>, because the thing to do next happens in Safari’s own toolbar, not on the page. The caution is one paragraph, beside the steps that fix it, in the palette <code>about.html</code> uses for the same sentence. The two lower panels are <code>about.html</code>’s words, shortened here only to fit the drawing; the build takes them, not a retyping.</p>
+<p class="mk-caption ask"><strong>Open line 1 — how firm on iPad Safari.</strong> Drawn as proposed: the same door, install steps above the browser path. The alternative is drawn next.</p>
+
+<!-- ═══════════════════════════ iPAD SAFARI, THE GATE ═══════════════════════════ -->
+
+<p class="mk-section">iPad, in Safari · the alternative: no browser path at all</p>
+<div style="max-width:820px;margin:12px auto 0;border:1px solid #c5ccd6;background:#f0f2f5">
+  <div class="front-door-band">
+    <div class="front-door-band-inner">
+      <h1>Planbook</h1>
+      <p>A gradebook and classroom assistant for teachers. Attendance, grades, the students who need you, and the messages that follow — all kept on your own device.</p>
+    </div>
+  </div>
+  <div class="front-door-main">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-row">
+          <div class="panel-title">
+            <h2>On an iPad, Planbook runs from the home screen</h2>
+            <p>About a minute, and nothing to download from an app store.</p>
+          </div>
+        </div>
+      </div>
+      <div class="front-door-body">
+        <ol>
+          <li>Tap the <strong>Share</strong> button in Safari’s toolbar — the square with an arrow coming out of the top.</li>
+          <li>Choose <strong>Add to Home Screen</strong>, then tap <strong>Add</strong>.</li>
+          <li>Open Planbook from the new icon.</li>
+        </ol>
+        <p class="front-door-caution"><strong>Why not in Safari?</strong> Safari can clear a website’s stored information after about a week of not being used, and with it a term of grades. An installed app is exempt from that.</p>
+      </div>
+    </div>
+    <p class="mk-caption" style="margin:0">…the same two panels below.</p>
+  </div>
+</div>
+<p class="mk-caption"><strong>The only gate that pays for itself, and still a gate.</strong> It is the one browser where a tab genuinely loses data, so refusing it buys something real. What it costs: a teacher on a school-managed iPad where <em>Add to Home Screen</em> is restricted has no way in at all, and somebody who only wants a look has to install first. The caution stops being one paragraph beside the steps and becomes the reason the page exists, which leans towards the warning screen trap 3 forbids.</p>
+
+<!-- ═══════════════════════════ LAPTOP, EDGE OR CHROME ═══════════════════════════ -->
+
+<p class="mk-section">Laptop, in Edge or Chrome</p>
+<div style="max-width:1100px;margin:12px auto 0;border:1px solid #c5ccd6;background:#f0f2f5">
+  <div class="front-door-band">
+    <div class="front-door-band-inner">
+      <h1>Planbook</h1>
+      <p>A gradebook and classroom assistant for teachers. Attendance, grades, the students who need you, and the messages that follow — all kept on your own device.</p>
+    </div>
+  </div>
+  <div class="front-door-main">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-row">
+          <div class="panel-title">
+            <h2>Use it here, or install it</h2>
+            <p>Both keep everything on this computer.</p>
+          </div>
+        </div>
+      </div>
+      <div class="front-door-body">
+        <p><strong>Installing gives Planbook its own window</strong> and lets it open with no internet connection. Choose the install icon at the right-hand end of the address bar, or <strong>Install Planbook</strong> in the browser’s menu.</p>
+        <div class="front-door-actions">
+          <button class="class-action-btn primary" type="button">Use it in this browser</button>
+        </div>
+        <p class="front-door-note">Whichever you choose, download a backup now and then from the ⤓ button in the app.</p>
+      </div>
+    </div>
+    <p class="mk-caption" style="margin:0">…the same two panels below.</p>
+  </div>
+</div>
+<p class="mk-caption"><strong>No caution here, and the browser path is the primary.</strong> Edge and Chrome on a laptop do not clear storage the way iOS Safari does, so a teacher who stays in a tab loses nothing by it. Installing is offered as a better window, not as data safety. The install itself is the browser’s own control, in the address bar, so the page describes it rather than pretending to be it: a PWA is installed from the page it is.</p>
+
+<!-- ═══════════════════════════ A BROWSER THAT CANNOT INSTALL ═══════════════════════════ -->
+
+<p class="mk-section">Firefox on a laptop, or a Chromebook with installing turned off</p>
+<div style="max-width:1100px;margin:12px auto 0;border:1px solid #c5ccd6;background:#f0f2f5">
+  <div class="front-door-band">
+    <div class="front-door-band-inner">
+      <h1>Planbook</h1>
+      <p>A gradebook and classroom assistant for teachers. Attendance, grades, the students who need you, and the messages that follow — all kept on your own device.</p>
+    </div>
+  </div>
+  <div class="front-door-main">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-row">
+          <div class="panel-title">
+            <h2>Planbook works in this browser</h2>
+            <p>Everything stays on this computer.</p>
+          </div>
+        </div>
+      </div>
+      <div class="front-door-body">
+        <p>Some browsers cannot install web apps, and some school-managed devices have installing turned off. Planbook does everything in an ordinary tab.</p>
+        <div class="front-door-actions">
+          <button class="class-action-btn primary" type="button">Use it in this browser</button>
+        </div>
+        <p class="front-door-note">Download a backup now and then from the ⤓ button in the app. It is the copy that can bring a school year back.</p>
+      </div>
+    </div>
+    <p class="mk-caption" style="margin:0">…the same two panels below.</p>
+  </div>
+</div>
+<p class="mk-caption ask"><strong>Can the app tell this case from the last one?</strong> Firefox can be told apart by what it lacks. A Chromebook whose admin has switched installing off probably cannot: the page sees an ordinary Chrome. Drawn as its own state because the words differ, but if the build cannot detect it, the laptop door above is what that Chromebook shows, and its install sentence describes a control that is not there. That is the implementer’s to establish, and the owner’s to accept or reword.</p>
+
+<!-- ═══════════════════════════ AFTER THE DOOR ═══════════════════════════ -->
+
+<p class="mk-section">After <em>Use it in this browser</em></p>
+<p class="mk-caption"><strong>The home screen exactly as it ships today</strong>, drawn in <a href="first-run.html">first-run.html</a> variant B: <em>Add your first class</em>, then <em>Open from Google Drive</em> and <em>Restore a backup file</em> under the hairline. That is the answer to trap 4: a teacher who cleared this device to restore a backup onto it has no year and is not a stranger, so she meets the door once, taps past it, and lands one tap from <em>Restore</em>. Nothing new is drawn for it.</p>
+<p class="mk-caption ask"><strong>Open line 2 — is the choice remembered?</strong> Proposed: yes, once, as a <code>planbook_</code> UI preference, so a teacher who chose the browser does not meet the door on every visit to an empty year. Not drawn, because remembering it changes when the door appears, not what it looks like.</p>
+<p class="mk-caption"><strong>Not drawn: the installed app.</strong> An installed launch never sees the door, with data or without, and neither does a browser visit to a device that already holds a year.</p>
+
+<!-- ═══════════════════════════ QUESTIONS ═══════════════════════════ -->
+
+<p class="mk-section">Questions this drawing asks</p>
+<p class="mk-caption ask"><strong>1 · How firm on iPad Safari?</strong> The door with the browser path last, or no browser path. WO-8.16 Open line 1.</p>
+<p class="mk-caption ask"><strong>2 · Is <em>use it in this browser</em> remembered?</strong> Proposed: yes, once. WO-8.16 Open line 2.</p>
+<p class="mk-caption ask"><strong>3 · A browser that cannot install.</strong> Its own words if it can be detected, or the laptop door if not.</p>
+
+</body>
+</html>

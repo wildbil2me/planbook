@@ -82,3 +82,64 @@
   font-size: 7.5pt; color: #333;
 }
 .print-header-running b { color: #000; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § FRONT DOOR   →  src/front-door.css   (WO-8.16)
+
+   Drawn 2026-10-01, before a line of the door exists. The screen `/` shows a
+   visitor who is not running installed and has no school year stored; anybody
+   else never sees it. It REPLACES the app's header and main rather than sitting
+   inside them, because a door with the year button and the class tabs above it
+   is the empty app with a panel on top — the thing WO-8.16 exists to stop a
+   stranger meeting.
+
+   THE BAND IS about.html's, value for value. That page keeps its styles in its
+   own <style> block, on purpose (its header, point 2), so nothing in src/ styles
+   a band like it today and the names below are unclaimed. HOW the door gets its
+   words — fetched from about.html, or about.html reduced to sections the shell
+   carries — is WO-8.16's third Deliverable and the implementer's to argue; if the
+   answer is "the shell carries them", about.html's block and this section become
+   one stylesheet and this banner is amended to say which.
+
+   Controls are `.class-action-btn` and `.primary`, worn as shipped, so this
+   section adds no tappable class and needs no touch block of its own. The two
+   documents are linked inside sentences, which is text, not a control —
+   privacy.html's distinction, which about.html already follows.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.front-door-band {
+  background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 60%, #2a2a6e 100%);
+  color: #fff;
+  padding: 32px 20px calc(32px + env(safe-area-inset-top, 0px));
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+.front-door-band-inner { max-width: 760px; margin: 0 auto; }
+.front-door-band h1 { font-size: 28px; font-weight: 700; }
+.front-door-band p { font-size: 15px; color: rgba(255,255,255,0.7); margin-top: 6px; max-width: 56ch; }
+
+.front-door-main { max-width: 760px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.front-door-body { padding: 0 20px 20px; font-size: 14px; line-height: 1.6; color: #1a1a2e; }
+.front-door-body p + p, .front-door-body p + ol, .front-door-body ol + p { margin-top: 10px; }
+.front-door-body ol, .front-door-body ul { margin-left: 20px; }
+.front-door-body li + li { margin-top: 6px; }
+
+/* The one caution on the door, and only on iOS: the caution palette about.html
+   already uses for the same sentence. Beside the steps that fix it, never above
+   the band — WO-8.16 trap 3, it is not a warning screen. */
+.front-door-caution {
+  background: #fff8e6; border: 1.5px solid #f0dfa8; border-radius: 8px;
+  color: #8a6d1a; padding: 12px 14px; margin-top: 12px;
+}
+
+/* The way forward. Install is a set of steps a browser carries out, so it is
+   prose; the button is always the way past, and it sits last in the panel so it
+   is the last thing read on iOS (Open line 1, as proposed) and beside the steps
+   everywhere else. */
+.front-door-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.front-door-note { font-size: 12px; color: #6b7a8d; margin-top: 8px; }
+
+@media (max-width: 640px) {
+  .front-door-main { padding: 10px; }
+  .front-door-band { padding: 22px 14px calc(22px + env(safe-area-inset-top, 0px)); }
+  .front-door-band h1 { font-size: 24px; }
+  .front-door-body { padding: 0 14px 14px; }
+}

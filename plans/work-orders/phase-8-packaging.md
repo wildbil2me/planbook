@@ -1356,6 +1356,10 @@ front door can only explain and send the teacher into the app to install it.
 - **The words come from `about.html` and are not retyped.** How — fetched, or the front page's
   sections lifted into the shell with `about.html` reduced to them — is the implementer's to argue
   at dispatch, against trap 1.
+- **Surface — read [`design/mockups/front-door.html`](../../design/mockups/front-door.html) first**
+  (drawn 2026-10-01). It settles the door's shape per device — install steps then the way past on
+  iPad Safari, the browser path as the primary on a laptop, no primary on the iOS panel — and styles
+  it in `design/mockups/proposed-phase8.css` § FRONT DOOR, bound for `src/front-door.css`.
 
 **Open — the owner's before dispatch**
 - **How firm on iPad Safari.** Proposed: the same door, with the install steps above the *use it in
@@ -1363,6 +1367,10 @@ front door can only explain and send the teacher into the app to install it.
   is the only gate that pays for itself, and it is still a gate.
 - **Whether *use it in this browser* is remembered**, under the `planbook_` prefix as a UI
   preference. Proposed: yes, once; a door that reappears on every visit to an empty year is a nag.
+- **A browser that cannot install** (raised by the drawing). Firefox can be told apart; a Chromebook
+  with installing switched off by its admin probably cannot, and would see the laptop door's install
+  sentence for a control that is not there. Proposed: its own words where it can be detected, and the
+  laptop door where it cannot, with the implementer establishing which is which.
 
 **Acceptance**
 - [ ] A cold, non-installed visit with no stored year shows the front door; an installed launch, and
