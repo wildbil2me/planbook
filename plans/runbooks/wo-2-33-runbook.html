@@ -1,0 +1,718 @@
+<title>WO-2.33 Tone Retest</title>
+
+<style>
+  /* design/style-guide.md § 1 and § 8: colours inline, never custom properties, and no dark
+     mode — the suite is light-theme only. Every value below is a literal for that reason, and
+     tools/wo-sweep.mjs reads every .css/.html outside tools/, so a token block here is a red
+     sweep. The masthead, section labels and step cards are lifted from wo-g3-runbook.html, by way of
+     wo-g2-runbook.html and wo-7-1-runbook.html, whose stylesheet this is, copied whole. */
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #eceff4;
+    color: #1a1a2e;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  h1, h2, h3 { text-wrap: balance; margin: 0; line-height: 1.15; }
+
+  code, .mono { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; }
+  code {
+    font-size: 0.86em;
+    background: #f6f8fb;
+    border: 1px solid #eef0f4;
+    border-radius: 3px;
+    padding: 0.1em 0.34em;
+    overflow-wrap: break-word;
+  }
+
+  a { color: #4a5fbb; text-underline-offset: 2px; }
+  a:hover { color: #5b6fcc; }
+  :focus-visible { outline: 2px solid #5b6fcc; outline-offset: 2px; border-radius: 2px; }
+
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── Masthead ─────────────────────────────────────────────── */
+  .band {
+    background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 78%, #2a2a6e 100%);
+    color: #ffffff;
+    padding: 44px 0 40px;
+  }
+  .band .wrap { display: flex; flex-direction: column; gap: 18px; }
+  .eyebrow {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.38);
+  }
+  .band h1 { font-size: clamp(30px, 5.2vw, 46px); font-weight: 700; letter-spacing: -0.015em; }
+  .band .standfirst { color: rgba(255,255,255,0.62); font-size: 17px; max-width: 62ch; margin: 0; }
+  .band .standfirst strong { color: #ffffff; font-weight: 600; }
+  .band-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.14);
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 12px;
+    color: rgba(255,255,255,0.38);
+  }
+  .band-meta b { color: rgba(255,255,255,0.62); font-weight: 500; }
+
+  /* ── Sections ─────────────────────────────────────────────── */
+  main { padding: 40px 0 72px; display: flex; flex-direction: column; gap: 52px; }
+
+  .sec-label {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8a9bb0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .sec-label::after { content: ""; flex: 1; height: 1px; background: #e0e4f0; }
+
+  p { margin: 0 0 14px; max-width: 68ch; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── Warnings ─────────────────────────────────────────────── */
+  .traps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .trap {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-left: 3px solid #f0b0b0;
+    border-radius: 6px;
+    padding: 15px 17px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+  }
+  .trap h3 { font-size: 15.5px; font-weight: 700; margin-bottom: 6px; }
+  .trap p { font-size: 14.5px; color: #4c5a6d; margin: 0; }
+
+  .callout {
+    background: #eef2ff;
+    border: 1px solid #b0bcf0;
+    border-radius: 6px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .callout h3 { font-size: 17px; font-weight: 700; }
+  .callout p { color: #4c5a6d; font-size: 15px; }
+  .callout.warn { background: #fff8e6; border-color: #d8bd63; }
+
+  /* ── Tables ───────────────────────────────────────────────── */
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eef0f4; vertical-align: top; }
+  th {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8a9bb0;
+    white-space: nowrap;
+  }
+  td { color: #4c5a6d; }
+  td.num { font-variant-numeric: tabular-nums; color: #8a9bb0; font-weight: 600; }
+  .glance { background: #ffffff; border: 1px solid #e0e4f0; border-radius: 6px; }
+  .glance a { font-weight: 600; }
+
+  .chip {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid #e0e4f0;
+    background: #f6f8fb;
+    color: #6b7a8d;
+    white-space: nowrap;
+    display: inline-block;
+  }
+  .chip.entry  { color: #4a5fbb; background: #eef2ff; border-color: #b0bcf0; }
+  .chip.real   { color: #1c7a45; background: #eafaf1; border-color: #a3e4bc; }
+  .chip.home   { color: #8a6d1a; background: #fff8e6; border-color: #d8bd63; }
+
+  /* ── Box cards ────────────────────────────────────────────── */
+  .steps { display: flex; flex-direction: column; gap: 22px; }
+  .step { display: grid; grid-template-columns: 74px 1fr; gap: 0 24px; align-items: start; }
+  .step-num {
+    font-size: 34px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #8a9bb0;
+    line-height: 1;
+    padding-top: 18px;
+    text-align: right;
+    padding-right: 4px;
+  }
+  .step-body {
+    background: #ffffff;
+    border: 1px solid #e0e4f0;
+    border-radius: 6px;
+    padding: 20px 22px 22px;
+    box-shadow: 0 1px 2px rgba(13,33,55,0.06), 0 6px 18px rgba(13,33,55,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+  }
+  .step.entry .step-body { border-left: 3px solid #b0bcf0; }
+  .step.real .step-body  { border-left: 3px solid #a3e4bc; }
+  .step.home .step-body  { border-left: 3px solid #e0e4f0; background: #f6f8fb; }
+  .step-head { display: flex; flex-direction: column; gap: 8px; }
+  .step h2 { font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
+  .step-body p, .step-body li { font-size: 15.5px; color: #4c5a6d; }
+  .step-body strong { color: #1a1a2e; font-weight: 600; }
+  .step-body ol, .step-body ul { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 7px; max-width: 68ch; }
+
+  .subhead {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8a9bb0;
+  }
+  .note {
+    border-left: 2px solid #e0e4f0;
+    padding-left: 14px;
+    font-size: 14.5px;
+    color: #6b7a8d;
+    font-style: italic;
+    max-width: 66ch;
+  }
+  .note b { font-style: normal; font-weight: 600; color: #4c5a6d; }
+
+  .quote {
+    background: #f6f8fb;
+    border: 1px solid #eef0f4;
+    border-radius: 5px;
+    padding: 12px 14px;
+    font-size: 14.5px;
+    color: #1a1a2e;
+  }
+
+  /* ── Record blocks: what gets filled in ──────────────────── */
+  .record {
+    border: 1px dashed #b0bcf0;
+    border-radius: 6px;
+    background: #fbfcff;
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .record .subhead { color: #4a5fbb; }
+  .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px 14px; }
+  .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #6b7a8d; }
+  .field.wide { grid-column: 1 / -1; }
+  input[type="text"], select, textarea {
+    font: inherit;
+    font-size: 15px;
+    color: #1a1a2e;
+    background: #ffffff;
+    border: 1px solid #c9d1e3;
+    border-radius: 4px;
+    padding: 7px 9px;
+    width: 100%;
+    min-height: 38px;
+  }
+  textarea { min-height: 64px; resize: vertical; }
+  input[type="text"]:focus, select:focus, textarea:focus { border-color: #5b6fcc; box-shadow: 0 0 0 2px #dfe5ff; }
+  td input[type="text"], td select { min-width: 84px; }
+  input[type="checkbox"] { width: 20px; height: 20px; accent-color: #4a5fbb; margin: 0; }
+  td.check { width: 60px; text-align: center; }
+
+  /* ── Bring it back ───────────────────────────────────────── */
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button {
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 5px;
+    padding: 10px 16px;
+    min-height: 44px;
+    cursor: pointer;
+    border: 1px solid #b0bcf0;
+    background: #ffffff;
+    color: #4a5fbb;
+  }
+  button.primary { background: #4a5fbb; border-color: #4a5fbb; color: #ffffff; }
+  button.primary:hover { background: #5b6fcc; }
+  button.danger { color: #a33b3b; border-color: #f0b0b0; }
+  .status { font-size: 14px; color: #1c7a45; }
+  #copyFallback { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 13px; min-height: 220px; }
+
+  footer {
+    border-top: 1px solid #e0e4f0;
+    padding: 22px 0 0;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11.5px;
+    color: #8a9bb0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+  }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 0 16px; }
+    .step { grid-template-columns: 1fr; }
+    .step-num { text-align: left; padding: 0 0 6px; font-size: 26px; }
+    .step-body { padding: 16px 14px 18px; }
+  }
+  @media (pointer: coarse) {
+    input[type="text"], select { min-height: 44px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<header class="band">
+  <div class="wrap">
+    <div class="eyebrow">WO-2.33 · no ship · size M</div>
+    <h1>The overdue tone, retested before anything is built</h1>
+    <p class="standfirst">
+      Turn the sound back on for <strong>one test install</strong>, then pick the iPad tests up where
+      16 August left them. Four runs, about <strong>45 minutes</strong> with the real 5 and 10 minute
+      thresholds. Nothing in the app changes and nothing is ticked from this page: fill in the record
+      blocks, then bring the results back to a session at home.
+    </p>
+    <div class="band-meta">
+      <span><b>Status</b> WO-2.33 ✅ DONE 30 September, on your readings from this page; the default is WO-2.57 🔒 GATED on your trial</span>
+      <span><b>Carries</b> WO-2.31's sixth Acceptance line, which failed on 16 August</span>
+      <span><b>Build</b> planbook-shell-v147</span>
+      <span><b>Written</b> 30 September 2026</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <div class="sec-label">Before anything else</div>
+    <div class="traps">
+      <div class="trap">
+        <h3>Not on your real year</h3>
+        <p>A pass is permanent history: every trip goes into <code>passes</code> and nothing in the app
+        takes one out. Four ten-minute test passes on a real student leave four ten-minute trips on their
+        record. Run this on the <strong>test install</strong> served from the laptop, with made-up
+        students. It has its own storage and cannot see your real year.</p>
+      </div>
+      <div class="trap">
+        <h3>Don't touch the screen while you wait</h3>
+        <p>Any touch creates or wakes the audio, which is exactly what the tests are trying not to do.
+        Once a pass is out, hands off until the step says otherwise. Put the iPad on a stand and set a
+        timer on your phone, not the iPad (run 3 is the only exception).</p>
+      </div>
+      <div class="trap">
+        <h3>The default stays off</h3>
+        <p>You're switching the sound on for this one install with the header speaker. Nothing here
+        changes what any other device does. Bringing the tone back for everyone is a decision to make
+        after these results, not before.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">What a pass sounds like</div>
+    <div class="callout">
+      <h3>Two thresholds, one tint each, one tone each</h3>
+      <p>When a pass reaches <strong>5 minutes</strong> the card tints and the first tone plays. At
+      <strong>10 minutes</strong> it tints again and the second tone plays. The tint needs no audio at all,
+      so <strong>a tint with no sound means the alert fired and the audio lost it</strong>. That's the
+      failure this page is looking for. No tint at all is a different problem; write it down if you see it.</p>
+      <p>A tone should play <strong>only</strong> at a threshold, or when you switch into the app while a pass
+      is already overdue. A tone at any other moment, like tapping Return or sending someone out, is the
+      erratic behaviour from 16 August, and it's worth more than any pass or fail on this page.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">At a glance</div>
+    <div class="glance scroll">
+      <table>
+        <thead><tr><th>Run</th><th>What it asks</th><th>Time</th><th>Kind</th></tr></thead>
+        <tbody>
+          <tr><td class="num">0</td><td><a href="#setup">Test install ready, sound on, volume up</a></td><td>~10 min</td><td><span class="chip home">Setup</span></td></tr>
+          <tr><td class="num">1</td><td><a href="#run1">Can this iPad make the sound at all today?</a></td><td>~2 min</td><td><span class="chip real">Control</span></td></tr>
+          <tr><td class="num">2</td><td><a href="#run2">A pass with no interruption chimes at 5 and 10</a></td><td>~11 min</td><td><span class="chip real">Control</span></td></tr>
+          <tr><td class="num">3</td><td><a href="#run3">An interruption that leaves the app on screen</a></td><td>~11 min</td><td><span class="chip entry">The failure</span></td></tr>
+          <tr><td class="num">4</td><td><a href="#run4">Try to make it go erratic on purpose</a></td><td>~15 min</td><td><span class="chip entry">The failure</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note" style="margin-top:14px"><b>Runs 1 and 2 are controls.</b> If either one is silent, stop
+    there: the iPad can't make the sound today, and runs 3 and 4 would only measure that again. Write down what
+    you heard and bring it back.</p>
+  </section>
+
+  <section>
+    <div class="sec-label">The runs</div>
+    <div class="steps">
+
+      <!-- Setup -->
+      <div class="step home" id="setup" data-box="Run 0: setup">
+        <div class="step-num">0</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip home">Setup</span> <span class="chip">~10 min</span></div>
+            <h2>The test install, sound on</h2>
+          </div>
+          <div class="subhead">On the laptop</div>
+          <ol>
+            <li>Start the app server: <code>node tools/serve-https.mjs</code>. It prints the LAN address.
+            Or ask a session to start it for you.</li>
+            <li>In a second terminal, start the probe server on other ports:
+            <code>node tools/serve-https.mjs --port 8444 --http-port 8081</code>. Run 1 needs it, because
+            on port 8443 the app's service worker opens the app instead of the probe page.</li>
+          </ol>
+          <div class="subhead">On the iPad</div>
+          <ol>
+            <li>If the iPad already has the Planbook install from <code>https://&lt;address&gt;:8443</code>
+            (August's test icon), use that one. If not, open <code>http://&lt;address&gt;:8080/</code> in Safari
+            and follow the setup page to install it. <strong>Don't use the icon you teach with.</strong></li>
+            <li>In the test install, make one class (for example <em>English I (test)</em>) and paste two or
+            three made-up students: <em>Test A</em>, <em>Test B</em>, <em>Test C</em>.</li>
+            <li><strong>Force-quit the test install from the app switcher</strong>, then open it again. A reload
+            isn't enough.</li>
+            <li>Open About and check the build line reads <strong>planbook-shell-v147</strong>, with no amber
+            line saying the screen is older than the stored copy.</li>
+            <li>Turn off Silent Mode in Control Centre (the bell) and turn the media volume up.</li>
+            <li>Tap the <strong>speaker in the header</strong> so it's no longer slashed. That switch is saved
+            on this install only.</li>
+          </ol>
+          <div class="record">
+            <div class="subhead">Record</div>
+            <div class="fields">
+              <label class="field">Build line in About<input type="text" id="s-build" data-label="Build line"></label>
+              <label class="field">Which install
+                <select id="s-origin" data-label="Install used"><option value=""></option><option>August's LAN test install</option><option>Freshly installed from :8080</option><option>Other (say below)</option></select>
+              </label>
+              <label class="field">Speaker un-slashed?
+                <select id="s-speaker" data-label="Speaker on"><option value=""></option><option>Yes</option><option>No</option></select>
+              </label>
+              <label class="field">iPadOS version (Settings, General, About)<input type="text" id="s-ios" data-label="iPadOS version"></label>
+              <label class="field wide">Anything odd during setup<textarea id="s-notes" data-label="Setup notes"></textarea></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Run 1 -->
+      <div class="step real" id="run1" data-box="Run 1: probe page">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip real">Control</span> <span class="chip">~2 min</span></div>
+            <h2>Can this iPad make the sound at all today?</h2>
+          </div>
+          <p>The probe page plays the app's exact notes in different ways. It was the quickest way to tell a
+          device problem from an app problem in August, and two of its probes are the ones that matter now.</p>
+          <ol>
+            <li>In Safari (not the installed app), open
+            <code>https://&lt;address&gt;:8444/tools/audio-probe.html</code>.</li>
+            <li>Tap <strong>probe 1</strong>. It should sound straight away.</li>
+            <li>Tap <strong>probe 5</strong>, then take your hand away. It should sound about 8 seconds later
+            with nobody touching the screen. This is the same way the app holds its audio.</li>
+            <li>Tap <strong>probe 6</strong> and take your hand away. Same wait, using an audio element
+            instead. This is the fallback if the app's way turns out not to work.</li>
+          </ol>
+          <div class="record">
+            <div class="subhead">Record</div>
+            <div class="fields">
+              <label class="field">Probe 1
+                <select id="r1-p1" data-label="Probe 1"><option value=""></option><option>Audible</option><option>Silent</option></select>
+              </label>
+              <label class="field">Probe 5 (held, 8s later)
+                <select id="r1-p5" data-label="Probe 5"><option value=""></option><option>Audible</option><option>Silent</option></select>
+              </label>
+              <label class="field">Probe 6 (audio element, 8s later)
+                <select id="r1-p6" data-label="Probe 6"><option value=""></option><option>Audible</option><option>Silent</option></select>
+              </label>
+            </div>
+          </div>
+          <p class="note"><b>In August all three were audible.</b> If probe 1 is silent now, check Silent Mode and
+          the volume before anything else. If probe 5 is silent but 1 isn't, stop here and bring that back:
+          it's new, and it changes the whole work order.</p>
+        </div>
+      </div>
+
+      <!-- Run 2 -->
+      <div class="step real" id="run2" data-box="Run 2: no interruption">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip real">Control</span> <span class="chip">~11 min</span></div>
+            <h2>A pass with nothing in the way</h2>
+          </div>
+          <p>This is the baseline. If an ordinary pass doesn't chime, the interruption in run 3 has nothing to
+          be compared with.</p>
+          <ol>
+            <li>Open the test class. Send <em>Test A</em> out with <strong>🚽</strong>. That tap unlocks the audio.
+            Note the time on your phone.</li>
+            <li>Stay in the app. <strong>Don't touch the screen.</strong></li>
+            <li>At 5 minutes: did the card tint, and did the tone play?</li>
+            <li>At 10 minutes: the same again.</li>
+            <li>Tap <strong>Return</strong>. Listen: there should be no sound on Return.</li>
+          </ol>
+          <div class="record">
+            <div class="subhead">Record</div>
+            <div class="scroll">
+              <table>
+                <thead><tr><th>Moment</th><th>Tint?</th><th>Tone?</th></tr></thead>
+                <tbody>
+                  <tr><td>5 minutes</td><td><select id="r2-5t" data-label="Run 2, 5 min tint"><option value=""></option><option>Yes</option><option>No</option></select></td><td><select id="r2-5s" data-label="Run 2, 5 min tone"><option value=""></option><option>Yes</option><option>No</option><option>Late (say below)</option></select></td></tr>
+                  <tr><td>10 minutes</td><td><select id="r2-10t" data-label="Run 2, 10 min tint"><option value=""></option><option>Yes</option><option>No</option></select></td><td><select id="r2-10s" data-label="Run 2, 10 min tone"><option value=""></option><option>Yes</option><option>No</option><option>Late (say below)</option></select></td></tr>
+                  <tr><td>Tapping Return</td><td class="mono">—</td><td><select id="r2-ret" data-label="Run 2, sound on Return"><option value=""></option><option>Silent (correct)</option><option>A tone played</option></select></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="fields">
+              <label class="field wide">Anything else you heard or saw<textarea id="r2-notes" data-label="Run 2 notes"></textarea></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Run 3 -->
+      <div class="step entry" id="run3" data-box="Run 3: the interruption">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip entry">The failure</span> <span class="chip">~11 min</span></div>
+            <h2>An interruption that leaves the app on screen</h2>
+          </div>
+          <p>This is the exact test that failed on 16 August: both tones silent while the card tinted on time.
+          The interruption has to happen <strong>without Planbook leaving the screen</strong>. Switching apps or
+          locking the iPad tests a different path, one that already worked.</p>
+          <div class="subhead">Pick one interruption</div>
+          <ul>
+            <li><strong>A timer from the Clock app (easiest alone).</strong> Before you start, set a
+            <strong>2-minute</strong> timer in Clock, then go straight back to the test install. When it fires
+            over the app, stop it from the banner.</li>
+            <li><strong>A FaceTime call or phone call</strong> to the iPad from your phone, about 2 minutes in.
+            Decline it, or answer and hang up, from the banner.</li>
+          </ul>
+          <div class="subhead">Then</div>
+          <ol>
+            <li>With the timer running (or your phone ready), send <em>Test B</em> out with <strong>🚽</strong>.
+            Note the time.</li>
+            <li>Let the interruption happen and dismiss it from the banner. Planbook should never leave the
+            screen.</li>
+            <li><strong>Don't touch the app.</strong> At 5 minutes: tint, and tone?</li>
+            <li><strong>If the 5-minute tone was silent:</strong> touch the screen once, somewhere harmless like
+            an empty part of the header, then hands off again. At 10 minutes: tint, and tone? This tells us which
+            half of the recovery failed.</li>
+            <li><strong>If the 5-minute tone played:</strong> don't touch anything. At 10 minutes: tint, and tone?</li>
+            <li>Tap <strong>Return</strong>.</li>
+          </ol>
+          <div class="record">
+            <div class="subhead">Record</div>
+            <div class="fields">
+              <label class="field">Interruption used
+                <select id="r3-kind" data-label="Interruption"><option value=""></option><option>Clock timer</option><option>FaceTime</option><option>Phone call</option><option>Other (say below)</option></select>
+              </label>
+              <label class="field">Did Planbook stay on screen?
+                <select id="r3-stayed" data-label="App stayed on screen"><option value=""></option><option>Yes</option><option>No, it left</option></select>
+              </label>
+            </div>
+            <div class="scroll">
+              <table>
+                <thead><tr><th>Moment</th><th>Tint?</th><th>Tone?</th></tr></thead>
+                <tbody>
+                  <tr><td>5 minutes, untouched</td><td><select id="r3-5t" data-label="Run 3, 5 min tint"><option value=""></option><option>Yes</option><option>No</option></select></td><td><select id="r3-5s" data-label="Run 3, 5 min tone"><option value=""></option><option>Yes</option><option>No</option><option>Late (say below)</option></select></td></tr>
+                  <tr><td>Touched once after 5?</td><td class="mono">—</td><td><select id="r3-touch" data-label="Run 3, touched after 5"><option value=""></option><option>Yes</option><option>No</option></select></td></tr>
+                  <tr><td>10 minutes</td><td><select id="r3-10t" data-label="Run 3, 10 min tint"><option value=""></option><option>Yes</option><option>No</option></select></td><td><select id="r3-10s" data-label="Run 3, 10 min tone"><option value=""></option><option>Yes</option><option>No</option><option>Late (say below)</option></select></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="fields">
+              <label class="field wide">Anything else you heard or saw<textarea id="r3-notes" data-label="Run 3 notes"></textarea></label>
+            </div>
+          </div>
+          <p class="note"><b>A silent 5-minute tone with the tint on time is a repeat of August</b>, and that's a
+          useful result, not a wasted run. Don't retry it until it passes. One clean fail tells us more than a
+          fail and a pass averaged together.</p>
+        </div>
+      </div>
+
+      <!-- Run 4 -->
+      <div class="step entry" id="run4" data-box="Run 4: the erratic spell">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-head">
+            <div><span class="chip entry">The failure</span> <span class="chip">~15 min</span></div>
+            <h2>Try to make it go erratic</h2>
+          </div>
+          <p>Late on 16 August the tone played when a pass was returned, played when a new pass was sent out,
+          and then stopped playing altogether. Nobody knows why, and nobody wrote down what had just been
+          done. This run tries to recreate that: lots of passes, returns and switches, with every sound
+          written down <strong>the moment it happens</strong>.</p>
+          <ol>
+            <li>Send <em>Test A</em> out. Wait for the 5-minute tone.</li>
+            <li>While A is overdue, send <em>Test B</em> out. Listen.</li>
+            <li>Return <em>Test A</em>. Listen.</li>
+            <li>Send <em>Test C</em> out, then Return them straight away. Listen at both taps.</li>
+            <li>Switch to another app for 30 seconds while B is running, then come back. If B is overdue by then,
+            a tone on coming back is correct.</li>
+            <li>Lock the iPad for 30 seconds and unlock it. Listen.</li>
+            <li>Wait for B's own 5 and 10 minute thresholds, hands off.</li>
+            <li>If you hear something at a moment the callout above says should be silent, note the time and
+            what you'd just done, then <strong>stop poking it</strong> and see whether the next threshold
+            still sounds.</li>
+          </ol>
+          <div class="record">
+            <div class="subhead">Record, one line per sound or silence</div>
+            <div class="fields">
+              <label class="field wide">Log: time, what you'd just done, what you heard
+                <textarea id="r4-log" data-label="Run 4 log" style="min-height:160px" placeholder="10:42  sent B out while A overdue  silent&#10;10:43  returned A  TONE"></textarea>
+              </label>
+              <label class="field">Did it go erratic?
+                <select id="r4-erratic" data-label="Went erratic"><option value=""></option><option>Yes</option><option>No, everything as expected</option><option>Went silent and stayed silent</option></select>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-label">What happens next</div>
+    <div class="callout warn">
+      <h3>This page can't take a reading from inside the app</h3>
+      <p>The app keeps a log of every interruption, recovery and tone it plays, and the iPad has no way to show
+      it. So if runs 3 or 4 fail, this page records <strong>that</strong> it failed and what you'd just done, but
+      not <strong>why</strong>. That's still the right first step. A failure that happens again on demand is
+      what makes it worth building a way to show that log on the iPad, and your run 4 log tells that build
+      which steps to repeat.</p>
+      <p>If every run passes, the next step is your call on turning the tone back on for everyone. No code
+      needed.</p>
+    </div>
+  </section>
+
+  <section id="bring">
+    <div class="sec-label">Bringing it back</div>
+    <div class="callout">
+      <h3>Copy your answers into a session at home</h3>
+      <p>What you type is kept in this browser only, and nothing leaves it. <strong>Copy my answers</strong>
+      puts everything you've filled in on the clipboard as plain text. Paste it into a session that starts
+      with "WO-2.33 results". Afterwards, stop both servers on the laptop.</p>
+      <div class="actions">
+        <button type="button" class="primary" id="copyBtn">Copy my answers</button>
+        <button type="button" class="danger" id="clearBtn">Clear my answers</button>
+        <span class="status" id="status" role="status"></span>
+      </div>
+      <textarea id="copyFallback" hidden readonly aria-label="Your answers as text"></textarea>
+    </div>
+  </section>
+
+  <footer>
+    <span>WO-2.33 · <a href="https://github.com/wildbil2me/planbook/blob/main/plans/work-orders/phase-2-attendance.md#wo-233--the-overdue-tone-is-silent-on-the-ipad-and-nobody-knows-why">the work order in the tracker</a></span>
+    <span>plans/runbooks/wo-2-33-runbook.html</span>
+    <span>Written 2026-09-30</span>
+  </footer>
+
+</main>
+
+<script>
+  /* The record blocks remember what was typed, in this browser only, so a page closed between the
+     sitting interrupted between runs does not lose the early ones. Nothing is sent anywhere: the
+     only way out is the Copy button, into a session the owner starts. Storage can be refused (a
+     private window, blocked site data), so every read and write is wrapped and the page works
+     without it. */
+  (function () {
+    var KEY = 'wo-2-33-runbook-answers';
+    var fields = Array.prototype.slice.call(document.querySelectorAll('[data-label]'));
+    var status = document.getElementById('status');
+
+    function load() {
+      try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; }
+    }
+    function save() {
+      var out = {};
+      fields.forEach(function (f) { out[f.id] = f.type === 'checkbox' ? f.checked : f.value; });
+      try { localStorage.setItem(KEY, JSON.stringify(out)); } catch (e) { /* kept on screen only */ }
+    }
+    var saved = load();
+    fields.forEach(function (f) {
+      if (f.id in saved) {
+        if (f.type === 'checkbox') f.checked = !!saved[f.id]; else f.value = saved[f.id];
+      }
+      f.addEventListener(f.type === 'checkbox' || f.tagName === 'SELECT' ? 'change' : 'input', save);
+    });
+
+    function asText() {
+      var lines = ['WO-2.33 results'];
+      document.querySelectorAll('[data-box]').forEach(function (box) {
+        var own = Array.prototype.slice.call(box.querySelectorAll('[data-label]'));
+        if (!own.length) return;
+        var filled = own.filter(function (f) { return f.type === 'checkbox' ? f.checked : f.value.trim(); });
+        lines.push('', box.getAttribute('data-box'));
+        if (!filled.length) { lines.push('  (nothing recorded)'); return; }
+        var boxes = own.filter(function (f) { return f.type === 'checkbox'; });
+        if (boxes.length) {
+          var ticked = boxes.filter(function (f) { return f.checked; }).map(function (f) { return f.getAttribute('data-label').replace('Case ', ''); });
+          lines.push('  Cases checked: ' + (ticked.length ? ticked.join(', ') : 'none') + ' (' + ticked.length + ' of ' + boxes.length + ')');
+        }
+        filled.filter(function (f) { return f.type !== 'checkbox'; }).forEach(function (f) {
+          lines.push('  ' + f.getAttribute('data-label') + ': ' + f.value.trim().replace(/\s*\n\s*/g, ' / '));
+        });
+      });
+      return lines.join('\n');
+    }
+
+    var fallback = document.getElementById('copyFallback');
+    document.getElementById('copyBtn').addEventListener('click', function () {
+      var text = asText();
+      function showFallback() {
+        fallback.value = text;
+        fallback.hidden = false;
+        fallback.focus();
+        fallback.select();
+        status.textContent = 'Copying was blocked here. The text is selected below: copy it by hand.';
+      }
+      try {
+        navigator.clipboard.writeText(text).then(function () {
+          fallback.hidden = true;
+          status.textContent = 'Copied. Paste it into a session at home.';
+        }, showFallback);
+      } catch (e) { showFallback(); }
+    });
+
+    var clearBtn = document.getElementById('clearBtn');
+    var armed = null;
+    clearBtn.addEventListener('click', function () {
+      if (!armed) {
+        clearBtn.textContent = 'Tap again to clear everything';
+        armed = setTimeout(function () { clearBtn.textContent = 'Clear my answers'; armed = null; }, 4000);
+        return;
+      }
+      clearTimeout(armed); armed = null;
+      fields.forEach(function (f) { if (f.type === 'checkbox') f.checked = false; else f.value = ''; });
+      try { localStorage.removeItem(KEY); } catch (e) { /* nothing stored */ }
+      clearBtn.textContent = 'Clear my answers';
+      fallback.hidden = true;
+      status.textContent = 'Cleared.';
+    });
+  })();
+</script>

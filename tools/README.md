@@ -511,10 +511,11 @@ it on a second port for that reason. **The symptom of getting this wrong is the 
 looking fine**, which is why it is written here and in the file's own header rather than left to
 be rediscovered: nothing errors, and the tool you came for is simply not the thing on screen.
 
-**It is kept on a condition.** Its first header said "delete when done" and it is still here
-because WO-2.29's acceptance line 6 is still 👤 and still failing; `TESTING.md` names probe 1 as
-the one-tap answer for the next run. When that line closes, this goes with it — the row above,
-this section, and the two references in `TESTING.md`.
+**It is kept for good, the owner's call on 2026-09-30.** Its first header said "delete when done",
+and then it was kept on a condition: the overdue tone's 👤 line was still failing, and the page was
+to go when that line closed. WO-2.33 closed it that day, and the owner kept the page anyway, because
+it had answered the first question of every sitting. It is now **the first thing to run if the tone
+goes quiet again**, before any theory. The row above and this section stay with it.
 
 ## Testing on the iPad — `make-cert.mjs` and `serve-https.mjs`
 

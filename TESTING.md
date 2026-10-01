@@ -5270,7 +5270,7 @@ Safari), with the header speaker un-slashed and Silent Mode off. **First confirm
 build** — the About line must read `planbook-shell-v68`; an iPad on v67 or older is running the build
 with the hole in it.
 
-- [ ] 👤 **The interruption that does not background the app.** Open a class, send a student out on a
+- [x] 👤 **The interruption that does not background the app.** Open a class, send a student out on a
       pass (that tap *is* the unlock), and stay in the app. Now take an interruption that leaves
       Planbook on screen — the easiest reliable one is an **incoming call or FaceTime request
       answered and ended from the banner**, or a **timer/alarm from the Clock app** firing over the
@@ -5344,6 +5344,58 @@ passed · 0 failed · 2 to review**, exit 0, both REVIEWs the standing pair. The
 the fixture was corrected read **781 passed · 7 failed**, every one of them reporting
 `"state":"silenced"` — which is the withdrawal being watched as it tried to turn seven checks green
 against an absence.
+
+*(**The 👤 line above is ticked as of 2026-09-30**, on WO-2.33's re-run below, which is the evidence
+its pointer named. The failure record above is kept as written.)*
+
+---
+
+### WO-2.33 — the overdue tone is silent on the iPad and nobody knows why
+
+**What this changes for a teacher: nothing yet.** No byte of `src/` moved. This section is a re-run
+of the 2026-08-16 sitting, taken **before** anything was built, on the owner's suggestion: if the
+failure still happened, the first Deliverable (a way to read the audio log off the iPad) would be
+worth building; if it did not, there was nothing to build it for.
+
+**The sitting, 2026-09-30, the owner's hands, from `plans/runbooks/wo-2-33-runbook.html`.** A test
+install served from the laptop by `serve-https.mjs` on 8443, with the probe page on a second server
+at 8444 (`--port 8444 --http-port 8081`), so a test pass never reached a real student's history.
+About read **`planbook-shell-v147`**; iPadOS **26.6**, model MD4H4LL/A; Silent Mode off; the header
+speaker switched on for that install only.
+
+| Run | What | Result |
+|---|---|---|
+| 1 | Probe page: 1 (in the tap), 5 (held context, 8s untouched), 6 (`<audio>` primed, 8s untouched) | **All audible.** Probe 6 also sounds on the tap itself, because its primer plays the real WAV and pauses only once `play()` resolves — the probe's shape, not a finding. An `<audio>` channel would need a muted or silent primer |
+| 2 | One pass, no interruption, untouched | Tint and tone at **5** and at **10** minutes; **silent on Return** |
+| 3 | **WO-2.31's Acceptance 6**: a Clock timer fired over the app with Planbook on screen, stopped from the banner, then untouched | Tint and tone at **5** and at **10** minutes. **The August failure did not reproduce** |
+| 4 | A deliberate attempt at the erratic spell | Every tone at a threshold and nothing else. **Did not reproduce** |
+
+*Run 4, the owner's log as written:* "7:56 — timer went off at five minute mark, added a new pass as
+the tone stopped. 8:01 — timers went off in close succession sounding right over each other — no
+issue; returned first pass and launched two new ones. I'm using all three buttons. 8:06 — all three
+chimed with no issue." (*Timer* there is the alert tone.) The runbook's app-switch and lock steps
+were not taken; switching into the app with an overdue pass already chimed correctly in August, and
+neither is the path that failed.
+
+- [x] 👤 **The interruption that leaves the app foregrounded no longer costs the alert its sound** —
+      run 3, the owner's reading 2026-09-30.
+- [x] 👤 **The erratic firing of 2026-08-16 does not reproduce after a deliberate attempt** — run 4,
+      the owner's reading 2026-09-30.
+- [x] **The channel decision**, the owner's, 2026-09-30: **the tone comes back as it is**, not probe
+      6's `<audio>` path and not left withdrawn — **on the teaching iPad first**, with the header
+      speaker on in real periods. `src/prefs.js`'s default stays `false` until that trial has run;
+      the flip is WO-2.57, `🔒 GATED` on the trial. `tools/audio-probe.html` is **kept**, also the
+      owner's call, as the first thing to run if the tone goes quiet again.
+
+**Why it passed, and how much to trust that.** Nothing in the app's audio path changed between
+August and today. **One explanation fits and is not proven**: `TESTING.md`'s early-August readings
+were on iPadOS **26.5.2**, and `resume()` hanging on an interrupted context (§ WO-2.29, probe 3) is the
+kind of WebKit defect a point release fixes — but the version on the iPad for the 2026-08-16 sitting
+itself was never written down, so the comparison has one end missing. **No reading was taken from
+inside the app**, because there was no failure to take one during. One clean sitting is also the
+reason for the trial: August's failures came after sittings that looked fine at first. **If the tone
+goes quiet in a real period, write down what had just happened and the time, before touching
+anything**, and start from the probe page.
 
 ---
 

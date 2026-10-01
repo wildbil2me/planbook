@@ -3088,7 +3088,7 @@ button and nothing to act on. **This is not a WO-2.28 regression** and its fix d
 
 ## WO-2.31 — the held audio context has two ways to die that nothing watches
 
-**Ship** 2 · **Status** ✅ DONE — 2026-08-16 · **Size** S · **Depends on** WO-2.29 · **Owes** WO-2.33
+**Ship** 2 · **Status** ✅ DONE — 2026-08-16 · **Size** S · **Depends on** WO-2.29
 
 **Booked 2026-08-14 out of WO-2.29's correction round, and both halves are doors left open by the
 fix rather than faults in it.** WO-2.29 shipped a fresh `AudioContext` per alert; the iPad proved on
@@ -3151,7 +3151,7 @@ green harness, which is the failure mode this work order series has already been
       guarantees are unchanged and its checks still pass.
 - [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` print what they printed before, but
       for the count.
-- [ ] 👤 **RUN 2026-08-16 — FAILED, and left unticked deliberately.** On the teaching iPad, with a
+- [x] 👤 **RUN 2026-08-16 — FAILED, and left unticked deliberately.** On the teaching iPad, with a
       pass running and an interruption that did not background the app, **both alerts were silent
       and the card tinted at both thresholds**. The tint puts the failure in the audio half rather
       than the alert logic. The finding is in `TESTING.md` § WO-2.31, along with what the two new
@@ -3160,7 +3160,9 @@ green harness, which is the failure mode this work order series has already been
       withdrawn on every device rather than re-cut a fifth attempt: **WO-2.32**. This line stays open
       because it was tested and it failed, which is not the same as untested and not the same as
       done. 👤
-      → WO-2.33 "an interruption that leaves the app foregrounded no longer costs the alert its sound"
+      *(Ticked 2026-09-30, and the `**Owes**` field came off with it. This line ended in a bare
+      `→ WO-2.33` until then. WO-2.33's first box closed on the owner's re-run, which passed on
+      iPadOS 26.6 and `planbook-shell-v147`; the 2026-08-16 failure above is kept as the record.)*
 
 **Traps** — **Do not go back to a context per alert.** That is the shape the iPad falsified on
 2026-08-14 and the evidence is in `TESTING.md` § WO-2.29; a context built outside a gesture reports
@@ -3259,7 +3261,7 @@ unexplained.
 
 ## WO-2.33 — the overdue tone is silent on the iPad and nobody knows why
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-2.32
+**Ship** — · **Status** ✅ DONE — 2026-09-30 · **Size** M · **Depends on** WO-2.32
 
 **Booked 2026-08-16, carrying WO-2.31's Acceptance 6.** That line was not re-homed because someone
 ran out of time: **it was run, and it failed.** On the teaching iPad, an interruption that left
@@ -3304,16 +3306,43 @@ spell is the real defect and the interruption is a symptom of it.
   failure.
 - **`src/prefs.js`'s default revisited** if and only if the answer is that the tone can be trusted.
 
+**Worked 2026-09-30, and neither failure came back.** The owner re-ran the August sitting before
+anything was built, from `plans/runbooks/wo-2-33-runbook.html`, on a test install served from the
+laptop (`planbook-shell-v147`, iPadOS **26.6**, so no real student's pass history was touched). Probes
+1, 5 and 6 audible; a plain pass chimed at 5 and 10 minutes and was silent on Return; **a Clock timer
+fired over the app with Planbook on screen and both tones still played on time, untouched**; and a
+deliberate attempt at the erratic spell, with all three pass buttons in use, three passes open at once,
+a pass issued as a tone ended and two tones overlapping, chimed at every threshold and at nothing else.
+The full record is `TESTING.md` § WO-2.33. **No reading was taken from inside the app**, because there
+was no failure to take one during, so the first Deliverable's surface was never needed and is not
+built. **One explanation fits and is not proven:** August's readings were on iPadOS 26.5.2, and a hung
+`resume()` is the kind of WebKit defect a point release fixes, but the version on the iPad for the
+2026-08-16 sitting itself was never written down.
+
+**The decision, the owner's, 2026-09-30: the tone comes back as it is, on one device first.** Not probe
+6's `<audio>` path, which is no longer needed, and not left withdrawn. The owner switches the header
+speaker on on the teaching iPad and uses it in real periods; `src/prefs.js`'s default stays `false`
+until that trial has run, because one clean sitting followed three that looked fine at first in August.
+Turning the default back on is [WO-2.57](#wo-257--the-overdue-tone-comes-back-on-by-default-after-a-classroom-trial),
+booked the same day with the trial as its 📆 line. `tools/audio-probe.html` is **kept**, also the
+owner's call: its header said it goes when this line closes, and it has earned a place as the first
+thing to run if the tone goes quiet again.
+
 **Acceptance**
-- [ ] 👤 On the teaching iPad, from the installed PWA: an interruption that leaves the app
+- [x] 👤 On the teaching iPad, from the installed PWA: an interruption that leaves the app
       foregrounded no longer costs the alert its sound, or the reason it does is written down with a
       reading taken from the device while it was failing.
-- [ ] 👤 The erratic firing of 2026-08-16 is either reproduced and explained, or recorded as not
+      *(The owner's reading 2026-09-30, runbook run 3: Clock timer over the app, both tones on time.)*
+- [x] 👤 The erratic firing of 2026-08-16 is either reproduced and explained, or recorded as not
       reproducing after a deliberate attempt to make it happen again.
-- [ ] The channel decision is made and written into `plans/work-orders/` and `TESTING.md`, including
+      *(Not reproducing, the owner's run 4 2026-09-30, quoted in `TESTING.md` § WO-2.33.)*
+- [x] The channel decision is made and written into `plans/work-orders/` and `TESTING.md`, including
       the case where the answer is that it stays withdrawn.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass, and any fixture that turns
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass, and any fixture that turns
       the sound on still does it explicitly rather than relying on a default.
+      *(2026-09-30, on the tree with no byte of `src/` moved: `verify-shell.mjs` **1600 of 1600**, 0
+      failed, 0 skipped, exit 0, the fixture still asserting the default silent and then tapping
+      `#soundsBtn` on; `wo-sweep.mjs` 45 checks, 42 passed, 0 failed, the standing 3 to review.)*
 
 **Traps** — **Do not re-derive the probe table.** Probes 1–6 cost three sittings; `TESTING.md` has
 them and `tools/audio-probe.html` still runs them. **Do not start from the interruption.** The
@@ -6059,3 +6088,49 @@ files, which a CRLF rewrite hides best.
 day, off term); those appear on arrival or after a deliberate button, not mid-marking. The direction of
 the columns against the arrows (newest-first from the left while *◀ Earlier* points left), raised at
 booking and not taken up. Any change to what a tap writes.
+
+---
+
+## WO-2.57 — the overdue tone comes back on by default after a classroom trial
+
+**Ship** — · **Status** 🔒 GATED — on the owner's classroom trial: two weeks of real periods with the speaker on, on the teaching iPad, from 2026-09-30 · **Size** S · **Depends on** WO-2.33
+
+**Booked 2026-09-30, out of WO-2.33's decision.** The owner re-ran the August sitting on the iPad and
+neither failure came back (`TESTING.md` § WO-2.33), so the tone is coming back as it is. **But one
+clean sitting does not undo four that failed**, and August's failures came after sittings that looked
+fine at first. So the owner runs a trial first: the header speaker switched on on the teaching iPad,
+on the deployed app, in real periods. This work order turns the default back on once the trial has
+held up, and it is the `src/prefs.js` Deliverable WO-2.33 set aside for this reason.
+
+**Ship is `—` for WO-2.33's reason.** The tint already does the job and nothing waits on the tone.
+
+**Deliverables**
+- **`src/prefs.js`: `alertSoundOn` defaults to `true`.** Keep the key. A device whose teacher tapped
+  the speaker off has a stored `false`, and that choice must survive the flip; a device that never
+  touched it starts chiming, which is the point.
+- **The withdrawal's prose rewritten, not trimmed**: the `WITHDRAWN 2026-08-16` block in `src/prefs.js`,
+  the matching comment in `src/alert-sound.js` (~88–98) and `OFF_LABEL`'s neighbourhood, so none of
+  them still says the tone is opt-in.
+- **The harness check that asserts the default flips with it.** `tools/verify/attendance-passes.mjs`
+  ~625 asserts *a browser that has never touched the speaker is SILENT*; it becomes the opposite
+  assertion, still made **before** any tap.
+- **The fixture still sets the sound explicitly.** Today it turns the sound on with one click on
+  `#soundsBtn`; under the new default that same click turns it **off**, and every tone check after it
+  would go red or, worse, read `silenced` as correct. Set the state the checks need on purpose, which
+  is WO-2.33's fourth Acceptance line carried forward.
+- **`CACHE` bumped in `sw.js`**, `TESTING.md` § WO-2.57 and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] 📆 👤 The owner has used the teaching iPad with the speaker on through at least two weeks of real
+      periods, and every overdue pass in that time chimed at its thresholds, or any silence is written
+      down and explained. A silence that is not explained sends this back to WO-2.33's probes, not on.
+- [ ] A browser that has never touched the speaker plays the tone, and a stored `false` still silences
+      it — both asserted by the harness, before any tap.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass, with the fixture setting the
+      sound state explicitly rather than toggling from a default.
+
+**Traps** — **Do not start before the 📆 line**: the trial is the evidence, and flipping the default
+first makes every device the trial. **Do not rename the key** to reset everyone; a teacher who turned
+the sound off chose that. **Do not touch the tone, the thresholds or `tools/audio-probe.html`** — the
+probe page is kept on the owner's call (WO-2.33) as the first thing to run if the tone goes quiet
+again.

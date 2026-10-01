@@ -13,6 +13,21 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The overdue tone works on the iPad again, and comes back after a trial — 2026-09-30
+
+- **The two August failures did not come back.** The owner re-ran the 16 August iPad sitting before
+  anything was built. A timer going off over the app with Planbook on screen no longer silenced the
+  overdue tone: both the 5 and 10 minute tones played on time. A deliberate attempt at the "erratic"
+  behaviour, with three passes open, overlapping tones and returns between thresholds, chimed at
+  every threshold and at nothing else. One likely reason is the iPadOS update since August (26.5.2 to
+  26.6), but that isn't proven. The record is `TESTING.md` § WO-2.33.
+- **The tone comes back as it is, one device first.** The owner turns the header speaker on on the
+  teaching iPad and uses it in real periods. The default for everyone else stays off until that trial
+  has run for two weeks. Changing the default is booked as WO-2.57.
+- **Nothing in the app changed.** The audio probe page in `tools/` is kept for good as the first thing
+  to run if the tone goes quiet again. The runbook for the sitting is
+  `plans/runbooks/wo-2-33-runbook.html`.
+
 ### A first sign-in is no longer announced as a reconnect — 2026-09-30
 
 - **Signing in from *Open from Google Drive* on a fresh device now says "Connected to Google
