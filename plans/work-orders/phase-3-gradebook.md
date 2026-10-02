@@ -2367,3 +2367,158 @@ is the precedent, already in that table and named by no gate.
 `late` and `missing` are teacher-marked, and `src/past-due.js` is the one place in the app allowed to
 read a clock against a blank — it *asks*, and writes only what the teacher accepts. A count that goes
 up at midnight is the rule this project has broken and repaired once already.
+
+---
+
+**WO-3.27 and WO-3.28 were drawn before they were booked.** Read
+[`design/mockups/score-tools.html`](../../design/mockups/score-tools.html) and
+[`design/mockups/proposed-scores.css`](../../design/mockups/proposed-scores.css) before building
+either. The drawing's first frame reproduces the focus defect by hand on the shipped grid. Its
+stylesheet's two sections are what these two work orders lift. The owner answered all eight of its
+questions on 2026-10-01, and each answer is recorded on the drawing, in green, beside the question.
+They are also collected in [`design/mockups/README.md`](../../design/mockups/README.md) § Score grid
+tools.
+
+## WO-3.27 — the score grid scrolls in a box of its own, and a focused cell is never under the frozen columns
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.5 — the grid and the frozen pair this boxes
+**Closes roadmap** *(no box. Found by the owner in daily use, 2026-10-01.)*
+
+**Booked 2026-10-01**, owner-directed, from a sitting about the score grid's usability. Three of the
+owner's five asks are one change:
+
+- **The assignment names scroll off the top.** `.scores-grid-wrap` is `overflow-x: auto`
+  (`src/scores.css:169`), and a scrolling box is what sticky positioning measures against on **both**
+  axes. So `top: 0` on the head sticks to a box that never scrolls vertically, and does nothing.
+- **A focused cell can sit under the frozen name and grade.** A browser scrolls a focused field into
+  view against the edge of its scroll box. It does not know the left 274px of that box (190 + 84;
+  252 under a coarse pointer) is covered, so a cell underneath counts as visible and nothing moves.
+  Reproducible by hand in the drawing's first frame: scroll right, click the last column, Shift+Tab.
+- **Sideways scrolling on the laptop is clumsy.** The horizontal scrollbar sits under the last
+  student, below the bottom of the screen. A trackpad swipe also stops wherever it stops, often with
+  a column half under the frozen pair.
+
+**Deliverables**
+- **Surface: `design/mockups/proposed-scores.css` § SCORE SCROLL BOX**, drawn in
+  `design/mockups/score-tools.html`, lifted into `src/scores.css`. The `.boxed`
+  state word folds into `.scores-grid-wrap`'s base rule on lift. Amend the drawing's banner in the
+  same sitting (`design/mockups/PROTOCOL.md` rule 4).
+- **The box**: `overflow: auto` both ways, with a `max-height` of the viewport less what sits above
+  it. Once the page is scrolled to it, the whole box fits on one screen, head and horizontal
+  scrollbar included. The summary, flag bar and toolbar above it scroll away as a page normally
+  does: **the owner's ruling, Open 1**. `overscroll-behavior: contain`, so a swipe that reaches the
+  grid's edge stops there and does not carry on into the page: **Open 2**.
+- **The head sticks**, all four lines of it, with no compact variant: **Open 3**. The name and grade
+  heads, already sticky on the left, become the corner. The head cells are reached through
+  `:where()` as drawn, so the shipped corner rule's `z-index: 3` still wins on specificity rather
+  than being restated.
+- **`scroll-padding`** on the box: the stuck head's height on top and the frozen width on the left,
+  in both pointer blocks. It becomes **a fourth value tied to the frozen widths**, alongside the ones
+  the THE TWO FROZEN COLUMNS comment in `src/scores.css` says are asserted three ways, and
+  `tools/verify/score-grid.mjs` asserts it with them.
+- **`scroll-snap-type: x proximity`** with `scroll-snap-align: start` on the head cells, so a swipe
+  settles with a column edge on the frozen edge. Never `mandatory`, which fights a slow drag.
+- **Nothing in `src/scores.js` changes for any of this.** `revealScoreColumn()` and its
+  `scrollIntoView({ inline: 'center' })` is the one call that scrolls the grid on purpose. It should
+  keep working inside the new box; check that rather than assume it.
+
+**Acceptance**
+- [ ] With the box scrolled down, every column head's top equals the box's top, measured, on both
+      pointers. The name and grade heads hold that **and** their left offsets with the box also
+      scrolled sideways.
+- [ ] **The focus defect, driven rather than reasoned about.** With the grid scrolled fully right,
+      move into a cell whose column sits under the frozen pair, once with a real Shift+Tab and once
+      with a real `ArrowLeft` (caret at the start). Both leave that cell's left edge at or right of
+      the frozen pair's right edge. Enter down into a row under the stuck head leaves the cell's top
+      at or below the head's bottom. Both pointers. **Mutation-proved**: with `scroll-padding`
+      removed, the same keystrokes leave the cell covered and the check goes red. Revert the mutation
+      before writing anything else.
+- [ ] The frozen-pair assertion in `tools/verify/score-grid.mjs` covers the scroll padding as well as
+      the widths and the offset, base against base and coarse against coarse. A drift in any one of
+      the four goes red.
+- [ ] At a 1280×800 laptop viewport with the page scrolled to the grid, the box's bottom edge, and so
+      its horizontal scrollbar, is inside the viewport.
+- [ ] Arriving from the glance page's *Waiting to be graded* still lands on the column with the caret
+      in its first cell (`revealScoreColumn()`, WO-6.8), and that column is not under the frozen pair.
+- [ ] Every existing score-grid, past-due and grade-sheet check is green unchanged, and the printed
+      grade sheet is unchanged.
+- [ ] 👤 On the iPad: the head stays on screen; a swipe that reaches the grid's edge stops there, and
+      that feels right under a thumb rather than stuck; tapping a cell near the frozen edge brings it
+      clear of the name and grade.
+- [ ] 👤 On the laptop: a trackpad swipe sideways settles on a column edge, and the scrollbar is on
+      screen without scrolling the page to the bottom of the class.
+
+**Traps** — **The box changes what a page-level scroll does.** Two things already scroll on purpose:
+`revealScoreColumn()`, and the past-due review's column tint, which a teacher finds by scrolling.
+Read both against the box. **Do not fix the focus defect in JavaScript first.** The fix is a
+declaration. A `scrollIntoView` in the key handler would cover arrows and Enter, and miss a click and
+a screen reader's own focus move. Add a script fallback only if the 👤 iPad reading shows Safari
+ignoring `scroll-padding` for focus, and say so in `TESTING.md`.
+
+## WO-3.28 — the score grid narrows by student and by category
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.27 — the box whose scroll padding a third frozen column widens
+**Closes roadmap** *(no box. Owner-requested, 2026-10-01.)*
+
+**Booked 2026-10-01**, owner-directed, from the same sitting as WO-3.27. A teacher wants two things
+the grid cannot do: find one student's row in a class of thirty without scrolling for it, and look
+at one category alone. The second is how a category is checked against the SIS. That check is done by
+hand, because the SIS has no usable export (`CLAUDE.md` § Working agreements).
+
+**Deliverables**
+- **Surface: `design/mockups/proposed-scores.css` § SCORE TOOLBAR and the `.scores-cat-avg`
+  rules**, drawn in `design/mockups/score-tools.html`, lifted into `src/scores.css`. Amend the drawing's banners in the same sitting. The toolbar is
+  `.attendance-toolbar` value for value, wearing `.search-box` and `.pill` as shipped.
+- **Type-to-narrow by student.** A row shows when the query, ignoring case, is the **start** of the
+  student's first name, last name or `nickname`: **Open 7**. *ma* finds Marcus and Mahoney and not
+  Thomas. Rows that do not match are not rendered. A count, *3 of 14 students*, sits beside the box.
+  When nothing matches, the grid's own `.scores-empty` line shows, with no head over nothing.
+  **Escape in the search box clears it** (the grid still does nothing on Escape).
+- **One matcher, and the attendance search moves to it**: the owner's ruling of 2026-10-01. Today
+  `src/attendance.js` (~3160) matches anywhere in `rosterName()` or `fullName()` and ignores
+  `nickname`. Both screens call one exported function, so two identical-looking boxes cannot answer
+  one query differently. `src/roster.js`, beside `fullName()`, is the natural home.
+- **One category at a time, plus *All***: **Open 4**. A single category's average is what gets
+  compared to the SIS. Pills carry names only (**Open 6**). A pill appears for each category with at
+  least one assignment in the open term, because a pill that empties the grid is a dead control.
+  Work filed under no category shows under *All* only. Columns outside the category are **not
+  rendered**, so Tab, the arrows and Enter cannot put a caret in a column nobody can see.
+- **A third frozen column while a category is picked: that category's average**, from
+  `categoryPercentage()` in `src/grade-engine.js` and from nowhere else. A percentage and no letter,
+  for the reason `classAverage()` gives. The overall grade does not move and does not change meaning:
+  **the owner's ruling before drawing**. The column stays in every orientation, iPad portrait
+  included (**Open 8**). The box's left `scroll-padding` widens to cover it (358px, 336px coarse).
+- **The summary line gains the category's class average** while one is picked (**Open 5**). Every
+  other figure on it stays whole-class. Neither filter moves the class average, the blank count or
+  any student's grade.
+- **Neither filter is remembered.** Both reset whenever the screen is opened, which is the
+  calendar's ruling that a filter is a door and not a preference. Nothing reaches `localStorage`.
+  The printed grade sheet ignores both.
+
+**Acceptance**
+- [ ] On a roster holding Marcus Bell, Jada Mahoney, Maya Ortiz and Thomas Reed, typing *ma* shows
+      exactly the first three. A student whose `nickname` starts with the query is shown. The count
+      reads *3 of N students*. A query matching no one draws the empty line and no grid head. Escape
+      clears the box and every row returns.
+- [ ] **The attendance search answers every one of those queries identically**, through the same
+      exported function, and the harness or a sweep check shows there is one matcher rather than two.
+- [ ] With a category picked, only its columns are in the DOM. Tab, `ArrowRight` and Enter stop at the
+      last shown column and the last shown row, with the edge sentence the grid already speaks.
+- [ ] The third column's figure for every student equals `categoryPercentage()` for that student and
+      category, and the summary's category average equals the same figure averaged over the class.
+      **Mutation-proved**: a third column fed any other arithmetic goes red.
+- [ ] With a category picked, a focused cell is never under the three frozen columns. This is
+      WO-3.27's driven check re-run with the filter on, both pointers.
+- [ ] The class average, the blank count and every overall grade are byte-identical with either
+      filter on and off.
+- [ ] Leaving the screen and coming back shows *All* and an empty search, and no `planbook_` key was
+      written by either control.
+- [ ] Pills and the search box measure ≥44px under the coarse pointer.
+- [ ] 👤 On the iPad in portrait, with a category picked and a name typed, the three frozen columns
+      leave a usable grid under a thumb.
+
+**Traps** — **Do not hide columns or rows with CSS.** The key handlers in `src/scores.js` can still
+walk into a `display: none` cell, and a caret in a hidden field is the defect WO-3.27 exists to
+remove. **Do not compute the category average on this screen.** The engine already answers it, and a
+second answer is the one that ends up disagreeing with the student detail an inch away. **Do not
+store either filter**, however convenient a remembered *Quizzes* would be on the second visit.

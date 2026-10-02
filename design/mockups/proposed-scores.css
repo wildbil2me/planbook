@@ -34,12 +34,12 @@
 
    WHERE IT SPLITS ON LIFT:
 
-     § SCORE TOOLBAR      →  src/scores.css   (not yet lifted)
-     § SCORE SCROLL BOX   →  src/scores.css   (not yet lifted)
+     § SCORE TOOLBAR      →  src/scores.css   (WO-3.28 — not yet lifted)
+     § SCORE SCROLL BOX   →  src/scores.css   (WO-3.27 — not yet lifted)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SCORE TOOLBAR   →  src/scores.css   (not yet lifted)
+   § SCORE TOOLBAR   →  src/scores.css   (WO-3.28 — not yet lifted)
 
    The attendance screen's toolbar, value for value — `.attendance-toolbar` and
    `.attendance-pills` in src/attendance.css — because it is the same question
@@ -59,7 +59,7 @@
 .scores-found b { color: #1a1a2e; font-variant-numeric: tabular-nums; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SCORE SCROLL BOX   →  src/scores.css   (not yet lifted)
+   § SCORE SCROLL BOX   →  src/scores.css   (WO-3.27 — not yet lifted)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* THE BOX. A height, both axes, and the frozen edges declared to the browser.
