@@ -700,3 +700,61 @@ The band is `about.html`'s, value for value, and controls are `.class-action-btn
 - **Is *use it in this browser* remembered**: proposed yes, once. WO-8.16 Open line 2.
 - **A browser that cannot install**: its own words if detectable, or the laptop door if not. WO-8.16
   Open line 3.
+
+---
+
+# Score grid tools — drawn 2026-10-01, not yet booked
+
+**The ninth room, and the first drawn of a screen that already ships.**
+[`score-tools.html`](score-tools.html) draws the owner's list of 2026-10-01 against the score grid
+WO-3.5 built: filter by assignment type, filter by student, keep the assignment names on screen, a
+cleaner sideways scroll on the laptop, and a focused cell that is never hidden. Its first frame is the
+grid as shipped, so the focus bug can be reproduced on the page by hand.
+
+## What the drawing proposes
+
+Styled in [`proposed-scores.css`](proposed-scores.css), two sections, both bound for
+`src/scores.css` and both `not yet lifted`.
+
+1. **§ SCORE SCROLL BOX: the grid gets a box of its own that scrolls both ways.** Three of the five
+   asks are this one change: sticky `top` on the head only works once the wrapper scrolls
+   vertically, the horizontal scrollbar moves from under the last row to the bottom of the box, and
+   `scroll-padding` tells the browser where the frozen columns end, which is the focus fix.
+   No JavaScript changes for any of it. `scroll-snap-type: x proximity` lets a trackpad swipe settle
+   on a column edge.
+2. **§ SCORE TOOLBAR: `.attendance-toolbar`, value for value.** `.search-box` and `.pill` are worn as
+   shipped. The search narrows rows on the start of a first or last name. The pills pick one category
+   or *All*. Neither is remembered, and neither touches the printed grade sheet.
+3. **A third frozen column while a category is picked: that category's average**, tinted, with the
+   category named in its header, a percentage and no letter, from `categoryPercentage()`. The
+   overall grade stays where it is.
+
+## Decided before drawing
+
+- **The overall grade stays in place; the category average is a second column beside it.** The
+  owner, 2026-10-01.
+- **Filtering by student is type-to-narrow.** The owner, 2026-10-01.
+
+## The open questions, collected — all eight answered 2026-10-01
+
+Every one answered by the owner the day it was drawn, and every one as drawn except 7, which widened.
+
+1. **How tall the box is**: the viewport less what sits above it, with the summary and toolbar
+   scrolling away (drawn), or those pinned too. **Decided: as drawn.**
+2. **Whether a swipe at the grid's edge carries on into the page**: drawn with
+   `overscroll-behavior: contain`, so it does not. **Decided: it stops.** Ruled from the desk; the
+   iPad reading is still owed as a 👤 line in the work order.
+3. **The stuck head is ~84px**: kept whole (drawn), or a compact version that drops the due line.
+   **Decided: all four lines.**
+4. **One category at a time or several**: one plus *All* (drawn). **Decided: one**, because a single
+   category's average is what gets checked against the SIS.
+5. **The summary line gains the category's class average** while one is picked (drawn), or not.
+   **Decided: yes.**
+6. **Weights on the pills**: names only (drawn). **Decided: names only.**
+7. **What a name matches on**: first or last name prefix (drawn); a preferred name too? And whether
+   Escape clears the search box. **Decided: a preferred name matches too, and Escape clears.** And
+   a follow-up the drawing had not seen: the attendance search matched anywhere in a name and
+   skipped the preferred name. **Decided: attendance changes to this rule**, in the same work order,
+   so the two boxes cannot answer one query differently.
+8. **Three frozen columns in iPad portrait**: kept (drawn), or the category average replaces the
+   grade there. **Decided: kept, the same in every orientation.**

@@ -1,0 +1,146 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   PROPOSED STYLES — the score grid, second pass: finding your way around it.
+
+   Ninth room, and the first drawn of a screen that already ships. `proposed.css`
+   § SCORE GRID drew this grid on 2026-08-09 and WO-3.5 lifted it; this file adds
+   to src/scores.css rather than proposing a new sheet, so both sections below
+   carry `not yet lifted` (PROTOCOL.md rule 4). Drawn 2026-10-01 from the owner's
+   list of the same day: filter by assignment type, filter by student, keep the
+   assignment names on screen, a cleaner sideways scroll, and a focused cell that
+   is never hidden.
+
+   THREE OF THOSE FIVE ARE ONE CHANGE. The grid's wrapper scrolls sideways
+   (`overflow-x: auto`), and a scrolling box is the frame sticky positioning is
+   measured against on BOTH axes. So `top: 0` on the head sticks to a box that
+   never scrolls vertically, and does nothing. Give the box a height and let it
+   scroll both ways, and the head sticks, the scrollbar is on screen instead of
+   under the last row, and `scroll-padding` can say where the frozen columns are.
+
+   THE FOCUS BUG IS REAL AND IS NOT A JAVASCRIPT BUG. A browser scrolls a focused
+   field into view against the edge of the scroll box. It does not know the left
+   274px of that box (190 name + 84 grade) is covered by two sticky columns, so a
+   cell under them counts as "visible" and nothing moves. `scroll-padding-left`
+   tells it. The drawing's first frame is the shipped wrapper, so the bug can be
+   reproduced by hand on this page; the frames after it are the fix.
+
+   THE RULE THIS FILE OBEYS, from PROTOCOL.md rule 5: a pending section styles no
+   class src/*.css already styles. Every new name below starts `scores-toolbar`,
+   `scores-filter`, `scores-found` or `scores-cat-avg`, and none is in src/. The
+   wrapper is changed through `.scores-grid-wrap.boxed`, a state word compounded
+   with the shipped class — on lift both halves fold into the base rule and
+   `.boxed` disappears. The head cells are reached through `:where()` so that
+   src/scores.css's own corner rule (z-index 3 on the name and grade heads)
+   still wins on specificity, rather than being restated here.
+
+   WHERE IT SPLITS ON LIFT:
+
+     § SCORE TOOLBAR      →  src/scores.css   (not yet lifted)
+     § SCORE SCROLL BOX   →  src/scores.css   (not yet lifted)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § SCORE TOOLBAR   →  src/scores.css   (not yet lifted)
+
+   The attendance screen's toolbar, value for value — `.attendance-toolbar` and
+   `.attendance-pills` in src/attendance.css — because it is the same question
+   (narrow a class list by name, and by one other axis) and a teacher who has
+   learned one has learned both. `.search-box` and `.pill` are worn as shipped
+   from src/shell.css and restyled from nowhere, exactly as attendance and the
+   signals screen wear them.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.scores-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+.scores-filter-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+/* How many rows the search left, said in words, because a grid of three students
+   reads as a class of three. Same voice as `.attendance-sort-label`. */
+.scores-found {
+  margin-left: auto; white-space: nowrap;
+  font-size: 11px; font-weight: 700; color: #8a9bb0;
+}
+.scores-found b { color: #1a1a2e; font-variant-numeric: tabular-nums; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § SCORE SCROLL BOX   →  src/scores.css   (not yet lifted)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* THE BOX. A height, both axes, and the frozen edges declared to the browser.
+
+   `max-height` is the one number here the drawing could not settle — each frame
+   in score-tools.html overrides it inline to fit the page. The lift wants
+   something like `calc(100dvh - <what sits above the box>)`, so the whole box,
+   head and horizontal scrollbar included, fits on one screen when the page is
+   scrolled to it.
+
+   `overscroll-behavior: contain` stops a swipe that reaches the top of the grid
+   from carrying on and dragging the page. Whether that is right on the iPad, or
+   whether a teacher expects the page to take over, is a thumb question.
+
+   `scroll-padding` is the focus fix: 84px of stuck head on top, and the frozen
+   columns on the left. It must change with the frozen widths, so it is the
+   fourth value in the pair src/scores.css already asserts stay in step.
+
+   `scroll-snap-type: x proximity` lets a trackpad swipe settle with a column's
+   left edge on the frozen edge rather than half under it. `proximity`, never
+   `mandatory`: a mandatory snap fights a slow drag. */
+.scores-grid-wrap.boxed {
+  overflow: auto;
+  max-height: calc(100dvh - 160px);
+  overscroll-behavior: contain;
+  scroll-padding: 84px 0 0 274px;
+  scroll-snap-type: x proximity;
+  border: 1px solid #eef0f4; border-radius: 8px;
+}
+.scores-grid-wrap.boxed.filtered { scroll-padding-left: 358px; }
+
+/* THE HEAD STAYS PUT. Every head cell sticks to the top of the box; the name and
+   grade heads were already sticky on the left, so they now stick on both axes,
+   which is the corner. `z-index: 1` lifts the head over `.scores-cell`, which is
+   `position: relative` and would otherwise paint over it as rows pass beneath.
+   `:where()` keeps this at (0,2,0) so the shipped corner rule — z-index 3 on
+   `thead th.scores-name` and `.scores-grade`, (0,2,2) — still wins. */
+.scores-grid-wrap.boxed :where(thead th) {
+  position: sticky; top: 0; z-index: 1;
+  scroll-snap-align: start;
+}
+
+/* THE CATEGORY AVERAGE: a third frozen column, drawn only while a category pill
+   is on. The overall grade stays where it is (the owner, 2026-10-01); this sits
+   beside it and says which category it is, in its head, every time. A percent
+   and no letter, for the reason src/scores.js gives about the class average: a
+   category does not get a report card, and a letter would read as one.
+
+   The wash is what keeps it from reading as a second overall grade at a glance.
+   Its right edge is the frozen edge now, the 1.5px line `.scores-grade` draws for
+   the same reason. The number is the engine's — `categoryPercentage()` in
+   src/grade-engine.js already answers it, so this screen computes nothing new. */
+.scores-cat-avg {
+  position: sticky; left: 274px; z-index: 2;
+  width: 84px; min-width: 84px;
+  background: #f5f7fb;
+  border-right: 1.5px solid #e0e4ea;
+  font-size: 14px; font-weight: 800; color: #4a5568;
+  font-variant-numeric: tabular-nums;
+}
+.scores-grid-wrap th.scores-cat-avg { z-index: 3; background: #f5f7fb; }
+.scores-cat-avg-name {
+  display: block; font-size: 11px; font-weight: 700; color: #1a1a2e;
+  text-transform: none; letter-spacing: 0;
+}
+.scores-cat-avg-sub { display: block; margin-top: 2px; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § TOUCH — the coarse pointer's frozen widths, kept in step
+   ══════════════════════════════════════════════════════════════════════════════ */
+/* This sheet adds no tappable control of its own — the pills and the search box are
+   src/shell.css's, at the floor already — so there is no grouped touch-action
+   selector at the top and nothing here is a 44px floor. What changes under a
+   coarse pointer is geometry: src/scores.css narrows the name column to 168px, so
+   the grade ends at 252 and the category average at 336, and the padding that
+   keeps a focused cell clear of them has to say so. */
+@media (pointer: coarse) {
+  .scores-toolbar { gap: 10px; }
+  .scores-filter-pills { gap: 6px; }
+  .scores-found { font-size: 12px; }
+  .scores-grid-wrap.boxed { scroll-padding-left: 252px; }
+  .scores-grid-wrap.boxed.filtered { scroll-padding-left: 336px; }
+  .scores-cat-avg { left: 252px; font-size: 15px; }
+}

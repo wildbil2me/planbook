@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Finding your way around the score grid</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="../../src/assignments.css">
+<link rel="stylesheet" href="../../src/scores.css">
+<link rel="stylesheet" href="proposed-scores.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Static HTML. Nothing filters, nothing saves, no grade recomputes. The scroll and the focus behaviour are real: they are CSS, and that is what is being proposed.</span>
+  <span>Score grid tools · drawn 2026-10-01 · not yet booked</span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="scores.html">Score grid (first drawing)</a>
+  <a href="score-tools.html" class="here">Score grid tools</a>
+</nav>
+
+<!-- This page links the three shipped stylesheets the grid already wears — src/scores.css for the
+     grid, src/assignments.css for `.cat-chip`, src/shell.css for the panel, `.pill` and
+     `.search-box` — and adds only proposed-scores.css on top. Every cell below is a real <input> so
+     that Tab, Shift+Tab and a click put a real caret in it: the focus fix is a scroll-padding
+     declaration, and a browser is the only thing that can show whether it works. -->
+
+<p class="mk-section">What this drawing is for</p>
+<p class="mk-caption">The owner's list of 2026-10-01, for the score grid that ships today: <strong>filter by assignment type</strong>, <strong>filter by student</strong>, <strong>keep the assignment names on screen</strong>, a <strong>cleaner sideways scroll</strong> on the laptop, and a <strong>focused cell that is always visible</strong>. The last three are one change: the grid gets a box of its own that scrolls both ways (<code>proposed-scores.css</code> § SCORE SCROLL BOX). The first two are a toolbar above it, the attendance screen's own (§ SCORE TOOLBAR). English III, Period 2, fourteen students, twelve assignments; every name and score is invented.</p>
+<p class="mk-caption decided"><strong>The overall grade stays where it is, and a category's average is a second column beside it</strong> while a category is picked. <strong>Filtering by student is type-to-narrow</strong>, not a jump to one student's page. Both the owner, 2026-10-01, in conversation before this was drawn.</p>
+
+<!-- ═══════════════════════════ TODAY ═══════════════════════════ -->
+
+<p class="mk-section">Today, as shipped · try this one first</p>
+<div style="max-width:1100px;margin:12px auto 0;border:1px solid #c5ccd6;background:#f0f2f5;padding:12px">
+  <div class="panel scores-panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>English III · Period 2</h2>
+          <p>Quarter 1 · 14 students · 12 assignments</p>
+        </div>
+      </div>
+    </div>
+    <div class="scores-body">
+      <div class="scores-grid-wrap">
+        <table class="scores-grid">
+          <thead>
+          <tr>
+            <th class="scores-name">Student</th>
+            <th class="scores-grade">Grade</th>
+            <th class="scores-col"><span class="scores-col-name">Summer reading essay</span><span class="scores-col-pts">out of 100</span><span class="cat-chip">Essays <b>40%</b></span><span class="scores-col-due">due Aug 29</span></th>
+            <th class="scores-col"><span class="scores-col-name">Vocab quiz 1</span><span class="scores-col-pts">out of 20</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 5</span></th>
+            <th class="scores-col"><span class="scores-col-name">Annotation log 1</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Homework <b>20%</b></span><span class="scores-col-due">due Sep 8</span></th>
+            <th class="scores-col"><span class="scores-col-name">Gatsby ch. 1–3 check</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 10</span></th>
+            <th class="scores-col"><span class="scores-col-name">Socratic seminar 1</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Participation <b>20%</b></span><span class="scores-col-due">due Sep 12</span></th>
+            <th class="scores-col"><span class="scores-col-name">Vocab quiz 2</span><span class="scores-col-pts">out of 20</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 15</span></th>
+            <th class="scores-col"><span class="scores-col-name">Annotation log 2</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Homework <b>20%</b></span><span class="scores-col-due">due Sep 17</span></th>
+            <th class="scores-col"><span class="scores-col-name">Rhetorical analysis draft</span><span class="scores-col-pts">out of 50</span><span class="cat-chip">Essays <b>40%</b></span><span class="scores-col-due">due Sep 19</span></th>
+            <th class="scores-col"><span class="scores-col-name">Gatsby ch. 4–6 check</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 22</span></th>
+            <th class="scores-col"><span class="scores-col-name">Socratic seminar 2</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Participation <b>20%</b></span><span class="scores-col-due">due Sep 24</span></th>
+            <th class="scores-col"><span class="scores-col-name">Annotation log 3</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Homework <b>20%</b></span><span class="scores-col-due">due Sep 26</span></th>
+            <th class="scores-col"><span class="scores-col-name">Vocab quiz 3</span><span class="scores-col-pts">out of 20</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 29</span></th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Amari Johnson</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">94.1%</div><div class="scores-grade-letter">A</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="100" placeholder="—" aria-label="Summer reading essay, out of 100, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 1, out of 10, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="19" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 2, out of 10, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="48" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Annotation log 3, out of 10, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Amari Johnson"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Ben Castillo</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">83.1%</div><div class="scores-grade-letter">B</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="87.5" placeholder="—" aria-label="Summer reading essay, out of 100, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="16" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 1, out of 10, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="14" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Annotation log 2, out of 10, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="44" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Annotation log 3, out of 10, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15.5" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Ben Castillo"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Chloe Nguyen</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">97.1%</div><div class="scores-grade-letter">A</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="100" placeholder="—" aria-label="Summer reading essay, out of 100, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="18.5" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Annotation log 1, out of 10, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="18.5" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 2, out of 10, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="49" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Annotation log 3, out of 10, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="19" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Chloe Nguyen"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Darius Webb</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">62.9%</div><div class="scores-grade-letter">D</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="73.5" placeholder="—" aria-label="Summer reading essay, out of 100, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="13.5" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Annotation log 1, out of 10, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="6" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="11" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="5" placeholder="—" aria-label="Annotation log 2, out of 10, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="28" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Gatsby ch. 4–6 check, out of 10, for Darius Webb"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="6" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Darius Webb"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="6" placeholder="—" aria-label="Annotation log 3, out of 10, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="13" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Darius Webb"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Elena Ruiz</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">86.9%</div><div class="scores-grade-letter">B</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="95.5" placeholder="—" aria-label="Summer reading essay, out of 100, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="19" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 1, out of 10, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Annotation log 2, out of 10, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="43" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 3, out of 10, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Elena Ruiz"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Grace Okafor</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">75.3%</div><div class="scores-grade-letter">C</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="71" placeholder="—" aria-label="Summer reading essay, out of 100, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Annotation log 1, out of 10, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Grace Okafor"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15.5" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Annotation log 2, out of 10, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="36" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Annotation log 3, out of 10, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Grace Okafor"></span></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="mk-caption"><strong>The bug, reproducible here.</strong> Scroll this grid all the way right, click into <em>Vocab quiz 3</em>, then press <strong>Shift+Tab</strong> a few times. The caret walks left into cells that are under the frozen name and grade columns, and <strong>the grid does not move</strong>. The browser sees those cells as already inside the box, because it doesn't know 274px of the box is covered. Only six rows are drawn here. On a real class the horizontal scrollbar sits under the last student, below the bottom of the screen, which is most of why sideways scrolling on the laptop feels clumsy.</p>
+
+<!-- ═══════════════════════════ PROPOSED, ALL ═══════════════════════════ -->
+
+<p class="mk-section">Laptop · proposed · everything showing</p>
+<div style="max-width:1100px;margin:12px auto 0;border:1px solid #c5ccd6;background:#f0f2f5;padding:12px">
+  <div class="panel scores-panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>English III · Period 2</h2>
+          <p>Quarter 1 · 14 students · 12 assignments</p>
+        </div>
+      </div>
+    </div>
+    <div class="scores-body">
+      <div class="scores-summary">
+        <span>Class average <b>79.0%</b></span><span class="sep">·</span>
+        <span>5 blanks across 1 assignment</span><span class="sep">·</span>
+        <span>Weights total <b>100%</b></span>
+      </div>
+      <div class="scores-toolbar">
+        <div class="search-box">
+          <span aria-hidden="true">🔍</span>
+          <input type="text" placeholder="Find a student…" aria-label="Show only students whose name starts with this">
+        </div>
+        <div class="scores-filter-pills" role="group" aria-label="Show only one category's assignments">
+          <button type="button" class="pill active" aria-pressed="true">All</button>
+          <button type="button" class="pill" aria-pressed="false">Essays</button>
+          <button type="button" class="pill" aria-pressed="false">Quizzes</button>
+          <button type="button" class="pill" aria-pressed="false">Homework</button>
+          <button type="button" class="pill" aria-pressed="false">Participation</button>
+        </div>
+      </div>
+      <div class="scores-grid-wrap boxed" style="max-height:420px">
+        <table class="scores-grid">
+          <thead>
+          <tr>
+            <th class="scores-name">Student</th>
+            <th class="scores-grade">Grade</th>
+            <th class="scores-col"><span class="scores-col-name">Summer reading essay</span><span class="scores-col-pts">out of 100</span><span class="cat-chip">Essays <b>40%</b></span><span class="scores-col-due">due Aug 29</span></th>
+            <th class="scores-col"><span class="scores-col-name">Vocab quiz 1</span><span class="scores-col-pts">out of 20</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 5</span></th>
+            <th class="scores-col"><span class="scores-col-name">Annotation log 1</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Homework <b>20%</b></span><span class="scores-col-due">due Sep 8</span></th>
+            <th class="scores-col"><span class="scores-col-name">Gatsby ch. 1–3 check</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 10</span></th>
+            <th class="scores-col"><span class="scores-col-name">Socratic seminar 1</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Participation <b>20%</b></span><span class="scores-col-due">due Sep 12</span></th>
+            <th class="scores-col"><span class="scores-col-name">Vocab quiz 2</span><span class="scores-col-pts">out of 20</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 15</span></th>
+            <th class="scores-col"><span class="scores-col-name">Annotation log 2</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Homework <b>20%</b></span><span class="scores-col-due">due Sep 17</span></th>
+            <th class="scores-col"><span class="scores-col-name">Rhetorical analysis draft</span><span class="scores-col-pts">out of 50</span><span class="cat-chip">Essays <b>40%</b></span><span class="scores-col-due">due Sep 19</span></th>
+            <th class="scores-col"><span class="scores-col-name">Gatsby ch. 4–6 check</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 22</span></th>
+            <th class="scores-col"><span class="scores-col-name">Socratic seminar 2</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Participation <b>20%</b></span><span class="scores-col-due">due Sep 24</span></th>
+            <th class="scores-col"><span class="scores-col-name">Annotation log 3</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Homework <b>20%</b></span><span class="scores-col-due">due Sep 26</span></th>
+            <th class="scores-col"><span class="scores-col-name">Vocab quiz 3</span><span class="scores-col-pts">out of 20</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 29</span></th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Amari Johnson</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">94.1%</div><div class="scores-grade-letter">A</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="100" placeholder="—" aria-label="Summer reading essay, out of 100, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 1, out of 10, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="19" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 2, out of 10, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="48" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Annotation log 3, out of 10, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Amari Johnson"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Ben Castillo</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">83.1%</div><div class="scores-grade-letter">B</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="87.5" placeholder="—" aria-label="Summer reading essay, out of 100, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="16" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 1, out of 10, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="14" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Annotation log 2, out of 10, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="44" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Annotation log 3, out of 10, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15.5" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Ben Castillo"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Chloe Nguyen</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">97.1%</div><div class="scores-grade-letter">A</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="100" placeholder="—" aria-label="Summer reading essay, out of 100, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="18.5" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Annotation log 1, out of 10, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="18.5" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 2, out of 10, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="49" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Annotation log 3, out of 10, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="19" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Chloe Nguyen"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Darius Webb</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">62.9%</div><div class="scores-grade-letter">D</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="73.5" placeholder="—" aria-label="Summer reading essay, out of 100, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="13.5" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Annotation log 1, out of 10, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="6" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="11" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="5" placeholder="—" aria-label="Annotation log 2, out of 10, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="28" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Gatsby ch. 4–6 check, out of 10, for Darius Webb"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="6" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Darius Webb"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="6" placeholder="—" aria-label="Annotation log 3, out of 10, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="13" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Darius Webb"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Elena Ruiz</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">86.9%</div><div class="scores-grade-letter">B</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="95.5" placeholder="—" aria-label="Summer reading essay, out of 100, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="19" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 1, out of 10, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Annotation log 2, out of 10, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="43" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 3, out of 10, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Elena Ruiz"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Grace Okafor</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">75.3%</div><div class="scores-grade-letter">C</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="71" placeholder="—" aria-label="Summer reading essay, out of 100, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Annotation log 1, out of 10, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Grace Okafor"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15.5" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Annotation log 2, out of 10, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="36" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Annotation log 3, out of 10, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Grace Okafor"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Isaiah Brooks</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">70.1%</div><div class="scores-grade-letter">C</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="79.5" placeholder="—" aria-label="Summer reading essay, out of 100, for Isaiah Brooks"></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Vocab quiz 1, out of 20, for Isaiah Brooks"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Annotation log 1, out of 10, for Isaiah Brooks"></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Isaiah Brooks"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Isaiah Brooks"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Isaiah Brooks"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Annotation log 2, out of 10, for Isaiah Brooks"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="34.5" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Isaiah Brooks"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Isaiah Brooks"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Isaiah Brooks"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Annotation log 3, out of 10, for Isaiah Brooks"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="14" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Isaiah Brooks"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Jada Mahoney</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">87.3%</div><div class="scores-grade-letter">B</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="84" placeholder="—" aria-label="Summer reading essay, out of 100, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="20" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Jada Mahoney"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Annotation log 1, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="18" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Annotation log 2, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="40.5" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 3, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Jada Mahoney"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Liam Fischer</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">73.0%</div><div class="scores-grade-letter">C</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="63.5" placeholder="—" aria-label="Summer reading essay, out of 100, for Liam Fischer"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Liam Fischer"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Annotation log 1, out of 10, for Liam Fischer"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Liam Fischer"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Liam Fischer"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="16" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Liam Fischer"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Annotation log 2, out of 10, for Liam Fischer"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="39" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Liam Fischer"></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="6" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Liam Fischer"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Liam Fischer"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Annotation log 3, out of 10, for Liam Fischer"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Liam Fischer"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Marcus Bell</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">55.1%</div><div class="scores-grade-letter">F</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="60" placeholder="—" aria-label="Summer reading essay, out of 100, for Marcus Bell"></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Vocab quiz 1, out of 20, for Marcus Bell"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Annotation log 1, out of 10, for Marcus Bell"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Gatsby ch. 1–3 check, out of 10, for Marcus Bell"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Marcus Bell"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="12" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Marcus Bell"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Annotation log 2, out of 10, for Marcus Bell"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="34" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Marcus Bell"></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Marcus Bell"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Marcus Bell"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Annotation log 3, out of 10, for Marcus Bell"></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Vocab quiz 3, out of 20, for Marcus Bell"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Maya Ortiz</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">92.5%</div><div class="scores-grade-letter">A</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="100" placeholder="—" aria-label="Summer reading essay, out of 100, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="17" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Maya Ortiz"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 1, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17.5" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 2, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="50" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 3, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Maya Ortiz"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Noah Kim</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">85.9%</div><div class="scores-grade-letter">B</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="89.5" placeholder="—" aria-label="Summer reading essay, out of 100, for Noah Kim"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Noah Kim"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 1, out of 10, for Noah Kim"></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Noah Kim"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Noah Kim"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15.5" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Noah Kim"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Annotation log 2, out of 10, for Noah Kim"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="42.5" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Noah Kim"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Noah Kim"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Noah Kim"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 3, out of 10, for Noah Kim"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="16" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Noah Kim"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Priya Shah</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">97.8%</div><div class="scores-grade-letter">A</div></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="100" placeholder="—" aria-label="Summer reading essay, out of 100, for Priya Shah"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17.5" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Priya Shah"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Annotation log 1, out of 10, for Priya Shah"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Priya Shah"></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Priya Shah"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="18" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Priya Shah"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 2, out of 10, for Priya Shah"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="50" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Priya Shah"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Priya Shah"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Priya Shah"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Annotation log 3, out of 10, for Priya Shah"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="18.5" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Priya Shah"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Tyler Grant</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">44.7%</div><div class="scores-grade-letter">F</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="56.5" placeholder="—" aria-label="Summer reading essay, out of 100, for Tyler Grant"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Tyler Grant"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="5" placeholder="—" aria-label="Annotation log 1, out of 10, for Tyler Grant"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Tyler Grant"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="6" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Tyler Grant"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Tyler Grant"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Annotation log 2, out of 10, for Tyler Grant"></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Rhetorical analysis draft, out of 50, for Tyler Grant"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="6" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Tyler Grant"></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Socratic seminar 2, out of 10, for Tyler Grant"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Annotation log 3, out of 10, for Tyler Grant"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Tyler Grant"></span></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="mk-caption"><strong>Scroll it, both ways.</strong> The assignment row stays on top, the name and grade stay on the left, and the top-left corner stays put in both directions. The horizontal scrollbar is at the bottom of the <em>box</em>, so it's always on screen. A trackpad swipe settles with a column's left edge against the frozen edge (<code>scroll-snap-type: x proximity</code>), never halfway under it. <strong>Now repeat the Shift+Tab test from the first frame</strong>: each cell scrolls clear of the frozen columns as the caret reaches it, and Tab and Enter going down keep the caret clear of the stuck header. Nothing in <code>src/scores.js</code> changes for any of this.</p>
+<p class="mk-caption">The toolbar is <code>.attendance-toolbar</code> value for value: <code>.search-box</code> first, then <code>.pill</code>s, all worn as shipped. A teacher who filters attendance already knows how to filter this. <strong>Neither filter is remembered</strong>: both reset whenever the screen is opened, for the reason the calendar's class filter gives. A grid that quietly opens on <em>Quizzes</em> because of last Tuesday is a grid missing two-thirds of its columns with no explanation. The printed grade sheet ignores both filters.</p>
+<p class="mk-caption decided"><strong>Open 1 · how tall is the box? Answered: the box is as tall as the screen, and what sits above it scrolls away.</strong> <em>(Owner, 2026-10-01.)</em> Drawn at a fixed 420px to fit this page. In the app it would be <code>calc(100dvh − what sits above it)</code>, so the whole box, header and scrollbar included, fits on one screen once the page is scrolled to it. The summary, flag bar and toolbar above it scroll out of the way as a page normally does. The alternative is to pin those too and give the grid whatever is left. That keeps the flag buttons on screen, but on an iPad in landscape it leaves very few rows.</p>
+<p class="mk-caption decided"><strong>Open 2 · does a swipe that reaches the grid's edge carry on into the page? Answered: no, it stops at the edge.</strong> <em>(Owner, 2026-10-01, ruled from the desk. The iPad reading is still owed as a 👤 line.)</em> Drawn with <code>overscroll-behavior: contain</code>: it doesn't. A finger in the grid scrolls only the grid. Whether that feels right or feels stuck on the iPad is a question for your thumb, not for the desk.</p>
+<p class="mk-caption decided"><strong>Open 3 · the head is tall when it's stuck. Answered: keep all four lines.</strong> <em>(Owner, 2026-10-01.)</em> Four lines per column: name, points, category, due date. When stuck, that's about 84px of every scroll position. Drawn as is. The alternative is a compact head that drops the due line, at the cost of two sets of styles for one head.</p>
+
+<!-- ═══════════════════════════ PROPOSED, QUIZZES ═══════════════════════════ -->
+
+<p class="mk-section">Laptop · proposed · Quizzes picked</p>
+<div style="max-width:1100px;margin:12px auto 0;border:1px solid #c5ccd6;background:#f0f2f5;padding:12px">
+  <div class="panel scores-panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>English III · Period 2</h2>
+          <p>Quarter 1 · 14 students · 12 assignments</p>
+        </div>
+      </div>
+    </div>
+    <div class="scores-body">
+      <div class="scores-summary">
+        <span>Class average <b>79.0%</b></span><span class="sep">·</span>
+        <span>Quizzes average <b>74.1%</b></span><span class="sep">·</span>
+        <span>5 blanks across 1 assignment</span><span class="sep">·</span>
+        <span>Weights total <b>100%</b></span>
+      </div>
+      <div class="scores-toolbar">
+        <div class="search-box">
+          <span aria-hidden="true">🔍</span>
+          <input type="text" placeholder="Find a student…" aria-label="Show only students whose name starts with this">
+        </div>
+        <div class="scores-filter-pills" role="group" aria-label="Show only one category's assignments">
+          <button type="button" class="pill" aria-pressed="false">All</button>
+          <button type="button" class="pill" aria-pressed="false">Essays</button>
+          <button type="button" class="pill active" aria-pressed="true">Quizzes</button>
+          <button type="button" class="pill" aria-pressed="false">Homework</button>
+          <button type="button" class="pill" aria-pressed="false">Participation</button>
+        </div>
+        <span class="scores-found"><b>5</b> of 12 assignments</span>
+      </div>
+      <div class="scores-grid-wrap boxed filtered" style="max-height:420px">
+        <table class="scores-grid">
+          <thead>
+          <tr>
+            <th class="scores-name">Student</th>
+            <th class="scores-grade">Grade</th>
+            <th class="scores-cat-avg"><span class="scores-cat-avg-name">Quizzes</span><span class="scores-cat-avg-sub">average</span></th>
+            <th class="scores-col"><span class="scores-col-name">Vocab quiz 1</span><span class="scores-col-pts">out of 20</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 5</span></th>
+            <th class="scores-col"><span class="scores-col-name">Gatsby ch. 1–3 check</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 10</span></th>
+            <th class="scores-col"><span class="scores-col-name">Vocab quiz 2</span><span class="scores-col-pts">out of 20</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 15</span></th>
+            <th class="scores-col"><span class="scores-col-name">Gatsby ch. 4–6 check</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 22</span></th>
+            <th class="scores-col"><span class="scores-col-name">Vocab quiz 3</span><span class="scores-col-pts">out of 20</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 29</span></th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Amari Johnson</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">94.1%</div><div class="scores-grade-letter">A</div></td>
+            <td class="scores-cat-avg">90.0%</td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="19" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Amari Johnson"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Amari Johnson"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Ben Castillo</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">83.1%</div><div class="scores-grade-letter">B</div></td>
+            <td class="scores-cat-avg">76.9%</td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="16" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="14" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Ben Castillo"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15.5" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Ben Castillo"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Chloe Nguyen</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">97.1%</div><div class="scores-grade-letter">A</div></td>
+            <td class="scores-cat-avg">95.0%</td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="18.5" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="18.5" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Chloe Nguyen"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="19" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Chloe Nguyen"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Darius Webb</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">62.9%</div><div class="scores-grade-letter">D</div></td>
+            <td class="scores-cat-avg">54.4%</td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="13.5" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="6" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="11" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Darius Webb"></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Gatsby ch. 4–6 check, out of 10, for Darius Webb"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="13" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Darius Webb"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Elena Ruiz</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">86.9%</div><div class="scores-grade-letter">B</div></td>
+            <td class="scores-cat-avg">83.3%</td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="19" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Elena Ruiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Elena Ruiz"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Grace Okafor</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">75.3%</div><div class="scores-grade-letter">C</div></td>
+            <td class="scores-cat-avg">80.6%</td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15.5" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Grace Okafor"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Grace Okafor"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Isaiah Brooks</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">70.1%</div><div class="scores-grade-letter">C</div></td>
+            <td class="scores-cat-avg">55.0%</td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Vocab quiz 1, out of 20, for Isaiah Brooks"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Isaiah Brooks"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Isaiah Brooks"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Isaiah Brooks"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="14" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Isaiah Brooks"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Jada Mahoney</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">87.3%</div><div class="scores-grade-letter">B</div></td>
+            <td class="scores-cat-avg">88.8%</td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="20" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Jada Mahoney"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="18" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Jada Mahoney"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Liam Fischer</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">73.0%</div><div class="scores-grade-letter">C</div></td>
+            <td class="scores-cat-avg">73.3%</td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Liam Fischer"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Liam Fischer"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="16" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Liam Fischer"></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="6" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Liam Fischer"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Liam Fischer"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Marcus Bell</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">55.1%</div><div class="scores-grade-letter">F</div></td>
+            <td class="scores-cat-avg">23.8%</td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Vocab quiz 1, out of 20, for Marcus Bell"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Gatsby ch. 1–3 check, out of 10, for Marcus Bell"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="12" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Marcus Bell"></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Marcus Bell"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Vocab quiz 3, out of 20, for Marcus Bell"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Maya Ortiz</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">92.5%</div><div class="scores-grade-letter">A</div></td>
+            <td class="scores-cat-avg">87.5%</td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="17" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Maya Ortiz"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17.5" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Maya Ortiz"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Noah Kim</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">85.9%</div><div class="scores-grade-letter">B</div></td>
+            <td class="scores-cat-avg">81.9%</td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Noah Kim"></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Noah Kim"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="15.5" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Noah Kim"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Noah Kim"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="16" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Noah Kim"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Priya Shah</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">97.8%</div><div class="scores-grade-letter">A</div></td>
+            <td class="scores-cat-avg">92.5%</td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17.5" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Priya Shah"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Priya Shah"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="18" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Priya Shah"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Priya Shah"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="18.5" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Priya Shah"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Tyler Grant</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">44.7%</div><div class="scores-grade-letter">F</div></td>
+            <td class="scores-cat-avg">55.0%</td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Tyler Grant"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Tyler Grant"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Tyler Grant"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="6" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Tyler Grant"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Tyler Grant"></span></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="mk-caption"><strong>Five quiz columns, and a third frozen column: each student's Quizzes average.</strong> The overall grade has not moved and still means the same thing. The new column names its category in its own header every time and is tinted, so at a glance it can't be mistaken for a second overall grade. It shows a percentage and no letter, the same rule as the class average. The figure comes from <code>categoryPercentage()</code> in <code>src/grade-engine.js</code>, which already exists, so the screen does no new arithmetic. Quiz columns that aren't shown are <strong>not drawn at all</strong>, rather than hidden. Tab and → stop at the last shown column, because a hidden cell that can still take the caret is a caret nobody can see.</p>
+<p class="mk-caption decided"><strong>Open 4 · one category at a time, or several? Answered: one, because a single category's average is what gets checked against the SIS.</strong> <em>(Owner, 2026-10-01.)</em> Drawn as one plus <em>All</em>, like the attendance and signals pills. Picking two (Quizzes and Homework) is possible, but then the third column has no single name and needs either two columns or none.</p>
+<p class="mk-caption decided"><strong>Open 5 · does the summary line gain the category's class average? Answered: yes.</strong> <em>(Owner, 2026-10-01.)</em> Drawn: <em>Quizzes average</em> appears beside the class average while Quizzes is picked. Leaving it out keeps the line from growing, at the cost of a number you might reasonably want.</p>
+<p class="mk-caption decided"><strong>Open 6 · should the pills show weights? Answered: names only.</strong> <em>(Owner, 2026-10-01.)</em> Drawn with names only. Each column's chip already shows the weight, and <em>Quizzes 20%</em> on a filter button reads like a setting.</p>
+
+<!-- ═══════════════════════════ PROPOSED, SEARCH ═══════════════════════════ -->
+
+<p class="mk-section">Laptop · proposed · “ma” typed in the search</p>
+<div style="max-width:1100px;margin:12px auto 0;border:1px solid #c5ccd6;background:#f0f2f5;padding:12px">
+  <div class="panel scores-panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>English III · Period 2</h2>
+          <p>Quarter 1 · 14 students · 12 assignments</p>
+        </div>
+      </div>
+    </div>
+    <div class="scores-body">
+      <div class="scores-summary">
+        <span>Class average <b>79.0%</b></span><span class="sep">·</span>
+        <span>5 blanks across 1 assignment</span><span class="sep">·</span>
+        <span>Weights total <b>100%</b></span>
+      </div>
+      <div class="scores-toolbar">
+        <div class="search-box">
+          <span aria-hidden="true">🔍</span>
+          <input type="text" value="ma" placeholder="Find a student…" aria-label="Show only students whose name starts with this">
+        </div>
+        <div class="scores-filter-pills" role="group" aria-label="Show only one category's assignments">
+          <button type="button" class="pill active" aria-pressed="true">All</button>
+          <button type="button" class="pill" aria-pressed="false">Essays</button>
+          <button type="button" class="pill" aria-pressed="false">Quizzes</button>
+          <button type="button" class="pill" aria-pressed="false">Homework</button>
+          <button type="button" class="pill" aria-pressed="false">Participation</button>
+        </div>
+        <span class="scores-found"><b>3</b> of 14 students</span>
+      </div>
+      <div class="scores-grid-wrap boxed" style="max-height:420px">
+        <table class="scores-grid">
+          <thead>
+          <tr>
+            <th class="scores-name">Student</th>
+            <th class="scores-grade">Grade</th>
+            <th class="scores-col"><span class="scores-col-name">Summer reading essay</span><span class="scores-col-pts">out of 100</span><span class="cat-chip">Essays <b>40%</b></span><span class="scores-col-due">due Aug 29</span></th>
+            <th class="scores-col"><span class="scores-col-name">Vocab quiz 1</span><span class="scores-col-pts">out of 20</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 5</span></th>
+            <th class="scores-col"><span class="scores-col-name">Annotation log 1</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Homework <b>20%</b></span><span class="scores-col-due">due Sep 8</span></th>
+            <th class="scores-col"><span class="scores-col-name">Gatsby ch. 1–3 check</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 10</span></th>
+            <th class="scores-col"><span class="scores-col-name">Socratic seminar 1</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Participation <b>20%</b></span><span class="scores-col-due">due Sep 12</span></th>
+            <th class="scores-col"><span class="scores-col-name">Vocab quiz 2</span><span class="scores-col-pts">out of 20</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 15</span></th>
+            <th class="scores-col"><span class="scores-col-name">Annotation log 2</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Homework <b>20%</b></span><span class="scores-col-due">due Sep 17</span></th>
+            <th class="scores-col"><span class="scores-col-name">Rhetorical analysis draft</span><span class="scores-col-pts">out of 50</span><span class="cat-chip">Essays <b>40%</b></span><span class="scores-col-due">due Sep 19</span></th>
+            <th class="scores-col"><span class="scores-col-name">Gatsby ch. 4–6 check</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 22</span></th>
+            <th class="scores-col"><span class="scores-col-name">Socratic seminar 2</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Participation <b>20%</b></span><span class="scores-col-due">due Sep 24</span></th>
+            <th class="scores-col"><span class="scores-col-name">Annotation log 3</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Homework <b>20%</b></span><span class="scores-col-due">due Sep 26</span></th>
+            <th class="scores-col"><span class="scores-col-name">Vocab quiz 3</span><span class="scores-col-pts">out of 20</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 29</span></th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Jada Mahoney</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">87.3%</div><div class="scores-grade-letter">B</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="84" placeholder="—" aria-label="Summer reading essay, out of 100, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="20" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Jada Mahoney"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Annotation log 1, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="18" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="10" placeholder="—" aria-label="Annotation log 2, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="40.5" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 3, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Jada Mahoney"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Marcus Bell</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">55.1%</div><div class="scores-grade-letter">F</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="60" placeholder="—" aria-label="Summer reading essay, out of 100, for Marcus Bell"></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Vocab quiz 1, out of 20, for Marcus Bell"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Annotation log 1, out of 10, for Marcus Bell"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Gatsby ch. 1–3 check, out of 10, for Marcus Bell"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Marcus Bell"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="12" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Marcus Bell"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Annotation log 2, out of 10, for Marcus Bell"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="34" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Marcus Bell"></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Marcus Bell"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Marcus Bell"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Annotation log 3, out of 10, for Marcus Bell"></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Vocab quiz 3, out of 20, for Marcus Bell"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Maya Ortiz</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">92.5%</div><div class="scores-grade-letter">A</div></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="100" placeholder="—" aria-label="Summer reading essay, out of 100, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="17" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Maya Ortiz"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 1, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Socratic seminar 1, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17.5" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 2, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="50" placeholder="—" aria-label="Rhetorical analysis draft, out of 50, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Socratic seminar 2, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Annotation log 3, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Maya Ortiz"></span></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="mk-caption"><strong>Rows narrow as you type.</strong> <em>Jada Mahoney</em>, <em>Marcus Bell</em> and <em>Maya Ortiz</em> match because a first or last name starts with what was typed. <em>Thomas</em> would not, even though <em>ma</em> is in the middle of it. Enter still goes down the column and stops at the last row shown. The class average, the blanks count and every grade stay whole-class figures; narrowing what's on screen changes no number. <strong>“3 of 14 students”</strong> is there because a grid of three rows otherwise looks like a class of three.</p>
+<p class="mk-caption decided"><strong>Open 7 · what does a name match on? Answered: the start of a first, last or preferred name, and Escape clears the search box.</strong> <em>(Owner, 2026-10-01.)</em> Drawn: the start of the first or last name, ignoring capitals. Should a preferred name the roster holds also match? And should <strong>Escape</strong> in the search box clear it? The grid deliberately does nothing on Escape, but the search box isn't part of the grid. <strong>And the attendance search changes to match.</strong> When this was drawn it matched letters anywhere in a name and ignored the preferred name, so two identical-looking boxes would have answered “ma” differently. The owner ruled the same day that both use this rule (start of a first, last or preferred name), and the build changes <code>src/attendance.js</code> in the same work order.</p>
+
+<!-- ═══════════════════════════ EMPTY ═══════════════════════════ -->
+
+<p class="mk-section">Laptop · proposed · nobody matches</p>
+<div style="max-width:1100px;margin:12px auto 0;border:1px solid #c5ccd6;background:#f0f2f5;padding:12px">
+  <div class="panel scores-panel">
+    <div class="scores-body" style="padding-top:16px">
+      <div class="scores-toolbar">
+        <div class="search-box">
+          <span aria-hidden="true">🔍</span>
+          <input type="text" value="zh" placeholder="Find a student…" aria-label="Show only students whose name starts with this">
+        </div>
+        <div class="scores-filter-pills" role="group" aria-label="Show only one category's assignments">
+          <button type="button" class="pill active" aria-pressed="true">All</button>
+          <button type="button" class="pill" aria-pressed="false">Essays</button>
+          <button type="button" class="pill" aria-pressed="false">Quizzes</button>
+          <button type="button" class="pill" aria-pressed="false">Homework</button>
+          <button type="button" class="pill" aria-pressed="false">Participation</button>
+        </div>
+        <span class="scores-found"><b>0</b> of 14 students</span>
+      </div>
+      <p class="scores-empty">No student in English III · Period 2 matches “zh”. Clear the search box to see the whole class.</p>
+    </div>
+  </div>
+</div>
+<p class="mk-caption"><strong>The grid's own empty line</strong> (<code>.scores-empty</code>, as shipped), using the same sentence pattern attendance uses for a search with no match. The header row goes away along with the rows: a header over nothing reads as a grid that failed to load.</p>
+
+<!-- ═══════════════════════════ iPAD ═══════════════════════════ -->
+
+<p class="mk-section">iPad, portrait width · Quizzes picked, “ma” typed</p>
+<div style="max-width:768px;margin:12px auto 0;border:1px solid #c5ccd6;background:#f0f2f5;padding:12px">
+  <div class="panel scores-panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title">
+          <h2>English III · Period 2</h2>
+          <p>Quarter 1 · 14 students · 12 assignments</p>
+        </div>
+      </div>
+    </div>
+    <div class="scores-body">
+      <div class="scores-toolbar">
+        <div class="search-box">
+          <span aria-hidden="true">🔍</span>
+          <input type="text" value="ma" placeholder="Find a student…" aria-label="Show only students whose name starts with this">
+        </div>
+        <span class="scores-found"><b>3</b> of 14 students · <b>5</b> of 12 assignments</span>
+        <div class="scores-filter-pills" role="group" aria-label="Show only one category's assignments">
+          <button type="button" class="pill" aria-pressed="false">All</button>
+          <button type="button" class="pill" aria-pressed="false">Essays</button>
+          <button type="button" class="pill active" aria-pressed="true">Quizzes</button>
+          <button type="button" class="pill" aria-pressed="false">Homework</button>
+          <button type="button" class="pill" aria-pressed="false">Participation</button>
+        </div>
+      </div>
+      <div class="scores-grid-wrap boxed filtered" style="max-height:360px">
+        <table class="scores-grid">
+          <thead>
+          <tr>
+            <th class="scores-name">Student</th>
+            <th class="scores-grade">Grade</th>
+            <th class="scores-cat-avg"><span class="scores-cat-avg-name">Quizzes</span><span class="scores-cat-avg-sub">average</span></th>
+            <th class="scores-col"><span class="scores-col-name">Vocab quiz 1</span><span class="scores-col-pts">out of 20</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 5</span></th>
+            <th class="scores-col"><span class="scores-col-name">Gatsby ch. 1–3 check</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 10</span></th>
+            <th class="scores-col"><span class="scores-col-name">Vocab quiz 2</span><span class="scores-col-pts">out of 20</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 15</span></th>
+            <th class="scores-col"><span class="scores-col-name">Gatsby ch. 4–6 check</span><span class="scores-col-pts">out of 10</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 22</span></th>
+            <th class="scores-col"><span class="scores-col-name">Vocab quiz 3</span><span class="scores-col-pts">out of 20</span><span class="cat-chip">Quizzes <b>20%</b></span><span class="scores-col-due">due Sep 29</span></th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Jada Mahoney</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">87.3%</div><div class="scores-grade-letter">B</div></td>
+            <td class="scores-cat-avg">88.8%</td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="20" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Jada Mahoney"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="18" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="8" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Jada Mahoney"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Jada Mahoney"></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Marcus Bell</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">55.1%</div><div class="scores-grade-letter">F</div></td>
+            <td class="scores-cat-avg">23.8%</td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Vocab quiz 1, out of 20, for Marcus Bell"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Gatsby ch. 1–3 check, out of 10, for Marcus Bell"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="12" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Marcus Bell"></span></td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="7" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Marcus Bell"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input missing" type="text" inputmode="decimal" value="" placeholder="0" aria-label="Vocab quiz 3, out of 20, for Marcus Bell"><span class="scores-flag missing" aria-hidden="true">M</span></span></td>
+          </tr>
+          <tr>
+            <td class="scores-name"><button class="scores-name-btn" type="button">Maya Ortiz</button></td>
+            <td class="scores-grade"><div class="scores-grade-num">92.5%</div><div class="scores-grade-letter">A</div></td>
+            <td class="scores-cat-avg">87.5%</td>
+            <td><span class="scores-cell"><input class="scores-input late" type="text" inputmode="decimal" value="17" placeholder="—" aria-label="Vocab quiz 1, out of 20, for Maya Ortiz"><span class="scores-flag late" aria-hidden="true">L</span></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Gatsby ch. 1–3 check, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="17.5" placeholder="—" aria-label="Vocab quiz 2, out of 20, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="9" placeholder="—" aria-label="Gatsby ch. 4–6 check, out of 10, for Maya Ortiz"></span></td>
+            <td><span class="scores-cell"><input class="scores-input" type="text" inputmode="decimal" value="" placeholder="—" aria-label="Vocab quiz 3, out of 20, for Maya Ortiz"></span></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="mk-caption"><strong>Both filters at once, at 768px.</strong> The search box (360px) and the pills don't fit on one line, so the pills wrap underneath. The count is placed between them in the markup so it stays next to the search box when they wrap. In portrait, three frozen columns take 336px of about 728, which leaves room for roughly three and a half score columns. Read on a desktop, this frame uses the laptop widths. On the iPad itself (<code>pointer: coarse</code>) the name column narrows to 168px and the cells grow to 44px, which is the version that counts.</p>
+<p class="mk-caption decided"><strong>Open 8 · is three frozen columns too many in portrait? Answered: keep all three, the same on every orientation.</strong> <em>(Owner, 2026-10-01.)</em> It only happens while a category is picked, and a category usually means fewer columns, so less sideways scrolling is needed. But if it feels cramped under a thumb, the category average could replace the grade column in portrait only. That's a narrow exception, and yours to make.</p>
+
+</body>
+</html>
