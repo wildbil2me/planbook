@@ -233,6 +233,9 @@
                                       an iPad
       data-scores-keys                shows or hides the key legend on the score grid. Remembered
                                       nowhere — it is a disclosure, not a preference
+      data-scores-search              on an <input>: narrows the score grid's rows as it is typed,
+                                      by the registry's own rule (WO-3.29); Escape in it empties
+                                      it. Remembered nowhere, and emptied on every arrival
       data-past-due                   not a control: the empty host each screen carries for the
                                       past-due prompt, painted by src/past-due.js. Two of them, on
                                       the score grid and on the assignment list
@@ -1128,6 +1131,13 @@ function showClassScreen(name) {
      toolbar's *All classes* is one tap away and is the whole reason this screen keeps a filter of
      its own. */
   if (want === 'signals') signalsView.resetSignals(classes.getSelectedClassId());
+  /* AND THE SCORE GRID'S SEARCH BOX STARTS EMPTY ON EVERY ARRIVAL (WO-3.29), reset here and before
+     the swap for the same two reasons: a grid that reopened narrowed to last period's "ma" would be
+     a class of four with nothing to say why, and the first paint should already be the whole class.
+     Every way onto the grid comes through here — the switcher's pill and openClassOn()'s *Waiting
+     to be graded* row both do — and a class tab leaves the grid for Attendance, so there is no
+     second door to reset. */
+  if (want === 'scores') scores.resetScoreSearch();
   const view = views.showView(want);
   classes.refreshClassBar();
   screenNav.refreshScreenNav();
@@ -3536,6 +3546,17 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
+  /* THE SCORE GRID'S SEARCH BOX (WO-3.29), scoped by its element for the reason the branch above
+     is, and read before the guards below for the same one: it is an INPUT on a screen that is not
+     `class`. Escape empties it and every row comes back; every other key is the box's own and goes
+     to the browser untouched. This is the one Escape the score screen binds — the grid's cells
+     still pass it through to nothing, two branches up. */
+  const scoreSearch = e.target.closest ? e.target.closest('[data-scores-search]') : null;
+  if (scoreSearch) {
+    if (e.key === 'Escape' && scores.clearScoreSearch()) e.preventDefault();
+    return;
+  }
+
   if (views.currentView() !== 'class') return;
   const active = document.activeElement;
   const tag = active ? active.tagName : '';
@@ -3716,6 +3737,13 @@ document.addEventListener('input', (e) => {
      the device this screen is for. */
   const attSearch = e.target.closest('[data-attendance-search]');
   if (attSearch) { attendance.setSearch(attSearch.value); return; }
+
+  /* The score grid's search box (WO-3.29), the same hook on the same event for the same reason, and
+     it also writes nothing. It is matched by its own hook rather than by `[data-score-cell]`, which
+     is the cell's — a search keystroke routed through editScore() would be a score written into a
+     student's column. */
+  const scoreSearch = e.target.closest('[data-scores-search]');
+  if (scoreSearch) { scores.setScoreSearch(scoreSearch.value); return; }
 
   /* A note on one student's mark, from the row's detail panel (WO-2.10). It carries the date it
      belongs to on the element for the reason a cell does: the grid has six days on it, and "which

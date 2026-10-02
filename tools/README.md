@@ -1253,14 +1253,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1598 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1612 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the seventy-six files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the seventy-seven files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -2285,6 +2285,19 @@ loop and none is a failure arm, so the gap between sites and results stays at �
 does not move. The run prints **1612**: `1612 checks · 1612 passed · 0 failed · 0 skipped`, 51,411
 lines, 31.9 lines per check, 661s, exit 0, measured 2026-10-01 on the real clock. Mutation round in
 `TESTING.md` § WO-3.27.
+
+**WO-3.29 moved it from 1598 to 1612, and the executed count from 1612 to 1624 — fourteen sites,
+twelve results, and the file count moves by one.** All fourteen are in a new section,
+`verify/score-search.mjs`, straight after `verify/score-grid.mjs` in `BROWSER_SECTIONS`, which is
+the seventy-seventh file. Twelve run on a green tree: one read off disk (one exported matcher, both
+screens importing and calling it, neither carrying a name test of its own), then the four names, the
+"Last, First" form and the nickname, the empty line with no head, the registry's answers compared set
+for set over eight queries, the figures under every query, the caret after each of seven keystrokes,
+Escape, the edges of a narrowed column, the arrival, the 44px, and the fixture's teardown. **The other
+two are failure arms** (a fixture that did not plant, a Scores door that is not there), so the gap
+between sites and results moves from −14 to −12. None sits in a loop. The run prints **1624**:
+`1624 checks · 1624 passed · 0 failed · 0 skipped`, 51,783 lines, 31.9 lines per check, 668s, exit 0,
+measured 2026-10-02 on the real clock. Mutation round in `TESTING.md` § WO-3.29.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

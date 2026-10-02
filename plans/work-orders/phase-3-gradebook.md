@@ -2539,7 +2539,7 @@ however convenient a remembered *Quizzes* would be on the second visit.
 
 ## WO-3.29 — the score grid narrows by student
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5 — the grid whose rows this narrows
+**Ship** — · **Status** ✅ DONE — 2026-10-02 · **Size** S · **Depends on** WO-3.5 — the grid whose rows this narrows
 **Closes roadmap** *(no box. Owner-requested, 2026-10-01.)*
 
 **Booked 2026-10-02**, owner-directed, cut out of [WO-3.28](#wo-328--the-score-grid-narrows-to-one-category)
@@ -2573,24 +2573,24 @@ A teacher wants to find one student's row in a class of thirty without scrolling
   it narrows the rows. The printed grade sheet ignores it.
 
 **Acceptance**
-- [ ] On a roster holding Amari Johnson, Ben Castillo, Marcus Bell and Thomas Reed, typing *ma*
+- [x] On a roster holding Amari Johnson, Ben Castillo, Marcus Bell and Thomas Reed, typing *ma*
       shows Amari, Marcus and Thomas and not Ben; *bell, m* (the "Last, First" form) shows Marcus; a
       query matching only a student's `nickname` shows no one. The count reads *3 of N students*. A
       query matching no one draws the empty line and no grid head. Escape clears the box and every
       row returns.
-- [ ] **The attendance search answers every one of those queries identically**, through the same
+- [x] **The attendance search answers every one of those queries identically**, through the same
       exported function, and the harness or a sweep check shows there is one matcher rather than two.
       Every existing attendance search check is green **unchanged**: the move altered no answer.
-- [ ] With the rows narrowed, Enter and `ArrowDown` stop at the last shown row and `ArrowUp` at the
+- [x] With the rows narrowed, Enter and `ArrowDown` stop at the last shown row and `ArrowUp` at the
       first, with the edge sentence the grid already speaks.
-- [ ] Typing a query keeps the caret in the search box from the first letter to the last, measured by
+- [x] Typing a query keeps the caret in the search box from the first letter to the last, measured by
       `document.activeElement` after every keystroke.
-- [ ] The class average, the blank count and every overall grade are byte-identical with the search
+- [x] The class average, the blank count and every overall grade are byte-identical with the search
       on and off.
-- [ ] Leaving the screen and coming back shows an empty search, and no `planbook_` key was written.
-- [ ] The search box measures ≥44px under the coarse pointer.
-- [ ] 👤 On the iPad, typing a name with the on-screen keyboard up leaves the narrowed rows in view
-      above it.
+- [x] Leaving the screen and coming back shows an empty search, and no `planbook_` key was written.
+- [x] The search box measures ≥44px under the coarse pointer.
+- [x] 👤 On the iPad, typing a name with the on-screen keyboard up leaves the narrowed rows in view
+      above it. *(Read by the owner on the LAN build, v149, 2026-10-02.)*
 
 **Traps** — **Do not hide rows with CSS.** The key handlers in `src/scores.js` can still walk into a
 `display: none` row. **Do not rebuild the search box on a keystroke.** `src/attendance.js` keeps its

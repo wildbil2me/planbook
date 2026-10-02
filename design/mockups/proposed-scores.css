@@ -34,8 +34,8 @@
 
    WHERE IT SPLITS ON LIFT:
 
-     § SCORE TOOLBAR      →  src/scores.css   (WO-3.29 — not yet lifted · its pills,
-                                               WO-3.28)
+     § SCORE TOOLBAR      →  src/scores.css   (WO-3.29 lifted 2026-10-02 · its pills,
+                                               WO-3.28, still drawn)
      § SCORE SCROLL BOX   →  src/scores.css   (WO-3.27 lifted 2026-10-01 · the category
                                                average, WO-3.28 — not yet lifted)
 
@@ -56,7 +56,7 @@
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SCORE TOOLBAR   →  src/scores.css   (WO-3.29 — not yet lifted · its pills, WO-3.28)
+   § SCORE TOOLBAR   →  src/scores.css   (WO-3.29 lifted 2026-10-02 · its pills, WO-3.28)
 
    The attendance screen's toolbar, value for value — `.attendance-toolbar` and
    `.attendance-pills` in src/attendance.css — because it is the same question
@@ -64,6 +64,17 @@
    learned one has learned both. `.search-box` and `.pill` are worn as shipped
    from src/shell.css and restyled from nowhere, exactly as attendance and the
    signals screen wear them.
+
+   LIFTED IN HALF on 2026-10-02 by WO-3.29: `.scores-toolbar` and `.scores-found`
+   went across value for value, coarse lines included. `.scores-filter-pills` is
+   WO-3.28's and stays drawn. THE TOKEN CAME OFF THIS BANNER, where § SCORE SCROLL
+   BOX kept it, and not by choice: that section's lifted half was a compound
+   (`.boxed`) the collision check never reads as declared, while this one's lifted
+   half is two plain classes now in src/scores.css, so `not yet lifted` here would
+   turn § 19 red on names that are correctly in both places. The cost is that
+   `.scores-filter-pills` is no longer collision-checked until WO-3.28 lifts it —
+   no src/ sheet styles it today. The build placed the count straight after the
+   search box, and WO-3.28's pills go after the count.
    ══════════════════════════════════════════════════════════════════════════════ */
 .scores-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
 .scores-filter-pills { display: flex; flex-wrap: wrap; gap: 5px; }

@@ -100,8 +100,10 @@ import { getSelectedClass, getSelectedTerm } from './classes.js';
 import { categoriesOf, formatWeight, weightTotal } from './categories.js';
 /* How a student's name reads on a roster row, and how it reads in a sentence. Imported from
    src/roster.js for the reason src/attendance.js imports the same two: a second copy of those eight
-   lines could be right about a hyphen, a suffix or a half-typed name in a way this one is not. */
-import { rosterName, fullName } from './roster.js';
+   lines could be right about a hyphen, a suffix or a half-typed name in a way this one is not.
+   searchNeedle() and nameMatches() are the attendance search's rule, moved there at WO-3.29 so that
+   this screen's box and the registry's are one test rather than two — see renderScores() below. */
+import { rosterName, fullName, searchNeedle, nameMatches } from './roster.js';
 /* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4). See this file's header. */
 import { letterFromPercentage, weightedClassGrade } from './grade-engine.js';
 /* THE PAST-DUE PROMPT (WO-3.6), which is the one thing on this screen that reads a clock and is
@@ -139,10 +141,23 @@ const BODY_ID = 'scoresBody';
 const CAPTION_ID = 'scoresCaption';
 const EMPTY_ID = 'scoresEmpty';
 const HINT_TERM_ID = 'scoresHintTerm';
+const TOOLBAR_ID = 'scoresToolbar';
+const SEARCH_ID = 'scoresSearch';
+const FOUND_ID = 'scoresFound';
 
 /* Whether the key legend is open. A module variable rather than a preference — decision 4 in the
    header. */
 let keysOpen = false;
+
+/*
+  WHAT THE SEARCH BOX HOLDS (WO-3.29), already trimmed and lower-cased by src/roster.js's
+  searchNeedle(). A module variable and NOT a preference, for decision 4's reason and one of its own:
+  a grid that reopened on last Tuesday's "ma" would be a class of four with nothing on screen saying
+  why. It is emptied on every arrival (resetScoreSearch(), called from src/shell.js's
+  showClassScreen()) and on nothing else — a repaint, a term change or a sync under the teacher keeps
+  the rows she narrowed to.
+*/
+let searchText = '';
 
 /*
   WHICH CELL THE FLAG BAR ACTS ON, held as two ids rather than as an element, for the reason
@@ -705,6 +720,10 @@ export function renderScores() {
   if (wrap) wrap.classList.toggle('hidden', !!emptyText);
   if (actions) actions.classList.toggle('hidden', !!emptyText);
   if (flags) flags.classList.toggle('hidden', !!emptyText);
+  /* The search box goes with them for the same reason — a box that narrows no rows is a dead
+     control — but it is only ever HIDDEN, never rebuilt: see paintFound(). */
+  const toolbar = document.getElementById(TOOLBAR_ID);
+  if (toolbar) toolbar.classList.toggle('hidden', !!emptyText);
   paintKeys();
   /* THE PAST-DUE PROMPT (WO-3.6), painted on both sides of the empty-state return below: with no
      term, no roster or no work there is nothing past due, and a banner left standing from the class
@@ -721,6 +740,33 @@ export function renderScores() {
     if (banner) banner.classList.add('hidden');
     const summary = document.getElementById(SUMMARY_ID);
     if (summary) summary.textContent = '';
+    paintFound(0, 0);
+    return;
+  }
+
+  /* THE ROWS THE SEARCH LEAVES (WO-3.29), and they are the only rows built. A row that does not
+     match is NOT RENDERED rather than hidden with CSS: moveWithinColumn() and moveAcrossRow() walk
+     the drawn inputs in document order, and a `display: none` row is still in that order — Enter
+     would put the caret in a student the teacher cannot see. Built rows only, so Enter and the
+     arrows stop at the last and first SHOWN student with the edge sentence they already speak.
+
+     `students` stays the whole class and is what paintGrades() is handed below, so the class
+     average and the blank count in the summary are the class's figures whatever the box says — a
+     search narrows what is on screen and changes no number. The headline above counts the whole
+     class for the same reason; the count beside the box is where the narrowing is said. */
+  const shown = students.filter((s) => nameMatches(s, searchText));
+  paintFound(shown.length, students.length);
+  if (!shown.length) {
+    /* No head over nothing: the grid and the flag bar go, and the empty line says what emptied the
+       screen and the way back, in the registry's own words for the same moment. */
+    if (wrap) wrap.classList.add('hidden');
+    if (flags) flags.classList.add('hidden');
+    if (empty) {
+      empty.textContent = 'No student in ' + cls.name + ' matches that. Clear the search box, or '
+        + 'press Escape in it, to see the whole class again.';
+      empty.classList.remove('hidden');
+    }
+    paintGrades(cls, termId, students);
     return;
   }
 
@@ -736,7 +782,7 @@ export function renderScores() {
   list.forEach((assignment) => headRow.append(columnHead(assignment, cls)));
   head.append(headRow);
 
-  students.forEach((student) => {
+  shown.forEach((student) => {
     const row = document.createElement('tr');
     row.setAttribute('data-score-row', student.id);
     /* A `<td>` and not a `<th scope="row">`, which is the drawing's own markup and is the choice
@@ -756,6 +802,66 @@ export function renderScores() {
   });
 
   paintGrades(cls, termId, students);
+}
+
+/*
+  THE SEARCH BOX (WO-3.29) — "find one student's row in a class of thirty without scrolling for it".
+
+  THE BOX IS MARKUP IN index.html AND NOTHING HERE CREATES OR REPLACES IT. renderScores() rebuilds
+  every cell on the grid, and it runs on every keystroke typed into this box; if the box were inside
+  what it rebuilds, the element the keystroke came from would be destroyed under the caret and the
+  teacher would lose focus after the first letter. src/attendance.js's setSearch() keeps its box in
+  index.html for exactly that reason, and this is the same arrangement: the box is only ever read,
+  emptied or hidden from here.
+
+  The count beside it — "3 of 14 students" — is drawn only while the box holds something, because a
+  grid of three rows reads as a class of three, and is said as a sentence of two text nodes and a
+  <b> rather than through innerHTML: a count is not a name, but this file builds no markup from
+  strings anywhere and is not about to start.
+*/
+function paintFound(count, total) {
+  const found = document.getElementById(FOUND_ID);
+  if (!found) return;
+  found.textContent = '';
+  found.classList.toggle('hidden', !searchText);
+  if (!searchText) return;
+  found.append(el('b', '', String(count)));
+  found.append(document.createTextNode(' of ' + plural(total, 'student', 'students')));
+}
+
+/* Called from src/shell.js's `input` listener, which is the event a paste, dictation and the
+   software keyboard's suggestions all fire — the registry's box is wired the same way. */
+export function setScoreSearch(value) {
+  searchText = searchNeedle(value);
+  renderScores();
+}
+
+/*
+  ESCAPE IN THE BOX EMPTIES IT, and answers whether it did anything so src/shell.js knows whether
+  the key was used. This is the ONE Escape this screen binds, and it is bound to the search box and
+  nowhere else: the grid still does nothing on Escape (WO-3.5's seventh acceptance line, and this
+  file's header), because a stray Escape two thirds of the way down a column must not cost the
+  teacher anything. Clearing a search costs her nothing — every row comes back and the caret stays
+  in the box she was typing in.
+*/
+export function clearScoreSearch() {
+  const box = document.getElementById(SEARCH_ID);
+  const had = !!searchText || !!(box && box.value);
+  if (!had) return false;
+  if (box) box.value = '';
+  searchText = '';
+  renderScores();
+  return true;
+}
+
+/* EVERY ARRIVAL STARTS UNSEARCHED, and this is the arrival half. It does not render: src/shell.js
+   calls it from showClassScreen() BEFORE the view swaps and paints, the order that function already
+   keeps for the calendar's and the concern list's own resets, so the first paint is already of the
+   whole class. */
+export function resetScoreSearch() {
+  searchText = '';
+  const box = document.getElementById(SEARCH_ID);
+  if (box) box.value = '';
 }
 
 /*

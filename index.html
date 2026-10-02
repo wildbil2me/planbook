@@ -1282,6 +1282,22 @@
         <span class="scores-key"><kbd>⌫</kbd> clear an empty cell to blank</span>
       </div>
 
+      <!-- THE SEARCH BOX (WO-3.29), directly over the grid it narrows, and it is the registry's own:
+           `.search-box` worn as shipped, in a toolbar that is `.attendance-toolbar` value for value
+           (design/mockups/score-tools.html). It is STATIC MARKUP for the reason the registry's is —
+           src/scores.js's renderScores() rebuilds every cell on each keystroke typed here, and a box
+           inside what it rebuilds would be destroyed under the caret after the first letter.
+           Escape in it empties it; nothing remembers what was typed, and the printed grade sheet
+           never sees it. WO-3.28's category pills go in after the count. -->
+      <div class="scores-toolbar" id="scoresToolbar">
+        <div class="search-box">
+          <span aria-hidden="true">🔍</span>
+          <input type="text" id="scoresSearch" data-scores-search
+                 placeholder="Find a student…" aria-label="Search students by name">
+        </div>
+        <span class="scores-found hidden" id="scoresFound"></span>
+      </div>
+
       <div class="scores-grid-wrap" id="scoresGridWrap">
         <table class="scores-grid">
           <caption class="sr-only" id="scoresCaption"></caption>

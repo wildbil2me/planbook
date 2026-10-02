@@ -183,6 +183,35 @@ export function fullName(s) {
   return (s.first + ' ' + s.last).trim() || 'this student';
 }
 
+/*
+  THE ONE NAME SEARCH IN THE APP (WO-3.29), and it is the attendance search's rule MOVED here rather
+  than a new one written beside it. Two screens carry a box that looks identical — the registry and
+  the score grid — and two copies of the test could answer one query two ways in front of the same
+  teacher in the same five minutes. So both screens call these two and neither holds a test of its
+  own; tools/verify/score-search.mjs reads both files to keep it that way.
+
+  THE RULE, EXACTLY AS src/attendance.js HAD IT ON 2026-10-02: the box's text is trimmed and
+  lower-cased once, when it is typed, and a student shows when that text appears ANYWHERE in the
+  roster form ("Bell, Marcus") or the sentence form ("Marcus Bell"). So `ma` finds Amari, Mahoney,
+  Marcus and Maya — and Thomas, whose m-a is in the middle — and `bell, m` finds Marcus. There is NO `nickname` in it, on purpose — the owner
+  kept this rule on 2026-10-02 over a prefix-and-nickname one booked the day before, and widening it
+  here would change the attendance screen's answers without anybody having asked for that. Do not
+  improve it on the way through; that is a work order of its own.
+
+  TWO FUNCTIONS, NOT ONE, because the normalisation is half the rule and is applied at a different
+  moment from the test: a screen stores the needle when the box changes and asks the question once
+  per row on every render. An empty needle matches everyone, which is what an empty box means.
+*/
+export function searchNeedle(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+export function nameMatches(s, needle) {
+  if (!needle) return true;
+  return rosterName(s).toLowerCase().indexOf(needle) >= 0
+    || fullName(s).toLowerCase().indexOf(needle) >= 0;
+}
+
 function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
 /* Initials for the row avatar — first name, last name. Written out here rather than shared with

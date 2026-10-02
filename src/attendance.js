@@ -398,8 +398,12 @@ import { outOfTermGap, termIsDated, termName, termContaining, termNearest, openT
    shape, and a second copy in this file could be right about a hyphen, a suffix or a half-typed
    name in a way the roster is not. That is exactly the second opinion this repo keeps refusing.
    (Contrast src/roster.js's initialsOf(), which is written out separately from src/classes.js's
-   initials() because those two read different shapes and answer different questions.) */
-import { rosterName, fullName } from './roster.js';
+   initials() because those two read different shapes and answer different questions.)
+
+   AND THE NAME SEARCH WITH THEM, since WO-3.29. The test that narrows the rows used to be two lines
+   inside visibleStudents() below; it moved to src/roster.js unchanged when the score grid gained the
+   same box, so the two boxes are one rule rather than two that happen to agree today. */
+import { rosterName, fullName, searchNeedle, nameMatches } from './roster.js';
 /* The hall-pass model (WO-2.8). It is imported one way and only one way: src/passes.js holds no
    DOM, reads no clock and never calls the store, so this file can hand it the live document inside
    an update() without the two modules being able to disagree about who is out of the room. */
@@ -2875,7 +2879,7 @@ export function pageDays(direction) {
    the element the keystroke came from — the whole grid re-rendering under a teacher's finger is
    how a search box loses focus mid-word. */
 export function setSearch(value) {
-  searchText = String(value || '').trim().toLowerCase();
+  searchText = searchNeedle(value);
   renderRows();
 }
 
@@ -3157,8 +3161,7 @@ function visibleStudents(cls) {
   const on = editDate();
   const record = recordFor(cls.id, on);
   return markingOrder(cls).filter((s) => {
-    if (searchText && rosterName(s).toLowerCase().indexOf(searchText) < 0
-      && fullName(s).toLowerCase().indexOf(searchText) < 0) return false;
+    if (!nameMatches(s, searchText)) return false;
     if (filterCode === 'all') return true;
     return readingOf(record, s.id) === filterCode;
   });

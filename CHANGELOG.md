@@ -13,6 +13,25 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The score grid narrows by student — 2026-10-02
+
+WO-3.29. Shell cache `v149`.
+
+- **The score grid has a search box.** Type part of a name and the grid shows only those students,
+  with *3 of 14 students* beside the box. When nothing matches, the grid's empty line shows with no
+  head over it. Escape empties the box.
+- **It finds names exactly as the attendance search always has, because the two boxes now share one
+  rule.** The test moved out of `src/attendance.js` into `nameMatches()` in `src/roster.js`, and
+  attendance answers every query as before. Nicknames are matched on neither screen.
+- **It changes no figure.** The class average, the blank count and every grade stay whole-class
+  numbers while the rows are narrowed, and the printed grade sheet ignores the search.
+- **Rows that do not match are not drawn, rather than hidden**, so Enter and the arrow keys stop at
+  the first and last shown row and never land on a hidden student. The box sits outside what the
+  grid redraws, so the caret stays in it while typing.
+- **It is not remembered.** The box is empty every time the grid is opened, and nothing is saved.
+- **Checked on hardware 2026-10-02:** on the iPad with the on-screen keyboard up, the narrowed rows
+  stay in view.
+
 ### The score grid scrolls in a box of its own — 2026-10-02
 
 WO-3.27. Shell cache `v148`.

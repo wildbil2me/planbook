@@ -118,6 +118,22 @@
 .scores-summary .sep { color: #d0d8e4; }
 
 .scores-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+
+/* THE SEARCH TOOLBAR (WO-3.29), lifted from design/mockups/proposed-scores.css § SCORE TOOLBAR. It is
+   `.attendance-toolbar` value for value, because it is the same question — narrow a class list by
+   name — and a teacher who has learned one box has learned both. `.search-box` inside it is
+   src/shell.css's, worn as shipped and restyled from nowhere; its input carries its own 44px in that
+   sheet's coarse block, which is where the floor belongs (the WO-1.2 `.search-box` lesson: the
+   height goes on the <input>, not on a wrapper around it). WO-3.28's `.scores-filter-pills` is the
+   other half of that drawn section and is not here yet. */
+.scores-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+/* How many rows the search left, said in words, because a grid of three students reads as a class
+   of three. `.attendance-sort-label`'s voice. Drawn only while the box holds something. */
+.scores-found {
+  margin-left: auto; white-space: nowrap;
+  font-size: 11px; font-weight: 700; color: #8a9bb0;
+}
+.scores-found b { color: #1a1a2e; font-variant-numeric: tabular-nums; }
 /* `.scores-actions-door` is in the drawing and is NOT here: the only door this screen would have
    given it is the assignment list, and the switcher two inches above already goes there. A rule
    for a control nothing wears is a rule the next reader has to go and prove is dead. */
@@ -680,6 +696,12 @@
      `.roster-row-actions` both took, and for the same reason. */
   .scores-flags { gap: 10px; }
   .scores-flags-label { font-size: 11px; }
+  /* The search toolbar (WO-3.29). Its one control is src/shell.css's `.search-box input`, which is
+     44px in that sheet's coarse block and is measured on this screen by
+     tools/verify/score-search.mjs rather than assumed; what grows here is the spacing around it and
+     the count's type, as `.attendance-toolbar` and `.attendance-sort-label` grow one screen over. */
+  .scores-toolbar { gap: 10px; }
+  .scores-found { font-size: 12px; }
   .scores-summary { font-size: 13px; }
   .scores-keys { font-size: 13px; }
   .scores-key kbd { min-width: 26px; height: 26px; font-size: 12px; }

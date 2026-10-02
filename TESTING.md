@@ -8925,6 +8925,76 @@ written:**
 A padding that drifts **larger** is caught only by the declaration check — cells park a few pixels
 further clear than they need — and `src/scores.css` says so at the frozen columns.
 
+### WO-3.29 — The score grid narrows by student
+
+**What this changes.** A search box sits directly over the score grid — `.search-box` as shipped, in
+a `.scores-toolbar` that is `.attendance-toolbar` value for value, lifted from
+`design/mockups/proposed-scores.css` § SCORE TOOLBAR — and typing in it narrows the rows to the
+students whose name holds the text, with *3 of 6 students* beside it. Rows that do not match are not
+built at all, so Enter and the arrows stop at the last and first shown student. The class average,
+the blank count, the headline and every grade stay whole-class figures. Escape in the box empties it;
+the grid itself still does nothing on Escape. Every arrival on the grid starts unsearched, and
+nothing is stored.
+
+**The matcher moved rather than being written twice.** The two lines inside `visibleStudents()` in
+`src/attendance.js` became `searchNeedle()` and `nameMatches()` in `src/roster.js`, beside
+`fullName()`. They were moved with nothing changed: the needle is trimmed and lower-cased once, when the box changes, exactly as
+`setSearch()` did, and a student matches when it appears anywhere in "Last, First" or "First Last".
+There is no `nickname` in it. Both screens call the pair, and nothing else in either file tests a name.
+The existing attendance search check (`search narrows the rows, a pill shows only that mark …`) is
+green **unedited**.
+
+**The box is static markup in `index.html`**, outside everything `renderScores()` rebuilds, and the
+search re-runs `renderScores()` on each keystroke. That is the registry's arrangement, and it is
+why the caret survives: the element the keystroke came from is never replaced.
+
+- [x] *ma* shows Amari Johnson, Marcus Bell and Thomas Reed and not Ben Castillo, count *3 of 6
+      students*; *bell, m* shows Marcus alone; *zeke* — Robert Quinn's nickname and nothing else —
+      shows no one; *zz* draws the empty line with `#scoresHead` empty and the grid wrapper hidden;
+      Escape clears the box and all six rows return, the caret still in the box.
+      (`verify/score-search.mjs`.)
+- [x] The registry, read through its own box and its own rows, answers *ma*, *bell, m*, *zeke*,
+      *␣␣MA␣*, *zz*, *REED*, *son, a* and the empty box with the same students as the grid, set for
+      set. Read off disk with comments stripped: `src/roster.js` exports the pair once and holds the
+      only lower-cased name test; both screens import and call it; neither carries a test or a
+      normalisation of its own.
+- [x] Narrowed to *ma*: `ArrowUp` on Bell stays and says *"Essay: that is the first student. 2 of 3
+      entered."*; Enter walks Bell → Johnson → Reed, never touching Castillo; Enter and `ArrowDown` on
+      Reed stay and say *"… that is the last student …"*. Keys dispatched at the page over CDP.
+- [x] Typing *bell, m* one key at a time, `document.activeElement` is `#scoresSearch` after each of
+      the seven keystrokes, the value one character longer each time.
+- [x] The summary line and the headline are the same text under every query above, the empty ones
+      included, and each shown row's grade cell matches that student's with the box empty.
+- [x] Out to Attendance through the switcher and back: the box is empty and all six rows are drawn;
+      the `planbook_` keys and their values are identical before and after all the typing.
+- [x] Under the emulated coarse pointer the box is 44px tall (893.77px wide at 1024).
+- [x] 👤 **On the iPad — force-quit from the app switcher first** (`index.html`, `src/scores.js`,
+      `src/scores.css`, `src/roster.js`, `src/attendance.js` and `src/shell.js` are in `SHELL`; v149):
+      on the score grid, tap the search box and type a name with the on-screen keyboard up; the
+      narrowed rows stay in view above the keyboard. *(Read by the owner on the LAN build, v149,
+      2026-10-02.)*
+
+**Mutation round.** Each mutation was marked `MUTATION`, applied to a copy-restored file, and run
+against a scratch copy of the harness holding only `verify/localstorage-prefs.mjs` and
+`verify/score-search.mjs` (46 checks, all green on the unmutated tree). Each file was put back from the
+copy and `cmp`-checked before the next mutation. The scratch harness was deleted afterwards.
+
+| Mutation | Result |
+|---|---|
+| M1 · `nickname` added to the shared `nameMatches()` | **2 red**: *zeke* shows Robert Quinn; the registry's *zeke* answer changes with it (its baseline is asserted, so "both screens moved together" still fails) |
+| M2 · `src/attendance.js` gets its own name test back, with `nickname` | **2 red**: the one-matcher read (no `nameMatches(` call, an own test present) and the registry-vs-grid comparison on *zeke* |
+| M3 · every row built, the non-matching ones hidden with `display: none` | **5 red**: *ma* and *bell, m* row sets, the comparison, the caret trail's row counts, and the edges (Enter from Bell lands nowhere) |
+| M4 · `paintGrades()` handed the shown rows instead of the class | **1 red**: the figures check |
+| M5 · the box replaced with a clone after each keystroke | **3 red**: the caret trail (`activeElement` is `<body>` from the first letter), Escape, and the edges that follow |
+| M6 · the arrival reset removed from `showClassScreen()` | **1 red**: the box comes back holding *ma* with three rows |
+| M7 · the Escape branch removed from `src/shell.js` | **1 red** and the section stops: Escape leaves *bell, m* in the box, and the next step cannot find Bell's cell under it, so `runSection()` records the throw |
+
+`grep -rn MUTATION` over `src/`, `tools/`, `index.html`, `sw.js` and `design/` afterwards finds only
+the pre-existing prose mentions, none of them a marker.
+
+**Full run on the delivered tree:** `1624 checks · 1624 passed · 0 failed · 0 skipped`, 668s, exit 0,
+2026-10-02, real clock.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise
