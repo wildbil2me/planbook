@@ -103,7 +103,7 @@ node tools/wo-gate.mjs --self-check    plant every violation this script is supp
 ```
 
 `--self-check` copies `plans/` to a temp directory, writes four **synthetic** work orders into the copy,
-plants forty-four violations against them, runs the script over the copy, and deletes the directory on
+plants forty-six violations against them, runs the script over the copy, and deletes the directory on
 both exit paths. *(Thirteen until 2026-08-16; WO-1.21 added four, for the two statuses that mean the
 work is not coming and for the § The files index. WO-2.49 added the eighteenth on 2026-08-18, and it
 is the first that is about the **reader** rather than about a refusal — a fixture written CRLF in its
@@ -193,7 +193,24 @@ assertion there says its value IS a sentinel and these want the opposite — app
 assert the defect — and because its own name is what lets a widened boundary name the arm it broke.
 It brought no fixture and no new shape; the values go into `fixtureBlock()`'s existing `depends`
 option.
-`44 plants, 44 caught, 0 missed` / `PASS | 44 of 44 plants were caught`, read
+**WO-1.36 added two on 2026-10-01**, the forty-fifth and forty-sixth, each separating two behaviours
+that sat behind one check with no fixture between them. **The first is about the 🎒 shelf's keying,
+and it corrects the sentence above that calls step 2b's pair "already the pair a 🎒 plant needs"**:
+for *empty shelf* against *shelf* it is, but both rows sit in one table, so a per-section `Map` and
+a single counter passed WO-1.35's three plants alike. The keying was **ruled global** at
+`rideAlongReport()` — the shelf is every `⬜` row above the 🎒 one in the running order, whatever
+heading it is under, because the NOTE's *"`next` steps over it"* is a claim about `next`, which
+ignores headings — and the plant lifts both fixture rows onto **two headings it writes itself**,
+directly above the first real table's heading, so no real section is borrowed and the fixture is
+still the first row `next` reads. `⬜` on the earlier shelf keeps the 🎒 row `ok` while `next`
+answers the open row; the same shelves with that row claimed make the 🎒 row a NOTE, and `next`
+steps over it. **The second is the missing-result-file arm of `--release`'s 🔍 refusal**, which no
+plant reached because WO-1.38's release plant writes the file first: with no
+`.claude/dispatch/<ID>-result.md` the refusal says *there is no such file*, with one it does not, and
+the two refusals are asserted to differ. That plant writes and removes the file itself, so its place
+in the array is free; it sits beside the shelf plant, after WO-1.35's three. Neither brought a
+fixture or a new shape.
+`46 plants, 46 caught, 0 missed` / `PASS | 46 of 46 plants were caught`, read
 off the run and not added up. The counts further down are readings from dated
 runs against older copies of the script and stay at the number that was true then.)* Two things about it are load-bearing. **Every plant path — and, since WO-2.44, the
 sandbox that holds them — goes through a guard that
@@ -276,8 +293,11 @@ part is what did **not** go red beside it:
 | the 🎒 skip deleted from `next()`, so a ride-along row is offered like any other — WO-1.35, `--against` over a copy in `TMP` | **1 red**: the `next` plant. Nothing else, including the two `--audit` plants beside it — the mark is read in exactly one place in `next()` and the audit reads the rows for itself |
 | `gate()` taught to refuse a marked row — WO-1.35, same method | **1 red**: the ordering plant, on its whole-report compare. This is the mutation that matters most of the three: it is 🎒 becoming 🔒 GATED under a new name, which is the line between *deprioritised* and *forbidden* |
 | `rideAlongReport()`'s `if (above)` forced true, so no row is ever reported as having run out of shelf — WO-1.35, same method | **1 red**: the audit plant, on its first case. Its second and third cases stay green — a report that says `ok` to everything passes both of those, which is why the first case exists |
+| **`rideAlongReport()`'s single counter put back to the per-section `Map` WO-1.35 shipped** — `openAbove.get(row.section)` / `.set(row.section, …)`, the keying WO-1.36 ruled against — `--against` over a copy in the scratchpad, 2026-10-01 | **1 red of 46**: WO-1.36's shelf plant, on its ruled case — *"--audit called WO-9.8's shelf empty with WO-9.9 ⬜ above it under an earlier heading"* and *"did not report WO-9.8 as a ride-along with exactly one open row above it in the running order"*. Its control stays green, and so do all three of WO-1.35's plants: **that is the defect WO-1.36 was booked for, reproduced** — the two keyings agree on every fixture that keeps both rows in one table. The same plants `--against` the pre-WO-1.36 script read **1 red of 46**, the same plant, plus the NOTE-wording assertion |
 | `--release`'s fence widened to accept `🔍 AWAITING VERDICT` as well as `🤖 CLAIMED` — WO-1.38, `--against` over a copy in the scratchpad | **1 red**: the release plant. **This is the mutation that matters most of WO-1.38's twelve** — it is a finished, unverified tree being set back to `⬜ NOT STARTED` where `next` hands it to somebody as unstarted, which is the entire reason the status exists. Nothing else moves, including the three plants beside it |
 | the `--release` refusal stops naming the result file it would orphan — WO-1.38, same method | **1 red**: the same plant, on that assertion alone. The refusal itself stays **green**, which is why the two assertions are separate — a refusal nobody can act on is how a reader ends up hand-editing the status line instead |
+| **the missing-file arm made unreachable** — `applyRelease()`'s `fs.existsSync(result) ? '' : ' — and there is no such file…'` forced to `''` — WO-1.36, `--against` over a copy in the scratchpad, 2026-10-01 | **1 red of 46**: WO-1.36's release plant, on *"with no result file behind the row, the refusal did not say there is no such file"* and *"the two arms printed the same refusal byte for byte"*. **WO-1.38's release plant stays green under it**, and that is the gap the plant closes: it writes the file before it runs the refusal, so it only ever saw the arm this mutation keeps |
+| **the missing-file arm made unconditional** — the same ternary forced to the *no such file* sentence — WO-1.36, same method | **1 red of 46**: the same plant, on its present-file half — *"with the result file present, the refusal still said there is no such file"*, the orphaned-file name no longer followed by its full stop, and the two refusals identical. WO-1.38's release plant stays green here too: it asserts the file is NAMED, and a refusal that names a file and then calls it missing still names it |
 | `--handoff`'s "only `🤖 CLAIMED`" fence dropped — WO-1.38, same method | **1 red**: the handoff plant, on all eight refused statuses at once, `⬜ NOT STARTED` included — a handoff over `⬜` records a build that never happened. Nothing else: no other plant runs `--handoff` |
 | the `🔍` branch removed from `reportSkips()`, so the row falls through to 🔨's sentence — WO-1.38, same method | **1 red**: the `next` plant. The row is still skipped and still named, and it now reads *"part-built work, not a claim"* over work that is finished — which is why that plant asserts the **wording** and not just the skip |
 | `gate()`'s `ok` widened to `✅ DONE` **or** `🔍 AWAITING VERDICT` — WO-1.38, same method | **1 red**: the dependency plant. This is the one defect none of WO-1.38's own Acceptance lines names — a new status that silently satisfies a dependency hands unchecked code to whatever is built on top of it, and every other report stays green |

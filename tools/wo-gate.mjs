@@ -789,9 +789,12 @@ function rideAlongOf(cell) {
 }
 
 // Every numbered work-order row in README.md, in document order, with the § heading it sits under and
-// whatever its `Suggested` cell marks. The heading is carried because --audit's question is "first ⬜
-// in its SECTION" — § Ship 3 and § After Ship 3 are different shelves, and a ride-along at the head of
-// one is not excused by an open row in the other.
+// whatever its `Suggested` cell marks. The heading is carried so that --audit's 🎒 NOTE can say WHERE
+// the row sits, and for nothing else: `next` ignores it, and since WO-1.36 so does the count behind
+// that NOTE — the shelf above a ride-along is every ⬜ row above it in the file, whatever heading it is
+// under. *(This said "§ Ship 3 and § After Ship 3 are different shelves" until then, and no plant paid
+// for it: both fixture rows sat in one table, so a global counter passed every plant. The ruling is at
+// rideAlongReport(); the plant that pays for the one that replaced it plants two headings of its own.)*
 //
 // The trailing `|` is stripped before the split so the last cell is the last cell: `a|b|`.split('|')
 // ends in an empty string, and reading the mark out of that finds nothing on every row forever.
@@ -1822,7 +1825,27 @@ function gatedProblems(wos) {
 
 // Every 🎒 row, and how much shelf is left above it (WO-1.35). A ride-along is a plan to fold an hour
 // of work into somebody else's sitting, and the plan runs out when the rows above it clear: the row is
-// then the first ⬜ in its section, `next` steps over it, and nothing is left for it to fold into.
+// then the first ⬜ in the running order, `next` steps over it, and nothing is left for it to fold into.
+//
+// **THE SHELF IS THE WHOLE RUNNING ORDER, NOT THE ROW'S SECTION — RULED AT WO-1.36, AND THE READING
+// THAT LOST WAS THE ONE THIS CODE SHIPPED WITH.** WO-1.35 keyed the count by `row.section`, on the
+// argument that a section is its own running order: a ride-along parked in § After Ship 3 is a plan
+// to fold an hour into an *After Ship 3* sitting, and § Ship 3's rows are a different body of work.
+// It lost to the NOTE's own words. *"`next` steps over it and there is nothing left to fold it into"*
+// is two claims about what will actually happen, and per-section keying could print both while open
+// rows sat above it in an earlier section — where the first is false, because `next` stops at the
+// first of those and never reaches this row, and so is the second, because each of them is a sitting
+// that can host the fold: what a ride-along rides with is a FILE, and a § Ship 3 row that opens
+// `index.html` hosts an hour of `index.html` exactly as well as an After-Ship-3 one does. `next` walks
+// document order and ignores headings, the mark's whole bite lives there, and the count below now
+// asks the question `next` asks. The section survives only as a place-name in the NOTE.
+//
+// One counter, then, and global keying can only ever print FEWER NOTEs than per-section did — never a
+// NOTE per-section would have withheld. The plant that pays for the difference puts the open row and
+// the 🎒 row under two headings it plants itself, and goes red if this is put back to a `Map`.
+//
+// What it does NOT settle: a ⬜ row above that is itself a 🎒 row still counts as shelf, though `next`
+// steps over both. That is the same under either keying and is not this ruling's question.
 //
 // **THIS REPORTS AND DOES NOT FAIL, AND THAT IS A RULING RATHER THAN A SOFT TOUCH.** Every other thing
 // --audit prints BAD for is two documents disagreeing — a fragment matching no box, a pointer landing
@@ -1839,19 +1862,19 @@ function gatedProblems(wos) {
 // bite is in `next`, which steps over the row whether or not anybody has read this section.
 function rideAlongReport(wos) {
   const rows = runningOrder();
-  const openAbove = new Map();                       // section → ⬜ rows seen so far in it
+  let openAbove = 0;                                 // ⬜ rows seen so far in the WHOLE running order — see above
   const lines = [], notes = [];
   for (const row of rows) {
     const wo = wos.get(row.id);
     const open = !!wo && wo.status.startsWith('⬜ NOT STARTED');
-    const above = openAbove.get(row.section) || 0;
-    if (open) openAbove.set(row.section, above + 1);
+    const above = openAbove;
+    if (open) openAbove = above + 1;
     if (!row.rideAlong) continue;
     const rides = row.rideAlong.rides || '(nothing named)';
     if (!wo) { lines.push(`  —    ${row.id.padEnd(8)} a ${RIDE_ALONG_MARK} row naming a work order this directory does not hold`); continue; }
     if (!open) { lines.push(`  ok   ${row.id.padEnd(8)} ${wo.status.trim()} — the mark is spent; it rode with ${rides}`); continue; }
-    if (above) { lines.push(`  ok   ${row.id.padEnd(8)} rides with ${rides}   ${above} open row(s) above it in § ${clip(row.section, 50)}`); continue; }
-    notes.push(`${row.id.padEnd(8)} the shelf above it has emptied. It is the first ⬜ in § ${clip(row.section, 50)} (row ${row.num}) and it rides with ${rides}, so \`next\` steps over it and there is nothing left to fold it into. Re-place it, start it by name, or take the ${RIDE_ALONG_MARK} off — which of the three is a human's call, so this is a NOTE and never a problem`);
+    if (above) { lines.push(`  ok   ${row.id.padEnd(8)} rides with ${rides}   ${above} open row(s) above it in the running order`); continue; }
+    notes.push(`${row.id.padEnd(8)} the shelf above it has emptied. It is the first ⬜ in the running order — row ${row.num} of § ${clip(row.section, 50)} — and it rides with ${rides}, so \`next\` steps over it and there is nothing left to fold it into. Re-place it, start it by name, or take the ${RIDE_ALONG_MARK} off — which of the three is a human's call, so this is a NOTE and never a problem`);
   }
   return { lines, notes };
 }
@@ -3997,14 +4020,14 @@ function runPlants(subject, sandbox) {
         const bad = [];
 
         // 1. The state this work order was written out of: the rows meant to sit above the ride-along
-        //    have cleared, so it is the first ⬜ in its section and there is nothing left to fold it
-        //    into. Every Ship 1 row in the copy is ✅ DONE and the fixture sits above all of them.
+        //    have cleared, so it is the first ⬜ in the running order and there is nothing left to fold
+        //    it into. Step 2b puts the fixture above every real row, so nothing is above it at all.
         reset({ status: OK, fragment: FIXTURE_BOX, open: false });
         markFixtureRow(`${RIDE_ALONG_MARK} \`a file that is open anyway\` — nothing open above this one`);
         const before = snapshot();
         let r = run(['--audit']);
         let section = rideSection(r.out);
-        if (!new RegExp(`NOTE ${FIXTURE_ID}\\s`).test(section)) bad.push('--audit did not report the 🎒 row that had become the first ⬜ in its section');
+        if (!new RegExp(`NOTE ${FIXTURE_ID}\\s`).test(section)) bad.push('--audit did not report the 🎒 row that had become the first ⬜ in the running order');
         if (!/shelf above it has emptied/.test(section)) bad.push('--audit reported the row without saying what about it needs a decision');
         if (r.code !== 0) bad.push('--audit failed over an empty shelf — re-place, start, or unmark are all correct answers and a script may not pick one');
         if (changedSince(before).length) bad.push(`--audit wrote ${changedSince(before).join(', ')} — it may write nothing, ever`);
@@ -4021,6 +4044,125 @@ function runPlants(subject, sandbox) {
         reset({ status: OK, fragment: FIXTURE_BOX, open: false });
         section = rideSection(run(['--audit']).out);
         if (new RegExp(`(ok|NOTE)\\s+${FIXTURE_ID}\\s`).test(section)) bad.push('--audit reported an unmarked row as a ride-along');
+        return bad;
+      },
+    },
+
+    // ------------------------------------------------------------ WO-1.36
+    //
+    // Two plants, each separating two behaviours that sat behind one check with no fixture between
+    // them. The first is the shelf's KEYING: WO-1.35's plants wrote both fixture rows into one table,
+    // so a per-section `Map` and a single counter passed all three of them alike. The second is the
+    // missing-file arm of --release's 🔍 refusal, which no plant reached because the only plant that
+    // runs that refusal writes the file first.
+    {
+      name: '--audit measures a 🎒 row\'s shelf over the whole running order — an open row under an EARLIER heading is shelf, on two headings this plant writes itself',
+      run: () => {
+        const bad = [];
+        const p = path.join('work-orders', 'README.md');
+        const rowOf = id => new RegExp(`^\\|\\s*\\d+\\s*\\|\\s*\\[${id.replace(/\./g, '\\.')}\\]`);
+        const SHELF_A = 'Self-check shelf A — an earlier section, planted by WO-1.36\'s plant';
+        const SHELF_B = 'Self-check shelf B — a later section, planted by WO-1.36\'s plant';
+
+        // The two fixture rows lifted out of the first real table and put under two headings of the
+        // plant's own, directly above that table's heading — so no real section is borrowed, no real
+        // row changes heading, and the fixture is still the first row in document order with the
+        // target the second, which is step 2b's guarantee kept rather than inherited. A later real
+        // section's ⬜ rows are whatever the trackers carry that week; nothing here may depend on them,
+        // and nothing does, because both shelves sit above every real row.
+        const plantShelves = () => {
+          const lines = readSb(p).split('\n');
+          const [fixtureRow, targetRow] = [FIXTURE_ID, TARGET_ID].map(id => {
+            const at = lines.findIndex(l => rowOf(id).test(l));
+            if (at < 0) throw new Error(`--self-check found no running-order row for ${id} to move onto a planted shelf`);
+            return lines[at];
+          });
+          const kept = lines.filter(l => !rowOf(FIXTURE_ID).test(l) && !rowOf(TARGET_ID).test(l));
+          let head = kept.findIndex(l => /^\|\s*\d+\s*\|\s*\[(WO-[\dG][\w.]*)\]/.test(l));
+          while (head >= 0 && !/^##\s/.test(kept[head])) head--;
+          if (head < 0) throw new Error('--self-check found no heading above the first running-order table');
+          kept.splice(head, 0, `## ${SHELF_A}`, '', fixtureRow, '', `## ${SHELF_B}`, '', targetRow, '');
+          plantWrite(p, kept.join('\n'));
+
+          // Read back independently of the subject: the two rows must now sit under two different
+          // headings, or this plant measures the adjacent-rows fixture it was written to replace.
+          const now = readSb(p).split('\n');
+          const a = now.findIndex(l => rowOf(FIXTURE_ID).test(l)), b = now.findIndex(l => rowOf(TARGET_ID).test(l));
+          if (!(a >= 0 && b > a && now.slice(a + 1, b).some(l => l === `## ${SHELF_B}`))) {
+            throw new Error(`the shelf plant did not put ${TARGET_ID} under a later heading than ${FIXTURE_ID}`);
+          }
+        };
+
+        // 1. The ruled case. ⬜ under shelf A, 🎒 under shelf B: the 🎒 row is the first ⬜ in ITS
+        //    section, and not in the running order. Under the ruling that is shelf — `ok`, one row
+        //    above it — and `next` proves why: it answers the open row and never reaches the 🎒 one,
+        //    so a NOTE saying "`next` steps over it" would be false on this tree.
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        markFixtureRow(`${RIDE_ALONG_MARK} \`a file that is open anyway\` — the open row above is under another heading`, TARGET_ID);
+        plantShelves();
+        let section = rideSection(run(['--audit']).out);
+        if (new RegExp(`NOTE\\s+${TARGET_ID}\\s`).test(section)) bad.push(`--audit called ${TARGET_ID}'s shelf empty with ${FIXTURE_ID} ⬜ above it under an earlier heading — that is the shelf keyed by section, which WO-1.36 ruled against`);
+        if (!new RegExp(`ok\\s+${TARGET_ID}\\s+rides with a file that is open anyway\\s+1 open row\\(s\\) above it in the running order`).test(section)) {
+          bad.push(`--audit did not report ${TARGET_ID} as a ride-along with exactly one open row above it in the running order`);
+        }
+        let nx = run(['next']);
+        if (!new RegExp(`next: ${FIXTURE_ID}`).test(nx.out)) bad.push(`\`next\` did not answer ${FIXTURE_ID}, the open row on the earlier shelf — the case above is then measuring nothing`);
+        if (new RegExp(`skipped ${TARGET_ID}`).test(nx.out)) bad.push(`\`next\` stepped over ${TARGET_ID} with an open row above it`);
+
+        // 2. The control, on the same two shelves: the row above is claimed rather than ⬜, so nothing
+        //    ⬜ is above the 🎒 row anywhere. Now it IS a NOTE, it names the planted section it sits
+        //    in, and `next` does step over it — the NOTE's sentence true at the moment it is printed.
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
+        markFixtureRow(`${RIDE_ALONG_MARK} \`a file that is open anyway\` — the row above is claimed, not open`, TARGET_ID);
+        plantShelves();
+        section = rideSection(run(['--audit']).out);
+        if (!new RegExp(`NOTE ${TARGET_ID}\\s`).test(section)) bad.push(`--audit did not report ${TARGET_ID} with nothing ⬜ above it anywhere — the case above is then passing for a reason that is not the shelf`);
+        if (!new RegExp(`NOTE ${TARGET_ID}\\s.*first ⬜ in the running order — row \\d+ of § Self-check shelf B`).test(section)) bad.push('the NOTE did not say it is the first ⬜ in the running order, or did not name the section the row sits in');
+        nx = run(['next']);
+        if (!new RegExp(`skipped ${TARGET_ID}`).test(nx.out)) bad.push(`\`next\` did not step over ${TARGET_ID} — the NOTE printed beside it says it does`);
+        return bad;
+      },
+    },
+    {
+      name: '--release on 🔍 AWAITING VERDICT with NO result file behind it says there is no such file — and stops saying so once the file exists',
+      run: () => {
+        const bad = [];
+        // Written and removed by this plant alone, so it runs anywhere in the array: whatever the
+        // sandbox's dispatch directory held on the way in, it holds again on the way out. WO-1.38's
+        // release plant, below, writes this same file and leaves it — which is why no plant ever
+        // reached the arm this one is about.
+        const claudeDir = assertOutsideRepo(path.join(sandbox, '.claude'));
+        const dispatchDir = assertOutsideRepo(path.join(claudeDir, 'dispatch'));
+        const result = assertOutsideRepo(path.join(dispatchDir, `${FIXTURE_ID}-result.md`));
+        const hadClaude = fs.existsSync(claudeDir);
+        const was = fs.existsSync(result) ? fs.readFileSync(result, 'utf8') : null;
+        const ORPHAN = `\\.claude/dispatch/${FIXTURE_ID}-result\\.md is the report it would orphan`;
+        try {
+          if (was !== null) fs.rmSync(result);
+
+          // 1. No file. The refusal still refuses and writes nothing — and says the file is missing,
+          //    which is the one thing a reader of a damaged dispatch trail needs told.
+          reset({ status: `${AWAITING} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
+          const before = snapshot();
+          const missing = run(['--release', FIXTURE_ID]);
+          if (missing.code === 0) bad.push('--release on a 🔍 AWAITING VERDICT row with no result file exited 0');
+          if (!fixtureStatus().startsWith(AWAITING)) bad.push(`the refused --release left the status at "${fixtureStatus()}"`);
+          if (changedSince(before).length) bad.push(`the refused --release wrote ${changedSince(before).join(', ')}`);
+          if (!new RegExp(`${ORPHAN} — and there is no such file`).test(missing.out)) bad.push('with no result file behind the row, the refusal did not say there is no such file — it names a report that does not exist as though it did');
+
+          // 2. The file present, same row, same status: the sentence is gone and the name stays.
+          fs.mkdirSync(dispatchDir, { recursive: true });
+          fs.writeFileSync(result, 'the implementer report this plant writes, then takes away again\n');
+          reset({ status: `${AWAITING} — 2026-01-01`, fragment: FIXTURE_BOX, open: false });
+          const present = run(['--release', FIXTURE_ID]);
+          if (/there is no such file/.test(present.out)) bad.push('with the result file present, the refusal still said there is no such file');
+          if (!new RegExp(`${ORPHAN}\\.`).test(present.out)) bad.push('with the result file present, the refusal did not name it as the report it would orphan');
+          if (missing.out === present.out) bad.push('the two arms printed the same refusal byte for byte');
+        } finally {
+          fs.rmSync(result, { force: true });
+          if (was !== null) { fs.mkdirSync(dispatchDir, { recursive: true }); fs.writeFileSync(result, was); }
+          if (!hadClaude) fs.rmSync(claudeDir, { recursive: true, force: true });
+        }
         return bad;
       },
     },
@@ -4422,6 +4564,12 @@ function runPlants(subject, sandbox) {
   console.log('  and --tick go through to ✅ DONE, and a dependent\'s gate still refuses it; and --audit');
   console.log('  reports the row whose shelf has emptied as a NOTE rather than a problem, says nothing');
   console.log('  about the same mark one row lower, and writes nothing either way.');
+  console.log('  And WO-1.36\'s TWO, each separating two behaviours one check used to hide: the shelf');
+  console.log('  above a 🎒 row is the whole running order, so a ⬜ row under an EARLIER heading — on two');
+  console.log('  headings the plant writes itself — keeps the row `ok` while `next` answers the open one,');
+  console.log('  and with that row claimed instead the same 🎒 row is a NOTE and `next` steps over it;');
+  console.log('  and --release over 🔍 AWAITING VERDICT says there is no such file when the result file');
+  console.log('  is missing, and stops saying so once it exists — two refusals, proved to differ.');
   console.log('  And WO-1.27\'s FOUR, the first here about WHERE a field is written rather than what');
   console.log('  it says: a field name in prose — WO-6.3\'s italic note running on into the header');
   console.log('  block, ending in `**Owes**` inside backticks — yields no **Owes** value and draws a');

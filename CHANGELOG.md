@@ -13,6 +13,23 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A ride-along's shelf is the whole running order, not its section — 2026-10-01
+
+A tooling change only; nothing in the app moved.
+
+- **`--audit` now counts every open row above a 🎒 ride-along, whatever section it is in.** Before,
+  it counted only rows in the ride-along's own section, so it could say *"`next` steps over it and
+  there is nothing left to fold it into"* while open rows in an earlier section meant `next` would
+  never reach it. `next` walks the document top to bottom and ignores headings, and the count now asks
+  the same question. The ruling, and why per-section counting lost, is written at `rideAlongReport()`.
+- **The change can only ever print fewer notes, never more.** Nothing reported before is now missed.
+- **Two new self-check plants, the 45th and 46th.** One puts the open row and the ride-along under two
+  different headings and goes red if the per-section counting comes back — the case WO-1.35's three
+  plants could not tell apart, since each kept both rows in one table. The other reaches
+  `--release`'s branch for a dispatch that left no result file, which nothing had exercised.
+- **One `--audit` line changed wording:** WO-1.54 now reads *in the running order* where it said
+  *in § After Ship 3*. No other gate report moved.
+
 ### The gate's self-check now proves `nothing` is a whole word — 2026-10-01
 
 A tooling change only; nothing in the app moved.

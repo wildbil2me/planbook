@@ -664,7 +664,9 @@ closes no box, opens no gate, satisfies no dependency, and naming the ID produce
 report it always did. It exists because **position is not a fence**: WO-8.13 spends a paragraph
 arguing it must not lead the running order, its only protection was sitting at the foot of the table,
 and on 2026-08-28 the three rows above it cleared and it led anyway, silently. So `--audit` reports a
-ride-along that has become the first `⬜` in its section — as a **note and not a failure**, because
+ride-along that has become the first `⬜` in **the running order** — not merely in its own section,
+ruled at WO-1.36 (2026-10-01), because `next` walks document order and ignores headings, and any
+open row above it in an earlier section is still a sitting it can fold into — as a **note and not a failure**, because
 *re-place it*, *start it* and *take the mark off* are all correct answers and only a person can pick.
 Defined in [`plans/work-orders/README.md`](plans/work-orders/README.md) § "Ride-along rows"; the
 glyph is the owner's to change and the behaviour is not.

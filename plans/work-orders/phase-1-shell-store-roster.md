@@ -3481,7 +3481,7 @@ writes, and the column keeps the sentence.
 
 ## WO-1.36 — two fixtures in one table cannot prove a per-section shelf
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.35 ✅ · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-01 · **Size** S · **Depends on** WO-1.35 ✅ · **Blocks** nothing
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.35 made.
 Booked 2026-08-28 by WO-1.35's own verifier, which **proved** this rather than suspecting it.)*
 
@@ -3565,21 +3565,26 @@ plant**, because it fires precisely when a row's dispatch trail is *already* dam
 reader is least able to tell a real refusal from a malformed one.
 
 **Acceptance**
-- [ ] The keying is **ruled on in prose where the code makes the choice** — at `rideAlongReport()` —
+- [x] The keying is **ruled on in prose where the code makes the choice** — at `rideAlongReport()` —
       naming the reading that lost and why, so the surviving sentence is one a reader can check.
-- [ ] A plant puts a 🎒 row in a **later section than an open `⬜` row**, on a shelf it planted
+      *(**Global** won; per-section — what WO-1.35 shipped — lost to the NOTE's own "`next` steps over
+      it", which `next` makes true only over the whole running order.)*
+- [x] A plant puts a 🎒 row in a **later section than an open `⬜` row**, on a shelf it planted
       itself, and asserts the ruled behaviour.
-- [ ] That plant goes **red** under the other keying — collapsing `openAbove` to one global bucket if
+- [x] That plant goes **red** under the other keying — collapsing `openAbove` to one global bucket if
       per-section won, restoring the per-section `Map` if global won — recorded in `tools/README.md`'s
       mutation table with the rest.
-- [ ] No comment in `tools/wo-gate.mjs` claims a distinction no plant pays for; the
+- [x] No comment in `tools/wo-gate.mjs` claims a distinction no plant pays for; the
       *"different shelves"* sentence either has a plant behind it or is gone.
-- [ ] `applyRelease()`'s missing-result-file arm is reached by a plant — a row at `🔍 AWAITING
+- [x] `applyRelease()`'s missing-result-file arm is reached by a plant — a row at `🔍 AWAITING
       VERDICT` with **no** `.claude/dispatch/<ID>-result.md` behind it — and the two arms are proved
       to print differently rather than assumed to.
-- [ ] `--self-check` is green and its own count goes up by the number of checks added.
-- [ ] `node tools/wo-sweep.mjs` is green, and `--audit` is green on a clean tree with WO-8.13's NOTE
-      reading as it does today.
+- [x] `--self-check` is green and its own count goes up by the number of checks added.
+      *(44 of 44 → 46 of 46, two plants added.)*
+- [x] `node tools/wo-sweep.mjs` is green, and `--audit` is green on a clean tree with WO-8.13's NOTE
+      reading as it does today. *(WO-8.13 is ✅ DONE and its line is unchanged; the section still
+      reports 0 rows with nothing open above them. One real line changed wording and not count or
+      kind — WO-1.54's `ok` now reads "in the running order" where it read "in § After Ship 3".)*
 
 ---
 
