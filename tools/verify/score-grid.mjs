@@ -1510,7 +1510,9 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           return 1; })()`);
 
         /*
-          THE TWO FROZEN COLUMNS, AND THE PAIR src/scores.css SAYS IS ASSERTED HERE. The grade column's
+          THE TWO FROZEN COLUMNS, AND THE PAIR src/scores.css SAYS IS ASSERTED HERE — four numbers since
+          WO-3.27, whose scroll padding is read by this same pass and asserted in the check after
+          this one. The grade column's
           `left` is a pixel offset, so it can only be right if the name column's width is known — the
           hand-computed layout src/attendance.css warns against, accepted for two columns because sticky
           arithmetic leaves no alternative. That comment claimed a check that did not exist until this
@@ -1539,6 +1541,15 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
               bag.nameWidth = r.style.width; bag.nameMin = r.style.minWidth;
             }
             if (parts.indexOf('.scores-grade') >= 0 && r.style.left) bag.gradeLeft = r.style.left;
+            if (parts.indexOf('.scores-grade') >= 0 && r.style.width) {
+              bag.gradeWidth = r.style.width; bag.gradeMin = r.style.minWidth;
+            }
+            /* WO-3.27's fourth number. Matched exactly for the same reason as above: the head rule
+               is '.scores-grid-wrap :where(thead th)', which must not be read as the box. The
+               longhand is read whether the sheet wrote it as the scroll-padding shorthand or not. */
+            if (parts.indexOf('.scores-grid-wrap') >= 0 && r.style.scrollPaddingLeft) {
+              bag.padLeft = r.style.scrollPaddingLeft; bag.padTop = r.style.scrollPaddingTop;
+            }
           });
           return out; })()`);
         check('the frozen name column\'s width and the frozen grade column\'s offset are the same number in the base rules and the same number again in the coarse block',
@@ -1549,6 +1560,31 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
             && frozen.coarse.nameWidth === frozen.coarse.nameMin
             && frozen.coarse.nameWidth !== frozen.base.nameWidth,
           'base ' + JSON.stringify(frozen.base) + ' :: coarse ' + JSON.stringify(frozen.coarse));
+
+        /*
+          AND THE FOURTH NUMBER (WO-3.27): the box's `scroll-padding-left`, which is what tells the
+          browser where the frozen pair ends, so a focused cell is scrolled clear of it rather than
+          left underneath. It is the name column's width plus the grade column's width, base against
+          base and coarse against coarse — the coarse block narrows the name and does not restate the
+          grade's width, so the coarse sum takes the base grade width unless the block says
+          otherwise. Asserted as a SUM of the declared numbers rather than against a literal 274, so
+          a drift in any one of the four (name width, grade width, grade offset, padding) goes red
+          here or in the check above, and a coherent change to all of them does not.
+        */
+        const px = (v) => (/^-?\d+(\.\d+)?px$/.test(String(v || '')) ? parseFloat(v) : NaN);
+        const cGradeW = frozen.coarse.gradeWidth || frozen.base.gradeWidth;
+        const cGradeMin = frozen.coarse.gradeMin || frozen.base.gradeMin;
+        const baseEdge = px(frozen.base.nameWidth) + px(frozen.base.gradeWidth);
+        const coarseEdge = px(frozen.coarse.nameWidth) + px(cGradeW);
+        check('and the box\'s scroll-padding-left is where the frozen pair ends — the name column\'s width plus the grade column\'s — in the base rules and again in the coarse block, so a focused cell is scrolled clear of the pair on both pointers (WO-3.27)',
+          frozen.sheet && !!frozen.base.padLeft && !!frozen.coarse.padLeft
+            && frozen.base.gradeWidth === frozen.base.gradeMin && cGradeW === cGradeMin
+            && px(frozen.base.padLeft) === baseEdge && px(frozen.coarse.padLeft) === coarseEdge
+            && px(frozen.base.padLeft) !== px(frozen.coarse.padLeft),
+          'base: padding ' + frozen.base.padLeft + ' against ' + frozen.base.nameWidth + ' + '
+            + frozen.base.gradeWidth + ' = ' + baseEdge + 'px :: coarse: padding '
+            + frozen.coarse.padLeft + ' against ' + frozen.coarse.nameWidth + ' + ' + cGradeW
+            + ' = ' + coarseEdge + 'px');
 
         /*
           AND THE SAME PAIR AS A MEASUREMENT, with the grid scrolled sideways — which is the defect
@@ -1575,6 +1611,240 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           !!pinned && pinned.scrollable > 0 && pinned.scrolled > 0
             && pinned.overlap <= 0.5 && Math.abs(pinned.nameOff) <= 0.5,
           JSON.stringify(pinned));
+
+        /*
+          ── WO-3.27: THE BOX, THE STUCK HEAD, AND THE FOCUS DEFECT — MEASURED ON BOTH POINTERS ──
+
+          The grid's wrapper scrolls both ways inside a `max-height` now, so the head can stick and a
+          focused cell can be told where the frozen pair and the stuck head end (`scroll-padding`).
+          Everything below is a reading of the drawn box, never of a stylesheet, and the two driven
+          halves are REAL KEYS dispatched at the page — a scripted `.focus()` is a different scroll
+          path from a teacher's Shift+Tab, and the Acceptance says "a real Shift+Tab".
+
+          THE SETUP IS SCRIPTED AND THE CLAIM IS NOT. Getting the caret into the starting cell with the
+          grid parked where the defect lives — scrolled fully right, or with a row under the stuck head
+          — is done with `focus({ preventScroll: true })` and an explicit scroll, and the scroll
+          position is read back before the key goes in, because a snap container is entitled to move a
+          programmatic scroll and a starting state assumed rather than read is how a check passes for
+          the wrong reason. The key that moves into the covered cell is the only thing measured.
+
+          MUTATION-PROVED (TESTING.md § WO-3.27): with `scroll-padding` deleted from src/scores.css,
+          Shift+Tab and ← leave the cell under the frozen pair and Enter leaves it under the head, on
+          both pointers, and the three checks per pointer go red.
+        */
+        const BOX = `(function(){
+          var wrap = document.getElementById('scoresGridWrap');
+          if (!wrap) return null;
+          var r = wrap.getBoundingClientRect();
+          var heads = Array.prototype.slice.call(document.querySelectorAll('#scoresHead th'));
+          var name = document.querySelector('#scoresHead th.scores-name');
+          var grade = document.querySelector('#scoresHead th.scores-grade');
+          var gb = grade ? grade.getBoundingClientRect() : null;
+          return { top: r.top + wrap.clientTop, left: r.left + wrap.clientLeft,
+            bottom: r.bottom, outerTop: r.top,
+            frozenRight: gb ? gb.right : NaN, headBottom: name ? name.getBoundingClientRect().bottom : NaN,
+            scrollTop: wrap.scrollTop, scrollLeft: wrap.scrollLeft,
+            maxTop: wrap.scrollHeight - wrap.clientHeight, maxLeft: wrap.scrollWidth - wrap.clientWidth,
+            heads: heads.map(function(th){ var b = th.getBoundingClientRect();
+              return { top: Math.round(b.top * 100) / 100, left: Math.round(b.left * 100) / 100,
+                right: Math.round(b.right * 100) / 100,
+                frozen: th.classList.contains('scores-name') ? 'name'
+                  : (th.classList.contains('scores-grade') ? 'grade' : '') }; }) }; })()`;
+        const scrollBox = (left, top) => evalJs(`(function(){
+          var wrap = document.getElementById('scoresGridWrap');
+          wrap.scrollLeft = ${left}; wrap.scrollTop = ${top}; return 1; })()`);
+        const skTab = (mods = 0) => sk('Tab', 'Tab', 9, '', mods);
+
+        /* Acceptance line 1: down and sideways at once, every head on the box's top edge (the
+           scrollport's — inside the 1px border), and the corner on its left edge with the grade head
+           starting where the name head ends. */
+        const stuckHead = async () => {
+          await scrollBox(240, 300);
+          await new Promise((r) => setTimeout(r, 120));
+          const b = await evalJs(BOX);
+          const name = b ? b.heads.filter((x) => x.frozen === 'name')[0] : null;
+          const grade = b ? b.heads.filter((x) => x.frozen === 'grade')[0] : null;
+          const offTop = b ? b.heads.filter((x) => Math.abs(x.top - b.top) > 0.5) : [];
+          return { b, name, grade, offTop,
+            ok: !!b && !!name && !!grade && b.scrollTop > 0 && b.scrollLeft > 0 && b.heads.length >= 12
+              && offTop.length === 0 && Math.abs(name.left - b.left) <= 0.5
+              && Math.abs(grade.left - name.right) <= 0.5 };
+        };
+
+        /* Acceptance line 2: the three moves into a covered cell. Row s05 for the two sideways moves,
+           with the box at its top so nothing vertical is in play; the column is the RIGHTMOST one
+           still under the frozen pair at full right scroll, so its right-hand neighbour is the
+           nearest cell a teacher could be in when she moves left into it. */
+        const CELL_AT = (a, s) => `(function(){
+          var e = document.querySelector(${JSON.stringify(cellSel(a, s))});
+          if (!e) return null; var r = e.getBoundingClientRect();
+          return { left: Math.round(r.left * 100) / 100, top: Math.round(r.top * 100) / 100,
+            tdLeft: Math.round(e.closest('td').getBoundingClientRect().left * 100) / 100,
+            scrollLeft: document.getElementById('scoresGridWrap').scrollLeft,
+            focused: document.activeElement === e }; })()`;
+        const focusDefect = async () => {
+          const out = {};
+          await scrollBox(0, 0);
+          const cols = await evalJs(`(function(){
+            return Array.prototype.slice.call(document.querySelectorAll('#scoresHead th[data-score-col]'))
+              .map(function(th){ return th.getAttribute('data-score-col'); }); })()`);
+          await scrollBox(100000, 0);
+          await new Promise((r) => setTimeout(r, 120));
+          const parked = await evalJs(BOX);
+          const under = parked.heads.filter((x) => !x.frozen)
+            .map((x, i) => ({ i, left: x.left })).filter((x) => x.left < parked.frozenRight - 1);
+          const target = under.length ? under[under.length - 1].i : -1;
+          out.parked = { scrollLeft: parked.scrollLeft, maxLeft: parked.maxLeft,
+            frozenRight: parked.frozenRight, under: under.length, target: cols[target] };
+          if (target < 0 || target + 1 >= cols.length) return Object.assign(out, { ok: false });
+          const into = cols[target], from = cols[target + 1];
+          const start = async (caretAtStart) => {
+            await evalJs(`(function(){
+              var e = document.querySelector(${JSON.stringify(cellSel(from, 'wo35-s05'))});
+              e.focus({ preventScroll: true });
+              ${caretAtStart ? 'e.setSelectionRange(0, 0);' : ''}
+              var wrap = document.getElementById('scoresGridWrap');
+              wrap.scrollLeft = 100000; wrap.scrollTop = 0; return 1; })()`);
+            await new Promise((r) => setTimeout(r, 120));
+            return await evalJs(BOX);
+          };
+          const before1 = await start(false);
+          await skTab(SHIFT);
+          await new Promise((r) => setTimeout(r, 200));
+          out.shiftTab = Object.assign({ startLeft: before1.scrollLeft },
+            await evalJs(CELL_AT(into, 'wo35-s05')), { frozenRight: (await evalJs(BOX)).frozenRight });
+          const before2 = await start(true);
+          await skLeft();
+          await new Promise((r) => setTimeout(r, 200));
+          out.arrowLeft = Object.assign({ startLeft: before2.scrollLeft },
+            await evalJs(CELL_AT(into, 'wo35-s05')), { frozenRight: (await evalJs(BOX)).frozenRight });
+
+          /* Enter, down the first column with the box at its left edge (so that column is clear of
+             the pair and only the head is in play). The box is scrolled until some row's top sits
+             inside the stuck head; the caret starts one row above it, and Enter moves into it. */
+          await scrollBox(0, 0);
+          const rows = await evalJs(`(function(){
+            return Array.prototype.slice.call(document.querySelectorAll('#scoresBody tr[data-score-row]'))
+              .map(function(r){ return r.getAttribute('data-score-row'); }); })()`);
+          const A = cols[0];
+          const plan = await evalJs(`(function(){
+            var wrap = document.getElementById('scoresGridWrap');
+            var name = document.querySelector('#scoresHead th.scores-name');
+            var headH = name.getBoundingClientRect().height;
+            var row = document.querySelector('#scoresBody tr[data-score-row="${rows[10]}"]');
+            var wr = wrap.getBoundingClientRect();
+            var rowTop = row.getBoundingClientRect().top - (wr.top + wrap.clientTop) + wrap.scrollTop;
+            /* That row's top lands halfway down the stuck head. */
+            return { scrollTo: Math.round(rowTop - headH / 2), headH: headH }; })()`);
+          await evalJs(`(function(){
+            var e = document.querySelector(${JSON.stringify(cellSel(A, rows[9]))});
+            e.focus({ preventScroll: true });
+            var wrap = document.getElementById('scoresGridWrap');
+            wrap.scrollLeft = 0; wrap.scrollTop = ${plan.scrollTo}; return 1; })()`);
+          await new Promise((r) => setTimeout(r, 120));
+          const before3 = await evalJs(BOX);
+          const coveredBefore = await evalJs(CELL_AT(A, rows[10]));
+          await skEnter();
+          await new Promise((r) => setTimeout(r, 200));
+          const after3 = await evalJs(BOX);
+          out.enter = Object.assign({ startTop: before3.scrollTop, headH: plan.headH,
+            coveredBefore: coveredBefore.top < before3.headBottom },
+            await evalJs(CELL_AT(A, rows[10])), { headBottom: after3.headBottom });
+          out.ok = { shiftTab: out.shiftTab.focused && before1.scrollLeft >= before1.maxLeft - 1
+              && out.shiftTab.left >= out.shiftTab.frozenRight - 0.5,
+            arrowLeft: out.arrowLeft.focused && before2.scrollLeft >= before2.maxLeft - 1
+              && out.arrowLeft.left >= out.arrowLeft.frozenRight - 0.5,
+            enter: out.enter.focused && out.enter.coveredBefore
+              && out.enter.top >= out.enter.headBottom - 0.5 };
+          return out;
+        };
+
+        const head1 = await stuckHead();
+        check('the box scrolled down and sideways at once leaves every column head\'s top on the box\'s top edge, and the name and grade heads on its left edge, end to end — on a fine pointer (WO-3.27)',
+          head1.ok,
+          JSON.stringify({ box: head1.b && { top: head1.b.top, left: head1.b.left,
+            scrollTop: head1.b.scrollTop, scrollLeft: head1.b.scrollLeft, heads: head1.b.heads.length },
+            name: head1.name, grade: head1.grade, offTop: head1.offTop.slice(0, 4) }));
+
+        const fd1 = await focusDefect();
+        check('with the grid scrolled fully right, a real Shift+Tab into a cell whose column sits under the frozen pair scrolls it clear: its left edge at or right of the pair\'s right edge — fine pointer (WO-3.27)',
+          !!fd1.ok && fd1.ok.shiftTab, JSON.stringify({ parked: fd1.parked, shiftTab: fd1.shiftTab }));
+        check('and a real ← with the caret at the start of the cell does the same, through src/scores.js\'s own focus move — fine pointer (WO-3.27)',
+          !!fd1.ok && fd1.ok.arrowLeft, JSON.stringify({ parked: fd1.parked, arrowLeft: fd1.arrowLeft }));
+        check('and a real Enter down into a row sitting under the stuck head leaves that cell\'s top at or below the head\'s bottom — fine pointer (WO-3.27)',
+          !!fd1.ok && fd1.ok.enter, JSON.stringify(fd1.enter));
+
+        /*
+          revealScoreColumn() INSIDE THE BOX, FROM THE WORST PLACE IT CAN START (WO-3.27, Acceptance
+          line 5's harder half). The glance page's real tap is driven in verify/glance-quiet.mjs, on a
+          fixture whose grid barely scrolls; this one has ten columns and twenty-five rows, so the box
+          is parked at its far right and well down, the screen is left and re-entered through the real
+          strips — the way a teacher leaves it for the home page and comes back — and then the
+          function the glance tap calls is asked for the FIRST column, the one furthest from where the
+          box was left on both axes.
+        */
+        await scrollBox(100000, 400);
+        await new Promise((r) => setTimeout(r, 120));
+        const leftAt = await evalJs(BOX);
+        await clickSel('#scoresView [data-class-screen="assignments"]');
+        await new Promise((r) => setTimeout(r, 250));
+        await clickSel('#assignmentsView [data-class-screen="scores"]');
+        await new Promise((r) => setTimeout(r, 300));
+        const cameBackAt = await evalJs(BOX);
+        const revealed = await evalJs(`(function(){
+          var ok = window.planbook.scores.revealScoreColumn(${JSON.stringify(A1)});
+          var wrap = document.getElementById('scoresGridWrap');
+          var th = document.querySelector('#scoresHead [data-score-col=${JSON.stringify(A1)}]');
+          var grade = document.querySelector('#scoresHead th.scores-grade');
+          var f = document.activeElement, fr = f.getBoundingClientRect();
+          var c = th.getBoundingClientRect(), g = grade.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+          return { ok: ok, cell: f.getAttribute('data-score-cell'), student: f.getAttribute('data-score-student'),
+            colLeft: Math.round(c.left * 100) / 100, frozenRight: Math.round(g.right * 100) / 100,
+            cellTop: Math.round(fr.top * 100) / 100, cellBottom: Math.round(fr.bottom * 100) / 100,
+            headBottom: Math.round(g.bottom * 100) / 100, boxBottom: Math.round(w.bottom * 100) / 100,
+            scrollTop: wrap.scrollTop, scrollLeft: wrap.scrollLeft, inner: window.innerHeight }; })()`);
+        check('revealScoreColumn() — what the glance page\'s *Waiting to be graded* tap calls — lands on the first column with the caret in its first cell, clear of the frozen pair and below the stuck head, even when the box was left scrolled far right and down and the screen left and re-entered first (WO-3.27)',
+          leftAt.scrollLeft > 0 && leftAt.scrollTop > 0 && revealed.ok === true
+            && revealed.cell === A1 && revealed.student === 'wo35-s01'
+            && revealed.colLeft >= revealed.frozenRight - 0.5
+            && revealed.cellTop >= revealed.headBottom - 0.5 && revealed.cellBottom <= revealed.boxBottom
+            && revealed.cellBottom <= revealed.inner,
+          JSON.stringify({ leftAt: { scrollLeft: leftAt.scrollLeft, scrollTop: leftAt.scrollTop },
+            cameBackAt: { scrollLeft: cameBackAt.scrollLeft, scrollTop: cameBackAt.scrollTop }, revealed }));
+
+        /*
+          Acceptance line 4, at the laptop size the work order names: 1280x800, the page scrolled to
+          the grid, and the box's bottom edge — which is where its horizontal scrollbar is drawn —
+          inside the viewport. Resized rather than reloaded; the coarse pass below reloads for itself.
+
+          The page scrolled to its very END is read too and reported, NOT asserted: src/scores.css
+          says in words that the hint under the grid is taller than the 160px the box leaves, so at
+          the end of the page the box's top — the stuck head with it — sits above the viewport. That
+          is a known cost written down at the declaration, and the figure in this check's detail is
+          what keeps the sentence there honest.
+        */
+        await send('Emulation.setDeviceMetricsOverride',
+          { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
+        await new Promise((r) => setTimeout(r, 300));
+        const fit = await evalJs(`(function(){
+          var wrap = document.getElementById('scoresGridWrap');
+          wrap.scrollTop = 0; wrap.scrollLeft = 0;
+          wrap.scrollIntoView({ block: 'start' });
+          var r = wrap.getBoundingClientRect();
+          var at = { pageY: Math.round(window.scrollY), top: Math.round(r.top * 100) / 100,
+            bottom: Math.round(r.bottom * 100) / 100, height: Math.round(r.height),
+            scrollsDown: wrap.scrollHeight > wrap.clientHeight, inner: window.innerHeight,
+            innerW: window.innerWidth };
+          window.scrollTo(0, document.documentElement.scrollHeight);
+          var e = wrap.getBoundingClientRect();
+          at.end = { pageY: Math.round(window.scrollY), top: Math.round(e.top * 100) / 100,
+            bottom: Math.round(e.bottom * 100) / 100 };
+          window.scrollTo(0, 0);
+          return at; })()`);
+        check('at a 1280x800 laptop viewport with the page scrolled to the grid, the box\'s top and bottom edges — and so its horizontal scrollbar — are inside the viewport, with rows still to scroll inside it (WO-3.27)',
+          fit.innerW === 1280 && fit.inner === 800 && fit.scrollsDown && fit.pageY > 0
+            && fit.top >= 0 && fit.bottom <= fit.inner,
+          JSON.stringify(fit) + ' (end = the page scrolled to its end: reported, not asserted)');
 
         /*
           ── THE COARSE PASS ──
@@ -1655,6 +1925,25 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
             && !!pinned && pinnedCoarse.nameW < pinned.nameW,
           JSON.stringify(pinnedCoarse) + ' against a fine-pointer name column of '
             + (pinned ? pinned.nameW : '?') + 'px');
+
+        /* WO-3.27 again on the coarse pointer, where the name column is 168px, the frozen edge is
+           at 252 and the head's type is a step larger — every number the fine pass leaned on has
+           moved, which is the reason for asking twice. The keys are still a keyboard's: an iPad
+           with a keyboard attached is this pointer and these keys. */
+        const head2 = await stuckHead();
+        check('the box scrolled down and sideways at once leaves every column head\'s top on the box\'s top edge, and the name and grade heads on its left edge, end to end — on a coarse pointer (WO-3.27)',
+          head2.ok,
+          JSON.stringify({ box: head2.b && { top: head2.b.top, left: head2.b.left,
+            scrollTop: head2.b.scrollTop, scrollLeft: head2.b.scrollLeft, heads: head2.b.heads.length },
+            name: head2.name, grade: head2.grade, offTop: head2.offTop.slice(0, 4) }));
+        const fd2 = await focusDefect();
+        check('with the grid scrolled fully right, a real Shift+Tab into a cell under the frozen pair scrolls it clear of the pair — coarse pointer (WO-3.27)',
+          !!fd2.ok && fd2.ok.shiftTab, JSON.stringify({ parked: fd2.parked, shiftTab: fd2.shiftTab }));
+        check('and a real ← with the caret at the start of the cell does the same — coarse pointer (WO-3.27)',
+          !!fd2.ok && fd2.ok.arrowLeft, JSON.stringify({ parked: fd2.parked, arrowLeft: fd2.arrowLeft }));
+        check('and a real Enter down into a row under the stuck head leaves that cell\'s top at or below the head\'s bottom — coarse pointer (WO-3.27)',
+          !!fd2.ok && fd2.ok.enter, JSON.stringify(fd2.enter));
+        await scrollBox(0, 0);
 
         /*
           ── WO-3.24: THE ⌨ KEYS PANEL, MEASURED FOR SPILL RATHER THAN ARGUED FROM CHARACTER COUNTS ──

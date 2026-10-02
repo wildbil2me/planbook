@@ -2381,7 +2381,7 @@ tools.
 
 ## WO-3.27 — the score grid scrolls in a box of its own, and a focused cell is never under the frozen columns
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.5 — the grid and the frozen pair this boxes
+**Ship** — · **Status** ✅ DONE — 2026-10-02 · **Size** M · **Depends on** WO-3.5 — the grid and the frozen pair this boxes
 **Closes roadmap** *(no box. Found by the owner in daily use, 2026-10-01.)*
 
 **Booked 2026-10-01**, owner-directed, from a sitting about the score grid's usability. Three of the
@@ -2423,29 +2423,30 @@ owner's five asks are one change:
   keep working inside the new box; check that rather than assume it.
 
 **Acceptance**
-- [ ] With the box scrolled down, every column head's top equals the box's top, measured, on both
+- [x] With the box scrolled down, every column head's top equals the box's top, measured, on both
       pointers. The name and grade heads hold that **and** their left offsets with the box also
       scrolled sideways.
-- [ ] **The focus defect, driven rather than reasoned about.** With the grid scrolled fully right,
+- [x] **The focus defect, driven rather than reasoned about.** With the grid scrolled fully right,
       move into a cell whose column sits under the frozen pair, once with a real Shift+Tab and once
       with a real `ArrowLeft` (caret at the start). Both leave that cell's left edge at or right of
       the frozen pair's right edge. Enter down into a row under the stuck head leaves the cell's top
       at or below the head's bottom. Both pointers. **Mutation-proved**: with `scroll-padding`
       removed, the same keystrokes leave the cell covered and the check goes red. Revert the mutation
       before writing anything else.
-- [ ] The frozen-pair assertion in `tools/verify/score-grid.mjs` covers the scroll padding as well as
+- [x] The frozen-pair assertion in `tools/verify/score-grid.mjs` covers the scroll padding as well as
       the widths and the offset, base against base and coarse against coarse. A drift in any one of
       the four goes red.
-- [ ] At a 1280×800 laptop viewport with the page scrolled to the grid, the box's bottom edge, and so
+- [x] At a 1280×800 laptop viewport with the page scrolled to the grid, the box's bottom edge, and so
       its horizontal scrollbar, is inside the viewport.
-- [ ] Arriving from the glance page's *Waiting to be graded* still lands on the column with the caret
+- [x] Arriving from the glance page's *Waiting to be graded* still lands on the column with the caret
       in its first cell (`revealScoreColumn()`, WO-6.8), and that column is not under the frozen pair.
-- [ ] Every existing score-grid, past-due and grade-sheet check is green unchanged, and the printed
+- [x] Every existing score-grid, past-due and grade-sheet check is green unchanged, and the printed
       grade sheet is unchanged.
-- [ ] 👤 On the iPad: the head stays on screen; a swipe that reaches the grid's edge stops there, and
+- [x] 👤 On the iPad: the head stays on screen; a swipe that reaches the grid's edge stops there, and
       that feels right under a thumb rather than stuck; tapping a cell near the frozen edge brings it
-      clear of the name and grade.
-- [ ] 👤 On the laptop: a trackpad swipe sideways settles on a column edge, and the scrollbar is on
+      clear of the name and grade. *(Read by the owner on the LAN build, v148, 2026-10-02, a
+      long-titled column included.)*
+- [x] 👤 On the laptop: a trackpad swipe sideways settles on a column edge, and the scrollbar is on
       screen without scrolling the page to the bottom of the class.
 
 **Traps** — **The box changes what a page-level scroll does.** Two things already scroll on purpose:
@@ -2454,6 +2455,15 @@ Read both against the box. **Do not fix the focus defect in JavaScript first.** 
 declaration. A `scrollIntoView` in the key handler would cover arrows and Enter, and miss a click and
 a screen reader's own focus move. Add a script fallback only if the 👤 iPad reading shows Safari
 ignoring `scroll-padding` for focus, and say so in `TESTING.md`.
+
+*(**Built 2026-10-01, and two things went differently from the Deliverables above**, both argued in
+`TESTING.md` § WO-3.27. **`src/scores.js` did change, by one line**: `revealScoreColumn()` now puts
+the box back to its top before scrolling the column head into view, because the box keeps its scroll
+while the screen is hidden and the head is sticky inside it — the "check that rather than assume it"
+above, checked, and it did not keep working from a box left scrolled down. And **`.scores-input`
+carries a `scroll-margin-left`** the drawing did not have: without it the proximity snap can return a
+focus scroll to where it started, with the caret under the frozen pair. No script fallback for the
+focus fix was added.)*
 
 ## WO-3.28 — the score grid narrows by student and by category
 

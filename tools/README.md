@@ -1253,7 +1253,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1586 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1598 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2273,6 +2273,18 @@ arm, so the gap between sites and results stays at −14. The run prints **1600*
 1600 passed · 0 failed · 0 skipped`, 51,064 lines, 31.9 lines per check, 657s, exit 0, measured
 2026-09-30 on the real clock. The same count on `HEAD`’s `src/` read `1600 · 1599 passed · 1
 failed`. Runs and mutation in `TESTING.md` § WO-7.17.
+
+**WO-3.27 moved it from 1586 to 1598, and the executed count from 1600 to 1612 — twelve sites,
+twelve results.** Eleven are in `verify/score-grid.mjs`, inside the existing WO-3.5 block: one
+declaration check beside the frozen pair's (the box's `scroll-padding-left` is the name width plus
+the grade width, base and coarse), and per pointer the stuck head, Shift+Tab, `←` and Enter into a
+covered cell — plus, on the fine pointer only, `revealScoreColumn()` from a box left far right and
+down, and the 1280x800 fit. The twelfth is in `verify/glance-quiet.mjs`, directly after WO-6.8's
+queue-row tap, reading the same landing against the frozen pair and the stuck head. None sits in a
+loop and none is a failure arm, so the gap between sites and results stays at −14 and the file count
+does not move. The run prints **1612**: `1612 checks · 1612 passed · 0 failed · 0 skipped`, 51,411
+lines, 31.9 lines per check, 661s, exit 0, measured 2026-10-01 on the real clock. Mutation round in
+`TESTING.md` § WO-3.27.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

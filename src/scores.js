@@ -815,6 +815,15 @@ function paintKeys() {
 
   Answers false when the column is not on this grid — an assignment deleted, or filed under a term
   the class is not open on — and the caller then says nothing more than the screen's own arrival.
+
+  THE BOX GOES BACK TO ITS TOP FIRST (WO-3.27), and that is the one line this work order added to
+  this file, against its own expectation that none would be needed. Since the grid scrolls in a box
+  of its own, the head is sticky inside it, so scrolling the HEAD into view says nothing about the
+  rows: a box the teacher left scrolled down keeps its scroll while she goes to the home page and
+  back (measured — the offset survives the view being hidden), and the caret then lands in a first
+  cell scrolled away above the stuck head. Before the box, the page was the only scroller and the
+  head's scroll brought the first row with it. Sideways is still `inline: 'center'` below, which the
+  box's `scroll-padding` already keeps clear of the frozen pair.
 */
 export function revealScoreColumn(assignmentId) {
   const id = String(assignmentId || '');
@@ -822,6 +831,8 @@ export function revealScoreColumn(assignmentId) {
   const heads = document.querySelectorAll('#' + GRID_WRAP_ID + ' [data-score-col]');
   const head = Array.prototype.filter.call(heads, (th) => th.getAttribute('data-score-col') === id)[0];
   if (!head) return false;
+  const wrap = document.getElementById(GRID_WRAP_ID);
+  if (wrap) wrap.scrollTop = 0;
   head.scrollIntoView({ block: 'nearest', inline: 'center' });
   const cells = document.querySelectorAll('#' + GRID_WRAP_ID + ' [data-score-cell]');
   const first = Array.prototype.filter.call(cells, (input) => input.getAttribute('data-score-cell') === id)[0];

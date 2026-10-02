@@ -751,6 +751,27 @@ if (!seam) {
           if (!th) return null;
           var r = th.getBoundingClientRect();
           return { left: Math.round(r.left), right: Math.round(r.right), inner: window.innerWidth }; })() }; })()`;
+    /* WO-3.27's reading of the same landing: the column against the frozen pair's right edge (the
+       grade head's), and the cell the caret is in against the stuck head and the box's own bottom —
+       "on screen" now means inside the box and clear of what is stuck over it, not inside the
+       window. revealScoreColumn() did change for the box — it now puts the box back to its top
+       first — and this check cannot see that line. verify/score-grid.mjs's reveal check, from a box
+       left 400px down, is the one that guards it. */
+    const ARRIVE_327 = `(function(){
+      var wrap = document.getElementById('scoresGridWrap');
+      var th = document.querySelector('#scoresGridWrap [data-score-col="a_wo68_x"]');
+      var grade = document.querySelector('#scoresHead th.scores-grade');
+      var focus = document.activeElement;
+      if (!wrap || !th || !grade || !focus) return null;
+      var c = th.getBoundingClientRect(), g = grade.getBoundingClientRect();
+      var f = focus.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+      var td = focus.closest ? focus.closest('td') : null;
+      return { colLeft: Math.round(c.left * 100) / 100, frozenRight: Math.round(g.right * 100) / 100,
+        cellTop: Math.round(f.top * 100) / 100, cellBottom: Math.round(f.bottom * 100) / 100,
+        headBottom: Math.round(g.bottom * 100) / 100, boxBottom: Math.round(w.bottom * 100) / 100,
+        boxTop: Math.round(w.top * 100) / 100, inner: window.innerHeight,
+        firstRow: !!td && td.parentNode === document.querySelector('#scoresBody tr[data-score-row]'),
+        cell: focus.getAttribute ? focus.getAttribute('data-score-cell') : null }; })()`;
     const closeAll68 = async () => await evalJs(`(function(){
       var open = document.querySelectorAll('.modal-overlay:not(.hidden)');
       Array.prototype.forEach.call(open, function(o){ window.planbook.closeModal(o); });
@@ -779,6 +800,9 @@ if (!seam) {
     await clickSel('#homeView [data-scores-open="a_wo68_x"]');
     await new Promise(r => setTimeout(r, 400));
     const toColumn68 = await evalJs(where68);
+    /* WO-3.27: the grid scrolls in a box of its own now, and the landing has to survive it. Read in
+       the same arrival as the check below, before anything else moves the page. */
+    const arrive68 = await evalJs(ARRIVE_327);
     await goHome67();
     await clickSel('#homeView [data-glance-panel="closing"] [data-calendar-ref="e_wo68_gd"]');
     await new Promise(r => setTimeout(r, 300));
@@ -795,6 +819,14 @@ if (!seam) {
       JSON.stringify({ column: { view: toColumn68.view, openClass: toColumn68.openClass,
         col: toColumn68.col, focus: toColumn68.focusCell },
         event: { modal: toEvent68.modal, title: toEvent68.eventTitle } }));
+    check('and inside the score grid\'s own box (WO-3.27) that landing still holds: the column starts at '
+      + 'or right of the frozen name-and-grade pair, and the caret is in the column\'s FIRST cell, '
+      + 'below the stuck head and above the box\'s bottom edge, with the box itself on screen',
+      !!arrive68 && arrive68.cell === 'a_wo68_x' && arrive68.firstRow
+        && arrive68.colLeft >= arrive68.frozenRight - 0.5
+        && arrive68.cellTop >= arrive68.headBottom - 0.5 && arrive68.cellBottom <= arrive68.boxBottom
+        && arrive68.boxTop >= 0 && arrive68.cellBottom <= arrive68.inner,
+      JSON.stringify(arrive68));
 
     /* ── acceptance line 3, second half: on EVERY day inside its lead, and not the day after ── */
     const onDays68 = [];

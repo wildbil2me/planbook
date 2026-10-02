@@ -164,9 +164,64 @@
 }
 
 /* Horizontal scroll belongs to the grid, never to the page — a page that scrolls sideways on an
-   iPad is a teacher swiping the app instead of the list. `.attendance-grid-wrap`'s rule, restated
-   in this sheet's own name. */
-.scores-grid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+   iPad is a teacher swiping the app instead of the list. `.attendance-grid-wrap`'s rule was the
+   starting point, and until WO-3.27 this was it restated in this sheet's own name.
+
+   THE BOX (WO-3.27), lifted from design/mockups/proposed-scores.css § SCORE SCROLL BOX, where it was
+   `.scores-grid-wrap.boxed`; the state word folded into this rule on the lift. It scrolls BOTH ways
+   now, and that one change is three of the owner's 2026-10-01 asks. A scrolling box is what sticky
+   positioning measures against on both axes, so while this scrolled only sideways the head's
+   `top: 0` stuck to a box that never moved vertically, and the assignment names scrolled off the
+   top with the page. And the horizontal scrollbar sat under the last student, below the bottom of
+   the screen on any real class.
+
+   `max-height` IS THE VIEWPORT LESS 160px, which is the drawing's own figure, kept for two reasons
+   rather than one. The owner's ruling (Open 1) is that the summary, the flag bar and the toolbar
+   scroll away as a page normally does, so what has to fit on one screen is the box alone, head and
+   scrollbar included, and it does with room to spare — tools/verify/score-grid.mjs measures it at
+   1280x800. The room is the second reason: `overscroll-behavior: contain` (Open 2) means a swipe or
+   a wheel that reaches the box's edge stops there, so a box as tall as the whole screen would leave
+   nowhere to put a finger that scrolls the page back up. The 160px is that place.
+   WHAT IT DOES NOT BUY: the hint paragraph under the grid is taller than 160px less the box's own
+   margin, so a page scrolled all the way to its end pushes the top of the box — the stuck head with
+   it — off the top of the screen (about 110px at 1280x800). Scrolling the page back up a little
+   brings it back. Fitting that too would cost ~110px of rows on every screen, against the owner's
+   "as tall as the screen", so it is written down here rather than designed away.
+
+   `scroll-padding` IS THE FOCUS FIX, AND IT IS A DECLARATION ON PURPOSE. A browser scrolls a focused
+   field into view against the edge of its scroll box, and it does not know the left 274px of this
+   one (190 name + 84 grade; 252 under a coarse pointer) is covered by two sticky columns, or that
+   the top of it is covered by the stuck head. So a cell under either counted as visible and nothing
+   moved. Saying so here covers every way focus arrives — Shift+Tab, the arrows and Enter in
+   src/scores.js, a click, a screen reader's own focus move — where a `scrollIntoView` in the key
+   handler would cover only the keys. The left value is the FOURTH number tied to the frozen widths;
+   see THE TWO FROZEN COLUMNS below. The top value is the stuck head's height, measured rather than
+   tied, because the head is four lines of text and nothing declares its height: 91px in headless
+   Edge on a fine pointer and 98 on a coarse one, written as 96 and 104 so another engine's line
+   heights have a few pixels to spend before a cell Enter lands on is half under the head.
+
+   `scroll-snap-type: x proximity` lets a trackpad swipe settle with a column's left edge on the
+   frozen edge rather than half under it — `scroll-snap-align` is on the head cells below. Never
+   `mandatory`, which fights a slow drag. Nothing vertical snaps. THE SNAP AND THE PADDING FIGHT
+   UNLESS `.scores-input` CARRIES A `scroll-margin-left` — see the note there; it is the one
+   declaration the drawing did not have, and the harness found it rather than a reading.
+
+   THE PRINTED GRADE SHEET NEVER SEES ANY OF THIS: it is drawn by src/grades-report.js into its own
+   dialog and tables, and the print block at the foot of this file hides everything on <body> but
+   that dialog. */
+.scores-grid-wrap {
+  overflow: auto; -webkit-overflow-scrolling: touch;
+  max-height: calc(100dvh - 160px);
+  overscroll-behavior: contain;
+  scroll-padding: 96px 0 0 274px;
+  scroll-snap-type: x proximity;
+  /* The drawing's 1px `border`, drawn as a ring OUTSIDE the box instead, and that is a departure
+     rather than a restyle: a border moves the scrollport 1px in from the box's edge, so the frozen
+     name column stops being flush with the box it is pinned to, and the WO-3.5 measurement that
+     asserts it is flush goes red over a line nobody can see. A spread shadow takes no layout and
+     looks the same. */
+  box-shadow: 0 0 0 1px #eef0f4; border-radius: 8px;
+}
 .scores-grid { width: 100%; border-collapse: separate; border-spacing: 0; }
 
 /* `separate` rather than `collapse`, which is the ONE place this sheet departs from
@@ -181,6 +236,19 @@
   text-transform: uppercase; letter-spacing: 0.5px;
   border-bottom: 1px solid #eef0f4; white-space: nowrap;
   background: #fff;
+}
+/* THE HEAD STAYS PUT (WO-3.27). Every head cell sticks to the top of the box, all four lines of it
+   — the owner's ruling (Open 3) was no compact variant. The name and grade heads were already
+   sticky on the left, so they now stick on both axes, which is the corner. `z-index: 1` lifts the
+   head over `.scores-cell`, which is `position: relative` and would otherwise paint over it as rows
+   pass beneath. `:where()` keeps this at (0,1,0), so the corner rule below —
+   `.scores-grid thead th.scores-name` and `.scores-grade` at z-index 3, (0,2,2) — still wins on
+   specificity rather than being restated here, and `.scores-name`'s own `left` is untouched.
+   `scroll-snap-align` is here and not on the body cells because one row is enough to say where
+   every column starts, and the head row is the one that is always drawn. */
+.scores-grid-wrap :where(thead th) {
+  position: sticky; top: 0; z-index: 1;
+  scroll-snap-align: start;
 }
 /* `td` AND `th`, though every cell src/scores.js builds in a body row is a `<td>` — the name cell
    included, which is the drawing's own markup and the choice that keeps this padding and this row
@@ -213,12 +281,22 @@
    hand-computed layout src/attendance.css warns against, and it is accepted here for two columns
    because sticky arithmetic leaves no alternative. The rest of the table is still auto.
 
-   THE PAIR IS ASSERTED THREE WAYS in tools/verify-shell.mjs § "the score entry grid (WO-3.5)", so
-   the width and the offset cannot drift apart in a later edit. One check reads the two DECLARATIONS
-   out of this sheet — base against base, coarse against coarse, and the two blocks required to
-   differ, so a coarse block that quietly stopped overriding either would not pass. Two more MEASURE
-   it, once per pointer, with the grid scrolled sideways: columns whose numbers have drifted do not
-   stop being sticky, they overlap, and the student's name goes under her own grade.
+   FOUR NUMBERS ARE TIED HERE SINCE WO-3.27, not two: the name column's width, the grade column's
+   width, the grade column's `left` offset, and `.scores-grid-wrap`'s `scroll-padding-left`, which is
+   the first two added together — where the frozen pair ends, said to the browser so a focused cell
+   is scrolled clear of it. Change one and change the others in the same edit, in BOTH blocks: the
+   coarse block narrows the name column, moves the offset and moves the padding with it.
+
+   THE PAIR IS ASSERTED FOUR WAYS in tools/verify/score-grid.mjs (moved there out of
+   tools/verify-shell.mjs by WO-1.26), so none of the four can drift in a later edit. Two checks read
+   the DECLARATIONS out of this sheet, base against base and coarse against coarse: one that the
+   name's width is the grade's offset (and the two blocks differ, so a coarse block that quietly
+   stopped overriding either would not pass), and one that the scroll padding is the name's width
+   plus the grade's. Two more MEASURE the pair, once per pointer, with the grid scrolled sideways:
+   columns whose numbers have drifted do not stop being sticky, they overlap, and the student's name
+   goes under her own grade. A padding that has drifted SMALLER is also caught by the WO-3.27 checks
+   that drive a real Shift+Tab, ← and Enter into a covered cell; one that drifted larger parks cells
+   a little further clear than they need to be, which nothing but the declaration check sees.
 
    Written down here because the claim was made before the check was: this comment said "asserted in
    one check" from the day the file shipped and there was no such check until 2026-08-10. */
@@ -343,6 +421,19 @@
   font-size: 13px; font-weight: 700; color: #1a1a2e; text-align: center;
   font-variant-numeric: tabular-nums;
   transition: border-color 0.12s, background 0.12s;
+  /* WHERE A FOCUS MOVE PARKS THE CELL (WO-3.27). The box's `scroll-padding` tells the browser where
+     the frozen pair ends, and a focused field is scrolled to that edge — the FIELD, not its <td>,
+     so the column's own left edge lands ~20px under the pair. Then `scroll-snap-type: x proximity`
+     looks for the nearest column edge, and when the position the grid was already in happens to be
+     nearer than the one the column starts at, it snaps straight back: the caret is in a cell under
+     the frozen name and nothing visibly moved. tools/verify/score-grid.mjs drove exactly that with
+     the drawing's declarations alone, at full right scroll.
+     20px is this field's inset from its <td> at the narrowest column (10px padding + 10px of
+     centring; 8 + 13 under a coarse pointer, where 20 still leaves the column edge within a pixel).
+     So a focus move targets the column's own edge — which is a snap position — and the snap has
+     nothing to argue about. In a wider column the field still lands 20px clear and the snap pulls
+     the column's edge onto the frozen one. It changes nothing about a click or a drag. */
+  scroll-margin-left: 20px;
 }
 .scores-input::placeholder { color: #d0d8e4; font-weight: 600; }
 .scores-input:hover { border-color: #b0bcf0; }
@@ -569,6 +660,11 @@
      name still has to fit. Kept in step with `left` — the same pair the check named above asserts. */
   .scores-name { width: 168px; min-width: 168px; }
   .scores-grade { left: 168px; }
+  /* And the scroll padding moves with them (WO-3.27): 168 + 84, where the frozen pair now ends.
+     Left at the base 274 it would park every cell a focus move reaches 22px clear of an edge that
+     is not there — harmless to look at and wrong to keep, because it is the fourth number in the
+     pair and the check counts it. The top grows with the head's coarse type sizes. */
+  .scores-grid-wrap { scroll-padding: 104px 0 0 252px; }
 
   .scores-keys-btn, .scores-flag-btn { min-height: 44px; }
   /* THE NAME DOOR AT 44px (WO-3.7). It takes the whole cell, so the 44 comes from the button

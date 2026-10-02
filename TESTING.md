@@ -8833,6 +8833,98 @@ have left the old document on screen against a build line reporting honestly —
 - [x] 👤 Presentation mode on, projected on the classroom wall: the count still reads and no student is
       named anywhere on the card. 👤
 
+### WO-3.27 — The score grid scrolls in a box of its own, and a focused cell is never under the frozen columns
+
+**What this changes.** `.scores-grid-wrap` scrolls both ways inside a `max-height` of the viewport
+less 160px, so the four-line assignment head sticks to the top of the box, the horizontal scrollbar
+is at the bottom of the box rather than under the last student, and the box carries
+`scroll-padding` saying where the frozen name-and-grade pair and the stuck head end. That last is the
+focus fix, and it is a declaration on purpose: it covers a click and a screen reader's own focus move
+as well as the keys. A swipe that reaches the box's edge stops there (`overscroll-behavior:
+contain`), and a sideways swipe settles on a column edge (`scroll-snap-type: x proximity`, the snap
+on the head cells). Lifted from `design/mockups/proposed-scores.css` § SCORE SCROLL BOX.
+
+**Three things the build changed from the drawing, each argued at its declaration in
+`src/scores.css`:**
+
+- **`scroll-margin-left: 20px` on `.scores-input`**, which the drawing does not have. The browser
+  scrolls the focused *field* to the padding edge, not its `<td>`, so the column edge lands ~20px
+  under the pair — and the proximity snap then looks for the nearest column edge. At full right
+  scroll the nearest one can be **the position the grid was already in**, and it snaps straight back:
+  the caret is under the frozen name and nothing moved. The harness found that with the drawing's
+  declarations alone (a Shift+Tab into `wo35-a2` left the field at 293.92 against a frozen edge of
+  314, scroll position unchanged at 138), and confirmed the cause by running once with the snap off
+  (green). With the margin, a focus move targets the column's own edge, which is a snap position.
+- **The 1px border is a 1px spread `box-shadow`.** A border moves the scrollport 1px in from the
+  box's edge, and WO-3.5's own measurement — *the frozen columns stay pinned to its left edge* —
+  went red at `nameOff: 1`. That check is unchanged; the ring moved instead.
+- **The head padding is 96px (104 coarse)** against a measured 91 (98) in headless Edge — slack for
+  another engine's line heights.
+
+**One line in `src/scores.js`, against the work order's expectation of none.** `revealScoreColumn()`
+now sets the box's `scrollTop` to 0 before it scrolls the column head into view. The head is sticky
+inside the box now, so scrolling it into view says nothing about the rows, and **the box keeps its
+scroll while the screen is hidden** — measured: parked at (138, 400), left for the assignment list
+and re-entered, it came back at (138, 400). The arrival then put the caret in a first cell scrolled
+away above the stuck head (cell top 346.75, head bottom 641.75). The Traps line asked for both
+deliberate scrollers to be read against the box; this is the one that needed a change. The past-due
+review's column tint needed none: the tinted head now sticks to the top of the box, so a teacher
+scrolling down a long class keeps it in sight.
+
+**Known cost, written down rather than designed away:** the hint paragraph under the grid is taller
+than the 160px the box leaves, so a page scrolled to its very end pushes the box's top — the stuck
+head with it — about 114px above a 1280x800 viewport. Scrolling the page back up a little brings it
+back. The harness reports the figure and does not assert it.
+
+**No script fallback was added** for the focus fix. The work order says to add one only if the 👤 iPad
+reading shows Safari ignoring `scroll-padding` for focus — **and on 2026-10-02 it did not**: the
+owner's iPad reading found tapped cells landing clear of the frozen pair, so none is owed.
+
+- [x] With the box scrolled down 300px and sideways, every one of the 12 head cells' tops equals the
+      box's top edge (31.75 fine, 652.22 coarse), the name head sits on the box's left edge and the
+      grade head starts where the name head ends. Both pointers.
+- [x] At full right scroll, a real Shift+Tab and a real `←` (caret at 0) into the rightmost column
+      still under the frozen pair leave the field at or right of the pair's edge (335.92 against
+      314 fine; 312.73 against 292 coarse). A real Enter into a row whose top sat halfway down the
+      stuck head leaves the cell's top below the head's bottom (433.75 against 122.75 fine; 355.22
+      against 119.22 coarse). Both pointers, keys dispatched at the page over CDP.
+- [x] The frozen-pair declaration check now covers a fourth number: `scroll-padding-left` equals the
+      name width plus the grade width, 274 base and 252 coarse.
+- [x] At 1280x800 with the page scrolled to the grid, the box runs 0.38 to 640.38 inside an 800px
+      viewport, with rows still to scroll inside it.
+- [x] `revealScoreColumn()`, from the box parked far right and 400px down with the screen left and
+      re-entered, lands on the first column at the frozen edge (314 against 314) with the caret in
+      `wo35-s01`'s cell below the stuck head; and the glance page's real *Waiting to be graded* tap
+      (`verify/glance-quiet.mjs`) lands its column clear of the pair with the caret in its first cell
+      below the head.
+- [x] 👤 **On the iPad — force-quit from the app switcher first** (`src/scores.css` and `src/scores.js`
+      are in `SHELL`; v148): the head stays on screen as a class is scrolled; a swipe that reaches the
+      grid's edge stops there, and that feels right under a thumb rather than stuck; tapping a cell
+      near the frozen edge brings it clear of the name and grade. **If tapping or the keyboard leaves a
+      cell under the frozen pair, Safari is ignoring `scroll-padding` for focus — say so here, and
+      that is the one case the work order allows a script fallback for.** 👤 *Read 2026-10-02 by the owner, v148 on the LAN
+      build, a long-titled column included: green.*
+- [x] 👤 **On the laptop — check `location.origin` first** (an app window installed from
+      `https://localhost:8443` never sees a deploy): a trackpad swipe sideways settles on a column
+      edge, and the box's scrollbar is on screen without scrolling the page to the bottom of the
+      class. 👤 *Read 2026-10-02 by the owner: green.*
+
+**Mutation round, every mutation marked `MUTATION`, applied to a copy-restored `src/scores.css`, run
+against `verify/score-grid.mjs` alone, and restored byte-for-byte (`cmp`) before anything else was
+written:**
+
+| Mutation | Result |
+|---|---|
+| `scroll-padding` deleted from both blocks | **8 red**: the declaration check, Shift+Tab / ← / Enter on both pointers, and the `revealScoreColumn()` landing (column at 176 against 314) |
+| `scroll-margin-left` deleted from `.scores-input` | **4 red**: Shift+Tab and ← on both pointers — the snap returns the grid to where it was |
+| name width 190 → 200 (base) | **4 red**: WO-3.5's pair check, the padding sum, the pinned measurement (overlap 10), the stuck-head left edges |
+| grade width 84 → 90 (base) | **1 red**: the padding sum |
+| grade offset 190 → 200 (base) | **3 red**: WO-3.5's pair check, the stuck-head left edges, the landing |
+| padding 274 → 280 (base) | **1 red**: the padding sum |
+
+A padding that drifts **larger** is caught only by the declaration check — cells park a few pixels
+further clear than they need — and `src/scores.css` says so at the frozen columns.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

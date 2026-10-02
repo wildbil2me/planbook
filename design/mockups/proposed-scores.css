@@ -35,7 +35,23 @@
    WHERE IT SPLITS ON LIFT:
 
      § SCORE TOOLBAR      →  src/scores.css   (WO-3.28 — not yet lifted)
-     § SCORE SCROLL BOX   →  src/scores.css   (WO-3.27 — not yet lifted)
+     § SCORE SCROLL BOX   →  src/scores.css   (WO-3.27 lifted 2026-10-01 · the category
+                                               average, WO-3.28 — not yet lifted)
+
+   § SCORE SCROLL BOX WENT ACROSS IN HALF on 2026-10-01, which is the honest reading of a
+   section two work orders share. WO-3.27 took the box and the stuck head: `.boxed` folded
+   into `.scores-grid-wrap`'s base rule, and the head rule is `.scores-grid-wrap
+   :where(thead th)`, one class lighter than drawn and still under the corner rule. The
+   category average (`.scores-cat-avg*`, and the `.filtered` padding that makes room for
+   it) is WO-3.28's and stays pending, which is why the banner still carries the token.
+   THREE THINGS THE BUILD CHANGED, each argued in src/scores.css where it stands: the 1px
+   border became a 1px spread `box-shadow`, because a border moves the scrollport off the
+   box's edge and the frozen name column off the box it is pinned to; the head padding is
+   96px (104 coarse) against a measured 91 (98), for slack; and `.scores-input` gained a
+   `scroll-margin-left: 20px` this drawing does not have — without it the snap and the
+   padding fight, and a Shift+Tab at full right scroll can snap straight back to where it
+   started with the caret under the frozen pair. The first frame on score-tools.html
+   wears the shipped sheet, so it no longer shows the bug it was drawn to reproduce.
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -59,7 +75,7 @@
 .scores-found b { color: #1a1a2e; font-variant-numeric: tabular-nums; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SCORE SCROLL BOX   →  src/scores.css   (WO-3.27 — not yet lifted)
+   § SCORE SCROLL BOX   →  src/scores.css   (WO-3.27 lifted 2026-10-01 · WO-3.28 — not yet lifted)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* THE BOX. A height, both axes, and the frozen edges declared to the browser.

@@ -13,6 +13,24 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The score grid scrolls in a box of its own — 2026-10-02
+
+WO-3.27. Shell cache `v148`.
+
+- **The assignment names stay on screen as a class is scrolled.** The grid now scrolls inside its own
+  box, sized to the window, so the four-line column head sticks to the top of the box. Before, the
+  head was stuck to a box that never scrolled vertically, and the names scrolled away.
+- **A focused cell is never hidden under the frozen name and grade.** The box's `scroll-padding`
+  equals the width of the frozen pair, so Tab, Shift+Tab, the arrow keys, Enter and a tap all bring
+  a cell clear of it. This is a CSS declaration with no script fallback. The owner's iPad reading
+  showed Safari honouring it.
+- **Arriving from *Waiting to be graded* puts the box back to its top first.** The box keeps its
+  scroll position while the teacher is on another screen. Without that reset, the caret could land
+  in a first row hidden above the stuck head. This is one line in `revealScoreColumn()`, and a
+  mutation run showed the harness goes red without it.
+- **Checked on hardware 2026-10-02:** the iPad (a long assignment title included) and a laptop
+  trackpad.
+
 ### The sweep's one-id-per-strip break is proved, and says how to prove it again — 2026-10-01
 
 A tooling change only; nothing in the app moved, and no check was added or removed.
