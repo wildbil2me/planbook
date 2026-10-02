@@ -2465,6 +2465,12 @@ carries a `scroll-margin-left`** the drawing did not have: without it the proxim
 focus scroll to where it started, with the caret under the frozen pair. No script fallback for the
 focus fix was added.)*
 
+*(**Verified and closed 2026-10-02.** The verifier proved the one `src/scores.js` line by mutation,
+which the implementer had not: deleting `scrollTop = 0` turns `verify/score-grid.mjs`'s reveal check
+red, and deleting `scroll-padding` turns eight checks red. The owner's two 👤 readings, iPad and
+laptop, were green on v148. On the iPad, Safari honoured `scroll-padding` for a tapped cell, a
+long-titled column included, so the Traps' script fallback is not owed.)*
+
 ## WO-3.28 — the score grid narrows by student and by category
 
 **Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.27 — the box whose scroll padding a third frozen column widens
