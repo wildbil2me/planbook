@@ -13,6 +13,20 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The sweep's one-id-per-strip break is proved, and says how to prove it again — 2026-10-01
+
+A tooling change only; nothing in the app moved, and no check was added or removed.
+
+- **§ 26's "id cell reached first" break is now mutation-proved.** That line stops a strip holding
+  two work-order ids from reading the second id's state as the first id's claim. No document § 26
+  reads puts two ids in one strip, so deleting the line left the sweep green and nothing had ever
+  shown it does anything. With it, a two-id fixture yields one claim, for the right id. Without it,
+  the fixture yields two.
+- **The re-run instructions sit beside the line in `tools/wo-sweep.mjs`:** the fixture, the
+  `--claims-in` command and both expected readings. § 26's banner and `tools/README.md` point to
+  them. Anyone editing that loop owes the same run, because the sweep still cannot catch the
+  deletion on its own.
+
 ### A ride-along's shelf is the whole running order, not its section — 2026-10-01
 
 A tooling change only; nothing in the app moved.

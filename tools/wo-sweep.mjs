@@ -3167,7 +3167,9 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
    without disturbing the tree: `git show 06bfa06:plans/wo-3-18-video-runbook.html` into a scratch
    file, then `node tools/wo-sweep.mjs --claims-in=<that file>` — four findings against today's
    tracker. The same against `a16b87c` is clean. Never `git checkout` an old version over the working
-   file to do this; a checkout reverts unstaged edits, including your own.
+   file to do this; a checkout reverts unstaged edits, including your own. It is also how WO-1.54
+   proved the card reader's id-cell break, which no planning document exercises — the fixture and the
+   two expected readings sit in the comment above `cards()`.
 
    IT CANNOT SEE ITSELF. This section reads HTML under `plans/` and one page in `tools/`. It does not
    read this banner, the row for it in `tools/README.md`, WO-1.52's own text, or `CLAUDE.md` — every
@@ -3276,6 +3278,16 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
   //     all still apply.
   //   - An id the sentence reading already took a claim for is left to it, so a card whose cells sit
   //     id-then-status with no full stop between is read once, not twice.
+  //   THE "id cell reached first" BREAK IS PROVED BY NO DOCUMENT § 26 READS — every strip in them holds
+  //   one id, so deleting `if (opensWith(cells[j], ID_AT)) break;` leaves the sweep green. WO-1.54
+  //   proved it by mutation instead, and whoever edits this loop owes the same run. Save this, outside
+  //   the tree, as a `.html` file — one strip, two id cells, the state beside the second only, and a
+  //   state that contradicts BOTH ids' tracker statuses so each reading prints something:
+  //     <div><div>WO-1.50</div><div>The first id. Its state cell is absent.</div>
+  //          <div>WO-1.52</div><div>The second id. Its state cell follows.</div><div>🚫 struck</div></div>
+  //   then `node tools/wo-sweep.mjs --claims-in=<that file>`. Intact: "1 status claim(s) found" and one
+  //   REVIEW finding, for WO-1.52. Break deleted: "2 status claim(s)", and WO-1.50 is named too. If either
+  //   id has since been struck, pick another pair whose statuses the state contradicts.
   const VOID_TAG = /^(area|base|br|col|embed|hr|img|input|link|meta|source|track|wbr)$/i;
   const CELL_TAG = /^(div|span|td|th|dt|dd)$/i;
   const ID_AT = new RegExp(WO_ID.source, 'y');

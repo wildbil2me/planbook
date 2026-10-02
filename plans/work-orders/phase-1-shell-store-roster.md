@@ -5147,7 +5147,7 @@ two of them are wrong in a way the Traps name:
 
 ## WO-1.54 — the line that keeps two strips apart is proved by nothing
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-1.52 ✅ · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-01 · **Size** XS · **Depends on** WO-1.52 ✅ · **Blocks** nothing
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.53 made.
 Booked 2026-09-24 out of WO-1.52's verdict, whose verifier found the surviving mutation and declined
 to widen a work order already verified.)*
@@ -5170,11 +5170,11 @@ only beside the second, the first id inherits it silently.
   turns something red.
 
 **Acceptance**
-- [ ] A scratch document with two id cells in one strip, the state beside only the second, is read by
+- [x] A scratch document with two id cells in one strip, the state beside only the second, is read by
       `node tools/wo-sweep.mjs --claims-in=<file>` as one claim for the second id and none for the first.
-- [ ] With the break line deleted, that same run reports a claim for the first id — the mutation is
+- [x] With the break line deleted, that same run reports a claim for the first id — the mutation is
       caught — and the line is restored before anything else is written.
-- [ ] How to re-run it is written where the next reader of § 26 will find it, and `node tools/wo-sweep.mjs`
+- [x] How to re-run it is written where the next reader of § 26 will find it, and `node tools/wo-sweep.mjs`
       is green with its recorded check count matching `tools/README.md`.
 
 ---
