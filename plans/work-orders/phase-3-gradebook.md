@@ -2485,15 +2485,19 @@ hand, because the SIS has no usable export (`CLAUDE.md` § Working agreements).
 - **Surface: `design/mockups/proposed-scores.css` § SCORE TOOLBAR and the `.scores-cat-avg`
   rules**, drawn in `design/mockups/score-tools.html`, lifted into `src/scores.css`. Amend the drawing's banners in the same sitting. The toolbar is
   `.attendance-toolbar` value for value, wearing `.search-box` and `.pill` as shipped.
-- **Type-to-narrow by student.** A row shows when the query, ignoring case, is the **start** of the
-  student's first name, last name or `nickname`: **Open 7**. *ma* finds Marcus and Mahoney and not
-  Thomas. Rows that do not match are not rendered. A count, *3 of 14 students*, sits beside the box.
-  When nothing matches, the grid's own `.scores-empty` line shows, with no head over nothing.
-  **Escape in the search box clears it** (the grid still does nothing on Escape).
-- **One matcher, and the attendance search moves to it**: the owner's ruling of 2026-10-01. Today
-  `src/attendance.js` (~3160) matches anywhere in `rosterName()` or `fullName()` and ignores
-  `nickname`. Both screens call one exported function, so two identical-looking boxes cannot answer
-  one query differently. `src/roster.js`, beside `fullName()`, is the natural home.
+- **Type-to-narrow by student, by the attendance search's rule exactly**: **Open 7**, as revised by
+  the owner on 2026-10-02. The query is trimmed and lower-cased, and a row shows when it appears
+  anywhere in `rosterName()` ("Last, First") or `fullName()` ("First Last"). *ma* finds Amari,
+  Mahoney, Marcus and Maya. **No `nickname`, on either screen.** Rows that do not match are not
+  rendered. A count, *4 of 14 students*, sits beside the box. When nothing matches, the grid's own
+  `.scores-empty` line shows, with no head over nothing. **Escape in the search box clears it** (the
+  grid still does nothing on Escape).
+- **One matcher, and attendance's behaviour does not change.** The test in `visibleStudents()` in
+  `src/attendance.js` (~3160) moves into one exported function, `src/roster.js` beside `fullName()`
+  being the natural home, and both screens call it, so two identical-looking boxes cannot answer one
+  query differently. This is a move, not a rewrite: attendance must answer every query exactly as it
+  does today. *(Booked on 2026-10-01 as a new prefix-and-nickname rule that attendance would move to.
+  The owner reversed that on 2026-10-02: the attendance rule already makes sense, so it is kept.)*
 - **One category at a time, plus *All***: **Open 4**. A single category's average is what gets
   compared to the SIS. Pills carry names only (**Open 6**). A pill appears for each category with at
   least one assignment in the open term, because a pill that empties the grid is a dead control.
@@ -2512,12 +2516,14 @@ hand, because the SIS has no usable export (`CLAUDE.md` § Working agreements).
   The printed grade sheet ignores both.
 
 **Acceptance**
-- [ ] On a roster holding Marcus Bell, Jada Mahoney, Maya Ortiz and Thomas Reed, typing *ma* shows
-      exactly the first three. A student whose `nickname` starts with the query is shown. The count
-      reads *3 of N students*. A query matching no one draws the empty line and no grid head. Escape
-      clears the box and every row returns.
+- [ ] On a roster holding Amari Johnson, Ben Castillo, Marcus Bell and Thomas Reed, typing *ma*
+      shows Amari, Marcus and Thomas and not Ben; *bell, m* (the "Last, First" form) shows Marcus; a
+      query matching only a student's `nickname` shows no one. The count reads *3 of N students*. A
+      query matching no one draws the empty line and no grid head. Escape clears the box and every
+      row returns.
 - [ ] **The attendance search answers every one of those queries identically**, through the same
       exported function, and the harness or a sweep check shows there is one matcher rather than two.
+      Every existing attendance search check is green **unchanged**: the move altered no answer.
 - [ ] With a category picked, only its columns are in the DOM. Tab, `ArrowRight` and Enter stop at the
       last shown column and the last shown row, with the edge sentence the grid already speaks.
 - [ ] The third column's figure for every student equals `categoryPercentage()` for that student and

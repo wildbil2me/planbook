@@ -723,7 +723,7 @@ Styled in [`proposed-scores.css`](proposed-scores.css), two sections, both bound
    No JavaScript changes for any of it. `scroll-snap-type: x proximity` lets a trackpad swipe settle
    on a column edge.
 2. **§ SCORE TOOLBAR: `.attendance-toolbar`, value for value.** `.search-box` and `.pill` are worn as
-   shipped. The search narrows rows on the start of a first or last name. The pills pick one category
+   shipped. The search narrows rows by the attendance search's own rule. The pills pick one category
    or *All*. Neither is remembered, and neither touches the printed grade sheet.
 3. **A third frozen column while a category is picked: that category's average**, tinted, with the
    category named in its header, a percentage and no letter, from `categoryPercentage()`. The
@@ -755,6 +755,9 @@ Every one answered by the owner the day it was drawn, and every one as drawn exc
    Escape clears the search box. **Decided: a preferred name matches too, and Escape clears.** And
    a follow-up the drawing had not seen: the attendance search matched anywhere in a name and
    skipped the preferred name. **Decided: attendance changes to this rule**, in the same work order,
-   so the two boxes cannot answer one query differently.
+   so the two boxes cannot answer one query differently. **Revised 2026-10-02, the owner: the
+   reverse.** Attendance stays exactly as it is, and the scores search takes its rule: letters
+   anywhere in "Last, First" or "First Last", with no preferred name on either screen. Escape still
+   clears. The drawing's search frames now show four matches for *ma*, Amari included.
 8. **Three frozen columns in iPad portrait**: kept (drawn), or the category average replaces the
    grade there. **Decided: kept, the same in every orientation.**
