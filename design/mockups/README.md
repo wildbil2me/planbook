@@ -703,7 +703,7 @@ The band is `about.html`'s, value for value, and controls are `.class-action-btn
 
 ---
 
-# Score grid tools — WO-3.27 and WO-3.28, drawn 2026-10-01
+# Score grid tools — WO-3.27, WO-3.28 and WO-3.29, drawn 2026-10-01
 
 **The ninth room, and the first drawn of a screen that already ships.**
 [`score-tools.html`](score-tools.html) draws the owner's list of 2026-10-01 against the score grid

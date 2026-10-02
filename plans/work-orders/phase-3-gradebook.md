@@ -2370,10 +2370,10 @@ up at midnight is the rule this project has broken and repaired once already.
 
 ---
 
-**WO-3.27 and WO-3.28 were drawn before they were booked.** Read
+**WO-3.27, WO-3.28 and WO-3.29 were drawn before they were booked.** Read
 [`design/mockups/score-tools.html`](../../design/mockups/score-tools.html) and
 [`design/mockups/proposed-scores.css`](../../design/mockups/proposed-scores.css) before building
-either. The drawing's first frame reproduces the focus defect by hand on the shipped grid. Its
+any of them. The drawing's first frame reproduces the focus defect by hand on the shipped grid. Its
 stylesheet's two sections are what these two work orders lift. The owner answered all eight of its
 questions on 2026-10-01, and each answer is recorded on the drawing, in green, beside the question.
 They are also collected in [`design/mockups/README.md`](../../design/mockups/README.md) § Score grid
@@ -2471,49 +2471,106 @@ red, and deleting `scroll-padding` turns eight checks red. The owner's two 👤 
 laptop, were green on v148. On the iPad, Safari honoured `scroll-padding` for a tapped cell, a
 long-titled column included, so the Traps' script fallback is not owed.)*
 
-## WO-3.28 — the score grid narrows by student and by category
+## WO-3.28 — the score grid narrows to one category
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.27 — the box whose scroll padding a third frozen column widens
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.27 — the box whose scroll padding a third frozen column widens; WO-3.29 — the toolbar this adds its pills to
 **Closes roadmap** *(no box. Owner-requested, 2026-10-01.)*
 
-**Booked 2026-10-01**, owner-directed, from the same sitting as WO-3.27. A teacher wants two things
-the grid cannot do: find one student's row in a class of thirty without scrolling for it, and look
-at one category alone. The second is how a category is checked against the SIS. That check is done by
-hand, because the SIS has no usable export (`CLAUDE.md` § Working agreements).
+**Booked 2026-10-01**, owner-directed, from the same sitting as WO-3.27, and **cut in two on
+2026-10-02**: it was booked as *narrows by student and by category*, and the student half is now
+[WO-3.29](#wo-329--the-score-grid-narrows-by-student). The cut is along rows and columns. Search
+narrows rows, which the grid's existing stop-at-the-last-row behaviour already handles. This work
+order narrows columns, which is where the arrow, Tab and Enter edge cases are, and it adds a third
+frozen column to WO-3.27's box. So it carries the risk, and it gets a dispatch to itself.
+
+A teacher wants to look at one category alone. That is how a category is checked against the SIS,
+and the check is done by hand, because the SIS has no usable export (`CLAUDE.md` § Working
+agreements).
 
 **Deliverables**
-- **Surface: `design/mockups/proposed-scores.css` § SCORE TOOLBAR and the `.scores-cat-avg`
-  rules**, drawn in `design/mockups/score-tools.html`, lifted into `src/scores.css`. Amend the drawing's banners in the same sitting. The toolbar is
-  `.attendance-toolbar` value for value, wearing `.search-box` and `.pill` as shipped.
-- **Type-to-narrow by student, by the attendance search's rule exactly**: **Open 7**, as revised by
-  the owner on 2026-10-02. The query is trimmed and lower-cased, and a row shows when it appears
-  anywhere in `rosterName()` ("Last, First") or `fullName()` ("First Last"). *ma* finds Amari,
-  Mahoney, Marcus and Maya. **No `nickname`, on either screen.** Rows that do not match are not
-  rendered. A count, *4 of 14 students*, sits beside the box. When nothing matches, the grid's own
-  `.scores-empty` line shows, with no head over nothing. **Escape in the search box clears it** (the
-  grid still does nothing on Escape).
-- **One matcher, and attendance's behaviour does not change.** The test in `visibleStudents()` in
-  `src/attendance.js` (~3160) moves into one exported function, `src/roster.js` beside `fullName()`
-  being the natural home, and both screens call it, so two identical-looking boxes cannot answer one
-  query differently. This is a move, not a rewrite: attendance must answer every query exactly as it
-  does today. *(Booked on 2026-10-01 as a new prefix-and-nickname rule that attendance would move to.
-  The owner reversed that on 2026-10-02: the attendance rule already makes sense, so it is kept.)*
+- **Surface: `design/mockups/proposed-scores.css`**, drawn in `design/mockups/score-tools.html`: the
+  `.scores-filter-pills` rule from § SCORE TOOLBAR, the `.scores-cat-avg` rules, and the filtered
+  scroll padding left pending in § SCORE SCROLL BOX, all lifted into `src/scores.css`. WO-3.29 lifts
+  the rest of the toolbar first; the pills go into it after the search box and its count. Amend the
+  drawing's banners in the same sitting.
 - **One category at a time, plus *All***: **Open 4**. A single category's average is what gets
-  compared to the SIS. Pills carry names only (**Open 6**). A pill appears for each category with at
-  least one assignment in the open term, because a pill that empties the grid is a dead control.
-  Work filed under no category shows under *All* only. Columns outside the category are **not
-  rendered**, so Tab, the arrows and Enter cannot put a caret in a column nobody can see.
+  compared to the SIS. Pills carry names only (**Open 6**) and wear `.pill` as shipped. A pill
+  appears for each category with at least one assignment in the open term, because a pill that
+  empties the grid is a dead control. Work filed under no category shows under *All* only. Columns
+  outside the category are **not rendered**, so Tab, the arrows and Enter cannot put a caret in a
+  column nobody can see.
 - **A third frozen column while a category is picked: that category's average**, from
   `categoryPercentage()` in `src/grade-engine.js` and from nowhere else. A percentage and no letter,
   for the reason `classAverage()` gives. The overall grade does not move and does not change meaning:
   **the owner's ruling before drawing**. The column stays in every orientation, iPad portrait
   included (**Open 8**). The box's left `scroll-padding` widens to cover it (358px, 336px coarse).
 - **The summary line gains the category's class average** while one is picked (**Open 5**). Every
-  other figure on it stays whole-class. Neither filter moves the class average, the blank count or
-  any student's grade.
-- **Neither filter is remembered.** Both reset whenever the screen is opened, which is the
-  calendar's ruling that a filter is a door and not a preference. Nothing reaches `localStorage`.
-  The printed grade sheet ignores both.
+  other figure on it stays whole-class. The filter moves no class average, blank count or student's
+  grade.
+- **The filter is not remembered.** It resets whenever the screen is opened, which is the calendar's
+  ruling that a filter is a door and not a preference. Nothing reaches `localStorage`. The printed
+  grade sheet ignores it.
+- **The two filters together.** A typed name and a picked category both apply at once, and each
+  keeps working when the other changes. This work order lands second, so it carries the checks for
+  the combination.
+
+**Acceptance**
+- [ ] With a category picked, only its columns are in the DOM. Tab, `ArrowRight` and Enter stop at the
+      last shown column and the last shown row, with the edge sentence the grid already speaks.
+- [ ] The third column's figure for every student equals `categoryPercentage()` for that student and
+      category, and the summary's category average equals the same figure averaged over the class.
+      **Mutation-proved**: a third column fed any other arithmetic goes red.
+- [ ] With a category picked, a focused cell is never under the three frozen columns. This is
+      WO-3.27's driven check re-run with the filter on, both pointers.
+- [ ] The class average, the blank count and every overall grade are byte-identical with the filter
+      on and off.
+- [ ] With a name typed and a category picked, the grid shows exactly the matching rows and the
+      category's columns. Clearing either one restores its own axis and leaves the other narrowed.
+- [ ] Leaving the screen and coming back shows *All*, and no `planbook_` key was written by the pills.
+- [ ] The pills measure ≥44px under the coarse pointer.
+- [ ] 👤 On the iPad in portrait, with a category picked and a name typed, the three frozen columns
+      leave a usable grid under a thumb.
+
+**Traps** — **Do not hide columns with CSS.** The key handlers in `src/scores.js` can still walk into
+a `display: none` cell, and a caret in a hidden field is the defect WO-3.27 exists to remove. **Do not
+compute the category average on this screen.** The engine already answers it, and a second answer is
+the one that ends up disagreeing with the student detail an inch away. **Do not store the filter**,
+however convenient a remembered *Quizzes* would be on the second visit.
+
+## WO-3.29 — the score grid narrows by student
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.5 — the grid whose rows this narrows
+**Closes roadmap** *(no box. Owner-requested, 2026-10-01.)*
+
+**Booked 2026-10-02**, owner-directed, cut out of [WO-3.28](#wo-328--the-score-grid-narrows-to-one-category)
+along rows and columns. This half narrows rows only. It touches no frozen column and none of
+WO-3.27's scroll padding, so it needs nothing but the shipped grid. **It goes first**: it is the
+smaller half, and it lifts the toolbar WO-3.28 then adds its pills to.
+
+A teacher wants to find one student's row in a class of thirty without scrolling for it.
+
+**Deliverables**
+- **Surface: `design/mockups/proposed-scores.css` § SCORE TOOLBAR**, drawn in
+  `design/mockups/score-tools.html`: `.scores-toolbar` and `.scores-found`, lifted into
+  `src/scores.css`. `.scores-filter-pills` is WO-3.28's and stays drawn. The toolbar is
+  `.attendance-toolbar` value for value, wearing `.search-box` as shipped. Amend the drawing's banner
+  in the same sitting.
+- **Type-to-narrow, by the attendance search's rule exactly**: **Open 7**, as revised by the owner on
+  2026-10-02. The query is trimmed and lower-cased, and a row shows when it appears anywhere in
+  `rosterName()` ("Last, First") or `fullName()` ("First Last"). *ma* finds Amari, Mahoney, Marcus
+  and Maya. **No `nickname`, on either screen.** Rows that do not match are not rendered. A count,
+  *4 of 14 students*, sits beside the box. When nothing matches, the grid's own `.scores-empty` line
+  shows, with no head over nothing. **Escape in the search box clears it** (the grid still does
+  nothing on Escape).
+- **One matcher, and attendance's behaviour does not change.** The test in `visibleStudents()` in
+  `src/attendance.js` (~3160) moves into one exported function, `src/roster.js` beside `fullName()`
+  being the natural home, and both screens call it, so two identical-looking boxes cannot answer one
+  query differently. This is a move, not a rewrite: attendance must answer every query exactly as it
+  does today. *(Booked on 2026-10-01 as a new prefix-and-nickname rule that attendance would move to.
+  The owner reversed that on 2026-10-02: the attendance rule already makes sense, so it is kept.)*
+- **The search is not remembered.** It is empty whenever the screen is opened, and nothing reaches
+  `localStorage`. The class average, the blank count and every grade stay whole-class figures while
+  it narrows the rows. The printed grade sheet ignores it.
 
 **Acceptance**
 - [ ] On a roster holding Amari Johnson, Ben Castillo, Marcus Bell and Thomas Reed, typing *ma*
@@ -2524,23 +2581,21 @@ hand, because the SIS has no usable export (`CLAUDE.md` § Working agreements).
 - [ ] **The attendance search answers every one of those queries identically**, through the same
       exported function, and the harness or a sweep check shows there is one matcher rather than two.
       Every existing attendance search check is green **unchanged**: the move altered no answer.
-- [ ] With a category picked, only its columns are in the DOM. Tab, `ArrowRight` and Enter stop at the
-      last shown column and the last shown row, with the edge sentence the grid already speaks.
-- [ ] The third column's figure for every student equals `categoryPercentage()` for that student and
-      category, and the summary's category average equals the same figure averaged over the class.
-      **Mutation-proved**: a third column fed any other arithmetic goes red.
-- [ ] With a category picked, a focused cell is never under the three frozen columns. This is
-      WO-3.27's driven check re-run with the filter on, both pointers.
-- [ ] The class average, the blank count and every overall grade are byte-identical with either
-      filter on and off.
-- [ ] Leaving the screen and coming back shows *All* and an empty search, and no `planbook_` key was
-      written by either control.
-- [ ] Pills and the search box measure ≥44px under the coarse pointer.
-- [ ] 👤 On the iPad in portrait, with a category picked and a name typed, the three frozen columns
-      leave a usable grid under a thumb.
+- [ ] With the rows narrowed, Enter and `ArrowDown` stop at the last shown row and `ArrowUp` at the
+      first, with the edge sentence the grid already speaks.
+- [ ] Typing a query keeps the caret in the search box from the first letter to the last, measured by
+      `document.activeElement` after every keystroke.
+- [ ] The class average, the blank count and every overall grade are byte-identical with the search
+      on and off.
+- [ ] Leaving the screen and coming back shows an empty search, and no `planbook_` key was written.
+- [ ] The search box measures ≥44px under the coarse pointer.
+- [ ] 👤 On the iPad, typing a name with the on-screen keyboard up leaves the narrowed rows in view
+      above it.
 
-**Traps** — **Do not hide columns or rows with CSS.** The key handlers in `src/scores.js` can still
-walk into a `display: none` cell, and a caret in a hidden field is the defect WO-3.27 exists to
-remove. **Do not compute the category average on this screen.** The engine already answers it, and a
-second answer is the one that ends up disagreeing with the student detail an inch away. **Do not
-store either filter**, however convenient a remembered *Quizzes* would be on the second visit.
+**Traps** — **Do not hide rows with CSS.** The key handlers in `src/scores.js` can still walk into a
+`display: none` row. **Do not rebuild the search box on a keystroke.** `src/attendance.js` keeps its
+search field as markup in `index.html` and re-renders only the rows, so the element a keystroke came
+from cannot be destroyed under it (its comment above `setSearch()` says why). `renderScores()`
+rebuilds every cell, so the search box has to live outside what it rebuilds, or the box loses focus
+mid-word. **Do not improve the rule on the way through.** Attendance's answers are the acceptance,
+and a better matcher is a change to a screen nobody asked to change.

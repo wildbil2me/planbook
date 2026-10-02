@@ -34,7 +34,8 @@
 
    WHERE IT SPLITS ON LIFT:
 
-     § SCORE TOOLBAR      →  src/scores.css   (WO-3.28 — not yet lifted)
+     § SCORE TOOLBAR      →  src/scores.css   (WO-3.29 — not yet lifted · its pills,
+                                               WO-3.28)
      § SCORE SCROLL BOX   →  src/scores.css   (WO-3.27 lifted 2026-10-01 · the category
                                                average, WO-3.28 — not yet lifted)
 
@@ -55,7 +56,7 @@
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SCORE TOOLBAR   →  src/scores.css   (WO-3.28 — not yet lifted)
+   § SCORE TOOLBAR   →  src/scores.css   (WO-3.29 — not yet lifted · its pills, WO-3.28)
 
    The attendance screen's toolbar, value for value — `.attendance-toolbar` and
    `.attendance-pills` in src/attendance.css — because it is the same question
