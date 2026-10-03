@@ -137,3 +137,80 @@ whole verify run, because `parseBackup()` then refused **every backup written by
 build, by name** (WO-6.1). A storage migration is that hazard at full scale — and it is invisible on
 the glass, so a version spent on it delivers nothing a teacher can see while the praise column and
 the outreach flow are the product.
+
+---
+
+## Gradebook
+
+### 1. Importing the other gradebook's export — a reconciliation, not an import
+
+*Raised 2026-10-02 by the owner, who brought a CSV export from the gradebook he keeps alongside
+Planbook. Not booked. Size guess M–L — the parser is small; the review screen is the work.*
+
+**The file is parseable.** It is a printed report flattened to CSV, not a table: one block per
+student — a `"Last, First"` line carrying `Cum. Grade:`, a header row, then per category a bare name
+line, `Weight:` / `Average:` / `Points:` summary lines, and the assignment rows (name, date assigned,
+date due, max points, `8.50 (85%)`, included-in-grade, comments, extra-credit, notes). A state
+machine reads it; a pivot turns it into the assignments × students grid. **The sample file is not
+in this repository and must never be** — it is student data, and the owner asked for it to be kept
+out of commits.
+
+**How it maps, and where it does not:**
+
+- **Scores** — take the number, drop the parenthesised percentage.
+- **Extra credit** (`2 Extra`, Extra Credit `Yes`) is exactly this app's zero-point assignment
+  (`docs/data-model.md` § Extra credit) — but the export reports **Max Points 20** on it, which must
+  come in as **0**. Checked by hand against the export's own category totals.
+- **Notes `Late`** → `flag: "late"`. **Notes `Incomplete`** has no equivalent; the score survives
+  and the word does not.
+- **A student with no row** for an assignment the class has drops out of that category's totals in
+  the export — the nearest thing here is `excused`, or no cell at all.
+- **Comments are HTML** (`<div>`, `<br />`, `&amp;`, newlines inside quoted fields), written *to the
+  student*, and there is no per-score comment field here. Drop them, or strip them — and note the
+  owner's anonymised copy still had a real first name inside a comment: **anonymising the name column
+  does not anonymise the comments.**
+- **Not seen in the sample:** how the export writes a missing or an excused score. Get a file that
+  has both before building.
+- **The raw export is messier than a cleaned copy** — leading spaces on dates, `10.00` for `10`,
+  names as `"Last, First (Preferred) '28  "` with trailing spaces. Parse the raw shape.
+
+**Three things to rule on before building:**
+
+1. **The weights sum to 75%** (25/25/10/5/10). The other system divides by the actual total — its
+   cumulative grade reproduces exactly that way — and **this app deliberately does not**
+   (§ Grade math: *"the weights come to 95%, so there is no grade yet"*). The likely cause is a
+   25% category with nothing in it yet, **which the export omits entirely** — so
+   the category list cannot be reconstructed from the file, and the import has to ask.
+2. **A future-dated project carries a 0 for every student and counts toward the grade.** Imported
+   faithfully, that is a scored zero — exactly the "the grade changed because a date rolled over"
+   failure this app's `missing` rule exists to prevent. It probably wants to come in blank.
+3. **Summary lines can contradict their own rows** — a late-enrolled student's block read
+   `Points: 0.00 (0)` over rows scored 100%. Trust the rows; never import the summaries.
+
+**Why it is a reconciliation.** The owner enters grades in **both** systems, and **the names are not
+always the same**. So the real job is matching an imported assignment to one already here, and the
+name is the weakest evidence for it. In order of strength:
+
+1. **The score vector** — the same students holding the same scores. Across twenty students, two
+   different assignments almost never agree. This is only available *because* of the double entry,
+   and it is the best signal there is.
+2. **Points + category + due date.**
+3. **Name similarity**, as a tie-breaker only.
+
+**The screen** proposes, per imported assignment, *new* · *matches X (and why)* · *skip*, and
+applies nothing unconfirmed. **Where both systems hold a score for the same student and the scores
+differ, it shows both** — that is a typo in one book or a regrade that reached only one, and finding
+it is likely worth more than the import itself. A blank here filled from the export is a proposal
+too. **A match keeps this app's name**; renaming is the existing assignment editor's job, not the
+import's. Categories map once per class with a dropdown each, and **students match by confirmation
+whenever the match is not exact** — a wrong student match puts grades on the wrong child, the worst
+error this feature can make.
+
+**A free check.** The export carries the other system's cumulative grade and per-category averages
+for every student. After a reconcile, recompute and compare: the only differences left should be
+explained ones (the 75% total), and anything else is an import bug caught before it is trusted.
+
+**Open question that may move a standing rule.** `CLAUDE.md` § Working agreements says the SIS has
+*"no usable export."* **If this export is the SIS's**, that sentence is now wrong, and this stops
+being a one-time migration and becomes a weekly comparison — a different feature, with a different
+screen budget. Settle which system produced it first.
