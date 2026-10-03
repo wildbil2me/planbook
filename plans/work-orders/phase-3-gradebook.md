@@ -2625,3 +2625,217 @@ from cannot be destroyed under it (its comment above `setSearch()` says why). `r
 rebuilds every cell, so the search box has to live outside what it rebuilds, or the box loses focus
 mid-word. **Do not improve the rule on the way through.** Attendance's answers are the acceptance,
 and a better matcher is a change to a screen nobody asked to change.
+
+## WO-3.30 — a class can be graded on total points
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.4 — the engine this gives a second formula
+**Closes roadmap** *(no box. Owner-requested, 2026-10-02.)*
+
+**Booked 2026-10-02**, owner-directed, out of a sitting about what grading should do next. **Total
+points keeps its categories.** They still file work, drive WO-3.28's filter and carry their own
+percentage. Only the class grade's formula changes: weighted is each category's earned ÷ possible
+times its weight, and points is everything earned ÷ everything possible, weights ignored. The engine
+already sums earned and possible inside each category (`categoryResult()` in `src/grade-engine.js`),
+so most of the arithmetic exists. The risk is the callers: seven files read a class grade, and they
+have to agree on it.
+
+**This work order is the engine and nothing a teacher can see.** No control can put a class in
+points mode until [WO-3.31](#wo-331--the-categories-editor-offers-total-points), so everything here
+is proved headless on fixture classes.
+
+**Deliverables**
+- **`gradingMode` on a class, and an absent key means weighted.** The only value ever stored is
+  `"points"`. Going back to weighted **deletes** the key rather than writing `"weighted"`, which is
+  the rule `thresholdsOf()` already follows: an absent key is its default. `newYearDocument()` gains
+  nothing, so every backup written by every earlier build still restores (CLAUDE.md § Data, the
+  WO-6.1 scar). `docs/data-model.md` gets the field and a § Grade math paragraph on the second
+  formula.
+- **One `classGrade()` that every caller uses**, branching on the mode. `weightedClassGrade()` is
+  removed, not kept beside it, and every caller moves: `src/detail.js`, `src/grades-report.js`,
+  `src/merge-fields.js`, `src/scores.js`, `src/signals-view.js`, `src/signals.js`, and the engine's
+  own uses. Two names for one answer is how a screen ends up disagreeing with the one next to it.
+- **Points mode returns the same shape weighted mode does**, so no caller branches. `percentage` is
+  the sum of `earned` over the sum of `possible` across categories. Each category's
+  `effectiveWeight` is its share of the total `possible`, and its `contribution` is its `earned` over
+  the total `possible` × 100, so the contributions still add up to the grade on a detail screen.
+- **The weights-total-100 refusal does not apply in points mode.** A points class has a grade as soon
+  as anything is graded. `no-graded-work` still applies.
+- **`projectedClassGrade()` takes the same branch.** Its *solved, not searched* argument still holds:
+  in points mode the projected grade is still a straight line in the rate.
+- **A per-category points share for the editor**, exported from the engine:
+  `pointsShare(doc, cls, termId)`, each category's share of the points assigned in the term so far.
+  WO-3.31 draws it and does no arithmetic of its own.
+- **Signal wording stops saying "weighted".** `grade-below`'s chip reads *Weighted grade below*
+  (`src/signals.js` ~219), which is false in a points class. It becomes *Grade below*, along with any
+  other on-screen use. The rules' arithmetic does not change: they read `classGrade()` at both ends
+  of the window, exactly as before.
+- **Work filed under no category counts toward a points grade.** It carries no weight, so it
+  counts toward nothing in weighted mode, and that does not change. In points mode there is no
+  weight for it to lack. *(The owner's ruling, 2026-10-02, before dispatch.)*
+
+**Acceptance**
+- [ ] A class with no `gradingMode` key produces byte-identical grades on every screen and in every
+      signal before and after this lands, on the harness's existing fixtures.
+- [ ] A points-mode fixture with three categories and deliberately lopsided points gives a grade equal
+      to total earned ÷ total possible, worked by hand in the check. Its category weights sum to 75,
+      and it still has a grade.
+- [ ] In both modes, each category's `contribution` adds up to `percentage`, and excused work is out of
+      both totals.
+- [ ] A scored assignment filed under no category moves a points-mode grade by exactly its earned and
+      possible points, and moves a weighted grade not at all.
+- [ ] No file in `src/` calls `weightedClassGrade`, and a sweep check keeps it that way.
+- [ ] Every screen showing one student's grade in a points-mode fixture shows the same number:
+      the score grid, student detail, the grade sheet, the signals list and the `{{grade.percent}}`
+      merge field. **Mutation-proved**: one caller left on the weighted formula goes red.
+- [ ] `projectedClassGrade()` in points mode matches a hand-worked projection, and the score needed
+      for the next band still solves by the straight line.
+- [ ] A backup written before this lands restores unchanged, and a points-mode year round-trips
+      through backup and restore with its mode intact.
+- [ ] No on-screen string calls the class grade "weighted".
+
+**Traps** — **Do not compute a points grade anywhere but the engine.** A screen that adds up its own
+cells is the second answer. **Do not seed `gradingMode`** on new classes or in `newYearDocument()`:
+`parseBackup()` would refuse every older backup by name. **Do not change what `categoryResult()`
+returns.** Both modes rest on it, and WO-3.28's frozen column reads it.
+
+## WO-3.31 — the categories editor offers total points
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.30 — the engine and the `gradingMode` key this writes
+**Closes roadmap** *(no box. Owner-requested, 2026-10-02.)*
+
+**Booked 2026-10-02** beside [WO-3.30](#wo-330--a-class-can-be-graded-on-total-points), cut along the
+line between the arithmetic and the control. This half is one screen and its readings. It is kept
+separate so the engine half closes headless without waiting on an iPad.
+
+**Deliverables**
+- **A mode control on the categories editor**: weighted or total points, per class.
+- **Weights are kept and greyed, never cleared.** In points mode the weight fields are not editable
+  and the weights-total line is gone, because there is nothing to add up to 100. Switching back
+  restores them exactly as typed.
+- **In place of each weight, the category's share of the points**: *Tests — 62% of the points
+  assigned so far*, from `pointsShare()` and nowhere else. It moves as work is assigned, so it is
+  computed at render and never stored. This is the line that tells a teacher what points grading is
+  actually doing: three early tests can make Tests most of the grade without anyone deciding it.
+- **Switching confirms with a before and after.** The dialog shows the class average under each mode
+  and lists **every student whose letter changes**. The quarter letter is what goes into the SIS, so
+  a letter change is the consequence worth naming. One `update()` writes the key, or deletes it on
+  the way back. Cancelling writes nothing.
+- **Drawn first** if the editor's layout changes enough to need it, under
+  `design/mockups/PROTOCOL.md`. If the control fits the editor as shipped, the dispatch says so and
+  skips the drawing.
+
+**Acceptance**
+- [ ] Switching a class to points and back leaves every weight byte-identical to what was typed, and
+      leaves no `gradingMode` key behind.
+- [ ] The confirmation's before and after figures equal `classGrade()` under each mode, and the
+      students it lists are exactly those whose `letterFromPercentage()` differs between them.
+      **Mutation-proved**: a list built from percentages instead of letters goes red.
+- [ ] Cancelling the confirmation writes nothing: `rev` unchanged after `flush()`.
+- [ ] In points mode the weight inputs are disabled, no weights-total line is drawn, and each
+      category's share equals `pointsShare()` for it.
+- [ ] The mode control and the confirmation's buttons measure ≥44px under the coarse pointer.
+- [ ] 👤 On the laptop and on the iPad, switching a real class to points and back reads clearly: what
+      the confirmation says would change, and that the weights come back.
+
+**Traps** — **Do not compute the share on the screen.** `pointsShare()` is the answer. **Do not put
+the mode in `localStorage`.** It is a grading decision about a class, so it lives in the document and
+survives a device change. **Do not soften the confirmation into a toggle.** A mode change moves every
+grade in the class at once.
+
+## WO-3.32 — a score cell can carry a note
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.5 — the grid whose cells this annotates
+**Closes roadmap** *(no box. Owner-requested, 2026-10-02.)*
+
+**Booked 2026-10-02**, owner-directed, from the same sitting as WO-3.30. A revised essay, a
+conference, *turned in after the absence*: the reason behind a score has nowhere to go today. **It
+goes first of the pair** so that [WO-3.33](#wo-333--a-changed-score-cell-keeps-what-it-was)'s history
+holds notes from its first entry.
+
+**The precedent is the attendance mark.** *"Any mark may carry a `note`"*, optional and absent where
+unused (`docs/data-model.md`, the mark cell rule). A score cell gets the same field on the same terms.
+
+**Deliverables**
+- **An optional `note` on a score cell**, absent where unused, and never an empty string left behind
+  by clearing it. A note can sit on any cell, including a blank, a `missing` or an `excused`. The
+  grade engine does not read it.
+- **Add, read, edit and clear it from the score grid without leaving the grid.** A cell with a note
+  shows a discreet mark. The note also shows on student detail beside its assignment. The Surface is
+  undrawn: draw it first under `design/mockups/PROTOCOL.md`, or the dispatch rules it is small enough
+  not to need one.
+- **Under the projector, a score note is absent**: not in the DOM, and its mark is gone too, in
+  presentation mode on every screen that draws it. That holds **whatever attendance-mark notes do**
+  (the owner's ruling, 2026-10-02, before dispatch). The score grid is the screen most likely to be on
+  the wall, and a note is free text about one student. If mark notes turn out to show on the
+  projector, the implementer records that as a finding and does not change attendance here.
+- **The note goes nowhere outside the app.** No merge field resolves it (the whitelist already
+  refuses it, and a check says so). The printed grade sheet leaves it out. It is in the backup. If
+  `privacy.html` and `docs/FERPA.md` list what a backup holds, both gain it **in the same sitting**,
+  per the rule at the top of each file.
+
+**Acceptance**
+- [ ] A note added, edited and cleared from the grid round-trips through the document, and clearing
+      it removes the key.
+- [ ] Adding or changing a note changes no grade on any screen.
+- [ ] A cell with a note shows the mark, and student detail shows the note beside its assignment.
+- [ ] In presentation mode no note text and no note mark is in the DOM, on the grid or on student
+      detail. **Mutation-proved**: a note rendered regardless of the mode goes red.
+- [ ] `{{score.note}}` and every path into a cell are refused by the merge-field resolver, and the
+      printed grade sheet contains no note text.
+- [ ] A backup written before this lands restores unchanged, and a year with notes round-trips.
+- [ ] Keyboard entry in the grid is unchanged: Tab, the arrows and Enter move exactly as before, and
+      no shortcut used for flags is taken by the note.
+- [ ] 👤 On the iPad, adding a note to a cell and reading it back works under a thumb.
+
+**Traps** — **Do not open the note on a keystroke the grid already uses.** Score entry is the fast
+path. **Do not mirror the note into the log.** One note in two places is two records, the same reason
+a tardy's time lives in the mark cell and nowhere else.
+
+## WO-3.33 — a changed score cell keeps what it was
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.32 — the note a history entry carries
+**Closes roadmap** *(no box. Owner-requested, 2026-10-02.)*
+
+**Booked 2026-10-02**, owner-directed. English runs on revision, and today a revision overwrites the
+score: *72, revised to 88* is lost the moment the 88 is typed, though that rise is exactly the delta
+the praise column exists for. **The history is of the whole cell, not of the score.** Each earlier
+version is the cell as it was, with its value, flag and note, so *Missing → Late, 70 → 88* is kept
+with no separate flag tracking.
+
+**Deliverables**
+- **Every write to a score cell stamps `at`**, a local ISO timestamp with its offset, the mark cell's
+  rule. A cell written before this lands has no `at`, and that is valid.
+- **Overwriting a cell pushes its previous value, flag, note and `at` onto `was`**, oldest first.
+  Only the current fields count toward any grade. `was` is absent until the first change.
+- **A write within five minutes of the cell's last write replaces it without pushing**, so
+  correcting a typo leaves no history entry. Five minutes is measured from the current cell's `at`,
+  and a cell with no `at` always pushes. *(The owner's ruling, 2026-10-02, before dispatch.)*
+- **The score grid marks a cell that has history**, and student detail shows the trail under its
+  assignment: *Missing (Sep 14) → Late, 70 (Sep 20) → 88 (Oct 1)*. *(The owner's ruling, 2026-10-02.)*
+  The history mark has to read as different from WO-3.32's note mark at a glance, since one cell can
+  carry both. **Open:** does the history mark show under the projector? It discloses that a score was
+  changed, not what it was. The owner rules at dispatch.
+- **Nothing reads history but student detail.** No signal rule, merge field, grade or print. What
+  history means for signals is parked in `plans/future-features.md` § Gradebook as a ruling for the
+  owner, not a detail for this work order.
+
+**Acceptance**
+- [ ] Changing a cell's score, flag or note more than five minutes after its last write pushes the previous
+      cell onto `was` with its `at`, and the current cell carries a new `at`.
+- [ ] A change within five minutes replaces the cell and pushes nothing, checked on the harness's
+      shifted clock either side of the boundary.
+- [ ] Every grade on every screen is byte-identical to the same document with every `was` removed.
+      **Mutation-proved**: an engine that reads a history entry goes red.
+- [ ] Student detail lists the history in order, with dates, and a cell with no history shows nothing
+      extra.
+- [ ] A cell with history carries the grid's history mark and a cell without it does not, and a cell
+      with both a note and history shows both marks, told apart.
+- [ ] A backup written before this lands restores unchanged, and a year with history round-trips.
+- [ ] No exported reader outside the detail screen's own path returns `was`, and a sweep check keeps
+      it that way.
+- [ ] 👤 On the iPad, revising a score and opening the student shows the history reading clearly.
+
+**Traps** — **Do not push on every keystroke.** The grid commits on leaving a cell, and the store's
+save is debounced, so a version is a commit, not a key. **Do not let a signal read `was`.** CLAUDE.md
+records that the turnaround rule cannot see a grade recovery because *a score is not dated*. That
+stops being true here, and changing what a rise means is the owner's ruling, not this work order's.

@@ -214,3 +214,56 @@ explained ones (the 75% total), and anything else is an import bug caught before
 *"no usable export."* **If this export is the SIS's**, that sentence is now wrong, and this stops
 being a one-time migration and becomes a weekly comparison — a different feature, with a different
 screen budget. Settle which system produced it first.
+
+### 2. A letter typed as a score
+
+*Raised 2026-10-02 by the owner and put on hold the same day. Not booked.*
+
+An essay graded *B+*, not 88. **The shape it should take:** a letter is a way of entering a number,
+not a second kind of score. The cell keeps the letter the teacher typed and stores the number it
+converts to beside it, and the grade engine only ever sees the number. Storing letters as scores
+would split every average and every signal rule in two.
+
+**The question that decides it: what is a B+ worth?** The bottom of its band (87) quietly makes every
+B+ the lowest possible B+. The middle of the band is arbitrary. **A letter-to-score table the teacher
+sets** is the likely answer, and it should live where a future year-end settings modal could reuse
+it: document-wide with a per-class override, the letter scale's pattern, not per assignment (see
+item 3). Score parsing belongs to WO-3.25's parser, which this would widen, not duplicate.
+
+### 3. Semester and year-end grades
+
+*Raised 2026-10-02. Deferred by the owner: "as long as quarters are working, we can figure out end of
+year / end of semester grades later." The owner expects it to need its own settings modal.*
+
+**Why it waits.** Every grade in the engine is computed inside one term, and nothing combines terms.
+The owner's SIS turns each quarter grade into a **letter**, and the letter into a GPA value with a
+course weighting. At year end it turns the letter back into a pre-defined average, and **that
+GPA-to-average conversion is not standard or consistent.** Planbook cannot match a formula the SIS
+does not apply consistently, so it is the SIS's behaviour to pin down first, not ours to design.
+
+**What follows today:** because the SIS goes through the letter, **the quarter letter is the figure
+that leaves Planbook**, and the class letter scale has to match the SIS's bands exactly.
+
+### 4. Drop the lowest N, and a late penalty
+
+*Raised 2026-10-02. Not booked, and only worth building if the SIS does the same.* Grades are
+re-keyed into the SIS by hand, so any rule Planbook applies that the SIS does not produces two
+numbers for one student. Both would also have to show in the cell: a dropped or penalised score that
+silently is not what was typed is the failure `docs/data-model.md` § Grade math already refuses (the
+`late` paragraph sets the terms for a penalty).
+
+### 5. What "rose" means once a score cell has a history
+
+*Raised 2026-10-02, out of booking WO-3.33. A Phase 4 ruling for the owner, not a gradebook detail.*
+
+**Today a signal sees only the document as it stands.** `grade-rose` and `grade-fell` compare the
+current class grade with the same grade minus the student's last N graded assignments (list order,
+not due date). So revising an old essay from 72 to 88 puts the 88 in **both** ends and fires no rise.
+It only moves the level, and might clear a `grade-below`. A revision registers as a rise only when the
+assignment happens to be in the window. The turnaround rule cannot see it either: CLAUDE.md records
+that it compares only dated facts, and *a score is not dated*.
+
+**WO-3.33 makes scores dated.** Once a cell carries *72 on Sep 20, 88 on Oct 1*, a rule could ask what
+changed in the last fortnight, and a praise rule like *turned in three missing pieces* or *revised up
+14 points* becomes possible. That changes what a rise means, which is why WO-3.33 forbids any signal
+reading `was` until this is ruled on.
