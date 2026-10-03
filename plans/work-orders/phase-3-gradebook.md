@@ -3043,7 +3043,7 @@ measurement to the row.
 
 ## WO-3.38 — a bonus scored 0 reads as nothing graded
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.35 — `rowIsEmpty()` and the extra-credit-only wording this extends
+**Ship** — · **Status** ✅ DONE — 2026-10-03 · **Size** S · **Depends on** WO-3.35 — `rowIsEmpty()` and the extra-credit-only wording this extends
 **Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
 
 **Booked 2026-10-03**, owner-directed, out of WO-3.35's verdict. **Unreachable today**, because
@@ -3066,16 +3066,35 @@ does not return, and that row forbade changing the engine's returned shape.
 - **(c)** Leave it. A 0 on extra credit adds nothing either way, and the sentence is wrong only in
   how it describes the student. If so, this row is 🚫 STRUCK with that ruling as its note.
 
-**Deliverables** *(for (a) or (b))*
+**Ruled 2026-10-03, the owner, at dispatch: (b).** The student detail screen works out "this bonus
+has been scored" from the rows it already lists, and the grade calculation and what it hands back
+stay untouched. The CSV export calls the same function, so the screen and the file cannot disagree.
+A blank cell never counts as a scored 0, and the screen computes no grade.
+
+**Ruled 2026-10-03, the owner, after the implementer returned — three readings, before the verdict.**
+- **"Scored" means what `isUngraded()` in `src/scores.js` says it means.** A bonus marked `missing`
+  reads as scored 0; one marked `excused` stays unscored. This is the implementer's reading of the
+  brief's "a score is present", and it is now the ruling. No fixture covers `missing` yet.
+- **The quiet list stays as it is.** It still says *"has no graded work yet"* for a student whose only
+  work is a bonus scored 0, and that wording is accepted for that case. Nothing to book, and
+  `src/signals.js` is not this row's to touch.
+- **Two known limits, noted here and not booked.** A +2 and −2 pair of bonuses nets to zero and keeps
+  the old no-grade sentence. A bonus scored 0 that sits in no category gets no row of its own.
+
+**Deliverables** *(for (b), as ruled)*
 - **A row holding a scored 0 on extra credit is not called empty**, on screen and in the CSV, and it
   says what is true about it.
 - **The no-grade message** follows the same fact, wherever it is printed.
 
 **Acceptance**
-- [ ] In a points fixture, a student whose only graded work is a bonus scored 0 is not told, on
+- [x] In a points fixture, a student whose only graded work is a bonus scored 0 is not told, on
       screen or in the CSV, that nothing is graded. **Mutation-proved.**
-- [ ] A weighted class's student detail and CSV are byte-identical before and after, on the harness's
+      *(2026-10-03: three checks in `verify/points-grade.mjs`, mutations M1–M4 — `TESTING.md` § WO-3.38.)*
+- [x] A weighted class's student detail and CSV are byte-identical before and after, on the harness's
       existing fixtures.
+      *(2026-10-03: 45 weighted renders captured on `HEAD` and on the change and compared by script —
+      every CSV byte-identical raw; every page identical once the run-minted avatar class and pass clock
+      times are normalised. `TESTING.md` § WO-3.38.)*
 
 **Traps** — **Do not compute a grade on the screen.** **A blank is still ungraded**: a cell with no
 score must never count as a scored 0, which is the rule the whole gradebook rests on.

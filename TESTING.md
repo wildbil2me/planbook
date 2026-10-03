@@ -9519,6 +9519,75 @@ src tools` prints — prose, not markers. The scratch harness is deleted.
 
 **Full run on the delivered tree:** `1678 checks · 1678 passed · 0 failed · 0 skipped`, 53,427 lines, 31.8 lines per check, 698s, exit 0, 2026-10-03 on the real clock. `node tools/wo-sweep.mjs`: `46 checks · 43 passed · 0 failed · 3 to review`, exit 0, the three standing reviews.
 
+### WO-3.38 — a bonus scored 0 reads as nothing graded
+
+**What this changes.** In a points class, student detail no longer calls a row holding extra credit
+graded at 0 empty, and no longer tells a student whose only graded work is that 0 that nothing is
+graded. A zero-point piece scored 0 is 0 earned over 0 possible — the same as a blank — so the
+engine's numbers cannot tell them apart. **The owner ruled (b) at dispatch**: `src/grade-engine.js`
+is untouched (its code, its messages and its returned shape; `git diff src/grade-engine.js` is
+empty), and student detail asks the cells instead. `gradedPieces()` in `src/detail.js` walks the
+class's assignments in the term and this student's cell on each and answers, per row, *is anything
+graded here* — a yes/no, never a sum. `renderDetail()` and `detailModel()` (so `studentCsv()`) both
+call it, and one test, `rowShowsEmpty()`, decides an empty row for the screen and the file. "Graded"
+is the gradebook's own cell rule (`docs/data-model.md` § Grade math, `src/scores.js` `isUngraded()`):
+a value, with or without `late`, is graded; `missing` is graded; `excused` is not; a blank — no key,
+or neither a value nor a meaningful flag, including a scoreless `late` — is not. Such a row reads
+*"extra credit, graded at 0 — it adds no points to either side"*, with its `0 / 0` kept and no cents;
+the to-move card and the hero's label read *"The only work graded so far is extra credit, graded at
+0, so there is no grade yet."* A weighted class never calls `gradedPieces()`. `CACHE` is
+`planbook-shell-v157`. There is no 👤 line on this row. *(Unreachable for a teacher until WO-3.31
+writes `gradingMode`; the harness plants it.)*
+
+- [x] In a points fixture, a student whose only graded work is a bonus scored 0 is not told, on screen
+      or in the CSV, that nothing is graded. **Mutation-proved.** WO-3.34's class in
+      `verify/points-grade.mjs` gained five students. Fi (Bonus puzzle `{ v: 0 }`, nothing else): the
+      engine still says *"There is no graded work yet."*; her Bonus row is not `.empty` and reads
+      `Bonus · — · 0 / 0 · extra credit, graded at 0 — …`, the to-move card and the hero's
+      `aria-label` carry the zero sentence, the file's Bonus row is `Bonus,,0,0,extra credit, graded
+      at 0 — …,`, and nothing on the page (empty rows and the breakdown footnote aside) or in the file
+      outside Tests and Projects matches `nothing graded|no graded work|…`. Iz (a 0 on the unfiled
+      piece, which the engine draws no row for): the zero sentence on the card and the label. Jo (Tests
+      15/20 and Bonus 0): 75.00%, Bonus worded with no cents, the column summing to 75.00 on screen and
+      in the file. Gus (`{ v: null }` on Bonus) and Hal (`excused` on Bonus, a scoreless `late` on the
+      unfiled piece): every row empty, *"nothing graded in it yet"* on screen and in the file, and
+      *"There is no graded work yet."* — never *graded at 0*. Mutations M1–M4.
+- [x] A weighted class's student detail and CSV are byte-identical before and after, on the harness's
+      existing fixtures. A temporary line at the foot of `renderDetail()` logged, for every weighted
+      render, the class id, student id, `#detailContent`'s `innerHTML` and
+      `studentCsv(detailModel()).text`; a temporary line at the entry harness's summary wrote them to
+      a scratch file. One full run on a git worktree of `HEAD` (no `src/` edit: `1678 · 1678 passed`,
+      exit 0) and one on the changed tree (`1681 · 1681 passed`, exit 0), compared by a script, not by
+      eye: 45 renders each, across seven weighted classes. **All 45 CSVs are byte-identical, raw.**
+      37 of 45 HTML renders are byte-identical raw; the other 8 are identical once two run-minted
+      things are normalised — the avatar colour class (`avatarClass()` hashes a student id the run
+      mints at random) and the wall-clock time on hall passes the run itself starts (*5:09 PM* in one
+      run, *5:24 PM* in the other). Nothing else differs. Both temporary lines are gone and the
+      worktree is removed. `verify/grade-detail.mjs`'s own byte-for-byte pin of a weighted CSV also
+      stays green.
+
+**Mutation round.** A scratch copy of the entry harness held only `localstorage-prefs` and
+`points-grade` (29 checks, all green on the delivered tree). Each mutation carried a `MUTATION`
+marker; `src/detail.js` was restored from a copy and its SHA-256 compared with the pre-mutation bytes
+(identical each time).
+
+| Mutation | Result |
+|---|---|
+| M1 · `gradedPieces()` ignores a cell scored 0 (`if (cell.v === 0) return;`) — the work order's own | **2 red**: the bonus-graded-at-0 check and the beside-a-grade check |
+| M2 · the blank test deleted, so a cell with no score counts as graded — the Trap | **1 red**: the blank-is-still-ungraded check |
+| M3 · the CSV handed `null` for `graded` (the screen and the file asking differently) | **2 red**: both zero-bonus checks, on their file halves |
+| M4 · the screen's no-grade sentence left as the engine's | **1 red**: the bonus-graded-at-0 check |
+
+`grep -rn MUTATION src tools` afterwards prints the same 19 lines `git grep -n MUTATION HEAD -- src
+tools` prints — prose, not markers. The scratch harness is deleted.
+
+**The quiet list still says it, and is outside the ruling.** The harness prints, unasserted, what
+`signalsModel()` says of Fi: *"In WO-3.34 Points, Fi Dunmore has no graded work yet and nothing has
+been written down, said or sent about them all term — 32 days."* — false, and `src/signals.js` was
+out of scope here. Reported as a proposed follow-up.
+
+**Full run on the delivered tree:** `1681 checks · 1681 passed · 0 failed · 0 skipped`, 53,513 lines, 31.8 lines per check, 710s, exit 0, 2026-10-03 on the real clock. `node tools/wo-sweep.mjs`: `46 checks · 43 passed · 0 failed · 3 to review`, exit 0, the three standing reviews.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

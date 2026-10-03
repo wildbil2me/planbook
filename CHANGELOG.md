@@ -13,6 +13,22 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A bonus scored 0 no longer reads as nothing graded — 2026-10-03
+
+WO-3.38. Shell cache `v157`.
+
+- **In a points class, a student whose only graded work is extra credit scored 0 is no longer told
+  they have nothing graded**, on student detail or in its CSV. The summary reads *"The only work
+  graded so far is extra credit, graded at 0, so there is no grade yet."*, and the category row reads
+  *"extra credit, graded at 0 — it adds no points to either side"*. Work under no category gets the
+  same wording.
+- **A blank or excused bonus still reads as nothing graded.** A blank is never treated as a scored
+  0. A bonus marked missing counts as graded, as the gradebook already counts it.
+- **The grade engine is untouched.** Student detail works out which rows hold graded work from the
+  cells it already lists, and a weighted class's screen and CSV are byte-identical to before.
+- **Not fixed yet:** the screen-reader labels on the score grid and the grade sheet, and the quiet
+  list's sentence, still say there is no graded work for this student.
+
 ### The quiet list says why a student has no grade — 2026-10-03
 
 WO-3.37. Shell cache `v156`.

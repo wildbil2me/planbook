@@ -141,8 +141,9 @@ import { getSelectedClass, getSelectedTerm, termIsDated, initials, avatarClass }
    worn by every screen that prints a name. */
 import { fullName, rosterName } from './roster.js';
 /* How a weight is written down, so this screen's "40%" and the categories panel's are the same
-   string for the same number. */
-import { formatWeight } from './categories.js';
+   string for the same number. And the class's own category list, which is how gradedPieces() tells
+   filed work from work under no category — the engine's own test (WO-3.38). */
+import { categoriesOf, formatWeight } from './categories.js';
 /* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4, extended for this screen at WO-3.7). */
 import { nextBandFor, openWork, projectedClassGrade,
   classGrade, gradingModeOf } from './grade-engine.js';
@@ -386,6 +387,10 @@ function cents(n) { return (n / 100).toFixed(2); }
   The weighted test is left exactly as it was, and has to be: a weighted category holding only
   extra credit has no percentage, its weight redistributes, and the row says so. Both the screen and
   the file ask here, so they cannot disagree about which rows are empty.
+
+  IT READS THE ENGINE'S NUMBERS AND NOTHING ELSE, so in a points class it cannot see a bonus graded
+  at 0 — that adds 0 to both sides, exactly as a blank does. rowShowsEmpty() below is the question
+  the screen and the file actually draw by (WO-3.38): this test, and no graded cell in the row.
 */
 function rowIsEmpty(category, byPoints) {
   if (byPoints) return category.earned === 0 && category.possible === 0;
@@ -404,6 +409,103 @@ const POINTS_EMPTY_SAY = 'nothing graded in it yet — it adds no points to eith
 const POINTS_BONUS_ONLY_SAY = 'extra credit — it counts once there is work worth points for it to add to';
 
 /*
+  AND THE THIRD, WHICH THE ENGINE CANNOT SEE (WO-3.38): a row whose only graded work is extra credit
+  graded at 0. A zero-point piece scored 0 adds 0 earned and 0 possible, the same as a blank, so by
+  the engine's numbers the row is indistinguishable from one with nothing graded in it — and the two
+  sentences above are both false about it: it is graded, and it will never "count once" anything.
+  So it says what is true, and claims nothing about adding, because a 0 adds nothing.
+
+  The no-grade sentence is the same fact at the scale of the whole student: extra credit graded at 0
+  is the only graded work, and the engine's "There is no graded work yet." is false about her.
+*/
+const POINTS_ZERO_BONUS_SAY = 'extra credit, graded at 0 — it adds no points to either side';
+const POINTS_ZERO_BONUS_MESSAGE = 'The only work graded so far is extra credit, graded at 0, so there is '
+  + 'no grade yet.';
+
+/*
+  WHICH ROWS HOLD A GRADED PIECE, counted off the cells themselves (WO-3.38, the owner's ruling (b)).
+  This is a fact src/grade-engine.js does not hand back and was ruled NOT to start handing back: the
+  engine and its returned shape are untouched, and this screen works the answer out from the work it
+  already lists — the class's assignments in the term, and this student's cell on each. Both the
+  screen and the file are handed the same answer, from the one call each makes here, so they cannot
+  disagree about which rows are graded — rowIsEmpty()'s own arrangement, beside it.
+
+  IT IS A YES/NO PER ROW, NEVER A SUM. Nothing here reads a score's value except to ask whether one is
+  there; there is no earned, no possible and no percentage, and a screen that grew one would be the
+  second grade calculation this app has refused since WO-3.4.
+
+  WHAT COUNTS AS GRADED is the gradebook's own cell rule (docs/data-model.md § Grade math, and
+  src/scores.js's isUngraded()), not a new one:
+    - a cell holding a value is graded, with or without a `late` flag beside it;
+    - `missing` is graded — it is a marked zero, the teacher's decision, and the engine counts it;
+    - `excused` is NOT — it drops out of the grade entirely, in both directions;
+    - a blank — no key, or a cell carrying neither a value nor a flag that means something, which
+      includes a `late` with no score yet — is NOT. A blank is ungraded, and it never becomes a
+      scored 0 here: that is the rule the whole gradebook rests on.
+
+  Filed and unfiled work are told apart by the engine's own test (src/grade-engine.js's
+  looseAssignments()): a categoryId that is none of this class's category ids is "no category", and
+  that row is `id: null` on the grade. Asked only in a points class — a weighted class never calls
+  this, so its screen and its file are the bytes they always were.
+*/
+function gradedPieces(doc, cls, termId, studentId) {
+  const filed = categoriesOf(cls).map((category) => category && category.id);
+  const ids = [];
+  let loose = false;
+  const assignments = doc && Array.isArray(doc.assignments) ? doc.assignments : [];
+  assignments.forEach((assignment) => {
+    if (!assignment || assignment.classId !== cls.id || assignment.termId !== termId) return;
+    const byStudent = doc.scores && doc.scores[assignment.id];
+    if (!byStudent || !Object.prototype.hasOwnProperty.call(byStudent, studentId)) return;
+    const cell = byStudent[studentId];
+    if (!cell || typeof cell !== 'object' || Array.isArray(cell)) return;
+    if (cell.flag === 'excused') return;
+    if (cell.flag !== 'missing' && (cell.v === null || cell.v === undefined)) return;
+    if (filed.indexOf(assignment.categoryId) === -1) loose = true;
+    else if (ids.indexOf(assignment.categoryId) === -1) ids.push(assignment.categoryId);
+  });
+  return { ids: ids, loose: loose };
+}
+
+/* Whether one row of the grade holds a graded piece — the `no category` row is `id: null`. An array
+   scanned by indexOf rather than an object keyed by id, so a category id that happens to read
+   "constructor" finds nothing it should not. */
+function rowIsGraded(category, graded) {
+  if (!graded) return false;
+  return category.id === null ? graded.loose : graded.ids.indexOf(category.id) !== -1;
+}
+
+/*
+  WHETHER A ROW IS DRAWN AS HOLDING NOTHING GRADED, on screen and in the file alike — the one test
+  breakdown() and pointsSection() both ask (WO-3.38). Empty by the engine's numbers (rowIsEmpty()) and
+  holding no graded cell: a points row graded at 0 is not empty, whatever its numbers say. `graded` is
+  null in a weighted class, so there this is rowIsEmpty() alone, exactly as it always was.
+*/
+function rowShowsEmpty(category, byPoints, graded) {
+  return rowIsEmpty(category, byPoints) && !rowIsGraded(category, graded);
+}
+
+/*
+  WHAT THE SCREEN SAYS WHEN THERE IS NO GRADE — the engine's own sentence, except in the one case the
+  engine cannot tell apart: a points class where every row is empty by its numbers and something is
+  graded all the same (extra credit graded at 0, filed or not). `graded` is null in a weighted class,
+  so a weighted student reads the engine's sentence exactly as before.
+
+  One limit, stated rather than claimed away: extra credit scored +2 in one category and −2 in
+  another nets the engine's earned to 0, its sentence says nothing is graded, and a row here is not
+  empty, so this keeps the engine's words. Negative extra credit in two places at once is the only
+  way there, and fixing it means reading the engine's arithmetic back, which is what (b) refused.
+*/
+function noGradeMessage(grade, graded) {
+  if (graded && grade.reason === 'no-graded-work'
+    && grade.categories.every((category) => rowIsEmpty(category, true))
+    && (graded.loose || graded.ids.length > 0)) {
+    return POINTS_ZERO_BONUS_MESSAGE;
+  }
+  return grade.message;
+}
+
+/*
   THE BREAKDOWN SPEAKS THE CLASS'S MODE (WO-3.34). A class graded on total points has no weights to
   print, so its table has no Weight and no Counts-at column: it has one column in their place, each
   category's share of the points graded so far, which is the grade's own `effectiveWeight` in that
@@ -414,7 +516,7 @@ const POINTS_BONUS_ONLY_SAY = 'extra credit — it counts once there is work wor
   A WEIGHTED CLASS DRAWS EXACTLY WHAT IT DREW BEFORE, byte for byte; the points branch is beside it,
   never through it.
 */
-function breakdown(grade, byPoints) {
+function breakdown(grade, byPoints, graded) {
   const card = el('div', 'detail-card');
   card.append(el('div', 'detail-card-title', 'Where the grade comes from'));
 
@@ -432,7 +534,7 @@ function breakdown(grade, byPoints) {
   const share = grade.percentage === null ? {} : contributionCents(grade.categories, grade.percentage);
   const tbody = el('tbody');
   grade.categories.forEach((category) => {
-    const empty = rowIsEmpty(category, byPoints);
+    const empty = rowShowsEmpty(category, byPoints, graded);
     const tr = el('tr', empty ? 'empty' : '');
     tr.append(cell('th', 'detail-break-cat', category.name || 'Untitled category'));
     if (byPoints) {
@@ -505,6 +607,11 @@ function breakdown(grade, byPoints) {
   graded — the row keeps its earned points and says why it has no share and no cents, in the caution
   wash across the last two columns. Nothing is worked out here: the engine handed it no share and no
   contribution, and a dash there with no sentence would read as the row having nothing in it.
+
+  AND A ROW WHOSE ONLY GRADED WORK IS EXTRA CREDIT GRADED AT 0 (WO-3.38) — not empty, because
+  breakdown() asked the cells and something is graded — takes the same shape, its 0 / 0 kept, and says
+  that instead, with or without a grade: it has no share and no cents in either case, because it adds
+  nothing.
 */
 function pointsRow(tr, category, empty, share) {
   if (empty) {
@@ -518,7 +625,8 @@ function pointsRow(tr, category, empty, share) {
   if (category.contribution === null) {
     tr.append(el('td', 'detail-break-weak', '—'));
     tr.append(el('td', 'detail-break-weak', category.earned + ' / ' + category.possible));
-    const say = el('td', 'detail-break-redist', POINTS_BONUS_ONLY_SAY);
+    const say = el('td', 'detail-break-redist',
+      rowIsEmpty(category, true) ? POINTS_ZERO_BONUS_SAY : POINTS_BONUS_ONLY_SAY);
     say.setAttribute('colspan', '2');
     tr.append(say);
     return;
@@ -601,7 +709,7 @@ function missingCard(grade, rows, person) {
   whether this student is in trouble — that is Phase 4's, and a threshold decided here would be a
   second opinion about what "at risk" means before the work order that owns the first one exists.
 */
-function toMoveCard(doc, cls, termId, student, grade, rows) {
+function toMoveCard(doc, cls, termId, student, grade, rows, noGradeSays) {
   const person = fullName(student);
   const card = el('div', 'detail-move');
   card.append(el('div', 'detail-move-head', 'What it would take to move'));
@@ -610,7 +718,7 @@ function toMoveCard(doc, cls, termId, student, grade, rows) {
 
   if (grade.percentage === null) {
     card.classList.add('unreachable');
-    say(grade.message || 'There is no grade yet, so there is nothing to move toward.');
+    say(noGradeSays || 'There is no grade yet, so there is nothing to move toward.');
     return card;
   }
 
@@ -783,6 +891,10 @@ export function renderDetail() {
 
   const grade = classGrade(doc, cls, termId, student.id);
   const rows = openWork(doc, cls, termId, student.id);
+  /* Which rows hold a graded piece, asked only of a points class (WO-3.38) — see gradedPieces(). The
+     breakdown, the to-move card and the hero's label all take it from here, so they say one thing. */
+  const graded = gradingModeOf(cls) === 'points' ? gradedPieces(doc, cls, termId, student.id) : null;
+  const noGradeSays = noGradeMessage(grade, graded);
 
   /* ── the hero: name, grade, band — the three things a guardian looks at first ── */
   const hero = el('div', 'detail-hero');
@@ -818,7 +930,7 @@ export function renderDetail() {
        would have been and the reason stands where the letter would have. */
     box.append(el('div', 'detail-grade-big none', '—'));
     box.append(el('div', 'detail-grade-band', 'No grade yet'));
-    box.setAttribute('aria-label', 'No grade — ' + (grade.message || 'there is no grade yet.'));
+    box.setAttribute('aria-label', 'No grade — ' + (noGradeSays || 'there is no grade yet.'));
   } else {
     box.append(el('div', 'detail-grade-big', formatPercent(grade.percentage)));
     const band = nextBandFor(doc, cls, grade.percentage);
@@ -849,8 +961,8 @@ export function renderDetail() {
      answers `categories: []` in that state — there is no weighted average to take apart — and a
      grid of empty rows under the banner would read as a rendering fault on the screen that can
      least afford one. The banner above says what the weights come to and where to fix it. */
-  if (grade.categories.length) left.append(breakdown(grade, gradingModeOf(cls) === 'points'));
-  left.append(toMoveCard(doc, cls, termId, student, grade, rows));
+  if (grade.categories.length) left.append(breakdown(grade, gradingModeOf(cls) === 'points', graded));
+  left.append(toMoveCard(doc, cls, termId, student, grade, rows, noGradeSays));
   const right = el('div');
   right.append(missingCard(grade, rows, person));
   right.append(attendanceCard(cls, student, term));
@@ -959,6 +1071,9 @@ export function detailModel() {
     person: fullName(student),
     /* Which shape the file's category section takes (WO-3.35) — the answer breakdown() is handed. */
     byPoints: gradingModeOf(cls) === 'points',
+    /* Which rows hold a graded piece (WO-3.38), from the call the screen makes — null in a weighted
+       class, whose file never asks. */
+    graded: gradingModeOf(cls) === 'points' ? gradedPieces(doc, cls, termId, student.id) : null,
     grade: grade,
     share: grade.percentage === null ? {} : contributionCents(grade.categories, grade.percentage),
     work: rows.map((row) => ({ name: assignmentName(row.id),
@@ -995,9 +1110,10 @@ export function detailModel() {
   file has no Weight % and no Counts at % — there are no weights in its formula — and carries the
   screen's Share of points in their place, from the grade's own `effectiveWeight`. Which rows are
   empty is asked of rowIsEmpty(), the screen's own test, so an extra-credit row hands its cents to the
-  column and the column adds up to the Overall grade in the file as it does on screen; the two worded
-  rows carry the screen's two sentences. Nothing here works a share or a sum out. A weighted class's
-  file is the bytes it always was: its branch is the code that was here, with the screen's test in
+  column and the column adds up to the Overall grade in the file as it does on screen; the worded
+  rows carry the screen's sentences, asked through rowShowsEmpty() and gradedPieces(), the screen's
+  own calls, so a bonus graded at 0 reads the same in both (WO-3.38). Nothing here works a share or a
+  sum out. A weighted class's file is the bytes it always was: its branch is the code that was here, with the screen's test in
   place of `percentage === null`, which is the same answer in that mode.
 */
 export function studentCsv(model) {
@@ -1016,7 +1132,7 @@ export function studentCsv(model) {
   rows.push(['Exported', todayISO()]);
   rows.push([]);
 
-  if (model.byPoints) pointsSection(rows, grade, model.share);
+  if (model.byPoints) pointsSection(rows, grade, model.share, model.graded);
   else weightedSection(rows, grade, model.share);
   rows.push([]);
 
@@ -1060,18 +1176,21 @@ function weightedSection(rows, grade, share) {
 
 /* A points class's category section — six columns, the weighted section's minus Counts at %, with
    the share where the weight stood, exactly as the screen's five are its six minus one. A number
-   column is left blank rather than given a dash it cannot add up, except in the two worded rows,
-   whose sentence stands in the Category % cell where the weighted file puts its own. */
-function pointsSection(rows, grade, share) {
+   column is left blank rather than given a dash it cannot add up, except in the worded rows, whose
+   sentence stands in the Category % cell where the weighted file puts its own. Which row is empty
+   and which is graded at 0 is the screen's answer (WO-3.38): `graded` is the gradedPieces() result
+   detailModel() asked for, and the tests are breakdown()'s. */
+function pointsSection(rows, grade, share, graded) {
   rows.push(['Category', 'Share of points %', 'Earned', 'Possible', 'Category %', 'Contributes']);
   grade.categories.forEach((category) => {
     const name = category.name || 'Untitled category';
-    if (rowIsEmpty(category, true)) {
+    if (rowShowsEmpty(category, true, graded)) {
       rows.push([name, '', '', '', POINTS_EMPTY_SAY, '']);
       return;
     }
     if (category.contribution === null) {
-      rows.push([name, '', category.earned, category.possible, POINTS_BONUS_ONLY_SAY, '']);
+      rows.push([name, '', category.earned, category.possible,
+        rowIsEmpty(category, true) ? POINTS_ZERO_BONUS_SAY : POINTS_BONUS_ONLY_SAY, '']);
       return;
     }
     rows.push([name, formatWeight(category.effectiveWeight), category.earned, category.possible,

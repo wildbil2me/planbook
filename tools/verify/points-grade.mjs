@@ -425,6 +425,10 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
     const C4 = 'c_wo334';
     const T4 = 'tm_wo334';
     const CY = 'wo334-s1', DI = 'wo334-s2', ED = 'wo334-s3';
+    /* WO-3.38's five: a bonus graded at 0 and nothing else (Fi), the same on the unfiled piece (Iz), a
+       bonus graded at 0 beside a scored test (Jo), and the two blanks that must stay blanks — a Bonus
+       cell present with no score in it (Gus) and an excused Bonus beside a scoreless late (Hal). */
+    const FI = 'wo334-s4', GUS = 'wo334-s5', HAL = 'wo334-s6', IZ = 'wo334-s7', JO = 'wo334-s8';
     const HEAD = ['Category', 'Share of points', 'Earned', 'Category %', 'Contributes'];
     const WEIGHT_WORDS = /weight|counts? for nothing|nothing counts|counted by nothing|percent of the grade|redistribut/i;
 
@@ -454,10 +458,13 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
       var was = c.getSelectedClassId();
       s.update(function(doc){
         doc.students.push({ id:'${CY}', first:'Cy', last:'Ashby' },
-          { id:'${DI}', first:'Di', last:'Brantley' }, { id:'${ED}', first:'Ed', last:'Cordero' });
+          { id:'${DI}', first:'Di', last:'Brantley' }, { id:'${ED}', first:'Ed', last:'Cordero' },
+          { id:'${FI}', first:'Fi', last:'Dunmore' }, { id:'${GUS}', first:'Gus', last:'Ellery' },
+          { id:'${HAL}', first:'Hal', last:'Fenwick' }, { id:'${IZ}', first:'Iz', last:'Garrow' },
+          { id:'${JO}', first:'Jo', last:'Hollis' });
         /* THE MODE IS PLANTED, as above: no control writes it until WO-3.31. */
         doc.classes.push({ id:'${C4}', name:'WO-3.34 Points', archived:false, gradingMode:'points',
-          roster:['${CY}','${DI}','${ED}'], letterScale:null,
+          roster:['${CY}','${DI}','${ED}','${FI}','${GUS}','${HAL}','${IZ}','${JO}'], letterScale:null,
           terms:[{ id:'${T4}', label:'WO-3.34 Term', start:'2026-09-01', end:'2026-11-06' }],
           categories:[
             { id:'cat334t', name:'Tests', weight:50 },
@@ -472,9 +479,10 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
         add('a334t1', 'cat334t', 'Unit test', 20);
         add('a334b1', 'cat334b', 'Bonus puzzle', 0);
         add('a334r1', null, 'Reading challenge', 0);    /* NO category, worth 0 */
-        doc.scores['a334t1'] = { '${CY}': { v:15 }, '${DI}': { v:15 } };
-        doc.scores['a334b1'] = { '${CY}': { v:2 }, '${ED}': { v:2 } };
-        doc.scores['a334r1'] = { '${DI}': { v:2 } };
+        doc.scores['a334t1'] = { '${CY}': { v:15 }, '${DI}': { v:15 }, '${JO}': { v:15 } };
+        doc.scores['a334b1'] = { '${CY}': { v:2 }, '${ED}': { v:2 }, '${FI}': { v:0 }, '${JO}': { v:0 },
+          '${GUS}': { v:null }, '${HAL}': { v:null, flag:'excused' } };
+        doc.scores['a334r1'] = { '${DI}': { v:2 }, '${IZ}': { v:0 }, '${HAL}': { v:null, flag:'late' } };
       });
       c.selectClass('${C4}');
       c.selectTerm('${T4}');
@@ -482,7 +490,8 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
       var cls = doc.classes.filter(function(x){ return x.id === '${C4}'; })[0];
       var g = window.planbook.gradeEngine.classGrade;
       return { was: was, cy: g(doc, cls, '${T4}', '${CY}'), di: g(doc, cls, '${T4}', '${DI}'),
-        ed: g(doc, cls, '${T4}', '${ED}') };
+        ed: g(doc, cls, '${T4}', '${ED}'), fi: g(doc, cls, '${T4}', '${FI}'), jo: g(doc, cls, '${T4}', '${JO}'),
+        gus: g(doc, cls, '${T4}', '${GUS}') };
     })()`);
 
     const rowNamed = (rows, name) => (rows || []).filter((r) => r.cells[0] === name)[0] || null;
@@ -674,6 +683,83 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
         bonus: edBonus, move: ed.move, heroLabel: ed.heroLabel,
         screenSays: (ed.bare.match(NOTHING) || [''])[0], fileBonus: edFileBonus,
         fileElsewhere: edFileElsewhere, overall: fEd.overall }));
+
+    /* ── a bonus graded at 0 is graded (WO-3.38) ──
+     * A zero-point piece scored 0 adds 0 earned and 0 possible — the same as a blank — so the
+     * engine's numbers cannot tell Fi's Bonus from Gus's. Until WO-3.38 Fi's row read "nothing graded
+     * in it yet" over her 0 and her to-move card said "There is no graded work yet." Student detail
+     * now asks the cells (the owner's ruling (b), the engine untouched), and the file asks the same
+     * function. Iz is the same fact on the unfiled piece — the engine draws no "no category" row for
+     * a 0/0 there, so only the no-grade sentence can carry it. Jo has a grade, and her Bonus row must
+     * say it is graded at 0 without a cent in the column. Gus and Hal are the trap: a Bonus cell with
+     * no score, and an excused one beside a scoreless late, are still blanks, and still say so. */
+    const ZERO_SAY = 'extra credit, graded at 0 — it adds no points to either side';
+    const ZERO_WHY = 'The only work graded so far is extra credit, graded at 0, so there is no grade yet.';
+    const NONE_WHY = 'There is no graded work yet.';
+    const fi = await readDetail(FI);
+    const iz = await readDetail(IZ);
+    const jo = await readDetail(JO);
+    const gus = await readDetail(GUS);
+    const hal = await readDetail(HAL);
+    const fFi = fileOf(fi.csv), fIz = fileOf(iz.csv), fJo = fileOf(jo.csv);
+    const fGus = fileOf(gus.csv), fHal = fileOf(hal.csv);
+    const fiBonus = rowNamed(fi.rows, 'Bonus');
+    const fiFileElsewhere = fFi.rows.filter((r) => NOTHING.test(r.join(' '))
+      && !(r[2] === '' && r[3] === '' && r[4] === EMPTY_SAY));
+    /* The quiet list's row for Fi, read and printed but NOT asserted: src/signals.js is outside the
+       ruling, and whether it still says "no graded work" is reported as a follow-up, not fixed here. */
+    const fiQuiet = await evalJs(`(function(){
+      var m = window.planbook.signalsView.signalsModel();
+      var r = m.quiet.rows.filter(function(x){ return x.classId === '${C4}' && x.studentId === '${FI}'; })[0];
+      return r ? r.explanation : null; })()`);
+    console.log('  (WO-3.38, not asserted — src/signals.js is out of scope) the quiet list says of Fi: '
+      + JSON.stringify(fiQuiet));
+    check('WO-3.38: a points-class student whose only graded work is a bonus graded at 0 is not told, on '
+      + 'screen or in the CSV, that nothing is graded — her Bonus row is not empty and reads — · 0 / 0 · '
+      + '"extra credit, graded at 0", the to-move card and the hero\'s label carry the same fact, the file\'s '
+      + 'Bonus row says it too, and only Tests and Projects say "nothing graded"; the same holds for a 0 '
+      + 'on the unfiled piece, where there is no row and the sentence is the whole of it',
+      planted.fi.percentage === null && planted.fi.reason === 'no-graded-work'
+        && planted.fi.message === NONE_WHY && fi.up
+        && !!fiBonus && !fiBonus.empty
+        && JSON.stringify(fiBonus.cells) === JSON.stringify(['Bonus', '—', '0 / 0', ZERO_SAY])
+        && rowNamed(fi.rows, 'Tests').empty && rowNamed(fi.rows, 'Projects').empty
+        && !NOTHING.test(fi.bare) && !NOTHING.test(fi.move) && !NOTHING.test(fi.heroLabel)
+        && fi.move.indexOf(ZERO_WHY) !== -1 && fi.heroLabel === 'No grade — ' + ZERO_WHY
+        && JSON.stringify(fileRow(fFi, 'Bonus')) === JSON.stringify(['Bonus', '', '0', '0', ZERO_SAY, ''])
+        && fiFileElsewhere.length === 0 && fFi.overall[1] === ''
+        && iz.up && iz.rows.every((r) => r.empty) && !rowNamed(iz.rows, 'no category')
+        && iz.move.indexOf(ZERO_WHY) !== -1 && iz.heroLabel === 'No grade — ' + ZERO_WHY
+        && !NOTHING.test(iz.move) && !NOTHING.test(iz.heroLabel),
+      JSON.stringify({ engine: planted.fi.message, bonus: fiBonus, move: fi.move, heroLabel: fi.heroLabel,
+        screenSays: (fi.bare.match(NOTHING) || [''])[0], fileBonus: fileRow(fFi, 'Bonus'),
+        fileElsewhere: fiFileElsewhere, iz: { rows: iz.rows, move: iz.move, heroLabel: iz.heroLabel } }));
+
+    const joBonus = rowNamed(jo.rows, 'Bonus');
+    check('WO-3.38: beside a grade, a bonus graded at 0 reads — · 0 / 0 · "extra credit, graded at 0" with '
+      + 'no cents, and the Contributes column still sums to the Overall: 75.00 under 75.00% (15/20, by hand), '
+      + 'on screen and in the file',
+      Math.abs(planted.jo.percentage - 75) < 1e-9 && jo.up && !!joBonus && !joBonus.empty
+        && JSON.stringify(joBonus.cells) === JSON.stringify(['Bonus', '—', '0 / 0', ZERO_SAY])
+        && columnCents(jo) === 7500 && jo.foot[jo.foot.length - 1] === '75.00%'
+        && JSON.stringify(fileRow(fJo, 'Bonus')) === JSON.stringify(['Bonus', '', '0', '0', ZERO_SAY, ''])
+        && fJo.overall[1] === '75.00%' && fileCents(fJo) === pctCents(fJo.overall[1]),
+      JSON.stringify({ engine: planted.jo.percentage, rows: jo.rows, foot: jo.foot,
+        fileBonus: fileRow(fJo, 'Bonus'), overall: fJo.overall }));
+
+    const blankSays = (d, f) => ({ bonus: rowNamed(d.rows, 'Bonus'), file: fileRow(f, 'Bonus'),
+      move: d.move, label: d.heroLabel });
+    const isBlank = (d, f) => d.up && d.rows.every((r) => r.empty)
+      && JSON.stringify(rowNamed(d.rows, 'Bonus').cells) === JSON.stringify(['Bonus', '—', EMPTY_SAY, '—'])
+      && JSON.stringify(fileRow(f, 'Bonus')) === JSON.stringify(['Bonus', '', '', '', EMPTY_SAY, ''])
+      && d.move.indexOf(NONE_WHY) !== -1 && d.heroLabel === 'No grade — ' + NONE_WHY
+      && d.move.indexOf(ZERO_WHY) === -1;
+    check('WO-3.38: a blank is still ungraded — a Bonus cell holding no score, and an excused Bonus beside a '
+      + 'scoreless late, read "nothing graded in it yet" on screen and in the file, and the student is told '
+      + '"There is no graded work yet." — never "graded at 0"',
+      planted.gus.percentage === null && planted.gus.message === NONE_WHY
+        && isBlank(gus, fGus) && isBlank(hal, fHal),
+      JSON.stringify({ gus: blankSays(gus, fGus), hal: blankSays(hal, fHal) }));
 
     /* ── the quiet list says why there is no grade (WO-3.37) ──
      * Ed is on the signals screen's quiet list — nothing fires for a student with no grade and no
