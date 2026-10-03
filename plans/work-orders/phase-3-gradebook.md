@@ -2954,7 +2954,7 @@ found two cases outside this row, both booked as
 
 ## WO-3.36 — the score grid, the grade sheet and the unfiled group still speak weights in a points class
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.34 — the points-mode wording this matches
+**Ship** — · **Status** ✅ DONE — 2026-10-03 · **Size** S · **Depends on** WO-3.34 — the points-mode wording this matches
 **Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
 
 **Booked 2026-10-03**, owner-directed, out of WO-3.34's verdict: the wording that row's list did not
@@ -2976,11 +2976,11 @@ screens are right.
   unfiled work; read it before touching it.
 
 **Acceptance**
-- [ ] In a points class, no text on the score grid or the grade sheet calls the grade weighted or
+- [x] In a points class, no text on the score grid or the grade sheet calls the grade weighted or
       prints a weight. **Measured**, not read.
-- [ ] The *Not in a category* group is not styled as an error in a points class, and is unchanged in
+- [x] The *Not in a category* group is not styled as an error in a points class, and is unchanged in
       a weighted one.
-- [ ] A weighted class's score grid and grade sheet are unchanged on the harness's existing fixtures.
+- [x] A weighted class's score grid and grade sheet are unchanged on the harness's existing fixtures.
 
 **Traps** — **Weighted wording stays exactly as it is.** This is a points-mode branch, not a
 rewording. **Do not compute a share on the screen**; `pointsShare()` and `effectiveWeight` exist.

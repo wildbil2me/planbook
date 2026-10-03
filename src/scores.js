@@ -112,8 +112,10 @@ import { categoriesOf, formatWeight, weightTotal } from './categories.js';
    searchNeedle() and nameMatches() are the attendance search's rule, moved there at WO-3.29 so that
    this screen's box and the registry's are one test rather than two — see renderScores() below. */
 import { rosterName, fullName, searchNeedle, nameMatches } from './roster.js';
-/* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4). See this file's header. */
-import { categoryPercentage, letterFromPercentage, classGrade } from './grade-engine.js';
+/* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4). See this file's header. gradingModeOf() is the one
+   test of how a class is graded (WO-3.36), asked here rather than reading `cls.gradingMode` so that a
+   stray value reads as weighted on this screen exactly as it does in the engine. */
+import { categoryPercentage, letterFromPercentage, classGrade, gradingModeOf } from './grade-engine.js';
 /* THE PAST-DUE PROMPT (WO-3.6), which is the one thing on this screen that reads a clock and is
    deliberately not in this file — see decision 1. This file draws it by calling one function and
    passing nothing: that module asks src/classes.js which class and term are open, exactly as this
@@ -452,16 +454,26 @@ function columnHead(assignment, cls) {
   th.append(el('span', 'scores-col-pts', 'out of ' + pointsOf(assignment)));
 
   const cat = categoriesOf(cls).filter((c) => c.id === assignment.categoryId)[0] || null;
+  /* A CLASS GRADED ON TOTAL POINTS GETS THE CATEGORY'S NAME AND NOTHING ELSE (WO-3.36). Its grade
+     ignores the weights, so "Essays 40%" over a column would be the screen telling her the grade is
+     weighted — and the dashed `.zero` chip says "this counts for nothing", which in that formula a
+     0% category does not mean. The weighted chip below is unchanged, word for word. No share of the
+     points is drawn in its place: src/assignments.js's group head dropped its chip the same way at
+     WO-3.34, and a share belongs to pointsShare() and the categories editor, not to a column. */
+  const byPoints = gradingModeOf(cls) === 'points';
   const weight = cat ? Number(cat.weight) : NaN;
   const zero = !Number.isFinite(weight) || weight === 0;
-  const chip = el('span', 'cat-chip' + (cat && zero ? ' zero' : ''));
-  if (cat) {
+  const chip = el('span', 'cat-chip' + (cat && zero && !byPoints ? ' zero' : ''));
+  if (cat && byPoints) {
+    chip.append(document.createTextNode(cat.name || 'Untitled category'));
+  } else if (cat) {
     chip.append(document.createTextNode((cat.name || 'Untitled category') + ' '));
     chip.append(el('b', '', formatWeight(Number.isFinite(weight) ? weight : 0) + '%'));
   } else {
-    /* Work filed under no category this class has — reachable from a restored document, and counted
-       by nothing until it is re-filed. src/assignments.js's list says the same thing in red on the
-       row itself and is one tap away; here the chip says it without shouting, because this screen
+    /* Work filed under no category this class has — reachable from a restored document. In a
+       weighted class it is counted by nothing until it is re-filed; in a class graded on total
+       points it counts, under "no category" (WO-3.30). src/assignments.js's list says which, on the
+       row itself and one tap away; here the chip says it without shouting, because this screen
        cannot fix it. */
     chip.append(document.createTextNode('no category'));
   }
@@ -650,6 +662,10 @@ function paintSummary(cls, termId, students) {
      — so any student's answer settles it. A second copy of the equality rule in this file is how the
      banner and the grade come to disagree for decimal weights (src/categories.js's BALANCE_EPSILON
      carries that scar). */
+  /* A CLASS GRADED ON TOTAL POINTS NEVER RAISES IT (WO-3.36, traced rather than assumed): classGrade()
+     sends that class to points() in src/grade-engine.js, whose only refusal is 'no-graded-work', so
+     `unbalanced` is false whatever its weights total — points-grade.mjs plants one at 75 and reads the
+     banner down. No mode test is added here: the engine's answer already is one. */
   const probe = classGrade(doc, cls, termId, students.length ? students[0].id : '');
   const unbalanced = probe.reason === 'weights-unbalanced';
 
@@ -722,6 +738,15 @@ function paintSummary(cls, termId, students) {
     : 'nothing left blank'));
 
   summary.append(el('span', 'sep', '·'));
+  /* THE LAST FIGURE SAYS WHAT THE GRADE IS MADE OF (WO-3.36). In a weighted class that is the weights
+     total, the number the banner above refuses on. A class graded on total points has no weights in
+     its grade, so "Weights total 75%" there would be a number about nothing — and a number a teacher
+     would go and fix. It says how the class is graded instead, in WO-3.34's words, and draws no figure:
+     a share computed here would be a second copy of pointsShare(). */
+  if (gradingModeOf(cls) === 'points') {
+    summary.append(el('span', '', 'graded on total points'));
+    return;
+  }
   const weights = el('span');
   weights.append(document.createTextNode('Weights total '));
   weights.append(el('b', '', formatWeight(total) + '%'));

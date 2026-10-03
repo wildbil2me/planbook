@@ -298,13 +298,18 @@
   padding: 8px 12px; margin: 6px 0; line-height: 1.5; font-weight: 700;
 }
 /* Work filed under a category this class no longer has — reachable from a restored document, or
-   from a build older than WO-3.1. Red rather than amber: an empty category costs nothing and this
-   costs the assignment, which is counted by nothing until it is re-filed. */
+   from a build older than WO-3.1. Red rather than amber in a WEIGHTED class: an empty category costs
+   nothing and this costs the assignment, which is counted by nothing until it is re-filed. */
 .assign-group-orphan {
   font-size: 12px; color: #c0392b; background: #fdeaea;
   border: 1.5px solid #e74c3c; border-radius: 8px;
   padding: 8px 12px; margin: 6px 0; line-height: 1.5; font-weight: 700;
 }
+/* In a class graded on total points the same work COUNTS (WO-3.30), so red's "this costs the
+   assignment" would be false there (WO-3.36). It takes `.assign-group-empty`'s amber — a thing worth
+   tidying, not a thing gone wrong — and keeps every measurement above, so the notice sits where it
+   always did. Not a control: it adds nothing to the coarse block. */
+.assign-group-orphan.counted { color: #8a6d1a; background: #fff8e6; border-color: #f0dfa8; }
 
 .assign-empty { font-size: 13px; color: #a0aab8; padding: 18px 2px; line-height: 1.6; }
 .assign-hint { font-size: 12px; color: #8a9bb0; line-height: 1.6; margin-top: 14px; }

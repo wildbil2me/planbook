@@ -24,8 +24,9 @@
   breaks if it is left out: WO-3.1's removalCounts() and applyRemoval() filter by `categoryId`
   alone, which is safe only while a category id can appear in one class. The moment an assignment
   can be copied across classes, a copy that carried its source's `categoryId` would sit in class B
-  filed under a category that only class A has — invisible on B's list, counted by nothing, and
-  destroyed by a category removal in A under a dialog naming A. So the copy below chooses the
+  filed under a category that only class A has — invisible on B's list, counted by nothing if B is
+  weighted (a B graded on total points counts it, under "no category"), and destroyed by a category
+  removal in A under a dialog naming A. So the copy below chooses the
   target's own category (by NAME, and never by id), and this file never asks "which assignments are
   in this category" without also saying which class. (The two functions in src/categories.js took
   the same guard in this pass, for the same reason and with a note there.)
@@ -605,20 +606,24 @@ export function renderAssignments() {
   /*
     WORK THAT IS IN NO CATEGORY THIS CLASS HAS. Two ways to arrive: an assignment created while the
     class had no categories at all, and one whose category was removed by a build or a document
-    this one did not write. Red rather than amber, because an empty category costs nothing and this
-    costs the assignment — it is counted by nothing until it is re-filed, and Edit is one tap away
-    on its own row.
+    this one did not write. In a WEIGHTED class it is red rather than amber, because an empty
+    category costs nothing and this costs the assignment — it is counted by nothing until it is
+    re-filed, and Edit is one tap away on its own row.
 
     IN A CLASS GRADED ON TOTAL POINTS IT IS COUNTED (WO-3.30's ruling), so the notice there says so
     and still asks for a category — the work is in the grade, and filing it is what puts it in a
     row of the breakdown with a name a guardian recognises. The weighted sentence is unchanged.
+    AND IT IS NOT RED THERE (WO-3.36): red says "this costs the assignment", which in that formula
+    is false. It keeps `.assign-group-orphan` and adds `.counted`, which src/assignments.css draws
+    in the amber of the empty-category notice — something to tidy, not something wrong.
   */
   const filed = cats.map((c) => c.id);
   const loose = list.filter((a) => filed.indexOf(a.categoryId) === -1);
   if (loose.length) {
     body.append(groupHead('Not in a category', null,
       plural(loose.length, 'assignment', 'assignments')));
-    body.append(noticeRow('assign-group-orphan', plural(loose.length, 'assignment', 'assignments')
+    body.append(noticeRow('assign-group-orphan' + (byPoints ? ' counted' : ''),
+      plural(loose.length, 'assignment', 'assignments')
       + ' below ' + (loose.length === 1 ? 'is' : 'are') + ' not filed under any category '
       + cls.name + ' has, ' + (byPoints
         ? 'so the grade counts ' + (loose.length === 1 ? 'it' : 'them') + ' under “no category” — '
@@ -1192,7 +1197,8 @@ export function moveAssignmentDown(id) { moveAssignment(id, 1); }
 
   Ids are opaque and belong to the class they were made in. A copy that kept `categoryId` would
   land in another class filed under a category that class does not have — invisible on its list,
-  counted by nothing, and destroyed by a category removal in the class it came from, under a dialog
+  counted by nothing in a weighted class (a class graded on total points counts it, under "no
+  category"), and destroyed by a category removal in the class it came from, under a dialog
   naming a different class. That is this work order's named trap, and this function is where it
   would have happened.
 

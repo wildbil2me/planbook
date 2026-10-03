@@ -155,8 +155,24 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
       var tr = document.querySelector('#scoresBody tr[data-score-row="${S1}"]');
       var num = tr ? tr.querySelector('.scores-grade-num') : null;
       var banner = document.getElementById('scoresNoGrade');
+      /* WO-3.36: every word the screen draws, read rather than grepped — the view's text with the two
+         static help paragraphs taken out, plus every title and aria-label on it. The paragraphs are
+         the same HTML in every class and name both modes in conditional sentences ("In a class graded
+         by weighted categories …", WO-3.34), so they say what a weighted class does without calling
+         this one weighted; they are read separately below rather than skipped silently. */
+      var view = document.getElementById('scoresView');
+      var bare = view.cloneNode(true);
+      Array.prototype.forEach.call(bare.querySelectorAll('.scores-hint'), function(p){ p.remove(); });
+      var attrs = Array.prototype.map.call(bare.querySelectorAll('[title],[aria-label]'), function(e){
+        return (e.getAttribute('title') || '') + ' ' + (e.getAttribute('aria-label') || ''); });
+      var hints = Array.prototype.map.call(view.querySelectorAll('.scores-hint'), function(p){ return p.textContent; });
       return { pct: num ? num.textContent : '', cell: tr ? (tr.querySelector('.scores-grade') || {}).textContent : '',
-        bannerUp: !!banner && !banner.classList.contains('hidden') }; })()`);
+        bannerUp: !!banner && !banner.classList.contains('hidden'),
+        words: bare.textContent + ' ' + attrs.join(' '),
+        hintWeights: hints.map(function(t){ return (t.match(/[^.]*weight[^.]*/gi) || []).join(' | '); }),
+        chips: Array.prototype.map.call(document.querySelectorAll('#scoresHead .cat-chip'), function(c){ return c.textContent; }),
+        chipFigures: document.querySelectorAll('#scoresHead .cat-chip b').length,
+        summary: (document.getElementById('scoresSummary') || {}).textContent || '' }; })()`);
 
     /* ── the grade sheet, opened through its real button ── */
     await clickSel('#scoresView [data-grades-record]');
@@ -167,8 +183,16 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
       var row = Array.prototype.filter.call(m.querySelectorAll('.grades-report-slice tbody tr'),
         function(tr){ var h = tr.querySelector('.grades-report-row-head');
           return h && h.textContent.indexOf('${S1_LAST}') !== -1; })[0];
+      /* WO-3.36: the whole dialog's words, its titles and labels, and the CSV it saves, through the
+         same gradesRecord()/gradesCsv() seam the Download button calls. */
+      var attrs = Array.prototype.map.call(m.querySelectorAll('[title],[aria-label]'), function(e){
+        return (e.getAttribute('title') || '') + ' ' + (e.getAttribute('aria-label') || ''); });
+      var colTitles = Array.prototype.map.call(m.querySelectorAll('.grades-report-col'), function(th){ return th.title; });
+      var gr = window.planbook.gradesReport;
       return { up:true, pct: row ? (row.querySelector('.grades-report-pct') || {}).textContent || '' : '',
-        banner: (m.querySelector('.grade-none') || {}).textContent || '' }; })()`);
+        banner: (m.querySelector('.grade-none') || {}).textContent || '',
+        words: m.textContent + ' ' + attrs.join(' '), colTitles: colTitles,
+        csv: gr.gradesCsv(gr.gradesRecord()).text }; })()`);
     await evalJs("window.planbook.closeModal('gradesRecordModal'); 1");
     await new Promise(r => setTimeout(r, 200));
 
@@ -235,6 +259,44 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
       'grid banner ' + grid.bannerUp + ', sheet banner ' + JSON.stringify(sheet.banner)
         + ', detail banner ' + detail.banner + ', rows ' + JSON.stringify(detail.rows)
         + ', column sums to ' + (cents / 100).toFixed(2) + ' under ' + JSON.stringify(detail.foot));
+
+    /* ── the score grid and the grade sheet in the class's own words (WO-3.36) ──
+     *
+     * THIS FIXTURE IS THE ONE THAT CAN FAIL IT: its weights total 75, so a build still speaking
+     * weights here prints "Weights total 75%" on the summary line and "Essays 40%" on a column chip.
+     * Measured on the rendered page and the saved file, never on the source.
+     */
+    const WEIGHTISH = /weight/i;
+    const CATS = ['Essays', 'Quizzes', 'Homework'];
+    const gridHit = (grid.words.match(WEIGHTISH) || [''])[0];
+    const sheetHit = (sheet.words.match(WEIGHTISH) || [''])[0];
+    const csvHit = (String(sheet.csv || '').match(WEIGHTISH) || [''])[0];
+    check('WO-3.36: in a points class no text on the score grid calls the grade weighted or prints a '
+      + 'weight — every column chip is the bare category name (or "no category") with no figure in it, '
+      + 'the summary line ends "graded on total points" with no weights total, and no word of weight is '
+      + 'anywhere in the view\'s text, titles or labels outside the two static help paragraphs',
+      gridHit === '' && grid.chipFigures === 0 && grid.chips.length === 7
+        && grid.chips.every((c) => CATS.indexOf(c) !== -1 || c === 'no category')
+        && grid.chips.filter((c) => c === 'no category').length === 1
+        && /graded on total points$/.test(grid.summary.trim())
+        && grid.summary.indexOf('Weights total') === -1 && !/%\s*$/.test(grid.summary.trim()),
+      JSON.stringify({ wordFound: gridHit, chips: grid.chips, chipFigures: grid.chipFigures,
+        summary: grid.summary }));
+    /* The two help paragraphs, read rather than skipped: any sentence in them with "weight" in it must
+       be one that names the weighted mode or says a points class has none — never one about this
+       class as though it were weighted. */
+    const hintSentences = (grid.hintWeights || []).join(' | ').split(' | ').filter(Boolean);
+    check('WO-3.36: the score grid\'s static help paragraphs mention weights only in sentences about a '
+      + 'weighted class or saying a points class has none to balance',
+      hintSentences.length > 0 && hintSentences.every((s) => /weighted categories|no\s+weights/.test(s)
+        || /until the weights|the weights do/.test(s)),
+      JSON.stringify(hintSentences));
+    check('WO-3.36: in a points class no text on the grade sheet calls the grade weighted or prints a '
+      + 'weight — not in the dialog, its titles or labels, nor the CSV it saves — and no column title '
+      + 'carries a percent',
+      sheet.up && sheetHit === '' && csvHit === '' && (sheet.colTitles || []).length === 7
+        && sheet.colTitles.every((t) => t.indexOf('%') === -1),
+      JSON.stringify({ wordFound: sheetHit, csvWordFound: csvHit, colTitles: sheet.colTitles }));
 
     /* ── the backup: the mode survives the file, and a file with no mode gains none ── */
     const files = await evalJs(`(async function(){
@@ -613,13 +675,66 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
         screenSays: (ed.bare.match(NOTHING) || [''])[0], fileBonus: edFileBonus,
         fileElsewhere: edFileElsewhere, overall: fEd.overall }));
 
+    /* ── the score grid's chip for a 0% category (WO-3.36) ──
+     * Bonus carries weight 0. A weighted class draws its chip dashed and grey (`.zero`) because a 0%
+     * category counts for nothing there; in a points class its 2-point puzzle counts, so the chip is
+     * the plain name like every other one. */
+    await into('scores');
+    const chips334 = await evalJs(`Array.prototype.map.call(document.querySelectorAll('#scoresHead .cat-chip'),
+      function(c){ return { text: c.textContent, cls: c.className }; })`);
+    check('WO-3.36: in a points class the score grid draws a 0% category\'s chip as a plain name — "Bonus", '
+      + 'not dashed as counting for nothing and carrying no figure — beside Tests and "no category"',
+      JSON.stringify(chips334) === JSON.stringify([
+        { text: 'Tests', cls: 'cat-chip' }, { text: 'Bonus', cls: 'cat-chip' },
+        { text: 'no category', cls: 'cat-chip' }]),
+      JSON.stringify(chips334));
+
     /* ── the assignments screen, with an empty category and an unfiled piece both on it ── */
     await into('assignments');
+    /* The unfiled notice's class and its computed colours as well as its words (WO-3.36): red is the
+       error state, and "not styled as an error" is a measurement of what is painted. */
+    const NOTICE_STYLE = `function(x){ var s = getComputedStyle(x);
+        return { cls: x.className, color: s.color, bg: s.backgroundColor, border: s.borderTopColor }; }`;
     const list = await evalJs(`(function(){
       var v = document.getElementById('assignmentsView');
+      var style = ${NOTICE_STYLE};
       return { text: v ? v.textContent : '',
         empty: Array.prototype.map.call(v.querySelectorAll('.assign-group-empty'), function(x){ return x.textContent; }),
-        orphan: Array.prototype.map.call(v.querySelectorAll('.assign-group-orphan'), function(x){ return x.textContent; }) }; })()`);
+        emptyStyle: Array.prototype.map.call(v.querySelectorAll('.assign-group-empty'), style),
+        orphan: Array.prototype.map.call(v.querySelectorAll('.assign-group-orphan'), function(x){ return x.textContent; }),
+        orphanStyle: Array.prototype.map.call(v.querySelectorAll('.assign-group-orphan'), style) }; })()`);
+    /* AND THE SAME CLASS WEIGHTED, for one render: the mode key comes off (its weights total 100, so
+       it is a balanced weighted class), the list is redrawn, read, and the key goes back on before
+       anything below drives the picker. */
+    const weightedList = await evalJs(`(async function(){
+      var s = window.planbook.store;
+      s.update(function(doc){ var c = doc.classes.filter(function(x){ return x.id === '${C4}'; })[0];
+        delete c.gradingMode; });
+      window.planbook.assignments.renderAssignments();
+      var v = document.getElementById('assignmentsView');
+      var style = ${NOTICE_STYLE};
+      var out = { orphan: Array.prototype.map.call(v.querySelectorAll('.assign-group-orphan'), function(x){ return x.textContent; }),
+        orphanStyle: Array.prototype.map.call(v.querySelectorAll('.assign-group-orphan'), style) };
+      s.update(function(doc){ var c = doc.classes.filter(function(x){ return x.id === '${C4}'; })[0];
+        c.gradingMode = 'points'; });
+      window.planbook.assignments.renderAssignments();
+      await s.flush();
+      return out; })()`);
+    const RED = { color: 'rgb(192, 57, 43)', bg: 'rgb(253, 234, 234)', border: 'rgb(231, 76, 60)' };
+    const AMBER = { color: 'rgb(138, 109, 26)', bg: 'rgb(255, 248, 230)', border: 'rgb(240, 223, 168)' };
+    const paint = (s) => s ? { color: s.color, bg: s.bg, border: s.border } : null;
+    const pOrphan = (list.orphanStyle || [])[0];
+    const wOrphan = (weightedList.orphanStyle || [])[0];
+    check('WO-3.36: the "Not in a category" notice is not drawn as an error in a points class — it is '
+      + 'painted in the empty-category notice\'s amber, not red — and in the same class made weighted it '
+      + 'is exactly what it always was: class "assign-group-orphan" alone, red, saying nothing counts it',
+      !!pOrphan && pOrphan.cls === 'assign-group-orphan counted'
+        && JSON.stringify(paint(pOrphan)) === JSON.stringify(AMBER)
+        && JSON.stringify(paint(pOrphan)) === JSON.stringify(paint((list.emptyStyle || [])[0]))
+        && !!wOrphan && wOrphan.cls === 'assign-group-orphan'
+        && JSON.stringify(paint(wOrphan)) === JSON.stringify(RED)
+        && /so nothing counts it at all\./.test(weightedList.orphan[0] || ''),
+      JSON.stringify({ points: pOrphan, weighted: wOrphan, weightedSays: weightedList.orphan }));
     /* And the picker's sentence, both ways. Filing: the loose piece is opened in its real editor and
        filed under Tests through the real <select>. Unfiling cannot be done from that picker — it offers
        "no category" only to a piece already in that state — so the other branch is asked through the

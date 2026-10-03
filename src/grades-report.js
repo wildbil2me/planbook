@@ -237,8 +237,9 @@ function pointsOf(assignment) {
 function categoryNameOf(cls, assignment) {
   const hit = categoriesOf(cls).filter((c) => c && c.id === assignment.categoryId)[0];
   if (hit) return hit.name || 'Untitled category';
-  /* Work filed under no category this class has — reachable from a restored document, and counted
-     by nothing until it is re-filed. src/scores.js's column head says the same thing in the same
+  /* Work filed under no category this class has — reachable from a restored document. In a weighted
+     class it is counted by nothing until it is re-filed; in a class graded on total points it counts,
+     under this same name (WO-3.30). src/scores.js's column head says the same thing in the same
      words on the screen this sheet is printed off. */
   return 'no category';
 }
@@ -314,7 +315,9 @@ export function gradesRecord() {
   /* WHY THE CLASS HAS NO GRADES, asked of the engine rather than decided here: one class can only be
      in one of those states, so any student's answer settles it, and a second copy of the balance
      rule in this file is how a banner and a grade come to disagree for decimal weights
-     (src/categories.js's BALANCE_EPSILON carries that scar). */
+     (src/categories.js's BALANCE_EPSILON carries that scar). A class graded on total points never
+     answers 'weights-unbalanced' — points() in src/grade-engine.js refuses only 'no-graded-work' — so
+     the banner below cannot stand over one, and nothing else on this sheet names a weight (WO-3.36). */
   const probe = students.length ? students[0] : null;
 
   return {

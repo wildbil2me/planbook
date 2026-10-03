@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The score grid and the grade sheet stop speaking weights in a points class — 2026-10-03
+
+WO-3.36. Shell cache `v155`.
+
+- **A class graded on total points no longer shows category weights** on the score grid or the
+  grade sheet. A column's chip names its category alone, and the summary line reads *graded on
+  total points* where it said *Weights total*.
+- **Work in no category is amber, not red, in a points class.** In a points class that work still
+  counts toward the grade, so it is not an error. A weighted class keeps the red, unchanged.
+- **Nothing changes in a weighted class**: every change is behind the points-mode branch, and every
+  existing weighted check is green. The two help paragraphs WO-3.34 wrote still open *In a class
+  graded by weighted categories…*, which is shared wording the work order's Traps left alone.
+
 ### The student CSV reads a points class in its own words — 2026-10-03
 
 WO-3.35. Shell cache `v154`.

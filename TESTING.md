@@ -9388,6 +9388,67 @@ scratch harness is deleted.
 **Full run on the delivered tree:** `1671 checks · 1671 passed · 0 failed · 0 skipped`, 53,270 lines,
 31.9 lines per check, 686s, exit 0, 2026-10-03, real clock.
 
+### WO-3.36 — the score grid, the grade sheet and the unfiled group still speak weights in a points class
+
+**What this changes.** Nothing in a weighted class, and nothing a teacher can reach yet: no control
+writes `gradingMode` until WO-3.31, so everything below is proved on the planted fixture classes in
+`verify/points-grade.mjs`. In a points class the score grid's column chips carry the category name
+and no figure, and a 0% category's chip is no longer drawn dashed; the summary line ends *graded on
+total points* where a weighted class reads *Weights total N%*. The grade sheet needed no change: read
+in a points class it names no weight anywhere, and its unbalanced banner is unreachable there for the
+same reason the grid's is — `points()` in `src/grade-engine.js` refuses only `no-graded-work`. The
+*Not in a category* notice in a points class keeps its class and adds `.counted`, painted in the
+empty-category notice's amber; a weighted class's notice is unchanged. Comments that called unfiled
+work "counted by nothing" now say that is the weighted case. `CACHE` is `planbook-shell-v155`. There
+is no 👤 line on this row.
+
+- [x] In a points class, no text on the score grid or the grade sheet calls the grade weighted or
+      prints a weight. Measured on WO-3.30's class, whose weights total 75: the view's text (with its
+      two static help paragraphs taken out), titles and aria-labels match nothing of `/weight/i`;
+      the seven column chips are bare names with no `<b>` figure; the summary reads
+      `Class average 76.98%·2 blanks across 1 assignment·graded on total points`. The help paragraphs
+      are read separately: each sentence in them mentioning weights names the weighted mode or says a
+      points class has none. The grade sheet dialog's text, titles, labels and the CSV
+      `gradesCsv(gradesRecord())` returns match nothing of `/weight/i`, and no column title holds a
+      `%`. On WO-3.34's class the Bonus (0%) chip reads `Bonus` with class `cat-chip` alone.
+      Mutations M1, M2, M6.
+- [x] The *Not in a category* notice is not styled as an error in a points class and is unchanged in
+      a weighted one. Measured with `getComputedStyle` on WO-3.34's class: in points mode
+      `assign-group-orphan counted`, `rgb(138, 109, 26)` on `rgb(255, 248, 230)`, border
+      `rgb(240, 223, 168)` — the empty-category notice's own paint; the same class with its mode key
+      deleted and the list redrawn reads `assign-group-orphan`, `rgb(192, 57, 43)` on
+      `rgb(253, 234, 234)`, border `rgb(231, 76, 60)`, saying "so nothing counts it at all."
+      Mutations M3, M4, M5.
+- [x] A weighted class's score grid and grade sheet are unchanged on the existing fixtures. A scratch
+      copy of the entry harness wrapped `evalJs` and `clickSel` and recorded every distinct
+      `#scoresView` and `#gradesRecordModal` `innerHTML` it saw. Run on a `git worktree` of `19b7bcd`
+      (`1671 · 1671 passed`, exit 0) and on the delivered tree (`1676 · 1676 passed`, exit 0): 72
+      weighted states each (68 score-grid, 4 grade-sheet), identical in sequence and byte for byte
+      once the assignment ids `newId()` mints at run time are renamed by order of appearance — three
+      WO-3.5 states carry such ids, and those ids were the only difference before renaming. The points
+      grade sheet state was identical too, as expected with no change to that file's output.
+
+**Mutation round.** A scratch copy of the entry harness held only `localstorage-prefs` and
+`points-grade` (24 checks, all green on the delivered tree). Each mutation carried a `MUTATION`
+marker, was run, and the file was restored in a `finally` and compared by SHA-256 with its
+pre-mutation bytes (all identical).
+
+| Mutation | Result |
+|---|---|
+| M1 · the column chip always in the weighted shape | **2 red**: the score-grid words check and the 0% chip check |
+| M2 · the summary always ends *Weights total N%* | **1 red**: the score-grid words check |
+| M3 · the unfiled notice never `.counted` | **1 red**: the notice paint check (red in a points class) |
+| M4 · the unfiled notice always `.counted` | **1 red**: the notice paint check (amber in a weighted class) |
+| M5 · the `.assign-group-orphan.counted` rule deleted | **1 red**: the notice paint check (class right, paint red) |
+| M6 · the sheet's column title carries ` 40%` | **1 red**: the grade-sheet check |
+
+`grep -rn MUTATION src tools sw.js index.html` afterwards prints 19 lines, the same 19 `git grep`
+prints at `19b7bcd` — prose, not markers. Both scratch harnesses are deleted.
+
+**Full run on the delivered tree:** `1676 checks · 1676 passed · 0 failed · 0 skipped`, 53,385 lines,
+31.9 lines per check, 698s, exit 0, 2026-10-03, real clock. `node tools/wo-sweep.mjs`:
+`46 checks · 43 passed · 0 failed · 3 to review`, the three standing reviews.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise
