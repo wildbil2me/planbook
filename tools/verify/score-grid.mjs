@@ -537,7 +537,7 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
         const case1 = await evalJs(READ);
         const engine = await evalJs(`(function(){ var d = window.planbook.store.getDoc();
           var cls = d.classes.filter(function(c){ return c.id === 'c_wo35'; })[0];
-          var g = window.planbook.gradeEngine.weightedClassGrade(d, cls, 'tm_wo35', 'wo35-s20');
+          var g = window.planbook.gradeEngine.classGrade(d, cls, 'tm_wo35', 'wo35-s20');
           return { percentage: g.percentage, letter: g.letter, reason: g.reason }; })()`);
         const row20 = case1.students.indexOf('wo35-s20');
         check('the displayed grade is docs/grade-math-cases.md case 1 to the digit — 87.00% and a B — and the screen and the engine agree about it',

@@ -188,7 +188,7 @@ console.log('\n--- the past-due prompt (WO-3.6) ---');
         var cls = d.classes.filter(function(c){ return c.id === ${JSON.stringify(classId)}; })[0];
         var out = [];
         for (var i = 1; i <= 5; i++) {
-          var g = window.planbook.gradeEngine.weightedClassGrade(d, cls,
+          var g = window.planbook.gradeEngine.classGrade(d, cls,
             ${JSON.stringify(termId)}, ${JSON.stringify(prefix)} + '-s' + i);
           out.push(g.percentage === null ? '—' : Number(g.percentage).toFixed(2) + '%');
         }

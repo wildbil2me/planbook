@@ -313,7 +313,7 @@ console.log('\n--- the class\'s grade sheet, printed and exported (WO-3.9) ---')
       var out = {};
       [['${S1}', ${JSON.stringify(S1_ROW)}], ['${S2}', ${JSON.stringify(S2_ROW)}],
        ['${S3}', ${JSON.stringify(S3_ROW)}]].forEach(function(pair){
-        var grade = p.gradeEngine.weightedClassGrade(doc, cls, '${TERM}', pair[0]);
+        var grade = p.gradeEngine.classGrade(doc, cls, '${TERM}', pair[0]);
         out[pair[1]] = { pct: grade.percentage, letter: grade.letter };
       });
       return out; })()`);

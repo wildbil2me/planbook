@@ -119,6 +119,7 @@ import { run as dateClear } from './verify/date-clear.mjs';
 import { run as attendanceHistory } from './verify/attendance-history.mjs';
 import { run as gradeDetail } from './verify/grade-detail.mjs';
 import { run as gradeSheet } from './verify/grade-sheet.mjs';
+import { run as pointsGrade } from './verify/points-grade.mjs';
 import { run as pastDue } from './verify/past-due.mjs';
 import { run as accommodationPrompts } from './verify/accommodation-prompts.mjs';
 import { run as printGate } from './verify/print-gate.mjs';
@@ -336,6 +337,11 @@ const BROWSER_SECTIONS = [
   { file: 'verify/attendance-history.mjs', run: attendanceHistory },
   { file: 'verify/grade-detail.mjs', run: gradeDetail },
   { file: 'verify/grade-sheet.mjs', run: gradeSheet },
+  /* WO-3.30, after the three screens it reads a grade off — the grid, the sheet and the detail — and
+     before the signals sections. It plants a points class, restores the year's own backup over itself
+     to prove the mode survives, takes the class back out at its foot and leaves the page at 1280x900
+     with touch off, the state grade-detail.mjs leaves it in. */
+  { file: 'verify/points-grade.mjs', run: pointsGrade },
   { file: 'verify/past-due.mjs', run: pastDue },
   { file: 'verify/accommodation-prompts.mjs', run: accommodationPrompts },
   { file: 'verify/print-gate.mjs', run: printGate },

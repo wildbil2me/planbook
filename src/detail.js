@@ -145,7 +145,7 @@ import { fullName, rosterName } from './roster.js';
 import { formatWeight } from './categories.js';
 /* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4, extended for this screen at WO-3.7). */
 import { nextBandFor, openWork, projectedClassGrade,
-  weightedClassGrade } from './grade-engine.js';
+  classGrade } from './grade-engine.js';
 /*
   HOW A PERCENTAGE IS WRITTEN DOWN, imported from the screen that settled it rather than copied.
   WO-3.14 made it two fixed decimal places, because the SIS carries two decimals and this number is
@@ -673,7 +673,7 @@ export function renderDetail() {
   if (actions) actions.classList.remove('hidden');
   if (empty) { empty.textContent = ''; empty.classList.add('hidden'); }
 
-  const grade = weightedClassGrade(doc, cls, termId, student.id);
+  const grade = classGrade(doc, cls, termId, student.id);
   const rows = openWork(doc, cls, termId, student.id);
 
   /* ── the hero: name, grade, band — the three things a guardian looks at first ── */
@@ -840,7 +840,7 @@ export function detailModel() {
   const student = openStudent(cls);
   if (!doc || !cls || !student) return null;
   const termId = term ? term.id : '';
-  const grade = weightedClassGrade(doc, cls, termId, student.id);
+  const grade = classGrade(doc, cls, termId, student.id);
   const rows = openWork(doc, cls, termId, student.id);
   return {
     className: cls.name,

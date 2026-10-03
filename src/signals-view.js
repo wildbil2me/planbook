@@ -114,7 +114,7 @@ import { evaluate, severityOrder, praiseOrder, orderHits, signalFigure, signalRu
   ruleThresholdText, inertRules, applyCooldown, quietMiddle } from './signals.js';
 /* The grade beside a name on the card, and the key the *Lowest grade* sort reads. It is the same
    engine every other grade in this app comes out of; nothing here sums a cell. */
-import { weightedClassGrade } from './grade-engine.js';
+import { classGrade } from './grade-engine.js';
 import { formatPercent } from './scores.js';
 import { formatWeight } from './categories.js';
 /* The app's one date formatter (WO-3.20). A suppressed row prints two dates — when the contact
@@ -330,7 +330,7 @@ function collect(doc) {
       const key = rowKey(hit);
       if (!byKey[key]) {
         const student = studentIn(doc, hit.studentId);
-        const grade = weightedClassGrade(doc, cls, termId, hit.studentId);
+        const grade = classGrade(doc, cls, termId, hit.studentId);
         byKey[key] = {
           key: key,
           studentId: hit.studentId,

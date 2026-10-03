@@ -134,7 +134,7 @@
   to the sitting that made it true.)*
 */
 
-import { weightedClassGrade, openWork } from './grade-engine.js';
+import { classGrade, openWork } from './grade-engine.js';
 /* The term totals a guardian reads, out of the same walk the registry's own percentage comes from
    (WO-2.4, WO-2.6), and the formatter that prints it. `plainDate` is here for the behavior lines
    below: a date said four ways in one app is four dates, and src/attendance.js's parser is the one
@@ -302,7 +302,7 @@ function contextOf(request) {
     grade() {
       if (!('grade' in memo)) {
         memo.grade = (doc && cls && student)
-          ? weightedClassGrade(doc, cls, termId, student.id) : null;
+          ? classGrade(doc, cls, termId, student.id) : null;
       }
       return memo.grade;
     },
@@ -365,7 +365,7 @@ const FIELDS = [
   /* The engine's answer, printed by the app's own formatter. `percentage: null` is "there is no
      grade yet" — an unbalanced set of weights, or no graded work — and it resolves to nothing
      rather than to a zero this file invented. */
-  { name: 'grade.percent', about: 'The current weighted grade for this class and term',
+  { name: 'grade.percent', about: 'The current grade for this class and term',
     resolve(ctx) {
       const g = ctx.grade();
       return g && g.percentage !== null ? formatPercent(g.percentage) : null;

@@ -33,7 +33,7 @@
   gradebook and its own detail screen end up disagreeing in front of a guardian.
 
   Two of the engine's four exports are called below and two are not, deliberately.
-  weightedClassGrade() answers each row, and letterFromPercentage() bands the CLASS AVERAGE — which
+  classGrade() answers each row, and letterFromPercentage() bands the CLASS AVERAGE — which
   is an average across students rather than a weighted average of categories, so the engine has no
   export for it and this file makes it (see classAverage(), which says what it is and is not).
   categoryResult() and categoryPercentage() are the per-category breakdown, and the screen that
@@ -113,7 +113,7 @@ import { categoriesOf, formatWeight, weightTotal } from './categories.js';
    this screen's box and the registry's are one test rather than two — see renderScores() below. */
 import { rosterName, fullName, searchNeedle, nameMatches } from './roster.js';
 /* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4). See this file's header. */
-import { categoryPercentage, letterFromPercentage, weightedClassGrade } from './grade-engine.js';
+import { categoryPercentage, letterFromPercentage, classGrade } from './grade-engine.js';
 /* THE PAST-DUE PROMPT (WO-3.6), which is the one thing on this screen that reads a clock and is
    deliberately not in this file — see decision 1. This file draws it by calling one function and
    passing nothing: that module asks src/classes.js which class and term are open, exactly as this
@@ -576,7 +576,7 @@ function paintGrades(cls, termId, students) {
     const cell = body.querySelector('tr[data-score-row="' + student.id + '"] .scores-grade');
     if (!cell) return;
     cell.textContent = '';
-    cell.append(gradeContent(weightedClassGrade(doc, cls, termId, student.id)));
+    cell.append(gradeContent(classGrade(doc, cls, termId, student.id)));
     /* THE THIRD FROZEN COLUMN (WO-3.28), repainted on the same keystroke as the grade beside it and
        for the same reason: a score typed into a quiz moves the Quizzes average, and a figure that
        lagged the field it is made of would be worse than none. The cell exists only while a
@@ -645,12 +645,12 @@ function paintSummary(cls, termId, students) {
 
   const total = weightTotal(cls);
   const cats = categoriesOf(cls);
-  /* Asked of the engine rather than decided here: `weightedClassGrade` refuses to compute while the
-     weights are unbalanced and says so in `reason`, and one class can only be in one of those states
+  /* Asked of the engine rather than decided here: `classGrade` refuses to compute while a
+     weighted class's weights are unbalanced and says so in `reason`, and one class can only be in one of those states
      — so any student's answer settles it. A second copy of the equality rule in this file is how the
      banner and the grade come to disagree for decimal weights (src/categories.js's BALANCE_EPSILON
      carries that scar). */
-  const probe = weightedClassGrade(doc, cls, termId, students.length ? students[0].id : '');
+  const probe = classGrade(doc, cls, termId, students.length ? students[0].id : '');
   const unbalanced = probe.reason === 'weights-unbalanced';
 
   if (banner && bannerText) {
@@ -671,7 +671,7 @@ function paintSummary(cls, termId, students) {
   summary.textContent = '';
 
   const average = classAverage(students,
-    (s) => weightedClassGrade(doc, cls, termId, s.id).percentage);
+    (s) => classGrade(doc, cls, termId, s.id).percentage);
   const avg = el('span');
   avg.append(document.createTextNode('Class average '));
   avg.append(el('b', '', average === null ? '—' : formatPercent(average)));

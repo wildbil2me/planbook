@@ -2628,7 +2628,7 @@ and a better matcher is a change to a screen nobody asked to change.
 
 ## WO-3.30 — a class can be graded on total points
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.4 — the engine this gives a second formula
+**Ship** — · **Status** ✅ DONE — 2026-10-03 · **Size** M · **Depends on** WO-3.4 — the engine this gives a second formula
 **Closes roadmap** *(no box. Owner-requested, 2026-10-02.)*
 
 **Booked 2026-10-02**, owner-directed, out of a sitting about what grading should do next. **Total
@@ -2674,24 +2674,24 @@ is proved headless on fixture classes.
   weight for it to lack. *(The owner's ruling, 2026-10-02, before dispatch.)*
 
 **Acceptance**
-- [ ] A class with no `gradingMode` key produces byte-identical grades on every screen and in every
+- [x] A class with no `gradingMode` key produces byte-identical grades on every screen and in every
       signal before and after this lands, on the harness's existing fixtures.
-- [ ] A points-mode fixture with three categories and deliberately lopsided points gives a grade equal
+- [x] A points-mode fixture with three categories and deliberately lopsided points gives a grade equal
       to total earned ÷ total possible, worked by hand in the check. Its category weights sum to 75,
       and it still has a grade.
-- [ ] In both modes, each category's `contribution` adds up to `percentage`, and excused work is out of
+- [x] In both modes, each category's `contribution` adds up to `percentage`, and excused work is out of
       both totals.
-- [ ] A scored assignment filed under no category moves a points-mode grade by exactly its earned and
+- [x] A scored assignment filed under no category moves a points-mode grade by exactly its earned and
       possible points, and moves a weighted grade not at all.
-- [ ] No file in `src/` calls `weightedClassGrade`, and a sweep check keeps it that way.
-- [ ] Every screen showing one student's grade in a points-mode fixture shows the same number:
+- [x] No file in `src/` calls `weightedClassGrade`, and a sweep check keeps it that way.
+- [x] Every screen showing one student's grade in a points-mode fixture shows the same number:
       the score grid, student detail, the grade sheet, the signals list and the `{{grade.percent}}`
       merge field. **Mutation-proved**: one caller left on the weighted formula goes red.
-- [ ] `projectedClassGrade()` in points mode matches a hand-worked projection, and the score needed
+- [x] `projectedClassGrade()` in points mode matches a hand-worked projection, and the score needed
       for the next band still solves by the straight line.
-- [ ] A backup written before this lands restores unchanged, and a points-mode year round-trips
+- [x] A backup written before this lands restores unchanged, and a points-mode year round-trips
       through backup and restore with its mode intact.
-- [ ] No on-screen string calls the class grade "weighted".
+- [x] No on-screen string calls the class grade "weighted".
 
 **Traps** — **Do not compute a points grade anywhere but the engine.** A screen that adds up its own
 cells is the second answer. **Do not seed `gradingMode`** on new classes or in `newYearDocument()`:
@@ -2700,7 +2700,7 @@ returns.** Both modes rest on it, and WO-3.28's frozen column reads it.
 
 ## WO-3.31 — the categories editor offers total points
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.30 — the engine and the `gradingMode` key this writes
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.30 — the engine and the `gradingMode` key this writes; WO-3.34 — the screens a points class is read on
 **Closes roadmap** *(no box. Owner-requested, 2026-10-02.)*
 
 **Booked 2026-10-02** beside [WO-3.30](#wo-330--a-class-can-be-graded-on-total-points), cut along the
@@ -2839,3 +2839,57 @@ with no separate flag tracking.
 save is debounced, so a version is a commit, not a key. **Do not let a signal read `was`.** CLAUDE.md
 records that the turnaround rule cannot see a grade recovery because *a score is not dated*. That
 stops being true here, and changing what a rise means is the owner's ruling, not this work order's.
+
+## WO-3.34 — student detail draws a points class in a weighted class's words
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.30 — the `classGrade()` shape and `gradingModeOf()` this reads
+**Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
+
+**Booked 2026-10-03**, owner-directed, out of WO-3.30's verdict. The verifier passed WO-3.30 on all
+nine lines and found one defect outside them, and the implementer and verifier both listed wording
+that WO-3.31 does not cover. **None of it can be reached today**, because nothing writes
+`gradingMode` until [WO-3.31](#wo-331--the-categories-editor-offers-total-points). WO-3.31 depends on
+this row so that the control does not ship before the screens are correct.
+
+**The defect.** In a points class, a category holding only extra credit (possible 0, earned > 0)
+counts toward the grade but draws as empty on student detail. The verifier's case: Tests 15/20 plus
+a Bonus category scored 2/0 grades at 85%. `breakdown()` in `src/detail.js` decides a row is empty
+on `category.percentage === null` and prints "—", while `contributionCents()` keys on
+`contribution !== null` and gives the Bonus row 10.00. The column on screen adds up to 75.00 under
+an Overall of 85.00%. The same happens to the `no category` row when all its work is extra credit.
+This breaks the promise WO-3.30's third Deliverable makes for a detail screen. Its Acceptance line 3
+tests the engine only, which is why it passed.
+
+**Deliverables**
+- **A row that contributes is drawn as contributing.** The test for an empty row agrees with
+  `contributionCents()`. An extra-credit-only row shows its earned points over 0, no category
+  percentage, and its cents in *Contributes*, so the column adds up to the Overall.
+- **The breakdown speaks the class's mode.** In points mode the *Weight* column, the "its N% is
+  shared across the others" sentence for an empty category, and the "counts at" footnote do not talk
+  about weights. Points mode shows each category's share of the points, from the grade's own
+  `effectiveWeight`. Weighted mode draws exactly as today.
+- **The scores hint in `index.html`** stops saying "Until the weights total 100% there is no grade
+  at all" without qualifying it to weighted classes.
+- **`src/assignments.js` stops calling uncategorized work "counted by nothing"** in a points class.
+  It is counted there, by WO-3.30's ruling. Weighted wording stays.
+- **`copyClass()` carries `gradingMode`.** It copies an explicit field list today, so a copied points
+  class becomes weighted. The mode is a grading decision about the class, like its weights, which the
+  copy already keeps. *(This is the booking's proposal. If the owner rules the other way at dispatch,
+  the Deliverable becomes a sentence in the copy dialog saying the copy is weighted.)*
+
+**Acceptance**
+- [ ] In a points fixture with an extra-credit-only category, student detail's *Contributes* column
+      sums to the Overall to the cent, and that row shows its earned points and its cents.
+      **Mutation-proved**: putting the empty test back on `percentage === null` goes red.
+- [ ] The same holds for a `no category` row whose only graded work is extra credit.
+- [ ] A weighted class's student detail is byte-identical before and after, on the harness's
+      existing fixtures.
+- [ ] In a points class, no text on student detail, in the scores hint, or on the assignments screen
+      calls the grade weighted or says uncategorized work counts for nothing.
+- [ ] Copying a points class gives a points class, and copying a weighted class writes no
+      `gradingMode` key.
+
+**Traps** — **Do not compute a share on the screen.** `effectiveWeight` and `contribution` come from
+`classGrade()`, and `pointsShare()` is the editor's. **Do not change the engine's returned shape.**
+WO-3.30 just proved it identical in weighted mode across 393,780 comparisons. **Do not seed
+`gradingMode` on the copy of a weighted class.** An absent key is weighted.

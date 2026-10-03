@@ -30,7 +30,7 @@ const { check, skip, evalJs, has, seam } = h;
  * There is no UI to drive: the grade engine is pure functions over a document (WO-3.4's Out of
  * scope line is explicit that WO-3.5 renders what this computes), so each case builds the exact
  * document fragment printed in the worked-cases doc as a plain object and hands it straight to
- * weightedClassGrade() and categoryResult() — no store, no class manager, no reload. That is also
+ * classGrade() and categoryResult() — no store, no class manager, no reload. That is also
  * why this section needs no classesBooted / classSeam gate the way the sections above it do: it
  * shares no screen and no document with the rest of the run.
  *
@@ -52,7 +52,7 @@ const { check, skip, evalJs, has, seam } = h;
 console.log('\n--- grade engine ---');
 
 const gradeSeam = await evalJs("!!(window.planbook && window.planbook.gradeEngine"
-  + " && typeof window.planbook.gradeEngine.weightedClassGrade === 'function'"
+  + " && typeof window.planbook.gradeEngine.classGrade === 'function'"
   + " && typeof window.planbook.gradeEngine.categoryResult === 'function')");
 
 if (!gradeSeam) {
@@ -61,7 +61,7 @@ if (!gradeSeam) {
     + 'read the arithmetic through, so its absence is a defect and not a stage of the build');
 } else {
   /* One round trip per case: build the fixture doc exactly as printed in the source document, ask
-     weightedClassGrade() for the class-level answer and categoryResult() for each category's own
+     classGrade() for the class-level answer and categoryResult() for each category's own
      fraction, and hand both back untouched. */
   const gradeAt = async (fixtureDoc, termId, studentId) => await evalJs(`(function(){
     var doc = ${JSON.stringify(fixtureDoc)};
@@ -70,7 +70,7 @@ if (!gradeSeam) {
     var cats = (cls.categories || []).map(function(cat){
       return { id: cat.id, result: g.categoryResult(doc, cls, ${JSON.stringify(termId)}, cat.id, ${JSON.stringify(studentId)}) };
     });
-    return { grade: g.weightedClassGrade(doc, cls, ${JSON.stringify(termId)}, ${JSON.stringify(studentId)}), categories: cats };
+    return { grade: g.classGrade(doc, cls, ${JSON.stringify(termId)}, ${JSON.stringify(studentId)}), categories: cats };
   })()`);
 
   /* docs/grade-math-cases.md:6 — "the letter scale is A >= 90, B >= 80, C >= 70, and F >= 0" — used
@@ -318,5 +318,204 @@ if (!gradeSeam) {
   check("case 15 (a second and third student's cells): s1's grade is 34/40 = 85%, unmoved by s2 or s3",
     case15.grade.percentage === 85,
     'class ' + case15.grade.percentage);
+
+  /* ───────── a class graded on total points (WO-3.30) ─────────
+   *
+   * The second formula: everything earned over everything possible, weights ignored. Same rule as
+   * cases 1-15 — EVERY EXPECTED VALUE IS A LITERAL worked by hand below, never a formula, and the
+   * literals are compared at 1e-9 because a thirds-and-ninths fixture cannot be written as an exact
+   * decimal. The fixture is LOPSIDED ON PURPOSE: one 200-point essay against a handful of 5- and
+   * 10-point pieces, so a points grade and a weighted one land far apart and an engine quietly
+   * answering the wrong formula cannot agree with the literal by accident. Its weights total 75,
+   * which is acceptance line 2's second half: a weighted class at 75 has no grade at all, and this
+   * one must.
+   *
+   *   Essays (w40):   e1 110/200, e2 50 pts outstanding
+   *   Quizzes (w20):  q1 9/10, q2 10 pts marked missing (0/10)
+   *   Homework (w15): h1 5/5, h2 5 pts EXCUSED (in neither total)
+   *
+   *   Earned 110 + 9 + 0 + 5 = 124.  Possible 200 + 10 + 10 + 5 = 225.
+   *   Grade 124/225 = 55.1̅%  (F on A90/B80/C70/D60/F0; next band D at 60).
+   *   Contributions 110/225 = 48.8̅, 9/225 = 4, 5/225 = 2.2̅  — sum 55.1̅.
+   *   Counts at 200/225 = 88.8̅%, 20/225 = 8.8̅%, 5/225 = 2.2̅%.
+   *
+   *   Projection, outstanding at 0:  124/(225+50) = 124/275 = 45.09̅0̅%
+   *   Projection, outstanding at 1:  174/275 = 63.27̅2̅%
+   *   Missing handed in at full:     134/225 = 59.5̅%
+   *   Rate for D (60): 124 + 50r = 0.60 x 275 = 165, so r = 41/50 = 0.82, landing at 165/275 = 60%.
+   *
+   *   The same work weighted 50/30/20 instead: 55 x .5 + 45 x .3 + 100 x .2 = 27.5 + 13.5 + 20 = 61.
+   *
+   *   Plus one assignment filed under NO category, r1, 18/20:
+   *     points  142/245 = 57.95918367…%  (the loose row is 18 of 20, and only it moved)
+   *     weighted  61 exactly, unmoved — it carries no weight.
+   */
+  const SCALE330 = [{ letter: 'A', min: 90 }, { letter: 'B', min: 80 }, { letter: 'C', min: 70 },
+    { letter: 'D', min: 60 }, { letter: 'F', min: 0 }];
+  const fixture330 = (mode, weights, loose) => {
+    const cls = { id: 'c1', categories: [
+      { id: 'ess', name: 'Essays', weight: weights[0] },
+      { id: 'quiz', name: 'Quizzes', weight: weights[1] },
+      { id: 'home', name: 'Homework', weight: weights[2] }] };
+    if (mode) cls.gradingMode = mode;
+    const doc = {
+      classes: [cls],
+      assignments: [
+        { id: 'e1', classId: 'c1', termId: 't1', categoryId: 'ess', points: 200 },
+        { id: 'e2', classId: 'c1', termId: 't1', categoryId: 'ess', points: 50 },
+        { id: 'q1', classId: 'c1', termId: 't1', categoryId: 'quiz', points: 10 },
+        { id: 'q2', classId: 'c1', termId: 't1', categoryId: 'quiz', points: 10 },
+        { id: 'h1', classId: 'c1', termId: 't1', categoryId: 'home', points: 5 },
+        { id: 'h2', classId: 'c1', termId: 't1', categoryId: 'home', points: 5 },
+      ],
+      scores: { e1: { s1: { v: 110 } }, q1: { s1: { v: 9 } }, q2: { s1: { v: null, flag: 'missing' } },
+        h1: { s1: { v: 5 } }, h2: { s1: { v: null, flag: 'excused' } } },
+      letterScale: SCALE330,
+    };
+    (loose || []).forEach((a) => {
+      doc.assignments.push(Object.assign({ classId: 'c1', termId: 't1' }, a.assignment));
+      if (a.cell) doc.scores[a.assignment.id] = { s1: a.cell };
+    });
+    return doc;
+  };
+  const ask330 = async (doc) => await evalJs(`(function(){
+    var doc = ${JSON.stringify(doc)};
+    var g = window.planbook.gradeEngine, cls = doc.classes[0];
+    var grade = g.classGrade(doc, cls, 't1', 's1');
+    return {
+      grade: grade,
+      floor: g.projectedClassGrade(doc, cls, 't1', 's1', { outstanding: 0 }),
+      ceiling: g.projectedClassGrade(doc, cls, 't1', 's1', { outstanding: 1 }),
+      handedIn: g.projectedClassGrade(doc, cls, 't1', 's1', { missing: 1 }),
+      band: grade.percentage === null ? null : g.nextBandFor(doc, cls, grade.percentage),
+      share: g.pointsShare(doc, cls, 't1') };
+  })()`);
+  const near = (a, b) => typeof a === 'number' && Math.abs(a - b) < 1e-9;
+  const sumOf = (rows, key) => rows.reduce((n, r) => n + (r[key] === null ? 0 : r[key]), 0);
+
+  const p330 = await ask330(fixture330('points', [40, 20, 15]));
+  const pg = p330.grade;
+  check('WO-3.30 points mode: three categories with lopsided points grade at total earned / total possible, '
+    + '124/225 = 55.1̅% (F), worked by hand — and the weights total 75 and it still has a grade',
+    near(pg.percentage, 55.1111111111111) && pg.letter === 'F' && pg.reason === null
+      && pg.weightTotal === 75 && pg.categories.length === 3,
+    JSON.stringify({ percentage: pg.percentage, letter: pg.letter, reason: pg.reason,
+      weightTotal: pg.weightTotal, rows: pg.categories.length }));
+  check('WO-3.30 points mode returns weighted mode\'s shape: each category carries its own fraction, '
+    + 'counts at its share of the total possible (88.8̅ / 8.8̅ / 2.2̅) and contributes earned / total '
+    + 'possible (48.8̅ / 4 / 2.2̅)',
+    pg.categories.every((c) => ['id', 'name', 'weight', 'earned', 'possible', 'percentage',
+      'effectiveWeight', 'contribution'].every((k) => k in c))
+      && near(pg.categories[0].effectiveWeight, 88.8888888888889)
+      && near(pg.categories[1].effectiveWeight, 8.88888888888889)
+      && near(pg.categories[2].effectiveWeight, 2.22222222222222)
+      && near(pg.categories[0].contribution, 48.8888888888889)
+      && near(pg.categories[1].contribution, 4)
+      && near(pg.categories[2].contribution, 2.22222222222222)
+      && near(pg.categories[0].percentage, 55) && near(pg.categories[1].percentage, 45)
+      && near(pg.categories[2].percentage, 100),
+    JSON.stringify(pg.categories));
+
+  const w330 = await ask330(fixture330(null, [50, 30, 20]));
+  const wg = w330.grade;
+  check('WO-3.30, both modes: the contributions add up to the percentage, and the excused 5-point '
+    + 'homework is out of both totals — Homework is 5/5 in each, points 55.1̅ and weighted 61',
+    near(sumOf(pg.categories, 'contribution'), pg.percentage)
+      && near(sumOf(wg.categories, 'contribution'), wg.percentage) && wg.percentage === 61
+      && pg.categories[2].earned === 5 && pg.categories[2].possible === 5
+      && wg.categories[2].earned === 5 && wg.categories[2].possible === 5
+      && near(sumOf(pg.categories, 'possible'), 225),
+    'points: contributions ' + sumOf(pg.categories, 'contribution') + ' vs ' + pg.percentage
+      + ' · weighted: contributions ' + sumOf(wg.categories, 'contribution') + ' vs ' + wg.percentage
+      + ' · Homework ' + pg.categories[2].earned + '/' + pg.categories[2].possible + ' and '
+      + wg.categories[2].earned + '/' + wg.categories[2].possible);
+
+  /* The same work in weighted mode at 75 has no grade at all — the refusal points mode skips is
+     still there for the class it belongs to, so the check above is a difference and not a
+     coincidence. */
+  const w75 = await ask330(fixture330(null, [40, 20, 15]));
+  check('WO-3.30: the same 75-weight class with no gradingMode still refuses, weights-unbalanced — '
+    + 'the refusal is skipped in points mode only',
+    w75.grade.percentage === null && w75.grade.reason === 'weights-unbalanced',
+    JSON.stringify({ percentage: w75.grade.percentage, reason: w75.grade.reason }));
+
+  const LOOSE = [{ assignment: { id: 'r1', points: 20 }, cell: { v: 18 } }];
+  const pLoose = await ask330(fixture330('points', [40, 20, 15], LOOSE));
+  const wLoose = await ask330(fixture330(null, [50, 30, 20], LOOSE));
+  const looseRow = pLoose.grade.categories.filter((c) => c.id === null)[0] || null;
+  check('WO-3.30: a scored assignment filed under no category moves a points grade by exactly its 18 '
+    + 'of 20 (124/225 -> 142/245 = 57.959…%, as one "no category" row) and a weighted grade not at all (61 -> 61)',
+    near(pLoose.grade.percentage, 57.9591836734694)
+      && !!looseRow && looseRow.earned === 18 && looseRow.possible === 20 && looseRow.weight === 0
+      && looseRow.name === 'no category'
+      && near(sumOf(pLoose.grade.categories, 'earned') - sumOf(pg.categories, 'earned'), 18)
+      && near(sumOf(pLoose.grade.categories, 'possible') - sumOf(pg.categories, 'possible'), 20)
+      && near(sumOf(pLoose.grade.categories, 'contribution'), pLoose.grade.percentage)
+      && wLoose.grade.percentage === 61 && wLoose.grade.categories.length === 3
+      && JSON.stringify(wLoose.grade) === JSON.stringify(wg),
+    'points ' + pg.percentage + ' -> ' + pLoose.grade.percentage + ', loose row '
+      + JSON.stringify(looseRow) + ' · weighted ' + wg.percentage + ' -> ' + wLoose.grade.percentage);
+
+  check('WO-3.30: projectedClassGrade() in points mode matches the hand-worked projection — 45.09̅0̅% '
+    + 'with nothing on the 50 outstanding points, 63.27̅2̅% with full marks, 59.5̅% with the missing quiz handed in',
+    near(p330.floor.percentage, 45.0909090909091) && near(p330.ceiling.percentage, 63.2727272727273)
+      && near(p330.handedIn.percentage, 59.5555555555556),
+    'floor ' + p330.floor.percentage + ', ceiling ' + p330.ceiling.percentage + ', handed in '
+      + p330.handedIn.percentage);
+  /* The straight line, solved and then checked against the engine at the solved rate — the same
+     two-point solve src/detail.js makes, so a projection that bent in points mode would miss. */
+  const rate330 = p330.band ? (p330.band.min - p330.floor.percentage)
+    / (p330.ceiling.percentage - p330.floor.percentage) : null;
+  const at330 = rate330 === null ? null : await evalJs(`(function(){
+    var doc = ${JSON.stringify(fixture330('points', [40, 20, 15]))};
+    return window.planbook.gradeEngine.projectedClassGrade(doc, doc.classes[0], 't1', 's1',
+      { outstanding: ${rate330} }).percentage; })()`);
+  check('WO-3.30: the score needed for the next band (D at 60) still solves by the straight line — '
+    + 'r = 41/50 = 0.82 by hand, and the engine at that rate lands on 60%',
+    !!p330.band && p330.band.letter === 'D' && p330.band.min === 60
+      && near(rate330, 0.82) && near(at330, 60),
+    'band ' + JSON.stringify(p330.band) + ', solved rate ' + rate330 + ', engine there ' + at330);
+
+  /* An outstanding piece filed under no category is in a points projection's denominator, because
+     it is in the grade's: 124/(275+30) = 40.6557…% with a 30-point loose piece still open. */
+  const pOpenLoose = await ask330(fixture330('points', [40, 20, 15],
+    [{ assignment: { id: 'r3', points: 30 } }]));
+  check('WO-3.30: an outstanding uncategorized piece is projected in points mode — 124/305 = 40.656% at '
+    + 'nothing scored — while the real grade is unmoved at 55.1̅% (nothing on it is graded yet)',
+    near(pOpenLoose.floor.percentage, 40.655737704918) && near(pOpenLoose.grade.percentage, 55.1111111111111)
+      && pOpenLoose.grade.categories.length === 3,
+    'floor ' + pOpenLoose.floor.percentage + ', grade ' + pOpenLoose.grade.percentage + ', rows '
+      + pOpenLoose.grade.categories.length);
+
+  const noneYet = await ask330({ classes: [{ id: 'c1', gradingMode: 'points',
+    categories: [{ id: 'k', weight: 30 }] }],
+    assignments: [{ id: 'x1', classId: 'c1', termId: 't1', categoryId: 'k', points: 0 },
+      { id: 'x2', classId: 'c1', termId: 't1', categoryId: 'k', points: 10 }],
+    scores: { x1: { s1: { v: 5 } } } });
+  check('WO-3.30: no-graded-work still applies in points mode — a student whose only graded work is '
+    + 'extra credit has n/0, not a grade',
+    noneYet.grade.percentage === null && noneYet.grade.reason === 'no-graded-work',
+    JSON.stringify({ percentage: noneYet.grade.percentage, reason: noneYet.grade.reason }));
+
+  const sh = pLoose.share;
+  check('WO-3.30: pointsShare() is each category\'s share of the points assigned in the term, graded or '
+    + 'not — 250 / 20 / 10 / 20 loose of 300 = 83.3̅ / 6.6̅ / 3.3̅ / 6.6̅ — and 250 / 20 / 10 of 280 with nothing loose',
+    sh.length === 4 && sh[0].id === 'ess' && sh[0].points === 250 && near(sh[0].share, 83.3333333333333)
+      && sh[1].points === 20 && near(sh[1].share, 6.66666666666667)
+      && sh[2].points === 10 && near(sh[2].share, 3.33333333333333)
+      && sh[3].id === null && sh[3].points === 20 && near(sh[3].share, 6.66666666666667)
+      && p330.share.length === 3 && near(p330.share[0].share, 89.2857142857143)
+      && near(p330.share[1].share, 7.14285714285714) && near(p330.share[2].share, 3.57142857142857),
+    JSON.stringify(sh) + ' :: ' + JSON.stringify(p330.share));
+
+  const modes = await evalJs(`(function(){ var g = window.planbook.gradeEngine;
+    return [g.gradingModeOf({}), g.gradingModeOf({ gradingMode: 'points' }),
+      g.gradingModeOf({ gradingMode: 'weighted' }), g.gradingModeOf({ gradingMode: 'Points' }),
+      g.gradingModeOf(null), typeof g.weightedClassGrade]; })()`);
+  check('WO-3.30: an absent gradingMode IS weighted, only the exact string "points" is points, and the '
+    + 'weighted-only entry point is gone from the engine rather than kept beside classGrade()',
+    JSON.stringify(modes) === JSON.stringify(['weighted', 'points', 'weighted', 'weighted', 'weighted',
+      'undefined']),
+    JSON.stringify(modes));
 }
 }

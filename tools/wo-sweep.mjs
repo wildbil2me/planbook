@@ -3452,6 +3452,37 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
   }
 }
 
+/* ══════ 27. one class grade: the weighted-only entry point is gone from src/ ══════
+   WO-3.30, and it sits ABOVE § 22 for § 23's reason: § 22's census has to be the last thing that
+   pushes a result. The number is the order this section was written in.
+
+   WO-3.30 gave the class grade a second formula (total points) and replaced the weighted-only
+   function with `classGrade()`, which branches on the class's mode. Its Deliverables say the old
+   function is REMOVED, NOT KEPT BESIDE IT, because two names for one answer is how a screen ends up
+   disagreeing with the one next to it: a caller left on the old name would print a weighted grade
+   for a points class, beside a detail screen printing the points one. The harness proves today's
+   callers agree on a points fixture; this proves the old name cannot come back on any line of
+   src/ — not as a call, not as an alias, not even in a comment, which is the simplest rule to
+   state and leaves nothing to argue about what counts as a call.
+
+   IT IS LOUD WHEN IT MOVES, for § 11's reason: if `export function classGrade(` is no longer in
+   src/grade-engine.js the absence check below is watching a tree that has been rearranged under
+   it, and it FAILs saying so rather than passing over nothing. */
+
+{
+  const NAME = 'the class grade has one entry point: no `weightedClassGrade` anywhere in src/, and `classGrade()` is exported from src/grade-engine.js';
+  const srcFiles = ALL.filter(p => /^src\//.test(rel(p)));
+  const hits = grepLines(srcFiles, /\bweightedClassGrade\b/);
+  const engine = path.join(REPO, 'src', 'grade-engine.js');
+  let exported = false;
+  try { exported = /^export function classGrade\(/m.test(fs.readFileSync(engine, 'utf8')); } catch { exported = false; }
+  const faults = [];
+  if (hits.length) faults.push(`${report(hits)} — WO-3.30 removed the weighted-only function rather than keeping it beside classGrade(); move the caller to classGrade(), which already answers a weighted class exactly as before`);
+  if (!exported) faults.push('no `export function classGrade(` in src/grade-engine.js — the absence check above is watching a rearranged tree. Restore the export, or re-point tools/wo-sweep.mjs § 27 if it was renamed');
+  check(NAME, !faults.length, faults.length ? faults.join(' · ')
+    : `${srcFiles.length} file(s) under src/ read, none names the removed function, and src/grade-engine.js exports classGrade()`);
+}
+
 /* ══════ 22. the count of checks in tools/README.md is the number this run emits ══════
    WO-1.42. § 11 holds `tools/README.md`'s figures for `verify-shell.mjs` against what the tree
    actually contains. This is that census turned on the sweep itself. The same file records how many

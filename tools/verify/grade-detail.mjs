@@ -320,7 +320,7 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
     const engine = await evalJs(`(function(){
       var p = window.planbook, doc = p.store.getDoc();
       var cls = p.classes.getSelectedClass();
-      return p.gradeEngine.weightedClassGrade(doc, cls, '${TERM}', '${S1}').percentage; })()`);
+      return p.gradeEngine.classGrade(doc, cls, '${TERM}', '${S1}').percentage; })()`);
     check('the breakdown\'s contributions sum to the displayed overall grade, and the total is the '
       + 'engine\'s own answer rather than the column\'s',
       JSON.stringify(contribs) === JSON.stringify(CONTRIBS)
@@ -997,7 +997,7 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
     const naive = await evalJs(`(function(){
       var p = window.planbook, doc = p.store.getDoc();
       var cls = p.classes.getSelectedClass();
-      var g = p.gradeEngine.weightedClassGrade(doc, cls, '${TERM}', '${S2}');
+      var g = p.gradeEngine.classGrade(doc, cls, '${TERM}', '${S2}');
       var each = g.categories.filter(function(c){ return c.contribution !== null; })
         .map(function(c){ return Math.round(c.contribution * 100); });
       return { each: each, sum: each.reduce(function(a,b){ return a+b; }, 0),

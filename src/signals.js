@@ -126,12 +126,12 @@
 */
 
 /* The grade half, and BOTH of these are reads of the same arithmetic rather than two of them
-   (WO-4.2). weightedClassGrade() is what "fell N points" measures at each end of its window —
+   (WO-4.2). classGrade() is what "fell N points" measures at each end of its window —
    the acceptance line says the weighted grade and not raw scores — and openWork() is where
    `missing` is defined, so the missing-work rule counts the very rows the grade already charged
    for. A rule that decided for itself what a missing cell was would be the second opinion
    src/grade-engine.js's header forbids. */
-import { weightedClassGrade, openWork } from './grade-engine.js';
+import { classGrade, openWork } from './grade-engine.js';
 /* attendanceHistory() joins the two window helpers at WO-4.2 because a RUN is the one attendance
    question a totals object cannot answer: `A 3` says how many, never whether they were the last
    three in a row. It is the same walk those totals come out of (src/attendance.js's walkMeetings),
@@ -216,9 +216,9 @@ export const SIGNAL_SETTINGS = [
     direction: 'concern',
     label: 'Concern',
     rules: [
-      { ruleId: 'grade-below', text: 'Weighted grade below',
+      { ruleId: 'grade-below', text: 'Grade below',
         fields: [{ key: 'gradeBelow', def: 65, unit: '%',
-          aria: 'Concern: the weighted grade a student is flagged below, as a percentage' }] },
+          aria: 'Concern: the grade a student is flagged below, as a percentage' }] },
       { ruleId: 'grade-fell', text: 'Grade fell over recent work',
         fields: [{ key: 'gradeFellPoints', def: 10, unit: 'points',
           aria: 'Concern: how many points a grade must fall by to be flagged' },
@@ -501,7 +501,7 @@ const gradeBelow = {
   IT MEASURES THE WEIGHTED GRADE AT BOTH ENDS OF THE WINDOW AND NEVER THE RAW SCORES, which is
   WO-4.2's second acceptance line and the whole reason this rule is more than a subtraction. Four
   scores of 50% inside a 10%-weighted category are not a fall; one of them inside a 60% category is.
-  So `before` is weightedClassGrade() over a document with the window's assignments taken OUT of
+  So `before` is classGrade() over a document with the window's assignments taken OUT of
   `assignments[]` — the grade as it stood before that work existed, computed by the engine that
   computes every other grade in this app, with its category redistribution and its empty-category
   rule intact — and `after` is the grade the score grid is showing right now.
@@ -1735,7 +1735,7 @@ function makeContext(doc, cls, termId, through, historical) {
     t: thresholdsOf(doc),
     grade(studentId) {
       if (!grades.has(studentId)) {
-        grades.set(studentId, weightedClassGrade(doc, cls, termId, studentId));
+        grades.set(studentId, classGrade(doc, cls, termId, studentId));
       }
       return grades.get(studentId);
     },
@@ -1894,7 +1894,7 @@ function makeContext(doc, cls, termId, through, historical) {
         const kept = (Array.isArray(doc.assignments) ? doc.assignments : [])
           .filter((a) => !(a && drop.indexOf(a.id) >= 0));
         beforeGrades.set(key,
-          weightedClassGrade(Object.assign({}, doc, { assignments: kept }), cls, termId, studentId));
+          classGrade(Object.assign({}, doc, { assignments: kept }), cls, termId, studentId));
       }
       return beforeGrades.get(key);
     },
@@ -2158,7 +2158,7 @@ export function quietMiddle(doc, cls, termId, options) {
       const said = lastEntryDate(doc, student.id, through);
       const from = said || range.from;
       const days = from ? Math.max(0, daysBetween(from, through)) : null;
-      const grade = weightedClassGrade(doc, cls, termId, student.id);
+      const grade = classGrade(doc, cls, termId, student.id);
       const percent = grade && grade.percentage !== null ? grade.percentage : null;
       rows.push({
         studentId: student.id,

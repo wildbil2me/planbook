@@ -66,6 +66,11 @@ nag, and nothing noticed until a verifier read the line for another reason.
     // documents. A sketch that disagrees with the code undoes the rule in good faith.
     "terms": [{ "id": "tm_…", "label": "Quarter 1", "start": "…", "end": "…" }],
     "categories": [{ "id": "k_…", "name": "Tests", "weight": 40 }],
+    // "gradingMode": "points",  // WO-3.30. ABSENT = weighted, and absent is the only other state:
+    //                           // "points" is the one value ever stored, and going back to
+    //                           // weighted DELETES the key rather than writing "weighted" — the
+    //                           // thresholdsOf() rule. Never seeded, so every earlier backup restores.
+    //                           // Read it through gradingModeOf() in src/grade-engine.js.
     "letterScale": null,      // null = use the document default below
     "roster": ["s_…"]
     // Copy (WO-1.22, src/classes.js's copyClass()): terms and categories come across, each with a
@@ -373,6 +378,9 @@ Seven shape decisions that matter:
 
 ## Grade math — weighted categories
 
+*(The default, and since WO-3.30 one of two formulas — the second, total points, is under its own
+heading below, before *Extra credit*.)*
+
 Per category, `earned / possible` over that category's graded work. The final grade is the
 weighted average of those, **with the weights of empty categories redistributed** — otherwise
 every grade is wrong until each category has an assignment.
@@ -435,6 +443,44 @@ divide by.
 `src/categories.js` owns the determination: `weightTotal(cls)` and `isProvisional(cls)`, both pure
 functions of a class. **`isProvisional()` now means "this class has no grade", not "this grade is
 provisional".** Its name and its copy are owed a correction — see the note in WO-3.1.
+
+### The second formula — total points *(WO-3.30, 2026-10-02)*
+
+**A class with `gradingMode: "points"` is graded on everything earned over everything possible,
+weights ignored.** Its categories are kept — they still file work, carry their own percentage and
+drive the score grid's category filter — and only the class grade's formula changes. The cell table
+above is unchanged: a missing cell is still zero out of the full points, an excused one is still in
+neither total, a zero-point assignment is still extra credit.
+
+- **One function answers both.** `classGrade(doc, cls, termId, studentId)` in `src/grade-engine.js`
+  branches on the mode, and every screen, signal rule and merge field calls it. The weighted-only
+  function it replaced was removed rather than kept beside it, and `tools/wo-sweep.mjs` § 27 keeps
+  its name out of `src/`. `projectedClassGrade()` takes the same branch, and the *solved, not
+  searched* argument holds unchanged: `(E + rate × owed) / (P + owed)` is a straight line in the rate.
+- **The same shape either way, so no caller branches.** Each category's `effectiveWeight` is its share
+  of the total `possible`, and its `contribution` is its `earned` over the total `possible`, × 100,
+  so a detail screen's contributions column still adds up to the grade printed above it.
+  `percentage` is the fraction itself — total earned ÷ total possible — rather than the running sum
+  of contributions.
+- **The weights-total-100 refusal does not apply**: there are no weights in the formula to be wrong,
+  so a points class has a grade as soon as anything worth points is graded. `no-graded-work` still
+  applies — a total possible of zero is `n/0`, which includes a student whose only graded work is
+  extra credit.
+- **Work filed under no category counts toward a points grade** *(the owner's ruling, 2026-10-02)*.
+  It carries no weight, so it counts toward nothing in weighted mode, and that has not changed; in
+  points mode there is no weight for it to lack. "No category" means a `categoryId` that is none of
+  the class's category ids — blank, or left behind by a deleted category — the same test the
+  assignment list's red *Not in a category* group draws by. It arrives as **one more row at the foot
+  of `categories`**, `id: null`, named `no category` (the score grid's and the grade sheet's own
+  words for such work), weight 0, present only when that work has something graded in it. A row
+  rather than a silent addition to the totals, so that the contributions still add up on screen.
+  `openWork()` does not list it — it walks categories only, as before — so a screen listing
+  outstanding pieces does not name an uncategorized one; the projection counts it anyway, because
+  it is in the grade.
+- **`pointsShare(doc, cls, termId)`** is each category's share of the points assigned in the term
+  so far — every assignment at its full points, graded or not, with the `no category` row when
+  loose work holds points. It is what WO-3.31's editor draws in place of weights, and it reads no
+  clock: "so far" is whatever has been created.
 
 ### Extra credit
 
@@ -559,7 +605,7 @@ once, and that is information rather than a bug.
 
 | Rule | Default |
 |---|---|
-| Current weighted grade below | 65% |
+| Current grade below | 65% |
 | Fell N points across the last N assignments | 10 pts / 4 |
 | N consecutive scores under N% | 3 / 60% |
 | N missing assignments | 3 |
@@ -690,7 +736,7 @@ A template is subject + body with **merge fields**, resolved against one student
 | `{{student.first}}` `{{student.last}}` `{{student.nickname}}` | Name parts |
 | `{{guardian.name}}` | The recipient guardian |
 | `{{class.name}}` `{{teacher.name}}` | Context |
-| `{{grade.percent}}` `{{grade.letter}}` | Current weighted grade |
+| `{{grade.percent}}` `{{grade.letter}}` | Current class grade — weighted or total points, whichever the class uses |
 | `{{grade.delta}}` | Change over the signal's window — the praise workhorse |
 | `{{missing.count}}` `{{missing.list}}` | Missing work |
 | `{{attendance.percent}}` `{{attendance.absences}}` `{{attendance.tardies}}` | Term totals |

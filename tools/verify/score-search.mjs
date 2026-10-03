@@ -471,7 +471,7 @@ console.log('\n--- the score grid narrows by student (WO-3.29) ---');
       var out = {};
       ['wo329-s3','wo329-s2','wo329-s1','wo329-s5','wo329-s4','wo329-s6'].forEach(function(id){
         var p = g.categoryPercentage(d, cls, 'tm_wo329', 'wo329-quiz', id);
-        var o = g.weightedClassGrade(d, cls, 'tm_wo329', id);
+        var o = g.classGrade(d, cls, 'tm_wo329', id);
         out[id] = { cat: p === null ? null : g.letterFromPercentage(d, cls, p), overall: o.letter }; });
       return out; })()`);
     const lineBad = cQuiz.catLines.filter((r) => {

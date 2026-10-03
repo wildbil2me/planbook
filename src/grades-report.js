@@ -39,7 +39,7 @@
 
   Every percentage and every letter comes out of src/grade-engine.js (WO-3.4) — the printout is what
   gets typed into the SIS, and two implementations of one arithmetic is exactly how a sheet comes to
-  disagree with the screen it was printed from. weightedClassGrade() answers each row and nothing in
+  disagree with the screen it was printed from. classGrade() answers each row and nothing in
   this file sums a point.
 
   The same rule one level down: what a CELL holds is asked of src/scores.js's scoreMark(), which is
@@ -100,7 +100,7 @@ import { rosterName } from './roster.js';
 /* The category an assignment is filed under, for the column key in the file. */
 import { categoriesOf } from './categories.js';
 /* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4). See this file's header. */
-import { weightedClassGrade } from './grade-engine.js';
+import { classGrade } from './grade-engine.js';
 /* The bands in force for this class, and whether they are its own or the year's — the deliverable
    asks both surfaces to name the scale in use, and that answer has one owner. Nothing here rounds
    anything on the way to a letter: a boundary is printed with String() exactly as
@@ -292,7 +292,7 @@ export function gradesRecord() {
   }));
 
   const students = gridOrder(cls).map((student) => {
-    const grade = weightedClassGrade(doc, cls, termId, student.id);
+    const grade = classGrade(doc, cls, termId, student.id);
     return {
       id: student.id,
       name: rosterName(student),

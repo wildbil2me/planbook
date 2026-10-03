@@ -9182,6 +9182,87 @@ the existing prose mentions.
 
 ---
 
+### WO-3.30 — A class can be graded on total points
+
+**What this changes.** Nothing a teacher can see except two words. A class may carry
+`gradingMode: "points"`, and then its grade is everything earned over everything possible, weights
+ignored. An absent key is weighted, and `"points"` is the only value ever stored. No control writes
+the key until WO-3.31, so everything below is proved on fixture classes with the mode planted.
+`weightedClassGrade()` is gone. `classGrade()` replaced it in all six caller files and branches on the
+mode. `projectedClassGrade()` takes the same branch, and `pointsShare()` is exported for WO-3.31's
+editor. Work filed under no category counts toward a points grade (the owner's ruling) as a
+`no category` row at the foot of the grade's `categories`, and still counts toward nothing in weighted
+mode. On screen: the `grade-below` threshold label reads *Grade below* (it read *Weighted grade
+below*), the `{{grade.percent}}` palette line reads *The current grade for this class and term*, and
+two help paragraphs in `index.html` no longer call the grade weighted. `CACHE` is
+`planbook-shell-v152`.
+
+- [x] **A class with no `gradingMode` grades exactly as before.** Measured two ways. (1) The full
+      harness on the untouched tree (a `git worktree` of `ba0ebc6`) and on the delivered tree: every
+      existing grade check is green on both, and their printed figures are identical (see the full run
+      below). (2) A throwaway Node script, not kept, loaded the `ba0ebc6` engine and this one side by
+      side and compared `JSON.stringify` of the weighted grade, `openWork()`, `categoryResult()` and
+      seven projections over 20,000 random classes (decimal and unbalanced weights, blank, stale and
+      cross-class category ids, every flag): 756,606 comparisons, 0 differences. The same script with
+      one class in ten set to `"points"` reported 40,320 differences, so it can see one.
+- [x] A points class whose weights total 75, three categories with lopsided points (a 200-point essay
+      against 5- and 10-point pieces), grades at 124/225 = 55.1̅%, worked by hand in
+      `verify/grade-engine.mjs`. The same class with no `gradingMode` still refuses (`weights-unbalanced`).
+- [x] In both modes the contributions sum to the percentage, and the excused 5-point homework is in
+      neither total. Points: 48.8̅ + 4 + 2.2̅ = 55.1̅. Weighted 50/30/20: 27.5 + 13.5 + 20 = 61.
+- [x] An uncategorized 18/20 moves the points grade to exactly 142/245 (its own `no category` row,
+      18 of 20) and leaves the weighted grade at 61, the whole object identical.
+- [x] `projectedClassGrade()` in points mode: 124/275 at nothing on the 50 outstanding points, 174/275
+      at full marks, 134/225 with the missing quiz in. The rate for D (60) is solved from the two
+      ends as 0.82 (41/50 by hand), and the engine lands on 60% there. An outstanding uncategorized
+      piece is in the projection's denominator (124/305).
+- [x] `pointsShare()`: 250 / 20 / 10 / 20 of 300, and 250 / 20 / 10 of 280 with nothing loose.
+      `gradingModeOf()` is `"points"` for exactly `"points"` and `"weighted"` for everything else.
+- [x] One student in a points class reads **57.96%** (142/245, by hand) on the score grid, the grade
+      sheet dialog, student detail, the signals row and `{{grade.percent}}`. The signals model's own
+      grade agrees, and `grade-below` fired. No *weights do not add up* banner on the grid, the sheet
+      or the detail, and the detail breakdown draws `no category · 0% · 18 / 20` with a contributions
+      column that sums to 57.96 under 57.96%. (`verify/points-grade.mjs`.)
+- [x] A year with no `gradingMode` anywhere parses back identical in content with nothing added, and
+      `newYearDocument()` seeds no key. A points year's backup text carries `"gradingMode": "points"`,
+      `parseBackup()` returns it, and after the real restore (confirm clicked) the class read raw from
+      IndexedDB is still a points class grading at 142/245.
+- [x] `wo-sweep.mjs` § 27: no `weightedClassGrade` anywhere in `src/`, and `classGrade()` exported.
+
+**Mutation round.** A scratch copy of the harness held only `localstorage-prefs`, `grade-engine` and
+`points-grade` (37 checks, all green on the delivered tree). Each file was copied aside, mutated with a
+`MUTATION` marker, run, and restored in a `finally`. Every restored file was `cmp`'d against a
+pre-round copy. The scratch harness was deleted before the full run.
+
+| Mutation | Result |
+|---|---|
+| M1 · `src/detail.js`'s hero asks the weighted formula (`gradingMode` stripped off the class) | **2 red**: the every-screen check (detail `—`) and the banner check (the detail draws the 75% banner) |
+| M2 · the same in `src/scores.js`'s grade column | **1 red**: the every-screen check |
+| M3 · the same in `src/grades-report.js` | **2 red**: the every-screen check and the banner check (the sheet prints the refusal) |
+| M4 · the same in `src/signals-view.js`'s row grade | **1 red**: the every-screen check (the model's grade is null) |
+| M5 · the same in `src/signals.js`'s per-student grade | **1 red**: the every-screen check (`grade-below` never fires, so there is no row) |
+| M6 · the same in `src/merge-fields.js` | **1 red**: the every-screen check (`{{grade.percent}}` is not 57.96%) |
+| M7 · the engine drops the uncategorized pile | **6 red**: the uncategorized engine check, the open-loose projection, the screen fixture, every-screen, banner/row and round-trip grade |
+| M8 · the engine keeps the weights refusal in points mode | **6 red**, including a section throw in `grade-engine.mjs` (a null grade has no categories to read) |
+| M9 · `projectedClassGrade()` ignores the mode | **3 red**: the hand-worked projection, the straight-line solve, the open-loose projection |
+| M10 · the mode read case-insensitively | **1 red**: the `gradingModeOf()` check |
+| B1 · `newYearDocument()` seeds a `gradingMode` key | **1 red**: the older-backup check |
+| S1 · `export const weightedClassGrade = classGrade` in the engine | **sweep § 27 red** at `src/grade-engine.js:373` |
+| S2 · `classGrade` export renamed | **sweep § 27 red** on its loud arm (no export to watch) |
+
+`grep -rn MUTATION src tools` afterwards finds only the existing prose mentions in `src/shell.js` and
+`tools/README.md`. None is a marker.
+
+**Full run on the delivered tree:** `1659 checks · 1659 passed · 0 failed · 0 skipped`, 52,845 lines,
+674s, exit 0, 2026-10-02, real clock. The untouched tree (`ba0ebc6`, in a `git worktree`) ran
+`1643 checks · 1643 passed · 0 failed · 0 skipped` the same evening. Across both runs' output, with
+generated ids, clocks and timestamps normalised, all 183 lines that print a percentage or a grade are
+identical except one, and that one is the intended wording change: *Write anyway* on a suppressed
+`grade-below` row is labelled "… — grade below, in …" where it said "… — weighted grade below, …". The
+label is built from the rule's own text.
+
+---
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

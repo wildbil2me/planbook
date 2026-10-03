@@ -13,6 +13,29 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A class can be graded on total points — the engine half — 2026-10-03
+
+WO-3.30. Shell cache `v152`.
+
+- **A class can now carry `gradingMode: "points"`.** Its grade is then everything earned over
+  everything possible, and the category weights are ignored. Categories still file the work, drive
+  the score grid's category filter and keep their own percentages. An absent key means weighted,
+  and going back to weighted deletes the key; `newYearDocument()` gains nothing, so every earlier
+  backup still restores.
+- **No control sets the mode yet.** That is WO-3.31, and WO-3.34 corrects the screens a points class
+  is read on before it lands. A class with no mode grades exactly as before: the old and new engines
+  agreed on 393,780 comparisons across 20,000 random classes.
+- **One `classGrade()` replaces `weightedClassGrade()` in every caller**: the score grid, student
+  detail, the grade sheet, the signals list and the `{{grade.percent}}` merge field. They cannot
+  disagree, and `wo-sweep.mjs` § 27 fails if the old name comes back.
+- **A points class has a grade as soon as anything is graded.** The weights-total-100 refusal does
+  not apply to it. `projectedClassGrade()` takes the same branch and still solves by the straight
+  line, and `pointsShare()` gives each category's share of the points for WO-3.31 to draw.
+- **Work filed under no category counts in a points class**, the owner's ruling. It still counts
+  toward nothing in a weighted one. On student detail it appears as a `no category` row.
+- **The concern chip reads *Grade below*, not *Weighted grade below*,** and the merge-field palette
+  and two help paragraphs no longer call the class grade weighted.
+
 ### The score grid narrows to one category — 2026-10-02
 
 WO-3.28. Shell cache `v151`.
