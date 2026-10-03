@@ -269,6 +269,15 @@ console.log('\n--- copying a class, terms and categories only (WO-1.22) ---');
         assignmentRefs: after122.assignmentRefs, openPassRefs: after122.openPassRefs,
         passRefs: after122.passRefs }));
 
+    /* WO-3.34: the copy carries how its source is graded, and a weighted source — this one has no
+       `gradingMode` key, which is what weighted IS — writes no key onto its copy. An absent key is
+       the default, and a "weighted" seeded here would be the seeded default the data model refuses.
+       The points half is in points-grade.mjs, beside the points fixture it copies. The copy came back
+       through JSON, so an absent key is absent here too rather than undefined-and-present. */
+    check('WO-3.34: copying a weighted class writes no gradingMode key onto the copy',
+      !!copy && !Object.prototype.hasOwnProperty.call(copy, 'gradingMode'),
+      JSON.stringify(copy && Object.keys(copy)));
+
     check('the open class does not change: it is still the one that was open before the copy',
       after122.openClassId === before122.openClassId && after122.openClassId === 'c_wo122_src',
       'before = ' + before122.openClassId + ', after = ' + after122.openClassId);

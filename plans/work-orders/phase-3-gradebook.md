@@ -2700,7 +2700,7 @@ returns.** Both modes rest on it, and WO-3.28's frozen column reads it.
 
 ## WO-3.31 — the categories editor offers total points
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.30 — the engine and the `gradingMode` key this writes; WO-3.34 — the screens a points class is read on
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.30 — the engine and the `gradingMode` key this writes; WO-3.34 — the screens a points class is read on; WO-3.35 — the CSV and the extra-credit-only student; WO-3.36 — the score grid and the grade sheet
 **Closes roadmap** *(no box. Owner-requested, 2026-10-02.)*
 
 **Booked 2026-10-02** beside [WO-3.30](#wo-330--a-class-can-be-graded-on-total-points), cut along the
@@ -2842,7 +2842,7 @@ stops being true here, and changing what a rise means is the owner's ruling, not
 
 ## WO-3.34 — student detail draws a points class in a weighted class's words
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.30 — the `classGrade()` shape and `gradingModeOf()` this reads
+**Ship** — · **Status** ✅ DONE — 2026-10-03 · **Size** S · **Depends on** WO-3.30 — the `classGrade()` shape and `gradingModeOf()` this reads
 **Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
 
 **Booked 2026-10-03**, owner-directed, out of WO-3.30's verdict. The verifier passed WO-3.30 on all
@@ -2878,18 +2878,99 @@ tests the engine only, which is why it passed.
   the Deliverable becomes a sentence in the copy dialog saying the copy is weighted.)*
 
 **Acceptance**
-- [ ] In a points fixture with an extra-credit-only category, student detail's *Contributes* column
+- [x] In a points fixture with an extra-credit-only category, student detail's *Contributes* column
       sums to the Overall to the cent, and that row shows its earned points and its cents.
       **Mutation-proved**: putting the empty test back on `percentage === null` goes red.
-- [ ] The same holds for a `no category` row whose only graded work is extra credit.
-- [ ] A weighted class's student detail is byte-identical before and after, on the harness's
+- [x] The same holds for a `no category` row whose only graded work is extra credit.
+- [x] A weighted class's student detail is byte-identical before and after, on the harness's
       existing fixtures.
-- [ ] In a points class, no text on student detail, in the scores hint, or on the assignments screen
+- [x] In a points class, no text on student detail, in the scores hint, or on the assignments screen
       calls the grade weighted or says uncategorized work counts for nothing.
-- [ ] Copying a points class gives a points class, and copying a weighted class writes no
+- [x] Copying a points class gives a points class, and copying a weighted class writes no
       `gradingMode` key.
 
 **Traps** — **Do not compute a share on the screen.** `effectiveWeight` and `contribution` come from
 `classGrade()`, and `pointsShare()` is the editor's. **Do not change the engine's returned shape.**
 WO-3.30 just proved it identical in weighted mode across 393,780 comparisons. **Do not seed
 `gradingMode` on the copy of a weighted class.** An absent key is weighted.
+
+**Landed 2026-10-03**, all five lines verified by a fresh verifier. **One change goes past the
+Deliverables as written, and the verifier ruled it in scope:** in a points class the assignments
+screen's category group heads draw no `weight N%` chip, and the editor's category options and the
+copy dialog's category labels drop their ` — N%` suffix. Line 4 could not pass without it — the chip
+is text on the assignments screen calling the grade weighted. Weighted classes are unchanged. The
+verdict also found six things outside this row's list; they are booked as
+[WO-3.35](#wo-335--the-student-csv-and-an-extra-credit-only-student-read-a-points-class-wrong) and
+[WO-3.36](#wo-336--the-score-grid-the-grade-sheet-and-the-unfiled-group-still-speak-weights-in-a-points-class),
+and WO-3.31 depends on both.
+
+## WO-3.35 — the student CSV and an extra-credit-only student read a points class wrong
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.34 — `rowIsEmpty()` and the points-mode breakdown this follows
+**Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
+
+**Booked 2026-10-03**, owner-directed, out of WO-3.34's verdict. **Unreachable today**, like
+WO-3.34 itself, because nothing writes `gradingMode` until
+[WO-3.31](#wo-331--the-categories-editor-offers-total-points), which depends on this row.
+
+**The defect, confirmed by the verifier.** `studentCsv()` in `src/detail.js` (~972) still decides a
+category row is empty on `category.percentage === null`. In a points class an extra-credit-only
+category, or the `no category` row, is written as "nothing graded — weight redistributes" with no
+*Contributes* cell, so the file's column does not add up to its *Overall grade* — the defect
+WO-3.34 fixed on screen, one export away. The file also keeps the weighted headers `Weight %` and
+`Counts at %` in a points class.
+
+**The second case.** A student whose only graded work in a points class is extra credit has possible
+0, so there is no overall grade and no contributions, and `rowIsEmpty()` draws the Bonus row
+"nothing graded in it yet" over a cell scored 2. That sentence is false. What the row should say
+instead is this row's judgment; *nothing graded* is not it.
+
+**Deliverables**
+- **The CSV uses the screen's empty test** — `rowIsEmpty()` or one function both call, never a third
+  copy — and writes a contributing row's cents, so the column adds up to the Overall.
+- **The CSV speaks the class's mode**, with the same columns the screen draws in points mode.
+- **An extra-credit-only student's rows say what is true**, on screen and in the CSV.
+
+**Acceptance**
+- [ ] In WO-3.34's points fixture, the student CSV's *Contributes* column sums to its *Overall grade*
+      to the cent, for both the extra-credit category and the `no category` row. **Mutation-proved.**
+- [ ] A points-class CSV contains no `Weight %`, `Counts at %` or "redistributes".
+- [ ] A weighted class's CSV is byte-identical before and after, on the harness's existing fixtures.
+- [ ] A points-class student whose only graded work is extra credit is not told, on screen or in the
+      CSV, that nothing is graded.
+
+**Traps** — **Do not compute a share or a sum in the export.** Every figure comes from
+`classGrade()` and `detailModel()`. **Do not change the engine's returned shape.**
+
+## WO-3.36 — the score grid, the grade sheet and the unfiled group still speak weights in a points class
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.34 — the points-mode wording this matches
+**Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
+
+**Booked 2026-10-03**, owner-directed, out of WO-3.34's verdict: the wording that row's list did not
+name. **Unreachable today**; WO-3.31 depends on this row so the control does not ship before these
+screens are right.
+
+**Deliverables**
+- **The score grid** (`src/scores.js`): in a points class the summary line does not read
+  `Weights total N%` (~726), and the column category chips do not carry a weight (~460). The
+  unbalanced-weights banner (~660) cannot fire there, since a points class has no such refusal;
+  confirm that rather than assume it.
+- **The grade sheet** (`src/grades-report.js`): read it in a points class for weight wording, and fix
+  what it finds. WO-3.34's implementer did not read it.
+- **The *Not in a category* group on the assignments screen** is red because "this costs the
+  assignment" (~608). In a points class that is false — unfiled work counts — so it is not drawn as a
+  cost there. Weighted stays red.
+- **Stale comments in `src/assignments.js`** that call uncategorized work "counted by nothing"
+  (~609, ~1195) say which mode they mean. The one at ~27 is about an id from another class, not about
+  unfiled work; read it before touching it.
+
+**Acceptance**
+- [ ] In a points class, no text on the score grid or the grade sheet calls the grade weighted or
+      prints a weight. **Measured**, not read.
+- [ ] The *Not in a category* group is not styled as an error in a points class, and is unchanged in
+      a weighted one.
+- [ ] A weighted class's score grid and grade sheet are unchanged on the harness's existing fixtures.
+
+**Traps** — **Weighted wording stays exactly as it is.** This is a points-mode branch, not a
+rewording. **Do not compute a share on the screen**; `pointsShare()` and `effectiveWeight` exist.

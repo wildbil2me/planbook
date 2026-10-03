@@ -75,7 +75,9 @@ nag, and nothing noticed until a verifier read the line for another reason.
     "roster": ["s_…"]
     // Copy (WO-1.22, src/classes.js's copyClass()): terms and categories come across, each with a
     // fresh id; name gets a "(copy)" suffix; archived, letterScale and roster do not come across —
-    // a copy is a new class in every other respect, roster: [] always.
+    // a copy is a new class in every other respect, roster: [] always. gradingMode comes across
+    // when it is "points" (WO-3.34) — how a class is graded is kept like its weights are — and a
+    // weighted source writes no key on its copy, because absent IS weighted.
   }],
 
   "letterScale": [            // document-wide default, editable in Settings
@@ -481,6 +483,13 @@ neither total, a zero-point assignment is still extra credit.
   so far — every assignment at its full points, graded or not, with the `no category` row when
   loose work holds points. It is what WO-3.31's editor draws in place of weights, and it reads no
   clock: "so far" is whatever has been created.
+- **A row whose only graded work is extra credit still contributes** *(WO-3.34)*. In points mode a
+  category — or the `no category` row — holding only zero-point work scored above zero has no
+  `percentage` (`n/0`) and does have a `contribution`: its earned points over the class's total
+  possible. Student detail decides a row is empty only when it has **neither**, the same test its
+  cent allocation keys on, so that row draws its earned points over 0, a dash for its percentage,
+  a 0% share and its cents, and the column still adds up to the Overall. In weighted mode such a
+  category has neither and still draws as empty, as before.
 
 ### Extra credit
 

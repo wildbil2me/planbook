@@ -9261,6 +9261,74 @@ identical except one, and that one is the intended wording change: *Write anyway
 `grade-below` row is labelled "… — grade below, in …" where it said "… — weighted grade below, …". The
 label is built from the rule's own text.
 
+### WO-3.34 — student detail draws a points class in a weighted class's words
+
+**What this changes.** Nothing in a weighted class, and nothing a teacher can reach yet: no control
+writes `gradingMode` until WO-3.31, so everything below is proved on fixture classes with the mode
+planted. In a points class: student detail draws a row that contributes as contributing (the empty
+test is now *no percentage and no contribution*, the test `contributionCents()` keys on), and its
+breakdown has five columns — *Category · Share of points · Earned · Category % · Contributes* — where
+the share is the grade's own `effectiveWeight`, the empty-category sentence says the category adds
+no points, the Overall row carries no weights total, and the footnote describes total points. The
+assignments screen in a points class drops the weight chip from its group heads and the weight from
+its category pickers, and its empty-category, unfiled-work and copy-dialog sentences and the
+picker's announcement say what is true in that formula. The scores hint in `index.html` qualifies
+the weights-total-100 refusal to weighted classes. `copyClass()` carries `gradingMode: "points"`
+and writes no key for a weighted source. `CACHE` is `planbook-shell-v153`.
+
+- [x] In a points fixture with an extra-credit-only category, the *Contributes* column sums to the
+      Overall to the cent, and that row shows its earned points and its cents. Tests 15/20 + Bonus
+      2/0 = 17/20 = 85.00%, by hand: Bonus reads `0% · 2 / 0 · — · 10.00`, and 75.00 + 10.00 = 85.00
+      under 85.00%. (`verify/points-grade.mjs`, the WO-3.34 block.) Mutation M1 below.
+- [x] The same for a `no category` row whose only graded work is extra credit: Tests 15/20 + an
+      unfiled 0-point piece scored 2 reads `no category · 0% · 2 / 0 · — · 10.00`, column 85.00
+      under 85.00%.
+- [x] A weighted class's student detail is byte-identical before and after on the harness's existing
+      fixtures. A scratch copy of the entry harness (deleted afterwards) recorded, after every
+      `evalJs` and `clickSel` a section made, the outerHTML of the breakdown card plus the whole
+      `#detailContent` innerHTML whenever student detail was on screen, deduplicated. It ran the full
+      harness once on a `git worktree` of `67b1cc7` (1659 · 1659 passed, 17 distinct detail states)
+      and once on the delivered tree (1665 · 1665 passed, 19 states). **All 16 weighted states are
+      identical byte for byte** — WO-3.7's fixture (with its empty Participation category) and the
+      detail screens the WO-8.4, WO-4.4, WO-4.5, WO-5.3 and WO-5.4 sections open. The one state in the base run that changed is
+      WO-3.30's points class, which is this work order's intended change; the two new states are
+      this work order's own fixture.
+- [x] In a points class, no text on student detail, in the scores hint, or on the assignments screen
+      calls the grade weighted or says uncategorized work counts for nothing. Student detail and the
+      assignments list are read whole against
+      `/weight|counts? for nothing|nothing counts|counted by nothing|percent of the grade|redistribut/i`
+      and match nothing; the editor's picker options are the names alone; the picker announces
+      "Reading challenge now counts in Tests." and, unfiled, "… now counts in no category, and in a
+      class graded on total points it still counts toward the grade." The scores hint is static
+      text and was read, not measured: it now says *In a class graded by weighted categories … until
+      the weights total 100% there is no grade at all*, and that a points class has no weights to
+      balance. The copy dialog's no-categories note and its category labels branch on the target's
+      mode and were read, not driven.
+- [x] Copying a points class through the real Copy button gives a class with `gradingMode: "points"`
+      (`verify/points-grade.mjs`), and copying the weighted WO-1.22 source writes no `gradingMode`
+      key (`verify/copy-class.mjs`, asserted on the copy's own keys).
+
+**Mutation round.** A scratch copy of the entry harness held only `localstorage-prefs`,
+`points-grade` and `copy-class` (31 checks, all green on the delivered tree). Each mutation was made
+with a `MUTATION` marker on a copy of the file, run, and restored in a `finally`; each restored file
+was compared byte for byte with its pre-round copy, and again with a copy taken before the round.
+
+| Mutation | Result |
+|---|---|
+| M1 · `rowIsEmpty()` back on `percentage === null` | **2 red**: the extra-credit category (Bonus drawn empty, column 75.00 under 85.00%) and the `no category` row |
+| M2 · the breakdown always drawn in the weighted shape | **3 red**: both extra-credit checks and the points-wording check |
+| M3 · the assignments list always in weighted words | **1 red**: the assignments wording check |
+| M4 · `copyClass()` drops the mode | **1 red**: the points copy |
+| M5 · `copyClass()` writes `gradingModeOf(cls)` unconditionally | **1 red**: the weighted copy carries `gradingMode` |
+
+`grep -rn MUTATION src/ index.html` afterwards finds only `src/shell.js:963`, the prose line
+*"A CLASS MUTATION ADDED LATER ADDS ITS LINE HERE"*, which is in `67b1cc7` unchanged. No marker.
+
+**Full run on the delivered tree:** `1665 checks · 1665 passed · 0 failed · 0 skipped`, 53,095 lines,
+31.9 lines per check, 696s, exit 0, 2026-10-03, real clock (`node tools/verify-shell.mjs`, scratch
+harness already deleted). `node tools/wo-sweep.mjs`: `46 checks · 43 passed · 0 failed · 3 to review`, the
+three standing reviews.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

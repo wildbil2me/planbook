@@ -105,6 +105,13 @@ import { getSelectedClass, getSelectedTerm, getActiveClasses, getTerms } from '.
 /* The category list and the way a weight is written down. src/categories.js is a leaf and imports
    nothing back, which is what lets both this file and src/classes.js wear it. */
 import { categoriesOf, formatWeight } from './categories.js';
+/* How the class is graded, asked of the one reader of the key (WO-3.34) — and nothing else from the
+   engine. This screen says what a category or its absence does to the grade — in three notices, the
+   picker's announcement, and the weight beside every category name — and in a class graded on total
+   points most of that was false: uncategorized work counts there, an empty category has no weight
+   to share, and no weight is part of the grade. src/grade-engine.js imports src/categories.js and nothing
+   that reaches back here, so this closes no loop. */
+import { gradingModeOf } from './grade-engine.js';
 /* What today is, and this is the ONE thing in this file that reads a clock. Imported rather than
    re-derived for the reason src/home.js imports the same function: two answers to "what day is it"
    is how a screen and a record end up disagreeing about a date, and src/attendance.js's todayISO()
@@ -547,14 +554,18 @@ export function renderAssignments() {
      (src/categories.js renders the same list the same way). An empty category is drawn rather than
      dropped — see decision 5 in the header. */
   const cats = categoriesOf(cls);
+  const byPoints = gradingModeOf(cls) === 'points';
   cats.forEach((cat) => {
     const held = list.filter((a) => a.categoryId === cat.id);
     const weight = Number(cat.weight);
     const zero = !Number.isFinite(weight) || weight === 0;
     const catPoints = held.reduce((n, a) => n + pointsOf(a), 0);
+    /* NO WEIGHT CHIP IN A CLASS GRADED ON TOTAL POINTS (WO-3.34): "weight 40%" on a group whose
+       weight the grade ignores is the screen telling her the grade is weighted. The head keeps its
+       name and its count, which is what the "Not in a category" head has always carried. */
     body.append(groupHead(
       cat.name || 'Untitled category',
-      { text: formatWeight(Number.isFinite(weight) ? weight : 0) + '%', zero: zero },
+      byPoints ? null : { text: formatWeight(Number.isFinite(weight) ? weight : 0) + '%', zero: zero },
       held.length
         ? plural(held.length, 'assignment', 'assignments') + ' · ' + plural(catPoints, 'point', 'points')
         : 'nothing in it yet'
@@ -568,8 +579,18 @@ export function renderAssignments() {
         At weight 0 that sentence would be false: there is nothing to redistribute, and saying
         there is would teach her to distrust the next one. (This is the open question the drawing
         left at design/mockups/assignments.html, answered here rather than left to the next reader.)
+
+        IN A CLASS GRADED ON TOTAL POINTS THERE IS A THIRD ANSWER, AND IT IS THE SAME FOR EVERY
+        WEIGHT (WO-3.34). Neither sentence above is true there: the weight is not part of the grade,
+        so there is nothing to redistribute and nothing that "counts for nothing either way" because
+        of a 0%. What an empty category costs in that formula is nothing at all — no points on
+        either side — so the row says that and names no weight, zero or otherwise.
       */
-      body.append(noticeRow('assign-group-empty', zero
+      body.append(noticeRow('assign-group-empty', byPoints
+        ? 'Nothing is filed under “' + (cat.name || 'this category') + '” yet. This class is graded '
+          + 'on total points, so an empty category adds nothing to either side of the grade until '
+          + 'something is in it.'
+        : zero
         ? 'Nothing is filed under “' + (cat.name || 'this category') + '” yet, and its weight is '
           + '0% — so it counts for nothing either way until you put work in it and give it a weight.'
         : 'Nothing is filed under “' + (cat.name || 'this category') + '” yet, so its '
@@ -587,6 +608,10 @@ export function renderAssignments() {
     this one did not write. Red rather than amber, because an empty category costs nothing and this
     costs the assignment — it is counted by nothing until it is re-filed, and Edit is one tap away
     on its own row.
+
+    IN A CLASS GRADED ON TOTAL POINTS IT IS COUNTED (WO-3.30's ruling), so the notice there says so
+    and still asks for a category — the work is in the grade, and filing it is what puts it in a
+    row of the breakdown with a name a guardian recognises. The weighted sentence is unchanged.
   */
   const filed = cats.map((c) => c.id);
   const loose = list.filter((a) => filed.indexOf(a.categoryId) === -1);
@@ -595,8 +620,12 @@ export function renderAssignments() {
       plural(loose.length, 'assignment', 'assignments')));
     body.append(noticeRow('assign-group-orphan', plural(loose.length, 'assignment', 'assignments')
       + ' below ' + (loose.length === 1 ? 'is' : 'are') + ' not filed under any category '
-      + cls.name + ' has, so nothing counts ' + (loose.length === 1 ? 'it' : 'them') + ' at all. '
-      + 'Open Edit on each one and choose a category.'));
+      + cls.name + ' has, ' + (byPoints
+        ? 'so the grade counts ' + (loose.length === 1 ? 'it' : 'them') + ' under “no category” — '
+          + cls.name + ' is graded on total points, and every point counts. '
+          + 'Open Edit on each one and choose a category to file it where it belongs.'
+        : 'so nothing counts ' + (loose.length === 1 ? 'it' : 'them') + ' at all. '
+          + 'Open Edit on each one and choose a category.')));
     loose.forEach((a, i) => body.append(assignmentRow(a, cls, i, loose.length)));
   }
 }
@@ -669,6 +698,7 @@ function categoryField(assignment, cls) {
   select.setAttribute('data-assignment-category', assignment.id);
 
   const cats = categoriesOf(cls);
+  const byPoints = gradingModeOf(cls) === 'points';
   const known = cats.some((c) => c.id === assignment.categoryId);
   /* The "no category" option exists only while the assignment is in that state, so it cannot be
      chosen back into it by accident — but it is never hidden from an assignment that IS in it,
@@ -685,9 +715,10 @@ function categoryField(assignment, cls) {
     const option = document.createElement('option');
     option.value = cat.id;
     /* The weight is in the option because it is the fact that makes a category a choice rather
-       than a label: "Quizzes — 25%" is what a teacher is deciding between. */
-    option.textContent = (cat.name || 'Untitled category') + ' — '
-      + formatWeight(Number(cat.weight) || 0) + '%';
+       than a label: "Quizzes — 25%" is what a teacher is deciding between. In a class graded on
+       total points it is not a fact about the grade, so the option is the name alone (WO-3.34). */
+    option.textContent = (cat.name || 'Untitled category') + (byPoints ? ''
+      : ' — ' + formatWeight(Number(cat.weight) || 0) + '%');
     if (cat.id === assignment.categoryId) option.selected = true;
     select.append(option);
   });
@@ -1118,9 +1149,15 @@ export function setAssignmentCategory(select) {
     about to read; on a category change it is a block rewritten behind her while the focus is on a
     picker, and nothing else would say so.
   */
+  /* In a class graded on total points a category is worth no percent of the grade and an unfiled
+     piece still counts, so the sentence names the category and nothing else (WO-3.34). */
+  const byPoints = gradingModeOf(cls) === 'points';
   announce((assignment.name || 'That assignment') + ' now counts in '
-    + (cat ? (cat.name || 'that category') + ', worth ' + formatWeight(Number(cat.weight) || 0)
-      + ' percent of the grade' : 'no category, so nothing counts it') + '.'
+    + (byPoints
+      ? (cat ? (cat.name || 'that category')
+        : 'no category, and in a class graded on total points it still counts toward the grade')
+      : cat ? (cat.name || 'that category') + ', worth ' + formatWeight(Number(cat.weight) || 0)
+        + ' percent of the grade' : 'no category, so nothing counts it') + '.'
     + (applies ? ' Accommodations apply to work in this category — this dialog says which.' : ''));
 }
 
@@ -1285,9 +1322,12 @@ function renderCopyFields() {
     getTerms(target.id).map((t) => ({ value: t.id, label: t.label || 'Untitled term' })),
     copyTermId, target.name + ' has no terms yet', '— choose a term —'));
   second.append(copySelect('data-assignment-copy-category', 'Category',
+    /* The target's weight beside each name, unless the target is graded on total points, where it
+       is not a fact about the grade (WO-3.34) — the same rule as the editor's own picker. */
     categoriesOf(target).map((c) => ({
       value: c.id,
-      label: (c.name || 'Untitled category') + ' — ' + formatWeight(Number(c.weight) || 0) + '%',
+      label: (c.name || 'Untitled category') + (gradingModeOf(target) === 'points' ? ''
+        : ' — ' + formatWeight(Number(c.weight) || 0) + '%'),
     })),
     copyCategoryId, target.name + ' has no categories yet', '— choose a category —'));
   box.append(second);
@@ -1325,8 +1365,11 @@ function renderCopy() {
           + '”, so the copy is not filed under a category yet. Pick one above, or file it later '
           + 'from its own row — a category id belongs to the class it was made in and is never '
           + 'carried across.'
-        : target.name + ' has no grading categories yet, so the copy will land in none. It will '
-          + 'sit on the list and count for nothing until you give it one.';
+        : target.name + ' has no grading categories yet, so the copy will land in none. '
+          + (gradingModeOf(target) === 'points'
+            ? target.name + ' is graded on total points, so it will still count toward the grade, '
+              + 'under “no category”, until you give it one.'
+            : 'It will sit on the list and count for nothing until you give it one.');
     } else {
       note.textContent = 'The dates come across as they are. Nothing about the copy is settled by '
         + 'making it — it is an ordinary assignment in ' + target.name + ' the moment it exists.';

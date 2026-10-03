@@ -59,6 +59,9 @@ import { starterCategories, copyCategories, categoriesOf, weightTotal, isProvisi
    src/views.js imports nothing but src/prefs.js, precisely so that the modules which navigate can
    import it without closing a loop. */
 import { showView, currentView, isClassScreen } from './views.js';
+/* How a class is graded, asked of the one reader of the key, for copyClass() and nothing else
+   (WO-3.34). src/grade-engine.js imports src/categories.js and nothing that reaches back here. */
+import { gradingModeOf } from './grade-engine.js';
 /* WO-2.30. One reader, and it is the model's own: who is out of this room right now. src/passes.js
    imports src/store.js and nothing else, so this is a leaf import like src/categories.js above it
    rather than the fifth loop this file's header records this repo refusing. Reading doc.openPasses
@@ -1120,6 +1123,13 @@ export function createClassFromForm() {
                    class bands rather than its source's, and that is the owner's call, not a defect
     - roster       [] — always, and never anything carried "just as ids". A class roster is a list
                    of students and Copy is not a way to move them
+    - gradingMode  "points" when the source is graded on total points, and ABSENT otherwise
+                   (WO-3.34). How a class is graded is a decision about the class, like the weights
+                   the copy already keeps, so a copied points class stays a points class. A weighted
+                   source writes no key at all: an absent key IS weighted (gradingModeOf()), and a
+                   "weighted" written onto the copy would be the seeded default CLAUDE.md § Data
+                   refuses. It goes through gradingModeOf() rather than copying the source's value,
+                   so a stray value that reads as weighted cannot ride across either
 
   BUILT KEY BY KEY, NOT BY SPREADING `cls`. A `{ ...cls }` or Object.assign shares `terms` and
   `categories` — the two arrays this whole work order exists to duplicate — so editing a term
@@ -1147,6 +1157,7 @@ export function copyClass(id) {
     letterScale: null,
     roster: [],
   };
+  if (gradingModeOf(cls) === 'points') copy.gradingMode = 'points';
 
   update((d) => {
     const all = classesIn(d);

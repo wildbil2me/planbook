@@ -145,7 +145,7 @@ import { fullName, rosterName } from './roster.js';
 import { formatWeight } from './categories.js';
 /* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4, extended for this screen at WO-3.7). */
 import { nextBandFor, openWork, projectedClassGrade,
-  classGrade } from './grade-engine.js';
+  classGrade, gradingModeOf } from './grade-engine.js';
 /*
   HOW A PERCENTAGE IS WRITTEN DOWN, imported from the screen that settled it rather than copied.
   WO-3.14 made it two fixed decimal places, because the SIS carries two decimals and this number is
@@ -358,14 +358,48 @@ function contributionCents(categories, percentage) {
 
 function cents(n) { return (n / 100).toFixed(2); }
 
-function breakdown(grade) {
+/*
+  WHETHER A ROW HAS NOTHING TO SHOW, asked the way contributionCents() above asks it (WO-3.34). A row
+  is drawn empty only when it has neither a percentage NOR a contribution, so a row that is handed
+  cents is never drawn as a row that has none.
+
+  The case that tells the two apart is EXTRA CREDIT IN A POINTS CLASS: a category whose only graded
+  work is worth 0 points has earned something over nothing possible, so it has no percentage of its
+  own (n/0) and still adds its points to the grade. Keyed on `percentage === null` alone, that row
+  printed "—" while its cents went into the total, and the column stopped adding up to the Overall
+  under it — the one promise this table makes in words. The `no category` row is the same case.
+
+  IN A WEIGHTED CLASS THE TWO TESTS NEVER DISAGREE when there is a grade: a category contributes
+  exactly when it has a percentage. Testing both rather than `contribution` alone keeps the one
+  weighted state where they could part — weights at 100 with every graded category at weight 0, so
+  no grade and no contributions — drawing its categories' work as it always has rather than calling
+  them empty.
+*/
+function rowIsEmpty(category) {
+  return category.percentage === null && category.contribution === null;
+}
+
+/*
+  THE BREAKDOWN SPEAKS THE CLASS'S MODE (WO-3.34). A class graded on total points has no weights to
+  print, so its table has no Weight and no Counts-at column: it has one column in their place, each
+  category's share of the points graded so far, which is the grade's own `effectiveWeight` in that
+  mode (src/grade-engine.js's points() says so). Nothing here works a share out — the number is the
+  engine's, formatted. Five columns rather than six, with the share where the weight stood, so the
+  Earned column keeps its place in both shapes.
+
+  A WEIGHTED CLASS DRAWS EXACTLY WHAT IT DREW BEFORE, byte for byte; the points branch is beside it,
+  never through it.
+*/
+function breakdown(grade, byPoints) {
   const card = el('div', 'detail-card');
   card.append(el('div', 'detail-card-title', 'Where the grade comes from'));
 
   const table = el('table', 'detail-break');
   const thead = el('thead');
   const hrow = el('tr');
-  ['Category', 'Weight', 'Earned', 'Category %', 'Counts at', 'Contributes'].forEach((label, i) => {
+  (byPoints
+    ? ['Category', 'Share of points', 'Earned', 'Category %', 'Contributes']
+    : ['Category', 'Weight', 'Earned', 'Category %', 'Counts at', 'Contributes']).forEach((label, i) => {
     hrow.append(cell('th', i === 0 ? 'detail-break-head-cat' : '', label));
   });
   thead.append(hrow);
@@ -374,9 +408,14 @@ function breakdown(grade) {
   const share = grade.percentage === null ? {} : contributionCents(grade.categories, grade.percentage);
   const tbody = el('tbody');
   grade.categories.forEach((category) => {
-    const empty = category.percentage === null;
+    const empty = rowIsEmpty(category);
     const tr = el('tr', empty ? 'empty' : '');
     tr.append(cell('th', 'detail-break-cat', category.name || 'Untitled category'));
+    if (byPoints) {
+      pointsRow(tr, category, empty, share);
+      tbody.append(tr);
+      return;
+    }
     tr.append(el('td', 'detail-break-weak', formatWeight(category.weight) + '%'));
     if (empty) {
       /* THE EMPTY CATEGORY IS SHOWN, NOT HIDDEN — WO-3.7's second acceptance line. Its weight
@@ -405,21 +444,54 @@ function breakdown(grade) {
   const tfoot = el('tfoot');
   const frow = el('tr');
   frow.append(cell('th', 'detail-break-cat', 'Overall'));
-  frow.append(el('td', 'detail-break-weak', formatWeight(grade.weightTotal) + '%'));
+  /* No total under the share column in points mode: the weights' total is a fact about a formula
+     this class is not graded on, and a "75%" in that cell would read as the weights coming back. */
+  frow.append(el('td', 'detail-break-weak', byPoints ? '' : formatWeight(grade.weightTotal) + '%'));
   frow.append(el('td', '', ''));
   frow.append(el('td', '', ''));
-  frow.append(el('td', '', ''));
+  if (!byPoints) frow.append(el('td', '', ''));
   frow.append(el('td', 'detail-break-num',
     grade.percentage === null ? '—' : formatPercent(grade.percentage)));
   tfoot.append(frow);
   table.append(tfoot);
   card.append(table);
 
-  card.append(el('p', 'detail-card-note',
-    'The last column adds up to the overall grade. A category with nothing graded in it does not '
+  card.append(el('p', 'detail-card-note', byPoints
+    ? 'The last column adds up to the overall grade. This class is graded on total points: '
+      + 'everything earned over everything possible, so each category counts at its share of the '
+      + 'points graded so far. A category with nothing graded in it adds nothing to either side. '
+      + 'Work worth 0 points is extra credit — it adds to what was earned and nothing to what was '
+      + 'possible, which is why its share can be 0% while it still contributes.'
+    : 'The last column adds up to the overall grade. A category with nothing graded in it does not '
       + 'count as a zero — its weight is shared out across the categories that do have work, which '
       + 'is why the “counts at” column can differ from the weight beside it.'));
   return card;
+}
+
+/*
+  ONE ROW OF A POINTS CLASS'S BREAKDOWN, in the five columns breakdown() heads it with: the share,
+  what was earned over what was possible, the category's own percentage, and the cents.
+
+  AN EXTRA-CREDIT-ONLY ROW draws its earned points over 0, a dash where its percentage would be —
+  n/0 is not a percentage, and printing one would be the screen inventing it — its 0% share, and
+  its cents, which is what makes the column add up to the Overall. The empty row says what an empty
+  category costs in this formula, which is nothing: there is no weight to share across the others.
+*/
+function pointsRow(tr, category, empty, share) {
+  if (empty) {
+    tr.append(el('td', 'detail-break-weak', '—'));
+    const say = el('td', 'detail-break-redist',
+      'nothing graded in it yet — it adds no points to either side until something is');
+    say.setAttribute('colspan', '2');
+    tr.append(say);
+    tr.append(el('td', 'detail-break-num', '—'));
+    return;
+  }
+  tr.append(el('td', 'detail-break-weak', formatWeight(category.effectiveWeight) + '%'));
+  tr.append(el('td', 'detail-break-weak', category.earned + ' / ' + category.possible));
+  tr.append(el('td', 'detail-break-num',
+    category.percentage === null ? '—' : formatPercent(category.percentage)));
+  tr.append(el('td', 'detail-break-num', cents(share[category.id] || 0)));
 }
 
 /* ────────────────────────────── what is still open ────────────────────────────── */
@@ -741,7 +813,7 @@ export function renderDetail() {
      answers `categories: []` in that state — there is no weighted average to take apart — and a
      grid of empty rows under the banner would read as a rendering fault on the screen that can
      least afford one. The banner above says what the weights come to and where to fix it. */
-  if (grade.categories.length) left.append(breakdown(grade));
+  if (grade.categories.length) left.append(breakdown(grade, gradingModeOf(cls) === 'points'));
   left.append(toMoveCard(doc, cls, termId, student, grade, rows));
   const right = el('div');
   right.append(missingCard(grade, rows, person));

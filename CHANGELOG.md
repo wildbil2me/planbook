@@ -13,6 +13,27 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A points class reads in its own words — 2026-10-03
+
+WO-3.34. Shell cache `v153`.
+
+- **Student detail no longer drops extra credit from a class graded on total points.** A category,
+  or the `no category` row, holding only 0-point work used to print a dash while its points counted,
+  so the *Contributes* column came up short of the Overall. It now shows its earned points over 0
+  and its share of the grade, and the column adds up.
+- **In a points class the breakdown shows each category's share of the points instead of a
+  weight**, from the grade's own `effectiveWeight`; nothing on the screen is computed.
+- **The assignments screen stops showing weights in a points class** — no `weight N%` chip on a
+  group head, no ` — N%` in the category picker or the copy dialog — and stops saying unfiled work
+  counts for nothing, because there it counts.
+- **The scores help paragraph** limits its "no grade until the weights total 100%" to weighted
+  classes.
+- **Copying a points class keeps it a points class.** Copying a weighted class writes no
+  `gradingMode` key.
+- **Nothing changes in a weighted class**: every weighted student-detail state the harness opens is
+  byte-identical before and after. No control sets a class to points until WO-3.31, which now also
+  waits on WO-3.35 and WO-3.36 — the student CSV and the score grid, booked out of this verdict.
+
 ### A class can be graded on total points — the engine half — 2026-10-03
 
 WO-3.30. Shell cache `v152`.

@@ -317,5 +317,246 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
       await s.flush();
       return 1; })()`);
   }
+
+  /* ───────── extra credit in a points class, and a points class in its own words (WO-3.34) ─────────
+   *
+   * THE DEFECT WO-3.30'S VERIFIER FOUND, AS ITS OWN FIXTURE: a row whose only graded work is worth 0
+   * points has earned something over nothing possible, so it has no percentage (n/0) and still adds
+   * to the grade. Student detail used to draw it empty on `percentage === null` while its cents went
+   * into the total, so the column added up to less than the Overall printed under it.
+   *
+   * A second class, so the WO-3.30 figures above stay exactly what they were. Tests 50, Projects 50,
+   * Bonus 0 — the weights are real and ignored. Projects is EMPTY for everyone, which is what makes
+   * the empty-row wording checkable; one piece is filed under no category and is worth 0 points.
+   *
+   *   Cy:  Tests 15/20, Bonus puzzle 2 (of 0), the loose piece blank.
+   *        Earned 17, possible 20 -> 85.00% by hand. Tests counts at 20/20 = 100% and contributes
+   *        15/20 = 75.00; Bonus counts at 0/20 = 0% and contributes 2/20 = 10.00. 75.00 + 10.00 = 85.00.
+   *        The loose piece has nothing graded, so there is no "no category" row.
+   *   Di:  Tests 15/20, the loose piece 2 (of 0), Bonus blank.
+   *        The same 85.00%, with the 10.00 on a "no category" row reading "2 / 0", and Bonus empty.
+   *
+   * A build that draws the extra-credit row empty prints "—" in its last cell, and the column sums
+   * to 75.00 under 85.00% — which is the mutation this block was proved against.
+   *
+   * AND THE WORDS. In a points class nothing on student detail or the assignments screen may say
+   * "weight", call uncategorized work counted by nothing, or call a category a percent of the grade.
+   * The assignments screen is read with an empty category and an unfiled piece both on it, which
+   * are the two notices that said otherwise, and the category picker is driven through its real
+   * <select> so the announcement it makes is read too. Then the class is copied through the real
+   * Copy button, and the copy is a points class. (The weighted half — a weighted copy writes no
+   * key — is in copy-class.mjs, beside the copy it is about.)
+   */
+  console.log('\n--- extra credit and the wording in a points class (WO-3.34) ---');
+  {
+    const C4 = 'c_wo334';
+    const T4 = 'tm_wo334';
+    const CY = 'wo334-s1', DI = 'wo334-s2';
+    const HEAD = ['Category', 'Share of points', 'Earned', 'Category %', 'Contributes'];
+    const WEIGHT_WORDS = /weight|counts? for nothing|nothing counts|counted by nothing|percent of the grade|redistribut/i;
+
+    const into = async (screen) => {
+      const on = await evalJs(
+        "(function(){var e=document.querySelector('main > :not(.hidden)');return e?e.id:'';})()");
+      if (on !== 'homeView') {
+        const nth = await evalJs(`(function(){
+          var all = document.querySelectorAll('[data-view-home]');
+          for (var i = 0; i < all.length; i++) {
+            var r = all[i].getBoundingClientRect();
+            if (r.width > 0 && r.height > 0) return i;
+          }
+          return -1; })()`);
+        if (nth < 0) throw new Error('no visible [data-view-home] to go home by');
+        await clickSel('[data-view-home]', nth);
+        await new Promise(r => setTimeout(r, 250));
+      }
+      await clickSel('#homeGrid [data-class-tab="' + C4 + '"]');
+      await new Promise(r => setTimeout(r, 250));
+      await clickSel('#classView [data-class-screen="' + screen + '"]');
+      await new Promise(r => setTimeout(r, 400));
+    };
+
+    const planted = await evalJs(`(function(){
+      var s = window.planbook.store, c = window.planbook.classes;
+      var was = c.getSelectedClassId();
+      s.update(function(doc){
+        doc.students.push({ id:'${CY}', first:'Cy', last:'Ashby' },
+          { id:'${DI}', first:'Di', last:'Brantley' });
+        /* THE MODE IS PLANTED, as above: no control writes it until WO-3.31. */
+        doc.classes.push({ id:'${C4}', name:'WO-3.34 Points', archived:false, gradingMode:'points',
+          roster:['${CY}','${DI}'], letterScale:null,
+          terms:[{ id:'${T4}', label:'WO-3.34 Term', start:'2026-09-01', end:'2026-11-06' }],
+          categories:[
+            { id:'cat334t', name:'Tests', weight:50 },
+            { id:'cat334p', name:'Projects', weight:50 },
+            { id:'cat334b', name:'Bonus', weight:0 }]});
+        var add = function(id, cat, name, points){
+          var a = { id:id, classId:'${C4}', termId:'${T4}', name:name, points:points,
+            assigned:'2026-09-08', due:'2026-09-15' };
+          if (cat) a.categoryId = cat;
+          doc.assignments.push(a);
+        };
+        add('a334t1', 'cat334t', 'Unit test', 20);
+        add('a334b1', 'cat334b', 'Bonus puzzle', 0);
+        add('a334r1', null, 'Reading challenge', 0);    /* NO category, worth 0 */
+        doc.scores['a334t1'] = { '${CY}': { v:15 }, '${DI}': { v:15 } };
+        doc.scores['a334b1'] = { '${CY}': { v:2 } };
+        doc.scores['a334r1'] = { '${DI}': { v:2 } };
+      });
+      c.selectClass('${C4}');
+      c.selectTerm('${T4}');
+      var doc = s.getDoc();
+      var cls = doc.classes.filter(function(x){ return x.id === '${C4}'; })[0];
+      var g = window.planbook.gradeEngine.classGrade;
+      return { was: was, cy: g(doc, cls, '${T4}', '${CY}'), di: g(doc, cls, '${T4}', '${DI}') };
+    })()`);
+
+    const rowNamed = (rows, name) => (rows || []).filter((r) => r.cells[0] === name)[0] || null;
+    const readDetail = async (id) => {
+      await into('scores');
+      await clickSel('#scoresBody [data-student-detail="' + id + '"]');
+      await new Promise(r => setTimeout(r, 300));
+      return await evalJs(`(function(){
+        var v = document.getElementById('detailView');
+        if (!v || v.classList.contains('hidden')) return { up:false };
+        var t = v.querySelector('.detail-break');
+        var cellsOf = function(tr){ return Array.prototype.map.call(tr.children, function(x){ return x.textContent; }); };
+        var foot = t ? t.querySelector('tfoot tr') : null;
+        return { up:true,
+          head: t ? cellsOf(t.querySelector('thead tr')) : [],
+          rows: t ? Array.prototype.map.call(t.querySelectorAll('tbody tr'), function(tr){
+            return { empty: tr.classList.contains('empty'), cells: cellsOf(tr) }; }) : [],
+          foot: foot ? cellsOf(foot) : [],
+          text: (document.getElementById('detailContent') || {}).textContent || '' }; })()`);
+    };
+    /* The printed column, summed in cents the way a guardian with a pencil would: every cell in the
+       last column that is a number. A dash is not a number and adds nothing. */
+    const columnCents = (d) => (d.rows || []).reduce((n, r) => {
+      const last = r.cells[r.cells.length - 1];
+      return /^-?\d+\.\d\d$/.test(last) ? n + Math.round(Number(last) * 100) : n;
+    }, 0);
+
+    const cy = await readDetail(CY);
+    const cyBonus = rowNamed(cy.rows, 'Bonus');
+    check('WO-3.34: in a points class, an extra-credit-only category is drawn as contributing — Bonus '
+      + 'reads 0% · 2 / 0 · — · 10.00, and the Contributes column sums to the Overall to the cent: '
+      + '75.00 + 10.00 = 85.00 under 85.00% (17/20, by hand)',
+      Math.abs(planted.cy.percentage - 85) < 1e-9 && cy.up && !!cyBonus && !cyBonus.empty
+        && JSON.stringify(cyBonus.cells) === JSON.stringify(['Bonus', '0%', '2 / 0', '—', '10.00'])
+        && columnCents(cy) === 8500 && cy.foot[cy.foot.length - 1] === '85.00%'
+        && !rowNamed(cy.rows, 'no category'),
+      JSON.stringify({ engine: planted.cy.percentage, rows: cy.rows, foot: cy.foot,
+        columnSums: (columnCents(cy) / 100).toFixed(2) }));
+
+    const di = await readDetail(DI);
+    const diLoose = rowNamed(di.rows, 'no category');
+    check('WO-3.34: the same holds for a "no category" row whose only graded work is extra credit — it '
+      + 'reads 0% · 2 / 0 · — · 10.00, and the column sums to 85.00 under 85.00%',
+      Math.abs(planted.di.percentage - 85) < 1e-9 && di.up && !!diLoose && !diLoose.empty
+        && JSON.stringify(diLoose.cells) === JSON.stringify(['no category', '0%', '2 / 0', '—', '10.00'])
+        && columnCents(di) === 8500 && di.foot[di.foot.length - 1] === '85.00%',
+      JSON.stringify({ engine: planted.di.percentage, rows: di.rows, foot: di.foot,
+        columnSums: (columnCents(di) / 100).toFixed(2) }));
+
+    /* The breakdown in the class's own words: five columns headed by the share rather than a weight,
+       the empty category saying it adds nothing rather than that its weight is shared, an Overall
+       row with no weights total in it, and not one word of weight anywhere on the page. */
+    const cyProjects = rowNamed(cy.rows, 'Projects');
+    const diBonus = rowNamed(di.rows, 'Bonus');
+    const detailHits = [cy.text, di.text].map((t) => (t.match(WEIGHT_WORDS) || [''])[0]);
+    check('WO-3.34: a points class\'s breakdown is headed ' + HEAD.join(' · ') + ', an empty category '
+      + 'says it adds no points rather than that its weight is shared, the Overall row carries no '
+      + 'weights total, and nothing on student detail says weight, counted-by-nothing or redistributes',
+      JSON.stringify(cy.head) === JSON.stringify(HEAD) && JSON.stringify(di.head) === JSON.stringify(HEAD)
+        && !!cyProjects && cyProjects.empty && cyProjects.cells[1] === '—'
+        && /adds no points/.test(cyProjects.cells[2]) && !!diBonus && diBonus.empty
+        && cy.foot.length === 5 && cy.foot[1] === ''
+        && detailHits.every((x) => x === ''),
+      JSON.stringify({ head: cy.head, projects: cyProjects, foot: cy.foot, wordFound: detailHits }));
+
+    /* ── the assignments screen, with an empty category and an unfiled piece both on it ── */
+    await into('assignments');
+    const list = await evalJs(`(function(){
+      var v = document.getElementById('assignmentsView');
+      return { text: v ? v.textContent : '',
+        empty: Array.prototype.map.call(v.querySelectorAll('.assign-group-empty'), function(x){ return x.textContent; }),
+        orphan: Array.prototype.map.call(v.querySelectorAll('.assign-group-orphan'), function(x){ return x.textContent; }) }; })()`);
+    /* And the picker's sentence, both ways. Filing: the loose piece is opened in its real editor and
+       filed under Tests through the real <select>. Unfiling cannot be done from that picker — it offers
+       "no category" only to a piece already in that state — so the other branch is asked through the
+       same function the picker calls, handed a <select> carrying the hook and an empty value. Both
+       run after every detail read above, so the grades they move are not ones this block asserts. */
+    const said = async () => {
+      await new Promise(r => setTimeout(r, 200));
+      return await evalJs("(document.querySelector('[aria-live]') || {}).textContent || ''");
+    };
+    await clickSel('#assignmentsView [data-assignment-edit="a334r1"]');
+    await new Promise(r => setTimeout(r, 300));
+    /* The editor's picker is part of the same screen: its options carry no weight in a points class. */
+    const options = await evalJs(`Array.prototype.map.call(document.querySelectorAll(
+      '#assignmentModal [data-assignment-category="a334r1"] option'), function(o){ return o.textContent; })`);
+    await evalJs(`(function(){
+      var sel = document.querySelector('#assignmentModal [data-assignment-category="a334r1"]');
+      sel.value = 'cat334t';
+      sel.dispatchEvent(new Event('change', { bubbles: true })); return 1; })()`);
+    const saidFiled = await said();
+    await evalJs("window.planbook.closeModal('assignmentModal'); 1");
+    await evalJs(`(function(){
+      var sel = document.createElement('select');
+      sel.setAttribute('data-assignment-category', 'a334t1');
+      var o = document.createElement('option'); o.value = ''; sel.append(o); sel.value = '';
+      window.planbook.assignments.setAssignmentCategory(sel); return 1; })()`);
+    const saidLoose = await said();
+    const listHit = (list.text.match(WEIGHT_WORDS) || [''])[0];
+    check('WO-3.34: in a points class the assignments screen says nothing about weights and does not call '
+      + 'unfiled work counted by nothing — the empty category says it adds nothing to either side, the '
+      + 'unfiled notice says the grade counts it under "no category", no group head or picker option '
+      + 'carries a weight, and the category picker announces the category with no percent of the grade, '
+      + 'and an unfiled piece as still counting',
+      listHit === '' && list.empty.length === 1
+        && JSON.stringify(options) === JSON.stringify(['— choose a category —', 'Tests', 'Projects', 'Bonus']) && /adds nothing to either side/.test(list.empty[0])
+        && list.orphan.length === 1 && /the grade counts it under “no category”/.test(list.orphan[0])
+        && saidFiled === 'Reading challenge now counts in Tests.'
+        && saidLoose === 'Unit test now counts in no category, and in a class graded on total '
+          + 'points it still counts toward the grade.'
+        && !WEIGHT_WORDS.test(saidFiled) && !WEIGHT_WORDS.test(saidLoose),
+      JSON.stringify({ wordFound: listHit, empty: list.empty, orphan: list.orphan, options: options,
+        saidFiled: saidFiled, saidLoose: saidLoose }));
+
+    /* ── and the class copied, through the real Copy button ── */
+    await clickSel('header [data-class-manage]');
+    await new Promise(r => setTimeout(r, 300));
+    await clickSel('[data-class-copy="' + C4 + '"]');
+    await new Promise(r => setTimeout(r, 250));
+    const copied = await evalJs(`(function(){
+      var d = window.planbook.store.getDoc();
+      var src = d.classes.filter(function(c){ return c.id === '${C4}'; })[0];
+      var copy = d.classes[d.classes.indexOf(src) + 1] || null;
+      return { name: copy ? copy.name : null, mode: copy ? copy.gradingMode : null,
+        engineMode: copy ? window.planbook.gradeEngine.gradingModeOf(copy) : null }; })()`);
+    await evalJs("window.planbook.closeModal('classesModal'); 1");
+    await new Promise(r => setTimeout(r, 150));
+    check('WO-3.34: copying a points class through the real Copy button gives a points class — the copy '
+      + 'carries gradingMode "points" and the engine reads it as points',
+      copied.name === 'WO-3.34 Points (copy)' && copied.mode === 'points' && copied.engineMode === 'points',
+      JSON.stringify(copied));
+
+    /* THE FIXTURE COMES BACK OUT, the copy with it, by id and by name. */
+    await evalJs(`(async function(){
+      var s = window.planbook.store, c = window.planbook.classes;
+      s.update(function(doc){
+        doc.classes = doc.classes.filter(function(x){
+          return x.id !== '${C4}' && String(x.name).indexOf('WO-3.34 Points') !== 0; });
+        doc.students = doc.students.filter(function(x){ return String(x.id).indexOf('wo334-') !== 0; });
+        doc.assignments = doc.assignments.filter(function(a){ return a.classId !== '${C4}'; });
+        Object.keys(doc.scores || {}).forEach(function(k){
+          if (String(k).indexOf('a334') === 0) delete doc.scores[k]; });
+      });
+      var was = ${JSON.stringify(planted.was || '')};
+      if (was) c.selectClass(was);
+      c.refreshClassBar();
+      await s.flush();
+      return 1; })()`);
+  }
 }
 }
