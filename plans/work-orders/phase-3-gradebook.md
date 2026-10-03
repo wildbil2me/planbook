@@ -3199,3 +3199,48 @@ did, so both say *0%* about a class that has no categories to weigh.
 **Traps** — **Do not change the order of the engine's tests**, and do not report a class with no
 categories as `no-graded-work`: work unfiled in a weighted class counts for nothing, so "no graded
 work" would be false there, which is the sentence WO-3.37 removed.
+
+---
+
+## WO-3.42 — the score grid and grade sheet tell a screen reader a bonus scored 0 is nothing graded
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.38 — `gradedPieces()` and the zero-bonus message this carries to two more screens
+**Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
+
+**Booked 2026-10-03**, owner-directed, out of WO-3.38's verdict. **Unreachable today**, because
+nothing writes `gradingMode` until [WO-3.31](#wo-331--the-categories-editor-offers-total-points).
+WO-3.31 does **not** depend on this row: the wrong sentence is heard, not seen, and it describes the
+student wrongly without changing any number.
+
+**The defect, found by the verifier.** WO-3.38 fixed student detail and its CSV. Two more places
+print the engine's no-grade message as an accessible name on the em dash in the grade column:
+`gradeContent()` in `src/scores.js` (~560) and the grade sheet in `src/grades-report.js` (~446).
+For a points-class student whose only graded work is extra credit scored 0, both still read
+*"No grade — There is no graded work yet."* That is false, and it is what WO-3.38's Deliverable meant
+by "wherever it is printed". Ruling (b) kept WO-3.38 to student detail, so it was left.
+
+**Open — the owner's ruling, at dispatch.** Where does the shared answer live?
+- **(a)** Lift `gradedPieces()` and `noGradeMessage()` out of `src/detail.js` into a small module that
+  reads no grade arithmetic, and have all three screens import it. One copy, so the three screens
+  cannot disagree. The engine stays untouched, as ruling (b) required.
+- **(b)** Reverse WO-3.38's ruling (b) for this fact: the engine hands back the graded-piece fact, and
+  every reader, `src/detail.js` included, uses it. This changes the engine's returned shape, so the
+  dispatch must prove every weighted reader unchanged, as WO-3.38's option (a) said.
+- **(c)** Leave it, and strike this row with that ruling as its note.
+
+**Deliverables**
+- **The score grid's and the grade sheet's accessible name for a missing grade** follow the same fact
+  student detail does, from the same function, never from a second copy.
+- **A weighted class's grid and grade sheet are byte-identical**, accessible names included.
+
+**Acceptance**
+- [ ] In a points fixture, a student whose only graded work is a bonus scored 0 is not told by the
+      score grid's or the grade sheet's accessible name that nothing is graded. A blank or excused
+      bonus still is. **Mutation-proved.**
+- [ ] A weighted class's score grid and grade sheet are byte-identical before and after, on the
+      harness's existing fixtures.
+
+**Traps** — **Do not compute a grade on the screen**, and **a blank is still ungraded**, exactly as
+WO-3.38. **The quiet list is not this row's**: the owner ruled on 2026-10-03 that `src/signals.js`
+keeps its sentence for this case. **A second copy of `gradedPieces()` is the defect this row
+exists to avoid**, so under (a) `src/detail.js` must import the lifted function rather than keep its own.
