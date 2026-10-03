@@ -3059,3 +3059,71 @@ does not return, and that row forbade changing the engine's returned shape.
 
 **Traps** — **Do not compute a grade on the screen.** **A blank is still ungraded**: a cell with no
 score must never count as a scored 0, which is the rule the whole gradebook rests on.
+
+## WO-3.39 — the score grid's help explains weights to a points class first
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.36 — the points-mode score grid this paragraph sits under
+**Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
+
+**Booked 2026-10-03**, owner-directed, out of WO-3.36's verdict. **Unreachable today**, because
+nothing writes `gradingMode` until [WO-3.31](#wo-331--the-categories-editor-offers-total-points).
+**WO-3.31 does not depend on this row**: the paragraph is true in both modes, so a points class that
+reads it is told nothing false. This row is about which half it reads first.
+
+**What is there.** The score grid's second help paragraph (`index.html`, ~1346, *"The grade beside
+each name is live"*) is static and shared. It spends most of its length on the weighted rule:
+*"In a class graded by weighted categories…"*, the empty-category redistribution, and *"until the
+weights total 100% there is no grade at all"*. Its last sentence then covers a points class. WO-3.34
+wrote it that way, and WO-3.36's harness skips it on purpose, because its Traps said to branch rather
+than reword shared text. So a points class has no weight wording on the grid except in its own help.
+
+**Open — the owner's ruling, at dispatch.**
+- **(a)** A class draws only its own mode's half. The paragraph is split into two blocks and the
+  screen shows one, from `gradingMode`, so WO-3.36's measurement can stop skipping it.
+- **(b)** Leave it. The paragraph explains both modes, and a teacher deciding between them is
+  better served by reading both. If so, this row is 🚫 STRUCK with that ruling as its note.
+
+**Deliverables** *(for (a))*
+- **The paragraph is split** so the weighted sentences and the points sentence can be shown apart.
+  The sentences before the split (*live*, *can go over 100%*, *extra credit*) stay shared.
+- **The screen shows the block for the class's mode** whenever the grid is drawn, including after a
+  class switch.
+- **WO-3.36's points measurement stops skipping the help** in `tools/verify/points-grade.mjs`.
+
+**Acceptance** *(for (a))*
+- [ ] In a points class the score grid's help has no weight wording. **Measured**, by the existing
+      WO-3.36 check with its skip removed. **Mutation-proved**: drawing both blocks goes red.
+- [ ] A weighted class's help reads word for word as today.
+- [ ] Switching from a points class to a weighted one and back draws the right block each time.
+
+**Traps** — **Do not reword the weighted sentences.** They are moved, not rewritten. **Do not
+compute anything for the help text.** It reads the mode and nothing else.
+
+## WO-3.40 — two comments say misfiled work is invisible on the list
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-3.36 — the comment it extended
+**Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
+
+**Booked 2026-10-03**, owner-directed, out of WO-3.36's verdict. A comment fix and nothing else, so it
+rides with the next work order that has `src/assignments.js` open.
+
+**The defect.** Two comments in `src/assignments.js` argue for the cross-class copy rule (~27, in the
+file header, and ~1199, above the duplicate function). Both say an assignment carrying another
+class's `categoryId` would be *"invisible on B's list"*. That is no longer true.
+`renderAssignments()` gathers every assignment whose category this class lacks into the *Not in a
+category* group (~620), so such an assignment would be listed there. WO-3.36 added accurate
+points-mode wording to both comments and, by its brief, left the visibility claim alone.
+
+**Deliverables**
+- **Both comments say where such an assignment would appear**: under *Not in a category*, filed
+  nowhere this class can name. Keep the rest of the argument. It is still sound: a category removal
+  in the class it came from would still destroy it, under a dialog naming the wrong class.
+- **`src/shell.js` ~4512** says a misfiled copy *"is invisible on screen because both look identical
+  on the list"*. Read it and decide whether it means the same thing. Fix it only if it does.
+
+**Acceptance**
+- [ ] Neither comment in `src/assignments.js` says a misfiled assignment is invisible on the list.
+- [ ] No line outside a comment moves: `git diff` touches comment lines only, and `sw.js`'s `CACHE`
+      is not bumped, because a comment changes nothing a device receives.
+
+**Traps** — **Do not change the copy rule.** The comments argue for it, and it stands.
