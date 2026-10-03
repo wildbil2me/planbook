@@ -2700,7 +2700,7 @@ returns.** Both modes rest on it, and WO-3.28's frozen column reads it.
 
 ## WO-3.31 — the categories editor offers total points
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.30 — the engine and the `gradingMode` key this writes; WO-3.34 — the screens a points class is read on; WO-3.35 — the CSV and the extra-credit-only student; WO-3.36 — the score grid and the grade sheet
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.30 — the engine and the `gradingMode` key this writes; WO-3.34 — the screens a points class is read on; WO-3.35 — the CSV and the extra-credit-only student; WO-3.36 — the score grid and the grade sheet; WO-3.37 — the quiet list's sentence; WO-3.38 — a bonus scored 0
 **Closes roadmap** *(no box. Owner-requested, 2026-10-02.)*
 
 **Booked 2026-10-02** beside [WO-3.30](#wo-330--a-class-can-be-graded-on-total-points), cut along the
@@ -2906,7 +2906,7 @@ and WO-3.31 depends on both.
 
 ## WO-3.35 — the student CSV and an extra-credit-only student read a points class wrong
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.34 — `rowIsEmpty()` and the points-mode breakdown this follows
+**Ship** — · **Status** ✅ DONE — 2026-10-03 · **Size** S · **Depends on** WO-3.34 — `rowIsEmpty()` and the points-mode breakdown this follows
 **Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
 
 **Booked 2026-10-03**, owner-directed, out of WO-3.34's verdict. **Unreachable today**, like
@@ -2932,15 +2932,25 @@ instead is this row's judgment; *nothing graded* is not it.
 - **An extra-credit-only student's rows say what is true**, on screen and in the CSV.
 
 **Acceptance**
-- [ ] In WO-3.34's points fixture, the student CSV's *Contributes* column sums to its *Overall grade*
+- [x] In WO-3.34's points fixture, the student CSV's *Contributes* column sums to its *Overall grade*
       to the cent, for both the extra-credit category and the `no category` row. **Mutation-proved.**
-- [ ] A points-class CSV contains no `Weight %`, `Counts at %` or "redistributes".
-- [ ] A weighted class's CSV is byte-identical before and after, on the harness's existing fixtures.
-- [ ] A points-class student whose only graded work is extra credit is not told, on screen or in the
+- [x] A points-class CSV contains no `Weight %`, `Counts at %` or "redistributes".
+- [x] A weighted class's CSV is byte-identical before and after, on the harness's existing fixtures.
+- [x] A points-class student whose only graded work is extra credit is not told, on screen or in the
       CSV, that nothing is graded.
 
 **Traps** — **Do not compute a share or a sum in the export.** Every figure comes from
 `classGrade()` and `detailModel()`. **Do not change the engine's returned shape.**
+
+**Landed 2026-10-03**, all four lines verified by a fresh verifier. **One change goes past the
+Deliverables as written, and the verifier ruled it in scope:** `src/grade-engine.js` changed one
+message's words. A points grade with earned points over nothing possible now says *"The only work
+graded so far is extra credit, so there is no grade yet for it to add to"* instead of *"There is no
+graded work yet"*. The reason code stays `no-graded-work`, and the returned shape is unchanged. Line 4
+could not pass without it, because student detail prints that message in three places. The verdict
+found two cases outside this row, both booked as
+[WO-3.37](#wo-337--the-quiet-list-says-an-extra-credit-only-student-has-no-graded-work) and
+[WO-3.38](#wo-338--a-bonus-scored-0-reads-as-nothing-graded), and WO-3.31 depends on both.
 
 ## WO-3.36 — the score grid, the grade sheet and the unfiled group still speak weights in a points class
 
@@ -2974,3 +2984,78 @@ screens are right.
 
 **Traps** — **Weighted wording stays exactly as it is.** This is a points-mode branch, not a
 rewording. **Do not compute a share on the screen**; `pointsShare()` and `effectiveWeight` exist.
+
+## WO-3.37 — the quiet list says an extra-credit-only student has no graded work
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.35 — the engine message this matches
+**Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
+
+**Booked 2026-10-03**, owner-directed, out of WO-3.35's verdict. **Unreachable today**, because
+nothing writes `gradingMode` until [WO-3.31](#wo-331--the-categories-editor-offers-total-points),
+which depends on this row.
+
+**The defect, found by the verifier.** `quietSentence()` in `src/signals.js` (~2214) prints
+*"has no graded work yet"* whenever the grade's `percentage` is null. In a points class, a student
+whose only graded work is extra credit has a null percentage and graded work. WO-3.35 fixed the same
+false sentence on student detail and in the engine's own message. The quiet list on the signals
+screen still says it.
+
+**Read this at dispatch.** A null percentage has other causes too. In a weighted class whose weights
+do not total 100% there is no grade, and the same sentence says *"no graded work"* over a class full
+of scores. Find out whether the quiet list can reach that case today. If it can, the defect predates
+points mode, and this row fixes it as well.
+
+**Deliverables**
+- **The quiet row's standing says why there is no grade**, from what `classGrade()` already returned
+  (its `reason`, or its `message`). It does not recompute anything. *"Has no graded work yet"* is
+  printed only when that is the reason.
+- **A student with a grade reads exactly as today.**
+
+**Acceptance**
+- [ ] In a points fixture, a quiet student whose only graded work is extra credit is not told they
+      have no graded work. **Mutation-proved**: putting the test back on `percentage === null` alone
+      goes red.
+- [ ] Every quiet row the harness's existing fixtures draw is byte-identical before and after.
+
+**Traps** — **Do not re-run the grade or read the scores in `src/signals.js`.** The answer is
+already on the grade object. **A quiet row is not a rule**, and nothing fired, so this adds no
+measurement to the row.
+
+## WO-3.38 — a bonus scored 0 reads as nothing graded
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.35 — `rowIsEmpty()` and the extra-credit-only wording this extends
+**Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
+
+**Booked 2026-10-03**, owner-directed, out of WO-3.35's verdict. **Unreachable today**, because
+nothing writes `gradingMode` until [WO-3.31](#wo-331--the-categories-editor-offers-total-points),
+which depends on this row.
+
+**The defect, found by the implementer and confirmed by the verifier.** Extra credit is work worth
+0 points. A piece of it scored 0 adds 0 earned and 0 possible, the same as a blank. So the engine
+cannot tell a bonus graded 0 from a bonus not graded. A student whose only graded work is a 0 on
+extra credit is told *"There is no graded work yet"*, and their Bonus row reads *"nothing graded in
+it yet"* over a cell scored 0. WO-3.35 could not fix this, because the fix needs a fact the engine
+does not return, and that row forbade changing the engine's returned shape.
+
+**Open — the owner's ruling, at dispatch.** Where does "a scored piece exists" come from?
+- **(a)** The engine adds a field, such as a count of graded pieces on each category. This adds to
+  the returned shape. WO-3.30 proved that shape identical in weighted mode, so the dispatch has to
+  prove again that every weighted reader is unchanged.
+- **(b)** Student detail reads it from the rows it already lists, and the engine is untouched. The
+  CSV has to use the same function, so the screen and the file cannot disagree.
+- **(c)** Leave it. A 0 on extra credit adds nothing either way, and the sentence is wrong only in
+  how it describes the student. If so, this row is 🚫 STRUCK with that ruling as its note.
+
+**Deliverables** *(for (a) or (b))*
+- **A row holding a scored 0 on extra credit is not called empty**, on screen and in the CSV, and it
+  says what is true about it.
+- **The no-grade message** follows the same fact, wherever it is printed.
+
+**Acceptance**
+- [ ] In a points fixture, a student whose only graded work is a bonus scored 0 is not told, on
+      screen or in the CSV, that nothing is graded. **Mutation-proved.**
+- [ ] A weighted class's student detail and CSV are byte-identical before and after, on the harness's
+      existing fixtures.
+
+**Traps** — **Do not compute a grade on the screen.** **A blank is still ungraded**: a cell with no
+score must never count as a scored 0, which is the rule the whole gradebook rests on.

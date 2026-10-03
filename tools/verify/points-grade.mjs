@@ -339,6 +339,17 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
    * A build that draws the extra-credit row empty prints "—" in its last cell, and the column sums
    * to 75.00 under 85.00% — which is the mutation this block was proved against.
    *
+   *   Ed (WO-3.35): the Bonus puzzle 2 (of 0) and NOTHING ELSE graded — the unit test blank, the loose
+   *        piece blank. Earned 2, possible 0, so there is no grade (n/0) and no row has a share or a
+   *        contribution. Before WO-3.35 her Bonus row read "nothing graded in it yet" over a cell
+   *        scored 2, and the to-move card said "There is no graded work yet." Both were false.
+   *
+   * AND THE FILE (WO-3.35). The student CSV is read for all three, straight after each one's screen,
+   * through the same detailModel() / studentCsv() seam grade-detail.mjs drives: Cy's and Di's
+   * Contributes column must add up to the Overall grade to the cent with the extra-credit row's
+   * 10.00 in it, the file must carry the screen's columns and not the weighted ones, and Ed's file
+   * must say what her screen says.
+   *
    * AND THE WORDS. In a points class nothing on student detail or the assignments screen may say
    * "weight", call uncategorized work counted by nothing, or call a category a percent of the grade.
    * The assignments screen is read with an empty category and an unfiled piece both on it, which
@@ -351,7 +362,7 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
   {
     const C4 = 'c_wo334';
     const T4 = 'tm_wo334';
-    const CY = 'wo334-s1', DI = 'wo334-s2';
+    const CY = 'wo334-s1', DI = 'wo334-s2', ED = 'wo334-s3';
     const HEAD = ['Category', 'Share of points', 'Earned', 'Category %', 'Contributes'];
     const WEIGHT_WORDS = /weight|counts? for nothing|nothing counts|counted by nothing|percent of the grade|redistribut/i;
 
@@ -381,10 +392,10 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
       var was = c.getSelectedClassId();
       s.update(function(doc){
         doc.students.push({ id:'${CY}', first:'Cy', last:'Ashby' },
-          { id:'${DI}', first:'Di', last:'Brantley' });
+          { id:'${DI}', first:'Di', last:'Brantley' }, { id:'${ED}', first:'Ed', last:'Cordero' });
         /* THE MODE IS PLANTED, as above: no control writes it until WO-3.31. */
         doc.classes.push({ id:'${C4}', name:'WO-3.34 Points', archived:false, gradingMode:'points',
-          roster:['${CY}','${DI}'], letterScale:null,
+          roster:['${CY}','${DI}','${ED}'], letterScale:null,
           terms:[{ id:'${T4}', label:'WO-3.34 Term', start:'2026-09-01', end:'2026-11-06' }],
           categories:[
             { id:'cat334t', name:'Tests', weight:50 },
@@ -400,7 +411,7 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
         add('a334b1', 'cat334b', 'Bonus puzzle', 0);
         add('a334r1', null, 'Reading challenge', 0);    /* NO category, worth 0 */
         doc.scores['a334t1'] = { '${CY}': { v:15 }, '${DI}': { v:15 } };
-        doc.scores['a334b1'] = { '${CY}': { v:2 } };
+        doc.scores['a334b1'] = { '${CY}': { v:2 }, '${ED}': { v:2 } };
         doc.scores['a334r1'] = { '${DI}': { v:2 } };
       });
       c.selectClass('${C4}');
@@ -408,7 +419,8 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
       var doc = s.getDoc();
       var cls = doc.classes.filter(function(x){ return x.id === '${C4}'; })[0];
       var g = window.planbook.gradeEngine.classGrade;
-      return { was: was, cy: g(doc, cls, '${T4}', '${CY}'), di: g(doc, cls, '${T4}', '${DI}') };
+      return { was: was, cy: g(doc, cls, '${T4}', '${CY}'), di: g(doc, cls, '${T4}', '${DI}'),
+        ed: g(doc, cls, '${T4}', '${ED}') };
     })()`);
 
     const rowNamed = (rows, name) => (rows || []).filter((r) => r.cells[0] === name)[0] || null;
@@ -422,7 +434,21 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
         var t = v.querySelector('.detail-break');
         var cellsOf = function(tr){ return Array.prototype.map.call(tr.children, function(x){ return x.textContent; }); };
         var foot = t ? t.querySelector('tfoot tr') : null;
+        /* WO-3.35: the page with its empty rows taken out, the to-move card, the hero's label and the
+           file — so a sentence can be looked for everywhere EXCEPT on a row that truly is empty. */
+        var bare = document.getElementById('detailContent').cloneNode(true);
+        Array.prototype.forEach.call(bare.querySelectorAll('tr.empty'), function(tr){ tr.remove(); });
+        /* And the breakdown's footnote, which defines the empty row for every student ("a category
+           with nothing graded in it adds nothing to either side") and so says nothing about this one. */
+        Array.prototype.forEach.call(bare.querySelectorAll('.detail-break'), function(t){
+          var n = t.parentNode.querySelector('.detail-card-note'); if (n) n.remove(); });
+        var big = v.querySelector('.detail-grade-big');
+        var move = v.querySelector('.detail-move');
         return { up:true,
+          bare: bare.textContent,
+          move: move ? move.textContent : '',
+          heroLabel: big && big.parentNode ? (big.parentNode.getAttribute('aria-label') || '') : '',
+          csv: window.planbook.detail.studentCsv(window.planbook.detail.detailModel()).text,
           head: t ? cellsOf(t.querySelector('thead tr')) : [],
           rows: t ? Array.prototype.map.call(t.querySelectorAll('tbody tr'), function(tr){
             return { empty: tr.classList.contains('empty'), cells: cellsOf(tr) }; }) : [],
@@ -473,6 +499,119 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
         && cy.foot.length === 5 && cy.foot[1] === ''
         && detailHits.every((x) => x === ''),
       JSON.stringify({ head: cy.head, projects: cyProjects, foot: cy.foot, wordFound: detailHits }));
+
+    /* ── the student CSV of a points class (WO-3.35) ──
+     *
+     * Parsed with grade-detail.mjs's deliberately naive reader — quotes and nothing else — so a cell
+     * is what a spreadsheet would put in it. The Contributes column is summed the way columnCents()
+     * sums the screen's: every cell that is a number, in cents. The Overall grade it is compared to
+     * is read out of the file's own "Overall grade" row, not out of the engine.
+     */
+    const ed = await readDetail(ED);
+    const cols = (line) => {
+      const out = [];
+      let cur = '';
+      let q = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (q) {
+          if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+          else if (ch === '"') q = false;
+          else cur += ch;
+        } else if (ch === '"') q = true;
+        else if (ch === ',') { out.push(cur); cur = ''; }
+        else cur += ch;
+      }
+      out.push(cur);
+      return out;
+    };
+    const fileOf = (text) => {
+      const parsed = String(text || '').replace(/^\uFEFF/, '').split('\r\n').map(cols);
+      const at = parsed.findIndex((r) => r[0] === 'Category');
+      const after = at === -1 ? [] : parsed.slice(at + 1);
+      const body = after.slice(0, after.findIndex((r) => r.length === 1 && r[0] === ''));
+      return { head: at === -1 ? [] : parsed[at], rows: body.filter((r) => r[0] !== 'Overall'),
+        foot: body.filter((r) => r[0] === 'Overall')[0] || [],
+        overall: parsed.filter((r) => r[0] === 'Overall grade')[0] || [] };
+    };
+    const fileCents = (f) => f.rows.reduce((n, r) => {
+      const last = r[r.length - 1];
+      return /^-?\d+\.\d\d$/.test(last) ? n + Math.round(Number(last) * 100) : n;
+    }, 0);
+    const pctCents = (cell) => /^\d+\.\d\d%$/.test(cell || '') ? Math.round(Number(cell.slice(0, -1)) * 100) : null;
+    const CSV_HEAD = ['Category', 'Share of points %', 'Earned', 'Possible', 'Category %', 'Contributes'];
+    const EMPTY_SAY = 'nothing graded in it yet — it adds no points to either side until something is';
+    const BONUS_SAY = 'extra credit — it counts once there is work worth points for it to add to';
+    const fCy = fileOf(cy.csv), fDi = fileOf(di.csv), fEd = fileOf(ed.csv);
+    const fileRow = (f, name) => f.rows.filter((r) => r[0] === name)[0] || null;
+
+    check('WO-3.35: in a points class the student CSV\'s Contributes column sums to its Overall grade to '
+      + 'the cent with the extra-credit category in it — Bonus reads 0 · 2 · 0 · (no %) · 10.00, Tests '
+      + '100 · 15 · 20 · 75.00% · 75.00, and 75.00 + 10.00 = 85.00 under an Overall grade of 85.00%',
+      JSON.stringify(fileRow(fCy, 'Bonus')) === JSON.stringify(['Bonus', '0', '2', '0', '', '10.00'])
+        && JSON.stringify(fileRow(fCy, 'Tests')) === JSON.stringify(['Tests', '100', '15', '20', '75.00%', '75.00'])
+        && fCy.overall[1] === '85.00%' && fileCents(fCy) === pctCents(fCy.overall[1])
+        && fCy.foot[fCy.foot.length - 1] === '85.00%' && !fileRow(fCy, 'no category'),
+      JSON.stringify({ rows: fCy.rows, foot: fCy.foot, overall: fCy.overall,
+        columnSums: (fileCents(fCy) / 100).toFixed(2) }));
+
+    check('WO-3.35: and with a "no category" row whose only graded work is extra credit — it reads '
+      + 'no category · 0 · 2 · 0 · (no %) · 10.00, and the column sums to 85.00 under 85.00%',
+      JSON.stringify(fileRow(fDi, 'no category')) === JSON.stringify(['no category', '0', '2', '0', '', '10.00'])
+        && fDi.overall[1] === '85.00%' && fileCents(fDi) === pctCents(fDi.overall[1])
+        && fDi.foot[fDi.foot.length - 1] === '85.00%',
+      JSON.stringify({ rows: fDi.rows, foot: fDi.foot, overall: fDi.overall,
+        columnSums: (fileCents(fDi) / 100).toFixed(2) }));
+
+    const csvWeightHits = [cy.csv, di.csv, ed.csv].map((t) => ['Weight %', 'Counts at %']
+      .filter((w) => t.indexOf(w) !== -1).concat((t.match(WEIGHT_WORDS) || []).slice(0, 1)));
+    check('WO-3.35: a points-class CSV speaks the mode — its category section is headed '
+      + CSV_HEAD.join(' · ') + ', six cells to every row, an empty category carries the screen\'s own '
+      + 'sentence, and no file contains Weight %, Counts at %, redistributes or any word of weight',
+      [fCy, fDi, fEd].every((f) => JSON.stringify(f.head) === JSON.stringify(CSV_HEAD)
+          && f.rows.concat([f.foot]).every((r) => r.length === 6))
+        && JSON.stringify(fileRow(fCy, 'Projects')) === JSON.stringify(['Projects', '', '', '', EMPTY_SAY, ''])
+        && csvWeightHits.every((h) => h.length === 0),
+      JSON.stringify({ head: fCy.head, widths: [fCy, fDi, fEd].map((f) => f.rows.map((r) => r.length)),
+        projects: fileRow(fCy, 'Projects'), found: csvWeightHits }));
+
+    /* AND ON SCREEN, THE FILE'S FIGURES ARE THE SCREEN'S — the Contributes cells of every row that has
+       one, read off both, in order. */
+    const screenCells = (d) => d.rows.filter((r) => !r.empty && r.cells.length === 5).map((r) => r.cells[4]);
+    const fileCells = (f) => f.rows.filter((r) => r[5] !== '').map((r) => r[5]);
+    check('WO-3.35: the points file carries the screen\'s own Contributes figures, row for row, for both '
+      + 'extra-credit fixtures',
+      JSON.stringify(screenCells(cy)) === JSON.stringify(fileCells(fCy))
+        && JSON.stringify(screenCells(di)) === JSON.stringify(fileCells(fDi))
+        && fileCells(fCy).length === 2 && fileCells(fDi).length === 2,
+      JSON.stringify({ cy: [screenCells(cy), fileCells(fCy)], di: [screenCells(di), fileCells(fDi)] }));
+
+    /* ED: only extra credit graded. No grade, and nothing anywhere says there is nothing graded —
+       except on Tests and Projects, which truly have nothing graded in them, and are read separately
+       as the empty rows they are. */
+    const NOTHING = /nothing graded|no graded work|nothing is graded|nothing has been graded/i;
+    const edBonus = rowNamed(ed.rows, 'Bonus');
+    const edFileBonus = fileRow(fEd, 'Bonus');
+    const edFileElsewhere = fEd.rows.filter((r) => NOTHING.test(r.join(' '))
+      && !(r[2] === '' && r[3] === '' && r[4] === EMPTY_SAY));
+    const edFileHead = String(ed.csv).split('\r\n').slice(0, 7).join(' ');
+    check('WO-3.35: a points-class student whose only graded work is extra credit is not told, on screen or '
+      + 'in the CSV, that nothing is graded — her Bonus row keeps its 2 / 0 and says it is extra credit '
+      + 'waiting for work worth points, the to-move card and the hero\'s label say the same, and only the '
+      + 'two categories that really are empty say "nothing graded"',
+      planted.ed.percentage === null && planted.ed.reason === 'no-graded-work' && ed.up
+        && !!edBonus && !edBonus.empty
+        && JSON.stringify(edBonus.cells) === JSON.stringify(['Bonus', '—', '2 / 0', BONUS_SAY])
+        && rowNamed(ed.rows, 'Tests').empty && rowNamed(ed.rows, 'Projects').empty
+        && !NOTHING.test(ed.bare) && !NOTHING.test(ed.move) && !NOTHING.test(ed.heroLabel)
+        && /extra credit/.test(ed.move) && /extra credit/.test(ed.heroLabel)
+        && JSON.stringify(edFileBonus) === JSON.stringify(['Bonus', '', '2', '0', BONUS_SAY, ''])
+        && edFileElsewhere.length === 0 && !NOTHING.test(edFileHead)
+        && fEd.overall[1] === '' && fEd.foot[fEd.foot.length - 1] === '',
+      JSON.stringify({ engine: { p: planted.ed.percentage, reason: planted.ed.reason, message: planted.ed.message },
+        bonus: edBonus, move: ed.move, heroLabel: ed.heroLabel,
+        screenSays: (ed.bare.match(NOTHING) || [''])[0], fileBonus: edFileBonus,
+        fileElsewhere: edFileElsewhere, overall: fEd.overall }));
 
     /* ── the assignments screen, with an empty category and an unfiled piece both on it ── */
     await into('assignments');

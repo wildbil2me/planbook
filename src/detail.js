@@ -374,10 +374,34 @@ function cents(n) { return (n / 100).toFixed(2); }
   weighted state where they could part — weights at 100 with every graded category at weight 0, so
   no grade and no contributions — drawing its categories' work as it always has rather than calling
   them empty.
+
+  IN A POINTS CLASS THE TEST IS THE ENGINE'S OWN (WO-3.35): nothing earned and nothing possible, the
+  line src/grade-engine.js's points() skips a row on before it hands out shares. With a grade it is
+  the same answer as the two-null test above — a row has a contribution exactly when it has earned or
+  possible points. Without one it is not, and that is the case it exists for: a student whose ONLY
+  graded work is extra credit has nothing possible anywhere, so there is no grade and no row has a
+  contribution, and the two-null test called her Bonus row "nothing graded in it yet" over a cell
+  scored 2. A row with points in it is never drawn as a row with nothing graded in it.
+
+  The weighted test is left exactly as it was, and has to be: a weighted category holding only
+  extra credit has no percentage, its weight redistributes, and the row says so. Both the screen and
+  the file ask here, so they cannot disagree about which rows are empty.
 */
-function rowIsEmpty(category) {
+function rowIsEmpty(category, byPoints) {
+  if (byPoints) return category.earned === 0 && category.possible === 0;
   return category.percentage === null && category.contribution === null;
 }
+
+/*
+  WHAT A POINTS CLASS'S TWO WORDED ROWS SAY, on screen and in the file alike (WO-3.35) — one string
+  each, so the CSV a teacher hands a parent reads the sentence the screen read her.
+
+  The second is the extra-credit-only row when there is no grade. Its points are real and scored,
+  and there is nothing possible yet for them to be added on top of, so it has no share and no cents
+  — and it says THAT, rather than borrowing the empty row's "nothing graded", which is false about it.
+*/
+const POINTS_EMPTY_SAY = 'nothing graded in it yet — it adds no points to either side until something is';
+const POINTS_BONUS_ONLY_SAY = 'extra credit — it counts once there is work worth points for it to add to';
 
 /*
   THE BREAKDOWN SPEAKS THE CLASS'S MODE (WO-3.34). A class graded on total points has no weights to
@@ -408,7 +432,7 @@ function breakdown(grade, byPoints) {
   const share = grade.percentage === null ? {} : contributionCents(grade.categories, grade.percentage);
   const tbody = el('tbody');
   grade.categories.forEach((category) => {
-    const empty = rowIsEmpty(category);
+    const empty = rowIsEmpty(category, byPoints);
     const tr = el('tr', empty ? 'empty' : '');
     tr.append(cell('th', 'detail-break-cat', category.name || 'Untitled category'));
     if (byPoints) {
@@ -476,15 +500,27 @@ function breakdown(grade, byPoints) {
   n/0 is not a percentage, and printing one would be the screen inventing it — its 0% share, and
   its cents, which is what makes the column add up to the Overall. The empty row says what an empty
   category costs in this formula, which is nothing: there is no weight to share across the others.
+
+  AND WHEN THERE IS NO GRADE AT ALL BUT THE ROW HAS POINTS (WO-3.35) — extra credit is the only work
+  graded — the row keeps its earned points and says why it has no share and no cents, in the caution
+  wash across the last two columns. Nothing is worked out here: the engine handed it no share and no
+  contribution, and a dash there with no sentence would read as the row having nothing in it.
 */
 function pointsRow(tr, category, empty, share) {
   if (empty) {
     tr.append(el('td', 'detail-break-weak', '—'));
-    const say = el('td', 'detail-break-redist',
-      'nothing graded in it yet — it adds no points to either side until something is');
+    const say = el('td', 'detail-break-redist', POINTS_EMPTY_SAY);
     say.setAttribute('colspan', '2');
     tr.append(say);
     tr.append(el('td', 'detail-break-num', '—'));
+    return;
+  }
+  if (category.contribution === null) {
+    tr.append(el('td', 'detail-break-weak', '—'));
+    tr.append(el('td', 'detail-break-weak', category.earned + ' / ' + category.possible));
+    const say = el('td', 'detail-break-redist', POINTS_BONUS_ONLY_SAY);
+    say.setAttribute('colspan', '2');
+    tr.append(say);
     return;
   }
   tr.append(el('td', 'detail-break-weak', formatWeight(category.effectiveWeight) + '%'));
@@ -921,6 +957,8 @@ export function detailModel() {
     last: String(student.last || ''),
     name: rosterName(student),
     person: fullName(student),
+    /* Which shape the file's category section takes (WO-3.35) — the answer breakdown() is handed. */
+    byPoints: gradingModeOf(cls) === 'points',
     grade: grade,
     share: grade.percentage === null ? {} : contributionCents(grade.categories, grade.percentage),
     work: rows.map((row) => ({ name: assignmentName(row.id),
@@ -952,6 +990,15 @@ export function detailModel() {
   THE NUMBERS ARE THE ONES ON THE SCREEN, character for character, including the contribution
   column's rounding. A file that has left the building and disagrees with the screen it was taken
   from is worse than no file.
+
+  AND THE CATEGORY SECTION SPEAKS THE CLASS'S MODE (WO-3.35), as breakdown() does. A points class's
+  file has no Weight % and no Counts at % — there are no weights in its formula — and carries the
+  screen's Share of points in their place, from the grade's own `effectiveWeight`. Which rows are
+  empty is asked of rowIsEmpty(), the screen's own test, so an extra-credit row hands its cents to the
+  column and the column adds up to the Overall grade in the file as it does on screen; the two worded
+  rows carry the screen's two sentences. Nothing here works a share or a sum out. A weighted class's
+  file is the bytes it always was: its branch is the code that was here, with the screen's test in
+  place of `percentage === null`, which is the same answer in that mode.
 */
 export function studentCsv(model) {
   const rows = [];
@@ -969,20 +1016,8 @@ export function studentCsv(model) {
   rows.push(['Exported', todayISO()]);
   rows.push([]);
 
-  rows.push(['Category', 'Weight %', 'Earned', 'Possible', 'Category %', 'Counts at %',
-    'Contributes']);
-  grade.categories.forEach((category) => {
-    if (category.percentage === null) {
-      rows.push([category.name || 'Untitled category', formatWeight(category.weight),
-        '', '', 'nothing graded — weight redistributes', '', '']);
-      return;
-    }
-    rows.push([category.name || 'Untitled category', formatWeight(category.weight),
-      category.earned, category.possible, formatPercent(category.percentage),
-      formatWeight(category.effectiveWeight), cents(model.share[category.id] || 0)]);
-  });
-  rows.push(['Overall', formatWeight(grade.weightTotal), '', '', '', '',
-    grade.percentage === null ? '' : formatPercent(grade.percentage)]);
+  if (model.byPoints) pointsSection(rows, grade, model.share);
+  else weightedSection(rows, grade, model.share);
   rows.push([]);
 
   rows.push(['Work', 'Category', 'Points', 'State']);
@@ -1003,6 +1038,48 @@ export function studentCsv(model) {
 
   const text = '﻿' + rows.map((row) => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
   return { name: csvName(model), text: text };
+}
+
+/* A weighted class's category section, as it has always been written. */
+function weightedSection(rows, grade, share) {
+  rows.push(['Category', 'Weight %', 'Earned', 'Possible', 'Category %', 'Counts at %',
+    'Contributes']);
+  grade.categories.forEach((category) => {
+    if (rowIsEmpty(category, false)) {
+      rows.push([category.name || 'Untitled category', formatWeight(category.weight),
+        '', '', 'nothing graded — weight redistributes', '', '']);
+      return;
+    }
+    rows.push([category.name || 'Untitled category', formatWeight(category.weight),
+      category.earned, category.possible, formatPercent(category.percentage),
+      formatWeight(category.effectiveWeight), cents(share[category.id] || 0)]);
+  });
+  rows.push(['Overall', formatWeight(grade.weightTotal), '', '', '', '',
+    grade.percentage === null ? '' : formatPercent(grade.percentage)]);
+}
+
+/* A points class's category section — six columns, the weighted section's minus Counts at %, with
+   the share where the weight stood, exactly as the screen's five are its six minus one. A number
+   column is left blank rather than given a dash it cannot add up, except in the two worded rows,
+   whose sentence stands in the Category % cell where the weighted file puts its own. */
+function pointsSection(rows, grade, share) {
+  rows.push(['Category', 'Share of points %', 'Earned', 'Possible', 'Category %', 'Contributes']);
+  grade.categories.forEach((category) => {
+    const name = category.name || 'Untitled category';
+    if (rowIsEmpty(category, true)) {
+      rows.push([name, '', '', '', POINTS_EMPTY_SAY, '']);
+      return;
+    }
+    if (category.contribution === null) {
+      rows.push([name, '', category.earned, category.possible, POINTS_BONUS_ONLY_SAY, '']);
+      return;
+    }
+    rows.push([name, formatWeight(category.effectiveWeight), category.earned, category.possible,
+      category.percentage === null ? '' : formatPercent(category.percentage),
+      cents(share[category.id] || 0)]);
+  });
+  rows.push(['Overall', '', '', '', '',
+    grade.percentage === null ? '' : formatPercent(grade.percentage)]);
 }
 
 function csvCell(value) {

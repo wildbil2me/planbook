@@ -990,6 +990,42 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
     await clickSel('#scoresBody [data-student-detail="' + S2 + '"]');
     await new Promise(r => setTimeout(r, 250));
     const two = await evalJs(READ);
+    const twoCsv = await evalJs('window.planbook.detail.studentCsv(window.planbook.detail.detailModel()).text');
+    /* A WEIGHTED CLASS'S FILE, PINNED BYTE FOR BYTE (WO-3.35). That work order gave the CSV a second
+       shape for a class graded on total points and moved the weighted section into a function of its
+       own beside it; its Acceptance asks that a weighted class's file come out exactly as before. The
+       two texts below were captured from these two students on the tree before that change
+       (`9a40109`), not written out after it, and only the export date is masked — so the next work
+       order that touches studentCsv() cannot drift a weighted file by a character without a red
+       line here. If a change to the weighted file is ever INTENDED, this is the place it is argued. */
+    const pinned = (t) => String(t).replace(/\r\nExported,\d{4}-\d{2}-\d{2}\r\n/, '\r\nExported,<date>\r\n');
+    const fileOf = (lines) => '\uFEFF' + lines.join('\r\n') + '\r\n';
+    const S1_PINNED = fileOf(['Planbook — student grade detail', 'Student,' + S1_LAST + ',' + S1_FIRST,
+      'Class,WO-3.7 Detail', 'Term,WO-3.7 Term', 'Overall grade,65.24%,D', 'Exported,<date>', '',
+      'Category,Weight %,Earned,Possible,Category %,Counts at %,Contributes',
+      'Tests,40,78,100,78.00%,47.06,36.71', 'Quizzes,25,13,20,65.00%,29.41,19.12',
+      'Homework,20,8,20,40.00%,23.53,9.41', 'Participation,15,,,nothing graded — weight redistributes,,',
+      'Overall,100,,,,,65.24%', '', 'Work,Category,Points,State', 'Osmosis Quiz,Quizzes,20,outstanding',
+      'Ch 2 Homework,Homework,10,marked missing', 'Ch 3 Homework,Homework,10,outstanding',
+      'Bonus poster,Homework,0,outstanding bonus work', '', 'Attendance,Count', 'Present,4', 'Tardy,1',
+      'Absent,1', 'Event,0', 'Dismissed,0', 'Recorded meetings,6', 'Attendance %,83%']);
+    const S2_PINNED = fileOf(['Planbook — student grade detail', 'Student,"Ó""Brien, Jr",Ida',
+      'Class,WO-3.7 Detail', 'Term,WO-3.7 Term', 'Overall grade,82.88%,B-', 'Exported,<date>', '',
+      'Category,Weight %,Earned,Possible,Category %,Counts at %,Contributes',
+      'Tests,40,78,100,78.00%,47.06,36.70', 'Quizzes,25,17,20,85.00%,29.41,25.00',
+      'Homework,20,9,10,90.00%,23.53,21.18', 'Participation,15,,,nothing graded — weight redistributes,,',
+      'Overall,100,,,,,82.88%', '', 'Work,Category,Points,State', '', 'Attendance,Count', 'Present,6',
+      'Tardy,0', 'Absent,0', 'Event,0', 'Dismissed,0', 'Recorded meetings,6', 'Attendance %,100%']);
+    const firstDiff = (a, b) => { let i = 0; while (i < a.length && a[i] === b[i]) i++; return i; };
+    check('WO-3.35: a weighted class\'s student CSV is the file it was before the points shape was added, '
+      + 'byte for byte, for both WO-3.7 students — the rounding one included — with only the export date masked',
+      pinned(csv.text) === S1_PINNED && pinned(twoCsv) === S2_PINNED,
+      pinned(csv.text) === S1_PINNED && pinned(twoCsv) === S2_PINNED
+        ? (csv.text.length + ' and ' + twoCsv.length + ' characters, identical to the pinned files')
+        : 'first difference: student 1 at ' + firstDiff(pinned(csv.text), S1_PINNED) + ' '
+          + JSON.stringify(pinned(csv.text).slice(firstDiff(pinned(csv.text), S1_PINNED)).slice(0, 60))
+          + ', student 2 at ' + firstDiff(pinned(twoCsv), S2_PINNED) + ' '
+          + JSON.stringify(pinned(twoCsv).slice(firstDiff(pinned(twoCsv), S2_PINNED)).slice(0, 60)));
     const twoContribs = two.rows.filter((r) => !r.empty).map((r) => r.cells[r.cells.length - 1]);
     const twoSum = twoContribs.reduce((n, s) => n + Math.round(Number(s) * 100), 0);
     /* What rounding each contribution on its own would have produced — computed here from the

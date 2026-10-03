@@ -9329,6 +9329,65 @@ was compared byte for byte with its pre-round copy, and again with a copy taken 
 harness already deleted). `node tools/wo-sweep.mjs`: `46 checks · 43 passed · 0 failed · 3 to review`, the
 three standing reviews.
 
+### WO-3.35 — the student CSV and an extra-credit-only student read a points class wrong
+
+**What this changes.** Nothing in a weighted class, and nothing a teacher can reach yet: no control
+writes `gradingMode` until WO-3.31, so everything below is proved on WO-3.34's fixture class with the
+mode planted. In a points class the student CSV's category section has the screen's columns —
+*Category · Share of points % · Earned · Possible · Category % · Contributes* — asks `rowIsEmpty()`
+which rows are empty, and gives an extra-credit row its cents, so the column adds up to the Overall
+grade. `rowIsEmpty()` takes the mode: in a points class a row is empty when it has nothing earned and
+nothing possible, which is the engine's own skip test and the same answer as before whenever there is
+a grade. A student whose only graded work is extra credit has no grade; her extra-credit row keeps
+its points and reads *"extra credit — it counts once there is work worth points for it to add to"*,
+on screen and in the file, and the engine's no-grade message for her reads *"The only work graded so
+far is extra credit, so there is no grade yet for it to add to."* — shown by the to-move card and the
+hero's label. The reason stays `no-graded-work`. `CACHE` is `planbook-shell-v154`. There is no 👤
+line on this row.
+
+- [x] In WO-3.34's points fixture, the CSV's *Contributes* column sums to its *Overall grade* to the
+      cent. Cy (Tests 15/20, Bonus 2 of 0): `Tests,100,15,20,75.00%,75.00` and `Bonus,0,2,0,,10.00`,
+      75.00 + 10.00 = 85.00 under `Overall grade,85.00%`. Di (Tests 15/20, an unfiled 0-point piece
+      scored 2): `no category,0,2,0,,10.00`, the same 85.00. The file's Contributes cells equal the
+      screen's, row for row. (`verify/points-grade.mjs`, the WO-3.34 block.) Mutations M1 and M2.
+- [x] A points-class CSV contains no `Weight %`, `Counts at %`, "redistributes" or any match of
+      WO-3.34's weight-word pattern, for all three fixture students, and every row is six cells wide.
+- [x] A weighted class's CSV is byte-identical before and after. The CSVs of both WO-3.7 students
+      and of WO-4.4's logged student were written to a scratch folder from a full run on the tree
+      before any `src/` edit (`9a40109`, 1665 · 1665 passed) and again from a full run on the
+      delivered tree (1671 · 1671): `cmp` reports all three identical. The two WO-3.7 files are now
+      pinned in `verify/grade-detail.mjs`, export date masked. Mutation M5.
+- [x] A points-class student whose only graded work is extra credit (Ed: Bonus 2 of 0, nothing
+      else) is not told that nothing is graded: her Bonus row reads `— · 2 / 0 · extra credit — …`
+      and is not an empty row; the page with its empty rows and the breakdown's footnote taken out,
+      the to-move card and the hero's label match nothing of
+      `/nothing graded|no graded work|nothing is graded|nothing has been graded/i`; in the file her
+      Bonus row carries the same sentence, her Overall grade is blank, and the only rows saying
+      "nothing graded" are Tests and Projects, which have nothing earned and nothing possible.
+      Mutations M3 and M4. *(The breakdown's footnote — "A category with nothing graded in it adds
+      nothing to either side" — is a definition printed for every student and was left as it is.)*
+
+**Mutation round.** M1–M4 ran on a scratch copy of the entry harness holding only
+`localstorage-prefs` and `points-grade` (49 checks, all green on the delivered tree). M5 needed
+`grade-detail`, which does not run without the sections before it, so it ran on the full harness.
+Each mutation was written with a `MUTATION` marker, run, and the file restored in a `finally`; each
+restored file was compared by SHA-256 with its pre-mutation bytes.
+
+| Mutation | Result |
+|---|---|
+| M1 · the points CSV's empty test back on `percentage === null` | **4 red**: both column sums, the file-matches-screen check, and the extra-credit-only check |
+| M2 · the CSV always in the weighted shape | **5 red**: every WO-3.35 points check |
+| M3 · `rowIsEmpty()` without its points branch | **1 red**: the extra-credit-only check (with a grade the two tests agree, as designed) |
+| M4 · the engine's no-grade message always "There is no graded work yet." | **1 red**: the extra-credit-only check |
+| M5 · a period added to the weighted CSV's empty-row sentence | **1 red** of 1671: the weighted pin. The older `/redistribut/` check stayed green, which is why the pin exists |
+
+`grep -rn MUTATION src/ index.html sw.js` afterwards finds only `src/shell.js:963`, the prose line
+that predates this work order, and neither harness file this row touched contains the word. The
+scratch harness is deleted.
+
+**Full run on the delivered tree:** `1671 checks · 1671 passed · 0 failed · 0 skipped`, 53,270 lines,
+31.9 lines per check, 686s, exit 0, 2026-10-03, real clock.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

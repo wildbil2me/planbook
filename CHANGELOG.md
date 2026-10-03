@@ -13,6 +13,24 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The student CSV reads a points class in its own words — 2026-10-03
+
+WO-3.35. Shell cache `v154`.
+
+- **The student CSV adds up in a class graded on total points.** A category, or the `no category`
+  row, holding only extra credit used to be written as "nothing graded — weight redistributes" with
+  no *Contributes* cell, so the file came up short of its own *Overall grade*. It now uses the same
+  test for an empty row as the screen, and the column adds up to the cent.
+- **A points-class CSV has no weight columns.** *Share of points %* replaces *Weight %*, and
+  *Counts at %* is gone, matching the screen's columns.
+- **A student whose only graded work is extra credit is no longer told nothing is graded**, on
+  student detail or in the CSV. Their Bonus row says it is extra credit waiting for work worth points,
+  and the no-grade message says the same.
+- **Nothing changes in a weighted class**: both existing test students' CSVs are byte-identical.
+  No control sets a class to points until WO-3.31, which now also waits on WO-3.37 (the signals
+  screen's quiet list says the same false sentence) and WO-3.38 (a bonus scored 0 still reads as
+  nothing graded), booked out of this verdict.
+
 ### A points class reads in its own words — 2026-10-03
 
 WO-3.34. Shell cache `v153`.

@@ -346,7 +346,13 @@ function points(doc, cls, termId, studentId, plan) {
     possible += category.possible;
   });
   if (possible === 0) {
-    return noGrade('no-graded-work', 'There is no graded work yet.', total, categories);
+    /* THE SAME REFUSAL, SAID TRUTHFULLY (WO-3.35). Points earned over nothing possible is a student
+       whose only graded work is extra credit, and "There is no graded work yet" is false about her —
+       the to-move card and the hero's label print this sentence on student detail. Only the words
+       differ: the reason stays `no-graded-work`, so every reader that branches on it still does. */
+    return noGrade('no-graded-work', earned !== 0
+      ? 'The only work graded so far is extra credit, so there is no grade yet for it to add to.'
+      : 'There is no graded work yet.', total, categories);
   }
 
   categories.forEach((category) => {
