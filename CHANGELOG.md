@@ -13,6 +13,33 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The score grid narrows to one category — 2026-10-02
+
+WO-3.28. Shell cache `v151`.
+
+- **The score grid has a row of category pills.** Pick one and the grid shows only that category's
+  assignments, which is how a category is checked against the SIS by hand. There is a pill for each
+  category with work in the open term, plus *All*. Work filed under no category shows under *All*
+  only.
+- **A picked category adds a third frozen column: each student's average in it, with its letter
+  underneath.** The figure comes from `categoryPercentage()` and the letter from
+  `letterFromPercentage()`; the screen computes neither. The category number sits on the overall
+  grade's number line and its letter on the grade's letter line. The summary line adds the
+  category's class average, without a letter.
+- **It changes no figure.** The class average, the blank count and every overall grade stay the
+  same with the filter on and off, and the printed grade sheet ignores it.
+- **Columns outside the category are not drawn, rather than hidden**, so Tab, the arrow keys and
+  Enter stop at the last column shown. The name search and the pills work together, and clearing
+  either leaves the other in place.
+- **The filter is not remembered.** The grid opens on *All* every time, and nothing is written to
+  `localStorage`.
+- **The frozen columns are now exactly their declared widths, whatever the font.** On the iPad the
+  grade column drew wider than its 84px, so the category column travelled a few pixels before it
+  stuck. Each frozen cell's contents no longer widen the column, and the harness now checks every
+  frozen column's left edge against its sticky `left` with the widest figures it can hold.
+- **The pills sit between the search box and its count**, the owner's ruling: the count appears
+  only while there is text, and pills placed after it would jump at the first keystroke.
+
 ### The score grid narrows by student — 2026-10-02
 
 WO-3.29. Shell cache `v149`.

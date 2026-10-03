@@ -1288,13 +1288,26 @@
            src/scores.js's renderScores() rebuilds every cell on each keystroke typed here, and a box
            inside what it rebuilds would be destroyed under the caret after the first letter.
            Escape in it empties it; nothing remembers what was typed, and the printed grade sheet
-           never sees it. WO-3.28's category pills go in after the count. -->
+           never sees it.
+
+           THE CATEGORY PILLS (WO-3.28) sit BETWEEN THE BOX AND THE COUNT, which is the drawing's
+           laptop frames and `.attendance-toolbar`'s own order (search, pills, then the thing with
+           `margin-left: auto`) — and is a departure from WO-3.28's text, which put them after the
+           count. The count is drawn only while the box holds something and carries
+           `margin-left: auto`, so pills after it would sit beside the box with the box empty and
+           jump to the far end of the row at the first letter typed: a control moving under a thumb
+           because of a keystroke somewhere else. Here they never move. The host is empty markup;
+           src/scores.js draws one pill per category with work in the open term and rebuilds them on
+           every render, so it is NOT a `data-pill-group` — that would be a second thing moving the
+           `.active` class (src/signals-view.js's rule-filter strip makes the same call). -->
       <div class="scores-toolbar" id="scoresToolbar">
         <div class="search-box">
           <span aria-hidden="true">🔍</span>
           <input type="text" id="scoresSearch" data-scores-search
                  placeholder="Find a student…" aria-label="Search students by name">
         </div>
+        <div class="scores-filter-pills" id="scoresCategories" role="group"
+             aria-label="Show only one category's assignments"></div>
         <span class="scores-found hidden" id="scoresFound"></span>
       </div>
 

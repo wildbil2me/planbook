@@ -39,6 +39,14 @@
   categoryResult() and categoryPercentage() are the per-category breakdown, and the screen that
   shows one is WO-3.7's.
 
+  WO-3.28 MADE IT THREE OF FOUR: categoryPercentage() now answers the third frozen column, drawn
+  only while one category's pill is picked, and the same figures averaged across the class are the
+  category average on the summary line. Same posture as the overall grade — the engine answers per
+  student, and the one mean this file takes is classAverage(), shared by both figures. Since the
+  correction round on 2026-10-02 letterFromPercentage() also bands each student's category figure,
+  under it, as it bands the grade beside it — see categoryAverageContent(). The class's category
+  average on the summary line stays letterless, as the class average does.
+
   ── FIVE THINGS THAT WILL LOOK LIKE OMISSIONS AND ARE DECISIONS ──
 
   1. NOTHING IN THIS FILE READS A CLOCK. Not `todayISO()`, not `new Date()`, nothing — and that is
@@ -105,7 +113,7 @@ import { categoriesOf, formatWeight, weightTotal } from './categories.js';
    this screen's box and the registry's are one test rather than two — see renderScores() below. */
 import { rosterName, fullName, searchNeedle, nameMatches } from './roster.js';
 /* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4). See this file's header. */
-import { letterFromPercentage, weightedClassGrade } from './grade-engine.js';
+import { categoryPercentage, letterFromPercentage, weightedClassGrade } from './grade-engine.js';
 /* THE PAST-DUE PROMPT (WO-3.6), which is the one thing on this screen that reads a clock and is
    deliberately not in this file — see decision 1. This file draws it by calling one function and
    passing nothing: that module asks src/classes.js which class and term are open, exactly as this
@@ -144,6 +152,7 @@ const HINT_TERM_ID = 'scoresHintTerm';
 const TOOLBAR_ID = 'scoresToolbar';
 const SEARCH_ID = 'scoresSearch';
 const FOUND_ID = 'scoresFound';
+const CATS_ID = 'scoresCategories';
 
 /* Whether the key legend is open. A module variable rather than a preference — decision 4 in the
    header. */
@@ -158,6 +167,17 @@ let keysOpen = false;
   the rows she narrowed to.
 */
 let searchText = '';
+
+/*
+  WHICH CATEGORY THE COLUMNS ARE NARROWED TO (WO-3.28), as a category id, or '' for *All*. A module
+  variable and not a preference, for the calendar's ruling that a filter is a door: a grid that
+  reopened on last Tuesday's *Quizzes* would be a grid missing two thirds of its columns with nothing
+  on screen saying why. Emptied on every arrival (resetScoreCategory(), beside resetScoreSearch() in
+  src/shell.js's showClassScreen()), and by renderScores() itself the moment the id stops naming a
+  category with work in the open term — a term switched under the grid, or the last quiz deleted —
+  because a pill that is not drawn cannot be the one that is on.
+*/
+let categoryId = '';
 
 /*
   WHICH CELL THE FLAG BAR ACTS ON, held as two ids rather than as an element, for the reason
@@ -344,11 +364,18 @@ export function formatPercent(p) {
   With no grades at all it is null, and the summary prints an em dash — design/mockups/README.md's
   open question 3, answered the way the drawing drew it: the class average goes when the grades go,
   because it is made of them.
+
+  IT TAKES THE PER-STUDENT FIGURE AS A FUNCTION SINCE WO-3.28, and that is the whole of the change.
+  The category average on the summary line is the same question one level down — the mean of
+  categoryPercentage() across the students who have one, a student with no graded work in the
+  category left out rather than counted as zero — so it is this mean handed a different engine
+  call, not a second averaging loop. NOT a pooled sum of points across the class: that would be a
+  figure the engine never produces for anybody, and the SIS check this exists for is made student
+  by student. The figure itself is always the engine's (`figureOf` below is a call into it at both
+  sites); this function only averages what it is handed.
 */
-function classAverage(doc, cls, termId, students) {
-  const grades = students
-    .map((s) => weightedClassGrade(doc, cls, termId, s.id).percentage)
-    .filter((p) => p !== null);
+function classAverage(students, figureOf) {
+  const grades = students.map(figureOf).filter((p) => p !== null && p !== undefined);
   if (!grades.length) return null;
   return grades.reduce((sum, p) => sum + p, 0) / grades.length;
 }
@@ -550,9 +577,49 @@ function paintGrades(cls, termId, students) {
     if (!cell) return;
     cell.textContent = '';
     cell.append(gradeContent(weightedClassGrade(doc, cls, termId, student.id)));
+    /* THE THIRD FROZEN COLUMN (WO-3.28), repainted on the same keystroke as the grade beside it and
+       for the same reason: a score typed into a quiz moves the Quizzes average, and a figure that
+       lagged the field it is made of would be worse than none. The cell exists only while a
+       category is picked; with none picked this finds nothing and writes nothing. */
+    const avg = cell.parentElement && cell.parentElement.querySelector('td.scores-cat-avg');
+    if (avg && categoryId) {
+      avg.textContent = '';
+      avg.append(categoryAverageContent(doc, cls,
+        categoryPercentage(doc, cls, termId, categoryId, student.id)));
+    }
   });
 
   paintSummary(cls, termId, students);
+}
+
+/* One student's category average, from the engine's answer and nothing else, and drawn the way the
+   grade beside it is drawn: the percentage on one line and its letter on the next, in the grade
+   cell's own two classes, so across a row the two numbers share a line and the two letters share the
+   next — the pair reads across rather than stepping.
+
+   THE LETTER IS THE OWNER'S RULING AT THE 👤 READING (2026-10-02), and it reverses the one this
+   function was first written to: "a percentage and no letter, because a category does not get a
+   report card". A STUDENT'S category figure is what the teacher checks against the SIS, and the SIS
+   shows it with its letter, so leaving the letter off made the check a mental banding step. The
+   CLASS's category average on the summary line stays letterless, for the reason classAverage() still
+   gives about a class. The letter is letterFromPercentage()'s for THIS figure — never the overall
+   grade's letter carried across — and, as in gradeContent(), it is absent when the document has no
+   letter scale rather than an empty line that reads as a letter which failed to draw.
+
+   A student with no graded work in the category gets the grade column's own quiet em dash with the
+   reason as its accessible name, and no letter: there is nothing to band. */
+function categoryAverageContent(doc, cls, percentage) {
+  const box = document.createDocumentFragment();
+  if (percentage === null || percentage === undefined) {
+    const none = el('div', 'scores-grade-none', '—');
+    none.setAttribute('aria-label', 'No average — no graded work in this category yet.');
+    box.append(none);
+    return box;
+  }
+  box.append(el('div', 'scores-grade-num', formatPercent(percentage)));
+  const letter = letterFromPercentage(doc, cls, percentage);
+  if (letter) box.append(el('div', 'scores-grade-letter', letter));
+  return box;
 }
 
 /*
@@ -603,7 +670,8 @@ function paintSummary(cls, termId, students) {
   if (!summary) return;
   summary.textContent = '';
 
-  const average = classAverage(doc, cls, termId, students);
+  const average = classAverage(students,
+    (s) => weightedClassGrade(doc, cls, termId, s.id).percentage);
   const avg = el('span');
   avg.append(document.createTextNode('Class average '));
   avg.append(el('b', '', average === null ? '—' : formatPercent(average)));
@@ -617,6 +685,29 @@ function paintSummary(cls, termId, students) {
     avg.setAttribute('aria-label', 'Class average — no grades yet');
   }
   summary.append(avg);
+
+  /* THE PICKED CATEGORY'S CLASS AVERAGE (WO-3.28, Open 5), beside the class average and only while a
+     pill other than *All* is on. It is the ONLY figure on this line the pill touches: the class
+     average before it and the blank count and weights after it stay whole-class whatever is picked,
+     because `students` and `list` here are always the whole class and the whole term — the filter
+     narrows what is drawn and moves no number. Labelled with the category's name every time, so it
+     cannot be read as the class average changing. */
+  const picked = categoryId ? cats.filter((c) => c.id === categoryId)[0] : null;
+  if (picked) {
+    const catAverage = classAverage(students,
+      (s) => categoryPercentage(doc, cls, termId, picked.id, s.id));
+    const name = picked.name || 'Untitled category';
+    const catAvg = el('span');
+    /* Read by nothing in the app — here so a check can find this figure by what it is rather than
+       by its position on the line, the job `data-score-col` does on a column head. */
+    catAvg.setAttribute('data-scores-cat-average', picked.id);
+    catAvg.append(document.createTextNode(name + ' average '));
+    catAvg.append(el('b', '', catAverage === null ? '—' : formatPercent(catAverage)));
+    catAvg.setAttribute('aria-label', name + ' average '
+      + (catAverage === null ? '— no graded work in it yet' : formatPercent(catAverage)));
+    summary.append(el('span', 'sep', '·'));
+    summary.append(catAvg);
+  }
 
   let blanks = 0;
   let touched = 0;
@@ -668,6 +759,12 @@ export function renderScores() {
 
   const list = cls ? assignmentsOf(cls.id, termId) : [];
   const students = cls ? gridOrder(cls) : [];
+  /* THE CATEGORY PILLS (WO-3.28): one per category with at least one assignment in the open term,
+     because a pill that empties the grid is a dead control. A picked id that is no longer among them
+     goes back to *All* here, before anything is drawn from it. */
+  const withWork = cls ? categoriesOf(cls).filter((c) => list.some((a) => a.categoryId === c.id)) : [];
+  if (categoryId && !withWork.some((c) => c.id === categoryId)) categoryId = '';
+  const picked = categoryId ? withWork.filter((c) => c.id === categoryId)[0] : null;
 
   if (hintTerm) hintTerm.textContent = termLabel || 'this class';
   if (headline) {
@@ -681,6 +778,8 @@ export function renderScores() {
     caption.textContent = cls
       ? 'Scores in ' + cls.name + (termLabel ? ', ' + termLabel : '')
         + ' — students down, assignments across. Enter moves down a column.'
+        + (picked ? ' Showing ' + (picked.name || 'Untitled category') + ' only, with its average '
+          + 'beside the grade.' : '')
       : 'No class is open.';
   }
 
@@ -724,6 +823,10 @@ export function renderScores() {
      control — but it is only ever HIDDEN, never rebuilt: see paintFound(). */
   const toolbar = document.getElementById(TOOLBAR_ID);
   if (toolbar) toolbar.classList.toggle('hidden', !!emptyText);
+  paintCategories(emptyText ? [] : withWork);
+  /* THE BOX'S LEFT SCROLL PADDING WIDENS WITH THE THIRD FROZEN COLUMN — src/scores.css
+     `.scores-grid-wrap.filtered`, the WO-3.27 focus fix carried one column further. */
+  if (wrap) wrap.classList.toggle('filtered', !emptyText && !!picked);
   paintKeys();
   /* THE PAST-DUE PROMPT (WO-3.6), painted on both sides of the empty-state return below: with no
      term, no roster or no work there is nothing past due, and a banner left standing from the class
@@ -771,15 +874,41 @@ export function renderScores() {
   }
 
   const headRow = document.createElement('tr');
-  const nameHead = el('th', 'scores-name', 'Student');
+  /* The two frozen heads carry their words in a span rather than as bare text since WO-3.28's
+     correction round: src/scores.css enforces the frozen widths on each frozen cell's CHILDREN (see
+     THE WIDTHS ARE ENFORCED there), and a bare text node is not a child any rule can reach. */
+  const nameHead = el('th', 'scores-name');
+  nameHead.append(el('span', '', 'Student'));
   nameHead.scope = 'col';
   headRow.append(nameHead);
-  const gradeHead = el('th', 'scores-grade', 'Grade');
+  const gradeHead = el('th', 'scores-grade');
+  gradeHead.append(el('span', '', 'Grade'));
   gradeHead.scope = 'col';
   headRow.append(gradeHead);
+  /* THE CATEGORY AVERAGE'S HEAD (WO-3.28), naming its category every time it is drawn, so the column
+     beside the grade cannot be read as a second overall grade. It carries no `data-score-col`: it is
+     not an assignment, and every reader of that attribute means one. */
+  if (picked) {
+    const catHead = el('th', 'scores-cat-avg');
+    catHead.scope = 'col';
+    const catName = el('span', 'scores-cat-avg-name', picked.name || 'Untitled category');
+    /* A long name trails off in this 84px head (src/scores.css) rather than widening the column; the
+       whole name is on the pressed pill above and here as a tooltip. */
+    catName.title = picked.name || 'Untitled category';
+    catHead.append(catName);
+    catHead.append(el('span', 'scores-cat-avg-sub', 'average'));
+    headRow.append(catHead);
+  }
   /* One column per assignment, in the order the document holds them — the same order the assignment
-     list draws, which is the order the teacher put them in with its ↑ ↓. Nothing here sorts. */
-  list.forEach((assignment) => headRow.append(columnHead(assignment, cls)));
+     list draws, which is the order the teacher put them in with its ↑ ↓. Nothing here sorts.
+
+     WITH A CATEGORY PICKED (WO-3.28), ONLY ITS ASSIGNMENTS ARE BUILT — the same rule as the search's
+     rows above, one axis over. A column outside the category is NOT RENDERED rather than hidden with
+     CSS, because moveAcrossRow() walks the drawn inputs in document order and Tab walks them
+     natively: a `display: none` column is still in both, and → or Tab would put the caret in a cell
+     nobody can see. Work filed under no category belongs to no pill and shows under *All* only. */
+  const columns = picked ? list.filter((a) => a.categoryId === picked.id) : list;
+  columns.forEach((assignment) => headRow.append(columnHead(assignment, cls)));
   head.append(headRow);
 
   shown.forEach((student) => {
@@ -795,7 +924,9 @@ export function renderScores() {
     /* Filled by paintGrades() below rather than here, so there is exactly one writer of a grade on
        this screen and the live path and the first paint cannot disagree. */
     row.append(el('td', 'scores-grade'));
-    list.forEach((assignment) => {
+    /* Filled by paintGrades() as well, beside the grade, for the same one-writer reason. */
+    if (picked) row.append(el('td', 'scores-cat-avg'));
+    columns.forEach((assignment) => {
       row.append(scoreCell(assignment, student, cellOf(doc, assignment.id, student.id)));
     });
     body.append(row);
@@ -865,6 +996,66 @@ export function resetScoreSearch() {
 }
 
 /*
+  THE CATEGORY PILLS (WO-3.28) — *All*, then one per category with work in the open term, in the
+  class's own category order. Names only (Open 6): every column head's chip already shows the
+  weight, and *Quizzes 20%* on a filter button reads like a setting.
+
+  `.pill` WORN AS SHIPPED, and rebuilt from the document on every render, the way
+  src/signals-view.js draws its rule chips — so a category renamed, emptied or deleted behind this
+  screen cannot leave a pill pointing at it. Not inside a `data-pill-group`, for the reason that file
+  gives: src/shell.js's generic handler would be a second thing moving `.active`.
+
+  NO PILLS AT ALL when no category has work — *All* on its own would be a control that does
+  nothing, and that is the case where every assignment in the term is filed under no category.
+*/
+function paintCategories(withWork) {
+  const host = document.getElementById(CATS_ID);
+  if (!host) return;
+  host.textContent = '';
+  host.classList.toggle('hidden', !withWork.length);
+  if (!withWork.length) return;
+  const add = (id, label, title) => {
+    const on = categoryId === id;
+    const button = el('button', 'pill' + (on ? ' active' : ''), label);
+    button.type = 'button';
+    button.setAttribute('data-scores-category', id);
+    button.setAttribute('aria-pressed', on ? 'true' : 'false');
+    button.title = title;
+    host.append(button);
+  };
+  add('', 'All', 'Show every assignment');
+  withWork.forEach((c) => {
+    const name = c.name || 'Untitled category';
+    add(c.id, name, 'Show only ' + name + ', with its average beside the grade');
+  });
+}
+
+/* Called from src/shell.js's click listener. The pills are rebuilt by the render, so a pill that had
+   focus is replaced under it; focus goes to the pill now standing for the same choice, so a keyboard
+   user who pressed one is not dropped onto <body>. */
+export function setScoreCategory(id) {
+  const host = document.getElementById(CATS_ID);
+  const hadFocus = !!(host && host.contains(document.activeElement));
+  categoryId = String(id || '');
+  renderScores();
+  if (hadFocus && host) {
+    const same = Array.prototype.filter.call(host.querySelectorAll('[data-scores-category]'),
+      (b) => b.getAttribute('data-scores-category') === categoryId)[0];
+    if (same) same.focus();
+  }
+  const cls = getSelectedClass();
+  const cat = categoryId && cls ? categoriesOf(cls).filter((c) => c.id === categoryId)[0] : null;
+  announce(cat ? (cat.name || 'Untitled category') + ' only, with its average beside the grade.'
+    : 'Every assignment.');
+}
+
+/* EVERY ARRIVAL SHOWS *ALL*, and this is the arrival half — the same shape and the same call site as
+   resetScoreSearch() above, before the view swaps and paints. */
+export function resetScoreCategory() {
+  categoryId = '';
+}
+
+/*
   THE WAY INTO ONE STUDENT'S GRADE DETAIL (WO-3.7): their own name, in the frozen column, which is
   the same door src/attendance.js's historyDoor() puts on the registry and lifted for the same
   reason. WO-3.7 owns no navigation target of its own — you arrive there from a NAME, never from
@@ -920,7 +1111,9 @@ function paintKeys() {
   be and a second, browser-chosen scroll would undo the centring.
 
   Answers false when the column is not on this grid — an assignment deleted, or filed under a term
-  the class is not open on — and the caller then says nothing more than the screen's own arrival.
+  the class is not open on, or (since WO-3.28) outside a category pill that is on — and the caller
+  then says nothing more than the screen's own arrival. The glance page's door comes through
+  showClassScreen(), which resets the pill to *All* first, so from there the column is always drawn.
 
   THE BOX GOES BACK TO ITS TOP FIRST (WO-3.27), and that is the one line this work order added to
   this file, against its own expectation that none would be needed. Since the grid scrolls in a box

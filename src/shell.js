@@ -236,6 +236,10 @@
       data-scores-search              on an <input>: narrows the score grid's rows as it is typed,
                                       by the registry's own rule (WO-3.29); Escape in it empties
                                       it. Remembered nowhere, and emptied on every arrival
+      data-scores-category="<catId>"  the score grid's category pills (WO-3.28): only that
+                                      category's assignment columns are built, with its average
+                                      as a third frozen column; an empty value is All. Remembered
+                                      nowhere, and back to All on every arrival
       data-past-due                   not a control: the empty host each screen carries for the
                                       past-due prompt, painted by src/past-due.js. Two of them, on
                                       the score grid and on the assignment list
@@ -1138,6 +1142,9 @@ function showClassScreen(name) {
      to be graded* row both do — and a class tab leaves the grid for Attendance, so there is no
      second door to reset. */
   if (want === 'scores') scores.resetScoreSearch();
+  /* AND ITS CATEGORY PILL GOES BACK TO *ALL* (WO-3.28), here and for the same two reasons — the
+     calendar's ruling that a filter is a door and not a preference. */
+  if (want === 'scores') scores.resetScoreCategory();
   const view = views.showView(want);
   classes.refreshClassBar();
   screenNav.refreshScreenNav();
@@ -2812,6 +2819,13 @@ document.addEventListener('click', (e) => {
   const scoreFlag = e.target.closest('[data-score-flag]');
   if (scoreFlag) { scores.flagFocusedCell(scoreFlag.getAttribute('data-score-flag')); return; }
   if (e.target.closest('[data-scores-keys]')) { scores.toggleScoreKeys(); return; }
+  /* WO-3.28's category pills — a lens on which COLUMNS are drawn, writing nothing, remembered
+     nowhere and chaining nothing, for the reasons the two hooks above chain nothing. */
+  const scoreCategory = e.target.closest('[data-scores-category]');
+  if (scoreCategory) {
+    scores.setScoreCategory(scoreCategory.getAttribute('data-scores-category'));
+    return;
+  }
 
   /* ── the past-due prompt (WO-3.6) ──
      Three hooks, and the chain is the whole difference between them. Review and "Not now" write no

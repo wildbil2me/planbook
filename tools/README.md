@@ -1253,7 +1253,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1612 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1631 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2298,6 +2298,28 @@ two are failure arms** (a fixture that did not plant, a Scores door that is not 
 between sites and results moves from −14 to −12. None sits in a loop. The run prints **1624**:
 `1624 checks · 1624 passed · 0 failed · 0 skipped`, 51,783 lines, 31.9 lines per check, 668s, exit 0,
 measured 2026-10-02 on the real clock. Mutation round in `TESTING.md` § WO-3.29.
+
+**WO-3.28 moved it from 1612 to 1627, and the executed count from 1624 to 1639 — fifteen sites,
+fifteen results, and the file count does not move.** Seven are in `verify/score-grid.mjs`, inside
+the WO-3.5 block: one declaration check beside WO-3.27's padding check (the third frozen column's
+`left` is name + grade and the filtered padding is that plus its width, base and coarse), and per
+pointer WO-3.27's Shift+Tab, `←` and Enter re-run with the Tests pill on. Eight are in
+`verify/score-search.mjs`, which WO-3.28 shares for the combination: the pills drawn, only the
+category's columns in the DOM, the third column and the summary against `categoryPercentage()`,
+the whole-class figures with the pill on, the keyboard edges, the two filters together, the
+arrival, and the pills at 44px. None sits in a loop and none is a failure arm, so the gap between
+sites and results stays at −12. The run prints **1639**: `1639 checks · 1639 passed · 0 failed · 0 skipped`,
+52,135 lines, 31.8 lines per check, 678s, exit 0, measured 2026-10-02 on the real clock. Mutation
+round in `TESTING.md` § WO-3.28.
+
+**WO-3.28's correction round moved it from 1627 to 1631, and the executed count from 1639 to
+1643 — four sites, four results, all in `verify/score-search.mjs`.** One is the letter under each
+student's category figure (its own letter, on the grade letter's line, none on the summary's class
+figure). Three are the frozen widths measured with the widest contents planted: coarse at the iPad's
+portrait 768, coarse again with every glyph in the grid widened by 4px (the face this desk does not
+have), and fine at 1024. None sits in a loop and none is a failure arm, so the gap stays at −12. The
+run prints **1643**: `1643 checks · 1643 passed · 0 failed · 0 skipped`, 52,318 lines, 31.8 lines per check,
+685s, exit 0, measured 2026-10-02 on the real clock. Mutation round in `TESTING.md` § WO-3.28, correction round 1.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

@@ -8997,6 +8997,191 @@ the pre-existing prose mentions, none of them a marker.
 
 ---
 
+### WO-3.28 — The score grid narrows to one category
+
+**What this changes.** A row of `.pill`s sits in the score grid's toolbar: *All*, then one per
+category that has at least one assignment in the open term, names only. Picking one builds only that
+category's assignment columns and adds a third frozen column beside the grade: that category's
+average for each student, straight out of `categoryPercentage()`, with the letter
+`letterFromPercentage()` gives for it under it (since correction round 1, below). The
+summary line gains *<Category> average*, which is the mean of those per-student figures over the
+students who have one. A student with no graded work in the category gets the grade column's em dash
+and is left out of the mean. That is the same rule `classAverage()` applies to the overall grade, and
+it is the same function, which now takes the per-student figure as an argument. While a pill is on,
+the box wears `.filtered`, and its left `scroll-padding` widens to 358px (336px coarse) so a focused
+cell clears all three frozen columns. Every other figure stays whole-class. Every arrival shows
+*All*, nothing is stored, and the printed grade sheet reads none of it.
+
+**Two places the build departs from the work order's text or the drawing, each argued where it
+stands:**
+
+- **The pills sit between the search box and the count**, not after the count. This is the drawing's
+  laptop order and `.attendance-toolbar`'s. The count appears only while the box holds text and
+  carries `margin-left: auto`, so pills after it would sit beside the box when it is empty and jump to
+  the far end of the row at the first letter typed. `index.html` says this at the toolbar.
+- **A hovered row keeps the category average's wash.** `.scores-grid tbody tr:hover td` would
+  otherwise remove it, and the wash is what keeps the column from reading as a second grade. Both
+  head labels also take one size step up under a coarse pointer, as the assignment heads beside them
+  do. The drawing's coarse block steps only the figure.
+
+**One harness change outside WO-3.28's own checks.** WO-3.27's `focusDefect()` in
+`verify/score-grid.mjs` used to pick its target as the column whose HEAD was under the frozen edge.
+It now picks the column whose FIELD in row s05 is under it. With a third frozen column on the coarse
+pointer, a column only 16px under the edge has its field already in view, and the check passed with
+the filtered padding deleted (M6's first run). WO-3.27's own mutation, `scroll-padding` deleted (M9
+below), was re-run after the change and still turns every one of its driven checks red.
+
+**And one press this section deliberately does not make.** The first full run pressed a real Tab
+from the grid's very last field. In headless Edge that takes focus off the page, because nothing
+focusable follows the grid, and the page does not get it back on later reloads.
+`verify/date-zero-key.mjs`, two sections on, then failed twice. Its three ArrowLefts no longer walked
+the caret to the month, and `09032026` landed in the day and the year as *32026-11-09*. That section
+and `assigned-and-due` passed when run without `score-search` in front of them, and passed again
+once the press was replaced by a DOM read. Nothing in `src/` was involved. The comment at the read
+says why, so the press does not come back.
+
+- [x] With Quizzes picked, the head names exactly the two quiz assignments and no input on the page
+      belongs to any other, including the one filed under no category. → walks Bell's row to the
+      second quiz and stops there, saying *"Marcus Bell: that is the last assignment."* Tab from that
+      last shown column goes to Castillo's name, the next row's door, and then to Castillo's first
+      quiz. It never reaches an essay or the loose sheet. The last score field in document order,
+      which is the order Tab walks, is Shah's second quiz, so Tab from it has no score field left to
+      land in. That is read off the DOM rather than pressed (see the note below). Enter down the
+      second quiz goes Reed → Shah and stops, saying *"Quiz two: that is the last student. 3 of 6
+      entered."* (`verify/score-search.mjs`, real keys over CDP.)
+- [x] Every student's third-column figure equals `categoryPercentage()` for that student, computed
+      in the page and formatted to two places. Reed, with no quiz graded, shows the em dash. The
+      summary's *Quizzes average* is those figures averaged over the five students who have one
+      (67.33%). A pooled earned/possible across the class would be 66.00%. **Mutation-proved**: M1,
+      M2 and M10 below.
+- [x] With the Tests pill on (eight of the WO-3.5 fixture's ten columns), a real Shift+Tab and a
+      real ← into a cell under the three frozen columns at full right scroll, and a real Enter into
+      a row under the stuck head, all land clear. This is WO-3.27's `focusDefect()` re-run, fine
+      pointer at 1024×768 and coarse at 1024×768. At 1200 the eight columns barely overflow, so the
+      check could not fail there. The frozen edge is read off the category average's head.
+      Declarations: `.scores-cat-avg` `left` = name + grade, and `.filtered` padding = that + 84, in
+      both blocks.
+- [x] With Quizzes picked and with *All*, the summary line (less the category's own figure), the
+      headline and all six overall grades are the same text.
+- [x] *ma* with Quizzes picked shows Bell, Johnson and Reed and the two quiz columns, with the third
+      column. Emptying the box brings back six rows and keeps the quiz columns. *All* with *ma* still
+      typed brings back all five columns and keeps three rows. *Work* with *ma* narrows to the two
+      essays, and the rows do not change.
+- [x] Leaving with *Work* picked and *ma* typed, going to Attendance and coming back shows *All*
+      pressed, every column, no third column and no `.filtered`. The `planbook_` keys and their
+      values are identical before the first pill tap and after the last.
+- [x] Under the emulated coarse pointer, *All*, *Work* and *Quizzes* each measure ≥44px in both
+      dimensions. The WO-3.5 coarse sweep of every control on the open grid also includes them and
+      stayed green.
+- [x] 👤 **On the iPad, in portrait — force-quit from the app switcher first** (`index.html`,
+      `src/scores.js`, `src/scores.css` and `src/shell.js` are in `SHELL`; **v151** since correction
+      round 1): on the score grid, pick a category and type a name, then check that the three frozen
+      columns leave a usable grid under a thumb — and that the category average does not move at all
+      with a horizontal scroll. *(Failed 2026-10-02 at v150, the owner: the category average drifted a
+      few pixels before it held. See correction round 1.)*
+      *(**Passed 2026-10-02 at v151, the owner.** All three frozen columns hold from the first pixel, a
+      100.00% grade stays inside its column, and the category figure and its letter sit on the grade's
+      two lines.)*
+
+**Mutation round.** Each mutation was marked `MUTATION`, applied to a file first copied aside, and
+run against a scratch copy of the harness holding only `verify/localstorage-prefs.mjs`,
+`verify/score-grid.mjs` and `verify/score-search.mjs` (125 checks, all green on the unmutated tree,
+62s). Each file was put back from its copy and `cmp`-checked before the next mutation. **A scripting
+fault during M3's first run printed a traceback before the restore.** It left `src/scores.js`
+mutated, and that was caught at once by `grep -c MUTATION`, then restored from the pre-round copy
+and `cmp`-checked. M3 onward were re-run with the restore in a `finally`. The scratch harness was
+deleted afterwards.
+
+| Mutation | Result |
+|---|---|
+| M1 · the third column fed `weightedClassGrade()`'s percentage | **1 red**: the figures check |
+| M2 · the summary's mean counts a student with no figure as 0 | **1 red**: the figures check |
+| M10 · the third column fed a mean of each quiz's typed score over its points, ignoring the missing and excused marks | **1 red**: the figures check |
+| M3 · every column built, the other categories' hidden with `display: none` | **9 red**: only-its-columns, the keyboard edges, the combination, and all six driven filtered checks on both pointers |
+| M4 · the pill stored in `planbook_scoresCategory` and restored on arrival | **1 red**: the arrival check |
+| M5 · the arrival reset removed from `showClassScreen()` | **1 red**: the arrival check |
+| M6 · both `.scores-grid-wrap.filtered` padding rules deleted | **5 red**: the declaration check, plus Shift+Tab and ← on both pointers. On its first run, before the target change above, the coarse pair stayed green, and that is how the change was found. Enter stays green, which is correct: it is the vertical half and reads the head, not the frozen columns |
+| M7 · the blank count taken over the picked category's columns only | **1 red**: the whole-class figures check |
+| M8 · picking a pill empties the search box | **1 red**: the combination check |
+| M9 · WO-3.27's own: `scroll-padding` deleted from both blocks (re-run for the target change) | **10 red**: WO-3.27's declaration check and every driven check on both pointers, revealScoreColumn(), and the two filtered Enter checks |
+
+`grep -rn MUTATION` over `src/`, `tools/`, `index.html`, `sw.js` and `design/` afterwards finds only
+the existing prose mentions. None of them is a marker.
+
+**Full run on the delivered tree:** `1639 checks · 1639 passed · 0 failed · 0 skipped`, 678s, exit 0,
+2026-10-02, real clock. The run before it, with the Tab press still in, read `1639 · 1637 passed ·
+2 failed`, and both failures were the date-field pair described above.
+
+#### Correction round 1 (2026-10-02)
+
+**Why.** The 👤 reading above failed on the iPad at v150: the category-average column drifted a few
+pixels with a horizontal scroll before it stuck, while the name and grade columns held. And the owner
+ruled at the same reading that each student's category figure carries its letter.
+
+**The drift, measured.** The hypothesis held. In an auto-layout table a cell's `width` is a floor. A
+frozen column whose contents outgrow it pushes the next frozen column's natural position past its
+sticky `left`, and that column travels the difference before it sticks. On the unfixed tree in
+headless Edge:
+
+- With a long surname planted, the name column rendered **286px** against its declared 190 (fine) and
+  **302px** against 168 (coarse), and the grade column sat 96px and 134px right of its sticky `left`.
+- With a long category name, the third column rendered **247px** (fine) and **268px** (coarse)
+  against 84.
+- **The grade column held at 84px in Edge, even at `100.00%`**: Segoe UI draws it 61.5px wide in a
+  67px room under the coarse pointer (57.4 in 63 fine). That is why the desk never saw the defect.
+- The iPad's own face was not measured, because there is no iPad here. The grade column is the only
+  one whose growth fits what the owner saw: a name column that grew would have moved the grade too,
+  and the grade held. So iPadOS's wider face overflowed that 67px room. With the fix removed from the
+  grade column alone and every glyph widened 4px (M3 below), Edge reproduces exactly that shape. The
+  grade column renders 106.47px, and the category average's natural left is 274.47 against its sticky
+  252, so it travels 22.47px before it sticks.
+
+**The fix, and why it does not depend on the font.** Each frozen cell's children now contribute no
+width to the column: `width: 0; min-width: 100%` (`src/scores.css`, THE WIDTHS ARE ENFORCED). The
+`min-width` percentage resolves against zero while the table sizes its columns, and against the cell
+once it has. So the column is its declared width whatever the face draws. A figure wider than its
+room spills into the padding and is never clipped, and names trail off. The two plain heads'
+words are in spans so the rule reaches them. The six coupled numbers are unchanged. The coarse
+`.scores-name-btn` `min-width: 44px` was removed, because the new rule outranks it and it would have
+been a declaration that never applies. The button is the column's full 168px.
+
+- [x] Every frozen cell in every row, head included, sits exactly at its computed sticky `left` and
+      is exactly its declared `min-width`, at `scrollLeft` 0 and again at full right scroll. The
+      planted contents are Shah at full marks (`100.00%` and its letter in both columns), Quizzes
+      renamed *"Quizzes, tests and every in-class assessment"*, a 35-character surname, and six more
+      quizzes so the category scrolls. It is checked three ways: coarse at 768×1024, coarse again with
+      every glyph in the grid widened 4px (`100.00%` then measures 89.5px against its 67px room), and
+      fine at 1024×768. All 21 frozen cells pass every time. **Mutation-proved**: M2 and M3 below.
+      (`verify/score-search.mjs`.)
+- [x] With Quizzes picked, each student's category figure has the letter `letterFromPercentage()`
+      gives for that figure, on its own line under the number. In every row the number's top equals
+      the overall number's top and the letter's top equals the overall letter's top. Reed has no
+      figure: em dash, no letter. The summary reads exactly *Quizzes average 67.33%*, with no letter.
+      In three of the five rows the category letter differs from the overall one (Bell D− against D,
+      Castillo F against C−, Johnson A− against B+), so a letter carried across from the overall grade
+      cannot pass. **Mutation-proved**: M1 and M4 below.
+
+**Mutation round.** The same method as above. A scratch copy of the harness held only
+`localstorage-prefs`, `score-grid` and `score-search`, 129 checks, all green on the corrected tree.
+Each file was copied aside, mutated with a `MUTATION` marker, run, and restored in a `finally` with a
+byte comparison. All four restores compared identical. `src/scores.js` and `src/scores.css` were also
+`cmp`'d against pre-round copies afterwards. The scratch harness is deleted.
+
+| Mutation | Result |
+|---|---|
+| M1 · the category letter banded from the overall grade's percentage instead of the category's | **1 red**: the letter check. Every row's letter came out as the overall one (Bell D, Castillo C−, Johnson B+) |
+| M2 · the enforcement rule deleted from `src/scores.css` | **3 red**: all three frozen-width arms |
+| M3 · the enforcement rule kept for the name and category columns, dropped for the grade column | **1 red**: the widened-face arm, grade 106.47px, category average travelling 22.47px. The two native arms stay green, and that is the reason the widened-face arm exists: in Edge's face nothing the app draws overflows the grade column |
+| M4 · the third column fed `weightedClassGrade()`'s percentage (the round-0 M1, re-run because the figure check now reads the number line rather than the cell's text) | **2 red**: the figure check and the letter check |
+
+`grep -rn MUTATION` over `src/`, `tools/`, `index.html`, `sw.js` and `design/` afterwards finds only
+the existing prose mentions.
+
+**Full run on the corrected tree:** `1643 checks · 1643 passed · 0 failed · 0 skipped`, 52,318 lines,
+685s, exit 0, 2026-10-02, real clock. `CACHE` is `planbook-shell-v151`.
+
+---
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

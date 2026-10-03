@@ -1550,6 +1550,16 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
             if (parts.indexOf('.scores-grid-wrap') >= 0 && r.style.scrollPaddingLeft) {
               bag.padLeft = r.style.scrollPaddingLeft; bag.padTop = r.style.scrollPaddingTop;
             }
+            /* WO-3.28's two: the third frozen column's offset and width, and the box's padding while
+               it is drawn. Exact matches again — '.scores-cat-avg-name' must not read as the column,
+               and the hover rule names the column only to keep its wash. */
+            if (parts.indexOf('.scores-cat-avg') >= 0 && r.style.left) bag.catLeft = r.style.left;
+            if (parts.indexOf('.scores-cat-avg') >= 0 && r.style.width) {
+              bag.catWidth = r.style.width; bag.catMin = r.style.minWidth;
+            }
+            if (parts.indexOf('.scores-grid-wrap.filtered') >= 0 && r.style.scrollPaddingLeft) {
+              bag.filteredPad = r.style.scrollPaddingLeft;
+            }
           });
           return out; })()`);
         check('the frozen name column\'s width and the frozen grade column\'s offset are the same number in the base rules and the same number again in the coarse block',
@@ -1585,6 +1595,27 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
             + frozen.base.gradeWidth + ' = ' + baseEdge + 'px :: coarse: padding '
             + frozen.coarse.padLeft + ' against ' + frozen.coarse.nameWidth + ' + ' + cGradeW
             + ' = ' + coarseEdge + 'px');
+
+        /*
+          AND THE TWO NUMBERS WO-3.28 TIED TO THEM: the category average's `left` is where the frozen
+          pair ends (name + grade), and the box's padding while that column is drawn (`.filtered`) is
+          that plus the column's own width — base against base and coarse against coarse, the coarse
+          width taken from the base rule unless the block restates it. Read as sums of the declared
+          numbers, like the check above, so a drift in any one goes red and a coherent change does not.
+          The driven half — a real Shift+Tab, ← and Enter with a pill on — is further down.
+        */
+        const cCatW = frozen.coarse.catWidth || frozen.base.catWidth;
+        const cCatMin = frozen.coarse.catMin || frozen.base.catMin;
+        check('and the third frozen column a category pill adds starts where the frozen pair ends, and the box\'s filtered scroll-padding-left is where it ends — name + grade, and name + grade + its own width — in the base rules and again in the coarse block (WO-3.28)',
+          frozen.sheet && !!frozen.base.catLeft && !!frozen.coarse.catLeft
+            && !!frozen.base.filteredPad && !!frozen.coarse.filteredPad
+            && frozen.base.catWidth === frozen.base.catMin && cCatW === cCatMin
+            && px(frozen.base.catLeft) === baseEdge && px(frozen.coarse.catLeft) === coarseEdge
+            && px(frozen.base.filteredPad) === baseEdge + px(frozen.base.catWidth)
+            && px(frozen.coarse.filteredPad) === coarseEdge + px(cCatW),
+          'base: left ' + frozen.base.catLeft + ', padding ' + frozen.base.filteredPad + ' against '
+            + baseEdge + ' + ' + frozen.base.catWidth + ' :: coarse: left ' + frozen.coarse.catLeft
+            + ', padding ' + frozen.coarse.filteredPad + ' against ' + coarseEdge + ' + ' + cCatW);
 
         /*
           AND THE SAME PAIR AS A MEASUREMENT, with the grid scrolled sideways — which is the defect
@@ -1639,7 +1670,10 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           var heads = Array.prototype.slice.call(document.querySelectorAll('#scoresHead th'));
           var name = document.querySelector('#scoresHead th.scores-name');
           var grade = document.querySelector('#scoresHead th.scores-grade');
-          var gb = grade ? grade.getBoundingClientRect() : null;
+          /* WO-3.28: while a category pill is on, the frozen edge is the category average's right
+             edge rather than the grade's, and that column is frozen like the other two. */
+          var cat = document.querySelector('#scoresHead th.scores-cat-avg');
+          var gb = (cat || grade) ? (cat || grade).getBoundingClientRect() : null;
           return { top: r.top + wrap.clientTop, left: r.left + wrap.clientLeft,
             bottom: r.bottom, outerTop: r.top,
             frozenRight: gb ? gb.right : NaN, headBottom: name ? name.getBoundingClientRect().bottom : NaN,
@@ -1649,7 +1683,8 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
               return { top: Math.round(b.top * 100) / 100, left: Math.round(b.left * 100) / 100,
                 right: Math.round(b.right * 100) / 100,
                 frozen: th.classList.contains('scores-name') ? 'name'
-                  : (th.classList.contains('scores-grade') ? 'grade' : '') }; }) }; })()`;
+                  : (th.classList.contains('scores-grade') ? 'grade'
+                    : (th.classList.contains('scores-cat-avg') ? 'cat' : '')) }; }) }; })()`;
         const scrollBox = (left, top) => evalJs(`(function(){
           var wrap = document.getElementById('scoresGridWrap');
           wrap.scrollLeft = ${left}; wrap.scrollTop = ${top}; return 1; })()`);
@@ -1691,8 +1726,18 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           await scrollBox(100000, 0);
           await new Promise((r) => setTimeout(r, 120));
           const parked = await evalJs(BOX);
-          const under = parked.heads.filter((x) => !x.frozen)
-            .map((x, i) => ({ i, left: x.left })).filter((x) => x.left < parked.frozenRight - 1);
+          /* "Under the frozen columns" is asked of the FIELD in row s05, not of the column head,
+             since WO-3.28. The head's left edge is the column's, and the field sits ~20px inside it,
+             so a column whose head is barely under the edge can have its caret already in view —
+             and choosing that one as the target made the check pass with the padding deleted, which
+             WO-3.28's mutation round found on the coarse pointer with a third frozen column. The
+             target is now a cell a teacher genuinely cannot see. */
+          const fieldLefts = await evalJs(`(function(){
+            return ${JSON.stringify(cols)}.map(function(a){
+              var e = document.querySelector('#scoresBody [data-score-cell="' + a + '"][data-score-student="wo35-s05"]');
+              return e ? Math.round(e.getBoundingClientRect().left * 100) / 100 : NaN; }); })()`);
+          const under = fieldLefts.map((left, i) => ({ i, left }))
+            .filter((x) => x.left < parked.frozenRight - 1);
           const target = under.length ? under[under.length - 1].i : -1;
           out.parked = { scrollLeft: parked.scrollLeft, maxLeft: parked.maxLeft,
             frozenRight: parked.frozenRight, under: under.length, target: cols[target] };
@@ -1773,6 +1818,54 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           !!fd1.ok && fd1.ok.arrowLeft, JSON.stringify({ parked: fd1.parked, arrowLeft: fd1.arrowLeft }));
         check('and a real Enter down into a row sitting under the stuck head leaves that cell\'s top at or below the head\'s bottom — fine pointer (WO-3.27)',
           !!fd1.ok && fd1.ok.enter, JSON.stringify(fd1.enter));
+
+        /*
+          ── WO-3.28: THE SAME THREE MOVES WITH A CATEGORY PILL ON — THREE FROZEN COLUMNS ──
+
+          WO-3.28's third Acceptance line is this check re-run, not a new geometry: a category pill
+          puts that category's average beside the grade as a third sticky column, the frozen edge
+          moves 84px right, and `.scores-grid-wrap.filtered` widens the padding to match. focusDefect()
+          above is unchanged except that BOX now reads the frozen edge off the category average's head
+          when there is one, so "clear of the frozen columns" means clear of all three.
+
+          Tests is the pill, because it holds eight of the ten columns and so still overflows the box
+          sideways. The fine half is measured at 1024 wide rather than this block's 1200: eight
+          columns plus 358px of frozen edge is within a few pixels of the box at 1200, and a box that
+          does not scroll sideways has no cell under the frozen columns to move into — a check that
+          cannot fail. The pill is tapped through the real control and put back to All afterwards.
+        */
+        const withPill = async () => {
+          await clickSel('#scoresCategories [data-scores-category="wo35-tests"]');
+          await new Promise((r) => setTimeout(r, 200));
+          const on = await evalJs(`(function(){
+            var w = document.getElementById('scoresGridWrap');
+            return { filtered: w.classList.contains('filtered'),
+              cat: !!document.querySelector('#scoresHead th.scores-cat-avg'),
+              cols: document.querySelectorAll('#scoresHead th[data-score-col]').length,
+              pad: getComputedStyle(w).scrollPaddingLeft,
+              overflow: w.scrollWidth - w.clientWidth }; })()`);
+          const fd = await focusDefect();
+          await scrollBox(0, 0);
+          await clickSel('#scoresCategories [data-scores-category=""]');
+          await new Promise((r) => setTimeout(r, 200));
+          return { on, fd };
+        };
+        await send('Emulation.setDeviceMetricsOverride',
+          { width: 1024, height: 768, deviceScaleFactor: 1, mobile: false });
+        await new Promise((r) => setTimeout(r, 300));
+        const pf = await withPill();
+        await send('Emulation.setDeviceMetricsOverride',
+          { width: 1200, height: 900, deviceScaleFactor: 1, mobile: false });
+        await new Promise((r) => setTimeout(r, 300));
+        const pfOn = pf.on.filtered && pf.on.cat && pf.on.cols === 8 && pf.on.overflow > 0;
+        check('with the Tests pill on, a real Shift+Tab into a cell whose column sits under the three frozen columns, at full right scroll, scrolls it clear of the category average\'s right edge — fine pointer (WO-3.28)',
+          pfOn && !!pf.fd.ok && pf.fd.ok.shiftTab,
+          JSON.stringify({ on: pf.on, parked: pf.fd.parked, shiftTab: pf.fd.shiftTab }));
+        check('and a real ← with the caret at the start of the cell does the same with the pill on — fine pointer (WO-3.28)',
+          pfOn && !!pf.fd.ok && pf.fd.ok.arrowLeft,
+          JSON.stringify({ on: pf.on, parked: pf.fd.parked, arrowLeft: pf.fd.arrowLeft }));
+        check('and a real Enter down into a row under the stuck head leaves that cell\'s top at or below the head\'s bottom with the pill on — fine pointer (WO-3.28)',
+          pfOn && !!pf.fd.ok && pf.fd.ok.enter, JSON.stringify(pf.fd.enter));
 
         /*
           revealScoreColumn() INSIDE THE BOX, FROM THE WORST PLACE IT CAN START (WO-3.27, Acceptance
@@ -1943,6 +2036,18 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           !!fd2.ok && fd2.ok.arrowLeft, JSON.stringify({ parked: fd2.parked, arrowLeft: fd2.arrowLeft }));
         check('and a real Enter down into a row under the stuck head leaves that cell\'s top at or below the head\'s bottom — coarse pointer (WO-3.27)',
           !!fd2.ok && fd2.ok.enter, JSON.stringify(fd2.enter));
+        /* WO-3.28 again on the coarse pointer: 168 + 84 + 84, the filtered padding at 336. The
+           viewport is already 1024 here, where eight coarse columns overflow by a wide margin. */
+        const pc = await withPill();
+        const pcOn = pc.on.filtered && pc.on.cat && pc.on.cols === 8 && pc.on.overflow > 0;
+        check('with the Tests pill on, a real Shift+Tab into a cell under the three frozen columns scrolls it clear of them — coarse pointer (WO-3.28)',
+          pcOn && !!pc.fd.ok && pc.fd.ok.shiftTab,
+          JSON.stringify({ on: pc.on, parked: pc.fd.parked, shiftTab: pc.fd.shiftTab }));
+        check('and a real ← with the caret at the start of the cell does the same with the pill on — coarse pointer (WO-3.28)',
+          pcOn && !!pc.fd.ok && pc.fd.ok.arrowLeft,
+          JSON.stringify({ on: pc.on, parked: pc.fd.parked, arrowLeft: pc.fd.arrowLeft }));
+        check('and a real Enter down into a row under the stuck head leaves that cell\'s top at or below the head\'s bottom with the pill on — coarse pointer (WO-3.28)',
+          pcOn && !!pc.fd.ok && pc.fd.ok.enter, JSON.stringify(pc.fd.enter));
         await scrollBox(0, 0);
 
         /*

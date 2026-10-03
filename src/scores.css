@@ -124,9 +124,13 @@
    name — and a teacher who has learned one box has learned both. `.search-box` inside it is
    src/shell.css's, worn as shipped and restyled from nowhere; its input carries its own 44px in that
    sheet's coarse block, which is where the floor belongs (the WO-1.2 `.search-box` lesson: the
-   height goes on the <input>, not on a wrapper around it). WO-3.28's `.scores-filter-pills` is the
-   other half of that drawn section and is not here yet. */
+   height goes on the <input>, not on a wrapper around it). */
 .scores-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+/* THE CATEGORY PILLS (WO-3.28), the other half of the drawn section: `.attendance-pills` value for
+   value, holding `.pill`s worn as shipped from src/shell.css and restyled from nowhere — their 44px
+   is that sheet's coarse block, measured on this screen by tools/verify/score-search.mjs. They sit
+   between the box and the count; index.html says why that is not the work order's order. */
+.scores-filter-pills { display: flex; flex-wrap: wrap; gap: 5px; }
 /* How many rows the search left, said in words, because a grid of three students reads as a class
    of three. `.attendance-sort-label`'s voice. Drawn only while the box holds something. */
 .scores-found {
@@ -238,6 +242,13 @@
      looks the same. */
   box-shadow: 0 0 0 1px #eef0f4; border-radius: 8px;
 }
+/* WITH A CATEGORY PICKED (WO-3.28) THE FROZEN EDGE IS A COLUMN FURTHER RIGHT — the category average
+   sits beside the grade — so the padding that keeps a focused cell clear of it moves with it: the
+   frozen pair's 274 plus the third column's 84. `.filtered` is put on and taken off by
+   src/scores.js's renderScores() in the same pass that draws or removes that column. It is one of
+   the two numbers WO-3.28 added to the ones tied to the frozen widths; see THE TWO FROZEN COLUMNS
+   below. */
+.scores-grid-wrap.filtered { scroll-padding-left: 358px; }
 .scores-grid { width: 100%; border-collapse: separate; border-spacing: 0; }
 
 /* `separate` rather than `collapse`, which is the ONE place this sheet departs from
@@ -303,6 +314,12 @@
    is scrolled clear of it. Change one and change the others in the same edit, in BOTH blocks: the
    coarse block narrows the name column, moves the offset and moves the padding with it.
 
+   SIX SINCE WO-3.28, which adds a third frozen column while a category pill is on: `.scores-cat-avg`'s
+   `left` is the pair's width (name + grade), and `.scores-grid-wrap.filtered`'s `scroll-padding-left`
+   is that plus the third column's own 84. Both have coarse twins. tools/verify/score-grid.mjs reads
+   the two new declarations against the four old ones, base and coarse, beside the check that reads
+   the padding — and then re-runs WO-3.27's driven Shift+Tab, ← and Enter with a pill on.
+
    THE PAIR IS ASSERTED FOUR WAYS in tools/verify/score-grid.mjs (moved there out of
    tools/verify-shell.mjs by WO-1.26), so none of the four can drift in a later edit. Two checks read
    the DECLARATIONS out of this sheet, base against base and coarse against coarse: one that the
@@ -332,10 +349,80 @@
      reads as a rendering fault. */
   border-right: 1.5px solid #e0e4ea;
 }
+/* THE WIDTHS ARE ENFORCED, NOT HOPED (WO-3.28, correction round 1, 2026-10-02). In an auto-layout
+   table a cell's `width` is a FLOOR: the column takes the widest thing any of its cells holds, and
+   the declared number only says it will not be narrower. Every number THE TWO FROZEN COLUMNS above
+   ties together assumes the frozen columns are exactly their declared widths, so a frozen cell whose
+   contents outgrow it pushes the next frozen column's natural position past its sticky `left`, and
+   that column then TRAVELS the difference with a horizontal scroll before it sticks. That is what the
+   owner saw on the iPad at v150: the category average drifted a few pixels and then held, while the
+   name and the grade held from the start — which, since a grade that held means the name did not
+   grow, puts the extra width in the grade column (84px border-box, ~66px of it for "100.00%" at
+   15px/800 under the coarse pointer). This headless Edge's Segoe UI fits in that; iPadOS's system
+   face is wider. The harness reproduces the mechanism in any face by planting what no face fits — a
+   long surname widened the name column to 286px, a long category name the third column to 247px.
+
+   So each frozen cell's CHILDREN contribute nothing to its column's width — `width: 0` is the
+   intrinsic contribution, and `min-width: 100%` is a cyclic percentage that resolves against zero
+   while the table sizes its columns and against the cell once it has — and the column is its
+   declared width in every face, with the contents laid out inside it. A figure wider than its cell
+   spills into the cell's padding rather than moving the frozen edge (and is never clipped: a number
+   with its last digit cut off is worse than one that overhangs). Text that is not a figure trails off
+   instead: the student's name (`.scores-name-btn`) and the category's name (`.scores-cat-avg-name`).
+   src/scores.js puts the two plain heads' words in a span so this reaches them too.
+   tools/verify/score-search.mjs measures every frozen cell against its declared width and its sticky
+   `left`, with those widest contents planted, on both pointers. */
+.scores-grid .scores-name > *,
+.scores-grid .scores-grade > *,
+.scores-grid .scores-cat-avg > * { display: block; width: 0; min-width: 100%; }
 .scores-grid thead th.scores-name,
 .scores-grid thead th.scores-grade { z-index: 3; }
 .scores-grid tbody tr:hover .scores-name,
 .scores-grid tbody tr:hover .scores-grade { background: #fafbfc; }
+
+/* THE CATEGORY AVERAGE: A THIRD FROZEN COLUMN (WO-3.28), lifted from
+   design/mockups/proposed-scores.css § SCORE SCROLL BOX and drawn only while a category pill is on.
+   The overall grade stays where it is and keeps its meaning — the owner's ruling before the drawing
+   was made — and this sits beside it, naming its category in its own head every time. Every figure
+   in it is categoryPercentage()'s from src/grade-engine.js, and each carries the letter
+   letterFromPercentage() gives for it, under it, as the grade beside it does — the owner's ruling
+   at the 👤 reading on 2026-10-02, which reversed the drawing's "a percent and no letter". The
+   CLASS's category average on the summary line stays letterless, for the reason src/scores.js's
+   classAverage() gives about a class.
+
+   THE WASH IS WHAT KEEPS IT FROM READING AS A SECOND OVERALL GRADE at a glance, and its right edge
+   is the frozen edge now — the 1.5px line `.scores-grade` draws for the same reason. Its `left` is
+   the frozen pair's width, 190 + 84, and it moves with the name column under the coarse pointer —
+   one of the six tied numbers THE TWO FROZEN COLUMNS above lists. It stays in every orientation,
+   iPad portrait included (Open 8, the owner). */
+.scores-cat-avg {
+  position: sticky; left: 274px; z-index: 2;
+  width: 84px; min-width: 84px;
+  background: #f5f7fb;
+  border-right: 1.5px solid #e0e4ea;
+  font-size: 14px; font-weight: 800; color: #4a5568;
+  font-variant-numeric: tabular-nums;
+}
+.scores-grid-wrap th.scores-cat-avg { z-index: 3; background: #f5f7fb; }
+/* The one line here that is not in the drawing: a hovered row would otherwise take this cell's wash
+   away with `.scores-grid tbody tr:hover td`, and the wash is the thing that says the column is not
+   the grade. The drawing links this sheet and loses it on hover too; it simply never showed a
+   pointer over a row. */
+.scores-grid tbody tr:hover .scores-cat-avg { background: #f5f7fb; }
+/* The figure and its letter are the grade cell's own `.scores-grade-num` and `.scores-grade-letter`
+   since correction round 1, so the two columns' numbers share a line and their letters the next. The
+   figure keeps this column's quieter ink, which is the drawing's and part of what keeps it from
+   reading as a second overall grade. */
+.scores-cat-avg .scores-grade-num { color: #4a5568; }
+/* `overflow: hidden` and the ellipsis are correction round 1's: a category name is free text, and
+   under THE WIDTHS ARE ENFORCED a long one trails off inside the 84px head rather than widening the
+   column. The whole name is on the pressed pill and in the head's tooltip. */
+.scores-cat-avg-name {
+  display: block; font-size: 11px; font-weight: 700; color: #1a1a2e;
+  text-transform: none; letter-spacing: 0;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.scores-cat-avg-sub { display: block; margin-top: 2px; }
 
 /* THE NAME AS A DOOR (WO-3.7) — the way into that student's grade detail, which owns no navigation
    target of its own and is reached from a name. It is `src/attendance.css`'s
@@ -681,6 +768,16 @@
      is not there — harmless to look at and wrong to keep, because it is the fourth number in the
      pair and the check counts it. The top grows with the head's coarse type sizes. */
   .scores-grid-wrap { scroll-padding: 104px 0 0 252px; }
+  /* And the third column with them (WO-3.28): it starts where the coarse pair ends, 168 + 84, and
+     the filtered padding is that plus its own 84. */
+  .scores-grid-wrap.filtered { scroll-padding-left: 336px; }
+  .scores-cat-avg { left: 252px; font-size: 15px; }
+  /* Its head's two lines are labels, not targets, and take the step up the assignment heads beside
+     them take (`.scores-col-name` and `.scores-col-pts` below), so the third head does not read a
+     size smaller than its neighbours on the iPad. Not in the drawing, whose coarse block steps only
+     the figure; named here for the reason this block names every label it re-states. */
+  .scores-cat-avg-name { font-size: 12px; }
+  .scores-cat-avg-sub { font-size: 11px; }
 
   .scores-keys-btn, .scores-flag-btn { min-height: 44px; }
   /* THE NAME DOOR AT 44px (WO-3.7). It takes the whole cell, so the 44 comes from the button
@@ -689,8 +786,12 @@
      opens a conference screen. Full width for the same reason `.scores-input` widens — a target you
      can miss sideways is a target. `line-height` rather than flex centring, because a flex container
      makes the label an anonymous item and `text-overflow: ellipsis` stops applying to it — a long
-     surname would then spill out of the frozen column instead of trailing off. */
-  .scores-name-btn { min-height: 44px; min-width: 44px; line-height: 44px; }
+     surname would then spill out of the frozen column instead of trailing off.
+     NO `min-width: 44px` SINCE WO-3.28's CORRECTION ROUND: it stood here until 2026-10-02 and is now
+     THE WIDTHS ARE ENFORCED's `min-width: 100%`, which beats it on specificity — the button is the
+     frozen column's whole 168px, so its width floor is the column's and a 44 here would be a
+     declaration that never applies. The height is still this block's. */
+  .scores-name-btn { min-height: 44px; line-height: 44px; }
   /* The four flag buttons are the ones a thumb reaches for on this screen, and a mis-tap here is a
      score marked missing. 10px between them, the widening `.category-row-actions` and
      `.roster-row-actions` both took, and for the same reason. */
@@ -702,6 +803,9 @@
      the count's type, as `.attendance-toolbar` and `.attendance-sort-label` grow one screen over. */
   .scores-toolbar { gap: 10px; }
   .scores-found { font-size: 12px; }
+  /* The category pills are `.pill`, at 44px in src/shell.css's own coarse block; what grows here is
+     the gap between them, as `.attendance-pills` grows one screen over. */
+  .scores-filter-pills { gap: 6px; }
   .scores-summary { font-size: 13px; }
   .scores-keys { font-size: 13px; }
   .scores-key kbd { min-width: 26px; height: 26px; font-size: 12px; }

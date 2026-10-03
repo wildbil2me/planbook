@@ -35,9 +35,9 @@
    WHERE IT SPLITS ON LIFT:
 
      § SCORE TOOLBAR      →  src/scores.css   (WO-3.29 lifted 2026-10-02 · its pills,
-                                               WO-3.28, still drawn)
+                                               WO-3.28, lifted 2026-10-02)
      § SCORE SCROLL BOX   →  src/scores.css   (WO-3.27 lifted 2026-10-01 · the category
-                                               average, WO-3.28 — not yet lifted)
+                                               average, WO-3.28, lifted 2026-10-02)
 
    § SCORE SCROLL BOX WENT ACROSS IN HALF on 2026-10-01, which is the honest reading of a
    section two work orders share. WO-3.27 took the box and the stuck head: `.boxed` folded
@@ -53,10 +53,34 @@
    padding fight, and a Shift+Tab at full right scroll can snap straight back to where it
    started with the caret under the frozen pair. The first frame on score-tools.html
    wears the shipped sheet, so it no longer shows the bug it was drawn to reproduce.
+
+   AND THE OTHER HALF WENT ACROSS ON 2026-10-02 (WO-3.28), so both sections have now
+   landed and neither banner carries the token. `.scores-cat-avg`, `-name` and `-sub`,
+   `.scores-grid-wrap.filtered` and `.scores-filter-pills` are in src/scores.css value for
+   value, coarse lines included; `.filtered` stays a state word on the box, put on by
+   src/scores.js while a pill is on. TWO THINGS THE BUILD CHANGED, each argued where it
+   stands: a hovered row keeps the category average's wash (`tr:hover` would otherwise take
+   it, and the wash is what says the column is not the grade), and the pills sit BETWEEN
+   the box and the count — this drawing's laptop frames, not the 768 frame or WO-3.28's
+   text — because the count appears only while the box holds text and carries
+   `margin-left: auto`, so pills after it would jump along the row at the first letter
+   typed. index.html says so at the toolbar. The drawn count of assignments (`5 of 12
+   assignments`) was not built: no Deliverable names it, and the pill that is on already
+   says which columns are showing.
+
+   AND A CORRECTION ROUND THE SAME DAY (WO-3.28, 2026-10-02, after the owner's iPad
+   reading failed at v150), which changed two more things in src/scores.css and none
+   of this drawing's values. Each student's category figure carries its letter
+   under it, the owner's ruling, reversing the "no letter" drawn below. And the
+   frozen widths are now ENFORCED rather than declared as floors: in an auto-layout
+   table `width: 84px` is a minimum, the grade column grew past it in iPadOS's wider
+   face, and the category average travelled the difference before it stuck. Every
+   frozen cell's children contribute no width now (`width: 0; min-width: 100%`), so
+   the column is its declared width in any face; long names trail off instead.
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SCORE TOOLBAR   →  src/scores.css   (WO-3.29 lifted 2026-10-02 · its pills, WO-3.28)
+   § SCORE TOOLBAR   →  src/scores.css   (WO-3.29 lifted 2026-10-02 · its pills, WO-3.28, lifted 2026-10-02)
 
    The attendance screen's toolbar, value for value — `.attendance-toolbar` and
    `.attendance-pills` in src/attendance.css — because it is the same question
@@ -75,6 +99,12 @@
    `.scores-filter-pills` is no longer collision-checked until WO-3.28 lifts it —
    no src/ sheet styles it today. The build placed the count straight after the
    search box, and WO-3.28's pills go after the count.
+
+   WO-3.28 LIFTED `.scores-filter-pills` on 2026-10-02, coarse gap included, so the
+   paragraph above is the record of a half-lifted section rather than the state of one —
+   and the collision check has nothing left here to miss. Its last sentence did not
+   survive the build: the pills went in BEFORE the count, in this drawing's laptop order,
+   for the reason the file header gives.
    ══════════════════════════════════════════════════════════════════════════════ */
 .scores-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
 .scores-filter-pills { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -87,7 +117,7 @@
 .scores-found b { color: #1a1a2e; font-variant-numeric: tabular-nums; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SCORE SCROLL BOX   →  src/scores.css   (WO-3.27 lifted 2026-10-01 · WO-3.28 — not yet lifted)
+   § SCORE SCROLL BOX   →  src/scores.css   (WO-3.27 lifted 2026-10-01 · WO-3.28 lifted 2026-10-02)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* THE BOX. A height, both axes, and the frozen edges declared to the browser.
@@ -132,9 +162,13 @@
 
 /* THE CATEGORY AVERAGE: a third frozen column, drawn only while a category pill
    is on. The overall grade stays where it is (the owner, 2026-10-01); this sits
-   beside it and says which category it is, in its head, every time. A percent
-   and no letter, for the reason src/scores.js gives about the class average: a
-   category does not get a report card, and a letter would read as one.
+   beside it and says which category it is, in its head, every time. Drawn as a
+   percent and no letter, on the class average's reasoning that a category does
+   not get a report card. SUPERSEDED 2026-10-02 by the owner at the 👤 reading:
+   the built column puts each student's letter under the figure, as the grade
+   does, and only the summary's class figure stays letterless (src/scores.js,
+   categoryAverageContent()). The frames on score-tools.html still show the
+   drawing's letterless column.
 
    The wash is what keeps it from reading as a second overall grade at a glance.
    Its right edge is the frozen edge now, the 1.5px line `.scores-grade` draws for

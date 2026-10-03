@@ -2473,7 +2473,7 @@ long-titled column included, so the Traps' script fallback is not owed.)*
 
 ## WO-3.28 — the score grid narrows to one category
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.27 — the box whose scroll padding a third frozen column widens; WO-3.29 — the toolbar this adds its pills to
+**Ship** — · **Status** ✅ DONE — 2026-10-02 · **Size** M · **Depends on** WO-3.27 — the box whose scroll padding a third frozen column widens; WO-3.29 — the toolbar this adds its pills to
 **Closes roadmap** *(no box. Owner-requested, 2026-10-01.)*
 
 **Booked 2026-10-01**, owner-directed, from the same sitting as WO-3.27, and **cut in two on
@@ -2493,6 +2493,9 @@ agreements).
   scroll padding left pending in § SCORE SCROLL BOX, all lifted into `src/scores.css`. WO-3.29 lifts
   the rest of the toolbar first; the pills go into it after the search box and its count. Amend the
   drawing's banners in the same sitting.
+  *(**Built between the box and its count, the owner's ruling 2026-10-02.** The count appears only
+  while there is text, so pills placed after it would shift along the row at the first keystroke.
+  Four of the drawing's five toolbar frames already drew it this way.)*
 - **One category at a time, plus *All***: **Open 4**. A single category's average is what gets
   compared to the SIS. Pills carry names only (**Open 6**) and wear `.pill` as shipped. A pill
   appears for each category with at least one assignment in the open term, because a pill that
@@ -2500,8 +2503,13 @@ agreements).
   outside the category are **not rendered**, so Tab, the arrows and Enter cannot put a caret in a
   column nobody can see.
 - **A third frozen column while a category is picked: that category's average**, from
-  `categoryPercentage()` in `src/grade-engine.js` and from nowhere else. A percentage and no letter,
-  for the reason `classAverage()` gives. The overall grade does not move and does not change meaning:
+  `categoryPercentage()` in `src/grade-engine.js` and from nowhere else. ~~A percentage and no letter,
+  for the reason `classAverage()` gives.~~ **Each student's figure now carries its letter under it,
+  as the overall grade does — the owner's ruling, 2026-10-02, at the 👤 reading** (see the Acceptance
+  line it added). The letter comes from `letterFromPercentage()` and nowhere else. The two columns read
+  as a pair: **the numbers share one line and the letters share the next**, so a row reads across
+  rather than stepping. The summary's category class average stays letterless, for the reason
+  `classAverage()` still gives about a class. The overall grade does not move and does not change meaning:
   **the owner's ruling before drawing**. The column stays in every orientation, iPad portrait
   included (**Open 8**). The box's left `scroll-padding` widens to cover it (358px, 336px coarse).
 - **The summary line gains the category's class average** while one is picked (**Open 5**). Every
@@ -2515,21 +2523,39 @@ agreements).
   the combination.
 
 **Acceptance**
-- [ ] With a category picked, only its columns are in the DOM. Tab, `ArrowRight` and Enter stop at the
+- [x] With a category picked, only its columns are in the DOM. Tab, `ArrowRight` and Enter stop at the
       last shown column and the last shown row, with the edge sentence the grid already speaks.
-- [ ] The third column's figure for every student equals `categoryPercentage()` for that student and
+- [x] The third column's figure for every student equals `categoryPercentage()` for that student and
       category, and the summary's category average equals the same figure averaged over the class.
       **Mutation-proved**: a third column fed any other arithmetic goes red.
-- [ ] With a category picked, a focused cell is never under the three frozen columns. This is
+- [x] With a category picked, a focused cell is never under the three frozen columns. This is
       WO-3.27's driven check re-run with the filter on, both pointers.
-- [ ] The class average, the blank count and every overall grade are byte-identical with the filter
+- [x] The class average, the blank count and every overall grade are byte-identical with the filter
       on and off.
-- [ ] With a name typed and a category picked, the grid shows exactly the matching rows and the
+- [x] With a name typed and a category picked, the grid shows exactly the matching rows and the
       category's columns. Clearing either one restores its own axis and leaves the other narrowed.
-- [ ] Leaving the screen and coming back shows *All*, and no `planbook_` key was written by the pills.
-- [ ] The pills measure ≥44px under the coarse pointer.
-- [ ] 👤 On the iPad in portrait, with a category picked and a name typed, the three frozen columns
+- [x] Leaving the screen and coming back shows *All*, and no `planbook_` key was written by the pills.
+- [x] The pills measure ≥44px under the coarse pointer.
+- [x] 👤 On the iPad in portrait, with a category picked and a name typed, the three frozen columns
       leave a usable grid under a thumb.
+      *(**Failed 2026-10-02, the owner, iPad at v150:** the category-average column is not frozen. It
+      drifts a few pixels with a horizontal scroll before holding, and only on the iPad; the name and
+      grade columns hold. A likely cause, not yet measured: in an auto-layout table `width: 84px` is a
+      floor, so if the grade column renders wider than 84 under iPadOS's font, the third column's
+      natural position sits past its `left: 252px` and it travels the difference before sticking.)*
+      *(**Passed 2026-10-02, the owner, iPad at v151**, after correction round 1 pinned each frozen
+      column to its declared width. The cause guessed above was the right one: widening every glyph
+      by 4px reproduced the drift on the desk, a 106px grade column against its declared 84.)*
+- [x] Every frozen column's rendered left edge equals its sticky `left` at `scrollLeft` 0, and stays
+      there under a full horizontal scroll, under both pointers, with the widest figures the columns
+      can hold (`100.00%`, the longest category name in the head). A column wider than its declared
+      width goes red here rather than on the iPad. *(Added 2026-10-02 from the failed reading above.)*
+- [x] With a category picked, each student's category figure has the letter `letterFromPercentage()`
+      gives for it, on its own line under the number, and a student with no figure shows the em dash
+      and no letter. In every row the category number sits on the overall grade number's line and
+      its letter on the overall letter's line. The summary's category average has no letter.
+      **Mutation-proved**: a letter banded from the overall grade instead of the category goes red.
+      *(Added 2026-10-02, owner-directed.)*
 
 **Traps** — **Do not hide columns with CSS.** The key handlers in `src/scores.js` can still walk into
 a `display: none` cell, and a caret in a hidden field is the defect WO-3.27 exists to remove. **Do not

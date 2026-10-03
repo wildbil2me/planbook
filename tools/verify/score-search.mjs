@@ -106,19 +106,46 @@ console.log('\n--- the score grid narrows by student (WO-3.29) ---');
     s.update(function(doc){
       doc.classes.push({ id:'c_wo329', name:'WO-3.29 Search', archived:false,
         terms:[{ id:'tm_wo329', label:'WO-3.29 Term', start:'', end:'' }],
-        categories:[{ id:'wo329-cat', name:'Work', weight:100 }],
+        /* THREE CATEGORIES SINCE WO-3.28, which shares this fixture for its combination checks.
+           Work and Quizzes each hold two assignments; Homework holds none, so it must get NO pill
+           (a pill that empties the grid is a dead control). Weighted 60 / 40 / 0 so the weights
+           still total 100 and every grade below is a real one, and so a Quizzes average is never
+           the overall grade by accident. */
+        categories:[{ id:'wo329-cat', name:'Work', weight:60 },
+                    { id:'wo329-quiz', name:'Quizzes', weight:40 },
+                    { id:'wo329-hw', name:'Homework', weight:0 }],
         roster: people.map(function(p){ return p.id; }).reverse() });
       people.forEach(function(p){ doc.students.push(p); });
       doc.assignments.push({ id:'wo329-a1', classId:'c_wo329', termId:'tm_wo329',
         categoryId:'wo329-cat', name:'Essay', points:100, assigned:'', due:'' });
       doc.assignments.push({ id:'wo329-a2', classId:'c_wo329', termId:'tm_wo329',
-        categoryId:'wo329-cat', name:'Quiz', points:20, assigned:'', due:'' });
+        categoryId:'wo329-quiz', name:'Quiz', points:20, assigned:'', due:'' });
+      doc.assignments.push({ id:'wo329-a3', classId:'c_wo329', termId:'tm_wo329',
+        categoryId:'wo329-cat', name:'Essay two', points:50, assigned:'', due:'' });
+      doc.assignments.push({ id:'wo329-a4', classId:'c_wo329', termId:'tm_wo329',
+        categoryId:'wo329-quiz', name:'Quiz two', points:10, assigned:'', due:'' });
+      /* Filed under a category this class does not have — reachable from a restored document. It
+         belongs to no pill and must show under All only. */
+      doc.assignments.push({ id:'wo329-a5', classId:'c_wo329', termId:'tm_wo329',
+        categoryId:'wo329-gone', name:'Loose sheet', points:10, assigned:'', due:'' });
       doc.scores = doc.scores || {};
-      /* Different numbers per student, and Reed left blank on both, so the summary has a class
-         average AND a blank count to hold still while the rows narrow. */
+      /* Different numbers per student, and Reed left blank on everything, so the summary has a class
+         average AND a blank count to hold still while the rows narrow — and so Reed has no Quizzes
+         figure at all, which is the student the category average has to leave out.
+
+         THE QUIZ CELLS ARE CHOSEN TO TELL ARITHMETICS APART (WO-3.28's mutation proof). Castillo's
+         second quiz is MISSING (0 out of the full 10) and Quinn's is EXCUSED (out of the
+         grade entirely), so the engine's per-student figure differs from a mean of the typed
+         numbers; the students have different possible points, so the mean of their figures differs
+         from one pooled earned/possible across the class; and 60/40 keeps every Quizzes figure off
+         the overall grade beside it. */
       doc.scores['wo329-a1'] = { 'wo329-s1':{ v:90 }, 'wo329-s2':{ v:80 }, 'wo329-s3':{ v:70 },
         'wo329-s5':{ v:60 }, 'wo329-s6':{ v:95 } };
       doc.scores['wo329-a2'] = { 'wo329-s2':{ v:15 }, 'wo329-s5':{ v:10 }, 'wo329-s6':{ v:19 } };
+      doc.scores['wo329-a3'] = { 'wo329-s1':{ v:40 }, 'wo329-s2':{ v:45 }, 'wo329-s6':{ v:30 } };
+      doc.scores['wo329-a4'] = { 'wo329-s1':{ v:9 }, 'wo329-s2':{ v:null, flag:'missing' },
+        'wo329-s3':{ v:6 }, 'wo329-s5':{ v:null, flag:'excused' }, 'wo329-s6':{ v:7 } };
+      doc.scores['wo329-a5'] = { 'wo329-s6':{ v:8 } };
     });
     c.selectClass('c_wo329');
     return { ok:true, was: was };
@@ -312,6 +339,263 @@ console.log('\n--- the score grid narrows by student (WO-3.29) ---');
         + oursIn(storeBefore).length + ', after ' + oursIn(storeAfter).length
         + (ours(storeBefore) === ours(storeAfter) ? ', unchanged' : ' — CHANGED: ' + ours(storeAfter)));
 
+    /* ════════════ WO-3.28 — the same grid narrowed to one category, and the two filters together ════════════
+       This fixture is shared on purpose: WO-3.28 lands second, so it carries the checks for the
+       combination (its own Deliverables say so), and a second class planted for them would be a
+       second roster to keep in step with this one. The grid is back on its arrival state here — box
+       empty, every row — after the WO-3.29 line-6 round trip just above. */
+    const CATS = `(function(){
+      var host = document.getElementById('scoresCategories');
+      var pills = host ? Array.prototype.slice.call(host.querySelectorAll('[data-scores-category]')) : [];
+      var wrap = document.getElementById('scoresGridWrap');
+      var heads = Array.prototype.slice.call(document.querySelectorAll('#scoresHead th[data-score-col]'))
+        .map(function(th){ return th.getAttribute('data-score-col'); });
+      var cells = {};
+      Array.prototype.slice.call(document.querySelectorAll('[data-score-cell]')).forEach(function(i){
+        cells[i.getAttribute('data-score-cell')] = 1; });
+      var catHead = document.querySelector('#scoresHead th.scores-cat-avg');
+      var rows = Array.prototype.slice.call(document.querySelectorAll('#scoresBody tr[data-score-row]'));
+      var summary = document.getElementById('scoresSummary');
+      var catSum = summary ? summary.querySelector('[data-scores-cat-average]') : null;
+      /* The summary with the category's own figure (and the separator before it) taken out — what
+         is left is every whole-class figure on the line, compared as text with the pill off. */
+      var rest = '';
+      if (summary) {
+        var clone = summary.cloneNode(true);
+        var cs = clone.querySelector('[data-scores-cat-average]');
+        if (cs) { if (cs.previousSibling) cs.previousSibling.remove(); cs.remove(); }
+        rest = clone.textContent;
+      }
+      return {
+        hostHidden: !host || host.classList.contains('hidden'),
+        pills: pills.map(function(b){ return { id: b.getAttribute('data-scores-category'),
+          label: b.textContent, pressed: b.getAttribute('aria-pressed'),
+          active: b.classList.contains('active'), group: !!b.closest('[data-pill-group]') }; }),
+        heads: heads, cellCols: Object.keys(cells).sort(),
+        filtered: !!wrap && wrap.classList.contains('filtered'),
+        catHead: catHead ? catHead.textContent.replace(/\\s+/g, ' ').trim() : '',
+        /* The figure alone — the number line, or the em dash — since correction round 1 put a letter
+           under it; the letter and where both lines sit are read separately, in catLines. */
+        catCells: rows.map(function(r){ var c = r.querySelector('td.scores-cat-avg');
+          var f = c ? (c.querySelector('.scores-grade-num') || c.querySelector('.scores-grade-none')) : null;
+          return r.getAttribute('data-score-row') + '=' + (c ? (f ? f.textContent.trim() : '(empty)') : '(none)'); }),
+        catLines: rows.map(function(r){
+          var c = r.querySelector('td.scores-cat-avg'), g = r.querySelector('td.scores-grade');
+          function top(e){ return e ? Math.round(e.getBoundingClientRect().top * 100) / 100 : null; }
+          var cn = c ? c.querySelector('.scores-grade-num') : null, cl = c ? c.querySelector('.scores-grade-letter') : null;
+          var gn = g ? g.querySelector('.scores-grade-num') : null, gl = g ? g.querySelector('.scores-grade-letter') : null;
+          return { id: r.getAttribute('data-score-row'), none: !!(c && c.querySelector('.scores-grade-none')),
+            letter: cl ? cl.textContent : null, letters: c ? c.querySelectorAll('.scores-grade-letter').length : 0,
+            numTop: top(cn), letterTop: top(cl), gradeNumTop: top(gn), gradeLetterTop: top(gl),
+            gradeLetter: gl ? gl.textContent : null }; }),
+        rows: rows.map(function(r){ return r.getAttribute('data-score-row'); }),
+        grades: rows.map(function(r){ return r.getAttribute('data-score-row') + '='
+          + (r.querySelector('.scores-grade')||{}).textContent; }),
+        catSum: catSum ? catSum.textContent.replace(/\\s+/g, ' ').trim() : '',
+        catSumB: catSum ? (catSum.querySelector('b')||{}).textContent : '',
+        catSumLetter: catSum ? catSum.querySelectorAll('.scores-grade-letter').length : -1,
+        summaryRest: rest,
+        summary: summary ? summary.textContent : '',
+        headline: (document.getElementById('scoresHeadline')||{}).textContent || '',
+        box: (document.getElementById('scoresSearch')||{}).value,
+        said: (document.getElementById('srLive')||{}).textContent || ''
+      }; })()`;
+    const pick = async (id) => {
+      await clickSel('#scoresCategories [data-scores-category="' + id + '"]');
+      await new Promise(r => setTimeout(r, 150));
+      return evalJs(CATS);
+    };
+    const ALL5 = ['wo329-a1', 'wo329-a2', 'wo329-a3', 'wo329-a4', 'wo329-a5'];
+
+    const cAll = await evalJs(CATS);
+    check('WO-3.28: the pills are All and then one per category with work in the open term, names only — Work and Quizzes, and no pill for Homework, which has no assignment, nor for the work filed under no category; All is pressed, the strip is not a data-pill-group, and every column is drawn',
+      !cAll.hostHidden
+        && JSON.stringify(cAll.pills.map((p) => p.id)) === JSON.stringify(['', 'wo329-cat', 'wo329-quiz'])
+        && JSON.stringify(cAll.pills.map((p) => p.label)) === JSON.stringify(['All', 'Work', 'Quizzes'])
+        && cAll.pills[0].pressed === 'true' && cAll.pills[0].active
+        && cAll.pills.slice(1).every((p) => p.pressed === 'false' && !p.active)
+        && cAll.pills.every((p) => !p.group)
+        && JSON.stringify(cAll.heads) === JSON.stringify(ALL5) && !cAll.filtered && !cAll.catHead,
+      JSON.stringify({ pills: cAll.pills, heads: cAll.heads, filtered: cAll.filtered }));
+
+    /* ── WO-3.28 line 1: only the category's columns are in the DOM ── */
+    const cQuiz = await pick('wo329-quiz');
+    check('WO-3.28: with Quizzes picked, only its two columns are in the DOM — the head names exactly wo329-a2 and wo329-a4, no input anywhere on the page belongs to another assignment (the uncategorised one included), the third column\'s head names Quizzes, the box wears .filtered, and the pills moved aria-pressed with .active',
+      JSON.stringify(cQuiz.heads) === JSON.stringify(['wo329-a2', 'wo329-a4'])
+        && JSON.stringify(cQuiz.cellCols) === JSON.stringify(['wo329-a2', 'wo329-a4'])
+        && /^Quizzes\s*average$/i.test(cQuiz.catHead) && cQuiz.filtered
+        && cQuiz.pills.filter((p) => p.pressed === 'true').map((p) => p.id).join() === 'wo329-quiz'
+        && cQuiz.pills.filter((p) => p.active).map((p) => p.id).join() === 'wo329-quiz'
+        && /Quizzes only/.test(cQuiz.said),
+      JSON.stringify({ heads: cQuiz.heads, cellCols: cQuiz.cellCols, catHead: cQuiz.catHead,
+        filtered: cQuiz.filtered, pills: cQuiz.pills, said: cQuiz.said }));
+
+    /* ── WO-3.28 line 2: every figure in the third column is the engine's ──
+       The expected strings are computed IN THE PAGE from window.planbook.gradeEngine and formatted
+       the way src/scores.js formats a percentage (two places), so this asks "is the column the
+       engine's answer" and not "is it a number worked out here". The class figure is the mean of the
+       same per-student answers over the students who have one. The fixture's quiz cells are chosen
+       so that a pooled earned/possible across the class (66.00%), a mean that ignores the missing
+       and excused marks, and the overall grade are all different numbers from these. */
+    const engine = await evalJs(`(function(){
+      var d = window.planbook.store.getDoc(), g = window.planbook.gradeEngine;
+      var cls = d.classes.filter(function(c){ return c.id === 'c_wo329'; })[0];
+      var ids = ['wo329-s3','wo329-s2','wo329-s1','wo329-s5','wo329-s4','wo329-s6'];
+      var per = {}, figs = [];
+      ids.forEach(function(id){
+        var p = g.categoryPercentage(d, cls, 'tm_wo329', 'wo329-quiz', id);
+        per[id] = p === null ? '—' : Number(p).toFixed(2) + '%';
+        if (p !== null) figs.push(p); });
+      var mean = figs.length ? figs.reduce(function(a, b){ return a + b; }, 0) / figs.length : null;
+      return { per: per, mean: mean === null ? '—' : mean.toFixed(2) + '%', n: figs.length }; })()`);
+    const shownPer = {};
+    cQuiz.catCells.forEach((c) => { const i = c.indexOf('='); shownPer[c.slice(0, i)] = c.slice(i + 1); });
+    const perOk = cQuiz.rows.length === 6 && cQuiz.rows.every((id) => shownPer[id] === engine.per[id]);
+    check('WO-3.28: the third column\'s figure for every student equals categoryPercentage() for that student and category (Reed, with no quiz graded, gets the em dash), and the summary\'s Quizzes average is those figures averaged over the five students who have one',
+      perOk && engine.n === 5 && engine.per['wo329-s4'] === '—'
+        && cQuiz.catSumB === engine.mean && /^Quizzes average/.test(cQuiz.catSum)
+        && engine.mean !== '66.00%',
+      'shown ' + JSON.stringify(shownPer) + ' · engine ' + JSON.stringify(engine.per)
+        + ' · summary ' + JSON.stringify(cQuiz.catSum) + ' against the engine mean ' + engine.mean);
+
+    /* ── WO-3.28, correction round 1: each student's category figure carries ITS OWN letter ──
+       The owner's ruling at the 👤 reading: the letter letterFromPercentage() gives for the category
+       figure, under it, on the overall letter's line — and the em dash with no letter where there is
+       no figure, and no letter on the summary's class figure. The expected letters are the engine's,
+       asked in the page for the same figures the column shows. The fixture makes a letter carried
+       across from the overall grade a different letter in at least one row (asserted below, so the
+       check cannot pass because the two bandings happen to agree). */
+    const lettersExpected = await evalJs(`(function(){
+      var d = window.planbook.store.getDoc(), g = window.planbook.gradeEngine;
+      var cls = d.classes.filter(function(c){ return c.id === 'c_wo329'; })[0];
+      var out = {};
+      ['wo329-s3','wo329-s2','wo329-s1','wo329-s5','wo329-s4','wo329-s6'].forEach(function(id){
+        var p = g.categoryPercentage(d, cls, 'tm_wo329', 'wo329-quiz', id);
+        var o = g.weightedClassGrade(d, cls, 'tm_wo329', id);
+        out[id] = { cat: p === null ? null : g.letterFromPercentage(d, cls, p), overall: o.letter }; });
+      return out; })()`);
+    const lineBad = cQuiz.catLines.filter((r) => {
+      const want = lettersExpected[r.id] || {};
+      if (want.cat === null) return !(r.none && r.letters === 0 && r.numTop === null);
+      return r.none || r.letters !== 1 || r.letter !== want.cat
+        || r.numTop === null || r.gradeNumTop === null || Math.abs(r.numTop - r.gradeNumTop) > 0.5
+        || r.letterTop === null || r.gradeLetterTop === null || Math.abs(r.letterTop - r.gradeLetterTop) > 0.5
+        || !(r.letterTop > r.numTop);
+    });
+    const lettersDiffer = Object.keys(lettersExpected).filter((id) => lettersExpected[id].cat !== null
+      && lettersExpected[id].cat !== lettersExpected[id].overall).length;
+    check('WO-3.28: with Quizzes picked, each student\'s category figure has the letter letterFromPercentage() gives for THAT figure, on its own line under the number — the number on the overall grade number\'s line and the letter on the overall letter\'s line, in every row — Reed, with no figure, shows the em dash and no letter, and the summary\'s Quizzes average carries no letter (correction round 1)',
+      cQuiz.catLines.length === 6 && lineBad.length === 0 && lettersDiffer >= 1
+        && cQuiz.catSum === 'Quizzes average ' + engine.mean && cQuiz.catSumLetter === 0,
+      'rows ' + JSON.stringify(cQuiz.catLines) + ' · expected ' + JSON.stringify(lettersExpected)
+        + ' · rows where the category letter is not the overall one: ' + lettersDiffer
+        + ' · summary ' + JSON.stringify(cQuiz.catSum)
+        + (lineBad.length ? ' · WRONG: ' + JSON.stringify(lineBad) : ''));
+
+    /* ── WO-3.28 line 4: the filter moves no whole-class figure ── */
+    const gradeMap = (snap) => { const m = {}; snap.grades.forEach((g) => { const i = g.indexOf('=');
+      m[g.slice(0, i)] = g.slice(i + 1); }); return m; };
+    check('WO-3.28: the class average, the blank count, the weights total, the headline and every overall grade are byte-identical with Quizzes picked and with All — the summary compared as text with only the category\'s own figure taken out',
+      cQuiz.summaryRest === cAll.summary && cQuiz.headline === cAll.headline
+        && JSON.stringify(gradeMap(cQuiz)) === JSON.stringify(gradeMap(cAll))
+        && /Class average/.test(cAll.summary) && /blank/.test(cAll.summary)
+        && Object.keys(gradeMap(cAll)).length === 6 && cAll.summary.indexOf('Quizzes') < 0,
+      'All: ' + JSON.stringify(cAll.summary) + ' · Quizzes, less its own figure: '
+        + JSON.stringify(cQuiz.summaryRest) + ' · grades ' + JSON.stringify(gradeMap(cQuiz)));
+
+    /* ── WO-3.28 line 1's keyboard half: →, Tab and Enter stop at the last SHOWN column and row ──
+       Grid order is Bell, Castillo, Johnson, Quinn, Reed, Shah. The caret is put on a cell by script
+       with its value selected (the state every keyboard arrival leaves), and every move after that is
+       a real key at the page. Tab is the browser's own and src/scores.js does not bind it, so what is
+       asserted for Tab is where the browser can put the caret when only the shown columns exist. */
+    const qCell = (a, st) => '#scoresBody [data-score-cell="' + a + '"][data-score-student="' + st + '"]';
+    const where = `(function(){ var a = document.activeElement;
+      return a ? { col: a.getAttribute('data-score-cell') || '', student: a.getAttribute('data-score-student') || '',
+        door: a.getAttribute('data-student-detail') || '', id: a.id || '', tag: a.tagName } : null; })()`;
+    const putOn = (a, st) => evalJs('(function(){ var e = document.querySelector(' + JSON.stringify(qCell(a, st))
+      + '); if (!e) return 0; e.focus(); e.select(); return 1; })()');
+    const listen = async (press) => {
+      await evalJs("(function(){ var e = document.getElementById('srLive'); if (e) e.textContent = '·'; return 1; })()");
+      await press();
+      let said = '·';
+      for (let i = 0; i < 20 && said === '·'; i++) {
+        await new Promise(r => setTimeout(r, 25));
+        said = await evalJs("(document.getElementById('srLive')||{}).textContent || ''");
+      }
+      return { at: await evalJs(where), said: said === '·' ? '' : said };
+    };
+    const skRight = () => sk('ArrowRight', 'ArrowRight', 39);
+    const skTab = () => sk('Tab', 'Tab', 9);
+    const placed = await putOn('wo329-a2', 'wo329-s3');
+    const r1 = await listen(skRight);
+    const r2 = await listen(skRight);
+    const t1 = await listen(skTab);
+    const t1b = await listen(skTab);
+    /* THE LAST ROW'S END IS READ, NOT TABBED OFF. A real Tab from the grid's very last field leaves
+       the page altogether in this headless browser — nothing focusable follows the grid — and a page
+       that has lost focus that way does not get it back on the reloads that follow: the date-field
+       section two sections on (verify/date-zero-key.mjs) then finds its three ArrowLefts no longer
+       walking the caret home, and types a September date into the day and the year. Found by this
+       work order's own full run, on 2026-10-02. So the end of the last shown row is asserted in
+       document order instead, which is the order Tab walks: the last score field in the whole page
+       is Shah's second quiz, so Tab from it has no score field left to land in. */
+    const t2 = await evalJs(`(function(){
+      var all = document.querySelectorAll('[data-score-cell]'), last = all[all.length - 1];
+      return { at: last ? { col: last.getAttribute('data-score-cell'),
+        student: last.getAttribute('data-score-student') } : null, count: all.length }; })()`);
+    await putOn('wo329-a4', 'wo329-s4');
+    const n1 = await listen(skEnter);
+    const n2 = await listen(skEnter);
+    check('WO-3.28: with Quizzes picked, → walks Bell\'s row from the first quiz to the second and stops there saying "that is the last assignment"; Tab from that last shown column goes on to the next row — Castillo\'s name, the door every row starts with — and the Tab after that to Castillo\'s first quiz, that row\'s first shown cell, never an essay or the loose sheet; and the last score field in document order — the order Tab walks — is Shah\'s second quiz, the last shown row\'s last shown column, so Tab from it has no score field left to land in; Enter down the second quiz goes Reed → Shah and stops on Shah saying "that is the last student"',
+      placed === 1
+        && !!r1.at && r1.at.col === 'wo329-a4' && r1.at.student === 'wo329-s3'
+        && !!r2.at && r2.at.col === 'wo329-a4' && r2.at.student === 'wo329-s3' && /last assignment/.test(r2.said)
+        && !!t1.at && t1.at.col === '' && t1.at.door === 'wo329-s2'
+        && !!t1b.at && t1b.at.col === 'wo329-a2' && t1b.at.student === 'wo329-s2'
+        && !!t2.at && t2.at.col === 'wo329-a4' && t2.at.student === 'wo329-s6' && t2.count === 12
+        && !!n1.at && n1.at.col === 'wo329-a4' && n1.at.student === 'wo329-s6'
+        && !!n2.at && n2.at.col === 'wo329-a4' && n2.at.student === 'wo329-s6' && /last student/.test(n2.said),
+      JSON.stringify({ r1, r2, t1, t1b, t2, n1, n2 }));
+
+    /* ── WO-3.28 line 5: a name typed and a category picked, together, and each one cleared ── */
+    await setBox('scoresSearch', 'ma');
+    const both = await evalJs(CATS);
+    await setBox('scoresSearch', '');
+    const searchCleared = await evalJs(CATS);
+    await setBox('scoresSearch', 'ma');
+    const pillCleared = await pick('');
+    const swapped = await pick('wo329-cat');
+    const MA = JSON.stringify(['wo329-s3', 'wo329-s1', 'wo329-s4']);
+    check('WO-3.28: "ma" with Quizzes picked shows exactly Bell, Johnson and Reed and exactly the two quiz columns, with the third column; emptying the box brings back all six rows and keeps the quiz columns; picking All with "ma" still typed brings back all five columns and keeps the three rows; and picking Work with "ma" typed narrows to the two essays, the rows untouched',
+      JSON.stringify(both.rows) === MA && JSON.stringify(both.heads) === JSON.stringify(['wo329-a2', 'wo329-a4'])
+        && both.filtered && /Quizzes/.test(both.catHead) && both.catCells.length === 3
+        && searchCleared.rows.length === 6 && searchCleared.box === ''
+        && JSON.stringify(searchCleared.heads) === JSON.stringify(['wo329-a2', 'wo329-a4']) && searchCleared.filtered
+        && JSON.stringify(pillCleared.rows) === MA && pillCleared.box === 'ma'
+        && JSON.stringify(pillCleared.heads) === JSON.stringify(ALL5) && !pillCleared.filtered && !pillCleared.catHead
+        && JSON.stringify(swapped.rows) === MA && JSON.stringify(swapped.heads) === JSON.stringify(['wo329-a1', 'wo329-a3'])
+        && /^Work\s*average$/i.test(swapped.catHead),
+      JSON.stringify({ both: [both.rows, both.heads], searchCleared: [searchCleared.rows.length, searchCleared.heads],
+        pillCleared: [pillCleared.rows, pillCleared.heads, pillCleared.box], swapped: [swapped.rows, swapped.heads, swapped.catHead] }));
+
+    /* ── WO-3.28 line 6: leave with Work picked and "ma" typed, come back to All; nothing stored ── */
+    await clickSel('#scoresView [data-class-screen="class"]');
+    await new Promise(r => setTimeout(r, 200));
+    await clickSel('#classView [data-class-screen="scores"]');
+    await new Promise(r => setTimeout(r, 300));
+    const cBack = await evalJs(CATS);
+    const storeAfterPills = await readLocalStore(evalJs, 400);
+    check('WO-3.28: leaving the grid with Work picked for Attendance and coming back shows All pressed, every column, no third column and an unfiltered box — and no planbook_ key was written or changed by any pill tap above',
+      cBack.pills.length === 3 && cBack.pills[0].pressed === 'true'
+        && cBack.pills.filter((p) => p.pressed === 'true').length === 1
+        && JSON.stringify(cBack.heads) === JSON.stringify(ALL5) && !cBack.filtered && !cBack.catHead
+        && cBack.rows.length === 6 && ours(storeBefore) === ours(storeAfterPills)
+        && !Object.keys(storeAfterPills).some((k) => /categor|filter/i.test(k)
+          || /wo329-(cat|quiz)/.test(String(storeAfterPills[k]))),
+      JSON.stringify({ pills: cBack.pills.map((p) => p.id + ':' + p.pressed), heads: cBack.heads,
+        filtered: cBack.filtered }) + '; planbook_ keys '
+        + (ours(storeBefore) === ours(storeAfterPills) ? 'unchanged' : 'CHANGED: ' + ours(storeAfterPills)));
+
     /* ── line 7: the box at 44px under a coarse pointer ── */
     await send('Emulation.setDeviceMetricsOverride',
       { width: 1024, height: 768, deviceScaleFactor: 2, mobile: true });
@@ -333,6 +617,152 @@ console.log('\n--- the score grid narrows by student (WO-3.29) ---');
     check('the score grid\'s search box measures at least 44px tall and 44px wide under the coarse pointer, on the open grid',
       coarse === true && !!box && !box.viewHidden && box.display !== 'none' && box.h >= 44 && box.w >= 44,
       'coarse = ' + coarse + ' · ' + JSON.stringify(box));
+    /* WO-3.28 line 7: the category pills, every one of them, measured on the open grid. */
+    const pills44 = await evalJs(`(function(){
+      return Array.prototype.slice.call(document.querySelectorAll('#scoresCategories [data-scores-category]'))
+        .map(function(b){ var r = b.getBoundingClientRect();
+          return { label: b.textContent, w: Math.round(r.width * 100) / 100, h: Math.round(r.height * 100) / 100,
+            display: getComputedStyle(b).display }; }); })()`);
+    check('WO-3.28: every category pill on the open score grid — All, Work and Quizzes — measures at least 44px tall and 44px wide under the coarse pointer',
+      coarse === true && pills44.length === 3
+        && pills44.every((p) => p.display !== 'none' && p.h >= 44 && p.w >= 44),
+      'coarse = ' + coarse + ' · ' + JSON.stringify(pills44));
+
+    /* ── WO-3.28 correction round 1: every frozen column holds its declared width, whatever is in it ──
+
+       THE DEFECT THIS EXISTS FOR WAS SEEN ON THE iPAD AND NOWHERE ELSE (2026-10-02, v150): the
+       category average drifted a few pixels with a horizontal scroll before it stuck, while the name
+       and grade held. A sticky column only holds still from the first pixel if its NATURAL position —
+       the sum of the rendered widths to its left — is already its sticky `left`. In an auto-layout
+       table a cell's `width` is a floor and not a size, so a column whose contents are wider than the
+       declared number pushes everything after it right, and the next frozen column then travels the
+       difference before it sticks. Whether that happens depended on the font: iPadOS draws the app's
+       figures in a wider face than this headless Edge.
+
+       So this check plants the widest things each frozen column can be asked to hold — 100.00% and its
+       letter in both the grade and the category average, a category name far longer than any head,
+       and a surname longer than the name column — and then, on the real drawn grid, asks every frozen
+       cell in every row (head included) two things at scrollLeft 0 and again at full right scroll:
+       is its left edge, measured from the box, exactly its computed sticky `left`; and is its rendered
+       width exactly its declared `min-width`. Both pointers, at the iPad's portrait width for the
+       coarse one. A column allowed to grow past its declared width goes red here, in Edge's font:
+       the planted surname and category name are wider than any face can fit, and for the one column
+       whose widest figure DOES fit this face — the grade's 100.00% — a third arm widens the face
+       itself. That is what makes the check independent of the font the desk happens to have.
+       MUTATION-PROVED in TESTING.md § WO-3.28, correction round 1. */
+    const FROZEN = `(function(){
+      var wrap = document.getElementById('scoresGridWrap');
+      if (!wrap) return null;
+      var max = wrap.scrollWidth - wrap.clientWidth;
+      function read(at){
+        wrap.scrollLeft = at;
+        var b = wrap.getBoundingClientRect(), x0 = b.left + wrap.clientLeft;
+        var bad = [], n = 0;
+        Array.prototype.slice.call(wrap.querySelectorAll('tr')).forEach(function(tr){
+          Array.prototype.slice.call(tr.querySelectorAll('.scores-name, .scores-grade, .scores-cat-avg'))
+            .forEach(function(c){
+              if (c.parentElement !== tr) return;
+              n += 1;
+              var r = c.getBoundingClientRect(), cs = getComputedStyle(c);
+              var off = Math.round((r.left - x0) * 100) / 100, w = Math.round(r.width * 100) / 100;
+              var stickAt = parseFloat(cs.left), decl = parseFloat(cs.minWidth);
+              if (Math.abs(off - stickAt) > 0.5 || Math.abs(w - decl) > 0.5) {
+                bad.push({ row: tr.getAttribute('data-score-row') || 'head', cls: c.className,
+                  off: off, left: stickAt, w: w, declared: decl });
+              }
+            });
+        });
+        return { at: wrap.scrollLeft, cells: n, bad: bad };
+      }
+      var out = { max: max, zero: read(0), full: read(max) };
+      wrap.scrollLeft = 0;
+      return out; })()`;
+    /* THE WIDEST FIGURES, planted for this check and for nothing after it: the fixture is taken back
+       out at the foot of this section. Shah gets full marks on every assignment, so both the overall
+       grade and the Quizzes average read 100.00% with the top band's letter; six more quizzes make the
+       picked category wide enough to scroll at the iPad's portrait width; and Quizzes and Shah get
+       names no column could fit in any face. */
+    const LONG_CAT = 'Quizzes, tests and every in-class assessment';
+    await evalJs(`(function(){
+      var s = window.planbook.store;
+      s.update(function(doc){
+        var cls = doc.classes.filter(function(c){ return c.id === 'c_wo329'; })[0];
+        cls.categories.forEach(function(c){ if (c.id === 'wo329-quiz') c.name = ${JSON.stringify(LONG_CAT)}; });
+        doc.students.forEach(function(p){ if (p.id === 'wo329-s6') p.last = 'Shah-Vandersloot-Okonkwo-Fitzgerald'; });
+        for (var i = 6; i <= 11; i++) {
+          doc.assignments.push({ id:'wo329-a' + i, classId:'c_wo329', termId:'tm_wo329',
+            categoryId:'wo329-quiz', name:'Quiz ' + i, points:10, assigned:'', due:'' });
+        }
+        var full = { 'wo329-a1':100, 'wo329-a2':20, 'wo329-a3':50, 'wo329-a4':10, 'wo329-a5':10 };
+        for (var j = 6; j <= 11; j++) full['wo329-a' + j] = 10;
+        Object.keys(full).forEach(function(a){
+          doc.scores[a] = doc.scores[a] || {};
+          doc.scores[a]['wo329-s6'] = { v: full[a] }; });
+      });
+      return 1; })()`);
+    await evalJs('window.planbook.store.flush()');
+    const widest = async () => {
+      await pick('wo329-quiz');
+      const shah = await evalJs(`(function(){
+        var r = document.querySelector('#scoresBody tr[data-score-row="wo329-s6"]');
+        var h = document.querySelector('#scoresHead th.scores-cat-avg .scores-cat-avg-name');
+        /* How wide this face draws "100.00%" against the room the grade cell's padding leaves it —
+           reported, not asserted: it is the headroom the iPad's wider face used up. */
+        var n = r ? r.querySelector('.scores-grade .scores-grade-num') : null, g = n ? n.parentElement : null;
+        var ink = null, room = null;
+        if (n && n.firstChild) { var rg = document.createRange(); rg.selectNodeContents(n);
+          ink = Math.round(rg.getBoundingClientRect().width * 100) / 100;
+          var cs = getComputedStyle(g);
+          room = Math.round((g.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
+            - parseFloat(cs.borderLeftWidth) - parseFloat(cs.borderRightWidth)) * 100) / 100; }
+        return { grade: n ? n.textContent : '',
+          cat: r ? (r.querySelector('.scores-cat-avg .scores-grade-num')||{}).textContent : '',
+          head: h ? h.textContent : '', gradeInk: ink, gradeRoom: room }; })()`);
+      const m = await evalJs(FROZEN);
+      await pick('');
+      return { shah, m };
+    };
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 768, height: 1024, deviceScaleFactor: 2, mobile: true });
+    await new Promise(r => setTimeout(r, 300));
+    const wc = await widest();
+    /* AND IN A WIDER FACE THAN THIS DESK HAS. "100.00%" fits the grade cell in Edge's Segoe UI with a
+       few pixels to spare (gradeInk against gradeRoom in the detail above), which is exactly why the
+       defect never showed here: no figure the app can draw overflows the GRADE column in this face,
+       so the native arms above can only catch the name and the category average growing. This arm
+       stands in for iPadOS's wider face by widening every glyph in the grid — letter-spacing, injected
+       for the length of one reading and taken out again — so the grade column is asked to hold more
+       than it has room for too, and a grade column allowed to grow goes red here. */
+    await evalJs(`(function(){ var st = document.createElement('style'); st.id = 'wo328WideFace';
+      st.textContent = '.scores-grid, .scores-grid * { letter-spacing: 4px !important; }';
+      document.head.appendChild(st); return 1; })()`);
+    const wcWide = await widest();
+    await evalJs("(function(){ var st = document.getElementById('wo328WideFace'); if (st) st.remove(); return 1; })()");
+    await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 1024, height: 768, deviceScaleFactor: 1, mobile: false });
+    await send('Page.reload');
+    await new Promise(r => setTimeout(r, 700));
+    await waitForBoot();
+    await evalJs(KILL_ANIM);
+    await evalJs(INSTALL_WALKER);
+    const fineNow = await evalJs("matchMedia('(pointer: fine)').matches");
+    await clickSel('#classTabBar [data-class-tab="c_wo329"]');
+    await new Promise(r => setTimeout(r, 250));
+    await clickSel('#classView [data-class-screen="scores"]');
+    await new Promise(r => setTimeout(r, 300));
+    const wf = await widest();
+    const holds = (w) => !!w.m && w.m.max > 0 && w.m.full.at > 0
+      && w.m.zero.cells >= 21 && w.m.full.cells === w.m.zero.cells
+      && w.m.zero.bad.length === 0 && w.m.full.bad.length === 0
+      && w.shah.grade === '100.00%' && w.shah.cat === '100.00%' && w.shah.head === LONG_CAT;
+    check('WO-3.28: with the widest figures planted — 100.00% in the grade and the category average, a category name no head can fit, a surname no name column can fit — every frozen cell in every row, head included, sits exactly at its sticky left and is exactly its declared width, at scrollLeft 0 and again at full right scroll — coarse pointer at the iPad\'s portrait 768 (correction round 1)',
+      coarse === true && holds(wc), JSON.stringify(wc));
+    check('WO-3.28: and the same again on the coarse pointer with every glyph in the grid widened by 4px — a face wider than this desk\'s, in which "100.00%" no longer fits the grade cell\'s room — so the grade column is held to its width too, not only the two columns this face happens to overflow (correction round 1)',
+      coarse === true && holds(wcWide) && wcWide.shah.gradeInk > wcWide.shah.gradeRoom,
+      JSON.stringify(wcWide));
+    check('WO-3.28: and the same with the fine pointer at 1024 — no frozen column grows past its declared width, so none travels before it sticks (correction round 1)',
+      fineNow === true && holds(wf), JSON.stringify(wf));
 
     await send('Emulation.setTouchEmulationEnabled', { enabled: false });
     await send('Emulation.setDeviceMetricsOverride',
