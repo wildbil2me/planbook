@@ -1,0 +1,12 @@
+# WO-3.37 dispatch status
+- 2026-10-03 gates passed — wo-gate PASS, dep WO-3.35 DONE, tree clean.
+- 2026-10-03 route Claude Opus — teacher-facing prose (the quiet row must say why there is no grade) plus a reachability investigation the WO asks for; Codex set aside though it fits the budget (2 runs ~9 min). No probe run: not a Codex route.
+- 2026-10-03 claimed — `wo-gate --start WO-3.37` ran, row reads 🤖 CLAIMED — 2026-10-03.
+- 2026-10-03 brief written — .claude/dispatch/WO-3.37-brief.md (~9 KB). Flagged trap: extra-credit-only shares reason 'no-graded-work'; only message differs.
+- 2026-10-03T16:18:03Z implementer spawned at Opus (no model override), brief .claude/dispatch/WO-3.37-brief.md, awaiting return — expect 20–40 min, flat trail is normal while it reads.
+- 2026-10-03T17:00:47Z implementer returned — result file written; AC1 claimed met+mutation-proved (M1-M3); AC2 left [ ] by implementer: weights-unbalanced reachable, 92 existing-fixture rows change, needs owner ruling. sweep 43/0/3, verify-shell 1678/1678 (its claims).
+- 2026-10-03T17:00:47Z handoff written — row 🔍 AWAITING VERDICT; verifier owed in a fresh session.
+- 2026-10-03T20:40:11Z fresh session entered at 🔍 AWAITING VERDICT — verifier being dispatched at Opus as a FIRST pass, no re-route/re-brief.
+- 2026-10-03T20:53:12Z verifier returned — PASS WITH MANUAL CHECKS: AC1 ✅ (verify-shell 1678/1678 exit 0, sweep 43/0/3 exit 0, re-run by verifier); AC2 🙋 — holds under the 'Ruled by the owner' paragraph at phase-3-gradebook.md:3026-3031, but that paragraph's provenance is unrecorded (written 20:38Z, after implementer return); TESTING.md § WO-3.37 still says 'needs a ruling'. Not ticked.
+- 2026-10-03 verifier returned — PASS WITH MANUAL CHECKS; AC1 verified; AC2 held for the owner because the 'Ruled by the owner' paragraph had no provenance in this trail.
+- 2026-10-03 owner confirmed in the verdict session — they gave the ruling but did not write the paragraph; both halves (narrowed AC2, the 0% wording kept) accepted. AC2 ticked, TESTING.md updated, wo-gate --tick applied (✅ DONE), sweep 43/0/3, audit PASS. WO-3.41 booked for the engine's no-categories message. Committed, not pushed.

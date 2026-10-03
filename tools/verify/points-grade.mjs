@@ -675,6 +675,48 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
         screenSays: (ed.bare.match(NOTHING) || [''])[0], fileBonus: edFileBonus,
         fileElsewhere: edFileElsewhere, overall: fEd.overall }));
 
+    /* ── the quiet list says why there is no grade (WO-3.37) ──
+     * Ed is on the signals screen's quiet list — nothing fires for a student with no grade and no
+     * absences — and until WO-3.37 her row read "has no graded work yet" over her 2-point puzzle. It
+     * is read off signalsModel(), the screen's own model, so the row is the one a teacher sees.
+     *
+     * AND THE OTHER NULL, which predates points mode: the same class handed to quietMiddle() as a
+     * plain WEIGHTED object whose weights total 90 — a copy, never written to the document. Cy has a
+     * 15/20 test in it and no grade, because the weights do not add up; the row must say that, in
+     * the engine's own sentence, and not that nothing is graded. */
+    const quiet337 = await evalJs(`(function(){
+      var m = window.planbook.signalsView.signalsModel();
+      var mine = m.quiet.rows.filter(function(r){ return r.classId === '${C4}'; });
+      var doc = window.planbook.store.getDoc();
+      var real = doc.classes.filter(function(x){ return x.id === '${C4}'; })[0];
+      var copy = JSON.parse(JSON.stringify(real));
+      delete copy.gradingMode;
+      copy.categories[1].weight = 40;
+      var off = window.planbook.signals.quietMiddle(doc, copy, '${T4}');
+      var says = function(rows, id){ var r = rows.filter(function(x){ return x.studentId === id; })[0];
+        return r ? r.explanation : null; };
+      return { ed: says(mine, '${ED}'), cy: says(mine, '${CY}'), offCy: says(off, '${CY}'),
+        offGrade: window.planbook.gradeEngine.classGrade(doc, copy, '${T4}', '${CY}') }; })()`);
+    const EC_WHY = ' The only work graded so far is extra credit, so there is no grade yet for it to add to.';
+    const UNBAL_WHY = ' The category weights total 90%, so there is no grade yet.';
+    check('WO-3.37: on the quiet list, a points-class student whose only graded work is extra credit is '
+      + 'not told she has no graded work — her row reads "has no grade" and carries the engine\'s own '
+      + 'sentence about extra credit; a classmate with a grade still reads "is at 85.00%"',
+      typeof quiet337.ed === 'string'
+        && quiet337.ed.indexOf('In WO-3.34 Points, Ed Cordero has no grade and nothing has been written '
+          + 'down, said or sent about them ') === 0
+        && quiet337.ed.slice(-EC_WHY.length) === EC_WHY && !NOTHING.test(quiet337.ed)
+        && typeof quiet337.cy === 'string' && quiet337.cy.indexOf('Cy Ashby is at 85.00% and ') !== -1,
+      JSON.stringify({ ed: quiet337.ed, cy: quiet337.cy }));
+    check('WO-3.37: and a WEIGHTED class whose weights total 90% — a fault that predates points mode — '
+      + 'does not tell a student with a scored test that he has no graded work: the row reads "has no '
+      + 'grade" and carries "The category weights total 90%, so there is no grade yet."',
+      !!quiet337.offGrade && quiet337.offGrade.reason === 'weights-unbalanced'
+        && typeof quiet337.offCy === 'string'
+        && quiet337.offCy.indexOf('In WO-3.34 Points, Cy Ashby has no grade and ') === 0
+        && quiet337.offCy.slice(-UNBAL_WHY.length) === UNBAL_WHY && !NOTHING.test(quiet337.offCy),
+      JSON.stringify({ offCy: quiet337.offCy, reason: quiet337.offGrade && quiet337.offGrade.reason }));
+
     /* ── the score grid's chip for a 0% category (WO-3.36) ──
      * Bonus carries weight 0. A weighted class draws its chip dashed and grey (`.zero`) because a 0%
      * category counts for nothing there; in a points class its 2-point puzzle counts, so the chip is

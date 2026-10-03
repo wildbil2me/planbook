@@ -13,6 +13,23 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The quiet list says why a student has no grade — 2026-10-03
+
+WO-3.37. Shell cache `v156`.
+
+- **The signals screen's quiet list no longer tells a student with graded work that they have
+  none.** *Has no graded work yet* is now printed only when nothing is graded. Any other student
+  without a grade reads *has no grade*, followed by the grade engine's own reason.
+- **This was already wrong in a weighted class, not only in a points class.** A class whose
+  weights did not total 100% has no grade for anyone, so most of it landed on the quiet list,
+  each student told they had no graded work over a column of scores. It now reads, for example,
+  *"The category weights total 95%, so there is no grade yet."*
+- **A points-class student whose only graded work is extra credit** reads *"The only work graded
+  so far is extra credit, so there is no grade yet for it to add to."*
+- **A student with a grade reads exactly as before.** A class with no categories reads *"The
+  category weights total 0%"*, the engine's message, on the owner's ruling. WO-3.41 is booked to
+  make the engine say the class has no categories instead.
+
 ### The score grid and the grade sheet stop speaking weights in a points class — 2026-10-03
 
 WO-3.36. Shell cache `v155`.

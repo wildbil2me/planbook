@@ -9449,6 +9449,76 @@ prints at `19b7bcd` — prose, not markers. Both scratch harnesses are deleted.
 31.9 lines per check, 698s, exit 0, 2026-10-03, real clock. `node tools/wo-sweep.mjs`:
 `46 checks · 43 passed · 0 failed · 3 to review`, the three standing reviews.
 
+### WO-3.37 — the quiet list says an extra-credit-only student has no graded work
+
+**What this changes.** A quiet-list row on the signals screen whose student has no grade now says
+why, out of what `classGrade()` already returned. `quietSentence()` in `src/signals.js` prints *has no
+graded work yet* only when the grade's `reason` is `no-graded-work` **and** its `message` is the
+engine's own sentence for nothing graded — the reason alone cannot tell that case from an
+extra-credit-only student, because WO-3.35 kept the reason for both. Every other no-grade row reads
+*has no grade* and ends with the engine's message as a sentence of its own:
+*"The only work graded so far is extra credit, so there is no grade yet for it to add to."* or
+*"The category weights total 90%, so there is no grade yet."* Nothing in `src/signals.js` reads a
+score or re-runs a grade. A student with a grade reads exactly as before. `CACHE` is
+`planbook-shell-v156`. There is no 👤 line on this row.
+
+**The weights-unbalanced case is reachable today, in a weighted class, with no points mode
+involved.** Nothing between the class list and the sentence leaves out a class whose weights do not
+total 100: `collect()` in `src/signals-view.js` walks every active class (`classesShown()`, ~230, and
+the `quietMiddle()` call, ~286); `evaluate()` (`src/signals.js` ~1972) and `quietMiddle()` (~2132) have
+no balance test; and the categories editor saves weights that do not add up (`isProvisional()`, and
+the remove-category dialog's own *"so this class totals N% until you set them"*). In such a class no
+student has a grade, so the grade rules cannot fire and most of the class lands on the quiet list —
+each told, before this row, that they had *no graded work yet* over scored work. The harness's own
+fixtures reached it 92 times in one run (below).
+
+- [x] In a points fixture, a quiet student whose only graded work is extra credit is not told they
+      have no graded work. WO-3.34's class in `verify/points-grade.mjs`: Ed (Bonus 2 of 0, nothing
+      else) reads, off `signalsModel()`, *"In WO-3.34 Points, Ed Cordero has no grade and nothing has
+      been written down, said or sent about them all term — 32 days. The only work graded so far is
+      extra credit, so there is no grade yet for it to add to."*; Cy, beside her, still reads *is at
+      85.00%*. A second check hands `quietMiddle()` the same class as a plain weighted copy whose
+      weights total 90 (never written to the document): Cy, with a 15/20 test, reads *has no grade …
+      The category weights total 90%, so there is no grade yet.* Mutations M1–M3.
+- [x] Every quiet row the harness's existing fixtures draw is byte-identical before and after.
+      **Ticked 2026-10-03 on the owner's ruling, as re-read in the work order:** every row is
+      byte-identical except where the grade's reason is not `no-graded-work`, or is that reason with
+      the extra-credit-only message, and a class with no categories keeps *"The category weights
+      total 0%…"*. The owner confirmed both in the verdict session; the verifier proved the code
+      meets that reading statically, and the capture below is the implementer's. *(It was left open
+      at first, with the paragraph that follows asking for the ruling.)* Evidence: a temporary `console.log` at the foot of `quietMiddle()` wrote every
+      row's `studentId|classId explanation`, and a temporary line at the entry harness's summary wrote
+      them to a scratch file; a full run on the tree before any `src/` edit (`1676 · 1676 passed`,
+      exit 0) and a full run with the change (`1678 · 1678 passed`, exit 0). Both temporary lines are
+      gone. With the run-minted ids stripped: **503 of the 600 rows before are byte-identical after**
+      — all 212 graded rows and all 291 genuine *no graded work yet* rows. **97 change**: 5 are Ed,
+      line 1's own student; 92 are in existing fixture classes whose weights do not total 100 —
+      *WO-1.22 Copy Source* (95%, 75 rows), *WO-6.5 Register* (0%, 9), *WO-2.56 Strip* (0%, 3),
+      *WO79 Class Sentinel* (0%, 3) and *Period 1 — Biology* (59.9%, 2). Replacing each changed row's
+      *has no grade … (engine sentence)* with the old *has no graded work yet …* reproduces the
+      before-capture as a multiset exactly, apart from the 6 rows the two new checks themselves add —
+      so nothing else moved. **The ruling wanted**: whether a class with **no categories at all**
+      (0%) and nothing graded should read *"The category weights total 0%, so there is no grade
+      yet."* — true, and the words student detail's banner uses for the same grade — or keep *has no
+      graded work yet*, which was also true there. Telling those apart would mean reading the scores
+      in `src/signals.js`, which the Traps forbid, or an engine change, which the brief forbids.
+
+**Mutation round.** A scratch copy of the entry harness held only `localstorage-prefs` and
+`points-grade` (26 checks, all green on the delivered tree). Each mutation carried a `MUTATION`
+marker, was run, and `src/signals.js` was restored from a copy and compared by SHA-256 with its
+pre-mutation bytes (identical each time).
+
+| Mutation | Result |
+|---|---|
+| M1 · the standing back on `percentage === null` alone, no appended sentence (the work order's own) | **2 red**: both WO-3.37 checks |
+| M2 · the genuine test on `reason === 'no-graded-work'` alone, without the message | **1 red**: the extra-credit check (the unbalanced one stays green, as designed — its reason differs) |
+| M3 · the engine's sentence never appended | **2 red**: both WO-3.37 checks |
+
+`grep -rn MUTATION src tools` afterwards prints 19 lines, the same 19 `git grep -n MUTATION HEAD --
+src tools` prints — prose, not markers. The scratch harness is deleted.
+
+**Full run on the delivered tree:** `1678 checks · 1678 passed · 0 failed · 0 skipped`, 53,427 lines, 31.8 lines per check, 698s, exit 0, 2026-10-03 on the real clock. `node tools/wo-sweep.mjs`: `46 checks · 43 passed · 0 failed · 3 to review`, exit 0, the three standing reviews.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

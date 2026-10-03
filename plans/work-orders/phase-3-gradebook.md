@@ -2987,7 +2987,7 @@ rewording. **Do not compute a share on the screen**; `pointsShare()` and `effect
 
 ## WO-3.37 — the quiet list says an extra-credit-only student has no graded work
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.35 — the engine message this matches
+**Ship** — · **Status** ✅ DONE — 2026-10-03 · **Size** S · **Depends on** WO-3.35 — the engine message this matches
 **Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
 
 **Booked 2026-10-03**, owner-directed, out of WO-3.35's verdict. **Unreachable today**, because
@@ -3012,10 +3012,30 @@ points mode, and this row fixes it as well.
 - **A student with a grade reads exactly as today.**
 
 **Acceptance**
-- [ ] In a points fixture, a quiet student whose only graded work is extra credit is not told they
+- [x] In a points fixture, a quiet student whose only graded work is extra credit is not told they
       have no graded work. **Mutation-proved**: putting the test back on `percentage === null` alone
       goes red.
-- [ ] Every quiet row the harness's existing fixtures draw is byte-identical before and after.
+- [x] Every quiet row the harness's existing fixtures draw is byte-identical before and after.
+      *(Left open by the implementer, 2026-10-03, for a ruling — see `TESTING.md` § WO-3.37. The
+      weights-unbalanced case **is reachable today**, and the existing fixtures reach it: of 600 quiet
+      rows captured across a full run before the change, 92 are in classes whose weights total 0%,
+      59.9% or 95%, and 5 are the extra-credit-only student line 1 is about; those 97 change, as
+      "Read this at dispatch" and line 1 ask. The other 503 — every graded row and every genuine
+      nothing-graded row — are byte-identical. The line cannot be true as written and the paragraph
+      above it both be honoured.)*
+      *(**Ruled by the owner, 2026-10-03: the line is re-read as it was meant** — every quiet row is
+      byte-identical before and after **except where the grade's `reason` is not `no-graded-work`, or
+      is that reason with the engine's extra-credit-only message**; those rows change to say why.
+      The verifier checks the capture against this reading, not the literal line. **And a class with
+      no categories and nothing graded keeps the new wording**, *"The category weights total 0%, so
+      there is no grade yet."*, the owner's ruling the same day.)*
+      *(**Provenance, recorded at the tick:** the owner gave this ruling but did not write the
+      paragraph above, and nothing in the status trail recorded it, so the verifier held the box for
+      it. The owner confirmed both halves in the verdict session, 2026-10-03, and the box was ticked
+      on that confirmation and on the verifier's static proof against this reading. The 0% wording
+      is accepted here because it is the engine's own message; that the engine says it about a
+      class with no categories at all is
+      [WO-3.41](#wo-341--a-class-with-no-categories-is-told-its-weights-total-0)'s to fix.)*
 
 **Traps** — **Do not re-run the grade or read the scores in `src/signals.js`.** The answer is
 already on the grade object. **A quiet row is not a rule**, and nothing fired, so this adds no
@@ -3127,3 +3147,36 @@ points-mode wording to both comments and, by its brief, left the visibility clai
       is not bumped, because a comment changes nothing a device receives.
 
 **Traps** — **Do not change the copy rule.** The comments argue for it, and it stands.
+
+## WO-3.41 — a class with no categories is told its weights total 0%
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.37 — the quiet row that now prints the engine's message
+**Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
+
+**Booked 2026-10-03**, owner-directed, out of WO-3.37's verdict. Reachable today, in a weighted class.
+
+**The defect.** `weighted()` in `src/grade-engine.js` (~255) tests `isBalanced()` before anything
+else, and a class with no categories totals 0%, so it answers `weights-unbalanced` with *"The
+category weights total 0%, so there is no grade yet."* That sentence is true, but it is not why a
+teacher would think there is no grade. The class has not been set up. Since WO-3.37 the quiet list
+prints the engine's message as written, and student detail's banner (`src/detail.js` ~837) already
+did, so both say *0%* about a class that has no categories to weigh.
+
+**Deliverables**
+- **The engine's message for a class with no categories says that**, for example *"This class has
+  no categories yet, so there is no grade."* The wording is the dispatch's to settle; it is written
+  once, in `src/grade-engine.js`, and every reader prints it.
+- **The `reason` stays `weights-unbalanced`.** Readers branch on it (`src/detail.js`,
+  `src/scores.js`, `src/grades-report.js`), and a class with no categories still has no grade for
+  that reason. Only the message changes.
+- **A class with categories whose weights do not total 100 reads exactly as today.**
+
+**Acceptance**
+- [ ] A weighted class with no categories, on student detail and in the quiet list, is not told its
+      weights total 0%. **Mutation-proved**: putting the old message back goes red.
+- [ ] Every row the harness's existing fixtures draw for a class that has categories is
+      byte-identical before and after.
+
+**Traps** — **Do not change the order of the engine's tests**, and do not report a class with no
+categories as `no-graded-work`: work unfiled in a weighted class counts for nothing, so "no graded
+work" would be false there, which is the sentence WO-3.37 removed.

@@ -2172,7 +2172,7 @@ export function quietMiddle(doc, cls, termId, options) {
         wrote: !!said,
         percentage: percent,
         letter: grade ? grade.letter : null,
-        explanation: quietSentence(percent, !!said, days, whoOf(cls, student)),
+        explanation: quietSentence(percent, grade, !!said, days, whoOf(cls, student)),
       });
     });
 
@@ -2210,15 +2210,40 @@ export function quietMiddle(doc, cls, termId, options) {
   would be a rule this file already has, run again outside the pass that owns it, to report that it
   did not fire. The grade is kept because it is one read and it is the thing that answers "why did I
   lose track of her"; the rest is one tap away on the row's own destination.
+
+  NO GRADE IS NOT ONE FACT, AND THE ROW SAYS WHICH (WO-3.37). Until then a null percentage printed
+  "has no graded work yet", and the grade engine has three ways to answer null: nothing graded; a
+  points class whose only graded work is extra credit; and a weighted class whose weights do not
+  total 100, where the same words were printed over a class full of scores. The second and third
+  are not "no graded work", and this list is the one screen where a teacher reads that sentence
+  about a student she has stopped looking at — so it is false at exactly the moment it is believed.
+
+  THE ANSWER IS READ OFF THE GRADE OBJECT, NOT WORKED OUT HERE — the Trap of that work order, and
+  this file's rule since WO-4.1. `reason` alone cannot tell the first case from the second: the
+  engine keeps `no-graded-work` for extra credit on purpose (WO-3.35, so every reader branching on
+  it still does), and only its `message` differs. So "has no graded work yet" is printed when the
+  reason is `no-graded-work` AND the message is the engine's own sentence for nothing graded, and
+  every other null reads "has no grade" with THE ENGINE'S MESSAGE APPENDED AS A SENTENCE OF ITS OWN.
+
+  Appended rather than paraphrased, for this comment's first paragraph's reason: the engine already
+  wrote the why — "The category weights total 90%, so there is no grade yet." — and a standing
+  phrase composed here would be a second author of it, free to drift. And the test fails SAFE: if
+  the engine's sentence for nothing graded is ever reworded, that case falls into the appended
+  branch and reads "has no grade … There is no graded work yet." — wordier, still true. What it
+  can never do again is print "no graded work" over graded work.
 */
-function quietSentence(percentage, said, days, who) {
+const NOTHING_GRADED = 'There is no graded work yet.';
+
+function quietSentence(percentage, grade, said, days, who) {
   const where = 'In ' + who.className + ', ' + who.name;
-  const standing = percentage === null
-    ? ' has no graded work yet'
-    : ' is at ' + formatPercent(percentage);
+  const nothingGraded = !!grade && grade.reason === 'no-graded-work' && grade.message === NOTHING_GRADED;
+  const standing = percentage !== null ? ' is at ' + formatPercent(percentage)
+    : nothingGraded ? ' has no graded work yet'
+      : ' has no grade';
+  const why = percentage === null && !nothingGraded && grade && grade.message ? ' ' + grade.message : '';
   if (days === null) {
-    return where + standing + ' and nothing has been written down, said or sent about them at all.';
+    return where + standing + ' and nothing has been written down, said or sent about them at all.' + why;
   }
   return where + standing + ' and nothing has been written down, said or sent about them '
-    + (said ? 'in ' : 'all term — ') + plural(days, 'day', 'days') + '.';
+    + (said ? 'in ' : 'all term — ') + plural(days, 'day', 'days') + '.' + why;
 }
