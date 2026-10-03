@@ -3101,7 +3101,7 @@ score must never count as a scored 0, which is the rule the whole gradebook rest
 
 ## WO-3.39 — the score grid's help explains weights to a points class first
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.36 — the points-mode score grid this paragraph sits under
+**Ship** — · **Status** ✅ DONE — 2026-10-03 · **Size** S · **Depends on** WO-3.36 — the points-mode score grid this paragraph sits under
 **Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
 
 **Booked 2026-10-03**, owner-directed, out of WO-3.36's verdict. **Unreachable today**, because
@@ -3130,10 +3130,10 @@ than reword shared text. So a points class has no weight wording on the grid exc
 - **WO-3.36's points measurement stops skipping the help** in `tools/verify/points-grade.mjs`.
 
 **Acceptance** *(for (a))*
-- [ ] In a points class the score grid's help has no weight wording. **Measured**, by the existing
+- [x] In a points class the score grid's help has no weight wording. **Measured**, by the existing
       WO-3.36 check with its skip removed. **Mutation-proved**: drawing both blocks goes red.
-- [ ] A weighted class's help reads word for word as today.
-- [ ] Switching from a points class to a weighted one and back draws the right block each time.
+- [x] A weighted class's help reads word for word as today.
+- [x] Switching from a points class to a weighted one and back draws the right block each time.
 
 **Traps** — **Do not reword the weighted sentences.** They are moved, not rewritten. **Do not
 compute anything for the help text.** It reads the mode and nothing else.

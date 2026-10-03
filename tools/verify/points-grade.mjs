@@ -53,6 +53,7 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
   const S1 = 'wo330-s1', S2 = 'wo330-s2';
   const S1_FIRST = 'Ada', S1_LAST = 'Quillfeather';
   const GRADE = '57.96%';
+  const CLS_W = 'c_wo339w', TERM_W = 'tm_wo339w';
 
   /* Into one of this class's screens the way a teacher gets there — home, the class's card, the
      switcher — from wherever the page is. selectClass() picks the class without changing the view,
@@ -123,6 +124,18 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
       add('a330h1', 'cat330h', 'Annotation 1', 5, '2026-09-15');
       add('a330h2', 'cat330h', 'Annotation 2', 5, '2026-09-22');      /* excused */
       add('a330r1', null, 'Reading log', 20, '2026-09-25');           /* NO category */
+      /* WO-3.39: A WEIGHTED SIBLING, so the help paragraph can be read on both sides of a class switch.
+         No gradingMode key at all — the shape every weighted class has — one category at 100, one
+         student, one scored assignment, so its grid is really drawn rather than an empty state. Its
+         ids wear the wo330-/a330 prefixes so the cleanup below takes it out with the rest. */
+      doc.students.push({ id:'wo330-s3', first:'Cass', last:'Weighted' });
+      doc.classes.push({ id:'${CLS_W}', name:'WO-3.39 Weighted', archived:false, roster:['wo330-s3'],
+        letterScale:null,
+        terms:[{ id:'${TERM_W}', label:'WO-3.39 Term', start:'2026-09-01', end:'2026-11-06' }],
+        categories:[{ id:'cat339w', name:'Essays', weight:100 }]});
+      doc.assignments.push({ id:'a330w1', classId:'${CLS_W}', termId:'${TERM_W}', categoryId:'cat339w',
+        name:'Weighted essay', points:10, assigned:'2026-09-08', due:'2026-09-12' });
+      doc.scores['a330w1'] = { 'wo330-s3': { v:8 } };
       doc.scores['a330e1'] = { '${S1}': { v:110 }, '${S2}': { v:190 } };
       doc.scores['a330q1'] = { '${S1}': { v:9 },   '${S2}': { v:10 } };
       doc.scores['a330q2'] = { '${S1}': { v:null, flag:'missing' }, '${S2}': { v:10 } };
@@ -130,8 +143,11 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
       doc.scores['a330h2'] = { '${S1}': { v:null, flag:'excused' }, '${S2}': { v:5 } };
       doc.scores['a330r1'] = { '${S1}': { v:18 },  '${S2}': { v:20 } };
     });
+    c.selectClass('${CLS_W}');
+    c.selectTerm('${TERM_W}');
     c.selectClass('${CLS}');
     c.selectTerm('${TERM}');
+    c.refreshClassBar();
     var cls = (s.getDoc().classes || []).filter(function(x){ return x.id === '${CLS}'; })[0];
     var w = cls.categories.reduce(function(n, k){ return n + k.weight; }, 0);
     return { ok:true, was: was, mode: mode, weights: w, gradingMode: cls.gradingMode,
@@ -155,24 +171,87 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
       var tr = document.querySelector('#scoresBody tr[data-score-row="${S1}"]');
       var num = tr ? tr.querySelector('.scores-grade-num') : null;
       var banner = document.getElementById('scoresNoGrade');
-      /* WO-3.36: every word the screen draws, read rather than grepped — the view's text with the two
-         static help paragraphs taken out, plus every title and aria-label on it. The paragraphs are
-         the same HTML in every class and name both modes in conditional sentences ("In a class graded
-         by weighted categories …", WO-3.34), so they say what a weighted class does without calling
-         this one weighted; they are read separately below rather than skipped silently. */
+      /* WO-3.36: every word the screen draws, read rather than grepped — the view's text plus every
+         title and aria-label on it. THE HELP PARAGRAPHS ARE IN IT (WO-3.39): until then they were
+         taken out and read separately, because the third one explained both grading modes to every
+         class. Now a class draws only its own mode's half of it, so the help is measured like every
+         other word on the screen. "Drawn" is measured, not inferred from a class name: a help block
+         whose computed display is none is taken out of the copy, and nothing else is. */
       var view = document.getElementById('scoresView');
+      var blocks = view.querySelectorAll('[data-scores-hint-mode]');
       var bare = view.cloneNode(true);
-      Array.prototype.forEach.call(bare.querySelectorAll('.scores-hint'), function(p){ p.remove(); });
+      var bareBlocks = bare.querySelectorAll('[data-scores-hint-mode]');
+      Array.prototype.forEach.call(blocks, function(b, i){
+        if (getComputedStyle(b).display === 'none') bareBlocks[i].remove(); });
       var attrs = Array.prototype.map.call(bare.querySelectorAll('[title],[aria-label]'), function(e){
         return (e.getAttribute('title') || '') + ' ' + (e.getAttribute('aria-label') || ''); });
-      var hints = Array.prototype.map.call(view.querySelectorAll('.scores-hint'), function(p){ return p.textContent; });
       return { pct: num ? num.textContent : '', cell: tr ? (tr.querySelector('.scores-grade') || {}).textContent : '',
         bannerUp: !!banner && !banner.classList.contains('hidden'),
         words: bare.textContent + ' ' + attrs.join(' '),
-        hintWeights: hints.map(function(t){ return (t.match(/[^.]*weight[^.]*/gi) || []).join(' | '); }),
+        helpBlocks: blocks.length,
         chips: Array.prototype.map.call(document.querySelectorAll('#scoresHead .cat-chip'), function(c){ return c.textContent; }),
         chipFigures: document.querySelectorAll('#scoresHead .cat-chip b').length,
         summary: (document.getElementById('scoresSummary') || {}).textContent || '' }; })()`);
+
+    /* ── the help paragraph across a class switch (WO-3.39) ──
+     *
+     * The third help paragraph, read as a teacher sees it: its text with every block whose computed
+     * display is none taken out, whitespace collapsed. The weighted string is the paragraph as it read
+     * before WO-3.39 with its last sentence — the points one — gone, letter for letter: the weighted
+     * sentences were MOVED, not rewritten, so a weighted class reads exactly what it always did. The
+     * points string is the shared opening plus the re-worded points sentence, which says no "weight".
+     * The switch is the real header tab, both ways, and then the real Scores segment — a class tab
+     * lands on the registry (src/classes.js selectClass()), so that is the path a teacher takes back
+     * to a grid — with the score grid read only once it is up again.
+     */
+    const HELP_OPENING = 'The grade beside each name is live. It can go over 100%: an assignment worth 0 '
+      + 'points is how extra credit works here, and nothing caps what a student earned.';
+    const HELP_WEIGHTED = HELP_OPENING + ' In a class graded by weighted categories it is worked out '
+      + 'from the categories, with an empty one\'s weight spread across the ones that have work, and '
+      + 'until the weights total 100% there is no grade at all — not a provisional one — and the '
+      + 'banner above says what they come to. Nothing is blocked while they are wrong: keep entering '
+      + 'scores, and the grades appear the moment the weights do.';
+    const HELP_POINTS = HELP_OPENING + ' This class is graded on total points: the grade is every point '
+      + 'earned over every point possible, work in no category included, from the first score you enter.';
+    const readHelp = () => evalJs(`(function(){
+      var view = document.getElementById('scoresView');
+      var first = view.querySelector('[data-scores-hint-mode]');
+      var p = first ? first.closest('.scores-hint') : null;
+      if (!p) return { up:false, text:'', drawn:[] };
+      var live = p.querySelectorAll('[data-scores-hint-mode]');
+      var copy = p.cloneNode(true);
+      var copies = copy.querySelectorAll('[data-scores-hint-mode]');
+      var drawn = [];
+      Array.prototype.forEach.call(live, function(b, i){
+        if (getComputedStyle(b).display === 'none') copies[i].remove();
+        else drawn.push(b.getAttribute('data-scores-hint-mode')); });
+      return { up: !view.classList.contains('hidden'),
+        open: window.planbook.classes.getSelectedClassId(),
+        text: copy.textContent.replace(/\\s+/g, ' ').trim(), drawn: drawn }; })()`);
+    const helpP1 = await readHelp();
+    await clickSel('#classTabBar [data-class-tab="' + CLS_W + '"]');
+    await new Promise(r => setTimeout(r, 300));
+    await clickSel('#classView [data-class-screen="scores"]');
+    await new Promise(r => setTimeout(r, 400));
+    const helpW = await readHelp();
+    await clickSel('#classTabBar [data-class-tab="' + CLS + '"]');
+    await new Promise(r => setTimeout(r, 300));
+    await clickSel('#classView [data-class-screen="scores"]');
+    await new Promise(r => setTimeout(r, 400));
+    const helpP2 = await readHelp();
+    check('WO-3.39: a weighted class\'s score-grid help reads word for word as it did before — the shared '
+      + 'opening and the weighted sentences, unchanged, and no points sentence',
+      helpW.up && helpW.open === CLS_W && helpW.text === HELP_WEIGHTED
+        && helpW.drawn.length === 1 && helpW.drawn[0] === 'weighted',
+      JSON.stringify(helpW));
+    check('WO-3.39: switching points → weighted → points through the header\'s class tabs draws the right '
+      + 'help block each time — points, then weighted, then points again — each read on the score grid '
+      + 'reached through the Scores segment, with exactly one block drawn on each',
+      [helpP1, helpW, helpP2].every((x) => x.up && x.drawn.length === 1)
+        && helpP1.open === CLS && helpP1.drawn[0] === 'points' && helpP1.text === HELP_POINTS
+        && helpW.open === CLS_W && helpW.drawn[0] === 'weighted'
+        && helpP2.open === CLS && helpP2.drawn[0] === 'points' && helpP2.text === HELP_POINTS,
+      JSON.stringify({ points: helpP1, weighted: helpW, pointsAgain: helpP2 }));
 
     /* ── the grade sheet, opened through its real button ── */
     await clickSel('#scoresView [data-grades-record]');
@@ -274,23 +353,15 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
     check('WO-3.36: in a points class no text on the score grid calls the grade weighted or prints a '
       + 'weight — every column chip is the bare category name (or "no category") with no figure in it, '
       + 'the summary line ends "graded on total points" with no weights total, and no word of weight is '
-      + 'anywhere in the view\'s text, titles or labels outside the two static help paragraphs',
-      gridHit === '' && grid.chipFigures === 0 && grid.chips.length === 7
+      + 'anywhere in the view\'s text, titles or labels — its help included, now that a points class '
+      + 'draws only its own half of it (WO-3.39)',
+      gridHit === '' && grid.helpBlocks === 2 && grid.chipFigures === 0 && grid.chips.length === 7
         && grid.chips.every((c) => CATS.indexOf(c) !== -1 || c === 'no category')
         && grid.chips.filter((c) => c === 'no category').length === 1
         && /graded on total points$/.test(grid.summary.trim())
         && grid.summary.indexOf('Weights total') === -1 && !/%\s*$/.test(grid.summary.trim()),
-      JSON.stringify({ wordFound: gridHit, chips: grid.chips, chipFigures: grid.chipFigures,
-        summary: grid.summary }));
-    /* The two help paragraphs, read rather than skipped: any sentence in them with "weight" in it must
-       be one that names the weighted mode or says a points class has none — never one about this
-       class as though it were weighted. */
-    const hintSentences = (grid.hintWeights || []).join(' | ').split(' | ').filter(Boolean);
-    check('WO-3.36: the score grid\'s static help paragraphs mention weights only in sentences about a '
-      + 'weighted class or saying a points class has none to balance',
-      hintSentences.length > 0 && hintSentences.every((s) => /weighted categories|no\s+weights/.test(s)
-        || /until the weights|the weights do/.test(s)),
-      JSON.stringify(hintSentences));
+      JSON.stringify({ wordFound: gridHit, helpBlocks: grid.helpBlocks, chips: grid.chips,
+        chipFigures: grid.chipFigures, summary: grid.summary }));
     check('WO-3.36: in a points class no text on the grade sheet calls the grade weighted or prints a '
       + 'weight — not in the dialog, its titles or labels, nor the CSV it saves — and no column title '
       + 'carries a percent',
@@ -366,9 +437,10 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
       var s = window.planbook.store, c = window.planbook.classes;
       if (!s.getDoc()) return 0;
       s.update(function(doc){
-        doc.classes = doc.classes.filter(function(x){ return x.id !== '${CLS}'; });
+        doc.classes = doc.classes.filter(function(x){ return x.id !== '${CLS}' && x.id !== '${CLS_W}'; });
         doc.students = doc.students.filter(function(x){ return String(x.id).indexOf('wo330-') !== 0; });
-        doc.assignments = doc.assignments.filter(function(a){ return a.classId !== '${CLS}'; });
+        doc.assignments = doc.assignments.filter(function(a){
+          return a.classId !== '${CLS}' && a.classId !== '${CLS_W}'; });
         Object.keys(doc.scores || {}).forEach(function(k){
           if (String(k).indexOf('a330') === 0) delete doc.scores[k]; });
       });

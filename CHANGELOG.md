@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The score grid's help explains only how this class is graded — 2026-10-03
+
+WO-3.39. Shell cache `v158`.
+
+- **A points class's help under the score grid no longer talks about weights.** It reads *"This
+  class is graded on total points: the grade is every point earned over every point possible, work
+  in no category included, from the first score you enter."* The word "weight" no longer appears
+  anywhere in it.
+- **A weighted class's help keeps its weights explanation word for word.** It no longer adds the
+  sentence about points classes, which used to follow it.
+- **Switching classes switches the help.** It follows the open class's grading mode on every
+  redraw, even for a class with nothing to grade yet. It reads the mode and nothing else.
+
 ### A bonus scored 0 no longer reads as nothing graded — 2026-10-03
 
 WO-3.38. Shell cache `v157`.

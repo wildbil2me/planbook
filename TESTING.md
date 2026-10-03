@@ -9588,6 +9588,55 @@ out of scope here. Reported as a proposed follow-up.
 
 **Full run on the delivered tree:** `1681 checks · 1681 passed · 0 failed · 0 skipped`, 53,513 lines, 31.8 lines per check, 710s, exit 0, 2026-10-03 on the real clock. `node tools/wo-sweep.mjs`: `46 checks · 43 passed · 0 failed · 3 to review`, exit 0, the three standing reviews.
 
+### WO-3.39 — the score grid's help explains weights to a points class first
+
+**What this changes.** The score grid's third help paragraph (*"The grade beside each name is
+live"*) is split. Its two opening sentences stay shared; the rest is two `<span>` blocks inside the
+same `<p class="scores-hint">`, `data-scores-hint-mode="weighted"` and `data-scores-hint-mode="points"`,
+and `renderScores()` in `src/scores.js` hides the one that is not `gradingModeOf(cls)` on every draw,
+above every early return — so a class switch, or a class with nothing to grade, redraws it. **The owner
+ruled (a) at dispatch.** The weighted block is WO-3.34's sentences moved, not rewritten. The points
+sentence *is* re-worded, because it carried weight wording itself:
+
+- **Before:** *"In a class graded on total points there are no weights to balance: the grade is every
+  point earned over every point possible, work in no category included, from the first score you
+  enter."*
+- **After:** *"This class is graded on total points: the grade is every point earned over every point
+  possible, work in no category included, from the first score you enter."*
+
+`CACHE` is `planbook-shell-v158`. There is no 👤 line on this row. *(Unreachable for a teacher until
+WO-3.31 writes `gradingMode`; the harness plants it.)*
+
+- [x] In a points class the score grid's help has no weight wording. **Measured** by WO-3.36's own grid
+      check in `verify/points-grade.mjs`, with its skip removed: the view's copy no longer has every
+      `.scores-hint` taken out; only a help block whose computed `display` is `none` is removed, and the
+      check also asserts both blocks are in the markup (`helpBlocks === 2`). WO-3.36's separate
+      "help paragraphs mention weights only in conditional sentences" check is deleted — it policed a
+      carve-out that no longer exists. **Mutation-proved** (M1 below).
+- [x] A weighted class's help reads word for word as today. A weighted sibling class (`c_wo339w`, no
+      `gradingMode` key, one category at 100, one scored student) is planted beside the points class;
+      its third paragraph, drawn blocks only, whitespace-collapsed, equals the pre-WO-3.39 paragraph
+      with its last (points) sentence gone — a literal string, checked against `git show
+      HEAD:index.html` by a script while building it.
+- [x] Switching from a points class to a weighted one and back draws the right block each time. On the
+      points class's grid, then the header's `#classTabBar` tab to the weighted class and its Scores
+      segment, then the tab back and Scores again: exactly one block drawn each time — points, weighted,
+      points — with the full expected text each time.
+
+**Mutation round.** A scratch copy of the entry harness held only `localstorage-prefs` and
+`points-grade` (30 checks, all green on the delivered tree). Each mutation carried a `MUTATION`
+marker; the file was restored from a copy and its SHA-256 compared with the pre-mutation bytes
+(identical each time). The scratch harness is deleted; `grep -rn MUTATION` over the changed files
+prints nothing.
+
+| Mutation | Result |
+|---|---|
+| M1 · both blocks drawn (`toggle('hidden', false && …)`) — the work order's own | **3 red**: WO-3.36's grid check (`wordFound: "weight"`, `helpBlocks: 2`), the weighted word-for-word check, the switch check |
+| M2 · the help never asks the mode (`hintMode = 'weighted'`) | **2 red**: WO-3.36's grid check and the switch check |
+| M3 · one weighted sentence reworded in `index.html` (*not a provisional one* → *not a provisional grade*) | **1 red**: the weighted word-for-word check |
+
+**Full run on the delivered tree:** `1682 checks · 1682 passed · 0 failed · 0 skipped`, 53,585 lines, 31.9 lines per check, 710s, exit 0, 2026-10-03 on the real clock. `node tools/wo-sweep.mjs`: `46 checks · 43 passed · 0 failed · 3 to review`, exit 0, the three standing reviews.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

@@ -792,6 +792,15 @@ export function renderScores() {
   const picked = categoryId ? withWork.filter((c) => c.id === categoryId)[0] : null;
 
   if (hintTerm) hintTerm.textContent = termLabel || 'this class';
+  /* THE HELP SPEAKS THE OPEN CLASS'S MODE (WO-3.39): the third help paragraph carries one block per
+     grading mode in index.html, and the block that is not this class's is hidden. It is set here,
+     above every early return, so it follows a class switch even onto a class with nothing to grade.
+     It reads the mode and nothing else — no figure, no weight total — and gradingModeOf(null) is
+     'weighted', which is what a screen with no class open shows. */
+  const hintMode = gradingModeOf(cls);
+  document.querySelectorAll('#scoresView [data-scores-hint-mode]').forEach((block) => {
+    block.classList.toggle('hidden', block.getAttribute('data-scores-hint-mode') !== hintMode);
+  });
   if (headline) {
     headline.textContent = !doc ? 'No school year is open.'
       : !cls ? 'Add a class from the class bar first.'
