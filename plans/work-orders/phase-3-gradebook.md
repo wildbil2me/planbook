@@ -2876,8 +2876,11 @@ with no separate flag tracking.
 - **The score grid marks a cell that has history**, and student detail shows the trail under its
   assignment: *Missing (Sep 14) → Late, 70 (Sep 20) → 88 (Oct 1)*. *(The owner's ruling, 2026-10-02.)*
   The history mark has to read as different from WO-3.32's note mark at a glance, since one cell can
-  carry both. **Open:** does the history mark show under the projector? It discloses that a score was
-  changed, not what it was. The owner rules at dispatch.
+  carry both. **Neither shows under the projector** *(the owner's ruling, 2026-10-04, at dispatch)*:
+  in presentation mode the grid's history mark and student detail's trail are **absent from the
+  page**, not dimmed or counted. That is WO-3.32's treatment of the note mark and the note, and
+  `flipPresentationMode()` already repaints the grid for it. The mark says only that a score changed;
+  hiding it is the direction that discloses nothing about one student on a wall.
 - **Nothing reads history but student detail.** No signal rule, merge field, grade or print. What
   history means for signals is parked in `plans/future-features.md` § Gradebook as a ruling for the
   owner, not a detail for this work order.
@@ -2892,7 +2895,8 @@ with no separate flag tracking.
 - [ ] Student detail lists the history in order, with dates, and a cell with no history shows nothing
       extra.
 - [ ] A cell with history carries the grid's history mark and a cell without it does not, and a cell
-      with both a note and history shows both marks, told apart.
+      with both a note and history shows both marks, told apart. In presentation mode neither the
+      history mark nor the student-detail trail is in the DOM.
 - [ ] A backup written before this lands restores unchanged, and a year with history round-trips.
 - [ ] No exported reader outside the detail screen's own path returns `was`, and a sweep check keeps
       it that way.
