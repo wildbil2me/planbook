@@ -228,6 +228,9 @@ own cache for ever once the dev server is down and never sees a deploy, so a sta
 failed feature. `location.origin` in DevTools settles it.
 **If you changed a file in `SHELL`, bump `CACHE` in `sw.js` in the same commit** — `./` is entry one,
 so `index.html` counts. Skip it and the owner verifies your work by looking at the previous build.
+*(A **comment-only** change to a SHELL file may skip the bump if every commit carrying it ends with the
+trailer `Shell-Cache: not needed — comments only` — a person's word, read by `wo-sweep.mjs` § 9 since
+WO-1.60, and never valid for `sw.js` or `index.html`.)*
 
 **The verifier is a fresh session, on every work order, and there is a status for the gap.**
 *(2026-08-30, WO-1.38, owner's call — uniform, not size-gated, because `Size` predicts nothing.)* The

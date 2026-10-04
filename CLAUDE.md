@@ -712,7 +712,9 @@ v131 with no amber line an hour after v132 shipped, and a stale build looked lik
 `location.origin` in DevTools (F12 works in an app window) settles it, and each origin holds its own
 copy of the year. **And bump `CACHE` in `sw.js` for any change to a
 file in `SHELL`** — `./` is entry one, so an `index.html` edit counts, and without the bump no
-device sees the change at all.
+device sees the change at all. *(A **comment-only** change to a SHELL file may skip the bump if every
+commit carrying it ends with the trailer `Shell-Cache: not needed — comments only` — a person's word,
+read by `wo-sweep.mjs` § 9 since WO-1.60, and never valid for `sw.js` or `index.html`.)*
 
 ## Conventions
 

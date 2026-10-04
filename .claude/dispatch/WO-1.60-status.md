@@ -1,0 +1,9 @@
+2026-10-04T19:08:34Z gates PASS (depends nothing; tree dirty only with the owner's uncommitted option-1 ruling in phase-1 file, not a draft)
+2026-10-04 route Claude Opus on merits — tooling change to wo-sweep § 9 plus TESTING.md prose, and the mutation proof needs commits made in a throwaway clone (judgment about not committing on main); runner-up Codex (spec complete after option-1 ruling, sweep is fast) set aside on the TESTING.md prose and the commit-making proof. No Codex probe: not a Codex route.
+2026-10-04 claimed: --start WO-1.60 ran (🤖 CLAIMED — 2026-10-04). Note: wo-gate reported 22.8M proxy units in the rolling 5h window, past the median-death mark — session-limit risk is high.
+2026-10-04 brief written: .claude/dispatch/WO-1.60-brief.md (12.0 KB, both markers filled, 8 added traps: owner's uncommitted ruling, scratch-clone commits, working tree unexcusable, git trailer parsing, check name/count, main stays red, convention home, MUTATION grep)
+2026-10-04 implementer spawned at Opus (no model override) with .claude/dispatch/WO-1.60-brief.md, awaiting return — expect 15-30 min, flat trail while it reads is normal
+2026-10-04 implementer returned (Opus, ~19.5 min): § 9 trailer excuse built; claims 3/3 Acceptance ticked, sweep red on real tree only at § 9 (WO-3.40/3.44, expected), verify-shell 1760/1760, proof A-D in deleted scratch clone; proposes follow-up: § 9 never watched index.html
+2026-10-04 handoff written: --handoff WO-1.60 → 🔍 AWAITING VERDICT. Verifier owed from a fresh session; this session stops here.
+2026-10-04T19:31:25Z fresh session: row reads 🔍 AWAITING VERDICT; gate PASS; verifier spawned at Opus as FIRST pass, awaiting verdict
+2026-10-04T19:45:44Z verdict in: PASS (3/3 Acceptance verified in scratch clone; verify-shell 1760/1760; sweep red only § 9 WO-3.40/3.44 as ruled; out-of-scope finding: § 9 never watched index.html — book it). Not ticked; awaiting owner go.

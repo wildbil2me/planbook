@@ -5473,7 +5473,7 @@ the record. **Do not fix the file with a `finally`**, for the reason WO-1.57 giv
 
 ## WO-1.60 — a comment-only change to a shell file turns the sweep red
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-10-04 · **Size** S · **Depends on** —
 **Closes roadmap** *(no box. A tooling defect, owner-directed, 2026-10-04.)*
 
 **Booked 2026-10-04**, owner-directed, out of WO-3.40's verdict. **`wo-sweep.mjs` is red on `main`
@@ -5486,6 +5486,13 @@ in `src/assignments.js` and `src/detail.js`, and its Acceptance line 3 forbade t
 comment changes nothing a device needs. The owner accepted the red at commit rather than bump against
 the work order. Each later work order now has to know that § 9's failure is expected, and a real miss
 looks exactly like it. WO-3.44 would do the same again.
+
+**Ruled 2026-10-04, the owner: option 1, the commit trailer.** Two things follow that the options
+below did not say. **The trailer is a person's word, so the mutation Acceptance line 2 asked for — a
+code change *carrying the same excuse* going red — is the one thing this rule cannot catch by
+construction**; that line is reworded below to prove what the trailer rule *can* hold. And **commits
+already on `main` cannot gain a trailer**, so WO-3.40's and WO-3.44's red is not cleared by this work
+order; it clears at the next `CACHE` bump, and the excuse governs from then on.
 
 **Open at dispatch — the owner's call, one of three:**
 1. **A recorded excuse.** A commit trailer such as `Shell-Cache: not needed — comments only`. § 9
@@ -5502,13 +5509,56 @@ looks exactly like it. WO-3.44 would do the same again.
 why. WO-3.40's and WO-3.44's `CACHE` lines get a pointer here.
 
 **Acceptance**
-- [ ] On a tree whose only SHELL change since the bump is comment-only and excused by the chosen rule,
+- [x] On a tree whose only SHELL change since the bump is comment-only and excused by the chosen rule,
       § 9 is green and names the excused file.
-- [ ] Mutation-proved: a one-character code change in the same file, carrying the same excuse, turns
-      § 9 red. Recorded in `TESTING.md` § WO-1.60, and **the mutation is reverted before anything else
+- [x] Mutation-proved: a second commit to the same file **without** the trailer turns § 9 red, and so
+      does the trailer on a commit touching `sw.js` or `index.html`. *(Reworded 2026-10-04 on the
+      option-1 ruling: the original asked a code change carrying the excuse to go red, which only
+      option 2 could do.)* Recorded in `TESTING.md` § WO-1.60, and **the mutation is reverted before anything else
       is written** (`AGENTS.md`).
-- [ ] `node tools/wo-sweep.mjs` is otherwise unchanged in check names and order.
+- [x] `node tools/wo-sweep.mjs` is otherwise unchanged in check names and order.
 
 **Traps** — **The default stays red.** An unexcused SHELL change must still fail, because the check
 exists for WO-2.4 and WO-2.13, which were real misses. **Never excuse `sw.js` or `index.html`.** The
 first is the version and the second is entry one of `SHELL`.
+
+## WO-1.61 — the sweep's cache check has never watched index.html
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Closes roadmap** *(no box. A tooling defect, owner-directed, 2026-10-04.)*
+
+**Booked 2026-10-04**, owner-directed, out of WO-1.60's verdict.
+
+**The defect.** § 9 of `tools/wo-sweep.mjs` reads `sw.js`'s `SHELL` array and builds its set of
+watched files with `if (p && !p.endsWith('/')) shellFiles.add(p)` — the comment beside it reads
+*"'./' is the index, not a file on disk"*. So `'./'`, entry one of `SHELL`, is dropped, and
+`index.html` is **never** in the set. An `index.html` edit committed with no `CACHE` bump leaves § 9
+green. CLAUDE.md says the opposite in as many words — *"`./` is entry one, so an `index.html` edit
+counts"* — and so does WO-1.60's own rewritten § 9 header ("index.html … is entry one of SHELL").
+`sw.js` itself is not in `SHELL` either, but a `sw.js` change *is* the bump, so that one is not a gap.
+
+**WO-1.60 made it visible rather than causing it.** Its trailer rule names `index.html` in
+`NEVER_EXCUSED`, so a trailer on an `index.html` commit goes red — while the same commit with no
+trailer stays green. The stricter path is the one a person can take on purpose. The verifier also
+found `!NEVER_EXCUSED.includes(f)` in the offender loop unreachable for `index.html` for the same
+reason, and for `sw.js` because it is not in `SHELL`; it does no harm.
+
+**Deliverables** — § 9 treats `'./'` as `index.html` (the file Cloudflare Pages serves at `/`) and
+watches it like every other SHELL file. The comment beside the parse says why. If the
+`NEVER_EXCUSED` guard in the offender loop is still dead afterwards, take it out or say why it stays.
+
+**Acceptance**
+- [ ] An `index.html` change committed since the bump, with no `CACHE` bump, turns § 9 red and names
+      `index.html`. Mutation-proved in a throwaway clone, never on `main`, and recorded in
+      `TESTING.md` § WO-1.61. **The mutation is reverted before anything else is written**
+      (`AGENTS.md`).
+- [ ] An `index.html` change committed together with a `CACHE` bump leaves § 9 green.
+- [ ] `node tools/wo-sweep.mjs` is otherwise unchanged in check names and order, and on the real tree
+      § 9 reports the same offenders as before, plus `index.html` only if it has changed since the
+      current bump.
+
+**Traps** — **This makes the sweep stricter**, so it can turn `main` red on a commit that was green
+yesterday. Check `git diff --name-only <bump>..HEAD -- index.html` on the real tree before claiming
+what § 9 will say. **Do not add `./index.html` to `SHELL`** to make the check see it — `sw.js`'s header
+explains why that breaks the app on the first navigation. The fix is in the sweep's reading of
+`SHELL`, never in `SHELL`.

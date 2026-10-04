@@ -379,7 +379,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.60 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.61 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.57 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.44 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.6 | Phase 4 |
@@ -453,7 +453,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 60 | 57 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 61 | 58 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 55 | 54 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 43 | 42 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 6 | 6 | — | ✅ DONE — 2026-09-30 |
@@ -462,7 +462,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 17 | 16 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.4 ✅ DONE 2026-09-26, the sign-in opened on the deployed domain and read on the laptop and the iPad; WO-7.5 ✅ DONE 2026-09-26, the header's sync button; WO-7.6 ✅ DONE 2026-09-26, the privacy documents say when Google's library loads, read off the deployed /privacy; WO-7.7 ✅ DONE 2026-09-26, a download repaints the open screen, read both ways on laptop and iPad; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 18 | 12 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 3 | — | WO-G2 ✅ **2026-09-30**: worked 2026-09-29 with six of eight boxes closed, and the letter-scale setting and the backup drill closed the next day on the owner's reading; WO-G3 ✅ **2026-09-30** on the owner's ruling, watched across four weeks of the term with nothing recorded |
-| | **228** | **214** | **3** | `[█████████░] 94%` |
+| | **229** | **215** | **3** | `[█████████░] 94%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)
@@ -1981,7 +1981,8 @@ it, never from a reading taken earlier in the same session.)*
 | 113 | [WO-3.32](phase-3-gradebook.md#wo-332--a-score-cell-can-carry-a-note) A score cell can carry a note | M | — | **At the foot, booked 2026-10-02**, owner-directed, with no slot chosen. An optional `note` on a score cell, on the attendance mark's precedent; in no merge field and not on the print. Absent under the projector, the owner's ruling. Goes before row 114, so the history holds notes from the start. One 👤 reading, iPad |
 | 114 | [WO-3.33](phase-3-gradebook.md#wo-333--a-changed-score-cell-keeps-what-it-was) A changed score cell keeps what it was | M | — | **After row 113**, booked 2026-10-02. Every cell write stamps `at`; an overwrite pushes the old cell, flag and note included, onto `was`; student detail shows the trail. Nothing else reads it, signals included. A rewrite within five minutes replaces rather than pushes, and the grid marks a cell with history, both the owner's rulings; and under the projector neither the mark nor the trail is on the page, ruled 2026-10-04 at dispatch. One 👤 reading, iPad |
 | 125 | [WO-3.44](phase-3-gradebook.md#wo-344--a-comment-says-a-misfiled-copy-looks-identical-on-the-list) A comment says a misfiled copy looks identical on the list | XS | — | ✅ **2026-10-04** — both Acceptance lines, verifier PASS, comment only; no cache bump, so § 9 waits on row 126. `src/shell.js` — Booked 2026-10-04, owner-directed, out of WO-3.40's verdict. The seam comment above `assignments, screenNav` says the naive duplicate and this build's look identical on the list, which is false when the target has a category of the same name. Comments only; the `CACHE` question is row 126's |
-| 126 | [WO-1.60](phase-1-shell-store-roster.md#wo-160--a-comment-only-change-to-a-shell-file-turns-the-sweep-red) A comment-only change to a shell file turns the sweep red | S | — | **At the foot, booked 2026-10-04**, owner-directed, with no slot chosen, so move it if it belongs elsewhere. Booked from WO-3.40's verdict. `wo-sweep.mjs` § 9 compares file names, so WO-3.40's comment-only edits, committed without a bump as its Acceptance line required, leave the sweep red on `main` until the next `CACHE` bump. **One Open at dispatch**: a commit-trailer excuse, a comment-stripped comparison, or strike it and always bump. Tooling only; nothing in `src/` moves |
+| 126 | [WO-1.60](phase-1-shell-store-roster.md#wo-160--a-comment-only-change-to-a-shell-file-turns-the-sweep-red) A comment-only change to a shell file turns the sweep red | S | — | ✅ **2026-10-04** — all three Acceptance lines, verifier PASS; the owner ruled **option 1, the commit trailer** (`Shell-Cache: not needed — comments only`), and § 9 believes it only when every commit to the file carries it, never for `sw.js` or `index.html`. WO-3.40's and WO-3.44's commits predate it, so § 9 stays red on `main` until the next `CACHE` bump. The verdict found § 9 has never watched `index.html` at all: row 127. **At the foot, booked 2026-10-04**, owner-directed, from WO-3.40's verdict. Tooling only; nothing in `src/` moves |
+| 127 | [WO-1.61](phase-1-shell-store-roster.md#wo-161--the-sweeps-cache-check-has-never-watched-indexhtml) The sweep's cache check has never watched `index.html` | S | — | **At the foot, booked 2026-10-04**, owner-directed, out of WO-1.60's verdict. § 9 drops SHELL's `'./'` entry, so an `index.html` edit with no `CACHE` bump stays green, though CLAUDE.md says an `index.html` edit counts. Makes the sweep stricter. Tooling only; nothing in `src/` moves |
 
 ***Rows 17 through 32 were added 2026-08-28, and the reason is the third occurrence of the failure
 this section exists to prevent.*** *Before that sitting,* **sixteen open work orders had no row in

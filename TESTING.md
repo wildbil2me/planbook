@@ -2682,6 +2682,61 @@ Evidence, 2026-09-30, real clock, whole harness each time. `EXIT=` is read from 
 
 *No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.*
 
+### WO-1.60 — a comment-only change to a shell file turns the sweep red
+
+**What this changes.** Nothing a teacher sees and nothing a device gets: `src/`, `index.html` and
+`sw.js` are byte-identical to HEAD, so **no `CACHE` bump is owed and none was made**. One code file
+moves, `tools/wo-sweep.mjs` § 9, on the owner's option-1 ruling: a SHELL file changed since the bump
+is excused when **every** commit that changed it carries the git trailer
+`Shell-Cache: not needed — comments only` (key matched case-blind by git; any value beginning
+`not needed` excuses, anything else does not). git parses the trailer
+(`%(trailers:key=Shell-Cache,valueonly)`), not a regex, so the words in a message's body are not a
+trailer. An uncommitted change is never excused, and a trailer on a commit that touches `sw.js` or
+`index.html` is itself a FAIL naming the commit. **It is a person's word, not a measurement** — a code
+change carrying the trailer passes, by construction, and nothing here can catch it.
+
+**`main` stays red on § 9 after this lands, and that is correct.** `de61b73` (WO-3.40:
+`src/assignments.js`, `src/detail.js`) and `c84e02a` (WO-3.44: `src/shell.js`) carry no trailer and
+cannot gain one. On the real tree, 2026-10-04: `FAIL | every SHELL file change is paired with a CACHE
+bump :: src/assignments.js, src/detail.js, src/shell.js changed since planbook-shell-v164 was set at
+061c53b — …`, the same three files as before the change. It clears at the next `CACHE` bump.
+
+**How it was proved — in a throwaway clone, never on `main`.** `git clone` of this repository into a
+scratch directory, `origin` removed so nothing could be pushed, the modified sweep copied in. Fixture
+base: a commit bumping `CACHE` to `planbook-shell-v165` (`aed5c19` in the clone), so WO-3.40's and
+WO-3.44's red was behind the bump. Then:
+
+- **A — the excuse.** One comment line added to `src/detail.js`'s header, committed with
+  `Shell-Cache: not needed — comments only` in the same final block as a `Co-Authored-By:` line.
+  § 9: `PASS … planbook-shell-v165 was set at aed5c19; changed since and excused by a Shell-Cache
+  trailer on every commit that touched it: src/detail.js (c7486c7)`. The whole sweep exited 0.
+- **B — mutation: a second commit to the same file without the trailer.** `FAIL … src/detail.js
+  changed since planbook-shell-v165 was set at aed5c19 — bump CACHE in sw.js, …`. Exit 1.
+- **C — mutation: the trailer on a commit touching `sw.js`** (a comment line). `FAIL … 2285f49
+  touches sw.js and carries a Shell-Cache trailer — sw.js and index.html are never excused, so bump
+  CACHE · excused by trailer: src/detail.js (c7486c7)`. Exit 1.
+- **D — mutation: the trailer on a commit touching `index.html`** (a comment appended to line 1).
+  `FAIL … 1c1ea8e touches index.html and carries a Shell-Cache trailer — …`. Exit 1.
+
+Each mutation was undone by `git reset --hard` back to A's tree in the clone before the next, and A
+re-read green after the last. The real tree never held one; `grep -rn MUTATION tools/ src/` on it
+is in the result file. Four further readings in the same clone, one-off, not mutations of the rule
+but edges of it: an **uncommitted** comment edit on top of A — red; the trailer in a **middle**
+paragraph with prose after it — red (git does not parse it as a trailer); `Shell-Cache: needed` —
+red; a second trailered commit with the key lower-cased and a plain hyphen in the value — green,
+naming both commits.
+
+**Check names and order unchanged.** HEAD's sweep and the new one, both run in the clone on HEAD's
+tree: 47 results each, the `PASS|FAIL|REVIEW | <name>` sequence identical line for line. The only
+difference in the output is the census line's own line number (`wo-sweep.mjs:3693` → `:3765`);
+it still reads 87 result-pushing call sites, because no `check(` was added.
+
+- [x] Excused comment-only change: § 9 green, names the file — fixture A above.
+- [x] Mutation-proved, both halves — fixtures B, C and D above, reverted in the clone.
+- [x] Names and order unchanged — the diff above.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.*
+
 ---
 
 ## Phase 2 — Attendance

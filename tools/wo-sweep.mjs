@@ -442,7 +442,35 @@ function commentLines(file) {
 
    A CACHE value that appears in no commit at all is a bump sitting uncommitted in the working tree.
    That is the rule being followed, not broken, so it passes — the whole point is to bump before you
-   deploy, and the deploy is the commit. */
+   deploy, and the deploy is the commit.
+
+   ONE EXCUSE, AND IT IS A PERSON'S WORD (WO-1.60, the owner's ruling of 2026-10-04). A file name
+   cannot tell a comment edit from a code edit, so a comment-only change — which changes nothing a
+   device needs — went red here with no way to say so; WO-3.40 forbade the bump and left this check
+   red on main, and from then on a real miss looked exactly like an expected one. So a commit may now
+   carry a trailer, in the same final block as its Co-Authored-By line:
+
+       Shell-Cache: not needed — comments only
+
+   The key is `Shell-Cache` (git matches it case-blind), and only a value beginning `not needed`
+   excuses; whatever follows is the committer's reason and is not read. `Shell-Cache: needed`, or any
+   other value, excuses nothing. git parses the trailer, not a regex over the message, so the words in
+   the body of a message are not a trailer. A SHELL file is excused only when EVERY commit that
+   changed it since the bump carries the trailer — one commit without it and the file is red again.
+   Four limits, all deliberate:
+     - It is a claim and not a measurement. A code change carrying the trailer passes here, and
+       nothing in this file can catch that by construction; the commit states it and the sweep
+       believes it. Option 2 (strip comments and compare) was the measured alternative and was not
+       chosen.
+     - The working tree has no commit and so no trailer: a SHELL file with uncommitted changes is
+       red exactly as before, whatever its commits say.
+     - sw.js and index.html are NEVER excused — the first is the version and the second is entry
+       one of SHELL (`./`). The trailer on a commit that touches either is itself a FAIL, naming the
+       commit, rather than being quietly ignored.
+     - Commits cannot gain a trailer after the fact, so WO-3.40's and WO-3.44's comment edits stay
+       red until the next CACHE bump; the excuse governs from that bump on.
+   The default is still red. WO-2.4 and WO-2.13 were real misses, and nothing here excuses a change
+   nobody spoke for. */
 
 {
   const swPath = path.join(REPO, 'sw.js');
@@ -472,6 +500,14 @@ function commentLines(file) {
       let gitAnswered = true;
       let introducedAt = '';
       let changed = new Set();
+      const uncommitted = new Set();
+      // The excuse, as the header states it. A value is excusing only if it begins `not needed`.
+      const EXCUSE_KEY = 'Shell-Cache';
+      const excuses = (values) => values.length > 0 && values.every(v => /^not needed\b/i.test(v));
+      const NEVER_EXCUSED = ['sw.js', 'index.html'];
+      const excused = [];        // [file, [short hashes]]
+      const misused = [];        // 'abc1234 touches sw.js'
+      let offenders = [];
       try {
         const git = (args) => execFileSync('git', args, { cwd: REPO, encoding: 'utf8' });
         // The commit that introduced the CACHE string sw.js carries right now. -S counts
@@ -483,11 +519,43 @@ function commentLines(file) {
           }
         }
         // Uncommitted work counts too: a SHELL file edited but not yet committed is still a
-        // shell change that owes a bump, and catching it before the commit is the point.
-        for (const f of git(['diff', '--name-only', 'HEAD']).split('\n')) if (f.trim()) changed.add(f.trim());
+        // shell change that owes a bump, and catching it before the commit is the point. It is
+        // kept apart because it can never be excused — there is no commit to carry a trailer.
+        for (const f of git(['diff', '--name-only', 'HEAD']).split('\n')) {
+          if (f.trim()) { changed.add(f.trim()); uncommitted.add(f.trim()); }
+        }
+
+        // Each commit since the bump: its hash, its Shell-Cache values as git parses them, the files
+        // it touched. A file that changed with no commit here naming it (a merge's own resolution,
+        // which --name-only does not list) has no commit to speak for it, and stays red.
+        const commits = [];
+        if (introducedAt) {
+          const out = git(['log', '--name-only',
+            `--format=%x1e%H%x1f%(trailers:key=${EXCUSE_KEY},valueonly,separator=%x1d)%x1f`,
+            `${introducedAt}..HEAD`]);
+          for (const rec of out.split('\x1e').slice(1)) {
+            const [hash, vals, names] = rec.split('\x1f');
+            commits.push({
+              hash: hash.trim(),
+              values: vals.split('\x1d').map(v => v.trim()).filter(Boolean),
+              files: new Set(names.split('\n').map(s => s.trim()).filter(Boolean)),
+            });
+          }
+        }
+        for (const c of commits) {
+          if (!excuses(c.values)) continue;
+          for (const f of NEVER_EXCUSED) if (c.files.has(f)) misused.push(`${c.hash.slice(0, 7)} touches ${f}`);
+        }
+        for (const f of [...changed].filter(f => shellFiles.has(f)).sort()) {
+          const touching = commits.filter(c => c.files.has(f));
+          const ok = !uncommitted.has(f) && !NEVER_EXCUSED.includes(f) && touching.length > 0
+            && touching.every(c => excuses(c.values));
+          if (ok) excused.push([f, touching.map(c => c.hash.slice(0, 7))]);
+          else offenders.push(f);
+        }
       } catch { gitAnswered = false; }
 
-      const offenders = [...changed].filter(f => shellFiles.has(f)).sort();
+      const excusedText = excused.map(([f, hs]) => `${f} (${hs.join(', ')})`).join(', ');
       if (!gitAnswered) {
         review('every SHELL file change is paired with a CACHE bump',
           'git could not be asked what has changed, so this check saw nothing — which is not the same as nothing having changed. Confirm the CACHE bump by hand before deploying.');
@@ -495,12 +563,16 @@ function commentLines(file) {
         // Not in history: the bump is in the working tree, ahead of the commit that will carry it.
         check('every SHELL file change is paired with a CACHE bump', true,
           `${cache} is not in any commit yet — the bump is uncommitted, which is the rule being followed`);
-      } else if (!offenders.length) {
-        check('every SHELL file change is paired with a CACHE bump', true,
-          `${cache} was set at ${introducedAt.slice(0, 7)}; no SHELL file has changed since`);
+      } else if (!offenders.length && !misused.length) {
+        check('every SHELL file change is paired with a CACHE bump', true, excused.length
+          ? `${cache} was set at ${introducedAt.slice(0, 7)}; changed since and excused by a ${EXCUSE_KEY} trailer on every commit that touched it: ${excusedText}`
+          : `${cache} was set at ${introducedAt.slice(0, 7)}; no SHELL file has changed since`);
       } else {
-        check('every SHELL file change is paired with a CACHE bump', false,
-          `${offenders.join(', ')} changed since ${cache} was set at ${introducedAt.slice(0, 7)} — bump CACHE in sw.js, or an installed app keeps the shell it already has`);
+        const parts = [];
+        if (offenders.length) parts.push(`${offenders.join(', ')} changed since ${cache} was set at ${introducedAt.slice(0, 7)} — bump CACHE in sw.js, or an installed app keeps the shell it already has`);
+        if (misused.length) parts.push(`${misused.join(', ')} and carries a ${EXCUSE_KEY} trailer — sw.js and index.html are never excused, so bump CACHE`);
+        if (excused.length) parts.push(`excused by trailer: ${excusedText}`);
+        check('every SHELL file change is paired with a CACHE bump', false, parts.join(' · '));
       }
     }
   }

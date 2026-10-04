@@ -3253,7 +3253,10 @@ points-mode wording to both comments and, by its brief, left the visibility clai
       *(Met, and it costs a red sweep: `wo-sweep.mjs` § 9 compares file names, so it fails on these
       comment-only edits until the next `CACHE` bump. The owner accepted the red at commit,
       2026-10-04, and booked WO-1.60 for the check. WO-3.44 was booked from the same verdict for
-      the `src/shell.js` comment the implementer ruled out of scope.)*
+      the `src/shell.js` comment the implementer ruled out of scope. **Settled by
+      [WO-1.60](phase-1-shell-store-roster.md#wo-160--a-comment-only-change-to-a-shell-file-turns-the-sweep-red)**:
+      a `Shell-Cache` trailer now excuses a comment-only commit, but this one has none and cannot
+      gain one, so its red clears at the next `CACHE` bump.)*
 
 **Traps** — **Do not change the copy rule.** The comments argue for it, and it stands.
 
@@ -3467,6 +3470,8 @@ overstatement.
 **Traps** — **Do not change the copy rule**, as WO-3.40's Traps said. **The `CACHE` question is
 WO-1.60's**: if this rides with a work order that bumps `CACHE` for its own code, nothing more is
 needed. Taken alone, it leaves `wo-sweep.mjs` § 9 red as WO-3.40 did, until WO-1.60 says otherwise.
+*(WO-1.60 has said: option 1, the `Shell-Cache` commit trailer — and this work order's commit landed
+before it, carries none, and stays red until the next `CACHE` bump.)*
 *(`src/assignments.js` ~925, "invisible on every term's list", was the third comment named in
 WO-3.40's verdict. It was read the day this was booked and is true: `assignmentsOf()` matches `termId`
 exactly, so a `termId` of `''` is on no term's list. Nothing to fix there.)*

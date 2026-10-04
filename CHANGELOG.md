@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The sweep can be told a shell change was comments only — 2026-10-04
+
+WO-1.60. Tooling only; no shell cache bump, and none owed.
+
+- **Not user-visible.** `wo-sweep.mjs` § 9 used to fail on any change to a precached file without a
+  `CACHE` bump, comment edits included. A commit can now carry the trailer
+  `Shell-Cache: not needed — comments only`, and § 9 believes it, but only when every commit to that
+  file carries it, never for uncommitted work, and never for `sw.js` or `index.html`. It is the
+  committer's word, not a measurement. WO-3.40's and WO-3.44's commits predate it, so § 9 stays red
+  until the next `CACHE` bump.
+- **Booked from the verdict:** WO-1.61. § 9 has never watched `index.html`, because it drops `SHELL`'s
+  `'./'` entry, so an `index.html` edit with no bump passes.
+
 ### A fourth comment corrected to match the build — 2026-10-04
 
 WO-3.44. No shell cache bump, so `wo-sweep.mjs` § 9 stays red until WO-1.60.
