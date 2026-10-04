@@ -875,6 +875,85 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
         && quiet337.offCy.slice(-UNBAL_WHY.length) === UNBAL_WHY && !NOTHING.test(quiet337.offCy),
       JSON.stringify({ offCy: quiet337.offCy, reason: quiet337.offGrade && quiet337.offGrade.reason }));
 
+    /* ── the score grid and the grade sheet say what student detail says (WO-3.42) ──
+     * Both screens put the reason there is no grade on the em dash in the grade column, as its
+     * accessible name — heard, not seen. Until WO-3.42 both read the engine's sentence straight off, so
+     * Fi and Iz were told "There is no graded work yet." over a bonus graded at 0 while student detail,
+     * one tap away, said otherwise. They now ask src/graded-pieces.js, the one copy student detail asks.
+     * Gus and Hal are the trap again: a scoreless Bonus and an excused one are blanks, and still say so.
+     *
+     * AND THE SAME CLASS WEIGHTED, for one read of both screens: the mode key comes off (its weights
+     * total 100, so it is a balanced weighted class) and goes back on before anything below. A weighted
+     * class never asks the cells, so every em dash must carry the engine's own sentence for its student
+     * — Fi's included, whose Bonus 0 is 0 of 0 there exactly as in points. That is the guard inside
+     * gradedPieces() read from the outside, and the weighted bytes this row promised to leave alone. */
+    const readGradeLabels = async () => {
+      await into('scores');
+      const grid = await evalJs(`(function(){ var out = {};
+        Array.prototype.forEach.call(document.querySelectorAll('#scoresBody tr[data-score-row]'), function(tr){
+          var n = tr.querySelector('.scores-grade .scores-grade-none');
+          out[tr.getAttribute('data-score-row')] = n ? n.getAttribute('aria-label') : null; });
+        return out; })()`);
+      await clickSel('#scoresView [data-grades-record]');
+      await new Promise(r => setTimeout(r, 300));
+      const sheet = await evalJs(`(function(){ var out = {};
+        var m = document.getElementById('gradesRecordModal');
+        Array.prototype.forEach.call(m ? m.querySelectorAll('.grades-report-slice tbody tr') : [], function(tr){
+          var h = tr.querySelector('th.grades-report-row-head');
+          var n = tr.querySelector('.grades-report-pct.none');
+          out[h ? h.textContent : '?'] = n ? n.getAttribute('aria-label') : null; });
+        return out; })()`);
+      await evalJs("window.planbook.closeModal('gradesRecordModal'); 1");
+      await new Promise(r => setTimeout(r, 150));
+      return { grid: grid, sheet: sheet };
+    };
+    const ZERO_LABEL = 'No grade — ' + ZERO_WHY;
+    const NONE_LABEL = 'No grade — ' + NONE_WHY;
+    const SHEET_NAME = { [FI]: 'Dunmore, Fi', [IZ]: 'Garrow, Iz', [GUS]: 'Ellery, Gus', [HAL]: 'Fenwick, Hal' };
+    const p342 = await readGradeLabels();
+    const both342 = (id) => ({ grid: p342.grid[id], sheet: p342.sheet[SHEET_NAME[id]] });
+    check('WO-3.42: in a points class, a student whose only graded work is a bonus graded at 0 is not told '
+      + 'by the score grid\'s or the grade sheet\'s accessible name that nothing is graded — both em dashes '
+      + 'read "' + ZERO_LABEL + '", for the filed Bonus (Fi) and the unfiled piece (Iz) alike',
+      [FI, IZ].every((id) => both342(id).grid === ZERO_LABEL && both342(id).sheet === ZERO_LABEL)
+        && [FI, IZ].every((id) => !NOTHING.test(both342(id).grid) && !NOTHING.test(both342(id).sheet)),
+      JSON.stringify({ fi: both342(FI), iz: both342(IZ) }));
+    check('WO-3.42: a blank is still ungraded on both — a Bonus cell holding no score (Gus), and an excused '
+      + 'Bonus beside a scoreless late (Hal), read "' + NONE_LABEL + '" on the score grid and the grade '
+      + 'sheet, never "graded at 0"',
+      [GUS, HAL].every((id) => both342(id).grid === NONE_LABEL && both342(id).sheet === NONE_LABEL),
+      JSON.stringify({ gus: both342(GUS), hal: both342(HAL) }));
+
+    await evalJs(`(async function(){ var s = window.planbook.store;
+      s.update(function(doc){ var c = doc.classes.filter(function(x){ return x.id === '${C4}'; })[0];
+        delete c.gradingMode; });
+      await s.flush(); return 1; })()`);
+    const w342 = await readGradeLabels();
+    const engine342 = await evalJs(`(function(){
+      var doc = window.planbook.store.getDoc();
+      var cls = doc.classes.filter(function(x){ return x.id === '${C4}'; })[0];
+      var g = window.planbook.gradeEngine;
+      var out = { mode: g.gradingModeOf(cls), says: {} };
+      ${JSON.stringify([CY, DI, ED, FI, GUS, HAL, IZ, JO])}.forEach(function(id){
+        var r = g.classGrade(doc, cls, '${T4}', id);
+        out.says[id] = r.percentage === null ? 'No grade — ' + (r.message || 'there is no grade yet.') : null; });
+      return out; })()`);
+    await evalJs(`(async function(){ var s = window.planbook.store;
+      s.update(function(doc){ var c = doc.classes.filter(function(x){ return x.id === '${C4}'; })[0];
+        c.gradingMode = 'points'; });
+      await s.flush(); return 1; })()`);
+    const wIds = Object.keys(engine342.says);
+    const wSheetHits = Object.keys(w342.sheet).map((name) => w342.sheet[name]).filter((x) => x !== null);
+    const wEngineHits = wIds.map((id) => engine342.says[id]).filter((x) => x !== null);
+    check('WO-3.42: and in the same class made weighted, the score grid and the grade sheet read the engine\'s '
+      + 'own sentence on every em dash and ask no cell — Fi\'s Bonus 0 reads "' + NONE_LABEL + '" there, '
+      + 'exactly as before WO-3.42',
+      engine342.mode === 'weighted' && engine342.says[FI] === NONE_LABEL
+        && wIds.every((id) => w342.grid[id] === engine342.says[id])
+        && w342.sheet[SHEET_NAME[FI]] === NONE_LABEL
+        && JSON.stringify(wSheetHits.slice().sort()) === JSON.stringify(wEngineHits.slice().sort()),
+      JSON.stringify({ engine: engine342, grid: w342.grid, sheet: w342.sheet }));
+
     /* ── the score grid's chip for a 0% category (WO-3.36) ──
      * Bonus carries weight 0. A weighted class draws its chip dashed and grey (`.zero`) because a 0%
      * category counts for nothing there; in a points class its 2-point puzzle counts, so the chip is

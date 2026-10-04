@@ -9680,6 +9680,53 @@ changed files prints nothing.
 
 **Full run on the delivered tree:** `1687 checks · 1687 passed · 0 failed · 0 skipped`, 53,747 lines, 31.9 lines per check, 729s, exit 0, 2026-10-03 on the real clock. `node tools/wo-sweep.mjs`: `46 checks · 43 passed · 0 failed · 3 to review`, exit 0, the three standing reviews.
 
+### WO-3.42 — the score grid and grade sheet tell a screen reader a bonus scored 0 is nothing graded
+
+**What this changes.** The owner's ruling (a): `gradedPieces()`, `rowIsGraded()`, `rowIsEmpty()`,
+`noGradeMessage()` and the zero-bonus sentence move out of `src/detail.js` into a new
+`src/graded-pieces.js`, which imports `src/categories.js` and `gradingModeOf()` from
+`src/grade-engine.js` and none of the three screens. `src/detail.js` imports them back and keeps no
+copy. The score grid's `gradeContent()` (`src/scores.js`) and the grade sheet's record
+(`src/grades-report.js`, `gradesRecord()`) now ask `noGradeMessage(grade, gradedPieces(…))` for the
+em dash's accessible name when there is no grade, instead of reading the engine's sentence. The
+weighted guard (`gradingModeOf(cls) === 'points'`), written inline at two call sites in
+`src/detail.js` before, is now inside `gradedPieces()`, which answers `null` for a weighted class
+without reading a cell. The engine and `src/signals.js` are untouched. `CACHE` is
+`planbook-shell-v160`, and `./src/graded-pieces.js` is in `SHELL`. There is no 👤 line on this row.
+
+- [x] In a points fixture, a student whose only graded work is a bonus scored 0 is not told by the
+      score grid's or the grade sheet's accessible name that nothing is graded. A blank or excused
+      bonus still is. Three checks in `verify/points-grade.mjs` on WO-3.34's fixture: Fi (Bonus 0) and
+      Iz (unfiled piece 0) read *"No grade — The only work graded so far is extra credit, graded at 0,
+      so there is no grade yet."* on both em dashes; Gus (Bonus with no score) and Hal (excused Bonus,
+      scoreless late) read *"No grade — There is no graded work yet."* on both; and the same class with
+      its `gradingMode` key removed reads the engine's own sentence for every student on both screens.
+      **Mutation-proved** (M1–M4 below).
+- [x] A weighted class's score grid and grade sheet are byte-identical before and after, on the
+      harness's existing fixtures. Capture probes (marked, scratch-only) logged `#scoresBody`'s
+      `innerHTML` at the end of every `paintGrades()` for a class not graded on points, and the grade
+      sheet's `innerHTML` plus its CSV text at every `openGrades()` for such a class. A full harness
+      run on a worktree of `d76ce97` (HEAD) and one on the same worktree with this row's `src/` and
+      `sw.js` copied in, both on HEAD's own `tools/`, captured 252 grid paints and 7 sheet opens
+      each, 16,762,639 bytes each. After renaming every `newId()`-shaped id to its first-occurrence
+      ordinal (the ids come from `crypto.getRandomValues()`, so two runs of HEAD differ there too),
+      the two captures are **identical**. The probes and the worktrees are gone; they were never in
+      the delivered tree.
+
+**Mutation round.** Each mutation carried a `MUTATION` marker and was planted in its own scratch
+worktree (HEAD plus this row's files), never in the delivered tree. Each ran the full harness. The
+worktrees were removed after; `grep -rn "WO342CAP|MUTATION" src/ tools/` over the delivered tree
+prints only the standing prose mentions.
+
+| Mutation | Result |
+|---|---|
+| M1 · the score grid reads the engine's sentence again (`const says = grade.message;` in `gradeContent()`) | **1 red** (`1690 checks · 1689 passed · 1 failed`): the bonus-graded-at-0 check, grid read *"There is no graded work yet."* for Fi and Iz while the sheet read the new sentence |
+| M2 · the grade sheet reads the engine's sentence again (`? grade.message` in `gradesRecord()`) | **1 red** (`1689 passed · 1 failed`): the same check, the other way round |
+| M3 · `gradedPieces()` counts a blank cell as graded (the `v === null` return deleted) | **2 red** (`1688 passed · 2 failed`): WO-3.38's blank check and WO-3.42's, Gus and Hal reading *"graded at 0"* on both screens |
+| M4 · the weighted guard taken out of `gradedPieces()` (`if (!cls) return null;`) | **1 red** (`1689 passed · 1 failed`): the weighted check, Fi and Iz reading the zero-bonus sentence in a weighted class. The guard is load-bearing: a weighted category's rows also carry `earned` and `possible` |
+
+**Full run on the delivered tree:** `1690 checks · 1690 passed · 0 failed · 0 skipped`, 53,826 lines, 31.8 lines per check, 748s, exit 0, 2026-10-04 on the real clock. `node tools/wo-sweep.mjs`: `46 checks · 43 passed · 0 failed · 3 to review`, exit 0, the three standing reviews.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

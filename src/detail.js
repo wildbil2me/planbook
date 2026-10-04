@@ -141,12 +141,15 @@ import { getSelectedClass, getSelectedTerm, termIsDated, initials, avatarClass }
    worn by every screen that prints a name. */
 import { fullName, rosterName } from './roster.js';
 /* How a weight is written down, so this screen's "40%" and the categories panel's are the same
-   string for the same number. And the class's own category list, which is how gradedPieces() tells
-   filed work from work under no category — the engine's own test (WO-3.38). */
-import { categoriesOf, formatWeight } from './categories.js';
+   string for the same number. */
+import { formatWeight } from './categories.js';
 /* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4, extended for this screen at WO-3.7). */
 import { nextBandFor, openWork, projectedClassGrade,
   classGrade, gradingModeOf } from './grade-engine.js';
+/* What is graded, asked of the cells, and what to say when there is no grade (WO-3.38, lifted at
+   WO-3.42). One copy, shared with the score grid and the grade sheet, so the three screens cannot
+   disagree about a bonus graded at 0. None of it is grade arithmetic — see that file's header. */
+import { gradedPieces, noGradeMessage, rowIsEmpty, rowIsGraded } from './graded-pieces.js';
 /*
   HOW A PERCENTAGE IS WRITTEN DOWN, imported from the screen that settled it rather than copied.
   WO-3.14 made it two fixed decimal places, because the SIS carries two decimals and this number is
@@ -360,42 +363,13 @@ function contributionCents(categories, percentage) {
 function cents(n) { return (n / 100).toFixed(2); }
 
 /*
-  WHETHER A ROW HAS NOTHING TO SHOW, asked the way contributionCents() above asks it (WO-3.34). A row
-  is drawn empty only when it has neither a percentage NOR a contribution, so a row that is handed
-  cents is never drawn as a row that has none.
-
-  The case that tells the two apart is EXTRA CREDIT IN A POINTS CLASS: a category whose only graded
-  work is worth 0 points has earned something over nothing possible, so it has no percentage of its
-  own (n/0) and still adds its points to the grade. Keyed on `percentage === null` alone, that row
-  printed "—" while its cents went into the total, and the column stopped adding up to the Overall
-  under it — the one promise this table makes in words. The `no category` row is the same case.
-
-  IN A WEIGHTED CLASS THE TWO TESTS NEVER DISAGREE when there is a grade: a category contributes
-  exactly when it has a percentage. Testing both rather than `contribution` alone keeps the one
-  weighted state where they could part — weights at 100 with every graded category at weight 0, so
-  no grade and no contributions — drawing its categories' work as it always has rather than calling
-  them empty.
-
-  IN A POINTS CLASS THE TEST IS THE ENGINE'S OWN (WO-3.35): nothing earned and nothing possible, the
-  line src/grade-engine.js's points() skips a row on before it hands out shares. With a grade it is
-  the same answer as the two-null test above — a row has a contribution exactly when it has earned or
-  possible points. Without one it is not, and that is the case it exists for: a student whose ONLY
-  graded work is extra credit has nothing possible anywhere, so there is no grade and no row has a
-  contribution, and the two-null test called her Bonus row "nothing graded in it yet" over a cell
-  scored 2. A row with points in it is never drawn as a row with nothing graded in it.
-
-  The weighted test is left exactly as it was, and has to be: a weighted category holding only
-  extra credit has no percentage, its weight redistributes, and the row says so. Both the screen and
-  the file ask here, so they cannot disagree about which rows are empty.
-
-  IT READS THE ENGINE'S NUMBERS AND NOTHING ELSE, so in a points class it cannot see a bonus graded
-  at 0 — that adds 0 to both sides, exactly as a blank does. rowShowsEmpty() below is the question
-  the screen and the file actually draw by (WO-3.38): this test, and no graded cell in the row.
+  WHETHER A ROW HAS NOTHING TO SHOW is rowIsEmpty(), and it lives in src/graded-pieces.js since
+  WO-3.42, beside the cell reading it pairs with — read its comment there. It is asked the way
+  contributionCents() above asks it (WO-3.34): a row is drawn empty only when it has neither a
+  percentage NOR a contribution, so a row that is handed cents is never drawn as a row that has none,
+  and in a points class by the engine's own earned-and-possible test (WO-3.35). It moved rather than
+  stayed because noGradeMessage() asks it too, and that sentence is spoken by three screens now.
 */
-function rowIsEmpty(category, byPoints) {
-  if (byPoints) return category.earned === 0 && category.possible === 0;
-  return category.percentage === null && category.contribution === null;
-}
 
 /*
   WHAT A POINTS CLASS'S TWO WORDED ROWS SAY, on screen and in the file alike (WO-3.35) — one string
@@ -415,65 +389,19 @@ const POINTS_BONUS_ONLY_SAY = 'extra credit — it counts once there is work wor
   sentences above are both false about it: it is graded, and it will never "count once" anything.
   So it says what is true, and claims nothing about adding, because a 0 adds nothing.
 
-  The no-grade sentence is the same fact at the scale of the whole student: extra credit graded at 0
-  is the only graded work, and the engine's "There is no graded work yet." is false about her.
+  The no-grade sentence is the same fact at the scale of the whole student, and since WO-3.42 it is
+  src/graded-pieces.js's POINTS_ZERO_BONUS_MESSAGE, because the score grid and the grade sheet speak
+  it too.
 */
 const POINTS_ZERO_BONUS_SAY = 'extra credit, graded at 0 — it adds no points to either side';
-const POINTS_ZERO_BONUS_MESSAGE = 'The only work graded so far is extra credit, graded at 0, so there is '
-  + 'no grade yet.';
 
 /*
-  WHICH ROWS HOLD A GRADED PIECE, counted off the cells themselves (WO-3.38, the owner's ruling (b)).
-  This is a fact src/grade-engine.js does not hand back and was ruled NOT to start handing back: the
-  engine and its returned shape are untouched, and this screen works the answer out from the work it
-  already lists — the class's assignments in the term, and this student's cell on each. Both the
-  screen and the file are handed the same answer, from the one call each makes here, so they cannot
-  disagree about which rows are graded — rowIsEmpty()'s own arrangement, beside it.
-
-  IT IS A YES/NO PER ROW, NEVER A SUM. Nothing here reads a score's value except to ask whether one is
-  there; there is no earned, no possible and no percentage, and a screen that grew one would be the
-  second grade calculation this app has refused since WO-3.4.
-
-  WHAT COUNTS AS GRADED is the gradebook's own cell rule (docs/data-model.md § Grade math, and
-  src/scores.js's isUngraded()), not a new one:
-    - a cell holding a value is graded, with or without a `late` flag beside it;
-    - `missing` is graded — it is a marked zero, the teacher's decision, and the engine counts it;
-    - `excused` is NOT — it drops out of the grade entirely, in both directions;
-    - a blank — no key, or a cell carrying neither a value nor a flag that means something, which
-      includes a `late` with no score yet — is NOT. A blank is ungraded, and it never becomes a
-      scored 0 here: that is the rule the whole gradebook rests on.
-
-  Filed and unfiled work are told apart by the engine's own test (src/grade-engine.js's
-  looseAssignments()): a categoryId that is none of this class's category ids is "no category", and
-  that row is `id: null` on the grade. Asked only in a points class — a weighted class never calls
-  this, so its screen and its file are the bytes they always were.
+  WHICH ROWS HOLD A GRADED PIECE, AND WHAT TO SAY WHEN THERE IS NO GRADE, are gradedPieces() and
+  noGradeMessage(), lifted to src/graded-pieces.js at WO-3.42 (the owner's ruling (a)) so that the
+  score grid and the grade sheet speak the same fact from the same function. rowIsGraded() went with
+  them, because it reads gradedPieces()'s shape. gradedPieces() answers null in a weighted class and
+  holds that guard itself, so this file no longer tests the mode before asking.
 */
-function gradedPieces(doc, cls, termId, studentId) {
-  const filed = categoriesOf(cls).map((category) => category && category.id);
-  const ids = [];
-  let loose = false;
-  const assignments = doc && Array.isArray(doc.assignments) ? doc.assignments : [];
-  assignments.forEach((assignment) => {
-    if (!assignment || assignment.classId !== cls.id || assignment.termId !== termId) return;
-    const byStudent = doc.scores && doc.scores[assignment.id];
-    if (!byStudent || !Object.prototype.hasOwnProperty.call(byStudent, studentId)) return;
-    const cell = byStudent[studentId];
-    if (!cell || typeof cell !== 'object' || Array.isArray(cell)) return;
-    if (cell.flag === 'excused') return;
-    if (cell.flag !== 'missing' && (cell.v === null || cell.v === undefined)) return;
-    if (filed.indexOf(assignment.categoryId) === -1) loose = true;
-    else if (ids.indexOf(assignment.categoryId) === -1) ids.push(assignment.categoryId);
-  });
-  return { ids: ids, loose: loose };
-}
-
-/* Whether one row of the grade holds a graded piece — the `no category` row is `id: null`. An array
-   scanned by indexOf rather than an object keyed by id, so a category id that happens to read
-   "constructor" finds nothing it should not. */
-function rowIsGraded(category, graded) {
-  if (!graded) return false;
-  return category.id === null ? graded.loose : graded.ids.indexOf(category.id) !== -1;
-}
 
 /*
   WHETHER A ROW IS DRAWN AS HOLDING NOTHING GRADED, on screen and in the file alike — the one test
@@ -483,26 +411,6 @@ function rowIsGraded(category, graded) {
 */
 function rowShowsEmpty(category, byPoints, graded) {
   return rowIsEmpty(category, byPoints) && !rowIsGraded(category, graded);
-}
-
-/*
-  WHAT THE SCREEN SAYS WHEN THERE IS NO GRADE — the engine's own sentence, except in the one case the
-  engine cannot tell apart: a points class where every row is empty by its numbers and something is
-  graded all the same (extra credit graded at 0, filed or not). `graded` is null in a weighted class,
-  so a weighted student reads the engine's sentence exactly as before.
-
-  One limit, stated rather than claimed away: extra credit scored +2 in one category and −2 in
-  another nets the engine's earned to 0, its sentence says nothing is graded, and a row here is not
-  empty, so this keeps the engine's words. Negative extra credit in two places at once is the only
-  way there, and fixing it means reading the engine's arithmetic back, which is what (b) refused.
-*/
-function noGradeMessage(grade, graded) {
-  if (graded && grade.reason === 'no-graded-work'
-    && grade.categories.every((category) => rowIsEmpty(category, true))
-    && (graded.loose || graded.ids.length > 0)) {
-    return POINTS_ZERO_BONUS_MESSAGE;
-  }
-  return grade.message;
 }
 
 /*
@@ -891,9 +799,10 @@ export function renderDetail() {
 
   const grade = classGrade(doc, cls, termId, student.id);
   const rows = openWork(doc, cls, termId, student.id);
-  /* Which rows hold a graded piece, asked only of a points class (WO-3.38) — see gradedPieces(). The
-     breakdown, the to-move card and the hero's label all take it from here, so they say one thing. */
-  const graded = gradingModeOf(cls) === 'points' ? gradedPieces(doc, cls, termId, student.id) : null;
+  /* Which rows hold a graded piece (WO-3.38) — see gradedPieces(), which answers null in a weighted
+     class without reading a cell. The breakdown, the to-move card and the hero's label all take it
+     from here, so they say one thing. */
+  const graded = gradedPieces(doc, cls, termId, student.id);
   const noGradeSays = noGradeMessage(grade, graded);
 
   /* ── the hero: name, grade, band — the three things a guardian looks at first ── */
@@ -1073,7 +982,7 @@ export function detailModel() {
     byPoints: gradingModeOf(cls) === 'points',
     /* Which rows hold a graded piece (WO-3.38), from the call the screen makes — null in a weighted
        class, whose file never asks. */
-    graded: gradingModeOf(cls) === 'points' ? gradedPieces(doc, cls, termId, student.id) : null,
+    graded: gradedPieces(doc, cls, termId, student.id),
     grade: grade,
     share: grade.percentage === null ? {} : contributionCents(grade.categories, grade.percentage),
     work: rows.map((row) => ({ name: assignmentName(row.id),

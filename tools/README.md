@@ -1253,7 +1253,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1676 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1679 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2400,6 +2400,14 @@ all weigh 0 keeps the weights sentence. Three are a block of their own at the fo
 `verify/points-grade.mjs`: the engine's answer for a planted weighted class with `categories: []`, its
 student detail banner and hero label, and its two quiet-list rows. None sits in a loop and none is a
 failure arm, so the gap stays at −11. The run prints `1687 checks · 1687 passed · 0 failed · 0 skipped`, 53,747 lines, 31.9 lines per check, 729s, exit 0, 2026-10-03 on the real clock. Mutation round in `TESTING.md` § WO-3.41.
+
+**WO-3.42 moved it from 1676 to 1679, and the executed count from 1687 to 1690 — three sites added, and
+no new file.** All three are in `verify/points-grade.mjs`, after WO-3.37's quiet-list checks in the
+WO-3.34 fixture: the score grid's and the grade sheet's em-dash accessible name for the two students
+whose only graded work is extra credit graded at 0 (Fi filed, Iz unfiled), the same two names for the
+two blanks (Gus, Hal), and both screens on the same class with its `gradingMode` key taken off, matching
+the engine's own sentence student by student. None sits in a loop and none is a failure arm, so the gap
+stays at −11. The run prints `1690 checks · 1690 passed · 0 failed · 0 skipped`, 53,826 lines, 31.8 lines per check, 748s, exit 0, 2026-10-04 on the real clock. Mutation round in `TESTING.md` § WO-3.42.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

@@ -3220,7 +3220,7 @@ work" would be false there, which is the sentence WO-3.37 removed.
 
 ## WO-3.42 — the score grid and grade sheet tell a screen reader a bonus scored 0 is nothing graded
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.38 — `gradedPieces()` and the zero-bonus message this carries to two more screens
+**Ship** — · **Status** ✅ DONE — 2026-10-04 · **Size** S · **Depends on** WO-3.38 — `gradedPieces()` and the zero-bonus message this carries to two more screens
 **Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
 
 **Booked 2026-10-03**, owner-directed, out of WO-3.38's verdict. **Unreachable today**, because
@@ -3244,16 +3244,21 @@ by "wherever it is printed". Ruling (b) kept WO-3.38 to student detail, so it wa
   dispatch must prove every weighted reader unchanged, as WO-3.38's option (a) said.
 - **(c)** Leave it, and strike this row with that ruling as its note.
 
+**Ruled 2026-10-03, the owner, at dispatch: (a).** `gradedPieces()` and `noGradeMessage()` move out
+of `src/detail.js` into a small module that does no grade arithmetic; `src/detail.js`,
+`src/scores.js` (`gradeContent()`) and `src/grades-report.js` import it. The engine is untouched, so
+WO-3.38's ruling (b) holds. Options (b) and (c) are declined.
+
 **Deliverables**
 - **The score grid's and the grade sheet's accessible name for a missing grade** follow the same fact
   student detail does, from the same function, never from a second copy.
 - **A weighted class's grid and grade sheet are byte-identical**, accessible names included.
 
 **Acceptance**
-- [ ] In a points fixture, a student whose only graded work is a bonus scored 0 is not told by the
+- [x] In a points fixture, a student whose only graded work is a bonus scored 0 is not told by the
       score grid's or the grade sheet's accessible name that nothing is graded. A blank or excused
       bonus still is. **Mutation-proved.**
-- [ ] A weighted class's score grid and grade sheet are byte-identical before and after, on the
+- [x] A weighted class's score grid and grade sheet are byte-identical before and after, on the
       harness's existing fixtures.
 
 **Traps** — **Do not compute a grade on the screen**, and **a blank is still ungraded**, exactly as

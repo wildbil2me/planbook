@@ -13,6 +13,18 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The score grid and grade sheet no longer tell a screen reader a bonus scored 0 is nothing graded — 2026-10-04
+
+WO-3.42. Shell cache `v160`.
+
+- **A screen reader on the score grid and the grade sheet no longer announces *"There is no graded
+  work yet"*** for a student whose only graded work is a bonus scored 0. Student detail stopped
+  saying it in WO-3.38; the other two screens now say the same thing it does.
+- **The check lives in one place.** What counts as graded work moved out of student detail into
+  its own module, which all three screens read. It does no grade arithmetic of its own.
+- **A blank or excused bonus still counts as nothing graded, and a weighted class reads exactly as
+  before.**
+
 ### A class with no grading categories says so instead of totalling its weights to 0% — 2026-10-03
 
 WO-3.41. Shell cache `v159`.

@@ -313,6 +313,36 @@ mutation to re-prove it**: with 21 uncommitted paths in the tree, a `git checkou
 taken the whole work order with it. That is the right call and the same hazard the mutation round
 carries in any session sharing a working tree.
 
+## The probe nobody called a mutation — WO-3.42, 2026-10-04
+
+**The first dead dispatch killed by a connection error rather than a quota, and the first whose live
+hazard was instrumentation rather than a `MUTATION`.** The orchestrator died on `ECONNREFUSED` at
+~01:17Z, six minutes after spawning its implementer, and the implementer died with it at 21:17 EDT.
+No result file, no handoff, no claims, the row still `🤖 CLAIMED`. The corpse held a complete-looking
+lift into a new `src/graded-pieces.js`, 79 lines of checks never run — and **three `// WO342CAP`
+capture probes**: `console.log`s of a grid's and a grade sheet's `innerHTML` and CSV in shipped code
+(`src/scores.js` `paintGrades`, `src/grades-report.js` `openGrades`), a `writeFile` in
+`tools/verify-shell.mjs`, and an untracked modified copy of the harness at `tools/wo342-scratch.mjs`.
+They were scaffolding for the Acceptance's weighted before/after byte-compare.
+
+**`grep -rn MUTATION` finds none of it.** The standing first move on a dead dispatch was built for
+the WO-5.1/5.3/5.4 shape, a deliberate break the implementer labelled; a probe is not a break and is
+labelled with whatever word the run invented. Two of the three would have shipped a student's grade
+row to the console on every repaint. **The rule this adds:** the first grep on a dead dispatch is
+over the **whole diff against HEAD** for anything that is not the work order — `console.log`, `fs`
+writes, a token in capitals nobody has seen before, an untracked file under `tools/` — not only for
+the one word the last three corpses used. The parent session found these by reading the diff, which
+is the move that generalises.
+
+**And the parent's reading of the corpse was itself a claim.** The recovery preamble said *no capture
+was ever taken*; the resumed implementer found a `before.cap` in the scratchpad from 21:26 — after the
+recorded last write. It did not rely on it and took both sides fresh (HEAD `d76ce97` with probes, then
+HEAD's `tools/` with this row's `src/` and `sw.js`), which is the right call for the reason WO-3.26
+gives: a dead run's artefacts are timestamps, not states. The resume was a re-dispatch rather than a
+last-mile walk because the draft was partial — unrun checks, live probes — and the claim was kept,
+not released, because a dispatch was going straight back into flight over it. The record is
+`.claude/dispatch/WO-3.42-status.md`.
+
 ## The spawn reported as a run — WO-3.5, and the 21 minutes nothing could see
 
 **2026-08-10. Sixty seconds into the WO-3.5 dispatch, the orchestrator returned a complete,

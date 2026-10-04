@@ -101,6 +101,11 @@ import { rosterName } from './roster.js';
 import { categoriesOf } from './categories.js';
 /* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4). See this file's header. */
 import { classGrade } from './grade-engine.js';
+/* What the grade column's em dash says when there is no grade (WO-3.42): the sentence student detail
+   and the score grid say, from the same function, so the sheet never calls a bonus graded at 0
+   nothing graded. No grade arithmetic — see that file's header; in a weighted class it reads no cell
+   and hands back the engine's own sentence. */
+import { gradedPieces, noGradeMessage } from './graded-pieces.js';
 /* The bands in force for this class, and whether they are its own or the year's — the deliverable
    asks both surfaces to name the scale in use, and that answer has one owner. Nothing here rounds
    anything on the way to a letter: a boundary is printed with String() exactly as
@@ -307,7 +312,12 @@ export function gradesRecord() {
          percentage this file invented. */
       grade: grade.percentage === null ? '' : formatPercent(grade.percentage),
       letter: grade.letter || '',
-      message: grade.message || '',
+      /* The reason there is no grade, as the em dash's accessible name speaks it — asked of
+         noGradeMessage() rather than read off the engine, and the cells asked only when there is no
+         grade (WO-3.42). */
+      message: (grade.percentage === null
+        ? noGradeMessage(grade, gradedPieces(doc, cls, termId, student.id))
+        : grade.message) || '',
       reason: grade.reason || '',
     };
   });

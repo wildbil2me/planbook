@@ -116,6 +116,11 @@ import { rosterName, fullName, searchNeedle, nameMatches } from './roster.js';
    test of how a class is graded (WO-3.36), asked here rather than reading `cls.gradingMode` so that a
    stray value reads as weighted on this screen exactly as it does in the engine. */
 import { categoryPercentage, letterFromPercentage, classGrade, gradingModeOf } from './grade-engine.js';
+/* What the grade cell's em dash says when there is no grade (WO-3.42): the sentence student detail
+   says, from the same function, so a bonus graded at 0 is never read out as nothing graded here
+   while the detail screen one tap away says otherwise. No grade arithmetic — see that file's header;
+   in a weighted class it reads no cell and hands back the engine's own sentence. */
+import { gradedPieces, noGradeMessage } from './graded-pieces.js';
 /* THE PAST-DUE PROMPT (WO-3.6), which is the one thing on this screen that reads a clock and is
    deliberately not in this file — see decision 1. This file draws it by calling one function and
    passing nothing: that module asks src/classes.js which class and term are open, exactly as this
@@ -552,12 +557,18 @@ function scoreCell(assignment, student, cell) {
 
 /* The grade cell's contents, from the engine's answer and nothing else. Two lines when there is a
    grade; a quiet em dash carrying the reason as its accessible name when there is not — never an
-   empty cell, which in a grade column is indistinguishable from a rendering fault. */
-function gradeContent(grade) {
+   empty cell, which in a grade column is indistinguishable from a rendering fault.
+
+   THE REASON IS noGradeMessage()'s (WO-3.42), not the engine's sentence read straight off: in a class
+   graded on total points, a student whose only graded work is extra credit graded at 0 has no grade
+   and the engine calls that "There is no graded work yet.", which is false. The cells are asked only
+   when there is no grade, because this runs on every keystroke and the answer is read nowhere else. */
+function gradeContent(grade, doc, cls, termId, studentId) {
   const box = document.createDocumentFragment();
   if (grade.percentage === null) {
     const none = el('div', 'scores-grade-none', '—');
-    none.setAttribute('aria-label', 'No grade — ' + (grade.message || 'there is no grade yet.'));
+    const says = noGradeMessage(grade, gradedPieces(doc, cls, termId, studentId));
+    none.setAttribute('aria-label', 'No grade — ' + (says || 'there is no grade yet.'));
     box.append(none);
     return box;
   }
@@ -588,7 +599,7 @@ function paintGrades(cls, termId, students) {
     const cell = body.querySelector('tr[data-score-row="' + student.id + '"] .scores-grade');
     if (!cell) return;
     cell.textContent = '';
-    cell.append(gradeContent(classGrade(doc, cls, termId, student.id)));
+    cell.append(gradeContent(classGrade(doc, cls, termId, student.id), doc, cls, termId, student.id));
     /* THE THIRD FROZEN COLUMN (WO-3.28), repainted on the same keystroke as the grade beside it and
        for the same reason: a score typed into a quiz moves the Quizzes average, and a figure that
        lagged the field it is made of would be worse than none. The cell exists only while a
