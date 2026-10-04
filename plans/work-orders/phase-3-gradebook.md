@@ -2709,17 +2709,39 @@ separate so the engine half closes headless without waiting on an iPad.
 
 **Deliverables**
 - **A mode control on the categories editor**: weighted or total points, per class.
+- **The editor speaks the class's mode.** Its title reads *Categories & weights* and its opening
+  sentence says "how much each part counts" (`index.html`, `#categoriesModal`). Both are false in a
+  points class. WO-3.36 fixed this wording on the other screens and left this dialog to this row.
 - **Weights are kept and greyed, never cleared.** In points mode the weight fields are not editable
   and the weights-total line is gone, because there is nothing to add up to 100. Switching back
-  restores them exactly as typed.
+  restores them exactly as typed. A category added in points mode gets a weight like any other,
+  disabled, and it is there when the class goes back to weighted.
 - **In place of each weight, the category's share of the points**: *Tests — 62% of the points
   assigned so far*, from `pointsShare()` and nowhere else. It moves as work is assigned, so it is
   computed at render and never stored. This is the line that tells a teacher what points grading is
   actually doing: three early tests can make Tests most of the grade without anyone deciding it.
+  **Draw every row `pointsShare()` returns**, including its *no category* row when loose work holds
+  points: that work counts in a points grade, and without the row the shares do not add up to 100.
+  **When the term holds no points yet**, every share is null and each line says so in words (*No work
+  assigned yet*), never *0%* and never a blank.
+- **The term is the open term**, resolved by `getOpenTermId(classId)` in `src/classes.js`. The editor
+  is opened with a class id only, and one of its doors (the class list) has no term in view, so the
+  term is resolved where the class id already is: `src/shell.js`.
 - **Switching confirms with a before and after.** The dialog shows the class average under each mode
-  and lists **every student whose letter changes**. The quarter letter is what goes into the SIS, so
-  a letter change is the consequence worth naming. One `update()` writes the key, or deletes it on
-  the way back. Cancelling writes nothing.
+  and lists **every student whose letter changes** in the open term. The quarter letter is what goes
+  into the SIS, so a letter change is the consequence worth naming. One `update()` writes the key, or
+  deletes it on the way back. Cancelling writes nothing.
+  - **The class average is the score grid's**: the mean of the students who have a grade, a student
+    with no grade left out. That is `classAverage()` in `src/scores.js`, which is private today. Export
+    it or move it where both can reach it. Do not write a second mean.
+  - **A letter that becomes no grade is a change and is listed**, as *B → no grade*, and the reverse
+    as *no grade → B*. Switching back to weighted with weights that do not total 100 takes every
+    letter away, and that is the case the dialog most needs to say.
+  - **The mode is per class, not per term**, so the switch regrades every term, including a finished
+    quarter whose letters are already in the SIS. Under the open term's list, the dialog adds one line
+    for each other term of the class where any letter changes, with a count: *Q1: 3 letters would
+    change.* A term where none changes draws no line. *(The owner's ruling, 2026-10-04, before
+    dispatch.)*
 - **Drawn first** if the editor's layout changes enough to need it, under
   `design/mockups/PROTOCOL.md`. If the control fits the editor as shipped, the dispatch says so and
   skips the drawing.
@@ -2728,11 +2750,16 @@ separate so the engine half closes headless without waiting on an iPad.
 - [ ] Switching a class to points and back leaves every weight byte-identical to what was typed, and
       leaves no `gradingMode` key behind.
 - [ ] The confirmation's before and after figures equal `classGrade()` under each mode, and the
-      students it lists are exactly those whose `letterFromPercentage()` differs between them.
+      students it lists are exactly those whose `letterFromPercentage()` differs between them, a
+      letter on one side and no grade on the other counting as a difference.
       **Mutation-proved**: a list built from percentages instead of letters goes red.
+- [ ] The class averages equal the score grid's own class average for the same class, term and mode.
+- [ ] On a fixture class with two terms, each term other than the open one gets a line exactly when
+      some letter in it changes, and the count on it is right.
 - [ ] Cancelling the confirmation writes nothing: `rev` unchanged after `flush()`.
-- [ ] In points mode the weight inputs are disabled, no weights-total line is drawn, and each
-      category's share equals `pointsShare()` for it.
+- [ ] In points mode the weight inputs are disabled, no weights-total line is drawn, the editor's
+      title and opening sentence speak of points, and each category's share equals `pointsShare()`
+      for it, the *no category* row included. A term with no points draws words, not *0%*.
 - [ ] The mode control and the confirmation's buttons measure ≥44px under the coarse pointer.
 - [ ] 👤 On the laptop and on the iPad, switching a real class to points and back reads clearly: what
       the confirmation says would change, and that the weights come back.
@@ -2740,7 +2767,11 @@ separate so the engine half closes headless without waiting on an iPad.
 **Traps** — **Do not compute the share on the screen.** `pointsShare()` is the answer. **Do not put
 the mode in `localStorage`.** It is a grading decision about a class, so it lives in the document and
 survives a device change. **Do not soften the confirmation into a toggle.** A mode change moves every
-grade in the class at once.
+grade in the class at once. **Do not import the grade engine into `src/categories.js`.**
+`src/grade-engine.js` imports `src/categories.js`, so the reverse import closes a loop, and this repo
+has refused every one of those so far. The editor's file is a leaf on purpose. The share lines and the
+confirmation, which need `pointsShare()`, `classGrade()` and `letterFromPercentage()`, live in a
+module `src/categories.js` does not import, and are called from `src/shell.js`.
 
 ## WO-3.32 — a score cell can carry a note
 
