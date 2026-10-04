@@ -590,6 +590,8 @@
           to until they add up. A category with no work in it yet doesn’t drag the grade down: its
           weight spreads across the categories that do have work, so an empty one costs nothing.
         </p>
+        <!-- Reversed by WO-3.43 (2026-10-04): removal now keeps the work, under no category. The live
+             hint is in index.html; see the caption at the foot of this page. -->
         <p class="class-hint">
           To stop a category counting without losing anything, set its weight to 0 — the assignments
           stay and the grade stops using them. Removing is the one that takes the work with it, which
@@ -653,6 +655,13 @@
     nothing by this sentence's arithmetic — but it is a piece of work she set up and will have to set
     up again. The count is honest about data and quiet about effort. Possibly fine; worth a look
     before WO-3.3 makes it common.
+  </div>
+  <div class="mk-caption">
+    <strong>Reversed by WO-3.43, 2026-10-04 — this confirm and the second hint above are history.</strong>
+    Removing a category no longer takes its work: the assignments and their scores stay, filed under
+    <em>no category</em>. The drawing is left as it was drawn, because it records the choice WO-3.1
+    made; the live wording is in <code>src/categories.js</code> and the hints in <code>index.html</code>.
+    The open question above is answered by the same reversal — nothing a teacher set up is lost.
   </div>
 </main>
 

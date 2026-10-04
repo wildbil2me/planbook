@@ -29,6 +29,9 @@ wrong at the start of a term.
 - A **visible, persistent** warning when weights don't total 100% — showing the actual total, not
   just "invalid". The teacher is mid-setup; don't block them, tell them.
 - Removing a category warns about the assignments it takes with it.
+  *(Reversed by [WO-3.43](#wo-343--removing-a-category-moves-its-work-to-no-category) on 2026-10-04:
+  removal now keeps the work and its scores, filed under* no category*, so there is nothing to warn
+  about losing. The line stands as what this work order built.)*
 - Sensible starter categories on class creation, trivially editable.
 
 **Acceptance**
