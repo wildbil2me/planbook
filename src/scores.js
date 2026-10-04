@@ -70,11 +70,22 @@
      and writes score cells is a screen where "the grade changed because a date rolled over" becomes
      a one-line mistake. src/scores.css says the same thing about the rule that colours it.
 
+     WHAT CHANGED AT WO-3.33 is that every cell this file writes now carries the moment it was
+     written, `at`, and whether the cell before it is kept turns on that moment being five minutes
+     old. THE CLOCK IS STILL NOT READ HERE: src/score-history.js's reviseCell() reads it and stamps
+     it, the way src/past-due.js reads it for the prompt, and nothing that reads a cell's `at` can
+     move a grade — the engine reads `v` and `flag` and stops.
+
   2. A CELL IS ALWAYS AN OBJECT, AND CLEARING ONE DELETES THE KEY. There is no `{ v: null }` with no
      flag anywhere in the writes below — writeCell() refuses to store one, and that is acceptance
      line 4 held by construction rather than by remembering. A missing key means ungraded and affects
      nothing (docs/data-model.md); a cell that says `null` and nothing else is the same fact written
      down twice, and the second copy is the one a later reader trusts wrongly.
+
+     TWO CELLS WITH NO VALUE AND NO FLAG ARE KEPT, both written down at their own definitions: one
+     holding only a note, `{ v: null, note }` (WO-3.32), and one that was cleared and has a past,
+     `{ v: null, at, was }` (WO-3.33, src/score-history.js). Each is blank and ungraded to every
+     reader; what keeps it is something the teacher would lose if the key went.
 
   3. THE FIELD IS NEVER RE-RENDERED WHILE IT IS BEING TYPED IN, but the grades are, on every
      keystroke. That is the same split src/categories.js states for its weight field: replacing the
@@ -99,6 +110,10 @@
      the mode itself: every note it draws is read through src/score-notes.js's visibleNoteOf(),
      which answers '' while projecting, so the question lives in one place. The repaint this
      paragraph predicted is in src/shell.js's flipPresentationMode() now.
+
+     WO-3.33 IS THE SECOND, on the same terms: the history mark, its tooltip line and "has earlier
+     versions" in a cell's name come from src/score-history.js's hasVisibleHistory(), which answers
+     false while projecting. This file asks the mode for neither.
 
      THE NOTE PANEL IS NOT A DIALOG, so the first rule above still stands. It is a strip of static
      markup under the flag bar (index.html, #scoresNote), opened by its own button and by no key —
@@ -158,6 +173,11 @@ import { shortDate } from './date-text.js';
    may be drawn, '' under presentation mode, and it is the only way a note reaches this screen's DOM.
    That file is the one asker of the mode for a note — see its header, and decision 5 above. */
 import { noteOf, visibleNoteOf, scoreNotesVisible } from './score-notes.js';
+/* WHAT A CELL WAS (WO-3.33). reviseCell() is the rule every write here goes through — stamp `at`,
+   push or replace, refuse a no-op — and hasVisibleHistory() is the one thing this screen is told
+   about a cell's past: a boolean, false under presentation mode. This file never reads `was`; that
+   file is the one asker of the mode for it and the one reader of it. */
+import { reviseCell, hasVisibleHistory } from './score-history.js';
 
 const CLASS_NAME_ID = 'scoresClassName';
 const HEADLINE_ID = 'scoresHeadline';
@@ -442,6 +462,28 @@ export function classAverage(students, figureOf) {
   as `{ v: null, note }` — blank, ungraded, and still carrying what the teacher wrote. Only
   writeNote() below takes a note off.
 */
+/*
+  AND SINCE WO-3.33 EVERY WRITE GOES THROUGH src/score-history.js's reviseCell(), which stamps `at`,
+  pushes the cell as it was onto `was` when the last write is five minutes old or more, replaces it
+  when it is not, and answers "do not touch the document" for a write that changes nothing. So a
+  key is deleted only when the cell has no value, flag or note AND no past — a cleared cell with
+  history stays as `{ v: null, at, was }`, which every reader already treats as blank. putCell() is
+  the one place both writers below hand that answer to the document.
+*/
+function putCell(doc, assignmentId, studentId, old, next) {
+  const revised = reviseCell(old, next);
+  if (!revised.write) return;
+  const column = doc.scores[assignmentId];
+  if (!revised.cell) {
+    if (!column) return;
+    delete column[studentId];
+    if (!Object.keys(column).length) delete doc.scores[assignmentId];
+    return;
+  }
+  if (!doc.scores[assignmentId]) doc.scores[assignmentId] = {};
+  doc.scores[assignmentId][studentId] = revised.cell;
+}
+
 function writeCell(assignmentId, studentId, cell) {
   update((doc) => {
     if (!doc.scores || typeof doc.scores !== 'object') doc.scores = {};
@@ -450,14 +492,7 @@ function writeCell(assignmentId, studentId, cell) {
       ? column[studentId] : null;
     const note = noteOf(old);
     const next = note ? Object.assign({}, cell || { v: null }, { note: note }) : cell;
-    if (!next) {
-      if (!column) return;
-      delete column[studentId];
-      if (!Object.keys(column).length) delete doc.scores[assignmentId];
-      return;
-    }
-    if (!doc.scores[assignmentId]) doc.scores[assignmentId] = {};
-    doc.scores[assignmentId][studentId] = next;
+    putCell(doc, assignmentId, studentId, old, next);
   });
 }
 
@@ -478,18 +513,14 @@ function writeNote(assignmentId, studentId, text) {
     const column = doc.scores[assignmentId];
     const old = column && Object.prototype.hasOwnProperty.call(column, studentId)
       ? column[studentId] : null;
-    const next = old && typeof old === 'object' && !Array.isArray(old)
-      ? Object.assign({}, old) : { v: null };
+    /* The value and the flag as stored, and the note as typed — built rather than copied, so the
+       old cell's `at` and `was` are not carried into the cell it is being compared with
+       (WO-3.33: those are reviseCell()'s to write). A note-only edit is a change to the cell. */
+    const held = old && typeof old === 'object' && !Array.isArray(old) ? old : null;
+    const next = { v: held && held.v !== undefined ? held.v : null };
+    if (held && held.flag) next.flag = held.flag;
     if (note.trim()) next.note = note;
-    else delete next.note;
-    if (valueOf(next) === null && !flagOf(next) && !noteOf(next)) {
-      if (!column) return;
-      delete column[studentId];
-      if (!Object.keys(column).length) delete doc.scores[assignmentId];
-      return;
-    }
-    if (!doc.scores[assignmentId]) doc.scores[assignmentId] = {};
-    doc.scores[assignmentId][studentId] = next;
+    putCell(doc, assignmentId, studentId, old, next);
   });
 }
 
@@ -634,16 +665,22 @@ function scoreCell(assignment, student, cell) {
   return td;
 }
 
+/* The two optional halves of a cell's accessible name and of its tooltip, read through the two
+   modules that answer whether each may be on screen — so under presentation mode both are ''. */
+function noteClause(cell) { return visibleNoteOf(cell) ? ', has a note' : ''; }
+function historyClause(cell) { return hasVisibleHistory(cell) ? ', has earlier versions' : ''; }
+
 /* A cell's accessible name: what it is, out of what, for whom, its flag, and — since WO-3.32 —
    whether it carries a note. Said as "has a note" and never as the note itself: a screen reader
    walking a column would otherwise read twenty-five sentences aloud between the numbers. Under
-   presentation mode visibleNoteOf() answers '' and the clause is not there. */
+   presentation mode visibleNoteOf() answers '' and the clause is not there. WO-3.33 adds "has
+   earlier versions" on the same terms — said, never listed, and absent under the projector. */
 function cellLabel(assignment, student, cell) {
   const flag = flagOf(cell);
   return (assignment.name || 'Untitled assignment')
     + ', out of ' + pointsOf(assignment) + ', for ' + fullName(student)
     + (flag ? ' — ' + flag : '')
-    + (visibleNoteOf(cell) ? ', has a note' : '');
+    + noteClause(cell) + historyClause(cell);
 }
 
 /*
@@ -662,14 +699,41 @@ function paintNoteMark(input, wrap, cell) {
   const note = visibleNoteOf(cell);
   const old = wrap.querySelector('.scores-note-mark');
   if (old) old.remove();
-  if (!note) {
-    input.removeAttribute('title');
-    return;
+  if (note) {
+    const mark = el('span', 'scores-note-mark');
+    mark.setAttribute('aria-hidden', 'true');
+    wrap.append(mark);
   }
-  input.title = 'Note: ' + note;
-  const mark = el('span', 'scores-note-mark');
-  mark.setAttribute('aria-hidden', 'true');
-  wrap.append(mark);
+  paintHistoryMark(input, wrap, cell, note);
+}
+
+/*
+  THE HISTORY MARK (WO-3.33) — a small hollow teal ring at the cell's BOTTOM right, which is the one
+  corner nothing else uses: the flag glyph is a filled disc at the top right and the note mark a
+  folded indigo corner at the top left. A ring and not a corner or a disc, so that a cell carrying
+  all three reads as three different things at a glance — shape, fill and corner all differ. It says
+  only that the score changed; what it changed from is on student detail and nowhere on this screen.
+  `aria-hidden`, because the accessible name carries "has earlier versions".
+
+  THE TOOLTIP IS SHARED WITH THE NOTE, one line each, because a field has one `title`. Both halves
+  come from the readers that answer '' / false under presentation mode, so a projected cell carries
+  no mark, no clause and no title: absent rather than hidden.
+*/
+function paintHistoryMark(input, wrap, cell, note) {
+  const old = wrap.querySelector('.scores-history-mark');
+  if (old) old.remove();
+  const changed = hasVisibleHistory(cell);
+  if (changed) {
+    const mark = el('span', 'scores-history-mark');
+    mark.setAttribute('aria-hidden', 'true');
+    wrap.append(mark);
+  }
+  const lines = [];
+  if (note) lines.push('Note: ' + note);
+  if (changed) lines.push('Changed since it was first entered — the earlier versions are on this '
+    + 'student’s detail.');
+  if (lines.length) input.title = lines.join('\n');
+  else input.removeAttribute('title');
 }
 
 /* The grade cell's contents, from the engine's answer and nothing else. Two lines when there is a
@@ -1510,7 +1574,13 @@ export function editScore(input) {
   }
 
   const after = cellOf(getDoc(), at.assignment.id, at.student.id);
-  if (flagOf(before) !== flagOf(after)) paintCell(input, at, after);
+  /* The cell's furniture is repainted when the flag moved and, since WO-3.33, when the cell gained
+     or lost a past — the first keystroke of a revision pushes, and a burst typed back to where it
+     started takes the push back. paintCell() never touches the field's value, so this is still safe
+     under the caret (decision 3). */
+  if (flagOf(before) !== flagOf(after) || hasVisibleHistory(before) !== hasVisibleHistory(after)) {
+    paintCell(input, at, after);
+  }
   paintGrades(at.cls, at.termId, at.students);
 }
 

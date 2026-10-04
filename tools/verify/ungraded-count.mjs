@@ -291,9 +291,14 @@ console.log('\n--- the ungraded count on the home screen (WO-3.26) ---');
     await clickSel('#classTabBar [data-view-home]');
     await new Promise(r => setTimeout(r, 200));
     const after = await evalJs(READ_CARDS);
+    /* WO-3.33: every write to a score cell stamps `at`, a local ISO timestamp with its offset. The
+       shape this check is about is the cell WITHOUT it, and the stamp is asserted present rather than
+       ignored, so a writer that stopped stamping goes red here as well as in score-history.mjs. */
+    const AT_KEY = /,"at":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}"/g;
     check('entering the last blank score on one of the three takes the count to two, with no '
       + 'reload — the card is redrawn by the same chain that brings the teacher back to it',
-      typed.cell === '{"v":60}' && typed.stillBlank === 0
+      String(typed.cell).replace(AT_KEY, '') === '{"v":60}' && (String(typed.cell).match(AT_KEY) || []).length === 1
+        && typed.stillBlank === 0
         && after.waiting.said === AFTER && after.waiting.gradeChips === 1,
       'the cell now holds ' + typed.cell + ', ' + typed.stillBlank
         + ' blank(s) left in that column, and the card says '

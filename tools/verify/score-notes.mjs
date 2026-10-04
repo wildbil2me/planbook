@@ -90,8 +90,17 @@ const plant = await evalJs(`(async function(){
     add('${A1}', 'WO-3.32 Essay', 100);
     add('${A2}', 'WO-3.32 Quiz', 10);
     add('${A3}', 'WO-3.32 Homework', 10);
-    doc.scores['${A1}'] = { '${S1}': { v:80 }, '${S2}': { v:90 }, '${S3}': { v:70 } };
-    doc.scores['${A2}'] = { '${S1}': { v:null, flag:'missing' }, '${S2}': { v:7 } };
+    /* EVERY PLANTED CELL IS STAMPED NOW (WO-3.33). A cell with no \`at\` pushes itself onto \`was\` on
+       its first change, and this section is about notes, not history: stamped within the five
+       minutes, every edit below replaces rather than pushes, so no cell here grows a past and the
+       note checks read what they always read. score-history.mjs is where the push is checked. */
+    var pad = function(n){ return (n < 10 ? '0' : '') + n; };
+    var t = new Date(), off = -t.getTimezoneOffset(), abs = Math.abs(off);
+    var at = t.getFullYear() + '-' + pad(t.getMonth() + 1) + '-' + pad(t.getDate()) + 'T' + pad(t.getHours())
+      + ':' + pad(t.getMinutes()) + ':' + pad(t.getSeconds()) + (off < 0 ? '-' : '+') + pad(Math.floor(abs / 60))
+      + ':' + pad(abs % 60);
+    doc.scores['${A1}'] = { '${S1}': { v:80, at:at }, '${S2}': { v:90, at:at }, '${S3}': { v:70, at:at } };
+    doc.scores['${A2}'] = { '${S1}': { v:null, flag:'missing', at:at }, '${S2}': { v:7, at:at } };
   });
   c.selectClass('${CLS}'); c.selectTerm('${TERM}');
   c.refreshClassBar();
@@ -162,12 +171,17 @@ const STATE = `(function(){
     label: (document.getElementById('scoresNoteLabel') || {}).textContent || '',
     said: (document.getElementById('srLive') || {}).textContent || '' }; })()`;
 
-/* What the document holds for the fixture's cells, after the debounced save has really happened. */
+/* What the document holds for the fixture's cells, after the debounced save has really happened —
+   with each cell's `at` taken off (WO-3.33: every write stamps one, and the moment is not what these
+   checks are about). `was` is NOT taken off, so a note edit that grew a history would still go red. */
+const BARE = `function(col){ if (!col || typeof col !== 'object') return col; var o = {};
+  Object.keys(col).forEach(function(k){ var c = col[k];
+    if (c && typeof c === 'object') { c = Object.assign({}, c); delete c.at; } o[k] = c; }); return o; }`;
 const DOC = `(async function(){
   await window.planbook.store.flush();
-  var d = window.planbook.store.getDoc();
-  return { A1: d.scores['${A1}'] || null, A2: d.scores['${A2}'] || null,
-    A3: Object.prototype.hasOwnProperty.call(d.scores, '${A3}') ? d.scores['${A3}'] : '(no column)' }; })()`;
+  var d = window.planbook.store.getDoc(), bare = ${BARE};
+  return { A1: bare(d.scores['${A1}']) || null, A2: bare(d.scores['${A2}']) || null,
+    A3: Object.prototype.hasOwnProperty.call(d.scores, '${A3}') ? bare(d.scores['${A3}']) : '(no column)' }; })()`;
 
 /* Every grade the app shows for this class: the grid's three grade cells and its summary line, the
    engine asked directly, the grade sheet's record, and the assignment list's entered counts. */
@@ -572,8 +586,9 @@ const readDisk = `(async function(){ var s = window.planbook.store;
       var q = db.transaction('years','readonly').objectStore('years').get(year);
       q.onsuccess = function(){ res(q.result); db.close(); };
       q.onerror = function(){ rej(q.error); }; }; });
-  return { scores: JSON.stringify(stored.scores), a2s1: stored.scores['${A2}'] ? stored.scores['${A2}']['${S1}'] : null,
-    a1s2: stored.scores['${A1}'] ? stored.scores['${A1}']['${S2}'] : null,
+  var bare = ${BARE};
+  return { scores: JSON.stringify(stored.scores), a2s1: stored.scores['${A2}'] ? bare(stored.scores['${A2}'])['${S1}'] : null,
+    a1s2: stored.scores['${A1}'] ? bare(stored.scores['${A1}'])['${S2}'] : null,
     confirmOpen: !document.getElementById('restoreConfirmModal').classList.contains('hidden') }; })()`;
 await evalJs(`(async function(){
   await window.planbook.backup.restoreFromText(${JSON.stringify(files.text)}, 'Planbook notes.json'); return 1; })()`);

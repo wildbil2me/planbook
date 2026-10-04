@@ -136,7 +136,11 @@ nag, and nothing noticed until a verifier read the line for another reason.
       "s_…": { "v": 78, "flag": "late" },     // scored, turned in late
       "s_…": { "v": null, "flag": "missing" },// not turned in → counts as zero
       "s_…": { "v": null, "flag": "excused" },// leaves the denominator
-      "s_…": { "v": 92, "note": "revised essay" } // any cell may carry a note; the math never reads it
+      "s_…": { "v": 92, "note": "revised essay" }, // any cell may carry a note; the math never reads it
+      "s_…": { "v": 88, "at": "2026-10-01T14:02:11-04:00", // every write stamps `at`
+               "was": [{ "v": null, "flag": "missing", "at": "2026-09-14T09:10:00-04:00" },
+                       { "v": 70, "flag": "late", "at": "2026-09-20T15:31:40-04:00" }] }
+               // what the cell was, oldest first; the math never reads it
       /* no key at all = not graded yet, no effect on anything */
     }
   },
@@ -230,6 +234,28 @@ Seven shape decisions that matter:
   only the note's own field takes it off. **It lives in the cell and nowhere else** — no `log` entry
   mirrors it, for the reason a tardy's time is not mirrored. And it is **absent under presentation
   mode** on every screen that draws it, whatever a mark's note does (the owner, 2026-10-02).
+  **Every write to a score cell stamps `at`, and a changed cell keeps what it was in `was`**
+  *(added 2026-10-04, WO-3.33)*. `at` is the mark cell's form — a local ISO timestamp with its
+  offset, never a `Z`, written by `localStamp()` in `src/log.js` — and a cell written before that
+  build has none, which is valid. Overwriting a cell pushes the cell **as it was** onto `was`, oldest
+  first: its `v`, its `flag`, its `note` and its `at`, each only where it was there, and never a
+  `was` of its own. So the history is of the whole cell and not of the score — *Missing → Late, 70 →
+  88* is one list. `was` is absent until the first change. Four rules, all in `reviseCell()` in
+  `src/score-history.js`, the one function every score write goes through:
+  **a write within five minutes of the cell's `at` replaces it and pushes nothing** (a typo, or the
+  second digit of a score — the grid writes on every keystroke), and **a cell with no `at` always
+  pushes** (the owner, 2026-10-02); **a write that changes nothing — same value, flag and note — is
+  not a write**, so nothing is pushed and nothing is restamped; **a write inside the five minutes
+  that puts the cell back to the version that burst pushed takes the push back**, `at` and all, so a
+  score retyped as it stood leaves no *72 → 72*; and **a cleared cell with a past is kept** as
+  `{ "v": null, "at": "…", "was": [ … ] }` — blank, ungraded, still carrying its history — where a
+  cleared cell with no past still deletes its key. **Only the current fields count toward any grade,
+  and nothing reads `was` but student detail**: not the grade engine, not a signal, not a merge field,
+  not the printed sheet, not the CSV. What a dated score should mean for the praise rules is parked in
+  `plans/future-features.md` § Gradebook as the owner's ruling to make. The score grid marks a cell
+  that has a past and student detail lists the trail, and both are **absent under presentation mode**
+  (the owner, 2026-10-04). No `SCHEMA_VERSION` bump: both keys are optional, so every backup written
+  by an earlier build restores unchanged.
 - **Attendance stores only exceptions.** Present is the absence of a mark. A class of 25 with two
   absences is two entries, not 25 — which is also why marking attendance is fast.
 - **`U` means unconfirmed, and it is temporary.** Writing the first mark in a class also writes `U`

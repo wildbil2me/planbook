@@ -597,12 +597,18 @@ console.log('\n--- the past-due prompt (WO-3.6) ---');
           + JSON.stringify(changed));
 
       const written = previewedOnScreen.map((k) => cellsPost.mine[k]);
+      /* WO-3.33: every write to a score cell stamps `at`, a local ISO timestamp with its offset. The
+         shape this check is about is the cell WITHOUT it, and the stamp is asserted present rather than
+         ignored, so a writer that stopped stamping goes red here as well as in score-history.mjs. */
+      const AT_KEY = /,"at":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}"/g;
+      const stamped = written.filter((cell) => (String(cell).match(AT_KEY) || []).length === 1).length;
       const untouched = ['wo36-past/wo36-s2', 'wo36-past/wo36-s3', 'wo36-past/wo36-s4',
         'wo36-today/wo36-s1'];
       check('and what it wrote is `{ v: null, flag: "missing" }` in exactly that shape, six times — '
         + 'while the excused cell, the late blank, the scored cell and the cell on the assignment due '
         + 'today are byte identical to what they were',
-        written.length === 6 && written.every((cell) => cell === '{"v":null,"flag":"missing"}')
+        written.length === 6 && stamped === 6
+          && written.every((cell) => String(cell).replace(AT_KEY, '') === '{"v":null,"flag":"missing"}')
           && untouched.every((k) => cellsPre.mine[k] === cellsPost.mine[k])
           && cellsPost.mine['wo36-past/wo36-s3'] === '{"v":null,"flag":"excused"}'
           && !Object.keys(cellsPost.mine).some((k) => /wo36-soon|wo36-nodate/.test(k)),

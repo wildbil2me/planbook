@@ -461,9 +461,14 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
         const mouse = await evalJs('window.__wo35mouse');
         const wantColumn = {};
         afterColumn.students.forEach((id, i) => { wantColumn[id] = { v: 61 + i }; });
+        /* WO-3.33: every write to a score cell stamps `at`, a local ISO timestamp with its offset. The
+           shape this check is about is the cell WITHOUT it, and the stamp is asserted present rather than
+           ignored, so a writer that stopped stamping goes red here as well as in score-history.mjs. */
+        const AT_KEY = /,"at":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}"/g;
+        const stamps = (String(typed.a1).match(AT_KEY) || []).length;
         check('twenty-five scores go down one column in twenty-five keystroke-groups with no mouse, and land on the students in DRAWN row order rather than in roster order',
           mouse === 0 && afterColumn.students.length === 25
-            && typed.a1 === JSON.stringify(wantColumn)
+            && String(typed.a1).replace(AT_KEY, '') === JSON.stringify(wantColumn) && stamps === 25
             && afterColumn.students[0] === 'wo35-s01' && afterColumn.students[24] === 'wo35-s25',
           'mouse events during the column = ' + mouse + '; drawn order ran '
             + afterColumn.students[0] + ' → ' + afterColumn.students[24] + '; stored column = '

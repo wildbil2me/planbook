@@ -222,6 +222,12 @@ import { studentContactCard } from './contact-history.js';
    src/supports.js. It wears `.log-card`, so it is off the printed sheet by the rule already in
    src/detail.css, and studentCsv() is untouched — a note goes nowhere outside the app. */
 import { scoreNotesCard } from './score-notes.js';
+/* AND WHAT A CHANGED SCORE WAS (WO-3.33), the same arrangement a fourth time: the document, the
+   class, the term and a student id go in, a card or null comes out, and src/score-history.js asks the
+   mode. This is the one screen that shows a score's history — no grade, signal, merge field or print
+   surface reads it — and it wears `.log-card`, so it is off the printed sheet by the rule already in
+   src/detail.css, and studentCsv() is untouched. */
+import { scoreHistoryCard } from './score-history.js';
 
 const NAME_ID = 'detailStudentName';
 const SUBTITLE_ID = 'detailSubtitle';
@@ -885,6 +891,10 @@ export function renderDetail() {
      teacher reads "why is that one blank" beside "which ones are missing". Absent when empty. */
   const notes = scoreNotesCard(doc, cls, termId, student.id);
   if (notes) right.append(notes);
+  /* Under the notes, and for their reason: both are about particular assignments, and "why did this
+     one change" is read beside "what was written on it". Absent when nothing changed. */
+  const history = scoreHistoryCard(doc, cls, termId, student.id);
+  if (history) right.append(history);
   right.append(attendanceCard(cls, student, term));
   /* AND THE TRIPS, UNDER THE ATTENDANCE THEY ARE NOT (WO-2.26). Roll Call! carries the Hall Pass
      History table inline on its Student Report (dashboard.html:4718) and this is that table, in this
@@ -922,8 +932,8 @@ export function renderDetail() {
       + 'written to, and nothing else. '
       + 'Nothing from ' + person + '’s support details is on it, on the printed sheet or in the CSV, '
       + 'in either mode — those live on the roster and go nowhere but your own backup file. What you '
-      + 'have written down, who you have written to and any note on a score are on the screen only: '
-      + 'none of them is on the sheet or in the CSV.'));
+      + 'have written down, who you have written to, any note on a score and what a changed score '
+      + 'was are on the screen only: none of them is on the sheet or in the CSV.'));
 }
 
 /* ────────────────────────────── out of the browser ────────────────────────────── */

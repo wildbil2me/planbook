@@ -200,6 +200,20 @@
   font-size: 12px; font-style: italic; color: #6b7a8d; line-height: 1.5;
 }
 
+/* A CHANGED SCORE (WO-3.33): the assignment's name in the missing-work row's own type, and the trail
+   UNDER it on a line of its own — a trail of three versions does not fit beside a name in a column
+   this narrow, and a wrapped one reads as two findings. The steps are the note's grey, because they
+   are the past; the last, which is what counts now, is the name's weight and colour. The card wears
+   `.log-card`, so the print block below hides it with the log and it needs no print rule of its own. */
+.detail-history-row {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 8px 0; border-bottom: 1px solid #f3f4f6;
+}
+.detail-history-row:last-of-type { border-bottom: none; }
+.detail-history-trail { font-size: 12px; color: #6b7a8d; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.detail-history-arrow { color: #a0aab8; }
+.detail-history-step.now { font-weight: 700; color: #1a1a2e; }
+
 /* ── ATTENDANCE SUMMARY ── */
 /* From WO-2.4, counted in recorded meetings and never in calendar days — the phrasing is
    the app's standing rule and the note says it out loud, because a percentage with no
@@ -499,6 +513,7 @@
   .detail-missing-name { font-size: 14px; }
   .detail-missing-pts, .detail-missing-bonus, .detail-missing-when { font-size: 12px; }
   .detail-score-note { font-size: 13px; }
+  .detail-history-trail { font-size: 13px; }
   .detail-missing-none { font-size: 13px; }
   .detail-att-label { font-size: 11px; }
   .detail-att-note, .detail-card-note, .detail-note, .detail-empty { font-size: 13px; }

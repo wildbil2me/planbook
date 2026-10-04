@@ -155,8 +155,12 @@ export function newLogEntry(studentId, kind, subject, body, at) {
 /*
   The device clock, written down the way this app writes every other moment (src/attendance.js's
   `at`). Built from the parts rather than from toISOString(), which is UTC by definition.
+
+  EXPORTED AT WO-3.33 for src/score-history.js, whose score cells stamp `at` in exactly this form. It
+  is a formatter and reads nothing of the document, so exporting it opens no door into the log; a
+  third copy of these lines would be a third opinion about what an offset looks like.
 */
-function localStamp(now) {
+export function localStamp(now) {
   const d = now || new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const offset = -d.getTimezoneOffset();

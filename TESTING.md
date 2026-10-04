@@ -9975,6 +9975,91 @@ revert.
 **Full run on the delivered tree:** `1745 checks · 1745 passed · 0 failed · 0 skipped`, 55,472 lines,
 31.8 lines per check, 761s, exit 0, 2026-10-04 on the real clock.
 
+### WO-3.33 — a changed score cell keeps what it was
+
+**What this changes.** Every write to a score cell stamps `at` — a local ISO timestamp with its offset,
+written by `src/log.js`'s `localStamp()`, now exported for it — and a change made **five minutes or more**
+after the cell's `at` pushes the cell as it was (value, flag, note, `at`) onto `was`, oldest first. A
+change inside the five minutes replaces the cell and pushes nothing; a cell with no `at` (anything
+written before this build) always pushes. Two rules the work order did not spell out, both decided in
+`src/score-history.js`'s header: **a write that changes nothing is not a write** (no push, no restamp),
+and **a write inside the five minutes that puts the cell back to the version that burst pushed takes the
+push back**, `at` and all — without it, every score retyped as it stood (`7`, `72` over a 72) would
+carry a *72 → 72* history, because the grid writes on every keystroke. **A cleared cell with a past is
+kept** as `{ v: null, at, was }` (blank, ungraded), where a cleared cell with no past still deletes its
+key; the assignment list's entered count skips it as it skips a noted blank. Every score write goes
+through one function, `reviseCell()` — the grid's typing, its flags and *Clear*, the note panel, and the
+past-due prompt's *mark missing*. The grid marks a cell that has a past with a **hollow teal ring at the
+bottom right** (the note mark is an indigo corner at the top left, the flag a filled disc at the top
+right), says *"has earlier versions"* in its accessible name, and adds a line to its tooltip. Student
+detail gains a **Changed scores** card under the notes card, each changed assignment with its trail —
+*Missing (undated) → Late, 7 (Oct 4) → Late, 9 (Oct 4)* — on `.log-card`, so it is off the printed
+report, and the CSV is untouched. Under presentation mode the ring, the clause, the tooltip line and the
+card are **absent**, through one asker, `src/score-history.js`'s `scoreHistoryVisible()`. Nothing reads
+`was` but that file. `CACHE` is `planbook-shell-v164`, and `src/score-history.js` is in `SHELL`.
+
+Every headless line below is `tools/verify/score-history.mjs`, a new section straight after
+`score-notes.mjs`, on one planted weighted class of three students and three assignments. **The five
+minutes are crossed on a clock the section moves**: a second `Date` proxy, the shape of
+`verify-shell.mjs`'s `--today` one, laid over the page's and taken off at its foot, so the boundary is
+checked on the page's own clock with nothing in `src/` reading a flag.
+
+- [x] Changing a cell's score, flag or note five minutes or more after its last write pushes the previous
+      cell onto `was` with its `at`, and the cell carries a new `at`: *88* typed over a 72 written before
+      this build pushes `{ v: 72 }` **once** for two keystrokes; a note typed on a 90 stamped ten minutes
+      earlier pushes `{ v: 90, at }`; and a quiz goes *Missing → Late, 7 → Late, 9*, the late 7 pushed
+      with its `at` by a score typed six minutes later.
+- [x] A change within five minutes replaces and pushes nothing, on the moved clock either side of the
+      boundary: 4m55s after the last write *85* replaces the 88 (`was` still only the 72); 5m05s after
+      that, *90* pushes the 85. A write that changes nothing — *90.* over a 90, and 90 retyped over itself
+      twelve minutes on — leaves the cell byte-identical.
+- [x] Every grade on every screen is byte-identical with every `was` in the year removed: the grid's
+      grade cells and summary, `classGrade()`, the grade sheet's record, `signals.evaluate()`, and student
+      detail's hero and breakdown for all three students. **Mutation-proved** (M1 below).
+- [x] Student detail lists Ada's two changed scores in the grid's column order, each trail oldest first
+      with its dates and ending on what counts now; her CSV carries none of it. Ben's card lists his
+      changed essay and not his unchanged quiz, and Cy, whose scores never changed, has no card.
+- [x] Exactly the three cells with a past wear the ring, and *"has earlier versions"* is in exactly their
+      accessible names. Ben's essay, with a note and a past, shows both marks — the corner above and left
+      of the ring, different radius and colour, both `aria-hidden` — and both clauses in its name and
+      tooltip. In presentation mode, flipped from the header, no ring, no `scores-history-mark` anywhere
+      in the page, no clause and no tooltip line on the grid, and no card or step on student detail;
+      switched off, both are back. **Mutation-proved** (M2 below).
+- [x] A backup in the shape written before this build (no `at`, no `was` on any cell) parses back
+      identical with neither key added and restores through the real confirm with the score map on disk
+      the file's, byte for byte; a year with history is written into the file, parses back, and survives
+      the real restore with Ada's essay byte-identical, `was` and all.
+- [x] No exported reader outside the detail screen's own path returns `was`: `tools/wo-sweep.mjs` § 28
+      reads `src/` with comments stripped for any `.was`, `'was'` literal or destructured `was` outside
+      `src/score-history.js`, holds that file's exports to five named answers, and holds the importers of
+      `scoreHistoryCard` to `src/detail.js` and of `reviseCell` to the two score writers. M1 below turned
+      it red at the line.
+- [x] 👤 On the iPad, type a score, come back to it more than five minutes later and type a different
+      one, then open that student: the ring is on the cell, the **Changed scores** card reads the trail
+      clearly at arm's length, and the ring is told apart from the note corner on a cell that has both.
+      Then turn presentation mode on and confirm the ring and the card are gone.
+      *(The owner, on hardware at v164, 2026-10-04: all of it read as described. The same sitting kept
+      both build-forced rulings — typing a score back pops the step, and a cleared cell with a past is
+      kept and counted.)*
+
+**Three existing sections changed their reading, not their claim.** `score-grid.mjs` (the
+twenty-five-score column), `past-due.mjs` (*accept writes `{ v: null, flag: "missing" }`*) and
+`ungraded-count.mjs` (*the last blank, typed*) each compared a cell's JSON exactly; each now takes the
+`at` off before comparing **and asserts it was there**. `score-notes.mjs` plants its cells stamped *now*,
+so its note edits replace rather than push, and reads cells with `at` taken off but `was` left on — a
+note edit that grew a history would still go red there.
+
+**Mutation round.** Each mutation carried a `MUTATION` marker, ran against the full harness, and was
+reverted by copying the pre-mutation file back, confirmed with `cmp` and `git diff --quiet`; `grep -rn
+MUTATION src tools index.html` read only long-standing prose afterwards.
+
+| Mutation | Result |
+|---|---|
+| M1 · `scoreCell()` in `src/grade-engine.js` returns `cell.was[0]` when a cell has a past — an engine that reads a history entry | **1 red** (`1760 checks · 1759 passed · 1 failed`, 781s, exit 1): the byte-identical check — Ada's grade 65.45% D with `was`, 90.00% A without. `wo-sweep.mjs` § 28 also went red, naming `src/grade-engine.js:54` |
+| M2 · `scoreHistoryVisible()` returns `true` — history drawn regardless of the mode | **1 red** (`1760 checks · 1759 passed · 1 failed`, 780s, exit 1): the presentation-mode check — three rings, `scores-history-mark` in the page, *"has earlier versions"* and the tooltip line on the grid, and the card and its steps on student detail, all with the mode on |
+
+**Full run on the delivered tree:** `1760 checks · 1760 passed · 0 failed · 0 skipped`, 56,045 lines, 31.8 lines per check, 784s, exit 0, 2026-10-04 on the real clock.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

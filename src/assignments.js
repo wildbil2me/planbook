@@ -284,10 +284,14 @@ function enteredCount(assignment, cls) {
    on any screen. So the count above skips it — the only place in this file that looks inside a cell,
    and it looks for the ABSENCE of a value and a flag rather than at a number, which is still not
    arithmetic. */
+/* SINCE WO-3.33 IT IS ANY KEY WITH NO VALUE AND NO FLAG, which is the same test with the note
+   requirement dropped: a cell that was revised and then cleared is kept as `{ v: null, at, was }`
+   for its history (src/score-history.js), and it is no more an entry than a noted blank is. The
+   name stays because the note was the first reason a blank kept its key. */
 function noteOnly(cell) {
   if (!cell || typeof cell !== 'object' || Array.isArray(cell)) return false;
   const noValue = cell.v === null || cell.v === undefined;
-  return noValue && !cell.flag && typeof cell.note === 'string';
+  return noValue && !cell.flag;
 }
 
 function scoreCount(assignmentId) {

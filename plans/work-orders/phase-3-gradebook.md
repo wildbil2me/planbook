@@ -2856,7 +2856,7 @@ Four things in it are rulings the work order left to the dispatch, and one is a 
 
 ## WO-3.33 — a changed score cell keeps what it was
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.32 — the note a history entry carries
+**Ship** — · **Status** ✅ DONE — 2026-10-04 · **Size** M · **Depends on** WO-3.32 — the note a history entry carries
 **Closes roadmap** *(no box. Owner-requested, 2026-10-02.)*
 
 **Booked 2026-10-02**, owner-directed. English runs on revision, and today a revision overwrites the
@@ -2886,21 +2886,32 @@ with no separate flag tracking.
   owner, not a detail for this work order.
 
 **Acceptance**
-- [ ] Changing a cell's score, flag or note more than five minutes after its last write pushes the previous
+- [x] Changing a cell's score, flag or note more than five minutes after its last write pushes the previous
       cell onto `was` with its `at`, and the current cell carries a new `at`.
-- [ ] A change within five minutes replaces the cell and pushes nothing, checked on the harness's
+- [x] A change within five minutes replaces the cell and pushes nothing, checked on the harness's
       shifted clock either side of the boundary.
-- [ ] Every grade on every screen is byte-identical to the same document with every `was` removed.
+- [x] Every grade on every screen is byte-identical to the same document with every `was` removed.
       **Mutation-proved**: an engine that reads a history entry goes red.
-- [ ] Student detail lists the history in order, with dates, and a cell with no history shows nothing
+- [x] Student detail lists the history in order, with dates, and a cell with no history shows nothing
       extra.
-- [ ] A cell with history carries the grid's history mark and a cell without it does not, and a cell
+- [x] A cell with history carries the grid's history mark and a cell without it does not, and a cell
       with both a note and history shows both marks, told apart. In presentation mode neither the
       history mark nor the student-detail trail is in the DOM.
-- [ ] A backup written before this lands restores unchanged, and a year with history round-trips.
-- [ ] No exported reader outside the detail screen's own path returns `was`, and a sweep check keeps
+- [x] A backup written before this lands restores unchanged, and a year with history round-trips.
+- [x] No exported reader outside the detail screen's own path returns `was`, and a sweep check keeps
       it that way.
-- [ ] 👤 On the iPad, revising a score and opening the student shows the history reading clearly.
+- [x] 👤 On the iPad, revising a score and opening the student shows the history reading clearly.
+      *(The owner, on hardware at v164, 2026-10-04: the teal ring reads at arm's length and apart
+      from the note corner, the trail reads oldest first with dates, and presentation mode removes
+      both.)*
+
+**Two rulings the build forced, the owner's, 2026-10-04.** The Traps line below assumed the grid
+commits on leaving a cell; it saves on every keystroke, so the implementer made two calls and the
+owner kept both. **Typing a score back undoes the saved step**: inside five minutes, a write equal to
+the newest `was` entry pops it rather than recording *90 → 90*. That departs from the letter of
+Deliverables 1 and 3, and is ruled the intent. **A cleared cell with a past is kept**, blank and
+carrying its history, where WO-3.5 deleted the key; such cells count in *N scores*, the delete
+confirmations and the roster count, as a blank cell with a note already did.
 
 **Traps** — **Do not push on every keystroke.** The grid commits on leaving a cell, and the store's
 save is debounced, so a version is a commit, not a key. **Do not let a signal read `was`.** CLAUDE.md

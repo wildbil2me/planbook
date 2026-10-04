@@ -134,6 +134,9 @@ import { todayISO } from './attendance.js';
    is gone; the copies are one function now. It reads no clock, which is why it is not decision 5's
    business: todayISO() above is still the only line here that asks what day it is. */
 import { shortDate } from './date-text.js';
+/* The rule every write to a score cell goes through (WO-3.33) — stamp `at`, keep what the cell was.
+   Imported from its own leaf rather than from src/scores.js, which imports this file. */
+import { reviseCell } from './score-history.js';
 
 const DISMISS_PREF = 'pastDueDismissed';
 
@@ -527,8 +530,13 @@ export function acceptPastDue() {
         const old = d.scores[cell.work.id][cell.student.id];
         const note = old && typeof old === 'object' && typeof old.note === 'string'
           && old.note.trim() ? old.note : '';
-        d.scores[cell.work.id][cell.student.id] = note
-          ? { v: null, flag: 'missing', note: note } : { v: null, flag: 'missing' };
+        /* AND IT IS A WRITE TO A SCORE CELL LIKE ANY OTHER (WO-3.33): src/score-history.js stamps
+           `at`, and a blank that already has a past — cleared after a revision — keeps it, with the
+           blank pushed onto `was` when it is five minutes old. The cell is always written: a blank
+           going to `missing` is never a no-op, so `revised.cell` is never null here. */
+        const revised = reviseCell(old, note
+          ? { v: null, flag: 'missing', note: note } : { v: null, flag: 'missing' });
+        if (revised.write && revised.cell) d.scores[cell.work.id][cell.student.id] = revised.cell;
       });
     });
   }

@@ -123,6 +123,7 @@ import { run as pointsGrade } from './verify/points-grade.mjs';
 import { run as gradingMode } from './verify/grading-mode.mjs';
 import { run as categoryRemoval } from './verify/category-removal.mjs';
 import { run as scoreNotes } from './verify/score-notes.mjs';
+import { run as scoreHistory } from './verify/score-history.mjs';
 import { run as pastDue } from './verify/past-due.mjs';
 import { run as accommodationPrompts } from './verify/accommodation-prompts.mjs';
 import { run as printGate } from './verify/print-gate.mjs';
@@ -362,6 +363,13 @@ const BROWSER_SECTIONS = [
      backup over itself on the way, and hands the page back at 1280x900 with touch off and
      presentation mode where it found it — the state category-removal.mjs leaves. */
   { file: 'verify/score-notes.mjs', run: scoreNotes },
+  /* WO-3.33, directly after the note section it builds on: a changed score cell keeps what it was. It
+     plants one class of its own, lays a movable clock over the page's Date to cross the five-minute
+     boundary and takes it off again, reloads at its head and its foot, takes the class back out,
+     restores the year's own pre-history backup over itself on the way, and hands the page back at
+     1280x900 with touch off and presentation mode where it found it — the state score-notes.mjs
+     leaves. */
+  { file: 'verify/score-history.mjs', run: scoreHistory },
   { file: 'verify/past-due.mjs', run: pastDue },
   { file: 'verify/accommodation-prompts.mjs', run: accommodationPrompts },
   { file: 'verify/print-gate.mjs', run: printGate },

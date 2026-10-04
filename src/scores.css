@@ -610,6 +610,21 @@
   pointer-events: none;
 }
 
+/* THE HISTORY MARK (WO-3.33): a small hollow teal ring at the cell's bottom RIGHT — the one corner
+   nothing else uses. It has to read as different from the note mark at a glance, since one cell can
+   carry both, so it differs in every way there is: corner (bottom right, not top left), shape (a
+   ring, not a folded corner) and fill (hollow, where the note mark and the flag glyph are solid).
+   Teal because it is in no other state on this grid — not a flag's orange, red or purple, and not
+   the note's indigo. It says only that the score changed; src/scores.js draws it only when history
+   may be on screen at all, so under presentation mode it is not in the DOM. No pointer: a tap on
+   it is a tap on the score. */
+.scores-history-mark {
+  position: absolute; bottom: 3px; right: 3px; width: 7px; height: 7px;
+  box-sizing: border-box; border: 2px solid #0e8a8a; border-radius: 999px;
+  background: transparent;
+  pointer-events: none;
+}
+
 /* The empty state and the hint, which the drawing does not carry and which every other screen in
    this app does: `.assign-empty` / `.assign-hint` and `.attendance-empty` / `.attendance-hint` are
    the pair being followed, at the same sizes. A screen that answers "there is nothing here" with an
@@ -802,6 +817,8 @@
   /* The note mark a step larger with the cell it sits in, so it is still findable at arm's length on
      the iPad. It is not a target — the cell is — so it has no 44 of its own. */
   .scores-note-mark { border-top-width: 10px; border-right-width: 10px; }
+  /* And the history ring a step larger for the same reason. Not a target either. */
+  .scores-history-mark { width: 9px; height: 9px; }
   .scores-grid tbody td, .scores-grid tbody th { padding: 7px 8px; }
   .scores-col { min-width: 104px; }
   /* The frozen pair gets narrower on touch, not wider: the tablet has less width to spend and the

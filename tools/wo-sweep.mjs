@@ -3483,6 +3483,83 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
     : `${srcFiles.length} file(s) under src/ read, none names the removed function, and src/grade-engine.js exports classGrade()`);
 }
 
+/* ══════ 28. a score cell's history is read by one module, and handed out as a card or a boolean ══════
+   WO-3.33's seventh Acceptance line, and it sits ABOVE § 22 for § 23's reason: § 22's census has to
+   be the last thing that pushes a result. The number is the order this section was written in.
+
+   WO-3.33 gave every score cell a `was` — what the cell held before it was changed — and ruled that
+   NOTHING READS IT BUT STUDENT DETAIL: no grade, no signal rule, no merge field, no print surface.
+   The signal half is the one with a cost: CLAUDE.md records that the turnaround rule cannot see a
+   grade recovery because *a score is not dated*, and a rule that quietly started reading `was` would
+   change what a rise means without the owner ruling on it (plans/future-features.md § Gradebook).
+   The harness proves today's grades are byte-identical with every `was` removed; this proves no line
+   of src/ outside src/score-history.js can read the key on any input, which is § 17's division of
+   labour over a different file.
+
+   THREE CLAUSES, all read off code with comments stripped (line numbers kept, so a hit names its
+   line):
+   1. Outside src/score-history.js no code line reads `was` — no `.was` member read, no `'was'`
+      string literal (which covers `cell['was']`, `'was' in cell` and `hasOwnProperty('was')`), and
+      no `was` destructured out of an object. The word is ordinary English in a comment, and a local
+      VARIABLE called `was` is untouched by all three patterns, which is the allowlist: only the key
+      is being fenced.
+   2. src/score-history.js exports exactly the five names it was written with, and each is named
+      here with why it may leave: `reviseCell` is the WRITER's rule, whose answer goes straight back
+      into the document inside the caller's own update(); `hasVisibleHistory` and
+      `scoreHistoryVisible` answer a boolean; `scoreHistoryCard` hands back DOM; and
+      `REVISION_WINDOW_MS` is a number. A sixth export is a new door and has to be argued here.
+   3. `scoreHistoryCard` is imported by src/detail.js and by nothing else in src/, and `reviseCell`
+      by the two files that write a score cell — src/scores.js and src/past-due.js — and nothing else.
+      So the one export whose answer carries a trail reaches one screen, and the one whose answer
+      carries `was` reaches only writers.
+
+   IT IS LOUD WHEN IT MOVES, for § 11's reason: no src/score-history.js, or no export of
+   `reviseCell`, and every clause above is watching nothing — that FAILs saying so. */
+
+{
+  const NAME = 'a score cell\'s `was` is read only in src/score-history.js, whose exports are a writer\'s rule, two booleans, a card for src/detail.js and a number';
+  const OWNER = 'src/score-history.js';
+  const ownerPath = path.join(REPO, 'src', 'score-history.js');
+  const srcFiles = ALL.filter(p => /^src\/.*\.js$/.test(rel(p)));
+  // Comments off, newlines kept, so a line number still names the line it came from.
+  const codeOf = (file) => fs.readFileSync(file, 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '))
+    .split('\n').map(l => l.replace(/(^|[^:'"`\\])\/\/.*$/, '$1'));
+  const READS = /\.was\b|(['"`])was\1|\{[^{}]*\bwas\b[^{}]*\}\s*=/;
+  const faults = [];
+  if (!fs.existsSync(ownerPath)) {
+    faults.push('src/score-history.js is not where § 28 expects it — the one module allowed to read a score cell\'s `was` is gone, so every clause below is watching nothing. Restore it, or re-point tools/wo-sweep.mjs § 28 if it moved');
+  } else {
+    const reads = [];
+    srcFiles.filter(f => rel(f) !== OWNER).forEach((f) => {
+      codeOf(f).forEach((line, i) => { if (READS.test(line)) reads.push({ file: rel(f), line: i + 1, text: line.trim() }); });
+    });
+    if (reads.length) faults.push(`${reads.map(r => `${r.file}:${r.line} "${r.text.length > 80 ? r.text.slice(0, 77) + '…' : r.text}"`).join(', ')} — reads a score cell's \`was\` outside ${OWNER}. WO-3.33: nothing reads history but student detail, and a grade, a signal or a print surface that did would change what a score means without the owner's ruling (plans/future-features.md § Gradebook). Read history through ${OWNER} or not at all`);
+
+    const ownerCode = codeOf(ownerPath).join('\n');
+    const exported = [...ownerCode.matchAll(/^export\s+(?:async\s+)?(?:function|const|let|class)\s+([A-Za-z_$][\w$]*)/gm)].map(m => m[1]).sort();
+    const ALLOWED = ['REVISION_WINDOW_MS', 'hasVisibleHistory', 'reviseCell', 'scoreHistoryCard', 'scoreHistoryVisible'];
+    if (!exported.includes('reviseCell')) faults.push(`no \`export function reviseCell(\` in ${OWNER} — the rule every score write goes through is gone or renamed, and this section is watching a rearranged tree. Re-point § 28`);
+    const extra = exported.filter(n => !ALLOWED.includes(n));
+    if (extra.length) faults.push(`${OWNER} exports ${extra.join(', ')}, which § 28 does not name — every export of that file is a possible door to \`was\`, and a new one is argued in this section's banner before it is added to ALLOWED`);
+    const re = /^export\s*\{/m.test(ownerCode);
+    if (re) faults.push(`${OWNER} has an \`export { … }\` list — § 28 reads exports by declaration only, so a list would be an export it cannot see`);
+
+    const importers = (name) => srcFiles.filter(f => rel(f) !== OWNER).filter((f) => {
+      const code = codeOf(f).join('\n');
+      return new RegExp(`import\\s*\\{[^}]*\\b${name}\\b[^}]*\\}\\s*from\\s*['"]\\./score-history\\.js['"]`).test(code);
+    }).map(rel).sort();
+    const cardBy = importers('scoreHistoryCard');
+    const reviseBy = importers('reviseCell');
+    if (cardBy.join(',') !== 'src/detail.js') faults.push(`scoreHistoryCard is imported by ${cardBy.join(', ') || 'nothing'} — WO-3.33 puts a score's trail on student detail and nowhere else, so src/detail.js is its one importer`);
+    if (reviseBy.join(',') !== 'src/past-due.js,src/scores.js') faults.push(`reviseCell is imported by ${reviseBy.join(', ') || 'nothing'} — its answer carries \`was\` and goes straight back into the document, so only the two files that write a score cell (src/scores.js, src/past-due.js) may hold it. A new writer is added here in the same edit; a reader is refused`);
+    if (!faults.length) {
+      check(NAME, true, `${srcFiles.length - 1} file(s) under src/ read with comments stripped and none reads \`was\`; ${OWNER} exports ${exported.join(', ')}; scoreHistoryCard is imported by ${cardBy.join(', ')} alone and reviseCell by ${reviseBy.join(' and ')} alone`);
+    }
+  }
+  if (faults.length) check(NAME, false, faults.join(' · '));
+}
+
 /* ══════ 22. the count of checks in tools/README.md is the number this run emits ══════
    WO-1.42. § 11 holds `tools/README.md`'s figures for `verify-shell.mjs` against what the tree
    actually contains. This is that census turned on the sweep itself. The same file records how many

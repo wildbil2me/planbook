@@ -13,6 +13,23 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A changed score keeps what it was — 2026-10-04
+
+WO-3.33. Shell cache `v164`.
+
+- **Changing a score cell more than five minutes after it was last written keeps the old version**:
+  its score, flag, note and time. A change within five minutes is treated as a typo fix and keeps
+  nothing, and typing back the value just replaced undoes that step.
+- **A cell with history shows a small teal ring at its bottom right**, separate from the indigo
+  note corner.
+- **Student detail has a *Changed scores* card** showing each trail oldest first, with dates, e.g.
+  *Missing (Sep 14) → Late, 70 (Sep 20) → 88 (Oct 1)*.
+- **Only the current score counts.** No grade, signal, merge field, print or CSV reads the history.
+- **Clearing a cell that has history keeps it as a blank with its trail**, and it counts in the
+  backup panel's *N scores*. A cleared cell with no history is still deleted.
+- **Under presentation mode the ring and the card are gone entirely.**
+- Old backups restore unchanged, and history survives backup and restore.
+
 ### A score can carry a note — 2026-10-04
 
 WO-3.32. Shell cache `v163`.
