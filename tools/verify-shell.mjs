@@ -122,6 +122,7 @@ import { run as gradeSheet } from './verify/grade-sheet.mjs';
 import { run as pointsGrade } from './verify/points-grade.mjs';
 import { run as gradingMode } from './verify/grading-mode.mjs';
 import { run as categoryRemoval } from './verify/category-removal.mjs';
+import { run as scoreNotes } from './verify/score-notes.mjs';
 import { run as pastDue } from './verify/past-due.mjs';
 import { run as accommodationPrompts } from './verify/accommodation-prompts.mjs';
 import { run as printGate } from './verify/print-gate.mjs';
@@ -355,6 +356,12 @@ const BROWSER_SECTIONS = [
      reloads once at its head and once at its foot, takes its classes back out, and hands the page
      back at 1280x900 with touch off, the state grading-mode.mjs leaves it in. */
   { file: 'verify/category-removal.mjs', run: categoryRemoval },
+  /* WO-3.32, after the three sections that plant classes on the grid, the sheet and the detail screen
+     it reads a note back off. It plants one class of its own, reloads at its head, once for the
+     coarse pointer and once at its foot, takes the class back out, restores the year's own pre-note
+     backup over itself on the way, and hands the page back at 1280x900 with touch off and
+     presentation mode where it found it — the state category-removal.mjs leaves. */
+  { file: 'verify/score-notes.mjs', run: scoreNotes },
   { file: 'verify/past-due.mjs', run: pastDue },
   { file: 'verify/accommodation-prompts.mjs', run: accommodationPrompts },
   { file: 'verify/print-gate.mjs', run: printGate },

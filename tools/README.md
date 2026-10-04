@@ -1253,14 +1253,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1712 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1737 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the seventy-nine files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the eighty files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -2433,6 +2433,24 @@ moves neither number. The run prints `1720 checks · 1720 passed · 0 failed · 
 to 1721** — one site added to `verify/category-removal.mjs`, not in a loop and not a failure arm, so
 the gap stays at −9. It reads the categories editor's visible hints in each mode and wants neither to
 claim a removal takes the work. The run prints `1721 checks · 1721 passed · 0 failed · 0 skipped`, 54,817 lines, 31.9 lines per check, 739s, exit 0, 2026-10-04 on the real clock.
+
+**WO-3.32 moved it from 1712 to 1737, and the executed count from 1721 to 1745 — twenty-five sites,
+twenty-four results, and the file count moves by one.** All twenty-five are in a new section,
+`verify/score-notes.mjs`, straight after `verify/category-removal.mjs` in `BROWSER_SECTIONS`, which is
+the eightieth file. It plants one weighted class of three and adds every note through the controls a
+teacher touches — a cell, the flag bar's *Note*, the panel's field, *Done*, *Remove note* — and reads
+back: the round trip and the key's removal (an emptied field, and *Remove note* on a blank deleting the
+cell and its column), the grade unmoved on the grid, its summary, the engine asked directly, the grade
+sheet's record and the assignment list's entered count, the mark and the detail card, the CSV, both
+presentation-mode absences **flipped from the header with the panel open**, the mode switched back to
+show the absences were the mode, the keyboard walk across noted cells (Enter, the arrows, Tab, Escape,
+L, ⌫, X, M, N) and *Clear*, nineteen merge-field paths into a cell, the grade sheet's dialog, record and
+CSV, the log, the pre-note backup and a noted one through `parseBackup()` and then the real restore read
+off IndexedDB, and the four controls at 44px under a coarse pointer. **The note strings occur nowhere
+else in the repository**, so "is a note on this surface" is a search over what was produced. None sits
+in a loop. **One is a failure arm** (the fixture guard), so the gap between sites and results moves
+from −9 to −8. The run prints `1745 checks · 1745 passed · 0 failed · 0 skipped`, 55,472 lines, 31.8
+lines per check, 761s, exit 0, 2026-10-04 on the real clock. Mutation round in `TESTING.md` § WO-3.32.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

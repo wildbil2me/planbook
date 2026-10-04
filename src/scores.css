@@ -57,7 +57,8 @@
 /* One grouped selector for this sheet's tappable classes, the way every other sheet in this app
    has one: a control covered only by some other selector's rule is a control the next reader has
    to go and prove is covered. */
-.scores-input, .scores-keys-btn, .scores-flag-btn, .scores-name-btn {
+.scores-input, .scores-keys-btn, .scores-flag-btn, .scores-name-btn, .scores-note-input,
+.scores-note-action {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -159,6 +160,34 @@
 /* The buttons are `.class-action-btn` worn as-is. This class only gives the coarse block below
    something to name; it never restyles the button. */
 .scores-flag-btn { }
+/* THE NOTE BUTTON (WO-3.32) is a fifth `.scores-flag-btn`, worn as-is, so it takes the bar's 44px
+   floor with the other four. The one thing it adds is a little air before it: the four flags are
+   one decision about a score and this is a different kind of thing, and a gap says so without a
+   divider a thumb could mistake for a control. */
+.scores-note-btn { margin-left: 6px; }
+
+/* THE NOTE PANEL (WO-3.32), under the flag bar, about one cell. NOT DRAWN — it is the attendance
+   history dialog's write block (src/attendance.css `.attendance-report-write`, the mark note's own
+   home) lifted value for value: indigo, a 5px left rail, a wrapping flex row. Same clothes because it
+   is the same act — a note on one student's mark — one screen over, and indigo for that block's
+   reason: a state the teacher chose, not one that needs acting on. The field is that block's
+   `.attendance-report-write-note` frame. design/mockups/ draws none of this, deliberately: there is
+   no surface question a picture would answer that the lift has not already answered. */
+.scores-note {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  margin: 0 0 10px; padding: 10px 12px; border-radius: 8px;
+  border: 1.5px solid #b0bcf0; border-left: 5px solid #5b6fcc; background: #eef2ff;
+}
+.scores-note-label { flex: 1 0 100%; font-size: 12px; font-weight: 700; color: #3a4a8a; }
+.scores-note-input {
+  flex: 1 1 260px; min-width: 0;
+  padding: 7px 10px; border-radius: 6px;
+  border: 1.5px solid #b0bcf0; background: #fff;
+  font-size: 12px; font-family: inherit; color: #1a1a2e;
+}
+.scores-note-input:focus { border-color: #5b6fcc; }
+/* `.class-action-btn` worn as-is; named so the coarse block can hold them at 44. */
+.scores-note-action { }
 
 /* THE KEYBOARD STRIP. Attendance put its key legend behind a "⌨ Keys" button and this screen needs
    the same thing more: entry here IS the keyboard, and the legend is what a teacher reads once in
@@ -568,6 +597,19 @@
 .scores-flag.missing { background: #e74c3c; }
 .scores-flag.excused { background: #7c3aed; }
 
+/* THE NOTE MARK (WO-3.32): the cell's top-left corner folded down in indigo — top LEFT because the
+   top right is the flag glyph's and one cell can carry both. A corner and not a wash, because the
+   fill already says the flag. Discreet on purpose: it says "there is something to read here" and
+   nothing about what. Inside the field's own border so it reads as part of the cell, and it takes
+   no pointer, so a tap on the corner is a tap on the score. src/scores.js draws it only when a note
+   may be on screen at all — under presentation mode it is not in the DOM. */
+.scores-note-mark {
+  position: absolute; top: 2px; left: 2px; width: 0; height: 0;
+  border-top: 8px solid #5b6fcc; border-right: 8px solid transparent;
+  border-top-left-radius: 4px;
+  pointer-events: none;
+}
+
 /* The empty state and the hint, which the drawing does not carry and which every other screen in
    this app does: `.assign-empty` / `.assign-hint` and `.attendance-empty` / `.attendance-hint` are
    the pair being followed, at the same sizes. A screen that answers "there is nothing here" with an
@@ -757,6 +799,9 @@
      thumb is a target you miss sideways. */
   .scores-input { height: 44px; width: 62px; font-size: 15px; }
   .scores-flag { min-width: 18px; height: 18px; font-size: 10px; top: -6px; right: -6px; }
+  /* The note mark a step larger with the cell it sits in, so it is still findable at arm's length on
+     the iPad. It is not a target — the cell is — so it has no 44 of its own. */
+  .scores-note-mark { border-top-width: 10px; border-right-width: 10px; }
   .scores-grid tbody td, .scores-grid tbody th { padding: 7px 8px; }
   .scores-col { min-width: 104px; }
   /* The frozen pair gets narrower on touch, not wider: the tablet has less width to spend and the
@@ -779,7 +824,13 @@
   .scores-cat-avg-name { font-size: 12px; }
   .scores-cat-avg-sub { font-size: 11px; }
 
-  .scores-keys-btn, .scores-flag-btn { min-height: 44px; }
+  .scores-keys-btn, .scores-flag-btn, .scores-note-btn { min-height: 44px; }
+  /* The note panel (WO-3.32), at the write block's own coarse sizes (src/attendance.css). The Note
+     button is a `.scores-flag-btn` and is held by the line above. */
+  .scores-note { gap: 10px; padding: 12px 14px; }
+  .scores-note-label { font-size: 13px; }
+  .scores-note-input { min-height: 44px; font-size: 14px; padding: 10px 12px; }
+  .scores-note-action { min-height: 44px; }
   /* THE NAME DOOR AT 44px (WO-3.7). It takes the whole cell, so the 44 comes from the button
      rather than from the row it happens to sit in: a row that shrank because a term had one short
      assignment name in its head would take this target down with it, and this is the control that

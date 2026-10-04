@@ -1233,6 +1233,30 @@
                 title="Excused. Drops out of the grade entirely — neither earned nor possible.">Excused (X)</button>
         <button class="class-action-btn scores-flag-btn" type="button" data-score-flag="clear"
                 title="Clear the cell back to blank. Blank means ungraded and changes no grade.">Clear</button>
+        <!-- WO-3.32. A note on the cell you are in — the reason behind a mark. In this bar because it
+             acts on the same cell the four flags do, and it is the only way the note opens: no key
+             on the grid is spent on it, so it carries no letter. src/scores.js hides it while
+             presentation mode is on, when a note may not be on screen at all. -->
+        <button class="class-action-btn scores-flag-btn scores-note-btn" type="button" data-score-note-open
+                aria-controls="scoresNote"
+                title="Add or read a note on this cell — a revised essay, a conference. It changes no grade.">Note</button>
+      </div>
+
+      <!-- THE NOTE PANEL (WO-3.32), about one cell, opened by the Note button above and by nothing
+           else. STATIC MARKUP for the search box's reason: src/scores.js's renderScores() rebuilds
+           every cell, and a field inside what it rebuilds would be destroyed under the caret. Every
+           keystroke in the field saves; an empty field is no note. The label and the field are
+           filled by src/scores.js on open and EMPTIED on close, so a shut panel holds no student's
+           words — and it is shut and emptied whenever presentation mode is on. -->
+      <div class="scores-note hidden" id="scoresNote" role="group" aria-labelledby="scoresNoteLabel">
+        <label class="scores-note-label" id="scoresNoteLabel" for="scoresNoteText"></label>
+        <input type="text" class="scores-note-input" id="scoresNoteText" data-score-note
+               autocomplete="off" spellcheck="true"
+               placeholder="Revised essay, conference, turned in after the absence…">
+        <button class="class-action-btn scores-note-action" type="button" data-score-note-remove
+                title="Take the note off this cell. The score is unchanged.">Remove note</button>
+        <button class="class-action-btn primary scores-note-action" type="button" data-score-note-done
+                title="Close the note and go back to the cell. It is already saved.">Done</button>
       </div>
 
       <!-- Closed to begin with, opened by the button above. Three kinds of key: `↵` and `⇥` are
@@ -1281,6 +1305,8 @@
         <span class="scores-key"><kbd>M</kbd> missing</span>
         <span class="scores-key"><kbd>X</kbd> excused</span>
         <span class="scores-key"><kbd>⌫</kbd> clear an empty cell to blank</span>
+        <!-- No key row for the note (WO-3.32): no key opens it, and a legend row naming the Note
+             button would be the one row here that is not a key. -->
       </div>
 
       <!-- THE SEARCH BOX (WO-3.29), directly over the grid it narrows, and it is the registry's own:

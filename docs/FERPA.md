@@ -7,7 +7,7 @@ it to, no account to create, and every record stays in the browser on the teache
 **not** your school's official record. The authoritative record remains your student information
 system; Planbook does not connect to it, does not read from it and does not replace it.
 
-**Last updated 28 September 2026.** The teacher-facing version of the same facts is the
+**Last updated 4 October 2026.** The teacher-facing version of the same facts is the
 [privacy policy](https://planbook.hwgteach.com/privacy), and the two are kept in step by hand: this
 document is written for a district review, that one for a teacher and for Google's OAuth
 verification. Neither restates the other's argument, and where they state the same fact — what
@@ -22,7 +22,9 @@ Entered by the teacher, for the teacher's own classes:
 - Student names, and any nickname or note the teacher types
 - Class lists, terms, grading categories and weights
 - Attendance — present, tardy, absent, excused, dismissed — and hall-pass logs
-- Assignments, scores, and teacher-marked flags: late, missing, excused
+- Assignments, scores, and teacher-marked flags: late, missing, excused — and any short note the
+  teacher adds to a score, which stays on the teacher's screen and is never printed or put in a
+  message
 - Guardian, counselor and case-manager names, email addresses and phone numbers, where the teacher
   enters them
 - What the teacher has written down about a student: short behavior entries and notes to herself,

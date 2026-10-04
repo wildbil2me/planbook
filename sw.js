@@ -35,7 +35,7 @@
    below reads this cache and no other, and every older copy under SHELL_PREFIX is deleted — in
    `activate`, and again on each launch (clearOldShells) — which is what makes a deploy replace
    the shell rather than layer on top of it. */
-const CACHE = 'planbook-shell-v162';
+const CACHE = 'planbook-shell-v163';
 
 /* Every cache this worker has ever made is SHELL_PREFIX plus a version. Nothing outside the prefix
    is ever deleted: another cache at this origin is not ours to judge, and IndexedDB, where the
@@ -125,6 +125,10 @@ const SHELL = [
      Imported by src/detail.js, src/signals-view.js and src/shell.js and reached no other way, which
      is exactly as absent offline as a file named in index.html (tools/verify/precache.mjs). */
   './src/contact-history.js',
+  /* WO-3.32. A note on a score cell: the one asker of presentation mode for it, and the card on the
+     student record. Imported by src/scores.js and src/detail.js and reached no other way, which is
+     exactly as absent offline as a file named in index.html (tools/verify/precache.mjs). */
+  './src/score-notes.js',
   /* WO-5.1. The merge-field resolver. No screen imports it yet — the template editor is WO-5.2
      — but src/shell.js pulls it in for the read seam, so it is in the module graph and belongs on
      this list: a module reached only through an import is exactly as absent offline as one named

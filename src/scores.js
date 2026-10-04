@@ -92,6 +92,19 @@
      names is to have nothing to suppress. If a later work order wants the roster's dot here, it
      goes through src/supports.js like every other surface, and src/shell.js's flipPresentationMode()
      gains this screen's repaint in the same pass.
+
+     WO-3.32 IS THE FIRST THING HERE THE MODE TAKES AWAY, and it is not support data: a NOTE on a
+     score cell is free text about one student, and under presentation mode it is absent — its mark,
+     its panel, its tooltip and the "has a note" in a cell's accessible name. This file does not ask
+     the mode itself: every note it draws is read through src/score-notes.js's visibleNoteOf(),
+     which answers '' while projecting, so the question lives in one place. The repaint this
+     paragraph predicted is in src/shell.js's flipPresentationMode() now.
+
+     THE NOTE PANEL IS NOT A DIALOG, so the first rule above still stands. It is a strip of static
+     markup under the flag bar (index.html, #scoresNote), opened by its own button and by no key —
+     WO-3.32's Traps: score entry is the fast path, and a note on a keystroke the grid already uses
+     would be a note opened by accident two thirds of the way down a column. `Esc` is still bound to
+     nothing on this screen but the search box.
 */
 
 import { getDoc, update } from './store.js';
@@ -140,6 +153,11 @@ import { paintPastDue, pastDueAsksAbout } from './past-due.js';
    identical one and why neither was an import, which stopped being an argument at the fifth
    shortDate() in src/ and the third that returned a different string. */
 import { shortDate } from './date-text.js';
+/* A NOTE ON A CELL (WO-3.32). noteOf() is the stored note, read ONLY by the two writers below, which
+   have to carry it across a change of value or flag in either mode; visibleNoteOf() is the note as it
+   may be drawn, '' under presentation mode, and it is the only way a note reaches this screen's DOM.
+   That file is the one asker of the mode for a note — see its header, and decision 5 above. */
+import { noteOf, visibleNoteOf, scoreNotesVisible } from './score-notes.js';
 
 const CLASS_NAME_ID = 'scoresClassName';
 const HEADLINE_ID = 'scoresHeadline';
@@ -160,6 +178,10 @@ const TOOLBAR_ID = 'scoresToolbar';
 const SEARCH_ID = 'scoresSearch';
 const FOUND_ID = 'scoresFound';
 const CATS_ID = 'scoresCategories';
+const NOTE_ID = 'scoresNote';
+const NOTE_LABEL_ID = 'scoresNoteLabel';
+const NOTE_TEXT_ID = 'scoresNoteText';
+const NOTE_BTN_SEL = '#scoresView [data-score-note-open]';
 
 /* Whether the key legend is open. A module variable rather than a preference — decision 4 in the
    header. */
@@ -200,6 +222,12 @@ let categoryId = '';
 */
 let focusedAssignmentId = '';
 let focusedStudentId = '';
+
+/* WHICH CELL THE OPEN NOTE PANEL IS ABOUT (WO-3.32), as two ids for the reason the pair above is —
+   or two empty strings when the panel is shut. Not a preference: a panel that reopened after a
+   reload would be a student's note on screen that nobody asked for. */
+let noteAssignmentId = '';
+let noteStudentId = '';
 
 /* ────────────────────────────── reading the document ────────────────────────────── */
 
@@ -405,18 +433,63 @@ export function classAverage(students, figureOf) {
   goes with its last cell for the same reason: an empty object under an assignment id is a column of
   no scores wearing a column's clothes, and every reader of `scores` would have to know that.
 */
+/*
+  A NOTE RIDES THROUGH EVERY WRITE HERE (WO-3.32). Every caller hands in a cell built by cellFor(),
+  which knows only a value and a flag — so without this, typing a score, setting a flag or clearing
+  to blank would silently delete the note on the cell, with no undo. The note is read off the cell
+  as STORED (noteOf(), never the visible reader) because a flag set under presentation mode must not
+  cost a note the screen is merely not showing. A cell that would otherwise be deleted keeps its note
+  as `{ v: null, note }` — blank, ungraded, and still carrying what the teacher wrote. Only
+  writeNote() below takes a note off.
+*/
 function writeCell(assignmentId, studentId, cell) {
   update((doc) => {
     if (!doc.scores || typeof doc.scores !== 'object') doc.scores = {};
-    if (!cell) {
-      const column = doc.scores[assignmentId];
+    const column = doc.scores[assignmentId];
+    const old = column && Object.prototype.hasOwnProperty.call(column, studentId)
+      ? column[studentId] : null;
+    const note = noteOf(old);
+    const next = note ? Object.assign({}, cell || { v: null }, { note: note }) : cell;
+    if (!next) {
       if (!column) return;
       delete column[studentId];
       if (!Object.keys(column).length) delete doc.scores[assignmentId];
       return;
     }
     if (!doc.scores[assignmentId]) doc.scores[assignmentId] = {};
-    doc.scores[assignmentId][studentId] = cell;
+    doc.scores[assignmentId][studentId] = next;
+  });
+}
+
+/*
+  THE ONLY FUNCTION THAT PUTS A NOTE ON A CELL OR TAKES ONE OFF (WO-3.32), on the attendance mark
+  note's terms (docs/data-model.md): stored as typed, and an empty or whitespace-only field deletes
+  the key rather than storing `""`. The value and the flag are left exactly as they are.
+
+  AND writeCell()'S INVARIANT HOLDS HERE TOO: a cell left with no value, no flag and now no note is
+  not a cell, so the key goes, and the column with its last key. Clearing the only note on a blank
+  cell leaves the document as it was before the note was added — which is acceptance line 1's
+  "clearing it removes the key", read all the way down.
+*/
+function writeNote(assignmentId, studentId, text) {
+  const note = String(text == null ? '' : text);
+  update((doc) => {
+    if (!doc.scores || typeof doc.scores !== 'object') doc.scores = {};
+    const column = doc.scores[assignmentId];
+    const old = column && Object.prototype.hasOwnProperty.call(column, studentId)
+      ? column[studentId] : null;
+    const next = old && typeof old === 'object' && !Array.isArray(old)
+      ? Object.assign({}, old) : { v: null };
+    if (note.trim()) next.note = note;
+    else delete next.note;
+    if (valueOf(next) === null && !flagOf(next) && !noteOf(next)) {
+      if (!column) return;
+      delete column[studentId];
+      if (!Object.keys(column).length) delete doc.scores[assignmentId];
+      return;
+    }
+    if (!doc.scores[assignmentId]) doc.scores[assignmentId] = {};
+    doc.scores[assignmentId][studentId] = next;
   });
 }
 
@@ -548,9 +621,7 @@ function scoreCell(assignment, student, cell) {
   input.placeholder = flag === 'missing' ? '0' : flag === 'excused' ? 'Ex' : '—';
   input.setAttribute('data-score-cell', assignment.id);
   input.setAttribute('data-score-student', student.id);
-  input.setAttribute('aria-label', (assignment.name || 'Untitled assignment')
-    + ', out of ' + pointsOf(assignment) + ', for ' + fullName(student)
-    + (flag ? ' — ' + flag : ''));
+  input.setAttribute('aria-label', cellLabel(assignment, student, cell));
   wrap.append(input);
 
   if (flag) {
@@ -558,8 +629,47 @@ function scoreCell(assignment, student, cell) {
     glyph.setAttribute('aria-hidden', 'true');
     wrap.append(glyph);
   }
+  paintNoteMark(input, wrap, cell);
   td.append(wrap);
   return td;
+}
+
+/* A cell's accessible name: what it is, out of what, for whom, its flag, and — since WO-3.32 —
+   whether it carries a note. Said as "has a note" and never as the note itself: a screen reader
+   walking a column would otherwise read twenty-five sentences aloud between the numbers. Under
+   presentation mode visibleNoteOf() answers '' and the clause is not there. */
+function cellLabel(assignment, student, cell) {
+  const flag = flagOf(cell);
+  return (assignment.name || 'Untitled assignment')
+    + ', out of ' + pointsOf(assignment) + ', for ' + fullName(student)
+    + (flag ? ' — ' + flag : '')
+    + (visibleNoteOf(cell) ? ', has a note' : '');
+}
+
+/*
+  THE NOTE MARK (WO-3.32) — a small indigo corner folded down at the cell's top LEFT, because the
+  top right is the flag glyph's and a cell can carry both. Indigo because it is the colour of a
+  thing the teacher chose (src/attendance.css's write block says the same of its own indigo), and a
+  corner rather than a wash because the fill already says the flag: a second fill would be two
+  states fighting over one background. It is `aria-hidden` — the accessible name above carries it.
+
+  THE NOTE ITSELF RIDES ON THE FIELD'S `title`, so a laptop reads it on hover without opening the
+  panel. Both come from visibleNoteOf(), so under presentation mode there is no mark and no title:
+  absent rather than hidden, which is the only kind of hidden a screenshot or find-in-page respects.
+  Called on first paint and again after any write that can change the note, never on the typing path.
+*/
+function paintNoteMark(input, wrap, cell) {
+  const note = visibleNoteOf(cell);
+  const old = wrap.querySelector('.scores-note-mark');
+  if (old) old.remove();
+  if (!note) {
+    input.removeAttribute('title');
+    return;
+  }
+  input.title = 'Note: ' + note;
+  const mark = el('span', 'scores-note-mark');
+  mark.setAttribute('aria-hidden', 'true');
+  wrap.append(mark);
 }
 
 /* The grade cell's contents, from the engine's answer and nothing else. Two lines when there is a
@@ -896,6 +1006,7 @@ export function renderScores() {
     const summary = document.getElementById(SUMMARY_ID);
     if (summary) summary.textContent = '';
     paintFound(0, 0);
+    paintNotePanel();
     return;
   }
 
@@ -922,6 +1033,7 @@ export function renderScores() {
       empty.classList.remove('hidden');
     }
     paintGrades(cls, termId, students);
+    paintNotePanel();
     return;
   }
 
@@ -985,6 +1097,9 @@ export function renderScores() {
   });
 
   paintGrades(cls, termId, students);
+  /* AFTER the rows, because whether the open note panel's cell is still on the grid is a question
+     about the cells just drawn (WO-3.32). */
+  paintNotePanel();
 }
 
 /*
@@ -1225,18 +1340,20 @@ function paintCell(input, at, cell) {
   input.classList.remove('late', 'missing', 'excused');
   if (flag) input.classList.add(flag);
   input.placeholder = flag === 'missing' ? '0' : flag === 'excused' ? 'Ex' : '—';
-  input.setAttribute('aria-label', (at.assignment.name || 'Untitled assignment')
-    + ', out of ' + pointsOf(at.assignment) + ', for ' + fullName(at.student)
-    + (flag ? ' — ' + flag : ''));
+  input.setAttribute('aria-label', cellLabel(at.assignment, at.student, cell));
 
   const wrap = input.parentElement;
   if (!wrap) return;
   const old = wrap.querySelector('.scores-flag');
   if (old) old.remove();
-  if (!flag) return;
-  const glyph = el('span', 'scores-flag ' + flag, flag === 'late' ? 'L' : flag === 'missing' ? 'M' : 'X');
-  glyph.setAttribute('aria-hidden', 'true');
-  wrap.append(glyph);
+  if (flag) {
+    const glyph = el('span', 'scores-flag ' + flag, flag === 'late' ? 'L' : flag === 'missing' ? 'M' : 'X');
+    glyph.setAttribute('aria-hidden', 'true');
+    wrap.append(glyph);
+  }
+  /* The note survives every write that reaches here (writeCell() carries it), so this repaints it
+     rather than changes it — kept beside the flag so the two corners are always drawn together. */
+  paintNoteMark(input, wrap, cell);
 }
 
 /*
@@ -1402,6 +1519,14 @@ export function editScore(input) {
 export function noteFocusedCell(input) {
   focusedAssignmentId = input.getAttribute('data-score-cell') || '';
   focusedStudentId = input.getAttribute('data-score-student') || '';
+  /* ENTERING A DIFFERENT CELL SHUTS THE NOTE PANEL (WO-3.32). The panel names the cell it is about,
+     but a teacher who has moved on is looking at another one, and a note typed next would land on
+     the cell she left. The field is already saved — every keystroke in it writes — so shutting it
+     loses nothing. Entering the SAME cell (Done hands focus back to it) leaves it as it is. */
+  if (noteAssignmentId && (noteAssignmentId !== focusedAssignmentId
+      || noteStudentId !== focusedStudentId)) {
+    shutNotePanel();
+  }
 }
 
 function inputFor(assignmentId, studentId) {
@@ -1434,12 +1559,17 @@ function applyFlag(at, which) {
   let said = '';
 
   if (which === 'clear') {
-    if (!before) {
+    /* A cell holding only a note is already blank (WO-3.32): it has no score and no flag to clear,
+       and Clear is about the score. The note is taken off in its own panel and nowhere else — a
+       stray ⌫ two thirds of the way down a column must not cost a teacher a sentence she typed,
+       in an app with no undo. */
+    if (!before || (value === null && !had)) {
       announce(what + ' for ' + who + ' is already blank.');
       return;
     }
     writeCell(at.assignment.id, at.student.id, null);
-    said = what + ' for ' + who + ' is cleared to blank. Blank is ungraded and changes no grade.';
+    said = what + ' for ' + who + ' is cleared to blank. Blank is ungraded and changes no grade.'
+      + (visibleNoteOf(before) ? ' Its note is kept.' : '');
   } else if (had === which) {
     writeCell(at.assignment.id, at.student.id, cellFor(which === 'late' ? value : null, ''));
     said = what + ' for ' + who + ': ' + which + ' taken off.'
@@ -1489,6 +1619,130 @@ export function flagFocusedCell(which) {
      the reason moveWithinColumn() gives: a score is overtyped far more often than it is edited. */
   input.focus();
   input.select();
+}
+
+/* ────────────────────────────── a note on a cell (WO-3.32) ────────────────────────────── */
+
+/*
+  THE NOTE PANEL — a strip of static markup under the flag bar (index.html, #scoresNote), about ONE
+  cell: the one the teacher was in when she tapped *Note*. Static rather than built by renderScores()
+  for the search box's reason: a field inside what a render rebuilds is destroyed under the caret.
+
+  IT IS OPENED BY ITS BUTTON AND BY NOTHING ELSE. No key on the grid opens it — WO-3.32's Traps, and
+  acceptance line 7: Tab, the arrows, Enter, ⌫ and L / M / X all do exactly what they did. The button
+  sits in the flag bar because it acts on the cell you are in, the way the four flags do, and is
+  reached the same way under a thumb; it carries no letter, because no letter opens it.
+
+  EVERY KEYSTROKE IN THE FIELD WRITES, the way a mark note does in the attendance history dialog and
+  the pass card's note does on the registry — there is no Save, so there is nothing to forget to
+  press, and shutting the panel by any route loses nothing. *Done* shuts it and hands focus back to
+  the cell; *Remove note* empties it and takes the key off.
+
+  UNDER PRESENTATION MODE IT DOES NOT OPEN, and an open one is shut and EMPTIED by the next render
+  (src/shell.js's flipPresentationMode() makes that render happen at the flip): a field holding a
+  student's note is still a note in the DOM, whatever its display.
+*/
+function notePanelParts() {
+  return {
+    panel: document.getElementById(NOTE_ID),
+    label: document.getElementById(NOTE_LABEL_ID),
+    field: document.getElementById(NOTE_TEXT_ID),
+  };
+}
+
+function shutNotePanel() {
+  noteAssignmentId = '';
+  noteStudentId = '';
+  const parts = notePanelParts();
+  if (parts.field) parts.field.value = '';
+  if (parts.label) parts.label.textContent = '';
+  if (parts.panel) parts.panel.classList.add('hidden');
+}
+
+/* The cell the open panel is about, resolved against the class and term on screen the way every
+   other write here is (resolveCell()'s guard). Null when the panel is shut or its cell has gone —
+   a term switched, the assignment deleted, the student taken off the roster. */
+function noteTarget() {
+  if (!noteAssignmentId || !noteStudentId) return null;
+  const input = inputFor(noteAssignmentId, noteStudentId);
+  const at = input ? resolveCell(input) : null;
+  return at ? { input: input, at: at } : null;
+}
+
+/* What renderScores() does about the panel and its button on every paint: the button is not drawn
+   while notes may not be on screen, and the panel is shut if the mode came on or its cell is no
+   longer on the grid. An open panel whose cell is still drawn is LEFT ALONE — the field may be under
+   the teacher's thumb, and its value is already the document's. */
+function paintNotePanel() {
+  const btn = document.querySelector(NOTE_BTN_SEL);
+  const visible = scoreNotesVisible();
+  if (btn) btn.classList.toggle('hidden', !visible);
+  if (!noteAssignmentId) return;
+  if (!visible || !noteTarget()) shutNotePanel();
+}
+
+/* The *Note* button. Opens the panel on the cell the teacher is in, with the note it carries, and
+   puts the caret at the end of it — a note is added to more often than it is retyped. */
+export function openScoreNote() {
+  if (!scoreNotesVisible()) {
+    announce('Notes are hidden while presentation mode is on.');
+    return;
+  }
+  const input = focusedAssignmentId && focusedStudentId
+    ? inputFor(focusedAssignmentId, focusedStudentId) : null;
+  const at = input ? resolveCell(input) : null;
+  if (!at) {
+    announce('Tap a score first — the note goes on the cell you are in.');
+    return;
+  }
+  const parts = notePanelParts();
+  if (!parts.panel || !parts.field) return;
+  noteAssignmentId = at.assignment.id;
+  noteStudentId = at.student.id;
+  if (parts.label) {
+    parts.label.textContent = 'Note on ' + (at.assignment.name || 'Untitled assignment') + ' for '
+      + fullName(at.student);
+  }
+  parts.field.value = visibleNoteOf(cellOf(getDoc(), at.assignment.id, at.student.id));
+  parts.panel.classList.remove('hidden');
+  parts.field.focus();
+  const end = parts.field.value.length;
+  if (typeof parts.field.setSelectionRange === 'function') parts.field.setSelectionRange(end, end);
+}
+
+/* A keystroke in the note field, from src/shell.js's `input` listener. Writes the note and repaints
+   the one cell's mark, title and accessible name — never the field, which is under the caret. No
+   grade is repainted, because no grade can have moved: the engine does not read the key. */
+export function editScoreNote(field) {
+  const target = noteTarget();
+  if (!target || !scoreNotesVisible()) return;
+  writeNote(target.at.assignment.id, target.at.student.id, field.value);
+  paintCell(target.input, target.at,
+    cellOf(getDoc(), target.at.assignment.id, target.at.student.id));
+}
+
+/* *Done*: shut the panel and put the caret back in the cell it was about, value selected, so the
+   next number typed lands where she was — the flag bar's own hand-back. */
+export function closeScoreNote() {
+  const target = noteTarget();
+  shutNotePanel();
+  if (target) {
+    target.input.focus();
+    target.input.select();
+  }
+}
+
+/* *Remove note*: the key comes off (writeNote() with nothing), the mark goes, and the panel shuts
+   with focus back on the cell. Said out loud because there is no undo in this app. */
+export function removeScoreNote() {
+  const target = noteTarget();
+  if (!target) { shutNotePanel(); return; }
+  const had = !!noteOf(cellOf(getDoc(), target.at.assignment.id, target.at.student.id));
+  writeNote(target.at.assignment.id, target.at.student.id, '');
+  paintCell(target.input, target.at,
+    cellOf(getDoc(), target.at.assignment.id, target.at.student.id));
+  closeScoreNote();
+  announce(had ? 'Note removed. The score is unchanged.' : 'There was no note to remove.');
 }
 
 /*
@@ -1705,7 +1959,11 @@ export function handleScoreKey(key, input, mods) {
     if (String(input.value).length) return false;
     const at = resolveCell(input);
     if (!at) return false;
-    if (!cellOf(getDoc(), at.assignment.id, at.student.id)) return false;
+    /* "Nothing to clear" is no value and no flag, not merely no key (WO-3.32): a cell carrying only a
+       note answers false here exactly as an absent cell did before notes existed, so the key goes
+       back to the browser and nothing on the grid behaves differently for the note being there. */
+    const here = cellOf(getDoc(), at.assignment.id, at.student.id);
+    if (!here || (valueOf(here) === null && !flagOf(here))) return false;
     applyFlag(at, 'clear');
     return true;
   }

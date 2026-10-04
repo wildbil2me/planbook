@@ -212,6 +212,10 @@ function hasValue(cell) {
   this feature in four lines. No key at all, or a cell carrying neither a number nor a flag. Any
   flag at all — `late`, `missing`, `excused` — is a decision she made, and this prompt does not
   propose to overwrite decisions, only to fill in silence.
+
+  A NOTE IS NOT A DECISION ABOUT THE GRADE (WO-3.32) and does not change this answer: a blank with a
+  note is asked about exactly as a blank without one, because nothing in the app decides anything
+  from a note. What the note does change is the write — acceptPastDue() carries it across.
 */
 function isUntouched(cell) {
   if (!cell) return true;
@@ -479,7 +483,8 @@ export function togglePastDueReview() {
   and six saves would be six entries in a history this app does not keep and one debounce the store
   would have to coalesce anyway.
 
-  `{ v: null, flag: 'missing' }` AND NOTHING ELSE, which is the shape docs/data-model.md gives and
+  `{ v: null, flag: 'missing' }` AND NOTHING ELSE — plus the cell's `note`, if it had one (WO-3.32),
+  which is the teacher's and is carried rather than written — which is the shape docs/data-model.md gives and
   the shape src/scores.js's cellFor() writes for the same flag. It is written literally here rather
   than imported: cellFor() is private to that file, and importing it would run a second import back
   into the module that calls this one. The two shapes are asserted against each other in
@@ -515,7 +520,15 @@ export function acceptPastDue() {
       if (!d.scores || typeof d.scores !== 'object') d.scores = {};
       wanted.forEach((cell) => {
         if (!d.scores[cell.work.id]) d.scores[cell.work.id] = {};
-        d.scores[cell.work.id][cell.student.id] = { v: null, flag: 'missing' };
+        /* A NOTE ON THE BLANK RIDES ACROSS (WO-3.32). A blank carrying only a note is still a blank
+           to this prompt — the note decides nothing, here or anywhere — but writing the bare shape
+           over it would delete what the teacher typed, with no undo. Read raw: this is a write, and
+           it must keep a note whatever the screen is allowed to show. */
+        const old = d.scores[cell.work.id][cell.student.id];
+        const note = old && typeof old === 'object' && typeof old.note === 'string'
+          && old.note.trim() ? old.note : '';
+        d.scores[cell.work.id][cell.student.id] = note
+          ? { v: null, flag: 'missing', note: note } : { v: null, flag: 'missing' };
       });
     });
   }

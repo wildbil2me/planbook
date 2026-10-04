@@ -215,6 +215,13 @@ import { studentLogCard } from './log-sheet.js';
    sheet a guardian carries out of the building is not where a teacher's messages to a counselor and
    an administrator belong. */
 import { studentContactCard } from './contact-history.js';
+/* AND THE NOTES ON THIS STUDENT'S SCORES (WO-3.32), on the same arrangement a third time: this file
+   passes the document, the class, the term and a student id, and appends what comes back — or
+   nothing, which is the answer both when there are no notes and while presentation mode is on.
+   src/score-notes.js asks the mode; this file still does not, and still imports nothing from
+   src/supports.js. It wears `.log-card`, so it is off the printed sheet by the rule already in
+   src/detail.css, and studentCsv() is untouched — a note goes nowhere outside the app. */
+import { scoreNotesCard } from './score-notes.js';
 
 const NAME_ID = 'detailStudentName';
 const SUBTITLE_ID = 'detailSubtitle';
@@ -874,6 +881,10 @@ export function renderDetail() {
   left.append(toMoveCard(doc, cls, termId, student, grade, rows, noGradeSays));
   const right = el('div');
   right.append(missingCard(grade, rows, person));
+  /* Under the missing work, because both are about particular assignments and this is where a
+     teacher reads "why is that one blank" beside "which ones are missing". Absent when empty. */
+  const notes = scoreNotesCard(doc, cls, termId, student.id);
+  if (notes) right.append(notes);
   right.append(attendanceCard(cls, student, term));
   /* AND THE TRIPS, UNDER THE ATTENDANCE THEY ARE NOT (WO-2.26). Roll Call! carries the Hall Pass
      History table inline on its Student Report (dashboard.html:4718) and this is that table, in this
@@ -911,8 +922,8 @@ export function renderDetail() {
       + 'written to, and nothing else. '
       + 'Nothing from ' + person + '’s support details is on it, on the printed sheet or in the CSV, '
       + 'in either mode — those live on the roster and go nowhere but your own backup file. What you '
-      + 'have written down and who you have written to are on the screen only: neither is on the '
-      + 'sheet and neither is in the CSV.'));
+      + 'have written down, who you have written to and any note on a score are on the screen only: '
+      + 'none of them is on the sheet or in the CSV.'));
 }
 
 /* ────────────────────────────── out of the browser ────────────────────────────── */

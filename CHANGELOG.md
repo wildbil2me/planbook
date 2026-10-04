@@ -13,6 +13,24 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A score can carry a note — 2026-10-04
+
+WO-3.32. Shell cache `v163`.
+
+- **The score grid's flag bar has a fifth button, *Note*.** It opens a panel under the bar for the
+  cell you are in. The note saves as you type, *Done* closes it, and *Remove note* deletes it. No key
+  opens it, so score entry by keyboard is unchanged.
+- **A cell with a note shows a small indigo corner at its top left.** A note can sit on any cell,
+  including a blank, *missing* or *excused*, and it changes no grade.
+- **Student detail has a *Notes on scores* card**, listing each note beside its assignment. It is
+  left off the printed report.
+- **Under presentation mode a score note is gone entirely**: no corner, no Note button, no card.
+- **A note stays inside the app.** No merge field reads it and the grade sheet and CSV leave it out.
+  It is in the backup, and `privacy.html` and `docs/FERPA.md` now say so.
+- **Known gap:** attendance-mark notes still show under the projector, on the register cell's tooltip
+  and in the history dialog. Recorded as a finding and left alone, per the owner's ruling of
+  2026-10-02.
+
 ### Removing a category keeps its work, under *no category* — 2026-10-04
 
 WO-3.43. Shell cache `v162`.

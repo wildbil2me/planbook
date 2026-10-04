@@ -135,7 +135,8 @@ nag, and nothing noticed until a verifier read the line for another reason.
       "s_…": { "v": 87 },                    // scored
       "s_…": { "v": 78, "flag": "late" },     // scored, turned in late
       "s_…": { "v": null, "flag": "missing" },// not turned in → counts as zero
-      "s_…": { "v": null, "flag": "excused" } // leaves the denominator
+      "s_…": { "v": null, "flag": "excused" },// leaves the denominator
+      "s_…": { "v": 92, "note": "revised essay" } // any cell may carry a note; the math never reads it
       /* no key at all = not graded yet, no effect on anything */
     }
   },
@@ -220,6 +221,15 @@ Seven shape decisions that matter:
   it are not migrated**: a `12.3456789` already in a document stays, renders as typed, and can be
   edited down but not extended, because retro-rounding a number a teacher already typed is the
   silent wrong number this rule exists to prevent, wearing a fix's clothes.
+  **Any score cell may carry a `note`** *(added 2026-10-04, WO-3.32)*, on the mark cell's terms below:
+  optional, absent where unused, stored as typed, and an empty or whitespace-only field deletes the
+  key rather than storing `""`. It may sit on a blank, so `{ "v": null, "note": "…" }` is a cell —
+  still ungraded, and clearing its note deletes the whole key. **Nothing reads it but the two places
+  that draw it** (the score grid and student detail): not the grade engine, not the past-due prompt,
+  not a signal, not a merge field, not the printed sheet. Changing a score or a flag keeps the note;
+  only the note's own field takes it off. **It lives in the cell and nowhere else** — no `log` entry
+  mirrors it, for the reason a tardy's time is not mirrored. And it is **absent under presentation
+  mode** on every screen that draws it, whatever a mark's note does (the owner, 2026-10-02).
 - **Attendance stores only exceptions.** Present is the absence of a mark. A class of 25 with two
   absences is two entries, not 25 — which is also why marking attendance is fast.
 - **`U` means unconfirmed, and it is temporary.** Writing the first mark in a class also writes `U`

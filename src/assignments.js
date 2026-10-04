@@ -267,13 +267,27 @@ function pointsOf(assignment) {
   left behind by a student who has since been taken off this class's roster is not a student who
   has been graded, and counting it would report 11 of 10. A key that is not there means ungraded
   (docs/data-model.md), which is what makes this a count of keys and never a look at a value —
-  nothing in this file reads `v`, and nothing in it can therefore accidentally become arithmetic.
+  nothing in this file reads `v` as a number, and nothing in it can therefore accidentally become
+  arithmetic. (Since WO-3.32 one key is skipped: a cell holding only a note — see noteOnly().)
 */
 function enteredCount(assignment, cls) {
   const doc = getDoc();
   const column = doc && doc.scores ? doc.scores[assignment.id] : null;
   if (!column) return 0;
-  return rosterOf(cls).filter((id) => Object.prototype.hasOwnProperty.call(column, id)).length;
+  return rosterOf(cls).filter((id) => Object.prototype.hasOwnProperty.call(column, id)
+    && !noteOnly(column[id])).length;
+}
+
+/* A CELL THAT HOLDS NOTHING BUT A NOTE (WO-3.32) — `{ v: null, note }`, a blank the teacher wrote a
+   sentence on. It is a key, and it is not an entry: counted, it would move this bar and take the
+   overdue tint off a column on the strength of a note, which is the one thing a note must never do
+   on any screen. So the count above skips it — the only place in this file that looks inside a cell,
+   and it looks for the ABSENCE of a value and a flag rather than at a number, which is still not
+   arithmetic. */
+function noteOnly(cell) {
+  if (!cell || typeof cell !== 'object' || Array.isArray(cell)) return false;
+  const noValue = cell.v === null || cell.v === undefined;
+  return noValue && !cell.flag && typeof cell.note === 'string';
 }
 
 function scoreCount(assignmentId) {

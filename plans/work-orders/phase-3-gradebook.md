@@ -2781,7 +2781,7 @@ module `src/categories.js` does not import, and are called from `src/shell.js`.
 
 ## WO-3.32 — a score cell can carry a note
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.5 — the grid whose cells this annotates
+**Ship** — · **Status** ✅ DONE — 2026-10-04 · **Size** M · **Depends on** WO-3.5 — the grid whose cells this annotates
 **Closes roadmap** *(no box. Owner-requested, 2026-10-02.)*
 
 **Booked 2026-10-02**, owner-directed, from the same sitting as WO-3.30. A revised essay, a
@@ -2811,22 +2811,48 @@ unused (`docs/data-model.md`, the mark cell rule). A score cell gets the same fi
   per the rule at the top of each file.
 
 **Acceptance**
-- [ ] A note added, edited and cleared from the grid round-trips through the document, and clearing
+- [x] A note added, edited and cleared from the grid round-trips through the document, and clearing
       it removes the key.
-- [ ] Adding or changing a note changes no grade on any screen.
-- [ ] A cell with a note shows the mark, and student detail shows the note beside its assignment.
-- [ ] In presentation mode no note text and no note mark is in the DOM, on the grid or on student
+- [x] Adding or changing a note changes no grade on any screen.
+- [x] A cell with a note shows the mark, and student detail shows the note beside its assignment.
+- [x] In presentation mode no note text and no note mark is in the DOM, on the grid or on student
       detail. **Mutation-proved**: a note rendered regardless of the mode goes red.
-- [ ] `{{score.note}}` and every path into a cell are refused by the merge-field resolver, and the
+- [x] `{{score.note}}` and every path into a cell are refused by the merge-field resolver, and the
       printed grade sheet contains no note text.
-- [ ] A backup written before this lands restores unchanged, and a year with notes round-trips.
-- [ ] Keyboard entry in the grid is unchanged: Tab, the arrows and Enter move exactly as before, and
+- [x] A backup written before this lands restores unchanged, and a year with notes round-trips.
+- [x] Keyboard entry in the grid is unchanged: Tab, the arrows and Enter move exactly as before, and
       no shortcut used for flags is taken by the note.
-- [ ] 👤 On the iPad, adding a note to a cell and reading it back works under a thumb.
+- [x] 👤 On the iPad, adding a note to a cell and reading it back works under a thumb. *(The owner,
+      2026-10-04, on v163 from the dev server, on the laptop and the iPad.)*
 
 **Traps** — **Do not open the note on a keystroke the grid already uses.** Score entry is the fast
 path. **Do not mirror the note into the log.** One note in two places is two records, the same reason
 a tardy's time lives in the mark cell and nowhere else.
+
+**Built 2026-10-04** — the record is `.claude/dispatch/WO-3.32-result.md` and `TESTING.md` § WO-3.32.
+Four things in it are rulings the work order left to the dispatch, and one is a finding.
+- **The Surface was ruled too small to draw.** The note panel is the attendance history dialog's
+  write block (`src/attendance.css` `.attendance-report-write`, the mark note's own home) lifted value
+  for value — indigo, a 5px left rail — because it is the same act one screen over; the mark is an
+  8px indigo corner at the cell's top *left*, since the top right is the flag glyph's. A drawing would
+  have answered no question the lift had not. `src/scores.css` says so at the rule.
+- **The note opens on a *Note* button in the flag bar and on no key**, so it carries no letter and
+  the key legend gains no row. Every keystroke in its field saves; *Done* hands focus back to the
+  cell; *Remove note* takes the key off; entering another cell shuts it.
+- **One module asks the mode**: `src/score-notes.js`'s `visibleNoteOf()` answers `''` under
+  presentation mode, the grid and the detail card both read through it, and `src/detail.js` still
+  imports nothing from `src/supports.js`. **`flipPresentationMode()` now repaints the score grid and
+  student detail unguarded by the current view**, the only entries there that are — a hidden view is
+  still a DOM, and the grid's `title` is the note word for word. M2 proved it: with the grid's repaint
+  deleted, the *detail* check went red too, on the grid's hidden cells.
+- **A note survives every other write.** `writeCell()`, ⌫, *Clear* and the past-due prompt all carry
+  it across, a cell holding only a note is `{ v: null, note }` (ungraded, and not *entered* on the
+  assignment list's count), and clearing the last note on a blank deletes the key and an emptied
+  column with it.
+- **Finding, not changed (the owner's ruling): attendance-mark notes do show under the projector.**
+  `src/attendance.js`'s `cellFor()` puts a mark's note on the register cell's tooltip and accessible
+  name, and the history dialog's write block puts it in a field, and neither asks
+  `presentationMode()`. Whether that should change is a work order of its own.
 
 ## WO-3.33 — a changed score cell keeps what it was
 

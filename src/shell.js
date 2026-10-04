@@ -237,6 +237,13 @@
                                       hands focus back to it. It exists because a decimal keypad has
                                       no letters on it, so the keyboard path above is unreachable on
                                       an iPad
+      data-score-note-open            the flag bar's Note button (WO-3.32): opens the note panel on
+                                      the cell the teacher is in. No key opens it. Hidden while
+                                      presentation mode is on
+      data-score-note                 on the note panel's <input>: saves the note as it is typed; an
+                                      empty field deletes the key rather than storing ""
+      data-score-note-done            shuts the note panel and hands focus back to its cell
+      data-score-note-remove          takes the note off the cell and shuts the panel
       data-scores-keys                shows or hides the key legend on the score grid. Remembered
                                       nowhere — it is a disclosure, not a preference
       data-scores-search              on an <input>: narrows the score grid's rows as it is typed,
@@ -1943,12 +1950,38 @@ function flipPresentationMode() {
     above this function describes — worse here, because this is the screen most likely to be facing a
     room or a guardian when the switch is reached for.
 
-    Guarded on the view being the one on screen, like the four other renderDetail() calls in this
-    file: every path onto that screen renders it on arrival, so a repaint of a hidden view is work
-    nobody sees. The condition the old comment named still stands beside this one — a later work
+    It was guarded on the view being the one on screen, like the four other renderDetail() calls in
+    this file, until WO-3.32 put a notes card on that screen — a repaint of a hidden view is work
+    nobody sees only while the hidden view holds nothing a projector must not carry; the line below
+    says why it is unguarded now. The condition the old comment named still stands beside this one — a later work
     order putting the roster's INDICATOR here answers for the print surface and the CSV first.
   */
-  if (views.currentView() === 'detail') detail.renderDetail();
+  /* UNGUARDED SINCE WO-3.32 — see the score grid's entry just below for the reason: a hidden detail
+     view still holds the notes card's text until it is next drawn, and that is a DOM, not a picture
+     nobody sees. Rendering it off-screen sets the breadcrumb src/screen-nav.js refuses to draw on any
+     other screen, so it costs one cheap paint and changes nothing visible. */
+  detail.renderDetail();
+  /*
+    AND THE SCORE GRID, SINCE WO-3.32 — the entry src/scores.js's decision 5 said this list would
+    gain the day that screen drew something the mode takes away. It is a NOTE on a score cell rather
+    than support data: free text about one student, on the screen most likely to be on the wall. The
+    suppression is src/score-notes.js's visibleNoteOf(), which answers '' while projecting, so the
+    next render draws no mark and no "has a note", and shuts and EMPTIES an open note panel. What this
+    line buys is the word "next", as every entry here does. The student detail line above already
+    covers that screen's note card, which is drawn by the same module.
+
+    It rebuilds every cell, which is why nothing on the typing path may call it — and a flip is not on
+    the typing path: the teacher's hand is on the header control, not in a column.
+
+    IT IS NOT GUARDED ON THE VIEW, unlike every other entry here, and the reason is the note's text
+    rather than its mark. A hidden grid is still a DOM: a teacher who flips the switch from student
+    detail leaves the grid behind her holding each noted cell's `title` — the note, word for word —
+    until her next arrival. "A repaint of a hidden view is work nobody sees" is true of a mark and
+    false of a string a screenshot tool or an accessibility tree can still reach. One rebuild of one
+    class's grid per flip is the cost. src/detail.js's line above is unguarded for the same reason
+    since WO-3.32: its notes card is text too.
+  */
+  scores.renderScores();
   /*
     AND THE CALENDAR IS ON THIS LIST FROM THE DAY IT SHIPPED (WO-6.3), which is what the paragraph
     about src/home.js above predicts happens the first time a screen draws something out of a
@@ -2856,6 +2889,12 @@ document.addEventListener('click', (e) => {
      screen is measured on. The value on the button is the flag; src/scores.js refuses anything else. */
   const scoreFlag = e.target.closest('[data-score-flag]');
   if (scoreFlag) { scores.flagFocusedCell(scoreFlag.getAttribute('data-score-flag')); return; }
+  /* WO-3.32's note panel: the button in the flag bar that opens it on the cell the teacher is in,
+     and the panel's two buttons. They chain nothing for the flag bar's reason — src/scores.js repaints
+     the one cell's mark itself, and no grade on any screen reads a note. */
+  if (e.target.closest('[data-score-note-open]')) { scores.openScoreNote(); return; }
+  if (e.target.closest('[data-score-note-done]')) { scores.closeScoreNote(); return; }
+  if (e.target.closest('[data-score-note-remove]')) { scores.removeScoreNote(); return; }
   if (e.target.closest('[data-scores-keys]')) { scores.toggleScoreKeys(); return; }
   /* WO-3.28's category pills — a lens on which COLUMNS are drawn, writing nothing, remembered
      nowhere and chaining nothing, for the reasons the two hooks above chain nothing. */
@@ -3776,6 +3815,11 @@ document.addEventListener('input', (e) => {
      touch the field, because replacing the input under the caret is the failure that rule exists for. */
   const scoreCell = e.target.closest('[data-score-cell]');
   if (scoreCell) { scores.editScore(scoreCell); return; }
+  /* A NOTE ON A SCORE CELL (WO-3.32), saved as it is typed, the way a mark note is below. Matched by
+     its own hook rather than by `[data-score-cell]`: a note keystroke routed through editScore()
+     would be a sentence read as a score. No chain — src/scores.js repaints the one cell's mark. */
+  const scoreNote = e.target.closest('[data-score-note]');
+  if (scoreNote) { scores.editScoreNote(scoreNote); return; }
 
   /* The copy's name, which writes NOTHING to the document: a duplicate is a proposal until the
      button that names the class it lands in. */

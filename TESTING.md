@@ -9883,6 +9883,98 @@ byte-for-byte from a copy after each. Full run after the amendment: `1721 checks
 
 **Full run on the delivered tree:** `1720 checks · 1720 passed · 0 failed · 0 skipped`, 54,800 lines, 31.9 lines per check, 738s, exit 0, 2026-10-04 on the real clock. `node tools/wo-sweep.mjs`: `46 checks · 43 passed · 0 failed · 3 to review`, exit 0 — the three standing reviews.
 
+### WO-3.32 — a score cell can carry a note
+
+**What this changes.** A score cell may carry an optional `note`, on the attendance mark note's terms:
+stored as typed, absent where unused, and an empty or whitespace-only field deletes the key rather than
+storing `""`. It may sit on any cell — a blank (`{ v: null, note }`), a `missing`, an `excused`. The
+flag bar on the score grid gains a fifth button, **Note**, which opens a panel under the bar about the
+cell the teacher is in; **no key opens it**. Every keystroke in the panel's field saves, **Done** shuts
+it and hands focus back to the cell, **Remove note** takes the key off, and entering another cell shuts
+it. A cell with a note wears a small indigo corner at its top *left* (the flag glyph keeps the top
+right), the note on the field's tooltip, and *"has a note"* — never the note — in its accessible name.
+Student detail gains a **Notes on scores** card under the missing work, each note beside its
+assignment; it wears `.log-card`, so it is off the printed report, and the CSV is untouched. Typing a
+score, ⌫, a flag, **Clear** and the past-due prompt all carry an existing note across; only the panel
+takes one off. The assignment list's entered count does not count a cell holding only a note. Under
+presentation mode a score note is **absent** — no mark, no tooltip, no *"has a note"*, no card, no Note
+button, and an open panel is shut and emptied — through one asker, `src/score-notes.js`'s
+`visibleNoteOf()`; `flipPresentationMode()` now repaints the score grid and student detail whatever
+view is on screen. `CACHE` is `planbook-shell-v163`, and `src/score-notes.js` is in `SHELL`.
+
+Every headless line below is `tools/verify/score-notes.mjs`, a new section straight after
+`category-removal.mjs`, on one planted weighted class of three students and three assignments. The
+note strings occur nowhere else in the repository, so each "no note here" is a search over what the
+surface actually produced.
+
+- [x] A note added, edited and cleared from the grid round-trips through the document: typed through
+      the panel it is `{ v: 80, note }` with the score untouched; edited, the document holds the new
+      text; on a missing cell `{ v: null, flag: 'missing', note }` and on a blank `{ v: null, note }`;
+      a field emptied to whitespace leaves `{ v: 80 }` with **no** `note` key, and **Remove note** on a
+      blank that held only a note deletes the cell and its now-empty column.
+- [x] Adding and changing a note changes no grade: with four notes on the class (one on a missing cell,
+      one on a blank) the grid's three grade cells, its summary line, `classGrade()` asked directly and
+      the grade sheet's record are byte-identical to before, and the assignment list still reads
+      *Homework 0/3* for the noted blank. Not mutation-proved; no grade mutation was run.
+- [x] A cell with a note shows the mark (drawn, `aria-hidden`), its tooltip reads *"Note: …"* and its
+      accessible name ends *"has a note"* without the note; exactly the four noted cells wear it.
+      Student detail shows Ada's two notes beside *Essay* and *Quiz*, in the grid's column order, on a
+      card wearing `.log-card`; her CSV contains none of the note strings.
+- [x] In presentation mode, switched on from the header **with the note panel open on a noted cell**,
+      no note string is anywhere in `document.documentElement.outerHTML` or in any field's value, there
+      is no mark, no *"has a note"*, no *"Note: …"* tooltip, the panel is shut with an empty field and
+      the Note button is not displayed. On student detail in the same mode there is no notes card and
+      no note string in the page. Switched off, the card and the four marks are back.
+      **Mutation-proved** (M1, M2 below).
+- [x] `{{score.note}}` and eighteen other spellings into a cell — by assignment and student id among
+      them — each block the draft with `refused-field` or `unknown-field`, keep the token intact, and
+      carry no note; the whole palette resolved for the student with three notes carries none (its only
+      errors are `unresolved-field`, and `{{missing.list}}` names the noted quiz). The printed grade
+      sheet — the dialog as drawn, its record and its CSV — carries Ada's row and her 80 and no note.
+      No note was written into `log[]`.
+- [x] A backup written before any note existed parses back identical in content with no `note`, and
+      restored through the real confirm the score map on disk is the file's, byte for byte. A year with
+      notes is written into the file, parsed back with the notes on the same cells, and survives the
+      real restore read off IndexedDB.
+- [x] Keyboard entry is unchanged across noted cells: Enter down the column and clamped at the last
+      student, ArrowUp, ArrowRight, ArrowLeft, Tab to the next assignment, ArrowDown, and Escape doing
+      nothing — and the panel never opens. On a noted cell L sets and takes off late, a typed 8 and ⌫
+      edit the value, ⌫ on the emptied cell is handed back to the browser, a typed 7 lands, and the note
+      rides through each; X and M on the noted missing cell set excused and missing with the note; `n`
+      and `N` open nothing. **Clear** on the flag bar empties a noted 90 to `{ v: null, note }`.
+- [x] Under a coarse pointer the Note button and the open panel's field, **Remove note** and **Done**
+      measure 44px tall (57.9 × 44, 725.8 × 44, 104.3 × 44, 59.9 × 44).
+- [x] 👤 On the iPad, tap a score, tap **Note**, type a sentence, tap **Done**: the corner mark is on
+      the cell, and tapping the cell and **Note** again shows the sentence. Open that student's detail
+      and find it beside its assignment. Then turn presentation mode on and confirm the mark, the Note
+      button and the card are all gone. Check the mark is findable at arm's length and that the panel's
+      field and buttons are comfortable under a thumb with the keyboard up. *(Green — the owner,
+      2026-10-04, on v163 served from the dev server after a force-quit, on the laptop and the iPad;
+      **Remove note** took the corner off.)*
+
+**Not drawn first.** The Surface was ruled small enough not to need a drawing: the panel is the
+attendance history dialog's write block (`src/attendance.css` `.attendance-report-write`) lifted value
+for value, because it is the same act — a note on one student's mark — one screen over, and the mark is
+a corner rather than a new visual idea. `src/scores.css` says so at the rule.
+
+**Finding, not changed.** Attendance-mark notes **do** show under the projector: `src/attendance.js`'s
+`cellFor()` puts a mark's note on the register cell's tooltip and accessible name, and the history
+dialog's write block shows it in a field, and neither asks `presentationMode()`. The owner's ruling
+(2026-10-02) was to record this and leave attendance alone.
+
+**Mutation round.** Each mutation carried a `MUTATION` marker, was run against the full harness with
+the work staged, and was reverted by copying the pre-mutation file back; byte-identity was confirmed
+with `cmp` (M1 also by SHA-256), and `grep -rn MUTATION` read only long-standing prose after each
+revert.
+
+| Mutation | Result |
+|---|---|
+| M1 · `scoreNotesVisible()` in `src/score-notes.js` returns `true` — a note drawn regardless of the mode | **2 red** (`1745 checks · 1743 passed · 2 failed`): both presentation-mode checks — four note strings in the page, four marks, *"has a note"*, the tooltip, the Note button shown, the panel still open holding the note, and the detail card drawn |
+| M2 · `scores.renderScores();` deleted from `flipPresentationMode()` in `src/shell.js` | **2 red** (`1745 checks · 1743 passed · 2 failed`, 55,472 lines, 763s, exit 1): the grid check (marks, tooltips, *"has a note"*, the open panel and its field all left from before the flip) **and the student-detail check** — the detail card was correctly absent, but the grid behind it still held all four notes in its hidden DOM, which is the reason the repaint is not guarded on the view |
+
+**Full run on the delivered tree:** `1745 checks · 1745 passed · 0 failed · 0 skipped`, 55,472 lines,
+31.8 lines per check, 761s, exit 0, 2026-10-04 on the real clock.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise
