@@ -248,18 +248,22 @@ untested.
 **The report, verbatim:** *"the other day I had an 'uncommited' count of 1 on a class even though the
 display showed everyone marked as present."*
 
+**Not seen since, as of 2026-10-04** — the owner's word. That fits the suspect, a one-off left by a
+roster move, but it rules nothing out: a stray mark stays in the record whether or not anyone opens
+that class and date again.
+
 **What that names.** The word on the screen is **unconfirmed**, not *uncommitted* — the temporary `U`
 code WO-2.10 added. The number comes from `stateSummary()` at
-[attendance.js:1557](../src/attendance.js#L1557), and it is drawn in two places that read the same
-figure: the day header's chip (`stateChip()`, [attendance.js:1616](../src/attendance.js#L1616)) and
-the class card on the home screen ([home.js:318](../src/home.js#L318)). The date and the class were
+[attendance.js:1584](../src/attendance.js#L1584), and it is drawn in two places that read the same
+figure: the day header's chip (`stateChip()`, [attendance.js:1643](../src/attendance.js#L1643)) and
+the class card on the home screen ([home.js:345](../src/home.js#L345)). The date and the class were
 not recorded at the time, and that is the first thing the reproduction is missing.
 
 **The suspect — a mark cell keyed by a student who is no longer on that class's roster.** Marked as
 a suspect, not a diagnosis; it is a reading of the code and nothing has been run.
-`countsFor()` at [attendance.js:1319](../src/attendance.js#L1319) walks `Object.keys(marks)` and
+`countsFor()` at [attendance.js:1346](../src/attendance.js#L1346) walks `Object.keys(marks)` and
 counts **every key in the record**, roster or not. The grid renders **roster rows**, and
-`readingOf()` at [attendance.js:1343](../src/attendance.js#L1343) — the one answer to *what does this
+`readingOf()` at [attendance.js:1370](../src/attendance.js#L1370) — the one answer to *what does this
 cell say* — is only ever asked about a student who has a row. So a cell keyed by a student off the
 roster is counted by the header and cannot be drawn, reached, or cleared from any screen: tapping
 every row present empties the roster's marks and leaves the count at 1.
