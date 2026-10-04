@@ -13,6 +13,15 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A fourth comment corrected to match the build — 2026-10-04
+
+WO-3.44. No shell cache bump, so `wo-sweep.mjs` § 9 stays red until WO-1.60.
+
+- **Not user-visible.** The comment in `src/shell.js` above the assignment-copy seam no longer says
+  a copy duplicated into another class looks the same on the list as a naive copy would. They match
+  only when the target class has no category of the same name; when it has one, the copy is filed
+  under it.
+
 ### Three comments corrected to match the build — 2026-10-04
 
 WO-3.40. No shell cache bump, by the work order's own rule, so `wo-sweep.mjs` § 9 stays red until

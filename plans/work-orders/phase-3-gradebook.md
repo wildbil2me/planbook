@@ -3438,7 +3438,7 @@ the dialog already uses.
 
 ## WO-3.44 — a comment says a misfiled copy looks identical on the list
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-3.40 — the two comments it corrected
+**Ship** — · **Status** ✅ DONE — 2026-10-04 · **Size** XS · **Depends on** WO-3.40 — the two comments it corrected
 **Closes roadmap** *(no box. Owner-directed, 2026-10-04.)*
 
 **Booked 2026-10-04**, owner-directed, out of WO-3.40's verdict. A comment fix and nothing else, so it
@@ -3461,8 +3461,8 @@ overstatement.
   breadcrumb half.
 
 **Acceptance**
-- [ ] The comment no longer says the two duplicates always look identical on the list.
-- [ ] No line outside a comment moves: `git diff` touches comment lines only.
+- [x] The comment no longer says the two duplicates always look identical on the list.
+- [x] No line outside a comment moves: `git diff` touches comment lines only.
 
 **Traps** — **Do not change the copy rule**, as WO-3.40's Traps said. **The `CACHE` question is
 WO-1.60's**: if this rides with a work order that bumps `CACHE` for its own code, nothing more is

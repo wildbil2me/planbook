@@ -4595,13 +4595,16 @@ window.planbook = {
      rather than a driving one: every control either feature has is a button, a field or a segment
      on a real screen, and a teacher can touch all of them. Two things no click can show. The first
      is what a DUPLICATE actually wrote — that the copy carries the target class's own ids and that
-     `scores` grew no column for it — which is the difference between this build and the naive one
-     that carried the source's `categoryId` across a class boundary, and it is invisible on screen
-     because both look identical on the list. The second is the breadcrumb rule: WO-3.7 owns the
-     per-student detail, so there is no screen today from which a name can be set and then left, and
-     setDetailBreadcrumb() through this seam is the only way to ask whether a name set with no
-     detail open stays off the strip. Nothing in the app reads window.planbook — see the block above
-     for why the seam outlived the shelf. */
+     `scores` grew no column for it. The list shows only part of the difference between this build
+     and the naive one that carried the source's `categoryId` across a class boundary. When the
+     target has a category of the same name, this build files the copy under it and the naive copy
+     sits under "Not in a category", so the two land in different groups. When the target has no
+     such category, both sit under "Not in a category" and look identical there. In neither case
+     does the list show the ids or the missing column. The second is the breadcrumb rule: WO-3.7
+     owns the per-student detail, so there is no screen today from which a name can be set and then
+     left, and setDetailBreadcrumb() through this seam is the only way to ask whether a name set with
+     no detail open stays off the strip. Nothing in the app reads window.planbook — see the block
+     above for why the seam outlived the shelf. */
   assignments, screenNav,
   /* `scores` joined at WO-3.5, and for the reading reason `classes` gives rather than a driving one:
      every control this screen has is an input, a button or a segment a teacher can touch. What no
