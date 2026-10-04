@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A class with no grading categories says so instead of totalling its weights to 0% — 2026-10-03
+
+WO-3.41. Shell cache `v159`.
+
+- **Student detail and the quiet list now say what is true of a class with no categories yet.** They
+  read *"This class has no grading categories yet, so there is nothing for a grade to be an average
+  of."* where they used to say its weights total 0%. It is the same sentence the score grid's banner
+  already uses.
+- **A class with categories reads exactly as before.** Its message comes from the same expression it
+  always did, and no existing check was edited to pass.
+
 ### The score grid's help explains only how this class is graded — 2026-10-03
 
 WO-3.39. Shell cache `v158`.

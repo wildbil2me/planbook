@@ -430,7 +430,9 @@ without destroying the work filed under it.
 **But there is no grade at all until they total 100.** *(Owner's decision, 2026-08-09.)* Not a
 provisional figure, not a figure with a label on it, not a best guess — **no number.** Screens that
 show a grade show its absence and the reason: *the weights come to 95%, so there is no grade yet.*
-A class with no categories is the same case for the same reason.
+A class with no categories is the same case for the same reason — and since WO-3.41 it is told so
+in its own words, *this class has no grading categories yet*, rather than that its weights come to
+0%; the engine's reason is the same either way.
 
 This **replaces** the paragraph WO-3.1 added here on the morning of the same day, which said the
 engine should divide by the actual total so "a class at 85 still produces a sensible weighted average

@@ -214,6 +214,30 @@ if (!gradeSeam) {
       && case8decimal.grade.message === 'The category weights total 94.8%, so there is no grade yet.',
     JSON.stringify({ reason: case8decimal.grade.reason, message: case8decimal.grade.message }));
 
+  /* Case 8, fourth direction (WO-3.41) — a class with NO categories totals 0% and is refused for the
+     same reason, but told why in its own words: it has not been set up. The reason, the total and the
+     empty rows are asserted unchanged beside the sentence, because readers branch on the reason; and
+     the scored piece filed under no category is what makes "no-graded-work" false here. A class
+     WITH categories at 0 keeps the weights sentence, which is the other half of the branch. */
+  const case8bare = await gradeAt({
+    classes: [{ id: 'c1', categories: [] }],
+    assignments: [{ id: 'a1', classId: 'c1', termId: 't1', points: 20 }],
+    scores: { a1: { s1: { v: 18 } } },
+  }, 't1', 's1');
+  check('case 8, fourth direction: a class with no categories is still "weights-unbalanced" at 0, and its '
+    + 'message says it has no categories rather than that its weights total 0%',
+    case8bare.grade.percentage === null && case8bare.grade.reason === 'weights-unbalanced'
+      && case8bare.grade.weightTotal === 0 && case8bare.grade.categories.length === 0
+      && case8bare.grade.message === 'This class has no grading categories yet, so there is nothing for '
+        + 'a grade to be an average of.',
+    JSON.stringify({ reason: case8bare.grade.reason, message: case8bare.grade.message }));
+  const case8zeroes = await gradeAt(case8Fixture([0, 0, 0]), 't1', 's1');
+  check('case 8, fourth direction: a class whose categories exist and all weigh 0 still reads "The category '
+    + 'weights total 0%, so there is no grade yet."',
+    case8zeroes.grade.reason === 'weights-unbalanced'
+      && case8zeroes.grade.message === 'The category weights total 0%, so there is no grade yet.',
+    JSON.stringify({ reason: case8zeroes.grade.reason, message: case8zeroes.grade.message }));
+
   /* Case 9 — a missing flag scores zero; the same cell excused raises the grade. */
   const case9Fixture = (flag) => ({
     classes: [{ id: 'c1', categories: [{ id: 'tests', weight: 100 }] }],

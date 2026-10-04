@@ -1253,7 +1253,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1671 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1676 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2392,6 +2392,14 @@ of the third paragraph and WO-3.36's grid check reads the help like every other 
 Added: a weighted sibling class's help reading word for word as before, and the help drawing the right
 block across points → weighted → points through the header's class tabs. None sits in a loop and none
 is a failure arm, so the gap stays at −11. The run prints `1682 checks · 1682 passed · 0 failed · 0 skipped`, 53,585 lines, 31.9 lines per check, 710s, exit 0, 2026-10-03 on the real clock. Mutation round in `TESTING.md` § WO-3.39.
+
+**WO-3.41 moved it from 1671 to 1676, and the executed count from 1682 to 1687 — five sites added, and
+no new file.** Two are case 8's fourth direction in `verify/grade-engine.mjs`: a class with no
+categories keeps `weights-unbalanced` at 0 and says it has no categories, and a class whose categories
+all weigh 0 keeps the weights sentence. Three are a block of their own at the foot of
+`verify/points-grade.mjs`: the engine's answer for a planted weighted class with `categories: []`, its
+student detail banner and hero label, and its two quiet-list rows. None sits in a loop and none is a
+failure arm, so the gap stays at −11. The run prints `1687 checks · 1687 passed · 0 failed · 0 skipped`, 53,747 lines, 31.9 lines per check, 729s, exit 0, 2026-10-03 on the real clock. Mutation round in `TESTING.md` § WO-3.41.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

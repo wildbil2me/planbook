@@ -3169,7 +3169,7 @@ points-mode wording to both comments and, by its brief, left the visibility clai
 
 ## WO-3.41 — a class with no categories is told its weights total 0%
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.37 — the quiet row that now prints the engine's message
+**Ship** — · **Status** ✅ DONE — 2026-10-03 · **Size** S · **Depends on** WO-3.37 — the quiet row that now prints the engine's message
 **Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
 
 **Booked 2026-10-03**, owner-directed, out of WO-3.37's verdict. Reachable today, in a weighted class.
@@ -3191,10 +3191,18 @@ did, so both say *0%* about a class that has no categories to weigh.
 - **A class with categories whose weights do not total 100 reads exactly as today.**
 
 **Acceptance**
-- [ ] A weighted class with no categories, on student detail and in the quiet list, is not told its
+- [x] A weighted class with no categories, on student detail and in the quiet list, is not told its
       weights total 0%. **Mutation-proved**: putting the old message back goes red.
-- [ ] Every row the harness's existing fixtures draw for a class that has categories is
+      *(The engine now says "This class has no grading categories yet, so there is nothing for a grade
+      to be an average of." — the score grid banner's own clause. Read on both screens by a block at
+      the foot of `verify/points-grade.mjs`; the old message put back turns all three of its checks
+      and case 8's fourth direction red. `TESTING.md` § WO-3.41.)*
+- [x] Every row the harness's existing fixtures draw for a class that has categories is
       byte-identical before and after.
+      *(The only new path is taken when `categoriesOf(cls)` is empty; with categories the message is
+      the same expression as before. Carried by the unedited case 8 checks (95%, 94.8%), WO-3.37's 90%
+      quiet row, and a new check that categories all weighing 0 still read "total 0%" — full run
+      1687 of 1687.)*
 
 **Traps** — **Do not change the order of the engine's tests**, and do not report a class with no
 categories as `no-graded-work`: work unfiled in a weighted class counts for nothing, so "no graded

@@ -9637,6 +9637,49 @@ prints nothing.
 
 **Full run on the delivered tree:** `1682 checks · 1682 passed · 0 failed · 0 skipped`, 53,585 lines, 31.9 lines per check, 710s, exit 0, 2026-10-03 on the real clock. `node tools/wo-sweep.mjs`: `46 checks · 43 passed · 0 failed · 3 to review`, exit 0, the three standing reviews.
 
+### WO-3.41 — a class with no categories is told its weights total 0%
+
+**What this changes.** One sentence in `weighted()` in `src/grade-engine.js`. A class with no
+categories still fails `isBalanced()` first, still answers `weights-unbalanced` with a total of 0 and
+no rows — the test order and the reason are unchanged — but its message is now chosen by whether the
+class has any categories (`categoriesOf(cls).length`):
+
+- **Before:** *"The category weights total 0%, so there is no grade yet."*
+- **After:** *"This class has no grading categories yet, so there is nothing for a grade to be an
+  average of."* — the score grid banner's own clause for the same state (`src/scores.js`), so the
+  two screens say one thing.
+
+A class whose categories exist and all weigh 0 keeps the weights sentence. `CACHE` is
+`planbook-shell-v159`. There is no 👤 line on this row.
+
+- [x] A weighted class with no categories, on student detail and in the quiet list, is not told its
+      weights total 0%. A weighted class (`c_wo341`, no `gradingMode` key, `categories: []`) with one
+      unfiled 20-point piece scored 18 for one student and nothing for the other is planted at the foot
+      of `verify/points-grade.mjs`. Asserted: the engine's reason, total and empty rows unchanged with
+      the new message; student detail (through the score grid's name door) draws the banner and the
+      hero's `aria-label` with the new sentence and nowhere on `#detailContent` says a standalone
+      "0%" or "weights total"; both quiet rows off `signalsModel()` read "has no grade" and end with the
+      new sentence. **Mutation-proved** (M1 below).
+- [x] Every row the harness's existing fixtures draw for a class that has categories is
+      byte-identical before and after. The new branch is entered only when the class has no
+      categories; otherwise the returned message is the same expression over the same inputs. The
+      pinned strings that carry it all pass unedited: case 8 first direction (*95%*), third direction
+      (*94.8%*), WO-3.37's weighted quiet row (*90%*), and a new case 8 fourth-direction check that a
+      class whose categories all weigh 0 still reads *"The category weights total 0%, so there is no
+      grade yet."* No before/after capture of every drawn row was taken.
+
+**Mutation round.** A scratch copy of the entry harness held only `localstorage-prefs`,
+`grade-engine` and `points-grade` (63 checks, all green on the delivered tree, before and after). The
+mutation carried a `MUTATION` marker; the file was restored from a copy and its SHA-256 compared with
+the pre-mutation bytes (identical). The scratch harness is deleted; `grep -rn MUTATION` over the
+changed files prints nothing.
+
+| Mutation | Result |
+|---|---|
+| M1 · the old message put back for a class with no categories — the work order's own | **4 red** (`63 checks · 59 passed · 4 failed`): case 8 fourth direction, and all three WO-3.41 checks — detail read `"banner":"The category weights total 0%, so there is no grade yet."`, quiet rows ended with the same |
+
+**Full run on the delivered tree:** `1687 checks · 1687 passed · 0 failed · 0 skipped`, 53,747 lines, 31.9 lines per check, 729s, exit 0, 2026-10-03 on the real clock. `node tools/wo-sweep.mjs`: `46 checks · 43 passed · 0 failed · 3 to review`, exit 0, the three standing reviews.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

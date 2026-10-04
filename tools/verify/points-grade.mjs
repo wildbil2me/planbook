@@ -1012,5 +1012,143 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
       await s.flush();
       return 1; })()`);
   }
+
+  /* ───────── a weighted class with no categories says so, not "0%" (WO-3.41) ─────────
+   *
+   * WO-3.37 made the quiet list print the engine's own no-grade sentence, and student detail's banner
+   * already did. A weighted class with NO categories totals 0%, so both used to read "The category
+   * weights total 0%, so there is no grade yet." — true, and not why a teacher would think there is
+   * no grade: the class has not been set up. The engine now says that in its own sentence, and this
+   * block reads it where a teacher reads it.
+   *
+   * THE FIXTURE IS A REAL CLASS IN THE DOCUMENT, because student detail draws only the selected class.
+   * No gradingMode key (a weighted class, the shape every earlier build wrote), `categories: []`, two
+   * students, and one assignment filed under no category with a score on it for one of them — so the
+   * row cannot fall back to "no graded work" without being false over a scored piece (the Trap: in a
+   * weighted class unfiled work counts for nothing, and the reason must stay `weights-unbalanced`).
+   *
+   * Asserted on BOTH screens and on the engine: the reason is unchanged, the detail banner and hero
+   * label and the quiet row carry the new sentence, and nothing on either says "0%". Mutation-proved
+   * against the old message put back in src/grade-engine.js (WO-3.41's Acceptance line 1).
+   */
+  console.log('\n--- a weighted class with no categories says so, not "0%" (WO-3.41) ---');
+  {
+    const C5 = 'c_wo341';
+    const T5 = 'tm_wo341';
+    const KAI = 'wo341-s1', LU = 'wo341-s2';
+    const NO_CATS = 'This class has no grading categories yet, so there is nothing for a grade to be '
+      + 'an average of.';
+    /* "0%" as a figure of its own, so a "100%" elsewhere on the page is not mistaken for it. */
+    const ZERO = /(^|[^\d.])0%|weights total/;
+
+    const planted341 = await evalJs(`(function(){
+      var s = window.planbook.store, c = window.planbook.classes;
+      var was = c.getSelectedClassId();
+      s.update(function(doc){
+        doc.students.push({ id:'${KAI}', first:'Kai', last:'Lindqvist' },
+          { id:'${LU}', first:'Lu', last:'Marrow' });
+        doc.classes.push({ id:'${C5}', name:'WO-3.41 Unset', archived:false,
+          roster:['${KAI}','${LU}'], letterScale:null,
+          terms:[{ id:'${T5}', label:'WO-3.41 Term', start:'2026-09-01', end:'2026-11-06' }],
+          categories:[] });
+        doc.assignments.push({ id:'a341r1', classId:'${C5}', termId:'${T5}', name:'Reading log',
+          points:20, assigned:'2026-09-08', due:'2026-09-15' });   /* NO category */
+        doc.scores['a341r1'] = { '${KAI}': { v:18 } };
+      });
+      c.selectClass('${C5}');
+      c.selectTerm('${T5}');
+      var doc = s.getDoc();
+      var cls = doc.classes.filter(function(x){ return x.id === '${C5}'; })[0];
+      var g = window.planbook.gradeEngine.classGrade;
+      return { was: was, kai: g(doc, cls, '${T5}', '${KAI}'), lu: g(doc, cls, '${T5}', '${LU}') };
+    })()`);
+
+    const engineOk = (g) => !!g && g.percentage === null && g.reason === 'weights-unbalanced'
+      && g.weightTotal === 0 && Array.isArray(g.categories) && g.categories.length === 0
+      && g.message === NO_CATS;
+    check('WO-3.41: the engine answers a weighted class with no categories with its reason unchanged — '
+      + '"weights-unbalanced", total 0, no rows — and the sentence "' + NO_CATS + '", for a student '
+      + 'with a scored unfiled piece and for one with nothing at all',
+      engineOk(planted341.kai) && engineOk(planted341.lu),
+      JSON.stringify({ kai: planted341.kai && { reason: planted341.kai.reason, message: planted341.kai.message },
+        lu: planted341.lu && { reason: planted341.lu.reason, message: planted341.lu.message } }));
+
+    /* Student detail, through the name on the score grid — the door a teacher uses. */
+    const into341 = async (screen) => {
+      const on = await evalJs(
+        "(function(){var e=document.querySelector('main > :not(.hidden)');return e?e.id:'';})()");
+      if (on !== 'homeView') {
+        const nth = await evalJs(`(function(){
+          var all = document.querySelectorAll('[data-view-home]');
+          for (var i = 0; i < all.length; i++) {
+            var r = all[i].getBoundingClientRect();
+            if (r.width > 0 && r.height > 0) return i;
+          }
+          return -1; })()`);
+        if (nth < 0) throw new Error('no visible [data-view-home] to go home by');
+        await clickSel('[data-view-home]', nth);
+        await new Promise(r => setTimeout(r, 250));
+      }
+      await clickSel('#homeGrid [data-class-tab="' + C5 + '"]');
+      await new Promise(r => setTimeout(r, 250));
+      await clickSel('#classView [data-class-screen="' + screen + '"]');
+      await new Promise(r => setTimeout(r, 400));
+    };
+    await into341('scores');
+    await clickSel('#scoresBody [data-student-detail="' + KAI + '"]');
+    await new Promise(r => setTimeout(r, 300));
+    const detail341 = await evalJs(`(function(){
+      var v = document.getElementById('detailView');
+      if (!v || v.classList.contains('hidden')) return { up:false };
+      var banner = v.querySelector('.grade-none-text');
+      var big = v.querySelector('.detail-grade-big');
+      return { up:true,
+        heading: (document.getElementById('detailStudentName') || {}).textContent || '',
+        banner: banner ? banner.textContent : null,
+        heroLabel: big && big.parentNode ? (big.parentNode.getAttribute('aria-label') || '') : '',
+        text: (document.getElementById('detailContent') || {}).textContent || '' }; })()`);
+    const detailHit = ((detail341.text || '').match(ZERO) || [''])[0];
+    check('WO-3.41: on student detail, a weighted class with no categories is not told its weights total '
+      + '0% — the banner reads "' + NO_CATS + '", the hero\'s label carries the same sentence, and '
+      + 'nothing on the page says "0%" or "weights total"',
+      detail341.up && /Kai Lindqvist/.test(detail341.heading) && detail341.banner === NO_CATS
+        && detail341.heroLabel === 'No grade — ' + NO_CATS && detailHit === '',
+      JSON.stringify({ up: detail341.up, heading: detail341.heading, banner: detail341.banner,
+        heroLabel: detail341.heroLabel, wordFound: detailHit }));
+
+    /* The quiet list, off signalsModel() — the screen's own model, as WO-3.37's check reads it. Both
+       students are on it: nothing fires for a student with no grade and no absences. */
+    const quiet341 = await evalJs(`(function(){
+      var m = window.planbook.signalsView.signalsModel();
+      var mine = m.quiet.rows.filter(function(r){ return r.classId === '${C5}'; });
+      var says = function(id){ var r = mine.filter(function(x){ return x.studentId === id; })[0];
+        return r ? r.explanation : null; };
+      return { kai: says('${KAI}'), lu: says('${LU}') }; })()`);
+    const quietOk = (row, name) => typeof row === 'string'
+      && row.indexOf('In WO-3.41 Unset, ' + name + ' has no grade and ') === 0
+      && row.slice(-(NO_CATS.length + 1)) === ' ' + NO_CATS && !ZERO.test(row)
+      && !/no graded work/.test(row);
+    check('WO-3.41: on the quiet list, a weighted class with no categories is not told its weights total '
+      + '0% — each row reads "has no grade" and ends with "' + NO_CATS + '", for the student with a '
+      + 'scored unfiled piece and for the one with nothing',
+      quietOk(quiet341.kai, 'Kai Lindqvist') && quietOk(quiet341.lu, 'Lu Marrow'),
+      JSON.stringify(quiet341));
+
+    /* THE FIXTURE COMES BACK OUT, by id, and the class this block found open is put back. */
+    await evalJs(`(async function(){
+      var s = window.planbook.store, c = window.planbook.classes;
+      s.update(function(doc){
+        doc.classes = doc.classes.filter(function(x){ return x.id !== '${C5}'; });
+        doc.students = doc.students.filter(function(x){ return String(x.id).indexOf('wo341-') !== 0; });
+        doc.assignments = doc.assignments.filter(function(a){ return a.classId !== '${C5}'; });
+        Object.keys(doc.scores || {}).forEach(function(k){
+          if (String(k).indexOf('a341') === 0) delete doc.scores[k]; });
+      });
+      var was = ${JSON.stringify(planted341.was || '')};
+      if (was) c.selectClass(was);
+      c.refreshClassBar();
+      await s.flush();
+      return 1; })()`);
+  }
 }
 }

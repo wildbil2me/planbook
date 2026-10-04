@@ -251,12 +251,26 @@ function categoryRows(doc, cls, termId, studentId, plan) {
    `plan` is null for the real grade and an object for a projection — see projectedClassGrade()
    below. It is one function rather than two because a projection that walked its own categories
    would be a second weighted average, and the whole point of the figure is that it is the same
-   arithmetic with different numbers in it. */
+   arithmetic with different numbers in it.
+
+   A CLASS WITH NO CATEGORIES AT ALL IS STILL UNBALANCED, AND IS TOLD WHY IN ITS OWN WORDS (WO-3.41).
+   It totals 0%, so it lands here, and "The category weights total 0%" was true and was not the
+   reason a teacher would recognise: the class has not been set up. Only the sentence differs. The
+   `reason` stays `weights-unbalanced` because src/detail.js, src/scores.js and src/grades-report.js
+   branch on it, and the test order stays as it is — this is a choice of words INSIDE the refusal,
+   never a test ahead of it, and never `no-graded-work`: work filed under no category in a weighted
+   class counts for nothing, so "no graded work" would be false over a scored piece (WO-3.37). The
+   wording is the score grid banner's own clause for the same state (src/scores.js), so the two
+   screens say one thing; every reader prints this message rather than composing its own. */
+const NO_CATEGORIES_MESSAGE = 'This class has no grading categories yet, so there is nothing for a '
+  + 'grade to be an average of.';
+
 function weighted(doc, cls, termId, studentId, plan) {
   const total = weightTotal(cls);
   if (!isBalanced(cls)) {
-    return noGrade('weights-unbalanced',
-      'The category weights total ' + formatWeight(total) + '%, so there is no grade yet.', total, []);
+    return noGrade('weights-unbalanced', categoriesOf(cls).length
+      ? 'The category weights total ' + formatWeight(total) + '%, so there is no grade yet.'
+      : NO_CATEGORIES_MESSAGE, total, []);
   }
 
   const categories = categoryRows(doc, cls, termId, studentId, plan);
