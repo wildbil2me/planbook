@@ -5470,3 +5470,45 @@ planted run found an enabled domain harmless once its list was cleared. **The pl
 something a normal run would notice**: the section's own `OFFLINE` is already different from a
 normal run's network, so unlike WO-1.58's time-zone plant no second edit is needed, but say so in
 the record. **Do not fix the file with a `finally`**, for the reason WO-1.57 gives.
+
+## WO-1.60 — a comment-only change to a shell file turns the sweep red
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Closes roadmap** *(no box. A tooling defect, owner-directed, 2026-10-04.)*
+
+**Booked 2026-10-04**, owner-directed, out of WO-3.40's verdict. **`wo-sweep.mjs` is red on `main`
+because of it, from WO-3.40's commit until the next `CACHE` bump.**
+
+**The defect.** § 9 of `tools/wo-sweep.mjs` fails when any file in `sw.js`'s `SHELL` has changed since
+the commit that introduced the current `CACHE` string. It compares file names from
+`git diff --name-only`, so it cannot tell a comment edit from a code edit. WO-3.40 changed comments only
+in `src/assignments.js` and `src/detail.js`, and its Acceptance line 3 forbade the bump, because a
+comment changes nothing a device needs. The owner accepted the red at commit rather than bump against
+the work order. Each later work order now has to know that § 9's failure is expected, and a real miss
+looks exactly like it. WO-3.44 would do the same again.
+
+**Open at dispatch — the owner's call, one of three:**
+1. **A recorded excuse.** A commit trailer such as `Shell-Cache: not needed — comments only`. § 9
+   excuses a SHELL file only when every commit that changed it since the bump carries the trailer. The
+   commit states the claim and the sweep reads it, so it is a person's word, not a measurement.
+2. **A measured excuse.** § 9 strips comments from the old and new text of each offending `.js`/`.css`
+   file and excuses it when the rest is byte-identical. Stripping comments from JavaScript safely
+   (strings, template literals, regex literals, `//` inside a URL) is the whole cost, and no parser is
+   allowed here. `index.html` and `sw.js` stay unexcusable.
+3. **Strike it**, and bump `CACHE` for comment-only changes from now on. That costs every device one
+   shell re-download for nothing, which is cheap. Acceptance lines that forbid the bump get reworded.
+
+**Deliverables** — whichever Open wins, with § 9's header comment rewritten to say what is excused and
+why. WO-3.40's and WO-3.44's `CACHE` lines get a pointer here.
+
+**Acceptance**
+- [ ] On a tree whose only SHELL change since the bump is comment-only and excused by the chosen rule,
+      § 9 is green and names the excused file.
+- [ ] Mutation-proved: a one-character code change in the same file, carrying the same excuse, turns
+      § 9 red. Recorded in `TESTING.md` § WO-1.60, and **the mutation is reverted before anything else
+      is written** (`AGENTS.md`).
+- [ ] `node tools/wo-sweep.mjs` is otherwise unchanged in check names and order.
+
+**Traps** — **The default stays red.** An unexcused SHELL change must still fail, because the check
+exists for WO-2.4 and WO-2.13, which were real misses. **Never excuse `sw.js` or `index.html`.** The
+first is the version and the second is entry one of `SHELL`.

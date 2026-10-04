@@ -3218,7 +3218,7 @@ compute anything for the help text.** It reads the mode and nothing else.
 
 ## WO-3.40 — two comments say misfiled work is invisible on the list
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-3.36 — the comment it extended
+**Ship** — · **Status** ✅ DONE — 2026-10-04 · **Size** XS · **Depends on** WO-3.36 — the comment it extended
 **Closes roadmap** *(no box. Owner-directed, 2026-10-03.)*
 
 **Booked 2026-10-03**, owner-directed, out of WO-3.36's verdict. A comment fix and nothing else, so it
@@ -3245,11 +3245,15 @@ points-mode wording to both comments and, by its brief, left the visibility clai
   its reason for drawing no breakdown still holds.
 
 **Acceptance**
-- [ ] Neither comment in `src/assignments.js` says a misfiled assignment is invisible on the list.
-- [ ] The comment above the breakdown in `src/detail.js` no longer says the banner always names the
+- [x] Neither comment in `src/assignments.js` says a misfiled assignment is invisible on the list.
+- [x] The comment above the breakdown in `src/detail.js` no longer says the banner always names the
       weights' total.
-- [ ] No line outside a comment moves: `git diff` touches comment lines only, and `sw.js`'s `CACHE`
+- [x] No line outside a comment moves: `git diff` touches comment lines only, and `sw.js`'s `CACHE`
       is not bumped, because a comment changes nothing a device receives.
+      *(Met, and it costs a red sweep: `wo-sweep.mjs` § 9 compares file names, so it fails on these
+      comment-only edits until the next `CACHE` bump. The owner accepted the red at commit,
+      2026-10-04, and booked WO-1.60 for the check. WO-3.44 was booked from the same verdict for
+      the `src/shell.js` comment the implementer ruled out of scope.)*
 
 **Traps** — **Do not change the copy rule.** The comments argue for it, and it stands.
 
@@ -3431,3 +3435,38 @@ import both, and call it from `src/shell.js` as WO-3.31 did. **Do not keep a "de
 option.** The owner ruled for one behaviour, and a second button is how the destructive path comes
 back. **Do not compute a share or a total on the screen.** The weights total is `weightTotal()`, which
 the dialog already uses.
+
+## WO-3.44 — a comment says a misfiled copy looks identical on the list
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-3.40 — the two comments it corrected
+**Closes roadmap** *(no box. Owner-directed, 2026-10-04.)*
+
+**Booked 2026-10-04**, owner-directed, out of WO-3.40's verdict. A comment fix and nothing else, so it
+rides with the next work order that has `src/shell.js` open.
+
+**The defect.** The comment above `assignments, screenNav` in the `window.planbook` seam
+(`src/shell.js` ~4599) says the naive duplicate, which carried the source's `categoryId` across a
+class boundary, and this build's duplicate are *"invisible on screen because both look identical on
+the list"*. That is false when the target class has a category of the same name. This build files
+the copy under the matching category. The naive copy carries a `categoryId` the target lacks, so
+`renderAssignments()` lists it under *Not in a category*. They look the same only when the target has
+no category that matches. WO-3.40's implementer read this comment, ruled it a different claim from the
+two that work order fixed, and left it. The verifier agreed with that ruling and confirmed the
+overstatement.
+
+**Deliverables**
+- **The comment says what a click can and cannot show.** When the target has a matching category,
+  the two builds file the copy in different groups. What no click shows is that the copy carries the
+  target's own ids and that `scores` grew no column for it. Keep the rest of the comment, including the
+  breadcrumb half.
+
+**Acceptance**
+- [ ] The comment no longer says the two duplicates always look identical on the list.
+- [ ] No line outside a comment moves: `git diff` touches comment lines only.
+
+**Traps** — **Do not change the copy rule**, as WO-3.40's Traps said. **The `CACHE` question is
+WO-1.60's**: if this rides with a work order that bumps `CACHE` for its own code, nothing more is
+needed. Taken alone, it leaves `wo-sweep.mjs` § 9 red as WO-3.40 did, until WO-1.60 says otherwise.
+*(`src/assignments.js` ~925, "invisible on every term's list", was the third comment named in
+WO-3.40's verdict. It was read the day this was booked and is true: `assignmentsOf()` matches `termId`
+exactly, so a `termId` of `''` is on no term's list. Nothing to fix there.)*

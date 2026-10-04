@@ -24,7 +24,8 @@
   breaks if it is left out: WO-3.1's removalCounts() and applyRemoval() filter by `categoryId`
   alone, which is safe only while a category id can appear in one class. The moment an assignment
   can be copied across classes, a copy that carried its source's `categoryId` would sit in class B
-  filed under a category that only class A has — invisible on B's list, counted by nothing if B is
+  filed under a category that only class A has — listed on B's screen under "Not in a category",
+  and filed nowhere B can name (that group gathers every id B lacks), counted by nothing if B is
   weighted (a B graded on total points counts it, under "no category"), and caught up by a category
   removal in A under a dialog naming A — destroyed there until WO-3.43, re-filed under no category
   since, which is the same wrong class's work moved by a dialog that never named it. (WO-3.1's
@@ -1221,10 +1222,10 @@ export function moveAssignmentDown(id) { moveAssignment(id, 1); }
   WHY THE COPY CHOOSES ITS OWN CATEGORY AND TERM RATHER THAN CARRYING THE SOURCE'S.
 
   Ids are opaque and belong to the class they were made in. A copy that kept `categoryId` would
-  land in another class filed under a category that class does not have — invisible on its list,
-  counted by nothing in a weighted class (a class graded on total points counts it, under "no
-  category"), and moved by a category removal in the class it came from (destroyed by one, before
-  WO-3.43), under a dialog naming a different class. That is this work order's named trap, and this function is where it
+  land in another class filed under a category that class does not have — listed there under "Not
+  in a category", filed nowhere that class can name, counted by nothing in a weighted class (a
+  class graded on total points counts it, under "no category"), and moved by a category removal in
+  the class it came from (destroyed by one, before WO-3.43), under a dialog naming a different class. That is this work order's named trap, and this function is where it
   would have happened.
 
   So the target's category is matched BY NAME — "Quizzes" in Biology I is "Quizzes" in Biology I

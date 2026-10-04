@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Three comments corrected to match the build — 2026-10-04
+
+WO-3.40. No shell cache bump, by the work order's own rule, so `wo-sweep.mjs` § 9 stays red until
+the next bump (WO-1.60).
+
+- **Not user-visible.** Two comments in `src/assignments.js` now say a copy filed under another
+  class's category would show up under *Not in a category*, not vanish. One in `src/detail.js` now
+  says a class with no categories gets its own no-grade banner sentence rather than a weights total.
+- **Booked from the verdict:** WO-3.44, a fourth comment in `src/shell.js` that overstates the same
+  point, and WO-1.60, so a comment-only shell change need not turn the sweep red.
+
 ### A changed score keeps what it was — 2026-10-04
 
 WO-3.33. Shell cache `v164`.

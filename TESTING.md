@@ -10060,6 +10060,26 @@ MUTATION src tools index.html` read only long-standing prose afterwards.
 
 **Full run on the delivered tree:** `1760 checks · 1760 passed · 0 failed · 0 skipped`, 56,045 lines, 31.8 lines per check, 784s, exit 0, 2026-10-04 on the real clock.
 
+### WO-3.40 — two comments say misfiled work is invisible on the list
+
+**Comments only.** Two comments in `src/assignments.js` (the file header's classId-guard argument, and
+the one above `matchCategory()`) now say a copy carrying another class's `categoryId` would be listed
+under *Not in a category*, filed nowhere that class can name — which is what `renderAssignments()`'s
+`loose` group does with any id the class lacks — and keep the rest of the argument. The comment above
+the breakdown in `src/detail.js` now says the banner explains why there is no grade: the weights' total,
+or (WO-3.41's `NO_CATEGORIES_MESSAGE`) that the class has no categories yet. The copy rule is
+unchanged. `src/shell.js`'s *"invisible on screen"* comment was read and left: it is about the two
+builds' ids and score columns not being on screen, not about a row being absent (result file).
+**`CACHE` not bumped**, by Acceptance 3 — so `wo-sweep.mjs` § 9 reads red until the next work order
+that bumps it, which is that check doing its job on a case it has no exemption for.
+
+- [x] Neither comment says *invisible on the list*. `grep -n "invisible on" src/assignments.js` prints
+      only line 925, the `termId: ''` comment, which is a different claim and not this work order's.
+- [x] The breakdown comment no longer says the banner always names the total; wording checked against
+      `weighted()` in `src/grade-engine.js`.
+- [x] `git diff src/` shows changed lines inside `/* … */` blocks only; `git diff --stat` reads
+      `src/assignments.js | 11`, `src/detail.js | 3`; no CRLF churn; `sw.js` untouched.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

@@ -882,7 +882,8 @@ export function renderDetail() {
   /* No breakdown at all while the weights are wrong, rather than a table of nothing. The engine
      answers `categories: []` in that state — there is no weighted average to take apart — and a
      grid of empty rows under the banner would read as a rendering fault on the screen that can
-     least afford one. The banner above says what the weights come to and where to fix it. */
+     least afford one. The banner above says why there is no grade: what the weights come to, or —
+     since WO-3.41 — that the class has no categories yet, which names no total at all. */
   if (grade.categories.length) left.append(breakdown(grade, gradingModeOf(cls) === 'points', graded));
   left.append(toMoveCard(doc, cls, termId, student, grade, rows, noGradeSays));
   const right = el('div');
