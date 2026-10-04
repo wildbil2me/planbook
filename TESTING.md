@@ -1977,6 +1977,50 @@ pass over an empty grep, was mutation-proved four ways.)*
 
 ---
 
+### WO-1.50 — a document you can read is not a document anything checks
+
+Tooling, not app: `tools/data-viewer.html` gained a Checks panel and `tools/wo-sweep.mjs` gained
+§ 29. Nothing under `src/` moved, and `sw.js` is untouched because the page is not in `SHELL`.
+
+**The panel was driven, not harnessed.** A throwaway CDP script (not committed; WO-1.50's Traps
+explain why no runner is kept for this page) served the page on `127.0.0.1`, loaded three fixtures
+through the page's own `loadText()`, and read the panel and the clipboard. The fixtures were built
+from `plans/known-bugs.md` § 2's shape: Period 3 with roster `s_a`, `s_b`, `s_c`, and a 2026-09-04
+record whose only mark is `s_x: { code: 'U' }`, where `s_x` is on Period 6's roster and carries
+`supports.medical: 'ZEBRA-MEDICAL-7731'`, a guardian and a phone. The *clean* fixture is the same
+document with that one key deleted; the *dup* fixture adds a second 2026-09-05 record for Period 3.
+Read 2026-10-04, `23 pass · 0 fail`:
+
+- [x] *carries*: the off-roster card is a hit naming `attendance[0].marks.s_x`; the both-ways card is a
+      hit reading `1 U` against `none`; the duplicate card is clear.
+- [x] *clean*: all three cards read *nothing found* and draw no copy buttons.
+- [x] *dup*: the duplicate card names `attendance[1], attendance[3]`; the other two stay clear.
+- [x] Masking on (the default): no fixture secret in the panel's `innerText` or `innerHTML`, in either
+      path list, or in either copied report. The clipboard text is **the argument the page handed to
+      `navigator.clipboard.writeText`**, recorded by a wrapper. Headless Edge's own clipboard read back
+      `''`, so the OS clipboard itself was not read. The `execCommand` fallback was not driven; it
+      copies the same string.
+- [x] The whole page, with the tree's top level open and `students[3].supports` then `students[3]`
+      selected, carries no secret. **Positive control:** with masking off, the side pane shows
+      `ZEBRA-MEDICAL-7731`, so the probe can see the string when it is there.
+- [x] The copied report starts `## N.`, carries **The reproduction**, a path table and **Counts**,
+      and names no student.
+- [x] Under touch emulation (`pointer: coarse` true) every `.btn.small` measures 44px.
+
+**§ 29 was mutation-proved against the 2026-09-06 defect.** With select()'s stringify given a key-name
+replacer again (marked `MUTATION`, on a staged tree), § 29 went red on two clauses: a `'supports'`
+literal outside masked() at `:574`, and a stringify replacer at `:574`. The drive went red at the same
+time, on its whole-page probe (`STUDENT-PHONE-5550142`): a replacer keyed on subtree names misses a
+student's own contact fields. Reverted with `git checkout --` from the index. Afterwards
+`grep -n MUTATION tools/data-viewer.html tools/wo-sweep.mjs` read nothing, and the sweep and the drive
+were green again.
+
+Not proved: whether a later reader that prints values *without asking* masked() is caught. It is not,
+and § 29's banner says so. The panel's rule is that every value a finding prints goes through
+`shown()`, and only a reading of the file holds a new reader to that rule.
+
+---
+
 ### WO-1.53 — the residue meets the register's earlier page for a week every September
 
 **What this changes.** Nothing a teacher sees, and nothing a device gets. `src/`, `index.html`,

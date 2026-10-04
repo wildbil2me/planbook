@@ -3632,6 +3632,121 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
   if (faults.length) check(NAME, false, faults.join(' · '));
 }
 
+/* ══════ 29. the data viewer asks "is this masked" in exactly one place ══════
+   WO-1.50's sixth Acceptance line, and it sits ABOVE § 22 for § 23's reason: § 22's census has to
+   be the last thing that pushes a result. The number is the order this section was written in.
+
+   `tools/data-viewer.html` masks `supports`, `guardians` and a student's own contact fields until a
+   checkbox is ticked (CLAUDE.md § Accommodations rule 1 has no tools/ carve-out). On 2026-09-06 the
+   first cut got it wrong in exactly one shape: the tree asked `masked()` about a PATH while the side
+   pane handed `JSON.stringify` a replacer matching key NAMES — two answers to one question, and the
+   wrong one printed `students[0].supports.medical` in full beside a tree masking it correctly. The
+   repair was one predicate. WO-1.50 then added a checks panel — a finding body, a path list and a
+   report copied to the clipboard: more readers. So this is a fence on THE FILE'S TEXT — how many
+   places answer the question — and it never reads a year document. It is not the browser harness
+   that caught the original leak, which was deliberately not kept (WO-1.50's Traps say why): it proves
+   one place asks, and nothing about whether that one place asks correctly.
+
+   FOUR CLAUSES, read over the page's inline <script> with HTML comments and JS comments blanked
+   (newlines kept, so a hit names its line):
+   1. exactly one `function masked(` declaration and no other definition — a second is a second answer;
+   2. outside that function's body, no `'supports'` / `'guardians'` string literal (any quote) and no
+      `.supports` / `.guardians` member read — the predicate is the only code that names those
+      subtrees, and everything else reaches them through a generic walk and asks masked();
+   3. no `JSON.stringify(` call anywhere in the file handed a second argument other than `null` —
+      a replacer is a reader that sees a key and never a path, which is the 2026-09-06 shape exactly;
+   4. the page loads no external script (`<script src=`) — a predicate re-asked in a file this does
+      not read would pass here unseen.
+   The masked() body must itself still name both subtrees, or the clauses above are watching a
+   predicate that has been rewritten under them — that FAILs saying so, for § 11's reason.
+
+   PROVED 2026-10-04 against the 2026-09-06 defect restored on purpose — select()'s stringify given a
+   key-name replacer again, this section red on clauses 2 and 3, the replacer reverted. A grep that has
+   never seen the thing it is for is a grep nobody has tested.
+
+   WHAT IT DOES NOT SEE: a masking question asked about a different key (a new sensitive field is a
+   change to masked() and to this banner together); and a reader that never asks at all — a new
+   surface that walks the document and prints leaves without calling masked() has no literal and no
+   replacer, and passes. The panel's own rule is that every value a finding prints goes through
+   `shown()`, which asks masked(); this section does not enforce that rule, only the one-answer rule. */
+
+{
+  const NAME = 'tools/data-viewer.html asks "is this masked" in one place: one masked(), no \'supports\'/\'guardians\' outside it, no stringify replacer, no external script';
+  const FILE = 'tools/data-viewer.html';
+  const abs = path.join(REPO, 'tools', 'data-viewer.html');
+  const faults = [];
+  let text = null;
+  try { text = fs.readFileSync(abs, 'utf8'); } catch { text = null; }
+  if (text === null) {
+    faults.push(`${FILE} is not where § 29 expects it — the one file whose masking this section fences is gone, so nothing is watching it. Restore it, or re-point tools/wo-sweep.mjs § 29 if it moved`);
+  } else {
+    const blank = (s) => s.replace(/[^\n]/g, ' ');
+    const noHtmlComments = text.replace(/<!--[\s\S]*?-->/g, blank);
+    if (/<script\b[^>]*\bsrc\s*=/i.test(noHtmlComments)) faults.push(`${FILE} loads an external script — § 29 reads the page's inline script only, so a masking answer in that file is one it cannot see. Keep the page one file (its header says why), or widen this section in the same edit`);
+    // Keep only inline-script text, everything else blanked, so offsets — and line numbers — survive.
+    let code = blank(noHtmlComments);
+    const scripts = [...noHtmlComments.matchAll(/(<script\b[^>]*>)([\s\S]*?)<\/script>/gi)];
+    scripts.forEach((m) => {
+      const at = m.index + m[1].length;
+      code = code.slice(0, at) + m[2] + code.slice(at + m[2].length);
+    });
+    if (!scripts.length) faults.push(`no inline <script> in ${FILE} — § 29 is reading nothing. Re-point it if the page was restructured`);
+    code = code.replace(/\/\*[\s\S]*?\*\//g, blank);
+    const lines = code.split('\n').map(l => l.replace(/(^|[^:'"`\\])\/\/.*$/, '$1'));
+
+    const decls = lines.map((l, i) => (/^\s*function\s+masked\s*\(/.test(l) ? i : -1)).filter(i => i >= 0);
+    const otherDefs = lines.map((l, i) => (/\bmasked\s*=\s*function\b|\b(?:var|let|const)\s+masked\b/.test(l) ? i : -1)).filter(i => i >= 0);
+    let from = -1, to = -1;
+    if (decls.length !== 1 || otherDefs.length) {
+      faults.push(`${decls.length} \`function masked(\` declaration(s)${otherDefs.length ? ` and ${otherDefs.length} other definition(s) at ${otherDefs.map(i => FILE + ':' + (i + 1)).join(', ')}` : ''} in ${FILE} — there must be exactly one, because a second definition is a second answer to the question this section fences`);
+    } else {
+      from = decls[0];
+      let depth = 0, opened = false;
+      for (let i = from; i < lines.length; i++) {
+        for (const ch of lines[i]) {
+          if (ch === '{') { depth++; opened = true; } else if (ch === '}') depth--;
+        }
+        if (opened && depth === 0) { to = i; break; }
+      }
+      if (to < 0) faults.push(`masked() opens at ${FILE}:${from + 1} and its body never closes — the brace count in § 29 ran off the end of the file`);
+    }
+    if (to >= 0) {
+      const body = lines.slice(from, to + 1).join('\n');
+      if (!/(['"`])supports\1/.test(body) || !/(['"`])guardians\1/.test(body)) faults.push(`masked() at ${FILE}:${from + 1} no longer names both 'supports' and 'guardians' — the predicate has been rewritten under this section, and clause 2 is now fencing nothing. Re-read § 29 against the new predicate before changing either`);
+    }
+    const NAMED = /(['"`])(?:supports|guardians)\1|\.(?:supports|guardians)\b/;
+    const outside = [];
+    lines.forEach((l, i) => {
+      if (from >= 0 && to >= 0 && i >= from && i <= to) return;
+      if (NAMED.test(l)) outside.push(`${FILE}:${i + 1} "${l.trim().length > 80 ? l.trim().slice(0, 77) + '…' : l.trim()}"`);
+    });
+    if (outside.length) faults.push(`${outside.join(', ')} — names a masked subtree outside masked(). WO-1.50: the masking question has one answer, and a second one is how 2026-09-06 printed supports.medical beside a tree that masked it. Ask masked() about the value's real path instead`);
+
+    const joined = lines.join('\n');
+    const replacers = [];
+    for (const m of joined.matchAll(/\bJSON\.stringify\s*\(/g)) {
+      let depth = 0, cur = '';
+      const args = [];
+      for (let i = m.index + m[0].length - 1; i < joined.length; i++) {
+        const ch = joined[i];
+        if (ch === '(' || ch === '[' || ch === '{') { depth++; if (depth === 1) continue; }
+        else if (ch === ')' || ch === ']' || ch === '}') { depth--; if (depth === 0) { args.push(cur); break; } }
+        else if (ch === ',' && depth === 1) { args.push(cur); cur = ''; continue; }
+        cur += ch;
+      }
+      if (args.length >= 2 && args[1].trim() !== 'null') {
+        const line = joined.slice(0, m.index).split('\n').length;
+        replacers.push(`${FILE}:${line} (second argument "${args[1].trim().replace(/\s+/g, ' ').slice(0, 60)}")`);
+      }
+    }
+    if (replacers.length) faults.push(`${replacers.join(', ')} — a JSON.stringify replacer. A replacer sees a KEY and never a path, which is the 2026-09-06 defect's exact shape; build a masked copy with maskedCopy() and stringify that with \`null\``);
+    if (!faults.length) {
+      check(NAME, true, `${FILE}: ${scripts.length} inline script(s), one masked() at :${from + 1}-${to + 1}, no 'supports'/'guardians' outside it, no JSON.stringify replacer, no external script. One answer is fenced; whether that answer is right is not — see § 29's banner`);
+    }
+  }
+  if (faults.length) check(NAME, false, faults.join(' · '));
+}
+
 /* ══════ 22. the count of checks in tools/README.md is the number this run emits ══════
    WO-1.42. § 11 holds `tools/README.md`'s figures for `verify-shell.mjs` against what the tree
    actually contains. This is that census turned on the sweep itself. The same file records how many

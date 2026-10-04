@@ -3,8 +3,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Planbook data viewer</title>
 <!--
-  A viewer for one year document. Hand-run, READ-ONLY, and it makes no judgements: it shows what
-  is in the file and never says whether that is right. Written 2026-09-06.
+  A viewer for one year document. Hand-run, READ-ONLY, and its tree makes no judgements: it shows
+  what is in the file and never says whether that is right. Written 2026-09-06. Since 2026-10-04
+  it also carries a CHECKS panel, which is the one part of this page that does offer an opinion —
+  see "THE CHECKS" below, and see the panel itself, which says so where a reader meets it.
 
   It is `tools/` in the same sense tools/audio-probe.html is — a page, not a script, self-styled,
   imported by nothing, not in sw.js SHELL, gates nothing. Opened from a Downloads folder over
@@ -20,10 +22,11 @@
     - It applies no migration. A document below schemaVersion 3 is shown exactly as stored, because
       the app's own migration runs on open and a viewer that repeated it would be showing you the
       repair rather than the file.
-    - It does not interpret. No counts are recomputed, no rule is checked, nothing is called wrong.
-      An absent key is drawn as absent — `calendar` and an untuned threshold are absent BY RULE
-      (docs/data-model.md), and a viewer that drew them as gaps would teach a reader to fill
-      them in.
+    - The tree does not interpret. No counts are recomputed there, no rule is checked, nothing is
+      called wrong. An absent key is drawn as absent — `calendar` and an untuned threshold are
+      absent BY RULE (docs/data-model.md), and a viewer that drew them as gaps would teach a reader
+      to fill them in. The checks panel is the exception, it is fenced off as one, and it does not
+      look for absent keys either.
 
   WHAT IS MASKED, AND WHY IT IS NOT A SETTING WORTH FORGETTING. CLAUDE.md § Accommodations rule 1
   has no tools/ carve-out: "the default state of any list view is not showing it". So `supports`
@@ -33,17 +36,41 @@
   `log[]` bodies and `students[].notes` are NOT masked, which follows the same file's ruling that
   a note to self is the teacher's working memory and hiding it costs her the useful half.
 
-  NOTHING IN THIS REPOSITORY CHECKS THAT MASKING, AND THE FIRST CUT OF THIS FILE GOT IT WRONG.
-  The tree asked masked() about a path; the side pane matched key NAMES instead. Two readers, one
-  rule, and the reader that was wrong is the one that prints a whole subtree at once — selecting
-  `students[0].supports` printed `medical` in full while the tree beside it masked the same field
-  correctly. Caught 2026-09-06 by a throwaway browser harness that was deliberately not kept (the
-  page gates nothing and fails loudly, so a standing behavioural harness earns little), and repaired
-  the same day to the one predicate below. What is owed is a STRUCTURAL check — a second answer to
-  "is this masked" is a thing a grep settles — and it is booked as part of WO-1.50, which is also the
-  row that adds the third and fourth readers: a finding body and a report copied to the clipboard.
-  Until that lands, this paragraph is the whole of what watches it. Add a reader and you are the
-  check.
+  WHAT CHECKS THAT MASKING: tools/wo-sweep.mjs § 29, on every sweep. It reads this file's text and
+  goes red if the masking question has a second answer anywhere in it — a `'supports'` or
+  `'guardians'` string literal, or a `.supports` / `.guardians` member read, outside the body of
+  masked(); any JSON.stringify call handed a replacer; or a second masked() definition. It is a
+  grep, not a run: it proves there is one place the question is asked, and nothing about whether
+  that one place asks it correctly. The scar it exists for: the first cut of this file got it
+  wrong. The tree asked masked() about a path; the side pane matched key NAMES in a stringify
+  replacer instead. Two readers, one rule, and the reader that was wrong is the one that prints a
+  whole subtree at once — selecting `students[0].supports` printed `medical` in full while the tree
+  beside it masked the same field correctly. Caught 2026-09-06 by a throwaway browser harness that
+  was deliberately not kept (the page gates nothing and fails loudly, so a standing behavioural
+  harness earns little), and repaired the same day to the one predicate below. § 29 was proved
+  against that defect put back on purpose, 2026-10-04. The checks panel is the third and fourth
+  reader — a finding body and a report copied to the clipboard — and both ask masked() rather than
+  re-asking the question, which is what § 29 holds them to. Add a reader and ask masked().
+
+  THE CHECKS — a panel over the same document, loaded by the same load(), masked by the same
+  masked(), annotated from the same `names`. ONE PAGE rather than a second page or a shared
+  module, chosen 2026-10-04: a module script is refused over file:// by Chromium, which is one of
+  the two ways in (a backup in Downloads at 10pm); a classic <script src> would load, but would put
+  the predicate in a file § 29 then has to follow imports into; and a second page would need a
+  second loader and a second id map, which is exactly the divergence this rule is for. It ASKS
+  rather than answers — it runs on every load, without being opened — and its findings are
+  readings, not verdicts. A finding names a path and a count; the copied report names student IDS,
+  never names, because it is the text that ends up in a committed file. No repair is offered: see
+  the note above drawChecks().
+
+  IT IS REACHABLE FROM THE DEPLOYED ORIGIN, decided 2026-10-04, because it is this page and this
+  page already is (`/tools/…` is public on Pages and holds no data). Re-argued for a page that
+  prints findings rather than assumed: a finding is computed in this browser from a file it was
+  handed or from that origin's own IndexedDB, and goes nowhere — the page fetches nothing and has
+  no network code at all. What a deployed copy adds is reading the teaching iPad without a file
+  round-trip, which is the reason to have it. What it risks is a screenshot or a paste, and those
+  are the same risks the tree already carries, under the same masking default. Nothing in the app
+  links here, so a teacher does not arrive by accident.
 
   IDS ARE RESOLVED INLINE, and that is the only thing here a generic JSON viewer cannot do. Every
   id in this document is opaque on purpose (docs/data-model.md), so a raw tree makes you carry
@@ -142,9 +169,40 @@
   .results .rv { color: #52606d; }
   .empty { color: #a0aab8; font-size: 13px; padding: 20px 0; text-align: center; }
 
+  /* ── the checks panel ─────────────────────────────────────────────────────────── */
+  .checks { background: #f8f9fb; border-bottom: 1px solid #e0e4f0; padding: 12px 16px;
+            max-height: 55vh; overflow: auto; }
+  .checks h2 { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+               color: #8a9bb0; margin: 0 0 6px; }
+  .checks .opinion { font-size: 12.5px; color: #52606d; background: #fff; border: 1px solid #eef0f4;
+                     border-left: 4px solid #c9a83f; border-radius: 6px; padding: 7px 10px;
+                     margin-bottom: 10px; max-width: 96ch; }
+  .find { background: #fff; border: 1px solid #e0e4f0; border-left-width: 4px; border-radius: 8px;
+          padding: 10px 12px; margin-bottom: 10px; }
+  .find.hit { border-left-color: #e67e22; }
+  .find.clear { border-left-color: #27ae60; }
+  .find h3 { font-size: 14px; margin: 0 0 4px; }
+  .find h3 .n { font-size: 11px; font-weight: 700; border-radius: 9px; padding: 1px 7px;
+                margin-left: 6px; vertical-align: 1px; }
+  .find.hit h3 .n { background: #fff3e0; color: #b35c00; }
+  .find.clear h3 .n { background: #e8f8ef; color: #1e8449; }
+  .find p { margin: 4px 0; font-size: 12.5px; max-width: 96ch; }
+  .find .mirror { color: #6b7a8d; font-size: 12px; }
+  .find .rederived { color: #8a6d1a; background: #fff8e6; border: 1px solid #f0dfa8; border-radius: 6px;
+                     padding: 5px 8px; font-size: 12px; }
+  .find table { border-collapse: collapse; font-size: 12px; margin: 6px 0; }
+  .find th, .find td { text-align: left; padding: 3px 8px; border-bottom: 1px solid #eef0f4;
+                       vertical-align: top; }
+  .find th { color: #8a9bb0; font-weight: 600; }
+  .find .scroll { overflow-x: auto; }
+  .find .acts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+
   .foot { padding: 8px 16px 14px; color: #a0aab8; font-size: 11.5px; }
   [hidden] { display: none !important; }
-  @media (pointer: coarse) { .row { padding: 5px 4px; } .row .tw { width: 22px; } }
+  /* `.btn.small` was 30px under a thumb until 2026-10-04, when the checks panel added six more of
+     them; it is lifted here for every small button on the page, the old three included. */
+  @media (pointer: coarse) { .row { padding: 5px 4px; } .row .tw { width: 22px; }
+    .btn.small { min-height: 44px; } }
 </style>
 
 <div class="band">
@@ -171,7 +229,10 @@
   <span class="hits" id="hits"></span>
   <button class="btn plain small" id="expandTop">Top level</button>
   <button class="btn plain small" id="collapse">Collapse all</button>
+  <button class="btn plain small" id="checksBtn">Checks</button>
 </div>
+
+<section class="checks" id="checks" hidden></section>
 
 <main id="main" hidden>
   <div class="pane tree-pane"><div class="tree" id="tree"></div></div>
@@ -192,6 +253,8 @@ var reveal = false;          /* sensitive values shown? */
 var selPath = null;          /* the selected node, as a path array */
 var CHUNK = 120;             /* children rendered per click — a 1,000-cell scores block is one node */
 var HITCAP = 800;
+var source = null;           /* where the document came from, for the copied report's first line */
+var checksOpen = true;       /* the panel is open on every load — see "THE CHECKS" in the header */
 
 var el = function (id) { return document.getElementById(id); };
 
@@ -223,8 +286,10 @@ function load(parsed, where, bytes) {
   el('foot').hidden = true;
   el('q').value = '';
   selPath = null;
+  source = { where: where, rev: doc.rev, schemaVersion: doc.schemaVersion };
   drawTree();
   showAbout();
+  drawChecks();
 }
 
 /* Every id in the document, mapped to something a person can read. Nothing here is checked or
@@ -291,6 +356,7 @@ function drawHeader(where, bytes) {
     drawTree();
     if (selPath) select(selPath);
     if (el('q').value) runSearch();
+    drawChecks();
   });
 }
 
@@ -625,6 +691,322 @@ function runSearch() {
     });
   }
 }
+
+/* ═══════════════════════════════ checks ═══════════════════════════════
+   The one part of this page with an opinion. Three questions, each with a report behind it —
+   plans/known-bugs.md § 2, "a class reads 1 unconfirmed while every student on the grid shows
+   present" — and no more, on purpose: a check nobody has needed is a question nobody asked, and a
+   table of them is a picture's number (the drawing, tools/inspector-mockup.html, has 38).
+
+   EACH CHECK NAMES THE SOURCE IT MIRRORS, ON THE PANEL. This page cannot call src/: the functions
+   in src/attendance.js read the open document out of src/store.js rather than one handed to them,
+   and importing them over file:// would drag IndexedDB into a page that has to work without it.
+   So a check either compares two things INSIDE the document — which cannot drift, however src/
+   changes — or it re-derives the app's arithmetic, and is then a second implementation that can be
+   wrong while looking right. Two of the three are the first kind. The both-ways count is the second
+   kind, and says so in amber on its own card, because a green card is evidence and a reader of one
+   has to know what it is evidence of. Line numbers are as of 2026-10-04 and will drift; the function
+   names are the reference.
+
+   READ-ONLY, LIKE THE REST. No check writes, and NO REPAIR IS OFFERED, not even as a snippet to
+   copy. known-bugs § 2 holds a suspect nobody has tested, and a repair for an untested suspect is a
+   diagnosis written in code — the row is a reproduction, and so is everything this panel copies.
+   When a repair is wanted it is a snippet a person copies, never a button; that is a later row.
+
+   EVERY VALUE A FINDING SHOWS GOES THROUGH shown(), which asks masked() by the value's real path —
+   the same question the tree asks, so the panel and the tree cannot disagree. None of the three
+   checks reads a masked subtree today; shown() is there so that the next one cannot forget to ask. */
+
+function arr(v) { return Array.isArray(v) ? v : []; }
+
+/* The one door from a document value to a finding: a value is printed only after masked() has
+   been asked about its own path. */
+function shown(path, value) {
+  if (masked(path)) return '(masked)';
+  return value === undefined ? '—' : String(value);
+}
+
+/* Mirrors codeOf() in src/attendance.js (:499): a bare string is its own code, an object reads its
+   `code`, anything else reads as ''. */
+function cellCode(cell) {
+  if (typeof cell === 'string') return cell;
+  return cell && typeof cell === 'object' && typeof cell.code === 'string' ? cell.code : '';
+}
+/* Mirrors marksOf() in src/attendance.js (:1199). */
+function marksIn(record) {
+  return record && record.marks && typeof record.marks === 'object' ? record.marks : {};
+}
+/* The path of the thing a mark cell's code is read from — the cell itself, or its `code`. */
+function codePath(i, id, cell) {
+  var p = ['attendance', i, 'marks', id];
+  return cell && typeof cell === 'object' ? p.concat(['code']) : p;
+}
+
+function classIndex(id) {
+  var cs = arr(doc.classes);
+  for (var k = 0; k < cs.length; k++) if (cs[k] && cs[k].id === id) return k;
+  return -1;
+}
+function className(k) { return k < 0 ? '(no such class)' : shown(['classes', k, 'name'], doc.classes[k].name); }
+function studentSet() {
+  var set = {};
+  arr(doc.students).forEach(function (s) { if (s && s.id) set[s.id] = true; });
+  return set;
+}
+
+/* ── 1. a mark keyed outside the class's roster ──────────────────────────────────────────────
+   A comparison of two things in the document: the keys under one record's `marks` against the
+   ids in its class's `roster`. Mirrors the two halves of the disagreement — countsFor()
+   (src/attendance.js:1346) counts every key in `marks`, and the grid draws a row only for
+   rosterOf() (:3127), which is `roster` filtered to ids that name a student. So a key that is
+   off the roster, or on it and naming nobody, is counted and cannot be drawn. */
+function checkOffRoster() {
+  var students = studentSet();
+  var rows = [], read = 0, noClass = 0, records = {};
+  arr(doc.attendance).forEach(function (r, i) {
+    if (!r || typeof r !== 'object') return;
+    var k = classIndex(r.classId);
+    if (k < 0) { noClass++; return; }
+    read++;
+    var roster = arr(doc.classes[k].roster);
+    var marks = marksIn(r);
+    Object.keys(marks).forEach(function (id) {
+      var onRoster = roster.indexOf(id) >= 0;
+      if (onRoster && students[id]) return;
+      var elsewhere = arr(doc.classes).filter(function (c, j) {
+        return j !== k && c && arr(c.roster).indexOf(id) >= 0;
+      }).map(function (c) { return classIndex(c.id); });
+      records[i] = true;
+      rows.push({ path: ['attendance', i, 'marks', id], i: i, k: k, id: id,
+        date: shown(['attendance', i, 'date'], r.date), exception: !!r.exception,
+        code: shown(codePath(i, id, marks[id]), cellCode(marks[id]) || '(none)'),
+        onRoster: onRoster, isStudent: !!students[id], elsewhere: elsewhere });
+    });
+  });
+  return {
+    key: 'offRoster',
+    title: 'A mark keyed by a student who is not on that class’s roster',
+    symptom: 'An attendance mark is keyed by a student id outside that class’s drawn roster',
+    repro: 'In every attendance record, each key under `marks` was looked up in that class’s '
+      + '`roster` and in `students[]`. The keys below are missing from one or both.',
+    mirror: 'Compares each record’s <code>marks</code> keys against its class’s <code>roster</code>. '
+      + 'Mirrors <code>countsFor()</code>, src/attendance.js:1346, which counts every key in '
+      + '<code>marks</code>, against <code>rosterOf()</code>, :3127, the rows the grid draws.',
+    rederived: '',
+    read: read + ' attendance record' + (read === 1 ? '' : 's') + ' read'
+      + (noClass ? '; ' + noClass + ' name a class that is not in classes[] and were not read' : ''),
+    rows: rows,
+    count: rows.length + ' cell' + (rows.length === 1 ? '' : 's') + ' in '
+      + Object.keys(records).length + ' record' + (Object.keys(records).length === 1 ? '' : 's'),
+    head: ['Path', 'Class', 'Date', 'Student id', 'Code', 'On that roster', 'In students[]', 'On another roster'],
+    cells: function (x, forCopy) {
+      var who = forCopy ? x.id : x.id + (names[x.id] ? ' — ' + names[x.id] : '');
+      return [pathText(x.path), className(x.k), x.date + (x.exception ? ' (exception)' : ''), who, x.code,
+        x.onRoster ? 'yes' : 'no', x.isStudent ? 'yes' : 'no',
+        x.elsewhere.length ? x.elsewhere.map(className).join(', ') : 'no'];
+    },
+  };
+}
+
+/* ── 2. every count, both ways ────────────────────────────────────────────────────────────────
+   THIS ONE RE-DERIVES THE APP'S ARITHMETIC, and the card says so in amber. For each class and date
+   it takes the record recordFor() would (src/attendance.js:1194 — the FIRST match), skips one with
+   an `exception` (stateOf() :1225 reads it as didn't-meet, and the header then shows no counts),
+   and tallies it twice:
+     the header's way — countsFor() :1346, every key in `marks` through codeOf(), counting U, T,
+       A, E and D (STORED_MARKS :473 plus UNCONFIRMED :466) and ignoring any other code;
+     the grid's way   — readingOf() :1370 for every student rosterOf() :3127 draws: a cell's own
+       code where there is an entry, present where there is none.
+   A record where the two tallies differ is a screen that cannot be made to agree with itself. A
+   date with no record is not compared: the header leads with the state there, not a count. */
+var TALLIED = ['U', 'A', 'T', 'E', 'D'];
+function tallyText(t) {
+  var bits = TALLIED.filter(function (c) { return t[c]; }).map(function (c) { return t[c] + ' ' + c; });
+  return bits.length ? bits.join(' · ') : 'none';
+}
+function checkBothWays() {
+  var students = studentSet();
+  var seen = {}, rows = [], compared = 0, skipped = 0;
+  arr(doc.attendance).forEach(function (r, i) {
+    if (!r || typeof r !== 'object') return;
+    var at = r.classId + '|' + r.date;
+    if (seen[at]) return;                       /* recordFor() never reaches a second one */
+    seen[at] = true;
+    var k = classIndex(r.classId);
+    if (k < 0) return;
+    if (r.exception) { skipped++; return; }
+    compared++;
+    var marks = marksIn(r);
+    var header = {}, grid = {};
+    TALLIED.forEach(function (c) { header[c] = 0; grid[c] = 0; });
+    Object.keys(marks).forEach(function (id) {
+      var c = cellCode(marks[id]);
+      if (header.hasOwnProperty(c)) header[c] += 1;
+    });
+    var drawn = arr(doc.classes[k].roster).filter(function (id) { return students[id]; });
+    drawn.forEach(function (id) {
+      var c = marks[id] ? (cellCode(marks[id]) || 'P') : 'P';
+      if (grid.hasOwnProperty(c)) grid[c] += 1;
+    });
+    var differ = TALLIED.some(function (c) { return header[c] !== grid[c]; });
+    if (!differ) return;
+    rows.push({ path: ['attendance', i], i: i, k: k, date: shown(['attendance', i, 'date'], r.date),
+      roster: drawn.length, keys: Object.keys(marks).length, header: header, grid: grid });
+  });
+  return {
+    key: 'bothWays',
+    title: 'A day whose header count and grid disagree',
+    symptom: 'A class’s attendance count differs between the header’s tally and the grid’s',
+    repro: 'For the first attendance record of each class and date, the codes were tallied once over '
+      + 'every key under `marks` and once over the class’s `roster` (ids naming a student; no entry '
+      + 'reads present). The records below give two different tallies. Both tallies are this '
+      + 'tool’s re-derivation, not the app’s own figures.',
+    mirror: 'Tallies each class-and-date twice: over the keys in <code>marks</code>, as '
+      + '<code>countsFor()</code> does (src/attendance.js:1346), and over the drawn roster through '
+      + '<code>readingOf()</code> (:1370) and <code>rosterOf()</code> (:3127). First record per class '
+      + 'and date only, as <code>recordFor()</code> (:1194) reads.',
+    rederived: '<b>This check re-derives the app’s arithmetic.</b> It is a second copy of '
+      + '<code>countsFor()</code> and <code>readingOf()</code>, written in this page, not a call into '
+      + 'them. If src/attendance.js changes how it counts, this card can go on saying “agree” '
+      + 'about a screen that no longer does. Green here is evidence about the document as of '
+      + 'the 2026-10-04 reading of that file, not about the screen.',
+    read: compared + ' class-and-date record' + (compared === 1 ? '' : 's') + ' compared'
+      + (skipped ? '; ' + skipped + ' marked as an exception (didn’t meet) and not compared' : ''),
+    rows: rows,
+    count: rows.length + (rows.length === 1 ? ' record disagrees' : ' records disagree'),
+    head: ['Path', 'Class', 'Date', 'Roster rows', 'Mark keys', 'Header’s tally', 'Grid’s tally'],
+    cells: function (x) {
+      return [pathText(x.path), className(x.k), x.date, String(x.roster), String(x.keys),
+        tallyText(x.header), tallyText(x.grid)];
+    },
+  };
+}
+
+/* ── 3. two records for one class and date ───────────────────────────────────────────────────
+   A comparison of the document's own records against each other. Mirrors recordFor()
+   (src/attendance.js:1194), which filters and returns [0], so a second record for the same class
+   and date is unreachable from every screen. known-bugs § 2 names it as the second shape to read
+   if the first is ruled out — and notes it produces the opposite symptom. */
+function checkDuplicates() {
+  var groups = {}, order = [], read = 0;
+  arr(doc.attendance).forEach(function (r, i) {
+    if (!r || typeof r !== 'object') return;
+    read++;
+    var at = r.classId + '|' + r.date;
+    if (!groups[at]) { groups[at] = []; order.push(at); }
+    groups[at].push(i);
+  });
+  var rows = [];
+  order.forEach(function (at) {
+    var g = groups[at];
+    if (g.length < 2) return;
+    var r = doc.attendance[g[0]];
+    rows.push({ path: ['attendance', g[1]], k: classIndex(r.classId), date: shown(['attendance', g[0], 'date'], r.date),
+      at: g, marks: g.map(function (i) { return Object.keys(marksIn(doc.attendance[i])).length; }) });
+  });
+  return {
+    key: 'duplicates',
+    title: 'Two attendance records for one class and date',
+    symptom: 'More than one attendance record holds the same class and date',
+    repro: 'Every attendance record was grouped by `classId` and `date`. The groups below hold more '
+      + 'than one record.',
+    mirror: 'Compares the records against each other. Mirrors <code>recordFor()</code>, '
+      + 'src/attendance.js:1194, which returns the first match, so a later one is never read.',
+    rederived: '',
+    read: read + ' attendance record' + (read === 1 ? '' : 's') + ' read',
+    rows: rows,
+    count: rows.length + ' class-and-date' + (rows.length === 1 ? '' : 's') + ' with more than one record',
+    head: ['Paths', 'Class', 'Date', 'Mark keys in each'],
+    cells: function (x) {
+      return [x.at.map(function (i) { return pathText(['attendance', i]); }).join(', '), className(x.k),
+        x.date, x.marks.join(', ')];
+    },
+    paths: function (x) { return x.at.map(function (i) { return pathText(['attendance', i]); }); },
+  };
+}
+
+function runChecks() { return [checkOffRoster(), checkBothWays(), checkDuplicates()]; }
+
+/* The copied report: Markdown shaped for a plans/known-bugs.md row. The reproduction, the paths and
+   the counts — no mechanism and no suspect, because the row is a report and what the document holds
+   is all this page knows. Student IDS only: this is the text that ends up in a committed file. */
+function reportFor(c) {
+  var cols = c.head, lines = [];
+  lines.push('## N. ' + c.symptom);
+  lines.push('');
+  lines.push('**Found by** the Checks panel in `tools/data-viewer.html`, reading ' + source.where
+    + (source.rev !== undefined ? ' — `rev` ' + source.rev : '')
+    + (source.schemaVersion !== undefined ? ', `schemaVersion` ' + source.schemaVersion : '')
+    + ', on ' + new Date().toISOString().slice(0, 10) + '.');
+  lines.push('');
+  lines.push('**The reproduction.** ' + c.repro);
+  lines.push('');
+  lines.push('| ' + cols.join(' | ') + ' |');
+  lines.push('|' + cols.map(function () { return '---'; }).join('|') + '|');
+  c.rows.forEach(function (x) {
+    lines.push('| ' + c.cells(x, true).map(function (t) { return String(t).replace(/\|/g, '\\|'); }).join(' | ') + ' |');
+  });
+  lines.push('');
+  lines.push('**Counts.** ' + c.count + '; ' + c.read + '.');
+  lines.push('');
+  lines.push('**Not a diagnosis.** This row records what the document holds. How it came to hold it '
+    + 'has not been established. Student ids are opaque; the names are on the device that holds the document.');
+  return lines.join('\n');
+}
+function pathsFor(c) {
+  var out = [];
+  c.rows.forEach(function (x) { out = out.concat(c.paths ? c.paths(x) : [pathText(x.path)]); });
+  return out.join('\n');
+}
+
+function drawChecks() {
+  var host = el('checks');
+  el('checksBtn').textContent = checksOpen ? 'Hide checks' : 'Checks';
+  if (!doc) { host.hidden = true; return; }
+  var checks = runChecks();
+  var found = checks.filter(function (c) { return c.rows.length; }).length;
+  if (!checksOpen) {
+    el('checksBtn').textContent = 'Checks' + (found ? ' (' + found + ')' : '');
+    host.hidden = true;
+    return;
+  }
+  host.hidden = false;
+  var html = '<h2>Checks — ' + checks.length + ' questions, ' + found + ' with something to show</h2>'
+    + '<div class="opinion"><b>These are readings, not verdicts.</b> Each card is this tool’s opinion '
+    + 'about the shape of the document. A card reading “nothing found” means that one question found '
+    + 'nothing — not that the document is right; three questions are three questions somebody thought '
+    + 'to ask. A finding names a path and a count, and masked fields stay masked here too.</div>';
+  checks.forEach(function (c, n) {
+    var hit = c.rows.length > 0;
+    html += '<div class="find ' + (hit ? 'hit' : 'clear') + '" data-check="' + c.key + '">'
+      + '<h3>' + esc(c.title) + '<span class="n">' + (hit ? esc(c.count) : 'nothing found') + '</span></h3>'
+      + '<p class="mirror">' + c.mirror + '</p>'
+      + (c.rederived ? '<p class="rederived">' + c.rederived + '</p>' : '')
+      + '<p class="mirror">' + esc(c.read) + '.</p>';
+    if (hit) {
+      html += '<div class="scroll"><table><tr>' + c.head.map(function (h) { return '<th>' + esc(h) + '</th>'; }).join('')
+        + '</tr>';
+      c.rows.forEach(function (x) {
+        html += '<tr>' + c.cells(x, false).map(function (t) { return '<td>' + esc(t) + '</td>'; }).join('') + '</tr>';
+      });
+      html += '</table></div><div class="acts">'
+        + '<button class="btn plain small" data-copy="paths" data-n="' + n + '">Copy the paths</button>'
+        + '<button class="btn plain small" data-copy="report" data-n="' + n + '">Copy as a known-bugs row</button>'
+        + '</div>';
+    }
+    html += '</div>';
+  });
+  host.innerHTML = html;
+  var btns = host.querySelectorAll('[data-copy]');
+  for (var b = 0; b < btns.length; b++) {
+    btns[b].addEventListener('click', function () {
+      var c = checks[Number(this.dataset.n)];
+      copy(this.dataset.copy === 'paths' ? pathsFor(c) : reportFor(c), this);
+    });
+  }
+}
+
+el('checksBtn').addEventListener('click', function () { checksOpen = !checksOpen; drawChecks(); });
 
 /* ═══════════════════════════════ sources ═══════════════════════════════ */
 function readFile(file) {

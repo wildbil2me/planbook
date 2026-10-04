@@ -4764,7 +4764,7 @@ reword a test it had just failed.)*
 
 ## WO-1.50 — a document you can read is not a document anything checks
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** nothing · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-04 · **Size** M · **Depends on** nothing · **Blocks** nothing
 *(`tools/data-viewer.html` already exists and this builds on it — that is a starting point rather than
 a dependency, and it is stated here instead of in the field so the gate reads clean.)*
 **Closes roadmap** Phase 1 → *(no box. Tooling, not app — the same call WO-1.26 through WO-1.49 made.
@@ -4844,31 +4844,31 @@ picture makes none of them — and this row's whole risk is in them rather than 
   prints findings.
 
 **Acceptance**
-- [ ] The checking surface and the viewer share **one** loader, **one** masking predicate and **one**
+- [x] The checking surface and the viewer share **one** loader, **one** masking predicate and **one**
       id map — one page or one module — with which was chosen and why written at the line.
-- [ ] The off-roster-mark check and the both-ways count check each find `plans/known-bugs.md` § 2's
+- [x] The off-roster-mark check and the both-ways count check each find `plans/known-bugs.md` § 2's
       shape, driven against a document that carries it **and** one that does not, so neither is
       vacuous.
-- [ ] Every check names the source line whose behaviour it mirrors, and a check that re-derives app
+- [x] Every check names the source line whose behaviour it mirrors, and a check that re-derives app
       arithmetic says so where a reader of a green report will meet it — not only in a comment.
-- [ ] No write path anywhere in the file: no `put`, no `readwrite` transaction, no repair button. A
+- [x] No write path anywhere in the file: no `put`, no `readwrite` transaction, no repair button. A
       repair is a snippet the reader copies.
-- [ ] **No masked value reaches a finding body, a path list, or the copied report** — driven with
+- [x] **No masked value reaches a finding body, a path list, or the copied report** — driven with
       masking on, against a fixture carrying a distinctive string in `supports.medical`, over all
       four surfaces including the clipboard text.
-- [ ] `wo-sweep.mjs` gains **one check that the masking question has exactly one answer** in the
+- [x] `wo-sweep.mjs` gains **one check that the masking question has exactly one answer** in the
       viewer's file: no `'supports'` or `'guardians'` comparison, and no `JSON.stringify` replacer,
       anywhere outside the single predicate. **Proved against the 2026-09-06 defect restored on
       purpose** — the key-name replacer put back, the check red, the replacer reverted — because a
       grep that has never seen the thing it is for is a grep nobody has tested. `tools/README.md`'s
       check count moves with it, and § 22 is what fails if it does not.
-- [ ] The paragraph in `tools/data-viewer.html`'s header that says **nothing checks the masking** is
+- [x] The paragraph in `tools/data-viewer.html`'s header that says **nothing checks the masking** is
       replaced by what now does, in the same sitting. It was written on 2026-09-06 as the standing
       admission until this row landed, and leaving it beside its own fence is the `§ SHARED` failure
       `design/mockups/PROTOCOL.md` § 4 records.
-- [ ] The report copies out as Markdown shaped for a `plans/known-bugs.md` row: the reproduction, the
+- [x] The report copies out as Markdown shaped for a `plans/known-bugs.md` row: the reproduction, the
       paths and the counts, and no diagnosis.
-- [ ] `node tools/wo-sweep.mjs` is green and `node tools/wo-gate.mjs --audit` is green on a clean
+- [x] `node tools/wo-sweep.mjs` is green and `node tools/wo-gate.mjs --audit` is green on a clean
       tree, with `tools/README.md`'s row for the mockup replaced by one for the built tool.
 
 **Not in scope**

@@ -13,6 +13,22 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The data viewer checks the attendance it shows — 2026-10-04
+
+WO-1.50. Tooling only; nothing under `src/` moved and the page is not in `SHELL`.
+
+- **Not user-visible.** `tools/data-viewer.html` has a Checks panel that runs on every load and asks
+  three questions about attendance, each with a report behind it in `plans/known-bugs.md` § 2: marks
+  keyed to a student not on the class's roster, a day whose two tallies disagree, and two records for
+  one class and date. A finding names paths and counts, and copies out as a known-bugs row with
+  student ids and never names. It never writes and offers no repair, and every value it prints goes
+  through the viewer's one `masked()`.
+- **`wo-sweep.mjs` § 29** holds that `masked()` is the only place the page asks what is masked, and was
+  proved against the 2026-09-06 key-name replacer put back on purpose. It cannot see a future reader
+  that prints values without asking at all, and its banner says so.
+- **Shell cache bumped to v165** in its own commit beforehand, for WO-3.40's and WO-3.44's comment
+  edits, so § 9 is green again.
+
 ### The sweep can be told a shell change was comments only — 2026-10-04
 
 WO-1.60. Tooling only; no shell cache bump, and none owed.

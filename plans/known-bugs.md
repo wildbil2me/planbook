@@ -275,10 +275,14 @@ first.
 [`tools/data-viewer.html`](../tools/data-viewer.html), search the class's `attendance` record for
 that date, and compare the keys under `marks` against that class's `roster` — the viewer annotates
 both with student names, so this is a reading rather than an id hunt. **A key under `marks` that is
-absent from `roster` is this row confirmed.** If every key is on the roster, the suspect is wrong and
+absent from `roster` is this row confirmed.** *(Since 2026-10-04 the viewer makes that comparison itself: its **Checks** panel runs on
+every load, names any such key by path, tallies each day both ways, looks for a second record for
+one class and date, and copies a finding out as a row shaped for this file. It reports what the
+document holds and diagnoses nothing, so it settles the suspect only once it has been run against
+the document that produced the report.)* If every key is on the roster, the suspect is wrong and
 should be struck rather than deleted, and the second candidate to read is a duplicate `attendance`
 record for the same class and date — `recordFor()` at
-[attendance.js:1167](../src/attendance.js#L1167) returns `[0]`, so a second record is unreachable —
+[attendance.js:1194](../src/attendance.js#L1194) returns `[0]`, so a second record is unreachable —
 though note that shape produces the **opposite** symptom, marks that are never counted rather than a
 count with no marks.
 
