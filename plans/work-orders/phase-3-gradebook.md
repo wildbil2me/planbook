@@ -3159,9 +3159,17 @@ points-mode wording to both comments and, by its brief, left the visibility clai
   in the class it came from would still destroy it, under a dialog naming the wrong class.
 - **`src/shell.js` ~4512** says a misfiled copy *"is invisible on screen because both look identical
   on the list"*. Read it and decide whether it means the same thing. Fix it only if it does.
+- **`src/detail.js` ~963 stops saying the banner names the weights' total.** *Added 2026-10-03,
+  owner-directed, out of WO-3.41's verdict.* The comment above the breakdown ends *"The banner above
+  says what the weights come to and where to fix it."* Since WO-3.41, a class with no categories gets
+  its own banner sentence, which names no total. Say the banner explains why there is no grade:
+  either the weights' total, or that the class has no categories yet. Keep the rest of the comment;
+  its reason for drawing no breakdown still holds.
 
 **Acceptance**
 - [ ] Neither comment in `src/assignments.js` says a misfiled assignment is invisible on the list.
+- [ ] The comment above the breakdown in `src/detail.js` no longer says the banner always names the
+      weights' total.
 - [ ] No line outside a comment moves: `git diff` touches comment lines only, and `sw.js`'s `CACHE`
       is not bumped, because a comment changes nothing a device receives.
 
