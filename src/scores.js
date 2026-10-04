@@ -380,8 +380,15 @@ export function formatPercent(p) {
   figure the engine never produces for anybody, and the SIS check this exists for is made student
   by student. The figure itself is always the engine's (`figureOf` below is a call into it at both
   sites); this function only averages what it is handed.
+
+  EXPORTED AT WO-3.31, for the categories editor's mode confirmation, which prints the class average
+  under each grading mode and has to print THIS figure — the work order's words are "do not write a
+  second mean". The import runs one way: src/grading-mode.js reads this, gridOrder() and
+  formatPercent() from here, and nothing in this file knows that one exists. The confirmation hands
+  in a class COPY carrying the other mode, so the figure it prints for that side is the one this
+  screen will draw after the switch.
 */
-function classAverage(students, figureOf) {
+export function classAverage(students, figureOf) {
   const grades = students.map(figureOf).filter((p) => p !== null && p !== undefined);
   if (!grades.length) return null;
   return grades.reduce((sum, p) => sum + p, 0) / grades.length;

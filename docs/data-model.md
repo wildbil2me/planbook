@@ -71,6 +71,9 @@ nag, and nothing noticed until a verifier read the line for another reason.
     //                           // weighted DELETES the key rather than writing "weighted" — the
     //                           // thresholdsOf() rule. Never seeded, so every earlier backup restores.
     //                           // Read it through gradingModeOf() in src/grade-engine.js.
+    //                           // Written by one control only: the categories editor's mode pills
+    //                           // (WO-3.31, src/grading-mode.js), through a confirmation, in one
+    //                           // update(). The weights are never touched by the switch.
     "letterScale": null,      // null = use the document default below
     "roster": ["s_…"]
     // Copy (WO-1.22, src/classes.js's copyClass()): terms and categories come across, each with a

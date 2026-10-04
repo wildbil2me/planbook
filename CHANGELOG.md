@@ -13,6 +13,22 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A class can be switched to total points from its categories editor — 2026-10-04
+
+WO-3.31. Shell cache `v161`.
+
+- **The categories editor has two buttons, *Weighted categories* and *Total points*.** Tapping the
+  one the class isn't on opens a confirmation first. It shows the class average both ways and lists
+  every student whose letter would change in the open term. It also adds a line for each other term
+  where letters would change, because that term's letters may already be in the SIS. Cancel changes
+  nothing.
+- **In points mode the weights are greyed out, never cleared.** Each category shows its share of
+  the points assigned so far instead, including a *no category* row when uncategorized work holds
+  points. Switching back brings every weight back exactly as typed.
+- **A weighted class reads exactly as before.** The setting is stored only for a class on points.
+- **Known gap:** removing a category in a points class still advises setting its weight to 0.
+  WO-3.43 is booked to fix that.
+
 ### The score grid and grade sheet no longer tell a screen reader a bonus scored 0 is nothing graded — 2026-10-04
 
 WO-3.42. Shell cache `v160`.

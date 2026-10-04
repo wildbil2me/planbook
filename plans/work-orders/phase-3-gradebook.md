@@ -2700,7 +2700,7 @@ returns.** Both modes rest on it, and WO-3.28's frozen column reads it.
 
 ## WO-3.31 — the categories editor offers total points
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.30 — the engine and the `gradingMode` key this writes; WO-3.34 — the screens a points class is read on; WO-3.35 — the CSV and the extra-credit-only student; WO-3.36 — the score grid and the grade sheet; WO-3.37 — the quiet list's sentence; WO-3.38 — a bonus scored 0
+**Ship** — · **Status** ✅ DONE — 2026-10-04 · **Size** M · **Depends on** WO-3.30 — the engine and the `gradingMode` key this writes; WO-3.34 — the screens a points class is read on; WO-3.35 — the CSV and the extra-credit-only student; WO-3.36 — the score grid and the grade sheet; WO-3.37 — the quiet list's sentence; WO-3.38 — a bonus scored 0
 **Closes roadmap** *(no box. Owner-requested, 2026-10-02.)*
 
 **Booked 2026-10-02** beside [WO-3.30](#wo-330--a-class-can-be-graded-on-total-points), cut along the
@@ -2747,22 +2747,25 @@ separate so the engine half closes headless without waiting on an iPad.
   skips the drawing.
 
 **Acceptance**
-- [ ] Switching a class to points and back leaves every weight byte-identical to what was typed, and
+- [x] Switching a class to points and back leaves every weight byte-identical to what was typed, and
       leaves no `gradingMode` key behind.
-- [ ] The confirmation's before and after figures equal `classGrade()` under each mode, and the
+- [x] The confirmation's before and after figures equal `classGrade()` under each mode, and the
       students it lists are exactly those whose `letterFromPercentage()` differs between them, a
       letter on one side and no grade on the other counting as a difference.
       **Mutation-proved**: a list built from percentages instead of letters goes red.
-- [ ] The class averages equal the score grid's own class average for the same class, term and mode.
-- [ ] On a fixture class with two terms, each term other than the open one gets a line exactly when
+- [x] The class averages equal the score grid's own class average for the same class, term and mode.
+- [x] On a fixture class with two terms, each term other than the open one gets a line exactly when
       some letter in it changes, and the count on it is right.
-- [ ] Cancelling the confirmation writes nothing: `rev` unchanged after `flush()`.
-- [ ] In points mode the weight inputs are disabled, no weights-total line is drawn, the editor's
+- [x] Cancelling the confirmation writes nothing: `rev` unchanged after `flush()`.
+- [x] In points mode the weight inputs are disabled, no weights-total line is drawn, the editor's
       title and opening sentence speak of points, and each category's share equals `pointsShare()`
       for it, the *no category* row included. A term with no points draws words, not *0%*.
-- [ ] The mode control and the confirmation's buttons measure ≥44px under the coarse pointer.
-- [ ] 👤 On the laptop and on the iPad, switching a real class to points and back reads clearly: what
+- [x] The mode control and the confirmation's buttons measure ≥44px under the coarse pointer.
+- [x] 👤 On the laptop and on the iPad, switching a real class to points and back reads clearly: what
       the confirmation says would change, and that the weights come back.
+      *(The owner, 2026-10-04, on v161. The same sitting found the remove-category confirm still
+      speaking weights in a points class, outside this row's Deliverables, and booked it as
+      [WO-3.43](#wo-343--removing-a-category-moves-its-work-to-no-category).)*
 
 **Traps** — **Do not compute the share on the screen.** `pointsShare()` is the answer. **Do not put
 the mode in `localStorage`.** It is a grading decision about a class, so it lives in the document and
@@ -3296,3 +3299,87 @@ WO-3.38's ruling (b) holds. Options (b) and (c) are declined.
 WO-3.38. **The quiet list is not this row's**: the owner ruled on 2026-10-03 that `src/signals.js`
 keeps its sentence for this case. **A second copy of `gradedPieces()` is the defect this row
 exists to avoid**, so under (a) `src/detail.js` must import the lifted function rather than keep its own.
+
+---
+
+## WO-3.43 — removing a category moves its work to *no category*
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.31 — the control that makes a points class reachable, and the mode the dialog now has to speak
+**Closes roadmap** *(no box. Owner-directed, 2026-10-04.)*
+
+**Booked 2026-10-04**, owner-directed, out of WO-3.31's 👤 reading. **Reachable today**: since
+WO-3.31 a teacher can put a class on total points, and the remove-category confirm in that class
+reads, word for word:
+
+> Removing "Essays" from English III (A) takes the work filed under it as well. This cannot be
+> undone, and a backup file is the only way back. If you only want it to stop counting, set its
+> weight to 0 instead — the assignments stay and the grade stops using them.
+>
+> 1 assignment and 5 scores · The remaining categories keep the weights they have, so this class
+> totals 50% until you set them.
+
+In a points class the weight field is disabled, a weight of 0 does not stop a category counting, and
+there is no weight total. The verifier predicted it and the owner met it on the laptop.
+
+**The ruling — the owner, 2026-10-04.** Removing a category **no longer destroys its work, in either
+mode.** The assignments and their scores stay, and the work goes to *no category*, which already
+exists and already means the right thing in each mode (`docs/data-model.md`, the 2026-10-02 ruling):
+- **Weighted:** the work counts for nothing until it is filed again, and the remaining categories keep
+  the weights they have, so the class totals less than 100% and its grades are provisional until the
+  teacher sets them. *"That is what I thought we had set up."* The weights line in the dialog stays.
+- **Total points:** the work still counts. It just isn't categorized, so it shows in the *no
+  category* row.
+
+**This reverses WO-3.1's third Deliverable** — "removing a category warns about the assignments it
+takes with it" — and the long comment above `removeCategory()` in `src/categories.js` that argues the
+cascade. That comment's case against leaving work behind was that an orphan is **silent**. It no
+longer is: the assignment list draws a *Not in a category* group (red in a weighted class, amber in a
+points class, WO-3.36), the score grid and grade sheet name *no category*, and the points engine
+counts it as a row. Rewrite the comment to say so, rather than deleting it.
+
+**Deliverables**
+- **`applyRemoval()` deletes the category and nothing else.** No assignment and no score column goes.
+  Each affected assignment in this class has its `categoryId` cleared, so a backup never carries an
+  id for a category that no longer exists. A `categoryId` that matches no category in its class
+  already reads as *no category* everywhere, so the clearing is tidiness, not a change in meaning.
+- **The confirm speaks the class's mode, and stops being a warning.** There is still a dialog when
+  work is filed under the category, because the grade changes. It says where the work goes and what
+  that does to the grade:
+  - weighted: the work stops counting until it is filed under another category, and the remaining
+    weights total N% until she sets them;
+  - points: the work keeps counting, under *no category*, and grades don't change.
+  The "cannot be undone, a backup file is the only way back" sentence, the "set its weight to 0"
+  advice and the red danger styling go, in both modes. The button keeps naming the category.
+- **The two announcements in `src/categories.js` that speak weights in a points class** say the
+  points version too: the weights-total announcement in `renderTotal()` (~290, *"…not 100. Grades are
+  provisional."*), and the add-category one (~437, *"…at 0 percent."*). The removal announcement says
+  where the work went rather than counting what was destroyed.
+- **The "Not in a category" notice on the assignment list** keeps its wording, but check it now reads
+  right for work that arrived by removal. Its comment names the two ways in; removal is a third.
+- **`docs/data-model.md`** loses any sentence saying removal cascades, and the *no category*
+  paragraph names removal as the usual way in.
+
+**Acceptance**
+- [ ] Removing a category that holds work leaves every one of its assignments in the document with
+      `categoryId` cleared, and every score column for them byte-identical. Nothing in another class,
+      and no other category's work, moves. **Mutation-proved**: a removal that still deletes the
+      assignments goes red.
+- [ ] In a weighted fixture, after the removal the class's `classGrade()` gives that work no weight,
+      and the weights-total line reads the remaining total. The dialog's weights sentence names that
+      same total.
+- [ ] In a points fixture, every student's `classGrade()` percentage is identical before and after
+      the removal, and the work appears in the *no category* row.
+- [ ] The confirm's text in a points class contains no *weight*, *0%* or *backup*, and in a weighted
+      class it contains no *backup* and no *set its weight to 0*.
+- [ ] The two announcements read the points wording in a points class, and the weighted wording,
+      byte-identical to today's, in a weighted class.
+- [ ] 👤 On the laptop and the iPad, removing a category in each mode reads clearly, and the work is
+      found again under *Not in a category* on the assignment list.
+
+**Traps** — **Do not import the grade engine into `src/categories.js`.** `gradingModeOf()` lives in
+`src/grade-engine.js`, and that file imports this one, so the reverse import closes a loop. Read
+`cls.gradingMode === 'points'` directly, or move the sentences into `src/grading-mode.js`, which may
+import both, and call it from `src/shell.js` as WO-3.31 did. **Do not keep a "delete the work too"
+option.** The owner ruled for one behaviour, and a second button is how the destructive path comes
+back. **Do not compute a share or a total on the screen.** The weights total is `weightTotal()`, which
+the dialog already uses.

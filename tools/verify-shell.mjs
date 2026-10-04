@@ -120,6 +120,7 @@ import { run as attendanceHistory } from './verify/attendance-history.mjs';
 import { run as gradeDetail } from './verify/grade-detail.mjs';
 import { run as gradeSheet } from './verify/grade-sheet.mjs';
 import { run as pointsGrade } from './verify/points-grade.mjs';
+import { run as gradingMode } from './verify/grading-mode.mjs';
 import { run as pastDue } from './verify/past-due.mjs';
 import { run as accommodationPrompts } from './verify/accommodation-prompts.mjs';
 import { run as printGate } from './verify/print-gate.mjs';
@@ -342,6 +343,12 @@ const BROWSER_SECTIONS = [
      to prove the mode survives, takes the class back out at its foot and leaves the page at 1280x900
      with touch off, the state grade-detail.mjs leaves it in. */
   { file: 'verify/points-grade.mjs', run: pointsGrade },
+  /* WO-3.31, straight after the section that plants a points class: this one switches a class there
+     and back through the categories editor's own control. It plants three classes of its own, reads
+     the score grid's average on both sides of a switch, reloads once for the coarse pointer, takes
+     its classes back out at its foot and hands the page back at 1280x900 with touch off, the state
+     points-grade.mjs leaves it in. */
+  { file: 'verify/grading-mode.mjs', run: gradingMode },
   { file: 'verify/past-due.mjs', run: pastDue },
   { file: 'verify/accommodation-prompts.mjs', run: accommodationPrompts },
   { file: 'verify/print-gate.mjs', run: printGate },

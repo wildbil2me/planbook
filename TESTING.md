@@ -9727,6 +9727,77 @@ prints only the standing prose mentions.
 
 **Full run on the delivered tree:** `1690 checks · 1690 passed · 0 failed · 0 skipped`, 53,826 lines, 31.8 lines per check, 748s, exit 0, 2026-10-04 on the real clock. `node tools/wo-sweep.mjs`: `46 checks · 43 passed · 0 failed · 3 to review`, exit 0, the three standing reviews.
 
+### WO-3.31 — the categories editor offers total points
+
+**What this changes.** The categories editor gets a mode control — two pills, *Weighted categories*
+and *Total points*, under the opening sentence — and neither one switches anything: the one that is
+not the class's mode opens `#gradingModeModal`, which shows the class average under each mode in the
+open term, every student whose **letter** changes there, and one line per other term where any letter
+would. Its confirm writes `gradingMode: "points"` or deletes the key in one `update()`; Cancel writes
+nothing. In points mode the editor's title reads *Categories & points*, its opening sentence and both
+hints speak of points, the weight fields are disabled with their numbers kept, the weights-total line
+is hidden, and each category's row carries its share of the points assigned so far, from
+`pointsShare()`, with a dashed *no category* row when loose work holds points and *No work assigned
+yet* while the term holds none. All of that lives in a new `src/grading-mode.js`, which imports the
+engine; `src/categories.js` is untouched and imports none of it, and `src/shell.js` calls the new
+module after opening the editor and at the head of `afterCategoryChange()`. The term is the class's
+open term, `getOpenTermId()`, resolved in `src/shell.js`. `classAverage()` is exported from
+`src/scores.js` rather than copied. `CACHE` is `planbook-shell-v161`, and `./src/grading-mode.js` is in
+`SHELL`. **No mockup was drawn**: the control is the letter-scale panel's pill row, a share is one line
+inside a row that already wraps, and the confirmation is the removal confirm's grammar with a neutral
+list — the work order's own hatch, stated in `src/shell.css` at the new section.
+
+Every line below is `tools/verify/grading-mode.mjs`, a new section after `points-grade.mjs`, on three
+planted classes with their own A 90 · B 80 · C 70 · D 60 · F 0 scale. The figures are hand-computed in
+the section's header and held against the engine asked directly, never against the dialog's own
+answer.
+
+- [x] Switching a class to points and back leaves every weight byte-identical to what was typed, and
+      leaves no `gradingMode` key behind. Two round trips through the real pills and confirm button:
+      the 50/50 class (with a category added on points, whose stored weight 0 survives too) and the
+      40/35 class. `JSON.stringify(cls.categories)` is equal before and after;
+      `hasOwnProperty('gradingMode')` is false after. **Mutation-proved** (M3).
+- [x] The confirmation's before and after figures equal `classGrade()` under each mode, and the
+      students it lists are exactly those whose `letterFromPercentage()` differs. 82.50% / 84.55% by
+      hand and from the engine; Abbot *C → B* and Dunn *B → C* listed, Brook — whose percentage moves
+      from 92.5 to 94.55 inside her A — not listed. A no-grade side counts: the 40/35 class lists
+      *no grade → A*, *no grade → C* on the way to points and *A → no grade*, *C → no grade* on the way
+      back, with the sentence that every letter goes. **Mutation-proved** (M1).
+- [x] The class averages equal the score grid's own: the grid's summary read *82.50%* on weighted
+      before the switch and *84.55%* on points after it, same class, same term, and those are the two
+      figures the dialog printed.
+- [x] On a fixture class with two terms, the other term gets a line exactly when a letter in it
+      changes, and the count is right: *Q1: 2 letters would change.* with Q2 open; with Abbot's and
+      Dunn's Q1 scores taken out (Brook A either way) the block and its label are not drawn.
+- [x] Cancelling writes nothing: `rev` read after `flush()` is the same before and after, with no key
+      and the categories JSON unchanged. **Mutation-proved** (M2).
+- [x] In points mode the weight inputs are disabled, no weights-total line is drawn, the title and
+      opening sentence speak of points, and each share equals `pointsShare()` — Tests 83.33%,
+      Homework 8.33% and the *no category* row 8.33%. A points term holding no work reads
+      *Tests — No work assigned yet* and the list has no "0%" in it. **Mutation-proved** (M4).
+- [x] The two pills and the confirmation's three buttons (confirm, Cancel, the close) measure ≥ 44 × 44
+      under a pointer that `matchMedia('(pointer: coarse)')` reports coarse: 146×44 and 98×44 for the
+      pills, 150×44, 67×44 and 44×44 for the buttons.
+- [x] 👤 On the laptop and on the iPad, switching a real class to points and back reads clearly.
+      Read by the owner on 2026-10-04 on `v161`: the confirmation, Cancel, both switches and the
+      weights coming back. The remove-category confirm, tapped in points mode in the same sitting,
+      still advises a weight of 0 — not this row's screen; booked as WO-3.43.
+
+**Mutation round.** A scratch copy of the entry harness holding only `grading-mode.mjs` (19 checks,
+all green on the delivered tree) was run once per mutation, each carrying a `MUTATION` marker in
+`src/grading-mode.js`, which was restored from a copy after each; its SHA-256 matched the
+pre-mutation bytes every time. The scratch harness is deleted; `grep -rn MUTATION` over `src/` prints
+only `src/shell.js`'s standing prose.
+
+| Mutation | Result |
+|---|---|
+| M1 · the changed list built from percentages (`before.percentage !== after.percentage` in `letterChanges()`) — the work order's own | **3 red** (`19 checks · 16 passed · 3 failed`): Brook listed as *A → A*; Q1 read *3 letters*; the quiet-term check read *Q1: 1 letter* |
+| M2 · Cancel writes (`update(() => {})` in `cancelModeChange()`) | **1 red**: the Cancel check, `rev` 2 → 3 |
+| M3 · the way back writes `"weighted"` instead of deleting the key | **2 red**: both round-trip checks, `hasKey: true` |
+| M4 · the *no category* row dropped from the share lines | **2 red**: the share check and the added-category check (3 share lines where 4 were owed) |
+
+**Full run on the delivered tree:** `1709 checks · 1709 passed · 0 failed · 0 skipped`, 54,350 lines, 31.8 lines per check, 721s, exit 0, 2026-10-04 on the real clock. `node tools/wo-sweep.mjs`: `46 checks · 42 passed · 0 failed · 4 to review`, exit 0 — the three standing reviews and one for this row's two new container classes (`.category-loose`, `.mode-change-facts`) having no coarse-block rule, which is correct: neither is a touch target.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

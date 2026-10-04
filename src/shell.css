@@ -990,6 +990,48 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 }
 .modal-body .category-total.warn { border-color: #e67e22; background: #fef5ea; color: #7a4f10; }
 
+/* ── HOW A CLASS IS GRADED (WO-3.31) ── */
+/* The mode control, the greyed weight, the share line, and what the confirmation lists. Two of the
+   four are components this sheet already owns — the control is `.pill`s in `.scale-subjects`' shape
+   (a short list whose consequence is drawn right below it, and the reason that row gives against a
+   <select> on an iPad holds here too), and the confirmation's amber line is `.category-total.warn`
+   itself — so what is written out here is only what has no counterpart.
+
+   NO MOCKUP WAS DRAWN for this, and that is the work order's own hatch rather than a skipped step:
+   the editor keeps its shape. The pills are a row the letter-scale panel already draws, a share is
+   one line of text inside a row that already wraps, and the confirmation is the removal confirm's
+   grammar with a neutral list where that one has the red. */
+.grading-modes { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Greyed, never cleared: the number stays as typed and readable, and the field says by its wash that
+   it cannot be typed into. `#f0f2f5` is the inset grey the screen switcher sits on
+   (src/assignments.css, `.screen-nav`); `#a0aab8` is what `.cat-chip.zero` prints a weight that
+   counts for nothing in — the same fact, said about a weight, one screen over. */
+.category-weight:disabled {
+  background: #f0f2f5; border-color: #eef0f4; color: #a0aab8; cursor: not-allowed;
+}
+.category-weight:disabled + .category-weight-unit { color: #c4ccd6; }
+/* One line under the row's controls — `flex-basis: 100%` puts it on a line of its own inside a row
+   that already wraps — in the secondary grey `.category-weight-unit` uses, because it is a reading of
+   the category rather than a thing to change. */
+.category-share { flex: 1 1 100%; font-size: 12px; font-weight: 600; color: #6b7a8d; line-height: 1.5; }
+/* The no-category row: the share line alone, in `.category-row`'s box so it reads as one of the
+   list, dashed because it is not a category anybody made — the border `.cat-chip.zero` uses for a
+   category that is there without being a choice the grade is acting on. Its own class rather than
+   `.category-row`, because src/categories.js and its checks read every `.category-row` as a row of
+   controls with a name field in it, and this one has none. */
+.category-loose {
+  padding: 8px 10px; border-radius: 8px;
+  border: 1.5px dashed #e0e4ea; background: #f8f9fb;
+}
+/* What a mode change would do. `.class-delete-facts`' shape without its red: nothing here destroys
+   anything, and the danger wash would say it did. */
+.mode-change-facts {
+  display: flex; flex-direction: column; gap: 4px;
+  margin-top: 4px; padding: 10px 12px; border-radius: 8px;
+  border: 1.5px solid #eef0f4; background: #f8f9fb;
+}
+.mode-change-line { font-size: 12px; line-height: 1.5; color: #1a1a2e; }
+
 /* ── LETTER GRADES (WO-3.2) ── */
 /* The contents of #letterScaleModal, plus the one door to it in the class manager. Almost
    everything in that panel is a component this sheet already owns — `.class-action-btn` for every
@@ -2060,6 +2102,14 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
      and a 44px floor on a label is 44px of a dialog spent on something nobody taps. */
   .class-row-warn { font-size: 11px; }
   .modal-body .category-total { font-size: 13px; padding: 12px 14px; }
+  /* How a class is graded (WO-3.31), in the same pass that adds it. The two pills take their 44px
+     height from `.pill` above and are named here anyway, with a 44px width, for the reason
+     `.scale-subjects .pill` is: every control appears in this block by its own name. The
+     confirmation's two buttons are `.class-action-btn`, whose floor is above. The rest is text. */
+  .grading-modes { gap: 8px; }
+  .grading-modes .pill { min-height: 44px; min-width: 44px; }
+  .category-share { font-size: 13px; }
+  .mode-change-line { font-size: 13px; }
   /* Letter grades (WO-3.2), in the same pass that adds them — there is no later one. The buttons in
      that panel are `.class-action-btn` and the subject row is `.pill`, both of which have their own
      floor above; what is named here is the two fields, the five containers and the three pieces of

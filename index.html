@@ -2633,7 +2633,16 @@
 
      And it offers 0% as the alternative to removal, because "this category does not count this
      term" and "destroy the work filed under it" are two different intentions and only one of them
-     is reversible. -->
+     is reversible.
+
+     THE PANEL SPEAKS THE CLASS'S MODE (WO-3.31). Every sentence below that is only true of one
+     grading mode is a block carrying `data-category-mode-text`, and src/grading-mode.js hides the
+     block that is not this class's, the shape #scoresView's help takes (WO-3.39) — so the weighted
+     panel reads word for word as WO-3.1 wrote it, and a points class is never told its weights must
+     total 100 or that 0% stops a category counting. The title is written by the same module. The two
+     pills under the opening sentence are the mode control; neither one switches anything — each opens
+     #gradingModeModal, which says what would change first, and the class's current mode is the pill
+     that is on. -->
 <div class="modal-overlay hidden" id="categoriesModal">
   <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="categoriesModalTitle">
     <div class="modal-header">
@@ -2642,10 +2651,18 @@
     </div>
     <div class="modal-body">
       <p>
-        What <strong id="categoriesClassName"></strong> is graded on, and how much each part counts.
+        What <strong id="categoriesClassName"></strong> is graded on<span data-category-mode-text="weighted">, and how much each part counts.
         Every class has its own set, so one class weighted 40/35/25 and another weighted evenly is
-        an ordinary thing here — Planbook never makes them match.
+        an ordinary thing here — Planbook never makes them match.</span><span class="hidden" data-category-mode-text="points">. It is
+        graded on total points: every point earned over every point possible, so each category
+        counts for exactly as many points as the work filed under it is worth, and no more.</span>
       </p>
+
+      <div class="modal-section-label">How this class is graded</div>
+      <div class="grading-modes" role="group" aria-label="How this class is graded">
+        <button class="pill active" type="button" data-grading-mode="weighted" aria-pressed="true">Weighted categories</button>
+        <button class="pill" type="button" data-grading-mode="points" aria-pressed="false" aria-haspopup="dialog">Total points</button>
+      </div>
 
       <div class="modal-section-label">Categories in this class</div>
       <div class="category-list" id="categoryList"></div>
@@ -2656,18 +2673,59 @@
       <div class="category-actions">
         <button class="class-action-btn" type="button" data-category-add>Add a category</button>
       </div>
-      <p class="class-hint">
+      <p class="class-hint" data-category-mode-text="weighted">
         Weights are percentages of the final grade and want to add up to 100. They do not have to
         right now — nothing is blocked while they are wrong, and Planbook will say what they come
         to until they add up. A category with no work in it yet doesn’t drag the grade down: its
         weight spreads across the categories that do have work, so an empty one costs nothing.
       </p>
-      <p class="class-hint">
+      <p class="class-hint" data-category-mode-text="weighted">
         To stop a category counting without losing anything, set its weight to 0 — the assignments
         stay and the grade stops using them. Removing is the one that takes the work with it, which
         is why it counts what goes first.
       </p>
+      <p class="class-hint hidden" data-category-mode-text="points">
+        The share beside each category is its part of the points assigned in
+        <span id="categoryShareTerm">this term</span> so far, and it moves as work is assigned —
+        nobody sets it. The weights are kept exactly as you typed them, greyed out, and they count
+        again if this class goes back to weighted categories.
+      </p>
+      <p class="class-hint hidden" data-category-mode-text="points">
+        Removing a category takes the work filed under it with it, which is why it counts what goes
+        first.
+      </p>
       <p class="class-error hidden" id="categoryError"></p>
+    </div>
+  </div>
+</div>
+
+<!-- How a class is graded, confirmed (WO-3.31). Opened over the categories editor by the pill that
+     is not the class's current mode — src/modal.js keeps a stack, so Escape closes this and leaves
+     the editor open, having written nothing. Never a toggle: a mode change moves every grade in the
+     class at once, so this says what would change before it does — the class average under each
+     mode, every student in the open term whose LETTER changes (the letter is what goes into the
+     SIS), and one line per other term where any letter would. Every element below is filled by
+     src/grading-mode.js from a preview computed on a copy of the class; nothing is written until
+     the confirm button, and then one update() writes the key or deletes it. -->
+<div class="modal-overlay hidden" id="gradingModeModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="gradingModeTitle">
+    <div class="modal-header">
+      <h2 id="gradingModeTitle">Change how this class is graded?</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="gradingModeLead"></p>
+      <p class="category-total warn hidden" id="gradingModeWarn"></p>
+      <div class="modal-section-label" id="gradingModeAverageLabel">Class average</div>
+      <div class="mode-change-facts" id="gradingModeAverages"></div>
+      <div class="modal-section-label" id="gradingModeLettersLabel">Letters that change</div>
+      <div class="mode-change-facts" id="gradingModeLetters"></div>
+      <div class="modal-section-label hidden" id="gradingModeOtherLabel">Other terms in this class</div>
+      <div class="mode-change-facts hidden" id="gradingModeOtherTerms"></div>
+      <div class="modal-actions">
+        <button class="class-action-btn primary" id="gradingModeConfirmBtn" data-grading-mode-confirm>Change</button>
+        <button class="class-action-btn" data-grading-mode-cancel>Cancel</button>
+      </div>
     </div>
   </div>
 </div>

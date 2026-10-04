@@ -101,6 +101,12 @@
       data-category-remove-cancel     abandons it, having written nothing
       data-category-field="name|weight" + data-category-id: an input; edits that field as it is
                                       typed, and redraws the running weights total beside it
+      data-grading-mode="weighted|points" the categories editor's mode control (WO-3.31). The pill
+                                      that is the class's current mode does nothing; the other one
+                                      opens the confirmation, which writes nothing until its button
+      data-grading-mode-confirm       carries out the switch the confirmation describes — one
+                                      update() writing the key, or deleting it on the way back
+      data-grading-mode-cancel        abandons it, having written nothing
       data-letter-scale               opens the letter-grade bands. One door, and it is document-
                                       level: the per-class override is reached from the subject row
                                       inside that panel, because the class-manager row is full
@@ -764,6 +770,12 @@ import * as classes from './classes.js';
    handed down as an id. */
 import * as categories from './categories.js';
 import * as gradeEngine from './grade-engine.js';
+/* WO-3.31. How a class is graded, said over the categories editor: the mode control, each
+   category's share of the points, and the confirmation. Its own module because all three need the
+   grade engine, and src/grade-engine.js imports src/categories.js — the editor importing the engine
+   back would close a loop. So this file opens the editor, then hands the same class id and the
+   class's OPEN term to this module, and chains its repaint after every category change. */
+import * as gradingMode from './grading-mode.js';
 /* WO-3.2. Its own module for the reason src/teacher.js declines to host it — a setting about the
    gradebook rather than about the teacher — and a leaf like categories.js: it imports the store, the
    modal system and the live region, and nothing imports it back. */
@@ -1169,6 +1181,11 @@ function showClassScreen(name) {
   decides where the teacher should be standing, which is not a thing typing a weight should do.
 */
 function afterCategoryChange() {
+  /* THE EDITOR ITSELF FIRST (WO-3.31): src/categories.js has just redrawn its rows as a weighted
+     editor draws them, and src/grading-mode.js says the class's mode over them — the weights greyed
+     and the shares drawn in a points class — before anything paints. See that file's header for
+     why it is a second pass and why it is chained from here. */
+  gradingMode.repaintEditor();
   classes.refreshClassList();
   /* AND THE ASSIGNMENT LIST, WHEN THAT IS THE SCREEN BEHIND THE PANEL (WO-3.3). It is grouped by
      category, it prints each category's weight in a chip, and removing a category destroys the
@@ -2540,9 +2557,28 @@ document.addEventListener('click', (e) => {
      question this file answers for every other module too. */
   const categoryManage = e.target.closest('[data-category-manage]');
   if (categoryManage) {
-    categories.openCategoryEditor(categoryManage.getAttribute('data-category-manage')
-      || classes.getSelectedClassId(), categoryManage);
+    const categoryClassId = categoryManage.getAttribute('data-category-manage')
+      || classes.getSelectedClassId();
+    categories.openCategoryEditor(categoryClassId, categoryManage);
+    /* AND THE CLASS'S MODE OVER IT (WO-3.31), with the term resolved HERE for the reason the class
+       is: one of this hook's doors is the class manager, which has no term in view, and the share of
+       the points is a fact about one term. getOpenTermId() is the class's own open term — the one
+       its score grid shows — whichever door was tapped. */
+    gradingMode.paintEditor(categoryClassId, classes.getOpenTermId(categoryClassId));
     return;
+  }
+  /* The mode control and its confirmation (WO-3.31). The editor's open class and term are the
+     module's own — set by paintEditor() above — so a pill carries only the mode it asks for. */
+  const gradingModePill = e.target.closest('[data-grading-mode]');
+  if (gradingModePill) {
+    gradingMode.requestModeChange(gradingModePill.getAttribute('data-grading-mode'), gradingModePill);
+    return;
+  }
+  if (e.target.closest('[data-grading-mode-confirm]')) {
+    gradingMode.confirmModeChange(); afterCategoryChange(); return;
+  }
+  if (e.target.closest('[data-grading-mode-cancel]')) {
+    gradingMode.cancelModeChange(); return;
   }
   if (e.target.closest('[data-category-add]')) {
     categories.addCategory(); afterCategoryChange(); return;
@@ -4470,6 +4506,11 @@ window.planbook = {
      through this seam so the worked cases exercise the shipped module rather than a second copy
      of the arithmetic in the harness. */
   gradeEngine,
+  /* `gradingMode` joined at WO-3.31, for the reading reason `categories` gives: every control it has
+     is a pill or a button a teacher can touch, and tools/verify-shell.mjs touches them. What no click
+     can show is that the confirmation's figures are the engine's — previewModeChange() is the whole
+     dialog as data, read beside classGrade() and letterFromPercentage() asked directly. */
+  gradingMode,
   /* `letterScale` joined at WO-3.2, and for the reading reason `categories` gives rather than a
      driving one: every control this feature has is a pill, a field or a button in #letterScaleModal
      and a teacher can touch all of them. What no click can show is the work order's first acceptance

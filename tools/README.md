@@ -1253,14 +1253,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1679 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1699 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the seventy-eight files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the seventy-nine files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -2408,6 +2408,15 @@ whose only graded work is extra credit graded at 0 (Fi filed, Iz unfiled), the s
 two blanks (Gus, Hal), and both screens on the same class with its `gradingMode` key taken off, matching
 the engine's own sentence student by student. None sits in a loop and none is a failure arm, so the gap
 stays at −11. The run prints `1690 checks · 1690 passed · 0 failed · 0 skipped`, 53,826 lines, 31.8 lines per check, 748s, exit 0, 2026-10-04 on the real clock. Mutation round in `TESTING.md` § WO-3.42.
+
+**WO-3.31 moved it from 1679 to 1699, and the executed count from 1690 to 1709 — twenty sites added, in
+one new file.** `verify/grading-mode.mjs` drives the categories editor's mode control on three planted
+classes: the editor in both modes, the confirmation's averages, letter list and other-term lines held
+against the engine asked directly and against the score grid's own summary, Cancel's unchanged `rev`,
+the round trip's weights and absent key, a points term with no work, and the 44px pills and buttons
+under a coarse pointer. None sits in a loop. One is a failure arm — the fixture guard, which records a
+FAIL and returns when the plant did not take — and never fires on a green run, so the gap moves from
+−11 to −10. The run prints `1709 checks · 1709 passed · 0 failed · 0 skipped`, 54,350 lines, 31.8 lines per check, 721s, exit 0, 2026-10-04 on the real clock. Mutation round in `TESTING.md` § WO-3.31.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
