@@ -3335,12 +3335,16 @@ takes with it" — and the long comment above `removeCategory()` in `src/categor
 cascade. That comment's case against leaving work behind was that an orphan is **silent**. It no
 longer is: the assignment list draws a *Not in a category* group (red in a weighted class, amber in a
 points class, WO-3.36), the score grid and grade sheet name *no category*, and the points engine
-counts it as a row. Rewrite the comment to say so, rather than deleting it.
+counts it as a row. Rewrite the comment to say so, rather than deleting it. **The header comment of `src/assignments.js`
+(~20–30) also says a category removal destroys the work** — it names `applyRemoval()` — and changes
+in the same sitting.
 
 **Deliverables**
 - **`applyRemoval()` deletes the category and nothing else.** No assignment and no score column goes.
-  Each affected assignment in this class has its `categoryId` cleared, so a backup never carries an
-  id for a category that no longer exists. A `categoryId` that matches no category in its class
+  Each affected assignment in this class has its `categoryId` set to `''`, so a backup never carries
+  an id for a category that no longer exists. `''` is what an assignment created in a class with no
+  categories already carries (`src/assignments.js`, ~920), so this is not a new value: not `null`,
+  and not a deleted key. A `categoryId` that matches no category in its class
   already reads as *no category* everywhere, so the clearing is tidiness, not a change in meaning.
 - **The confirm speaks the class's mode, and stops being a warning.** There is still a dialog when
   work is filed under the category, because the grade changes. It says where the work goes and what
@@ -3361,7 +3365,7 @@ counts it as a row. Rewrite the comment to say so, rather than deleting it.
 
 **Acceptance**
 - [ ] Removing a category that holds work leaves every one of its assignments in the document with
-      `categoryId` cleared, and every score column for them byte-identical. Nothing in another class,
+      `categoryId` equal to `''`, and every score column for them byte-identical. Nothing in another class,
       and no other category's work, moves. **Mutation-proved**: a removal that still deletes the
       assignments goes red.
 - [ ] In a weighted fixture, after the removal the class's `classGrade()` gives that work no weight,
