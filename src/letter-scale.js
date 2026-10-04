@@ -382,8 +382,9 @@ function renderSubjects() {
 
   Turning it off discards the class's own bands, and that is said on the line rather than behind a
   confirm dialog. src/categories.js's removal grammar is the precedent and it draws the line at what
-  is DESTROYED: a category removal takes assignments and scores with it, so it counts them first,
-  and there is no student data anywhere in a letter scale — nothing is stored per student, no grade
+  touches STUDENT DATA: a category removal moves assignments and their scores to "no category" (it
+  took them with it until WO-3.43), so it counts them first, and there is no student data anywhere
+  in a letter scale — nothing is stored per student, no grade
   is written down, and the cost of a mis-tap is retyping boundaries that are still on screen above
   the button until she taps it. A dialog for that would be the third modal in a stack that already
   has two.

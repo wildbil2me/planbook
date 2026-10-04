@@ -3304,7 +3304,7 @@ exists to avoid**, so under (a) `src/detail.js` must import the lifted function 
 
 ## WO-3.43 — removing a category moves its work to *no category*
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.31 — the control that makes a points class reachable, and the mode the dialog now has to speak
+**Ship** — · **Status** ✅ DONE — 2026-10-04 · **Size** S · **Depends on** WO-3.31 — the control that makes a points class reachable, and the mode the dialog now has to speak
 **Closes roadmap** *(no box. Owner-directed, 2026-10-04.)*
 
 **Booked 2026-10-04**, owner-directed, out of WO-3.31's 👤 reading. **Reachable today**: since
@@ -3364,20 +3364,20 @@ in the same sitting.
   paragraph names removal as the usual way in.
 
 **Acceptance**
-- [ ] Removing a category that holds work leaves every one of its assignments in the document with
+- [x] Removing a category that holds work leaves every one of its assignments in the document with
       `categoryId` equal to `''`, and every score column for them byte-identical. Nothing in another class,
       and no other category's work, moves. **Mutation-proved**: a removal that still deletes the
       assignments goes red.
-- [ ] In a weighted fixture, after the removal the class's `classGrade()` gives that work no weight,
+- [x] In a weighted fixture, after the removal the class's `classGrade()` gives that work no weight,
       and the weights-total line reads the remaining total. The dialog's weights sentence names that
       same total.
-- [ ] In a points fixture, every student's `classGrade()` percentage is identical before and after
+- [x] In a points fixture, every student's `classGrade()` percentage is identical before and after
       the removal, and the work appears in the *no category* row.
-- [ ] The confirm's text in a points class contains no *weight*, *0%* or *backup*, and in a weighted
+- [x] The confirm's text in a points class contains no *weight*, *0%* or *backup*, and in a weighted
       class it contains no *backup* and no *set its weight to 0*.
-- [ ] The two announcements read the points wording in a points class, and the weighted wording,
+- [x] The two announcements read the points wording in a points class, and the weighted wording,
       byte-identical to today's, in a weighted class.
-- [ ] 👤 On the laptop and the iPad, removing a category in each mode reads clearly, and the work is
+- [x] 👤 On the laptop and the iPad, removing a category in each mode reads clearly, and the work is
       found again under *Not in a category* on the assignment list.
 
 **Traps** — **Do not import the grade engine into `src/categories.js`.** `gradingModeOf()` lives in

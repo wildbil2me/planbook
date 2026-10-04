@@ -9798,6 +9798,91 @@ only `src/shell.js`'s standing prose.
 
 **Full run on the delivered tree:** `1709 checks · 1709 passed · 0 failed · 0 skipped`, 54,350 lines, 31.8 lines per check, 721s, exit 0, 2026-10-04 on the real clock. `node tools/wo-sweep.mjs`: `46 checks · 42 passed · 0 failed · 4 to review`, exit 0 — the three standing reviews and one for this row's two new container classes (`.category-loose`, `.mode-change-facts`) having no coarse-block rule, which is correct: neither is a touch target.
 
+### WO-3.43 — removing a category moves its work to *no category*
+
+**What this changes.** Removing a category no longer destroys its work, in either mode — the owner's
+ruling, 2026-10-04, reversing WO-3.1's third deliverable. `applyRemoval()` in `src/categories.js`
+deletes the category and clears `categoryId` to `''` on every assignment filed under it **in that
+class**; it no longer touches `assignments` membership or `scores` at all. The confirm still opens when
+work is filed under the category, and now says where the work goes in the class's own mode — weighted:
+it stops counting until it is filed again, and *"this class totals N% until you set them"* stays;
+points: it goes on counting, and no grade changes. The "cannot be undone / backup file" sentence, the
+"set its weight to 0" advice and the red styling are gone in both modes: the facts panel is
+`.mode-change-facts`, the button `primary`, and the section label reads *Where its work goes*. The
+weights-crossing and add-category announcements speak points in a points class (the weighted
+sentences are unchanged), and the removal announcement says where the work went. The mode is read as
+`cls.gradingMode === 'points'` inside `src/categories.js` (`gradedOnPoints()`) — the grade engine is
+not imported, because it imports this file. `CACHE` is `planbook-shell-v162`.
+
+Every headless line below is `tools/verify/category-removal.mjs`, a new section straight after
+`grading-mode.mjs`, on three planted classes — weighted (Essays 40 · Quizzes 60), points (the same
+work and scores), and a bystander holding a planted assignment with its own `classId` and the weighted
+class's Essays id. Figures are hand-computed in the section's header. Two checks in
+`categories-weights.mjs` that asserted the cascade were **re-pointed, not deleted**: the confirm check
+now wants *"2 assignments and 4 scores move to no category"* and no "cannot be undone / backup /
+weight to 0", and the confirm-removal check now wants `a_k1`/`a_k2` present with `categoryId ''`, their
+score columns present, and `a_k3` still under its own category.
+
+- [x] Removing a category that holds work leaves every one of its assignments in the document with
+      `categoryId` equal to `''`, and every score column for them byte-identical. Nothing in another
+      class, and no other category's work, moves. Weighted and points classes both: each moved
+      assignment's JSON equals its pre-removal JSON with only `categoryId` changed, `JSON.stringify(d.scores)`
+      is equal before and after, every other assignment's JSON is equal, and the bystander's plant still
+      reads `k343we`. **Mutation-proved** (M1, M2, M3).
+- [x] Weighted: before the removal the class grades 86 and 46 by hand; after it `classGrade()` refuses
+      on `weights-unbalanced` with `weightTotal` 60, and the dialog's *"totals 60%"*, the editor's
+      *"Weights total 60%, not 100%"* and `formatWeight(weightTotal())` all name 60. With Quizzes then
+      typed to 100 the grade is 90 and 50 — the quiz alone — equal to `classGrade()` of a copy of the
+      document with both essays deleted, and no `id: null` row.
+- [x] Points: 80.625 and 40.625 by hand, identical (`===`) before and after the removal; the engine's
+      `no category` row carries 150 possible points (120 and 60 earned) and the editor draws its
+      `data-category-share="none"` line.
+- [x] The points confirm's whole panel text contains no *weight*, no *0%* and no *backup*; the weighted
+      one contains no *backup*, no *set its weight to 0* and no *cannot be undone*. **Mutation-proved**
+      (M4).
+- [x] Announcements, read off every write into `#srLive` with a `MutationObserver` (the region only ever
+      holds the last): weighted — *"Added New category to WO-3.43 Weighted at 0 percent."* and *"Weights
+      total 60 percent, not 100. Grades are provisional."*, byte-identical to the strings before this
+      change; points — *"Added New category to WO-3.43 Points, which is graded on total points, so it
+      needs no weight."* and *"The weights now total 60 percent. WO-3.43 Points is graded on total
+      points, so they change no grade."* The removal announcement in each mode says where the work went.
+      **Mutation-proved** (M4).
+- [x] 👤 On the laptop and on the iPad, remove a category that holds work in a **weighted** class and in
+      a **points** class. Each dialog should read clearly and say where the work goes, with no red and no
+      mention of a backup; the points one should not mention weights. After each, open the class's
+      **Assignments** screen and find the work again under *Not in a category* — red in the weighted
+      class, amber in the points class. *(Headless already finds both essays under that heading in both
+      modes; what is owed is a human reading the words and a thumb on the dialog.)*
+      Before tapping Remove, read the editor's own hint under the list in each mode: it should agree
+      with the dialog — the work stays, under no category — and the weighted one should still offer a
+      weight of 0 as the way to stop a category counting while keeping it.
+      **Read by the owner on the laptop and the iPad, 2026-10-04, from the local server**, both modes,
+      including the singular wording for a category holding one assignment — all as above.
+
+**Mutation round.** A scratch copy of the entry harness holding only `category-removal.mjs` (11
+checks, all green on the delivered tree) was run once per mutation, each carrying a `MUTATION` marker
+in `src/categories.js`, restored from a copy after each; its SHA-256 matched the pre-mutation bytes
+every time. The scratch harness is deleted.
+
+| Mutation | Result |
+|---|---|
+| M1 · the old cascade back — the moved assignments filtered out of `d.assignments` | **5 red** (`11 checks · 6 passed · 5 failed`): both document checks (`"GONE"`), the points grade (80.625 → 90), the no-category row, and both assignment-list checks |
+| M2 · the score columns deleted for the moved assignments | **3 red**: both document checks (scores differ) and the no-category row (nothing graded in it) |
+| M3 · the `classId` guard dropped from `applyRemoval()` | **1 red**: the weighted document check — the bystander's plant re-filed to `''` |
+| M4 · `gradedOnPoints()` answers `false` | **2 red**: the points confirm (the weighted lead, and *"keep the weights … totals 60%"*) and the points announcements (*"at 0 percent"*, *"Grades are provisional"*) |
+| M5 · *(amendment, owner, 2026-10-04)* the weighted editor hint gains *"Removing is the one that takes the work with it."* in `index.html` | **1 red** (`12 checks · 11 passed · 1 failed`): the editor-hints check |
+| M6 · *(amendment)* the points editor hint put back to *"Removing a category takes the work filed under it with it, which is why it counts what goes first."* | **1 red** (`12 checks · 11 passed · 1 failed`): the editor-hints check |
+
+**Amendment, 2026-10-04 (owner).** The categories editor's two hints in `index.html` said a removal
+takes the work with it, contradicting the confirm. Both now say the work stays under no category, in
+the confirm's own mode wording, and the weighted one keeps its weight-0 advice. One check added at the
+foot of the points half of `category-removal.mjs` reads the visible hints in each mode; M5 and M6 above
+were run on a scratch harness holding that section only (12/12 green unmutated), `index.html` restored
+byte-for-byte from a copy after each. Full run after the amendment: `1721 checks · 1721 passed · 0 failed · 0 skipped`, 54,817 lines,
+31.9 lines per check, 739s, exit 0, 2026-10-04 on the real clock.
+
+**Full run on the delivered tree:** `1720 checks · 1720 passed · 0 failed · 0 skipped`, 54,800 lines, 31.9 lines per check, 738s, exit 0, 2026-10-04 on the real clock. `node tools/wo-sweep.mjs`: `46 checks · 43 passed · 0 failed · 3 to review`, exit 0 — the three standing reviews.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

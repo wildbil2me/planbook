@@ -476,8 +476,16 @@ neither total, a zero-point assignment is still extra credit.
 - **Work filed under no category counts toward a points grade** *(the owner's ruling, 2026-10-02)*.
   It carries no weight, so it counts toward nothing in weighted mode, and that has not changed; in
   points mode there is no weight for it to lack. "No category" means a `categoryId` that is none of
-  the class's category ids — blank, or left behind by a deleted category — the same test the
-  assignment list's red *Not in a category* group draws by. It arrives as **one more row at the foot
+  the class's category ids — blank, or an id from a document or build that did not clear it — the
+  same test the assignment list's *Not in a category* group draws by. **Removing a category is the
+  usual way in** *(WO-3.43, the owner, 2026-10-04)*: a removal deletes the category and nothing
+  else, and each assignment filed under it in that class has its `categoryId` set to `''` — the value
+  an assignment created in a class with no categories already carries — with its score column
+  untouched. So in weighted mode that work stops counting until it is filed again, and the remaining
+  weights keep what was typed, so the class totals less than 100 until the teacher sets them; in
+  points mode it goes on counting, in this row, and no grade moves. *(Until WO-3.43 a removal took
+  the assignments and their scores with it — WO-3.1's third deliverable, reversed.)* It arrives as
+  **one more row at the foot
   of `categories`**, `id: null`, named `no category` (the score grid's and the grade sheet's own
   words for such work), weight 0, present only when that work has something graded in it. A row
   rather than a silent addition to the totals, so that the contributions still add up on screen.

@@ -44,8 +44,8 @@
      error here and must never become one: its weight redistributes across the categories that do
      have work (docs/data-model.md § Grade math), which is WO-3.4's arithmetic, and this module
      neither counts assignments per category for that purpose nor warns about it. The only place
-     assignments are counted at all is removal, below, where the count is what the teacher is being
-     asked to agree to.
+     assignments are counted at all is removal, below, where the count is how much work the teacher
+     is about to see move to "no category".
 */
 
 import { getDoc, update, newId } from './store.js';
@@ -109,7 +109,8 @@ function newCategory(name, weight) {
    version of that failure and the one this work order's Traps line names outright — removalCounts()
    and applyRemoval() below were made safe filtering on categoryId ALONE only after WO-3.3 added the
    classId guard, exactly because a category id appearing in two classes at once is what lets a
-   removal in one class count and destroy work filed in the other. A copy that carried the source's
+   removal in one class count work filed in the other and move it to "no category" (WO-3.43; until
+   then it destroyed it). A copy that carried the source's
    id would reopen that door from the other side. */
 export function copyCategories(cls) {
   return categoriesOf(cls).map((c) => newCategory(c.name, c.weight));
@@ -225,6 +226,14 @@ function findCategory(cls, id) {
 
 function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
+/* Is this class graded on total points (WO-3.30)? Read off the key directly, and deliberately not
+   src/grade-engine.js's gradingModeOf(): that file imports this one, so importing it back would
+   close the loop this file's header refuses — the reason src/grading-mode.js exists at all. The rule
+   is the one gradingModeOf() states: "points" is the only value that means anything, and an absent
+   key is weighted. Used for the sentences this module speaks and for nothing else; no arithmetic
+   here branches on it (WO-3.43). */
+function gradedOnPoints(cls) { return !!cls && cls.gradingMode === 'points'; }
+
 function showCategoryError(message) {
   const el = document.getElementById(CATEGORY_ERROR_ID);
   if (!el) return;
@@ -287,9 +296,19 @@ function renderTotal(cls) {
       + 'they add up.';
   }
 
+  /* In a class graded on total points the line above is hidden (src/grading-mode.js's paintEditor)
+     and the weights are in no formula, so "grades are provisional" would be false out loud. A
+     crossing there can only come from a removal — the fields are disabled — and it is still spoken,
+     because the number is real and kept for the day the class goes back; it just says what it does
+     not do (WO-3.43). The weighted sentences are byte-for-byte what they were. */
   if (lastBalanced !== null && lastBalanced !== balanced) {
-    announce(balanced ? 'Weights total 100%.'
-      : 'Weights total ' + formatWeight(total) + ' percent, not 100. Grades are provisional.');
+    if (gradedOnPoints(cls)) {
+      announce('The weights now total ' + formatWeight(total) + ' percent. ' + cls.name
+        + ' is graded on total points, so they change no grade.');
+    } else {
+      announce(balanced ? 'Weights total 100%.'
+        : 'Weights total ' + formatWeight(total) + ' percent, not 100. Grades are provisional.');
+    }
   }
   lastBalanced = balanced;
 }
@@ -434,7 +453,13 @@ export function addCategory() {
   });
   showCategoryError('');
   renderCategoryList();
-  announce('Added ' + cat.name + ' to ' + cls.name + ' at 0 percent.');
+  /* The 0 is still stored in a points class — it waits, disabled, for the day the class goes back
+     (src/grading-mode.js) — but saying "at 0 percent" there names a number that counts for nothing
+     and reads as though the new category will. WO-3.43. */
+  announce(gradedOnPoints(cls)
+    ? 'Added ' + cat.name + ' to ' + cls.name + ', which is graded on total points, so it needs no '
+      + 'weight.'
+    : 'Added ' + cat.name + ' to ' + cls.name + ' at 0 percent.');
   /* Focus and select the new name, because "New category" is a placeholder to type over rather
      than a name. After the render, for the reason src/classes.js's renderClassList() gives: an
      input that is not yet in the document cannot take focus, and on iPadOS a focus() that misses
@@ -501,26 +526,28 @@ export function moveCategoryDown(id) { moveCategory(id, 1); }
 
 /*
   Assignments filed under one category OF ONE CLASS, which is the one question this module asks
-  about grade data and the only thing that makes removing a category destructive.
+  about grade data, and what decides whether removing a category asks first.
 
   THE `classId` HALF WAS ADDED AT WO-3.3 AND IT IS NOT DECORATION. This function and the two below
   it filtered by `categoryId` alone, which was safe for exactly as long as a category id could only
   appear in the class it was made in — and duplicate-to-another-class is the feature that ends
   that. A copy carrying its source's `categoryId` into another class would be counted here, and
-  destroyed by applyRemoval() below, under a dialog naming a class it was never in.
-  src/assignments.js makes sure no such copy is ever written (it matches the target's category by
-  name and refuses an id from another class); this is the guard on the other side of that promise,
-  for the document that arrives from a restore, a hand edit, or a build older than this one.
+  moved to "no category" by applyRemoval() below (destroyed, before WO-3.43), under a dialog naming
+  a class it was never in. src/assignments.js makes sure no such copy is ever written (it matches
+  the target's category by name and refuses an id from another class); this is the guard on the
+  other side of that promise, for the document that arrives from a restore, a hand edit, or a build
+  older than this one.
 */
 function assignmentsIn(doc, classId, categoryId) {
   return (Array.isArray(doc && doc.assignments) ? doc.assignments : [])
     .filter((a) => a.classId === classId && a.categoryId === categoryId).length;
 }
 
-/* Everything a removal would destroy, counted off the open document rather than estimated — the
-   same shape as src/classes.js's deletionCounts() and for the same reason: "Remove Tests?" is a
-   question a tired teacher answers yes to, and "9 assignments and 214 scores" is one she reads.
-   Class-scoped since WO-3.3 — see assignmentsIn() above for why that stopped being optional. */
+/* Everything a removal would move, counted off the open document rather than estimated — the same
+   shape as src/classes.js's deletionCounts(), and kept since WO-3.43 for a different reason than it
+   was written for: nothing is destroyed any more, but the grade still changes in a weighted class,
+   and "2 assignments and 41 scores move to no category" is the size of that change in words a
+   teacher can check against her list. Class-scoped since WO-3.3 — see assignmentsIn() above. */
 function removalCounts(doc, classId, categoryId) {
   const assignments = (Array.isArray(doc.assignments) ? doc.assignments : [])
     .filter((a) => a.classId === classId && a.categoryId === categoryId);
@@ -534,34 +561,51 @@ function removalCounts(doc, classId, categoryId) {
   return { assignments: assignments.length, scores: scores };
 }
 
+/* `.mode-change-line`, the grading-mode confirmation's neutral fact line, rather than the class
+   delete's red `.class-delete-line`: since WO-3.43 nothing in this dialog destroys anything, and the
+   danger wash would say it did. */
 function factLine(parent, text) {
   const el = document.createElement('div');
-  el.className = 'class-delete-line';
+  el.className = 'mode-change-line';
   el.textContent = text;
   parent.append(el);
 }
 
 /*
-  ── THE POINT OF DEPARTURE FROM src/classes.js's removeTerm(), STATED HERE BECAUSE IT IS ONE ──
+  ── REMOVING A CATEGORY MOVES ITS WORK TO "NO CATEGORY" (WO-3.43, the owner, 2026-10-04) ──
 
-  removeTerm() and applyPreset() REFUSE when a term still holds an assignment, and say why: "a
-  grade that quietly stops counting is the worst failure this app has." This does not refuse. It
-  warns, counts, and then destroys what it counted, which is what WO-3.1's third deliverable asks
-  for in those words — "removing a category warns about the assignments it takes with it."
+  WHAT THIS USED TO DO, AND WHY IT STOPPED. WO-3.1's third deliverable — "removing a category warns
+  about the assignments it takes with it" — had a removal take the assignments filed under it and
+  their score columns, behind a red dialog that counted them first. The argument for that, which
+  stood here, was against the alternative: src/classes.js's removeTerm() REFUSES when a term still
+  holds work, because "a grade that quietly stops counting is the worst failure this app has", and
+  work left pointing at a category that no longer exists was an orphan — still in `assignments`,
+  still holding scores, counted by nothing, and SILENT. Destroying it was quieter than nothing only
+  in the sense that there was nothing left to be quiet about.
 
-  WHY THE OTHER RULE DOES NOT BEAT IT HERE. Read the refusal's reason exactly: the failure it names
-  is a grade that stops counting QUIETLY. Removing a term without cascading would leave assignments
-  pointing at a term id that no longer exists — still in `assignments`, still holding scores, still
-  looking like work, and counted by nothing. That is an orphan, and an orphan is silent. A category
-  removal that takes its assignments and their score columns with it leaves no orphan at all: the
-  work is gone, the teacher was shown the count of it before she agreed, and the grade changes for
-  a reason she can name. That is the class-delete grammar in this same file — the third precedent,
-  the one that is allowed to destroy precisely because it counts first (src/classes.js's
-  openDeleteConfirm) — and it is the right one for a container the teacher is choosing to abolish.
+  THE PREMISE IS GONE, SO THE CONCLUSION GOES WITH IT. Work in no category is not silent any more:
+  the assignment list draws a "Not in a category" group under every class that has some — red in a
+  weighted class, where it counts for nothing, amber in a points class, where it counts (WO-3.36);
+  the score grid and the grade sheet name "no category"; and the points engine counts it as a row
+  of its own (WO-3.30). So the work stays. The category goes, and each assignment filed under it IN
+  THIS CLASS has its `categoryId` set to '' — the value an assignment created in a class with no
+  categories already carries (src/assignments.js), so a backup never holds an id for a category that
+  is gone. That clearing is tidiness rather than meaning: an id matching no category already read as
+  "no category" everywhere.
 
-  So: nothing in the way, and the category goes on the tap. Something in the way, and she reads
-  what goes and taps a second, differently-worded button. The refusal stays where it is; this is a
-  different question with a different answer, not a loosening of that one.
+  What that does to the grade is the class's formula's business, not this file's: on weighted
+  categories the work counts for nothing until it is filed again, and the remaining weights are left
+  exactly as typed, so the class totals less than 100 until she sets them; on total points the work
+  goes on counting, under "no category", and no grade moves. The dialog says whichever is true.
+
+  THERE IS NO "DELETE THE WORK TOO". The owner ruled for one behaviour, and a second button is how
+  the destructive path comes back. Deleting an assignment is the assignment list's own Delete, one
+  piece of work at a time, with its own count.
+
+  So: nothing filed under it, and the category goes on the tap. Work filed under it, and she reads
+  where it goes and what that does to the grade, and taps a button naming the category. The term
+  editor's refusal stays where it is; a term id with no term behind it still has no group of its own
+  to be found in.
 */
 export function removeCategory(id, opener) {
   const doc = getDoc();
@@ -577,48 +621,65 @@ export function removeCategory(id, opener) {
   }
 
   pendingRemoveId = id;
+  const byPoints = gradedOnPoints(cls);
+  const them = counts.assignments === 1 ? 'it' : 'them';
   const lead = document.getElementById(REMOVE_LEAD_ID);
   if (lead) {
     lead.textContent = 'Removing “' + (cat.name || 'this category') + '” from ' + cls.name
-      + ' takes the work filed under it as well. This cannot be undone, and a backup file is the '
-      + 'only way back. If you only want it to stop counting, set its weight to 0 instead — the '
-      + 'assignments stay and the grade stops using them.';
+      + ' keeps the work filed under it. The assignments and their scores stay, under no category, '
+      + (byPoints
+        ? 'and because ' + cls.name + ' is graded on total points, they go on counting toward the '
+          + 'grade. You can file ' + them + ' under another category whenever you like.'
+        : 'and they stop counting toward the grade until you file ' + them + ' under another '
+          + 'category.');
   }
   const facts = document.getElementById(REMOVE_FACTS_ID);
   if (facts) {
     facts.textContent = '';
     factLine(facts, plural(counts.assignments, 'assignment', 'assignments') + ' and '
-      + plural(counts.scores, 'score', 'scores'));
-    factLine(facts, 'The remaining categories keep the weights they have, so this class totals '
-      + formatWeight(weightTotal(cls) - weightOf(cat)) + '% until you set them.');
+      + plural(counts.scores, 'score', 'scores') + ' move to no category.');
+    if (byPoints) {
+      factLine(facts, 'Every point in ' + (counts.assignments === 1 ? 'it' : 'them')
+        + ' still counts, so no grade in ' + cls.name + ' changes.');
+    } else {
+      /* weightTotal() less the one weight leaving — the figure the editor's own total line prints
+         the moment the category is gone, through the same formatter. */
+      factLine(facts, 'The remaining categories keep the weights they have, so this class totals '
+        + formatWeight(weightTotal(cls) - weightOf(cat)) + '% until you set them.');
+    }
   }
   const button = document.getElementById(REMOVE_BTN_ID);
   if (button) button.textContent = 'Remove ' + (cat.name || 'this category');
   openModal(REMOVE_MODAL_ID, opener);
 }
 
-/* The only lines in this module that destroy anything, and they destroy exactly what the dialog
-   listed: the category, the assignments filed under it IN THIS CLASS, and the score columns
-   belonging to those assignments. Students, attendance, terms, every other category — and, since
-   WO-3.3 put the `classId` on both tests below, any work in another class that a restored document
-   filed under the same id — are untouched. */
+/* The only lines in this module that touch grade data, and they destroy nothing: the category
+   leaves the class, and every assignment filed under it IN THIS CLASS is re-filed under no category
+   by clearing its `categoryId` to ''. Not `null` and not a deleted key — '' is the value
+   src/assignments.js already writes for an assignment made in a class with no categories, so this
+   is not a new shape for a backup to carry. Score columns are not touched at all. Students,
+   attendance, terms, every other category — and, since WO-3.3 put the `classId` on the test below,
+   any work in another class that a restored document filed under the same id — are untouched. */
 function applyRemoval(cls, cat, counts) {
   const name = cat.name || 'the category';
   update((d) => {
-    const gone = (Array.isArray(d.assignments) ? d.assignments : [])
-      .filter((a) => a.classId === cls.id && a.categoryId === cat.id).map((a) => a.id);
-    gone.forEach((assignmentId) => { if (d.scores) delete d.scores[assignmentId]; });
-    d.assignments = (Array.isArray(d.assignments) ? d.assignments : [])
-      .filter((a) => !(a.classId === cls.id && a.categoryId === cat.id));
+    (Array.isArray(d.assignments) ? d.assignments : []).forEach((a) => {
+      if (a.classId === cls.id && a.categoryId === cat.id) a.categoryId = '';
+    });
     cls.categories = categoriesOf(cls).filter((c) => c.id !== cat.id);
   });
   showCategoryError('');
   renderCategoryList();
+  /* Where the work went, rather than a count of what was destroyed (WO-3.43). */
+  const moved = counts.assignments;
   announce('Removed ' + name + ' from ' + cls.name
-    + (counts.assignments
-      ? ', with ' + plural(counts.assignments, 'assignment', 'assignments') + ' and '
-        + plural(counts.scores, 'score', 'scores') + '.'
-      : '. Nothing was filed under it.'));
+    + (!moved
+      ? '. Nothing was filed under it.'
+      : '. ' + (moved === 1 ? 'Its assignment is' : 'Its ' + moved + ' assignments are')
+        + ' now under no category' + (gradedOnPoints(cls)
+          ? ' and still ' + (moved === 1 ? 'counts' : 'count') + ' toward the grade.'
+          : ' and ' + (moved === 1 ? 'counts' : 'count') + ' for nothing until you file '
+            + (moved === 1 ? 'it' : 'them') + ' again.')));
 }
 
 export function confirmRemoveCategory() {

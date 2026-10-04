@@ -1188,10 +1188,11 @@ function afterCategoryChange() {
   gradingMode.repaintEditor();
   classes.refreshClassList();
   /* AND THE ASSIGNMENT LIST, WHEN THAT IS THE SCREEN BEHIND THE PANEL (WO-3.3). It is grouped by
-     category, it prints each category's weight in a chip, and removing a category destroys the
-     work filed under it — so a teacher who opens Categories from the assignment list and renames,
-     reweights or removes one would otherwise close the panel onto a list describing the class as
-     it was, with rows on it that no longer exist. Painted only when it is up, for the reason
+     category, it prints each category's weight in a chip, and removing a category moves the work
+     filed under it to "Not in a category" (WO-3.43) — so a teacher who opens Categories from the
+     assignment list and renames, reweights or removes one would otherwise close the panel onto a
+     list describing the class as it was, with that work still grouped under a heading that no
+     longer exists. Painted only when it is up, for the reason
      afterClassChange() gives: painting a hidden screen is rows nobody is looking at. */
   if (views.currentView() === 'assignments') assignments.renderAssignments();
   /*
@@ -1203,9 +1204,10 @@ function afterCategoryChange() {
     when the weights reach 100 and disappear when they leave it — and both halves happen behind the
     panel as she types, because this chain runs on the keystroke that changes the weight.
 
-    renderScores() rather than paintDerived(): a category REMOVAL destroys the assignments filed under
-    it, which is whole columns rather than figures, and the narrower paint would leave a column of live
-    inputs for work that no longer exists.
+    renderScores() rather than paintDerived(): a category REMOVAL takes a category away and moves the
+    assignments filed under it to "no category" (WO-3.43; it destroyed them before), which is whole
+    columns changing group rather than figures, and the narrower paint would leave those columns
+    under a category that no longer exists.
   */
   if (views.currentView() === 'scores') scores.renderScores();
   /* AND THE PER-STUDENT DETAIL (WO-3.7), the third screen a category is drawn on and the one where

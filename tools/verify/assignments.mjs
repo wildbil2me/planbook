@@ -38,7 +38,8 @@ const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, wai
  *
  * THE TRAP CHECK IS THE ONE TO KEEP. WO-3.3's Traps line says a duplicate must not carry its
  * source's `categoryId` into another class, because a category removal in the first class would
- * then destroy work in the second under a dialog naming the first. Two checks stand on it: the copy
+ * then destroy work in the second under a dialog naming the first (since WO-3.43 it would re-file
+ * that work under no category instead — the same wrong class touched by a dialog that never named it). Two checks stand on it: the copy
  * is asserted to carry the TARGET's own category id (or none) and never the source's, and a foreign
  * assignment is planted carrying this class's `categoryId` with another class's `classId` — where
  * it must be absent from this list AND absent from the count in the category-removal confirm. The
@@ -553,7 +554,8 @@ if (!classesBooted || !classSeam || !assignSeam) {
       another class produces a NEW assignment with no scores attached — and the copy carries the
       TARGET class's own ids. A copy that kept the source's `categoryId` would sit in the target
       filed under a category only the source has: invisible on its list, counted by nothing, and
-      destroyed by a category removal in the source under a dialog naming the source.
+      destroyed by a category removal in the source under a dialog naming the source (re-filed under
+      no category by one since WO-3.43).
 
       THE FIXTURE IS BUILT IN BOTH DIRECTIONS NOW, AND THAT IS WHY THIS BLOCK IS LONG.
       *(Rebuilt 2026-08-09, correction round 1.)* Its first cut asserted "the copy wears the
@@ -741,7 +743,7 @@ if (!classesBooted || !classSeam || !assignSeam) {
       than this one carrying an assignment whose `categoryId` belongs to this class and whose
       `classId` does not. It must be absent from this class's list, and — the expensive half —
       absent from the count in the category-removal confirm, which is what decides how much work a
-      teacher agrees to destroy.
+      teacher agrees to destroy (since WO-3.43, to move to no category).
 
       THE PLANT CARRIES THE SOURCE'S TERM ID AS WELL, AND THAT IS THE WHOLE FIXTURE. The first
       version of it used the target class's own term, and the mutation run said so: dropping the
@@ -763,8 +765,8 @@ if (!classesBooted || !classSeam || !assignSeam) {
       guarded.names.length + ' row(s): ' + JSON.stringify(guarded.names.map((n) => n.slice(0, 32))));
     /* Through the real door and the real confirm: the class manager, the Categories button on this
        class's row, and Remove on the category that holds one real assignment. "1 assignment" is the
-       claim; an unguarded count says 2 and the teacher agrees to destroy work in a class the dialog
-       does not name. */
+       claim; an unguarded count says 2 and the teacher agrees to move work in a class the dialog
+       does not name (to destroy it, before WO-3.43). */
     await clickSel('header [data-class-manage]');
     await clickSel('#classList [data-category-manage="' + src.id + '"]');
     await clickSel('#categoryList .category-row:nth-child(' + (catRowIndex + 1) + ') [data-category-remove]');

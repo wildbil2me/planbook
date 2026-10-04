@@ -121,6 +121,7 @@ import { run as gradeDetail } from './verify/grade-detail.mjs';
 import { run as gradeSheet } from './verify/grade-sheet.mjs';
 import { run as pointsGrade } from './verify/points-grade.mjs';
 import { run as gradingMode } from './verify/grading-mode.mjs';
+import { run as categoryRemoval } from './verify/category-removal.mjs';
 import { run as pastDue } from './verify/past-due.mjs';
 import { run as accommodationPrompts } from './verify/accommodation-prompts.mjs';
 import { run as printGate } from './verify/print-gate.mjs';
@@ -349,6 +350,11 @@ const BROWSER_SECTIONS = [
      its classes back out at its foot and hands the page back at 1280x900 with touch off, the state
      points-grade.mjs leaves it in. */
   { file: 'verify/grading-mode.mjs', run: gradingMode },
+  /* WO-3.43, straight after the section that switches a class to points: this one removes a category
+     in each mode and finds the work again under no category. It plants three classes of its own,
+     reloads once at its head and once at its foot, takes its classes back out, and hands the page
+     back at 1280x900 with touch off, the state grading-mode.mjs leaves it in. */
+  { file: 'verify/category-removal.mjs', run: categoryRemoval },
   { file: 'verify/past-due.mjs', run: pastDue },
   { file: 'verify/accommodation-prompts.mjs', run: accommodationPrompts },
   { file: 'verify/print-gate.mjs', run: printGate },

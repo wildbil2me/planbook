@@ -294,11 +294,14 @@ if (!classesBooted || !classSeam || !catSeam) {
     JSON.stringify(fixedDoc.categoryWeights[workingAt]));
 
   /*
-    THE REMOVAL WARNING — the third deliverable, and the one place this feature destroys anything.
-    The fixture is written through the store because there is no assignment screen yet (WO-3.3 owns
-    that), and its point is that the confirm counts real records rather than printing zeroes. A
-    neighbouring category gets an assignment of its own, so "it removed the right one" is
-    falsifiable.
+    THE REMOVAL CONFIRM — WO-3.1's third deliverable, reversed by WO-3.43: a removal used to take
+    the work filed under the category with it, and since 2026-10-04 it moves that work to "no
+    category" instead. The two checks below that asserted the cascade were re-pointed at the new
+    ruling rather than deleted — the confirm still counts real records, and confirming must now leave
+    them. The fixture is written through the store because there was no assignment screen when this
+    was written (WO-3.3 owned that). A neighbouring category gets an assignment of its own, so "it
+    re-filed the right one" is falsifiable. The mode-by-mode wording, the grade on either side and
+    the announcements are tools/verify/category-removal.mjs.
   */
   const victimCat = fixedDoc.categoryIds[workingAt][0];
   const bystanderCat = fixedDoc.categoryIds[workingAt][1];
@@ -323,9 +326,10 @@ if (!classesBooted || !classSeam || !catSeam) {
   await clickSel('#classList .class-row:nth-child(2) [data-category-manage]');
   await clickSel('#categoryList .category-row:nth-child(1) [data-category-remove]');
   const warned = await evalJs('window.__cat()');
-  check('removing a category that holds work warns first, and counts the assignments and scores it takes',
-    warned.confirmOpen && /2 assignments and 3 scores/.test(warned.confirmFacts)
-      && /cannot be undone/.test(warned.confirmLead) && /weight to 0/.test(warned.confirmLead)
+  check('removing a category that holds work asks first, counts the assignments and scores it moves to no category, and no longer threatens a backup',
+    warned.confirmOpen && /2 assignments and 3 scores move to no category/.test(warned.confirmFacts)
+      && /keeps the work filed under it/.test(warned.confirmLead)
+      && !/cannot be undone|backup|weight to 0/.test(warned.confirmLead + ' ' + warned.confirmFacts)
       && /Remove /.test(warned.confirmButton),
     JSON.stringify(warned.confirmFacts.slice(0, 200)) + ' :: ' + JSON.stringify(warned.confirmButton));
 
@@ -353,21 +357,22 @@ if (!classesBooted || !classSeam || !catSeam) {
   const removed = await evalJs(`(async function(){ var s = window.planbook.store; await s.flush();
     var d = s.getDoc(); var live = window.__cls();
     live.assignmentIds = d.assignments.map(function(a){ return a.id; });
+    live.filedUnder = {}; d.assignments.forEach(function(a){
+      if (/^a_k[123]$/.test(a.id)) live.filedUnder[a.id] = a.categoryId; });
     live.scoreKeys = Object.keys(d.scores);
     live.catConfirmOpen = !document.getElementById('categoryRemoveModal').classList.contains('hidden');
     return live; })()`);
-  check('confirming takes the category, the assignments filed under it and their scores — and only those',
+  check('confirming takes the category and only the category — its two assignments stay, re-filed under no category, every score column stays, and the work in the neighbouring category is not touched (WO-3.43)',
     removed.categories[workingAt] === 3 && !removed.catConfirmOpen
       && removed.categoryIds[workingAt].indexOf(victimCat) === -1
       && removed.categoryIds[workingAt].indexOf(bystanderCat) >= 0
-      && removed.assignmentIds.indexOf('a_k1') === -1
-      && removed.assignmentIds.indexOf('a_k2') === -1
-      && removed.assignmentIds.indexOf('a_k3') >= 0
-      && removed.scoreKeys.indexOf('a_k1') === -1 && removed.scoreKeys.indexOf('a_k2') === -1
+      && removed.filedUnder.a_k1 === '' && removed.filedUnder.a_k2 === ''
+      && removed.filedUnder.a_k3 === bystanderCat
+      && removed.scoreKeys.indexOf('a_k1') >= 0 && removed.scoreKeys.indexOf('a_k2') >= 0
       && removed.scoreKeys.indexOf('a_k3') >= 0,
-    'categories left ' + removed.categories[workingAt] + ', assignments left '
-      + JSON.stringify(removed.assignmentIds) + ', score columns left '
-      + JSON.stringify(removed.scoreKeys));
+    'categories left ' + removed.categories[workingAt] + ', filed under '
+      + JSON.stringify(removed.filedUnder) + ', score columns '
+      + JSON.stringify(removed.scoreKeys.filter((k) => /^a_k[123]$/.test(k))));
   /* And the total followed the removal down, which is the other half of "recomputed immediately":
      40.1 went with the category, so the class is at 59.9 and the banner and the row badge both say
      so without anything being reopened. Compared with a tolerance rather than to 59.9 exactly,
@@ -384,8 +389,9 @@ if (!classesBooted || !classSeam || !catSeam) {
   /* The fixture comes back out, so the sections after this one see the document they expect. */
   await evalJs(`(async function(){ var s = window.planbook.store;
     s.update(function(d){
-      d.assignments = d.assignments.filter(function(a){ return a.id !== 'a_k3'; });
-      delete d.scores['a_k3'];
+      /* All three since WO-3.43: a_k1 and a_k2 survive the removal now, under no category. */
+      d.assignments = d.assignments.filter(function(a){ return !/^a_k[123]$/.test(a.id); });
+      delete d.scores['a_k1']; delete d.scores['a_k2']; delete d.scores['a_k3'];
     });
     await s.flush(); return 1; })()`);
 

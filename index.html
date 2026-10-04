@@ -86,9 +86,10 @@
   rather than decorative. #categoryTotal is drawn in BOTH states and always names the number —
   "Weights total 95%", never "invalid" — because the total is the thing a teacher mid-setup can act
   on, and because a line that appears only when something is wrong makes its own absence the
-  message. And #categoryRemoveModal counts the assignments and scores a removal destroys before it
-  destroys them, which is the class-delete grammar rather than the term editor's refusal;
-  src/categories.js argues that departure at the point it makes it.
+  message. And #categoryRemoveModal counts the assignments and scores a removal moves to "no
+  category", and says what that does to the grade in the class's own mode — since WO-3.43 a removal
+  destroys nothing, so the dialog is a statement of where the work goes rather than a warning;
+  src/categories.js argues it at removeCategory().
 
   WO-1.3 added the install path: the manifest link, the icon set, the theme color, the
   service worker registration in src/shell.js, and the eviction banner below the header.
@@ -2680,9 +2681,10 @@
         weight spreads across the categories that do have work, so an empty one costs nothing.
       </p>
       <p class="class-hint" data-category-mode-text="weighted">
-        To stop a category counting without losing anything, set its weight to 0 — the assignments
-        stay and the grade stops using them. Removing is the one that takes the work with it, which
-        is why it counts what goes first.
+        To stop a category counting but keep it, set its weight to 0 — the assignments stay filed
+        under it and the grade stops using them. Removing a category keeps the work filed under it
+        too: the assignments and their scores stay, under no category, and they stop counting
+        toward the grade until you file them under another category.
       </p>
       <p class="class-hint hidden" data-category-mode-text="points">
         The share beside each category is its part of the points assigned in
@@ -2691,8 +2693,9 @@
         again if this class goes back to weighted categories.
       </p>
       <p class="class-hint hidden" data-category-mode-text="points">
-        Removing a category takes the work filed under it with it, which is why it counts what goes
-        first.
+        Removing a category keeps the work filed under it. The assignments and their scores stay,
+        under no category, and they go on counting toward the grade — you can file them under
+        another category whenever you like.
       </p>
       <p class="class-error hidden" id="categoryError"></p>
     </div>
@@ -2730,11 +2733,15 @@
   </div>
 </div>
 
-<!-- The removal confirm. Same tier and the same job as the class delete confirm above, and it is
-     deliberately that dialog's grammar rather than the term editor's refusal: a term removal that
-     cascaded would leave assignments pointing at nothing, and this one leaves no orphan at all —
-     the work goes with the category and the count is on screen before it does. The reasoning in
-     full is at removeCategory() in src/categories.js. The two empty elements are filled there. -->
+<!-- The removal confirm. Until WO-3.43 it was the class delete confirm's grammar — red, a count of
+     what would be destroyed, "a backup file is the only way back" — because a removal took the work
+     filed under the category with it. The owner ruled on 2026-10-04 that it no longer does, in
+     either mode: the work stays, under "no category", where the assignment list, the score grid and
+     the grade sheet all name it. So the dialog says where the work goes and what that does to the
+     grade in this class's mode, in the grading-mode confirmation's neutral facts panel, and its
+     button is primary rather than danger. It still opens only when work is filed under the
+     category, because a weighted grade changes. The reasoning in full is at removeCategory() in
+     src/categories.js. The two empty elements are filled there. -->
 <div class="modal-overlay hidden" id="categoryRemoveModal">
   <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="categoryRemoveTitle">
     <div class="modal-header">
@@ -2743,10 +2750,10 @@
     </div>
     <div class="modal-body">
       <p id="categoryRemoveLead"></p>
-      <div class="modal-section-label">What goes with it</div>
-      <div class="class-delete-facts" id="categoryRemoveFacts"></div>
+      <div class="modal-section-label">Where its work goes</div>
+      <div class="mode-change-facts" id="categoryRemoveFacts"></div>
       <div class="modal-actions">
-        <button class="class-action-btn danger" id="categoryRemoveBtn" data-category-remove-confirm>Remove</button>
+        <button class="class-action-btn primary" id="categoryRemoveBtn" data-category-remove-confirm>Remove</button>
         <button class="class-action-btn" data-category-remove-cancel>Cancel</button>
       </div>
     </div>

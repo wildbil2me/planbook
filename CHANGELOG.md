@@ -13,6 +13,21 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Removing a category keeps its work, under *no category* — 2026-10-04
+
+WO-3.43. Shell cache `v162`.
+
+- **Removing a category no longer deletes its assignments or scores, in either mode.** The work moves
+  to *no category* and shows on the assignment list under *Not in a category*.
+- **Weighted class:** that work stops counting until it is filed under another category, and the
+  remaining weights keep their values, so the class totals less than 100% until they are set.
+- **Total points class:** the work keeps counting and no grade changes.
+- **The confirm is no longer a warning.** It says where the work goes and what that does to the
+  grade. It no longer mentions a backup or advises a weight of 0, and it isn't red. The editor's hint
+  and the screen-reader announcements match each mode.
+- **Fixes the known gap in WO-3.31's entry below**, where the dialog in a points class advised
+  setting a weight of 0.
+
 ### A class can be switched to total points from its categories editor — 2026-10-04
 
 WO-3.31. Shell cache `v161`.

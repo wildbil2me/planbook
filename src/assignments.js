@@ -25,8 +25,11 @@
   alone, which is safe only while a category id can appear in one class. The moment an assignment
   can be copied across classes, a copy that carried its source's `categoryId` would sit in class B
   filed under a category that only class A has — invisible on B's list, counted by nothing if B is
-  weighted (a B graded on total points counts it, under "no category"), and destroyed by a category
-  removal in A under a dialog naming A. So the copy below chooses the
+  weighted (a B graded on total points counts it, under "no category"), and caught up by a category
+  removal in A under a dialog naming A — destroyed there until WO-3.43, re-filed under no category
+  since, which is the same wrong class's work moved by a dialog that never named it. (WO-3.1's
+  applyRemoval() took the assignments and their score columns with the category; since WO-3.43 it
+  takes neither, and clears each one's `categoryId` to ''.) So the copy below chooses the
   target's own category (by NAME, and never by id), and this file never asks "which assignments are
   in this category" without also saying which class. (The two functions in src/categories.js took
   the same guard in this pass, for the same reason and with a note there.)
@@ -604,11 +607,15 @@ export function renderAssignments() {
   });
 
   /*
-    WORK THAT IS IN NO CATEGORY THIS CLASS HAS. Two ways to arrive: an assignment created while the
-    class had no categories at all, and one whose category was removed by a build or a document
-    this one did not write. In a WEIGHTED class it is red rather than amber, because an empty
-    category costs nothing and this costs the assignment — it is counted by nothing until it is
-    re-filed, and Edit is one tap away on its own row.
+    WORK THAT IS IN NO CATEGORY THIS CLASS HAS. Three ways to arrive, and since WO-3.43 the third is
+    the usual one: an assignment created while the class had no categories at all; one whose
+    category id was left behind by a build or a document this one did not write; and work whose
+    category the teacher removed, which src/categories.js now re-files here (its `categoryId`
+    cleared to '') rather than deleting. The notice's wording was checked against that third way and
+    left alone: "not filed under any category this class has" is exactly what a removal leaves, and
+    "Open Edit on each one" is how she files it again. In a WEIGHTED class it is red rather than
+    amber, because an empty category costs nothing and this costs the assignment — it is counted by
+    nothing until it is re-filed, and Edit is one tap away on its own row.
 
     IN A CLASS GRADED ON TOTAL POINTS IT IS COUNTED (WO-3.30's ruling), so the notice there says so
     and still asks for a category — the work is in the grade, and filing it is what puts it in a
@@ -1198,8 +1205,8 @@ export function moveAssignmentDown(id) { moveAssignment(id, 1); }
   Ids are opaque and belong to the class they were made in. A copy that kept `categoryId` would
   land in another class filed under a category that class does not have — invisible on its list,
   counted by nothing in a weighted class (a class graded on total points counts it, under "no
-  category"), and destroyed by a category removal in the class it came from, under a dialog
-  naming a different class. That is this work order's named trap, and this function is where it
+  category"), and moved by a category removal in the class it came from (destroyed by one, before
+  WO-3.43), under a dialog naming a different class. That is this work order's named trap, and this function is where it
   would have happened.
 
   So the target's category is matched BY NAME — "Quizzes" in Biology I is "Quizzes" in Biology I

@@ -939,8 +939,9 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 /* ── CATEGORIES & WEIGHTS (WO-3.1) ── */
 /* The contents of #categoriesModal and #categoryRemoveModal. Almost everything in those panels is
    a component this sheet already owns — `.class-action-btn` for every button, `.class-empty` for
-   the empty list, `.class-hint`, `.class-error`, `.modal-section-label`, and
-   `.class-delete-facts` / `.class-delete-line` for what a removal destroys — which is the point:
+   the empty list, `.class-hint`, `.class-error`, `.modal-section-label`, and — since WO-3.43, when a
+   removal stopped destroying anything — `.mode-change-facts` / `.mode-change-line` below for where
+   the removed category's work goes, rather than the red `.class-delete-facts` — which is the point:
    a sixth dialog inventing a sixth grammar would be a sixth thing to keep in step. What is written
    out here is the five things with no counterpart.
 
@@ -1024,7 +1025,8 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   border: 1.5px dashed #e0e4ea; background: #f8f9fb;
 }
 /* What a mode change would do. `.class-delete-facts`' shape without its red: nothing here destroys
-   anything, and the danger wash would say it did. */
+   anything, and the danger wash would say it did. The category removal confirm borrows it for the
+   same reason since WO-3.43 — its work moves to "no category" rather than going. */
 .mode-change-facts {
   display: flex; flex-direction: column; gap: 4px;
   margin-top: 4px; padding: 10px 12px; border-radius: 8px;

@@ -1253,7 +1253,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1699 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1712 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2417,6 +2417,22 @@ the round trip's weights and absent key, a points term with no work, and the 44p
 under a coarse pointer. None sits in a loop. One is a failure arm — the fixture guard, which records a
 FAIL and returns when the plant did not take — and never fires on a green run, so the gap moves from
 −11 to −10. The run prints `1709 checks · 1709 passed · 0 failed · 0 skipped`, 54,350 lines, 31.8 lines per check, 721s, exit 0, 2026-10-04 on the real clock. Mutation round in `TESTING.md` § WO-3.31.
+
+**WO-3.43 moved it from 1699 to 1711, and the executed count from 1709 to 1720 — twelve sites added, in
+one new file.** `verify/category-removal.mjs` removes a category that holds work in a planted weighted
+class and a planted points class: the document on either side (moved assignments at `categoryId ''`,
+every score column byte-identical, a planted assignment in a third class untouched), the grade on
+either side in each mode against the engine asked directly, the confirm's words in each mode, the four
+announcements read off a `MutationObserver` on `#srLive`, and the work found again under *Not in a
+category* on each class's assignment list. None sits in a loop. One is a failure arm — the fixture
+guard — and never fires on a green run, so the gap moves from −10 to −9. Two checks in
+`verify/categories-weights.mjs` that asserted the old cascade were re-pointed at the new ruling, which
+moves neither number. The run prints `1720 checks · 1720 passed · 0 failed · 0 skipped`, 54,800 lines, 31.9 lines per check, 738s, exit 0, 2026-10-04 on the real clock. Mutation round in `TESTING.md` § WO-3.43.
+
+**WO-3.43's amendment (owner, 2026-10-04) moved it from 1711 to 1712, and the executed count from 1720
+to 1721** — one site added to `verify/category-removal.mjs`, not in a loop and not a failure arm, so
+the gap stays at −9. It reads the categories editor's visible hints in each mode and wants neither to
+claim a removal takes the work. The run prints `1721 checks · 1721 passed · 0 failed · 0 skipped`, 54,817 lines, 31.9 lines per check, 739s, exit 0, 2026-10-04 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
