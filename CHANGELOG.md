@@ -13,6 +13,15 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The harness puts the network back after a section that fails offline — 2026-10-05
+
+WO-1.59. Tooling only; no shell cache bump, and none owed.
+
+- **Not user-visible.** `verify-shell.mjs` now records and restores `Network.emulateNetworkConditions`
+  per section, beside the state WO-1.58 already restored, so a section that throws while offline no
+  longer hands every later section an offline page. The newer network-emulation methods are not
+  covered; `TESTING.md` § WO-1.59 says so.
+
 ### A class tab keeps you on Assignments or Scores — 2026-10-05
 
 WO-3.45, owner-directed. Shell cache bumped to v166.

@@ -651,7 +651,7 @@ ws.onmessage = (m) => {
  * know what a section received is to have watched every call that set it. Every CDP call in this run
  * goes through the one `send` below — the sections destructure it off `h`, and the harness's own
  * helpers (`load`, `evalJs`, `dateResetOn` …) close over it directly — so recording INSIDE `send`
- * sees all of them, where a wrapper put on `h.send` would miss the helpers. Four things are kept:
+ * sees all of them, where a wrapper put on `h.send` would miss the helpers. Five things are kept:
  *   - `emulation.touch` / `emulation.metrics`: the parameters of the last SUCCESSFUL
  *     `setTouchEmulationEnabled` (with `enabled: true`) and `setDeviceMetricsOverride`, run-wide, or
  *     `null` for "not set" — never set, cleared, or touch turned off. `null` is a real baseline:
@@ -667,7 +667,16 @@ ws.onmessage = (m) => {
  *     while `Network.enable` is off, and it is recorded regardless; `Network.enable` itself is not
  *     followed, because a recovery that clears the list leaves an enabled domain harmless, and
  *     `TESTING.md` § WO-1.58 has the planted run that says so.
- *   - `sectionStart`: a copy of all five, taken by the browser loop as each section begins — the
+ *   - `emulation.network` (WO-1.59): the parameters of the last SUCCESSFUL
+ *     `Network.emulateNetworkConditions`, run-wide, kept WHOLE. It has no clear call either, so "not
+ *     set" is the params that emulate nothing — `{ offline: false, latency: 0, downloadThroughput: -1,
+ *     uploadThroughput: -1 }`, which is `verify/sync-button.mjs`'s own `ONLINE`. Confirmed, not
+ *     assumed: the protocol definition this Edge serves at `/json/protocol` gives `offline: false` as
+ *     no disconnection and `-1` as "disables … throttling", and a fresh target reads `navigator.onLine`
+ *     `true` before any send and again after these params follow an `OFFLINE` (`TESTING.md`
+ *     § WO-1.59). Like the blocked list it bites only while `Network.enable` is on, and is recorded
+ *     regardless; `Network.enable` is still not followed.
+ *   - `sectionStart`: a copy of all six, taken by the browser loop as each section begins — the
  *     state THIS section received, which is the only baseline that means the same thing for every
  *     section.
  *   - `sectionStart.scripts`: the identifier of every page-start script added while the section runs,
@@ -678,13 +687,14 @@ ws.onmessage = (m) => {
  * WHAT IT DOES NOT SEE: anything set some other way than a CDP call through this `send`. No section
  * does that today — none opens a socket or a target of its own — and nothing here would notice if one
  * started. Nor a CDP setting this block does not follow; what is still out of reach is written up in
- * `TESTING.md` § WO-1.58.
+ * `TESTING.md` § WO-1.58 and § WO-1.59.
  *
  * It changes nothing on a run where no section throws: a record is kept and never read. It is read
  * in exactly one place, `putBackWhatTheSectionChanged()` inside `recoverPage()`. */
 const emulation = {
   touch: null, metrics: null,
   media: { media: '' }, timezone: { timezoneId: '' }, blocked: { urls: [] },
+  network: { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 },
 };
 let sectionStart = null;
 function noteWhatItChanges(method, params, reply) {
@@ -700,6 +710,8 @@ function noteWhatItChanges(method, params, reply) {
     reply.then(() => { emulation.timezone = { ...params }; }, () => {});
   } else if (method === 'Network.setBlockedURLs') {
     reply.then(() => { emulation.blocked = { ...params }; }, () => {});
+  } else if (method === 'Network.emulateNetworkConditions') {
+    reply.then(() => { emulation.network = { ...params }; }, () => {});
   } else if (method === 'Page.addScriptToEvaluateOnNewDocument') {
     const into = sectionStart;
     reply.then((r) => { if (into && r && r.identifier) into.scripts.add(r.identifier); }, () => {});
@@ -1038,7 +1050,8 @@ Object.assign(h, {
 
 /* What the failed section changed that the reload below would not undo, put back to what it received
    (WO-1.57 — the record and its limits are at `noteWhatItChanges()`, above `send`). Scripts first,
-   then the viewport, then touch, then the media, the time zone and the blocked URLs (WO-1.58); each
+   then the viewport, then touch, then the media, the time zone and the blocked URLs (WO-1.58), then
+   the network conditions (WO-1.59); each
    is sent only if it differs, so a section that threw with
    everything already tidied costs no CDP call at all. `sectionStart` is let go of before the first
    send, so these calls are not recorded as the section's own — the emulation they set is still
@@ -1064,6 +1077,7 @@ async function putBackWhatTheSectionChanged() {
   if (!same(emulation.media, start.media)) await send('Emulation.setEmulatedMedia', start.media);
   if (!same(emulation.timezone, start.timezone)) await send('Emulation.setTimezoneOverride', start.timezone);
   if (!same(emulation.blocked, start.blocked)) await send('Network.setBlockedURLs', start.blocked);
+  if (!same(emulation.network, start.network)) await send('Network.emulateNetworkConditions', start.network);
 }
 
 /* A booted page again, or an honest no. Everything it can throw is caught in here, because the one
@@ -1078,10 +1092,12 @@ async function recoverPage() {
 }
 
 for (let i = 0; i < BROWSER_SECTIONS.length; i++) {
-  /* What this section received, for `recoverPage()` to put back if it throws (WO-1.57, WO-1.58). */
+  /* What this section received, for `recoverPage()` to put back if it throws (WO-1.57, WO-1.58,
+     WO-1.59). */
   sectionStart = {
     touch: emulation.touch, metrics: emulation.metrics,
     media: emulation.media, timezone: emulation.timezone, blocked: emulation.blocked,
+    network: emulation.network,
     scripts: new Set(),
   };
   if (await runSection(BROWSER_SECTIONS[i], recoverPage)) continue;

@@ -5420,7 +5420,7 @@ three sections send that. Record the URL list regardless, and do not start track
 
 ## WO-1.59 — a section that throws while offline hands an offline network on
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-1.58 — the record and the restore this widens
+**Ship** — · **Status** ✅ DONE — 2026-10-05 · **Size** XS · **Depends on** WO-1.58 — the record and the restore this widens
 **Closes roadmap** *(no box. A harness defect with no live symptom yet.)*
 
 **Booked 2026-10-01**, owner-directed, from WO-1.58's verdict. WO-1.58 widened `recoverPage()`'s
@@ -5452,14 +5452,14 @@ whether a check goes red on it is luck.
 - Nothing under `src/` moves, and no section file is edited except by a planted, reverted throw.
 
 **Acceptance**
-- [ ] A throw planted in `sync-button.mjs` between the `OFFLINE` and `ONLINE` sends leaves the next
+- [x] A throw planted in `sync-button.mjs` between the `OFFLINE` and `ONLINE` sends leaves the next
       section reading `navigator.onLine` as `true` and reaching the server with a probe request, as
       on a normal run. Mutation-proved: with the new restore removed, the same throw leaves it
       `false` and the probe refused. Recorded in `TESTING.md` § WO-1.59, and **the planted throw is
       reverted before anything else is written** (`AGENTS.md`).
-- [ ] The whole harness is green on the real clock, the check list is unchanged in names and order,
+- [x] The whole harness is green on the real clock, the check list is unchanged in names and order,
       and no check changes state against HEAD.
-- [ ] `node tools/wo-sweep.mjs` is green, including § 25's reading of `runSection()`'s shape.
+- [x] `node tools/wo-sweep.mjs` is green, including § 25's reading of `runSection()`'s shape.
 
 **Traps** — **`recoverPage()` must still never throw**, and a CDP call that fails while restoring
 goes in its existing `catch`, as WO-1.57's and WO-1.58's do. **Put back what the section received,

@@ -453,7 +453,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 61 | 60 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 61 | 61 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 55 | 54 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 44 | 43 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 6 | 6 | — | ✅ DONE — 2026-09-30 |
@@ -462,7 +462,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 17 | 16 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.4 ✅ DONE 2026-09-26, the sign-in opened on the deployed domain and read on the laptop and the iPad; WO-7.5 ✅ DONE 2026-09-26, the header's sync button; WO-7.6 ✅ DONE 2026-09-26, the privacy documents say when Google's library loads, read off the deployed /privacy; WO-7.7 ✅ DONE 2026-09-26, a download repaints the open screen, read both ways on laptop and iPad; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 18 | 12 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 3 | — | WO-G2 ✅ **2026-09-30**: worked 2026-09-29 with six of eight boxes closed, and the letter-scale setting and the backup drill closed the next day on the owner's reading; WO-G3 ✅ **2026-09-30** on the owner's ruling, watched across four weeks of the term with nothing recorded |
-| | **230** | **218** | **3** | `[█████████░] 95%` |
+| | **230** | **219** | **3** | `[█████████░] 95%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)

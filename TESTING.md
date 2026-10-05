@@ -2700,10 +2700,12 @@ Evidence, 2026-09-30, real clock, whole harness each time. `EXIT=` is read from 
   blocked list.** `grep -rhoE "send\('[A-Za-z]+\.[A-Za-z]+'" tools/verify/ | sort | uniq -c` lists
   every method the sections send. Beside the eight followed now, three set state that outlives a
   reload:
-  - **`Network.emulateNetworkConditions`**, twice, in `sync-button.mjs`: `OFFLINE` at ~515 and back
+  - ~~**`Network.emulateNetworkConditions`**, twice, in `sync-button.mjs`: `OFFLINE` at ~515 and back
     to `ONLINE` at ~526, inside a `Network.enable` window. **A throw between them hands an offline
     network on**, exactly as a throw inside the block hands the block on. It was not in this work
-    order's list and is not put back. **Booked 2026-10-01 as WO-1.59**, and the fix would
+    order's list and is not put back.~~ **Put back since WO-1.59, 2026-10-05** — see § WO-1.59
+    below, which has the planted runs and what is still out of reach. What this bullet said, kept as
+    the record: **Booked 2026-10-01 as WO-1.59**, and the fix would
     be the same few lines with `ONLINE`'s own parameters — whatever "not set" is for this method —
     as the baseline. Found while writing this list; no planted run was taken against it.
   - **`Browser.grantPermissions`** (`score-grid.mjs`, `outreach.mjs`) and
@@ -2721,6 +2723,171 @@ Evidence, 2026-09-30, real clock, whole harness each time. `EXIT=` is read from 
   the reload, not this record, that undoes it.
 - **Fixture data and page storage** — WO-1.56's limit, and the one the praise-column failure above
   is an instance of.
+- **A normal run is unchanged by construction.** The record is kept on every run and read only in
+  `recoverPage()`, which runs only after a throw.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.*
+
+### WO-1.59 — a section that throws while offline hands an offline network on
+
+**What this changes.** Nothing a teacher sees, and nothing a device gets. `src/`, `index.html`,
+`sw.js` and every file under `tools/verify/` are **byte-identical to HEAD**, so **no `CACHE` bump is
+owed**. One code file moves, `tools/verify-shell.mjs`. No check was added or removed, so the `check(`
+count in `tools/README.md` does not move (§ 11: 1763 call sites, `tools/README.md:1256`), and
+`runSection()`'s body is untouched — § 25 reads it at the same lines.
+
+**How it is recorded.** WO-1.58's record, widened by one method and nothing else.
+`noteWhatItChanges()` now also follows `Network.emulateNetworkConditions`, on its **successful**
+reply, into `emulation.network`, keeping the **whole params object** (so a later send carrying
+`connectionType` or the packet fields is put back with them). The browser loop copies it into
+`sectionStart` beside the other five, and `putBackWhatTheSectionChanged()` sends it back last, only
+if it differs. A failed restore call lands in `recoverPage()`'s existing `catch`, as WO-1.57's and
+WO-1.58's do, so **`recoverPage()` still cannot throw**. No section file gained a `finally`.
+
+**What "not set" is, and where it was confirmed.** The method has no clear call, so the record
+starts at the params that emulate nothing: `{ offline: false, latency: 0, downloadThroughput: -1,
+uploadThroughput: -1 }`, which is `sync-button.mjs`'s own `ONLINE`. That is the **starting
+record**, not what recovery sends regardless: recovery sends whatever the section received. Two sources,
+both taken on 2026-10-05 against the Edge the harness drives (`Edg/154.0.4258.53`, protocol 1.3), in
+a throwaway script outside the repository:
+
+- **The protocol definition the browser itself serves**, at `/json/protocol`.
+  - `offline` is *"True to emulate internet disconnection"*.
+  - For both throughputs, `-1` *"disables … throttling"*.
+  - `latency` is a *"Minimum latency"*, so 0 adds none.
+  - The same definition marks the method **deprecated** in favour of
+    `emulateNetworkConditionsByRule` and `overrideNetworkState`. See the out-of-reach list.
+- **An observed fresh target.** These are `navigator.onLine` readings on a new `about:blank`:
+  - before any send: `true`;
+  - with `Network.enable` on: `true`;
+  - after `OFFLINE`: `false`;
+  - after a `Page.reload`: still `false`, which is why a reload does not undo it;
+  - after the `ONLINE` params: `true`;
+  - after `OFFLINE` and then `Network.disable`: `true`. This is the "bites only while
+    `Network.enable` is on" of the Traps, measured.
+
+**`Network.enable` is still not followed.** A throw between `sync-button.mjs`'s `Network.enable`
+(~483) and its `Network.disable` (~528) leaves the domain on. In run B, putting the conditions back
+was enough. `first-run` read online and reached the server, and nothing in `first-run` or after it
+differed from run A except the storage-family lines below. *That the domain was still on is read
+from the code path, not measured*, as in WO-1.58.
+
+**The plant needs no second edit, unlike WO-1.58's time-zone plant.** A normal run's page is
+online. The section's own `OFFLINE` already differs from that, so a handed-on network reads
+differently from a correct restore without changing anything else. The throw went in directly after
+`const onLineFlag = await evalJs('navigator.onLine');` (~519), after `OFFLINE` at ~515 and before
+`ONLINE` at ~526. The `*accounts.google.com*` block is also in force at that point. WO-1.58's restore
+clears that block in runs B and C alike.
+
+**The reader was a temporary probe, as in WO-1.56, WO-1.57 and WO-1.58.** It was **not** a new
+check. Acceptance 2 forbids any change to the check list.
+
+- **Where it ran.** `verify/first-run.mjs` is the section after `sync-button` in
+  `BROWSER_SECTIONS`, read from the list, not assumed. One `console.log` went at the head of its
+  `run()`, before it sets anything.
+- **What it printed:**
+  - `navigator.onLine`;
+  - the outcome of `fetch('http://localhost:<port>/wo159-probe?…', { mode: 'no-cors', cache:
+    'no-store' })`;
+  - how many times the harness's own server had been asked for `/wo159-probe` (`SERVED`), before
+    and after the fetch.
+- **Why that URL.** It is cross-origin to the page at `127.0.0.1`, so the service worker passes it
+  through untouched. The server answering it is the harness's own, so "reached" and "refused" are
+  both local facts.
+- **Markers.** The probe and the throw both carried `MUTATION WO-1.59`. **This work order edits
+  `putBackWhatTheSectionChanged()` and the browser loop**, so it owed § 25's planted-throw run. Runs
+  B and C pay it. Each throw is a FAIL naming its file and line, the summary is reached, and the run
+  exits 1.
+
+Evidence, 2026-10-05, real clock, whole harness each time. `EXIT=` is read from each log's own line:
+
+- **Run H, `HEAD` before any edit:** `1769 checks · 1769 passed · 0 failed · 0 skipped`, 792s,
+  `EXIT=0`. This is the comparison baseline for line 2.
+- **Run A, the change plus the probe, no throw:** `1769 · 1769 · 0 · 0`, 779s, `EXIT=0`.
+  - The probe read **`{"onLine":true,"fetch":"reached"}`, served 0→1**. These are the normal-run
+    values.
+  - The stripped check list is identical to run H's, so the probe changes nothing.
+- [x] **A throw between `sync-button.mjs`'s `OFFLINE` and `ONLINE` leaves the next section online
+      and reaching the server.**
+      - **Run B** had the change, the throw and the probe: `1738 checks · 1735 passed · 3 failed ·
+        0 skipped`, 737s, `EXIT=1`.
+      - The section was reported as thrown *"after 10 of its own checks"* at
+        `sync-button.mjs:520`, with the planted message reading `onLine read false`. The throw
+        happened offline.
+      - `first-run`'s probe read **`{"onLine":true,"fetch":"reached"}`, served 0→1**, as in run A.
+      - **Mutation-proved by run C.** Run C was the same plants with the one new restore line
+        commented out of `putBackWhatTheSectionChanged()` under the marker (WO-1.57's and WO-1.58's
+        left in): `1722 checks · 1719 passed · 3 failed · 0 skipped`, 722s, `EXIT=1`.
+      - In run C the probe read **`{"onLine":false,"fetch":"refused: Failed to fetch"}`, served
+        0→0**. The request never left the page.
+      - Unlike WO-1.58's blocked-list run, a real check broke on it. `first-run` itself threw
+        *"after 2 of its own checks"* on `TypeError: Cannot read properties of undefined (reading
+        'store')` and lost the rest of the section, 17 checks. *Why it threw is inferred, not
+        measured:* its third step opens the fresh `http://localhost` origin, which no service
+        worker has cached. Offline, that page cannot load, so `window.planbook` is undefined.
+      - With detail text stripped, **that thrown section is the only difference between runs B and
+        C**. The 17 `first-run` lines B ran after its first two (16 PASS, 1 FAIL) are replaced by
+        C's one section FAIL (`diff` of the PASS/FAIL/SKIP lines).
+      - **What the rest of run C read is inferred, not measured.** Nothing after `first-run` sends
+        `emulateNetworkConditions` or `Network.disable`. By `grep`, `sync-button.mjs` is the only
+        sender of the first. `Network.disable` is sent only by `drive-sign-in.mjs`, which runs
+        before `sync-button`, by `sync-button.mjs` itself, and by `first-run.mjs`, which threw
+        before its own pair at ~352/~449. So by the code path the page stayed offline for every later section. Not one
+        later check turned red on that, which is the work order's "whether a check goes red on it
+        is luck", seen. No probe was taken past `first-run`.
+- **What else fails in runs B and C, and why it is not this work order's.** Two lines fail in both
+  runs, and neither is caused by the network:
+  - **`first-run`'s *"the run's own device was never touched"*.** In run B it read `"gis":true`. In
+    run C it is inside the lost checks.
+  - **`outreach`'s *"no Google scope is requested anywhere in this flow"*.** It read `google scripts
+    on the page = 1`, identically in both runs.
+  - **The cause.** Both come from the opt-in left `true` in `localStorage`: `sync-button.mjs` sets
+    it at ~510, just before the plant, and the throw skips its own switch-off. So every later launch
+    preloads Google's library (WO-7.5).
+  - This is the page-storage family that WO-1.56, WO-1.57 and WO-1.58 all put out of scope, and it
+    is out of scope here. Runs A and B differ in nothing else.
+- **Revert.**
+  - `sync-button.mjs` and `first-run.mjs` were copied back from copies saved before the first
+    plant.
+  - `tools/verify-shell.mjs` was copied back from its post-change save. It matched the staged
+    change byte for byte (`git diff --quiet`).
+  - `git diff --quiet HEAD -- tools/verify src` then held.
+  - `grep -rn "MUTATION WO-1.59\|WO159" tools/ src/` printed nothing (exit 1).
+  - All of that happened before anything else was written.
+- [x] **The whole harness is green on the real clock, the check list is unchanged, and no check
+      changes state against HEAD.**
+      - Run D was the final tree after every revert, with no flag:
+        **`1769 checks · 1769 passed · 0 failed · 0 skipped`**, 772s, `EXIT=0`, and no probe line
+        in the log.
+      - **How it was compared:** every `PASS | ` / `FAIL | ` / `SKIP | ` line of runs H and D was
+        cut at the `  :: ` and `diff`ed. They are **identical**: the same 1769 names in the same
+        order, all PASS in both.
+      - *(As in WO-1.58, the edit landed while run H was in flight. Its checks ran the code loaded
+        at launch, which was `HEAD`'s, because every section is a static import.)*
+- [x] **`node tools/wo-sweep.mjs` is green, including § 25.**
+      - Result: `48 checks · 45 passed · 0 failed · 3 to review`, exit 0. The three reviews are the
+        standing ones.
+      - § 25 reads *"runSection() at tools/verify-shell.mjs:506-524 awaits the one `.run(` …"*.
+        `runSection()` starts at line 506 at `HEAD` too.
+
+**What is still out of reach, stated rather than claimed away:**
+
+- **Anything set some other way than a CDP call through that `send`.** This is WO-1.57's limit,
+  unchanged.
+- **The two methods that replace this one.** No section sends `Network.emulateNetworkConditionsByRule`
+  or `Network.overrideNetworkState` today. The browser marks `emulateNetworkConditions` deprecated in
+  their favour, so a section rewritten to the newer pair would set the same state through methods
+  this record does not follow, and nothing here would notice.
+- **`Network.disable` is not read as a clear.** The fresh-target reading above shows that disabling
+  the domain brings `navigator.onLine` back. The record does not know that. A future section that
+  sent `OFFLINE` and then `Network.disable`, without an `ONLINE`, would leave `emulation.network`
+  reading `OFFLINE` on a page that is online. A throw in a *later* section would then make recovery
+  send `OFFLINE` back. No section does this today: `sync-button.mjs` sends `ONLINE` before its
+  `disable`. Following `Network.enable`/`disable` is what the Traps say not to start without a
+  planted run that needs it, and none did. The same is true of the blocked-URL list.
+- **`Browser.grantPermissions`, `Browser.setDownloadBehavior`, domain enables, page events of a print
+  window, fixture data and page storage.** These are § WO-1.58's list, unchanged. Page storage is the
+  family the two shared failures above belong to.
 - **A normal run is unchanged by construction.** The record is kept on every run and read only in
   `recoverPage()`, which runs only after a throw.
 

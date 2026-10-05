@@ -4319,7 +4319,9 @@ reload, the recovery puts back what the failed section changed that a reload doe
 section received. They are recorded inside `send` and not on `h`, so the harness's own helpers are
 seen too. **Since WO-1.58 the same record follows the media type, the time zone and the blocked-URL
 list** (`setEmulatedMedia`, `setTimezoneOverride`, `Network.setBlockedURLs`), and puts each back to
-what the section received. `TESTING.md` § WO-1.57 and § WO-1.58 have the record and its limits. *(This paragraph
+what the section received, and since WO-1.59 the network conditions
+(`Network.emulateNetworkConditions`) too. `TESTING.md` § WO-1.57, § WO-1.58 and § WO-1.59 have the
+record and its limits. *(This paragraph
 said the opposite — "nothing wraps `run(h)` in a `try`/`catch`, on purpose" — from WO-1.26 until
 WO-1.45 on 2026-09-24, four weeks after WO-1.44 had made it false. The reasoning it gave, that a quiet
 catch is a silent skip, is why the containment records a FAIL rather than swallowing anything.)*
