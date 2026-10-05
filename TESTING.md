@@ -10285,7 +10285,11 @@ reads nothing.
 because `renderScores()` drops a `categoryId` the class has no pill for (`src/scores.js`, the line under
 `withWork`). Category ids are minted fresh per class, so with this fixture removing `resetScoreCategory()`
 alone would leave every check here green: the tap still performs that reset (it goes through
-`showClassScreen()`), but no check here can tell it from the renderer's own guard.
+`showClassScreen()`), but no check here can tell it from the renderer's own guard. **The reset is
+proved elsewhere, not unguarded:** `score-search.mjs`'s WO-3.28 leave-and-return check (~588) goes back
+into the *same* class, where the picked id is still valid and the guard cannot clear it. Measured
+2026-10-05 in a scratch copy of `4e9d36d` with the `resetScoreCategory()` call deleted:
+`1769 checks · 1768 passed · 1 failed`, exit 1, and that check was the one.
 
 **Full run on the delivered tree:** `1769 checks · 1769 passed · 0 failed · 0 skipped`, 56,411 lines, 31.9
 lines per check, 789s, exit 0, 2026-10-04 on the real clock.
