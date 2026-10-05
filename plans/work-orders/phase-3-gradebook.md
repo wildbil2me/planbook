@@ -3507,10 +3507,16 @@ assignment list and the score grid. The tap means *same screen, different class*
   through whatever chain already paints those screens on arrival. Do not add a second painter. The
   comment above the branch (~2443), which says the calendar and the concern list are the only screens
   of that kind, is corrected.
-- **Per-screen state that belongs to the class being left does not follow the tap**: an open
-  assignment editor, a score cell part way through an edit, a selection or a scroll position. Settle
-  each one against the code and name it in the result. Whatever a fresh arrival on that screen
-  resets, the tap resets too.
+- **The score grid's search box and category pill reset on the tap**, as they do on every arrival
+  (`resetScoreSearch()` and `resetScoreCategory()`, `src/shell.js` ~1157). A category pill is a
+  class's own id, so A's means nothing in B, and A's student search narrows B's grid to nobody.
+  The comment there says *"a class tab leaves the grid for Attendance, so there is no second door to
+  reset"*, which stops being true here. Prefer routing the tap through the arrival path that already
+  does these resets over adding a second set of them. Whatever else a fresh arrival on either screen
+  resets, the tap resets too. Name each one in the result.
+  *(Checked at booking: the assignment editor is a modal, so no header tab can be tapped while it is
+  open. A score cell writes on every `input` event (`src/shell.js` ~3816 → `editScore()`), so there
+  is no half-finished value to lose.)*
 - **The class switcher (`src/screen-nav.js`) marks the screen that is up**, not Attendance.
 
 **Acceptance**
@@ -3525,8 +3531,8 @@ assignment list and the score grid. The tap means *same screen, different class*
       Assignments lands on Attendance"* and *"…coming back… lands on Attendance too"*) are rewritten
       to this ruling rather than deleted. The *no per-class memory* half survives as a check: leave A
       on Scores, go home, open B from its card, and B lands on Attendance.
-- [ ] An edit left part way on A's score grid is neither lost silently nor written into B. Name in
-      the result what the tap does with it, and assert it.
+- [ ] With A's grid searched and narrowed to one category, a tap on B shows B's grid unsearched and
+      on *All*. A score typed into A immediately before the tap is in A and nowhere in B.
 - [ ] `CACHE` in `sw.js` is bumped (`src/classes.js` and `src/shell.js` are SHELL files).
 - [ ] 👤 On the iPad, after a force-quit: Assignments and Scores each stay up across two class taps,
       and detail drops to Attendance.
