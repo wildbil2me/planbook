@@ -5013,13 +5013,13 @@ whole of the work is asking whether a sentence somewhere else disagrees with it.
       `plans/work-orders/` is reported, naming the file, the line, the claim and the tracker's value.
       *(Verified 2026-09-24 on the second verifier pass — 24 claims read across five documents, no
       false positive. The first pass FAILED this line: a full stop in the strip's description cell
-      stood between id and state, so `plans/runboo../runbooks/wo-3-18-runbook.html` yielded no claims at all and two
+      stood between id and state, so `plans/runbooks/wo-3-18-runbook.html` yielded no claims at all and two
       stale strips went unread, and "at least one claim" was counted across all documents together.
       One correction round added a cell reader and made the count per document; reverting the
       per-document count lets an empty document pass, so it is mutation-proved. One line of the cell
       reader, `tools/wo-sweep.mjs:3298`, survives its mutation — no document exercises it.)*
 - [x] Proved against the pre-repair tree: the four false statements in
-      `plans/runboo../runbooks/wo-3-18-video-runbook.html` as of `06bfa06` are each reported, and the repaired file at
+      `plans/runbooks/wo-3-18-video-runbook.html` as of `06bfa06` are each reported, and the repaired file at
       `a16b87c` is clean. *(That is the reproduction this row has and WO-1.31 did not — use it.)*
       *(Four findings at `06bfa06` — :270, :304, :322, :513 — and none at `a16b87c`, via `--claims-in`.)*
 - [x] A historical claim in a dated or excluded passage is **not** reported, proved on the repaired
@@ -5034,7 +5034,7 @@ whole of the work is asking whether a sentence somewhere else disagrees with it.
       HEAD; apart from that embedded block and the notes a dirty tree adds, the only report that
       differs is WO-1.52's own status. The sweep is green at `45 · 41 · 0 · 4 review`, matching
       `tools/README.md:10` — the four reviews are the stale strips § 26 found on its first run, in
-      `plans/runboo../runbooks/wo-3-18-runbook.html` and `plans/runboo../runbooks/wo-7-1-runbook.html`, repaired in the next commit.)*
+      `plans/runbooks/wo-3-18-runbook.html` and `plans/runbooks/wo-7-1-runbook.html`, repaired in the next commit.)*
 
 ---
 

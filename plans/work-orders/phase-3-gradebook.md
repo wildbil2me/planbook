@@ -831,7 +831,7 @@ is why it is not paperwork.
 
 **The second origin was added 2026-08-21 and this table did not learn it for three days — 2026-08-24.**
 The row above held one origin until then, because the addition happened during a console sitting whose
-only record was `plans/runboo../runbooks/wo-7-1-runbook.html` § step 0, a dated HTML page that marks it ✅ done. **A
+only record was `plans/runbooks/wo-7-1-runbook.html` § step 0, a dated HTML page that marks it ✅ done. **A
 runbook is a click path, not a register**, and that page says so about itself in as many words: *nothing
 here can be confirmed from the repository — the origin list lives in Google's console and no file in
 this tree records it.* It is recorded here now, on the owner's reading of the console, because this
@@ -1515,7 +1515,7 @@ can only be filmed at* `https://localhost:8443` *until WO-7.3 widens it* ***(dis
 WO-7.4 widened it instead, so the flow films at the real domain once that deploy is live)*** *— and the GIS* **popup**
 *shows a truncated origin bar, so the* `client_id` *Google asks to see in the address bar cannot
 appear there and has to be filmed off the console instead. Both are written up, with a shot list, in*
-[`plans/runboo../runbooks/wo-3-18-video-runbook.html`](../runbooks/wo-3-18-video-runbook.html)*.)*
+[`plans/runbooks/wo-3-18-video-runbook.html`](../runbooks/wo-3-18-video-runbook.html)*.)*
 
 *(**`🔒 GATED` until 2026-09-12, and what took the lock off is the lock's own sentence coming true.**
 [WO-7.2](phase-7-sync.md#wo-72--document-transfer--conflicts) *landed* **✅ 2026-09-07**: `src/drive-sync.js`

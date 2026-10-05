@@ -384,7 +384,7 @@ one work order, never two.)*
 **Booked 2026-09-25**, owner-directed, out of the question *"why not turn on sign-in for the live
 site?"* asked after WO-8.15 closed. **This is WO-7.3's fourth deliverable — "Sync taken out from
 behind its flag" — split off and moved ahead of the submission**, which is the first of the three ways
-out that [`plans/runboo../runbooks/wo-3-18-video-runbook.html`](../runbooks/wo-3-18-video-runbook.html) § "Decide before you shoot"
+out that [`plans/runbooks/wo-3-18-video-runbook.html`](../runbooks/wo-3-18-video-runbook.html) § "Decide before you shoot"
 names. The owner picked it over the middle path the shot list assumed.
 
 **Why it exists.** `hostAllowsSignIn()` answers `true` for `localhost` and `127.0.0.1` and nothing
