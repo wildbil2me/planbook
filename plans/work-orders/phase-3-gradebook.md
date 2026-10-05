@@ -3557,3 +3557,143 @@ is the per-class memory under another name. **The calendar and signals branches 
 these two screens have none to move.** They need the class repainted, not a lens moved, so do not
 model them on `setCalendarFilter()`. And **`resetRegistry()` still runs on every class tap** for the
 reason the comment above it gives. Leave it in place.
+
+## WO-3.46 — a score column can be held out of the grade until it is committed
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** —
+**Closes roadmap** *(no box. Owner-directed, 2026-10-05.)*
+
+**Booked 2026-10-05**, owner-directed, from the owner's reconciling against the SIS: *"Sometimes you
+want to enter a grade, but you're rectifying things from the SIS. The challenge is you can't enter a
+grade without it applying."* The SIS makes every grade wait for a *commit* before it counts, per cell
+and per column range, which the owner calls clunky. **The owner chose per column.** A held column
+takes values, flags and notes as any column does, counts toward nothing, and **keeps no history**
+until it is committed.
+
+**This is half of the feature, cut along its seam.** This work order covers the column's state, the
+grade, the history rule and the commit control. What every *other* reader of `assignments[]` does
+with a held column (signals, the past-due sweep, the ungraded queue, student detail, the grade sheet,
+merge fields) is [WO-3.47](#wo-347--every-reader-outside-the-grade-engine-agrees-about-a-held-column).
+Until that lands, those readers may still show a held column, and that is expected, not a defect of
+this one.
+
+**The shape** — an absent key is its default, as with `thresholdsOf()` and a settings block:
+- `held: true` on the assignment while it is held. **Absent means live**, so every assignment written
+  by every earlier build is live, every backup restores, and there is no `SCHEMA_VERSION` bump.
+- `committedAt: "<localStamp>"`, written when a held column is committed and overwritten by a later
+  commit. Absent on a column that was never held.
+- Nothing about a held column is stored on its cells. A cell does not know its column is held.
+
+**Rulings proposed at booking — the owner confirms each before `--start`**
+1. **The revision window after a commit is measured from the commit.** `reviseCell()` treats a change
+   inside `REVISION_WINDOW_MS` of the cell's `at` as a correction and pushes nothing. A held cell's
+   `at` is when it was typed, not when it began to count. So: type 72 while held, commit at 9:02,
+   change it to 75 at 9:03, and the 72 would vanish from the trail of a score that counted. The window
+   starts at whichever is later, the cell's `at` or the column's `committedAt`.
+2. **A live column can be held again, and its trail is frozen, not cleared.** A cell that already
+   has `was` keeps it untouched while held. Edits replace the current version and push nothing, and
+   the trail resumes on the next commit. Holding a column must never be a way to make a revised score
+   disappear.
+3. **Committing and holding are each one tap behind a confirm that shows what moves.** The confirm
+   names the students whose class grade changes, before and after (*"Jordan 84% → 78%"*), and says
+   so in words when none does. The preview is `classGrade()` asked twice: once on the document as it
+   is, and once on a shallow clone with the column's `held` flipped. `src/signals.js`'s
+   `gradeWithout()` is the precedent. **No arithmetic of its own.**
+4. **A new column is live.** The assignment editor offers *Hold out of the grade* unticked. Nothing a
+   teacher does today changes behaviour unless she asks for a hold.
+
+**Deliverables**
+- **The grade engine skips a held column at its two choke points**, `assignmentsFor()` (~41) and
+  `looseAssignments()` (~63) in `src/grade-engine.js`, with a comment at each saying why. Every class
+  grade, category percentage, letter, points share, projection and `openWork()` row follows from
+  those two, in both grading modes. **Do not filter anywhere else in the engine.**
+- **`reviseCell()` is told about the column**: a fourth argument, `{ held, committedAt }` or nothing,
+  where nothing means live and today's behaviour is unchanged to the byte. A held write stores the
+  wanted value, flag and note with a fresh `at`, keeps any existing `was` as it is, and pushes
+  nothing. A held cell blanked with no `was` is deleted, as today. Ruling 1's window lives here too.
+  Both callers pass it: `src/scores.js` (~474) and `src/past-due.js` (~537). **One rule, not callers
+  deciding.**
+- **The score grid shows a held column as held**: a mark on its head, a word for a screen reader,
+  and a *Commit* control on the head that opens ruling 3's confirm. A live column's head carries
+  *Hold*, behind the same confirm.
+- **The assignment editor carries the hold checkbox** (ruling 4), and changing it on an existing
+  column goes through the same confirm.
+- **`docs/data-model.md`** documents `held` and `committedAt` in the assignment sketch, the history
+  rule under the score cells, and the grade-math rule that a held column counts toward nothing.
+- **`CACHE` in `sw.js` is bumped.**
+
+**Acceptance**
+- [ ] A held column's scores, `missing` and `excused` move no class grade, category percentage or
+      letter, in a weighted class and in a points class, and in a points class's uncategorized work.
+- [ ] Committing the column moves exactly the grades the confirm named, to the figures it named.
+- [ ] Editing a held cell three times leaves no `was`. After commit, the first edit more than the
+      window after `committedAt` pushes the committed version.
+- [ ] Ruling 1: a held cell typed at T, committed at T+2m and changed at T+3m pushes the committed
+      value onto `was`. Mutation-proved against measuring from the cell's `at`.
+- [ ] Ruling 2: a live column with a trail, held and then edited, keeps its trail byte for byte.
+- [ ] A document written before this build restores, and every column in it is live.
+- [ ] `reviseCell()` with no fourth argument returns what it returns today, for every case in the
+      existing history checks.
+- [ ] `CACHE` in `sw.js` is bumped.
+- [ ] 👤 On the iPad, after a force-quit: hold a column, type scores, see the grade not move; commit,
+      read the confirm's names against the grid, and see the grade move.
+
+**Traps** — **Do not store a held marker on the cells.** The column is the unit, and a cell-level
+flag is a second truth that a restore, a copy or the past-due sweep will one day write one of and not
+the other. **Do not use `excused` to fake it.** It is a decision about one student and is already in
+the grade math. **The preview is not a second grade engine.** If the confirm computes a percentage
+itself, the confirm and the grid can disagree, which is the failure this repository refuses
+everywhere else. And **`openWork()` loses held columns as a side effect of the choke-point filter**,
+so the home card's *N to grade* and the waiting queue drop them. That is WO-3.47's to rule on, not
+this work order's to work around.
+
+## WO-3.47 — every reader outside the grade engine agrees about a held column
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.46
+**Closes roadmap** *(no box. Owner-directed, 2026-10-05.)*
+
+**Booked 2026-10-05** with [WO-3.46](#wo-346--a-score-column-can-be-held-out-of-the-grade-until-it-is-committed),
+the second half of the same feature. WO-3.46 keeps a held column out of the grade engine. **Eight
+modules walk `doc.assignments` themselves** and would go on reading a held column as if it counted.
+Then a screen disagrees with itself: the grade says 84% while the concern list says *3 missing* from a
+column that is not live. This work order gives each of them a ruling.
+
+**Rulings proposed at booking — the owner confirms or changes each before `--start`**
+
+| Reader | Proposed ruling |
+|---|---|
+| `src/signals.js` — `sequence` (~1727), so every rule reading `countedWork()` / `scorePercents()` | **Skips held columns.** A signal built from a grade that is not committed contradicts the grade on screen. `gradeWithout()` already goes through `classGrade()`, so it follows WO-3.46 by itself |
+| `src/past-due.js` — the sweep's offer | **Does not offer** to mark blanks in a held column missing. A held column is work in progress, and the sweep's question is about work that is finished and late |
+| `src/glance.js` `queueRows()` and `src/home.js`'s *N to grade* chip | **A held column with blanks still counts as waiting to be graded**, and its row says *held*. Unfinished work is exactly what the queue is for. This needs `openWork()` to report held rows in its own state, or a sibling engine call; **the call goes in `src/grade-engine.js`, not in the reader** (the glance-reader rule in `CLAUDE.md`) |
+| `src/detail.js` — open work and projections | Projections stay out (they follow the engine). Open work lists a held column under its own word, or not at all — **the implementer proposes, the owner rules at dispatch** |
+| `src/graded-pieces.js` | **Skips held columns**: it answers which categories have counted work, and a held column has none |
+| `src/grades-report.js` — the grade sheet and CSV | **Includes the column, marked held** in its head and in the CSV's header cell. The sheet is what is re-keyed into the SIS, and the SIS has its own commit, so leaving the column off would hide the very work being reconciled |
+| `src/merge-fields.js` — `{{missing.list}}` and the grade fields | **Follows the engine**: a held column's `missing` is not listed. A guardian must not be told about a zero that does not count |
+| `src/calendar-derived.js` — due dates | **Unchanged.** A due date is a date whether or not the column counts |
+
+**Deliverables**
+- Each ruling in the table, as the owner confirmed it, built at the reader. **Where a reader wants
+  held-awareness, it asks one exported predicate** (`isHeld(assignment)` or similar, in
+  `src/grade-engine.js` beside the filter) rather than reading `.held` itself. Then a later change to
+  what "held" means is one edit.
+- A comment at each reader naming this work order and its ruling.
+- `docs/data-model.md` gains the table above, as ruled, under the held-column section WO-3.46 wrote.
+- `CACHE` in `sw.js` is bumped if any SHELL file moves.
+
+**Acceptance**
+- [ ] With a held column holding a `missing` and two low scores for one student, the concern list
+      shows nothing from that column, and committing it makes the matching signals fire.
+- [ ] The past-due prompt does not name a held column whose due date has passed.
+- [ ] The home card and the waiting queue show a held column with blanks as the ruling says.
+- [ ] The grade sheet and CSV show the held column as the ruling says.
+- [ ] `{{missing.list}}` does not name a held column's missing work.
+- [ ] Nothing outside `src/grade-engine.js` reads `.held` off an assignment. Asserted by the harness
+      or by a sweep check — the implementer proposes which.
+- [ ] 👤 On the iPad: a held column with a missing score, read on the home card, the concern list and
+      the student's detail, all three agreeing with the grade.
+
+**Traps** — **The table is a proposal until the owner says otherwise.** Build what was ruled, not
+what is written above, if the two differ. **A reader that re-implements "is this column held" is the
+second opinion** that the glance-reader rule forbids. And **the queue ruling is the one most likely
+to be got wrong by symmetry**: everything else in this table hides a held column, and the queue
+deliberately does not.
