@@ -1350,7 +1350,8 @@ front door can only explain and send the teacher into the app to install it.
 - **`/` shows WO-8.15's front page content to a visitor who is both not running installed**
   (`src/install-banner.js`'s own `display-mode: standalone` / `navigator.standalone` test — one
   asker, not two) **and has no school year stored.** Anybody installed, or with data, goes straight
-  into the app exactly as today.
+  into the app exactly as today. *"No school year stored" means no year at all — not
+  `untouchedYear()`*, ruled below; the probe that answers it is ruling 3 and trap 2.
 - **A way past it that is always on the screen** — *Use it in this browser* — and the install steps
   for the device the visitor is on.
 - **The words come from `about.html` and are not retyped.** How — fetched, or the front page's
@@ -1361,16 +1362,33 @@ front door can only explain and send the teacher into the app to install it.
   iPad Safari, the browser path as the primary on a laptop, no primary on the iOS panel — and styles
   it in `design/mockups/proposed-phase8.css` § FRONT DOOR, bound for `src/front-door.css`.
 
-**Open — the owner's before dispatch**
-- **How firm on iPad Safari.** Proposed: the same door, with the install steps above the *use it in
-  this browser* link rather than below it. The alternative — no browser path on iOS Safari at all —
-  is the only gate that pays for itself, and it is still a gate.
-- **Whether *use it in this browser* is remembered**, under the `planbook_` prefix as a UI
-  preference. Proposed: yes, once; a door that reappears on every visit to an empty year is a nag.
-- **A browser that cannot install** (raised by the drawing). Firefox can be told apart; a Chromebook
-  with installing switched off by its admin probably cannot, and would see the laptop door's install
-  sentence for a control that is not there. Proposed: its own words where it can be detected, and the
-  laptop door where it cannot, with the implementer establishing which is which.
+**Ruled — the owner, 2026-10-04** *(this block was* Open — the owner's before dispatch *until then;
+the pre-dispatch read found that `store.boot()` changes the answer to two of its three lines)*
+1. **The condition is "no year stored", not "untouched year".** `store.boot()` → `createYear()`
+   saves a rev-1 year on the first launch of a fresh origin, so the first pass through the door
+   leaves a year behind and the door does not return. Someone who looked once and left without
+   doing anything will not see it again; they have seen it once, and that is accepted. The door
+   therefore never asks `untouchedYear()` and never depends on its six-fact proof.
+2. **_Use it in this browser_ is not remembered — no new preference.** It was proposed as a
+   `planbook_` key; under ruling 1 the year `boot()` saves is the memory, and a preference would be
+   a second record of the same fact. *(`design/mockups/front-door.html`'s caption on Open line 2
+   still reads "proposed: yes, once" — superseded here; the drawing is not re-cut for a caption.)*
+3. **The probe is the `planbook_openYear` preference first, then `indexedDB.databases()`.** The
+   preference is read through `getPref('openYear')` — `src/prefs.js` is the only door to
+   `localStorage`, and `wo-sweep.mjs` fails a second one. The preference present → a year exists → straight into the app, with no await before the decision,
+   so nobody who has used the app before waits on a probe. Absent → `indexedDB.databases()`, and the
+   door only if `planbook` is not among the names. **`databases()` missing or throwing opens the app
+   — doubt draws no door**, because this is a front door and not a gate. It lives in
+   `src/store.js` as one more read-only export, so the store stays the one module that knows
+   `DB_NAME`. Both halves of an iOS eviction clear together (script-writable storage goes as a
+   unit), which is what lets the preference stand in for the database.
+4. **iPad Safari: the door, not a gate.** Install steps first, *use it in this browser* below them,
+   as drawn. No browser path at all would stand between trap 4's teacher and *Restore*.
+5. **A browser that cannot install: its own words where it can be detected, the laptop door where it
+   cannot.** Firefox is told apart. A Chromebook with installing switched off is not detectable and
+   gets the laptop door. **Do not infer it from `beforeinstallprompt` not firing** — that event's
+   timing is the browser's engagement heuristic, and its absence proves nothing.
+6. **The harness passes the door with a loopback-only URL flag**, ruled under trap 5.
 
 **Acceptance**
 - [ ] A cold, non-installed visit with no stored year shows the front door; an installed launch, and
@@ -1386,13 +1404,26 @@ front door can only explain and send the teacher into the app to install it.
 `/` from the cache so an installed app opens offline; teaching the worker to choose between two
 documents is WO-8.12's defect in reverse. **2. Opening IndexedDB creates it.** A probe that calls
 `indexedDB.open()` on a fresh origin leaves an empty database behind, and whatever asks "has this
-device got data" next reads that. Ask the store module what it already knows; do not open a second
-connection to find out. **3. It is not a warning screen.** WO-8.6's Acceptance says the onboarding
+device got data" next reads that. **And the store knows nothing before it opens one** —
+`boot()`'s first act is `connect()`, which is that `open()`, and on a fresh origin it then saves a
+year. So the decision is made **before `store.boot()`**, by ruling 3's probe — never `open()` to find
+out. The obvious-looking shortcut, "ask the store", is the defect. **3. It is not a warning screen.** WO-8.6's Acceptance says the onboarding
 path has none; a front door that leads with *you could lose your data* is one. The caution is one
 paragraph, on iOS, beside the steps that fix it. **4. "No school year stored" is not "new here".** A
 teacher who has cleared a device to restore a backup onto it has no year and is not a stranger; the
 door must not stand between her and *Restore*. *Use it in this browser* landing on the home screen,
-where restore already is, is the proposed answer — check it rather than assume it.
+where restore already is, is the proposed answer — check it rather than assume it. **5. The harness
+is a cold visitor on every run.** `tools/verify-shell.mjs` launches headless Edge on a fresh
+`--user-data-dir`: not installed, no year — exactly the door's condition, so every existing check
+lands on the door unless it is passed. Pass it with a URL flag (`?door=skip` or the implementer's
+name for it) **read only on a loopback host**, the way `hostAllowsSignIn()` in `src/auth.js` gates
+on the hostname, so the deployed app cannot be told to skip it. Existing sections pass the flag; a
+new section runs without it and proves the door appears cold, that it creates no database, and that
+*use it in this browser* lands on the home screen with *Restore* on it. **Do not seed the
+preference instead** — a seeded `planbook_openYear` passes today and silently stops passing the
+day the probe order changes. **6. "No flash" is a hold on the paint**, not a style: the probe's
+async half runs before anything is drawn, and it runs only on a device with no preference, which is
+the only device that can be a stranger.
 
 **Out of scope, and unbooked** — asking the browser to keep this site's storage
 (`navigator.storage.persist()`, called nowhere in `src/` today). It is a cheap second belt for a
