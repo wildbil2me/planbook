@@ -3475,3 +3475,68 @@ before it, carries none, and stays red until the next `CACHE` bump.)*
 *(`src/assignments.js` ~925, "invisible on every term's list", was the third comment named in
 WO-3.40's verdict. It was read the day this was booked and is true: `assignmentsOf()` matches `termId`
 exactly, so a `termId` of `''` is on no term's list. Nothing to fix there.)*
+
+## WO-3.45 — a class tab on the assignment list or the score grid drops you on Attendance
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Closes roadmap** *(no box. Owner-directed, 2026-10-04.)*
+
+**Booked 2026-10-04**, owner-directed, from the owner's own use: *"When I am looking at calendars or
+signals, and I click on another class, I land on the same screen for that class. That doesn't work
+for assignments or scores."* **Placed next in the running order**, the owner's call.
+
+**This reverses a ruling, not a bug.** `selectClass()` in `src/classes.js` (~733) records that every
+class screen except the calendar and the concern list lands on Attendance on a class tap. Its reason
+was *"a teacher tapping Period 3 while looking at Period 2's score grid is going to Period 3, not to
+a column of Period 3's scores she did not ask for."* The owner has now ruled the other way for the
+assignment list and the score grid. The tap means *same screen, different class* on four screens now.
+
+**The owner's rulings, 2026-10-04**
+1. **Assignments → another class's Assignments. Scores → another class's Scores.** Attendance stays
+   on Attendance, as it already does.
+2. **Student detail still lands on Attendance.** The student is not in the other class, so there is
+   no "same screen" to land on.
+3. **Nothing else moves.** A card on the home grid still opens a class on Attendance, and a reload
+   still lands on Attendance (`REMEMBERED_AS` in `src/views.js` is unchanged). This is *same screen
+   on a class switch*, not a per-class memory of the last screen used. That memory is still refused.
+
+**Deliverables**
+- **`selectClass()` keeps `assignments` and `scores` up** beside `calendar` and `signals`, and its
+  comment says why the list grew and that `detail` is left off it on purpose.
+- **`src/shell.js`'s `data-class-tab` branch paints the new class's assignment list or score grid**,
+  through whatever chain already paints those screens on arrival. Do not add a second painter. The
+  comment above the branch (~2443), which says the calendar and the concern list are the only screens
+  of that kind, is corrected.
+- **Per-screen state that belongs to the class being left does not follow the tap**: an open
+  assignment editor, a score cell part way through an edit, a selection or a scroll position. Settle
+  each one against the code and name it in the result. Whatever a fresh arrival on that screen
+  resets, the tap resets too.
+- **The class switcher (`src/screen-nav.js`) marks the screen that is up**, not Attendance.
+
+**Acceptance**
+- [ ] With the assignment list up for class A, a tap on class B's header tab shows class B's
+      assignment list. The B tab is the active one and the switcher marks Assignments.
+- [ ] The same for the score grid: A's Scores → tap B → B's Scores, showing B's students and B's
+      columns, and no column or row of A's.
+- [ ] Student detail up → tap another class → that class's Attendance. Unchanged, and asserted.
+- [ ] A home-grid card still opens on Attendance, and a reload from either screen still lands on
+      Attendance. `tools/verify/assignments.mjs`'s card check (~828) stays green as it is.
+- [ ] `tools/verify/assignments.mjs` ~799 and ~809 (*"opening a second class from a class left on
+      Assignments lands on Attendance"* and *"…coming back… lands on Attendance too"*) are rewritten
+      to this ruling rather than deleted. The *no per-class memory* half survives as a check: leave A
+      on Scores, go home, open B from its card, and B lands on Attendance.
+- [ ] An edit left part way on A's score grid is neither lost silently nor written into B. Name in
+      the result what the tap does with it, and assert it.
+- [ ] `CACHE` in `sw.js` is bumped (`src/classes.js` and `src/shell.js` are SHELL files).
+- [ ] 👤 On the iPad, after a force-quit: Assignments and Scores each stay up across two class taps,
+      and detail drops to Attendance.
+
+**Traps** — **WO-3.3's Acceptance line *"Opening a class lands on Attendance every time"* is not
+reopened.** Its argument is against a per-class memory of the last screen, and its proof is a card
+tap and a reload, both still true. Add a dated note under that line saying a header tap from
+Assignments or Scores now keeps the screen (this work order), and leave its tick alone. **Do not put
+`assignments` or `scores` in `REMEMBERED_AS`'s other direction**: a reload landing on the score grid
+is the per-class memory under another name. **The calendar and signals branches move a filter, and
+these two screens have none to move.** They need the class repainted, not a lens moved, so do not
+model them on `setCalendarFilter()`. And **`resetRegistry()` still runs on every class tap** for the
+reason the comment above it gives. Leave it in place.
