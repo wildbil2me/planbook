@@ -13,6 +13,21 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A class tab keeps you on Assignments or Scores — 2026-10-05
+
+WO-3.45, owner-directed. Shell cache bumped to v166.
+
+- **A class tab tapped on the assignment list or the score grid shows that class's assignment list
+  or score grid**, the way the calendar and the concern list already did. Before, it dropped you on
+  Attendance. Student detail still drops to Attendance, because that student is not in the other
+  class.
+- **The score grid's search and category pill reset on the tap**, because the tap goes through the
+  same arrival as the switcher's pill. A search for one class's student would otherwise narrow the
+  next class's grid to nobody.
+- **Nothing is remembered per class.** A card on the home grid and a reload still land on
+  Attendance, and `REMEMBERED_AS` is unchanged. WO-3.3's line carries a dated note rather than being
+  reopened.
+
 ### The sweep's cache check watches index.html — 2026-10-04
 
 WO-1.61. Tooling only; no shell cache bump, and none owed.

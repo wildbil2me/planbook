@@ -787,6 +787,15 @@ if (!classesBooted || !classSeam || !assignSeam) {
       ACCEPTANCE LINE 6, and it is proved the way the work order asks for — by leaving one class on
       Assignments, opening a second and coming back — rather than by reading the code. The failure
       mode is a per-class memory nobody asked for, and it is invisible until the second class.
+
+      REWRITTEN FOR WO-3.45 (2026-10-04), not deleted. The owner has since ruled that a HEADER TAB
+      tapped from the assignment list means "same screen, different class", so the two checks that
+      used to assert Attendance after a tab now assert the second class's Assignments, and the first
+      class's again on the way back. The per-class-memory half of WO-3.3's line did not go anywhere —
+      it was never about the tab, it was about a class reopening on the screen it was LEFT on — so it
+      is asserted by the door that question is really asked through: leave the first class on Scores,
+      go home, open the second from its card, and the second lands on Attendance. The card check and
+      the reload check below are unchanged.
     */
     await clickSel('#classTabBar [data-class-tab]', tabIndex < 0 ? 0 : tabIndex);
     await clickSel('#classView [data-class-screen="assignments"]');
@@ -796,20 +805,38 @@ if (!classesBooted || !classSeam || !assignSeam) {
     const secondClass = await evalJs(`(function(){ var live = window.__assign();
       live.strip = window.__strip(); live.open = window.planbook.classes.getSelectedClassId();
       return live; })()`);
-    check('opening a second class from a class left on Assignments lands on Attendance',
-      leftOnList.shown && secondClass.classShown && !secondClass.shown
-        && secondClass.open === dst.id
-        && secondClass.strip.every((s) => s.active[0] === true),
-      'left on assignments = ' + leftOnList.shown + ', second class shows attendance = '
-        + secondClass.classShown);
+    check('opening a second class by its header tab from a class left on Assignments shows that class\'s Assignments (WO-3.45)',
+      leftOnList.shown && secondClass.shown && !secondClass.classShown
+        && secondClass.open === dst.id && secondClass.heading === dst.name
+        && secondClass.strip.every((s) => s.active[0] === false && s.active[1] === true),
+      'left on assignments = ' + leftOnList.shown + ', second class shows assignments = '
+        + secondClass.shown + ' headed ' + JSON.stringify(secondClass.heading) + ', strip '
+        + JSON.stringify(secondClass.strip.map((s) => s.active)));
     await clickSel('#classTabBar [data-class-tab]', tabIndex < 0 ? 0 : tabIndex);
     const backAgain = await evalJs(`(function(){ var live = window.__assign();
       live.strip = window.__strip(); live.open = window.planbook.classes.getSelectedClassId();
       return live; })()`);
-    check('and coming back to the first class lands on Attendance too — there is no per-class memory',
-      backAgain.classShown && !backAgain.shown && backAgain.open === src.id
-        && backAgain.strip.every((s) => s.active[0] === true && s.active[1] === false),
-      'open class ' + (backAgain.open === src.id) + ', attendance up = ' + backAgain.classShown);
+    check('and coming back to the first class by its tab shows the first class\'s Assignments again (WO-3.45)',
+      backAgain.shown && !backAgain.classShown && backAgain.open === src.id
+        && backAgain.heading === src.name
+        && backAgain.strip.every((s) => s.active[0] === false && s.active[1] === true),
+      'open class ' + (backAgain.open === src.id) + ', assignments up = ' + backAgain.shown
+        + ' headed ' + JSON.stringify(backAgain.heading));
+    await clickSel('#assignmentsView [data-class-screen="scores"]');
+    const leftOnScores = await evalJs(`(function(){
+      return !document.getElementById('scoresView').classList.contains('hidden'); })()`);
+    await clickSel('#scoresView [data-view-home]');
+    await clickSel('#homeGrid [data-class-tab="' + dst.id + '"]');
+    const cardAfterScores = await evalJs(`(function(){ var live = window.__assign();
+      live.strip = window.__strip(); live.open = window.planbook.classes.getSelectedClassId();
+      live.scoresShown = !document.getElementById('scoresView').classList.contains('hidden');
+      return live; })()`);
+    check('and there is still no per-class memory: leave the first class on Scores, go home, open the second from its card, and it lands on Attendance',
+      leftOnScores && cardAfterScores.classShown && !cardAfterScores.shown && !cardAfterScores.scoresShown
+        && cardAfterScores.open === dst.id
+        && cardAfterScores.strip.every((s) => s.active[0] === true),
+      'left on scores = ' + leftOnScores + ', second class from its card shows attendance = '
+        + cardAfterScores.classShown + ', scores = ' + cardAfterScores.scoresShown);
 
     /* The way in from a card, which is the other door into a class, and it has to answer the same
        way — a teacher who left the list open and went home through "All classes" is the commonest

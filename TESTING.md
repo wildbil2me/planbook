@@ -10230,6 +10230,66 @@ that bumps it, which is that check doing its job on a case it has no exemption f
 - [x] `git diff src/` shows changed lines inside `/* … */` blocks only; `git diff --stat` reads
       `src/assignments.js | 11`, `src/detail.js | 3`; no CRLF churn; `sw.js` untouched.
 
+### WO-3.45 — a class tab on the assignment list or the score grid drops you on Attendance
+
+**What this changes.** A header tab tapped while the assignment list or the score grid is up now shows
+the same screen for the class tapped — the owner's ruling of 2026-10-04 — where it used to drop to
+Attendance. `selectClass()` in `src/classes.js` keeps `assignments` and `scores` up beside `calendar` and
+`signals`, and leaves `detail` off on purpose. The `data-class-tab` branch in `src/shell.js` sends those
+two through `showClassScreen()`, the arrival the switcher's pill already uses, so the tap performs
+every reset an arrival does — on the score grid, `resetScoreSearch()` and `resetScoreCategory()`; the
+assignment list has no arrival reset of its own — plus `resetRegistry()`, which still runs on every class
+tap. `REMEMBERED_AS` is unchanged, so a card and a reload still land on Attendance. `CACHE` is
+`planbook-shell-v166`.
+
+Every headless line below is `tools/verify/class-tab-keeps-screen.mjs`, a new section straight after
+`score-search.mjs`, on two planted English classes that share no student, term, category or assignment,
+except the card and per-class-memory lines, which are `tools/verify/assignments.mjs`.
+
+- [x] Assignments up for English I → tap English III → English III's list (its heading, its three
+      assignments, none of English I's), the English III tab the one marked, and all six switcher strips
+      marking Assignments; a second tap, back on English I, shows English I's list the same way. Asserted
+      in `assignments.mjs` too, on that section's own two classes.
+- [x] Scores up for English I → tap English III → English III's grid: its three students as rows, its
+      three assignments as columns, nine cells, no id of English I's anywhere among rows, columns or cells,
+      and the strips marking Scores. **Mutation-proved** (M1 below).
+- [x] Student detail up (Rhea, English III, opened by her name on the grid) → tap English I → English I's
+      registry with its three students, strips marking Attendance.
+- [x] A card still opens on Attendance (`assignments.mjs`'s card check, unchanged text, green); a reload
+      from the assignment list (`assignments.mjs`, unchanged) and from the score grid (new) still lands on
+      Attendance, with `planbook_openView` holding `class` while each screen was up.
+- [x] `assignments.mjs`'s two WO-3.3 checks are rewritten in place to the new ruling, and a third asserts
+      the surviving half: one class left on Scores, home, the other class opened from its card, and it
+      lands on Attendance.
+- [x] English I's grid searched for "Ashby" (one of its students, none of English III's) and narrowed to
+      Essays → tap English III → English III's grid with the box empty, no count, *All* the one pressed pill
+      and no English I category id among the pills. A 73 typed one key at a time into Odette's essay with no
+      flush before the tap is in English I's saved document, and English III's only saved cell is the one
+      the fixture planted. **Mutation-proved** for the search box (M2 below); the pill half is defence in
+      depth, below.
+- [x] `CACHE` is `planbook-shell-v166` (was v165).
+- [x] 👤 On the iPad, after a force-quit: Assignments and Scores each stay up across two class taps, and
+      detail drops to Attendance. *(The owner, 2026-10-05, v166 from the local server: all three
+      readings, including Scores arriving unsearched and on* All *after a search and a pill.)*
+
+**Mutation round.** Both mutations were made in throwaway copies of the tree outside the repository, so
+the working tree never carried one; `grep -rn "MUTATION M" src tools sw.js index.html` in the repository
+reads nothing.
+
+| Mutation | Result |
+|---|---|
+| M1 · `selectClass()` drops `scores` from its stays-up list | **3 red** (`1767 checks · 1763 passed · 3 failed · 1 skipped`, 795s, exit 1): the English III grid check (Attendance came up), the arrival check (the box still read "Ashby", *Essays* still pressed — the grid was never re-entered), and the section's containment line, because the detail step had no name on the grid to tap |
+| M2 · the tab branch paints the screen itself (`refreshClassBar()`, `refreshScreenNav()`, `paintClassScreen()`) instead of calling `showClassScreen()` — a second painter with no arrival resets | **3 red** (same totals, 791s, exit 1): the English III grid check (no rows, no columns — English I's "Ashby" narrowed English III to nobody), the arrival check (the box read "Ashby", *0 of 3 students*), and the containment line for the same reason as M1. The 73 check stayed green, as it should: where the score lands does not depend on the resets |
+
+**Defence in depth, noted rather than claimed.** Under M2 the category pill still came up on *All*,
+because `renderScores()` drops a `categoryId` the class has no pill for (`src/scores.js`, the line under
+`withWork`). Category ids are minted fresh per class, so with this fixture removing `resetScoreCategory()`
+alone would leave every check here green: the tap still performs that reset (it goes through
+`showClassScreen()`), but no check here can tell it from the renderer's own guard.
+
+**Full run on the delivered tree:** `1769 checks · 1769 passed · 0 failed · 0 skipped`, 56,411 lines, 31.9
+lines per check, 789s, exit 0, 2026-10-04 on the real clock.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

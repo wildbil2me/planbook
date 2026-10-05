@@ -54,8 +54,10 @@
                                       the calendar is a screen ABOUT a class rather than of one, so
                                       the tap keeps the month up and re-aims it at the class just
                                       chosen. Which class is open still moves, in the same one
-                                      function that has always written it
-      data-class-create               on a <form>: creates the class typed into it
+                                      function that has always written it. The concern list does
+                                      the same (WO-4.2), and the assignment list and the score grid
+                                      stay up too since WO-3.45, repainted for the new class
+      data-class-create              on a <form>: creates the class typed into it
       data-class-copy="<classId>"     duplicates that class's terms and categories into a fresh
                                       class, right beside it — the roster, attendance, assignments,
                                       scores and passes stay behind. Active rows only (WO-1.22)
@@ -1158,8 +1160,10 @@ function showClassScreen(name) {
      the swap for the same two reasons: a grid that reopened narrowed to last period's "ma" would be
      a class of four with nothing to say why, and the first paint should already be the whole class.
      Every way onto the grid comes through here — the switcher's pill and openClassOn()'s *Waiting
-     to be graded* row both do — and a class tab leaves the grid for Attendance, so there is no
-     second door to reset. */
+     to be graded* row both do, and since WO-3.45 (2026-10-04) so does a class tab tapped while the
+     grid is up, which used to leave the grid for Attendance and now repaints it for the next class
+     by calling this function. That is the second door this comment once said did not exist, and it
+     is reset by routing it HERE rather than by a second copy of these two lines. */
   if (want === 'scores') scores.resetScoreSearch();
   /* AND ITS CATEGORY PILL GOES BACK TO *ALL* (WO-3.28), here and for the same two reasons — the
      calendar's ruling that a filter is a door and not a preference. */
@@ -2477,6 +2481,12 @@ document.addEventListener('click', (e) => {
     Three files, three jobs: the preference is src/classes.js's, the filter is
     src/calendar-view.js's, and the order they happen in is this file's, the way every other chain
     here is.
+
+    THE CALENDAR AND THE CONCERN LIST ARE NO LONGER THE ONLY SCREENS A CLASS TAP KEEPS UP (WO-3.45,
+    2026-10-04). They are still the only two whose third call moves a FILTER; the assignment list
+    and the score grid now stay up as well, and their third call is an arrival rather than a lens —
+    the branch for them, below the concern list's, says why it is not modelled on these. Student
+    detail and every other screen still fall through to afterClassChange() on Attendance.
   */
   const classTab = e.target.closest('[data-class-tab]');
   if (classTab) {
@@ -2497,6 +2507,24 @@ document.addEventListener('click', (e) => {
     if (views.currentView() === 'signals') {
       signalsView.setSignalsFilter(classes.getSelectedClassId());
       home.refreshHome();
+      return;
+    }
+    /* AND THE ASSIGNMENT LIST AND THE SCORE GRID STAY UP TOO (WO-3.45, the owner's ruling of
+       2026-10-04), but they are NOT the calendar's kind and are not written in its shape. Those two
+       are screens ABOUT a class with a filter of their own, so the tap moves a lens. These two are
+       screens OF the open class and have no lens to move: what they need is the new class drawn, as
+       if she had walked onto the screen through its own door. So the tap goes through that door —
+       showClassScreen(), the same call the switcher's pill makes and openClassOn() ends with —
+       rather than through a painter of its own, which is what makes "whatever a fresh arrival
+       resets, the tap resets too" a fact about one function instead of a list kept in step by hand.
+       On the score grid that is the search box emptied and the category pill put back to *All*: a
+       pill is one class's category id and means nothing in the next, and last class's search would
+       narrow this one to nobody. The cards behind are refreshed for afterClassChange()'s own reason,
+       which is the line openClassOn() carries before the same call. resetRegistry() above has
+       already run, for the reason the comment above this branch gives. */
+    if (views.currentView() === 'assignments' || views.currentView() === 'scores') {
+      home.refreshHome();
+      showClassScreen(views.currentView());
       return;
     }
     afterClassChange();

@@ -737,6 +737,10 @@ function addClassTab(label) {
   grid is going to Period 3, not to a column of Period 3's scores she did not ask for. The calendar
   is not a screen of a class, it is a screen ABOUT one, so the honest answer to the same tap is to
   stay where she is and re-aim the grid.
+  (WO-3.45, 2026-10-04: the owner has since ruled the other way about the score grid and the
+  assignment list — the sentence about Period 2's scores above is the reasoning that ruling
+  reversed, kept as the record of what was reversed. Student detail still goes to Attendance, for
+  a reason of its own. See staysUp below.)
 
   THE TEST IS ON THE VIEW THAT IS UP, AND IT IS ONE LINE HERE RATHER THAN A SECOND WRITER SOMEWHERE
   ELSE. `openClassId` is written in exactly one place in this app and this is that place; a hook that
@@ -750,15 +754,34 @@ function addClassTab(label) {
 export function selectClass(id) {
   if (!findClass(id)) return;
   setPref('openClassId', id);
-  /* TWO SCREENS KEEP THEMSELVES ON A CLASS TAP AND EVERY OTHER ONE GOES BACK TO THE REGISTRY. The
+  /* FOUR SCREENS KEEP THEMSELVES ON A CLASS TAP AND EVERY OTHER ONE GOES BACK TO THE REGISTRY. (This
+     said TWO until WO-3.45; the second paragraph says which two joined and why.) The
      calendar was the first (WO-6.6) and the concern list is the second (WO-4.2) — both are screens
      ABOUT a class rather than OF one, and on both the tap means "same screen, different class"
      rather than "take me to that class". The list of them is here because this is the one place
      `openClassId` is written; what neither of them gets from this function is their own FILTER
      moved, which is src/shell.js's order-of-operations answer for the reason the paragraph above
-     gives about import loops. */
-  const staysUp = currentView() === 'calendar' || currentView() === 'signals';
-  showView(staysUp ? currentView() : 'class');
+     gives about import loops.
+
+     AND THE ASSIGNMENT LIST AND THE SCORE GRID JOINED THEM ON 2026-10-04 (WO-3.45, the owner's
+     ruling), which reverses the sentence about Period 2's score grid in the comment above this
+     function for those two screens and no others. The owner's own use found the tap meaning "same
+     screen, different class" on the calendar and the concern list and then meaning "Attendance" on
+     the two screens a teacher grades from, and ruled the other way: Assignments goes to the next
+     class's Assignments, Scores to its Scores. They are screens OF a class, not about one, so they
+     have no filter to move — src/shell.js repaints them for the new class through the arrival path
+     instead, which is the difference from the first two and the reason the list is one list
+     anyway: the question here is only "does the screen stay up", and for all four the answer is yes.
+     `detail` IS LEFT OFF ON PURPOSE (the same ruling): a student's detail is one student in one
+     class, and the class she has just tapped does not have that student, so there is no "same
+     screen" over there to land on — the tap goes to Attendance as it always did. Nor is this a
+     per-class memory of the last screen: a card on the home grid and a reload still land on
+     Attendance (src/views.js's REMEMBERED_AS is untouched), because only a class SWITCH keeps the
+     screen, and a switch is made from a screen that is already up. */
+  const view = currentView();
+  const staysUp = view === 'calendar' || view === 'signals'
+    || view === 'assignments' || view === 'scores';
+  showView(staysUp ? view : 'class');
   refreshClassBar();
   const cls = findClass(id);
   const term = getSelectedTerm();

@@ -113,6 +113,7 @@ import { run as recordedMeetingCounts } from './verify/recorded-meeting-counts.m
 import { run as totalsByteIdentical } from './verify/totals-byte-identical.mjs';
 import { run as scoreGrid } from './verify/score-grid.mjs';
 import { run as scoreSearch } from './verify/score-search.mjs';
+import { run as classTabKeepsScreen } from './verify/class-tab-keeps-screen.mjs';
 import { run as assignedAndDue } from './verify/assigned-and-due.mjs';
 import { run as dateZeroKey } from './verify/date-zero-key.mjs';
 import { run as dateClear } from './verify/date-clear.mjs';
@@ -328,6 +329,11 @@ const BROWSER_SECTIONS = [
      coarse pointer, takes the class back out at its foot and hands the page back on a 1200x900
      laptop with touch off, so the section after it sees what it saw before this existed. */
   { file: 'verify/score-search.mjs', run: scoreSearch },
+  /* WO-3.45, straight after the section about the grid's search box and its category pills, because
+     it is the class tab carrying both across that it asserts against. It plants two classes of its
+     own, reloads at its head and its foot, takes both back out and hands the page back at 1200x900
+     with touch off, the state score-search.mjs leaves it in. */
+  { file: 'verify/class-tab-keeps-screen.mjs', run: classTabKeepsScreen },
   { file: 'verify/assigned-and-due.mjs', run: assignedAndDue },
   /* Straight after the section about the same two fields, and it depends on that placement in one
      direction only: it puts the viewport back to 1024 for itself rather than trusting the 390 it

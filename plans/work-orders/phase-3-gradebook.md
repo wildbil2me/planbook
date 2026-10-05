@@ -233,6 +233,16 @@ which reads due dates rather than storing copies of them.
       one class on Assignments, opening a second class and coming back, not by reading the code:
       the failure mode is a per-class memory nobody asked for, and it is invisible until the second
       class.
+      *(**2026-10-04, [WO-3.45](#wo-345--a-class-tab-on-the-assignment-list-or-the-score-grid-drops-you-on-attendance):**
+      a **header tab** tapped from Assignments or Scores now keeps that screen and shows it for the
+      class tapped — the owner's ruling, "same screen, different class", as the calendar and the
+      concern list already did. **This line is not reopened and its tick stands:** its argument is
+      against a per-class memory of the last screen, and both of its proofs are still true — a card
+      on the home grid opens on Attendance, and a reload lands on Attendance (`REMEMBERED_AS` is
+      unchanged). What changed is the *leave one class on Assignments, open a second* route when the
+      second class is opened by its header tab; `tools/verify/assignments.mjs` now proves the
+      no-memory half by leaving A on Scores, going home, and opening B from its card. Student detail
+      still drops to Attendance on a tab.)*
 - [x] The switcher carries three tabs and no student tab. A student's name appears in the strip only
       while that student's detail is open, and switching away from it takes the name with it. **The
       first sentence is built and verified**, on both strips: three segments, no fourth, no student
@@ -3478,7 +3488,7 @@ exactly, so a `termId` of `''` is on no term's list. Nothing to fix there.)*
 
 ## WO-3.45 — a class tab on the assignment list or the score grid drops you on Attendance
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-10-05 · **Size** S · **Depends on** —
 **Closes roadmap** *(no box. Owner-directed, 2026-10-04.)*
 
 **Booked 2026-10-04**, owner-directed, from the owner's own use: *"When I am looking at calendars or
@@ -3520,22 +3530,23 @@ assignment list and the score grid. The tap means *same screen, different class*
 - **The class switcher (`src/screen-nav.js`) marks the screen that is up**, not Attendance.
 
 **Acceptance**
-- [ ] With the assignment list up for class A, a tap on class B's header tab shows class B's
+- [x] With the assignment list up for class A, a tap on class B's header tab shows class B's
       assignment list. The B tab is the active one and the switcher marks Assignments.
-- [ ] The same for the score grid: A's Scores → tap B → B's Scores, showing B's students and B's
+- [x] The same for the score grid: A's Scores → tap B → B's Scores, showing B's students and B's
       columns, and no column or row of A's.
-- [ ] Student detail up → tap another class → that class's Attendance. Unchanged, and asserted.
-- [ ] A home-grid card still opens on Attendance, and a reload from either screen still lands on
+- [x] Student detail up → tap another class → that class's Attendance. Unchanged, and asserted.
+- [x] A home-grid card still opens on Attendance, and a reload from either screen still lands on
       Attendance. `tools/verify/assignments.mjs`'s card check (~828) stays green as it is.
-- [ ] `tools/verify/assignments.mjs` ~799 and ~809 (*"opening a second class from a class left on
+- [x] `tools/verify/assignments.mjs` ~799 and ~809 (*"opening a second class from a class left on
       Assignments lands on Attendance"* and *"…coming back… lands on Attendance too"*) are rewritten
       to this ruling rather than deleted. The *no per-class memory* half survives as a check: leave A
       on Scores, go home, open B from its card, and B lands on Attendance.
-- [ ] With A's grid searched and narrowed to one category, a tap on B shows B's grid unsearched and
+- [x] With A's grid searched and narrowed to one category, a tap on B shows B's grid unsearched and
       on *All*. A score typed into A immediately before the tap is in A and nowhere in B.
-- [ ] `CACHE` in `sw.js` is bumped (`src/classes.js` and `src/shell.js` are SHELL files).
-- [ ] 👤 On the iPad, after a force-quit: Assignments and Scores each stay up across two class taps,
-      and detail drops to Attendance.
+- [x] `CACHE` in `sw.js` is bumped (`src/classes.js` and `src/shell.js` are SHELL files).
+- [x] 👤 On the iPad, after a force-quit: Assignments and Scores each stay up across two class taps,
+      and detail drops to Attendance. *(The owner, 2026-10-05, on v166 from the local server: all
+      three readings in `TESTING.md` § WO-3.45, including Scores arriving unsearched and on* All*.)*
 
 **Traps** — **WO-3.3's Acceptance line *"Opening a class lands on Attendance every time"* is not
 reopened.** Its argument is against a per-class memory of the last screen, and its proof is a card

@@ -1253,7 +1253,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1753 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1763 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2468,6 +2468,20 @@ how they read a cell and gained no site — `verify/score-grid.mjs`, `verify/pas
 `verify/ungraded-count.mjs` now take the new `at` off before comparing and assert it was there, and
 `verify/score-notes.mjs` plants its cells stamped *now*. The run prints `1760 checks · 1760 passed · 0 failed · 0 skipped`, 56,045 lines, 31.8 lines per check, 784s, exit 0, 2026-10-04 on the real clock. Mutation round in
 `TESTING.md` § WO-3.33.
+
+**WO-3.45 moved it from 1753 to 1763, and the executed count from 1760 to 1769 — ten sites, nine
+results, and the file count moves by one.** Nine are in a new section, `verify/class-tab-keeps-screen.mjs`,
+straight after `verify/score-search.mjs` in `BROWSER_SECTIONS`, which is the eighty-second file. It plants
+two English classes that share no student, term, category or assignment, and taps the real controls: the
+assignment list across two header taps, the score grid across one with a search typed, a category pill
+pressed and a score typed into a cell immediately before the tap, a student's detail across one, and a
+reload from the grid. None sits in a loop. **One is a failure arm** (the fixture guard), so the gap between
+sites and results moves from −7 to −6. The tenth is in `verify/assignments.mjs`, whose
+two WO-3.3 checks that asserted Attendance after a header tab were rewritten in place to assert the second
+class's Assignments and the first's on the way back, and a third added beside them for the half of WO-3.3's
+line that survives: leave a class on Scores, go home, open another from its card, and it lands on
+Attendance. The run prints `1769 checks · 1769 passed · 0 failed · 0 skipped`, 56,411 lines, 31.9 lines per
+check, 789s, exit 0, 2026-10-04 on the real clock. Mutation round in `TESTING.md` § WO-3.45.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
