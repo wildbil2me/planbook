@@ -2781,6 +2781,57 @@ it still reads 87 result-pushing call sites, because no `check(` was added.
 
 *No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.*
 
+### WO-1.61 — the sweep's cache check has never watched index.html
+
+**What this changes.** Nothing a teacher sees and nothing a device gets: `src/`, `index.html` and
+`sw.js` are byte-identical to HEAD, so no `CACHE` bump is owed and none was made. One code file
+moves, `tools/wo-sweep.mjs` § 9: the parse of `sw.js`'s `SHELL` array used to drop `'./'` as "the
+index, not a file on disk", so `index.html` was never in the watched set and an `index.html` edit with
+no bump left § 9 green — while `CLAUDE.md` and § 9's own header said it counted. The parse now reads
+`'./'` as `index.html`, the file Cloudflare Pages serves at `/`. **`SHELL` is untouched** — `sw.js`'s
+header says why `./index.html` on that list is a white screen on the first navigation; the mapping is
+in the sweep's reading of the list, never in the list. The `NEVER_EXCUSED` test in the offender loop is
+now live for `index.html` (a trailered `index.html` change is an offender as well as a misused
+trailer) and still cannot fire for `sw.js`, which is not in `SHELL`; it stays, with a comment saying so.
+
+**The real tree stays green, checked before claiming it.** The current bump is `3f3369b`
+(`git log -1 -S planbook-shell-v165 -- sw.js`), and `git diff --name-only 3f3369b..HEAD -- index.html`
+is empty on 2026-10-04. § 9 on the real tree after the change: `PASS | every SHELL file change is paired
+with a CACHE bump :: planbook-shell-v165 was set at 3f3369b; no SHELL file has changed since` — the same
+line as before it. Whole sweep exit 0.
+
+**How it was proved — in a throwaway clone, never on `main`.** `git clone` of this repository at
+`7a008e5` into the session scratchpad, `origin` removed, the modified sweep copied in and committed as
+the clone's base. Each fixture was built on that base and undone by `git reset --hard` before the next;
+the real tree never held an `index.html` edit.
+
+- **A — mutation: `index.html` edited and committed with no bump** (one comment line appended).
+  `FAIL | every SHELL file change is paired with a CACHE bump :: index.html changed since
+  planbook-shell-v165 was set at 3f3369b — bump CACHE in sw.js, or an installed app keeps the shell it
+  already has`. Exit 1.
+- **B — the defect, on A's tree.** HEAD's own `tools/wo-sweep.mjs` (pre-fix) run against A's commit:
+  `PASS … no SHELL file has changed since`. So A's red is the fix, not the fixture.
+- **C — `index.html` edited and `CACHE` bumped to `v166` in one commit.** `PASS … planbook-shell-v166
+  was set at 76ebafd; no SHELL file has changed since`. No FAIL anywhere in the run; exit 0.
+- **D — `index.html` edited with the `Shell-Cache: not needed — comments only` trailer, no bump.**
+  `FAIL … index.html changed since planbook-shell-v165 was set at 3f3369b — … · 1366675 touches
+  index.html and carries a Shell-Cache trailer — sw.js and index.html are never excused, so bump CACHE`.
+  Both halves now name it; before this change only the second could.
+- Two readings of edges, not mutations: an **uncommitted** `index.html` edit — red, naming
+  `index.html`; a trailered comment on `src/modal.js` — green and excused, exactly as WO-1.60 left it.
+
+**Check names and order unchanged.** The real tree's sweep before and after the edit: 48 result lines
+each, the `PASS|FAIL|REVIEW | <name>` sequence identical. The only difference in the whole output is
+the census line's own line number (`wo-sweep.mjs:3880` → `:3891`), still 89 result-pushing call
+sites, because no `check(` was added.
+
+- [x] `index.html` committed with no bump turns § 9 red and names it — fixture A, with B showing the
+      pre-fix sweep green on the same tree.
+- [x] `index.html` committed with a bump leaves § 9 green — fixture C.
+- [x] Names and order unchanged; the real tree's § 9 unchanged — the diff above.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.*
+
 ---
 
 ## Phase 2 — Attendance

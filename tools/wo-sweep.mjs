@@ -484,11 +484,17 @@ function commentLines(file) {
     // re-derived — one apostrophe in a comment inside the array pairs with the next and swallows
     // every real entry between them.
     const shellM = /const SHELL\s*=\s*\[([\s\S]*?)\n\];/.exec(swText);
+    // `./` is entry one of SHELL and it IS index.html: it is the file Cloudflare Pages serves at `/`,
+    // so it is read here as that file and watched like every other entry. Until WO-1.61 this parse
+    // dropped it as "not a file on disk", so an index.html edit with no CACHE bump left this check
+    // green while CLAUDE.md and the header above both said it counted. The mapping lives HERE, in
+    // the reading of SHELL, and never in SHELL itself — sw.js's header says why `./index.html` on
+    // that list is a white screen on the first navigation.
     const shellFiles = new Set();
     if (shellM) {
       for (const m of shellM[1].matchAll(/'([^']+)'/g)) {
-        const p = m[1].replace(/^\.\//, '');
-        if (p && !p.endsWith('/')) shellFiles.add(p);   // './' is the index, not a file on disk
+        const p = m[1] === './' ? 'index.html' : m[1].replace(/^\.\//, '');
+        if (p && !p.endsWith('/')) shellFiles.add(p);
       }
     }
 
@@ -546,6 +552,11 @@ function commentLines(file) {
           if (!excuses(c.values)) continue;
           for (const f of NEVER_EXCUSED) if (c.files.has(f)) misused.push(`${c.hash.slice(0, 7)} touches ${f}`);
         }
+        // The NEVER_EXCUSED test below is live for index.html since WO-1.61 mapped `./` to it: a
+        // trailered index.html change is reported here as an offender as well as in `misused` above,
+        // rather than listed as excused beside a FAIL. Its sw.js half cannot fire — sw.js is not in
+        // SHELL, and its change is the bump — and it stays so that a list naming both files means
+        // the same thing in both places it is read.
         for (const f of [...changed].filter(f => shellFiles.has(f)).sort()) {
           const touching = commits.filter(c => c.files.has(f));
           const ok = !uncommitted.has(f) && !NEVER_EXCUSED.includes(f) && touching.length > 0

@@ -13,6 +13,15 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The sweep's cache check watches index.html — 2026-10-04
+
+WO-1.61. Tooling only; no shell cache bump, and none owed.
+
+- **Not user-visible.** `wo-sweep.mjs` § 9 now reads `SHELL`'s `'./'` entry as `index.html`, so an
+  `index.html` edit with no `CACHE` bump turns the sweep red, as `CLAUDE.md` always said it did.
+  `SHELL` itself is unchanged, and the real tree's § 9 is unchanged because `index.html` has not
+  moved since the last bump.
+
 ### The data viewer checks the attendance it shows — 2026-10-04
 
 WO-1.50. Tooling only; nothing under `src/` moved and the page is not in `SHELL`.

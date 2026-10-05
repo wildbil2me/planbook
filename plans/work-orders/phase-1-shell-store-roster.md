@@ -5524,7 +5524,7 @@ first is the version and the second is entry one of `SHELL`.
 
 ## WO-1.61 — the sweep's cache check has never watched index.html
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-10-04 · **Size** S · **Depends on** —
 **Closes roadmap** *(no box. A tooling defect, owner-directed, 2026-10-04.)*
 
 **Booked 2026-10-04**, owner-directed, out of WO-1.60's verdict.
@@ -5548,12 +5548,12 @@ watches it like every other SHELL file. The comment beside the parse says why. I
 `NEVER_EXCUSED` guard in the offender loop is still dead afterwards, take it out or say why it stays.
 
 **Acceptance**
-- [ ] An `index.html` change committed since the bump, with no `CACHE` bump, turns § 9 red and names
+- [x] An `index.html` change committed since the bump, with no `CACHE` bump, turns § 9 red and names
       `index.html`. Mutation-proved in a throwaway clone, never on `main`, and recorded in
       `TESTING.md` § WO-1.61. **The mutation is reverted before anything else is written**
       (`AGENTS.md`).
-- [ ] An `index.html` change committed together with a `CACHE` bump leaves § 9 green.
-- [ ] `node tools/wo-sweep.mjs` is otherwise unchanged in check names and order, and on the real tree
+- [x] An `index.html` change committed together with a `CACHE` bump leaves § 9 green.
+- [x] `node tools/wo-sweep.mjs` is otherwise unchanged in check names and order, and on the real tree
       § 9 reports the same offenders as before, plus `index.html` only if it has changed since the
       current bump.
 
