@@ -778,18 +778,29 @@ at the owner's request.
 Styled in [`proposed-copy.css`](proposed-copy.css), one section bound for `src/assignments.css` and
 `not yet lifted`.
 
-1. **A wider panel**, 840px, a second class beside `.modal-panel`, whose `95vw` cap still applies.
+1. **A wider panel**, 880px, a second class beside `.modal-panel`, whose `95vw` cap still applies.
 2. **One list, one line per class.** Every class the copy could go into is listed from the start.
-   The tick is the class name, and term, category and due sit on the same line. The column heads are
-   written once. The pills and the per-class cards go, so each class is on screen once instead of
-   twice.
-3. **An unticked class is one short line**, so ticking one doesn't move the rest of the list.
-4. **A line's own fallback is an amber line under it**: no category of that name, or no terms.
-   The shipped rules are unchanged, including the disabled confirm and the dropdowns showing exactly
-   what will be written.
-5. **The list folds by its own width**: below 760px each ticked class is two rows, the name and then
-   the three fields side by side with a small label each. That is about 120px a class under a thumb,
-   against about 280px today.
+   The tick is the class name, with the copy's term under it, then category, assigned date and due
+   date on the same line. The column heads are written once. The pills and the per-class cards go,
+   so each class is on screen once instead of twice.
+3. **No term control.** The due date decides the term (see Decided below), so the line states it.
+4. **An assigned date per class**, starting on the source's, where the term column was.
+5. **An unticked class is one short line**, so ticking one doesn't move the rest of the list.
+6. **A line's own fallback is an amber line under it**: no category of that name, or no terms.
+   The disabled confirm and "each line shows what will be written" are unchanged.
+7. **The list folds by its own width**: below 820px each ticked class is two rows, the name and then
+   category and both dates side by side with a small label each. That is a portrait iPad, at about
+   130px a class under a thumb against about 280px today.
+
+## Decided before booking
+
+- **The due date decides the term, and each copy gets its own assigned date.** The owner,
+  2026-10-06: in the school's SIS a term is never named, the due date places the work. A copy goes
+  into the term of its own class that holds its due date. The column the term dropdown took holds an
+  assigned date per class instead, for a section a day behind or a class that lost a day to a
+  schedule drop. **This also retires a shipped defect**: v167 proposes every other class's *first*
+  term (`firstTermId()` in `src/assignments.js`), so from Quarter 2 on every copy would default to
+  Quarter 1 unless changed on each card.
 
 ## The open questions, collected
 
@@ -797,10 +808,21 @@ Styled in [`proposed-copy.css`](proposed-copy.css), one section bound for `src/a
    third of the shipped length, keeping every claim the shipped text makes. The exact words are the
    owner's.
 2. **`@container` or `@media`.** The fold is drawn as a CSS size container, which nothing in `src/`
-   uses yet (iPadOS 16+). A `@media (max-width: 860px)` rule is the app's existing shape and
+   uses yet (iPadOS 16+). A `@media (max-width: 900px)` rule is the app's existing shape and
    behaves the same on real devices.
-3. **The date field and Clear on a portrait line.** If the iPad draws the date field wider than a
-   third of the line, due gets a row of its own, at about 50px a class. Only a thumb can settle it.
+3. **Two dates and two Clears on a portrait line.** If the iPad draws a date field wider than a
+   third of the line, the dates get a row of their own, at about 50px a class. Only a thumb can
+   settle it.
 4. **The order of the list.** Drawn in the class manager's order. The other option is the source
    course's other sections first.
 5. **A "tick every section of this course" shortcut.** Not drawn.
+6. **A due date no term holds**: blank, in a gap between terms, or in a class whose term dates
+   aren't typed in. Proposed: a blank due date falls back to the term holding the assigned date, and
+   a date outside every term blocks that line until the date changes, the way a class with no terms
+   does.
+7. **Moving the assigned date.** Drawn so it moves only itself. The other option is for the due
+   date to follow by the same number of days.
+
+**Outside this drawing, and worth asking once:** the assignment editor still files new work under
+the term being viewed, not the term its due date falls in. If the SIS rule is the app's rule, the
+editor should follow it too, which is a separate work order.

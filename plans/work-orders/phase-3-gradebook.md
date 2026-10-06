@@ -3800,7 +3800,7 @@ rulings now. Build them as they stand.
 
 **The layout follow-up is drawn, not booked** (2026-10-06, at the owner's request):
 [`design/mockups/copy-classes.html`](../../design/mockups/copy-classes.html) puts one line per class
-in a wider panel, and `design/mockups/README.md` § "Copy into other classes" collects its five open
+in a wider panel, and `design/mockups/README.md` § "Copy into other classes" collects its open
 questions. The work order that builds it gets a **Surface** deliverable naming the drawing and an
 **Open** line for each question still open when it is booked.
 

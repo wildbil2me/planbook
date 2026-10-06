@@ -11,19 +11,24 @@
    width a class's term, category and due cannot share a line, so each ticked
    class is a card three blocks deep, every field carries its own label, and
    the classes are chosen in one place (the pills) and filled in another (the
-   cards), so each one is on screen twice. Under a coarse pointer the card's
+   cards), so each one is on screen twice. A term dropdown on every card asks
+   what the due date already answers. Under a coarse pointer the card's
    fields stack as well, and one class is ~280px of a 704px landscape iPad.
 
    WHAT THIS PROPOSES. A wider panel, and one list where every class the copy
-   could go into is a line: a tick and the class name, then term, category and
-   due on the same line. Column heads are written once above the list instead
+   could go into is a line: a tick and the class name with its term under it,
+   then category, assigned and due on the same line. No term control: the due
+   date decides the term, as it does in the school's SIS, and the column it
+   would have taken holds an assigned date per class instead, for a section a
+   day behind or a class that lost a day to the schedule (the owner,
+   2026-10-06). Column heads are written once above the list instead
    of on every field. An unticked line is just its name. The pills go.
 
    THE LIST NARROWS BY ITS OWN WIDTH, NOT THE WINDOW'S. `.assign-copy-list` is
-   a size container, and below 760px of list each line folds to two rows: the
-   tick and name, then the three fields side by side with a small label each.
-   That is what a portrait iPad gets, and it is why this page can show the
-   portrait frame on a laptop. Nothing in src/ uses `@container` yet, so that
+   a size container, and below 820px of list each line folds to two rows: the
+   tick and name, then category, assigned and due side by side with a small
+   label each. That is what a portrait iPad gets, and it is why this page can
+   show the portrait frame on a laptop. Nothing in src/ uses `@container` yet, so that
    is a question for the owner and is in README.md.
 
    THE RULE THIS FILE OBEYS, from PROTOCOL.md rule 5: a pending section styles
@@ -43,10 +48,10 @@
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* The panel. A second class worn beside `.modal-panel`, the way `.detail-avatar`
-   sits beside `.avatar`. 840px is what four columns need at their narrowest
-   with the date field's Clear beside it; `.modal-panel`'s own `max-width: 95vw`
+   sits beside `.avatar`. 880px is what four columns need at their narrowest
+   with a Clear beside each date field; `.modal-panel`'s own `max-width: 95vw`
    still governs, so a narrow window gets the folded lines below. */
-.assign-copy-panel { width: 840px; }
+.assign-copy-panel { width: 880px; }
 
 /* The list: one framed box, the subdued card of design/style-guide.md §1 that
    WO-3.48's per-class cards wore, now around all of them once. */
@@ -59,7 +64,7 @@
 .assign-copy-heads,
 .assign-copy-line {
   display: grid; align-items: center; column-gap: 10px;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1.35fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.2fr);
 }
 .assign-copy-heads {
   padding: 8px 10px 6px; background: #f8f9fc; border-bottom: 1px solid #e0e4f0;
@@ -84,8 +89,11 @@
 /* `.pill.active`'s green, so a tick reads like the toggles it replaces. */
 .assign-copy-line.on .assign-copy-box { background: #27ae60; border-color: #27ae60; }
 .assign-copy-name { min-width: 0; overflow-wrap: anywhere; }
-/* The source's own class, offered only from a row's Duplicate. */
-.assign-copy-own { display: block; font-size: 11px; font-weight: 600; color: #8a9bb0; }
+/* The quiet line under a class's name: the term its due date falls in, or
+   the source's own class from a row's Duplicate. There is no term control:
+   the due date decides the term, the way the school's SIS files work (the
+   owner, 2026-10-06), so the line says what was decided instead of asking. */
+.assign-copy-sub { display: block; font-size: 11px; font-weight: 600; color: #8a9bb0; }
 
 /* A field cell. Its label is the column head in the wide layout, so the cue is
    hidden there and shown when the line folds. */
@@ -101,12 +109,13 @@
   font-size: 12px; line-height: 1.5; color: #8a6d1a;
 }
 
-/* FOLDED: below 760px of list, the tick and name take a row of their own and
-   the three fields share the next, each with its cue. An unticked line is one
-   row. ~120px a class under a thumb, against ~280px for WO-3.48's card. */
-@container (max-width: 760px) {
+/* FOLDED: below 820px of list, the tick and name take a row of their own and
+   category, assigned and due share the next, each with its cue. An unticked
+   line is one row. ~130px a class under a thumb, against ~280px for WO-3.48's
+   card, which had no assigned date to show. */
+@container (max-width: 820px) {
   .assign-copy-heads { display: none; }
-  .assign-copy-line { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.35fr); }
+  .assign-copy-line { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1.1fr); }
   .assign-copy-tick { grid-column: 1 / -1; }
   .assign-copy-cue { display: block; }
   .assign-copy-skip { display: none; }
