@@ -22,7 +22,9 @@ There is no ranking here and no promise of one — position means nothing.
 
 ## Assignments screen
 
-### 1. A more verbose screen — one assignment into several classes, with its own due date in each
+### 1. ~~A more verbose screen — one assignment into several classes, with its own due date in each~~ → [WO-3.48](work-orders/phase-3-gradebook.md#wo-348--one-assignment-goes-into-several-classes-in-one-dialog)
+
+*Booked 2026-10-05 as WO-3.48, owner-directed. The owner ruled the open question: a dialog, not a view. Each due date starts on the source's, and creation offers the fan-out every time. The argument below is kept as the record that produced it.*
 
 *Raised 2026-09-03 by the owner. Not booked. Size guess S–M, mostly in the surface rather than the
 write.*

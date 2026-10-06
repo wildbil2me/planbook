@@ -3697,3 +3697,106 @@ what is written above, if the two differ. **A reader that re-implements "is this
 second opinion** that the glance-reader rule forbids. And **the queue ruling is the one most likely
 to be got wrong by symmetry**: everything else in this table hides a held column, and the queue
 deliberately does not.
+
+## WO-3.48 — one assignment goes into several classes in one dialog
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** —
+**Closes roadmap** *(no box. Owner-directed, 2026-10-05.)*
+
+**Booked 2026-10-05**, owner-directed, from [`plans/future-features.md`](../future-features.md)
+§ Assignments screen, item 1, which the owner raised on 2026-09-03: *"When creating and duplicating
+an assignment, we really need the ability to add it to more than one class."* Today the same
+assignment into four sections on four days is about **seven dialog trips**: three passes through the
+duplicate dialog, then each copy opened again to change its due date. That cost comes every week.
+
+**What stands and is not reopened.** The owner asked on 2026-10-05 whether a standing decision
+forbids this. None does. The record forbids a **shape**, not the errand:
+- **Copies, never a structure several classes point at** (`ROADMAP.md`, the class-copy box). N
+  targets make N independent assignments with N new ids. `scores` stays keyed by assignment, and the
+  grade math never hears about it.
+- **A `categoryId` never crosses a class.** Each target matches by **name** through
+  `matchCategory()` and falls back to *not in a category*, saying so before the tap (WO-3.2's trap,
+  the guards in `src/categories.js`, and WO-3.40's *"Do not change the copy rule"*).
+- **The control shows what the proposal holds** (`src/assignments.js` ~1127's scar). With N rows
+  there are N chances to break it.
+
+**Rulings, the owner's, 2026-10-05**
+1. **A dialog, not a view.** The duplicate dialog grows into this. It is a task finished and
+   dismissed, which is `gradebook-surfaces.md`'s test for a modal.
+2. **Each target's due date starts on the source's due date**, and is editable per target. Blank in
+   the source stays blank. `assigned` comes across as it is and is not offered per target.
+3. **Creation offers it every time.** It is not a separate errand reached only through Duplicate.
+   *How* it is offered is the proposal below, for the owner to confirm before `--start`.
+
+**Proposed at booking — the owner confirms before `--start`**
+- **The create door.** While the assignment editor is in a create flow (`creatingId` is set, the
+  same condition that shows *Cancel*), it shows a **Copy into other classes…** button beside *Done*,
+  whenever there are at least two active classes. It opens this dialog with the new assignment as
+  its source. *Done* still just closes. Creation stays a single write followed by an editor, so the
+  no-lost-draft contract in `createAssignment()`'s header is unchanged. The alternatives considered
+  were for *Done* to open the dialog itself, which turns every create into two dialogs even for a
+  one-section assignment, or a target strip inside the editor that writes copies on close, which
+  makes Close, Escape and the backdrop into writes. Both were set aside.
+- **No target is pre-selected.** The owner's five classes are four different courses, and a
+  pre-selection is a guess about which are sections of the same one. The confirm stays disabled until
+  one is ticked. The create door does not offer the source's own class, while Duplicate still does,
+  because a second copy in the same class is a real errand (*Quiz 2*).
+
+**Deliverables**
+- **The class pills become multi-select**, using `aria-pressed` on the pills `renderCopyClasses()`
+  already draws. `copyClassId` becomes an ordered list of targets, each holding its own proposal
+  (`termId`, `categoryId`, `due`), computed by `proposeCopyInto()` when the target is ticked and
+  dropped when it is unticked.
+- **One row per ticked target: class · term · category · due.** The name field stays single and
+  applies to every copy. The rows stack under `@media (pointer: coarse)` and at portrait iPad width,
+  with no horizontal scroll and 44px targets.
+- **Each row says its own fallback**: no category match, no categories, or no terms. A target with
+  no terms is shown and cannot be confirmed, and the row says why. It is never silently dropped.
+- **`confirmCopy()` writes every copy in one `update()`**, each with `newId('a')`, its own target's
+  `classId`/`termId`/`categoryId`/`due`, the source's `assigned` and `points`, and no scores. It
+  announces once, naming the classes: *"Copied Essay 2 into Period 2, Period 4 and Period 6 with no
+  scores on them."*
+- **The dates note changes in the same edit as the field** (the future-features row's ruling 4). It
+  stops saying *"The dates come across as they are"*. It says the assigned date comes across and each
+  due date starts on the source's. Update `confirmCopy()`'s long date comment to match, keeping its
+  WO-3.17 reasoning: the copy still never re-dates to today.
+- **The confirm button names the count**: *Copy into Period 2*, or *Copy into 3 classes*.
+- **The create door** as ruled above, in `index.html` beside the editor's *Done*, shown and hidden
+  by `renderEditorFields()` alongside the *Cancel* toggle.
+- **The dialog says that copies are separate** in the create door's lead line. Once made, a copy
+  does not follow later edits to its source, and a teacher who copies and then renames the source
+  would otherwise expect the copies to follow.
+- **`tools/verify/assignments.mjs` and `tools/verify/copy-class.mjs`** are updated for the new
+  dialog. **`TESTING.md`'s 👤 lines on the duplicate dialog** (the iPad category-fallback reading)
+  are re-read against it.
+- **`plans/future-features.md`** § Assignments screen item 1 is struck with this ID.
+- **`CACHE` in `sw.js` is bumped.**
+
+**Acceptance**
+- [ ] Ticking three classes and confirming writes exactly three assignments, each with a new id, its
+      own class's `classId` and `termId`, no `scores` entry, and the due date its row showed.
+- [ ] A target with a same-named category is filed under it. A target without one arrives in *no
+      category*, and its row said so before the tap. No copy ever carries the source's
+      `categoryId` into another class. Mutation-proved against carrying the id across.
+- [ ] Every row's selects show the value that will be written: for each target, the selected option
+      equals the proposal, including a target whose term or category has no match.
+- [ ] Changing one row's due date changes only that copy's `due`. A blank source due stays blank in
+      every row.
+- [ ] Unticking a target removes its row, and no copy is written for it.
+- [ ] A target with no terms cannot be confirmed, and its row says why.
+- [ ] Cancel, Close and Escape write nothing (`flush()` awaited, as WO-5.3's harness learned).
+- [ ] From a create flow with two or more active classes, the editor shows **Copy into other
+      classes…**. It opens with the new assignment as the source and does not offer the source's own
+      class. With one active class, the button is absent. Opening an existing row through Edit does
+      not show it.
+- [ ] The note no longer says the dates come across as they are.
+- [ ] `CACHE` in `sw.js` is bumped.
+- [ ] 👤 On the iPad, after a force-quit: create an assignment, name it, copy it into three sections
+      with three different due dates in one dialog, and read each copy on its own class's list.
+
+**Traps** — **Do not build a shared assignment.** It is the tempting shape and the one ruled out.
+**Do not let one target's proposal leak into another's**, for example a single `copyTermId` that the
+last-ticked class overwrites. Every target's fields belong to that target's class. **Do not
+re-date a copy to today**, because WO-3.17's default is creation-only. And if
+[WO-3.46](#wo-346--a-score-column-can-be-held-out-of-the-grade-until-it-is-committed) lands first, a
+copy is **live** whatever its source is (WO-3.46's ruling 4). Do not copy `held` or `committedAt`.
