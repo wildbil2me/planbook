@@ -785,8 +785,8 @@ Styled in [`proposed-copy.css`](proposed-copy.css), one section bound for `src/a
    so each class is on screen once instead of twice.
 3. **No term control.** The due date decides the term (see Decided below), so the line states it.
 4. **An assigned date per class**, starting on the source's, where the term column was.
-5. **The source heads the list as a fixed line**, with no tick: its term, category and both dates
-   as plain text, for reference.
+5. **The source heads the list**, with no tick and its term under its name. Its category and dates
+   stay editable, and the confirm reads *Save P1 and copy into 3 classes* when P1 has changed.
 6. **An unticked class is one short line**, so ticking one doesn't move the rest of the list.
 7. **A line's own fallback is an amber line under it**: no category of that name, or no terms.
    The disabled confirm and "each line shows what will be written" are unchanged.
@@ -804,8 +804,10 @@ Styled in [`proposed-copy.css`](proposed-copy.css), one section bound for `src/a
   term (`firstTermId()` in `src/assignments.js`), so from Quarter 2 on every copy would default to
   Quarter 1 unless changed on each card.
 
-- **The source is the first line, fixed, from either door.** The owner, 2026-10-06: it is the
-  assignment already set up, not a copy to make, and its line is a quick reference. v167 offered it
+- **The source is the first line, from either door, and stays editable.** The owner, 2026-10-06: it
+  is the assignment already set up, not a copy to make, and its line is a quick reference whose
+  category and dates can still be corrected there. So the confirm can save the source as well as
+  create the copies, and says so. v167 offered it
   as a target from a row's Duplicate; open question 8 is what becomes of that.
 
 ## The open questions, collected
@@ -830,6 +832,9 @@ Styled in [`proposed-copy.css`](proposed-copy.css), one section bound for `src/a
    date to follow by the same number of days.
 8. **A second copy in the same class**, which v167's Duplicate allows ("Quiz 2" from "Quiz 1"). An
    *Another copy in P1* control on the source line, or drop it, since New is one tap away.
+9. **When the source's dates change in the dialog.** Drawn so the copies stay where they are. The
+   other option is that a line still showing the source's old date follows it, and a line the
+   teacher changed stays put.
 
 **Outside this drawing, and worth asking once:** the assignment editor still files new work under
 the term being viewed, not the term its due date falls in. If the SIS rule is the app's rule, the

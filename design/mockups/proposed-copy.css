@@ -102,19 +102,17 @@
 .assign-copy-due { display: flex; align-items: flex-start; gap: 6px; min-width: 0; }
 .assign-copy-skip { grid-column: 2 / -1; font-size: 12px; color: #a0aab8; }
 
-/* THE SOURCE, FIRST AND FIXED (the owner, 2026-10-06). The assignment being
-   copied, read-only, at the head of the list from either door: a reference to
-   copy from, not a target. No tick, so it lines its name up with the ticked
-   names by the box's width plus the gap. The indigo wash is `.pill`-free on
-   purpose: it must not read as a ticked line. */
+/* THE SOURCE, FIRST AND EDITABLE (the owner, 2026-10-06). The assignment being
+   copied heads the list from either door: a reference to copy from, not a
+   target, so it has no tick. Its category and dates are live fields, so a
+   slip noticed while copying is fixed here, and the confirm says it saves P1
+   too when one has changed. Its name lines up with the ticked names by the
+   box's width plus the gap. The indigo wash keeps it from reading as a ticked
+   line. */
 .assign-copy-line.source { background: #eef2ff; border-bottom: 1.5px solid #d5dcf5; }
 .assign-copy-ref {
   min-height: 34px; padding: 4px 2px 4px 28px; display: flex; align-items: center;
   font-size: 13px; font-weight: 700; color: #1a1a2e;
-}
-.assign-copy-fixed {
-  display: flex; flex-direction: column; gap: 4px; min-width: 0;
-  padding: 0 10px; font-size: 13px; font-weight: 600; color: #3a4a6b;
 }
 
 /* A line's own fallback, under that line only. Amber, `.assign-group-empty`'s
@@ -149,5 +147,4 @@
   .assign-copy-cue { font-size: 12px; }
   .assign-copy-flag { font-size: 13px; }
   .assign-copy-ref { min-height: 44px; padding-left: 32px; font-size: 14px; }
-  .assign-copy-fixed { font-size: 14px; }
 }
