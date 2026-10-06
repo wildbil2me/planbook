@@ -3700,7 +3700,7 @@ deliberately does not.
 
 ## WO-3.48 — one assignment goes into several classes in one dialog
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-10-06 · **Size** M · **Depends on** —
 **Closes roadmap** *(no box. Owner-directed, 2026-10-05.)*
 
 **Booked 2026-10-05**, owner-directed, from [`plans/future-features.md`](../future-features.md)
@@ -3774,26 +3774,29 @@ rulings now. Build them as they stand.
 - **`CACHE` in `sw.js` is bumped.**
 
 **Acceptance**
-- [ ] Ticking three classes and confirming writes exactly three assignments, each with a new id, its
+- [x] Ticking three classes and confirming writes exactly three assignments, each with a new id, its
       own class's `classId` and `termId`, no `scores` entry, and the due date its row showed.
-- [ ] A target with a same-named category is filed under it. A target without one arrives in *no
+- [x] A target with a same-named category is filed under it. A target without one arrives in *no
       category*, and its row said so before the tap. No copy ever carries the source's
       `categoryId` into another class. Mutation-proved against carrying the id across.
-- [ ] Every row's selects show the value that will be written: for each target, the selected option
+- [x] Every row's selects show the value that will be written: for each target, the selected option
       equals the proposal, including a target whose term or category has no match.
-- [ ] Changing one row's due date changes only that copy's `due`. A blank source due stays blank in
+- [x] Changing one row's due date changes only that copy's `due`. A blank source due stays blank in
       every row.
-- [ ] Unticking a target removes its row, and no copy is written for it.
-- [ ] A target with no terms cannot be confirmed, and its row says why.
-- [ ] Cancel, Close and Escape write nothing (`flush()` awaited, as WO-5.3's harness learned).
-- [ ] From a create flow with two or more active classes, the editor shows **Copy into other
+- [x] Unticking a target removes its row, and no copy is written for it.
+- [x] A target with no terms cannot be confirmed, and its row says why.
+- [x] Cancel, Close and Escape write nothing (`flush()` awaited, as WO-5.3's harness learned).
+- [x] From a create flow with two or more active classes, the editor shows **Copy into other
       classes…**. It opens with the new assignment as the source and does not offer the source's own
       class. With one active class, the button is absent. Opening an existing row through Edit does
       not show it.
-- [ ] The note no longer says the dates come across as they are.
-- [ ] `CACHE` in `sw.js` is bumped.
-- [ ] 👤 On the iPad, after a force-quit: create an assignment, name it, copy it into three sections
+- [x] The note no longer says the dates come across as they are.
+- [x] `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the iPad, after a force-quit: create an assignment, name it, copy it into three sections
       with three different due dates in one dialog, and read each copy on its own class's list.
+      *(The owner, 2026-10-06, on v167 from the local server: every box in the checklist read
+      correctly. The same reading found the dialog clunky on the laptop and too long to scroll on
+      both devices. That is a layout follow-up, not a failure of this line.)*
 
 **Traps** — **Do not build a shared assignment.** It is the tempting shape and the one ruled out.
 **Do not let one target's proposal leak into another's**, for example a single `copyTermId` that the

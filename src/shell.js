@@ -192,9 +192,13 @@
       data-assignment-move-up="<id>"  moves it one place earlier inside its own category group
       data-assignment-move-down="<id>"  one place later
       data-assignment-duplicate="<id>"  opens the copy dialog — into this class or another section
-      data-assignment-copy-class="<id>"  which class the copy lands in; re-proposes its term and
-                                      matches its category BY NAME, never by carrying an id across
-      data-assignment-copy-confirm    writes the copy, with a new id and no scores on it
+      data-assignment-copy-door       the editor's Copy into other classes…, shown during a create:
+                                      closes the editor and opens the copy dialog on the new one
+      data-assignment-copy-class="<id>"  ticks or unticks a class for a copy (WO-3.48); a tick
+                                      proposes that class's own term and matches its category BY
+                                      NAME, never by carrying an id across
+      data-assignment-copy-confirm    writes one copy per ticked class, each with a new id and no
+                                      scores, in one update()
       data-assignment-copy-cancel     abandons it, having written nothing
       data-assignment-delete="<id>"   opens the confirm that counts the scores it takes with it —
                                       empty on the editor's own Delete…, meaning "the open one"
@@ -209,8 +213,12 @@
                                       takes (WO-1.48). `points` stores what was typed, INCLUDING 0
       data-assignment-category="<id>" a <select>; files that assignment under another category of
                                       the same class, on `change` rather than on `input`
-      data-assignment-copy-term       a <select> in the copy dialog; which term the copy lands in
-      data-assignment-copy-category   a <select>; which of the TARGET class's categories it lands in
+      data-assignment-copy-term="<classId>"  a <select> in one row of the copy dialog; which term
+                                      that class's copy lands in
+      data-assignment-copy-category="<classId>"  a <select>; which of THAT class's categories it
+                                      lands in
+      data-assignment-copy-due="<classId>"  a date input; that class's copy's due date, a proposal
+                                      on `input` and `change` alike, emptied by the Clear beside it
       data-assignment-copy-name       an input; the copy's name, held as a proposal until confirmed
       data-accommodation-prompt       on a container inside the assignment editor: the host
                                       src/accommodation-prompt.js paints the summary into. Markup,
@@ -2149,6 +2157,8 @@ function clearDateField(btn) {
   if (input.hasAttribute('data-support-date')) { roster.supportDateCleared(input); return; }
   if (input.hasAttribute('data-dayoff-date')) { daysOff.dateCleared(input); return; }
   if (input.hasAttribute('data-event-date')) { events.dateCleared(input); return; }
+  /* A due date in the copy dialog (WO-3.48) is a proposal, so there is nothing behind it to chain. */
+  if (input.hasAttribute('data-assignment-copy-due')) { assignments.copyDueCleared(input); return; }
   if (input.hasAttribute('data-assignment-field')) {
     /* The chain the assignment editor's `change` route runs for the same reason: a due date is
        printed on the column head of the score grid and on the student record, and a cleared one has
@@ -2868,6 +2878,7 @@ document.addEventListener('click', (e) => {
       assignmentCopy);
     return;
   }
+  if (e.target.closest('[data-assignment-copy-door]')) { assignments.openCopyFromCreate(); return; }
   const copyClass = e.target.closest('[data-assignment-copy-class]');
   if (copyClass) {
     assignments.setCopyClass(copyClass.getAttribute('data-assignment-copy-class')); return;
@@ -3853,6 +3864,10 @@ document.addEventListener('input', (e) => {
      button that names the class it lands in. */
   const copyName = e.target.closest('[data-assignment-copy-name]');
   if (copyName) { assignments.setCopyName(copyName); return; }
+  /* And one copy's due date (WO-3.48), which writes nothing either — the row it sits in names the
+     class it belongs to, and the field is not rebuilt under the caret. */
+  const copyDue = e.target.closest('[data-assignment-copy-due]');
+  if (copyDue) { assignments.setCopyDue(copyDue); return; }
 
   /* The registry's search box, which is the one hook on this listener that writes NOTHING — it
      narrows the rows on screen. It is here rather than on `keyup` for the reason the fields below
@@ -4031,7 +4046,11 @@ document.addEventListener('change', (e) => {
   if (outreachTemplate) {
     outreachView.setOutreachTemplate(outreachTemplate.value, outreachTemplate);
   }
-  /* The copy dialog's two pickers. Neither writes to the document — they move a proposal. */
+  /* The copy dialog's pickers, one pair per ticked class, and that row's due date for the browser
+     that commits a picker without an `input` first. None writes to the document — they move a
+     proposal, and each names the class whose row it is in. */
+  const copyDueCommit = e.target.closest('[data-assignment-copy-due]');
+  if (copyDueCommit) assignments.setCopyDue(copyDueCommit);
   const copyTerm = e.target.closest('[data-assignment-copy-term]');
   if (copyTerm) assignments.setCopyTerm(copyTerm);
   const copyCategory = e.target.closest('[data-assignment-copy-category]');

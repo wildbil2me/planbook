@@ -7329,7 +7329,12 @@ work order before anything rounds.*
       the same day — a second, shorter sitting, because it arrived after the first one. iOS renders a `<select>` as a native picker and fires `change` on Done only
       when the value moved, which is the platform form of the defect this fix answers: with the
       placeholder showing, every real category is a move. The desk half is measured, the wheel is
-      not.)*
+      not.)* *(**Re-read against WO-3.48's dialog, 2026-10-05, at the desk and not on the iPad.** The
+      dialog now has one category picker per ticked class rather than one in all, each built by the
+      same `copySelect()` with the same placeholder rule, so the line's claim is unchanged per row and
+      `verify/copy-class.mjs` asserts it on three rows at once. The reading on the hardware above was
+      of the one-target dialog; the multi-row dialog's own iPad reading is WO-3.48's 👤 line, below
+      under § WO-3.48, and this box stays as it was.)*
 
 ***The six 👤 lines above them were run in one sitting on 2026-08-09** on the installed iPad, over
 `tools/serve-https.mjs`. All six pass. The date-picker **Clear** is the one that was riding on an
@@ -10460,6 +10465,77 @@ into the *same* class, where the picked id is still valid and the guard cannot c
 
 **Full run on the delivered tree:** `1769 checks · 1769 passed · 0 failed · 0 skipped`, 56,411 lines, 31.9
 lines per check, 789s, exit 0, 2026-10-04 on the real clock.
+
+### WO-3.48 — one assignment goes into several classes in one dialog
+
+**What this changes.** The duplicate dialog takes several classes at once. Its class pills are toggles
+(`aria-pressed`), **none is pressed when it opens** from either door, and each ticked class gets a row of
+its own — class · term · category · due — built from that class's own proposal and dropped when it is
+unticked. The name stays one field for every copy. The due date starts on the source's (blank staying
+blank) and is editable per row; `assigned` comes across as it is. The confirm names the count (*Copy into
+Period 2*, *Copy into 3 classes*) and writes one independent copy per row, each with a new id and no
+scores, in **one** `update()`. A row speaks its own fallback (no category of that name, no categories, no
+terms), and a ticked class with no terms keeps the confirm disabled until it is unticked. During a create,
+the editor shows **Copy into other classes…** beside *Done* when another active class exists: it closes the
+editor, ends the create flow, and opens this dialog on the new assignment without offering its own class.
+The dialog's dates note and the assignment list's hint no longer say the dates come across as they are.
+`CACHE` is `planbook-shell-v167`.
+
+Every headless line below is the WO-3.48 block at the foot of `tools/verify/copy-class.mjs`, on five planted
+English classes, except where `assignments.mjs` is named.
+
+- [x] Three classes ticked (in the order P6, P2, P4) and confirmed write exactly three assignments: three
+      new, distinct ids, each with its own class's `classId` and `termId` (P2's moved to Q2 in its row), no
+      `scores` key, and the due its row showed — 2026-10-02, 2026-10-06, 2026-10-08. `rev` moves by one.
+- [x] The P2 copy is filed under P2's own id for ` essays ` (another id, another spelling); P4 (categories,
+      none of that name) and P6 (no categories) arrive in no category, and both rows said so before the
+      tap. No copy carries the source's `categoryId`. **Mutation-proved** (M1 below). `assignments.mjs`'s
+      WO-3.3 trap check still holds on its own fixture.
+- [x] For each row, the term and category selects' selected option equals the proposal: P2's first term
+      and matched category, P4's placeholder (*— choose a category —*), P6's disabled *has no categories
+      yet*, P5's disabled term select holding nothing.
+- [x] Changing P2's term and P4's and P6's due dates changes only those rows. Duplicating an assignment
+      with no due date starts every row blank and the note says it has none.
+- [x] Unticking a class removes its row and its pill reads `aria-pressed="false"`; the other rows keep
+      their edits, and no copy is written for it.
+- [x] A class with no terms is shown, its row says it has no terms and to untick it, the confirm is
+      disabled, and a press on it writes nothing (`rev` unmoved after a flush).
+- [x] Cancel, the ✕ and Escape each write nothing (`rev` and the count unmoved after `flush()`), and each
+      reopening starts with nothing ticked.
+- [x] During a create, with other active classes, **Copy into other classes…** shows beside Done and
+      Cancel; it closes the editor and opens on the new assignment (its name; a lead saying each copy is
+      separate and does not follow later changes), with nothing ticked and the source's class not offered.
+      Confirming copies it and keeps the new assignment. Edit on an existing row does not show the button;
+      with every other class archived, a create shows Cancel and no button.
+- [x] The dialog's note says the assigned date comes across and each due date starts on the source's,
+      and nothing re-dates a copy to today; it does not say *"The dates come across as they are"*
+      (`assignments.mjs`'s match check asserts the same on its own fixture).
+- [x] Under a coarse pointer at 768px, all 32 controls in the open three-row dialog measure ≥44px both
+      ways, each row stacks term, category and due inside its card, and nothing scrolls sideways; the
+      create door measures 44px.
+- [x] `CACHE` is `planbook-shell-v167` (was v166).
+- [x] 👤 On the iPad, after a force-quit: create an assignment, name it, copy it into three sections with
+      three different due dates in one dialog, and read each copy on its own class's list. *(The owner,
+      2026-10-06, on v167 from the local server: every step read correctly. The same reading found the
+      dialog clunky on the laptop and too long to scroll on both devices, which is a layout follow-up
+      and not a failure of this line.)*
+
+**Mutation round.** Made in a throwaway copy of the tree outside the repository, so the working tree never
+carried it; `grep -rn MUTATION src tools index.html sw.js` in the repository finds only the comments that
+were there before.
+
+| Mutation | Result |
+|---|---|
+| M1 · `confirmCopy()` writes `categoryId: source.categoryId` — the source's id carried into every target | **3 red** (`1796 checks · 1793 passed · 3 failed · 0 skipped`, 787s, exit 1): WO-3.48's filing check (all three copies under `k348_src_essays`), the create-door copy check (P2's copy under the source's id), and WO-3.3's trap check in `assignments.mjs` |
+
+**Pre-selection, and which existing checks it touched.** No existing check relied on the dialog opening
+with the source's class chosen: `assignments.mjs` taps the target's pill straight after opening, which
+used to SWITCH the one target and now TICKS the only one, so its proposal reads the same. Three of its
+checks changed in place — the proposal and pick checks read the no-match sentence from the row's own note
+(and assert one row), and the match check asserts the new dates note.
+
+**Full run on the delivered tree:** `1796 checks · 1796 passed · 0 failed · 0 skipped`, 56,956 lines, 31.7
+lines per check, 789s, exit 0, 2026-10-05 on the real clock.
 
 ---
 

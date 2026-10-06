@@ -13,6 +13,24 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### One assignment goes into several classes in one dialog — 2026-10-06
+
+WO-3.48, owner-directed. Shell cache bumped to v167.
+
+- **The duplicate dialog takes several classes at once.** Tick the sections and each gets its own
+  row with its own term, category and due date. The due date starts on the source's, and a blank
+  stays blank. Each copy is a separate assignment with its own id. Nothing links the copies.
+- **A category never crosses classes by id.** Each copy is filed under the target class's category
+  of the same name. If there isn't one, the copy goes to *no category*, and its row says so before
+  you confirm. A class with no terms can't be confirmed, and its row says why.
+- **Creating an assignment offers it every time.** **Copy into other classes…** sits beside Done
+  while you are creating, when another active class exists. Nothing is pre-ticked, and the
+  assignment's own class isn't listed.
+- **The note no longer promises the dates come across as they are.** The hint beside it is reworded
+  to match.
+- **Known:** on the owner's iPad reading the dialog was too long to scroll on both devices and
+  clunky on the laptop. Its layout is a follow-up.
+
 ### The harness puts the network back after a section that fails offline — 2026-10-05
 
 WO-1.59. Tooling only; no shell cache bump, and none owed.

@@ -472,6 +472,25 @@
 /* The class picker is `.pill`s worn as-is, in the shape src/letter-scale.js's subject row uses; this
    class only holds them in a wrapping row. */
 .assign-copy-classes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+/* ONE CARD PER TICKED CLASS (WO-3.48): class · term · category · due. It wears the subdued card of
+   design/style-guide.md §1 — `1.5px #e0e4f0` on `#f8f9fc`, the box `.supports-panel` already is —
+   because each row is a group of fields about one class, and without a frame four rows of the same
+   three fields read as one long form with no way to tell where Period 2 stops and Period 4 starts.
+   `min-width: 0` all the way down is what keeps a long class name or a wide <select> from pushing
+   the panel into a sideways scroll. */
+.assign-copy-target {
+  display: flex; flex-direction: column; gap: 10px; min-width: 0;
+  padding: 12px; border: 1.5px solid #e0e4f0; border-radius: 8px; background: #f8f9fc;
+}
+.assign-copy-target-head {
+  font-size: 13px; font-weight: 800; color: #1a1a2e; overflow-wrap: anywhere;
+}
+/* The row's own fallback — no category of that name, no categories, no terms. Amber text, the
+   `.assign-group-empty` colour: a thing to tidy before or after the tap, not a thing gone wrong. */
+.assign-copy-target-note { margin: 0; font-size: 12px; line-height: 1.5; color: #8a6d1a; }
+/* The create door. `.class-action-btn` worn as-is; the class is only here so the coarse block below
+   can name it, the same note `.accommodation-prompt-btn` carries. */
+.assign-copy-door { }
 
 /* ══════════════════════════════════════════════════════════════════════════════
    § TOUCH — every control above, at the floor, in one place
@@ -521,6 +540,18 @@
      leaves the text clamped to the top of a 44px box. */
   .assign-field-select { min-height: 44px; font-size: 14px; padding: 8px 10px; }
   .assign-copy-classes { gap: 10px; }
+  /* THE COPY ROWS STACK UNDER A THUMB (WO-3.48): term, category and due one above the other, each a
+     full-width 44px control, rather than two or three to a line at ~200px apiece in a 480px panel.
+     `flex: 0 0 auto` because `.assign-field`'s `140px` basis would otherwise become a HEIGHT once the
+     row turns into a column. The pills and the create door are `.pill` and `.class-action-btn`,
+     which carry the floor in src/shell.css; named here anyway, for the rule this block opens with. */
+  .assign-copy-target { gap: 12px; }
+  .assign-copy-target .assign-field-row { flex-direction: column; }
+  .assign-copy-target .assign-field { flex: 0 0 auto; }
+  .assign-copy-target-head { font-size: 14px; }
+  .assign-copy-target-note { font-size: 13px; }
+  .assign-copy-classes .pill { min-height: 44px; }
+  .assign-copy-door { min-height: 44px; min-width: 44px; }
   .cat-chip { font-size: 11px; padding: 3px 9px; }
   /* THE PROMPT'S THREE BUTTONS (WO-3.6). `.class-action-btn` already carries the 44px floor in
      src/shell.css's own coarse block, and this line is here anyway for the reason `.assign-row-btn`
@@ -594,4 +625,13 @@
      alternative is hiding a control, and every one of the five writes something. */
   .assign-col-name { min-width: 160px; }
   .assign-progress { min-width: 96px; }
+}
+
+/* THE COPY ROWS STACK AT PORTRAIT-IPAD WIDTH AND BELOW, under any pointer (WO-3.48). The coarse block
+   above already stacks them on every touch screen; this is the same two lines for a window that
+   narrow under a mouse or a trackpad, so the work order's "at portrait iPad width" does not depend on
+   what the device reports as its pointer. 834px is the widest portrait iPad (11-inch Pro). */
+@media (max-width: 834px) {
+  .assign-copy-target .assign-field-row { flex-direction: column; }
+  .assign-copy-target .assign-field { flex: 0 0 auto; }
 }

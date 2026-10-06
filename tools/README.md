@@ -1253,7 +1253,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1763 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1790 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2482,6 +2482,22 @@ class's Assignments and the first's on the way back, and a third added beside th
 line that survives: leave a class on Scores, go home, open another from its card, and it lands on
 Attendance. The run prints `1769 checks · 1769 passed · 0 failed · 0 skipped`, 56,411 lines, 31.9 lines per
 check, 789s, exit 0, 2026-10-04 on the real clock. Mutation round in `TESTING.md` § WO-3.45.
+
+**WO-3.48 moved it from 1763 to 1790, and the executed count from 1769 to 1796 — twenty-seven sites,
+twenty-seven results, and the file count stays where it was.** All twenty-seven are in a new block at the
+foot of `verify/copy-class.mjs`, the file that already held the other copy, rather than in a section of
+their own. It plants five English classes — a source and four targets that differ in exactly the ways the
+dialog has to speak to (a category of the source's name under another id and spelling, categories with
+no such name, no categories, no terms) — and drives the multi-target duplicate dialog through its real
+controls: the pills, each row's two selects and its date field, the confirm, Cancel, the close button,
+Escape, and the editor's *Copy into other classes…*. It archives every other class for one create to
+reach the one-active-class case and puts them back, takes a coarse pass at 768px, takes its classes back
+out, and hands the page back at 1280x900 with touch off — what it received. None sits in a loop and none
+is a failure arm, so the gap between sites and results stays at −6. `verify/assignments.mjs` changed
+three checks in place and gained no site: the no-match sentence is read from the ticked row's own note,
+and the dates note is asserted NOT to say *"The dates come across as they are"*. The run prints
+`1796 checks · 1796 passed · 0 failed · 0 skipped`, 56,956 lines, 31.7 lines per check, 789s, exit 0,
+2026-10-05 on the real clock. Mutation round in `TESTING.md` § WO-3.48.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

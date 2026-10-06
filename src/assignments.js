@@ -55,8 +55,10 @@
      term dates — so clearing one must not re-fill it (assignmentDateCleared() below rebuilds the
      field from the assignment, which is what makes that true rather than remembered). The default
      is a CREATION-time default, so an assignment being EDITED is never touched: open a two-year-old
-     assignment with a blank Due and it opens blank. And a COPY keeps whatever its source had, which
-     is the duplicate dialog's own rule and not this one — confirmCopy() says why beside it.
+     assignment with a blank Due and it opens blank. And a COPY keeps its source's assigned date, and
+     each copy's due date STARTS on its source's and is the teacher's to change per class (WO-3.48)
+     — the duplicate dialog's own rule and not this one, and never today; confirmCopy() says why
+     beside it.
 
      The clock is read in exactly two places in this file, and both of them are today: that default,
      and the overdue TINT below, which changes no stored value and marks no student.
@@ -171,7 +173,9 @@ const EDITOR_FIELDS_ID = 'assignmentFields';
 const EDITOR_ERROR_ID = 'assignmentError';
 const EDITOR_CREATE_CANCEL_ID = 'assignmentCreateCancel';
 const EDITOR_DELETE_DOOR_ID = 'assignmentDeleteDoor';
+const EDITOR_COPY_DOOR_ID = 'assignmentCopyDoor';
 
+const COPY_TITLE_ID = 'assignmentCopyTitle';
 const COPY_LEAD_ID = 'assignmentCopyLead';
 const COPY_CLASSES_ID = 'assignmentCopyClasses';
 const COPY_FIELDS_ID = 'assignmentCopyFields';
@@ -204,12 +208,30 @@ let creatingId = '';
 let copyId = '';
 let pendingDeleteId = '';
 
+/* The control that opened the current create flow — `+ New assignment` on the list or on the score
+   grid, both of which survive the dialog (src/scores.js says why). Kept so that the create door below
+   can hand focus back to it when the copy dialog it opens is dismissed: the door itself sits in an
+   editor that has closed by then. */
+let createOpener = null;
+
 /* What the duplicate dialog is currently proposing. It is a proposal and not a write: nothing here
-   reaches the document until the teacher taps the button that names the class it lands in. */
-let copyClassId = '';
-let copyTermId = '';
-let copyCategoryId = '';
+   reaches the document until the teacher taps the button that names the classes it lands in.
+
+   ONE ENTRY PER TICKED CLASS, EACH HOLDING ITS OWN PROPOSAL, AND NOTHING SHARED BETWEEN THEM
+   (WO-3.48). `{ classId, termId, categoryId, due }`, kept in the order the class pills are drawn so
+   the rows read in the order of the pills above them. A term id and a category id belong to the
+   class they were made in, so a single "current term" beside this list — what the dialog held when
+   it had one target — is exactly the leak that work order's Traps name: the last class ticked would
+   overwrite the term every other row is showing. Every setter below names the class it edits.
+
+   `copyName` is the one field that is NOT per target: one name, applied to every copy, as ruled. */
+let copyTargets = [];
 let copyName = '';
+/* Whether the dialog was opened from the create door rather than from a row's Duplicate. It decides
+   one thing: the create door does not offer the source's own class, where Duplicate does — a second
+   copy in the same class is a real errand there (*Quiz 2*), and it is not what a teacher who has just
+   made the assignment is asking for. */
+let copyFromCreate = false;
 
 /* ────────────────────────────── reading the document ────────────────────────────── */
 
@@ -865,6 +887,15 @@ function renderEditorFields() {
      column. Hide Delete here so the shared editor does not offer two doors to the same outcome;
      ordinary assignment edits still expose Delete exactly as before. */
   if (deleting) deleting.classList.toggle('hidden', isCreating);
+  /* THE CREATE DOOR (WO-3.48), shown on exactly the condition Cancel is — a create flow — and only
+     when there is another active class to copy into. Opening a row through Edit clears `creatingId`,
+     so an assignment that was ever accepted never shows it; Duplicate on its row is that door. */
+  const copyDoor = document.getElementById(EDITOR_COPY_DOOR_ID);
+  if (copyDoor) {
+    const others = isCreating
+      ? getActiveClasses().filter((c) => c.id !== assignment.classId).length : 0;
+    copyDoor.classList.toggle('hidden', !isCreating || others < 1);
+  }
   if (title) {
     title.textContent = assignment && cls
       ? (assignment.name || 'Untitled assignment') + ' — ' + cls.name
@@ -956,6 +987,7 @@ export function createAssignment(opener) {
 
   editingId = assignment.id;
   creatingId = assignment.id;
+  createOpener = opener || null;
   showAssignmentError('');
   renderAssignments();
   renderEditorFields();
@@ -1247,21 +1279,48 @@ function firstTermId(cls) {
   return terms.length ? terms[0].id : '';
 }
 
-/* What the dialog proposes for one target class, recomputed whenever the target changes. Copying
-   into the SAME class keeps the term and the category it already has; copying elsewhere starts
-   from that class's first term and the name match above. */
+/* What the dialog proposes for ONE target class, built when that class is ticked and thrown away
+   when it is unticked — so a row never carries anything over from a class it used to be. Copying
+   into the SAME class keeps the term and the category it already has; copying elsewhere starts from
+   that class's first term and the name match above.
+
+   Both halves are NORMALISED to what the target can actually hold, which is what keeps
+   WO-3.48's third Acceptance line true at the edges: the dialog's select shows the proposal, and the
+   proposal is what gets written, so a same-class source still filed under a category its class has
+   since lost proposes none rather than an id the select cannot show and confirmCopy() would drop.
+
+   THE DUE DATE STARTS ON THE SOURCE'S, blank staying blank (the owner's ruling 2, 2026-10-05), and
+   is the teacher's to change per row. `assigned` is deliberately not here: it comes across as it is
+   and is not offered per target. */
 function proposeCopyInto(classId) {
   const source = findAssignment(copyId);
   const target = findClass(classId);
-  if (!source || !target) return;
-  copyClassId = classId;
+  if (!source || !target) return null;
+  const terms = getTerms(target.id);
   if (classId === source.classId) {
-    copyTermId = source.termId;
-    copyCategoryId = source.categoryId || '';
-  } else {
-    copyTermId = firstTermId(target);
-    copyCategoryId = matchCategory(target, findCategory(findClass(source.classId), source.categoryId));
+    return {
+      classId,
+      termId: terms.some((t) => t.id === source.termId) ? source.termId : firstTermId(target),
+      categoryId: source.categoryId && findCategory(target, source.categoryId) ? source.categoryId : '',
+      due: typeof source.due === 'string' ? source.due : '',
+    };
   }
+  return {
+    classId,
+    termId: firstTermId(target),
+    categoryId: matchCategory(target, findCategory(findClass(source.classId), source.categoryId)),
+    due: typeof source.due === 'string' ? source.due : '',
+  };
+}
+
+/* The classes this dialog offers: every active class, minus the source's own on the create door. */
+function copyOffered() {
+  const source = findAssignment(copyId);
+  return getActiveClasses().filter((cls) => !(copyFromCreate && source && cls.id === source.classId));
+}
+
+function copyTargetFor(classId) {
+  return copyTargets.filter((t) => t.classId === classId)[0] || null;
 }
 
 function renderCopyClasses() {
@@ -1270,9 +1329,14 @@ function renderCopyClasses() {
   box.textContent = '';
   /* Active classes only, and `.pill`s in the shape src/letter-scale.js's subject row uses. An
      archived class is one the teacher has put away, and offering to copy work into one is offering
-     to file it somewhere she cannot see. */
-  getActiveClasses().forEach((cls) => {
-    const on = cls.id === copyClassId;
+     to file it somewhere she cannot see.
+
+     MULTI-SELECT SINCE WO-3.48: each pill is a toggle and says so with `aria-pressed`, and NONE is
+     pressed when the dialog opens, from either door. The owner's five classes are four different
+     courses, so a pre-selection is a guess about which are sections of the same one — and a guess
+     that is wrong costs a stray assignment in a class nobody meant to touch. */
+  copyOffered().forEach((cls) => {
+    const on = !!copyTargetFor(cls.id);
     const pill = document.createElement('button');
     pill.type = 'button';
     pill.className = 'pill' + (on ? ' active' : '');
@@ -1297,12 +1361,15 @@ function renderCopyClasses() {
   option of its own, at the top, selected — which is categoryField()'s answer above, arrived at for
   the same reason, and the two must not disagree. It appears only while the proposal is unmatched,
   so it cannot be chosen back into by accident once a category has been picked.
+
+  Since WO-3.48 there is one of these per ticked class, and the hook carries the class it belongs
+  to as its value — N rows are N chances to break the rule above, and each one is held to it.
 */
-function copySelect(hook, label, options, selected, emptyLabel, chooseLabel) {
+function copySelect(hook, classId, label, options, selected, emptyLabel, chooseLabel) {
   const wrap = fieldWrap(label, true);
   const select = document.createElement('select');
   select.className = 'assign-field-select';
-  select.setAttribute(hook, '');
+  select.setAttribute(hook, classId);
   if (!options.length) {
     const none = document.createElement('option');
     none.value = '';
@@ -1327,17 +1394,72 @@ function copySelect(hook, label, options, selected, emptyLabel, chooseLabel) {
   return wrap;
 }
 
+/* One row's due date: the field, and the Clear beside it (WO-1.48's answer, for WO-1.48's reason —
+   a native date input reports '' both half typed and deliberately emptied, so emptying is a button
+   rather than an inference). It shows what the TARGET holds and decides nothing; the source's date
+   arrived there in proposeCopyInto(), and nothing here falls back to today. */
+function copyDueInput(target, cls) {
+  const input = document.createElement('input');
+  input.className = 'assign-field-date';
+  input.type = 'date';
+  input.value = target.due;
+  input.setAttribute('data-assignment-copy-due', target.classId);
+  input.setAttribute('aria-label', 'Due — the copy in ' + cls.name);
+  return input;
+}
+
+function copyDueField(target, cls) {
+  const wrap = fieldWrap('Due', false, 'div');
+  wrap.setAttribute('data-date-field', '');
+  wrap.append(copyDueInput(target, cls));
+  const clear = document.createElement('button');
+  clear.type = 'button';
+  clear.className = 'class-action-btn date-clear';
+  clear.setAttribute('data-date-clear', '');
+  clear.setAttribute('aria-label', 'Clear the due date — the copy in ' + cls.name);
+  clear.textContent = 'Clear';
+  wrap.append(clear);
+  return wrap;
+}
+
+/* What one row says about its own fallback, or '' when there is none to say. Each row speaks for
+   its own class only: "no category of that name" is a fact about Period 4, and a single note under
+   five rows could not say which of them it meant. */
+function copyRowNote(target, cls, source, sourceClass) {
+  if (!getTerms(cls.id).length) {
+    return cls.name + ' has no terms, and an assignment belongs to one, so nothing can be copied into '
+      + 'it yet. Add a term to it from the class manager, or untick it to copy into the rest.';
+  }
+  if (target.categoryId) return '';
+  if (!categoriesOf(cls).length) {
+    return cls.name + ' has no grading categories yet, so this copy will land in none. '
+      + (gradingModeOf(cls) === 'points'
+        ? cls.name + ' is graded on total points, so it will still count toward the grade, under '
+          + '“no category”, until you give it one.'
+        : 'It will sit on the list and count for nothing until you give it one.');
+  }
+  const sourceCat = findCategory(sourceClass, source.categoryId);
+  if (!sourceCat) {
+    return 'The assignment is not filed under a category, so this copy is not either. Pick one '
+      + 'above, or file it later from its own row.';
+  }
+  return 'Nothing in ' + cls.name + ' is called “' + (sourceCat.name || 'that category')
+    + '”, so this copy is not filed under a category yet. Pick one above, or file it later from its '
+    + 'own row — a category id belongs to the class it was made in and is never carried across.';
+}
+
 function renderCopyFields() {
   const box = document.getElementById(COPY_FIELDS_ID);
   if (!box) return;
   box.textContent = '';
-  const target = findClass(copyClassId);
-  if (!target) return;
+  const source = findAssignment(copyId);
+  const sourceClass = source ? findClass(source.classId) : null;
+  if (!source || !sourceClass) return;
 
+  /* THE NAME, ONCE, ABOVE EVERY ROW: it applies to every copy (WO-3.48's second deliverable). */
   const row = document.createElement('div');
   row.className = 'assign-field-row';
-
-  const nameWrap = fieldWrap('Name of the copy', true);
+  const nameWrap = fieldWrap(copyTargets.length > 1 ? 'Name of each copy' : 'Name of the copy', true);
   const name = document.createElement('input');
   name.className = 'assign-field-input';
   name.type = 'text';
@@ -1348,96 +1470,218 @@ function renderCopyFields() {
   row.append(nameWrap);
   box.append(row);
 
-  const second = document.createElement('div');
-  second.className = 'assign-field-row';
-  second.append(copySelect('data-assignment-copy-term', 'Term',
-    getTerms(target.id).map((t) => ({ value: t.id, label: t.label || 'Untitled term' })),
-    copyTermId, target.name + ' has no terms yet', '— choose a term —'));
-  second.append(copySelect('data-assignment-copy-category', 'Category',
-    /* The target's weight beside each name, unless the target is graded on total points, where it
-       is not a fact about the grade (WO-3.34) — the same rule as the editor's own picker. */
-    categoriesOf(target).map((c) => ({
-      value: c.id,
-      label: (c.name || 'Untitled category') + (gradingModeOf(target) === 'points' ? ''
-        : ' — ' + formatWeight(Number(c.weight) || 0) + '%'),
-    })),
-    copyCategoryId, target.name + ' has no categories yet', '— choose a category —'));
-  box.append(second);
+  /* ONE ROW PER TICKED CLASS: class · term · category · due. Every value in a row is read off that
+     row's own target and nothing else. */
+  copyTargets.forEach((target) => {
+    const cls = findClass(target.classId);
+    if (!cls) return;
+    const card = document.createElement('div');
+    card.className = 'assign-copy-target';
+    card.setAttribute('data-assignment-copy-row', cls.id);
+
+    const head = document.createElement('div');
+    head.className = 'assign-copy-target-head';
+    head.textContent = cls.name;
+    card.append(head);
+
+    const pickers = document.createElement('div');
+    pickers.className = 'assign-field-row';
+    pickers.append(copySelect('data-assignment-copy-term', cls.id, 'Term',
+      getTerms(cls.id).map((t) => ({ value: t.id, label: t.label || 'Untitled term' })),
+      target.termId, cls.name + ' has no terms yet', '— choose a term —'));
+    pickers.append(copySelect('data-assignment-copy-category', cls.id, 'Category',
+      /* The target's weight beside each name, unless the target is graded on total points, where it
+         is not a fact about the grade (WO-3.34) — the same rule as the editor's own picker. */
+      categoriesOf(cls).map((c) => ({
+        value: c.id,
+        label: (c.name || 'Untitled category') + (gradingModeOf(cls) === 'points' ? ''
+          : ' — ' + formatWeight(Number(c.weight) || 0) + '%'),
+      })),
+      target.categoryId, cls.name + ' has no categories yet', '— choose a category —'));
+    card.append(pickers);
+
+    const dates = document.createElement('div');
+    dates.className = 'assign-field-row';
+    dates.append(copyDueField(target, cls));
+    card.append(dates);
+
+    const said = copyRowNote(target, cls, source, sourceClass);
+    if (said) {
+      const note = document.createElement('p');
+      note.className = 'assign-copy-target-note';
+      note.setAttribute('data-assignment-copy-row-note', cls.id);
+      note.textContent = said;
+      card.append(note);
+    }
+    box.append(card);
+  });
+}
+
+/* Can this target be written? Only into a term its class still has. */
+function copyTargetReady(target) {
+  return !!findClass(target.classId) && getTerms(target.classId).some((t) => t.id === target.termId);
+}
+
+/* "Period 2", "Period 2 and Period 4", "Period 2, Period 4 and Period 6". */
+function listNames(names) {
+  if (names.length < 2) return names.join('');
+  return names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
 }
 
 function renderCopy() {
   const source = findAssignment(copyId);
   const sourceClass = source ? findClass(source.classId) : null;
-  const target = findClass(copyClassId);
+  const title = document.getElementById(COPY_TITLE_ID);
   const lead = document.getElementById(COPY_LEAD_ID);
   const note = document.getElementById(COPY_NOTE_ID);
   const button = document.getElementById(COPY_BTN_ID);
   if (!source || !sourceClass) return;
 
+  if (title) title.textContent = copyFromCreate ? 'Copy into other classes' : 'Duplicate this assignment';
   if (lead) {
-    lead.textContent = 'Copying “' + (source.name || 'Untitled assignment') + '” from '
-      + sourceClass.name + '. It is worth ' + plural(pointsOf(source), 'point', 'points')
-      + ', and the copy arrives with no scores on it — that is the point of copying it rather '
-      + 'than the cost.';
+    const named = '“' + (source.name || 'Untitled assignment') + '”';
+    const worth = plural(pointsOf(source), 'point', 'points');
+    /* THE CREATE DOOR'S LEAD SAYS THE COPIES ARE SEPARATE (WO-3.48). That door is reached from an
+       assignment still being written, and the next thing a teacher does there is often to go back
+       and rename it — a copy does not follow, and expecting it to is how the same work ends up
+       under two names in two classes. */
+    lead.textContent = copyFromCreate
+      ? 'Copying ' + named + ' from ' + sourceClass.name + ' into other classes. It is worth '
+        + worth + ', and each copy arrives with no scores on it. Each copy is a separate assignment '
+        + 'from the moment it is made: changing this one later does not change the copies.'
+      : 'Copying ' + named + ' from ' + sourceClass.name + '. It is worth ' + worth
+        + ', and the copy arrives with no scores on it — that is the point of copying it rather '
+        + 'than the cost.';
   }
   renderCopyClasses();
   renderCopyFields();
 
   if (note) {
-    const cats = target ? categoriesOf(target) : [];
-    const terms = target ? getTerms(target.id) : [];
-    if (!target) note.textContent = 'Choose a class for the copy.';
-    else if (!terms.length) {
-      note.textContent = target.name + ' has no terms, and an assignment belongs to one. Add a '
-        + 'term to it from the class manager first.';
-    } else if (!copyCategoryId) {
-      note.textContent = cats.length
-        ? 'Nothing in ' + target.name + ' is called “'
-          + ((findCategory(sourceClass, source.categoryId) || {}).name || 'that category')
-          + '”, so the copy is not filed under a category yet. Pick one above, or file it later '
-          + 'from its own row — a category id belongs to the class it was made in and is never '
-          + 'carried across.'
-        : target.name + ' has no grading categories yet, so the copy will land in none. '
-          + (gradingModeOf(target) === 'points'
-            ? target.name + ' is graded on total points, so it will still count toward the grade, '
-              + 'under “no category”, until you give it one.'
-            : 'It will sit on the list and count for nothing until you give it one.');
+    if (!copyTargets.length) {
+      note.textContent = copyFromCreate
+        ? 'Choose the classes to copy it into. Nothing is chosen for you.'
+        : 'Choose the classes to copy it into — ' + sourceClass.name + ' is among them, for a '
+          + 'second copy beside this one. Nothing is chosen for you.';
     } else {
-      note.textContent = 'The dates come across as they are. Nothing about the copy is settled by '
-        + 'making it — it is an ordinary assignment in ' + target.name + ' the moment it exists.';
+      /* THE DATES NOTE, CHANGED IN THE SAME EDIT AS THE FIELD (WO-3.48, the future-features row's
+         ruling 4). It said "The dates come across as they are" while the dialog had no date field
+         at all; a printed promise the dialog no longer keeps is the fault WO-3.17 fixed in the
+         editor's own hint, so it moved with the field rather than after it. */
+      note.textContent = 'The assigned date comes across as it is. '
+        + (source.due
+          ? 'Each due date starts on this assignment’s and can be changed in its own row'
+          : 'This assignment has no due date, so each copy starts with none; set one in its row')
+        + ' — nothing re-dates a copy to today. Nothing about a copy is settled by making it: it is '
+        + 'an ordinary assignment in its class the moment it exists.';
     }
   }
   if (button) {
-    const terms = target ? getTerms(target.id) : [];
-    button.disabled = !target || !terms.length;
-    button.textContent = target ? 'Copy into ' + target.name : 'Make the copy';
+    const ready = copyTargets.length > 0 && copyTargets.every(copyTargetReady);
+    button.disabled = !ready;
+    const only = copyTargets.length === 1 ? findClass(copyTargets[0].classId) : null;
+    button.textContent = only ? 'Copy into ' + only.name
+      : copyTargets.length > 1 ? 'Copy into ' + copyTargets.length + ' classes'
+      : 'Make the copy';
   }
 }
 
-export function openCopyEditor(id, opener) {
+/* Both doors arrive here: the dialog starts with the source named and NOTHING ticked. */
+function startCopy(id, fromCreate) {
   const source = findAssignment(id);
-  if (!source) return;
+  if (!source) return false;
   copyId = id;
   copyName = source.name || '';
-  proposeCopyInto(source.classId);
+  copyTargets = [];
+  copyFromCreate = !!fromCreate;
   renderCopy();
+  return true;
+}
+
+/* A row's Duplicate. */
+export function openCopyEditor(id, opener) {
+  if (!startCopy(id, false)) return;
   openModal(COPY_MODAL_ID, opener);
 }
 
+/*
+  THE CREATE DOOR (WO-3.48): Copy into other classes…, beside the editor's Done, during a create.
+
+  THE EDITOR CLOSES AND THE COPY DIALOG OPENS IN ITS PLACE, rather than stacking on top of it, and
+  the create flow ends here. Three reasons, in the order they decided it.
+  - Nothing is lost by closing. Every field in the editor is written as it is typed (the
+    no-lost-draft contract in createAssignment()'s header), so the assignment the copy dialog reads
+    is already the one on the editor's glass. Closing is the same act Done is.
+  - The editor's Cancel must not survive the copies. It removes the assignment this flow wrote and
+    announces "Nothing was added" — true before a copy is made and false after, with the copies left
+    behind in other classes. Ending the flow here (`creatingId` cleared, the same as Edit clears it)
+    is what makes that sentence impossible to reach; the row's own Delete is still there.
+  - One dialog at a time. A dialog stacked on a dialog is a thing to dismiss twice, the reason
+    src/past-due.js's review is inline rather than a second modal, and Escape on the top one would
+    leave a teacher in an editor she believed she had finished with.
+  So Close, Escape and Cancel on the copy dialog are what they are from Duplicate — nothing written —
+  and focus goes back to the `+ New assignment` that started the create.
+*/
+export function openCopyFromCreate() {
+  const id = creatingId;
+  if (!id || editingId !== id || !findAssignment(id)) return;
+  const opener = createOpener;
+  creatingId = '';
+  createOpener = null;
+  closeModal(EDITOR_MODAL_ID);
+  if (!startCopy(id, true)) return;
+  openModal(COPY_MODAL_ID, opener);
+}
+
+/* A pill: ticks the class if it is not ticked, with a fresh proposal of its own, and unticks it —
+   dropping that proposal, so a row put back later starts again rather than remembering. */
 export function setCopyClass(classId) {
   if (!findClass(classId)) return;
-  proposeCopyInto(classId);
+  if (!copyOffered().some((cls) => cls.id === classId)) return;
+  if (copyTargetFor(classId)) {
+    copyTargets = copyTargets.filter((t) => t.classId !== classId);
+  } else {
+    const proposal = proposeCopyInto(classId);
+    if (!proposal) return;
+    const order = copyOffered().map((cls) => cls.id);
+    copyTargets = copyTargets.concat([proposal])
+      .sort((a, b) => order.indexOf(a.classId) - order.indexOf(b.classId));
+  }
   renderCopy();
 }
 
+/* The two pickers in one row, each naming the class it belongs to. Neither writes to the document. */
 export function setCopyTerm(select) {
-  copyTermId = select.value;
+  const target = copyTargetFor(select.getAttribute('data-assignment-copy-term'));
+  if (!target) return;
+  target.termId = select.value;
   renderCopy();
 }
 
 export function setCopyCategory(select) {
-  copyCategoryId = select.value;
+  const target = copyTargetFor(select.getAttribute('data-assignment-copy-category'));
+  if (!target) return;
+  target.categoryId = select.value;
   renderCopy();
+}
+
+/* One row's due date, as it is typed or picked. NOT re-rendered, for editAssignmentField()'s reason
+   — rebuilding would take the field out from under the caret — and the empty value a half-typed
+   date reports is taken as it comes, because this is a proposal: the row's Clear, below, is what
+   rebuilds the element, and nothing here reacts to an empty value. */
+export function setCopyDue(input) {
+  const target = copyTargetFor(input.getAttribute('data-assignment-copy-due'));
+  if (!target) return;
+  target.due = input.value;
+}
+
+/* The row's Clear: empties that one copy's due date and replaces the element, for the WebKit reason
+   assignmentDateCleared() gives — a cleared picker otherwise keeps the old day highlighted. */
+export function copyDueCleared(input) {
+  const target = copyTargetFor(input.getAttribute('data-assignment-copy-due'));
+  const cls = target ? findClass(target.classId) : null;
+  if (!target || !cls) return;
+  target.due = '';
+  input.replaceWith(copyDueInput(target, cls));
 }
 
 /* The name is read as it is typed and the panel is NOT re-rendered for it, for the reason
@@ -1446,54 +1690,71 @@ export function setCopyCategory(select) {
 export function setCopyName(input) { copyName = input.value; }
 
 /*
-  The copy itself, and the only line in this section that writes anything.
+  The copies themselves, and the only lines in this section that write anything.
 
-  A NEW ID, THE TARGET'S OWN classId / termId / categoryId, AND NO SCORES. `scores` is keyed by
-  assignment id (docs/data-model.md), so a fresh id has no column and there is nothing to avoid
-  copying — the absence is structural rather than something this function remembers not to do.
-  That is this work order's third acceptance line, and it is true by construction.
+  A NEW ID PER COPY, EACH TARGET'S OWN classId / termId / categoryId / due, AND NO SCORES. `scores`
+  is keyed by assignment id (docs/data-model.md), so a fresh id has no column and there is nothing
+  to avoid copying — the absence is structural rather than something this function remembers not to
+  do. Every copy is an independent assignment: there is no structure several classes point at, and
+  the grade math never hears that a copy was one (WO-3.48's first standing rule).
+
+  BUILT FROM NAMED FIELDS AND NEVER BY SPREADING THE SOURCE. A spread would carry whatever a later
+  build adds to an assignment, and WO-3.46's `held` / `committedAt` are the ones already booked:
+  a copy is live whatever its source is (that work order's ruling 4), and naming the fields is what
+  makes that true here without this function having to know they exist.
+
+  ALL OF THEM IN ONE update(), so three classes is one save and one `rev`, and a refusal below —
+  any ticked class whose term is gone — writes none of them rather than some.
 */
 export function confirmCopy() {
   const source = findAssignment(copyId);
-  const target = findClass(copyClassId);
-  if (!source || !target) { closeModal(COPY_MODAL_ID); return; }
-  if (!getTerms(target.id).some((t) => t.id === copyTermId)) return;
-  const category = copyCategoryId && findCategory(target, copyCategoryId) ? copyCategoryId : '';
+  if (!source || !copyTargets.length) { closeModal(COPY_MODAL_ID); return; }
+  if (!copyTargets.every(copyTargetReady)) return;
 
-  const copy = {
-    id: newId('a'),
-    classId: target.id,
-    termId: copyTermId,
-    categoryId: category,
-    name: copyName,
-    points: source.points,
-    /* THE SOURCE'S DATES EXACTLY AS THEY ARE, AND DELIBERATELY NOT TODAY. WO-3.17 gives a new
-       assignment today in both fields; this is the other creation path in this file and it was
-       weighed against that one rather than left unconsidered. Two reasons it goes the other way.
-       The dialog above tells the teacher in words that "the dates come across as they are" before
-       she taps the button, and a control that quietly re-dated its copy would be contradicting its
-       own printed promise — the same fault the hint in index.html was carrying and that work order
-       fixed. And a copy that dropped a due date the teacher had already set is a form to fill in
-       twice, which is the cost this control exists to remove. Blank in the source stays blank. */
-    assigned: source.assigned,
-    due: source.due,
-  };
+  const copies = copyTargets.map((target) => {
+    const cls = findClass(target.classId);
+    return {
+      id: newId('a'),
+      classId: cls.id,
+      termId: target.termId,
+      /* The target's own category id or none, checked against THAT class — never the source's id. */
+      categoryId: target.categoryId && findCategory(cls, target.categoryId) ? target.categoryId : '',
+      name: copyName,
+      points: source.points,
+      /* THE ASSIGNED DATE AS IT IS, AND EACH DUE DATE AS ITS ROW SHOWS IT — DELIBERATELY NEVER
+         TODAY. WO-3.17 gives a new assignment today in both fields; this is the other creation path
+         in this file and it was weighed against that one rather than left unconsidered. Two reasons
+         it goes the other way, and both survive WO-3.48. The dialog tells the teacher in words that
+         the assigned date comes across and that each due date starts on the source's before she
+         taps the button, and a control that quietly re-dated its copy would be contradicting its own
+         printed promise — the same fault the hint in index.html was carrying and that work order
+         fixed. And a copy that dropped a date the teacher had already set is a form to fill in
+         twice, which is the cost this control exists to remove. What WO-3.48 changed is only who
+         decides the due date: it starts on the source's, blank staying blank, and the teacher may
+         change it per class in that class's row. */
+      assigned: source.assigned,
+      due: target.due,
+    };
+  });
   update((doc) => {
     if (!Array.isArray(doc.assignments)) doc.assignments = [];
-    doc.assignments.push(copy);
+    copies.forEach((copy) => doc.assignments.push(copy));
   });
 
+  const names = copies.map((copy) => findClass(copy.classId).name);
   copyId = '';
+  copyTargets = [];
   closeModal(COPY_MODAL_ID);
   renderAssignments();
-  announce('Copied ' + (copy.name || 'the assignment') + ' into ' + target.name
-    + ' with no scores on it.');
+  announce('Copied ' + (copyName || 'the assignment') + ' into ' + listNames(names) + ' with no '
+    + (copies.length === 1 ? 'scores on it.' : 'scores on them.'));
 }
 
 /* No. Nothing has been written, so there is nothing to undo — which is the point of proposing
    before writing rather than writing and offering an undo. */
 export function cancelCopy() {
   copyId = '';
+  copyTargets = [];
   closeModal(COPY_MODAL_ID);
   announce('Nothing was copied.');
 }

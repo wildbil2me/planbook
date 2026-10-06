@@ -1071,8 +1071,10 @@
         <strong>Nothing else is ever filled in for you.</strong> Planbook has no timetable and is not
         getting one, so there is no “next meeting” to guess at; a due date is a plain date you type,
         and it changes no grade and marks nobody. <strong>Duplicate</strong> copies an assignment
-        into this class or into another one you teach — the dates come across as they are, and the
-        copy arrives with no scores on it, which is the point of copying it rather than the cost.
+        into this class or into as many of the others you teach as you tick — the assigned date
+        comes across as it is, each copy’s due date starts on this one’s and can be changed for that
+        class alone, and every copy arrives with no scores on it, which is the point of copying it
+        rather than the cost. Each copy is its own assignment from then on.
       </p>
       <p class="assign-hint">
         <strong>Worth 0 points is how you give extra credit.</strong> A 0-point assignment scored 5
@@ -3274,6 +3276,13 @@
       </p>
       <div class="modal-actions">
         <button class="class-action-btn primary" type="button" data-modal-close>Done</button>
+        <!-- THE CREATE DOOR (WO-3.48, the owner's ruling of 2026-10-05). Shown by src/assignments.js
+             on the same condition as Cancel below — a create flow — and only when another active
+             class exists. It closes this editor and opens the duplicate dialog with the new
+             assignment as its source; Done still just closes, so creating stays one write followed
+             by an editor and nothing about the no-lost-draft contract moves. -->
+        <button class="class-action-btn assign-copy-door hidden" id="assignmentCopyDoor" type="button"
+                data-assignment-copy-door aria-haspopup="dialog">Copy into other classes…</button>
         <!-- A create is already in the document so every field can keep autosaving. Cancel is the
              explicit exception: it removes that new row again. Close, Escape and Done still keep
              typed work, which is the no-lost-draft contract above. src/assignments.js shows this
@@ -3299,6 +3308,12 @@
      removal in the class it came from, under a dialog naming a different class. So the copy is
      matched by NAME into the target and shown to the teacher before she agrees to it.
 
+     SEVERAL CLASSES AT ONCE SINCE WO-3.48. The pills are toggles and none is pressed on opening;
+     each ticked class gets a row of its own — term, category, due — and the confirm writes one
+     independent copy per row, with a new id each. Copies, never one assignment several classes point
+     at. Reached from a row's Duplicate and, during a create, from the editor's Copy into other
+     classes…, which does not offer the source's own class.
+
      Filled by src/assignments.js. -->
 <div class="modal-overlay hidden" id="assignmentCopyModal">
   <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="assignmentCopyTitle">
@@ -3308,10 +3323,10 @@
     </div>
     <div class="modal-body">
       <p id="assignmentCopyLead"></p>
-      <div class="modal-section-label">Which class</div>
+      <div class="modal-section-label">Which classes</div>
       <div class="assign-copy-classes" id="assignmentCopyClasses" role="group"
-           aria-label="Which class the copy goes into"></div>
-      <div class="modal-section-label">Where it lands</div>
+           aria-label="Which classes the copies go into"></div>
+      <div class="modal-section-label">Where each copy lands</div>
       <div class="assign-fields" id="assignmentCopyFields"></div>
       <p class="class-hint" id="assignmentCopyNote"></p>
       <div class="modal-actions">

@@ -611,6 +611,10 @@ if (!classesBooted || !classSeam || !assignSeam) {
         open: !document.getElementById('assignmentCopyModal').classList.contains('hidden'),
         lead: (document.getElementById('assignmentCopyLead')||{}).textContent.replace(/\\s+/g,' '),
         note: (document.getElementById('assignmentCopyNote')||{}).textContent.replace(/\\s+/g,' '),
+        /* Since WO-3.48 a fallback is said in the row it belongs to rather than in the one note under
+           the dialog, so the no-match sentence is read from the ticked row's own note. */
+        rowNote: (document.querySelector('[data-assignment-copy-row-note]')||{textContent:''}).textContent.replace(/\\s+/g,' '),
+        rows: document.querySelectorAll('[data-assignment-copy-row]').length,
         button: (document.getElementById('assignmentCopyBtn')||{}).textContent,
         term: term ? term.value : null, category: cat ? cat.value : null,
         catOptions: opts.map(function(o){ return o.value; }),
@@ -619,16 +623,20 @@ if (!classesBooted || !classSeam || !assignSeam) {
         classes: document.querySelectorAll('#assignmentCopyClasses .pill').length,
         active: document.querySelectorAll('#assignmentCopyClasses .pill.active').length }; })()`;
 
+    /* The tap on the target's pill TICKS it (WO-3.48): the dialog opens with nothing ticked, from
+       this door and the editor's, so this is the only pressed pill and the only row. Until WO-3.48
+       the dialog opened with the source's own class chosen and this tap SWITCHED the one target; the
+       checks below read the same proposal either way. */
     await clickSel('#assignmentsView [data-assignment-duplicate="' + secondId + '"]');
     await clickSel('#assignmentCopyClasses [data-assignment-copy-class="' + dst.id + '"]');
     const proposal = await evalJs(COPY_READ);
     check('the duplicate dialog proposes the TARGET class\'s own term, and files under nothing when that class has no category of the source\'s name',
       proposal.open && dst.terms.indexOf(proposal.term) >= 0
         && proposal.category === ''
-        && proposal.active === 1 && proposal.classes >= 2
+        && proposal.active === 1 && proposal.classes >= 2 && proposal.rows === 1
         && proposal.button.indexOf(dst.name) >= 0
         && /no scores/.test(proposal.lead)
-        && proposal.note.indexOf(PROBE_CAT) >= 0 && /Pick one above/.test(proposal.note),
+        && proposal.rowNote.indexOf(PROBE_CAT) >= 0 && /Pick one above/.test(proposal.rowNote),
       JSON.stringify({ term: dst.terms.indexOf(proposal.term) >= 0, category: proposal.category,
         button: proposal.button }));
     /*
@@ -657,7 +665,7 @@ if (!classesBooted || !classSeam || !assignSeam) {
       picked.category === catsNow.dst[0].id && picked.catShown === catsNow.dst[0].id
         && picked.catOptions.indexOf('') === -1
         && picked.catOptions.length === catsNow.dst.length
-        && !/Pick one above/.test(picked.note),
+        && !/Pick one above/.test(picked.rowNote),
       'proposal now ' + JSON.stringify(picked.category) + ', options '
         + picked.catOptions.length + ' with no placeholder among them');
     await clickSel('[data-assignment-copy-cancel]');
@@ -697,7 +705,11 @@ if (!classesBooted || !classSeam || !assignSeam) {
       matched.category === twin.id && matched.catShown === twin.id
         && matched.category !== otherCat
         && matched.catOptions.indexOf('') === -1
-        && /The dates come across as they are/.test(matched.note),
+        /* WO-3.48: the note stopped promising "the dates come across as they are" when the dialog
+           gained a due date per row; it says the assigned date comes across and each due date
+           starts on the source's. */
+        && !/come across as they are/.test(matched.note)
+        && /assigned date comes across as it is/.test(matched.note),
       'proposed ' + JSON.stringify(matched.category) + ' and displayed '
         + JSON.stringify(matched.catShownLabel));
 
