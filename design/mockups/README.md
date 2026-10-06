@@ -761,3 +761,46 @@ Every one answered by the owner the day it was drawn, and every one as drawn exc
    clears. The drawing's search frames now show four matches for *ma*, Amari included.
 8. **Three frozen columns in iPad portrait**: kept (drawn), or the category average replaces the
    grade there. **Decided: kept, the same in every orientation.**
+
+---
+
+# Copy into other classes — WO-3.48's follow-up, drawn 2026-10-06
+
+**The tenth room, and the second drawn of a screen that already ships.**
+[`copy-classes.html`](copy-classes.html) draws the copy dialog WO-3.48 shipped at v167, which the
+owner's iPad reading on 2026-10-06 passed and found clunky on the laptop and too long to scroll on
+both devices. Its first frame is the dialog as it ships, with the same errand as the frames after
+it, so the two can be compared directly. **No work order is booked yet.** The drawing comes first,
+at the owner's request.
+
+## What the drawing proposes
+
+Styled in [`proposed-copy.css`](proposed-copy.css), one section bound for `src/assignments.css` and
+`not yet lifted`.
+
+1. **A wider panel**, 840px, a second class beside `.modal-panel`, whose `95vw` cap still applies.
+2. **One list, one line per class.** Every class the copy could go into is listed from the start.
+   The tick is the class name, and term, category and due sit on the same line. The column heads are
+   written once. The pills and the per-class cards go, so each class is on screen once instead of
+   twice.
+3. **An unticked class is one short line**, so ticking one doesn't move the rest of the list.
+4. **A line's own fallback is an amber line under it**: no category of that name, or no terms.
+   The shipped rules are unchanged, including the disabled confirm and the dropdowns showing exactly
+   what will be written.
+5. **The list folds by its own width**: below 760px each ticked class is two rows, the name and then
+   the three fields side by side with a small label each. That is about 120px a class under a thumb,
+   against about 280px today.
+
+## The open questions, collected
+
+1. **The wording.** The lead, the per-line notes and the note under the list are drawn at about a
+   third of the shipped length, keeping every claim the shipped text makes. The exact words are the
+   owner's.
+2. **`@container` or `@media`.** The fold is drawn as a CSS size container, which nothing in `src/`
+   uses yet (iPadOS 16+). A `@media (max-width: 860px)` rule is the app's existing shape and
+   behaves the same on real devices.
+3. **The date field and Clear on a portrait line.** If the iPad draws the date field wider than a
+   third of the line, due gets a row of its own, at about 50px a class. Only a thumb can settle it.
+4. **The order of the list.** Drawn in the class manager's order. The other option is the source
+   course's other sections first.
+5. **A "tick every section of this course" shortcut.** Not drawn.

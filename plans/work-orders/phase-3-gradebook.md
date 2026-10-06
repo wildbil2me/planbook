@@ -3798,6 +3798,12 @@ rulings now. Build them as they stand.
       correctly. The same reading found the dialog clunky on the laptop and too long to scroll on
       both devices. That is a layout follow-up, not a failure of this line.)*
 
+**The layout follow-up is drawn, not booked** (2026-10-06, at the owner's request):
+[`design/mockups/copy-classes.html`](../../design/mockups/copy-classes.html) puts one line per class
+in a wider panel, and `design/mockups/README.md` § "Copy into other classes" collects its five open
+questions. The work order that builds it gets a **Surface** deliverable naming the drawing and an
+**Open** line for each question still open when it is booked.
+
 **Traps** — **Do not build a shared assignment.** It is the tempting shape and the one ruled out.
 **Do not let one target's proposal leak into another's**, for example a single `copyTermId` that the
 last-ticked class overwrites. Every target's fields belong to that target's class. **Do not

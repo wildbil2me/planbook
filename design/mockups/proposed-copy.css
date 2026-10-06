@@ -1,0 +1,127 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   PROPOSED STYLES — the copy dialog, second pass: one line per class.
+
+   Tenth room, and the second drawn of a screen that already ships. WO-3.48 made
+   the duplicate dialog multi-target on 2026-10-05, and the owner's iPad reading
+   on 2026-10-06 passed it and found it clunky on the laptop and too long to
+   scroll on both devices. Not booked as a work order yet; the drawing comes
+   first, at the owner's request the same day.
+
+   WHY IT IS LONG TODAY. The dialog is the stock 480px `.modal-panel`. At that
+   width a class's term, category and due cannot share a line, so each ticked
+   class is a card three blocks deep, every field carries its own label, and
+   the classes are chosen in one place (the pills) and filled in another (the
+   cards), so each one is on screen twice. Under a coarse pointer the card's
+   fields stack as well, and one class is ~280px of a 704px landscape iPad.
+
+   WHAT THIS PROPOSES. A wider panel, and one list where every class the copy
+   could go into is a line: a tick and the class name, then term, category and
+   due on the same line. Column heads are written once above the list instead
+   of on every field. An unticked line is just its name. The pills go.
+
+   THE LIST NARROWS BY ITS OWN WIDTH, NOT THE WINDOW'S. `.assign-copy-list` is
+   a size container, and below 760px of list each line folds to two rows: the
+   tick and name, then the three fields side by side with a small label each.
+   That is what a portrait iPad gets, and it is why this page can show the
+   portrait frame on a laptop. Nothing in src/ uses `@container` yet, so that
+   is a question for the owner and is in README.md.
+
+   THE RULE THIS FILE OBEYS, from PROTOCOL.md rule 5: a pending section styles
+   no class src/*.css already styles. Every name below is new. `.modal-panel`,
+   `.assign-field*`, `.class-action-btn`, `.date-clear` and `.class-hint` are
+   worn as shipped.
+
+   Colours inline, no custom properties, no dark mode — src/shell.css's rules.
+
+     § COPY LIST   →  src/assignments.css   (WO-3.48's follow-up, unbooked — not yet lifted)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.assign-copy-tick { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § COPY LIST   →  src/assignments.css   (WO-3.48's follow-up, unbooked — not yet lifted)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* The panel. A second class worn beside `.modal-panel`, the way `.detail-avatar`
+   sits beside `.avatar`. 840px is what four columns need at their narrowest
+   with the date field's Clear beside it; `.modal-panel`'s own `max-width: 95vw`
+   still governs, so a narrow window gets the folded lines below. */
+.assign-copy-panel { width: 840px; }
+
+/* The list: one framed box, the subdued card of design/style-guide.md §1 that
+   WO-3.48's per-class cards wore, now around all of them once. */
+.assign-copy-list {
+  container-type: inline-size;
+  border: 1.5px solid #e0e4f0; border-radius: 8px; overflow: hidden; background: #fff;
+}
+
+/* One grid shared by the head row and every line, so the columns line up. */
+.assign-copy-heads,
+.assign-copy-line {
+  display: grid; align-items: center; column-gap: 10px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1.35fr);
+}
+.assign-copy-heads {
+  padding: 8px 10px 6px; background: #f8f9fc; border-bottom: 1px solid #e0e4f0;
+  font-size: 10px; font-weight: 700; color: #8a9bb0; letter-spacing: 0.8px; text-transform: uppercase;
+}
+.assign-copy-line { padding: 8px 10px; row-gap: 6px; border-top: 1px solid #eef0f5; }
+.assign-copy-heads + .assign-copy-line { border-top: none; }
+.assign-copy-line.on { background: #f8f9fc; }
+
+/* The tick IS the class name: one control, the whole first cell. */
+.assign-copy-tick {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 34px;
+  padding: 4px 2px; border: none; background: none; cursor: pointer; text-align: left;
+  font-family: inherit; font-size: 13px; font-weight: 700; color: #1a1a2e;
+}
+.assign-copy-line.off .assign-copy-tick { font-weight: 600; color: #6b7a8d; }
+.assign-copy-box {
+  flex: 0 0 18px; height: 18px; border-radius: 4px; border: 1.5px solid #c5cdd8; background: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: #fff; line-height: 1;
+}
+/* `.pill.active`'s green, so a tick reads like the toggles it replaces. */
+.assign-copy-line.on .assign-copy-box { background: #27ae60; border-color: #27ae60; }
+.assign-copy-name { min-width: 0; overflow-wrap: anywhere; }
+/* The source's own class, offered only from a row's Duplicate. */
+.assign-copy-own { display: block; font-size: 11px; font-weight: 600; color: #8a9bb0; }
+
+/* A field cell. Its label is the column head in the wide layout, so the cue is
+   hidden there and shown when the line folds. */
+.assign-copy-cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.assign-copy-cue { display: none; font-size: 11px; font-weight: 700; color: #8a9bb0; }
+.assign-copy-due { display: flex; align-items: flex-start; gap: 6px; min-width: 0; }
+.assign-copy-skip { grid-column: 2 / -1; font-size: 12px; color: #a0aab8; }
+
+/* A line's own fallback, under that line only. Amber, `.assign-group-empty`'s
+   colour, indented to sit under the name rather than under the tick box. */
+.assign-copy-flag {
+  grid-column: 1 / -1; margin: 0; padding-left: 28px;
+  font-size: 12px; line-height: 1.5; color: #8a6d1a;
+}
+
+/* FOLDED: below 760px of list, the tick and name take a row of their own and
+   the three fields share the next, each with its cue. An unticked line is one
+   row. ~120px a class under a thumb, against ~280px for WO-3.48's card. */
+@container (max-width: 760px) {
+  .assign-copy-heads { display: none; }
+  .assign-copy-line { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.35fr); }
+  .assign-copy-tick { grid-column: 1 / -1; }
+  .assign-copy-cue { display: block; }
+  .assign-copy-skip { display: none; }
+  .assign-copy-flag { padding-left: 0; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § TOUCH   — every control above, at the floor
+   ══════════════════════════════════════════════════════════════════════════════ */
+/* The fields inside a line are `.assign-field-select` and `.assign-field-date`,
+   which carry the 44px floor in src/assignments.css's coarse block already. */
+@media (pointer: coarse) {
+  .assign-copy-tick { min-height: 44px; font-size: 14px; }
+  .assign-copy-box { flex-basis: 22px; height: 22px; font-size: 14px; }
+  .assign-copy-line { padding: 10px 12px; column-gap: 12px; row-gap: 8px; }
+  .assign-copy-cue { font-size: 12px; }
+  .assign-copy-flag { font-size: 13px; }
+}

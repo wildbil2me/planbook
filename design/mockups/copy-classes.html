@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Copy into other classes</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="../../src/assignments.css">
+<link rel="stylesheet" href="proposed-copy.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Static HTML. Nothing here ticks, copies or reads a document; every value is typed in.</span>
+  <span>The copy dialog, one line per class · drawn 2026-10-06 · follow-up to <a href="../../plans/work-orders/phase-3-gradebook.md#wo-348--one-assignment-goes-into-several-classes-in-one-dialog">WO-3.48</a>, not yet booked</span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="copy-classes.html" class="here">Copy into other classes</a>
+</nav>
+
+<main class="main">
+
+<div class="mk-caption">
+  <strong>The same errand in each frame:</strong> “Personal narrative — final draft”, 50 points, filed
+  under Essays in P1 · English I, due Friday 9 October. It goes into P2 and P4 (English I, same
+  categories) and P5 (English III, which has no “Essays”). P4 meets Monday, so its due date moves to
+  the 12th. Today is Tuesday 6 October.
+</div>
+
+<!-- ═══════════════════════════ AS SHIPPED ═══════════════════════════ -->
+
+<p class="mk-section">0 · As it ships at v167 (WO-3.48), from the create door</p>
+
+<div style="max-width:480px;margin:12px auto 0">
+  <div class="modal-panel" style="width:100%;animation:none">
+    <div class="modal-header">
+      <h2>Copy into other classes</h2>
+      <button class="modal-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>Copying “Personal narrative — final draft” from P1 · English I into other classes. It is worth 50 points, and each copy arrives with no scores on it. Each copy is a separate assignment from the moment it is made: changing this one later does not change the copies.</p>
+      <div class="modal-section-label">Which classes</div>
+      <div class="assign-copy-classes">
+        <button class="pill active" type="button">P2 · English I</button>
+        <button class="pill" type="button">P3 · English IV</button>
+        <button class="pill active" type="button">P4 · English I</button>
+        <button class="pill active" type="button">P5 · English III</button>
+        <button class="pill" type="button">P6 · AP Lit</button>
+      </div>
+      <div class="modal-section-label">Where each copy lands</div>
+      <div class="assign-fields">
+        <div class="assign-field-row">
+          <label class="assign-field assign-field-wide"><span class="assign-field-label">Name of each copy</span>
+            <input class="assign-field-input" type="text" value="Personal narrative — final draft"></label>
+        </div>
+        <div class="assign-copy-target">
+          <div class="assign-copy-target-head">P2 · English I</div>
+          <div class="assign-field-row">
+            <label class="assign-field"><span class="assign-field-label">Term</span>
+              <select class="assign-field-select"><option>Quarter 1</option></select></label>
+            <label class="assign-field"><span class="assign-field-label">Category</span>
+              <select class="assign-field-select"><option>Essays — 40%</option></select></label>
+          </div>
+          <div class="assign-field-row">
+            <div class="assign-field"><span class="assign-field-label">Due</span>
+              <input class="assign-field-date" type="date" value="2026-10-09">
+              <button class="class-action-btn date-clear" type="button">Clear</button></div>
+          </div>
+        </div>
+        <div class="assign-copy-target">
+          <div class="assign-copy-target-head">P4 · English I</div>
+          <div class="assign-field-row">
+            <label class="assign-field"><span class="assign-field-label">Term</span>
+              <select class="assign-field-select"><option>Quarter 1</option></select></label>
+            <label class="assign-field"><span class="assign-field-label">Category</span>
+              <select class="assign-field-select"><option>Essays — 40%</option></select></label>
+          </div>
+          <div class="assign-field-row">
+            <div class="assign-field"><span class="assign-field-label">Due</span>
+              <input class="assign-field-date" type="date" value="2026-10-12">
+              <button class="class-action-btn date-clear" type="button">Clear</button></div>
+          </div>
+        </div>
+        <div class="assign-copy-target">
+          <div class="assign-copy-target-head">P5 · English III</div>
+          <div class="assign-field-row">
+            <label class="assign-field"><span class="assign-field-label">Term</span>
+              <select class="assign-field-select"><option>Quarter 1</option></select></label>
+            <label class="assign-field"><span class="assign-field-label">Category</span>
+              <select class="assign-field-select"><option>— choose a category —</option></select></label>
+          </div>
+          <div class="assign-field-row">
+            <div class="assign-field"><span class="assign-field-label">Due</span>
+              <input class="assign-field-date" type="date" value="2026-10-09">
+              <button class="class-action-btn date-clear" type="button">Clear</button></div>
+          </div>
+          <p class="assign-copy-target-note">Nothing in P5 · English III is called “Essays”, so this copy is not filed under a category yet. Pick one above, or file it later from its own row — a category id belongs to the class it was made in and is never carried across.</p>
+        </div>
+      </div>
+      <p class="class-hint">The assigned date comes across as it is. Each due date starts on this assignment’s and can be changed in its own row — nothing re-dates a copy to today. Nothing about a copy is settled by making it: it is an ordinary assignment in its class the moment it exists.</p>
+      <div class="modal-actions">
+        <button class="class-action-btn primary" type="button">Copy into 3 classes</button>
+        <button class="class-action-btn" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="mk-caption"><strong>Every class is on screen twice:</strong> once as a pill and once as a card. Each card is three blocks deep, because three fields and a Clear don’t fit across 480px. Every field also repeats its own label. Under a thumb the term and category stack too, which makes each card about 280px, and three classes are more than a landscape iPad’s 704px of usable height.</p>
+
+<!-- ═══════════════════════════ PROPOSED, WIDE ═══════════════════════════ -->
+
+<p class="mk-section">A · Proposed: one line per class, on the laptop or a landscape iPad</p>
+
+<div style="max-width:840px;margin:12px auto 0">
+  <div class="modal-panel assign-copy-panel" style="width:100%;animation:none">
+    <div class="modal-header">
+      <h2>Copy into other classes</h2>
+      <button class="modal-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>Copying “Personal narrative — final draft” (50 points) from P1 · English I. Each copy is its own assignment, arrives with no scores, and stays as it is if you change this one later.</p>
+      <div class="assign-fields" style="margin:14px 0">
+        <div class="assign-field-row">
+          <label class="assign-field assign-field-wide"><span class="assign-field-label">Name of each copy</span>
+            <input class="assign-field-input" type="text" value="Personal narrative — final draft"></label>
+        </div>
+      </div>
+      <div class="assign-copy-list">
+        <div class="assign-copy-heads"><span>Class</span><span>Term</span><span>Category</span><span>Due</span></div>
+
+        <div class="assign-copy-line on">
+          <button class="assign-copy-tick" type="button" aria-pressed="true"><span class="assign-copy-box">✓</span><span class="assign-copy-name">P2 · English I</span></button>
+          <label class="assign-copy-cell"><span class="assign-copy-cue">Term</span><select class="assign-field-select" aria-label="Term — the copy in P2 · English I"><option>Quarter 1</option></select></label>
+          <label class="assign-copy-cell"><span class="assign-copy-cue">Category</span><select class="assign-field-select" aria-label="Category — the copy in P2 · English I"><option>Essays — 40%</option></select></label>
+          <div class="assign-copy-cell"><span class="assign-copy-cue">Due</span><div class="assign-copy-due"><input class="assign-field-date" type="date" value="2026-10-09" aria-label="Due — the copy in P2 · English I"><button class="class-action-btn date-clear" type="button">Clear</button></div></div>
+        </div>
+
+        <div class="assign-copy-line off">
+          <button class="assign-copy-tick" type="button" aria-pressed="false"><span class="assign-copy-box"></span><span class="assign-copy-name">P3 · English IV</span></button>
+          <span class="assign-copy-skip">Not copied</span>
+        </div>
+
+        <div class="assign-copy-line on">
+          <button class="assign-copy-tick" type="button" aria-pressed="true"><span class="assign-copy-box">✓</span><span class="assign-copy-name">P4 · English I</span></button>
+          <label class="assign-copy-cell"><span class="assign-copy-cue">Term</span><select class="assign-field-select" aria-label="Term — the copy in P4 · English I"><option>Quarter 1</option></select></label>
+          <label class="assign-copy-cell"><span class="assign-copy-cue">Category</span><select class="assign-field-select" aria-label="Category — the copy in P4 · English I"><option>Essays — 40%</option></select></label>
+          <div class="assign-copy-cell"><span class="assign-copy-cue">Due</span><div class="assign-copy-due"><input class="assign-field-date" type="date" value="2026-10-12" aria-label="Due — the copy in P4 · English I"><button class="class-action-btn date-clear" type="button">Clear</button></div></div>
+        </div>
+
+        <div class="assign-copy-line on">
+          <button class="assign-copy-tick" type="button" aria-pressed="true"><span class="assign-copy-box">✓</span><span class="assign-copy-name">P5 · English III</span></button>
+          <label class="assign-copy-cell"><span class="assign-copy-cue">Term</span><select class="assign-field-select" aria-label="Term — the copy in P5 · English III"><option>Quarter 1</option></select></label>
+          <label class="assign-copy-cell"><span class="assign-copy-cue">Category</span><select class="assign-field-select" aria-label="Category — the copy in P5 · English III"><option>— choose a category —</option></select></label>
+          <div class="assign-copy-cell"><span class="assign-copy-cue">Due</span><div class="assign-copy-due"><input class="assign-field-date" type="date" value="2026-10-09" aria-label="Due — the copy in P5 · English III"><button class="class-action-btn date-clear" type="button">Clear</button></div></div>
+          <p class="assign-copy-flag">Nothing here is called “Essays”, so this copy goes in no category. Pick one, or file it later.</p>
+        </div>
+
+        <div class="assign-copy-line off">
+          <button class="assign-copy-tick" type="button" aria-pressed="false"><span class="assign-copy-box"></span><span class="assign-copy-name">P6 · AP Lit</span></button>
+          <span class="assign-copy-skip">Not copied</span>
+        </div>
+      </div>
+      <p class="class-hint" style="margin-top:10px">The assigned date comes across as it is. Each due date starts on this one’s, and nothing is re-dated to today.</p>
+      <div class="modal-actions">
+        <button class="class-action-btn primary" type="button">Copy into 3 classes</button>
+        <button class="class-action-btn" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="mk-caption"><strong>Each class is on screen once.</strong> The tick is the class name, and every class you could copy into is listed from the start, so there is nothing to pick before you can see what you picked. Column heads are written once. An unticked class is one short line, so its place in the list doesn’t move when you tick it. The rule from WO-3.48 still stands: each line’s dropdowns show exactly what that copy will be written with, and P5’s blank category says why on its own line.</p>
+<p class="mk-caption ask"><strong>Open 1 · the wording.</strong> The lead, P5’s line and the note under the list are shortened from what ships, to about a third of the length. Each still says what the shipped text says: separate copies, no scores, no id carried across, nothing re-dated. The exact words are the owner’s.</p>
+
+<!-- ═══════════════════════════ PROPOSED, FOLDED ═══════════════════════════ -->
+
+<p class="mk-section">B · Proposed, folded: a portrait iPad (820px wide, so the panel is 779px)</p>
+
+<div style="max-width:779px;margin:12px auto 0">
+  <div class="modal-panel assign-copy-panel" style="width:100%;animation:none">
+    <div class="modal-header">
+      <h2>Copy into other classes</h2>
+      <button class="modal-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>Copying “Personal narrative — final draft” (50 points) from P1 · English I. Each copy is its own assignment, arrives with no scores, and stays as it is if you change this one later.</p>
+      <div class="assign-fields" style="margin:14px 0">
+        <div class="assign-field-row">
+          <label class="assign-field assign-field-wide"><span class="assign-field-label">Name of each copy</span>
+            <input class="assign-field-input" type="text" value="Personal narrative — final draft"></label>
+        </div>
+      </div>
+      <div class="assign-copy-list">
+        <div class="assign-copy-heads"><span>Class</span><span>Term</span><span>Category</span><span>Due</span></div>
+
+        <div class="assign-copy-line on">
+          <button class="assign-copy-tick" type="button" aria-pressed="true"><span class="assign-copy-box">✓</span><span class="assign-copy-name">P2 · English I</span></button>
+          <label class="assign-copy-cell"><span class="assign-copy-cue">Term</span><select class="assign-field-select"><option>Quarter 1</option></select></label>
+          <label class="assign-copy-cell"><span class="assign-copy-cue">Category</span><select class="assign-field-select"><option>Essays — 40%</option></select></label>
+          <div class="assign-copy-cell"><span class="assign-copy-cue">Due</span><div class="assign-copy-due"><input class="assign-field-date" type="date" value="2026-10-09"><button class="class-action-btn date-clear" type="button">Clear</button></div></div>
+        </div>
+
+        <div class="assign-copy-line off">
+          <button class="assign-copy-tick" type="button" aria-pressed="false"><span class="assign-copy-box"></span><span class="assign-copy-name">P3 · English IV</span></button>
+          <span class="assign-copy-skip">Not copied</span>
+        </div>
+
+        <div class="assign-copy-line on">
+          <button class="assign-copy-tick" type="button" aria-pressed="true"><span class="assign-copy-box">✓</span><span class="assign-copy-name">P4 · English I</span></button>
+          <label class="assign-copy-cell"><span class="assign-copy-cue">Term</span><select class="assign-field-select"><option>Quarter 1</option></select></label>
+          <label class="assign-copy-cell"><span class="assign-copy-cue">Category</span><select class="assign-field-select"><option>Essays — 40%</option></select></label>
+          <div class="assign-copy-cell"><span class="assign-copy-cue">Due</span><div class="assign-copy-due"><input class="assign-field-date" type="date" value="2026-10-12"><button class="class-action-btn date-clear" type="button">Clear</button></div></div>
+        </div>
+
+        <div class="assign-copy-line on">
+          <button class="assign-copy-tick" type="button" aria-pressed="true"><span class="assign-copy-box">✓</span><span class="assign-copy-name">P5 · English III</span></button>
+          <label class="assign-copy-cell"><span class="assign-copy-cue">Term</span><select class="assign-field-select"><option>Quarter 1</option></select></label>
+          <label class="assign-copy-cell"><span class="assign-copy-cue">Category</span><select class="assign-field-select"><option>— choose a category —</option></select></label>
+          <div class="assign-copy-cell"><span class="assign-copy-cue">Due</span><div class="assign-copy-due"><input class="assign-field-date" type="date" value="2026-10-09"><button class="class-action-btn date-clear" type="button">Clear</button></div></div>
+          <p class="assign-copy-flag">Nothing here is called “Essays”, so this copy goes in no category. Pick one, or file it later.</p>
+        </div>
+
+        <div class="assign-copy-line off">
+          <button class="assign-copy-tick" type="button" aria-pressed="false"><span class="assign-copy-box"></span><span class="assign-copy-name">P6 · AP Lit</span></button>
+          <span class="assign-copy-skip">Not copied</span>
+        </div>
+      </div>
+      <p class="class-hint" style="margin-top:10px">The assigned date comes across as it is. Each due date starts on this one’s, and nothing is re-dated to today.</p>
+      <div class="modal-actions">
+        <button class="class-action-btn primary" type="button">Copy into 3 classes</button>
+        <button class="class-action-btn" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="mk-caption"><strong>The same markup as frame A, folded by the list’s own width.</strong> Each ticked class takes two rows: the tick and name, then term, category and due side by side, each with a small label because the column heads are gone. An unticked class is one row. On a laptop this frame shows the fine-pointer sizes. On the iPad every control is 44px, about 120px per ticked class against about 280px today.</p>
+<p class="mk-caption ask"><strong>Open 2 · folding by the panel’s width.</strong> This frame folds because the list is a CSS size container (<code>@container</code>), which is what lets one page show both layouts. Nothing in <code>src/</code> uses one yet. It needs iPadOS 16 or later. The alternative is a <code>@media (max-width: 860px)</code> rule, the shape the app already uses, which folds by window width and behaves the same on real devices.</p>
+<p class="mk-caption ask"><strong>Open 3 · the date and Clear on a portrait line.</strong> The due cell is the widest of the three because of the Clear beside it (WO-1.48’s button, which isn’t optional). If the iPad’s date field draws wider than a third of the line, the fallback is giving due a row of its own, which adds about 50px per class. Only a thumb on the real device can settle this.</p>
+
+<!-- ═══════════════════════════ PROPOSED, DUPLICATE DOOR ═══════════════════════════ -->
+
+<p class="mk-section">C · Proposed, from a row’s Duplicate: the source class is offered, and a class with no terms</p>
+
+<div style="max-width:840px;margin:12px auto 0">
+  <div class="modal-panel assign-copy-panel" style="width:100%;animation:none">
+    <div class="modal-header">
+      <h2>Duplicate this assignment</h2>
+      <button class="modal-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>Copying “Personal narrative — final draft” (50 points) from P1 · English I. Each copy is its own assignment and arrives with no scores.</p>
+      <div class="assign-fields" style="margin:14px 0">
+        <div class="assign-field-row">
+          <label class="assign-field assign-field-wide"><span class="assign-field-label">Name of each copy</span>
+            <input class="assign-field-input" type="text" value="Personal narrative — final draft"></label>
+        </div>
+      </div>
+      <div class="assign-copy-list">
+        <div class="assign-copy-heads"><span>Class</span><span>Term</span><span>Category</span><span>Due</span></div>
+
+        <div class="assign-copy-line off">
+          <button class="assign-copy-tick" type="button" aria-pressed="false"><span class="assign-copy-box"></span><span class="assign-copy-name">P1 · English I<span class="assign-copy-own">this class · a second copy</span></span></button>
+          <span class="assign-copy-skip">Not copied</span>
+        </div>
+
+        <div class="assign-copy-line on">
+          <button class="assign-copy-tick" type="button" aria-pressed="true"><span class="assign-copy-box">✓</span><span class="assign-copy-name">P2 · English I</span></button>
+          <label class="assign-copy-cell"><span class="assign-copy-cue">Term</span><select class="assign-field-select"><option>Quarter 1</option></select></label>
+          <label class="assign-copy-cell"><span class="assign-copy-cue">Category</span><select class="assign-field-select"><option>Essays — 40%</option></select></label>
+          <div class="assign-copy-cell"><span class="assign-copy-cue">Due</span><div class="assign-copy-due"><input class="assign-field-date" type="date" value="2026-10-09"><button class="class-action-btn date-clear" type="button">Clear</button></div></div>
+        </div>
+
+        <div class="assign-copy-line on">
+          <button class="assign-copy-tick" type="button" aria-pressed="true"><span class="assign-copy-box">✓</span><span class="assign-copy-name">P3 · English IV</span></button>
+          <label class="assign-copy-cell"><span class="assign-copy-cue">Term</span><select class="assign-field-select" disabled><option>No terms yet</option></select></label>
+          <label class="assign-copy-cell"><span class="assign-copy-cue">Category</span><select class="assign-field-select"><option>— choose a category —</option></select></label>
+          <div class="assign-copy-cell"><span class="assign-copy-cue">Due</span><div class="assign-copy-due"><input class="assign-field-date" type="date" value="2026-10-09"><button class="class-action-btn date-clear" type="button">Clear</button></div></div>
+          <p class="assign-copy-flag">P3 has no terms, so nothing can be copied into it yet. Add one in the class manager, or untick it to copy into the rest.</p>
+        </div>
+
+        <div class="assign-copy-line off">
+          <button class="assign-copy-tick" type="button" aria-pressed="false"><span class="assign-copy-box"></span><span class="assign-copy-name">P4 · English I</span></button>
+          <span class="assign-copy-skip">Not copied</span>
+        </div>
+        <div class="assign-copy-line off">
+          <button class="assign-copy-tick" type="button" aria-pressed="false"><span class="assign-copy-box"></span><span class="assign-copy-name">P5 · English III</span></button>
+          <span class="assign-copy-skip">Not copied</span>
+        </div>
+        <div class="assign-copy-line off">
+          <button class="assign-copy-tick" type="button" aria-pressed="false"><span class="assign-copy-box"></span><span class="assign-copy-name">P6 · AP Lit</span></button>
+          <span class="assign-copy-skip">Not copied</span>
+        </div>
+      </div>
+      <p class="class-hint" style="margin-top:10px">The assigned date comes across as it is. Each due date starts on this one’s, and nothing is re-dated to today.</p>
+      <div class="modal-actions">
+        <button class="class-action-btn primary" type="button" disabled>Copy into 2 classes</button>
+        <button class="class-action-btn" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="mk-caption"><strong>From a row’s Duplicate, the source class is first in the list</strong>, labelled as a second copy and unticked like every other line. P3 was added this week and has no terms, so its term dropdown is disabled, its own line says why, and the button stays disabled until P3 is unticked. That is the shipped rule, now shown on P3’s line instead of in a card further down.</p>
+<p class="mk-caption ask"><strong>Open 4 · the order of the list.</strong> Drawn in the class manager’s order, with the source class first only from a row’s Duplicate. Another option is to put the source course’s other sections first (P2 and P4 here), because those are almost always the ones ticked. That would be the first place this dialog sorts by anything other than the class manager’s order.</p>
+<p class="mk-caption ask"><strong>Open 5 · a “tick every section of this course” shortcut.</strong> Not drawn. With five classes it saves two taps. It could sit in the list head beside “Class” if it turns out to be wanted.</p>
+
+</main>
+</body>
+</html>
