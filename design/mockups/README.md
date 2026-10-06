@@ -764,14 +764,16 @@ Every one answered by the owner the day it was drawn, and every one as drawn exc
 
 ---
 
-# Copy into other classes — WO-3.48's follow-up, drawn 2026-10-06
+# Copy into other classes — WO-3.49, drawn 2026-10-06
 
 **The tenth room, and the second drawn of a screen that already ships.**
 [`copy-classes.html`](copy-classes.html) draws the copy dialog WO-3.48 shipped at v167, which the
 owner's iPad reading on 2026-10-06 passed and found clunky on the laptop and too long to scroll on
 both devices. Its first frame is the dialog as it ships, with the same errand as the frames after
-it, so the two can be compared directly. **No work order is booked yet.** The drawing comes first,
-at the owner's request.
+it, so the two can be compared directly. Drawn at the owner's request before anything was booked,
+then booked the same day as [WO-3.49](../../plans/work-orders/phase-3-gradebook.md#wo-349--the-copy-dialog-is-one-line-per-class-and-the-due-date-picks-each-copys-term),
+whose Rulings carry every answer. Each question below keeps its drawn wording, with its answer
+beside it.
 
 ## What the drawing proposes
 
@@ -810,32 +812,32 @@ Styled in [`proposed-copy.css`](proposed-copy.css), one section bound for `src/a
   create the copies, and says so. v167 offered it
   as a target from a row's Duplicate; open question 8 is what becomes of that.
 
-## The open questions, collected
+## The open questions, collected — all nine answered 2026-10-06
 
 1. **The wording.** The lead, the per-line notes and the note under the list are drawn at about a
    third of the shipped length, keeping every claim the shipped text makes. The exact words are the
-   owner's.
+   owner's. **Decided: the drawn wording, corrected by the owner at the iPad reading.**
 2. **`@container` or `@media`.** The fold is drawn as a CSS size container, which nothing in `src/`
    uses yet (iPadOS 16+). A `@media (max-width: 900px)` rule is the app's existing shape and
-   behaves the same on real devices.
+   behaves the same on real devices. **Decided: a `@media` rule, the app's existing shape.**
 3. **Two dates and two Clears on a portrait line.** If the iPad draws a date field wider than a
    third of the line, the dates get a row of their own, at about 50px a class. Only a thumb can
-   settle it.
+   settle it. **Decided: settled at the iPad reading, with the fallback written into the work order.**
 4. **The order after the source.** Drawn in the class manager's order. The other option is the source
-   course's other sections first.
-5. **A "tick every section of this course" shortcut.** Not drawn.
+   course's other sections first. **Decided: the class manager's order.**
+5. **A "tick every section of this course" shortcut.** Not drawn. **Decided: not now.**
 6. **A due date no term holds**: blank, in a gap between terms, or in a class whose term dates
    aren't typed in. Proposed: a blank due date falls back to the term holding the assigned date, and
    a date outside every term blocks that line until the date changes, the way a class with no terms
-   does.
+   does. **Decided: as proposed.**
 7. **Moving the assigned date.** Drawn so it moves only itself. The other option is for the due
-   date to follow by the same number of days.
+   date to follow by the same number of days. **Decided: no. Each date moves only itself.**
 8. **A second copy in the same class**, which v167's Duplicate allows ("Quiz 2" from "Quiz 1"). An
-   *Another copy in P1* control on the source line, or drop it, since New is one tap away.
+   *Another copy in P1* control on the source line, or drop it, since New is one tap away. **Decided: dropped. A second copy in one class is made with New.**
 9. **When the source's dates change in the dialog.** Drawn so the copies stay where they are. The
    other option is that a line still showing the source's old date follows it, and a line the
-   teacher changed stays put.
+   teacher changed stays put. **Decided: a line still on the source's old date follows it; a line the teacher changed stays put.**
 
-**Outside this drawing, and worth asking once:** the assignment editor still files new work under
-the term being viewed, not the term its due date falls in. If the SIS rule is the app's rule, the
-editor should follow it too, which is a separate work order.
+**Outside this drawing:** the assignment editor still files new work under the term being viewed, not
+the term its due date falls in. The owner wants it to follow the SIS rule too, booked as
+[WO-3.50](../../plans/work-orders/phase-3-gradebook.md#wo-350--the-due-date-picks-an-assignments-term-in-the-editor-too).

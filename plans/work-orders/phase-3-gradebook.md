@@ -3798,11 +3798,12 @@ rulings now. Build them as they stand.
       correctly. The same reading found the dialog clunky on the laptop and too long to scroll on
       both devices. That is a layout follow-up, not a failure of this line.)*
 
-**The layout follow-up is drawn, not booked** (2026-10-06, at the owner's request):
+**The layout follow-up is drawn and booked** (2026-10-06, at the owner's request):
 [`design/mockups/copy-classes.html`](../../design/mockups/copy-classes.html) puts one line per class
-in a wider panel, and `design/mockups/README.md` § "Copy into other classes" collects its open
-questions. The work order that builds it gets a **Surface** deliverable naming the drawing and an
-**Open** line for each question still open when it is booked.
+in a wider panel, and the owner ruled on every question it raised the same day. It is
+[WO-3.49](#wo-349--the-copy-dialog-is-one-line-per-class-and-the-due-date-picks-each-copys-term),
+with the editor's half of the same rule booked as
+[WO-3.50](#wo-350--the-due-date-picks-an-assignments-term-in-the-editor-too).
 
 **Traps** — **Do not build a shared assignment.** It is the tempting shape and the one ruled out.
 **Do not let one target's proposal leak into another's**, for example a single `copyTermId` that the
@@ -3810,3 +3811,167 @@ last-ticked class overwrites. Every target's fields belong to that target's clas
 re-date a copy to today**, because WO-3.17's default is creation-only. And if
 [WO-3.46](#wo-346--a-score-column-can-be-held-out-of-the-grade-until-it-is-committed) lands first, a
 copy is **live** whatever its source is (WO-3.46's ruling 4). Do not copy `held` or `committedAt`.
+
+## WO-3.49 — the copy dialog is one line per class, and the due date picks each copy's term
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.48
+**Closes roadmap** *(no box. Owner-directed, 2026-10-06.)*
+
+**Booked 2026-10-06**, owner-directed, out of [WO-3.48](#wo-348--one-assignment-goes-into-several-classes-in-one-dialog)'s
+👤 reading the same day: the dialog worked, and was clunky on the laptop and too long to scroll on
+both devices. It was drawn before it was booked, and every ruling below was made against the drawing.
+
+**Why it is next.** v167 proposes every other class's **first** term for a copy (`firstTermId()` in
+`src/assignments.js`). That is invisible in Quarter 1. From **Quarter 2, which starts 2026-11-01**,
+every copy defaults to Quarter 1 unless the teacher changes it on each card, which files the work in a
+closed quarter, under a grade already keyed into the SIS, off the list she is looking at. Ruling 2
+removes the default rather than patching it.
+
+**Surface.** [`design/mockups/copy-classes.html`](../../design/mockups/copy-classes.html), frames A
+to C, styled in [`design/mockups/proposed-copy.css`](../../design/mockups/proposed-copy.css)
+§ COPY LIST, with `design/mockups/README.md` § "Copy into other classes". Frame 0 is v167 as it
+ships. **Lift the section rather than re-deriving it** (`PROTOCOL.md` § When the drawing lands), and
+amend its banner in the same sitting.
+
+**Rulings, the owner's, 2026-10-06**
+1. **One list, one line per class, in a wider panel** (drawn at 880px; `.modal-panel`'s `95vw` still
+   caps it). The tick is the class name. Category, assigned and due sit on the same line, under
+   column heads written once. The pills and the per-class cards go. Active classes only, in the class
+   manager's order. No "tick every section" shortcut.
+2. **No term control. The due date picks the term**, the way the school's SIS works: a copy goes into
+   the term of its own class that holds its due date (`termContaining()` in `src/classes.js`). Each
+   line names that term under the class name. A blank due date uses the term holding the assigned
+   date. If neither date places it, or the class has no terms, **the line is blocked**: its own amber
+   line says why, and the confirm stays disabled until the date changes or the class is unticked.
+3. **An assigned date per line**, starting on the source's, for a section a day behind or a class
+   that lost a day to the schedule. Changing it moves only itself, never the due date.
+4. **The source heads the list from either door, with no tick, and stays editable.** Its category,
+   assigned and due are live fields, as a quick reference and a place to fix a slip. Its edits are
+   **held, not written as typed**: the confirm saves them in the same single `update()` as the
+   copies, and Cancel, Close and Escape discard them with everything else. When the source has
+   changed, the confirm reads *Save P1 and copy into 3 classes*. With nothing ticked the confirm stays
+   disabled whether or not the source changed, so this is never an editor for the source alone.
+5. **The source keeps its `termId` here.** Moving it with its due date is
+   [WO-3.50](#wo-350--the-due-date-picks-an-assignments-term-in-the-editor-too)'s job, booked
+   alongside this one.
+6. **A line still showing the source's old date follows a change to the source's date; a line the
+   teacher changed stays put.** Per field: assigned and due follow separately.
+7. **No second copy in the same class.** Duplicate no longer offers the source's own class. A second
+   copy in one class is made with *New*.
+8. **The narrow layout is a `@media` rule**, the app's existing shape, not the drawing's
+   `@container`, which was only there so one page could show both layouts. The breakpoint is where
+   the four columns stop fitting, measured rather than copied. Below it each ticked line folds to two
+   rows: the name, then category and both dates side by side, each with a small label.
+9. **The wording is the drawing's**: the shortened lead, line notes and list note. The owner corrects
+   it at the 👤 reading.
+
+**Deliverables**
+- **`renderCopy()` and its helpers redrawn as the list**: the source line, one line per offered class
+  (unticked: the name and *Not copied*), the column heads, and the amber line under a line that has
+  something to say. `.assign-copy-classes`, `.assign-copy-target*` and the term `<select>` go, with
+  their coarse-pointer rules.
+- **`proposeCopyInto()` proposes `{ classId, categoryId, assigned, due }`**, and the term is derived
+  from those dates when the line is drawn and again at confirm. `firstTermId()` goes if nothing else
+  calls it.
+- **The source's held edits and the follow rule** (rulings 4 and 6): a touched flag per line per date
+  field, held in the dialog's own state and never in the document.
+- **`confirmCopy()`**: one `update()` that writes the source's changed fields and every copy, each
+  copy with `newId('a')`, its line's `classId`, derived `termId`, `categoryId`, `assigned` and `due`,
+  the source's `points`, and no scores. The announcement names the source when it was saved.
+- **The confirm's label** per ruling 4, and WO-3.48's count wording otherwise.
+- **`index.html`**: the dialog's markup, and the assignment list's hint (~line 1073), which describes
+  the copy's dates and must now say each copy's term comes from its due date.
+- **`src/assignments.css`**: § COPY LIST lifted, `@container` swapped for `@media` (ruling 8), and the
+  coarse-pointer block updated in the same pass.
+- **`tools/verify/copy-class.mjs` and `tools/verify/assignments.mjs`** rewritten for the list,
+  including a run at a `--today=` date in the fixture's Quarter 2.
+- **`design/mockups/proposed-copy.css`'s banner, its `README.md` section and its `index.html` entry**
+  amended to say the section landed.
+- **`TESTING.md` § WO-3.49**, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] A copy's `termId` is the target's term holding its due date. With the source due in Quarter 2
+      and a target with dated Quarter 1 and Quarter 2, the copy lands in Quarter 2. Mutation-proved
+      against restoring `firstTermId()`.
+- [ ] A blank due date files the copy under the term holding its assigned date. A line neither date
+      can place, or a class with no terms, is blocked: its own line says why, and the confirm is
+      disabled until it is fixed or unticked.
+- [ ] Each line's assigned and due are written to that copy only. Changing a line's assigned date
+      leaves its due date as it was.
+- [ ] Edits to the source's category, assigned or due are written only on confirm, in the same
+      `update()` as the copies (`rev` moves by one). Cancel, Close and Escape leave the source
+      byte-identical, with `flush()` awaited.
+- [ ] The confirm reads *Save <class> and copy into N classes* exactly when the source has changed,
+      and is disabled with nothing ticked even then.
+- [ ] Changing the source's due date moves every line still on the old date and no line the teacher
+      changed. Likewise for the assigned date.
+- [ ] The source line heads the list from both doors and has no tick. Duplicate does not offer the
+      source's own class. No term control exists anywhere in the dialog, and each ticked line names
+      its term.
+- [ ] At 1280px under a fine pointer, every class is one line with no horizontal scroll. At 820px it
+      folds to two rows a class, and every control is ≥44px under a coarse pointer.
+- [ ] `CACHE` in `sw.js` is bumped.
+- [ ] 👤 On the iPad, after a force-quit, in portrait and landscape: create an assignment and copy it
+      into three sections, one of them a day behind (both its dates moved), and fix a slip on the
+      source line before confirming. Read each copy and the source on their own lists, and read the
+      dialog's wording. If two dates and two Clears do not fit on a portrait line, the fallback is
+      taken (the dates on a row of their own) and the reading says so.
+
+**Traps** — **Nothing in this dialog writes before the confirm**, and that includes the source: the
+editor's write-as-typed contract does not apply here, and a source saved on input would survive the
+Cancel that is supposed to undo it. **Derive the term from the value at confirm, not from what was
+last drawn.** **Do not store the touched flags or a derived term in the document.** WO-3.48's rules
+stand: copies are never a shared structure, a `categoryId` never crosses a class, the controls show
+what will be written, and nothing re-dates a copy to today. If WO-3.46 lands first, a copy is live:
+do not copy `held` or `committedAt`.
+
+## WO-3.50 — the due date picks an assignment's term in the editor too
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.49
+**Closes roadmap** *(no box. Owner-directed, 2026-10-06.)*
+
+**Booked 2026-10-06**, owner-directed, alongside
+[WO-3.49](#wo-349--the-copy-dialog-is-one-line-per-class-and-the-due-date-picks-each-copys-term).
+The owner's rule, from the school's SIS: **a term is never named; the due date places the work.**
+WO-3.49 applies it to copies. This applies it to the editor. Today a new assignment is filed under
+the term being viewed (`createAssignment()`, `termId: term.id`, ~line 974 of `src/assignments.js`),
+and editing its due date never moves it.
+
+**Proposed at booking. These await the owner before `--start`.**
+1. **A new assignment's term is the one holding its due date**, which is today on creation. A teacher
+   viewing a term that does not hold today creates work in today's term. The list moves to that term
+   and says so, rather than the new row vanishing.
+2. **An edited due date moves the assignment when the editor closes, never per keystroke.** The due
+   field writes on every keystroke, including a blank one partway through typing a date (WO-1.47's
+   phantom), so a term derived on input would flip mid-typing and take the row off the list behind
+   the dialog.
+3. **A blank due date uses the assigned date's term. If neither places it, it stays where it is**,
+   and the editor says that no term holds its dates.
+4. **A move that carries scores says so before it happens.** Scores are keyed by assignment, so moving
+   a scored assignment changes two terms' grades, and one of them may already be in the SIS. The
+   editor names both terms and the number of scores at the close that would move it.
+5. **Existing assignments are not re-filed.** No migration: the rule applies when a date is next
+   edited, so an old backup restores exactly as it was.
+6. **The copy dialog's source line follows the same rule**, lifting WO-3.49's ruling 5.
+
+**Deliverables** — the editor's close path, the create path, the list's term switch and its note, the
+scored-move warning, WO-3.49's source save, harness checks in `tools/verify/assignments.mjs` (with
+`--today=` across a term edge), `TESTING.md` § WO-3.50, and a `CACHE` bump.
+
+**Acceptance**
+- [ ] Creating an assignment files it under the term holding today, and the list shows that term.
+- [ ] Typing a due date in another term does not move the assignment until the editor closes. Then it
+      moves once, `rev` moves by one, and the list says where it went.
+- [ ] A blank due date files by the assigned date. Dates no term holds leave the term unchanged, and
+      the editor says so.
+- [ ] Closing on a move that carries scores names both terms and the score count before writing, and
+      declining leaves the document byte-identical.
+- [ ] An old backup restores with every `termId` unchanged.
+- [ ] The copy dialog's source moves with its due date on confirm.
+- [ ] `CACHE` in `sw.js` is bumped.
+- [ ] 👤 On the iPad, after a force-quit: edit a scored assignment's due date across a term edge, read
+      the warning, confirm, and read both terms' lists and grades.
+
+**Traps** — **CLAUDE.md's "the grade must never change because a date rolled over" is about the
+clock, and this is a date the teacher typed.** Keep the distinction explicit in the code: nothing
+here may re-file work because time passed. **Never derive the term on `input`** (ruling 2).

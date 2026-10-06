@@ -4,8 +4,8 @@
    Tenth room, and the second drawn of a screen that already ships. WO-3.48 made
    the duplicate dialog multi-target on 2026-10-05, and the owner's iPad reading
    on 2026-10-06 passed it and found it clunky on the laptop and too long to
-   scroll on both devices. Not booked as a work order yet; the drawing comes
-   first, at the owner's request the same day.
+   scroll on both devices. Drawn at the owner's request the same day, every
+   question ruled on, and booked as WO-3.49.
 
    WHY IT IS LONG TODAY. The dialog is the stock 480px `.modal-panel`. At that
    width a class's term, category and due cannot share a line, so each ticked
@@ -38,13 +38,13 @@
 
    Colours inline, no custom properties, no dark mode — src/shell.css's rules.
 
-     § COPY LIST   →  src/assignments.css   (WO-3.48's follow-up, unbooked — not yet lifted)
+     § COPY LIST   →  src/assignments.css   (WO-3.49 — not yet lifted)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 .assign-copy-tick { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § COPY LIST   →  src/assignments.css   (WO-3.48's follow-up, unbooked — not yet lifted)
+   § COPY LIST   →  src/assignments.css   (WO-3.49 — not yet lifted)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* The panel. A second class worn beside `.modal-panel`, the way `.detail-avatar`
