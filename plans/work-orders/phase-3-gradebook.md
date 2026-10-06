@@ -3726,9 +3726,10 @@ forbids this. None does. The record forbids a **shape**, not the errand:
 2. **Each target's due date starts on the source's due date**, and is editable per target. Blank in
    the source stays blank. `assigned` comes across as it is and is not offered per target.
 3. **Creation offers it every time.** It is not a separate errand reached only through Duplicate.
-   *How* it is offered is the proposal below, for the owner to confirm before `--start`.
+   *How* it is offered is the proposal below, confirmed as written on 2026-10-05.
 
-**Proposed at booking — the owner confirms before `--start`**
+**Proposed at booking — confirmed as written by the owner, 2026-10-05.** Both points below are
+rulings now. Build them as they stand.
 - **The create door.** While the assignment editor is in a create flow (`creatingId` is set, the
   same condition that shows *Cancel*), it shows a **Copy into other classes…** button beside *Done*,
   whenever there are at least two active classes. It opens this dialog with the new assignment as
