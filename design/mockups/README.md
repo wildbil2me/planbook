@@ -785,10 +785,12 @@ Styled in [`proposed-copy.css`](proposed-copy.css), one section bound for `src/a
    so each class is on screen once instead of twice.
 3. **No term control.** The due date decides the term (see Decided below), so the line states it.
 4. **An assigned date per class**, starting on the source's, where the term column was.
-5. **An unticked class is one short line**, so ticking one doesn't move the rest of the list.
-6. **A line's own fallback is an amber line under it**: no category of that name, or no terms.
+5. **The source heads the list as a fixed line**, with no tick: its term, category and both dates
+   as plain text, for reference.
+6. **An unticked class is one short line**, so ticking one doesn't move the rest of the list.
+7. **A line's own fallback is an amber line under it**: no category of that name, or no terms.
    The disabled confirm and "each line shows what will be written" are unchanged.
-7. **The list folds by its own width**: below 820px each ticked class is two rows, the name and then
+8. **The list folds by its own width**: below 820px each ticked class is two rows, the name and then
    category and both dates side by side with a small label each. That is a portrait iPad, at about
    130px a class under a thumb against about 280px today.
 
@@ -802,6 +804,10 @@ Styled in [`proposed-copy.css`](proposed-copy.css), one section bound for `src/a
   term (`firstTermId()` in `src/assignments.js`), so from Quarter 2 on every copy would default to
   Quarter 1 unless changed on each card.
 
+- **The source is the first line, fixed, from either door.** The owner, 2026-10-06: it is the
+  assignment already set up, not a copy to make, and its line is a quick reference. v167 offered it
+  as a target from a row's Duplicate; open question 8 is what becomes of that.
+
 ## The open questions, collected
 
 1. **The wording.** The lead, the per-line notes and the note under the list are drawn at about a
@@ -813,7 +819,7 @@ Styled in [`proposed-copy.css`](proposed-copy.css), one section bound for `src/a
 3. **Two dates and two Clears on a portrait line.** If the iPad draws a date field wider than a
    third of the line, the dates get a row of their own, at about 50px a class. Only a thumb can
    settle it.
-4. **The order of the list.** Drawn in the class manager's order. The other option is the source
+4. **The order after the source.** Drawn in the class manager's order. The other option is the source
    course's other sections first.
 5. **A "tick every section of this course" shortcut.** Not drawn.
 6. **A due date no term holds**: blank, in a gap between terms, or in a class whose term dates
@@ -822,6 +828,8 @@ Styled in [`proposed-copy.css`](proposed-copy.css), one section bound for `src/a
    does.
 7. **Moving the assigned date.** Drawn so it moves only itself. The other option is for the due
    date to follow by the same number of days.
+8. **A second copy in the same class**, which v167's Duplicate allows ("Quiz 2" from "Quiz 1"). An
+   *Another copy in P1* control on the source line, or drop it, since New is one tap away.
 
 **Outside this drawing, and worth asking once:** the assignment editor still files new work under
 the term being viewed, not the term its due date falls in. If the SIS rule is the app's rule, the

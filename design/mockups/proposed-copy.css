@@ -102,6 +102,21 @@
 .assign-copy-due { display: flex; align-items: flex-start; gap: 6px; min-width: 0; }
 .assign-copy-skip { grid-column: 2 / -1; font-size: 12px; color: #a0aab8; }
 
+/* THE SOURCE, FIRST AND FIXED (the owner, 2026-10-06). The assignment being
+   copied, read-only, at the head of the list from either door: a reference to
+   copy from, not a target. No tick, so it lines its name up with the ticked
+   names by the box's width plus the gap. The indigo wash is `.pill`-free on
+   purpose: it must not read as a ticked line. */
+.assign-copy-line.source { background: #eef2ff; border-bottom: 1.5px solid #d5dcf5; }
+.assign-copy-ref {
+  min-height: 34px; padding: 4px 2px 4px 28px; display: flex; align-items: center;
+  font-size: 13px; font-weight: 700; color: #1a1a2e;
+}
+.assign-copy-fixed {
+  display: flex; flex-direction: column; gap: 4px; min-width: 0;
+  padding: 0 10px; font-size: 13px; font-weight: 600; color: #3a4a6b;
+}
+
 /* A line's own fallback, under that line only. Amber, `.assign-group-empty`'s
    colour, indented to sit under the name rather than under the tick box. */
 .assign-copy-flag {
@@ -116,7 +131,7 @@
 @container (max-width: 820px) {
   .assign-copy-heads { display: none; }
   .assign-copy-line { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1.1fr); }
-  .assign-copy-tick { grid-column: 1 / -1; }
+  .assign-copy-tick, .assign-copy-ref { grid-column: 1 / -1; }
   .assign-copy-cue { display: block; }
   .assign-copy-skip { display: none; }
   .assign-copy-flag { padding-left: 0; }
@@ -133,4 +148,6 @@
   .assign-copy-line { padding: 10px 12px; column-gap: 12px; row-gap: 8px; }
   .assign-copy-cue { font-size: 12px; }
   .assign-copy-flag { font-size: 13px; }
+  .assign-copy-ref { min-height: 44px; padding-left: 32px; font-size: 14px; }
+  .assign-copy-fixed { font-size: 14px; }
 }
