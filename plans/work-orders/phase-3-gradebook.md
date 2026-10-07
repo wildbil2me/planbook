@@ -3943,7 +3943,8 @@ WO-3.49 applies it to copies. This applies it to the editor. Today a new assignm
 the term being viewed (`createAssignment()`, `termId: term.id`, ~line 974 of `src/assignments.js`),
 and editing its due date never moves it.
 
-**Proposed at booking. These await the owner before `--start`.**
+**Proposed at booking and approved by the owner on 2026-10-06.** Rulings 1, 2, 4, 5 and 6 stand as
+proposed. Ruling 3 is amended.
 1. **A new assignment's term is the one holding its due date**, which is today on creation. A teacher
    viewing a term that does not hold today creates work in today's term. The list moves to that term
    and says so, rather than the new row vanishing.
@@ -3951,8 +3952,15 @@ and editing its due date never moves it.
    field writes on every keystroke, including a blank one partway through typing a date (WO-1.47's
    phantom), so a term derived on input would flip mid-typing and take the row off the list behind
    the dialog.
-3. **A blank due date uses the assigned date's term. If neither places it, it stays where it is**,
-   and the editor says that no term holds its dates.
+3. **A blank due date takes the assigned date, and the due date still picks the term.** *(Amended by
+   the owner, 2026-10-06. The booking read "a blank due date uses the assigned date's term", which
+   left the due date blank.)* At the close, a blank due date gets the assigned date copied into it and
+   is written. The due date is then the only thing that places the work. With both dates blank, or
+   with dates no term holds, the assignment stays where it is and the editor says that no term holds
+   its dates. The copy happens at close and never on `input`, under ruling 2. **The consequence is
+   intended:** a blank due date can never be past due (`src/past-due.js`, `isDate()`), so the copied
+   date makes the work eligible for the overdue tint and the past-due prompt from the next day. The
+   owner, asked: a "never past due" assignment does not make sense for work that lives in a quarter.
 4. **A move that carries scores says so before it happens.** Scores are keyed by assignment, so moving
    a scored assignment changes two terms' grades, and one of them may already be in the SIS. The
    editor names both terms and the number of scores at the close that would move it.
@@ -3968,8 +3976,8 @@ scored-move warning, WO-3.49's source save, harness checks in `tools/verify/assi
 - [ ] Creating an assignment files it under the term holding today, and the list shows that term.
 - [ ] Typing a due date in another term does not move the assignment until the editor closes. Then it
       moves once, `rev` moves by one, and the list says where it went.
-- [ ] A blank due date files by the assigned date. Dates no term holds leave the term unchanged, and
-      the editor says so.
+- [ ] Closing with a blank due date and an assigned date writes the assigned date into `due` and files
+      by it. Both blank, or dates no term holds, leave the term unchanged, and the editor says so.
 - [ ] Closing on a move that carries scores names both terms and the score count before writing, and
       declining leaves the document byte-identical.
 - [ ] An old backup restores with every `termId` unchanged.
