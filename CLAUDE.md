@@ -398,6 +398,15 @@ Things that will bite:
   still **ask**: `src/past-due.js` (WO-3.6) offers to mark past-due blanks missing and writes only
   what the teacher accepts. That is the one place the rule allows the clock to be read, and the
   set is narrower than "empty" — `excused` and a scoreless `late` are decisions and are never swept.
+- **The due date places the work, and a term is never named** (WO-3.49, WO-3.50, the owner's rule
+  from the school's SIS). An assignment's `termId` is the term holding its due date, worked out when
+  the editor or the copy dialog **closes** — never on `input`, because the due field writes per
+  keystroke and a half-typed date would flip the term and take the row off the list behind the
+  dialog. A new assignment starts on today's date, a blank due date takes the assigned date, and a
+  move that carries scores names both terms and the count before anything is written. **This does
+  not contradict the bullet above**: that one is about the clock, and this is a date the teacher
+  typed. Nothing may re-file work because time passed, and nothing migrates an old `termId` — the
+  rule applies when a date is next edited.
 - **Empty categories redistribute their weight.** Otherwise every grade is wrong until each
   category has an assignment.
 - **An absent threshold key IS its default** (WO-4.1). The `signals` block holds only what the

@@ -51,6 +51,11 @@ dependencies.
   **ask**: `src/past-due.js` (WO-3.6) offers to mark past-due blanks missing and writes only what the
   teacher accepts. It is the one place the clock may be read, and `excused` and a scoreless `late`
   are never in the set. Do not widen it, and do not add a second reader of the date.
+- **The due date places the work, and a term is never named** (WO-3.49, WO-3.50). An assignment's
+  `termId` is the term holding its due date, worked out when the editor or the copy dialog
+  **closes**, never on `input`. A new one starts on today's date, a blank due date takes the assigned
+  date, and a move that carries scores asks first. This is a date the teacher typed, not the clock:
+  nothing may re-file work because time passed, and nothing migrates an old `termId`.
 - **Empty categories redistribute their weight.**
 - **An absent threshold key IS its default** (WO-4.1). `signals` holds only what the teacher has
   changed, and *Put every threshold back* **deletes** the keys rather than writing today's numbers
