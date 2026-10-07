@@ -1,0 +1,9 @@
+2026-10-06T21:39:59-04:00 gates PASS (deps none, tree clean, no prior dispatch files)
+2026-10-06T21:39:59-04:00 route Claude Opus — diagnosis-first harness defect with judgment Traps (no skip-as-fix, app presumed innocent) plus TESTING.md prose; Acceptance demands >=4 full verify-shell runs (real, Q2, Q3, mutation) ~20+ min, over Codex's 20-min cap. Runner-up Codex (harness-only, mechanical acceptance) set aside on budget. No Codex probe run (not Codex route).
+2026-10-06T21:40:04-04:00 claimed via --start (CLAIMED 2026-10-06). Note: --start reported window at 20.6M proxy units, past median death (20.3M) — session-limit risk high; a replacement should read this file first.
+2026-10-06T21:40:39-04:00 brief written: .claude/dispatch/WO-1.62-brief.md (markers filled, ~11 KB)
+2026-10-06T21:40:39-04:00 implementer spawned at Opus (no override) with .claude/dispatch/WO-1.62-brief.md, awaiting return — expect 20-60 min; a flat trail for the first 20 min is reading, not death
+2026-10-06T23:19:43-04:00 implementer returned: claims all 4 boxes met and ticked; two causes (Date.now set-through-proxy recursion in SHIFT_PAGE_CLOCK, not double-install; class-tab check expected Q1); --today Q2 1811/1811, real 1811/1811, mutation 10 red, 2026-01-20 15 red named; files tools/verify-shell.mjs, tools/verify/classes-terms.mjs (staged), TESTING.md, phase-1 file; uncommitted
+2026-10-06T23:19:43-04:00 handoff written (AWAITING VERDICT); verifier owed in a fresh session
+2026-10-07T04:55:02-04:00 fresh session: row AWAITING VERDICT, tree matches implementer's return; verifier spawned at Opus as FIRST pass, awaiting verdict
+2026-10-07T05:37:03-04:00 verdict in: PASS — 4/4 Acceptance re-run independently (real 1811/1811, 2026-11-10 1811/1811, mutation 10 red, 2026-01-20 15 red named), no live mutation, src untouched, sweep 45/0/3. Awaiting owner go for --tick + commit.

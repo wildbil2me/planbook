@@ -13,6 +13,20 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A harness run with a shifted date is green in Quarter 2 — 2026-10-07
+
+WO-1.62. Tooling only; nothing under `src/` moved, so no shell cache bump, and none owed.
+
+- **Not user-visible.** `node tools/verify-shell.mjs --today=2026-11-10` was red before any work
+  order touched it, for two independent reasons, and both are fixed in the harness. The clock shift
+  `--today` installs overflowed the stack when a check replaced `Date.now` and later restored it,
+  which took worker-takeover down. And the class-tab check always expected Quarter 1. It now works
+  out the expected term from the run's date and the fixture's term dates. The shifted run and the
+  real-clock run are both 1811 of 1811. Putting the old clock shift back turns 10 checks red.
+- **Known:** `--today=2026-01-20` has 15 failures. That date falls before the fixtures' school year,
+  and they are recorded in `TESTING.md` § WO-1.62 rather than fixed. The fixture year's own
+  Quarter 3, `--today=2027-01-20`, is green.
+
 ### The harness presses the copy dialog's source-line Clears — 2026-10-06
 
 WO-3.51. Tooling only; nothing under `src/` moved, so no shell cache bump, and none owed.

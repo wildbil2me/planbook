@@ -5565,7 +5565,7 @@ explains why that breaks the app on the first navigation. The fix is in the swee
 
 ## WO-1.62 — a run under --today in Quarter 2 is red before any work order touches it
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-10-07 · **Size** S · **Depends on** —
 **Closes roadmap** *(no box. A harness defect, owner-directed, 2026-10-06.)*
 
 **Booked 2026-10-06**, owner-directed, out of WO-3.49's verdict.
@@ -5591,13 +5591,13 @@ by check title, and fixed in the harness. If the clock patch is the cause, it is
 installing it twice cannot recurse, and the comment above it says why.
 
 **Acceptance**
-- [ ] `node tools/verify-shell.mjs --today=2026-11-10` is green on the delivered tree, with the same
+- [x] `node tools/verify-shell.mjs --today=2026-11-10` is green on the delivered tree, with the same
       number of checks as a real-clock run, apart from any check that names its date dependence.
-- [ ] The real-clock run is unchanged in check titles and count and is still green.
-- [ ] If the clock patch is changed, a mutation restoring the recursion turns a check red.
+- [x] The real-clock run is unchanged in check titles and count and is still green.
+- [x] If the clock patch is changed, a mutation restoring the recursion turns a check red.
       Mutation-proved and recorded in `TESTING.md` § WO-1.62. **The mutation is reverted before
       anything else is written** (`AGENTS.md`).
-- [ ] `--today=2026-01-20` (Quarter 3, a date after a year boundary) is also run and its result
+- [x] `--today=2026-01-20` (Quarter 3, a date after a year boundary) is also run and its result
       recorded. Failures there that this work order does not fix are named, not fixed.
 
 **Traps** — **The app is probably innocent**, as it was in WO-1.44: look for the harness or fixture

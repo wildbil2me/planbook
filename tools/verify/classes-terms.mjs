@@ -12,6 +12,29 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { nodeToday, nodeColumns } from './lib-dates.mjs';
 
+/* The term of one class an arrival rolls over to — the one holding nodeToday, else the nearer side of
+   the gap today falls in — worked out in Node from the dates the fixture typed, never read back off
+   the app (WO-2.54's rule, src/classes.js termNearest()). Written inline under the reload check until
+   WO-1.62 gave the class-tab check the same question, so it is one walk for two checks rather than two
+   walks. Undated and half-typed terms bound nothing and are skipped, as the app skips them. */
+const nearestTermOf = (termIds, termDates) => {
+  const ids = termIds || [];
+  const dated = (termDates || []).map((d, i) => ({ id: ids[i], start: d[0], end: d[1] }))
+    .filter((t) => /^\d{4}-\d{2}-\d{2}$/.test(t.start) && /^\d{4}-\d{2}-\d{2}$/.test(t.end));
+  const holds = dated.filter((t) => t.start <= nodeToday && nodeToday <= t.end)[0];
+  if (holds) return holds.id;
+  const day = (iso) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / 86400000;
+  let before = null;
+  let after = null;
+  dated.forEach((t) => {
+    if (t.end < nodeToday && (!before || t.end > before.end)) before = t;
+    if (t.start > nodeToday && (!after || t.start < after.start)) after = t;
+  });
+  if (!after) return before ? before.id : '';
+  if (!before) return after.id;
+  return day(after.start) - day(nodeToday) <= day(nodeToday) - day(before.end) ? after.id : before.id;
+};
+
 /* Everything this section reads, in one page-side helper, so that a check is one round trip and
    the reads cannot drift between checks. Re-installed after every reload, like the walker. */
 export const INSTALL_CLASS_READER = `(function(){
@@ -530,11 +553,24 @@ if (!classesBooted || !classSeam) {
   await clickSel('#classesModal [data-modal-close]');
   await clickSel('[data-class-tab]', 1);
   const onClass = await evalJs('window.__cls()');
+  /*
+    THE TERM A CLASS TAB OPENS ON IS THE ONE NEAREST TODAY, NOT THE FIRST (WO-1.62). A tab tap is an
+    arrival at the register, and since WO-2.54 an arrival rolls the selected term over to the one
+    nearest today — the same rule the reload check below asserts at a boot. This check used to want
+    `termIds[1][0]`, which is that rule's answer only while today sits inside MESSY's first window
+    (2026-08-26 … 2026-11-06): on the real clock it held, and a run under `--today=2026-11-10` — Quarter
+    2, which MESSY opens 2026-10-15 — went red on a correct app. So the expected term is worked out
+    here, in Node, off nodeToday and the dates the fixture typed, by the same walk the reload check
+    uses, and never read back off the app.
+  */
+  const onClassNearest = nearestTermOf(onClass.termIds[1], onClass.termDates[1]);
   check('tapping a class tab opens it, and the term nav switches to THAT class\'s terms',
     onClass.selectedClass === onClass.ids[1]
       && JSON.stringify(onClass.navLabels) === JSON.stringify(messyBefore.termLabels[1])
-      && onClass.selectedTerm === onClass.termIds[1][0],
-    'open class = ' + JSON.stringify(onClass.names[1]) + ', nav = ' + JSON.stringify(onClass.navLabels));
+      && !!onClassNearest && onClass.selectedTerm === onClassNearest,
+    'open class = ' + JSON.stringify(onClass.names[1]) + ', nav = ' + JSON.stringify(onClass.navLabels)
+      + ', open term = ' + onClass.selectedTerm + ' (nearest to ' + nodeToday + ' over '
+      + JSON.stringify(onClass.termDates[1]) + ' is ' + onClassNearest + ')');
   await clickSel('[data-term-select]', 1);
   const onTerm = await evalJs('window.__cls()');
   check('and tapping a term opens that one, with one active tab in the nav',
@@ -595,23 +631,7 @@ if (!classesBooted || !classSeam) {
     is WO-2.52's section and WO-2.54's, and both drive it against a document where the rollover wants
     a different term.
   */
-  const nearestTermId = (() => {
-    const ids = remembered.termIds[1] || [];
-    const dated = (remembered.termDates[1] || []).map((d, i) => ({ id: ids[i], start: d[0], end: d[1] }))
-      .filter((t) => /^\d{4}-\d{2}-\d{2}$/.test(t.start) && /^\d{4}-\d{2}-\d{2}$/.test(t.end));
-    const holds = dated.filter((t) => t.start <= nodeToday && nodeToday <= t.end)[0];
-    if (holds) return holds.id;
-    const day = (iso) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / 86400000;
-    let before = null;
-    let after = null;
-    dated.forEach((t) => {
-      if (t.end < nodeToday && (!before || t.end > before.end)) before = t;
-      if (t.start > nodeToday && (!after || t.start < after.start)) after = t;
-    });
-    if (!after) return before ? before.id : '';
-    if (!before) return after.id;
-    return day(after.start) - day(nodeToday) <= day(nodeToday) - day(before.end) ? after.id : before.id;
-  })();
+  const nearestTermId = nearestTermOf(remembered.termIds[1], remembered.termDates[1]);
   check('the open class survives the reload, and the open term comes back on the one nearest today — the arrival rollover, seen at a boot',
     remembered.selectedClass === onTerm.selectedClass
       && !!nearestTermId && remembered.selectedTerm === nearestTermId

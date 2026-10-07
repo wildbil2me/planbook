@@ -1008,21 +1008,51 @@ await send('Page.addScriptToEvaluateOnNewDocument', { source: CATCH_AUDIO_CONTEX
  * own definition too; it is the property that makes the flag cheap enough to be worth having.
  *
  * INSTALLED ON NEW DOCUMENTS, and it has to be: `src/attendance.js` computes today at module scope
- * on some paths and this file reloads the page a dozen times. */
+ * on some paths and this file reloads the page a dozen times.
+ *
+ * THE NATIVE `now` IS CAPTURED ONCE, AND `Date.now` IS A SLOT OF THE PROXY'S OWN (WO-1.62). Until
+ * that work order the shifted `now` looked the native one up afresh on every call — `Real.now()` — and
+ * the proxy had no `set` trap, so an assignment to `Date.now` fell through to the native constructor.
+ * `verify/worker-takeover.mjs` steps the clock exactly that way, the way any page code may: it keeps
+ * `var realNow = Date.now`, which on a shifted run is THIS proxy's closure, assigns a stub that calls
+ * it, and puts it back in a `finally`. Through the old proxy the stub became `Real.now`, so the closure
+ * called the stub and the stub called the closure; and the put-back made `Real.now` the closure itself,
+ * which then called itself on every `Date.now()` and every `new Date()` until the page was reloaded.
+ * Every one of the ten checks that section lost on 2026-11-10 was that one overflow, and the real
+ * clock never saw it because there the stub really does sit on the native constructor. (The
+ * hypothesis the work order booked — this script installed twice into one realm — is ruled out: each
+ * document is a fresh realm with its own native `Date`, and `__clockShifted` returns early on a repeat
+ * within one. `TESTING.md` § WO-1.62 has both, reproduced.)
+ *
+ * So nothing in here reads `now` off the constructor any more: the shifted clock is built on
+ * `realNow`, taken before the proxy exists, and an assignment to `Date.now` is kept by the proxy and
+ * handed back by its `get`, exactly as an assignment to the native constructor would be on the real
+ * clock. Like there, a stub moves `Date.now()` and leaves `new Date()` alone. Either change alone
+ * would have stopped the overflow; both are kept, because without the `set` trap a stub would land on
+ * the native constructor and this proxy would never hand it back, and the section stepping the clock
+ * would read three silent returns instead of a throttle. Restoring the old shape brings the overflow
+ * back, and `TESTING.md` § WO-1.62 records the mutation that proves it. */
 const SHIFT_PAGE_CLOCK = `(function(){
   var SHIFT = ${SHIFT_MS};
   if (!SHIFT || window.__clockShifted) return;
   window.__clockShifted = SHIFT;
   var Real = Date;
+  var realNow = Real.now;
+  function shiftedNow(){ return realNow.call(Real) + SHIFT; }
+  var now = shiftedNow;
   window.Date = new Proxy(Real, {
     construct: function(target, args, nt){
       return args.length ? Reflect.construct(target, args, nt)
-        : Reflect.construct(target, [Real.now() + SHIFT], nt);
+        : Reflect.construct(target, [shiftedNow()], nt);
     },
-    apply: function(target, self, args){ return new Real(Real.now() + SHIFT).toString(); },
+    apply: function(target, self, args){ return new Real(shiftedNow()).toString(); },
     get: function(target, key, recv){
-      if (key === 'now') return function(){ return Real.now() + SHIFT; };
+      if (key === 'now') return now;
       return Reflect.get(target, key, recv);
+    },
+    set: function(target, key, value, recv){
+      if (key === 'now') { now = value; return true; }
+      return Reflect.set(target, key, value);
     }
   });
 })();`;

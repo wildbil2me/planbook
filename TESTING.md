@@ -2999,6 +2999,174 @@ sites, because no `check(` was added.
 
 *No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.*
 
+### WO-1.62 — a run under --today in Quarter 2 is red before any work order touches it
+
+**What this changes.** Nothing a teacher sees, and nothing a device gets. `git diff HEAD -- src/
+index.html sw.js` is empty, so no `CACHE` bump is owed. Two harness files move:
+`tools/verify-shell.mjs`'s `SHIFT_PAGE_CLOCK`, and one check's expectation in
+`tools/verify/classes-terms.mjs`. No check was added, removed or renamed. `check()` call sites stay at
+1805 and `node tools/wo-sweep.mjs` § 11 still matches `tools/README.md`.
+
+**The verdict on the eleven: harness, all eleven.** No byte of `src/` moved and all eleven went green.
+There are two causes, not one, and neither is a commit that broke anything.
+
+**The baseline, taken first on the clean tree** (`0eaa185`, `--today=2026-11-10`): `1806 checks · 1795
+passed · 11 failed · 0 skipped`, EXIT=1, 802s. The work order lists `build-line.mjs` and
+`stuck-update.mjs` among the red sections. **Neither failed on this tree.** All ten non-term failures
+are in `verify/worker-takeover.mjs`. Six of them have titles about the About build line, which is
+probably how the two sections got named.
+
+*Cause 1, one check: a fixture expectation that assumed today is in MESSY's first term.*
+
+1. **`tapping a class tab opens it, and the term nav switches to THAT class's terms`**
+   (`verify/classes-terms.mjs`). The check wanted the open term to be `termIds[1][0]`. A tab tap is an
+   arrival, though, and since WO-2.54 an arrival rolls the selected term to the one **nearest today**.
+   MESSY's first window is 2026-08-26 … 2026-11-06 and its second opens 2026-10-15, so 2026-11-10 opens
+   on Quarter 2, and the app was right to. The same file already had the correct walk, written inline
+   under the reload check further down. It is now a module-level `nearestTermOf()` that both checks call.
+   It works in Node from `nodeToday` and the dates the fixture typed, and never reads the answer back
+   off the app. The check's detail now names the date it was judged against
+   (`open term = tm_… (nearest to 2026-11-10 over [...] is tm_…)`). This is not a hard-coded "pick Q2":
+   the same walk answers Quarter 1 on the real clock and at 2026-01-20, and both of those runs pass it.
+
+*Cause 2, ten checks: the clock patch, overwritten through its own proxy.*
+
+2. **`bringing the page back to visible calls registration.update() — once, on the first return`**
+3. **`a second return twenty seconds later is inside the throttle window and calls nothing, and a third
+   past the window calls it again — so the silence is the throttle and not a listener that fired once`**
+4. **`and the line it reads is WO-8.10's sentence to the character, with nothing about staleness added
+   to the case that happens every single launch`**
+5. **`the build line now SAYS the screen is older than what is stored, and says it before it names the
+   stored copy — the fact a teacher can act on, not two versions side by side`**
+6. **`and it names the action that actually clears it — quitting from the app switcher, which is the one
+   thing that re-renders the document`**
+7. **`the refresh a teacher would try first is named AND refused in the same breath — a line that
+   mentions refreshing without denying it sends her round the loop that failed`**
+8. **`and it wears the same caution amber the more-than-one line wears, because the teacher's next move
+   under both is to quit the app and open it again`**
+9. **`the strip's Reload waited for the save to LAND before it reloaded — a change made inside the
+   debounce was written after the tap and before the page began to unload`**
+10. **`and the change is in IndexedDB on the far side of the reload`**
+11. **`§ verify/worker-takeover.mjs ran to the end of its own checks`**, which threw after 17 of its own
+    checks: `RangeError: Maximum call stack size exceeded ← at Date.<anonymous> (<anonymous>:13:41) ← at
+    Date.<anonymous> (<anonymous>:13:57) …`
+
+All ten come from one assignment. To step the clock past WO-8.17's update throttle,
+`verify/worker-takeover.mjs` runs `var realNow = Date.now; Date.now = function(){ return
+realNow.call(Date) + shift; }` and then, in a `finally`, `Date.now = realNow`. On the real clock that
+stub sits on the native constructor and is harmless. On a shifted run `Date` is `SHIFT_PAGE_CLOCK`'s
+proxy, and the old proxy had **no `set` trap**, so the assignment fell through and **replaced the
+native `Date.now`**. Its `now` getter, meanwhile, returned a closure that looked up `Real.now()` again
+on every call. So:
+
+- **Inside the block**, the closure called the stub and the stub called the closure. The app's
+  visibility listener overflowed silently inside an event handler, `update()` was never reached, and
+  the counts read `[0,0,0]` (failures 2 and 3).
+- **After the `finally`**, the native `now` was the proxy's closure itself, and it called itself on
+  every `Date.now()` and every argument-less `new Date()` until the page was reloaded. About's line
+  stayed empty, which is failures 4 to 8. The update strip's Reload threw before it could reload,
+  which is 9 and 10 (`log across the reload = ["click"], new document = false`). The next evaluation
+  overflowed, which is 11.
+
+Both stack positions decode to line 13 of the injected script, the getter's
+`return function(){ return Real.now() + SHIFT; }`: column 57 is the `Real.now()` call. That is a
+function calling itself, not one proxy calling another.
+
+**The booked hypothesis is ruled out, in fact and in principle.** In fact: `SHIFT_PAGE_CLOCK` is added
+once, before the first navigation, through `Page.addScriptToEvaluateOnNewDocument`. Every document,
+reload or iframe is a fresh realm with its own native `Date`. Within one realm, `__clockShifted`
+returns early on a repeat. No section opens a second target or CDP session, and the other two
+page-side clock proxies (`verify/score-history.mjs`'s `CLOCK` and `verify/sync-button.mjs`'s
+`FIXED_CLOCK`) are layered deliberately and assign nothing to `Date.now`. In principle: I took the
+**pre-fix** patch out of `HEAD`, ran it in a Node `vm` realm, deleted the flag and installed it a
+second time. It **did not recurse**. The inner proxy's `Real` is the outer proxy, whose closure reaches
+the native `now`, so the clock only shifts twice (`extraShiftDays: 35`). The same harness reproduces
+the real defect in one step: the worker-takeover assignment on the pre-fix patch gives
+`inside: THREW Maximum call stack size exceeded, after: THREW …`.
+
+**The fix** (`SHIFT_PAGE_CLOCK`, with the reasoning in its own comment). The native `now` is captured
+once, before the proxy exists (`var realNow = Real.now`). The shifted clock, the argument-less
+construction and `Date()` are all built on that capture, so nothing reads `now` off the constructor
+again. `Date.now` is now a slot the proxy owns: the `get` trap returns it and a new `set` trap stores
+an assignment to it. That is what an assignment to the native constructor does on the real clock,
+including that a stub moves `Date.now()` and leaves `new Date()` alone, and in the vm it reads
+`moved: true, ctorUnmoved: true, back: true, sameFn: true`. Either half alone would have stopped the
+overflow. Both are kept: without the `set` trap a stub would land on the native constructor, the proxy
+would never return it, and worker-takeover would read three silent returns instead of a throttle. A
+forced double install of the fixed patch also does not recurse (`recursed: false`). It still shifts
+twice, which the flag prevents.
+
+- [x] **`--today=2026-11-10` is green on the delivered tree, with the real clock's count.**
+      `1811 checks · 1811 passed · 0 failed · 0 skipped`, 57,417 lines, 796s, EXIT=0, and the run says
+      *THE CLOCK WAS MOVED … 2026-11-10*. Its 1811 titles were diffed against the real-clock run's 1811.
+      Three differ, and each differs only by the date it prints in its own title: WO-3.49's create-door
+      check (`Q1 on 2026-10-06` / `Q2 on 2026-11-10`) and the two WO-2.56 state-line checks
+      (`Editing Fri 10/2` / `Editing Fri 11/6`). Every other title is identical. **Nothing skipped
+      in either run.** The one skip in WO-3.49's run (`one tap of Connect puts the Sync button on the
+      panel …`, `verify/drive-sync.mjs`) is not date-dependent. It fires when this machine reached
+      accounts.google.com and the real sign-in was still out after six seconds, which is elapsed real
+      time, and the shift keeps that unchanged.
+- [x] **The real-clock run is unchanged in check titles and count, and still green.** `HEAD` (`0eaa185`)
+      was extracted with `git archive` into a scratch directory and run there: `1811 checks · 1811
+      passed · 0 failed · 0 skipped`, EXIT=0. The delivered tree: `1811 checks · 1811 passed · 0
+      failed · 0 skipped`, 57,417 lines, 796s, EXIT=0. The two runs' `PASS|FAIL|SKIP` title sequences
+      were diffed and are **identical line for line**. *(The work order's "1806/1806 on `9a5b316`" is an
+      older tree. WO-3.49/3.51 have since added checks, and the baseline's 1806 is 1811 less the six
+      checks the throw lost plus its own containment line.)*
+- [x] **Mutation-proved, and reverted before anything else was written.** With both fix files staged,
+      `SHIFT_PAGE_CLOCK` was put back to its pre-fix text under a `MUTATION WO-1.62` comment: a
+      per-call `Real.now()` and no `set` trap. `--today=2026-11-10` then read `1806 checks · 1796
+      passed · 10 failed · 0 skipped`, EXIT=1. The same ten worker-takeover failures came back with the
+      same `Maximum call stack size exceeded … (<anonymous>:13:41)`, and the class-tab check stayed green,
+      so the two causes really are independent. I reverted with `git checkout -- tools/verify-shell.mjs`
+      against the staged tree, and `git diff --stat` on the tools then showed nothing.
+      `grep -rn "MUTATION WO-1.62" tools/ src/` returns nothing. `grep -rn MUTATION tools/ src/` returns
+      only prose that was already there (`tools/README.md`, `verify/keys-legend-guards.mjs`,
+      `verify/outreach.mjs`, `verify/score-grid.mjs`, `verify/score-search.mjs`, `tools/wo-gate.mjs`,
+      `src/shell.js:998`).
+- [x] **`--today=2026-01-20` was run and its result is recorded. Its failures are named here and not
+      fixed.** `1807 checks · 1792 passed · 15 failed · 0 skipped`, 806s, EXIT=1. **Both of this work
+      order's causes are green there**: the class-tab check passes with Quarter 1 nearest, and
+      worker-takeover passes in full. **That date is January of the school year *before* the one the
+      fixtures are built in**, so it is before every term this harness plants. The fixture year's own
+      Quarter 3 is January **2027**, so `--today=2027-01-20` was run too: `1811 checks · 1811 passed ·
+      0 failed · 0 skipped`, 793s, EXIT=0. Its titles match the real clock's except for the same three
+      checks that print their own date. The fifteen failures at 2026-01-20 are below, each read from the
+      run's own detail and **not** traced further. A title diff against the real clock confirms the
+      count gap. Log-entries' last five checks never ran (`and the tap shows what the plan actually
+      says …` through `this section handed the document back as it found it …`), and one containment
+      line stands in their place.
+      - `verify/term-nav.mjs`, four checks: `the WO-2.17 fixture is real: … one of which contains
+        today`, `switching term on the attendance registry updates the totals line in the same paint …`,
+        `and each student's own term line goes with it …`, and `the term change repaints the figures and
+        not the grid under them …`. The fixture types term starts of 2026-02-02 and 2026-03-02 and
+        records on Feb 2–4, so on 2026-01-20 today falls in neither term (`today falls inside a term of
+        this class = false`) and the early term counts 0 meetings.
+      - `verify/score-grid.mjs`, one check: `at a 1280x800 laptop viewport with the page scrolled to the
+        grid, the box's top and bottom edges … are inside the viewport … (WO-3.27)`. The top reads
+        `-0.12`, a fraction of a pixel. **I did not trace the cause.** My best guess is that something
+        drawn above the grid changes height on that date.
+      - `verify/concern-list.mjs` (who needs you, WO-4.2), eight checks: `the list bands attendance
+        ahead of the grade …`, `and the lead sentence on each row is the rule that put it there …`,
+        `a student with no graded work at all is on NO concern list …`, `the absence run counts FOUR in
+        a row across NINE recorded meetings …`, `one rule chip per rule that actually fired, in BOTH
+        directions …`, `tapping a row opens the signal card …`, `moving the grade line from 65 to 40
+        takes the 50% student off the list …`, and `and it comes straight back when the mode goes
+        off …`. The fixture's term (2026-06-01 … 2026-06-30), its attendance and its dropped day are all
+        typed in June 2026, which is after 2026-01-20, so only the grade rule fires
+        (`[{"id":"grade-below","count":1}]`).
+      - `verify/log-entries.mjs` (WO-4.4), two lines: `marking a student absent for the Nth time raises
+        the plan's attendance clause …` (`the mark reads "T"`), then `§ verify/log-entries.mjs ran to
+        the end of its own checks`, which threw `nothing to click for [data-absence-clause]`. The
+        fixture's term starts 2026-06-01, after that date.
+      That is 4 + 1 + 8 + 2 = 15. The count of 1807 against 1811 comes from that throw, and not from any
+      check that names its date. **What the three
+      fixture groups share** is a date typed in calendar 2026 that they assume today is already past.
+      That holds anywhere in the 2026–27 year and fails before it. Whether a prior-year date is worth
+      supporting is the owner's call, so no work order was booked.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.*
+
 ---
 
 ## Phase 2 — Attendance
