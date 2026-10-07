@@ -8,12 +8,16 @@
  * CDP" says where a new check goes.
  *
  * Since WO-3.48 (2026-10-05) the file holds the OTHER copy too: one assignment into several classes
- * in one dialog, in its own block at the foot. It plants five classes of its own, reloads at its head
- * and its foot, takes them back out, and hands the page back at 1280x900 with touch off — the state
- * print-sheets.mjs set and this section received.
+ * in one dialog, in its own block at the foot — rewritten by WO-3.49 (2026-10-06) for the list that
+ * replaced the pills and cards, where each copy's due date picks its term. It plants seven classes
+ * of its own, reloads at its head and its foot, takes them back out, and hands the page back at
+ * 1280x900 with touch off — the state print-sheets.mjs set and this section received.
  */
 
 import { measureIn } from './touch-targets.mjs';
+/* Node's today — moved by `--today` with the page's — for the create door's copy, which is dated today
+   and so goes into whichever of the fixture's quarters holds it (WO-3.49). */
+import { nodeToday } from './lib-dates.mjs';
 
 export async function run(h) {
 const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, waitForBoot, seam } = h;
@@ -458,36 +462,53 @@ console.log('\n--- copying a class, terms and categories only (WO-1.22) ---');
 }
 
 /*
-  ══════════ ONE ASSIGNMENT INTO SEVERAL CLASSES IN ONE DIALOG (WO-3.48) ══════════
+  ══════════ ONE ASSIGNMENT INTO SEVERAL CLASSES, ONE LINE PER CLASS (WO-3.48, WO-3.49) ══════════
 
   Here rather than in verify/assignments.mjs, beside the class copy, because this block needs a
-  fixture that file cannot build out of the classes the run happens to leave: four target classes
-  whose differences are the whole of the claim — one with a category of the source's name under
-  another id (and in a different case, with spaces, because the match trims and folds case), one
-  with categories but none of that name, one with no categories at all, and one with no terms. Its
-  five classes are prefixed `c_wo348_`, and all of them come back out at the foot.
+  fixture that file cannot build out of the classes the run happens to leave. WO-3.48 wrote it for
+  the pills-and-cards dialog; WO-3.49 rewrote it for the list that replaced them, in which the due
+  date picks each copy's term. Its seven classes are prefixed `c_wo349_` and all of them come back
+  out at the foot. Every dated class has a Quarter 1 and a Quarter 2 — 2026-08-24 to 2026-10-31 and
+  2026-11-01 to 2027-01-22 — and the source assignment is due in Quarter 2, because that is the case
+  v167's firstTermId() got wrong and the case WO-3.49's first Acceptance line names:
+    · P1, the source (Essays, Quizzes).
+    · P2, a section of the same course: a category of the source's name under another id and
+      another spelling (" essays "), dated Q1 and Q2 — the copy must land in Q2.
+    · P4, the same terms, categories but none of that name.
+    · P6, one dated year-long term and no categories.
+    · P5, no terms at all. P3, terms with no dates. P7, a gap between its quarters (Nov 1 to 15).
+  The four ways a line can be blocked are each one of those classes rather than one of them hoped for.
 
-  WHAT IS DRIVEN, ALL THROUGH THE CONTROLS A TEACHER TOUCHES: a row's Duplicate, the class pills, each
-  row's two selects and its date field, the confirm, Cancel, the close button, Escape, the editor's
-  + New assignment, its name field, its Copy into other classes…, and its Cancel. The window.planbook
-  seam plants the fixture, reads the document, and archives the other classes for the one-class case.
+  WHAT IS DRIVEN, ALL THROUGH THE CONTROLS A TEACHER TOUCHES: a row's Duplicate, each class's tick,
+  each line's category select and both its dates (typed, picked and Cleared), the source line's three
+  fields, the confirm, Cancel, the close button, Escape, the editor's + New assignment, its name
+  field, its Copy into other classes…, and its Cancel. The window.planbook seam plants the fixture,
+  reads the document, and archives the other classes for the one-class case.
 
-  WHAT IS NOT HERE AND IS OWED TO A HUMAN: WO-3.48's last Acceptance line — three sections, three
-  different due dates, read on each class's own list on a real iPad after a force-quit. The coarse
-  pass below measures every control in the open dialog and that the rows stack without a sideways
-  scroll at portrait-iPad width; it cannot hold a native date picker or a select wheel.
+  THE CLOCK. The create door's copy is dated today (WO-3.17), so its term is the one holding today:
+  Quarter 1 on a real-clock run in October, Quarter 2 under `--today=2026-11-10`. The expected term
+  is worked out here from the fixture's own dates and nodeToday, never asked of the app.
+
+  WHAT IS NOT HERE AND IS OWED TO A HUMAN: WO-3.49's last Acceptance line — three sections, one a day
+  behind, a slip fixed on the source line, read on each class's own list on a real iPad after a
+  force-quit, in both orientations, and whether two dates and two Clears fit a portrait line under a
+  thumb. The coarse pass below measures every control in the open dialog at 820px and that the lines
+  fold; it cannot hold a native date picker or a select wheel, and its date field is Edge's.
 */
-console.log('\n--- one assignment into several classes in one dialog (WO-3.48) ---');
+console.log('\n--- one assignment into several classes, one line per class (WO-3.48, WO-3.49) ---');
 {
   const { INSTALL_WALKER } = h;
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const flush = () => evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
-  const SRC = 'c_wo348_src', P2 = 'c_wo348_p2', P4 = 'c_wo348_p4', P6 = 'c_wo348_p6',
-    P5 = 'c_wo348_p5';
-  const NAMES = { [SRC]: 'WO-3.48 English I P1', [P2]: 'WO-3.48 English I P2',
-    [P4]: 'WO-3.48 English I P4', [P6]: 'WO-3.48 English I P6', [P5]: 'WO-3.48 English I P5' };
-  const ESSAY = 'a348_essay', BLANK = 'a348_blank';
-  const SRC_ESSAYS = 'k348_src_essays', P2_ESSAYS = 'k348_p2_essays';
+  const SRC = 'c_wo349_src', P2 = 'c_wo349_p2', P3 = 'c_wo349_p3', P4 = 'c_wo349_p4',
+    P5 = 'c_wo349_p5', P6 = 'c_wo349_p6', P7 = 'c_wo349_p7';
+  const NAMES = { [SRC]: 'WO-3.49 English I P1', [P2]: 'WO-3.49 English I P2',
+    [P3]: 'WO-3.49 English IV P3', [P4]: 'WO-3.49 English I P4', [P5]: 'WO-3.49 English III P5',
+    [P6]: 'WO-3.49 English I P6', [P7]: 'WO-3.49 AP Lit P7' };
+  const ESSAY = 'a349_essay', BLANK = 'a349_blank';
+  const SRC_ESSAYS = 'k349_src_essays', P2_ESSAYS = 'k349_p2_essays', P2_QUIZ = 'k349_p2_quiz',
+    P7_ESSAYS = 'k349_p7_essays';
+  const Q1 = ['2026-08-24', '2026-10-31'], Q2 = ['2026-11-01', '2027-01-22'];
 
   await flush();
   await send('Emulation.setDeviceMetricsOverride',
@@ -499,47 +520,55 @@ console.log('\n--- one assignment into several classes in one dialog (WO-3.48) -
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
 
-  const plant348 = await evalJs(`(async function(){
+  const plant349 = await evalJs(`(async function(){
     var s = window.planbook.store, c = window.planbook.classes;
     if (!s || !c || !s.getDoc()) return { ok:false, why:'no seam or no open year' };
+    var Q1 = ${JSON.stringify(Q1)}, Q2 = ${JSON.stringify(Q2)};
+    function q(id, label, d){ return { id:id, label:label, start:d[0], end:d[1] }; }
     s.update(function(doc){
       if (!Array.isArray(doc.assignments)) doc.assignments = [];
       if (!doc.scores) doc.scores = {};
-      doc.students.push({ id:'wo348-s1', first:'Odette', last:'Ashby' });
+      doc.students.push({ id:'wo349-s1', first:'Odette', last:'Ashby' });
       function cls(id, name, terms, cats, roster){
         doc.classes.push({ id:id, name:name, archived:false, letterScale:null, roster:roster || [],
           terms:terms, categories:cats });
       }
       cls('${SRC}', ${JSON.stringify(NAMES[SRC])},
-        [{ id:'tm348_src', label:'Q1', start:'', end:'' }],
-        [{ id:'${SRC_ESSAYS}', name:'Essays', weight:60 }, { id:'k348_src_quiz', name:'Quizzes', weight:40 }],
-        ['wo348-s1']);
+        [q('tm349_src1', 'Q1', Q1), q('tm349_src2', 'Q2', Q2)],
+        [{ id:'${SRC_ESSAYS}', name:'Essays', weight:60 }, { id:'k349_src_quiz', name:'Quizzes', weight:40 }],
+        ['wo349-s1']);
       /* Essays SECOND and spelt differently: a match by position, or by exact string, would miss it. */
       cls('${P2}', ${JSON.stringify(NAMES[P2])},
-        [{ id:'tm348_p2a', label:'Q1', start:'', end:'' }, { id:'tm348_p2b', label:'Q2', start:'', end:'' }],
-        [{ id:'k348_p2_quiz', name:'Quizzes', weight:30 }, { id:'${P2_ESSAYS}', name:' essays ', weight:70 }]);
+        [q('tm349_p2a', 'Q1', Q1), q('tm349_p2b', 'Q2', Q2)],
+        [{ id:'${P2_QUIZ}', name:'Quizzes', weight:30 }, { id:'${P2_ESSAYS}', name:' essays ', weight:70 }]);
+      cls('${P3}', ${JSON.stringify(NAMES[P3])},
+        [{ id:'tm349_p3', label:'Q1', start:'', end:'' }],
+        [{ id:'k349_p3_essays', name:'Essays', weight:100 }]);
       cls('${P4}', ${JSON.stringify(NAMES[P4])},
-        [{ id:'tm348_p4', label:'Q1', start:'', end:'' }],
-        [{ id:'k348_p4_hw', name:'Homework', weight:100 }]);
-      cls('${P6}', ${JSON.stringify(NAMES[P6])},
-        [{ id:'tm348_p6', label:'Q1', start:'', end:'' }], []);
+        [q('tm349_p4a', 'Q1', Q1), q('tm349_p4b', 'Q2', Q2)],
+        [{ id:'k349_p4_hw', name:'Homework', weight:100 }]);
       cls('${P5}', ${JSON.stringify(NAMES[P5])}, [],
-        [{ id:'k348_p5_essays', name:'Essays', weight:100 }]);
-      doc.assignments.push({ id:'${ESSAY}', classId:'${SRC}', termId:'tm348_src',
-        categoryId:'${SRC_ESSAYS}', name:'WO-3.48 Essay 2', points:50,
-        assigned:'2026-09-28', due:'2026-10-02' });
-      doc.assignments.push({ id:'${BLANK}', classId:'${SRC}', termId:'tm348_src',
-        categoryId:'k348_src_quiz', name:'WO-3.48 Quiz 1', points:10,
-        assigned:'2026-09-29', due:'' });
-      doc.scores['${ESSAY}'] = { 'wo348-s1': { v:44 } };
+        [{ id:'k349_p5_essays', name:'Essays', weight:100 }]);
+      cls('${P6}', ${JSON.stringify(NAMES[P6])},
+        [q('tm349_p6', 'Year', ['2026-08-24', '2027-06-15'])], []);
+      cls('${P7}', ${JSON.stringify(NAMES[P7])},
+        [q('tm349_p7a', 'Q1', Q1), q('tm349_p7b', 'Q2', ['2026-11-16', '2027-01-22'])],
+        [{ id:'${P7_ESSAYS}', name:'Essays', weight:100 }]);
+      doc.assignments.push({ id:'${ESSAY}', classId:'${SRC}', termId:'tm349_src2',
+        categoryId:'${SRC_ESSAYS}', name:'WO-3.49 Personal narrative', points:50,
+        assigned:'2026-11-05', due:'2026-11-12' });
+      doc.assignments.push({ id:'${BLANK}', classId:'${SRC}', termId:'tm349_src2',
+        categoryId:'k349_src_quiz', name:'WO-3.49 Quiz 1', points:10,
+        assigned:'2026-11-03', due:'' });
+      doc.scores['${ESSAY}'] = { 'wo349-s1': { v:44 } };
     });
-    c.selectClass('${SRC}'); c.selectTerm('tm348_src'); c.refreshClassBar();
+    c.selectClass('${SRC}'); c.selectTerm('tm349_src2'); c.refreshClassBar();
     await s.flush();
-    return { ok:true, classes: s.getDoc().classes.filter(function(x){ return /^c_wo348_/.test(x.id); }).length };
+    return { ok:true, classes: s.getDoc().classes.filter(function(x){ return /^c_wo349_/.test(x.id); }).length };
   })()`);
-  check('WO-3.48: the fixture planted cleanly — a source and four targets that differ in exactly the '
-    + 'ways the dialog has to speak to',
-    plant348.ok === true && plant348.classes === 5, JSON.stringify(plant348));
+  check('WO-3.49: the fixture planted cleanly — a source due in Quarter 2 and six targets that differ in '
+    + 'exactly the ways the list has to speak to',
+    plant349.ok === true && plant349.classes === 7, JSON.stringify(plant349));
 
   /* Onto the source class's assignment list through its home card and the switcher. */
   const toSourceList = async () => {
@@ -551,32 +580,52 @@ console.log('\n--- one assignment into several classes in one dialog (WO-3.48) -
     await sleep(250);
     await clickSel('#classView [data-class-screen="assignments"]');
     await sleep(250);
+    /* Opening a class through its card goes to the term nearest today (WO-2.54), which on a real
+       October clock is Q1 — and both fixture assignments are in Q2. So Q2 is chosen on the term
+       strip, the way a teacher would, before any row's Duplicate is looked for. */
+    await clickSel('#termNav [data-term-select="tm349_src2"]');
+    await sleep(200);
   };
   await toSourceList();
 
-  /* Everything a check below reads off the dialog, in one round trip: the pills, every row's two
-     selects (value AND the option actually displayed), its due field and its own note, the global
-     note, and the confirm. */
-  const READ348 = `(function(){
+  /* Everything a check below reads off the dialog, in one round trip: the source line, every other
+     line (its tick, the term named under it, its category select's value AND the option actually
+     displayed, both dates, its amber lines), every select in the dialog, the note and the confirm. */
+  const READ349 = `(function(){
     var modal = document.getElementById('assignmentCopyModal');
-    var pills = Array.prototype.map.call(document.querySelectorAll('#assignmentCopyClasses [data-assignment-copy-class]'),
-      function(p){ return { id: p.getAttribute('data-assignment-copy-class'), pressed: p.getAttribute('aria-pressed'),
-        active: p.classList.contains('active') }; });
+    var list = document.getElementById('assignmentCopyList');
     function shown(sel){ if (!sel || sel.selectedIndex < 0) return null; return sel.options[sel.selectedIndex].value; }
-    var rows = Array.prototype.map.call(document.querySelectorAll('#assignmentCopyFields [data-assignment-copy-row]'),
-      function(r){
-        var id = r.getAttribute('data-assignment-copy-row');
-        var term = r.querySelector('[data-assignment-copy-term]');
-        var cat = r.querySelector('[data-assignment-copy-category]');
-        var due = r.querySelector('[data-assignment-copy-due]');
-        var note = r.querySelector('[data-assignment-copy-row-note]');
-        return { id: id, head: (r.querySelector('.assign-copy-target-head') || {}).textContent,
-          termHook: term ? term.getAttribute('data-assignment-copy-term') : null,
-          term: term ? term.value : null, termShown: shown(term), termDisabled: term ? term.disabled : null,
+    function flags(line){ return Array.prototype.map.call(line.querySelectorAll('[data-assignment-copy-flag]'),
+      function(f){ return f.textContent.replace(/\\s+/g, ' '); }).join(' | '); }
+    var kids = list ? Array.prototype.slice.call(list.children) : [];
+    var srcLine = list ? list.querySelector('[data-assignment-copy-source-line]') : null;
+    var source = srcLine ? {
+      index: kids.indexOf(srcLine), id: srcLine.getAttribute('data-assignment-copy-line'),
+      text: (srcLine.querySelector('.assign-copy-ref') || {}).textContent,
+      sub: (srcLine.querySelector('.assign-copy-sub') || {}).textContent,
+      ticks: srcLine.querySelectorAll('[data-assignment-copy-class], [aria-pressed]').length,
+      cat: (srcLine.querySelector('[data-assignment-copy-source="categoryId"]') || {}).value,
+      assigned: (srcLine.querySelector('[data-assignment-copy-source="assigned"]') || {}).value,
+      due: (srcLine.querySelector('[data-assignment-copy-source="due"]') || {}).value } : null;
+    var lines = Array.prototype.map.call(list ? list.querySelectorAll('[data-assignment-copy-line]:not([data-assignment-copy-source-line])') : [],
+      function(l){
+        var id = l.getAttribute('data-assignment-copy-line');
+        var tick = l.querySelector('[data-assignment-copy-class]');
+        var cat = l.querySelector('[data-assignment-copy-category]');
+        var as = l.querySelector('[data-assignment-copy-assigned]');
+        var due = l.querySelector('[data-assignment-copy-due]');
+        var sub = l.querySelector('[data-assignment-copy-sub]');
+        return { id: id, on: l.classList.contains('on'), pressed: tick ? tick.getAttribute('aria-pressed') : null,
+          tickFor: tick ? tick.getAttribute('data-assignment-copy-class') : null,
+          sub: sub ? sub.textContent : null,
+          skip: (l.querySelector('.assign-copy-skip') || {}).textContent || '',
           cat: cat ? cat.value : null, catShown: shown(cat), catDisabled: cat ? cat.disabled : null,
           catLabel: cat && cat.selectedIndex >= 0 ? cat.options[cat.selectedIndex].textContent : null,
-          due: due ? due.value : null, note: note ? note.textContent.replace(/\\s+/g, ' ') : '' };
+          assigned: as ? as.value : null, due: due ? due.value : null, flag: flags(l) };
       });
+    var selects = Array.prototype.map.call(modal.querySelectorAll('select'), function(s){
+      return s.hasAttribute('data-assignment-copy-category') ? 'line'
+        : s.getAttribute('data-assignment-copy-source') === 'categoryId' ? 'source' : 'other'; });
     var btn = document.getElementById('assignmentCopyBtn');
     return { open: !!modal && !modal.classList.contains('hidden'),
       editorOpen: !document.getElementById('assignmentModal').classList.contains('hidden'),
@@ -584,20 +633,30 @@ console.log('\n--- one assignment into several classes in one dialog (WO-3.48) -
       lead: (document.getElementById('assignmentCopyLead') || {}).textContent.replace(/\\s+/g, ' '),
       note: (document.getElementById('assignmentCopyNote') || {}).textContent.replace(/\\s+/g, ' '),
       name: (document.querySelector('[data-assignment-copy-name]') || {}).value,
-      pills: pills, rows: rows,
+      headsFirst: !!kids[0] && kids[0].classList.contains('assign-copy-heads'),
+      heads: kids[0] ? kids[0].textContent : '',
+      source: source, lines: lines, selects: selects,
+      termControls: modal.querySelectorAll('[data-assignment-copy-term]').length,
       button: btn ? btn.textContent : null, disabled: btn ? btn.disabled : null };
   })()`;
-  const DOC348 = `(function(){ var d = window.planbook.store.getDoc();
+  const DOC349 = `(function(){ var d = window.planbook.store.getDoc();
     return { rev: d.rev,
       assignments: d.assignments.map(function(a){ return JSON.parse(JSON.stringify(a)); }),
-      scoreKeys: Object.keys(d.scores || {}), essayScores: JSON.stringify((d.scores || {})['${ESSAY}']) }; })()`;
+      essay: JSON.stringify(d.assignments.filter(function(a){ return a.id === '${ESSAY}'; })[0]),
+      scoreKeys: Object.keys(d.scores || {}), essayScores: JSON.stringify((d.scores || {})['${ESSAY}']),
+      active: window.planbook.classes.getActiveClasses().map(function(c){ return c.id; }) }; })()`;
+  /* A field set the way a keystroke or a picker sets it: `.value`, then the event src/shell.js reads. */
   const pick = async (sel, value, ev) => {
-    await evalJs(`(function(){ var s = document.querySelector(${JSON.stringify(sel)}); if (!s) return 0;
+    const ok = await evalJs(`(function(){ var s = document.querySelector(${JSON.stringify(sel)}); if (!s) return 0;
       s.value = ${JSON.stringify(String(value))};
       s.dispatchEvent(new Event(${JSON.stringify(ev || 'change')}, { bubbles: true })); return 1; })()`);
     await sleep(150);
+    return ok;
   };
-  const tick = async (id) => { await clickSel('#assignmentCopyClasses [data-assignment-copy-class="' + id + '"]'); };
+  const tick = async (id) => { await clickSel('#assignmentCopyList [data-assignment-copy-class="' + id + '"]'); };
+  const clearOn = async (sel) => {
+    await clickSel(`#assignmentCopyList [data-date-field]:has(${sel}) [data-date-clear]`);
+  };
   const liveSays = async (re) => {
     let said = '';
     for (let i = 0; i < 20; i++) {
@@ -607,189 +666,283 @@ console.log('\n--- one assignment into several classes in one dialog (WO-3.48) -
     }
     return said;
   };
-  const rowOf = (st, id) => st.rows.filter((r) => r.id === id)[0] || null;
-  const closeIfOpen348 = () => evalJs("['assignmentCopyModal','assignmentModal']"
+  /* The classes in the order the list draws them, the way the announcement names them. */
+  const listed = (ids) => { const names = ids.slice().sort((a, b) => offered.indexOf(a) - offered.indexOf(b))
+    .map((id) => NAMES[id]); return names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1]; };
+  const lineOf = (st, id) => st.lines.filter((l) => l.id === id)[0] || null;
+  const closeIfOpen349 = () => evalJs("['assignmentCopyModal','assignmentModal']"
     + ".forEach(function(m){ window.planbook.closeModal(m); }); 1");
+  const SAVE = 'Save ' + NAMES[SRC] + ' and ';
 
-  /* ── NO PRE-SELECTION, FROM DUPLICATE ── */
-  const docBefore348 = await evalJs(DOC348);
+  /* ── FROM DUPLICATE: THE SOURCE HEADS THE LIST, AND NOTHING IS TICKED ── */
+  const docBefore349 = await evalJs(DOC349);
   await clickSel('#assignmentsView [data-assignment-duplicate="' + ESSAY + '"]');
   await sleep(150);
-  const opened = await evalJs(READ348);
-  check('WO-3.48: Duplicate opens with no class ticked — every pill reads aria-pressed="false" — no row, '
-    + 'and the confirm disabled; the source\'s own class is still offered, for a second copy beside it',
-    opened.open && opened.pills.length >= 5
-      && opened.pills.every((p) => p.pressed === 'false' && !p.active)
-      && opened.pills.some((p) => p.id === SRC)
-      && opened.rows.length === 0 && opened.disabled === true
-      && opened.title === 'Duplicate this assignment',
-    JSON.stringify({ pills: opened.pills.length, pressed: opened.pills.filter((p) => p.pressed !== 'false'),
-      rows: opened.rows.length, disabled: opened.disabled, title: opened.title }));
+  const opened = await evalJs(READ349);
+  const offered = docBefore349.active.filter((id) => id !== SRC);
+  check('WO-3.49: from Duplicate, the source heads the list under the column heads — its own class, '
+    + '"this assignment · Q2", and no tick — and every other active class follows in the class manager\'s '
+    + 'order, none ticked; the source\'s own class is not offered as a copy',
+    opened.open && opened.title === 'Duplicate this assignment' && opened.headsFirst
+      && /Class · term/.test(opened.heads) && /Category/.test(opened.heads) && /Assigned/.test(opened.heads)
+      && !!opened.source && opened.source.index === 1 && opened.source.id === SRC
+      && opened.source.ticks === 0 && opened.source.sub === 'this assignment · Q2'
+      && opened.source.cat === SRC_ESSAYS && opened.source.assigned === '2026-11-05'
+      && opened.source.due === '2026-11-12'
+      && JSON.stringify(opened.lines.map((l) => l.id)) === JSON.stringify(offered)
+      && opened.lines.every((l) => l.tickFor === l.id && l.pressed === 'false' && !l.on
+        && l.skip === 'Not copied' && l.sub === null)
+      && opened.lines.every((l) => l.id !== SRC),
+    JSON.stringify({ source: opened.source, lines: opened.lines.map((l) => l.id), offered,
+      heads: opened.heads }));
+  check('WO-3.49: no term control exists anywhere in the dialog — the one select open with nothing ticked '
+    + 'is the source\'s category — and the confirm is disabled, reading "Copy into other classes"',
+    opened.termControls === 0 && JSON.stringify(opened.selects) === '["source"]'
+      && opened.disabled === true && opened.button === 'Copy into other classes'
+      && /Tick the classes to copy it into/.test(opened.note),
+    JSON.stringify({ selects: opened.selects, button: opened.button, disabled: opened.disabled }));
 
-  /* ── THREE TICKS, AND WHAT EACH ROW PROPOSES ──
-     Ticked in the order P6, P2, P4 on purpose: a single "current term" the last tick overwrote would
-     leave P2 and P6 showing P4's term, which neither class has — so each would fall to its placeholder
-     and the per-row check below goes red. */
+  /* ── THREE TICKS, AND WHAT EACH LINE PROPOSES ──
+     Ticked in the order P6, P2, P4 on purpose: a single value the last tick overwrote would leave the
+     other two lines showing P4's, and the per-line checks below go red. */
   await tick(P6); await tick(P2); await tick(P4);
-  const three = await evalJs(READ348);
-  const r2 = rowOf(three, P2), r4 = rowOf(three, P4), r6 = rowOf(three, P6);
-  const pillOrder = three.pills.map((p) => p.id).filter((id) => [P2, P4, P6].indexOf(id) >= 0);
-  check('WO-3.48: three ticks make three rows — one per class, headed by its name, in the order the pills '
-    + 'are drawn rather than the order they were tapped — and the three pills read aria-pressed="true"',
-    three.rows.length === 3 && JSON.stringify(three.rows.map((r) => r.id)) === JSON.stringify(pillOrder)
-      && !!r2 && r2.head === NAMES[P2] && !!r4 && r4.head === NAMES[P4] && !!r6 && r6.head === NAMES[P6]
-      && three.pills.filter((p) => p.pressed === 'true').map((p) => p.id).sort().join()
-        === [P2, P4, P6].sort().join(),
-    JSON.stringify({ rows: three.rows.map((r) => r.id), pills: pillOrder }));
-  check('WO-3.48: every row\'s selects show the value that will be written — P2 its first term and its own '
-    + 'id for the matched " essays ", P4 its own term and the "choose a category" placeholder (no match), '
-    + 'P6 its own term and a disabled "no categories" select — each selected option equal to its proposal',
-    !!r2 && r2.termHook === P2 && r2.term === 'tm348_p2a' && r2.termShown === 'tm348_p2a'
-      && r2.cat === P2_ESSAYS && r2.catShown === P2_ESSAYS
-      && !!r4 && r4.term === 'tm348_p4' && r4.termShown === 'tm348_p4'
-      && r4.cat === '' && r4.catShown === '' && /choose a category/i.test(r4.catLabel || '')
-      && r4.catDisabled === false
-      && !!r6 && r6.term === 'tm348_p6' && r6.termShown === 'tm348_p6'
-      && r6.cat === '' && r6.catShown === '' && r6.catDisabled === true
-      && /has no categories/.test(r6.catLabel || ''),
-    JSON.stringify([r2, r4, r6].map((r) => r && { id: r.id, term: r.term, termShown: r.termShown,
-      cat: r.cat, catShown: r.catShown, catLabel: r.catLabel })));
-  check('WO-3.48: each row says its own fallback before the tap — P4 that nothing there is called "Essays", '
-    + 'P6 that it has no categories — and the matched P2 says nothing',
-    !!r2 && r2.note === ''
-      && !!r4 && /Nothing in WO-3\.48 English I P4 is called “Essays”/.test(r4.note)
-      && /never carried across/.test(r4.note)
-      && !!r6 && /WO-3\.48 English I P6 has no grading categories yet/.test(r6.note),
-    JSON.stringify({ p2: r2 && r2.note, p4: r4 && r4.note.slice(0, 80), p6: r6 && r6.note.slice(0, 80) }));
-  check('WO-3.48: every row\'s due date starts on the source\'s (2026-10-02), the name is one field above '
-    + 'them, and the confirm names the count — "Copy into 3 classes"',
-    three.rows.every((r) => r.due === '2026-10-02') && three.name === 'WO-3.48 Essay 2'
+  const three = await evalJs(READ349);
+  const l2 = lineOf(three, P2), l4 = lineOf(three, P4), l6 = lineOf(three, P6);
+  check('WO-3.49: three ticks turn three lines on, in place and in list order, each tick reading '
+    + 'aria-pressed="true", and each ticked line names the term its due date picks under the class — '
+    + 'P2 and P4 "Q2, from its due date" (due 2026-11-12), P6 "Year, from its due date"',
+    three.lines.filter((l) => l.on).map((l) => l.id).join() === [P2, P4, P6].sort((a, b) =>
+      offered.indexOf(a) - offered.indexOf(b)).join()
+      && [l2, l4, l6].every((l) => !!l && l.on && l.pressed === 'true')
+      && l2.sub === 'Q2, from its due date' && l4.sub === 'Q2, from its due date'
+      && l6.sub === 'Year, from its due date'
+      && three.termControls === 0
+      && three.selects.filter((s) => s === 'line').length === 3 && three.selects.indexOf('other') === -1,
+    JSON.stringify([l2, l4, l6].map((l) => l && { id: l.id, on: l.on, sub: l.sub })));
+  check('WO-3.49: every line\'s category select shows the value that will be written — P2 its own id for the '
+    + 'matched " essays ", P4 the "choose a category" placeholder, P6 a disabled "no categories" select — '
+    + 'and P4 and P6 say why on their own amber line while P2 says nothing',
+    l2.cat === P2_ESSAYS && l2.catShown === P2_ESSAYS && l2.flag === ''
+      && l4.cat === '' && l4.catShown === '' && /choose a category/i.test(l4.catLabel || '')
+      && l4.catDisabled === false && /Nothing here is called “Essays”/.test(l4.flag)
+      && l6.cat === '' && l6.catDisabled === true && /has no categories/.test(l6.catLabel || '')
+      && /WO-3\.49 English I P6 has no grading categories yet/.test(l6.flag),
+    JSON.stringify([l2, l4, l6].map((l) => l && { id: l.id, cat: l.cat, shown: l.catShown, flag: l.flag })));
+  check('WO-3.49: both dates on every ticked line start on the source\'s (assigned 2026-11-05, due '
+    + '2026-11-12), the name is one field above the list, the note says each copy\'s dates start on this '
+    + 'one\'s and nothing is re-dated to today, and the confirm reads "Copy into 3 classes"',
+    three.lines.filter((l) => l.on).every((l) => l.assigned === '2026-11-05' && l.due === '2026-11-12')
+      && three.name === 'WO-3.49 Personal narrative'
+      && /Each copy’s dates start on this one’s/.test(three.note) && /Nothing is re-dated to today/.test(three.note)
+      && !/come across as/.test(three.note)
       && three.button === 'Copy into 3 classes' && three.disabled === false,
-    JSON.stringify({ dues: three.rows.map((r) => r.due), name: three.name, button: three.button }));
-  check('WO-3.48: the dates note no longer says the dates come across as they are — it says the assigned '
-    + 'date does, each due date starts on the source\'s, and nothing re-dates a copy to today',
-    !/come across as they are/.test(three.note)
-      && /assigned date comes across as it is/.test(three.note)
-      && /Each due date starts on this assignment’s/.test(three.note)
-      && /nothing re-dates a copy to today/.test(three.note),
-    JSON.stringify(three.note));
+    JSON.stringify({ dates: three.lines.filter((l) => l.on).map((l) => [l.assigned, l.due]),
+      note: three.note, button: three.button }));
 
-  /* ── ONE ROW'S EDITS STAY IN THAT ROW ── P2's term moved to Q2, P4's due typed (input), P6's due
-     picked (change). Nothing else may move, and nothing reaches the document. */
-  await pick('[data-assignment-copy-term="' + P2 + '"]', 'tm348_p2b', 'change');
-  await pick('[data-assignment-copy-due="' + P4 + '"]', '2026-10-06', 'input');
-  await pick('[data-assignment-copy-due="' + P6 + '"]', '2026-10-08', 'change');
-  const edited = await evalJs(READ348);
-  const e2 = rowOf(edited, P2), e4 = rowOf(edited, P4), e6 = rowOf(edited, P6);
-  check('WO-3.48: changing one row changes only that row — P2\'s term to Q2 leaves P4\'s and P6\'s terms, and '
-    + 'P4\'s and P6\'s due dates leave P2\'s on the source\'s; every category stays where it was',
-    !!e2 && e2.term === 'tm348_p2b' && e2.termShown === 'tm348_p2b' && e2.due === '2026-10-02'
-      && e2.cat === P2_ESSAYS
-      && !!e4 && e4.term === 'tm348_p4' && e4.due === '2026-10-06' && e4.cat === ''
-      && !!e6 && e6.term === 'tm348_p6' && e6.due === '2026-10-08' && e6.cat === '',
-    JSON.stringify([e2, e4, e6].map((r) => r && { id: r.id, term: r.term, cat: r.cat, due: r.due })));
+  /* ── EACH LINE'S DATES ARE ITS OWN (Acceptance 3) ── P4 is a section a day behind: its assigned date
+     typed first and read before anything else moves, then its due date picked. P6's assigned typed. */
+  await pick('[data-assignment-copy-assigned="' + P4 + '"]', '2026-11-06', 'input');
+  const p4Assigned = await evalJs(READ349);
+  await pick('[data-assignment-copy-due="' + P4 + '"]', '2026-11-13', 'change');
+  await pick('[data-assignment-copy-assigned="' + P6 + '"]', '2026-11-04', 'input');
+  const perLine = await evalJs(READ349);
+  const a4 = lineOf(p4Assigned, P4), b2 = lineOf(perLine, P2), b4 = lineOf(perLine, P4), b6 = lineOf(perLine, P6);
+  check('WO-3.49: changing P4\'s assigned date leaves P4\'s due date where it was; each line\'s dates are its '
+    + 'own — P4 2026-11-06 / 2026-11-13, P6 2026-11-04 / 2026-11-12, P2 still on the source\'s — and the '
+    + 'source line has not moved',
+    !!a4 && a4.assigned === '2026-11-06' && a4.due === '2026-11-12'
+      && b4.assigned === '2026-11-06' && b4.due === '2026-11-13'
+      && b6.assigned === '2026-11-04' && b6.due === '2026-11-12'
+      && b2.assigned === '2026-11-05' && b2.due === '2026-11-12'
+      && perLine.source.assigned === '2026-11-05' && perLine.source.due === '2026-11-12'
+      && perLine.button === 'Copy into 3 classes',
+    JSON.stringify({ afterAssigned: a4 && [a4.assigned, a4.due],
+      lines: [b2, b4, b6].map((l) => l && [l.id, l.assigned, l.due]), source: perLine.source }));
 
-  /* ── A CLASS WITH NO TERMS: SHOWN, SAYS WHY, AND BLOCKS THE CONFIRM ── */
-  await tick(P5);
-  const withP5 = await evalJs(READ348);
-  const r5 = rowOf(withP5, P5);
-  check('WO-3.48: a ticked class with no terms is shown as a row, says it has no terms and to untick it, '
-    + 'shows a disabled term select holding nothing, and the confirm is disabled',
-    withP5.rows.length === 4 && !!r5 && r5.term === '' && r5.termDisabled === true
-      && /WO-3\.48 English I P5 has no terms/.test(r5.note) && /untick it/.test(r5.note)
-      && withP5.disabled === true && withP5.button === 'Copy into 4 classes',
-    JSON.stringify({ row: r5, disabled: withP5.disabled, button: withP5.button }));
-  /* A press on the disabled confirm, through the real pointer, then the document read after a flush. */
+  /* ── THE SOURCE LINE: HELD, FOLLOWED, AND NAMED ON THE CONFIRM (Acceptance 4, 5, 6) ── */
+  await pick('[data-assignment-copy-source="due"]', '2026-11-19', 'input');
+  await flush();
+  const dueMoved = await evalJs(READ349);
+  const docDueMoved = await evalJs(DOC349);
+  check('WO-3.49: changing the source\'s due date moves every line still on the old date (P2, P6) and not '
+    + 'the line whose due date was changed by hand (P4), and moves no assigned date',
+    lineOf(dueMoved, P2).due === '2026-11-19' && lineOf(dueMoved, P6).due === '2026-11-19'
+      && lineOf(dueMoved, P4).due === '2026-11-13'
+      && lineOf(dueMoved, P2).assigned === '2026-11-05' && lineOf(dueMoved, P4).assigned === '2026-11-06'
+      && lineOf(dueMoved, P6).assigned === '2026-11-04'
+      && lineOf(dueMoved, P2).sub === 'Q2, from its due date',
+    JSON.stringify(dueMoved.lines.filter((l) => l.on).map((l) => [l.id, l.assigned, l.due])));
+  check('WO-3.49: a source edit is held, not written — `rev` unmoved and the source byte-identical after a '
+    + 'flush — and the confirm now reads "Save WO-3.49 English I P1 and copy into 3 classes"',
+    docDueMoved.rev === docBefore349.rev && docDueMoved.essay === docBefore349.essay
+      && dueMoved.button === SAVE + 'copy into 3 classes' && dueMoved.disabled === false,
+    'rev ' + docBefore349.rev + ' -> ' + docDueMoved.rev + ', button ' + JSON.stringify(dueMoved.button));
+  await pick('[data-assignment-copy-source="assigned"]', '2026-11-02', 'input');
+  const asMoved = await evalJs(READ349);
+  check('WO-3.49: changing the source\'s assigned date moves every line still on the old one (P2) and not '
+    + 'the lines whose assigned date was changed by hand (P4, P6), and moves no due date',
+    lineOf(asMoved, P2).assigned === '2026-11-02' && lineOf(asMoved, P4).assigned === '2026-11-06'
+      && lineOf(asMoved, P6).assigned === '2026-11-04'
+      && lineOf(asMoved, P2).due === '2026-11-19' && lineOf(asMoved, P4).due === '2026-11-13',
+    JSON.stringify(asMoved.lines.filter((l) => l.on).map((l) => [l.id, l.assigned, l.due])));
+  /* "Exactly when the source has changed": both dates put back, and the confirm goes back with them. */
+  await pick('[data-assignment-copy-source="assigned"]', '2026-11-05', 'input');
+  await pick('[data-assignment-copy-source="due"]', '2026-11-12', 'change');
+  const putBack = await evalJs(READ349);
+  await pick('[data-assignment-copy-source="due"]', '2026-11-19', 'input');
+  const again = await evalJs(READ349);
+  check('WO-3.49: the confirm says it saves the source exactly when the source has changed — with both '
+    + 'dates put back it reads "Copy into 3 classes" again, and the following lines came back with them',
+    putBack.button === 'Copy into 3 classes' && lineOf(putBack, P2).assigned === '2026-11-05'
+      && lineOf(putBack, P2).due === '2026-11-12'
+      && again.button === SAVE + 'copy into 3 classes' && lineOf(again, P2).due === '2026-11-19',
+    JSON.stringify({ putBack: putBack.button, again: again.button }));
+
+  /* ── BLOCKED LINES (Acceptance 2) ── */
+  await tick(P5); await tick(P3); await tick(P7);
+  await pick('[data-assignment-copy-due="' + P7 + '"]', '2026-11-10', 'input');
+  const blocked = await evalJs(READ349);
+  const k5 = lineOf(blocked, P5), k3 = lineOf(blocked, P3), k7 = lineOf(blocked, P7);
+  check('WO-3.49: a line no date can place is blocked and says why on its own amber line — P5 has no terms, '
+    + 'P3\'s terms have no dates, P7\'s due date (Nov 10) falls between its Q1 and Q2 — and the confirm is '
+    + 'disabled while any of them is ticked',
+    k5.sub === 'no terms yet' && /WO-3\.49 English III P5 has no terms/.test(k5.flag) && /untick it/.test(k5.flag)
+      && k3.sub === 'no term dates yet' && /terms has its dates typed in/.test(k3.flag)
+      && k7.sub === 'no term holds its due date'
+      && /Its due date, Nov 10, falls between Q1 and Q2/.test(k7.flag) && /Change the date/.test(k7.flag)
+      && blocked.disabled === true && blocked.button === SAVE + 'copy into 6 classes',
+    JSON.stringify([k5, k3, k7].map((l) => l && { id: l.id, sub: l.sub, flag: l.flag.slice(0, 90) })
+      .concat([{ button: blocked.button, disabled: blocked.disabled }])));
   await clickSel('#assignmentCopyBtn');
   await flush();
-  const afterRefused = await evalJs(DOC348);
-  const stillOpen = await evalJs(READ348);
-  check('WO-3.48: pressing the confirm while a no-terms class is ticked writes nothing — no copy for any '
-    + 'row, `rev` unmoved after a flush — and leaves the dialog open on all four rows',
-    afterRefused.rev === docBefore348.rev
-      && afterRefused.assignments.length === docBefore348.assignments.length
-      && stillOpen.open && stillOpen.rows.length === 4,
-    'rev ' + docBefore348.rev + ' -> ' + afterRefused.rev + ', assignments '
-      + docBefore348.assignments.length + ' -> ' + afterRefused.assignments.length);
-
-  /* ── UNTICKING TAKES THE ROW AWAY ── */
-  await tick(P5);
-  const unticked = await evalJs(READ348);
-  check('WO-3.48: unticking a class removes its row and its pill reads aria-pressed="false"; the other '
-    + 'three rows keep every edit made to them, and the confirm is back to "Copy into 3 classes"',
-    unticked.rows.length === 3 && !rowOf(unticked, P5)
-      && unticked.pills.filter((p) => p.id === P5)[0].pressed === 'false'
-      && rowOf(unticked, P2).term === 'tm348_p2b' && rowOf(unticked, P4).due === '2026-10-06'
-      && rowOf(unticked, P6).due === '2026-10-08'
-      && unticked.button === 'Copy into 3 classes' && unticked.disabled === false,
-    JSON.stringify({ rows: unticked.rows.map((r) => r.id), button: unticked.button }));
+  const refused = await evalJs(DOC349);
+  const stillOpen = await evalJs(READ349);
+  check('WO-3.49: pressing the confirm while a blocked line is ticked writes nothing — no copy and no '
+    + 'source edit, `rev` unmoved after a flush — and leaves the dialog open',
+    refused.rev === docBefore349.rev && refused.assignments.length === docBefore349.assignments.length
+      && refused.essay === docBefore349.essay && stillOpen.open,
+    'rev ' + docBefore349.rev + ' -> ' + refused.rev);
+  /* P7 with no due date falls back to its assigned date — in the gap too, then with no date at all,
+     then placed by an assigned date inside its Q2. */
+  await clearOn('[data-assignment-copy-due="' + P7 + '"]');
+  const byAssigned = await evalJs(READ349);
+  await clearOn('[data-assignment-copy-assigned="' + P7 + '"]');
+  const noDate = await evalJs(READ349);
+  await pick('[data-assignment-copy-assigned="' + P7 + '"]', '2026-11-17', 'input');
+  const placed7 = await evalJs(READ349);
+  check('WO-3.49: a blank due date is placed by the assigned date — P7 Cleared falls back to its assigned '
+    + 'Nov 5, still in the gap and saying so; with no date at all it says nothing places it; with an '
+    + 'assigned date of Nov 17 it reads "Q2, from its assigned date" and its amber line is gone',
+    lineOf(byAssigned, P7).due === '' && lineOf(byAssigned, P7).sub === 'no term holds its assigned date'
+      && /It has no due date, and its assigned date, Nov 5, falls between Q1 and Q2/.test(lineOf(byAssigned, P7).flag)
+      && lineOf(noDate, P7).sub === 'no date to place it'
+      && /no due date and no assigned date/.test(lineOf(noDate, P7).flag)
+      && lineOf(placed7, P7).sub === 'Q2, from its assigned date' && lineOf(placed7, P7).flag === ''
+      && lineOf(placed7, P7).due === '' && lineOf(placed7, P7).cat === P7_ESSAYS,
+    JSON.stringify([byAssigned, noDate, placed7].map((s) => { const l = lineOf(s, P7);
+      return { sub: l.sub, due: l.due, assigned: l.assigned, flag: l.flag.slice(0, 70) }; })));
+  await tick(P5); await tick(P3);
+  const unblocked = await evalJs(READ349);
+  check('WO-3.49: unticking the two blocked classes turns their lines back into "Not copied" and enables the '
+    + 'confirm — "Save WO-3.49 English I P1 and copy into 4 classes" — with every other line\'s edits kept',
+    !lineOf(unblocked, P5).on && lineOf(unblocked, P5).skip === 'Not copied' && !lineOf(unblocked, P3).on
+      && unblocked.disabled === false && unblocked.button === SAVE + 'copy into 4 classes'
+      && lineOf(unblocked, P4).due === '2026-11-13' && lineOf(unblocked, P7).assigned === '2026-11-17',
+    JSON.stringify({ button: unblocked.button, disabled: unblocked.disabled }));
 
   /* ── THE WRITE ── */
   await clickSel('#assignmentCopyBtn');
-  const said348 = await liveSays(/^Copied /);
+  const said349 = await liveSays(/^Saved /);
   await flush();
-  const afterCopy = await evalJs(DOC348);
-  const beforeIds = docBefore348.assignments.map((a) => a.id);
+  const afterCopy = await evalJs(DOC349);
+  const beforeIds = docBefore349.assignments.map((a) => a.id);
   const made = afterCopy.assignments.filter((a) => beforeIds.indexOf(a.id) === -1);
   const madeIn = (id) => made.filter((a) => a.classId === id)[0] || null;
-  const m2 = madeIn(P2), m4 = madeIn(P4), m6 = madeIn(P6);
-  const closed348 = await evalJs(READ348);
-  check('WO-3.48: confirming writes exactly three assignments — each a new id, its own class\'s classId and '
-    + 'termId, no scores entry, and the due date its row showed (P2 2026-10-02 in Q2, P4 2026-10-06, P6 '
-    + '2026-10-08) — and none for the class that was unticked',
-    made.length === 3 && !!m2 && !!m4 && !!m6
-      && new Set(made.map((a) => a.id)).size === 3 && made.every((a) => a.id !== ESSAY)
-      && m2.termId === 'tm348_p2b' && m4.termId === 'tm348_p4' && m6.termId === 'tm348_p6'
-      && m2.due === '2026-10-02' && m4.due === '2026-10-06' && m6.due === '2026-10-08'
+  const m2 = madeIn(P2), m4 = madeIn(P4), m6 = madeIn(P6), m7 = madeIn(P7);
+  const closed349 = await evalJs(READ349);
+  check('WO-3.49: a copy\'s termId is the target\'s term holding its due date — the source is due in Q2 '
+    + '(2026-11-19), and the copy into P2, which has a dated Q1 and Q2, lands in Q2 (tm349_p2b), as do P4\'s; '
+    + 'P6\'s lands in its one year-long term, and P7\'s, with no due date, in the Q2 holding its assigned date',
+    !!m2 && m2.termId === 'tm349_p2b' && !!m4 && m4.termId === 'tm349_p4b'
+      && !!m6 && m6.termId === 'tm349_p6' && !!m7 && m7.termId === 'tm349_p7b',
+    JSON.stringify(made.map((a) => ({ classId: a.classId, termId: a.termId, assigned: a.assigned, due: a.due }))));
+  check('WO-3.49: confirming writes exactly four copies, one per ticked line, each a new id with no scores '
+    + 'entry, and each line\'s assigned and due written to that copy only — P2 2026-11-05 / 2026-11-19, P4 '
+    + '2026-11-06 / 2026-11-13, P6 2026-11-04 / 2026-11-19, P7 2026-11-17 / blank — none for an unticked class',
+    made.length === 4 && new Set(made.map((a) => a.id)).size === 4 && made.every((a) => a.id !== ESSAY)
+      && m2.assigned === '2026-11-05' && m2.due === '2026-11-19'
+      && m4.assigned === '2026-11-06' && m4.due === '2026-11-13'
+      && m6.assigned === '2026-11-04' && m6.due === '2026-11-19'
+      && m7.assigned === '2026-11-17' && m7.due === ''
       && made.every((a) => afterCopy.scoreKeys.indexOf(a.id) === -1)
-      && made.every((a) => a.classId !== P5)
-      && afterCopy.essayScores === docBefore348.essayScores
-      && !closed348.open,
-    JSON.stringify(made.map((a) => ({ id: a.id, classId: a.classId, termId: a.termId, due: a.due }))));
-  check('WO-3.48: the copy into P2 is filed under P2\'s OWN id for "Essays", P4\'s and P6\'s under no '
-    + 'category, and no copy carries the source\'s categoryId into another class',
-    !!m2 && m2.categoryId === P2_ESSAYS && !!m4 && m4.categoryId === '' && !!m6 && m6.categoryId === ''
-      && made.every((a) => a.categoryId !== SRC_ESSAYS),
-    JSON.stringify(made.map((a) => ({ classId: a.classId, categoryId: a.categoryId }))));
-  check('WO-3.48: each copy carries the source\'s assigned date and points and the one name, holds exactly '
-    + 'the eight fields an assignment has (nothing spread from the source), and the source is untouched',
-    made.every((a) => a.assigned === '2026-09-28' && a.points === 50 && a.name === 'WO-3.48 Essay 2'
-      && Object.keys(a).sort().join() === 'assigned,categoryId,classId,due,id,name,points,termId')
-      && JSON.stringify(afterCopy.assignments.filter((a) => a.id === ESSAY))
-        === JSON.stringify(docBefore348.assignments.filter((a) => a.id === ESSAY)),
-    JSON.stringify(made.map((a) => Object.keys(a).sort().join())));
-  check('WO-3.48: the three copies are one save — `rev` moved by exactly one across the confirm',
-    afterCopy.rev === docBefore348.rev + 1, 'rev ' + docBefore348.rev + ' -> ' + afterCopy.rev);
-  check('WO-3.48: it announces once, naming the classes: "Copied WO-3.48 Essay 2 into P2, P4 and P6 with no '
-    + 'scores on them."',
-    said348 === 'Copied WO-3.48 Essay 2 into ' + NAMES[P2] + ', ' + NAMES[P4] + ' and ' + NAMES[P6]
-      + ' with no scores on them.',
-    JSON.stringify(said348));
+      && made.every((a) => [P3, P5].indexOf(a.classId) === -1)
+      && afterCopy.essayScores === docBefore349.essayScores && !closed349.open,
+    JSON.stringify(made.map((a) => ({ classId: a.classId, assigned: a.assigned, due: a.due }))));
+  check('WO-3.49: the copy into P2 is filed under P2\'s OWN id for "Essays", P7\'s under P7\'s, P4\'s and P6\'s '
+    + 'under no category, no copy carries the source\'s categoryId, and each holds exactly the eight fields '
+    + 'an assignment has, with the source\'s points and the one name',
+    m2.categoryId === P2_ESSAYS && m7.categoryId === P7_ESSAYS && m4.categoryId === '' && m6.categoryId === ''
+      && made.every((a) => a.categoryId !== SRC_ESSAYS)
+      && made.every((a) => a.points === 50 && a.name === 'WO-3.49 Personal narrative'
+        && Object.keys(a).sort().join() === 'assigned,categoryId,classId,due,id,name,points,termId'),
+    JSON.stringify(made.map((a) => ({ classId: a.classId, categoryId: a.categoryId, keys: Object.keys(a).length }))));
+  const essayAfter = JSON.parse(afterCopy.essay);
+  const essayBefore = JSON.parse(docBefore349.essay);
+  check('WO-3.49: the source\'s held edit is written on confirm in the SAME update() as the copies — `rev` '
+    + 'moved by exactly one — its due date now 2026-11-19, everything else as it was, its termId kept (ruling 5)',
+    afterCopy.rev === docBefore349.rev + 1 && essayAfter.due === '2026-11-19'
+      && JSON.stringify(Object.assign({}, essayAfter, { due: essayBefore.due })) === docBefore349.essay
+      && essayAfter.termId === 'tm349_src2',
+    'rev ' + docBefore349.rev + ' -> ' + afterCopy.rev + ', source ' + afterCopy.essay);
+  check('WO-3.49: it announces once, naming the source because it was saved: "Saved WO-3.49 Personal '
+    + 'narrative in WO-3.49 English I P1, and copied … into P2, P4, P6 and P7 with no scores on them."',
+    said349 === 'Saved WO-3.49 Personal narrative in ' + NAMES[SRC] + ', and copied WO-3.49 Personal narrative into '
+      + listed([P2, P4, P6, P7]) + ' with no scores on them.',
+    JSON.stringify(said349));
 
-  /* ── A BLANK SOURCE DUE STAYS BLANK IN EVERY ROW ── */
+  /* ── A BLANK SOURCE DUE: EVERY LINE BLANK, PLACED BY THE ASSIGNED DATE ── */
   await clickSel('#assignmentsView [data-assignment-duplicate="' + BLANK + '"]');
   await sleep(150);
-  await tick(P2); await tick(P4); await tick(SRC);
-  const blank = await evalJs(READ348);
-  const bs = rowOf(blank, SRC);
-  check('WO-3.48: duplicating an assignment with no due date starts every row blank, and the note says it '
-    + 'has none rather than promising a date; ticking its own class keeps its own term and category',
-    blank.rows.length === 3 && blank.rows.every((r) => r.due === '')
-      && /has no due date/.test(blank.note) && !/come across as they are/.test(blank.note)
-      && !!bs && bs.term === 'tm348_src' && bs.cat === 'k348_src_quiz' && bs.catShown === 'k348_src_quiz',
-    JSON.stringify({ dues: blank.rows.map((r) => r.due), note: blank.note.slice(0, 90), own: bs && [bs.term, bs.cat] }));
+  await tick(P2);
+  const blank = await evalJs(READ349);
+  const docPreBlank = await evalJs(DOC349);
+  await clickSel('#assignmentCopyBtn');
+  const saidBlank = await liveSays(/^Copied /);
+  await flush();
+  const afterBlank = await evalJs(DOC349);
+  const madeBlank = afterBlank.assignments.filter((a) => docPreBlank.assignments.every((b) => b.id !== a.id));
+  check('WO-3.49: duplicating an assignment with no due date starts the line blank and places it by the '
+    + 'assigned date — "Q2, from its assigned date" — and the copy is written into P2\'s Q2 with no due date; '
+    + 'an untouched source writes nothing of its own and the announcement does not say it was saved',
+    lineOf(blank, P2).due === '' && lineOf(blank, P2).assigned === '2026-11-03'
+      && lineOf(blank, P2).sub === 'Q2, from its assigned date'
+      && blank.button === 'Copy into ' + NAMES[P2]
+      && madeBlank.length === 1 && madeBlank[0].classId === P2 && madeBlank[0].termId === 'tm349_p2b'
+      && madeBlank[0].due === '' && madeBlank[0].assigned === '2026-11-03'
+      && afterBlank.rev === docPreBlank.rev + 1
+      && JSON.stringify(afterBlank.assignments.filter((a) => a.id === BLANK))
+        === JSON.stringify(docPreBlank.assignments.filter((a) => a.id === BLANK))
+      && /^Copied WO-3\.49 Quiz 1 into /.test(saidBlank),
+    JSON.stringify({ line: lineOf(blank, P2), made: madeBlank, said: saidBlank }));
 
-  /* ── CANCEL, CLOSE AND ESCAPE WRITE NOTHING ── each one after a tick and an edited due date, each
-     read after a flush, because update() only schedules a save (WO-5.3's harness). */
-  const docPreDismiss = await evalJs(DOC348);
+  /* ── CANCEL, CLOSE AND ESCAPE DROP THE SOURCE'S HELD EDITS (Acceptance 4, 5) ── each after an edit to
+     all three of the source's fields and a ticked line, each read after a flush, because update() only
+     schedules a save (WO-5.3's harness). Each reopening must show the source as the document has it. */
+  const docPreDismiss = await evalJs(DOC349);
   const dismissals = [];
+  let follows = null;
   for (const how of ['Cancel', 'Close', 'Escape']) {
-    await closeIfOpen348();
+    await closeIfOpen349();
     await clickSel('#assignmentsView [data-assignment-duplicate="' + ESSAY + '"]');
     await sleep(150);
-    const fresh = await evalJs(READ348);
+    const fresh = await evalJs(READ349);
+    await pick('[data-assignment-copy-source="due"]', '2026-12-01', 'input');
+    await pick('[data-assignment-copy-source="assigned"]', '2026-11-30', 'input');
+    const untickedSave = await evalJs(READ349);
     await tick(P2);
-    await pick('[data-assignment-copy-due="' + P2 + '"]', '2026-11-11', 'input');
+    await pick('[data-assignment-copy-source="categoryId"]', 'k349_src_quiz', 'change');
+    const withCat = await evalJs(READ349);
+    if (how === 'Cancel') follows = { cat: lineOf(withCat, P2).cat, due: lineOf(withCat, P2).due };
     if (how === 'Cancel') await clickSel('[data-assignment-copy-cancel]');
     else if (how === 'Close') await clickSel('#assignmentCopyModal [data-modal-close]');
     else {
@@ -797,21 +950,64 @@ console.log('\n--- one assignment into several classes in one dialog (WO-3.48) -
       await sleep(150);
     }
     await flush();
-    const after = await evalJs(DOC348);
-    const st = await evalJs(READ348);
-    dismissals.push({ how, freshTicked: fresh.pills.filter((p) => p.pressed === 'true').length,
-      rev: after.rev, count: after.assignments.length, open: st.open });
+    const after = await evalJs(DOC349);
+    const st = await evalJs(READ349);
+    dismissals.push({ how, freshSource: fresh.source && [fresh.source.cat, fresh.source.assigned, fresh.source.due],
+      freshTicked: fresh.lines.filter((l) => l.on).length,
+      untickedButton: untickedSave.button, untickedDisabled: untickedSave.disabled,
+      catButton: withCat.button, rev: after.rev, count: after.assignments.length,
+      essaySame: after.essay === docPreDismiss.essay, open: st.open });
   }
-  check('WO-3.48: Cancel, the close button and Escape each write nothing — `rev` and the assignment count '
-    + 'unmoved after a flush — and each reopening starts with nothing ticked',
-    dismissals.length === 3
-      && dismissals.every((d) => d.rev === docPreDismiss.rev && d.count === docPreDismiss.assignments.length
-        && d.open === false && d.freshTicked === 0),
-    JSON.stringify(dismissals) + ' against rev ' + docPreDismiss.rev);
+  const docSource = JSON.parse(docPreDismiss.essay);
+  check('WO-3.49: with nothing ticked the confirm stays disabled even though the source has changed, and '
+    + 'reads "Save WO-3.49 English I P1 and copy into other classes"; ticking one makes it "… copy into '
+    + 'WO-3.49 English I P2"',
+    dismissals.length === 3 && dismissals.every((d) => d.untickedDisabled === true
+      && d.untickedButton === SAVE + 'copy into other classes'
+      && d.catButton === SAVE + 'copy into ' + NAMES[P2]),
+    JSON.stringify(dismissals.map((d) => [d.untickedButton, d.untickedDisabled, d.catButton])));
+  check('WO-3.49: Cancel, the close button and Escape each leave the source byte-identical after three held '
+    + 'edits — `rev` and the assignment count unmoved after a flush — and each reopening shows the source '
+    + 'as the document has it, with nothing ticked',
+    dismissals.every((d) => d.rev === docPreDismiss.rev && d.count === docPreDismiss.assignments.length
+      && d.essaySame && d.open === false && d.freshTicked === 0
+      && JSON.stringify(d.freshSource) === JSON.stringify([docSource.categoryId, docSource.assigned, docSource.due])),
+    JSON.stringify(dismissals.map((d) => ({ how: d.how, rev: d.rev, same: d.essaySame, src: d.freshSource })))
+      + ' against rev ' + docPreDismiss.rev);
+  check('WO-3.49: an untouched line follows the source\'s category by NAME — P2, ticked before the source moved '
+    + 'to Quizzes, moves to P2\'s own Quizzes id — and was proposed on the source\'s held due date',
+    !!follows && follows.cat === P2_QUIZ && follows.due === '2026-12-01', JSON.stringify(follows));
 
+  /* ── THE SOURCE'S CATEGORY AND ASSIGNED DATE REACH THE DOCUMENT ON CONFIRM TOO ── the write above
+     carried a due date only. Here the other two fields are changed on the source line and confirmed. */
+  await closeIfOpen349();
+  await clickSel('#assignmentsView [data-assignment-duplicate="' + BLANK + '"]');
+  await sleep(150);
+  await tick(P2);
+  await pick('[data-assignment-copy-source="categoryId"]', SRC_ESSAYS, 'change');
+  await pick('[data-assignment-copy-source="assigned"]', '2026-11-04', 'input');
+  const docPreSave = await evalJs(DOC349);
+  const preSaveLine = await evalJs(READ349);
+  await clickSel('#assignmentCopyBtn');
+  await flush();
+  const afterSave = await evalJs(DOC349);
+  const blankBefore = docPreSave.assignments.filter((a) => a.id === BLANK)[0];
+  const blankAfter = afterSave.assignments.filter((a) => a.id === BLANK)[0];
+  const savedCopy = afterSave.assignments.filter((a) => docPreSave.assignments.every((b) => b.id !== a.id));
+  check('WO-3.49: a change to the source\'s category and assigned date is held until the confirm and written '
+    + 'by it, in the same update() as the copy — `rev` +1 — with its due date and termId untouched; the '
+    + 'untouched P2 line followed both',
+    preSaveLine.button === SAVE + 'copy into ' + NAMES[P2] && docPreSave.rev === afterSave.rev - 1
+      && JSON.stringify(blankBefore) === JSON.stringify(docPreBlank.assignments.filter((a) => a.id === BLANK)[0])
+      && blankAfter.categoryId === SRC_ESSAYS && blankAfter.assigned === '2026-11-04'
+      && blankAfter.due === '' && blankAfter.termId === 'tm349_src2'
+      && savedCopy.length === 1 && savedCopy[0].classId === P2 && savedCopy[0].categoryId === P2_ESSAYS
+      && savedCopy[0].assigned === '2026-11-04' && savedCopy[0].termId === 'tm349_p2b',
+    JSON.stringify({ button: preSaveLine.button, rev: [docPreSave.rev, afterSave.rev], source: blankAfter,
+      copy: savedCopy }));
 
   /* ── THE CREATE DOOR ── */
-  await closeIfOpen348();
+  await closeIfOpen349();
   await clickSel('#assignmentsView [data-assignment-new]');
   await sleep(150);
   const doorShown = await evalJs(`(function(){ var b = document.getElementById('assignmentCopyDoor');
@@ -820,43 +1016,57 @@ console.log('\n--- one assignment into several classes in one dialog (WO-3.48) -
       editorOpen: !document.getElementById('assignmentModal').classList.contains('hidden'),
       cancelShown: !document.getElementById('assignmentCreateCancel').classList.contains('hidden') }; })()`);
   await evalJs(`(function(){ var f = document.querySelector('#assignmentFields [data-assignment-field="name"]');
-    f.value = 'WO-3.48 Essay 3'; f.dispatchEvent(new Event('input', { bubbles: true })); return 1; })()`);
+    f.value = 'WO-3.49 Essay 3'; f.dispatchEvent(new Event('input', { bubbles: true })); return 1; })()`);
   await sleep(150);
-  const createdId = await evalJs(`(function(){ var d = window.planbook.store.getDoc();
-    var a = d.assignments.filter(function(x){ return x.classId === '${SRC}' && x.name === 'WO-3.48 Essay 3'; });
-    return a.length === 1 ? a[0].id : ''; })()`);
+  const created = await evalJs(`(function(){ var d = window.planbook.store.getDoc();
+    var a = d.assignments.filter(function(x){ return x.classId === '${SRC}' && x.name === 'WO-3.49 Essay 3'; });
+    return a.length === 1 ? JSON.parse(JSON.stringify(a[0])) : null; })()`);
   await clickSel('#assignmentCopyDoor');
   await sleep(150);
-  const fromCreate = await evalJs(READ348);
+  const fromCreate = await evalJs(READ349);
   check('WO-3.48: during a create, with other active classes, the editor shows "Copy into other classes…" '
     + 'beside Done, alongside Cancel',
     doorShown.exists && doorShown.hidden === false && doorShown.w > 0 && doorShown.editorOpen
       && doorShown.cancelShown && doorShown.text === 'Copy into other classes…',
     JSON.stringify(doorShown));
-  check('WO-3.48: the create door closes the editor and opens the dialog on the NEW assignment — its name, '
-    + 'a lead saying each copy is separate and does not follow later changes — with nothing ticked and '
-    + 'the source\'s own class not offered',
-    !!createdId && fromCreate.open && !fromCreate.editorOpen
-      && fromCreate.title === 'Copy into other classes'
-      && fromCreate.name === 'WO-3.48 Essay 3' && /“WO-3\.48 Essay 3”/.test(fromCreate.lead)
-      && /separate assignment/.test(fromCreate.lead) && /does not change the copies/.test(fromCreate.lead)
-      && fromCreate.pills.length >= 4 && fromCreate.pills.every((p) => p.id !== SRC)
-      && fromCreate.pills.every((p) => p.pressed === 'false') && fromCreate.rows.length === 0
-      && fromCreate.disabled === true,
-    JSON.stringify({ createdId, title: fromCreate.title, name: fromCreate.name,
-      pills: fromCreate.pills.map((p) => p.id), lead: fromCreate.lead.slice(0, 120) }));
+  check('WO-3.49: the create door closes the editor and opens the list on the NEW assignment — its name, the '
+    + 'lead saying each copy stays as it is if this one changes — with the source heading the list and no '
+    + 'tick on it, nothing ticked, and the source\'s own class not offered',
+    !!created && fromCreate.open && !fromCreate.editorOpen && fromCreate.title === 'Copy into other classes'
+      && fromCreate.name === 'WO-3.49 Essay 3' && /“WO-3\.49 Essay 3”/.test(fromCreate.lead)
+      && /stays as it is if you change this one later/.test(fromCreate.lead)
+      && !!fromCreate.source && fromCreate.source.index === 1 && fromCreate.source.id === SRC
+      && fromCreate.source.ticks === 0
+      && fromCreate.lines.every((l) => l.id !== SRC && !l.on && l.pressed === 'false')
+      && fromCreate.lines.length === offered.length && fromCreate.disabled === true,
+    JSON.stringify({ created: !!created, title: fromCreate.title, name: fromCreate.name,
+      source: fromCreate.source, lead: fromCreate.lead.slice(0, 120) }));
+  /* The new assignment is dated today (WO-3.17), so its copy's term is the one holding TODAY in P2:
+     Q1 on a real-clock run in October, Q2 under --today=2026-11-10. Worked out from the fixture's dates
+     here, not asked of the app. Outside both quarters the line must say no term holds it. */
+  const wantTerm = nodeToday >= Q1[0] && nodeToday <= Q1[1] ? { id: 'tm349_p2a', label: 'Q1' }
+    : nodeToday >= Q2[0] && nodeToday <= Q2[1] ? { id: 'tm349_p2b', label: 'Q2' } : null;
   await tick(P2);
+  const createLine = await evalJs(READ349);
   await clickSel('#assignmentCopyBtn');
   await flush();
   const createCopy = await evalJs(`(function(){ var d = window.planbook.store.getDoc();
-    return { src: d.assignments.filter(function(a){ return a.id === ${JSON.stringify(createdId)}; }).length,
-      p2: d.assignments.filter(function(a){ return a.classId === '${P2}' && a.name === 'WO-3.48 Essay 3'; })
-        .map(function(a){ return { id: a.id, categoryId: a.categoryId, termId: a.termId }; }) }; })()`);
-  check('WO-3.48: confirming from the create door copies the new assignment into the class ticked and keeps '
-    + 'the new assignment itself — closing the editor through the door is not its Cancel',
-    createCopy.src === 1 && createCopy.p2.length === 1 && createCopy.p2[0].id !== createdId
-      && createCopy.p2[0].categoryId === P2_ESSAYS && createCopy.p2[0].termId === 'tm348_p2a',
-    JSON.stringify(createCopy));
+    return { src: d.assignments.filter(function(a){ return a.id === ${JSON.stringify(created && created.id)}; }).length,
+      p2: d.assignments.filter(function(a){ return a.classId === '${P2}' && a.name === 'WO-3.49 Essay 3'; })
+        .map(function(a){ return JSON.parse(JSON.stringify(a)); }) }; })()`);
+  check('WO-3.49: from the create door, a copy dated today goes into the term of P2 that holds today ('
+    + (wantTerm ? wantTerm.label : 'none') + ' on ' + nodeToday + ') — its line said so before the tap — and '
+    + 'the new assignment itself is kept: the door is not the editor\'s Cancel',
+    !!created && created.due === nodeToday && created.assigned === nodeToday
+      && (wantTerm
+        ? lineOf(createLine, P2).sub === wantTerm.label + ', from its due date'
+          && createCopy.src === 1 && createCopy.p2.length === 1 && createCopy.p2[0].id !== created.id
+          && createCopy.p2[0].termId === wantTerm.id && createCopy.p2[0].due === nodeToday
+          && createCopy.p2[0].categoryId === P2_ESSAYS
+        : lineOf(createLine, P2).sub === 'no term holds its due date' && createCopy.p2.length === 0),
+    JSON.stringify({ today: nodeToday, created: created && [created.assigned, created.due],
+      sub: lineOf(createLine, P2).sub, copies: createCopy.p2.map((a) => [a.termId, a.due]) }));
+  await closeIfOpen349();
   await clickSel('#assignmentsView [data-assignment-edit="' + ESSAY + '"]');
   await sleep(150);
   const onEdit = await evalJs(`(function(){ var b = document.getElementById('assignmentCopyDoor');
@@ -864,10 +1074,10 @@ console.log('\n--- one assignment into several classes in one dialog (WO-3.48) -
       hidden: b ? b.classList.contains('hidden') : null, w: b ? b.getBoundingClientRect().width : -1 }; })()`);
   check('WO-3.48: opening an existing row through Edit does not show "Copy into other classes…"',
     onEdit.editorOpen && onEdit.hidden === true && onEdit.w === 0, JSON.stringify(onEdit));
-  await closeIfOpen348();
+  await closeIfOpen349();
 
-  /* ── ONE ACTIVE CLASS: NO DOOR ── every other active class is put away for one create, through the
-     seam, and put back exactly as it was. */
+  /* ── ONE ACTIVE CLASS: NO DOOR, AND DUPLICATE HAS NOTHING TO OFFER ── every other active class is put
+     away through the seam, and put back exactly as it was. */
   const parked = await evalJs(`(function(){ var s = window.planbook.store; var ids = [];
     s.update(function(doc){ doc.classes.forEach(function(c){
       if (c.id !== '${SRC}' && !c.archived) { c.archived = true; ids.push(c.id); } }); });
@@ -880,58 +1090,111 @@ console.log('\n--- one assignment into several classes in one dialog (WO-3.48) -
       cancelShown: !document.getElementById('assignmentCreateCancel').classList.contains('hidden'),
       hidden: b ? b.classList.contains('hidden') : null }; })()`);
   await clickSel('[data-assignment-create-cancel]');
+  await clickSel('#assignmentsView [data-assignment-duplicate="' + ESSAY + '"]');
+  await sleep(150);
+  const loneDup = await evalJs(READ349);
+  await clickSel('[data-assignment-copy-cancel]');
   await evalJs(`(function(){ var s = window.planbook.store; var ids = ${JSON.stringify(parked)};
     s.update(function(doc){ doc.classes.forEach(function(c){ if (ids.indexOf(c.id) >= 0) c.archived = false; }); });
     window.planbook.classes.refreshClassBar(); return 1; })()`);
   check('WO-3.48: with one active class, a create shows Cancel and no "Copy into other classes…"',
-    parked.length >= 4 && lone.active === 1 && lone.editorOpen && lone.cancelShown && lone.hidden === true,
+    parked.length >= 6 && lone.active === 1 && lone.editorOpen && lone.cancelShown && lone.hidden === true,
     JSON.stringify({ parked: parked.length, lone }));
+  check('WO-3.49: with one active class, Duplicate shows the source line alone, says there is no other class '
+    + 'and that a second copy in this class is made with New, and its confirm is disabled',
+    loneDup.open && !!loneDup.source && loneDup.lines.length === 0 && loneDup.disabled === true
+      && /no other class to copy this into/.test(loneDup.note) && /made with New/.test(loneDup.note),
+    JSON.stringify({ lines: loneDup.lines.length, note: loneDup.note, disabled: loneDup.disabled }));
 
-  /* ── THE COARSE PASS, AT PORTRAIT-IPAD WIDTH ── */
+  /* ── THE WIDE LIST (Acceptance 8) ── at 1280px under a fine pointer, and either side of the measured
+     919/920 breakpoint src/assignments.css records. Read with the source and three classes on. */
+  const LAYOUT349 = `(function(){
+    var panel = document.querySelector('#assignmentCopyModal .modal-panel');
+    var body = document.querySelector('#assignmentCopyModal .modal-body');
+    var list = document.getElementById('assignmentCopyList');
+    var heads = list.querySelector('.assign-copy-heads');
+    function box(e){ var r = e.getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom }; }
+    var lines = Array.prototype.map.call(list.querySelectorAll('.assign-copy-line.on, .assign-copy-line.source'), function(l){
+      var first = box(l.querySelector('.assign-copy-tick, .assign-copy-ref'));
+      var cells = Array.prototype.map.call(l.querySelectorAll('.assign-copy-cell'), function(c){
+        var cb = box(c), clear = c.querySelector('[data-date-clear]'), input = c.querySelector('input[type="date"]');
+        return { t: cb.t, fits: !clear || (box(clear).r <= cb.r + 0.5 && box(input).r <= box(clear).l + 0.5),
+          cue: getComputedStyle(c.querySelector('.assign-copy-cue')).display !== 'none' };
+      });
+      return { id: l.getAttribute('data-assignment-copy-line'), first: first, cells: cells };
+    });
+    var off = Array.prototype.map.call(list.querySelectorAll('.assign-copy-line.off'), function(l){
+      return l.getBoundingClientRect().height; });
+    return { width: innerWidth, coarse: matchMedia('(pointer: coarse)').matches,
+      heads: getComputedStyle(heads).display !== 'none', lines: lines, offHeights: off,
+      oneRow: lines.every(function(l){ return l.cells.length === 3 && l.cells.every(function(c){
+        return Math.abs(c.t - l.first.t) < 12 && !c.cue; }); }),
+      folded: lines.every(function(l){ return l.cells.length === 3 && l.cells.every(function(c){
+        return c.t >= l.first.b - 0.5 && Math.abs(c.t - l.cells[0].t) < 4 && c.cue; }); }),
+      fits: lines.every(function(l){ return l.cells.every(function(c){ return c.fits; }); }),
+      scroll: [panel.scrollWidth - panel.clientWidth, body.scrollWidth - body.clientWidth,
+        list.scrollWidth - list.clientWidth,
+        document.documentElement.scrollWidth - document.documentElement.clientWidth] };
+  })()`;
+  await clickSel('#assignmentsView [data-assignment-duplicate="' + ESSAY + '"]');
+  await sleep(150);
+  await tick(P2); await tick(P4); await tick(P6);
+  const wide = await evalJs(LAYOUT349);
+  await send('Emulation.setDeviceMetricsOverride', { width: 920, height: 900, deviceScaleFactor: 1, mobile: false });
+  await sleep(200);
+  const at920 = await evalJs(LAYOUT349);
+  await send('Emulation.setDeviceMetricsOverride', { width: 919, height: 900, deviceScaleFactor: 1, mobile: false });
+  await sleep(200);
+  const at919 = await evalJs(LAYOUT349);
+  await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+  await sleep(200);
+  check('WO-3.49: at 1280px under a fine pointer, the source and every ticked class are each one line — the '
+    + 'name and its three fields side by side under the column heads — every date and its Clear inside its '
+    + 'cell, and nothing scrolls sideways',
+    wide.width === 1280 && wide.coarse === false && wide.heads && wide.lines.length === 4 && wide.oneRow
+      && wide.fits && wide.scroll.every((n) => n <= 0),
+    JSON.stringify({ width: wide.width, heads: wide.heads, oneRow: wide.oneRow, fits: wide.fits, scroll: wide.scroll,
+      first: wide.lines[1] }));
+  check('WO-3.49: the measured breakpoint holds on both sides — at 920px the list is still one line a class '
+    + 'with every Clear inside its cell, and at 919px it has folded',
+    at920.width === 920 && at920.heads && at920.oneRow && at920.fits && at920.scroll.every((n) => n <= 0)
+      && at919.width === 919 && !at919.heads && at919.folded && at919.scroll.every((n) => n <= 0),
+    JSON.stringify({ at920: { heads: at920.heads, oneRow: at920.oneRow, fits: at920.fits, scroll: at920.scroll },
+      at919: { heads: at919.heads, folded: at919.folded, scroll: at919.scroll } }));
+  await clickSel('[data-assignment-copy-cancel]');
+
+  /* ── THE COARSE PASS, AT A PORTRAIT iPAD'S 820px ── */
   await flush();
   await send('Emulation.setDeviceMetricsOverride',
-    { width: 768, height: 1024, deviceScaleFactor: 2, mobile: true });
+    { width: 820, height: 1180, deviceScaleFactor: 2, mobile: true });
   await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   await send('Page.reload');
   await sleep(700);
   await waitForBoot();
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
-  const coarse348 = await evalJs("matchMedia('(pointer: coarse)').matches && innerWidth === 768");
-  await evalJs("window.planbook.classes.selectClass('" + SRC + "'); 1");
+  const coarse349 = await evalJs("matchMedia('(pointer: coarse)').matches && innerWidth === 820");
+  await evalJs("window.planbook.classes.selectClass('" + SRC + "'); window.planbook.classes.selectTerm('tm349_src2'); 1");
   await toSourceList();
   await clickSel('#assignmentsView [data-assignment-duplicate="' + ESSAY + '"]');
   await sleep(150);
   await tick(P2); await tick(P4); await tick(P6);
-  const touch348 = await evalJs(measureIn('#assignmentCopyModal'));
-  const under348 = touch348.filter((m) => m.h < 44 || m.w < 44);
-  const layout348 = await evalJs(`(function(){
-    var panel = document.querySelector('#assignmentCopyModal .modal-panel');
-    var body = document.querySelector('#assignmentCopyModal .modal-body');
-    var rows = Array.prototype.map.call(document.querySelectorAll('#assignmentCopyFields [data-assignment-copy-row]'),
-      function(r){
-        var t = r.querySelector('[data-assignment-copy-term]').getBoundingClientRect();
-        var c = r.querySelector('[data-assignment-copy-category]').getBoundingClientRect();
-        var d = r.querySelector('[data-assignment-copy-due]').getBoundingClientRect();
-        var card = r.getBoundingClientRect();
-        return { stacked: c.top >= t.bottom && d.top >= c.bottom && Math.abs(t.left - c.left) < 1
-            && Math.abs(c.left - d.left) < 1,
-          inside: t.right <= card.right + 0.5 && c.right <= card.right + 0.5 && d.right <= card.right + 0.5 };
-      });
-    return { rows: rows, panelScroll: panel.scrollWidth - panel.clientWidth,
-      bodyScroll: body.scrollWidth - body.clientWidth,
-      pageScroll: document.documentElement.scrollWidth - document.documentElement.clientWidth };
-  })()`);
-  check('WO-3.48: under a coarse pointer at 768px, every control in the open three-row dialog measures '
-    + '>=44px both ways — pills, name, both selects, the date field and its Clear, the confirm and Cancel',
-    coarse348 === true && touch348.length >= 3 * 4 + 5 && under348.length === 0,
-    'coarse = ' + coarse348 + ', measured ' + touch348.length + '; under = '
-      + JSON.stringify(under348.slice(0, 6)));
-  check('WO-3.48: at that width each row stacks term, category and due one above the other, inside its card, '
-    + 'and nothing scrolls sideways',
-    layout348.rows.length === 3 && layout348.rows.every((r) => r.stacked && r.inside)
-      && layout348.panelScroll <= 0 && layout348.bodyScroll <= 0 && layout348.pageScroll <= 0,
-    JSON.stringify(layout348));
+  const touch349 = await evalJs(measureIn('#assignmentCopyModal'));
+  const under349 = touch349.filter((m) => m.h < 44 || m.w < 44);
+  const narrow = await evalJs(LAYOUT349);
+  check('WO-3.49: under a coarse pointer at 820px, every control in the open dialog measures >=44px both ways '
+    + '— every tick, the name, every category select, every date field and every Clear, the confirm and Cancel',
+    coarse349 === true && touch349.length >= offered.length + 1 + 4 * 5 + 2 && under349.length === 0,
+    'coarse = ' + coarse349 + ', measured ' + touch349.length + '; under = '
+      + JSON.stringify(under349.slice(0, 6)));
+  check('WO-3.49: at 820px each class folds to two rows — the name, then category, assigned and due side by '
+    + 'side with a cue each — the column heads are gone, an unticked class is one row, and nothing scrolls '
+    + 'sideways; in this browser two dates and two Clears fit a portrait line',
+    narrow.coarse && !narrow.heads && narrow.lines.length === 4 && narrow.folded && narrow.fits
+      && narrow.offHeights.length > 0 && narrow.offHeights.every((h) => h < 70)
+      && narrow.scroll.every((n) => n <= 0),
+    JSON.stringify({ heads: narrow.heads, folded: narrow.folded, fits: narrow.fits, off: narrow.offHeights,
+      scroll: narrow.scroll }));
   await clickSel('[data-assignment-copy-cancel]');
   await clickSel('#assignmentsView [data-assignment-new]');
   await sleep(150);
@@ -942,15 +1205,15 @@ console.log('\n--- one assignment into several classes in one dialog (WO-3.48) -
     door44.w >= 44 && door44.h >= 44, JSON.stringify(door44));
 
   /* ── THE FIXTURE COMES BACK OUT, and the page goes back to what this section received ── */
-  await closeIfOpen348();
+  await closeIfOpen349();
   await evalJs(`(async function(){ var s = window.planbook.store;
     s.update(function(doc){
-      var ids = doc.assignments.filter(function(a){ return /^c_wo348_/.test(a.classId); })
+      var ids = doc.assignments.filter(function(a){ return /^c_wo349_/.test(a.classId); })
         .map(function(a){ return a.id; });
       ids.forEach(function(id){ delete doc.scores[id]; });
-      doc.assignments = doc.assignments.filter(function(a){ return !/^c_wo348_/.test(a.classId); });
-      doc.classes = doc.classes.filter(function(c){ return !/^c_wo348_/.test(c.id); });
-      doc.students = doc.students.filter(function(x){ return x.id !== 'wo348-s1'; });
+      doc.assignments = doc.assignments.filter(function(a){ return !/^c_wo349_/.test(a.classId); });
+      doc.classes = doc.classes.filter(function(c){ return !/^c_wo349_/.test(c.id); });
+      doc.students = doc.students.filter(function(x){ return x.id !== 'wo349-s1'; });
     });
     await s.flush(); return 1; })()`);
   await send('Emulation.setDeviceMetricsOverride',
@@ -960,10 +1223,10 @@ console.log('\n--- one assignment into several classes in one dialog (WO-3.48) -
   await sleep(600);
   await waitForBoot();
   await evalJs(KILL_ANIM);
-  const gone348 = await evalJs(`(function(){ var d = window.planbook.store.getDoc();
-    return d.classes.filter(function(c){ return /^c_wo348_/.test(c.id); }).length
-      + d.assignments.filter(function(a){ return /^c_wo348_/.test(a.classId); }).length; })()`);
-  check('WO-3.48: the fixture is gone again — no c_wo348_ class and no assignment in one',
-    gone348 === 0, gone348 + ' left');
+  const gone349 = await evalJs(`(function(){ var d = window.planbook.store.getDoc();
+    return d.classes.filter(function(c){ return /^c_wo349_/.test(c.id); }).length
+      + d.assignments.filter(function(a){ return /^c_wo349_/.test(a.classId); }).length; })()`);
+  check('WO-3.49: the fixture is gone again — no c_wo349_ class and no assignment in one',
+    gone349 === 0, gone349 + ' left');
 }
 }

@@ -31,6 +31,22 @@
    show the portrait frame on a laptop. Nothing in src/ uses `@container` yet, so that
    is a question for the owner and is in README.md.
 
+   LANDED 2026-10-06 (WO-3.49): § COPY LIST is in src/assignments.css under
+   every name drawn here, and this page still draws it from this file, so the
+   frames keep showing both layouts. What the build did differently, and why:
+     · The fold is `@media (max-width: 919px)` at the foot of that sheet, not
+       the `@container` below — the owner's ruling 8. 919 was measured in
+       headless Edge rather than copied from the 820 here: the date field will
+       not draw narrower than its own content, so the Clear leaves its cell
+       below a 844px window under a fine pointer and below 909px under a coarse
+       one. The sheet's note has the arithmetic.
+     · `.assign-copy-flag` is a <div> in the app, not a <p>: `.modal-body p`
+       in src/shell.css outranks one class and would draw the amber grey. On
+       this page the flag is still a <p>, so it reads grey here.
+     · `.assign-copy-naming` is new there and holds the name row's margin this
+       page writes inline; the list's own `margin-bottom` replaces the inline
+       margin on the note under it.
+
    THE RULE THIS FILE OBEYS, from PROTOCOL.md rule 5: a pending section styles
    no class src/*.css already styles. Every name below is new. `.modal-panel`,
    `.assign-field*`, `.class-action-btn`, `.date-clear` and `.class-hint` are
@@ -38,13 +54,13 @@
 
    Colours inline, no custom properties, no dark mode — src/shell.css's rules.
 
-     § COPY LIST   →  src/assignments.css   (WO-3.49 — not yet lifted)
+     § COPY LIST   →  src/assignments.css   (WO-3.49 — lifted 2026-10-06)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 .assign-copy-tick { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § COPY LIST   →  src/assignments.css   (WO-3.49 — not yet lifted)
+   § COPY LIST   →  src/assignments.css   (WO-3.49 — lifted 2026-10-06)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* The panel. A second class worn beside `.modal-panel`, the way `.detail-avatar`

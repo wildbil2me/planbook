@@ -603,42 +603,71 @@ if (!classesBooted || !classSeam || !assignSeam) {
        the selected option's value rather than the variable behind it, which is the whole of the
        first defect this round came back for. */
     const COPY_READ = `(function(){
-      var term = document.querySelector('[data-assignment-copy-term]');
+      /* Since WO-3.49 the dialog is one list: the source's own line first, then one line per other
+         class, ticked or not. The target's category select is the one carrying the target's hook —
+         the source line's carries data-assignment-copy-source instead. There is no term select at
+         all; the term the dates pick is named under the class, and read here off that sub-line. */
       var cat = document.querySelector('[data-assignment-copy-category]');
       var opts = cat ? Array.prototype.slice.call(cat.options) : [];
       var shown = cat && cat.selectedIndex >= 0 ? opts[cat.selectedIndex] : null;
+      var on = document.querySelector('#assignmentCopyList .assign-copy-line.on');
       return {
         open: !document.getElementById('assignmentCopyModal').classList.contains('hidden'),
         lead: (document.getElementById('assignmentCopyLead')||{}).textContent.replace(/\\s+/g,' '),
         note: (document.getElementById('assignmentCopyNote')||{}).textContent.replace(/\\s+/g,' '),
-        /* Since WO-3.48 a fallback is said in the row it belongs to rather than in the one note under
-           the dialog, so the no-match sentence is read from the ticked row's own note. */
-        rowNote: (document.querySelector('[data-assignment-copy-row-note]')||{textContent:''}).textContent.replace(/\\s+/g,' '),
-        rows: document.querySelectorAll('[data-assignment-copy-row]').length,
+        /* Since WO-3.48 a fallback is said on the line it belongs to rather than in the one note under
+           the dialog, so the no-match sentence is read from the ticked line's own amber lines. */
+        rowNote: on ? Array.prototype.map.call(on.querySelectorAll('[data-assignment-copy-flag]'),
+          function(f){ return f.textContent; }).join(' ').replace(/\\s+/g,' ') : '',
+        rows: document.querySelectorAll('#assignmentCopyList .assign-copy-line.on').length,
         button: (document.getElementById('assignmentCopyBtn')||{}).textContent,
-        term: term ? term.value : null, category: cat ? cat.value : null,
+        disabled: (document.getElementById('assignmentCopyBtn')||{}).disabled,
+        sub: on ? ((on.querySelector('[data-assignment-copy-sub]')||{}).textContent || '') : '',
+        termControls: document.querySelectorAll('#assignmentCopyModal [data-assignment-copy-term]').length,
+        category: cat ? cat.value : null,
         catOptions: opts.map(function(o){ return o.value; }),
         catShown: shown ? shown.value : null,
         catShownLabel: shown ? shown.textContent : null,
-        classes: document.querySelectorAll('#assignmentCopyClasses .pill').length,
-        active: document.querySelectorAll('#assignmentCopyClasses .pill.active').length }; })()`;
+        classes: document.querySelectorAll('#assignmentCopyList [data-assignment-copy-class]').length,
+        active: document.querySelectorAll('#assignmentCopyList [data-assignment-copy-class][aria-pressed="true"]').length }; })()`;
 
     /* The tap on the target's pill TICKS it (WO-3.48): the dialog opens with nothing ticked, from
        this door and the editor's, so this is the only pressed pill and the only row. Until WO-3.48
        the dialog opened with the source's own class chosen and this tap SWITCHED the one target; the
        checks below read the same proposal either way. */
+    /* THE TARGET'S TERM IS THE ONE HOLDING THE COPY'S DUE DATE SINCE WO-3.49, so the target needs a
+       term that holds 2026-09-18 — the run leaves this class's terms as whatever earlier sections
+       made them, and a term with no dates holds no date at all (the line would be blocked, and say
+       so). If none holds it, the class's first term is given dates around it for this block and
+       handed its own back after the copy below; the seam plants it, because a fixture going in is
+       not a claim being made. */
+    const dstTerm = await evalJs(`(function(){
+      var c = window.planbook.classes, s = window.planbook.store, id = ${JSON.stringify(dst.id)};
+      var planted = null;
+      if (!c.termContaining(id, '2026-09-18')) {
+        s.update(function(d){
+          var cls = d.classes.filter(function(x){ return x.id === id; })[0];
+          var t = cls.terms[0];
+          planted = { id: t.id, start: t.start, end: t.end };
+          t.start = '2026-08-01'; t.end = '2026-12-31';
+        });
+      }
+      var hit = c.termContaining(id, '2026-09-18');
+      return { id: hit ? hit.id : '', label: hit ? (String(hit.label || '').trim() || 'an unnamed term') : '',
+        planted: planted }; })()`);
     await clickSel('#assignmentsView [data-assignment-duplicate="' + secondId + '"]');
-    await clickSel('#assignmentCopyClasses [data-assignment-copy-class="' + dst.id + '"]');
+    await clickSel('#assignmentCopyList [data-assignment-copy-class="' + dst.id + '"]');
     const proposal = await evalJs(COPY_READ);
-    check('the duplicate dialog proposes the TARGET class\'s own term, and files under nothing when that class has no category of the source\'s name',
-      proposal.open && dst.terms.indexOf(proposal.term) >= 0
+    check('the duplicate dialog names the TARGET class\'s own term — the one its due date falls in — with no term control, and files under nothing when that class has no category of the source\'s name',
+      proposal.open && !!dstTerm.id && proposal.sub === dstTerm.label + ', from its due date'
+        && proposal.termControls === 0
         && proposal.category === ''
-        && proposal.active === 1 && proposal.classes >= 2 && proposal.rows === 1
+        && proposal.active === 1 && proposal.classes >= 1 && proposal.rows === 1
         && proposal.button.indexOf(dst.name) >= 0
         && /no scores/.test(proposal.lead)
-        && proposal.rowNote.indexOf(PROBE_CAT) >= 0 && /Pick one above/.test(proposal.rowNote),
-      JSON.stringify({ term: dst.terms.indexOf(proposal.term) >= 0, category: proposal.category,
-        button: proposal.button }));
+        && proposal.rowNote.indexOf(PROBE_CAT) >= 0 && /Pick one/.test(proposal.rowNote),
+      JSON.stringify({ sub: proposal.sub, want: dstTerm, category: proposal.category,
+        button: proposal.button, rowNote: proposal.rowNote.slice(0, 90) }));
     /*
       AND THE CONTROL SHOWS WHAT THE PROPOSAL HOLDS. A <select> with no option marked `selected`
       displays its first one, so an unmatched proposal against a class that HAS categories drew
@@ -665,7 +694,7 @@ if (!classesBooted || !classSeam || !assignSeam) {
       picked.category === catsNow.dst[0].id && picked.catShown === catsNow.dst[0].id
         && picked.catOptions.indexOf('') === -1
         && picked.catOptions.length === catsNow.dst.length
-        && !/Pick one above/.test(picked.rowNote),
+        && !/Pick one/.test(picked.rowNote),
       'proposal now ' + JSON.stringify(picked.category) + ', options '
         + picked.catOptions.length + ' with no placeholder among them');
     await clickSel('[data-assignment-copy-cancel]');
@@ -699,17 +728,18 @@ if (!classesBooted || !classSeam || !assignSeam) {
         + ', where the source\'s id for it is ' + JSON.stringify(otherCat));
 
     await clickSel('#assignmentsView [data-assignment-duplicate="' + secondId + '"]');
-    await clickSel('#assignmentCopyClasses [data-assignment-copy-class="' + dst.id + '"]');
+    await clickSel('#assignmentCopyList [data-assignment-copy-class="' + dst.id + '"]');
     const matched = await evalJs(COPY_READ);
     check('with a category of that name in the target, the dialog proposes the TARGET\'s id for it and shows it',
       matched.category === twin.id && matched.catShown === twin.id
         && matched.category !== otherCat
         && matched.catOptions.indexOf('') === -1
         /* WO-3.48: the note stopped promising "the dates come across as they are" when the dialog
-           gained a due date per row; it says the assigned date comes across and each due date
-           starts on the source's. */
+           gained a due date per row. WO-3.49 gave every line an assigned date too, so it says each
+           copy's dates start on this one's and that nothing is re-dated to today. */
         && !/come across as they are/.test(matched.note)
-        && /assigned date comes across as it is/.test(matched.note),
+        && /Each copy’s dates start on this one’s/.test(matched.note)
+        && /Nothing is re-dated to today/.test(matched.note),
       'proposed ' + JSON.stringify(matched.category) + ' and displayed '
         + JSON.stringify(matched.catShownLabel));
 
@@ -720,10 +750,10 @@ if (!classesBooted || !classSeam || !assignSeam) {
       doc.copy = made[made.length - 1] || null;
       doc.copyOpen = !document.getElementById('assignmentCopyModal').classList.contains('hidden');
       return doc; })()`);
-    check('duplicating into another class produces a new assignment with no scores attached',
+    check('duplicating into another class produces a new assignment with no scores attached, filed under the target term that holds its due date',
       !!copied.copy && copied.copy.id !== secondId
         && copied.copy.classId === dst.id
-        && dst.terms.indexOf(copied.copy.termId) >= 0
+        && copied.copy.termId === dstTerm.id
         && copied.scoreKeys.indexOf(copied.copy.id) === -1
         && copied.scoreKeys.indexOf(secondId) >= 0
         && copied.assignments.length === beforeCopy.assignments.length + 1
@@ -749,6 +779,14 @@ if (!classesBooted || !classSeam || !assignSeam) {
           === JSON.stringify(beforeCopy.assignments.filter((a) => a.id === secondId)),
       JSON.stringify({ points: copied.copy.points, assigned: copied.copy.assigned,
         due: copied.copy.due }));
+    /* The target's term dates go back to what this block found, if it planted any (above). */
+    if (dstTerm.planted) {
+      await evalJs(`(function(){ var p = ${JSON.stringify(dstTerm.planted)};
+        window.planbook.store.update(function(d){
+          d.classes.forEach(function(c){ (c.terms || []).forEach(function(t){
+            if (t.id === p.id) { t.start = p.start; t.end = p.end; } }); }); });
+        return 1; })()`);
+    }
 
     /*
       THE OTHER END OF THE TRAP. A document can arrive from a restore, a hand edit, or a build older

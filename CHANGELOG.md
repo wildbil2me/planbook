@@ -13,6 +13,23 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The copy dialog is one list, and the due date files each copy — 2026-10-06
+
+WO-3.49, owner-directed, out of WO-3.48's reading the same day. Shell cache bumped to v168.
+
+- **One line per class, in a wider panel.** Duplicate and *Copy into other classes…* show each
+  class as a tick with its category, assigned date and due date on the same line. On a portrait
+  iPad each class takes two rows.
+- **The assignment you're copying heads the list, and can be fixed there.** Its category and dates
+  are editable on its own line. Those fixes are saved with the copies, and Cancel, ✕ and Escape
+  throw them away. Lines you haven't touched follow the source's dates and category.
+- **A section a day behind gets its own dates.** Each line's dates go to that copy only.
+- **There is no term menu any more.** A copy goes into the term its due date falls in, or its
+  assigned date if it has no due date, the way the SIS does it, and the line says which. Before
+  this, from Quarter 2 on, every copy would have been filed in Quarter 1. A class with no term
+  holding the dates says so, and blocks the confirm until the date changes or the class is
+  unticked.
+
 ### One assignment goes into several classes in one dialog — 2026-10-06
 
 WO-3.48, owner-directed. Shell cache bumped to v167.

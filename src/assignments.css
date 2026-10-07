@@ -44,7 +44,8 @@
 /* One grouped selector for this sheet's tappable classes, the way every other sheet in this app
    has one: a control covered only by some other selector's rule is a control the next reader has
    to go and prove is covered. */
-.screen-nav-btn, .assign-row-btn, .assign-field-input, .assign-field-select, .assign-field-date {
+.screen-nav-btn, .assign-row-btn, .assign-field-input, .assign-field-select, .assign-field-date,
+.assign-copy-tick {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -468,26 +469,96 @@
   margin: 0; font-size: 12px; line-height: 1.6; color: #1a1a2e; white-space: pre-line;
 }
 
-/* ── DUPLICATING ── */
-/* The class picker is `.pill`s worn as-is, in the shape src/letter-scale.js's subject row uses; this
-   class only holds them in a wrapping row. */
-.assign-copy-classes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
-/* ONE CARD PER TICKED CLASS (WO-3.48): class · term · category · due. It wears the subdued card of
-   design/style-guide.md §1 — `1.5px #e0e4f0` on `#f8f9fc`, the box `.supports-panel` already is —
-   because each row is a group of fields about one class, and without a frame four rows of the same
-   three fields read as one long form with no way to tell where Period 2 stops and Period 4 starts.
-   `min-width: 0` all the way down is what keeps a long class name or a wide <select> from pushing
-   the panel into a sideways scroll. */
-.assign-copy-target {
-  display: flex; flex-direction: column; gap: 10px; min-width: 0;
-  padding: 12px; border: 1.5px solid #e0e4f0; border-radius: 8px; background: #f8f9fc;
+/* ══════════════════════════════════════════════════════════════════════════════
+   § COPY LIST — the copy dialog, one line per class (WO-3.49)
+   ══════════════════════════════════════════════════════════════════════════════ */
+/* LIFTED FROM design/mockups/proposed-copy.css § COPY LIST, drawn and ruled on 2026-10-06, with
+   every class name as drawn. Three departures, each the owner's ruling or forced by this sheet:
+     · The fold is a @media rule at the foot of this file, not the drawing's @container (ruling 8:
+       the app's existing shape — the container query was only there so one page could show both
+       layouts). So `.assign-copy-list` is not a size container here.
+     · `.assign-copy-flag` is a <div> in the build, not the drawing's <p>: `.modal-body p` in
+       src/shell.css outranks one class, and would have drawn the amber line grey.
+     · `.assign-copy-naming` is new, and holds the margin the drawing wrote inline on the name row.
+       The note under the list takes its space from the list's own margin rather than from a rule
+       on `.class-hint`, which is a shell component this sheet wears as-is.
+   It replaced WO-3.48's pills and per-class cards (`.assign-copy-classes`, `.assign-copy-target*`)
+   and their coarse rules, which are gone with them. */
+
+/* The panel. A second class worn beside `.modal-panel`, the way `.detail-avatar` sits beside
+   `.avatar`. 880px is what four columns need at their narrowest with a Clear beside each date
+   field; `.modal-panel`'s own `max-width: 95vw` still governs, so a narrow window gets the folded
+   lines below. */
+.assign-copy-panel { width: 880px; }
+.assign-copy-naming { margin: 14px 0; }
+
+/* The list: one framed box, the subdued card of design/style-guide.md §1 that WO-3.48's per-class
+   cards wore, now around all of them once. */
+.assign-copy-list {
+  border: 1.5px solid #e0e4f0; border-radius: 8px; overflow: hidden; background: #fff;
+  margin-bottom: 10px;
 }
-.assign-copy-target-head {
-  font-size: 13px; font-weight: 800; color: #1a1a2e; overflow-wrap: anywhere;
+
+/* One grid shared by the head row and every line, so the columns line up. */
+.assign-copy-heads,
+.assign-copy-line {
+  display: grid; align-items: center; column-gap: 10px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.2fr);
 }
-/* The row's own fallback — no category of that name, no categories, no terms. Amber text, the
-   `.assign-group-empty` colour: a thing to tidy before or after the tap, not a thing gone wrong. */
-.assign-copy-target-note { margin: 0; font-size: 12px; line-height: 1.5; color: #8a6d1a; }
+.assign-copy-heads {
+  padding: 8px 10px 6px; background: #f8f9fc; border-bottom: 1px solid #e0e4f0;
+  font-size: 10px; font-weight: 700; color: #8a9bb0; letter-spacing: 0.8px; text-transform: uppercase;
+}
+.assign-copy-line { padding: 8px 10px; row-gap: 6px; border-top: 1px solid #eef0f5; }
+.assign-copy-heads + .assign-copy-line { border-top: none; }
+.assign-copy-line.on { background: #f8f9fc; }
+
+/* The tick IS the class name: one control, the whole first cell. */
+.assign-copy-tick {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 34px;
+  padding: 4px 2px; border: none; background: none; cursor: pointer; text-align: left;
+  font-family: inherit; font-size: 13px; font-weight: 700; color: #1a1a2e;
+}
+.assign-copy-line.off .assign-copy-tick { font-weight: 600; color: #6b7a8d; }
+.assign-copy-box {
+  flex: 0 0 18px; height: 18px; border-radius: 4px; border: 1.5px solid #c5cdd8; background: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: #fff; line-height: 1;
+}
+/* `.pill.active`'s green, so a tick reads like the toggles it replaces. */
+.assign-copy-line.on .assign-copy-box { background: #27ae60; border-color: #27ae60; }
+.assign-copy-name { min-width: 0; overflow-wrap: anywhere; }
+/* The quiet line under a class's name: the term its due date falls in, or why no term holds it, or
+   the source's own term. There is no term control: the due date decides the term, the way the
+   school's SIS files work (the owner, 2026-10-06), so the line says what was decided instead of
+   asking. */
+.assign-copy-sub { display: block; font-size: 11px; font-weight: 600; color: #8a9bb0; }
+
+/* A field cell. Its label is the column head in the wide layout, so the cue is hidden there and
+   shown when the line folds. */
+.assign-copy-cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.assign-copy-cue { display: none; font-size: 11px; font-weight: 700; color: #8a9bb0; }
+.assign-copy-due { display: flex; align-items: flex-start; gap: 6px; min-width: 0; }
+.assign-copy-skip { grid-column: 2 / -1; font-size: 12px; color: #a0aab8; }
+
+/* THE SOURCE, FIRST AND EDITABLE (the owner, 2026-10-06). The assignment being copied heads the
+   list from either door: a reference to copy from, not a target, so it has no tick. Its category
+   and dates are live fields, so a slip noticed while copying is fixed here, and the confirm says it
+   saves the source too when one has changed. Its name lines up with the ticked names by the box's
+   width plus the gap. The indigo wash keeps it from reading as a ticked line. */
+.assign-copy-line.source { background: #eef2ff; border-bottom: 1.5px solid #d5dcf5; }
+.assign-copy-ref {
+  min-height: 34px; padding: 4px 2px 4px 28px; display: flex; align-items: center;
+  font-size: 13px; font-weight: 700; color: #1a1a2e;
+}
+
+/* A line's own fallback, under that line only. Amber, `.assign-group-empty`'s colour, indented to
+   sit under the name rather than under the tick box. */
+.assign-copy-flag {
+  grid-column: 1 / -1; margin: 0; padding-left: 28px;
+  font-size: 12px; line-height: 1.5; color: #8a6d1a;
+}
+
 /* The create door. `.class-action-btn` worn as-is; the class is only here so the coarse block below
    can name it, the same note `.accommodation-prompt-btn` carries. */
 .assign-copy-door { }
@@ -539,18 +610,18 @@
   /* A <select> keeps its vertical padding: iPadOS draws the control itself and a zeroed padding
      leaves the text clamped to the top of a 44px box. */
   .assign-field-select { min-height: 44px; font-size: 14px; padding: 8px 10px; }
-  .assign-copy-classes { gap: 10px; }
-  /* THE COPY ROWS STACK UNDER A THUMB (WO-3.48): term, category and due one above the other, each a
-     full-width 44px control, rather than two or three to a line at ~200px apiece in a 480px panel.
-     `flex: 0 0 auto` because `.assign-field`'s `140px` basis would otherwise become a HEIGHT once the
-     row turns into a column. The pills and the create door are `.pill` and `.class-action-btn`,
-     which carry the floor in src/shell.css; named here anyway, for the rule this block opens with. */
-  .assign-copy-target { gap: 12px; }
-  .assign-copy-target .assign-field-row { flex-direction: column; }
-  .assign-copy-target .assign-field { flex: 0 0 auto; }
-  .assign-copy-target-head { font-size: 14px; }
-  .assign-copy-target-note { font-size: 13px; }
-  .assign-copy-classes .pill { min-height: 44px; }
+  /* THE COPY LIST (WO-3.49), in the same pass that added it, as the drawing's § TOUCH has it. The
+     fields on a line are `.assign-field-select` and `.assign-field-date`, which take the floor just
+     above, and each Clear is `.class-action-btn`, which takes it in src/shell.css's coarse block.
+     What is new here is the tick — the class name IS the control, so it is the whole first cell at
+     44px — and the source line's name, which is not a control but lines up with the ticks. The
+     create door is `.class-action-btn` too, named for the rule this block opens with. */
+  .assign-copy-tick { min-height: 44px; font-size: 14px; }
+  .assign-copy-box { flex-basis: 22px; height: 22px; font-size: 14px; }
+  .assign-copy-line { padding: 10px 12px; column-gap: 12px; row-gap: 8px; }
+  .assign-copy-cue { font-size: 12px; }
+  .assign-copy-flag { font-size: 13px; }
+  .assign-copy-ref { min-height: 44px; padding-left: 32px; font-size: 14px; }
   .assign-copy-door { min-height: 44px; min-width: 44px; }
   .cat-chip { font-size: 11px; padding: 3px 9px; }
   /* THE PROMPT'S THREE BUTTONS (WO-3.6). `.class-action-btn` already carries the 44px floor in
@@ -627,11 +698,32 @@
   .assign-progress { min-width: 96px; }
 }
 
-/* THE COPY ROWS STACK AT PORTRAIT-IPAD WIDTH AND BELOW, under any pointer (WO-3.48). The coarse block
-   above already stacks them on every touch screen; this is the same two lines for a window that
-   narrow under a mouse or a trackpad, so the work order's "at portrait iPad width" does not depend on
-   what the device reports as its pointer. 834px is the widest portrait iPad (11-inch Pro). */
-@media (max-width: 834px) {
-  .assign-copy-target .assign-field-row { flex-direction: column; }
-  .assign-copy-target .assign-field { flex: 0 0 auto; }
+/* THE COPY LIST FOLDS (WO-3.49, the owner's ruling 8): below the width where its four columns stop
+   fitting, each ticked line takes two rows — the tick and name, then category, assigned and due side
+   by side, each with its cue because the column heads are gone. An unticked line is one row. Under
+   any pointer, because the question is width and not thumbs.
+
+   A WINDOW WIDTH, NOT THE LIST'S. The drawing folded by `@container` so one page could show both
+   layouts; the app's shape is `@media`, and on a real device the two say the same thing because the
+   panel is a fixed fraction of the window (`max-width: 95vw`) until it reaches its 880px.
+
+   MEASURED, NOT COPIED (2026-10-06, headless Edge, this sheet and src/shell.css over the drawing's
+   frame A markup — four lines, two dates and two Clears each). What stops fitting first is a date
+   cell: the date input will not draw narrower than its own content (~135px at 13px, ~143px at the
+   coarse 14px), so once the 1.2fr column is narrower than input + 6px gap + Clear, the Clear hangs
+   out past its cell. That happens below a viewport of 844px under a fine pointer (a list of 762px)
+   and below 909px under a coarse one, where the padding, gaps, type and Clear are all larger. One
+   breakpoint for both, at the coarse figure plus ten pixels for a scrollbar and for WebKit's date
+   field not being Edge's: 920 and up is four columns, 919 and down is folded. It also falls in the
+   gap the devices leave — every portrait iPad but the 12.9-inch is 834px or narrower and folds,
+   every landscape one is 1024px or wider and does not — and whether two dates and two Clears fit a
+   portrait line at all is the 👤 reading's to settle, with the work order's fallback if not.
+   tools/verify/copy-class.mjs asserts both sides of it. */
+@media (max-width: 919px) {
+  .assign-copy-heads { display: none; }
+  .assign-copy-line { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1.1fr); }
+  .assign-copy-tick, .assign-copy-ref { grid-column: 1 / -1; }
+  .assign-copy-cue { display: block; }
+  .assign-copy-skip { display: none; }
+  .assign-copy-flag { padding-left: 0; }
 }

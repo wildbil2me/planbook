@@ -10537,6 +10537,99 @@ checks changed in place — the proposal and pick checks read the no-match sente
 **Full run on the delivered tree:** `1796 checks · 1796 passed · 0 failed · 0 skipped`, 56,956 lines, 31.7
 lines per check, 789s, exit 0, 2026-10-05 on the real clock.
 
+### WO-3.49 — the copy dialog is one line per class, and the due date picks each copy's term
+
+**What this changes.** The copy dialog is one list in a wider panel (`.assign-copy-panel`, 880px, still
+capped at `95vw`). The source heads it on a line of its own, from both doors, with no tick: its term
+under its name, and its category, assigned and due as live fields whose edits are **held** — written by
+the confirm in the same `update()` as the copies, dropped by Cancel, the ✕ and Escape. Every other active
+class follows in the class manager's order; the source's own class is not offered from either door (a
+second copy in one class is made with *New*). The tick is the class name. An unticked line reads *Not
+copied*; a ticked one holds that copy's category and both its dates under column heads written once.
+**There is no term control.** Each copy goes into the term of its own class that holds its due date, or
+its assigned date when the due date is blank, and the line names it under the class (*Q2, from its due
+date*). A line no date can place — no terms, terms with no dates, both dates blank, or a date in a gap or
+past either end — says why on its own amber line and keeps the confirm disabled. A line still on the
+source's old date follows a change to it, per field; a line the teacher changed stays put. The confirm
+reads *Save P1 and copy into 3 classes* exactly when the source has changed, and is disabled with nothing
+ticked even then. Below a 920px window the list folds to two rows a class. `firstTermId()` is gone.
+`CACHE` is `planbook-shell-v168`.
+
+Every headless line below is the WO-3.49 block at the foot of `tools/verify/copy-class.mjs`, on seven
+planted English classes whose quarters are dated (Q1 2026-08-24 to 2026-10-31, Q2 2026-11-01 to
+2027-01-22) and a source due in Q2, except where `assignments.mjs` is named.
+
+- [x] With the source due in Q2 (2026-11-19), the copy into P2 — dated Q1 and Q2 — lands in Q2
+      (`tm349_p2b`), as does P4's; P6's lands in its one year-long term; P7's, with no due date, in the Q2
+      holding its assigned date. `assignments.mjs`'s duplicate fixture asserts the copy's `termId` is the
+      target term holding its due date. **Mutation-proved** (M1 below).
+- [x] Duplicating an assignment with no due date starts the line blank, names *Q2, from its assigned
+      date*, and writes the copy into P2's Q2 with no due date. P5 (no terms), P3 (terms with no dates) and
+      P7 (due Nov 10, in its gap) are each blocked with a sub-line and an amber sentence saying which; P7
+      Cleared falls back to its assigned date (still in the gap, and says so), with no date at all says
+      nothing places it, and with an assigned date of Nov 17 is placed. A press on the disabled confirm
+      writes nothing (`rev` unmoved after a flush); unticking P5 and P3 enables it.
+- [x] P4's assigned date changed first and read alone leaves its due date where it was; then each line's
+      dates are its own and are written to that copy only (P4 2026-11-06 / 2026-11-13, P6 2026-11-04 /
+      2026-11-19, P2 the source's).
+- [x] A source date edit leaves `rev` and the source byte-identical after a flush; the confirm writes it
+      with four copies and `rev` moves by exactly one, the source's `termId` kept. A second confirm writes a
+      changed category and assigned date on another source with its copy, `rev` +1, its due date and
+      `termId` untouched, and the untouched line having followed both. After edits to all three
+      source fields and a ticked line, Cancel, the ✕ and Escape each leave the source byte-identical and
+      `rev` unmoved after `flush()`, and each reopening shows the source as the document has it.
+- [x] The confirm reads *Save WO-3.49 English I P1 and copy into 3 classes* after a source edit, goes back
+      to *Copy into 3 classes* when both dates are put back, and with nothing ticked reads *Save … and copy
+      into other classes* and is disabled.
+- [x] Moving the source's due date moves P2 and P6 (still on it) and not P4 (changed by hand), and no
+      assigned date; moving its assigned date moves P2 and not P4 or P6, and no due date.
+- [x] The source line is the first line under the column heads from Duplicate and from the create door,
+      carries no tick and no `aria-pressed`, and names *this assignment · Q2*. Neither door offers the
+      source's class. No `[data-assignment-copy-term]` exists, the only selects are categories (one per
+      ticked line plus the source's), and every ticked line names its term. With one active class,
+      Duplicate shows the source alone and says a second copy in this class is made with New.
+- [x] At 1280px under a fine pointer the source and three ticked classes are each one line, every date
+      and its Clear inside its cell, nothing scrolling sideways; the same at 920px, and folded at 919px. At
+      820px under a coarse pointer every control in the open dialog measures ≥44px both ways, each ticked
+      class folds to two rows with a cue per field, an unticked class is one row (65px), and nothing
+      scrolls sideways.
+- [x] `CACHE` is `planbook-shell-v168` (was v167).
+- [x] 👤 On the iPad, after a force-quit, in portrait and landscape: create an assignment and copy it into
+      three sections, one of them a day behind (both its dates moved), and fix a slip on the source line
+      before confirming. Read each copy and the source on their own lists, and read the dialog's wording.
+      If two dates and two Clears do not fit on a portrait line, the fallback is taken (the dates on a row
+      of their own) and the reading says so.
+      *(Read by the owner on the iPad and the laptop 2026-10-06, after a force-quit, on v168: confirmed
+      as written. The portrait line fit, so the fallback was not taken.)*
+
+**The breakpoint, measured.** What stops fitting first is a date cell: the date input will not draw
+narrower than its own content, so once the 1.2fr column is narrower than input + gap + Clear, the Clear
+leaves its cell. In headless Edge over the drawing's frame A markup that happens below an 844px viewport
+under a fine pointer and below 909px under a coarse one. The fold is `@media (max-width: 919px)`. Edge's
+date field is not WebKit's, which is why the portrait line is still the 👤 reading's to settle.
+
+**Mutation round.** Made in a throwaway copy of the tree outside the repository, so the working tree never
+carried it; `grep -rn MUTATION` over the delivered files finds only the comments that were there before.
+The copy ran a three-section subset of the harness (the year store, classes & terms, and
+`copy-class.mjs`); its classes & terms section throws on the subset's thin fixture with or without the
+mutation, so it is the subset's own red and is excluded from the counts below.
+
+| Mutation | Result |
+|---|---|
+| M1 · `firstTermId()` restored and `confirmCopy()` writes `termId: firstTermId(cls)` — v167's first-term default — on the real clock (2026-10-06) | **2 red** of the block's checks: the termId check (P2 into `tm349_p2a`, P4 into `tm349_p4a`, P7 into `tm349_p7a`) and the blank-due check (P2's copy into Q1). The create door's copy stayed green, because today is in Q1 and Q1 is the first term — the case v167 got right by accident. (Run before the source-category check below existed.) |
+| M1 again, under `--today=2026-11-10` — Quarter 2 | **4 red**: the two above, the source-category-and-assigned check (P2's copy into Q1), and the create door's copy — dated today, 2026-11-10, its line saying *Q2, from its due date*, written into `tm349_p2a`. That last one is the work order's *Why it is next* in a single check. |
+
+**Full run on the delivered tree:** `1806 checks · 1806 passed · 0 failed · 0 skipped`, 57,257 lines, 31.7
+lines per check, 792s, exit 0, 2026-10-06 on the real clock.
+
+**Under `--today=2026-11-10`** (taken one check earlier, before the source-category check was added):
+`1800 checks · 1788 passed · 11 failed · 1 skipped`, exit 1 — and **every one of the 36 WO-3.48/3.49
+checks then in the block green**, the create door's copy landing in Q2 (`tm349_p2b`). The eleven reds are not this work
+order's: the tree it was built on (`HEAD`, `e3abd60`, put into a scratch directory by `git archive`) run on
+the same date prints `1791 checks · 1780 passed · 11 failed · 0 skipped` with the same eleven — a class-tab term-nav
+check, and `build-line.mjs` / `stuck-update.mjs` / `worker-takeover.mjs` (the last throwing *Maximum call
+stack size exceeded* from inside a `Date` call). The one skip is the Drive Connect check in About.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

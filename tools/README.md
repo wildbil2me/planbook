@@ -1253,7 +1253,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1790 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1800 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2498,6 +2498,20 @@ three checks in place and gained no site: the no-match sentence is read from the
 and the dates note is asserted NOT to say *"The dates come across as they are"*. The run prints
 `1796 checks · 1796 passed · 0 failed · 0 skipped`, 56,956 lines, 31.7 lines per check, 789s, exit 0,
 2026-10-05 on the real clock. Mutation round in `TESTING.md` § WO-3.48.
+
+**WO-3.49 moved it from 1790 to 1800, and the executed count from 1796 to 1806 — ten sites, ten
+results, and the file count stays where it was.** The WO-3.48 block at the foot of `verify/copy-class.mjs`
+was rewritten in place for the list that replaced the pills and cards: twenty-seven sites became
+thirty-seven. It plants seven English classes instead of five, with dated quarters and a source due in Q2
+— the case v167's first-term default filed wrongly — and drives the source line's held fields, the follow
+rule, the four ways a line is blocked, the measured breakpoint at 920 and 919px without a reload,
+and a coarse pass at 820px. It reads `nodeToday` from `lib-dates.mjs` for the create door's copy, which
+is dated today and so lands in whichever quarter holds it. None sits in a loop and none is a failure arm,
+so the gap between sites and results stays at −6. `verify/assignments.mjs` changed four checks in place
+and gained no site: its duplicate fixture now gives the target a term holding the copy's due date (and
+hands the dates back), and it reads the term off the line's sub-line rather than a select. The run prints
+`1806 checks · 1806 passed · 0 failed · 0 skipped`, 57,257 lines, 31.7 lines per check, 792s, exit 0,
+2026-10-06 on the real clock. Mutation round in `TESTING.md` § WO-3.49.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

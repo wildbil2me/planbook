@@ -3814,7 +3814,7 @@ copy is **live** whatever its source is (WO-3.46's ruling 4). Do not copy `held`
 
 ## WO-3.49 — the copy dialog is one line per class, and the due date picks each copy's term
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.48
+**Ship** — · **Status** ✅ DONE — 2026-10-06 · **Size** M · **Depends on** WO-3.48
 **Closes roadmap** *(no box. Owner-directed, 2026-10-06.)*
 
 **Booked 2026-10-06**, owner-directed, out of [WO-3.48](#wo-348--one-assignment-goes-into-several-classes-in-one-dialog)'s
@@ -3890,32 +3890,34 @@ amend its banner in the same sitting.
 - **`TESTING.md` § WO-3.49**, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] A copy's `termId` is the target's term holding its due date. With the source due in Quarter 2
+- [x] A copy's `termId` is the target's term holding its due date. With the source due in Quarter 2
       and a target with dated Quarter 1 and Quarter 2, the copy lands in Quarter 2. Mutation-proved
       against restoring `firstTermId()`.
-- [ ] A blank due date files the copy under the term holding its assigned date. A line neither date
+- [x] A blank due date files the copy under the term holding its assigned date. A line neither date
       can place, or a class with no terms, is blocked: its own line says why, and the confirm is
       disabled until it is fixed or unticked.
-- [ ] Each line's assigned and due are written to that copy only. Changing a line's assigned date
+- [x] Each line's assigned and due are written to that copy only. Changing a line's assigned date
       leaves its due date as it was.
-- [ ] Edits to the source's category, assigned or due are written only on confirm, in the same
+- [x] Edits to the source's category, assigned or due are written only on confirm, in the same
       `update()` as the copies (`rev` moves by one). Cancel, Close and Escape leave the source
       byte-identical, with `flush()` awaited.
-- [ ] The confirm reads *Save <class> and copy into N classes* exactly when the source has changed,
+- [x] The confirm reads *Save <class> and copy into N classes* exactly when the source has changed,
       and is disabled with nothing ticked even then.
-- [ ] Changing the source's due date moves every line still on the old date and no line the teacher
+- [x] Changing the source's due date moves every line still on the old date and no line the teacher
       changed. Likewise for the assigned date.
-- [ ] The source line heads the list from both doors and has no tick. Duplicate does not offer the
+- [x] The source line heads the list from both doors and has no tick. Duplicate does not offer the
       source's own class. No term control exists anywhere in the dialog, and each ticked line names
       its term.
-- [ ] At 1280px under a fine pointer, every class is one line with no horizontal scroll. At 820px it
+- [x] At 1280px under a fine pointer, every class is one line with no horizontal scroll. At 820px it
       folds to two rows a class, and every control is ≥44px under a coarse pointer.
-- [ ] `CACHE` in `sw.js` is bumped.
-- [ ] 👤 On the iPad, after a force-quit, in portrait and landscape: create an assignment and copy it
+- [x] `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the iPad, after a force-quit, in portrait and landscape: create an assignment and copy it
       into three sections, one of them a day behind (both its dates moved), and fix a slip on the
       source line before confirming. Read each copy and the source on their own lists, and read the
       dialog's wording. If two dates and two Clears do not fit on a portrait line, the fallback is
       taken (the dates on a row of their own) and the reading says so.
+      *(Read by the owner on the iPad and the laptop 2026-10-06, after a force-quit, on v168: confirmed
+      as written. The portrait line fit, so the fallback was not taken.)*
 
 **Traps** — **Nothing in this dialog writes before the confirm**, and that includes the source: the
 editor's write-as-typed contract does not apply here, and a source saved on input would survive the

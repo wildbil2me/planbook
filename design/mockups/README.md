@@ -777,8 +777,12 @@ beside it.
 
 ## What the drawing proposes
 
-Styled in [`proposed-copy.css`](proposed-copy.css), one section bound for `src/assignments.css` and
-`not yet lifted`.
+Styled in [`proposed-copy.css`](proposed-copy.css), one section bound for `src/assignments.css`,
+**lifted 2026-10-06 by WO-3.49** under every name drawn. Three things the build did differently, each
+written in the stylesheet's own banner: the fold is a `@media (max-width: 919px)` rule (open question
+2's answer, with the width measured rather than copied — the Clear leaves its cell below 844px under a
+fine pointer and below 909px under a coarse one); the amber line is a `<div>`, because `.modal-body p`
+would draw it grey; and the name row's margin, written inline here, is a class there.
 
 1. **A wider panel**, 880px, a second class beside `.modal-panel`, whose `95vw` cap still applies.
 2. **One list, one line per class.** Every class the copy could go into is listed from the start.
