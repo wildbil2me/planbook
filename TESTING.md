@@ -10798,6 +10798,143 @@ the same date prints `1791 checks · 1780 passed · 11 failed · 0 skipped` with
 check, and `build-line.mjs` / `stuck-update.mjs` / `worker-takeover.mjs` (the last throwing *Maximum call
 stack size exceeded* from inside a `Date` call). The one skip is the Drive Connect check in About.
 
+### WO-3.50 — the due date picks an assignment's term in the editor too
+
+**What this changes.** The owner's rule from the school's SIS — *a term is never named; the due date
+places the work* — now files the assignment the editor is open on, not only its copies. A new assignment
+goes into the term holding its due date, which is today on creation; if that is not the term on screen,
+the list moves there and says so in an indigo note over it (`#assignmentsMoved`). An edited date moves
+the assignment **when the editor closes, never per keystroke**: every way out — Done, the ✕, Escape, the
+backdrop — passes through one close guard (`setCloseGuard()` / `dismissModal()` in `src/modal.js`, set by
+`src/shell.js`, answered by `settleEditor()` in `src/assignments.js`), and so do the create door and
+opening another row. At that close a blank due date takes the assigned date and is written, and the due
+date then picks the term. With no date, or dates no term holds, the work stays where it is and the
+editor's amber line (`#assignmentTermNote`) says so; the same close again goes through. A class whose
+terms carry no dates says so from the moment the editor opens and never stops the close. **A move that
+carries scores asks first** (`#assignmentMoveModal`): it names both terms and the score count before
+anything is written; *Move it to Q2* writes the move in one save and closes both dialogs, *Keep it in Q1*
+writes nothing at all, and the ✕ or Escape go back to the editor. **An editor in which no date changed
+re-files nothing** (ruling 5), so an old backup restores as it was and an old row keeps its term until a
+date is next edited. The copy dialog's source line follows the same rule (ruling 6): its sub-line says
+*moves to Q2 on saving*, an amber line names the scores a move would carry, and the confirm writes the
+source's term in the same `update()` as the copies. The list's hint and the editor's own note say the
+due date picks the term. `CACHE` is `planbook-shell-v169`.
+
+Every headless line below is the WO-3.50 block at the foot of `tools/verify/assignments.mjs`, on three
+planted English classes — P1 and P2 with Q1 (2026-08-24 to 10-31) and Q2 (11-01 to 2027-01-22) and P3
+whose one term has no dates — and ten assignments in P1's Q1, each the subject of one claim.
+
+- [x] Creating an assignment files it under the term holding today, and the list shows that term. From a
+      list put on the quarter that does **not** hold today, *+ New assignment* writes the row into the one
+      that does — Q1 on the real clock (2026-10-07), Q2 under `--today=2026-11-10` — and the summary
+      (*Assignments · Q1 · …*), the active term tab and the row all show it, under a note that says *The new
+      assignment is in Q1, not Q2: a new assignment is due today, today is in Q1, and the due date picks the
+      term.* Done with the dates untouched writes nothing (`rev` unmoved after a flush). The editor's Cancel
+      removes it and puts the list back on the quarter it was showing, with no note left. **Mutation-proved**
+      (M2).
+- [x] Typing a due date in another term does not move the assignment until the editor closes; then it moves
+      once, `rev` moves by one, and the list says where it went. A due date typed through the field's
+      `input` — first the blank a half-typed date reports, then 2026-11-12 — leaves the row filed in Q1 and on
+      Q1's list behind the dialog. Done then files it in Q2 with `rev` +1 after a flush, the list moves to Q2,
+      and its note reads *“WO-3.50 Plain” moved here from Q1: its due date, Nov 12, is in Q2, and the due date
+      picks the term.* Escape and a press on the backdrop do the same on rows of their own (`rev` +1 each),
+      the ✕ is the close in the fill check below, and opening another row while the editor is up settles the
+      first row before the editor re-fills (driven through `openAssignmentEditor()` on the seam, because no
+      door on screen reaches that while the dialog covers the list). **Mutation-proved** (M1, M3).
+- [x] Closing with a blank due date and an assigned date writes the assigned date into `due` and files by it;
+      both blank, or dates no term holds, leave the term unchanged, and the editor says so. A due date
+      Cleared stays blank while the editor is open, and the ✕ writes 2026-10-14 (the assigned date) into it,
+      `rev` +1, still Q1. With the assigned date typed as 2026-11-03 and the due date Cleared, the close
+      writes 2026-11-03 into `due` and files it in Q2 in one save. Both dates Cleared: the first Done stops
+      and the editor's amber line says *no due date and no assigned date, so no term holds it, and it stays
+      in Q1*, writing nothing; the second Done closes, still Q1. A due date of 2027-03-01: the first Escape
+      stops with *Its due date, Mar 1, falls after Q2, so no term in WO-3.50 English I P1 holds it, and it
+      stays in Q1*; the second closes, still Q1. In a class whose one term has no dates the editor says so
+      from the moment it opens and Done closes on the first press, the term unchanged. **Mutation-proved**
+      (M8, and M1 for the stops).
+- [x] Closing on a move that carries scores names both terms and the score count before writing, and
+      declining leaves the document byte-identical. Done on a row with two scores and a due date typed into
+      Q2 opens *Move it to Q2?* over the editor — *2 scores move from Q1 to Q2.*, *Q1’s grades stop counting
+      them and Q2’s start. If Q1’s grades are already in the SIS, they will no longer match.*, buttons *Move
+      it to Q2* and *Keep it in Q1* — and `JSON.stringify` of the whole document after a flush is identical
+      to before Done. Escape on the confirm goes back to the editor, writing nothing. *Keep it in Q1* closes
+      both dialogs and the whole document is byte-identical after a flush, `rev` unmoved. Reopening that row
+      and closing it with no date changed asks nothing and moves nothing (ruling 5). With a new date, *Move
+      it to Q2* writes the move with `rev` +1, the score column byte-identical, and the list goes to Q2
+      saying *Its 2 scores went with it.* **Mutation-proved** (M4, M7).
+- [x] An old backup restores with every `termId` unchanged. The run's own document — carrying a row filed in
+      Q1 and due in Q2, exactly what a build before this one leaves — is put through
+      `backup.restoreFromText()` and `confirmRestore()` and a reload; every assignment's `termId` matches the
+      file's, and opening and closing that row with no date changed leaves it in Q1 and writes nothing. No
+      migration and no `SCHEMA_VERSION` bump: nothing in `src/store.js` or `newYearDocument()` moved.
+      **Mutation-proved** (M5).
+- [x] The copy dialog's source moves with its due date on confirm. The source (Q1, one score) with its due
+      date typed as 2026-11-09 on the source line reads *this assignment · Q1 · moves to Q2 on saving*, and
+      its amber line says *Saving moves this assignment from Q1 to Q2, the term its due date is in. Its 1
+      score goes with it: …* before the confirm; the confirm writes its due date and Q2 in the same
+      `update()` as the copy (`rev` +1), the copy lands in P2's Q2, and the list follows the source to Q2.
+      `copy-class.mjs`'s two checks that confirmed a source with a blank due date now assert ruling 3's copy
+      (2026-11-05 and 2026-11-04 into `due`, the term unchanged in both) — rewritten for the ruling, the cause
+      the brief named in advance. **Mutation-proved** (M6).
+- [x] `CACHE` in `sw.js` is `planbook-shell-v169` (was v168).
+- [x] 👤 On the iPad, after a force-quit: edit a scored assignment's due date across a term edge, read the
+      warning, confirm, and read both terms' lists and grades.
+      *(Read by the owner on the iPad 2026-10-07, after a force-quit, on v169: every item on the
+      checklist confirmed as written, including both terms' grades after the move.)*
+
+**Mutation round.** Made in a throwaway copy of the tree under the session scratch directory, never in the
+working tree, each mutation written by a script that put the file back byte for byte after the run and
+said so; `grep -rn MUTATION src/ tools/` over the delivered tree reads only the comments that were there
+before. The copy ran a two-section subset — the year store and `verify/assignments.mjs` — in which the
+older WO-3.3 section skips (its fixture comes from sections the subset leaves out) and the WO-3.50 block
+plants its own. **Control, unmutated:** `48 checks · 47 passed · 0 failed · 1 skipped`, 57s, all 21
+WO-3.50 checks green; the same subset under `--today=2026-11-10` likewise, the create landing in Q2.
+
+| Mutation | Result |
+|---|---|
+| M1 · `dismissModal()` stops asking the guard — Done, the ✕, Escape and the backdrop close straight away | **10 red**: the Done move, Escape and backdrop, both fill checks, both stops, and all three confirm checks. The other-row check stays green, correctly: that door asks `settleEditor()` itself. |
+| M2 · `createAssignment()` keeps the term on screen (`if (placed) …` deleted) — v168's filing | **3 red**: the create check (filed in Q2 on 2026-10-07, list on Q2), the Done-after-create check, and the Cancel check. |
+| M3 · **the trap**: the term worked out on `input`, in `editAssignmentField()` | **7 red, then the section throws after 17 of its checks** (`44 checks · 35 passed · 8 failed`, the eighth the throw): the typing check (filed in Q2 while the editor was still open), the Done, Escape-and-backdrop and other-row checks (nothing left for the close to move, `rev` unmoved), and the three confirm checks — the scored row had left Q1 as its date was typed, so the confirm never opened, and the next Edit was not on Q1's list to press. |
+| M4 · a scored move written without asking | **5 red**: the confirm never opens, the document changes before any answer, *Keep* has nothing to keep, and the row is already in Q2. |
+| M5 · ruling 5 off — every close re-plans, date edited or not | **2 red**: reopening the declined row and closing it opens the confirm again; the restored old row does the same. |
+| M6 · `confirmCopy()` keeps the source's term (WO-3.49's ruling 5) | **1 red**: the source written with its due date and still in Q1. |
+| M7 · *Keep it in Q1* writes the plan anyway | **3 red**: Keep's byte-identical check (`rev` +1), and the two after it, which find the row already in Q2. |
+| M8 · ruling 3 off — a blank due date stays blank at the close | **2 red**: both fill checks (`due` still blank; the second still moves, by its assigned date, which is WO-3.49's copy rule and not this one). |
+
+**Full run on the delivered tree:** `1832 checks · 1832 passed · 0 failed · 0 skipped`, 57,962 lines,
+31.6 lines per check, 852s, exit 0, 2026-10-07 on the real clock — the 1811 before it and the 21 new.
+
+**Under `--today=2026-11-10`** (Quarter 2, across the term edge from the real clock's Quarter 1):
+`1832 checks · 1832 passed · 0 failed · 0 skipped`, 57,962 lines, 842s, exit 0, and the run says *THE CLOCK
+WAS MOVED … 2026-11-10*. Its 1832 titles were diffed against the real-clock run's 1832: six differ, and
+each only by the date or term it prints in its own title — this block's three create checks (*Q1 on
+2026-10-07 … showing Q2* / *Q2 on 2026-11-10 … showing Q1*), WO-3.49's create-door check, and the two
+WO-2.56 state-line checks. Nothing skipped in either run.
+
+**The first `--today=2026-11-10` run of this tree was red, and the cause was the harness, not the app.**
+WO-3.3's section in `assignments.mjs` creates *Unit 1 test* and types 2026-09-14 / 2026-09-18 into it. On
+a Quarter 2 clock the new assignment goes into Q2 (today's term), and Done then moves it back to Q1 by its
+due date — which is this work order working — so five of that section's checks read one assignment where
+they expected two, and it threw before reaching this block (`1808 checks · 1802 passed · 6 failed`). The
+section now asks `termContaining()` whether 2026-09-18 picks the term the first assignment went into, and
+types today's date into both fields when it does not. On the real clock it still types 2026-09-14 /
+2026-09-18; under Q2 it types 2026-11-10. (A first attempt compared the dates to that one term's edges and
+went red again on the same run, because the terms this run leaves overlap and the app answers an overlap
+first-match. The app's own predicate is the only honest one to ask.)
+
+**What no headless run can say.** The 👤 line above: a scored assignment's due date moved across a term
+edge on the iPad after a force-quit, the warning read, confirmed, and both terms' lists and grades read.
+The backdrop press here is a mouse at the viewport's edge rather than a thumb, the date is typed into
+Edge's field rather than picked on WebKit's wheel, and no check reads the grades on the score grid or a
+student's page after a move — the move changes `termId` and nothing else, and those screens read
+`termId`, but that is an argument and not a reading.
+
+**Two limits, stated rather than built around.** The move happens at the close, so a due date typed
+into another term on an editor that never closes — the app killed, the iPad's battery, a reload with the
+dialog up — is written and **not** moved: the next time a date on that row is edited and the editor
+closes, it is. And the copies the copy dialog writes are still WO-3.49's: a copy with a blank due date
+keeps it blank, placed by its assigned date, while the source beside it now takes ruling 3's copy.
+
 ### WO-3.51 — no check presses the copy dialog's source-line Clears
 
 **What this changes.** Harness only — nothing in `src/`, `index.html` or `sw.js` moved, and `CACHE` is
@@ -10826,6 +10963,10 @@ is WO-3.50's sixth ruling, and the confirm check compares the saved source field
       WO-3.49 English I P1 and copy into 2 classes* and is enabled; pressing it moves `rev` by exactly one
       (309 → 310), the source is saved with `due: ''` and every other field but `termId` as it was, and
       the two copies are written in that same `update()`, each on 2026-11-05 with a blank due date.
+      *(True when ticked, and no longer since WO-3.50, 2026-10-07: its ruling 3 has a blank due date
+      take the assigned date at the confirm, so the source is now saved with `due: '2026-11-05'`, still
+      in Q2. The copies keep their blank due dates. `copy-class.mjs` asserts the new value and says
+      why at the check; it was rewritten for the ruling, not for a defect.)*
 - [x] Mutation-proved — below.
 
 **Mutation round.** Made in a throwaway copy of the tree under the session scratch directory, never in

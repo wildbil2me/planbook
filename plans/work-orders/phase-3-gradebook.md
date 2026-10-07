@@ -3933,7 +3933,7 @@ do not copy `held` or `committedAt`.
 
 ## WO-3.50 — the due date picks an assignment's term in the editor too
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.49
+**Ship** — · **Status** ✅ DONE — 2026-10-07 · **Size** M · **Depends on** WO-3.49
 **Closes roadmap** *(no box. Owner-directed, 2026-10-06.)*
 
 **Booked 2026-10-06**, owner-directed, alongside
@@ -3973,18 +3973,20 @@ scored-move warning, WO-3.49's source save, harness checks in `tools/verify/assi
 `--today=` across a term edge), `TESTING.md` § WO-3.50, and a `CACHE` bump.
 
 **Acceptance**
-- [ ] Creating an assignment files it under the term holding today, and the list shows that term.
-- [ ] Typing a due date in another term does not move the assignment until the editor closes. Then it
+- [x] Creating an assignment files it under the term holding today, and the list shows that term.
+- [x] Typing a due date in another term does not move the assignment until the editor closes. Then it
       moves once, `rev` moves by one, and the list says where it went.
-- [ ] Closing with a blank due date and an assigned date writes the assigned date into `due` and files
+- [x] Closing with a blank due date and an assigned date writes the assigned date into `due` and files
       by it. Both blank, or dates no term holds, leave the term unchanged, and the editor says so.
-- [ ] Closing on a move that carries scores names both terms and the score count before writing, and
+- [x] Closing on a move that carries scores names both terms and the score count before writing, and
       declining leaves the document byte-identical.
-- [ ] An old backup restores with every `termId` unchanged.
-- [ ] The copy dialog's source moves with its due date on confirm.
-- [ ] `CACHE` in `sw.js` is bumped.
-- [ ] 👤 On the iPad, after a force-quit: edit a scored assignment's due date across a term edge, read
+- [x] An old backup restores with every `termId` unchanged.
+- [x] The copy dialog's source moves with its due date on confirm.
+- [x] `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the iPad, after a force-quit: edit a scored assignment's due date across a term edge, read
       the warning, confirm, and read both terms' lists and grades.
+      *(Read by the owner on the iPad 2026-10-07, after a force-quit, on v169: confirmed as written,
+      including both terms' grades on the score grid and a student's page after the move.)*
 
 **Traps** — **CLAUDE.md's "the grade must never change because a date rolled over" is about the
 clock, and this is a date the teacher typed.** Keep the distinction explicit in the code: nothing
@@ -4025,6 +4027,11 @@ through the button, the way `clearOn()` presses P7's, and read the result.
       reopening the dialog shows the source's stored dates.
 - [x] After a source Clear, the confirm saves the source with that date empty, in the same single
       `update()` as the copies, and the confirm label reads *Save … and copy into N classes*.
+      *(True when ticked, and no longer since
+      [WO-3.50](#wo-350--the-due-date-picks-an-assignments-term-in-the-editor-too), 2026-10-07: a
+      blank due date now takes the assigned date at the confirm, so the source is saved with its
+      assigned date in `due` rather than empty, and filed by it. The check in `copy-class.mjs` was
+      rewritten to that in the same work order; the rest of this line stands.)*
 - [x] Mutation-proved: with the `sourceField` branch in `copyFieldCleared()` removed, at least one of
       these checks goes red. Recorded in `TESTING.md` § WO-3.51. **The mutation is reverted before
       anything else is written** (`AGENTS.md`).

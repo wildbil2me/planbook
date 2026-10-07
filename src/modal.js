@@ -20,6 +20,10 @@
     - a click on the backdrop closes it,
     - closing returns focus to whatever opened it.
 
+  Escape, the backdrop and every `data-modal-close` go through dismissModal(), which asks a dialog's
+  close guard first if it has one (WO-3.50; one dialog does). closeModal() is the unguarded close a
+  module calls once it has decided.
+
   The focus trap and the open-modal stack are lifted from Roll Call! (src/dashboard.html
   ~line 1944), which keeps a hand-maintained MODAL_REGISTRY of every modal id. That list
   is a thing to forget to update, so here the stack is built at open time instead: any
@@ -100,7 +104,7 @@ export function openModal(overlay, opener) {
   entry.onClick = (e) => {
     /* Both press and release must land on the backdrop. Press-inside-release-outside is
        someone dragging a text selection, not a dismissal. */
-    if (e.target === el && entry.pressedBackdrop) closeModal(el);
+    if (e.target === el && entry.pressedBackdrop) dismissModal(el);
     entry.pressedBackdrop = false;
   };
   el.addEventListener('mousedown', entry.onPress);
@@ -120,6 +124,41 @@ export function openModal(overlay, opener) {
     panel.setAttribute('tabindex', '-1');
     panel.focus({ preventScroll: true });
   }
+}
+
+/*
+  A GUARD ON THE TEACHER'S OWN WAYS OUT OF ONE DIALOG (WO-3.50), and the reason closing has two
+  doors in this file rather than one.
+
+  The assignment editor writes every field as it is typed, so closing it has always cost nothing —
+  until the due date started picking the term, and the owner ruled that the pick happens when the
+  editor CLOSES, never per keystroke. So closing that one dialog can now write, or can need to ask
+  first (a move that carries scores), and every gesture that closes it has to pass through the same
+  question: the ✕, Done, Escape and the backdrop. A close that skipped it would be a due date typed
+  into Quarter 2 on work still filed in Quarter 1, with nothing on screen to say so.
+
+  dismissModal() is those gestures. It asks the overlay's guard, if it has one, and closes only on a
+  yes; a no leaves the dialog up, and the guard is what puts something on screen to say why.
+  closeModal() stays unguarded on purpose: it is what a module calls when it has ALREADY decided —
+  a confirm that has written, a Cancel that removed the row, a delete that took the assignment —
+  and a guard asked again there would ask a question its own caller has just answered.
+
+  ONE GUARD PER OVERLAY, keyed by id, set once at load by whoever owns what closing means. A
+  dialog with no guard closes exactly as it always has.
+*/
+const guards = new Map();
+
+export function setCloseGuard(overlayId, guard) {
+  if (typeof guard === 'function') guards.set(overlayId, guard);
+  else guards.delete(overlayId);
+}
+
+export function dismissModal(overlay) {
+  const el = resolve(overlay);
+  if (!el) return;
+  const guard = guards.get(el.id);
+  if (guard && !el.classList.contains('hidden') && guard() === false) return;
+  closeModal(el);
 }
 
 export function closeModal(overlay) {
@@ -152,7 +191,7 @@ document.addEventListener('keydown', (e) => {
 
   if (e.key === 'Escape') {
     e.preventDefault();
-    closeModal(entry.overlay);
+    dismissModal(entry.overlay);
     return;
   }
 

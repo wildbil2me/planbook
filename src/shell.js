@@ -18,7 +18,8 @@
       data-modal-open="<overlayId>"   opens that overlay. `aboutModal` is the one exception and it
                                       is handled in the listener rather than here: its last line is
                                       written from Cache Storage before the panel is shown (WO-8.10)
-      data-modal-close                closes the overlay it sits inside
+      data-modal-close                closes the overlay it sits inside, asking its close guard first
+                                      if it has one (the assignment editor, WO-3.50)
       data-pill-group                 on a container: its .pill children single-select
       data-install-dismiss            snoozes the install banner
       data-update-reload              the update strip's Reload (WO-8.17): saves, then reloads onto
@@ -193,14 +194,20 @@
       data-assignment-move-down="<id>"  one place later
       data-assignment-duplicate="<id>"  opens the copy dialog — into other sections of the course
       data-assignment-copy-door       the editor's Copy into other classes…, shown during a create:
-                                      closes the editor and opens the copy dialog on the new one
+                                      settles the editor's dates (WO-3.50), closes it, and opens the
+                                      copy dialog on the new one
+      data-assignment-move-confirm    the scored-move confirm's Move it to <term> (WO-3.50): files the
+                                      assignment under the term its due date is in, scores and all,
+                                      and closes it and the editor behind it
+      data-assignment-move-keep       its Keep it in <term>: closes both, having written nothing
       data-assignment-copy-class="<id>"  the tick on one class's line of the copy dialog (WO-3.48, a
                                       line since WO-3.49); a tick matches that class's category BY
                                       NAME, never by carrying an id across, and starts both dates on
                                       the source line's
       data-assignment-copy-confirm    writes one copy per ticked class, each with a new id, the term
                                       its own dates pick and no scores, and the source line's held
-                                      edits, all in one update()
+                                      edits — with the term its due date then picks (WO-3.50) — all
+                                      in one update()
       data-assignment-copy-cancel     abandons it, having written nothing
       data-assignment-delete="<id>"   opens the confirm that counts the scores it takes with it —
                                       empty on the editor's own Delete…, meaning "the open one"
@@ -779,7 +786,7 @@
     in is a modal that flickers.
 */
 
-import { openModal, closeModal, anyModalOpen } from './modal.js';
+import { openModal, closeModal, dismissModal, setCloseGuard, anyModalOpen } from './modal.js';
 import { announce } from './live-region.js';
 import { getPref, setPref } from './prefs.js';
 import { refreshInstallBanner, dismissInstallBanner, isInstalled } from './install-banner.js';
@@ -1360,6 +1367,39 @@ function afterLetterScaleChange() {
   the line would put Quarter 1's scores under a header saying Quarter 2, one keystroke from being
   overwritten.
 */
+/*
+  THE ASSIGNMENT EDITOR CLOSING, WHICH CAN NOW WRITE (WO-3.50). The due date picks an assignment's term
+  when the editor closes, so the close is a write like any other in this file and owes the same
+  repaint — and it is reached from four gestures, two of which never pass through this file's click
+  handler at all (Escape and the backdrop live in src/modal.js). So the editor gets a CLOSE GUARD:
+  src/modal.js asks it before any of the four closes the dialog, and this is where it is set, because
+  this is where the screens an assignment is drawn on are known.
+
+  `follows` is whether a term-filtered screen is up behind the dialog — the list or the score grid —
+  which is when a moved row takes the open term with it. From the calendar or a student's page the
+  open term is left alone; src/assignments.js says where the work went instead.
+
+  The repaint is afterAssignmentChange(), which covers the grid, the detail and the calendar, plus the
+  list, which that chain leaves out because src/assignments.js repaints its own screen after its own
+  writes — and the guard's caller is src/modal.js, which repaints nothing.
+*/
+function editorFollows() {
+  const view = views.currentView();
+  return view === 'assignments' || view === 'scores';
+}
+
+function afterEditorSettled(result) {
+  if (!result || !result.wrote) return;
+  afterAssignmentChange();
+  if (views.currentView() === 'assignments') assignments.renderAssignments();
+}
+
+setCloseGuard('assignmentModal', () => {
+  const result = assignments.settleEditor(editorFollows());
+  afterEditorSettled(result);
+  return result.close;
+});
+
 function afterTermChange() {
   const view = views.currentView();
   if (view === 'assignments') assignments.renderAssignments();
@@ -2288,7 +2328,9 @@ document.addEventListener('click', (e) => {
   const close = e.target.closest('[data-modal-close]');
   if (close) {
     const overlay = close.closest('.modal-overlay');
-    if (overlay) closeModal(overlay);
+    /* dismissModal(), not closeModal(): the ✕ and Done are the teacher closing, and a dialog with a
+       close guard — the assignment editor, since WO-3.50 — is asked first (src/modal.js says why). */
+    if (overlay) dismissModal(overlay);
     return;
   }
 
@@ -2891,7 +2933,15 @@ document.addEventListener('click', (e) => {
       assignmentCopy);
     return;
   }
-  if (e.target.closest('[data-assignment-copy-door]')) { assignments.openCopyFromCreate(); return; }
+  if (e.target.closest('[data-assignment-copy-door]')) {
+    afterEditorSettled(assignments.openCopyFromCreate(editorFollows())); return;
+  }
+  /* THE SCORED-MOVE CONFIRM (WO-3.50), over the editor: move it, or keep it where it is. Its ✕ and
+     Escape are data-modal-close and src/modal.js, and take the teacher back to the editor. */
+  if (e.target.closest('[data-assignment-move-confirm]')) {
+    afterEditorSettled(assignments.confirmEditorMove()); return;
+  }
+  if (e.target.closest('[data-assignment-move-keep]')) { assignments.keepEditorTerm(); return; }
   const copyClass = e.target.closest('[data-assignment-copy-class]');
   if (copyClass) {
     assignments.setCopyClass(copyClass.getAttribute('data-assignment-copy-class')); return;
@@ -2901,7 +2951,7 @@ document.addEventListener('click', (e) => {
      also land somewhere the teacher is not looking. The chain asks which view is up rather than
      which class was chosen, which answers both cases with one line. */
   if (e.target.closest('[data-assignment-copy-confirm]')) {
-    assignments.confirmCopy(); afterAssignmentChange(); return;
+    assignments.confirmCopy(editorFollows()); afterAssignmentChange(); return;
   }
   if (e.target.closest('[data-assignment-copy-cancel]')) { assignments.cancelCopy(); return; }
   /* One hook and two doors — the row's own Delete and the Delete… inside the editor, which carries

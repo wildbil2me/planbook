@@ -313,6 +313,26 @@
 .assign-group-orphan.counted { color: #8a6d1a; background: #fff8e6; border-color: #f0dfa8; }
 
 .assign-empty { font-size: 13px; color: #a0aab8; padding: 18px 2px; line-height: 1.6; }
+
+/* WORK THAT ARRIVED FROM ANOTHER TERM (WO-3.50). The due date moved it here, or a new assignment was
+   filed under today's term while another was up, and the list followed. Indigo rather than amber:
+   nothing is wrong — it is the source line's wash and the extra-credit badge's ink, the colour this
+   screen already uses for "this is what you did, said back to you". */
+.assign-moved {
+  margin: 0 0 12px; padding: 8px 12px;
+  border: 1.5px solid #d5dcf5; border-left: 5px solid #5b6fcc; border-radius: 8px;
+  background: #eef2ff; color: #3d4f9e;
+  font-size: 12px; font-weight: 700; line-height: 1.5;
+}
+
+/* NO TERM HOLDS THESE DATES (WO-3.50), in the editor. Amber, `.assign-group-empty`'s: the work stays
+   where it is, which is a thing to read before closing again rather than a thing gone wrong.
+   Qualified with `.modal-body` because it is a <p> in there and `.modal-body p` would win. */
+.modal-body .assign-term-note {
+  margin-top: 10px; padding: 8px 11px; border-radius: 8px;
+  border: 1.5px solid #f0dfa8; background: #fff8e6; color: #8a6d1a;
+  font-size: 12px; font-weight: 700; line-height: 1.5;
+}
 .assign-hint { font-size: 12px; color: #8a9bb0; line-height: 1.6; margin-top: 14px; }
 .assign-hint strong { color: #6b7a8d; }
 
@@ -623,6 +643,13 @@
   .assign-copy-flag { font-size: 13px; }
   .assign-copy-ref { min-height: 44px; padding-left: 32px; font-size: 14px; }
   .assign-copy-door { min-height: 44px; min-width: 44px; }
+  /* THE SCORED-MOVE CONFIRM'S TWO BUTTONS (WO-3.50), in the same pass that added them. Both are
+     `.class-action-btn`, which src/shell.css's coarse block already floors at 44, and they are named
+     here anyway for the reason `.assign-row-btn` above is — one of them moves a column of scores
+     between two terms' grades. The two notes are text, not controls, and only grow to read. */
+  .assign-move-btn { min-height: 44px; min-width: 44px; }
+  .assign-moved { font-size: 13px; }
+  .modal-body .assign-term-note { font-size: 13px; }
   .cat-chip { font-size: 11px; padding: 3px 9px; }
   /* THE PROMPT'S THREE BUTTONS (WO-3.6). `.class-action-btn` already carries the 44px floor in
      src/shell.css's own coarse block, and this line is here anyway for the reason `.assign-row-btn`

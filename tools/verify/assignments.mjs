@@ -436,11 +436,33 @@ if (!classesBooted || !classSeam || !assignSeam) {
       rather than against an empty object. The other half of the line names a displayed grade and is
       re-homed to WO-3.5 in the work order.
     */
+    /*
+      THE TWO DATES TYPED BELOW ARE CHOSEN INSIDE THE TERM THE FIRST ASSIGNMENT WENT INTO (WO-3.50).
+      Since then the due date picks an assignment's term when the editor closes, and a new one goes
+      into the term holding today — so a fixed 2026-09-18 typed on a run whose clock is in Quarter 2
+      (`--today=2026-11-10`) moves this assignment back to Quarter 1 at Done, correctly, and every
+      check below that reads "this term's two assignments" reads one. The dates stay 2026-09-14 and
+      2026-09-18 whenever 2026-09-18 picks that same term — which is the real-clock run in the
+      autumn — or the class has no dated term, which moves nothing; otherwise both are TODAY, which
+      picks the term the first assignment is in by construction (it is due today). Asked of
+      termContaining(), the app's own predicate, rather than compared to the term's edges here: the
+      terms this run leaves may overlap, and it answers an overlap first-match, which a hand compare
+      against one term's start and end got wrong on the first `--today=2026-11-10` run of this fix.
+      Used by every check below that used to name the fixed dates.
+    */
+    const unit = await evalJs(`(function(){
+      var c = window.planbook.classes, id = ${JSON.stringify(src.id)};
+      var undated = !c.getTerms(id).some(c.termIsDated);
+      var hit = c.termContaining(id, '2026-09-18');
+      if (undated || (hit && hit.id === ${JSON.stringify(fresh.made.termId)})) {
+        return { assigned: '2026-09-14', due: '2026-09-18' };
+      }
+      return { assigned: ${JSON.stringify(nodeToday)}, due: ${JSON.stringify(nodeToday)} }; })()`);
     await clickSel('#assignmentsView [data-assignment-new]');
     await typeField('name', 'Unit 1 test');
     await typeField('points', '100');
-    await typeField('assigned', '2026-09-14');
-    await typeField('due', '2026-09-18');
+    await typeField('assigned', unit.assigned);
+    await typeField('due', unit.due);
     await clickSel('#assignmentModal [data-modal-close]');
     const secondId = await evalJs(`(function(){ var d = window.__adoc().assignments
       .filter(function(a){ return a.classId === ${JSON.stringify(src.id)}; });
@@ -636,23 +658,23 @@ if (!classesBooted || !classSeam || !assignSeam) {
        the dialog opened with the source's own class chosen and this tap SWITCHED the one target; the
        checks below read the same proposal either way. */
     /* THE TARGET'S TERM IS THE ONE HOLDING THE COPY'S DUE DATE SINCE WO-3.49, so the target needs a
-       term that holds 2026-09-18 — the run leaves this class's terms as whatever earlier sections
+       term that holds the copy's due date (`unit.due`, above) — the run leaves this class's terms as whatever earlier sections
        made them, and a term with no dates holds no date at all (the line would be blocked, and say
        so). If none holds it, the class's first term is given dates around it for this block and
        handed its own back after the copy below; the seam plants it, because a fixture going in is
        not a claim being made. */
     const dstTerm = await evalJs(`(function(){
       var c = window.planbook.classes, s = window.planbook.store, id = ${JSON.stringify(dst.id)};
-      var planted = null;
-      if (!c.termContaining(id, '2026-09-18')) {
+      var planted = null, due = ${JSON.stringify(unit.due)};
+      if (!c.termContaining(id, due)) {
         s.update(function(d){
           var cls = d.classes.filter(function(x){ return x.id === id; })[0];
           var t = cls.terms[0];
           planted = { id: t.id, start: t.start, end: t.end };
-          t.start = '2026-08-01'; t.end = '2026-12-31';
+          t.start = due < '2026-08-01' ? due : '2026-08-01'; t.end = due > '2026-12-31' ? due : '2026-12-31';
         });
       }
-      var hit = c.termContaining(id, '2026-09-18');
+      var hit = c.termContaining(id, due);
       return { id: hit ? hit.id : '', label: hit ? (String(hit.label || '').trim() || 'an unnamed term') : '',
         planted: planted }; })()`);
     await clickSel('#assignmentsView [data-assignment-duplicate="' + secondId + '"]');
@@ -773,8 +795,8 @@ if (!classesBooted || !classSeam || !assignSeam) {
     /* And the points and both dates came across as they were — a duplicate that dropped the dates
        would be a form to fill in twice, which is what this control exists to stop. */
     check('the copy carries the points and both dates across, and nothing else about the source moved',
-      copied.copy.points === 100 && copied.copy.assigned === '2026-09-14'
-        && copied.copy.due === '2026-09-18'
+      copied.copy.points === 100 && copied.copy.assigned === unit.assigned
+        && copied.copy.due === unit.due
         && JSON.stringify(copied.assignments.filter((a) => a.id === secondId))
           === JSON.stringify(beforeCopy.assignments.filter((a) => a.id === secondId)),
       JSON.stringify({ points: copied.copy.points, assigned: copied.copy.assigned,
@@ -942,7 +964,7 @@ if (!classesBooted || !classSeam || !assignSeam) {
     check('the assignments survive a reload, zero points included',
       survived.length === 2
         && survived.some((a) => a.id === firstId && a.points === 0)
-        && survived.some((a) => a.id === secondId && a.points === 100 && a.due === '2026-09-18'),
+        && survived.some((a) => a.id === secondId && a.points === 100 && a.due === unit.due),
       JSON.stringify(survived.map((a) => a.name + ' @ ' + a.points)));
 
     /*
@@ -1087,5 +1109,514 @@ if (!classesBooted || !classSeam || !assignSeam) {
       'attendance up = ' + backOnAttendance.classShown);
     if (stage.tabs[1] && stage.tabs[1] !== src.id) await clickSel('#classTabBar [data-class-tab]', 1);
   }
+}
+
+/* ───────────────── the due date picks an assignment's term, in the editor too (WO-3.50) ─────────────────
+
+  The owner's rule, from the school's SIS: a term is never named; the due date places the work. WO-3.49
+  applied it to copies; this block holds the editor to it, and the copy dialog's source line.
+
+  ITS OWN FIXTURE, PLANTED AND TAKEN BACK OUT, like the WO-3.49 block in `copy-class.mjs`: three English
+  classes — P1 with a dated Q1 (2026-08-24 to 10-31) and Q2 (11-01 to 2027-01-22) and two students,
+  P2 the same quarters for a copy to land in, and P3 whose one term has no dates — and ten assignments
+  in P1's Q1, each the subject of one claim, so no check reads a row another check has moved. The seam
+  plants and reads; every gesture is the teacher's: + New assignment, Edit, a due date typed through
+  the field's `input` (the keystroke path, including the blank WO-1.47 says a half-typed date reports),
+  the date Clears pressed, Done, the ✕, Escape, a press on the backdrop, the scored-move confirm's two
+  buttons and its Escape, the copy dialog's tick, source due and confirm, and the term strip.
+
+  THE CLOCK. Acceptance 1 files a new assignment under the term holding TODAY, so the expected term is
+  worked out here from the fixture's dates and `nodeToday` — Q1 on a real-clock run in October, Q2
+  under `--today=2026-11-10` — and the list is put on the OTHER quarter first, so the switch is always
+  exercised. Outside both quarters the work stays on the quarter on screen, and that is asserted too.
+  Nothing else in the block depends on the date: every other date is typed.
+
+  WHAT IS NOT HERE AND IS OWED TO A HUMAN: the work order's last Acceptance line — a scored assignment's
+  due date moved across a term edge on a real iPad after a force-quit, the warning read, confirmed,
+  and both terms' lists and grades read. The backdrop press here is a mouse at the viewport's edge, and
+  the date is typed into Edge's field, not WebKit's picker.
+*/
+console.log('\n--- the due date picks an assignment\'s term in the editor (WO-3.50) ---');
+{
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const flush = () => evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+  const P1 = 'c_wo350_p1', P2 = 'c_wo350_p2', P3 = 'c_wo350_p3';
+  const T1 = 'tm350_q1', T2 = 'tm350_q2', U1 = 'tm350_u1';
+  const LABEL = { [T1]: 'Q1', [T2]: 'Q2' };
+  const Q1 = ['2026-08-24', '2026-10-31'], Q2 = ['2026-11-01', '2027-01-22'];
+  const SCORED = 'a350_scored', PLAIN = 'a350_plain', ESC = 'a350_esc', BACK = 'a350_back',
+    FILL = 'a350_fill', NONE = 'a350_none', OUT = 'a350_out', OLD = 'a350_old', SRC = 'a350_src',
+    UND = 'a350_undated', SWAP = 'a350_swap';
+
+  await flush();
+  await send('Emulation.setDeviceMetricsOverride',
+    { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+  await send('Page.reload');
+  await sleep(600);
+  await waitForBoot();
+  await evalJs(KILL_ANIM);
+  await evalJs(INSTALL_WALKER);
+
+  const plant350 = await evalJs(`(async function(){
+    var s = window.planbook.store, c = window.planbook.classes;
+    if (!s || !c || !s.getDoc()) return { ok:false, why:'no seam or no open year' };
+    var Q1 = ${JSON.stringify(Q1)}, Q2 = ${JSON.stringify(Q2)};
+    s.update(function(doc){
+      if (!Array.isArray(doc.assignments)) doc.assignments = [];
+      if (!doc.scores) doc.scores = {};
+      doc.students.push({ id:'wo350-s1', first:'Imogen', last:'Pryce' });
+      doc.students.push({ id:'wo350-s2', first:'Tobias', last:'Wren' });
+      function cls(id, name, terms, cats, roster){
+        doc.classes.push({ id:id, name:name, archived:false, letterScale:null, roster:roster || [],
+          terms:terms, categories:cats });
+      }
+      cls('${P1}', 'WO-3.50 English I P1',
+        [{ id:'${T1}', label:'Q1', start:Q1[0], end:Q1[1] }, { id:'${T2}', label:'Q2', start:Q2[0], end:Q2[1] }],
+        [{ id:'k350_p1', name:'Essays', weight:100 }], ['wo350-s1', 'wo350-s2']);
+      cls('${P2}', 'WO-3.50 English I P2',
+        [{ id:'tm350_p2a', label:'Q1', start:Q1[0], end:Q1[1] }, { id:'tm350_p2b', label:'Q2', start:Q2[0], end:Q2[1] }],
+        [{ id:'k350_p2', name:'Essays', weight:100 }]);
+      cls('${P3}', 'WO-3.50 English IV P3',
+        [{ id:'${U1}', label:'Q1', start:'', end:'' }], [{ id:'k350_p3', name:'Essays', weight:100 }]);
+      function a(id, name, assigned, due, classId, termId){
+        doc.assignments.push({ id:id, classId:classId || '${P1}', termId:termId || '${T1}',
+          categoryId: classId === '${P3}' ? 'k350_p3' : 'k350_p1', name:name, points:50,
+          assigned:assigned, due:due });
+      }
+      a('${SCORED}', 'WO-3.50 Scored essay', '2026-10-15', '2026-10-20');
+      a('${PLAIN}', 'WO-3.50 Plain', '2026-10-16', '2026-10-21');
+      a('${ESC}', 'WO-3.50 Escaped', '2026-10-16', '2026-10-22');
+      a('${BACK}', 'WO-3.50 Backdrop', '2026-10-16', '2026-10-23');
+      a('${FILL}', 'WO-3.50 Fill', '2026-10-14', '2026-10-24');
+      a('${NONE}', 'WO-3.50 No dates', '2026-10-13', '2026-10-25');
+      a('${OUT}', 'WO-3.50 Outside', '2026-10-13', '2026-10-26');
+      a('${SWAP}', 'WO-3.50 Swapped', '2026-10-13', '2026-10-27');
+      /* What a build before this one leaves: filed in Q1, due in Q2. Ruling 5 keeps it there. */
+      a('${OLD}', 'WO-3.50 Old row', '2026-10-13', '2026-11-20');
+      a('${SRC}', 'WO-3.50 Source', '2026-10-12', '2026-10-19');
+      a('${UND}', 'WO-3.50 Undated', '2026-10-13', '2026-10-20', '${P3}', '${U1}');
+      doc.scores['${SCORED}'] = { 'wo350-s1': { v:40 }, 'wo350-s2': { v:45 } };
+      doc.scores['${OLD}'] = { 'wo350-s1': { v:30 } };
+      doc.scores['${SRC}'] = { 'wo350-s1': { v:9 } };
+    });
+    c.selectClass('${P1}'); c.selectTerm('${T1}'); c.refreshClassBar();
+    await s.flush();
+    return { ok:true, classes: s.getDoc().classes.filter(function(x){ return /^c_wo350_/.test(x.id); }).length,
+      assignments: s.getDoc().assignments.filter(function(x){ return /^a350_/.test(x.id); }).length };
+  })()`);
+  check('WO-3.50: the fixture planted cleanly — three classes (P1 and P2 with dated quarters, P3 with an '
+    + 'undated term) and eleven assignments, all but one in P1\'s Q1',
+    plant350.ok === true && plant350.classes === 3 && plant350.assignments === 11, JSON.stringify(plant350));
+
+  /* Onto a class's assignment list through its home card and the switcher, then onto a term by its tab,
+     the way a teacher gets there. */
+  const toList = async (classId, termId) => {
+    const nth = await evalJs(`(function(){ var all = document.querySelectorAll('[data-view-home]');
+      for (var i = 0; i < all.length; i++) { var r = all[i].getBoundingClientRect();
+        if (r.width > 0 && r.height > 0) return i; } return -1; })()`);
+    if (nth >= 0) { await clickSel('[data-view-home]', nth); await sleep(250); }
+    await clickSel('#homeGrid [data-class-tab="' + classId + '"]');
+    await sleep(250);
+    await clickSel('#classView [data-class-screen="assignments"]');
+    await sleep(250);
+    await clickSel('#termNav [data-term-select="' + termId + '"]');
+    await sleep(200);
+  };
+  /* One read of everything a check below asks about, after a flush: update() only schedules a save,
+     and `rev` moves when it lands (WO-5.3's harness). */
+  const READ350 = `(function(){ var d = window.planbook.store.getDoc();
+    var a = {}; d.assignments.forEach(function(x){ if (/^a350_/.test(x.id)) a[x.id] = { termId:x.termId,
+      assigned:x.assigned, due:x.due }; });
+    function shown(id){ var el = document.getElementById(id); return !!el && !el.classList.contains('hidden'); }
+    function text(id){ var el = document.getElementById(id); return el ? el.textContent.replace(/\\s+/g, ' ').trim() : ''; }
+    return { rev: d.rev, a: a,
+      created: d.assignments.filter(function(x){ return x.classId === '${P1}' && !/^a350_/.test(x.id); })
+        .map(function(x){ return { id:x.id, termId:x.termId, assigned:x.assigned, due:x.due }; }),
+      summary: text('assignmentsSummary'),
+      rows: Array.prototype.map.call(document.querySelectorAll('#assignmentsBody .assign-name'),
+        function(n){ return n.textContent; }),
+      active: Array.prototype.map.call(document.querySelectorAll('#termNav [data-term-select].active'),
+        function(b){ return b.getAttribute('data-term-select'); }),
+      note: shown('assignmentsMoved') ? text('assignmentsMoved') : '',
+      termNote: shown('assignmentTermNote') ? text('assignmentTermNote') : '',
+      editorOpen: shown('assignmentModal'), moveOpen: shown('assignmentMoveModal'),
+      moveTitle: text('assignmentMoveTitle'), moveLead: text('assignmentMoveLead'),
+      moveFacts: text('assignmentMoveFacts'), moveBtn: text('assignmentMoveBtn'), moveKeep: text('assignmentMoveKeep'),
+      said: (document.getElementById('srLive') || {}).textContent || '',
+      scored: JSON.stringify(d.scores['${SCORED}'] || null) }; })()`;
+  const read = async () => { await flush(); return evalJs(READ350); };
+  const WHOLE = '(async function(){ await window.planbook.store.flush(); return JSON.stringify(window.planbook.store.getDoc()); })()';
+  /* A date typed the way a keystroke or a picker sets it: `.value`, then `input`, which is what
+     src/shell.js reads — the path that writes on every keystroke, and the one ruling 2 forbids
+     deriving a term on. */
+  const typeDate = async (field, value) => {
+    await evalJs(`(function(){ var f = document.querySelector('#assignmentFields [data-assignment-field="${field}"]');
+      if (!f) return 0; f.value = ${JSON.stringify(value)};
+      f.dispatchEvent(new Event('input', { bubbles: true })); return 1; })()`);
+    await sleep(120);
+  };
+  const clearDate = async (field) => {
+    await clickSel('#assignmentFields [data-date-field]:has([data-assignment-field="' + field + '"]) [data-date-clear]');
+  };
+  const edit = async (id) => { await clickSel('#assignmentsView [data-assignment-edit="' + id + '"]'); await sleep(150); };
+  const done = async () => { await clickSel('#assignmentModal .modal-actions [data-modal-close]'); await sleep(150); };
+  const escape = async () => {
+    await evalJs("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); 1");
+    await sleep(150);
+  };
+  const closeAll350 = () => evalJs("['assignmentMoveModal','assignmentCopyModal','assignmentModal','restoreConfirmModal','backupModal']"
+    + ".forEach(function(m){ window.planbook.closeModal(m); }); 1");
+
+  /* ── ACCEPTANCE 1: A NEW ASSIGNMENT GOES INTO THE TERM HOLDING TODAY ── */
+  const todayTerm = nodeToday >= Q1[0] && nodeToday <= Q1[1] ? T1
+    : nodeToday >= Q2[0] && nodeToday <= Q2[1] ? T2 : '';
+  const viewOn = todayTerm === T1 ? T2 : T1;
+  const wantTerm = todayTerm || viewOn;
+  await toList(P1, viewOn);
+  const preCreate = await read();
+  await clickSel('#assignmentsView [data-assignment-new]');
+  await sleep(150);
+  const created = await read();
+  const made = created.created[0] || null;
+  check('WO-3.50: a new assignment is filed under the term holding today (' + (todayTerm ? LABEL[todayTerm]
+    : 'none — it stays on ' + LABEL[viewOn]) + ' on ' + nodeToday + ') from a list showing ' + LABEL[viewOn]
+    + ', and the list shows that term — its summary, its term tab, its row — and says why in its note',
+    preCreate.active.join() === viewOn && created.created.length === 1 && !!made
+      && made.termId === wantTerm && made.due === nodeToday && made.assigned === nodeToday
+      && created.editorOpen && created.active.join() === wantTerm
+      && created.summary.indexOf('Assignments · ' + LABEL[wantTerm] + ' · ') === 0
+      && created.rows.some((n) => n === 'Untitled assignment')
+      && (todayTerm
+        ? created.note.indexOf('The new assignment is in ' + LABEL[todayTerm] + ', not ' + LABEL[viewOn]) === 0
+          && /the due date picks the term/.test(created.note)
+        : created.note === ''),
+    JSON.stringify({ today: nodeToday, viewOn, made, active: created.active, summary: created.summary,
+      note: created.note }));
+  await done();
+  const keptCreate = await read();
+  check('WO-3.50: Done on that new assignment, its dates untouched, closes at once and writes nothing — it '
+    + 'stays in ' + LABEL[wantTerm] + ', `rev` unmoved after a flush, the list still on ' + LABEL[wantTerm],
+    !keptCreate.editorOpen && keptCreate.rev === created.rev && keptCreate.created.length === 1
+      && keptCreate.created[0].termId === wantTerm && keptCreate.active.join() === wantTerm,
+    'rev ' + created.rev + ' -> ' + keptCreate.rev + ', term ' + (keptCreate.created[0] || {}).termId);
+  /* The editor's Cancel undoes the create, the list's move included. */
+  await toList(P1, viewOn);
+  await clickSel('#assignmentsView [data-assignment-new]');
+  await sleep(150);
+  const second = await read();
+  await clickSel('#assignmentModal [data-assignment-create-cancel]');
+  await sleep(150);
+  const cancelled = await read();
+  check('WO-3.50: the editor\'s Cancel on such a create removes it and puts the list back on the term it '
+    + 'was showing (' + LABEL[viewOn] + '), with no note left behind',
+    second.created.length === 2 && second.active.join() === wantTerm
+      && cancelled.created.length === 1 && !cancelled.editorOpen
+      && cancelled.active.join() === viewOn && cancelled.note === ''
+      && cancelled.summary.indexOf('Assignments · ' + LABEL[viewOn] + ' · ') === 0,
+    JSON.stringify({ during: second.active, after: cancelled.active, note: cancelled.note }));
+
+  /* ── ACCEPTANCE 2: TYPING MOVES NOTHING; THE CLOSE MOVES IT ONCE ── a due date typed into Q2 the way a
+     keystroke reaches the field, with WO-1.47's transient blank in the middle of it. */
+  await toList(P1, T1);
+  await edit(PLAIN);
+  await typeDate('due', '');
+  const midBlank = await read();
+  await typeDate('due', '2026-11-12');
+  const typed = await read();
+  check('WO-3.50: a due date typed into Q2 moves nothing while the editor is open — through the blank a '
+    + 'half-typed date reports and the full date, the row stays filed in Q1 and on Q1\'s list behind the '
+    + 'dialog, and no term is worked out on `input`',
+    midBlank.a[PLAIN].termId === T1 && midBlank.a[PLAIN].due === '' && midBlank.editorOpen
+      && typed.a[PLAIN].termId === T1 && typed.a[PLAIN].due === '2026-11-12' && typed.editorOpen
+      && typed.active.join() === T1 && typed.rows.indexOf('WO-3.50 Plain') >= 0 && typed.note === ''
+      && typed.termNote === '',
+    JSON.stringify({ midBlank: midBlank.a[PLAIN], typed: typed.a[PLAIN], active: typed.active }));
+  await done();
+  const moved = await read();
+  check('WO-3.50: Done then moves it once — `rev` +1 after a flush, filed in Q2 with its due date '
+    + '2026-11-12 — and the list goes with it to Q2 and says where it came from and why',
+    !moved.editorOpen && moved.a[PLAIN].termId === T2 && moved.a[PLAIN].due === '2026-11-12'
+      && moved.rev === typed.rev + 1
+      && moved.active.join() === T2 && moved.summary.indexOf('Assignments · Q2 · ') === 0
+      && moved.rows.indexOf('WO-3.50 Plain') >= 0
+      && moved.note === '“WO-3.50 Plain” moved here from Q1: its due date, Nov 12, is in Q2, and the due '
+        + 'date picks the term.',
+    JSON.stringify({ rev: [typed.rev, moved.rev], a: moved.a[PLAIN], active: moved.active, note: moved.note }));
+
+  /* The other ways out, each on a row of its own: Escape, and a press on the backdrop. */
+  await toList(P1, T1);
+  await edit(ESC);
+  await typeDate('due', '2026-11-13');
+  const preEsc = await read();
+  await escape();
+  const afterEsc = await read();
+  await toList(P1, T1);
+  await edit(BACK);
+  await typeDate('due', '2026-11-14');
+  const preBack = await read();
+  await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: 8, y: 450, button: 'left', clickCount: 1 });
+  await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: 8, y: 450, button: 'left', clickCount: 1 });
+  await sleep(200);
+  const afterBack = await read();
+  check('WO-3.50: Escape and a press on the backdrop settle the editor the way Done does — each row filed '
+    + 'in Q1 before the close and in Q2 after it, `rev` +1 each, the list on Q2',
+    preEsc.a[ESC].termId === T1 && afterEsc.a[ESC].termId === T2 && afterEsc.rev === preEsc.rev + 1
+      && !afterEsc.editorOpen && afterEsc.active.join() === T2
+      && preBack.editorOpen && preBack.a[BACK].termId === T1 && afterBack.a[BACK].termId === T2
+      && afterBack.rev === preBack.rev + 1 && !afterBack.editorOpen && afterBack.active.join() === T2,
+    JSON.stringify({ esc: [preEsc.a[ESC].termId, afterEsc.a[ESC].termId, preEsc.rev, afterEsc.rev],
+      back: [preBack.a[BACK].termId, afterBack.a[BACK].termId, preBack.rev, afterBack.rev] }));
+
+  /* And the fourth way out: opening another row while the editor is up re-fills it in place, so it is
+     a close of the row it was showing. No door on screen reaches that while the dialog covers the list,
+     so it is driven through the module's own opener on the seam — the function every Edit calls. */
+  await toList(P1, T1);
+  await edit(SWAP);
+  await typeDate('due', '2026-11-16');
+  const preSwap = await read();
+  await evalJs("window.planbook.assignments.openAssignmentEditor('" + NONE + "', null); 1");
+  await sleep(150);
+  const swapped = await read();
+  const swappedName = await evalJs(
+    "(document.querySelector('#assignmentFields [data-assignment-field=\"name\"]') || {}).value");
+  await done();
+  const swapClosed = await read();
+  check('WO-3.50: opening another row while the editor is up settles the row it was showing first — filed '
+    + 'in Q2 by its due date, `rev` +1, the list redrawn without it — and the editor then shows the new '
+    + 'row, which closes untouched',
+    preSwap.editorOpen && preSwap.a[SWAP].termId === T1 && swapped.a[SWAP].termId === T2
+      && swapped.rev === preSwap.rev + 1 && swapped.editorOpen && swappedName === 'WO-3.50 No dates'
+      && swapped.rows.indexOf('WO-3.50 Swapped') === -1
+      && !swapClosed.editorOpen && swapClosed.a[NONE].termId === T1 && swapClosed.rev === swapped.rev,
+    JSON.stringify({ swap: [preSwap.a[SWAP].termId, swapped.a[SWAP].termId], rev: [preSwap.rev, swapped.rev,
+      swapClosed.rev], showing: swappedName, rows: swapped.rows.length }));
+
+  /* ── ACCEPTANCE 3: A BLANK DUE DATE TAKES THE ASSIGNED ONE; NO TERM, NO MOVE, AND THE EDITOR SAYS SO ── */
+  await toList(P1, T1);
+  await edit(FILL);
+  await clearDate('due');
+  const fillOpen = await read();
+  await clickSel('#assignmentModal .modal-header [data-modal-close]');
+  await sleep(150);
+  const filled = await read();
+  check('WO-3.50: a due date Cleared stays blank while the editor is open, and the ✕ writes the assigned '
+    + 'date into it — 2026-10-14 — and files by it (Q1, where it already was), `rev` +1',
+    fillOpen.a[FILL].due === '' && fillOpen.editorOpen
+      && filled.a[FILL].due === '2026-10-14' && filled.a[FILL].assigned === '2026-10-14'
+      && filled.a[FILL].termId === T1 && filled.rev === fillOpen.rev + 1 && !filled.editorOpen,
+    JSON.stringify({ open: fillOpen.a[FILL], closed: filled.a[FILL], rev: [fillOpen.rev, filled.rev] }));
+  await edit(FILL);
+  await typeDate('assigned', '2026-11-03');
+  await clearDate('due');
+  const fillMoveOpen = await read();
+  await done();
+  const fillMoved = await read();
+  check('WO-3.50: with the assigned date typed into Q2 and the due date Cleared, the close copies '
+    + '2026-11-03 into the due date and that due date moves it to Q2, in one save',
+    fillMoveOpen.a[FILL].due === '' && fillMoveOpen.a[FILL].termId === T1
+      && fillMoved.a[FILL].due === '2026-11-03' && fillMoved.a[FILL].termId === T2
+      && fillMoved.rev === fillMoveOpen.rev + 1 && fillMoved.active.join() === T2
+      && /took its assigned date, Nov 3, which is in Q2/.test(fillMoved.note),
+    JSON.stringify({ open: fillMoveOpen.a[FILL], closed: fillMoved.a[FILL], note: fillMoved.note }));
+
+  await toList(P1, T1);
+  await edit(NONE);
+  await clearDate('assigned');
+  await clearDate('due');
+  const bareOpen = await read();
+  await done();
+  const bareStopped = await read();
+  await done();
+  const bareClosed = await read();
+  check('WO-3.50: with both dates Cleared, the first Done stops and the editor says no term holds it and it '
+    + 'stays in Q1, writing nothing; the second Done closes, and it is still in Q1 with both dates blank',
+    bareStopped.editorOpen && /no due date and no assigned date, so no term holds it, and it stays in Q1/
+      .test(bareStopped.termNote)
+      && bareStopped.rev === bareOpen.rev && bareStopped.a[NONE].termId === T1
+      && !bareClosed.editorOpen && bareClosed.a[NONE].termId === T1 && bareClosed.a[NONE].due === ''
+      && bareClosed.a[NONE].assigned === '' && bareClosed.rev === bareOpen.rev,
+    JSON.stringify({ note: bareStopped.termNote, rev: [bareOpen.rev, bareStopped.rev, bareClosed.rev] }));
+
+  await edit(OUT);
+  await typeDate('due', '2027-03-01');
+  const outOpen = await read();
+  await escape();
+  const outStopped = await read();
+  await escape();
+  const outClosed = await read();
+  check('WO-3.50: a due date no term holds (Mar 1, after Q2) stops the first Escape with the editor saying '
+    + 'which side of which term it fell and that it stays in Q1; the second closes, still in Q1',
+    outStopped.editorOpen && /Its due date, Mar 1, falls after Q2, so no term in WO-3\.50 English I P1 holds it, and it stays in Q1/
+      .test(outStopped.termNote)
+      && outStopped.rev === outOpen.rev && !outClosed.editorOpen && outClosed.a[OUT].termId === T1
+      && outClosed.a[OUT].due === '2027-03-01' && outClosed.rev === outOpen.rev,
+    JSON.stringify({ note: outStopped.termNote, a: outClosed.a[OUT] }));
+
+  await toList(P3, U1);
+  await edit(UND);
+  const undOpen = await read();
+  await typeDate('due', '2026-11-12');
+  await done();
+  const undClosed = await read();
+  check('WO-3.50: in a class whose terms have no dates the editor says from the moment it opens that no due '
+    + 'date can pick a term and it stays in Q1 — and Done closes on the first press, the term unchanged',
+    undOpen.editorOpen && /terms has its dates typed in, so no due date can pick a term/.test(undOpen.termNote)
+      && /stays in Q1/.test(undOpen.termNote)
+      && !undClosed.editorOpen && undClosed.a[UND].termId === U1 && undClosed.a[UND].due === '2026-11-12',
+    JSON.stringify({ note: undOpen.termNote, a: undClosed.a[UND] }));
+
+  /* ── ACCEPTANCE 4: A MOVE THAT CARRIES SCORES ASKS FIRST, AND NO IS BYTE-IDENTICAL ── */
+  await toList(P1, T1);
+  await edit(SCORED);
+  await typeDate('due', '2026-11-10');
+  const wholeBefore = await evalJs(WHOLE);
+  const preAsk = await read();
+  await done();
+  const asked = await read();
+  const wholeAsked = await evalJs(WHOLE);
+  check('WO-3.50: Done on a scored assignment due in another term opens the confirm BEFORE writing — it '
+    + 'names both terms and the score count ("2 scores move from Q1 to Q2"), the editor stays up behind it, '
+    + 'and the document is byte-identical after a flush',
+    asked.moveOpen && asked.editorOpen && asked.moveTitle === 'Move it to Q2?'
+      && asked.moveFacts.indexOf('2 scores move from Q1 to Q2.') === 0
+      && /Q1’s grades stop counting them and Q2’s start\. If Q1’s grades are already in the SIS/.test(asked.moveFacts)
+      && asked.moveLead.indexOf('“WO-3.50 Scored essay” is now due Nov 10, which is in Q2, and it is filed in Q1.') === 0
+      && asked.moveBtn === 'Move it to Q2' && asked.moveKeep === 'Keep it in Q1'
+      && wholeAsked === wholeBefore && asked.rev === preAsk.rev && asked.a[SCORED].termId === T1,
+    JSON.stringify({ title: asked.moveTitle, lead: asked.moveLead.slice(0, 120), facts: asked.moveFacts.slice(0, 90),
+      same: wholeAsked === wholeBefore }));
+  await escape();
+  const backInEditor = await read();
+  const wholeEsc = await evalJs(WHOLE);
+  check('WO-3.50: Escape on the confirm goes back to the editor — the confirm shut, the editor up — and '
+    + 'writes nothing',
+    !backInEditor.moveOpen && backInEditor.editorOpen && wholeEsc === wholeBefore,
+    JSON.stringify({ move: backInEditor.moveOpen, editor: backInEditor.editorOpen, same: wholeEsc === wholeBefore }));
+  await done();
+  const askedAgain = await read();
+  await clickSel('#assignmentMoveModal [data-assignment-move-keep]');
+  await sleep(150);
+  const kept = await read();
+  const wholeKept = await evalJs(WHOLE);
+  check('WO-3.50: "Keep it in Q1" closes both dialogs and leaves the whole document byte-identical after a '
+    + 'flush — `rev` unmoved, the assignment in Q1 with its scores',
+    askedAgain.moveOpen && !kept.moveOpen && !kept.editorOpen && wholeKept === wholeBefore
+      && kept.rev === preAsk.rev && kept.a[SCORED].termId === T1 && kept.scored === preAsk.scored,
+    JSON.stringify({ rev: [preAsk.rev, kept.rev], same: wholeKept === wholeBefore }));
+  /* Ruling 5, read off the row just declined: its due date is in Q2 and it is filed in Q1, and an editor
+     in which no date changes re-files nothing. */
+  await edit(SCORED);
+  await done();
+  const untouched = await read();
+  check('WO-3.50: reopening that row and closing it without changing a date asks nothing and moves '
+    + 'nothing — no date was edited, so nothing is re-filed (ruling 5)',
+    !untouched.moveOpen && !untouched.editorOpen && untouched.a[SCORED].termId === T1
+      && untouched.a[SCORED].due === '2026-11-10' && untouched.rev === kept.rev,
+    JSON.stringify({ a: untouched.a[SCORED], rev: [kept.rev, untouched.rev] }));
+  await edit(SCORED);
+  await typeDate('due', '2026-11-11');
+  const preMove = await read();
+  await done();
+  await clickSel('#assignmentMoveModal [data-assignment-move-confirm]');
+  await sleep(150);
+  const movedScored = await read();
+  check('WO-3.50: "Move it to Q2" writes the move in one save — `rev` +1, filed in Q2, its score column '
+    + 'byte-identical — closes both dialogs, and the list goes to Q2 saying the 2 scores went with it',
+    !movedScored.moveOpen && !movedScored.editorOpen && movedScored.a[SCORED].termId === T2
+      && movedScored.a[SCORED].due === '2026-11-11' && movedScored.rev === preMove.rev + 1
+      && movedScored.scored === preMove.scored && movedScored.active.join() === T2
+      && /moved here from Q1: its due date, Nov 11, is in Q2/.test(movedScored.note)
+      && /Its 2 scores went with it\./.test(movedScored.note),
+    JSON.stringify({ a: movedScored.a[SCORED], rev: [preMove.rev, movedScored.rev], note: movedScored.note }));
+
+  /* ── ACCEPTANCE 6: THE COPY DIALOG'S SOURCE MOVES WITH ITS DUE DATE ON CONFIRM ── */
+  await toList(P1, T1);
+  await clickSel('#assignmentsView [data-assignment-duplicate="' + SRC + '"]');
+  await sleep(150);
+  await clickSel('#assignmentCopyList [data-assignment-copy-class="' + P2 + '"]');
+  await evalJs(`(function(){ var f = document.querySelector('[data-assignment-copy-source="due"]');
+    if (!f) return 0; f.value = '2026-11-09'; f.dispatchEvent(new Event('input', { bubbles: true })); return 1; })()`);
+  await sleep(150);
+  const srcLine = await evalJs(`(function(){ var l = document.querySelector('[data-assignment-copy-source-line]');
+    return { sub: ((l && l.querySelector('[data-assignment-copy-source-sub]')) || {}).textContent || '',
+      flag: Array.prototype.map.call(l ? l.querySelectorAll('[data-assignment-copy-source-flag]') : [],
+        function(f){ return f.textContent; }).join(' | '),
+      button: (document.getElementById('assignmentCopyBtn') || {}).textContent }; })()`);
+  const preCopy = await read();
+  await clickSel('#assignmentCopyBtn');
+  await sleep(150);
+  const copied = await read();
+  const copy350 = await evalJs(`(function(){ return window.planbook.store.getDoc().assignments
+    .filter(function(a){ return a.classId === '${P2}'; }).map(function(a){ return { termId:a.termId, due:a.due }; }); })()`);
+  check('WO-3.50: on the copy dialog the source line says before the confirm that saving moves it from Q1 to '
+    + 'Q2 with its 1 score; the confirm writes its due date and its Q2 in the same update() as the copy — '
+    + '`rev` +1 — and the list follows it to Q2',
+    srcLine.sub === 'this assignment · Q1 · moves to Q2 on saving'
+      && /^Saving moves this assignment from Q1 to Q2, the term its due date is in\. Its 1 score goes with it/.test(srcLine.flag)
+      && srcLine.button === 'Save WO-3.50 English I P1 and copy into WO-3.50 English I P2'
+      && preCopy.a[SRC].termId === T1 && copied.a[SRC].termId === T2 && copied.a[SRC].due === '2026-11-09'
+      && copied.rev === preCopy.rev + 1 && copy350.length === 1 && copy350[0].termId === 'tm350_p2b'
+      && copied.active.join() === T2 && /moved here from Q1 when it was saved with its copies/.test(copied.note),
+    JSON.stringify({ line: srcLine, a: copied.a[SRC], rev: [preCopy.rev, copied.rev], copy: copy350,
+      note: copied.note }));
+
+  /* ── ACCEPTANCE 5: AN OLD BACKUP RESTORES WITH EVERY termId UNCHANGED ── This run's own document, taken
+     now, carries OLD exactly as a build before this one leaves a row (filed in Q1, due in Q2) — it is
+     put through the real restore path and a reload, and every assignment's term is compared with the
+     file's. Then OLD is opened and closed with no date changed. */
+  await closeAll350();
+  const backupText = await evalJs(WHOLE);
+  const restored = await evalJs(`(async function(){ var b = window.planbook.backup;
+    var ok = await b.restoreFromText(${JSON.stringify(backupText)}, 'WO-3.50 backup.json');
+    var done = ok ? await b.confirmRestore() : false;
+    await window.planbook.store.flush(); return { ok: ok, done: done }; })()`);
+  await evalJs("window.planbook.closeModal('backupModal'); 1");
+  await send('Page.reload');
+  await sleep(600);
+  await waitForBoot();
+  await evalJs(KILL_ANIM);
+  await evalJs(INSTALL_WALKER);
+  const terms = (doc) => doc.assignments.map((a) => a.id + '=' + a.termId).join(',');
+  const afterRestore = await evalJs('JSON.parse(JSON.stringify(window.planbook.store.getDoc()))');
+  await toList(P1, T1);
+  await edit(OLD);
+  const oldOpen = await read();
+  await done();
+  const oldClosed = await read();
+  check('WO-3.50: a backup restored through the real path and a reload keeps every assignment\'s termId as '
+    + 'the file has it — the old row filed in Q1 and due in Q2 included — and opening and closing that row '
+    + 'without a date changed leaves it in Q1 and writes nothing (no migration, ruling 5)',
+    restored.ok === true && restored.done === true
+      && terms(afterRestore) === terms(JSON.parse(backupText))
+      && afterRestore.assignments.length === JSON.parse(backupText).assignments.length
+      && oldOpen.a[OLD].termId === T1 && oldOpen.a[OLD].due === '2026-11-20'
+      && !oldClosed.editorOpen && oldClosed.a[OLD].termId === T1 && oldClosed.rev === oldOpen.rev,
+    JSON.stringify({ restored, assignments: afterRestore.assignments.length, old: oldClosed.a[OLD],
+      rev: [oldOpen.rev, oldClosed.rev] }));
+
+  /* The fixture comes back out, and the page goes back to the class grid at 1280x900 with touch off,
+     which is what this block received. */
+  await closeAll350();
+  await evalJs(`(async function(){ var s = window.planbook.store;
+    s.update(function(doc){
+      var ids = doc.assignments.filter(function(a){ return /^c_wo350_/.test(a.classId); })
+        .map(function(a){ return a.id; });
+      ids.forEach(function(id){ delete doc.scores[id]; });
+      doc.assignments = doc.assignments.filter(function(a){ return !/^c_wo350_/.test(a.classId); });
+      doc.classes = doc.classes.filter(function(c){ return !/^c_wo350_/.test(c.id); });
+      doc.students = doc.students.filter(function(x){ return !/^wo350-/.test(x.id); });
+    });
+    await s.flush(); return 1; })()`);
+  await send('Page.reload');
+  await sleep(600);
+  await waitForBoot();
+  await evalJs(KILL_ANIM);
+  const gone350 = await evalJs(`(function(){ var d = window.planbook.store.getDoc();
+    return d.classes.filter(function(c){ return /^c_wo350_/.test(c.id); }).length
+      + d.assignments.filter(function(a){ return /^c_wo350_/.test(a.classId); }).length
+      + d.students.filter(function(x){ return /^wo350-/.test(x.id); }).length; })()`);
+  check('WO-3.50: the fixture is gone again — no c_wo350_ class, no assignment in one, no wo350- student',
+    gone350 === 0, gone350 + ' left');
 }
 }

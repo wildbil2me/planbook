@@ -1253,7 +1253,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1805 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1826 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2521,6 +2521,29 @@ and read the follow rule, the held edit, Cancel and the confirm. None sits in a 
 failure arm, so the gap between sites and results stays at −6. The run prints
 `1811 checks · 1811 passed · 0 failed · 0 skipped`, 57,367 lines, 31.7 lines per check, 813s, exit 0,
 2026-10-06 on the real clock. Mutation round in `TESTING.md` § WO-3.51.
+
+**WO-3.50 moved it from 1805 to 1826, and the executed count from 1811 to 1832 — twenty-one sites,
+twenty-one results, and the file count stays where it was.** All twenty-one are in a new block at the
+foot of `verify/assignments.mjs`, labelled `WO-3.50:`, after the WO-3.3 section rather than in a section
+of their own. It reloads, plants three English classes (two with dated Q1 and Q2, one whose term has no
+dates) and eleven assignments, and drives the editor's close through every gesture that makes one —
+Done, the ✕, Escape, a mouse press on the backdrop, and opening another row through the module's own
+opener — plus *+ New assignment* from the quarter that does not hold today, the date Clears, the
+scored-move confirm's two buttons and its Escape, the copy dialog's source line, and one real restore of
+the run's own document through `backup.restoreFromText()` and a reload. It reads `nodeToday` from
+`lib-dates.mjs` for the create, which lands in whichever quarter holds it. It takes its classes back out
+and hands the page back reloaded at 1280x900 with touch off. None sits in a loop and none is a failure
+arm, so the gap between sites and results stays at −6. `verify/copy-class.mjs` changed three checks in
+place and gained no site: two that confirmed a source with a blank due date now assert WO-3.50's ruling 3
+(the assigned date written into it), and the create door's block goes back to Q2 before its next Edit,
+because the create now takes the list to the quarter holding today. The WO-3.3 section of
+`verify/assignments.mjs` changed in place and gained no site: the dates it types for *Unit 1 test* are
+read off the term the first new assignment went into, because a fixed 2026-09-18 on a `--today` run in
+Quarter 2 is now moved back to Quarter 1 at Done — correctly — and five of its checks then read one
+assignment where they expected two (the first `--today=2026-11-10` run of this tree said so, and threw
+before the WO-3.50 block). The run prints
+`1832 checks · 1832 passed · 0 failed · 0 skipped`, 57,962 lines, 31.6 lines per check, 852s, exit 0,
+2026-10-07 on the real clock. Mutation round in `TESTING.md` § WO-3.50.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

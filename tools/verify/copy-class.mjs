@@ -889,7 +889,8 @@ console.log('\n--- one assignment into several classes, one line per class (WO-3
   const essayAfter = JSON.parse(afterCopy.essay);
   const essayBefore = JSON.parse(docBefore349.essay);
   check('WO-3.49: the source\'s held edit is written on confirm in the SAME update() as the copies — `rev` '
-    + 'moved by exactly one — its due date now 2026-11-19, everything else as it was, its termId kept (ruling 5)',
+    + 'moved by exactly one — its due date now 2026-11-19, everything else as it was, its termId kept (Q2 '
+    + 'already holds that date; WO-3.50 moves a source whose due date leaves its term)',
     afterCopy.rev === docBefore349.rev + 1 && essayAfter.due === '2026-11-19'
       && JSON.stringify(Object.assign({}, essayAfter, { due: essayBefore.due })) === docBefore349.essay
       && essayAfter.termId === 'tm349_src2',
@@ -1061,7 +1062,12 @@ console.log('\n--- one assignment into several classes, one line per class (WO-3
     JSON.stringify({ same: wholeCancel351 === wholePre351, lengths: [wholePre351.length, wholeCancel351.length],
       reopened: reopened351.source && [reopened351.source.assigned, reopened351.source.due] }));
   /* The confirm after a source Clear: the due date only, both lines untouched, so each follows to a
-     blank due date and is placed by the assigned date it still shares with the source. */
+     blank due date and is placed by the assigned date it still shares with the source. The SOURCE does
+     not keep its blank since WO-3.50: its ruling 3 has a blank due date take the assigned date when it
+     is saved, and ruling 6 holds the source line to the editor's rule — so the confirm writes 2026-11-05
+     into the source's due date, which places it in Q2, where it already is. The copies are WO-3.49's and
+     keep theirs blank. This check asserted the blank until then; it was rewritten for the ruling, not
+     for a defect. */
   await tick(P2); await tick(P6);
   await clearOn('[data-assignment-copy-source="due"]');
   await sleep(150);
@@ -1075,11 +1081,12 @@ console.log('\n--- one assignment into several classes, one line per class (WO-3
   const after351 = JSON.parse(src351(docSaved351) || 'null');
   const made351 = docSaved351.assignments.filter((a) => docPreSave351.assignments.every((b) => b.id !== a.id));
   check('WO-3.51: after the source\'s due Clear the confirm reads "Save WO-3.49 English I P1 and copy into 2 '
-    + 'classes" and saves the source with its due date empty and nothing else changed but its term, in the '
-    + 'SAME update() as the two copies — `rev` +1 — each copy following to a blank due date on 2026-11-05',
+    + 'classes" and saves the source with its assigned date, 2026-11-05, as its due date (WO-3.50 ruling 3) '
+    + 'and nothing else changed — its term still Q2 — in the SAME update() as the two copies — `rev` +1 — each '
+    + 'copy following to a blank due date on 2026-11-05',
     toSave351.button === SAVE + 'copy into 2 classes' && toSave351.disabled === false
       && docPreSave351.rev === docPre351.rev && docSaved351.rev === docPreSave351.rev + 1
-      && !!after351 && after351.due === ''
+      && !!after351 && after351.due === '2026-11-05' && after351.termId === 'tm349_src2'
       && JSON.stringify(Object.assign({}, after351, { due: before351.due, termId: before351.termId }))
         === JSON.stringify(before351)
       && made351.length === 2 && made351.map((a) => a.classId).sort().join() === [P2, P6].sort().join()
@@ -1104,13 +1111,16 @@ console.log('\n--- one assignment into several classes, one line per class (WO-3
   const blankBefore = docPreSave.assignments.filter((a) => a.id === BLANK)[0];
   const blankAfter = afterSave.assignments.filter((a) => a.id === BLANK)[0];
   const savedCopy = afterSave.assignments.filter((a) => docPreSave.assignments.every((b) => b.id !== a.id));
+  /* The source here has no due date, so since WO-3.50 the confirm also writes its new assigned date into
+     its due date (that work order's ruling 3; ruling 6 holds the source line to it) — 2026-11-04, in Q2,
+     where it already is. Until then this check asserted the due date stayed blank. */
   check('WO-3.49: a change to the source\'s category and assigned date is held until the confirm and written '
-    + 'by it, in the same update() as the copy — `rev` +1 — with its due date and termId untouched; the '
-    + 'untouched P2 line followed both',
+    + 'by it, in the same update() as the copy — `rev` +1 — the blank due date taking the new assigned date '
+    + '(WO-3.50) and the termId untouched; the untouched P2 line followed both',
     preSaveLine.button === SAVE + 'copy into ' + NAMES[P2] && docPreSave.rev === afterSave.rev - 1
       && JSON.stringify(blankBefore) === JSON.stringify(docPreBlank.assignments.filter((a) => a.id === BLANK)[0])
       && blankAfter.categoryId === SRC_ESSAYS && blankAfter.assigned === '2026-11-04'
-      && blankAfter.due === '' && blankAfter.termId === 'tm349_src2'
+      && blankAfter.due === '2026-11-04' && blankAfter.termId === 'tm349_src2'
       && savedCopy.length === 1 && savedCopy[0].classId === P2 && savedCopy[0].categoryId === P2_ESSAYS
       && savedCopy[0].assigned === '2026-11-04' && savedCopy[0].termId === 'tm349_p2b',
     JSON.stringify({ button: preSaveLine.button, rev: [docPreSave.rev, afterSave.rev], source: blankAfter,
@@ -1177,6 +1187,10 @@ console.log('\n--- one assignment into several classes, one line per class (WO-3
     JSON.stringify({ today: nodeToday, created: created && [created.assigned, created.due],
       sub: lineOf(createLine, P2).sub, copies: createCopy.p2.map((a) => [a.termId, a.due]) }));
   await closeIfOpen349();
+  /* Since WO-3.50 the create above filed the new assignment under the term holding today and took the
+     list with it — Q1 on a real October clock — and ESSAY is in Q2. Back onto Q2 the way a teacher gets
+     there before its row is looked for. */
+  await toSourceList();
   await clickSel('#assignmentsView [data-assignment-edit="' + ESSAY + '"]');
   await sleep(150);
   const onEdit = await evalJs(`(function(){ var b = document.getElementById('assignmentCopyDoor');

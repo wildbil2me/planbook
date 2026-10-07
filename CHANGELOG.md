@@ -13,6 +13,25 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The due date files an assignment in the editor too — 2026-10-07
+
+WO-3.50. Shell cache `planbook-shell-v169`.
+
+- **A new assignment goes into the term today is in.** If another term was on screen, the list
+  moves to today's term and says so in a note over it, instead of the new row vanishing.
+- **Changing a due date moves the assignment when the editor closes**, by Done, ✕, Escape or a tap
+  outside it, and never while you are still typing. The list follows it and says where it went.
+- **A blank due date takes the assigned date** when the editor closes, and that date decides the
+  term. Such work can now show as past due. If neither date falls in a term, the assignment stays
+  where it is and the editor says so.
+- **A move that carries scores asks first.** It names both terms and how many scores would move,
+  because one of them may already be in the SIS. *Keep it in* leaves everything as it was.
+- **Nothing old is re-filed.** An assignment moves only when its date is edited, and a backup
+  restores exactly as it was.
+- **The copy dialog's source line follows the same rule**, so a blank source due date is now saved
+  as its assigned date. Read on the iPad by the owner on v169; harness 1832 of 1832 on the real
+  clock and on `--today=2026-11-10`.
+
 ### A harness run with a shifted date is green in Quarter 2 — 2026-10-07
 
 WO-1.62. Tooling only; nothing under `src/` moved, so no shell cache bump, and none owed.

@@ -63,6 +63,13 @@
      The clock is read in exactly two places in this file, and both of them are today: that default,
      and the overdue TINT below, which changes no stored value and marks no student.
 
+     AND ONE THING SINCE WO-3.50 THAT LOOKS LIKE A FOURTH SURVIVOR BROKEN AND IS NOT. When the editor
+     closes after a date was changed, a blank due date takes the ASSIGNED date (the owner's ruling 3)
+     and the due date then picks the term. That is a date the teacher typed, copied to the field beside
+     it at the close — never today, never on a keystroke, and never into a field she is looking at:
+     a cleared field still rebuilds blank and stays blank for as long as the editor is open. The
+     section "the due date picks the term" below holds the rule; the clock is still read in two places.
+
   2. POINTS ARE STORED EXACTLY AS TYPED, INCLUDING 0. Nothing here clamps, rounds, rejects or
      "helpfully" defaults a number a teacher entered — the rule src/categories.js states for a
      weight, one field over, and for the same reason docs/data-model.md gives: a value that
@@ -112,9 +119,15 @@ import { announce } from './live-region.js';
    WHICH TERM A DATE IS IN comes from there too, for the copy dialog (WO-3.49): a copy goes into the
    term of its own class that holds its due date, the way the school's SIS files work. src/classes.js
    owns `terms[]` and already answers that question for the register, and a second date predicate here
-   is the copy its own section header refuses (WO-2.50). */
+   is the copy its own section header refuses (WO-2.50).
+
+   AND FOR THE ASSIGNMENT ITSELF SINCE WO-3.50: the editor files work under the term holding its due
+   date, through the same termContaining() and nothing of its own. selectTerm() is how the list
+   follows a moved row onto the term it went to — the term strip's own writer, so the list, the strip
+   in the header and the score grid all move together rather than this file keeping a fourth opinion
+   about which term is on screen. */
 import { getSelectedClass, getSelectedTerm, getActiveClasses, getTerms,
-  termContaining, outOfTermGap, termIsDated, termName } from './classes.js';
+  termContaining, outOfTermGap, termIsDated, termName, selectTerm } from './classes.js';
 /* The category list and the way a weight is written down. src/categories.js is a leaf and imports
    nothing back, which is what lets both this file and src/classes.js wear it. */
 import { categoriesOf, formatWeight } from './categories.js';
@@ -188,6 +201,15 @@ const COPY_LIST_ID = 'assignmentCopyList';
 const COPY_NOTE_ID = 'assignmentCopyNote';
 const COPY_BTN_ID = 'assignmentCopyBtn';
 
+const MOVE_MODAL_ID = 'assignmentMoveModal';
+const MOVE_TITLE_ID = 'assignmentMoveTitle';
+const MOVE_LEAD_ID = 'assignmentMoveLead';
+const MOVE_FACTS_ID = 'assignmentMoveFacts';
+const MOVE_BTN_ID = 'assignmentMoveBtn';
+const MOVE_KEEP_ID = 'assignmentMoveKeep';
+const EDITOR_TERM_NOTE_ID = 'assignmentTermNote';
+const LIST_NOTE_ID = 'assignmentsMoved';
+
 const DELETE_LEAD_ID = 'assignmentDeleteLead';
 const DELETE_FACTS_ID = 'assignmentDeleteFacts';
 const DELETE_BTN_ID = 'assignmentDeleteBtn';
@@ -255,6 +277,35 @@ let copySource = null;
    any longer (the owner's ruling 7), because the source heads the list as a line of its own and a
    second copy in the same class is made with New. */
 let copyFromCreate = false;
+
+/*
+  THE EDITOR'S SESSION (WO-3.50): the two dates the assignment held when the editor opened on it, and
+  nothing else. `{ id, assigned, due }`, dialog state only and never written into the document.
+
+  It is what makes ruling 5 true — EXISTING ASSIGNMENTS ARE NOT RE-FILED. The due date picks the term
+  when the editor closes, but only an editor in which a date was CHANGED: one opened to fix a name, or
+  opened and shut, closes exactly as it always has, however its dates and its term disagree. That is
+  the whole of "no migration" — an old backup restores as it was, and a row from before this build
+  keeps its term until a teacher next edits one of its dates. Compared by value rather than flagged on
+  `input`, so a date typed and then typed back is no change, and so nothing about the dates is decided
+  per keystroke (ruling 2).
+*/
+let editorDates = null;
+/* The dates the editor last said no term holds, as one string. The first close on such dates stops
+   and says so; a second close on the SAME dates is the teacher having read it, and closes. Typing a
+   different date asks again. */
+let unplacedSaid = '';
+/* A scored move waiting on its confirm: the assignment's id and whether the list follows it. The
+   plan itself is NOT held — the confirm works it out again from the dates as they stand, the same rule
+   WO-3.49's Traps set for the copy dialog. */
+let pendingMove = null;
+/* The term the list was showing when a create moved it onto today's term (ruling 1), so that the
+   editor's Cancel — "Nothing was added" — can put the list back where the teacher had it. */
+let createdFromTermId = '';
+/* THE LIST'S NOTE (WO-3.50, ruling 1 and Acceptance 2): `{ classId, termId, text }` — what moved onto
+   the term on screen, and why. A VIEW STATE: drawn only while that class and that term are the ones
+   up, dropped the first time they are not, and never stored anywhere. */
+let listNote = null;
 
 /* ────────────────────────────── reading the document ────────────────────────────── */
 
@@ -546,6 +597,22 @@ function noticeRow(className, text) {
 }
 
 /*
+  THE NOTE OVER THE LIST WHEN WORK ARRIVED ON IT FROM ANOTHER TERM (WO-3.50). A row the due date moved
+  — or a new assignment filed under today's term while another was on screen — must not simply turn
+  up on a list the teacher did not choose: the list switched under her, and the note is the sentence
+  that says so and why. Drawn only while the class and term it is about are the ones up; the first
+  render on any other drops it, so going back to that term later does not bring back a note about a
+  move she has long since read.
+*/
+function paintListNote(cls, termId) {
+  const el = document.getElementById(LIST_NOTE_ID);
+  if (listNote && !(cls && listNote.classId === cls.id && listNote.termId === termId)) listNote = null;
+  if (!el) return;
+  el.textContent = listNote ? listNote.text : '';
+  el.classList.toggle('hidden', !listNote);
+}
+
+/*
   THE SCREEN, redrawn from the open document. Called by src/shell.js after anything that changes
   what is in it, and after a switch onto it — this module never subscribes to the store, for the
   reason src/classes.js gives: a subscriber fires on every save, and a redraw while a teacher is
@@ -572,6 +639,7 @@ export function renderAssignments() {
   const termLabel = term ? (term.label || 'Untitled term') : '';
 
   if (hintTerm) hintTerm.textContent = termLabel || 'this class';
+  paintListNote(cls, termId);
   if (summary) {
     summary.textContent = !doc ? 'No school year is open.'
       : !cls ? 'Add a class from the class bar first.'
@@ -924,7 +992,12 @@ function renderEditorFields() {
       ? (assignment.name || 'Untitled assignment') + ' — ' + cls.name
       : 'Assignment';
   }
-  if (!assignment || !cls) { paintAccommodationPrompt(null, ''); return; }
+  if (!assignment || !cls) { paintTermNote(''); paintAccommodationPrompt(null, ''); return; }
+  /* A class whose terms carry no dates is the one place the due date cannot pick a term, and the
+     editor says so from the moment it opens rather than at the close — there is no date she could
+     type that would change the answer, so stopping her on the way out would be a question with no
+     right reply. A fact about the class, not about anything typed (ruling 2). */
+  paintTermNote(undatedNoteFor(assignment));
 
   const first = document.createElement('div');
   first.className = 'assign-field-row';
@@ -953,9 +1026,21 @@ function renderEditorFields() {
 /* Opened through its own hook rather than data-modal-open, for the reason src/classes.js gives:
    the panel is filled from the document, and a modal that opens and then fills in flickers. */
 export function openAssignmentEditor(id, opener) {
-  if (!findAssignment(id)) return;
+  const assignment = findAssignment(id);
+  if (!assignment) return;
+  /* OPENING ANOTHER ROW IS A CLOSE OF THIS ONE (WO-3.50). The editor is re-filled in place when it is
+     already up, so a date changed on the row it was showing has to be settled first or it never would
+     be. No door reaches this while the dialog covers the list today; it is here so the day one does,
+     the move is not silently skipped. */
+  if (editorIsOpen() && editingId && editingId !== id) {
+    const settled = settleEditor(false);
+    if (!settled.close) return;
+    /* The row it moved is no longer on the list behind the dialog, and nothing else here repaints. */
+    if (settled.wrote) renderAssignments();
+  }
   editingId = id;
   creatingId = '';
+  beginSession(assignment);
   showAssignmentError('');
   renderEditorFields();
   openModal(EDITOR_MODAL_ID, opener);
@@ -994,6 +1079,8 @@ export function createAssignment(opener) {
   const assignment = {
     id: newId('a'),
     classId: cls.id,
+    /* Provisional: replaced just below by the term the due date picks, and kept only when no term
+       holds it — today in the gap between two terms, or a class whose terms have no dates. */
     termId: term.id,
     /* The first category, or none — never a guess at a better one. A class with no categories can
        still hold work; the list shows it under "Not in a category" and says what that costs. */
@@ -1003,6 +1090,17 @@ export function createAssignment(opener) {
     assigned: today,
     due: today,
   };
+  /*
+    THE DUE DATE PICKS THE TERM (WO-3.50, ruling 1) — and it is the DUE DATE that is asked, the value
+    just written into the record, not the clock. They are the same day at this instant, which is
+    exactly why the distinction has to be written down: the clock was read once, above, to OFFER a
+    date (decision 1), and what files the work is that date as a date the teacher now owns. Nothing in
+    this file asks the clock which term anything is in, and nothing here re-files work because time
+    passed — "the grade must never change because a date rolled over" (CLAUDE.md) is about the clock,
+    and this is a date.
+  */
+  const placed = termContaining(cls.id, assignment.due);
+  if (placed) assignment.termId = placed.id;
   update((doc) => {
     if (!Array.isArray(doc.assignments)) doc.assignments = [];
     doc.assignments.push(assignment);
@@ -1011,6 +1109,18 @@ export function createAssignment(opener) {
   editingId = assignment.id;
   creatingId = assignment.id;
   createOpener = opener || null;
+  beginSession(assignment);
+  /* THE LIST GOES WITH IT, AND SAYS SO (ruling 1). A teacher looking at Quarter 1 on the first of
+     November has just made work that lives in Quarter 2; leaving the list on Quarter 1 would be the
+     new row vanishing the moment it was made. The term she was on is kept for the editor's Cancel. */
+  if (assignment.termId !== term.id) {
+    createdFromTermId = term.id;
+    selectTerm(assignment.termId);
+    listNote = { classId: cls.id, termId: assignment.termId,
+      text: 'The new assignment is in ' + termName(placed) + ', not ' + termName(term) + ': a new '
+        + 'assignment is due today, today is in ' + termName(placed) + ', and the due date picks '
+        + 'the term. This list has moved to ' + termName(placed) + ' with it.' };
+  }
   showAssignmentError('');
   renderAssignments();
   renderEditorFields();
@@ -1019,7 +1129,9 @@ export function createAssignment(opener) {
      teacher's behalf is announced with it — a default nobody said out loud is a value a
      screen-reader user finds out about later, from a list she did not expect to read a date on. */
   announce('Added an assignment to ' + cls.name + ', worth ' + DEFAULT_POINTS
-    + ' points, assigned and due today. Name it.');
+    + ' points, assigned and due today' + (createdFromTermId
+      ? ', in ' + termName(placed) + ', the term today is in — the list has moved there'
+      : '') + '. Name it.');
 
   /* Focus the name after the fields are in the document, for the reason src/classes.js's
      renderClassList() gives: an input that is not yet in the page cannot take focus, and on iPadOS
@@ -1041,12 +1153,304 @@ export function cancelCreatedAssignment() {
     doc.assignments = assignmentsIn(doc).filter((a) => a.id !== id);
     if (doc.scores) delete doc.scores[id];
   });
+  /* A create that moved the list onto today's term puts it back: nothing was added, so nothing is
+     there to follow (WO-3.50). Before endSession(), which forgets the term. */
+  const back = createdFromTermId;
+  endSession();
+  listNote = null;
+  if (back && getTerms(assignment.classId).some((t) => t.id === back)) selectTerm(back);
   editingId = '';
   creatingId = '';
   closeModal(EDITOR_MODAL_ID);
   renderAssignments();
   announce('Cancelled the new assignment. Nothing was added.');
   return true;
+}
+
+/* ────────────────────────────── the due date picks the term (WO-3.50) ──────────────────────────────
+
+   THE OWNER'S RULE, FROM THE SCHOOL'S SIS: A TERM IS NEVER NAMED; THE DUE DATE PLACES THE WORK.
+   WO-3.49 applied it to copies; this applies it to the assignment the editor is open on, and to the
+   copy dialog's source line (ruling 6).
+
+   IT HAPPENS WHEN THE EDITOR CLOSES, NEVER ON A KEYSTROKE (ruling 2). The due field writes on every
+   `input`, including the blank Chromium reports for a moment while a leading 0 is typed (WO-1.47's
+   phantom), so a term worked out per keystroke would flip mid-date and take the row off the list
+   behind the dialog while the teacher was still typing it. Nothing in this section is reached from
+   an input event: settleEditor() is the editor's close guard (src/modal.js), and the move confirm's
+   two buttons are the only other callers.
+
+   A DATE THE TEACHER TYPED, AND NEVER THE CLOCK. CLAUDE.md's "the grade must never change because a
+   date rolled over" is about time passing, and nothing below reads what day it is: every answer is
+   termContaining() asked about a date stored in the record. Work is re-filed because a teacher
+   changed its date and closed the dialog — and for no other reason, ever, which is also why an
+   editor in which no date changed re-files nothing (ruling 5, `editorDates` above).
+
+   A BLANK DUE DATE TAKES THE ASSIGNED DATE (ruling 3, as amended by the owner on 2026-10-06), and it
+   is WRITTEN, at the close and not on `input`: the due date is then the only thing that places the
+   work. The consequence is intended and is not to be suppressed — a blank due date can never be past
+   due (src/past-due.js's isDate()), so a copied one makes the work eligible for the overdue tint and
+   the past-due prompt from the next day. With no date at all, or dates no term holds, the work stays
+   where it is and the editor says so. */
+
+function editorIsOpen() {
+  const modal = document.getElementById(EDITOR_MODAL_ID);
+  return !!modal && !modal.classList.contains('hidden');
+}
+
+function beginSession(assignment) {
+  editorDates = { id: assignment.id, assigned: dateOf(assignment.assigned), due: dateOf(assignment.due) };
+  unplacedSaid = '';
+  pendingMove = null;
+  createdFromTermId = '';
+  /* A note about an earlier move is not about the row now being edited. */
+  if (listNote) { listNote = null; renderAssignments(); }
+}
+
+function endSession() {
+  editorDates = null;
+  unplacedSaid = '';
+  pendingMove = null;
+  createdFromTermId = '';
+}
+
+function termOf(classId, termId) {
+  return getTerms(classId).filter((t) => t.id === termId)[0] || null;
+}
+
+/* The amber line in the editor: why no term holds the dates, or '' to take it down. */
+function paintTermNote(text) {
+  const el = document.getElementById(EDITOR_TERM_NOTE_ID);
+  if (!el) return;
+  el.textContent = text || '';
+  el.classList.toggle('hidden', !text);
+}
+
+/* What the editor says on opening when the class has no dated term, or ''. */
+function undatedNoteFor(assignment) {
+  const cls = assignment ? findClass(assignment.classId) : null;
+  if (!cls || getTerms(cls.id).some(termIsDated)) return '';
+  return 'None of ' + cls.name + '’s terms has its dates typed in, so no due date can pick a term for '
+    + 'this assignment, and it stays in ' + termName(termOf(cls.id, assignment.termId)) + '. Type the '
+    + 'term dates in the class manager and the due date will place it.';
+}
+
+/*
+  WHERE A PAIR OF DATES PUTS AN ASSIGNMENT — the one answer, for the editor and the copy dialog's
+  source line both. Handed the dates as they stand and the term the work is filed under now; reads
+  nothing else and writes nothing.
+
+  `fill` is ruling 3's copy, '' when there is none. `kind` is one of:
+    'none'     — the term the dates pick is the one it is in; nothing to do
+    'fill'     — the same, and the blank due date takes the assigned one
+    'move'     — `term` holds the placing date and is not where the work is filed
+    'unplaced' — no date, or a date no term holds (`why`, `by`, `date`, `gap`): it stays where it is
+    'undated'  — the class has no dated term at all, so no date could ever place it: it stays, and the
+                 editor has said so since it opened (undatedNoteFor())
+*/
+function placeByTypedDates(classId, termId, assigned, due) {
+  const fill = !due && assigned ? assigned : '';
+  const placing = due || fill;
+  if (!getTerms(classId).some(termIsDated)) return { kind: 'undated', fill };
+  if (!placing) return { kind: 'unplaced', fill, why: 'no-date' };
+  const by = due ? 'due' : 'assigned';
+  const term = termContaining(classId, placing);
+  if (!term) {
+    return { kind: 'unplaced', fill, why: 'outside', by, date: placing, gap: outOfTermGap(classId, placing) };
+  }
+  if (term.id === termId) return { kind: fill ? 'fill' : 'none', fill, term, by, date: placing };
+  return { kind: 'move', fill, term, by, date: placing };
+}
+
+/* The editor's own question: did a date change in this sitting, and if so, where do the dates put it. */
+function closePlan(assignment) {
+  if (!editorDates || editorDates.id !== assignment.id) return { kind: 'none', fill: '' };
+  const assigned = dateOf(assignment.assigned);
+  const due = dateOf(assignment.due);
+  if (assigned === editorDates.assigned && due === editorDates.due) return { kind: 'none', fill: '' };
+  return placeByTypedDates(assignment.classId, assignment.termId, assigned, due);
+}
+
+/* Where a date sits that no term holds, in words — the same four answers the copy dialog's lines give
+   (placementFlag() above), read off the same `gap`. */
+function gapWords(gap) {
+  const g = gap || {};
+  return g.before && g.after ? 'falls between ' + termName(g.before) + ' and ' + termName(g.after)
+    : g.after ? 'falls before ' + termName(g.after)
+    : g.before ? 'falls after ' + termName(g.before)
+    : 'falls in no term';
+}
+
+function unplacedSentence(plan, assignment, cls) {
+  const here = termName(termOf(cls.id, assignment.termId));
+  if (plan.why === 'no-date') {
+    return 'This assignment has no due date and no assigned date, so no term holds it, and it stays in '
+      + here + '. Give it a due date to file it by, or close again to leave it there.';
+  }
+  return (plan.by === 'due' ? 'Its due date, ' : 'It has no due date, and its assigned date, ')
+    + shortDate(plan.date) + ', ' + gapWords(plan.gap) + ', so no term in ' + cls.name + ' holds it, '
+    + 'and it stays in ' + here + '. Change the date, or close again to leave it there'
+    + (plan.fill ? ', due on ' + shortDate(plan.fill) + ', its assigned date' : '') + '.';
+}
+
+/* How many scores a move would carry: entries with a value or a flag, against the roster, exactly as
+   the coverage bar counts them — a note on a blank is not a score (noteOnly()), and a cell left by a
+   student no longer on the roster is in no grade either term draws. */
+function scoresCarried(assignment, cls) { return enteredCount(assignment, cls); }
+
+/*
+  THE WRITE: the copied due date and the new term, in ONE update() — one save, one `rev` — and then
+  the list follows the row (ruling 1's "the list moves to that term and says so", which is the same
+  promise after an edit as after a create). `follow` is the caller's word that a term-filtered screen
+  is up behind the dialog; with the calendar or a student's page behind it, the open term is not
+  pulled about by an edit made somewhere else, and the announcement says where the work went instead.
+  Answers whether it wrote.
+*/
+function applyPlan(assignment, cls, plan, follow) {
+  const moving = plan.kind === 'move';
+  if (!moving && !plan.fill) return false;
+  const from = termOf(cls.id, assignment.termId);
+  const scores = moving ? scoresCarried(assignment, cls) : 0;
+  update(() => {
+    if (plan.fill) assignment.due = plan.fill;
+    if (moving) assignment.termId = plan.term.id;
+  });
+  const named = '“' + (assignment.name || 'Untitled assignment') + '”';
+  if (!moving) {
+    announce(named + ' had no due date, so it is now due on its assigned date, ' + shortDate(plan.fill)
+      + '.');
+    return true;
+  }
+  const why = plan.fill
+    ? 'it had no due date, so it took its assigned date, ' + shortDate(plan.fill) + ', which is in '
+      + termName(plan.term)
+    : 'its due date, ' + shortDate(plan.date) + ', is in ' + termName(plan.term);
+  const carried = scores ? ' Its ' + plural(scores, 'score', 'scores') + ' went with it.' : '';
+  const selected = getSelectedClass();
+  if (follow && selected && selected.id === cls.id) {
+    selectTerm(plan.term.id);
+    listNote = { classId: cls.id, termId: plan.term.id,
+      text: named + ' moved here from ' + termName(from) + ': ' + why
+        + ', and the due date picks the term.' + carried };
+    announce('Moved ' + named + ' to ' + termName(plan.term) + ', because ' + why + '. The list has '
+      + 'moved to ' + termName(plan.term) + ' with it.' + carried);
+  } else {
+    announce('Moved ' + named + ' from ' + termName(from) + ' to ' + termName(plan.term) + ', because '
+      + why + '.' + carried);
+  }
+  return true;
+}
+
+/*
+  THE EDITOR'S CLOSE GUARD, set by src/shell.js on #assignmentModal and asked by every gesture that
+  closes it — the ✕, Done, Escape, the backdrop (src/modal.js's dismissModal()) — and by the two
+  in-file doors that close it too: opening another row, and the create door. `{ close, wrote }`:
+  whether the dialog may go, and whether the document changed, so the caller can repaint the screens
+  an assignment is drawn on.
+
+  Two answers stop the close, and each puts something on screen saying why. A move that carries
+  scores opens the confirm (ruling 4) — before ANY write, so declining leaves the document exactly as
+  it was. Dates no term holds paint the editor's amber line, once: the same close again is the
+  teacher having read it, and goes through, writing ruling 3's copy if there is one.
+*/
+export function settleEditor(follow) {
+  const assignment = editingId ? findAssignment(editingId) : null;
+  const cls = assignment ? findClass(assignment.classId) : null;
+  if (!assignment || !cls || !editorDates || editorDates.id !== assignment.id) {
+    endSession();
+    return { close: true, wrote: false };
+  }
+  const plan = closePlan(assignment);
+  if (plan.kind === 'unplaced') {
+    const said = dateOf(assignment.assigned) + '|' + dateOf(assignment.due) + '|' + assignment.termId;
+    if (unplacedSaid !== said) {
+      unplacedSaid = said;
+      const sentence = unplacedSentence(plan, assignment, cls);
+      paintTermNote(sentence);
+      announce(sentence);
+      return { close: false, wrote: false };
+    }
+  }
+  if (plan.kind === 'move' && scoresCarried(assignment, cls) > 0) {
+    openMoveConfirm(assignment, cls, plan, follow);
+    return { close: false, wrote: false };
+  }
+  const wrote = applyPlan(assignment, cls, plan, follow);
+  endSession();
+  return { close: true, wrote };
+}
+
+/*
+  A MOVE THAT CARRIES SCORES SAYS SO BEFORE IT HAPPENS (ruling 4). Scores are keyed by assignment, so
+  moving a scored one takes them out of one term's grades and into another's — and the one it leaves
+  may already be keyed into the SIS, which is the cost a teacher would otherwise find out about at the
+  next report. So the confirm names both terms and the number, and the teacher picks: move it, or
+  keep it where it is. The ✕, Escape and the backdrop take her back to the editor to change the date,
+  writing nothing — the confirm is a question about the close, and backing out of it is not an answer.
+  Same tier and grammar as the delete confirm: it counts what goes before it goes.
+*/
+function openMoveConfirm(assignment, cls, plan, follow) {
+  pendingMove = { id: assignment.id, follow: !!follow };
+  const from = termOf(cls.id, assignment.termId);
+  const scores = scoresCarried(assignment, cls);
+  const named = '“' + (assignment.name || 'Untitled assignment') + '”';
+  const title = document.getElementById(MOVE_TITLE_ID);
+  if (title) title.textContent = 'Move it to ' + termName(plan.term) + '?';
+  const lead = document.getElementById(MOVE_LEAD_ID);
+  if (lead) {
+    lead.textContent = (plan.fill
+      ? named + ' has no due date, so it takes its assigned date, ' + shortDate(plan.fill)
+        + ', which is in ' + termName(plan.term)
+      : named + ' is now due ' + shortDate(plan.date) + ', which is in ' + termName(plan.term))
+      + ', and it is filed in ' + termName(from) + '. The due date picks the term, so closing the '
+      + 'editor moves it, and its scores go with it.';
+  }
+  const facts = document.getElementById(MOVE_FACTS_ID);
+  if (facts) {
+    facts.textContent = '';
+    factLine(facts, plural(scores, 'score moves', 'scores move') + ' from ' + termName(from) + ' to '
+      + termName(plan.term) + '.');
+    factLine(facts, termName(from) + '’s grades stop counting ' + (scores === 1 ? 'it' : 'them')
+      + ' and ' + termName(plan.term) + '’s start. If ' + termName(from) + '’s grades are already in '
+      + 'the SIS, they will no longer match.');
+  }
+  const button = document.getElementById(MOVE_BTN_ID);
+  if (button) button.textContent = 'Move it to ' + termName(plan.term);
+  const keep = document.getElementById(MOVE_KEEP_ID);
+  if (keep) keep.textContent = 'Keep it in ' + termName(from);
+  openModal(MOVE_MODAL_ID);
+}
+
+/* Yes: worked out again from the dates as they stand now, never from what the confirm was drawn with
+   — then written, and both dialogs closed. `{ wrote }` for the caller's repaint. */
+export function confirmEditorMove() {
+  const pending = pendingMove;
+  pendingMove = null;
+  closeModal(MOVE_MODAL_ID);
+  const assignment = pending ? findAssignment(pending.id) : null;
+  const cls = assignment ? findClass(assignment.classId) : null;
+  if (!assignment || !cls || editingId !== assignment.id) return { wrote: false };
+  const wrote = applyPlan(assignment, cls, closePlan(assignment), pending.follow);
+  endSession();
+  closeModal(EDITOR_MODAL_ID);
+  return { wrote };
+}
+
+/* No: nothing is written — not the move, and not ruling 3's copy either, so declining leaves the
+   document byte for byte as it was (Acceptance 4). The editor closes, because closing it is what she
+   was doing. */
+export function keepEditorTerm() {
+  const pending = pendingMove;
+  pendingMove = null;
+  closeModal(MOVE_MODAL_ID);
+  const assignment = pending ? findAssignment(pending.id) : null;
+  const cls = assignment ? findClass(assignment.classId) : null;
+  endSession();
+  closeModal(EDITOR_MODAL_ID);
+  if (assignment && cls) {
+    announce('Kept “' + (assignment.name || 'Untitled assignment') + '” in '
+      + termName(termOf(cls.id, assignment.termId)) + '. Nothing moved, and no score changed term.');
+  }
 }
 
 /*
@@ -1093,6 +1497,9 @@ export function editAssignmentField(input) {
     */
     const value = input.value;
     update(() => { assignment[field] = value; });
+    /* A date that no term held, said at the last close, is not the date on the field any longer. The
+       sentence goes; nothing is worked out in its place (ruling 2) — the next close asks again. */
+    if (unplacedSaid) { unplacedSaid = ''; paintTermNote(undatedNoteFor(assignment)); }
   }
 
   showAssignmentError('');
@@ -1179,6 +1586,7 @@ export function assignmentDateCleared(input) {
      exactly the state this exists to discard. */
   if (assignment[field]) update(() => { assignment[field] = ''; });
   input.replaceWith(dateInput(assignment, field));
+  if (unplacedSaid) { unplacedSaid = ''; paintTermNote(undatedNoteFor(assignment)); }
   renderAssignments();
 }
 
@@ -1572,8 +1980,69 @@ function paintLineFlags(line, target, cls, sourceClass, place) {
   });
 }
 
-/* The source's own line: no tick, its term (which it keeps here — ruling 5; moving it with its due
-   date is WO-3.50's), and its category and dates as live fields over the HELD values. */
+/*
+  WHERE THE SOURCE'S HELD DATES WOULD PUT IT (WO-3.50, ruling 6, lifting WO-3.49's ruling 5): the
+  editor's rule exactly, asked through the same placeByTypedDates() — and, as in the editor, only once a
+  date on the line has CHANGED (ruling 5), so a source opened and copied unchanged keeps its term
+  whatever its dates say.
+
+  WORKED OUT AS THE LINE IS DRAWN AND AGAIN AT THE CONFIRM, the way every other line on this list is
+  (copyPlacement()), and for the same reason: nothing here writes before the confirm, so the sub-line
+  under the source is a proposal said out loud, not a write made per keystroke — ruling 2's danger is
+  a row leaving the list behind the dialog while a date is half typed, and nothing leaves anything
+  until the confirm. It is also how ruling 4 reaches this dialog: a source move that carries scores
+  says so on the source's own amber line before the button that makes it.
+*/
+function sourcePlan(source) {
+  if (!copySource || !source) return { kind: 'none', fill: '' };
+  if (copySource.assigned === dateOf(source.assigned) && copySource.due === dateOf(source.due)) {
+    return { kind: 'none', fill: '' };
+  }
+  return placeByTypedDates(source.classId, source.termId, copySource.assigned, copySource.due);
+}
+
+/* The quiet line under the source's name: its term, and where saving will move it. */
+function sourceSub(source, sourceClass) {
+  const term = termOf(sourceClass.id, source.termId);
+  const plan = sourcePlan(source);
+  return 'this assignment' + (term ? ' · ' + termName(term) : '')
+    + (plan.kind === 'move' ? ' · moves to ' + termName(plan.term) + ' on saving' : '');
+}
+
+/* The source's amber lines: a move, with the scores it carries; or dates no term holds. Rebuilt in
+   place, under their own hook so a target line's repaint never takes them. */
+function paintSourceFlags(line, source, sourceClass) {
+  Array.prototype.slice.call(line.querySelectorAll('[data-assignment-copy-source-flag]'))
+    .forEach((el) => el.remove());
+  const plan = sourcePlan(source);
+  const from = termOf(sourceClass.id, source.termId);
+  let said = '';
+  if (plan.kind === 'move') {
+    const scores = scoresCarried(source, sourceClass);
+    said = 'Saving moves this assignment from ' + termName(from) + ' to ' + termName(plan.term) + ', '
+      + (plan.fill ? 'the term its assigned date is in: with no due date, it takes that date as one'
+        : 'the term its due date is in') + '.'
+      + (scores ? ' Its ' + plural(scores, 'score goes', 'scores go') + ' with it: ' + termName(from)
+        + '’s grades stop counting ' + (scores === 1 ? 'it' : 'them') + ' and ' + termName(plan.term)
+        + '’s start. If ' + termName(from) + '’s grades are already in the SIS, they will no longer '
+        + 'match.' : '');
+  } else if (plan.kind === 'unplaced') {
+    said = (plan.why === 'no-date' ? 'With no due date and no assigned date'
+      : (plan.by === 'due' ? 'Its due date, ' : 'With no due date, its assigned date, ')
+        + shortDate(plan.date) + ', ' + gapWords(plan.gap) + ', so')
+      + (plan.why === 'no-date' ? ', no term holds it, so' : '')
+      + ' saving keeps it in ' + termName(from) + '.';
+  }
+  if (!said) return;
+  const flag = document.createElement('div');
+  flag.className = 'assign-copy-flag';
+  flag.setAttribute('data-assignment-copy-source-flag', '');
+  flag.textContent = said;
+  line.append(flag);
+}
+
+/* The source's own line: no tick, its term — and where its held dates will move it on saving, since
+   WO-3.50 — and its category and dates as live fields over the HELD values. */
 function sourceLine(source, sourceClass) {
   const line = document.createElement('div');
   line.className = 'assign-copy-line source';
@@ -1581,9 +2050,8 @@ function sourceLine(source, sourceClass) {
   line.setAttribute('data-assignment-copy-source-line', '');
   const ref = document.createElement('div');
   ref.className = 'assign-copy-ref';
-  const term = getTerms(sourceClass.id).filter((t) => t.id === source.termId)[0];
-  ref.append(copyNameBlock(sourceClass.name,
-    'this assignment' + (term ? ' · ' + termName(term) : ''), null, null));
+  ref.append(copyNameBlock(sourceClass.name, sourceSub(source, sourceClass),
+    'data-assignment-copy-source-sub', ''));
   line.append(ref);
   line.append(copyCategoryCell('data-assignment-copy-source', 'categoryId', sourceClass,
     copySource.categoryId, 'Category — this assignment, in ' + sourceClass.name));
@@ -1591,6 +2059,7 @@ function sourceLine(source, sourceClass) {
     'Assigned — this assignment, in ' + sourceClass.name, 'Clear the assigned date — this assignment'));
   line.append(copyDateCell('Due', 'data-assignment-copy-source', 'due', copySource.due,
     'Due — this assignment, in ' + sourceClass.name, 'Clear the due date — this assignment'));
+  paintSourceFlags(line, source, sourceClass);
   return line;
 }
 
@@ -1763,6 +2232,12 @@ function paintCopyDates(typed) {
   const sourceClass = source ? findClass(source.classId) : null;
   const box = document.getElementById(COPY_LIST_ID);
   if (!source || !sourceClass || !box) return;
+  const own = box.querySelector('[data-assignment-copy-source-line]');
+  if (own) {
+    const sub = own.querySelector('[data-assignment-copy-source-sub]');
+    if (sub) sub.textContent = sourceSub(source, sourceClass);
+    paintSourceFlags(own, source, sourceClass);
+  }
   copyTargets.forEach((target) => {
     const cls = findClass(target.classId);
     const line = box.querySelector('[data-assignment-copy-line="' + target.classId + '"]');
@@ -1822,15 +2297,22 @@ export function openCopyEditor(id, opener) {
   including the source line's held edits — and focus goes back to the `+ New assignment` that
   started the create.
 */
-export function openCopyFromCreate() {
+export function openCopyFromCreate(follow) {
   const id = creatingId;
-  if (!id || editingId !== id || !findAssignment(id)) return;
+  if (!id || editingId !== id || !findAssignment(id)) return { wrote: false };
+  /* THE DOOR CLOSES THE EDITOR, SO IT SETTLES IT FIRST (WO-3.50): a due date typed into another term
+     before the tap moves the new assignment here, exactly as Done would have, and the copy dialog then
+     reads the assignment where it now is. A new assignment has no scores, so this never stops on the
+     move confirm; dates no term holds stop it once, and the editor says why. */
+  const settled = settleEditor(follow);
+  if (!settled.close) return settled;
   const opener = createOpener;
   creatingId = '';
   createOpener = null;
   closeModal(EDITOR_MODAL_ID);
-  if (!startCopy(id, true)) return;
+  if (!startCopy(id, true)) return settled;
   openModal(COPY_MODAL_ID, opener);
+  return settled;
 }
 
 /* A tick: ticks the class if it is not ticked, with a fresh proposal of its own, and unticks it —
@@ -1945,10 +2427,10 @@ export function setCopyName(input) { copyName = input.value; }
 
   ALL OF IT IN ONE update(), the source's held edits included, so three classes and a fixed slip are
   one save and one `rev`, and a refusal below — any ticked line no date can place — writes none of
-  them rather than some. The source keeps its `termId` whatever its dates now say (ruling 5); moving
-  it is WO-3.50's.
+  them rather than some. Since WO-3.50 the source's `termId` is written here too, when its held due
+  date picks another term (that work order's ruling 6, which lifted WO-3.49's ruling 5).
 */
-export function confirmCopy() {
+export function confirmCopy(follow) {
   const source = findAssignment(copyId);
   const sourceClass = source ? findClass(source.classId) : null;
   if (!source || !sourceClass || !copySource) { closeModal(COPY_MODAL_ID); return; }
@@ -1967,6 +2449,14 @@ export function confirmCopy() {
   if ('categoryId' in edits && edits.categoryId && !findCategory(sourceClass, edits.categoryId)) {
     delete edits.categoryId;
   }
+  /* THE SOURCE MOVES WITH ITS DUE DATE (WO-3.50, ruling 6), worked out again here from the held dates
+     about to be written, and written in this same update() — a blank due date taking the assigned one
+     (ruling 3), and the term the due date then picks. A source whose dates did not change keeps its
+     term (ruling 5), and so does one no term holds; the line has said which before this button. */
+  const placing = sourcePlan(source);
+  const fromTerm = termOf(sourceClass.id, source.termId);
+  if (placing.fill) edits.due = placing.fill;
+  if (placing.kind === 'move') edits.termId = placing.term.id;
   const copies = placed.map(({ target, cls, place }) => ({
     id: newId('a'),
     classId: cls.id,
@@ -1997,14 +2487,27 @@ export function confirmCopy() {
 
   const names = copies.map((copy) => findClass(copy.classId).name);
   const saved = Object.keys(edits).length > 0;
+  const moved = 'termId' in edits ? placing.term : null;
   copyId = '';
   copyTargets = [];
   copySource = null;
   closeModal(COPY_MODAL_ID);
+  /* A MOVED SOURCE TAKES THE LIST WITH IT, as an edit in the editor does (ruling 1's "the list moves
+     to that term and says so"), when its class is the one on screen behind the dialog. */
+  const selected = getSelectedClass();
+  if (moved && follow && selected && selected.id === sourceClass.id) {
+    selectTerm(moved.id);
+    listNote = { classId: sourceClass.id, termId: moved.id,
+      text: '“' + (source.name || 'Untitled assignment') + '” moved here from ' + termName(fromTerm)
+        + ' when it was saved with its copies: its due date, ' + shortDate(edits.due || source.due)
+        + ', is in ' + termName(moved) + ', and the due date picks the term.' };
+  }
   renderAssignments();
   /* THE ANNOUNCEMENT NAMES THE SOURCE WHEN IT WAS SAVED (WO-3.49's Deliverables): a teacher who
-     fixed a slip on the source line hears that the fix landed, not only that copies were made. */
+     fixed a slip on the source line hears that the fix landed, not only that copies were made — and,
+     since WO-3.50, where it went when its due date moved it. */
   announce((saved ? 'Saved ' + (source.name || 'the assignment') + ' in ' + sourceClass.name
+    + (moved ? ', moved it to ' + termName(moved) + ' by its due date' : '')
     + ', and copied ' : 'Copied ') + (copyName || 'the assignment') + ' into ' + listNames(names)
     + ' with no ' + (copies.length === 1 ? 'scores on it.' : 'scores on them.'));
 }
@@ -2098,6 +2601,7 @@ export function confirmAssignmentDelete() {
      doors here — so it is closed rather than left describing work that no longer exists. */
   if (editingId === id) {
     editingId = '';
+    endSession();
     closeModal(EDITOR_MODAL_ID);
   }
   renderAssignments();

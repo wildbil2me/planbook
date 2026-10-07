@@ -1043,6 +1043,13 @@
            dismissal on both because it is recorded per assignment. -->
       <div class="past-due hidden" id="assignmentsPastDue" data-past-due></div>
 
+      <!-- WORK THAT ARRIVED ON THIS LIST FROM ANOTHER TERM (WO-3.50). The due date picks an
+           assignment's term, so a new assignment made while another term is on screen, or a due date
+           moved across a term edge, takes the list with it — and this says so, and why, rather than
+           leaving the teacher on a term she did not choose. Filled by src/assignments.js, drawn only
+           while the term it is about is the one up. -->
+      <p class="assign-moved hidden" id="assignmentsMoved"></p>
+
       <div class="assign-table-wrap">
         <table class="assign-table">
           <caption class="sr-only" id="assignmentsCaption"></caption>
@@ -1067,7 +1074,11 @@
         category it counts in, and both dates are all editable afterwards — nothing here is
         settled by writing it down. <strong>A new assignment starts with both dates on today</strong>,
         because that is the day you are almost always writing it down on. Type over either one, or
-        clear it and leave it blank — a date is never required, and clearing one leaves it empty.
+        clear it. <strong>The due date picks the term</strong>, the way the school’s SIS files work:
+        a new assignment goes into the term today is in, and when you close the editor after changing
+        a date, it moves to the term its due date is in, and this list goes with it. A due date left
+        blank takes the assigned date when you close the editor. An assignment you open and close
+        without changing a date stays where it is.
         <strong>Nothing else is ever filled in for you.</strong> Planbook has no timetable and is not
         getting one, so there is no “next meeting” to guess at; a due date is a plain date you type,
         and it changes no grade and marks nobody. <strong>Duplicate</strong> copies an assignment
@@ -3236,7 +3247,13 @@
      one: a new assignment starts them both on today, and nothing ever moves them afterwards. The
      second half is the standing refusal, said where it bites; the first half is the sentence that
      had to change with the behaviour, because a dialog that contradicts its own printed promise is
-     worse than either behaviour on its own. -->
+     worse than either behaviour on its own.
+
+     AND SINCE WO-3.50 CLOSING IT CAN WRITE: the due date picks the term when the editor closes, and a
+     blank due date takes the assigned one. So the paragraph says that too, and "Done" now closes a
+     dialog that may have one thing left to settle — src/modal.js's close guard, set by src/shell.js,
+     is how all four ways out reach it. The amber line under the fields is the editor saying that no
+     term holds the dates; the confirm after this dialog is the scored move. -->
 <div class="modal-overlay hidden" id="assignmentModal">
   <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="assignmentModalTitle">
     <div class="modal-header">
@@ -3265,11 +3282,16 @@
            It sits under the fields and above the two hints because it is about the category picked
            in them, and before the actions because it is something to read before tapping Done. -->
       <div class="supports-panel accommodation-prompt hidden" data-accommodation-prompt></div>
+      <!-- WHY NO TERM HOLDS THESE DATES (WO-3.50), amber, empty and hidden at rest. Painted by
+           src/assignments.js at a close the dates cannot place — and from the moment the dialog
+           opens in a class whose terms carry no dates. Never painted from a keystroke. -->
+      <p class="assign-term-note hidden" id="assignmentTermNote"></p>
       <p class="class-hint">
         <strong>Both dates are plain dates, and a new assignment starts them on today.</strong>
-        Type over either one, or clear it and leave it blank. Nothing moves them after that:
-        Planbook has no timetable, so there is no “next meeting” to advance a due date to — and a
-        date here never marks anybody or changes a grade on its own.
+        Type over either one, or clear it. <strong>The due date picks the term</strong> when you
+        close this: due in another term, the assignment moves there, and its scores go with it. A due
+        date left blank takes the assigned date. Nothing else moves them: Planbook has no timetable,
+        so there is no “next meeting” to advance a due date to — and a date here never marks anybody.
       </p>
       <p class="class-hint">
         <strong>0 points is extra credit.</strong> Type it and it stays 0: a 0-point assignment
@@ -3294,6 +3316,37 @@
                 aria-haspopup="dialog">Delete…</button>
       </div>
       <p class="class-error hidden" id="assignmentError"></p>
+    </div>
+  </div>
+</div>
+
+<!-- A MOVE THAT CARRIES SCORES (WO-3.50, ruling 4). Opened over the editor when it closes on a due
+     date in another term and the assignment has scores on it: scores are keyed by assignment, so the
+     move takes them out of one term's grades and into another's, and the one it leaves may already be
+     in the SIS. It names both terms and the count BEFORE anything is written. Move writes the new term
+     (and a blank due date's copy of the assigned one) in one save and closes both dialogs; Keep writes
+     nothing at all and closes both; the ✕ and Escape go back to the editor to change the date. Same
+     tier and grammar as the delete confirm below: it counts what goes before it goes.
+     Filled by src/assignments.js. -->
+<div class="modal-overlay hidden" id="assignmentMoveModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="assignmentMoveTitle">
+    <div class="modal-header">
+      <h2 id="assignmentMoveTitle">Move it to another term?</h2>
+      <button class="modal-close" data-modal-close title="Back to the assignment" aria-label="Back to the assignment">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="assignmentMoveLead"></p>
+      <div class="modal-section-label">What goes with it</div>
+      <div class="class-delete-facts" id="assignmentMoveFacts"></div>
+      <div class="modal-actions">
+        <button class="class-action-btn primary assign-move-btn" type="button" id="assignmentMoveBtn"
+                data-assignment-move-confirm>Move it</button>
+        <button class="class-action-btn assign-move-btn" type="button" id="assignmentMoveKeep"
+                data-assignment-move-keep>Keep it where it is</button>
+      </div>
+      <p class="class-hint">
+        To change the date instead, close this and you are back in the assignment.
+      </p>
     </div>
   </div>
 </div>
