@@ -13,6 +13,16 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The harness presses the copy dialog's source-line Clears — 2026-10-06
+
+WO-3.51. Tooling only; nothing under `src/` moved, so no shell cache bump, and none owed.
+
+- **Not user-visible.** `tools/verify/copy-class.mjs` now clicks the Clear buttons beside the
+  source line's due and assigned dates and proves each one empties only the source's field, saves
+  nothing until the confirm, is dropped by Cancel, and is saved with the copies in the same `rev`.
+  The mutation that makes a Clear write at once turns four of the five new checks red. Census:
+  1805 `check()` call sites.
+
 ### The copy dialog is one list, and the due date files each copy — 2026-10-06
 
 WO-3.49, owner-directed, out of WO-3.48's reading the same day. Shell cache bumped to v168.

@@ -10630,6 +10630,61 @@ the same date prints `1791 checks · 1780 passed · 11 failed · 0 skipped` with
 check, and `build-line.mjs` / `stuck-update.mjs` / `worker-takeover.mjs` (the last throwing *Maximum call
 stack size exceeded* from inside a `Date` call). The one skip is the Drive Connect check in About.
 
+### WO-3.51 — no check presses the copy dialog's source-line Clears
+
+**What this changes.** Harness only — nothing in `src/`, `index.html` or `sw.js` moved, and `CACHE` is
+still `planbook-shell-v168`. Five checks in `tools/verify/copy-class.mjs`, labelled `WO-3.51:`, directly
+after WO-3.49's dismissals check. They plant one source assignment of their own in the WO-3.49 fixture's
+P1 — *WO-3.51 Close reading*, Q2, assigned 2026-11-05, due 2026-11-12 — so the ESSAY and BLANK rows the
+blocks either side read are untouched, and it comes back out with the fixture at the foot. **Every press
+is a click on the source line's own `[data-date-clear]`**, through the same `clearOn()` that presses P7's;
+nothing sets `.value = ''` and fires an event. P2 and P6 are ticked, and each is touched in the *other*
+field (P2's assigned typed as 2026-11-06, P6's due as 2026-11-20), so each Clear has one line that follows
+it and one that keeps its own date. **Nothing asserts what term a blank-due source falls back to** — that
+is WO-3.50's sixth ruling, and the confirm check compares the saved source field by field with `due` and
+`termId` set aside.
+
+- [x] The source's due Clear empties the source's due field and leaves its assigned date and category;
+      P2's untouched due follows it to blank, P6's hand-typed 2026-11-20 stays, and no assigned date moves.
+      The assigned Clear then empties the source's assigned field with its due still blank; P6's untouched
+      assigned follows to blank, P2's hand-typed 2026-11-06 stays, and no due date moves.
+- [x] Neither press writes: after each, and a `flush()`, `rev` is unmoved (309 → 309 → 309 on the full
+      run) and the source in the document is byte-identical. Both read as held edits on the confirm:
+      *Copy into 2 classes* before, *Save WO-3.49 English I P1 and copy into 2 classes* after each.
+- [x] After both Clears, Cancel and a `flush()` leave **the whole document** byte-identical to a
+      `JSON.stringify` of it taken before the dialog opened (25,665 characters either side), and
+      reopening shows the source's stored 2026-11-05 / 2026-11-12, its category, and nothing ticked.
+- [x] Reopened, P2 and P6 ticked and both untouched, the source's due Cleared: the confirm reads *Save
+      WO-3.49 English I P1 and copy into 2 classes* and is enabled; pressing it moves `rev` by exactly one
+      (309 → 310), the source is saved with `due: ''` and every other field but `termId` as it was, and
+      the two copies are written in that same `update()`, each on 2026-11-05 with a blank due date.
+- [x] Mutation-proved — below.
+
+**Mutation round.** Made in a throwaway copy of the tree under the session scratch directory, never in
+the working tree; `grep -rn MUTATION src/ tools/` over the delivered tree reads only comments that were
+there before. The copy deleted the one line `if (sourceField) { setCopySource(fresh); return; }` from
+`copyFieldCleared()` and ran a three-section subset (the year store, classes & terms, and
+`copy-class.mjs`). Classes & terms throws on the subset's thin fixture with or without the mutation —
+the same subset red WO-3.49 recorded — so the unmutated subset was run first as the control:
+`116 checks · 115 passed · 1 failed`, the one red that throw, all five WO-3.51 checks green.
+
+**What the fall-through does.** Without the branch, a source input reaches `setCopyDate(fresh)`. It
+carries neither `data-assignment-copy-assigned` nor `data-assignment-copy-due`, so `setCopyDate()` takes
+the field as `'due'` — for the assigned Clear too — and looks for the line keyed by
+`getAttribute('data-assignment-copy-due')`, which is `null`; `copyTargetFor(null)` finds nothing and it
+returns. **It neither throws nor writes: it does nothing.** The element has already been replaced by an
+empty one, so the source's field *reads* blank while the held source still holds the stored date —
+a field that says Cleared over a save that will write the old date, which is the worst shape this could
+take. That is also why the source-field half of the first line passes under the mutation, and the
+follow and label halves are what catch it.
+
+| Mutation | Result |
+|---|---|
+| M1 · the `sourceField` branch in `copyFieldCleared()` deleted | **4 red of 5, each by name, no section throw** (`116 checks · 111 passed · 5 failed`, the fifth red the control's classes-and-terms throw): the due-Clear check (P2 kept 2026-11-12, button *Copy into 2 classes*); the assigned-Clear check (P6 kept 2026-11-05); the no-write check (`rev` 13 → 13 → 13, but the confirm never named the source); the confirm check (button *Copy into 2 classes*, source saved with `due: '2026-11-12'`, both copies on 2026-11-12). The Cancel check stayed green, correctly: under the mutation nothing was held, so there was nothing for Cancel to drop. |
+
+**Full run on the delivered tree:** `1811 checks · 1811 passed · 0 failed · 0 skipped`, 57,367 lines,
+31.7 lines per check, 813s, exit 0, 2026-10-06 on the real clock.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

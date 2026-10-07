@@ -481,7 +481,7 @@ console.log('\n--- copying a class, terms and categories only (WO-1.22) ---');
 
   WHAT IS DRIVEN, ALL THROUGH THE CONTROLS A TEACHER TOUCHES: a row's Duplicate, each class's tick,
   each line's category select and both its dates (typed, picked and Cleared), the source line's three
-  fields, the confirm, Cancel, the close button, Escape, the editor's + New assignment, its name
+  fields and — since WO-3.51 — its two Clears, the confirm, Cancel, the close button, Escape, the editor's + New assignment, its name
   field, its Copy into other classes…, and its Cancel. The window.planbook seam plants the fixture,
   reads the document, and archives the other classes for the one-class case.
 
@@ -977,6 +977,116 @@ console.log('\n--- one assignment into several classes, one line per class (WO-3
   check('WO-3.49: an untouched line follows the source\'s category by NAME — P2, ticked before the source moved '
     + 'to Quizzes, moves to P2\'s own Quizzes id — and was proposed on the source\'s held due date',
     !!follows && follows.cat === P2_QUIZ && follows.due === '2026-12-01', JSON.stringify(follows));
+
+  /* ── THE SOURCE LINE'S TWO CLEARS, PRESSED (WO-3.51) ── WO-3.49 drew them and this block only ever
+     measured them for fit; nothing pressed one. Each press is a click on the source line's own
+     `[data-date-clear]`, the way clearOn() presses P7's — never `.value = ''` and an event, the path
+     WO-1.47 and WO-1.48 ruled out. A source assignment of its own, so the ESSAY and BLANK rows the
+     blocks either side read are left exactly as they were; planted through the seam and drawn by going
+     back onto the list, because no screen repaints on a store write. Two lines ticked, each touched in
+     the OTHER field — P2's assigned typed, P6's due typed — so each Clear has one line that follows it
+     and one that keeps its own date. What term a blank-due SOURCE falls back to is WO-3.50's ruling and
+     is asserted nowhere here; this fences the path, not what is behind it. */
+  const A351 = 'a351_reading';
+  await closeIfOpen349();
+  await evalJs(`(async function(){ var s = window.planbook.store;
+    s.update(function(doc){ doc.assignments.push({ id:'${A351}', classId:'${SRC}', termId:'tm349_src2',
+      categoryId:'${SRC_ESSAYS}', name:'WO-3.51 Close reading', points:20,
+      assigned:'2026-11-05', due:'2026-11-12' }); });
+    await s.flush(); return 1; })()`);
+  await toSourceList();
+  const src351 = (d) => JSON.stringify(d.assignments.filter((a) => a.id === A351)[0]);
+  const WHOLE351 = 'JSON.stringify(window.planbook.store.getDoc())';
+  const docPre351 = await evalJs(DOC349);
+  const wholePre351 = await evalJs(WHOLE351);
+  await clickSel('#assignmentsView [data-assignment-duplicate="' + A351 + '"]');
+  await sleep(150);
+  await tick(P2); await tick(P6);
+  await pick('[data-assignment-copy-assigned="' + P2 + '"]', '2026-11-06', 'input');
+  await pick('[data-assignment-copy-due="' + P6 + '"]', '2026-11-20', 'input');
+  const pre351 = await evalJs(READ349);
+  await clearOn('[data-assignment-copy-source="due"]');
+  await sleep(150);
+  const dueCleared = await evalJs(READ349);
+  await flush();
+  const docDueCleared = await evalJs(DOC349);
+  await clearOn('[data-assignment-copy-source="assigned"]');
+  await sleep(150);
+  const asCleared = await evalJs(READ349);
+  await flush();
+  const docAsCleared = await evalJs(DOC349);
+  const dates351 = (st) => ({ source: st.source && [st.source.cat, st.source.assigned, st.source.due],
+    lines: st.lines.filter((l) => l.on).map((l) => [l.id, l.assigned, l.due]), button: st.button });
+  check('WO-3.51: the source\'s due Clear, pressed, empties the source\'s due field and only that field — '
+    + 'its assigned date and category stay — and the untouched due date on P2 follows it to blank while P6, '
+    + 'whose due date was changed by hand, keeps 2026-11-20; no assigned date moves',
+    !!pre351.source && pre351.source.due === '2026-11-12' && lineOf(pre351, P2).due === '2026-11-12'
+      && !!dueCleared.source && dueCleared.source.due === ''
+      && dueCleared.source.assigned === '2026-11-05' && dueCleared.source.cat === SRC_ESSAYS
+      && lineOf(dueCleared, P2).due === '' && lineOf(dueCleared, P6).due === '2026-11-20'
+      && lineOf(dueCleared, P2).assigned === '2026-11-06' && lineOf(dueCleared, P6).assigned === '2026-11-05',
+    JSON.stringify({ before: dates351(pre351), after: dates351(dueCleared) }));
+  check('WO-3.51: the source\'s assigned Clear, pressed, empties the source\'s assigned field and only that '
+    + 'field — its due date stays blank and its category stays — and the untouched assigned date on P6 '
+    + 'follows it to blank while P2, whose assigned date was changed by hand, keeps 2026-11-06; no due date moves',
+    !!asCleared.source && asCleared.source.assigned === '' && asCleared.source.due === ''
+      && asCleared.source.cat === SRC_ESSAYS
+      && lineOf(asCleared, P6).assigned === '' && lineOf(asCleared, P2).assigned === '2026-11-06'
+      && lineOf(asCleared, P2).due === '' && lineOf(asCleared, P6).due === '2026-11-20',
+    JSON.stringify(dates351(asCleared)));
+  check('WO-3.51: neither source Clear writes — after each press and a flush `rev` is unmoved and the source '
+    + 'in the document is byte-identical — and both are held edits the confirm names: "Save WO-3.49 '
+    + 'English I P1 and copy into 2 classes"',
+    docDueCleared.rev === docPre351.rev && docAsCleared.rev === docPre351.rev
+      && src351(docDueCleared) === src351(docPre351) && src351(docAsCleared) === src351(docPre351)
+      && pre351.button === 'Copy into 2 classes'
+      && dueCleared.button === SAVE + 'copy into 2 classes' && asCleared.button === SAVE + 'copy into 2 classes',
+    'rev ' + docPre351.rev + ' -> ' + docDueCleared.rev + ' -> ' + docAsCleared.rev + ', buttons '
+      + JSON.stringify([pre351.button, dueCleared.button, asCleared.button]));
+  await clickSel('[data-assignment-copy-cancel]');
+  await sleep(150);
+  await flush();
+  const wholeCancel351 = await evalJs(WHOLE351);
+  const cancelled351 = await evalJs(READ349);
+  await clickSel('#assignmentsView [data-assignment-duplicate="' + A351 + '"]');
+  await sleep(150);
+  const reopened351 = await evalJs(READ349);
+  check('WO-3.51: after both source Clears, Cancel leaves the whole document byte-identical to before the '
+    + 'dialog opened, after a flush, and reopening shows the source\'s stored dates (2026-11-05 / '
+    + '2026-11-12) with nothing ticked',
+    !cancelled351.open && wholeCancel351 === wholePre351
+      && reopened351.open && !!reopened351.source && reopened351.source.assigned === '2026-11-05'
+      && reopened351.source.due === '2026-11-12' && reopened351.source.cat === SRC_ESSAYS
+      && reopened351.lines.every((l) => !l.on),
+    JSON.stringify({ same: wholeCancel351 === wholePre351, lengths: [wholePre351.length, wholeCancel351.length],
+      reopened: reopened351.source && [reopened351.source.assigned, reopened351.source.due] }));
+  /* The confirm after a source Clear: the due date only, both lines untouched, so each follows to a
+     blank due date and is placed by the assigned date it still shares with the source. */
+  await tick(P2); await tick(P6);
+  await clearOn('[data-assignment-copy-source="due"]');
+  await sleep(150);
+  const toSave351 = await evalJs(READ349);
+  const docPreSave351 = await evalJs(DOC349);
+  await clickSel('#assignmentCopyBtn');
+  await flush();
+  const docSaved351 = await evalJs(DOC349);
+  const saved351 = await evalJs(READ349);
+  const before351 = JSON.parse(src351(docPreSave351));
+  const after351 = JSON.parse(src351(docSaved351) || 'null');
+  const made351 = docSaved351.assignments.filter((a) => docPreSave351.assignments.every((b) => b.id !== a.id));
+  check('WO-3.51: after the source\'s due Clear the confirm reads "Save WO-3.49 English I P1 and copy into 2 '
+    + 'classes" and saves the source with its due date empty and nothing else changed but its term, in the '
+    + 'SAME update() as the two copies — `rev` +1 — each copy following to a blank due date on 2026-11-05',
+    toSave351.button === SAVE + 'copy into 2 classes' && toSave351.disabled === false
+      && docPreSave351.rev === docPre351.rev && docSaved351.rev === docPreSave351.rev + 1
+      && !!after351 && after351.due === ''
+      && JSON.stringify(Object.assign({}, after351, { due: before351.due, termId: before351.termId }))
+        === JSON.stringify(before351)
+      && made351.length === 2 && made351.map((a) => a.classId).sort().join() === [P2, P6].sort().join()
+      && made351.every((a) => a.due === '' && a.assigned === '2026-11-05' && a.name === 'WO-3.51 Close reading')
+      && !saved351.open,
+    JSON.stringify({ button: toSave351.button, rev: [docPre351.rev, docPreSave351.rev, docSaved351.rev],
+      source: after351, copies: made351.map((a) => [a.classId, a.assigned, a.due]) }));
 
   /* ── THE SOURCE'S CATEGORY AND ASSIGNED DATE REACH THE DOCUMENT ON CONFIRM TOO ── the write above
      carried a due date only. Here the other two fields are changed on the source line and confirmed. */

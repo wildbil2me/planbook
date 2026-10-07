@@ -1,0 +1,9 @@
+- 2026-10-07T00:28:18Z gates PASS (dep WO-3.49 DONE, tree clean, no prior dispatch files)
+- 2026-10-07T00:28:18Z route Claude Opus (no model override) — harness-only XS, but Traps are judgment (a red check on the delivered tree is an app defect to STOP and report, not a check to adjust; press the button, never .value='' + event) plus TESTING.md § WO-3.51 prose and a mutation round. Runner-up Codex (spec complete, mechanical, convention clearOn() exists) set aside on ties-to-Claude and precedent WO-1.59/1.61. No Codex probe: not Codex-routed. No Ship 1 pre-routing row.
+- 2026-10-07T00:28:18Z claimed: --start ran (🤖 CLAIMED)
+- 2026-10-07T00:28:50Z brief written: .claude/dispatch/WO-3.51-brief.md (~10 KB, markers filled). Note: wo-gate --start reported the 5h window at 17.4M proxy units, above the 16.4M p25 death mark — a quota death is plausible; recovery = grep -rn MUTATION first.
+- 2026-10-07T00:28:57Z implementer spawned at Opus (work-order-implementer, no model override), brief .claude/dispatch/WO-3.51-brief.md; awaiting return — expect 20–40 min, flat trail normal while it reads
+- 2026-10-07T00:48:41Z implementer returned: claims 5 WO-3.51 checks in copy-class.mjs, all 5 boxes ticked, verify-shell 1811/1811 EXIT=0, sweep 45/0/3, mutation proved in a scratch copy (4 of 5 checks red), no src/ change, tools/README.md count 1800->1805; no app defect found. Not committed.
+- 2026-10-07T00:48:45Z handoff written: --handoff ran, row is 🔍 AWAITING VERDICT. Verifier owed from a FRESH session (WO-1.38); this session stops here.
+- 2026-10-07T00:51:11Z fresh session: row 🔍 AWAITING VERDICT confirmed; grep MUTATION over delivered files clean; verifier spawning at Opus as FIRST pass
+- 2026-10-07T01:19:22Z verifier returned: PASS, 5/5 ✅, no 🙋; verify-shell 1811/1811 EXIT=0, sweep 45/0/3 EXIT=0, mutation re-run full (4 of 5 red), no src/ change, nothing armed. --tick awaits owner go.

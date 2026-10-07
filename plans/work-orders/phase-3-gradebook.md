@@ -3984,7 +3984,7 @@ here may re-file work because time passed. **Never derive the term on `input`** 
 
 ## WO-3.51 — no check presses the copy dialog's source-line Clears
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-3.49
+**Ship** — · **Status** ✅ DONE — 2026-10-06 · **Size** XS · **Depends on** WO-3.49
 **Closes roadmap** *(no box. A harness gap, owner-directed, 2026-10-06.)*
 
 **Booked 2026-10-06**, owner-directed, out of a reading of WO-3.49's Clears after it closed.
@@ -4008,16 +4008,16 @@ path should be fenced before WO-3.50 changes what is behind it.
 through the button, the way `clearOn()` presses P7's, and read the result.
 
 **Acceptance**
-- [ ] Pressing the source's due Clear empties the source's due field and only that field, and every
+- [x] Pressing the source's due Clear empties the source's due field and only that field, and every
       ticked line the teacher has not touched follows it to blank. A touched line keeps its own
       date. The same holds for the assigned Clear.
-- [ ] Neither press writes: `rev` is unmoved after a `flush()`, and the source in the document is
+- [x] Neither press writes: `rev` is unmoved after a `flush()`, and the source in the document is
       byte-identical.
-- [ ] After both Clears, Cancel leaves the document byte-identical to before the dialog opened, and
+- [x] After both Clears, Cancel leaves the document byte-identical to before the dialog opened, and
       reopening the dialog shows the source's stored dates.
-- [ ] After a source Clear, the confirm saves the source with that date empty, in the same single
+- [x] After a source Clear, the confirm saves the source with that date empty, in the same single
       `update()` as the copies, and the confirm label reads *Save … and copy into N classes*.
-- [ ] Mutation-proved: with the `sourceField` branch in `copyFieldCleared()` removed, at least one of
+- [x] Mutation-proved: with the `sourceField` branch in `copyFieldCleared()` removed, at least one of
       these checks goes red. Recorded in `TESTING.md` § WO-3.51. **The mutation is reverted before
       anything else is written** (`AGENTS.md`).
 

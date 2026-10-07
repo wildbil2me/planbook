@@ -1253,7 +1253,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1800 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1805 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2512,6 +2512,15 @@ and gained no site: its duplicate fixture now gives the target a term holding th
 hands the dates back), and it reads the term off the line's sub-line rather than a select. The run prints
 `1806 checks · 1806 passed · 0 failed · 0 skipped`, 57,257 lines, 31.7 lines per check, 792s, exit 0,
 2026-10-06 on the real clock. Mutation round in `TESTING.md` § WO-3.49.
+
+**WO-3.51 moved it from 1800 to 1805, and the executed count from 1806 to 1811 — five sites, five
+results, and the file count stays where it was.** Five checks in the WO-3.49 block of
+`verify/copy-class.mjs`, after its dismissals check, that press the copy dialog's source-line Clears
+through `clearOn()` — the button, never `.value` and an event — on a source assignment of their own,
+and read the follow rule, the held edit, Cancel and the confirm. None sits in a loop and none is a
+failure arm, so the gap between sites and results stays at −6. The run prints
+`1811 checks · 1811 passed · 0 failed · 0 skipped`, 57,367 lines, 31.7 lines per check, 813s, exit 0,
+2026-10-06 on the real clock. Mutation round in `TESTING.md` § WO-3.51.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
