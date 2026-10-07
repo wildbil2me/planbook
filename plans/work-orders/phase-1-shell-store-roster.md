@@ -5605,3 +5605,42 @@ assumption before the commit that broke it. **A check made to pass by skipping i
 not a fix**. If a check really cannot run on a shifted clock, it says so in its own output, and
 WO-1.44's rule that a shifted run says so stands. Nothing in `src/` should move. If something there
 must, stop and report it rather than fixing it inside this work order.
+
+## WO-1.63 — --today takes a date before the fixtures' year and reports fifteen failures instead of refusing
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** —
+**Closes roadmap** *(no box. A harness guard, owner-directed, 2026-10-07.)*
+
+**Booked 2026-10-07**, owner-directed, out of WO-1.62's verdict.
+
+**The defect.** `node tools/verify-shell.mjs --today=2026-01-20` runs to the end and reports
+`1807 checks · 15 failed`. None of the fifteen is a defect: the date is January of the school year
+*before* the one the fixtures are built in, and term-nav, concern-list and log-entries each type a
+date in calendar 2026 that they assume today is already past (`TESTING.md` § WO-1.62 names every
+one). The fixture year's own Quarter 3, `--today=2027-01-20`, is 1811/1811. WO-1.62's own Acceptance
+line called 2026-01-20 a Quarter 3 date, which is how easily this is misread. A run like that costs
+about 13 minutes and ends in fifteen red lines that look like a regression.
+
+**Ruled 2026-10-07: dates before the fixtures' year are not supported.** Supporting them would mean
+rewriting fixtures in three files for a date the app is never used on. The fix is a refusal and not
+a re-fixture.
+
+**Deliverables** — `--today` refuses a date earlier than a floor, before Edge is launched, with a
+message naming the floor, why it exists, and a date that works. The floor is **derived from what the
+fixtures actually assume**, not guessed. The latest date that a section types and assumes is past
+decides it. Concern-list's June 2026 term is the likely one, but read it off the fixtures. The floor
+is a named constant beside the `--today` parse, with a comment saying which fixture sets it, so the
+next fixture that types a later date knows to move it. **The real-clock run is never refused**: the
+guard reads only an explicit `--today`.
+
+**Acceptance**
+- [ ] `--today=2026-01-20` exits non-zero within seconds without launching Edge, and its message names
+      the floor and suggests `--today=2027-01-20`.
+- [ ] `--today` at the floor itself runs, and is green. The run is recorded in `TESTING.md` § WO-1.63
+      with its count. If it is not green, the floor is wrong: move it, do not fix the fixtures.
+- [ ] The real-clock run is unchanged in check titles and count and still green.
+- [ ] `tools/README.md` and the `--today` usage text say what the floor is and why.
+
+**Traps** — **Do not fix the fifteen.** The ruling is that they are out of range, not broken. **No
+upper bound** is in scope. A date after the fixtures' year may or may not be green, and if anyone
+wants that probed it is a separate row. Nothing in `src/` moves.
