@@ -379,7 +379,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.63 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.64 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.57 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.51 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.6 | Phase 4 |
@@ -453,7 +453,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 63 | 63 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 64 | 63 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 55 | 54 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 50 | 47 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 6 | 6 | — | ✅ DONE — 2026-09-30 |
@@ -462,7 +462,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 17 | 16 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.4 ✅ DONE 2026-09-26, the sign-in opened on the deployed domain and read on the laptop and the iPad; WO-7.5 ✅ DONE 2026-09-26, the header's sync button; WO-7.6 ✅ DONE 2026-09-26, the privacy documents say when Google's library loads, read off the deployed /privacy; WO-7.7 ✅ DONE 2026-09-26, a download repaints the open screen, read both ways on laptop and iPad; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 18 | 12 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 3 | — | WO-G2 ✅ **2026-09-30**: worked 2026-09-29 with six of eight boxes closed, and the letter-scale setting and the backup drill closed the next day on the owner's reading; WO-G3 ✅ **2026-09-30** on the owner's ruling, watched across four weeks of the term with nothing recorded |
-| | **238** | **225** | **3** | `[█████████░] 95%` |
+| | **239** | **225** | **3** | `[█████████░] 94%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)
@@ -1992,6 +1992,7 @@ it, never from a reading taken earlier in the same session.)*
 | 131 | [WO-3.48](phase-3-gradebook.md#wo-348--one-assignment-goes-into-several-classes-in-one-dialog) One assignment goes into several classes in one dialog | M | — | ✅ **2026-10-06** — all eleven Acceptance lines, verifier PASS, the 👤 read by the owner on v167, who found the dialog too long to scroll on both devices and clunky on the laptop, a layout follow-up. **At the foot, booked 2026-10-05**, owner-directed, out of `plans/future-features.md` § Assignments screen item 1. The duplicate dialog becomes multi-target: one row per class with its own term, category and due date, the due date starting on the source's, and copies never a shared structure. Creation offers it every time. The create door's shape and no pre-selection were confirmed by the owner at `7eaf2c4`. `src/`, harness checks, a 👤 on the iPad; bumps `CACHE` |
 | 134 | [WO-1.62](phase-1-shell-store-roster.md#wo-162--a-run-under---today-in-quarter-2-is-red-before-any-work-order-touches-it) A run under `--today` in Quarter 2 is red before any work order touches it | S | — | **At the foot, booked 2026-10-06**, owner-directed, out of WO-3.49's verdict. `--today=2026-11-10` fails 11 checks on `e3abd60`: one class-tab term-nav check, plus `build-line`, `stuck-update` and `worker-takeover`, the last throwing a stack overflow from inside `Date`. **Before 2026-11-01**, when the real clock reaches Quarter 2 and the same failures may turn up on an unshifted run. Harness only; nothing in `src/` moves |
 | 135 | [WO-1.63](phase-1-shell-store-roster.md#wo-163----today-takes-a-date-before-the-fixtures-year-and-reports-fifteen-failures-instead-of-refusing) `--today` takes a date before the fixtures' year and reports fifteen failures instead of refusing | XS | — | ✅ **2026-10-07** — all four Acceptance lines, verifier PASS. The floor is **2026-09-19**, not the fixtures' year: the first reading, 2026-07-01, and 2026-09-18 each failed one score-grid check (WO-3.27) that holds only with a past-due banner for a 2026-09-18 due date, so Sep 1–18 is refused too. Row 136 gets that window back. Was `tools/verify-shell.mjs` — **Nothing blocks it.** An hour, whenever `verify-shell.mjs` is open for something else. Booked **2026-10-07**, owner-directed, out of WO-1.62's verdict: `--today=2026-01-20` falls before the fixtures' school year and reports fifteen failures that are not defects. The owner ruled such dates unsupported, so the fix is a refusal with a floor read off the fixtures, not a re-fixture. |
+| 136 | [WO-1.64](phase-1-shell-store-roster.md#wo-164--the-harness-floor-refuses-sep-118-because-of-one-check-measured-to-a-fraction-of-a-pixel) The harness floor refuses Sep 1–18 because of one check measured to a fraction of a pixel | S | WO-1.63 | **At the foot, booked 2026-10-07**, owner-directed, out of WO-1.63's verdict. The WO-3.27 viewport check asserts `top >= 0` exactly and has only passed because a fixture's past-due banner moves the page; without the banner it reads −0.12. The fix gives that check a half-pixel tolerance and brings `TODAY_FLOOR` back down, expected to 2026-07-01, so the term's first eighteen days can be run again. Also refuses impossible dates like `2026-13-40`, and drops the failure counts from the refusal. Harness only; nothing in `src/` moves |
 
 ***Rows 17 through 32 were added 2026-08-28, and the reason is the third occurrence of the failure
 this section exists to prevent.*** *Before that sitting,* **sixteen open work orders had no row in
