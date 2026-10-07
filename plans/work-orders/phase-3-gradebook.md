@@ -3977,3 +3977,48 @@ scored-move warning, WO-3.49's source save, harness checks in `tools/verify/assi
 **Traps** — **CLAUDE.md's "the grade must never change because a date rolled over" is about the
 clock, and this is a date the teacher typed.** Keep the distinction explicit in the code: nothing
 here may re-file work because time passed. **Never derive the term on `input`** (ruling 2).
+
+## WO-3.51 — no check presses the copy dialog's source-line Clears
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-3.49
+**Closes roadmap** *(no box. A harness gap, owner-directed, 2026-10-06.)*
+
+**Booked 2026-10-06**, owner-directed, out of a reading of WO-3.49's Clears after it closed.
+
+**The gap.** WO-3.49 put two date fields and two Clears on the copy dialog's source line. The Clears
+are drawn by `copyDateCell()` in `src/assignments.js` and routed by `clearDateField()` in
+`src/shell.js` to `copyFieldCleared()`, whose `sourceField` branch hands the fresh input to
+`setCopySource()`. **No check ever presses them.** `tools/verify/copy-class.mjs` presses only P7's due
+and assigned Clears on a ticked line, and it measures the source line's Clears for fit at 1280, 920
+and 919px without pressing them. So nothing tests that clearing a source date is a held edit like
+every other source edit, that untouched lines follow it, or that Cancel undoes it.
+`tools/verify/date-clear.mjs`'s census counts its ten Clears with the dialogs shut, on purpose, and
+is not the place for this.
+
+**Why now.** [WO-3.50](#wo-350--the-due-date-picks-an-assignments-term-in-the-editor-too)'s sixth
+ruling has the source line's term follow its due date, with a blank due date falling back to the
+assigned date. Pressing the source's due Clear is the quickest way to reach that fallback, so the
+path should be fenced before WO-3.50 changes what is behind it.
+
+**Deliverables** — checks in `tools/verify/copy-class.mjs` that press the source line's two Clears
+through the button, the way `clearOn()` presses P7's, and read the result.
+
+**Acceptance**
+- [ ] Pressing the source's due Clear empties the source's due field and only that field, and every
+      ticked line the teacher has not touched follows it to blank. A touched line keeps its own
+      date. The same holds for the assigned Clear.
+- [ ] Neither press writes: `rev` is unmoved after a `flush()`, and the source in the document is
+      byte-identical.
+- [ ] After both Clears, Cancel leaves the document byte-identical to before the dialog opened, and
+      reopening the dialog shows the source's stored dates.
+- [ ] After a source Clear, the confirm saves the source with that date empty, in the same single
+      `update()` as the copies, and the confirm label reads *Save … and copy into N classes*.
+- [ ] Mutation-proved: with the `sourceField` branch in `copyFieldCleared()` removed, at least one of
+      these checks goes red. Recorded in `TESTING.md` § WO-3.51. **The mutation is reverted before
+      anything else is written** (`AGENTS.md`).
+
+**Traps** — **If a check fails on the delivered tree, that is an app defect, not a check to adjust.**
+Stop and report it with the failing output rather than fixing `src/` inside this work order.
+**Press the button**, never set `.value = ''` and dispatch an event: an emptied field fired as an event
+is the exact path WO-1.47 and WO-1.48 ruled out. Harness only; nothing in `src/` moves and there is
+no `CACHE` bump.
