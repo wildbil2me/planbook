@@ -5562,3 +5562,46 @@ yesterday. Check `git diff --name-only <bump>..HEAD -- index.html` on the real t
 what § 9 will say. **Do not add `./index.html` to `SHELL`** to make the check see it — `sw.js`'s header
 explains why that breaks the app on the first navigation. The fix is in the sweep's reading of
 `SHELL`, never in `SHELL`.
+
+## WO-1.62 — a run under --today in Quarter 2 is red before any work order touches it
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Closes roadmap** *(no box. A harness defect, owner-directed, 2026-10-06.)*
+
+**Booked 2026-10-06**, owner-directed, out of WO-3.49's verdict.
+
+**The defect.** `node tools/verify-shell.mjs --today=2026-11-10` fails 11 checks on `e3abd60`, before
+WO-3.49 landed, and the same 11 by title on WO-3.49's tree. So a full run dated in Quarter 2, which
+starts 2026-11-01, is red on `main`, and every verifier from now to then has to diff a `--today` run
+against a baseline to tell its own failures from these. The real clock is green (1806/1806 on
+`9a5b316`). The failures are in two groups, and they may not share a cause:
+
+- **One class-tab term-nav check.** Likely a fixture or expectation that assumes today is in Quarter 1.
+  This is WO-1.44's *a fixture colliding with a date* again, in a section that has not met that date.
+- **`build-line.mjs`, `stuck-update.mjs` and `worker-takeover.mjs`**, with `worker-takeover` throwing
+  *Maximum call stack size exceeded* from inside a `Date` call. **A hypothesis, not a finding:**
+  `SHIFT_PAGE_CLOCK` in `tools/verify-shell.mjs` captures `var Real = Date`. If it ever runs in a realm
+  where `Date` is already the proxy and `window.__clockShifted` is not set, `Real` is the proxy, and
+  its `now` getter calls `Real.now()`, which goes back through the same getter until the stack runs
+  out. All three sections are about the service worker and reloads, which is where a fresh realm or a
+  second install would come from. Confirm or rule it out before fixing anything.
+
+**Deliverables** — each of the 11 failures traced to its cause, recorded in `TESTING.md` § WO-1.62
+by check title, and fixed in the harness. If the clock patch is the cause, it is fixed so that
+installing it twice cannot recurse, and the comment above it says why.
+
+**Acceptance**
+- [ ] `node tools/verify-shell.mjs --today=2026-11-10` is green on the delivered tree, with the same
+      number of checks as a real-clock run, apart from any check that names its date dependence.
+- [ ] The real-clock run is unchanged in check titles and count and is still green.
+- [ ] If the clock patch is changed, a mutation restoring the recursion turns a check red.
+      Mutation-proved and recorded in `TESTING.md` § WO-1.62. **The mutation is reverted before
+      anything else is written** (`AGENTS.md`).
+- [ ] `--today=2026-01-20` (Quarter 3, a date after a year boundary) is also run and its result
+      recorded. Failures there that this work order does not fix are named, not fixed.
+
+**Traps** — **The app is probably innocent**, as it was in WO-1.44: look for the harness or fixture
+assumption before the commit that broke it. **A check made to pass by skipping it under `--today` is
+not a fix**. If a check really cannot run on a shifted clock, it says so in its own output, and
+WO-1.44's rule that a shifted run says so stands. Nothing in `src/` should move. If something there
+must, stop and report it rather than fixing it inside this work order.
