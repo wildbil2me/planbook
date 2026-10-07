@@ -3905,6 +3905,10 @@ amend its banner in the same sitting.
       and is disabled with nothing ticked even then.
 - [x] Changing the source's due date moves every line still on the old date and no line the teacher
       changed. Likewise for the assigned date.
+      *(Built wider than this line: an untouched line also follows the source's **category**,
+      matched by name. The implementer disclosed it as its reading of ruling 6, the verifier did not
+      fail it, and the owner accepted it as built at the 👤 reading on 2026-10-06. Undoing it is a
+      three-line change.)*
 - [x] The source line heads the list from both doors and has no tick. Duplicate does not offer the
       source's own class. No term control exists anywhere in the dialog, and each ticked line names
       its term.
