@@ -13,6 +13,20 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A harness date before the floor is refused — 2026-10-07
+
+WO-1.63. Tooling only; nothing under `src/` moved, so no shell cache bump, and none owed.
+
+- **Not user-visible.** `node tools/verify-shell.mjs --today=<date>` now refuses any date before
+  **2026-09-19** in well under a second, before a browser starts. The message names the floor and
+  why, and suggests `--today=2027-01-20`, which is measured green. A run without `--today` never
+  reaches the check.
+- **The floor is later than the work order expected.** Reading the June 2026 fixtures gave July 1,
+  but a run on that date, and one on 2026-09-18, each failed one score-grid check. That check holds
+  only when the past-due banner for a fixture assignment due 2026-09-18 is on screen. So
+  Sep 1–18 is refused for now, and WO-1.64 is booked to get those days back. The floor run and the
+  real-clock run are both 1832 of 1832.
+
 ### The due date files an assignment in the editor too — 2026-10-07
 
 WO-3.50. Shell cache `planbook-shell-v169`.
@@ -44,7 +58,8 @@ WO-1.62. Tooling only; nothing under `src/` moved, so no shell cache bump, and n
   real-clock run are both 1811 of 1811. Putting the old clock shift back turns 10 checks red.
 - **Known:** `--today=2026-01-20` has 15 failures. That date falls before the fixtures' school year,
   and they are recorded in `TESTING.md` § WO-1.62 rather than fixed. The fixture year's own
-  Quarter 3, `--today=2027-01-20`, is green.
+  Quarter 3, `--today=2027-01-20`, is green. *(Since WO-1.63, the same day, that date is refused
+  rather than run.)*
 
 ### The harness presses the copy dialog's source-line Clears — 2026-10-06
 

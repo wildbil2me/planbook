@@ -719,8 +719,11 @@ worker.
 
 ```
 node tools/verify-shell.mjs                    # the real clock, and this is the run that counts
-node tools/verify-shell.mjs --today=2026-09-03 # the same run, taken as if today were that Thursday
+node tools/verify-shell.mjs --today=2026-11-10 # the same run, taken as if today were that Tuesday
 ```
+
+*(The example read `--today=2026-09-03` until WO-1.63, which made that date one the flag refuses —
+see the floor below.)*
 
 **The default is the real clock and that is a rule rather than a convenience.** A harness whose
 ordinary run stopped measuring the day the teacher is actually in would have traded one blind spot
@@ -753,6 +756,28 @@ sentence beside it is a figure about a day nobody was on.
 **A typo throws rather than defaulting.** `--today=tuesday` stops the run with a message; silently
 falling back to the real clock would produce a green run somebody would then cite as proof of a day
 it never saw.
+
+**And a date before 2026-09-19 is refused, by ruling** (WO-1.63, 2026-10-07). The fixtures are built
+in the 2026-27 school year, and several sections type dates in calendar 2026 that they assume today is
+already past: `verify/term-nav.mjs` (February and March), `verify/log-entries.mjs` (June 1–10),
+`verify/concern-list.mjs` (a term of 2026-06-01 … 2026-06-30, *in the past on purpose*, its header
+says) and, latest, `verify/score-grid.mjs`, whose *Unit test* is due 2026-09-18 with blank cells. From
+the 19th the past-due banner draws above the grid, and the WO-3.27 laptop-viewport check was only ever
+measured with it there: without it the box's top lands at −0.12px. **The floor was first set at
+2026-07-01 off the June term, and the run there moved it** — a due date assumed past does not say so
+in a header, so read the fixtures *and* run the floor. Before the refusal existed,
+`--today=2026-01-20` — January of the year *before* the fixtures' — ran thirteen minutes and ended in
+fifteen red lines that were not defects (`TESTING.md` § WO-1.62 names each). The ruling is that such
+dates are out of range, not that the fixtures are broken, so they are refused rather than re-fixtured:
+the run exits 1 within a second, before a server or Edge is started, naming the floor and suggesting
+`--today=2027-01-20`, the fixtures' own Quarter 3, which is green. The floor is `TODAY_FLOOR`, beside
+the parse in `tools/verify/lib-dates.mjs`, with a comment naming the fixture that sets it — **a
+fixture that types a later date it assumes is past moves it**, and the run at the new floor is
+recorded. Only an explicit `--today` is checked; the real-clock run is never refused. There is no
+upper bound, and none has been probed. **What the floor costs**: the first eighteen days of the
+fixtures' own September — where WO-1.44 and WO-1.53 took their readings — can no longer be driven.
+Bringing it back means making the score-grid check hold without the banner, which is a change to a
+check and not a floor, and is not in WO-1.63.
 
 **It grows with each work order: 28 at WO-1.3, 54 at WO-1.4, 82 at WO-1.5, 130 at WO-1.6, 162 at
 WO-1.7, 164 once the line cap was retired and its two replacement measurements went in, 184 at

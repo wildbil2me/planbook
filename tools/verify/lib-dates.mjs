@@ -28,8 +28,8 @@
 /*
   ── THE CLOCK IS AN INPUT SINCE WO-1.44, AND ITS DEFAULT IS THE REAL ONE ──
 
-  `node tools/verify-shell.mjs --today=2026-09-03` runs the whole harness as if today were that
-  date. Without the flag nothing here changes by a byte: `SHIFT_DAYS` is 0, `now()` is `new Date()`,
+  `node tools/verify-shell.mjs --today=2026-11-10` runs the whole harness as if today were that
+  date (no earlier than `TODAY_FLOOR`, below — WO-1.63). Without the flag nothing here changes by a byte: `SHIFT_DAYS` is 0, `now()` is `new Date()`,
   and every value below is what it has always been. That default is not a convenience, it is the
   rule — a harness whose ordinary run stopped measuring the day the teacher is actually in would
   have swapped one blind spot for another.
@@ -64,12 +64,60 @@
 */
 const SHIFT_ARG = (process.argv.slice(2).filter((a) => a.indexOf('--today=') === 0)[0] || '')
   .slice('--today='.length);
+/*
+  ── THE EARLIEST DATE `--today` WILL TAKE (WO-1.63, ruled 2026-10-07) ──
+
+  The fixtures are built in the 2026-27 school year, and some of them type a date in calendar 2026
+  that they assume today is already PAST. The latest such date decides the floor, and today it is
+  `tools/verify/score-grid.mjs`'s WO-3.5 fixture: its *Unit test* is typed `due:'2026-09-18'` with
+  blank cells, so from 2026-09-19 on (src/past-due.js asks `due < today`, strictly) the past-due
+  banner is drawn above the grid, and the WO-3.27 check "at a 1280x800 laptop viewport … the box's
+  top and bottom edges … are inside the viewport" was only ever measured with it there. Without the
+  banner the page scrolls to 505 rather than 576 and the box's top lands at -0.12px — red, on a
+  fraction of a pixel, for no defect. Measured, not reasoned: WO-1.63 ran 2026-09-18 and it read
+  exactly that, and 2026-09-19 is green (TESTING.md § WO-1.63).
+
+  THE FLOOR WAS FIRST SET A SECTION EARLIER, AND THE RUN MOVED IT. Reading the fixtures for dates
+  typed into calendar 2026 found `concern-list.mjs` latest — a term of 2026-06-01 … 2026-06-30 whose
+  header says "THE FIXTURE IS JUNE 2026 AND IT IS IN THE PAST ON PURPOSE" — with `log-entries.mjs`
+  (meetings on 2026-06-01 … 2026-06-10) and `term-nav.mjs` (2026-02-02 … 2026-03-02) inside it. So
+  the first floor was 2026-07-01, and the run there failed the score-grid check above: a due date
+  assumed past is a past-date assumption too, and it does not announce itself in a header. Those
+  three still hold under the floor; they are just no longer the latest.
+
+  A FIXTURE THAT TYPES A LATER DATE IT ASSUMES IS PAST MOVES THIS LINE, in the same sitting, and the
+  run at the new floor is recorded in TESTING.md the way WO-1.63's was. Before it existed a run on
+  2026-01-20 took thirteen minutes to end in fifteen red lines that looked like a regression and were
+  not one; the ruling is that those dates are out of range, not that those fixtures are broken, so
+  the answer is this refusal and never a re-fixture.
+
+  Read only off an explicit `--today`. The real-clock run is never refused, whatever the date.
+  No upper bound: whether a date after the fixtures' year is green has not been probed.
+*/
+export const TODAY_FLOOR = '2026-09-19';
+/* The date the refusal suggests instead: the fixtures' own Quarter 3, measured green — 1811 of
+   1811 under WO-1.62, and 1832 of 1832 again under WO-1.63 (TESTING.md § both). A suggestion
+   computed from the refused date would be a date nobody had run. */
+const TODAY_SUGGESTED = '2027-01-20';
 export const SHIFT_DAYS = (() => {
   if (!SHIFT_ARG) return 0;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(SHIFT_ARG)) {
     /* Thrown rather than ignored. A typo that quietly ran on the real clock would produce a green
        run somebody would then cite as proof of a day it never saw. */
     throw new Error('--today wants a YYYY-MM-DD date, and got ' + JSON.stringify(SHIFT_ARG));
+  }
+  /* Thrown here, at module evaluation, which is before verify-shell.mjs's body runs at all — every
+     import is evaluated first — so no server is started and no Edge is launched. ISO strings of
+     one fixed shape compare correctly as strings. */
+  if (SHIFT_ARG < TODAY_FLOOR) {
+    throw new Error('--today=' + SHIFT_ARG + ' is before ' + TODAY_FLOOR + ', the earliest date '
+      + 'this harness supports. The fixtures are built in the 2026-27 school year and some of them '
+      + 'type dates they assume are already past - the latest is tools/verify/score-grid.mjs\'s '
+      + 'assignment due 2026-09-18, and before it concern-list.mjs\'s June 2026 term - so an '
+      + 'earlier day ends in red checks that are not defects (fifteen of them on 2026-01-20, one '
+      + 'on 2026-09-18). Dates before the floor are out of range by '
+      + 'ruling (WO-1.63), not broken. Try --today=' + TODAY_SUGGESTED + ' (the fixtures\' own '
+      + 'Quarter 3, measured green), or any date from ' + TODAY_FLOOR + ' on.');
   }
   const want = new Date(Number(SHIFT_ARG.slice(0, 4)), Number(SHIFT_ARG.slice(5, 7)) - 1,
     Number(SHIFT_ARG.slice(8, 10)));

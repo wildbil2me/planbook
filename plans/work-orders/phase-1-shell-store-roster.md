@@ -5608,7 +5608,7 @@ must, stop and report it rather than fixing it inside this work order.
 
 ## WO-1.63 — --today takes a date before the fixtures' year and reports fifteen failures instead of refusing
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-10-07 · **Size** XS · **Depends on** —
 **Closes roadmap** *(no box. A harness guard, owner-directed, 2026-10-07.)*
 
 **Booked 2026-10-07**, owner-directed, out of WO-1.62's verdict.
@@ -5634,12 +5634,15 @@ next fixture that types a later date knows to move it. **The real-clock run is n
 guard reads only an explicit `--today`.
 
 **Acceptance**
-- [ ] `--today=2026-01-20` exits non-zero within seconds without launching Edge, and its message names
+- [x] `--today=2026-01-20` exits non-zero within seconds without launching Edge, and its message names
       the floor and suggests `--today=2027-01-20`.
-- [ ] `--today` at the floor itself runs, and is green. The run is recorded in `TESTING.md` § WO-1.63
+- [x] `--today` at the floor itself runs, and is green. The run is recorded in `TESTING.md` § WO-1.63
       with its count. If it is not green, the floor is wrong: move it, do not fix the fixtures.
-- [ ] The real-clock run is unchanged in check titles and count and still green.
-- [ ] `tools/README.md` and the `--today` usage text say what the floor is and why.
+      *(It was not green at first. The floor read off concern-list, 2026-07-01, failed one score-grid
+      check, and so did 2026-09-18. It is now **2026-09-19**, set by `score-grid.mjs`'s due date of
+      2026-09-18, and that run is 1832/1832. `TESTING.md` § WO-1.63 has all three runs.)*
+- [x] The real-clock run is unchanged in check titles and count and still green.
+- [x] `tools/README.md` and the `--today` usage text say what the floor is and why.
 
 **Traps** — **Do not fix the fifteen.** The ruling is that they are out of range, not broken. **No
 upper bound** is in scope. A date after the fixtures' year may or may not be green, and if anyone

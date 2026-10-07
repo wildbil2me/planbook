@@ -3167,6 +3167,86 @@ twice, which the flag prevents.
 
 *No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.*
 
+### WO-1.63 — --today takes a date before the fixtures' year and reports fifteen failures instead of refusing
+
+**What this changes.** Nothing a teacher sees, and nothing a device gets. `git diff HEAD -- src/
+index.html sw.js` is empty, so no `CACHE` bump is owed. One harness file changes behaviour:
+`tools/verify/lib-dates.mjs` gains `TODAY_FLOOR` beside the `--today` parse and throws below it. The
+rest is prose: the usage text at the head of `tools/verify-shell.mjs` and `tools/README.md` § "It takes
+one argument, and it is a date". No check was added, removed or renamed. The refusal is proved by
+running the command, not by a `check()`. A check would move the count that the third line below says
+must not move.
+
+**The floor is 2026-09-19, and the run put it there, not the reading.** Reading the fixtures for dates
+typed into calendar 2026 and assumed past gave `verify/concern-list.mjs` as the latest. Its term is
+2026-06-01 … 2026-06-30, and its header says *"THE FIXTURE IS JUNE 2026 AND IT IS IN THE PAST ON
+PURPOSE"*. `verify/log-entries.mjs` (meetings on June 1–10) and `verify/term-nav.mjs` (2026-02-02 …
+2026-03-02) fall inside it. So the first floor was **2026-07-01**, and it was red:
+
+- **`--today=2026-07-01`**: `1832 checks · 1831 passed · 1 failed · 0 skipped`, 841s, EXIT=1. The one
+  failure is `verify/score-grid.mjs`'s *"at a 1280x800 laptop viewport with the page scrolled to the
+  grid, the box's top and bottom edges … are inside the viewport … (WO-3.27)"*, detail `{"pageY":505,
+  "top":-0.12,…}`. It is the same check, with the same −0.12, that WO-1.62 listed among the fifteen at
+  2026-01-20 and did not trace. The real-clock run reads `{"pageY":576,"top":0.38,…}`, so 71px more of
+  the page sits above the grid. The score-grid fixture types its *Unit test* `due:'2026-09-18'`, and its
+  cells stay blank. `src/past-due.js` draws its banner above the grid only when `due < today`, strictly.
+  The check was only ever measured with the banner there.
+- **`--today=2026-09-18`** (run while the 07-01 floor still allowed it, to test the boundary):
+  `1832 checks · 1831 passed · 1 failed · 0 skipped`, 836s, EXIT=1. It is the same single failure with
+  the identical `{"pageY":505,"top":-0.12,…}`.
+- **`--today=2026-09-19`**: green. See the second line below.
+
+I did not open the page to see the banner itself. The evidence that it is the banner is the 71px
+step, and the fact that the step falls exactly on the fixture's due date. The fix the work order allows
+is to move the floor, and that is what I did. The check and the fixture are unchanged.
+
+- [x] **`--today=2026-01-20` exits non-zero within seconds without launching Edge, and its message
+      names the floor and suggests `--today=2027-01-20`.** `time node tools/verify-shell.mjs
+      --today=2026-01-20` gave EXIT=1 in **0.141s** real time. The throw happens while
+      `lib-dates.mjs` is being evaluated. ESM evaluates every import before `verify-shell.mjs`'s body
+      runs, so neither the static server nor Edge has started. The output has no `serving :` line, no
+      `CLOCK   :` line and no PASS or FAIL line (grep count 0). The output is a single `Error:` whose
+      message begins *"--today=2026-01-20 is before 2026-09-19, the earliest date this harness
+      supports"*, names `score-grid.mjs`'s due date and `concern-list.mjs`'s June term as the reason,
+      says these dates are *"out of range by ruling (WO-1.63), not broken"*, and ends *"Try
+      --today=2027-01-20 (the fixtures' own Quarter 3, measured green), or any date from 2026-09-19
+      on."* `--today=2026-09-18` is refused the same way (EXIT=1, 0.130s). The suggested date was run on
+      the delivered tree to back the words *"measured green"*: `--today=2027-01-20` gave `1832 checks ·
+      1832 passed · 0 failed · 0 skipped`, 841s, EXIT=0.
+- [x] **`--today` at the floor itself runs, and is green.** `--today=2026-09-19`: `1832 checks · 1832
+      passed · 0 failed · 0 skipped`, 58,018 lines, 836s, EXIT=0. The run says *THE CLOCK WAS MOVED …
+      2026-09-19, -18 day(s)*. The WO-3.27 check reads `{"pageY":576,"top":0.38,…}`. Its 1832 titles
+      match the real clock's except for four checks that print their own date: WO-3.50's and WO-3.49's
+      `(Q1 on 2026-09-19)` / `(Q1 on 2026-10-07)`, and the two WO-2.56 state lines (`Editing Thu 9/17` /
+      `Editing Mon 10/5`). *(2026-09-19 is a Saturday. It is green anyway.)*
+- [x] **The real-clock run is unchanged in check titles and count and still green.** I extracted `HEAD`
+      (`8df9db2`) with `git archive` into a scratch directory and ran it there: `1832 checks · 1832
+      passed · 0 failed · 0 skipped`, 835s, EXIT=0. The delivered tree gave `1832 checks · 1832 passed ·
+      0 failed · 0 skipped`, 58,018 lines, 833s, EXIT=0. The two runs' `PASS|FAIL|SKIP` title sequences
+      were diffed and are **identical line for line**. With no `--today`, `SHIFT_DAYS` returns 0 before
+      the floor is ever compared. *(After that run, one comment in `lib-dates.mjs` and the
+      `tools/README.md` example changed. Those edits are text only.)*
+- [x] **`tools/README.md` and the `--today` usage text say what the floor is and why.** The README
+      paragraph *"And a date before 2026-09-19 is refused, by ruling"* names each fixture that types a
+      past date, the score-grid due date that sets the floor, how the first floor of 2026-07-01 was moved,
+      the suggestion, the rule that a later fixture moves `TODAY_FLOOR`, the real-clock exemption, and
+      the missing upper bound. The `Run:` block at the head of `tools/verify-shell.mjs` now shows
+      `--today` and states the floor. The README's example run read `--today=2026-09-03`, which the floor
+      now refuses, so it reads `--today=2026-11-10`. The comment at the head of `lib-dates.mjs` changed
+      the same way.
+
+**What the floor costs, and it is the owner's to weigh.** The work order's ruling was about dates
+*before the fixtures' year*. The floor this produced also refuses the first eighteen days of that year's
+September, and WO-1.44 (2026-09-01 … 09-03) and WO-1.53 (2026-09-09 … 09-17) took their readings in
+that window. One check is all that excludes them. To get those days back, `score-grid.mjs`'s WO-3.27
+check would have to hold without the banner, or not care about a fraction of a pixel. Either is a
+change to a check, and this work order forbids it. That would be a separate row.
+
+**`grep -rn MUTATION tools/ src/`**: no mutation was inserted. The refusal was proved by running the
+command, and the boundary by two real runs. The grep returns only the prose WO-1.62 listed.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.*
+
 ---
 
 ## Phase 2 — Attendance
