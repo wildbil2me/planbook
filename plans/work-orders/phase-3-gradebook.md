@@ -3646,7 +3646,14 @@ cleared) moved to
 - [ ] `wo-sweep.mjs` § 30 names the writer's file as an exception in the same edit that adds the
       writer, and the sweep is green. *(WO-3.53's deliverables promised this and nothing on this list
       held it: § 30 forbids every `.held` outside `src/grade-engine.js`, so the writer turns it red,
-      and the easy repair is a wider exception than one file.)*
+      and the easy repair is a wider exception than one file.)* **In the same edit, § 30 also catches
+      `held` named in a destructured parameter** — `({ held }) => !held`, `function f({ held })` —
+      and nothing wider: a bare `held` is a local variable at `src/assignments.js:695` and a word in
+      prose elsewhere, so matching every `held` token goes red on a clean tree. Proved non-vacuous by
+      planting each shape in a scratch copy and seeing § 30 go red. *(WO-3.53's verifier, 2026-10-08:
+      a destructured parameter passes § 30 today, and it is the shape a filter over assignments is
+      most often written in. The owner's ruling, the same day: close it here, where § 30 is open
+      anyway, before WO-3.47 builds the readers most likely to use it.)*
 - [ ] `CACHE` in `sw.js` is bumped.
 - [ ] 👤 On the iPad, after a force-quit: hold a column, type scores, see the grade not move; commit,
       read the confirm's names against the grid, and see the grade move.
