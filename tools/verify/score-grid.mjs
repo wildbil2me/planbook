@@ -1920,6 +1920,13 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           the end of the page the box's top — the stuck head with it — sits above the viewport. That
           is a known cost written down at the declaration, and the figure in this check's detail is
           what keeps the sentence there honest.
+
+          HALF A PIXEL EITHER WAY, THE SAME `- 0.5` THE CHECKS ABOVE USE (WO-1.64). scrollIntoView
+          lands on a whole-pixel scrollY, so the box's top can sit a fraction of a pixel above the
+          viewport for no defect: -0.12 with nothing drawn above the grid, 0.38 with src/past-due.js's
+          banner there — which this fixture's *Unit test* draws from the day after its due date. Exact
+          comparison was green only on the banner's side of that date. A real overflow is tens of
+          pixels, and the allowance is mutation-proved not to hide one (TESTING.md § WO-1.64).
         */
         await send('Emulation.setDeviceMetricsOverride',
           { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
@@ -1941,7 +1948,7 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           return at; })()`);
         check('at a 1280x800 laptop viewport with the page scrolled to the grid, the box\'s top and bottom edges — and so its horizontal scrollbar — are inside the viewport, with rows still to scroll inside it (WO-3.27)',
           fit.innerW === 1280 && fit.inner === 800 && fit.scrollsDown && fit.pageY > 0
-            && fit.top >= 0 && fit.bottom <= fit.inner,
+            && fit.top >= -0.5 && fit.bottom <= fit.inner + 0.5,
           JSON.stringify(fit) + ' (end = the page scrolled to its end: reported, not asserted)');
 
         /*

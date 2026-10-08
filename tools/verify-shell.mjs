@@ -4,12 +4,13 @@
  *       node tools/verify-shell.mjs --today=YYYY-MM-DD   (the same run, as if today were that date)
  * Exit: 0 if every check passed, 1 if any failed or the browser could not be driven.
  *
- * `--today` refuses any date before 2026-09-19 (`TODAY_FLOOR` in `tools/verify/lib-dates.mjs`),
- * within a second and before a browser is launched. The fixtures are built in the 2026-27 school
- * year and some type dates they assume are already past — the latest is `verify/score-grid.mjs`'s
- * assignment due 2026-09-18 — so an earlier date ends in red lines that are not defects: out of
- * range by ruling (WO-1.63), not broken. `--today=2027-01-20` is the fixtures' own Quarter 3 and is
- * green. The real-clock run is never refused.
+ * `--today` refuses any date before 2026-07-01 (`TODAY_FLOOR` in `tools/verify/lib-dates.mjs`),
+ * and any date that is not a real one (2026-02-30), within a second and before a browser is
+ * launched. The fixtures are built in the 2026-27 school year and some type dates they assume are
+ * already past — the latest is `verify/concern-list.mjs`'s June 2026 term — so an earlier date ends
+ * in red lines that are not defects: out of range by ruling (WO-1.63), not broken.
+ * `--today=2027-01-20` is the fixtures' own Quarter 3 and is green. The real-clock run is never
+ * refused.
  *
  * WHY THIS EXISTS. Several of Phase 1's acceptance lines cannot be settled by reading a
  * stylesheet. WO-1.2 shipped `.search-box { min-height: 44px }` around a 19px input: the

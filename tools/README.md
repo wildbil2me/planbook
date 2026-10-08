@@ -755,29 +755,34 @@ sentence beside it is a figure about a day nobody was on.
 
 **A typo throws rather than defaulting.** `--today=tuesday` stops the run with a message; silently
 falling back to the real clock would produce a green run somebody would then cite as proof of a day
-it never saw.
+it never saw. **So does a date that does not exist** (WO-1.64): `--today=2026-13-40` and
+`--today=2026-02-30` pass the `YYYY-MM-DD` shape, and the `Date` constructor rolls them over without a
+word to 2027-02-09 and 2026-03-02 — so the parse refuses any date that does not come back out as the
+string that went in, with the typo's own message.
 
-**And a date before 2026-09-19 is refused, by ruling** (WO-1.63, 2026-10-07). The fixtures are built
-in the 2026-27 school year, and several sections type dates in calendar 2026 that they assume today is
-already past: `verify/term-nav.mjs` (February and March), `verify/log-entries.mjs` (June 1–10),
-`verify/concern-list.mjs` (a term of 2026-06-01 … 2026-06-30, *in the past on purpose*, its header
-says) and, latest, `verify/score-grid.mjs`, whose *Unit test* is due 2026-09-18 with blank cells. From
-the 19th the past-due banner draws above the grid, and the WO-3.27 laptop-viewport check was only ever
-measured with it there: without it the box's top lands at −0.12px. **The floor was first set at
-2026-07-01 off the June term, and the run there moved it** — a due date assumed past does not say so
-in a header, so read the fixtures *and* run the floor. Before the refusal existed,
-`--today=2026-01-20` — January of the year *before* the fixtures' — ran thirteen minutes and ended in
-fifteen red lines that were not defects (`TESTING.md` § WO-1.62 names each). The ruling is that such
-dates are out of range, not that the fixtures are broken, so they are refused rather than re-fixtured:
-the run exits 1 within a second, before a server or Edge is started, naming the floor and suggesting
-`--today=2027-01-20`, the fixtures' own Quarter 3, which is green. The floor is `TODAY_FLOOR`, beside
-the parse in `tools/verify/lib-dates.mjs`, with a comment naming the fixture that sets it — **a
-fixture that types a later date it assumes is past moves it**, and the run at the new floor is
-recorded. Only an explicit `--today` is checked; the real-clock run is never refused. There is no
-upper bound, and none has been probed. **What the floor costs**: the first eighteen days of the
-fixtures' own September — where WO-1.44 and WO-1.53 took their readings — can no longer be driven.
-Bringing it back means making the score-grid check hold without the banner, which is a change to a
-check and not a floor, and is not in WO-1.63.
+**And a date before 2026-07-01 is refused, by ruling** (WO-1.63, 2026-10-07; floor lowered by
+WO-1.64 the same day). The fixtures are built in the 2026-27 school year, and several sections type
+dates in calendar 2026 that they assume today is already past: `verify/term-nav.mjs` (February and
+March), `verify/log-entries.mjs` (June 1–10) and, latest, `verify/concern-list.mjs` (a term of
+2026-06-01 … 2026-06-30, *in the past on purpose*, its header says) — **that June term sets the
+floor.** Before the refusal existed, `--today=2026-01-20` — January of the year *before* the
+fixtures' — ran thirteen minutes and ended in red lines that were not defects (`TESTING.md` § WO-1.62
+names each). The ruling is that such dates are out of range, not that the fixtures are broken, so they
+are refused rather than re-fixtured: the run exits 1 within a second, before a server or Edge is
+started, naming the floor and suggesting `--today=2027-01-20`, the fixtures' own Quarter 3, which is
+green. The floor is `TODAY_FLOOR`, beside the parse in `tools/verify/lib-dates.mjs`, with a comment
+naming the fixture that sets it — **a fixture that types a later date it assumes is past moves it**,
+and the run at the new floor is recorded. Only an explicit `--today` is checked; the real-clock run is
+never refused. There is no upper bound, and none has been probed.
+
+*(**The floor sat at 2026-09-19 for one work order, and what held it there was a check rather than a
+fixture.** `verify/score-grid.mjs`'s WO-3.27 laptop-viewport check compared the box's top to 0
+exactly; `scrollIntoView` lands on a whole pixel, so the top sat at −0.12px with nothing above the
+grid, and only the past-due banner that fixture's* Unit test *(due 2026-09-18) draws from the 19th
+moved it to +0.38. WO-1.64 gave the check the `- 0.5` its neighbours already used, mutation-proved
+that a real overflow still turns it red, and brought the floor back to the June term — which gives
+back the first eighteen days of the fixtures' September, where WO-1.44 and WO-1.53 took their
+readings. `TESTING.md` § WO-1.63 and § WO-1.64.)*
 
 **It grows with each work order: 28 at WO-1.3, 54 at WO-1.4, 82 at WO-1.5, 130 at WO-1.6, 162 at
 WO-1.7, 164 once the line cap was retired and its two replacement measurements went in, 184 at

@@ -13,6 +13,22 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The harness gets September back — 2026-10-07
+
+WO-1.64. Tooling only; nothing under `src/` moved, so no shell cache bump, and none owed.
+
+- **Not user-visible.** `--today` now accepts any date from **2026-07-01** on, down from
+  2026-09-19. That is the floor WO-1.63 expected before one check moved it: the June 2026 term in
+  `concern-list.mjs`. Runs at 2026-07-01, at 2026-09-10 and on the real clock are each 1832 of 1832,
+  and 2026-06-30 is still refused before a browser starts.
+- **The check that took Sep 1–18 away now allows half a pixel.** The WO-3.27 laptop-viewport check
+  in `score-grid.mjs` compared the box's top to 0 exactly. That held only while a past-due banner
+  sat above the grid. Without the banner the top lands at -0.12px, which is a rounding effect, not a
+  defect. It now uses the same `- 0.5` allowance as the checks beside it, and a box planted 30px out
+  of view still turns it red.
+- **Impossible dates are refused as typos.** `--today=2026-02-30` and `2026-13-40` used to roll
+  over silently to another day. They now get the same refusal as a malformed date.
+
 ### A harness date before the floor is refused — 2026-10-07
 
 WO-1.63. Tooling only; nothing under `src/` moved, so no shell cache bump, and none owed.

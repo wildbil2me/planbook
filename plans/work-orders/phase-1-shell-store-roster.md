@@ -5650,7 +5650,7 @@ wants that probed it is a separate row. Nothing in `src/` moves.
 
 ## WO-1.64 — the harness floor refuses Sep 1–18 because of one check measured to a fraction of a pixel
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.63
+**Ship** — · **Status** ✅ DONE — 2026-10-07 · **Size** S · **Depends on** WO-1.63
 **Closes roadmap** *(no box. A harness repair, owner-directed, 2026-10-07.)*
 
 **Booked 2026-10-07**, owner-directed, out of WO-1.63's verdict.
@@ -5685,20 +5685,20 @@ where WO-1.44 (09-01 … 09-03) and WO-1.53 (09-09 … 09-17) took their reading
    numbers out.
 
 **Acceptance**
-- [ ] The WO-3.27 viewport check passes with and without the banner. Both the new floor's run and
+- [x] The WO-3.27 viewport check passes with and without the banner. Both the new floor's run and
       the real-clock run are green, and its detail line is recorded in `TESTING.md` § WO-1.64 for
       each.
-- [ ] Changing the check's tolerance to `- 5`, or pushing the box down past the viewport by mutation,
+- [x] Changing the check's tolerance to `- 5`, or pushing the box down past the viewport by mutation,
       turns it red. A real overflow is tens of pixels, and the half-pixel allowance must not hide one.
       `TESTING.md` records the mutation and its revert.
-- [ ] `--today` at the new floor runs and is green, and the day before it is refused. Both are
+- [x] `--today` at the new floor runs and is green, and the day before it is refused. Both are
       recorded with their counts. If the floor is still 2026-09-19 because something else holds it
       there, that is reported and not forced.
-- [ ] `--today=2026-13-40` and `--today=2026-02-30` exit non-zero within seconds without launching
+- [x] `--today=2026-13-40` and `--today=2026-02-30` exit non-zero within seconds without launching
       Edge, and `--today=2026-02-28` is not refused by the parse.
-- [ ] The real-clock run is unchanged in check titles and count, apart from any title text the
+- [x] The real-clock run is unchanged in check titles and count, apart from any title text the
       tolerance change edits, and is still green.
-- [ ] `tools/README.md`, the `TODAY_FLOOR` comment, the usage text in `tools/verify-shell.mjs` and
+- [x] `tools/README.md`, the `TODAY_FLOOR` comment, the usage text in `tools/verify-shell.mjs` and
       the refusal message all agree on the floor and on which fixture sets it, and none of them quotes
       a failure count.
 

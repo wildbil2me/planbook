@@ -3247,6 +3247,70 @@ command, and the boundary by two real runs. The grep returns only the prose WO-1
 
 *No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.*
 
+### WO-1.64 — the harness floor refuses Sep 1–18 because of one check measured to a fraction of a pixel
+
+**What this changes.** Nothing a teacher sees, and nothing a device gets: `git diff HEAD -- src/
+index.html sw.js` is empty, so no `CACHE` bump is owed. Two harness files change behaviour.
+`tools/verify/score-grid.mjs`'s WO-3.27 laptop-viewport check compares `fit.top >= -0.5 && fit.bottom
+<= fit.inner + 0.5` where it compared `>= 0` and `<= fit.inner`, the half-pixel its neighbours already
+allow; its title is unchanged. `tools/verify/lib-dates.mjs` takes `TODAY_FLOOR` from 2026-09-19 down
+to **2026-07-01**, refuses a `--today` date that does not round-trip through `Date`, and its refusal
+names `concern-list.mjs`'s June term and quotes no failure count. The rest is prose: the usage text
+at the head of `tools/verify-shell.mjs` and `tools/README.md` § "It takes one argument, and it is a
+date". No check was added, removed or renamed.
+
+Every full run below was taken on 2026-10-07; four of them ran concurrently on one 16-core machine,
+which cost nothing visible (each ~14m15s, against ~14m on the run alone).
+
+- [x] **The WO-3.27 viewport check passes with and without the banner.** Without — `--today=2026-07-01`,
+      before the *Unit test*'s 2026-09-18 due date, so `src/past-due.js` draws nothing above the grid:
+      `PASS`, detail `{"pageY":505,"top":-0.12,"bottom":639.88,"height":640,"scrollsDown":true,
+      "inner":800,"innerW":1280,…}` — the identical −0.12 WO-1.63 read red on 07-01 and 09-18. With —
+      the real clock, 2026-10-07: `PASS`, detail `{"pageY":576,"top":0.38,"bottom":640.38,"height":640,
+      "scrollsDown":true,"inner":800,"innerW":1280,…}`. Both runs are green in full (counts on the third
+      and fifth lines). The fixture and its due date are untouched.
+- [x] **A real overflow still turns it red; the half-pixel does not hide one.** Both mutations were made
+      in scratch copies of the delivered tree, never in the working tree, each marked `MUTATION
+      (WO-1.64)`, and the copies discarded after — so there was nothing to revert here, and `grep -rn
+      MUTATION tools/ src/` finds no `WO-1.64` line. *(1)* The box pushed 30px past the viewport's
+      bottom — `window.scrollBy(0, -(innerHeight - bottom + 30))` after the `scrollIntoView`, tolerance
+      left at the delivered `- 0.5`, real clock, **banner drawn**: `1832 checks · 1831 passed · 1 failed`,
+      EXIT=1, the one failure this check, detail `{"pageY":386,"top":190.38,"bottom":830.38,…}`.
+      *(2)* The tolerance changed to `- 5` (and `+ 5` on the bottom) **and** the same 30px push,
+      `--today=2026-07-01`, **no banner**: `1832 checks · 1831 passed · 1 failed`, EXIT=1, the one failure
+      this check, detail `{"pageY":315,"top":189.88,"bottom":829.88,…}`. *The tolerance change on its own
+      was not run, and could not turn the check red*: loosening an allowance only passes more pages,
+      and the unmutated page measures −0.12 and +0.38, inside −5 either way. What the `- 5` mutation
+      can prove is that a tenfold allowance still catches a 30px overflow, which is what (2) shows.
+- [x] **`--today` at the new floor runs and is green, and the day before is refused.**
+      `--today=2026-07-01`: `1832 checks · 1832 passed · 0 failed · 0 skipped`, 2,043 lines, 14m18s,
+      EXIT=0, the run printing *"CLOCK : --today=2026-07-01 — this run is -98 day(s) from the real one"*.
+      So the floor is the June term the work order expected, and nothing else holds it higher.
+      `--today=2026-06-30`: EXIT=1 in 0.231s, **0 checks** — the output carries no `serving :`,
+      `CLOCK`, `PASS` or `FAIL` line (grep count 0), only the `Error:` *"--today=2026-06-30 is before
+      2026-07-01, the earliest date this harness supports … the latest is
+      tools/verify/concern-list.mjs's June 2026 term …"*.
+- [x] **An impossible date is refused by the parse, a real one is not.** `--today=2026-13-40`: EXIT=1
+      in 0.234s; `--today=2026-02-30`: EXIT=1 in 0.227s. Each prints the typo's own message, *"--today
+      wants a YYYY-MM-DD date, and got "2026-13-40""* (and `"2026-02-30"`), from the same `throw` path,
+      with no `serving :`, `CLOCK`, `PASS` or `FAIL` line, so neither the server nor Edge started.
+      `--today=2026-02-28` passes the parse and is then refused **by the floor** (EXIT=1, 0.227s,
+      *"--today=2026-02-28 is before 2026-07-01 …"*) — that is the floor, not the parse.
+- [x] **The real-clock run is unchanged in check titles and count, and still green.** `HEAD`
+      (`9deb818`), extracted with `git archive` into a scratch directory: `1832 checks · 1832 passed ·
+      0 failed · 0 skipped`, 14m15s, EXIT=0. The delivered tree: `1832 checks · 1832 passed · 0 failed
+      · 0 skipped`, 2,039 lines, 14m18s, EXIT=0. The two runs' `PASS|FAIL|SKIP` title sequences, detail
+      stripped, are **identical line for line** (`diff` empty) — the tolerance change edited no title.
+- [x] **The four places agree.** `TODAY_FLOOR`'s comment, the refusal message, the usage text at the
+      head of `tools/verify-shell.mjs` and `tools/README.md` all say 2026-07-01 and name
+      `concern-list.mjs`'s June 2026 term as what sets it. None quotes a failure count: the refusal's
+      *"fifteen of them on 2026-01-20, one on 2026-09-18"* is gone, and so are *"fifteen red lines"* in
+      the `lib-dates.mjs` comment and the README.
+
+**Sweep:** `node tools/wo-sweep.mjs` — `48 checks · 45 passed · 0 failed · 3 to review`, EXIT=0.
+
+*No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.*
+
 ---
 
 ## Phase 2 — Attendance
