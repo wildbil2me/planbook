@@ -132,6 +132,19 @@
   through src/log.js's writeContact(). *(This line named WO-5.3 until 2026-08-29: that work order
   built the flow and deliberately wrote nothing, said so at its own head, and left the correction
   to the sitting that made it true.)*
+
+  ── A HELD COLUMN IS NOT IN A DRAFT, AND THIS FILE HOLDS NO TEST FOR IT (WO-3.53) ──
+
+  The owner's ruling of 2026-10-07: the merge fields follow the engine, so a held column's
+  `missing` is not listed and a guardian is never told about a zero that does not count. They
+  follow it BY CONSTRUCTION rather than by a filter of this file's own: `{{missing.count}}` and
+  `{{missing.list}}` are openWork(), and `{{grade.percent}}` and `{{grade.letter}}` are
+  classGrade(), and src/grade-engine.js drops a held column at both of its choke points before
+  either answers (WO-3.52). An isHeld() call here would be a second filter over a list that has
+  already been filtered — the second opinion about what "held" excludes that the engine's header
+  refuses — so there is none, on purpose. If a field is ever added that walks `assignments[]`
+  itself, it asks isHeld() from src/grade-engine.js; it never reads the key, and the call is a
+  function call rather than a property read named after a token (tools/wo-sweep.mjs § 20 claim 5).
 */
 
 import { classGrade, openWork } from './grade-engine.js';

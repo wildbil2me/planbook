@@ -130,8 +130,9 @@
    the acceptance line says the weighted grade and not raw scores — and openWork() is where
    `missing` is defined, so the missing-work rule counts the very rows the grade already charged
    for. A rule that decided for itself what a missing cell was would be the second opinion
-   src/grade-engine.js's header forbids. */
-import { classGrade, openWork } from './grade-engine.js';
+   src/grade-engine.js's header forbids. isHeld() joined at WO-3.53, for the one list in this file
+   that walks `assignments[]` itself — see `sequence` in makeContext(). */
+import { classGrade, openWork, isHeld } from './grade-engine.js';
 /* attendanceHistory() joins the two window helpers at WO-4.2 because a RUN is the one attendance
    question a totals object cannot answer: `A 3` says how many, never whether they were the last
    three in a row. It is the same walk those totals come out of (src/attendance.js's walkMeetings),
@@ -1723,9 +1724,18 @@ function makeContext(doc, cls, termId, through, historical) {
 
   /* Every assignment of this class and term, in the order the document holds them. Once per pass,
      because it is the same list for every student — what differs per student is which of its cells
-     count, and that is countedWork() below. */
+     count, and that is countedWork() below.
+
+     A HELD COLUMN IS NOT IN IT (WO-3.53, the owner's ruling of 2026-10-07): a signal built from a
+     score the grade does not count contradicts the grade on screen. Filtered HERE, once, so every
+     reader projected off this list — countedWork(), countedRows(), scorePercents(), termWork() and
+     the rules fed by them — follows without a test of its own. The rest already follow the engine:
+     grade() and gradeWithout() are classGrade(), and missingWork() is openWork(), both of which
+     drop a held column at src/grade-engine.js's own choke points (WO-3.52). The question is asked
+     of isHeld(), never of the key, because a second reading of what "held" means is a second
+     opinion. */
   const sequence = (doc && Array.isArray(doc.assignments) ? doc.assignments : [])
-    .filter((a) => a && a.classId === classId && a.termId === termId);
+    .filter((a) => a && a.classId === classId && a.termId === termId && !isHeld(a));
 
   return {
     doc: doc,

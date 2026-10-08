@@ -20,9 +20,10 @@
   ── SIX THINGS THAT WILL LOOK LIKE OMISSIONS AND ARE DECISIONS ──
 
   1. WHAT COUNTS AS A PAST-DUE BLANK, and it is NARROWER than "the cell is empty". The set is: an
-     assignment in the open class and term, with a `due` date that is a real date and is strictly
-     BEFORE today, and a student on that class's roster whose cell carries NOTHING — no key at all,
-     or (from a restore or a hand edit) a cell holding neither a value nor a flag.
+     assignment in the open class and term, not held (WO-3.53), with a `due` date that is a real
+     date and is strictly BEFORE today, and a student on that class's roster whose cell carries
+     NOTHING — no key at all, or (from a restore or a hand edit) a cell holding neither a value nor
+     a flag.
 
      THREE KINDS OF EMPTY-LOOKING CELL ARE DELIBERATELY OUT OF IT, and each one is a teacher
      decision this prompt must not overwrite. `excused` holds no number and LEAVES THE DENOMINATOR
@@ -138,7 +139,9 @@ import { shortDate } from './date-text.js';
    Imported from its own leaf rather than from src/scores.js, which imports this file. */
 import { reviseCell } from './score-history.js';
 /* Whether a column is held (WO-3.52), asked of the one reader of `.held` and handed to reviseCell()
-   with the column's `heldAt` and `committedAt`. This file decides nothing with it. */
+   with the column's `heldAt` and `committedAt`. Since WO-3.53 it also keeps a held column out of
+   the set this prompt offers — pastDueBlanks() says why — and that is the one decision this file
+   makes with it. */
 import { isHeld } from './grade-engine.js';
 
 const DISMISS_PREF = 'pastDueDismissed';
@@ -285,6 +288,12 @@ function pastDueBlanks(cls, termId) {
        decision 5, and the same comparison src/assignments.js's overdue tint makes. */
     if (!isDate(assignment.due) || !(assignment.due < today)) return;
     if (isDismissed(assignment.id)) return;
+    /* A HELD COLUMN IS NOT OFFERED (WO-3.53, the owner's ruling of 2026-10-07). Held is work in
+       progress — the teacher has said the column is not finished — and this prompt's question is
+       about work that is finished and late. Filtered here, in the one walk, so the sentence, the
+       review, the column-head tint (pastDueAsksAbout()) and accept all lose it together, and once
+       the column is live it is asked about like any other. Asked of isHeld(), never of the key. */
+    if (isHeld(assignment)) return;
     const students = roster
       .filter((student) => isUntouched(cellOf(doc, assignment.id, student.id)))
       .map((student) => ({ id: student.id, name: rosterName(student) }));

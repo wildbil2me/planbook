@@ -26,9 +26,9 @@
   ── WHAT IT IMPORTS, AND WHAT IT MUST NOT ──
 
   src/categories.js, for the class's own category list (how filed work is told from unfiled), and
-  src/grade-engine.js, for gradingModeOf() and nothing else. It imports NONE of the three screens
-  that import it: src/detail.js and src/grades-report.js both already import src/scores.js, and a
-  module any of them reached back into would close a loop.
+  src/grade-engine.js, for gradingModeOf() and — since WO-3.53 — isHeld(), and nothing else. It
+  imports NONE of the three screens that import it: src/detail.js and src/grades-report.js both
+  already import src/scores.js, and a module any of them reached back into would close a loop.
 
   ── THE WEIGHTED GUARD LIVES HERE, NOT AT THE CALL SITES ──
 
@@ -45,8 +45,8 @@
 */
 
 import { categoriesOf } from './categories.js';
-/* The mode, and only the mode. Nothing else from the engine is read here. */
-import { gradingModeOf } from './grade-engine.js';
+/* The mode, and whether a column is held (WO-3.53). Nothing else from the engine is read here. */
+import { gradingModeOf, isHeld } from './grade-engine.js';
 
 /*
   WHETHER A CATEGORY ROW IS EMPTY BY THE ENGINE'S NUMBERS (WO-3.34, the points branch WO-3.35).
@@ -113,6 +113,11 @@ export function gradedPieces(doc, cls, termId, studentId) {
   const assignments = doc && Array.isArray(doc.assignments) ? doc.assignments : [];
   assignments.forEach((assignment) => {
     if (!assignment || assignment.classId !== cls.id || assignment.termId !== termId) return;
+    /* A HELD COLUMN HAS NO COUNTED WORK (WO-3.53, the owner's ruling of 2026-10-07). This answers
+       which rows hold a graded piece, and a held column's cells are graded toward nothing — the
+       engine drops it before it sums — so a row whose only work is held is empty here too, and the
+       sentence a screen prints is the engine's own. Asked of isHeld(), never of the key. */
+    if (isHeld(assignment)) return;
     const byStudent = doc.scores && doc.scores[assignment.id];
     if (!byStudent || !Object.prototype.hasOwnProperty.call(byStudent, studentId)) return;
     const cell = byStudent[studentId];

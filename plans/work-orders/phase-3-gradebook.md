@@ -3643,6 +3643,10 @@ cleared) moved to
 - [ ] A held column that is the only work in its category leaves that category empty, and its weight
       passes to the other categories exactly as an empty category's does, checked against a hand
       computation. *(Also WO-3.52's verifier: the engine filter implies it, and no check showed it.)*
+- [ ] `wo-sweep.mjs` § 30 names the writer's file as an exception in the same edit that adds the
+      writer, and the sweep is green. *(WO-3.53's deliverables promised this and nothing on this list
+      held it: § 30 forbids every `.held` outside `src/grade-engine.js`, so the writer turns it red,
+      and the easy repair is a wider exception than one file.)*
 - [ ] `CACHE` in `sw.js` is bumped.
 - [ ] 👤 On the iPad, after a force-quit: hold a column, type scores, see the grade not move; commit,
       read the confirm's names against the grid, and see the grade move.
@@ -4160,7 +4164,7 @@ needs. Do not work around the loss in this piece.
 
 ## WO-3.53 — the readers that hide a held column ask the engine whether it is held
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.52
+**Ship** — · **Status** ✅ DONE — 2026-10-08 · **Size** M · **Depends on** WO-3.52
 **Closes roadmap** *(no box. Owner-directed, 2026-10-07.)*
 
 **Cut out of [WO-3.47](#wo-347--every-reader-outside-the-grade-engine-agrees-about-a-held-column)
@@ -4194,16 +4198,16 @@ check holds a column by building a fixture.
 - **`CACHE` in `sw.js` is bumped**: all four readers are in SHELL.
 
 **Acceptance**
-- [ ] With a held column holding a `missing` and two low scores for one student, the concern list
+- [x] With a held column holding a `missing` and two low scores for one student, the concern list
       shows nothing from that column. Deleting `held` and committing makes the matching signals fire.
-- [ ] The past-due prompt does not name a held column whose due date has passed, and does name it
+- [x] The past-due prompt does not name a held column whose due date has passed, and does name it
       once the column is live.
-- [ ] `graded-pieces` reports no counted work for a category whose only work is held.
-- [ ] `{{missing.list}}` does not name a held column's missing work, and names it once the column is
+- [x] `graded-pieces` reports no counted work for a category whose only work is held.
+- [x] `{{missing.list}}` does not name a held column's missing work, and names it once the column is
       live.
-- [ ] The sweep claim is green on the delivered tree and red with a `.held` read planted in any one
+- [x] The sweep claim is green on the delivered tree and red with a `.held` read planted in any one
       of the four readers. **The plant is reverted before anything else is written.**
-- [ ] `CACHE` in `sw.js` is bumped.
+- [x] `CACHE` in `sw.js` is bumped.
 
 **Traps** — **A reader that re-implements "is this column held" is the second opinion** that the
 glance-reader rule forbids. **Do not touch the queue, the home card, student detail or the grade

@@ -11247,6 +11247,79 @@ every copy taken from the final tree.** The unmutated copy ran first as the cont
 **Full run on the first build's tree:** `1841 checks · 1841 passed · 0 failed · 0 skipped`, 58,262 lines,
 31.6 lines per check, 835s, exit 0, 2026-10-07 on the real clock.
 
+### WO-3.53 — the readers that hide a held column ask the engine whether it is held
+
+**What this changes.** Four readers outside the engine now treat a held column as not there, and still
+nothing a teacher can see: no build writes `held` yet (WO-3.46), so every check plants a fixture.
+`src/signals.js` filters its per-class `sequence` through `isHeld()`, so `countedWork()`,
+`countedRows()`, `scorePercents()`, `termWork()` and every rule fed from them follow; `src/past-due.js`
+leaves a held column out of the set it offers; `src/graded-pieces.js` skips one. **`src/merge-fields.js`
+gained a header paragraph and no filter**: `{{missing.count}}`, `{{missing.list}}`, `{{grade.percent}}`
+and `{{grade.letter}}` are `openWork()` and `classGrade()`, which WO-3.52 already filters, and a second
+filter over a filtered list is the second opinion the work order's Traps forbid. A new sweep section,
+§ 30, fences the key. `CACHE` is `planbook-shell-v171`. Five new `check()` sites in a new section,
+`tools/verify/held-readers.mjs`, straight after `verify/past-due.mjs` — four claims and one fixture-guard
+failure arm.
+
+**The fixture** (in the section's header, hand-worked against the default thresholds): one points
+class, two categories, two students; for the student every claim is about, two live `missing`, ten live
+95s, a held 80 that is the only work in its category, a held `missing`, two held 40s (the first due
+yesterday) and a live 40 due yesterday. Held: 76.15%, two missing, a run of one, no concern. Live:
+67.65%, three missing, a run of three under 60, a fall of 11.58 across the last four.
+
+**A decision the work order did not settle: how § 30 tells a held column from the two `.held` reads
+that are not one.** `column.held` in `src/score-history.js` is `reviseCell()`'s descriptor, built by its
+callers from `isHeld()`; `pass.held` in `src/signals-view.js` is the cooldown list, an unrelated word.
+Both are **(file, receiver) exceptions**, not file exceptions — the identifier in front of the dot is
+matched, so `assignment.held` or `a.held` in either file still goes red — and each FAILs if it stops
+being used. Renaming either was the alternative and was refused: one is WO-3.52's history logic, the
+other a five-week-old screen, and neither rename is this work order's. A bare `'held'` string is not
+fenced, because `data-signals-open="held"` uses the word.
+
+- [x] With held columns holding a `missing` and two low scores for one student, the concern list shows
+      nothing for her — no row on `signalsModel()`'s concern column, no concern hit from `evaluate()` —
+      and with `held` deleted and a `committedAt` stamped, both read `grade-fell`, `low-score-run`,
+      `missing-count`.
+- [x] The past-due prompt, held: *1 blank is past due*, naming the live column only, and
+      `pastDueAsksAbout()` false for the held one. Live: *2 blanks*, naming the formerly held column
+      first, and true for both.
+- [x] `gradedPieces()`, held: `{ ids: [Essays], loose: false }`. Live: both categories.
+- [x] `{{missing.list}}`, held: the two live columns by name, and `{{missing.count}}` 2. Live: all three,
+      and 3.
+- [x] § 30 green on the delivered tree, and red with a `.held` read planted in each of the four readers
+      in turn — table below. Plants made in a scratch copy of the tree, never in the working tree.
+- [x] `CACHE` bumped v170 → v171.
+
+**The harness's own mutation round.** In a scratch copy of the tree whose `verify-shell.mjs` ran two
+sections, `year-document-store.mjs` and `held-readers.mjs`. Unmutated control:
+`30 checks · 30 passed · 0 failed · 0 skipped`, exit 0.
+
+| Mutation | Result |
+|---|---|
+| S1 · `&& !isHeld(a)` deleted from `sequence` in `src/signals.js` | **1 red of 30** (`30 · 29 · 1`): the concern check, held reading `["low-score-run"]` on the model and in the engine. `missing-count` stays quiet, correctly — it reads `openWork()`, which the engine filters. |
+| S2 · `if (isHeld(assignment)) return;` deleted from `pastDueBlanks()` | **1 red of 30** (`30 · 29 · 1`): the past-due check, held reading *2 blanks* and naming the held column. |
+| S3 · the same line deleted from `gradedPieces()` | **1 red of 30** (`30 · 29 · 1`): held reading both categories. |
+| S4 · `&& !isHeld(assignment)` deleted from the engine's `assignmentsFor()` — the merge fields' only filter | **2 red of 30** (`30 · 28 · 2`): `{{missing.list}}` naming the held missing column while held (count 3), and the concern check reading `["missing-count"]` while held. |
+
+**§ 30's plants.** In a second scratch copy taken from the final tree, each a `.held` read added to one reader, the sweep run, the
+file restored, and `diff -r` of the copy's `src/` against the tree empty afterwards (§ 30 green in the copy before the first plant and after the last):
+
+| Plant | § 30 |
+|---|---|
+| `src/signals.js` — `&& !a.held` in `sequence` | **FAIL**, exit 1: `src/signals.js:1738 … (a member read of held on a)` |
+| `src/past-due.js` — `if (assignment.held) return;` | **FAIL**, exit 1: `src/past-due.js:296 … on assignment` |
+| `src/graded-pieces.js` — `if (assignment.held === true) return;` | **FAIL**, exit 1: `src/graded-pieces.js:120 … on assignment` |
+| `src/merge-fields.js` — `…find((a) => a.id === row.id).held` in `{{missing.list}}` | **FAIL**, exit 1: `src/merge-fields.js:417 … on )` |
+| `src/score-history.js` (an excepted file) — `column.assignment.held` | **FAIL**, exit 1: on `assignment`, not the excepted `column` |
+| `src/signals.js` — `a['held']` | **FAIL**, exit 1: a bracket read of 'held' |
+| `src/graded-pieces.js` — the `isHeld()` call deleted, the import kept | **FAIL**, exit 1: does not import and call `isHeld()` |
+
+**Full run on the delivered tree:** `1846 checks · 1846 passed · 0 failed · 0 skipped`, 58,548 lines,
+31.7 lines per check, 849s, exit 0, 2026-10-08 on the real clock. *(Three comment-only rewraps in
+`src/past-due.js`, `src/graded-pieces.js` and `src/merge-fields.js` landed while it ran; no code line
+moved.)* `node tools/wo-sweep.mjs` on the final tree: `49 checks · 46 passed · 0 failed · 3 to review`,
+exit 0, the three reviews the same three as before this work order.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

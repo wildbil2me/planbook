@@ -13,6 +13,22 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Every reader that hides a held column asks the engine — 2026-10-08
+
+WO-3.53, the second of WO-3.46's four pieces. Shell cache bumped to v171.
+
+- **Not user-visible yet.** Nothing can hold a column until WO-3.46 adds the control. When one is
+  held, the concern list, the past-due prompt, the graded-pieces count and `{{missing.list}}` all
+  leave it out. A guardian is never told about a zero that does not count.
+- **Each reader calls `isHeld()`; none reads `.held` itself.** `{{missing.list}}` gets the answer
+  from the engine, with no second filter in `src/merge-fields.js`. `docs/data-model.md` has a table
+  of the readers, with WO-3.47's marked as not yet built.
+- **Sweep § 30 enforces it.** No file under `src/` outside `src/grade-engine.js` may read an
+  assignment's `held`, and the four readers must each call `isHeld()`. The verifier broke it eight
+  ways in a scratch copy, and each turned it red. It does not catch a destructured parameter
+  (`({ held }) => held`). WO-3.46 now has an Acceptance line requiring it to add its writer to
+  § 30's exceptions.
+
 ### A held column counts toward nothing, in the engine — 2026-10-08
 
 WO-3.52, the first of WO-3.46's four pieces. Shell cache bumped to v170.

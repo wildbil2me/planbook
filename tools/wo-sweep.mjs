@@ -3758,6 +3758,125 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
   if (faults.length) check(NAME, false, faults.join(' · '));
 }
 
+/* ══════ 30. an assignment's `held` is read in one place, and that place is src/grade-engine.js ══════
+   WO-3.53's second Deliverable, and it sits ABOVE § 22 for § 23's reason: § 22's census has to be
+   the last thing that pushes a result. The number is the order this section was written in.
+
+   WO-3.52 made `isHeld(assignment)` in src/grade-engine.js THE ONE READER OF `.held`, and WO-3.53
+   taught four readers — src/signals.js, src/past-due.js, src/graded-pieces.js and (by following the
+   engine) src/merge-fields.js — that a held column is not there, each by asking isHeld(). A reader
+   that tested the key itself would be the second opinion the glance-reader rule forbids: the day
+   "held" grows a second condition, the grade and that reader disagree about which columns count. The
+   harness proves what today's paths do on today's fixture; this proves no file in src/ could read the
+   key itself, which is § 17's division of labour and § 20's, over a key rather than a file.
+
+   WHAT IS FENCED, read off every src/**.js with comments blanked (newlines kept, so a hit names its
+   line) and string literals LEFT IN, because one of the shapes is a string:
+     · a member read, `x.held` or `x?.held` — `.heldAt` is a different key and is not matched, by
+       the word boundary, because WO-3.52's history rule hands `heldAt` to reviseCell() on purpose;
+     · a bracket read, `x['held']` in any quote;
+     · `'held' in x`, and `hasOwnProperty('held')` in either spelling;
+     · `held` destructured out of an object, `{ …held… } =`.
+   A bare string `'held'` is NOT fenced, unlike § 28's `'was'`: src/glance.js and src/shell.js use
+   it as the value of `data-signals-open`, the cooldown foot's landing, and that has nothing to do
+   with an assignment.
+
+   THE EXCEPTIONS ARE (file, receiver) PAIRS, NOT FILES, and each is here with its reason. A
+   member read is matched with the identifier in front of the dot, and only the named receiver in
+   the named file is let through — so a planted `assignment.held` or `a.held` in either file still
+   goes red, which a whole-file exemption would have let pass:
+     · src/score-history.js — `column.held`. reviseCell()'s fourth argument is a DESCRIPTOR,
+       `{ held, heldAt, committedAt }`, which its two callers build from isHeld() (WO-3.52). The
+       read is of a value the engine already answered, never of the assignment. Renaming the
+       descriptor's key was the other answer and was refused: it is WO-3.52's history logic and its
+       harness, and a rename there to quiet a grep is the tail wagging the dog.
+     · src/signals-view.js — `pass.held`. An unrelated word: collect()'s list of rows held back by
+       the cooldown (WO-4.5), which predates held columns by five weeks. Nothing on it is an
+       assignment.
+   WO-3.46 adds its writer's file as the one further exception, by file, because a writer SETS the
+   key — that is the only thing that may — and says so here in the same edit.
+
+   IT IS LOUD WHEN IT MOVES, for § 11's reason. No src/grade-engine.js, or no `assignment.held` read
+   inside its `export function isHeld(`, and the owner this section protects has moved — FAIL. An
+   exception whose receiver is no longer found in its file is STALE and FAILs too, because an
+   allowance nothing needs is an allowance waiting for something to use it. And each of the three
+   readers that filters for itself — src/signals.js, src/past-due.js, src/graded-pieces.js — must
+   still import isHeld from the engine, so that a reader which quietly stopped asking reads as a
+   fault rather than as a file with no `.held` in it, which is also what a deleted filter looks like.
+   src/merge-fields.js is not on that list: it follows the engine through openWork() and
+   classGrade() and holds no filter of its own, on purpose (its header says why).
+
+   PROVED 2026-10-08 against `.held` reads planted one at a time in each of the four readers —
+   TESTING.md § WO-3.53 has the table. WHAT IT DOES NOT SEE: a key named by a value
+   (`a[key]` where key is 'held'), `Reflect.get`, `Object.entries(a).find(…)`, a `for…in` that
+   compares — § 20's open-ended family, and the same answer: a grep over a crude strip cannot close
+   it, so read a new reader of an assignment by eye. */
+
+{
+  const NAME = 'an assignment\'s `held` is read only by isHeld() in src/grade-engine.js, and the readers that hide a held column import it';
+  const OWNER = 'src/grade-engine.js';
+  const ownerPath = path.join(REPO, 'src', 'grade-engine.js');
+  const srcFiles = ALL.filter(p => /^src\/.*\.js$/.test(rel(p)));
+  // Comments blanked, newlines kept; strings left in, because `x['held']` is one of the shapes.
+  const codeOf = (file) => fs.readFileSync(file, 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '))
+    .split('\n').map(l => l.replace(/(^|[^:'"`\\])\/\/.*$/, '$1'));
+  const EXCEPT = [
+    { file: 'src/score-history.js', receiver: 'column', why: 'reviseCell()\'s descriptor, built by its callers from isHeld()' },
+    { file: 'src/signals-view.js', receiver: 'pass', why: 'collect()\'s cooldown list, an unrelated word' },
+  ];
+  const FILTERS = ['src/signals.js', 'src/past-due.js', 'src/graded-pieces.js'];
+  const MEMBER = /([A-Za-z_$][\w$]*|[)\]}])?\s*(?:\?\.|\.)\s*held\b/g;
+  const OTHER = [
+    { re: /\[\s*(['"`])held\1\s*\]/, what: 'a bracket read of \'held\'' },
+    { re: /(['"`])held\1\s+in\b/, what: '`\'held\' in` an object' },
+    { re: /hasOwn(?:Property)?\s*\([^)]*(['"`])held\1/, what: 'a hasOwnProperty test for \'held\'' },
+    { re: /\{[^{}]*\bheld\b[^{}]*\}\s*=(?![=>])/, what: '`held` destructured out of an object' },
+  ];
+  const faults = [];
+  const reads = [];
+  const used = new Set();
+  if (!fs.existsSync(ownerPath)) {
+    faults.push(`${OWNER} is not where § 30 expects it — the one module allowed to read an assignment's \`held\` is gone, so every clause below is watching nothing. Restore it, or re-point tools/wo-sweep.mjs § 30`);
+  } else {
+    const ownerLines = codeOf(ownerPath);
+    const at = ownerLines.findIndex(l => /^export function isHeld\s*\(/.test(l));
+    const to = at < 0 ? -1 : ownerLines.findIndex((l, i) => i > at && /^\}/.test(l));
+    if (at < 0 || to < 0 || !/\bassignment\.held\b/.test(ownerLines.slice(at, to + 1).join('\n'))) {
+      faults.push(`no \`export function isHeld(\` reading \`assignment.held\` in ${OWNER} — the one reader this section protects has moved or been rewritten, and a fence round a reader that is not there passes over anything. Re-point § 30`);
+    }
+  }
+  srcFiles.filter(f => rel(f) !== OWNER).forEach((f) => {
+    const file = rel(f);
+    codeOf(f).forEach((line, i) => {
+      for (const m of line.matchAll(MEMBER)) {
+        const pass = EXCEPT.find(e => e.file === file && e.receiver === m[1]);
+        if (pass) { used.add(pass.file + ':' + pass.receiver); continue; }
+        reads.push(`${file}:${i + 1} "${line.trim().length > 80 ? line.trim().slice(0, 77) + '…' : line.trim()}" (a member read of \`held\`${m[1] ? ` on \`${m[1]}\`` : ''})`);
+      }
+      OTHER.forEach((o) => {
+        if (o.re.test(line)) reads.push(`${file}:${i + 1} "${line.trim().length > 80 ? line.trim().slice(0, 77) + '…' : line.trim()}" (${o.what})`);
+      });
+    });
+  });
+  if (reads.length) faults.push(`${reads.join(', ')} — reads an assignment's \`held\` outside ${OWNER}. WO-3.52 and WO-3.53: whether a column is held is asked of isHeld() and nothing else, because a reader that tests the key itself is a second opinion about what "held" means, and the grade and that reader drift apart the day the meaning grows. Call isHeld(assignment) instead. If this is a WRITER (WO-3.46), add its file to EXCEPT with its reason, in the same edit`);
+  const stale = EXCEPT.filter(e => !used.has(e.file + ':' + e.receiver));
+  if (stale.length) faults.push(`${stale.map(e => `${e.file} \`${e.receiver}.held\` (${e.why})`).join(', ')} — an exception in § 30 that no line in its file uses any more. Take it out of EXCEPT: an allowance nothing needs is an allowance waiting for something to use it`);
+  const notAsking = FILTERS.filter((file) => {
+    const p = path.join(REPO, file);
+    if (!fs.existsSync(p)) return true;
+    const code = codeOf(p).join('\n');
+    return !/import\s*\{[^}]*\bisHeld\b[^}]*\}\s*from\s*['"]\.\/grade-engine\.js['"]/.test(code)
+      || !/\bisHeld\s*\(/.test(code.replace(/import\s*\{[^}]*\}\s*from[^;]*;/g, ''));
+  });
+  if (notAsking.length) faults.push(`${notAsking.join(', ')} does not import and call isHeld() from ./grade-engine.js — WO-3.53 built a held-column filter at each of these readers, and one that stopped asking reads exactly like one that never reads \`held\`, which is green here and wrong on screen. Restore the call, or re-point § 30 if the reader moved`);
+  if (!faults.length) {
+    check(NAME, true, `${srcFiles.length - 1} file(s) under src/ outside ${OWNER} read with comments blanked, and none reads an assignment's \`held\` — the ${EXCEPT.length} named exceptions (${EXCEPT.map(e => `${e.file} \`${e.receiver}.held\``).join(', ')}) each still in use; ${FILTERS.join(', ')} each import and call isHeld()`);
+  } else {
+    check(NAME, false, faults.join(' · '));
+  }
+}
+
 /* ══════ 22. the count of checks in tools/README.md is the number this run emits ══════
    WO-1.42. § 11 holds `tools/README.md`'s figures for `verify-shell.mjs` against what the tree
    actually contains. This is that census turned on the sweep itself. The same file records how many

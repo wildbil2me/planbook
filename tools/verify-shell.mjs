@@ -135,6 +135,7 @@ import { run as categoryRemoval } from './verify/category-removal.mjs';
 import { run as scoreNotes } from './verify/score-notes.mjs';
 import { run as scoreHistory } from './verify/score-history.mjs';
 import { run as pastDue } from './verify/past-due.mjs';
+import { run as heldReaders } from './verify/held-readers.mjs';
 import { run as accommodationPrompts } from './verify/accommodation-prompts.mjs';
 import { run as printGate } from './verify/print-gate.mjs';
 import { run as printSheets } from './verify/print-sheets.mjs';
@@ -386,6 +387,11 @@ const BROWSER_SECTIONS = [
      leaves. */
   { file: 'verify/score-history.mjs', run: scoreHistory },
   { file: 'verify/past-due.mjs', run: pastDue },
+  /* WO-3.53, directly after the prompt it reads: four readers that hide a held column. It plants one
+     points class of its own through the store, selects it, filters the concern list to it, reads
+     each reader held and then live, and puts the class, the selection and both filters back. No
+     reload, no viewport change, no presentation-mode change. */
+  { file: 'verify/held-readers.mjs', run: heldReaders },
   { file: 'verify/accommodation-prompts.mjs', run: accommodationPrompts },
   { file: 'verify/print-gate.mjs', run: printGate },
   /* WO-8.4, directly after the gate it prints through: the four sheets under one #printHeader, in

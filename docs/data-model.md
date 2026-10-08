@@ -600,6 +600,27 @@ never sees the column. The rule lives at the engine's two walks over a class's w
   (WO-3.46, WO-3.47). Until WO-3.46 lands, nothing in the app writes `held`, `heldAt` or
   `committedAt`.
 
+**Every reader outside the engine, and what it does with a held column** *(the owner's table of
+2026-10-07, started by WO-3.53 on 2026-10-08 and completed by WO-3.47)*. Each reader that needs to
+know asks `isHeld()`; **no file in `src/` outside `src/grade-engine.js` reads the key**, which
+`tools/wo-sweep.mjs` § 30 asserts — with two named exceptions that are not an assignment's key, a
+`reviseCell()` descriptor and the cooldown list's own word, and the one further exception WO-3.46's
+writer will add. A reader that follows the engine through `classGrade()` or `openWork()` holds no
+test of its own, because a second filter over a list already filtered is a second opinion about what
+*held* excludes.
+
+| Reader | With a held column | Built |
+|---|---|---|
+| `src/signals.js` — the per-class `sequence`, so `countedWork()`, `scorePercents()`, `termWork()` and every rule fed from them | **Skips it.** A signal built from a score the grade does not count contradicts the grade on screen. `grade()` / `gradeWithout()` are `classGrade()` and `missingWork()` is `openWork()`, so they follow the engine with no test of their own. A held column also does not count toward a rule's *not yet* minimum | WO-3.53 |
+| `src/past-due.js` — the set the prompt offers | **Not offered.** A held column is work in progress, and the prompt asks about work that is finished and late. The sentence, the review, the column-head tint and accept lose it together; once live it is asked about like any other | WO-3.53 |
+| `src/graded-pieces.js` | **Skips it**: a category whose only work is held has no counted work, and the screen says the engine's own sentence | WO-3.53 |
+| `src/merge-fields.js` — `{{missing.count}}`, `{{missing.list}}`, `{{grade.percent}}`, `{{grade.letter}}` | **Follows the engine**, by construction: the four are `openWork()` and `classGrade()`. A guardian is never told about a zero that does not count | WO-3.53 *(no filter of its own)* |
+| `src/glance.js` `queueRows()` and the home card's *N to grade* | **Counted as waiting**, its row marked *held*, through a new engine call beside `openWork()` | WO-3.47 — *not yet built* |
+| `src/detail.js` — open work and projections | Open work **lists it, marked *held***; projections leave it out | WO-3.47 — *not yet built* |
+| `src/grades-report.js` — the grade sheet and CSV | **Includes it, marked held** in its head and the CSV's header cell; the class grade beside it does not count it | WO-3.47 — *not yet built* |
+| `src/calendar-derived.js` — due dates | **Unchanged.** A due date is a date whether or not the column counts | Nobody |
+| `src/score-history.js` `scoreHistoryCard()`, `src/score-notes.js` `scoreNotesCard()` | **Unchanged.** Both cards are about the cell, not the grade | Nobody |
+
 ### Extra credit
 
 **A zero-point assignment is the extra-credit mechanism.** *(Owner's decision, 2026-08-09.)* It
