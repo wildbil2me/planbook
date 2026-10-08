@@ -143,7 +143,7 @@ import { rosterName, fullName, searchNeedle, nameMatches } from './roster.js';
 /* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4). See this file's header. gradingModeOf() is the one
    test of how a class is graded (WO-3.36), asked here rather than reading `cls.gradingMode` so that a
    stray value reads as weighted on this screen exactly as it does in the engine. */
-import { categoryPercentage, letterFromPercentage, classGrade, gradingModeOf } from './grade-engine.js';
+import { categoryPercentage, letterFromPercentage, classGrade, gradingModeOf, isHeld } from './grade-engine.js';
 /* What the grade cell's em dash says when there is no grade (WO-3.42): the sentence student detail
    says, from the same function, so a bonus graded at 0 is never read out as nothing graded here
    while the detail screen one tap away says otherwise. No grade arithmetic — see that file's header;
@@ -469,9 +469,17 @@ export function classAverage(students, figureOf) {
   key is deleted only when the cell has no value, flag or note AND no past — a cleared cell with
   history stays as `{ v: null, at, was }`, which every reader already treats as blank. putCell() is
   the one place both writers below hand that answer to the document.
+
+  AND SINCE WO-3.52 IT TELLS reviseCell() ABOUT THE COLUMN — whether it is held, and when it was
+  last held and last committed — and decides nothing with the answer: what a hold or a commit means
+  for a cell is reviseCell()'s rule, so this writer and src/past-due.js's cannot disagree about it.
 */
 function putCell(doc, assignmentId, studentId, old, next) {
-  const revised = reviseCell(old, next);
+  const assignment = (Array.isArray(doc.assignments) ? doc.assignments : [])
+    .find((a) => a && a.id === assignmentId);
+  const revised = reviseCell(old, next, undefined,
+    { held: isHeld(assignment), heldAt: assignment ? assignment.heldAt : undefined,
+      committedAt: assignment ? assignment.committedAt : undefined });
   if (!revised.write) return;
   const column = doc.scores[assignmentId];
   if (!revised.cell) {

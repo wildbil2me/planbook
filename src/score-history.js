@@ -21,7 +21,9 @@
     · A WRITE WITHIN FIVE MINUTES OF THE CELL'S LAST WRITE REPLACES IT AND PUSHES NOTHING. Five
       minutes is measured from the current cell's `at`, and a cell with no `at` always pushes (the
       owner's ruling, 2026-10-02). Correcting a typo leaves no history entry, and neither does the
-      second digit of a two-digit score.
+      second digit of a two-digit score. A held column, a cell last written before its column was
+      held, and one last written before its column was committed are the exceptions, all argued
+      above reviseCell() (WO-3.52).
     · A WRITE THAT CHANGES NOTHING IS NOT A WRITE. Same value, same flag, same note: nothing is
       pushed, nothing is restamped, and the caller is told not to touch the document. `72.` in the
       field reads as 72 over a stored 72, and leaving that cell is not a revision.
@@ -110,18 +112,73 @@ function isBlank(cell) {
   return valueIn(cell) === null && !flagWord(cell) && !noteOf(cell);
 }
 
+/* Whether a cell holds a score that counted before its column was held (WO-3.52, ruling 2): a value
+   or a flag, last written at or before `heldAt` — a missing `at` counts as before, a missing
+   `heldAt` means nothing was there first, and the same second counts as before. Argued above
+   reviseCell(). */
+function countedBefore(cell, heldAt) {
+  if (valueIn(cell) === null && !flagWord(cell)) return false;
+  const hold = typeof heldAt === 'string' ? Date.parse(heldAt) : NaN;
+  if (!Number.isFinite(hold)) return false;
+  const stamped = typeof cell.at === 'string' ? Date.parse(cell.at) : NaN;
+  return !Number.isFinite(stamped) || stamped <= hold;
+}
+
 /*
   THE RULE, for every path that writes a score cell. `old` is the cell as stored (or nothing);
   `next` is the cell the writer wants — a value, a flag and a note, or null for "no value, no flag,
-  no note". `now` is a Date, and defaults to the device clock.
+  no note". `now` is a Date, and defaults to the device clock. `column` is what the writer knows
+  about the cell's column — `{ held, heldAt, committedAt }`, built by the caller from
+  src/grade-engine.js's isHeld() and the assignment's own `heldAt` and `committedAt` — or nothing,
+  which means a live column that was never committed and is today's behaviour to the byte (WO-3.52).
 
   Answers `{ write: false }` when the document must not be touched at all, or `{ write: true, cell }`
   where `cell` is what to store under the key — or null, which means delete the key.
+
+  ── A HOLD AND A COMMIT ARE VERSION BOUNDARIES (WO-3.52) ──
+
+  Both of the owner's rulings, as amended 2026-10-08, come from one principle of his: EVERY SCORE
+  THAT COUNTED TOWARD A GRADE APPEARS IN THE TRAIL, AND A VERSION THAT NEVER COUNTED DOES NOT. The
+  five-minute window is the one deliberate exception — a typo corrected inside it counted for a
+  moment and is still not kept. This file does not import the grade engine: the caller says whether
+  the column is held and when it was held and committed, and what that means for a cell is decided
+  here and only here, so the two writers cannot disagree.
+
+    · A HOLD IS A VERSION BOUNDARY (ruling 2). The score a cell carried when its column was held —
+      last written at or before `heldAt` — counted, so the first held write PUSHES it onto `was`,
+      however soon after its own `at`, with the stored `was` kept beneath it exactly as stored (not
+      re-read through versionOf(), not popped by a burst). That includes a blank: the cell is kept
+      as `{ v: null, at, was }`. Holding a column must never be a way to make a score disappear.
+    · EVERY OTHER HELD WRITE REPLACES AND PUSHES NOTHING. Once the first held write has stamped the
+      cell after `heldAt`, the cell is a held version, which counted toward nothing, so the next
+      held write replaces it however long since — and a cell first typed while held keeps no history
+      until the commit. A write that changes nothing is still not a write, and a held cell blanked
+      with no `was` and nothing to push is still deleted.
+    · WHAT "A SCORE THAT COUNTED" MEANS HERE: a value or a flag — the two fields the grade math reads.
+      A `missing` with no number counted as a zero, and an `excused` took the work out of the grade,
+      so either is pushed. A cell holding only a note, or a blank kept for its past, counted toward
+      nothing and pushes nothing; its trail is frozen as it stands.
+    · A MISSING STAMP COUNTS AS BEFORE THE HOLD — a cell written before WO-3.33 has no `at`, and it
+      was certainly there first. A MISSING `heldAt` means held from before any cell was typed, so
+      nothing is pushed: no build has written a held column without one, and a column created held
+      has no score from before it.
+    · AFTER A COMMIT, THE COMMIT IS A VERSION BOUNDARY (ruling 1). A held cell's `at` is when it was
+      typed, not when it began to count, so a cell last written at or before the column's
+      `committedAt` is the committed version and the first change after the commit PUSHES it,
+      however soon, the way a cell with no `at` always does — the five minutes cannot reach back
+      across a commit. Type 72 while held, commit at 9:02, change it to 75 at 9:03: the 72 is on the
+      trail, where measuring from the cell's `at` alone would have read 9:03 as a correction of 9:00
+      and dropped it. A write after the commit opens an ordinary window from its own `at`.
+    · THE SAME SECOND COUNTS AS BEFORE, at both boundaries. `at` is second-granular (localStamp()),
+      and a spare trail entry costs nothing where a lost score that counted is the failure. The one
+      spare it can produce: a write in the very second of a hold or a commit, followed by another,
+      keeps the first. Both are compared as parsed instants, the way the window is.
 */
-export function reviseCell(old, next, now) {
+export function reviseCell(old, next, now, column) {
   const at = now instanceof Date ? now : new Date();
   const was = isCell(old) ? old : null;
   const want = isCell(next) ? next : { v: null };
+  const held = !!(column && column.held);
 
   if (!was) {
     if (isBlank(want)) return { write: false };
@@ -129,11 +186,23 @@ export function reviseCell(old, next, now) {
   }
   if (sameContent(was, want)) return { write: false };
 
+  if (held) {
+    const kept = Array.isArray(was.was) && was.was.length ? was.was : [];
+    const past = countedBefore(was, column.heldAt) ? kept.concat([versionOf(was)]) : kept;
+    const cell = Object.assign(versionOf(want), { at: localStamp(at) });
+    if (past.length) cell.was = past;
+    if (isBlank(cell) && !past.length) return { write: true, cell: null };
+    return { write: true, cell: cell };
+  }
+
   let past = earlier(was).map(versionOf);
   let cell;
   const stamped = typeof was.at === 'string' ? Date.parse(was.at) : NaN;
   const since = at.getTime() - stamped;
-  if (Number.isFinite(stamped) && since >= 0 && since < REVISION_WINDOW_MS) {
+  const committed = column && typeof column.committedAt === 'string'
+    ? Date.parse(column.committedAt) : NaN;
+  const sealed = Number.isFinite(committed) && Number.isFinite(stamped) && stamped <= committed;
+  if (!sealed && Number.isFinite(stamped) && since >= 0 && since < REVISION_WINDOW_MS) {
     const last = past[past.length - 1];
     if (last && sameContent(last, want)) {
       past = past.slice(0, -1);

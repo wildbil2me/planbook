@@ -11140,6 +11140,115 @@ follow and label halves are what catch it.
 
 ---
 
+### WO-3.52 — a held column counts toward nothing and keeps no history, in the engine
+
+**What this changes.** The engine half of holding a column, and nothing a teacher can see: no build
+writes `held` or `committedAt` yet (WO-3.46 owns the writer), so every check below plants a fixture
+document by hand. `isHeld()` is exported from `src/grade-engine.js` and is the one reader of `.held`;
+`assignmentsFor()` and `looseAssignments()` skip a held column through it; `reviseCell()` in
+`src/score-history.js` takes a fourth argument, `{ held, heldAt, committedAt }`, which `src/scores.js`'s
+`putCell()` and `src/past-due.js`'s accept build from `isHeld()` and the assignment's `heldAt` and
+`committedAt`. `CACHE` is `planbook-shell-v170`. Ten new `check()` sites: four at the foot of
+`tools/verify/grade-engine.mjs` (pure, through the `gradeEngine` seam) and six in
+`tools/verify/score-history.mjs` after its earlier-shape restore — one reads the restored document,
+five ask `reviseCell()` directly through a dynamic import of the module the page already loaded,
+with every clock an explicit `Date` and every stored `at` a literal. *(Nine until correction round 1,
+2026-10-08, which added the sixth there.)*
+
+**The two rulings, and the one principle under them.** Both are the owner's, both were amended on
+2026-10-08 after the first build returned, and both come from one sentence of his: **every score that
+counted toward a grade appears in the trail, and versions that never counted do not** — WO-3.33's
+five-minute correction window being the one deliberate exception.
+- **Ruling 1 — a commit is a version boundary.** A cell last written at or before `committedAt` is the
+  committed version, and the first change after the commit pushes it however soon; a write after the
+  commit opens an ordinary window from its own `at`. *The ruling once read "the window starts at
+  whichever is later, the cell's `at` or the column's `committedAt`", which read literally replaces the
+  72 in its own worked example and could not be told apart from Acceptance line 3's mutation. The
+  first build found that and built the boundary; the owner confirmed it as the ruling on 2026-10-08.*
+- **Ruling 2 — a hold is a version boundary too.** The assignment gains `heldAt`, stamped by the hold
+  writer (WO-3.46's). The score a cell carried when its column was held — last written at or before
+  `heldAt` — is pushed onto `was` by the first held write, however soon, with the stored trail kept
+  beneath it byte for byte; a blank as that first write keeps `{ v: null, at, was }`. Every later held
+  write replaces and pushes nothing, and a cell first typed while held keeps no history until the
+  commit. *The ruling once said held edits "push nothing", so a live 88 that had counted, held and
+  edited to 90, left no record. The first build flagged it; the owner amended it on 2026-10-08.*
+- **At both boundaries the same second counts as before** — stamps are second-granular, and a spare
+  entry is cheaper than a lost score that counted. **A cell with no `at` counts as before the hold**,
+  and **a held column with no `heldAt` is read as held from before any score was typed**, so nothing is
+  pushed for it.
+- **What counts as "a score that counted" at the hold** — a decision the corrected work order left to
+  the implementer: **a value or a flag**, the two fields the grade math reads. A `missing` with no
+  number counted as a zero and an `excused` took the work out of the grade, so both are pushed. A cell
+  holding only a note, or a blank kept for its past, counted toward nothing and is not.
+
+- [x] A held column's scores and `missing` move no class grade, category percentage or letter — weighted,
+      points, and points-uncategorized — and the same document with `held` deleted moves them (Ada
+      72.5% C / 55%, Ben 67.5% F / 45% weighted; 66.6̅% F and 60% F in points, both ways of filing).
+      **`excused` is asserted as the control, not as a mover**: an excused cell is in neither total
+      whether its column is held or live, so Cy reads 90% A both ways and the check says so rather than
+      claiming a movement that the grade math rules out.
+- [x] A cell first typed while held (at 9:00, a minute after an 8:59 hold) and edited three times, ten
+      minutes apart, carries no `was`; the same three edits live push three. After a commit at 9:31,
+      the edit at 9:37 pushes the committed 78 with its own `at`. *(The check's fixture gained a
+      `heldAt` in correction round 1, so it exercises a cell typed after the hold rather than the
+      absence of a stamp; it matches the line as narrowed.)*
+- [x] Ruling 1: typed at 9:00 while held, committed 9:02, changed 9:03 — the 72 is pushed onto `was`;
+      a further change at 9:04 is a correction of the 75 and pushes nothing more. Mutation-proved below.
+- [x] Ruling 2, as amended: a live 88 typed at 8:58 over a two-version trail (one version in a key
+      order `versionOf()` would never write), held at 9:00 and edited at 9:01 — inside the 88's own
+      window, where the same edit on a live column replaces and leaves two versions (the control) —
+      carries the old trail byte for byte beneath one new entry, `{ v: 88, at: 8:58 }`; the edits at
+      9:02 and 9:20 leave `JSON.stringify(was)` unchanged. A blank as the first held edit pushes the
+      same way and is kept as `{ v: null, at, was }`. Committed at 9:30 and changed at 9:31, the trail
+      reads the old two, the pre-hold 88 and the committed 92. *(After the commit the write is live
+      and re-reads the earlier versions through `versionOf()`, so their key order is the data model's
+      there — WO-3.33's behaviour, unchanged; byte-for-byte is asserted across the held edits.)*
+      Mutation-proved below (M3).
+- [x] Ruling 2's boundary, edge by edge, against a 9:00:00 hold and an edit at 9:00:30: a cell stamped
+      9:00:00 is pushed (the same second), 9:00:01 is not; a cell with no `at` is pushed; a held column
+      with no `heldAt` pushes nothing; a `missing` or `excused` with no number is pushed; a note alone
+      is not. A held cell typed after the hold and blanked is deleted, and a held write that changes
+      nothing is not a write. And Ruling 1's same second: after a 9:00:00 commit, a cell stamped
+      9:00:00 is pushed. Mutation-proved below (M4, M5).
+- [x] The WO-3.33 earlier-shape backup, restored through the real restore, leaves every assignment on
+      the page live through `isHeld()` and none carrying `held` or `committedAt`.
+- [x] `reviseCell()` with no fourth argument: eleven literal cases covering every rule WO-3.33's grid
+      checks drive (first write, blank first write, no-`at` push, ten-minute push, 4m59s replace,
+      exactly-five push, no-op, burst pop, cleared-with-past kept, cleared-without-past deleted, flag
+      and note pushed whole) match hand-written answers, and `undefined`, `{}` and `{ held: false }`
+      answer identically. WO-3.33's own checks run unedited and green on the delivered tree.
+- [x] `CACHE` bumped v169 → v170.
+
+**Mutation round.** Made in throwaway copies of the tree under the session scratch directory, never in
+the working tree; `git diff -- src tools` over the delivered tree contains no `MUTATION`, and `grep -rn MUTATION src/
+tools/` reads only comments that were there before. Each copy ran a three-section subset —
+`year-document-store.mjs`, `grade-engine.mjs`, `score-history.mjs` — and the unmutated copy ran first as
+the control: `80 checks · 80 passed · 0 failed · 0 skipped`, exit 0.
+
+| Mutation | Result |
+|---|---|
+| M1 · `const sealed = false` in `reviseCell()` — the window measured from the cell's `at` alone | **1 red of 80, by name** (`80 checks · 79 passed · 1 failed`): the Ruling 1 check, reading `{"v":75,"at":"NOW"}` with no `was` — the 72 gone. Every other WO-3.52 check stayed green, correctly: the post-commit edit in the line-2 check is seven minutes after the cell's `at`, so it pushes under either rule. |
+| M2 · `&& !isHeld(assignment)` deleted from both `assignmentsFor()` and `looseAssignments()` | **3 red of 80, by name** (`80 checks · 77 passed · 3 failed`): the weighted, points and points-uncategorized checks, each reading the held figures equal to the live ones (Ada 72.5% C held, and so on). |
+
+**Correction round 1 (2026-10-08) — the same method, the same three-section subset, now 81 checks,
+every copy taken from the final tree.** The unmutated copy ran first as the control:
+`81 checks · 81 passed · 0 failed · 0 skipped`, exit 0.
+
+| Mutation | Result |
+|---|---|
+| M3 · the first build's rule — `countedBefore(...)` replaced by `false` in `reviseCell()`'s held branch, so held edits never push | **2 red of 81, by name** (`81 checks · 79 passed · 2 failed`): the amended Ruling 2 check — every held edit's `was` the bare two-version trail with no 88, the blank first edit likewise, the post-commit trail missing the 88 — and the boundary check, every edge reading `{ v: 75, at: NOW }` with no `was`. |
+| M4 · `stamped <= hold` → `stamped < hold` in `countedBefore()` — the same second read as after the hold | **1 red of 81, by name** (`81 · 80 · 1`): the boundary check, the 9:00:00 cell not pushed. |
+| M5 · `stamped <= committed` → `stamped < committed` in `reviseCell()` — the same second read as after the commit | **1 red of 81, by name** (`81 · 80 · 1`): the boundary check, the commit-second cell not pushed. Ruling 1's own check stays green, correctly: its cell is two minutes before the commit. |
+| M1, re-run · `const sealed = false` | **2 red of 81, by name** (`81 · 79 · 2`): the Ruling 1 check as before, and now the boundary check's commit-second edge too. |
+
+**Full run on the corrected tree (round 1, 2026-10-08):** `1842 checks · 1842 passed · 0 failed ·
+0 skipped`, 58,319 lines, 31.7 lines per check, 854s, exit 0, on the real clock.
+
+**Full run on the first build's tree:** `1841 checks · 1841 passed · 0 failed · 0 skipped`, 58,262 lines,
+31.6 lines per check, 835s, exit 0, 2026-10-07 on the real clock.
+
+---
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

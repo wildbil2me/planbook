@@ -13,6 +13,24 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A held column counts toward nothing, in the engine — 2026-10-08
+
+WO-3.52, the first of WO-3.46's four pieces. Shell cache bumped to v170.
+
+- **Not user-visible yet.** Nothing can hold a column until WO-3.46 adds the control. The grade
+  engine now leaves a column marked `held` out of every grade, in weighted, points and
+  uncategorized classes, and `isHeld()` is the one question every other reader asks.
+- **A cell edited while its column is held keeps no history.** The first change after the column is
+  committed records the committed figure, because the revision window is measured from the commit
+  (ruling 1). A re-held column freezes its trail rather than clearing it, because a hold marks the
+  edge between versions (ruling 2, amended 2026-10-08). A `missing` or `excused` flag with no number
+  counts as a version.
+- **Every earlier backup restores with every column live.** An absent `held` means live, so no
+  migration was needed.
+- **Two checks are owed to WO-3.46.** No check sends a held column through `putCell()` or
+  `acceptPastDue()`, and none covers a held column that is the only work in its category. Both are on
+  WO-3.46's Acceptance list now, because it is the first work order that can hold a column.
+
 ### The harness gets September back — 2026-10-07
 
 WO-1.64. Tooling only; nothing under `src/` moved, so no shell cache bump, and none owed.

@@ -507,6 +507,211 @@ check('WO-3.33: and the backup in the earlier shape restores unchanged — every
   unchanged.scores === before.scores ? 'score map identical to the file (' + before.scores.length + ' chars)'
     : 'DIFFERS: ' + unchanged.scores.slice(0, 300));
 
+/* WO-3.52, ACCEPTANCE LINE 5: that same earlier-shape file, now on disk, holds no column — every
+   assignment in it reads live through the engine's one reader of `held`, and none carries the key. */
+const restoredLive = await evalJs(`(function(){ var g = window.planbook.gradeEngine;
+  var all = window.planbook.store.getDoc().assignments || [];
+  return { n: all.length, ours: all.filter(function(a){ return a.classId === '${CLS}'; }).length,
+    held: all.filter(function(a){ return g.isHeld(a); }).length,
+    keyed: all.filter(function(a){ return Object.prototype.hasOwnProperty.call(a, 'held')
+      || Object.prototype.hasOwnProperty.call(a, 'committedAt'); }).length }; })()`);
+check('WO-3.52: a document written before this build restores with every column live — after the '
+  + 'earlier-shape file above, isHeld() is false for every assignment on the page and none carries '
+  + '`held` or `committedAt`',
+  restoredLive.ours === 3 && restoredLive.n >= 3 && restoredLive.held === 0 && restoredLive.keyed === 0,
+  JSON.stringify(restoredLive));
+
+/* ── A HELD COLUMN KEEPS NO HISTORY, IN reviseCell() ITSELF (WO-3.52) ──
+   reviseCell() is pure, so these are asked of the module the page already loaded — a dynamic import of
+   the same URL hands back the same instance — with every `now` an explicit Date and every stored `at`
+   a literal stamp. Nothing here goes through the grid: no build can hold a column yet. A fresh stamp's
+   text depends on the browser's zone, so each result is normalised before it is compared — an `at`
+   naming exactly the `now` of that call reads as "NOW" — and every expectation below is a literal. */
+const history352 = await evalJs(`(async function(){
+  var m = await import(new URL('src/score-history.js', document.baseURI).href);
+  var rc = m.reviseCell;
+  var T = function(s){ return new Date(s); };
+  var norm = function(r, now){
+    return JSON.parse(JSON.stringify(r, function(k, v){
+      return k === 'at' && typeof v === 'string' && Date.parse(v) === now.getTime() ? 'NOW' : v; })); };
+  var ask = function(old, next, now, column){
+    return arguments.length < 4 ? norm(rc(old, next, now), now) : norm(rc(old, next, now, column), now); };
+  var out = {};
+
+  /* Line 6: the rule with no fourth argument, case by case — the cases WO-3.33's checks above drive
+     through the grid, asked directly — and the same answer with undefined, {} and a live column. */
+  var N = T('2026-10-07T10:00:00-04:00');
+  var cases = [
+    [null, { v: 72 }],
+    [null, { v: null }],
+    [{ v: 72 }, { v: 88 }],
+    [{ v: 72, at: '2026-10-07T09:50:00-04:00' }, { v: 88 }],
+    [{ v: 72, at: '2026-10-07T09:55:01-04:00' }, { v: 88 }],
+    [{ v: 72, at: '2026-10-07T09:55:00-04:00' }, { v: 88 }],
+    [{ v: 72, at: '2026-10-07T09:50:00-04:00' }, { v: 72 }],
+    [{ v: 7, at: '2026-10-07T09:59:00-04:00', was: [{ v: 72, at: '2026-10-01T08:00:00-04:00' }] }, { v: 72 }],
+    [{ v: 88, at: '2026-10-07T09:50:00-04:00', was: [{ v: 72 }] }, { v: null }],
+    [{ v: 88, at: '2026-10-07T09:59:00-04:00' }, { v: null }],
+    [{ v: null, flag: 'missing' }, { v: 7, flag: 'late', note: 'x' }]];
+  out.noArg = cases.map(function(c){ return ask(c[0], c[1], N); });
+  out.sameEveryWay = cases.every(function(c){
+    var a = JSON.stringify(ask(c[0], c[1], N));
+    return a === JSON.stringify(ask(c[0], c[1], N, undefined))
+      && a === JSON.stringify(ask(c[0], c[1], N, {}))
+      && a === JSON.stringify(ask(c[0], c[1], N, { held: false })); });
+
+  /* Line 2: first typed while held — at 9:00, a minute after the hold at 8:59 — and edited three times
+     ten minutes apart, each far outside the window, so a live column would push every time; then
+     committed and edited six minutes after the commit. */
+  var H = { held: true, heldAt: '2026-10-07T08:59:00-04:00' };
+  var c0 = rc(null, { v: 70 }, T('2026-10-07T09:00:00-04:00'), H).cell;
+  var c1 = rc(c0, { v: 72 }, T('2026-10-07T09:10:00-04:00'), H).cell;
+  var c2 = rc(c1, { v: 75, flag: 'late' }, T('2026-10-07T09:20:00-04:00'), H).cell;
+  var c3 = rc(c2, { v: 78 }, T('2026-10-07T09:30:00-04:00'), H).cell;
+  out.heldThree = [c1, c2, c3].map(function(c){ return Object.prototype.hasOwnProperty.call(c, 'was'); });
+  out.heldLast = { v: c3.v, at: Date.parse(c3.at) === T('2026-10-07T09:30:00-04:00').getTime() };
+  var l1 = rc(c0, { v: 72 }, T('2026-10-07T09:10:00-04:00')).cell;
+  var l2 = rc(l1, { v: 75, flag: 'late' }, T('2026-10-07T09:20:00-04:00')).cell;
+  var l3 = rc(l2, { v: 78 }, T('2026-10-07T09:30:00-04:00')).cell;
+  out.liveThree = (l3.was || []).length;
+  var committed = { committedAt: '2026-10-07T09:31:00-04:00' };
+  var after = T('2026-10-07T09:37:00-04:00');
+  out.afterCommit = norm(rc(c3, { v: 80 }, after, committed), after);
+  out.c3at = c3.at;
+
+  /* Line 3, Ruling 1: typed at T while held, committed at T+2m, changed at T+3m. */
+  var r0 = rc(null, { v: 72 }, T('2026-10-07T09:00:00-04:00'), H).cell;
+  var r1At = T('2026-10-07T09:03:00-04:00');
+  var r1 = rc(r0, { v: 75 }, r1At, { held: false, committedAt: '2026-10-07T09:02:00-04:00' });
+  out.ruling1 = norm(r1, r1At);
+  out.ruling1Typed = r0.at;
+  /* and the window resumes from the post-commit write: a minute later is a correction of the 75. */
+  var r2At = T('2026-10-07T09:04:00-04:00');
+  out.ruling1Then = norm(rc(r1.cell, { v: 76 }, r2At, { committedAt: '2026-10-07T09:02:00-04:00' }), r2At);
+
+  /* Line 4, Ruling 2 as amended 2026-10-08: a live 88, typed at 8:58 over a two-version trail — one
+     earlier version deliberately in a key order this file would never write, so a trail rebuilt through
+     versionOf() would read differently — held at 9:00 and edited three times: at 9:01, three minutes
+     after the 88's own at, so a live column would REPLACE (the control below proves it does); at 9:02;
+     and at 9:20, which a live column would push. The first pushes the 88; the other two push nothing. */
+  var HR = { held: true, heldAt: '2026-10-07T09:00:00-04:00' };
+  var trail = [{ at: '2026-09-14T09:10:00-04:00', v: null, flag: 'missing' },
+    { v: 70, flag: 'late', note: 'n', at: '2026-09-20T15:31:40-04:00' }];
+  var live = { v: 88, at: '2026-10-07T08:58:00-04:00', was: JSON.parse(JSON.stringify(trail)) };
+  var e1 = rc(live, { v: 90 }, T('2026-10-07T09:01:00-04:00'), HR).cell;
+  var e2 = rc(e1, { v: 70, flag: 'late', note: 'n' }, T('2026-10-07T09:02:00-04:00'), HR).cell;
+  var e3 = rc(e2, { v: 92 }, T('2026-10-07T09:20:00-04:00'), HR).cell;
+  out.ruling2 = [e1, e2, e3].map(function(c){ return JSON.stringify(c.was); });
+  out.ruling2Want = JSON.stringify(trail.concat([{ v: 88, at: '2026-10-07T08:58:00-04:00' }]));
+  /* The control: the same edit on a live column replaces the 88 and pushes nothing, so the trail keeps
+     its two versions (re-read through versionOf(), which is why it is counted rather than compared). */
+  out.ruling2Live = rc(live, { v: 90 }, T('2026-10-07T09:01:00-04:00')).cell.was.length;
+  out.ruling2Trail = JSON.stringify(trail);
+  /* A blank as the first held edit pushes the same way, and the cell is kept as a blank carrying it. */
+  var bAt = T('2026-10-07T09:01:00-04:00');
+  out.ruling2Blank = norm(rc(live, { v: null }, bAt, HR), bAt);
+  /* Committed at 9:30 and changed at 9:31: the trail shows the pre-hold 88, and the committed 92 is pushed. */
+  var cAt = T('2026-10-07T09:31:00-04:00');
+  out.ruling2Commit = norm(rc(e3, { v: 95 }, cAt,
+    { held: false, heldAt: HR.heldAt, committedAt: '2026-10-07T09:30:00-04:00' }), cAt);
+  out.e3at = e3.at;
+
+  /* The hold boundary's edges, each against the 9:00 hold above and each edited at 9:00:30 — inside
+     every window. The same second counts as before; one second later is a held version; a missing at
+     counts as before; a missing heldAt means nothing was there first; a flag with no number counted,
+     and a note alone did not. */
+  var mid = T('2026-10-07T09:00:30-04:00');
+  var edge = function(old, column){ return norm(rc(old, { v: 75 }, mid, column || HR), mid); };
+  out.edges = {
+    sameSecond: edge({ v: 72, at: '2026-10-07T09:00:00-04:00' }),
+    secondAfter: edge({ v: 72, at: '2026-10-07T09:00:01-04:00' }),
+    noAt: edge({ v: 72 }),
+    noHeldAt: edge({ v: 72, at: '2026-10-07T08:58:00-04:00' }, { held: true }),
+    missing: edge({ v: null, flag: 'missing', at: '2026-10-07T08:58:00-04:00' }),
+    excused: edge({ v: null, flag: 'excused', at: '2026-10-07T08:58:00-04:00' }),
+    noteOnly: edge({ v: null, note: 'x', at: '2026-10-07T08:58:00-04:00' }),
+    /* and Ruling 1's boundary the same way: a cell stamped in the very second of the commit is pushed. */
+    commitSecond: edge({ v: 72, at: '2026-10-07T09:00:00-04:00' }, { committedAt: '2026-10-07T09:00:00-04:00' }) };
+  /* A held cell blanked with no past and nothing to push is deleted, as today; a held write that changes
+     nothing is none. Both cells were typed after the 8:59 hold. */
+  out.heldBlank = JSON.stringify(rc({ v: 72, at: '2026-10-07T09:00:00-04:00' }, { v: null },
+    T('2026-10-07T09:10:00-04:00'), H));
+  out.heldSame = JSON.stringify(rc({ v: 72, at: '2026-10-07T09:00:00-04:00' }, { v: 72 },
+    T('2026-10-07T09:10:00-04:00'), H));
+  return out; })()`);
+
+const NO_ARG = [
+  { write: true, cell: { v: 72, at: 'NOW' } },
+  { write: false },
+  { write: true, cell: { v: 88, at: 'NOW', was: [{ v: 72 }] } },
+  { write: true, cell: { v: 88, at: 'NOW', was: [{ v: 72, at: '2026-10-07T09:50:00-04:00' }] } },
+  { write: true, cell: { v: 88, at: 'NOW' } },
+  { write: true, cell: { v: 88, at: 'NOW', was: [{ v: 72, at: '2026-10-07T09:55:00-04:00' }] } },
+  { write: false },
+  { write: true, cell: { v: 72, at: '2026-10-01T08:00:00-04:00' } },
+  { write: true, cell: { v: null, at: 'NOW', was: [{ v: 72 }, { v: 88, at: '2026-10-07T09:50:00-04:00' }] } },
+  { write: true, cell: null },
+  { write: true, cell: { v: 7, flag: 'late', note: 'x', at: 'NOW', was: [{ v: null, flag: 'missing' }] } }];
+check('WO-3.52: reviseCell() with no fourth argument answers every case WO-3.33\'s rule covers exactly as '
+  + 'before — first write, blank first write, no-`at` push, push at ten minutes, replace at 4m59s, push '
+  + 'at exactly five, no-op, burst pop, cleared-with-past kept, cleared-without-past deleted, flag and '
+  + 'note pushed whole — and `undefined`, `{}` and `{ held: false }` answer identically',
+  JSON.stringify(history352.noArg) === JSON.stringify(NO_ARG) && history352.sameEveryWay === true,
+  JSON.stringify({ noArg: history352.noArg, sameEveryWay: history352.sameEveryWay }));
+check('WO-3.52: a cell first typed while held, a minute after the hold, and edited three times ten '
+  + 'minutes apart carries no `was` — where the same three edits on a live column push three versions — '
+  + 'and after the commit at 9:31 the first edit, six minutes later, pushes the committed 78 with its own `at`',
+  JSON.stringify(history352.heldThree) === '[false,false,false]' && history352.heldLast.v === 78
+    && history352.heldLast.at === true && history352.liveThree === 3
+    && JSON.stringify(history352.afterCommit) === JSON.stringify(
+      { write: true, cell: { v: 80, at: 'NOW', was: [{ v: 78, at: history352.c3at }] } }),
+  JSON.stringify({ heldThree: history352.heldThree, liveThree: history352.liveThree,
+    afterCommit: history352.afterCommit }));
+check('WO-3.52, Ruling 1: a held cell typed at 9:00, committed at 9:02 and changed at 9:03 pushes the '
+  + 'committed 72 onto `was` — the window is measured from the commit, not from when the 72 was typed — '
+  + 'and a change a minute after that is a correction of the 75 and pushes nothing more',
+  JSON.stringify(history352.ruling1) === JSON.stringify(
+    { write: true, cell: { v: 75, at: 'NOW', was: [{ v: 72, at: history352.ruling1Typed }] } })
+    && JSON.stringify(history352.ruling1Then) === JSON.stringify(
+      { write: true, cell: { v: 76, at: 'NOW', was: [{ v: 72, at: history352.ruling1Typed }] } }),
+  JSON.stringify({ ruling1: history352.ruling1, then: history352.ruling1Then }));
+check('WO-3.52, Ruling 2 as amended: a live 88 over a two-version trail, held at 9:00 and edited at '
+  + '9:01 — inside the 88\'s own window, where a live column replaces and keeps the trail as it was — '
+  + 'pushes the 88 with the old trail byte for byte beneath it, and the edits at 9:02 and 9:20 push '
+  + 'nothing more; a blank as the first held edit pushes the same way and is kept as a blank carrying it; '
+  + 'committed at 9:30 and changed at 9:31, the trail shows the pre-hold 88 and then the committed 92',
+  history352.ruling2Live === 2
+    && history352.ruling2Want.indexOf(history352.ruling2Trail.slice(0, -1)) === 0
+    && history352.ruling2.every((w) => w === history352.ruling2Want)
+    && JSON.stringify(history352.ruling2Blank) === JSON.stringify(
+      { write: true, cell: { v: null, at: 'NOW', was: JSON.parse(history352.ruling2Want) } })
+    /* After the commit the write is a live one, and a live write re-reads the trail through
+       versionOf() — WO-3.33's behaviour, unchanged — so the earlier versions come back in the order the
+       data model writes a cell's keys. The VALUES are the stored trail's; only the key order moves. */
+    && JSON.stringify(history352.ruling2Commit) === JSON.stringify({ write: true, cell: { v: 95, at: 'NOW',
+      was: [{ v: null, flag: 'missing', at: '2026-09-14T09:10:00-04:00' },
+        { v: 70, flag: 'late', note: 'n', at: '2026-09-20T15:31:40-04:00' },
+        { v: 88, at: '2026-10-07T08:58:00-04:00' }, { v: 92, at: history352.e3at }] } }),
+  JSON.stringify({ ruling2: history352.ruling2, want: history352.ruling2Want, live: history352.ruling2Live,
+    blank: history352.ruling2Blank, commit: history352.ruling2Commit }));
+const E = history352.edges;
+const heldPushed = (r, version) => JSON.stringify(r) === JSON.stringify(
+  { write: true, cell: { v: 75, at: 'NOW', was: [version] } });
+const heldReplaced = (r) => JSON.stringify(r) === JSON.stringify({ write: true, cell: { v: 75, at: 'NOW' } });
+check('WO-3.52, Ruling 2\'s boundary: against a hold at 9:00:00, a cell stamped 9:00:00 — the same '
+  + 'second — counts as before and is pushed, one stamped 9:00:01 is a held version and is not, a cell '
+  + 'with no `at` is pushed, a held column with no `heldAt` pushes nothing, a `missing` or `excused` with '
+  + 'no number is pushed, and a cell holding only a note is not; a held cell typed after the hold and '
+  + 'blanked is deleted, and a held write that changes nothing is not a write; and after a commit at '
+  + '9:00:00, a cell stamped in that same second is the committed version and is pushed',
+  heldPushed(E.sameSecond, { v: 72, at: '2026-10-07T09:00:00-04:00' })
+    && heldReplaced(E.secondAfter) && heldPushed(E.noAt, { v: 72 }) && heldReplaced(E.noHeldAt)
+    && heldPushed(E.missing, { v: null, flag: 'missing', at: '2026-10-07T08:58:00-04:00' })
+    && heldPushed(E.excused, { v: null, flag: 'excused', at: '2026-10-07T08:58:00-04:00' })
+    && heldReplaced(E.noteOnly) && heldPushed(E.commitSecond, { v: 72, at: '2026-10-07T09:00:00-04:00' })
+    && history352.heldBlank === '{"write":true,"cell":null}' && history352.heldSame === '{"write":false}',
+  JSON.stringify({ edges: E, heldBlank: history352.heldBlank, heldSame: history352.heldSame }));
+
 /* ── THE FIXTURE COMES BACK OUT, by id, the clock goes back, and the page is handed back ── */
 await evalJs(`(async function(){
   var s = window.planbook.store, c = window.planbook.classes;

@@ -1283,7 +1283,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1826 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1836 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2574,6 +2574,25 @@ assignment where they expected two (the first `--today=2026-11-10` run of this t
 before the WO-3.50 block). The run prints
 `1832 checks · 1832 passed · 0 failed · 0 skipped`, 57,962 lines, 31.6 lines per check, 852s, exit 0,
 2026-10-07 on the real clock. Mutation round in `TESTING.md` § WO-3.50.
+
+**WO-3.52 moved it from 1826 to 1835, and the executed count from 1832 to 1841 — nine sites, nine
+results, and the file count stays where it was.** Four at the foot of `verify/grade-engine.mjs`, labelled
+`WO-3.52:`, pure through the `gradeEngine` seam: a held column in a weighted class, a points class and a
+points class's uncategorized work, each asked as written and with `held` deleted, and `isHeld()`'s truth
+table. Five in `verify/score-history.mjs`, after its earlier-shape restore: one reads the restored
+document for a `held` key, and four ask `reviseCell()` directly through a dynamic `import()` of the
+module the page already loaded — the first harness checks here to reach a module that way rather than
+through `window.planbook`, because § 28 allows `reviseCell` exactly two importers in `src/` and a seam in
+`src/shell.js` would have been a third. None sits in a loop and none is a failure arm, so the gap between
+sites and results stays at −6. WO-3.33's fifteen checks are unedited. The run prints
+`1841 checks · 1841 passed · 0 failed · 0 skipped`, 58,262 lines, 31.6 lines per check, 835s, exit 0,
+2026-10-07 on the real clock. Mutation round in `TESTING.md` § WO-3.52.
+*Correction round 1, 2026-10-08, moved it from 1835 to 1836 and the executed count from 1841 to 1842:*
+the owner amended ruling 2 so that a hold is a version boundary, `verify/score-history.mjs`'s Ruling 2
+check was rewritten in place for the amended line, and one site was added beside it for the boundary's
+edges (the same second, a missing `at`, a missing `heldAt`, a flag with no number, a note alone, and
+the commit's same second). The run prints `1842 checks · 1842 passed · 0 failed · 0 skipped`, 58,319
+lines, 31.7 lines per check, 854s, exit 0, 2026-10-08 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

@@ -541,5 +541,90 @@ if (!gradeSeam) {
     JSON.stringify(modes) === JSON.stringify(['weighted', 'points', 'weighted', 'weighted', 'weighted',
       'undefined']),
     JSON.stringify(modes));
+
+  /* ── A HELD COLUMN COUNTS TOWARD NOTHING (WO-3.52) ──
+     Nothing in the app can write `held` yet (WO-3.46 owns the writer), so each fixture writes it
+     straight into a plain document and asks the engine twice: once as written, and once with every
+     `held` key deleted. Expected values are literals worked by hand, never a formula, for the reason
+     at the top of this section. The fixture: two categories at 50/50 and a scale of A 90 / B 80 / C 70
+     / F 0. Live work is 90/100 in each category for all three students. The held column `h1` is
+     100 points in the first category: Ada scored 20, Ben MISSING, Cy EXCUSED.
+       held:  everyone 90% A, first category 90%.
+       live:  Ada  first 110/200 = 55%, class (55 + 90) / 2 = 72.5% C
+              Ben  first  90/200 = 45%, class (45 + 90) / 2 = 67.5% F
+              Cy   unchanged at 90% A — an excused cell is in neither total whether its column is held
+                   or not, so it is the control rather than a mover; the held column changes nothing
+                   for him in either direction, and that is asserted rather than assumed.
+     Points mode, same work: held 180/200 = 90% A; live Ada 200/300 = 66.6̅% F, Ben 180/300 = 60% F.
+     And a points class whose held column is filed under NO category (looseAssignments()'s walk): the
+     same three figures, through the second choke point. */
+  const HELD_SCALE = [{ letter: 'A', min: 90 }, { letter: 'B', min: 80 }, { letter: 'C', min: 70 },
+    { letter: 'F', min: 0 }];
+  const heldDoc = (mode, heldCategory) => ({
+    letterScale: HELD_SCALE,
+    classes: [{ id: 'c1', gradingMode: mode, letterScale: HELD_SCALE,
+      categories: [{ id: 'k1', weight: 50 }, { id: 'k2', weight: 50 }] }],
+    assignments: [
+      { id: 'a1', classId: 'c1', termId: 't1', categoryId: 'k1', points: 100 },
+      { id: 'a2', classId: 'c1', termId: 't1', categoryId: 'k2', points: 100 },
+      { id: 'h1', classId: 'c1', termId: 't1', categoryId: heldCategory, points: 100, held: true }],
+    scores: {
+      a1: { s1: { v: 90 }, s2: { v: 90 }, s3: { v: 90 } },
+      a2: { s1: { v: 90 }, s2: { v: 90 }, s3: { v: 90 } },
+      h1: { s1: { v: 20 }, s2: { v: null, flag: 'missing' }, s3: { v: null, flag: 'excused' } } } });
+  const askHeld = async (fixtureDoc) => await evalJs(`(function(){
+    var g = window.planbook.gradeEngine;
+    /* Rounded to six places before comparing: 110/200 * 100 is 55.00000000000001 in a double, and the
+       literal it is held against is the hand-worked 55. */
+    var six = function(n){ return n === null ? null : Math.round(n * 1e6) / 1e6; };
+    var read = function(doc){
+      var cls = doc.classes[0];
+      return ['s1', 's2', 's3'].map(function(s){
+        var grade = g.classGrade(doc, cls, 't1', s);
+        return { pct: six(grade.percentage),
+          letter: g.letterFromPercentage(doc, cls, grade.percentage),
+          k1: six(g.categoryPercentage(doc, cls, 't1', 'k1', s)) };
+      });
+    };
+    var doc = ${JSON.stringify(fixtureDoc)};
+    var held = read(doc);
+    var live = JSON.parse(JSON.stringify(doc));
+    live.assignments.forEach(function(a){ delete a.held; });
+    return { held: held, live: read(live) }; })()`);
+  const heldW = await askHeld(heldDoc('weighted', 'k1'));
+  check('WO-3.52: in a weighted class a held column\'s score and MISSING move no class grade, category '
+    + 'percentage or letter — all three at 90% A with the first category at 90% — and with `held` deleted '
+    + 'the same document moves them: Ada 72.5% C with the category at 55%, Ben 67.5% F at 45%, and the '
+    + 'excused cell moves Cy in neither direction',
+    JSON.stringify(heldW.held) === JSON.stringify([
+      { pct: 90, letter: 'A', k1: 90 }, { pct: 90, letter: 'A', k1: 90 }, { pct: 90, letter: 'A', k1: 90 }])
+      && JSON.stringify(heldW.live) === JSON.stringify([
+        { pct: 72.5, letter: 'C', k1: 55 }, { pct: 67.5, letter: 'F', k1: 45 }, { pct: 90, letter: 'A', k1: 90 }]),
+    JSON.stringify(heldW));
+  const heldP = await askHeld(heldDoc('points', 'k1'));
+  check('WO-3.52: in a points class the same — held, all three at 90% A; live, Ada 66.6̅% F and Ben 60% F '
+    + 'with the first category at 55% and 45%, Cy unmoved',
+    JSON.stringify(heldP.held) === JSON.stringify([
+      { pct: 90, letter: 'A', k1: 90 }, { pct: 90, letter: 'A', k1: 90 }, { pct: 90, letter: 'A', k1: 90 }])
+      && JSON.stringify(heldP.live) === JSON.stringify([
+        { pct: 66.666667, letter: 'F', k1: 55 }, { pct: 60, letter: 'F', k1: 45 }, { pct: 90, letter: 'A', k1: 90 }]),
+    JSON.stringify(heldP));
+  const heldL = await askHeld(heldDoc('points', ''));
+  check('WO-3.52: and in a points class\'s uncategorized work — a held column filed under no category '
+    + 'counts toward nothing (all three at 90% A), and with `held` deleted it counts: Ada 66.6̅% F, Ben '
+    + '60% F, Cy unmoved, the first category at 90% throughout because the column is not in it',
+    JSON.stringify(heldL.held) === JSON.stringify([
+      { pct: 90, letter: 'A', k1: 90 }, { pct: 90, letter: 'A', k1: 90 }, { pct: 90, letter: 'A', k1: 90 }])
+      && JSON.stringify(heldL.live) === JSON.stringify([
+        { pct: 66.666667, letter: 'F', k1: 90 }, { pct: 60, letter: 'F', k1: 90 }, { pct: 90, letter: 'A', k1: 90 }]),
+    JSON.stringify(heldL));
+  const heldRead = await evalJs(`(function(){ var g = window.planbook.gradeEngine;
+    return typeof g.isHeld !== 'function' ? 'no isHeld export'
+      : [g.isHeld({ held: true }), g.isHeld({}), g.isHeld({ held: false }), g.isHeld({ held: 'true' }),
+        g.isHeld({ held: 1 }), g.isHeld(null), g.isHeld(undefined)]; })()`);
+  check('WO-3.52: isHeld() is exported by the engine, and only `held: true` holds — absent, false, a '
+    + 'string, a number and no assignment at all are live, so every assignment an earlier build wrote is live',
+    JSON.stringify(heldRead) === JSON.stringify([true, false, false, false, false, false, false]),
+    JSON.stringify(heldRead));
 }
 }

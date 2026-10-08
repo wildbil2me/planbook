@@ -137,6 +137,9 @@ import { shortDate } from './date-text.js';
 /* The rule every write to a score cell goes through (WO-3.33) — stamp `at`, keep what the cell was.
    Imported from its own leaf rather than from src/scores.js, which imports this file. */
 import { reviseCell } from './score-history.js';
+/* Whether a column is held (WO-3.52), asked of the one reader of `.held` and handed to reviseCell()
+   with the column's `heldAt` and `committedAt`. This file decides nothing with it. */
+import { isHeld } from './grade-engine.js';
 
 const DISMISS_PREF = 'pastDueDismissed';
 
@@ -534,8 +537,12 @@ export function acceptPastDue() {
            `at`, and a blank that already has a past — cleared after a revision — keeps it, with the
            blank pushed onto `was` when it is five minutes old. The cell is always written: a blank
            going to `missing` is never a no-op, so `revised.cell` is never null here. */
+        const assignment = (Array.isArray(d.assignments) ? d.assignments : [])
+          .find((a) => a && a.id === cell.work.id);
         const revised = reviseCell(old, note
-          ? { v: null, flag: 'missing', note: note } : { v: null, flag: 'missing' });
+          ? { v: null, flag: 'missing', note: note } : { v: null, flag: 'missing' }, undefined,
+          { held: isHeld(assignment), heldAt: assignment ? assignment.heldAt : undefined,
+            committedAt: assignment ? assignment.committedAt : undefined });
         if (revised.write && revised.cell) d.scores[cell.work.id][cell.student.id] = revised.cell;
       });
     });

@@ -1,0 +1,21 @@
+# WO-3.52 — correction round 1 (owner-directed, 2026-10-08)
+
+This is not a verifier FAIL. The owner amended Rulings 1 and 2 on 2026-10-08, after the first build returned. The first build is the uncommitted working tree; its report is `.claude/dispatch/WO-3.52-result.md` and the original brief is `.claude/dispatch/WO-3.52-brief.md` (its constraints and orchestrator notes still apply). The row reads 🔍 AWAITING VERDICT and stays there; do not run `--start`, `--release`, `--handoff` or `--tick`.
+
+**Start by re-reading WO-3.52 in `plans/work-orders/phase-3-gradebook.md` and diffing that file against HEAD.** The shape, both rulings, the `reviseCell()` deliverable and Acceptance lines 2 and 4 were edited by the owner; the rest of the uncommitted diff in that file is the first build's ticks. WO-3.46's shape paragraph, writer deliverable and first Acceptance line also changed to name `heldAt` — those are WO-3.46's to build, not this round's. Do not build a hold writer or any control.
+
+The instructions, verbatim from the coordinator:
+
+1. Ruling 1: the owner confirmed the first build's reading, "the commit is a version boundary", matching Acceptance line 3. The code needs nothing. Make sure the comment above reviseCell(), docs/data-model.md and TESTING.md describe it as the ruling, not as a reinterpretation awaiting the owner.
+2. Ruling 2, as amended: a hold is a version boundary too. Add the new assignment key `heldAt` (localStamp, written by the hold writer in WO-3.46; absent means "held from before any cell was typed"). reviseCell's fourth argument becomes `{ held, heldAt, committedAt }`, and both callers (src/scores.js, src/past-due.js) pass `heldAt`. On a held write where the old cell has a value and was last written at or before `heldAt` (same second counts as before; a missing `at` counts as before), push that version onto `was` first, however soon, with the existing was kept beneath it byte for byte. Then store the new version. That includes blanking, which keeps `{v:null, at, was}`. Later held writes replace and push nothing. A cell first typed while held keeps no history until commit, as before.
+3. Acceptance line 4 is unticked and rewritten. It needs a new check and a mutation proof against the first build's rule (held edits never push), done in scratch copies as before, with `git diff | grep -c MUTATION` = 0 at the end. Line 2 was narrowed to "a cell first typed while held"; check that the existing check matches it.
+4. docs/data-model.md: add `heldAt` to the assignment sketch and amend the held-column history paragraph. Under the held-columns section, state the one principle both rulings derive from, the owner's own: every score that counted toward a grade appears in the trail and versions that never counted do not, with the WO-3.33 correction window as the one deliberate exception.
+5. Update TESTING.md § WO-3.52, the tools/README.md count, and the result file's CHANGELOG draft. Leave the CACHE bump at v170 unless a SHELL file was already committed at v170 (it was not; nothing is committed).
+
+Re-run the full verify-shell.mjs, wo-sweep.mjs and wo-gate --audit. You may tick line 4 only on evidence you produced yourself, as the pipeline normally allows; the verifier grades it afterwards in a fresh session.
+
+**Orchestrator notes.**
+- "A value" for the hold boundary: decide and state in the code comment whether a cell holding only a flag (`missing`/`excused`, no number) counts as having a version to push. Ruling 2's principle — every score that counted appears in the trail — says a counted `missing` is a version that counted; if the work order text settles it, follow the text, and say in your report which reading you took and why.
+- `localStamp()` is second-granular; compare stamps the way the existing window code does, and make "same second counts as before" an explicit check.
+- Any mutation goes in a scratch copy only. Before reporting: `git diff -- src tools sw.js | grep -c MUTATION` must print 0, and scratch copies are deleted.
+- **Append** a "Correction round 1" section to `.claude/dispatch/WO-3.52-result.md` — do not rewrite the first build's report — covering what changed, the evidence for line 4, the new totals, and the revised CHANGELOG draft. Then return it in-band. Do not commit.

@@ -3589,8 +3589,9 @@ running order:
    student detail). Between this landing and that one, the home card's *N to grade* does not count
    a held column. Keep the gap short; nothing in this work order works around it.
 
-**The shape** is WO-3.52's: `held: true` while held, absent means live, and `committedAt` stamped
-by a commit. This work order writes both and reads neither directly. It asks `isHeld()`.
+**The shape** is WO-3.52's: `held: true` while held, absent means live, `heldAt` stamped by a hold
+(added 2026-10-08 for ruling 2 as amended), and `committedAt` stamped by a commit. This work order
+writes all three and reads none directly. It asks `isHeld()`.
 
 **Rulings, the owner's, 2026-10-07.** All four were confirmed as proposed at booking. Rulings 1
 (the revision window is measured from the commit) and 2 (a re-held column's trail is frozen, not
@@ -3607,7 +3608,8 @@ cleared) moved to
    source is (WO-3.48's trap).
 
 **Deliverables**
-- **One writer for each direction**, each a single `update()`: holding sets `held: true`;
+- **One writer for each direction**, each a single `update()`: holding sets `held: true` and stamps
+  `heldAt` with `localStamp()`, overwriting an earlier stamp (a column created held gets both);
   committing deletes `held` and stamps `committedAt` with `localStamp()`, overwriting an earlier
   stamp. Nothing on the cells moves in either direction.
 - **The score grid shows a held column as held**: a mark on its head, a word for a screen reader,
@@ -3623,7 +3625,7 @@ cleared) moved to
 - **`CACHE` in `sw.js` is bumped.**
 
 **Acceptance**
-- [ ] Holding a column writes `held: true` and nothing else; committing deletes it, stamps
+- [ ] Holding a column writes `held: true` and `heldAt` and nothing else; committing deletes it, stamps
       `committedAt`, and touches no cell. Each is one `update()` and `rev` moves by one.
 - [ ] Committing the column moves exactly the grades the confirm named, to the figures it named, in
       a weighted class and in a points class. Holding does the same in the other direction.
@@ -3633,6 +3635,14 @@ cleared) moved to
       column opens the same confirm as the grid's control.
 - [ ] Edits typed through the grid into a held column and then committed reach `reviseCell()` with
       the column's state, so WO-3.52's rulings 1 and 2 hold end to end, not only in the unit checks.
+- [ ] A held column is driven through **both** of `reviseCell()`'s callers, `putCell()` in
+      `src/scores.js` and `acceptPastDue()` in `src/past-due.js`, and each records no history while
+      held and the committed figure after. *(WO-3.52's verifier, 2026-10-08: those two call sites
+      were confirmed by reading only, so a misnamed field in either would pass every check. This is
+      the first work order that can hold a column through them.)*
+- [ ] A held column that is the only work in its category leaves that category empty, and its weight
+      passes to the other categories exactly as an empty category's does, checked against a hand
+      computation. *(Also WO-3.52's verifier: the engine filter implies it, and no check showed it.)*
 - [ ] `CACHE` in `sw.js` is bumped.
 - [ ] 👤 On the iPad, after a force-quit: hold a column, type scores, see the grade not move; commit,
       read the confirm's names against the grid, and see the grade move.
@@ -4053,7 +4063,7 @@ no `CACHE` bump.
 
 ## WO-3.52 — a held column counts toward nothing and keeps no history, in the engine
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-10-08 · **Size** S · **Depends on** —
 **Closes roadmap** *(no box. Owner-directed, 2026-10-07.)*
 
 **Cut out of [WO-3.46](#wo-346--a-score-column-can-be-held-out-of-the-grade-until-it-is-committed)
@@ -4067,18 +4077,37 @@ nothing in this one can, so every check here holds a column by building a fixtur
   by every earlier build is live, every backup restores, and there is no `SCHEMA_VERSION` bump.
 - `committedAt: "<localStamp>"`, written when a held column is committed and overwritten by a later
   commit. Absent on a column that was never held.
+- `heldAt: "<localStamp>"`, written when a column is held (or created held) and overwritten by a
+  later hold. It stays after a commit; it only means anything while `held` is set. **Added
+  2026-10-08 for ruling 2**, which cannot be kept without knowing which cell versions were typed
+  before the hold. A held column with no `heldAt` is read as held from before any cell was typed.
 - Nothing about a held column is stored on its cells. A cell does not know its column is held.
 
-**Rulings, the owner's, 2026-10-07**, confirmed as proposed when WO-3.46 was booked:
+**Rulings, the owner's, 2026-10-07**, confirmed as proposed when WO-3.46 was booked, **both amended
+2026-10-08 after the first build** (below each):
 1. **The revision window after a commit is measured from the commit.** `reviseCell()` treats a change
    inside `REVISION_WINDOW_MS` of the cell's `at` as a correction and pushes nothing. A held cell's
    `at` is when it was typed, not when it began to count. So: type 72 while held, commit at 9:02,
-   change it to 75 at 9:03, and the 72 would vanish from the trail of a score that counted. The window
-   starts at whichever is later, the cell's `at` or the column's `committedAt`.
+   change it to 75 at 9:03, and the 72 would vanish from the trail of a score that counted.
+   *As amended 2026-10-08, the owner: match Acceptance line 3.* **A commit is a version boundary.** A
+   cell last written at or before `committedAt` is the committed version, and the first change after
+   the commit pushes it, however soon that change comes. A write after the commit opens an ordinary
+   window from its own `at`. A cell stamped in the same second as the commit counts as before it.
+   *(The ruling read "the window starts at whichever is later, the cell's `at` or the column's
+   `committedAt`" until then. Read literally, that opens the window at 9:02 and the 9:03 change
+   replaces the 72 — the outcome the ruling exists to prevent, and the reading Acceptance line 3's
+   mutation could not be told apart from. The first build found it.)*
 2. **A live column can be held again, and its trail is frozen, not cleared.** A cell that already
-   has `was` keeps it untouched while held. Edits replace the current version and push nothing, and
-   the trail resumes on the next commit. Holding a column must never be a way to make a revised score
-   disappear.
+   has `was` keeps it untouched while held, and the trail resumes on the next commit. Holding a
+   column must never be a way to make a revised score disappear.
+   *As amended 2026-10-08, the owner: "the grade stops counting, but it is still there when the
+   column is recommitted. If the score changes while held, a record of the old score should still
+   appear."* **A hold is a version boundary too.** The score a cell held when its column was held —
+   last written at or before `heldAt` — is pushed onto `was` by the first held edit, however soon,
+   blank included. Every held edit after that replaces the current version and pushes nothing. A
+   cell first typed while held keeps no history until the commit, as before. *(The ruling said
+   edits "replace the current version and push nothing" until then, so a live 88 that had counted,
+   held and edited to 90, left no record after the commit. The first build flagged it.)*
 
 **Deliverables**
 - **`isHeld(assignment)`, exported from `src/grade-engine.js`.** It is the one place that reads
@@ -4087,30 +4116,40 @@ nothing in this one can, so every check here holds a column by building a fixtur
   `looseAssignments()` (~63), through `isHeld()`, with a comment at each saying why. Every class
   grade, category percentage, letter, points share, projection and `openWork()` row follows from
   those two, in both grading modes. **Do not filter anywhere else in the engine.**
-- **`reviseCell()` is told about the column**: a fourth argument, `{ held, committedAt }` or nothing,
-  where nothing means live and today's behaviour is unchanged to the byte. A held write stores the
-  wanted value, flag and note with a fresh `at`, keeps any existing `was` as it is, and pushes
-  nothing. A held cell blanked with no `was` is deleted, as today. Ruling 1's window lives here too.
-  Both callers pass it, built from `isHeld()` and the assignment's `committedAt`: `src/scores.js`
+- **`reviseCell()` is told about the column**: a fourth argument, `{ held, heldAt, committedAt }` or
+  nothing, where nothing means live and today's behaviour is unchanged to the byte. A held write
+  stores the wanted value, flag and note with a fresh `at`, keeps any existing `was` as it is, and
+  pushes nothing — **except ruling 2's hold boundary**, where the version from before `heldAt` is
+  pushed first. A held cell blanked with no `was` and nothing to push is deleted, as today. Ruling
+  1's boundary lives here too.
+  Both callers pass it, built from `isHeld()` and the assignment's `heldAt` and `committedAt`: `src/scores.js`
   (~474) and `src/past-due.js` (~537). **One rule, not callers deciding.**
 - **`docs/data-model.md`** documents `held` and `committedAt` in the assignment sketch, the history
   rule under the score cells, and the grade-math rule that a held column counts toward nothing.
 - **`CACHE` in `sw.js` is bumped**: `src/grade-engine.js` and `src/score-history.js` are in SHELL.
 
 **Acceptance**
-- [ ] A held column's scores, `missing` and `excused` move no class grade, category percentage or
+- [x] A held column's scores, `missing` and `excused` move no class grade, category percentage or
       letter, in a weighted class, in a points class, and in a points class's uncategorized work.
       The same document with `held` deleted moves them.
-- [ ] Editing a held cell three times leaves no `was`. After commit, the first edit more than the
-      window after `committedAt` pushes the committed version.
-- [ ] Ruling 1: a held cell typed at T, committed at T+2m and changed at T+3m pushes the committed
+- [x] A cell first typed while held and edited three times leaves no `was`. After commit, the first
+      edit more than the window after `committedAt` pushes the committed version.
+- [x] Ruling 1: a held cell typed at T, committed at T+2m and changed at T+3m pushes the committed
       value onto `was`. Mutation-proved against measuring from the cell's `at`; **the mutation is
       reverted before anything else is written** (`AGENTS.md`).
-- [ ] Ruling 2: a live column with a trail, held and then edited, keeps its trail byte for byte.
-- [ ] A document written before this build restores, and every column in it is live.
-- [ ] `reviseCell()` with no fourth argument returns what it returns today, for every case in the
+- [x] Ruling 2, as amended 2026-10-08: a live column with a trail, held and then edited three times
+      — the first edit inside the window of the cell's `at`, so a live column would replace — keeps
+      its old trail byte for byte **beneath one new entry, the score from before the hold**, and
+      pushes nothing for the second and third edits. A blank as the first held edit pushes the same
+      way. After commit, the trail shows the pre-hold score and the next change pushes the committed
+      one. Mutation-proved against the first build's rule (held edits never push); **the mutation
+      is reverted before anything else is written** (`AGENTS.md`). *(Unticked 2026-10-08: the first
+      build met the line as it read then, "keeps its trail byte for byte", which the amendment
+      replaced.)*
+- [x] A document written before this build restores, and every column in it is live.
+- [x] `reviseCell()` with no fourth argument returns what it returns today, for every case in the
       existing history checks.
-- [ ] `CACHE` in `sw.js` is bumped.
+- [x] `CACHE` in `sw.js` is bumped.
 
 **Traps** — **Do not store a held marker on the cells.** The column is the unit, and a cell-level
 flag is a second truth that a restore, a copy or the past-due sweep will one day write one of and not

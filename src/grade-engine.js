@@ -38,12 +38,35 @@ function numberOrZero(value) {
   return Number.isFinite(n) ? n : 0;
 }
 
+/*
+  A HELD COLUMN (WO-3.52) — one the teacher has asked to keep out of the grade until she commits it,
+  the way the SIS makes a grade wait. `held: true` on the assignment while it is held; ABSENT MEANS
+  LIVE, so every assignment written by every earlier build is live and no backup needs migrating.
+  Only `true` holds: a malformed `held` is not a teacher's request, and the safe reading of a value
+  nobody wrote on purpose is the one that leaves the grade as it was before this key existed.
+
+  THIS IS THE ONE PLACE THAT READS `.held`. Every screen, writer and reader that needs to know asks
+  here, so a later change to what "held" means is one edit. Nothing about a held column is stored on
+  its cells — a cell does not know its column is held — so the column is the unit and there is no
+  second truth for a restore, a copy or the past-due sweep to write one half of.
+*/
+export function isHeld(assignment) {
+  return !!assignment && typeof assignment === 'object' && assignment.held === true;
+}
+
+/* A held column counts toward nothing, and this is one of the two choke points that make it so
+   (WO-3.52): every category percentage, class grade, letter, points share, projection and openWork()
+   row is built on this walk or on looseAssignments() below. Filtering here and nowhere else in the
+   engine is the point — a second filter is a second opinion about what "held" excludes. openWork()
+   loses held columns as a side effect, which is right for a grade and is WO-3.47's to answer for the
+   queue; it is not worked around here. */
 function assignmentsFor(doc, cls, termId, categoryId) {
   const classId = cls && cls.id;
   return arrayOf(doc && doc.assignments).filter((assignment) => assignment
     && assignment.classId === classId
     && assignment.termId === termId
-    && assignment.categoryId === categoryId);
+    && assignment.categoryId === categoryId
+    && !isHeld(assignment));
 }
 
 function scoreCell(doc, assignmentId, studentId) {
@@ -59,6 +82,9 @@ function scoreCell(doc, assignmentId, studentId) {
   ids, which covers a blank one and one left behind by a deleted category alike. assignmentsFor()
   above can never return these, which is right for a weighted grade — the work carries no weight,
   so it counts toward nothing — and is why a points grade needs its own walk for them.
+
+  The second of the two choke points for a held column (WO-3.52): uncategorized work that is held
+  counts toward no points grade either, for the reason assignmentsFor() gives above.
 */
 function looseAssignments(doc, cls, termId) {
   const classId = cls && cls.id;
@@ -66,7 +92,8 @@ function looseAssignments(doc, cls, termId) {
   return arrayOf(doc && doc.assignments).filter((assignment) => assignment
     && assignment.classId === classId
     && assignment.termId === termId
-    && filed.indexOf(assignment.categoryId) === -1);
+    && filed.indexOf(assignment.categoryId) === -1
+    && !isHeld(assignment));
 }
 
 /* The cell rule, once. categoryResult() sums a category's work through it and a points grade sums

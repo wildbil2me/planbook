@@ -127,7 +127,10 @@ nag, and nothing noticed until a verifier read the line for another reason.
 
   "assignments": [{
     "id": "a_…", "classId": "c_…", "termId": "tm_…", "categoryId": "k_…",
-    "name": "", "points": 100, "assigned": "2026-09-02", "due": "2026-09-09"
+    "name": "", "points": 100, "assigned": "2026-09-02", "due": "2026-09-09",
+    "held": true,                              // only while held out of the grade; absent = live
+    "heldAt": "2026-10-07T08:40:00-04:00",     // the last hold; absent = held before any score was typed
+    "committedAt": "2026-10-07T09:02:00-04:00" // the last commit of a held column; absent if never held
   }],
 
   "scores": {
@@ -256,6 +259,28 @@ Seven shape decisions that matter:
   that has a past and student detail lists the trail, and both are **absent under presentation mode**
   (the owner, 2026-10-04). No `SCHEMA_VERSION` bump: both keys are optional, so every backup written
   by an earlier build restores unchanged.
+  **A hold and a commit are version boundaries** *(added 2026-10-07, WO-3.52; the owner's rulings 1
+  and 2, both as amended 2026-10-08 — see* Held columns *under the grade math for the principle they
+  come from)*. **The score a cell carried when its column was held** — a value or a flag, last
+  written at or before the column's `heldAt` — counted, so **the first held write pushes it onto
+  `was`**, however soon after its own `at`, with the stored `was` kept beneath it exactly as stored;
+  a blank as that first write keeps the cell as `{ v: null, at, was }`. **Every other held write
+  replaces and pushes nothing**, however long since the last one: a version typed while held counted
+  toward nothing, so a cell first typed while held keeps no history until the commit. A cell holding
+  only a note, or a blank kept for its past, counted toward nothing and pushes nothing; its trail is
+  frozen as it stands and resumes on the next commit. **After a commit, the commit is a version
+  boundary**: a cell last written at or before the column's `committedAt` is the committed version,
+  and the first change after the commit pushes it whatever its `at` says — type 72 while held, commit
+  at 9:02, change it to 75 at 9:03, and the 72 is on the trail, where measuring five minutes from when
+  it was *typed* would have dropped it. A write after the commit opens an ordinary five-minute window
+  from its own `at`. At both boundaries **the same second counts as before** (stamps are
+  second-granular, and a spare trail entry is cheaper than a lost score that counted), **a cell with
+  no `at` counts as before**, and **a held column with no `heldAt` is read as held from before any
+  score was typed**, so nothing is pushed for it. All of it is `reviseCell()`'s: the two score
+  writers tell it whether the column is held and when it was held and committed, built from
+  `isHeld()` and the assignment's own `heldAt` and `committedAt`, and decide nothing with the answer.
+  **A cell does not know its column is held** — there is no marker on the cells, so a restore, a copy
+  or the past-due sweep cannot write one half of it.
 - **Attendance stores only exceptions.** Present is the absence of a mark. A class of 25 with two
   absences is two entries, not 25 — which is also why marking attendance is fast.
 - **`U` means unconfirmed, and it is temporary.** Writing the first mark in a class also writes `U`
@@ -539,6 +564,41 @@ neither total, a zero-point assignment is still extra credit.
   cent allocation keys on, so that row draws its earned points over 0, a dash for its percentage,
   a 0% share and its cents, and the column still adds up to the Overall. In weighted mode such a
   category has neither and still draws as empty, as before.
+
+### Held columns *(WO-3.52, 2026-10-07)*
+
+**A held column counts toward nothing.** An assignment carrying `held: true` is skipped by the grade
+engine before any cell is read: its scores, its `missing` flags and its `excused` flags move no category
+percentage, class grade, letter, points share, projection or `openWork()` row, in either grading
+mode and whether or not it is filed under a category. The cell table above is unchanged; it simply
+never sees the column. The rule lives at the engine's two walks over a class's work —
+`assignmentsFor()` and `looseAssignments()` in `src/grade-engine.js` — and nowhere else, and
+`isHeld(assignment)`, exported beside them, is the one reader of the key: only `true` holds.
+
+- **Absent means live.** Every assignment written by every earlier build is live, every backup
+  restores unchanged, and there is no `SCHEMA_VERSION` bump — the rule an absent threshold key and an
+  unseeded settings block already follow.
+- **`heldAt`** is a local stamp (the `at` form, from `localStamp()`) written when a column is held or
+  created held, and overwritten by a later hold. It stays after a commit and means something only
+  while `held` is set. A held column without one is read as held from before any score was typed.
+  *(Added 2026-10-08, the owner's amendment to ruling 2, which cannot be kept without knowing which
+  versions of a cell were there before the hold.)*
+- **`committedAt`** is a local stamp written when a held column is committed, overwritten by a later
+  commit, and absent on a column that was never held. Nothing in the grade reads it, nor `heldAt`;
+  both exist for the history rule under *score cells* above.
+- **One principle, the owner's own, is what both history rulings derive from: every score that
+  counted toward a grade appears in the trail, and versions that never counted do not.** A hold is a
+  boundary because the score before it counted; edits while held replace one another because none of
+  them counted; a commit is a boundary because the committed score is about to count. **The one
+  deliberate exception is WO-3.33's five-minute correction window**: a typo fixed inside it counted
+  for a moment and is still not kept, because a trail of *8 → 88* is noise a teacher would stop
+  reading. A future rule about the trail is checked against this sentence first.
+- **`excused` is not a way to hold a column.** It is a decision about one student and is already in
+  the math; a held column is the teacher's decision about a whole piece of work.
+- **`openWork()` loses a held column** as a side effect of the walk. That is correct for a grade, and
+  the screens that list outstanding work get their own engine call when a teacher can first hold one
+  (WO-3.46, WO-3.47). Until WO-3.46 lands, nothing in the app writes `held`, `heldAt` or
+  `committedAt`.
 
 ### Extra credit
 
