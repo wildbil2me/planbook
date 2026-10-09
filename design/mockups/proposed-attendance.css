@@ -37,7 +37,7 @@
 
    Colours inline, no custom properties, no dark mode — src/shell.css's rules.
 
-     § ATTENDANCE HEADER     →  src/attendance.css   (WO-2.58 — not yet lifted)
+     § ATTENDANCE HEADER     →  src/attendance.css   (WO-2.58 — lifted 2026-10-09)
      § STUDENT ATTENDANCE    →  src/detail.css       (WO-2.60 — not yet lifted)
    ══════════════════════════════════════════════════════════════════════════════ */
 
@@ -46,10 +46,17 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § ATTENDANCE HEADER   →  src/attendance.css   (WO-2.58 — not yet lifted)
+   § ATTENDANCE HEADER   →  src/attendance.css   (WO-2.58 — lifted 2026-10-09)
 
    The rows above the grid: the totals, the strip, the search box, the clear button and the
    toolbar's end group. Drawn in attendance-header.html.
+
+   LIFTED THE SAME DAY IT WAS DRAWN, under the same names, value for value — with two
+   departures the build says at its own rules. `.search-clear` went to src/shell.css rather
+   than src/attendance.css, because both screens with a search box wear it. And
+   `.attendance-state-totals` gained `white-space: nowrap`, so the float cannot break inside
+   itself. Ruling 3's fallbacks were not needed: at 820px under a coarse pointer the
+   widest state needs 630px of a 740px strip (tools/verify/attendance-header.mjs prints it).
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* THE TOTALS, INSIDE THE STATE LINE. A <span> at the line's far end, so the line

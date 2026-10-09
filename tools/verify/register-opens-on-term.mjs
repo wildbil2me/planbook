@@ -145,7 +145,7 @@ if (!seam) {
       var pagerBtns = pager ? Array.prototype.slice.call(pager.querySelectorAll('button')) : [];
       var nav = document.getElementById('termNav');
       var tabs = nav ? Array.prototype.slice.call(nav.querySelectorAll('[data-term-select]')) : [];
-      var stateEl = document.getElementById('attendanceState');
+      var stateEl = document.getElementById('attendanceStateText');
       var view = document.getElementById('classView');
       var holds = c.termContaining(id, a.todayISO());
       return {

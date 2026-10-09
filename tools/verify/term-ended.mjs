@@ -160,9 +160,9 @@ if (!seam) {
       term: c.getSelectedTermId(),
       active: tabs.filter(function(b){ return b.classList.contains('active'); })
         .map(function(b){ return b.getAttribute('data-term-select'); }).join(','),
-      classText: (document.getElementById('attendanceTotals') || {}).textContent || '',
+      classText: (document.getElementById('attendanceStateTotals') || {}).textContent || '',
       rowText: line ? line.textContent : '',
-      stateLine: (document.getElementById('attendanceState') || {}).textContent || '',
+      stateLine: (document.getElementById('attendanceStateText') || {}).textContent || '',
       editDate: (document.getElementById('attendanceDate') || {}).textContent || '',
       registryUp: !!(view && !view.classList.contains('hidden')),
       today: today,

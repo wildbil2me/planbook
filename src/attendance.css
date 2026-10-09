@@ -8,8 +8,10 @@
    the end. No selector below names anything shell.css or home.css styles — the
    controls here that ARE shell components (`.class-action-btn`, `.pill`,
    `.search-box`, `.panel*`) are worn as-is and never restyled from here, and the
-   three places this screen needs something shell.css has no name for get names of
-   their own (`.attendance-toggle-on`, `.attendance-panel`, `.attendance-body`).
+   places this screen needs something shell.css has no name for get names of their
+   own (`.attendance-panel`, `.attendance-body`, `.attendance-find`). The third was
+   `.attendance-toggle-on`, the pressed "✓ Everyone's here", until WO-2.58 removed
+   that state; `.attendance-find` is the search box's width on this screen alone.
 
    WHERE THIS SCREEN SITS CHANGED AT WO-1.13 and none of the values below did. It
    was a dialog over the home screen and is now `#classView` in <main>, so the frame
@@ -52,7 +54,7 @@
 /* One grouped selector for this sheet's tappable classes, the way shell.css has one for the app
    and for the reason home.css states: a control only covered by another selector's rule is a
    control the next reader has to go and prove is covered. */
-.attendance-cell, .attendance-day-btn, .attendance-sort-btn, .attendance-toggle-on,
+.attendance-cell, .attendance-day-btn, .attendance-sort-toggle,
 .attendance-student-door, .attendance-pass-btn, .attendance-pass-card-btn, .attendance-keys-btn {
   touch-action: manipulation;
   user-select: none;
@@ -191,16 +193,91 @@
    Colours only — no padding, border width or type size — for the reason the header of this rule
    gives. Values inline, never variables, per CLAUDE.md § Conventions. */
 .attendance-body .attendance-state.away { background: #eef2ff; border-color: #b0bcf0; color: #3a4a8a; }
-.attendance-body .attendance-totals {
-  margin: -4px 0 10px; color: #6b7a8d; font-size: 12px; font-weight: 700; line-height: 1.4;
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § ATTENDANCE HEADER (WO-2.58) — lifted from design/mockups/proposed-attendance.css
+   the day it was drawn, 2026-10-09, with design/mockups/attendance-header.html as
+   the picture. The rows above the grid: the totals, the strip, the search box's
+   width and the toolbar's end group. `.search-clear` from the same section went to
+   src/shell.css instead, because both screens with a search box wear it.
+
+   Eight rows above the first student on an upright iPad became six, and seven
+   lying down became five. The rules are the drawing's, value for value; what the
+   build added is said at each rule.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* THE TOTALS, INSIDE THE STATE LINE. A <span> at the line's far end, so the line
+   keeps its one slot and its one height — WO-2.56's rule that nothing under it
+   moves when it changes colour. Muted, and it inherits the state's own colour at
+   reduced strength rather than carrying a palette of its own: it is a fact about
+   the term, and the line around it is the fact about today. It floats right
+   inside the <p> rather than turning the line into a flex row, which leaves
+   `.attendance-state`'s own rules untouched. It was `.attendance-totals`, a line
+   of its own under this one, until WO-2.58; the figures did not change.
+
+   `white-space: nowrap` is the build's, not the drawing's: a float that is
+   allowed to break wraps INSIDE itself when the state beside it grows, and the
+   totals would then read "Quarter 1: 28 recorded / meetings" across two lines. */
+.attendance-state-totals {
+  float: right; margin-left: 12px;
+  font-size: 12px; font-weight: 700; opacity: 0.75;
+  white-space: nowrap;
 }
 
-/* ── THE CLASS-LEVEL CONTROLS ── */
-/* "Everyone's here" and "Didn't meet", side by side and wrapping rather than squeezing — the same
-   call `.roster-actions` makes over the same kind of row. */
-.attendance-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+/* THE STRIP: the action buttons and the pager on one row. Writes on the left,
+   paging on the right, and it NEVER WRAPS — the action row grows from two
+   buttons to three on the first mark, and a row that wraps only in its wider
+   state drops the grid under the finger aimed at the second student, which is
+   the defect WO-2.56 removed. tools/verify/attendance-header.mjs measures the
+   widest state at 820px under a coarse pointer — the drawing's frame A.
 
-/* A DOOR IN THIS ROW, HELD AWAY FROM THE CONTROLS THAT WRITE. src/attendance.js's termDatesDoor()
+   The two children are the shipped `.attendance-actions` and
+   `.attendance-pager`. Their own bottom margins are what this row neutralises
+   here, and their own rules below lost them in the same pass. Neither child
+   wraps either: a strip that holds its line while the action row breaks inside
+   it is the same drop wearing a different selector. */
+.attendance-strip {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: nowrap; gap: 8px; margin-bottom: 8px;
+}
+.attendance-strip > * { margin-bottom: 0; }
+
+/* THE SEARCH BOX'S WIDTH ON THIS SCREEN. Worn beside `.search-box`, which
+   stays 360px everywhere else. Here it gives up width before the toolbar wraps:
+   down to 200px, which still holds "Search students…" and the clear button.
+   It beats src/shell.css's `(max-width: 1024px)` rule for `.search-box` on load
+   order, at equal specificity — the same posture every rule in this sheet takes
+   toward the shell's. */
+.attendance-find { flex: 1 1 200px; min-width: 200px; max-width: 360px; }
+
+/* SORT AND THE THREE DOORS, AS ONE GROUP. They wrap together or not at all,
+   so an upright iPad puts them on the toolbar's second line side by side and a
+   landscape iPad or a laptop keeps them on the first. */
+.attendance-tools {
+  display: flex; align-items: center; gap: 6px; margin-left: auto; flex-wrap: nowrap;
+}
+
+/* ONE SORT CONTROL. A `.class-action-btn` that reads its current state —
+   "Sort: Last" — and flips to First on a tap. The label and two-button pair it
+   replaces (`.attendance-sort`, `.attendance-sort-label`, `.attendance-sort-btn`,
+   whose rules went with them) was three controls' width for a setting chosen
+   once. */
+.attendance-sort-toggle b { color: #5b6fcc; font-weight: 800; }
+
+/* ── THE CLASS-LEVEL CONTROLS ── */
+/* "Everyone's here" and "Didn't meet", side by side. They wrapped rather than squeezing until
+   WO-2.58 put them on the strip, where wrapping is the defect: the row is `nowrap` now and its bottom
+   margin belongs to `.attendance-strip`. The phone block at the foot of this file lets it wrap
+   again, and says why. */
+.attendance-actions { display: flex; flex-wrap: nowrap; gap: 8px; }
+
+/* THE TERM-DATES DOOR SITS WITH THE ACTIONS, AT THE LEFT (WO-2.58, the owner's ruling 9), rather
+   than pushing to the far edge — the far edge of the strip is the pager now. The rule that held it
+   away is gone. It never fired on the off-term day anyway (the door is the row's only child there, so
+   `:not(:only-child)` held it back) and no other state draws the door, so it was a rule for a door
+   that does not exist; what it was for is kept below as the record.
+
+   (WAS:) A DOOR IN THIS ROW, HELD AWAY FROM THE CONTROLS THAT WRITE. src/attendance.js's termDatesDoor()
    carries the reasoning: the buttons to its left act on the day on screen and are aimed at with a
    class walking in, this one opens a dialog and changes nothing. `margin-left: auto` puts the row's
    spare width between them, so the separation is real on a laptop and on an iPad in landscape
@@ -220,16 +297,10 @@
    `:not(:only-child)` because a covered day draws this button and NOTHING ELSE. There is nothing to
    be held away from there, and an auto margin would have parked a lone control against the right
    edge of the panel with the sentence explaining it starting at the left. */
-.attendance-actions-door:not(:only-child) { margin-left: auto; }
 
-/* The pressed state of "Everyone's here", which shell.css has no variant for: `.primary` is a
-   call to action and this is a fact about where you already are. Interactive wash + tinted border,
-   the same answer `.toggle-btn.active` gives to the same question — but on the action button's own
-   shape, so the two controls in this row stay one row of one kind of thing.
-   `:hover:not(:disabled)` matches `.class-action-btn`'s own hover specificity exactly, so this
-   sheet wins on load order rather than by being more specific than it needs to be. */
-.attendance-toggle-on { background: #eef2ff; border-color: #b0bcf0; color: #5b6fcc; }
-.attendance-toggle-on:hover:not(:disabled) { background: #dfe6ff; border-color: #5b6fcc; color: #5b6fcc; }
+/* `.attendance-toggle-on` WAS HERE — the pressed "✓ Everyone's here" on a class taken with nothing
+   marked. WO-2.58 replaced that state's control with "Not taken yet" (the owner's ruling 4), nothing
+   else wore the class, and its two rules and its coarse rule went with it. */
 
 /* Two <p>s inside the panel body, qualified for the reason `.attendance-state` is. The note is
    what a dropped day says instead of a list of students; the hint is the standing sentence about
@@ -259,11 +330,6 @@
    `.pill` are worn exactly as they are. */
 .attendance-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
 .attendance-pills { display: flex; flex-wrap: wrap; gap: 5px; }
-.attendance-sort { display: flex; align-items: center; gap: 4px; margin-left: auto; }
-.attendance-sort-label {
-  font-size: 10px; font-weight: 700; color: #8a9bb0;
-  letter-spacing: 0.8px; text-transform: uppercase;
-}
 /* THE NAME AND THE TERM LINE UNDER IT, AND SINCE WO-2.6 THEY ARE A BUTTON — the door into that
    student's history, which is Roll Call!'s `.s-name-link` arrangement (dashboard.html: an onclick on
    the name that opens the student report) with the target grown to the whole identity block.
@@ -292,15 +358,8 @@
 .attendance-student-totals {
   color: #8a9bb0; font-size: 10px; font-weight: 600; line-height: 1.35; white-space: normal;
 }
-/* Roll Call!'s `.sort-btn`, under a name of this app's own because shell.css never lifted that
-   one — the first screen with something to sort is what instances it, and this is it. */
-.attendance-sort-btn {
-  padding: 3px 9px; border-radius: 6px;
-  border: 1.5px solid #e0e4ea; background: #fff; color: #8a9bb0;
-  font-size: 10px; font-weight: 700; cursor: pointer; transition: all 0.15s; white-space: nowrap;
-}
-.attendance-sort-btn:hover { border-color: #5b6fcc; color: #5b6fcc; }
-.attendance-sort-btn.active { background: #5b6fcc; border-color: #5b6fcc; color: #fff; }
+/* `.attendance-sort-btn` — Roll Call!'s `.sort-btn` under this app's name — was here until WO-2.58
+   made Sort one `.class-action-btn` toggle (`.attendance-sort-toggle`, in § ATTENDANCE HEADER). */
 
 /* ── THE PAGER ── */
 /* Earlier · Today · Later, immediately above the columns it moves, together at the right edge.
@@ -311,10 +370,15 @@
    GROUPED AT THE RIGHT SINCE WO-2.56, by `justify-content` rather than by a spacer. A date range sat
    between Earlier and Today until then, carrying `margin-right: auto`, which parked Earlier alone at
    the left edge and read as misaligned beside the day columns; the range repeated what every column
-   head prints, and it went with its rules. */
+   head prints, and it went with its rules.
+
+   SINCE WO-2.58 IT IS THE RIGHT HALF OF `.attendance-strip`, which owns the row's bottom margin and
+   its `nowrap`; the pager carries no margin of its own and does not wrap inside the strip, for the
+   strip's reason. `margin-left: auto` keeps it at the right edge on a day the action row is empty — a
+   locked past day, a covered day — where `space-between` would otherwise have nothing to space. */
 .attendance-pager {
-  display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px;
-  margin-bottom: 6px;
+  display: flex; align-items: center; justify-content: flex-end; flex-wrap: nowrap; gap: 8px;
+  margin-left: auto;
 }
 
 /* ── THE GRID ── */
@@ -1112,8 +1176,7 @@
      this block nothing new. */
   .attendance-banner-btn { min-height: 44px; min-width: 44px; }
   .attendance-body .attendance-state { font-size: 14px; padding: 10px 14px; }
-  .attendance-actions { gap: 10px; margin-bottom: 12px; }
-  .attendance-toggle-on { min-height: 44px; min-width: 44px; }
+  .attendance-actions { gap: 10px; }
   /* Same arrangement as `.attendance-banner-btn` above: the 44px comes from `.class-action-btn`,
      which this button also wears, and the name appears here so a reader of this block can see the
      control was considered rather than having to go and prove it is covered elsewhere. It also does
@@ -1132,8 +1195,17 @@
   .attendance-body .attendance-empty { font-size: 14px; }
   .attendance-toolbar { gap: 10px; }
   .attendance-pills { gap: 6px; }
-  .attendance-sort { gap: 6px; }
-  .attendance-sort-label { font-size: 11px; }
+  /* § ATTENDANCE HEADER's touch half (WO-2.58), lifted with it, value for value. The sort toggle
+     takes its 44px from `.class-action-btn` as the doors beside it do and is named here for the
+     reason they are, so the control was considered rather than proved covered; `flex-shrink: 0` for
+     theirs. `.attendance-find` is the box AROUND the field, not a target: the 44px is the <input>'s,
+     from src/shell.css's coarse `.search-box input` rule, and the ✕'s coarse rule is src/shell.css's
+     too, beside the box it sits in. Its 200px floor is restated so the box was considered here. */
+  .attendance-strip { gap: 10px; margin-bottom: 10px; }
+  .attendance-tools { gap: 10px; }
+  .attendance-sort-toggle { min-height: 44px; min-width: 44px; flex-shrink: 0; }
+  .attendance-find { min-width: 200px; }
+  .attendance-state-totals { font-size: 13px; }
   /* ── WO-2.5, and the touch half of a keyboard work order is not a contradiction. A Smart Keyboard
      on an iPad is a coarse pointer with letters, so this door has to be tappable on the device that
      will not have a mouse; and the roadmap line is "both, not either" precisely because building
@@ -1154,7 +1226,6 @@
   .attendance-key-row dt { flex-basis: 86px; }
   .attendance-key-row dd { font-size: 14px; }
   .attendance-key { min-width: 28px; padding: 4px 9px; font-size: 13px; }
-  .attendance-sort-btn { padding: 8px 14px; font-size: 12px; min-height: 44px; min-width: 44px; }
   .attendance-pager { gap: 10px; }
   .attendance-grid-wrap { margin-top: 2px; }
   .attendance-grid { font-variant-numeric: tabular-nums; }
@@ -1180,7 +1251,6 @@
   .attendance-student-identity { min-width: 0; }
   .attendance-student-name { overflow: hidden; text-overflow: ellipsis; }
   .attendance-student-totals { font-size: 10px; line-height: 1.35; }
-  .attendance-body .attendance-totals { font-size: 12px; }
   /* THE NAME COLUMN MAY NOT DEMAND MORE THAN THE SIX COLUMNS LEAVE. This cell is `nowrap`, so its
      min-content is the whole name laid out flat — 279px for "Delacroix-Nguyen, Xiomara" — and a
      table cell's min-content is a floor the browser will widen the TABLE to honour. Six day columns
@@ -1458,10 +1528,12 @@
    column's floor is the base `min-width: 72px`, not the 54px the coarse block asks for), and a long
    name is 279px, so the grid wanted 711px of a 680px body and clipped the WO-2.10 note panel on
    every iPad in both orientations. The arithmetic was wrong in the direction that made the cap look
-   safe, which is the kind of wrong that survives review. */
-@media (max-width: 1024px) {
-  .attendance-sort { margin-left: 0; }
-}
+   safe, which is the kind of wrong that survives review.
+
+   AND THE `(max-width: 1024px)` BLOCK THAT SAT UNDER THIS COMMENT IS GONE (WO-2.58). Its one rule was
+   `.attendance-sort { margin-left: 0 }`, and it went with the sort pair. `.attendance-tools` keeps its
+   auto margin at every width: on the second line of an upright iPad's toolbar it parks the group at
+   the right edge, which is where the drawing's frame A puts it. */
 
 /* The phone. Fewer columns than six (src/attendance.js drops them; this block only makes the row
    that is left readable), and the honest trade is the same one the marks made before: the grid is
@@ -1481,6 +1553,16 @@
      three 44px targets do not get smaller because the screen did, and a phone is where this grid
      already leans on the wrap's sideways-scroll valve. */
   .attendance-passes, .attendance-pass-td { padding-left: 4px; padding-right: 4px; }
+  /* THE STRIP WRAPS ON A PHONE, AND THAT IS A DEPARTURE FROM WO-2.58'S RULE 3 RATHER THAN A LAPSE OF
+     IT. The rule is measured at 820px under a coarse pointer, the owner's upright iPad, and holds
+     there and at every width above. At 390px the two action buttons and the three pager buttons are
+     ~500px of controls in ~350px of panel, so `nowrap` would push the page sideways — which
+     tools/verify/horizontal-overflow.mjs measures — and a page that scrolls sideways is worse than a
+     row that breaks. The pager drops to its own line here in EVERY state, two buttons or three, so
+     the line it is on does not depend on the first tap. */
+  .attendance-strip { flex-wrap: wrap; }
+  .attendance-actions { flex-wrap: wrap; }
+  .attendance-pager { flex: 1 0 100%; }
 }
 
 /* ══════════════════════════ THE PRINTED PAGE (WO-2.6) ══════════════════════════

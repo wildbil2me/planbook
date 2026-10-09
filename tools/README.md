@@ -1347,7 +1347,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1878 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1895 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2722,6 +2722,19 @@ removed before the next arm, and one page-start observer records whether the doo
 was ever on the glass at a task boundary. None sits in a loop and none is a failure arm (its guard
 is a `skip()`), so the gap between sites and results stays at −3. Mutation round in `TESTING.md`
 § WO-8.16.
+
+**WO-2.58 moved it from 1878 to 1895, and the executed count from 1881 to 1898 — seventeen sites,
+seventeen results, and the file count moves by one.** Fourteen are in a new section,
+`verify/attendance-header.mjs`, straight after `verify/strip-holds-still.mjs` in `BROWSER_SECTIONS`:
+the strip on one line at 820 and 1180 under a coarse pointer with the grid's first row held still,
+the action row in its five states, the totals inside the state line across every write and a term
+change, the toolbar's lines at both widths, the sort toggle and the three doors' names. Three are in
+`verify/score-search.mjs`, beside the two search boxes they are about: the ✕ on the registry's box,
+the ✕ on the grid's, and both at 44px under a coarse pointer. None sits in a loop and none is a
+failure arm (the section's guard is a `skip()`), so the gap between sites and results stays at −3.
+Reads in eleven existing sections moved with the ids — the day's words are `#attendanceStateText`
+and the totals `#attendanceStateTotals` — and moved no count. Full run: `1898 checks · 1898 passed · 0 failed · 0 skipped`, 60,411 lines, 31.8 lines per check, 886s, exit 0, 2026-10-09 on the real clock. Mutation round
+in `TESTING.md` § WO-2.58.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

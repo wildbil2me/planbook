@@ -202,6 +202,7 @@ const EMPTY_ID = 'scoresEmpty';
 const HINT_TERM_ID = 'scoresHintTerm';
 const TOOLBAR_ID = 'scoresToolbar';
 const SEARCH_ID = 'scoresSearch';
+const SEARCH_CLEAR_ID = 'scoresSearchClear';
 const FOUND_ID = 'scoresFound';
 const CATS_ID = 'scoresCategories';
 const NOTE_ID = 'scoresNote';
@@ -1273,7 +1274,17 @@ function paintFound(count, total) {
    software keyboard's suggestions all fire — the registry's box is wired the same way. */
 export function setScoreSearch(value) {
   searchText = searchNeedle(value);
+  paintSearchClear();
   renderScores();
+}
+
+/* THE ✕ IN THE BOX (WO-2.58), the registry's own: drawn while the field holds text — its raw value,
+   so typed spaces still offer a way to clear them — and a sibling of the field in index.html, so this
+   only toggles `hidden` on it. src/attendance.js's paintSearchClear() is the twin. */
+function paintSearchClear() {
+  const box = document.getElementById(SEARCH_ID);
+  const clear = document.getElementById(SEARCH_CLEAR_ID);
+  if (clear) clear.classList.toggle('hidden', !(box && box.value));
 }
 
 /*
@@ -1283,13 +1294,19 @@ export function setScoreSearch(value) {
   file's header), because a stray Escape two thirds of the way down a column must not cost the
   teacher anything. Clearing a search costs her nothing — every row comes back and the caret stays
   in the box she was typing in.
+
+  AND THE ✕ BESIDE THE FIELD CALLS IT TOO (WO-2.58), with `blur` — the one difference between the
+  two doors, and the owner's ruling: a tap on the ✕ takes the cursor out of the box so the iPad's
+  keyboard goes away, where Escape is a hardware key pressed mid-typing and leaves the caret put.
 */
-export function clearScoreSearch() {
+export function clearScoreSearch(blur) {
   const box = document.getElementById(SEARCH_ID);
   const had = !!searchText || !!(box && box.value);
+  if (box && blur) box.blur();
   if (!had) return false;
   if (box) box.value = '';
   searchText = '';
+  paintSearchClear();
   renderScores();
   return true;
 }
@@ -1302,6 +1319,7 @@ export function resetScoreSearch() {
   searchText = '';
   const box = document.getElementById(SEARCH_ID);
   if (box) box.value = '';
+  paintSearchClear();
 }
 
 /*

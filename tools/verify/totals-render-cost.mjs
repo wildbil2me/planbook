@@ -38,10 +38,10 @@ console.log('\n--- attendance totals render cost (WO-2.13) ---');
     var target='2026-03-31';a.editDay(target);a.setFilter('A');
     var rowSel='[data-attendance-row="'+ids[0]+'"] .attendance-student-totals';
     var beforeRow=(document.querySelector(rowSel)||{}).textContent||'';
-    var beforeClass=(document.getElementById('attendanceTotals')||{}).textContent||'';
+    var beforeClass=(document.getElementById('attendanceStateTotals')||{}).textContent||'';
     var threw='';try{a.setMark(ids[0],'P',target);}catch(e){threw=e&&e.message||String(e);}
     var afterRow=(document.querySelector(rowSel)||{}).textContent||'';
-    var afterClass=(document.getElementById('attendanceTotals')||{}).textContent||'';
+    var afterClass=(document.getElementById('attendanceStateTotals')||{}).textContent||'';
     a.setFilter('all');a.setMark(ids[0],'A',target);a.setFilter('A');
     var unconfirmThrew='';try{a.unconfirmAll(target);}catch(e){unconfirmThrew=e&&e.message||String(e);}
     var afterUnconfirmRow=(document.querySelector(rowSel)||{}).textContent||'';

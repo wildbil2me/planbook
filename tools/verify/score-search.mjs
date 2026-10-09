@@ -211,6 +211,47 @@ console.log('\n--- the score grid narrows by student (WO-3.29) ---');
     }
     await setBox('attendanceSearch', '');
 
+    /* ── WO-2.58 line 5, the registry's half: the ✕ in its search box ──
+       Absent on an empty field and present with text; a tap empties the field, shows the whole list
+       and leaves the field UNFOCUSED; Escape empties it. The tap is the element's own click() with
+       the field focused — not a CDP mouse press, because a mouse press on a button moves focus to
+       the button by itself and the "unfocused" half would pass on a build that never blurs. Safari
+       on the iPad does not focus a tapped button, which is exactly the case where the blur is the
+       only thing that puts the keyboard away. Escape is a real key at the page, typed into the box. */
+    const CLEAR = (box, x) => `(function(){
+      var b = document.getElementById(${JSON.stringify(box)}), x = document.getElementById(${JSON.stringify(x)});
+      var a = document.activeElement;
+      return { value: b ? b.value : null, xShown: !!x && !x.classList.contains('hidden')
+                 && x.getClientRects().length > 0,
+               xIsSibling: !!x && !!b && x.parentNode === b.parentNode,
+               focused: a === b, active: a ? (a.id || a.tagName) : '' }; })()`;
+    const attX = {};
+    attX.empty = await evalJs(CLEAR('attendanceSearch', 'attendanceSearchClear'));
+    await setBox('attendanceSearch', 'ma');
+    attX.typed = await evalJs(CLEAR('attendanceSearch', 'attendanceSearchClear'));
+    attX.typedRows = (await evalJs(REGISTRY)).length;
+    await evalJs("(function(){ document.getElementById('attendanceSearch').focus();"
+      + " document.getElementById('attendanceSearchClear').click(); return 1; })()");
+    await new Promise(r => setTimeout(r, 150));
+    attX.tapped = await evalJs(CLEAR('attendanceSearch', 'attendanceSearchClear'));
+    attX.tappedRows = (await evalJs(REGISTRY)).length;
+    await clickSel('#attendanceSearch');
+    for (const c of 'bell') await skChar(c);
+    attX.keyed = await evalJs(CLEAR('attendanceSearch', 'attendanceSearchClear'));
+    attX.keyedRows = (await evalJs(REGISTRY)).length;
+    await skEsc();
+    attX.escaped = await evalJs(CLEAR('attendanceSearch', 'attendanceSearchClear'));
+    attX.escapedRows = (await evalJs(REGISTRY)).length;
+    await evalJs("(function(){ var a = document.activeElement; if (a && a.blur) a.blur(); return 1; })()");
+    check('WO-2.58: the registry\'s search box draws no ✕ while empty and one beside the field once it holds text; a tap on it empties the field, brings back all six rows and leaves the field unfocused; Escape typed into the box empties it and brings them back too',
+      attX.empty.value === '' && !attX.empty.xShown && attX.empty.xIsSibling
+        && attX.typed.value === 'ma' && attX.typed.xShown && attX.typedRows === 3
+        && attX.tapped.value === '' && !attX.tapped.xShown && attX.tappedRows === 6
+        && !attX.tapped.focused
+        && attX.keyed.value === 'bell' && attX.keyed.xShown && attX.keyedRows === 1
+        && attX.escaped.value === '' && !attX.escaped.xShown && attX.escapedRows === 6,
+      JSON.stringify(attX));
+
     await clickSel('#classView [data-class-screen="scores"]');
     await new Promise(r => setTimeout(r, 300));
     const whole = await evalJs(GRID);
@@ -291,6 +332,31 @@ console.log('\n--- the score grid narrows by student (WO-3.29) ---');
         && afterEsc.active === 'scoresSearch' && afterEsc.shown && !afterEsc.emptyShown,
       JSON.stringify({ box: afterEsc.boxValue, rows: afterEsc.rows.length, active: afterEsc.active,
         found: afterEsc.found, shown: afterEsc.shown }));
+
+    /* ── WO-2.58 line 5, the score grid's half: the same ✕, the same three behaviours ──
+       Read the way the registry's was above, and for its reason: click() with the field focused, so
+       "unfocused" is the build's blur and not a side effect of a mouse press on a button. The Escape
+       above already proves the key on this box; it is asserted again here against the ✕'s state. */
+    const scX = {};
+    scX.escaped = await evalJs(CLEAR('scoresSearch', 'scoresSearchClear'));
+    for (const c of 'ma') await skChar(c);
+    scX.typed = await evalJs(CLEAR('scoresSearch', 'scoresSearchClear'));
+    scX.typedRows = (await evalJs(GRID)).rows.length;
+    await evalJs("(function(){ document.getElementById('scoresSearch').focus();"
+      + " document.getElementById('scoresSearchClear').click(); return 1; })()");
+    await new Promise(r => setTimeout(r, 150));
+    scX.tapped = await evalJs(CLEAR('scoresSearch', 'scoresSearchClear'));
+    const scAfterX = await evalJs(GRID);
+    scX.tappedRows = scAfterX.rows.length;
+    scX.found = scAfterX.found;
+    check('WO-2.58: the score grid\'s search box draws no ✕ while empty (after the Escape above) and one beside the field once it holds text; a tap on it empties the field, brings back all six rows and the count line goes, and the field is left unfocused',
+      scX.escaped.value === '' && !scX.escaped.xShown && scX.escaped.xIsSibling
+        && scX.typed.value === 'ma' && scX.typed.xShown && scX.typedRows === 3
+        && scX.tapped.value === '' && !scX.tapped.xShown && scX.tappedRows === 6
+        && scX.found === '' && !scX.tapped.focused,
+      JSON.stringify(scX));
+    /* The section goes on to type into the box from where the caret was left; put it back there. */
+    await clickSel('#scoresSearch');
 
     /* ── line 3: the edges of a narrowed column ──
        "ma" leaves Bell, Johnson, Reed. The caret starts on Bell's Essay cell; ArrowUp there is the
@@ -608,8 +674,34 @@ console.log('\n--- the score grid narrows by student (WO-3.29) ---');
     const coarse = await evalJs("matchMedia('(pointer: coarse)').matches");
     await clickSel('#classTabBar [data-class-tab="c_wo329"]');
     await new Promise(r => setTimeout(r, 250));
+    /* WO-2.58 line 5's last clause, on both screens: the ✕ is at least 44px under the coarse pointer,
+       measured with text in the box (it is not drawn without), and a real press at its centre is
+       what clears the box — so the 44px is a target the hit test actually lands on, not a box drawn
+       around a smaller one. The glyph's disc is measured beside it, because "small glyph" is the
+       other half of the ruling. */
+    const X44 = (box, x) => `(function(){
+      var b = document.getElementById(${JSON.stringify(box)}), e = document.getElementById(${JSON.stringify(x)});
+      if (!e) return null; var r = e.getBoundingClientRect(), cs = getComputedStyle(e);
+      var disc = r.width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      return { w: r.width, h: r.height, disc: disc, clip: cs.backgroundClip, value: b ? b.value : null,
+               display: cs.display }; })()`;
+    const xSizes = {};
+    await setBox('attendanceSearch', 'ma');
+    xSizes.attendance = await evalJs(X44('attendanceSearch', 'attendanceSearchClear'));
+    await clickSel('#attendanceSearchClear');
+    xSizes.attendanceAfterPress = await evalJs("document.getElementById('attendanceSearch').value");
     await clickSel('#classView [data-class-screen="scores"]');
     await new Promise(r => setTimeout(r, 300));
+    await setBox('scoresSearch', 'ma');
+    xSizes.scores = await evalJs(X44('scoresSearch', 'scoresSearchClear'));
+    await clickSel('#scoresSearchClear');
+    xSizes.scoresAfterPress = await evalJs("document.getElementById('scoresSearch').value");
+    const x44 = (m) => !!m && m.display !== 'none' && m.w >= 44 && m.h >= 44 && m.disc <= 24
+      && m.clip === 'content-box';
+    check('WO-2.58: under the coarse pointer the ✕ in both search boxes — the registry\'s and the score grid\'s — is a target of at least 44px around a disc of no more than 24, and a real press at its centre clears the box',
+      coarse === true && x44(xSizes.attendance) && x44(xSizes.scores)
+        && xSizes.attendanceAfterPress === '' && xSizes.scoresAfterPress === '',
+      'coarse = ' + coarse + ' · ' + JSON.stringify(xSizes));
     const box = await evalJs(`(function(){ var b = document.getElementById('scoresSearch');
       if (!b) return null; var r = b.getBoundingClientRect();
       return { w: r.width, h: r.height, display: getComputedStyle(b).display,

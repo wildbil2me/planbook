@@ -428,9 +428,13 @@ const CLASS_NAME_ID = 'attendanceClassName';
 const DATE_ID = 'attendanceDate';
 const BANNER_ID = 'attendanceBanner';
 const STATE_ID = 'attendanceState';
+/* The day's half of the state line (WO-2.58). The line is two spans since the totals moved into it,
+   each with one writer — see paintActions() and paintClassTotals(). */
+const STATE_TEXT_ID = 'attendanceStateText';
 const ACTIONS_ID = 'attendanceActions';
 const NOTE_ID = 'attendanceNote';
 const SEARCH_ID = 'attendanceSearch';
+const SEARCH_CLEAR_ID = 'attendanceSearchClear';
 const PILLS_ID = 'attendancePills';
 const SORT_ID = 'attendanceSort';
 const PAGER_ID = 'attendancePager';
@@ -441,7 +445,10 @@ const BODY_ID = 'attendanceBody';
 const EMPTY_ID = 'attendanceEmpty';
 const PASS_NOTE_ID = 'attendancePassNote';
 const PASS_BANNER_ID = 'attendancePassBanner';
-const TOTALS_ID = 'attendanceTotals';
+/* The totals' half of the state line (WO-2.58). It was a line of its own, #attendanceTotals, until
+   that work order moved the figures to the far end of the state line; the figures and their wording
+   did not change, only where they are drawn. */
+const TOTALS_ID = 'attendanceStateTotals';
 
 /* ────────────────────────────── the vocabulary ──────────────────────────────
    Roll Call!'s five letters and its five words. `phrase` is the same fact said in a sentence —
@@ -2880,7 +2887,43 @@ export function pageDays(direction) {
    how a search box loses focus mid-word. */
 export function setSearch(value) {
   searchText = searchNeedle(value);
+  paintSearchClear();
   renderRows();
+}
+
+/*
+  THE ✕ IN THE SEARCH BOX (WO-2.58). Drawn while the FIELD holds text — its raw value, not the
+  needle: three spaces typed are three characters a teacher can see and wants gone, even though they
+  narrow nothing. A sibling of the field in index.html, so this only toggles `hidden` on it; the field
+  itself is never replaced, for the reason setSearch() above gives.
+*/
+function paintSearchClear() {
+  const box = document.getElementById(SEARCH_ID);
+  const clear = document.getElementById(SEARCH_CLEAR_ID);
+  if (clear) clear.classList.toggle('hidden', !(box && box.value));
+}
+
+/*
+  EMPTYING THE BOX, from the ✕ or from Escape, and it answers whether it did anything so
+  src/shell.js knows whether the key was used — src/scores.js's clearScoreSearch() has the same
+  contract. Every row comes back, and the filter and sort are left where they are: the ✕ is about
+  what was typed.
+
+  `blur` IS THE ✕'s AND NOT ESCAPE'S. The owner's ruling: a tap on the ✕ takes the cursor out of the
+  box, so the iPad's keyboard goes away and the grid it was covering is back. Escape is a key pressed
+  IN the box on a hardware keyboard, where there is no software keyboard to dismiss and the teacher
+  is mid-typing — so it clears and leaves the caret where it was, as the Scores box always has.
+*/
+export function clearSearch(blur) {
+  const box = document.getElementById(SEARCH_ID);
+  const had = !!searchText || !!(box && box.value);
+  if (box && blur) box.blur();
+  if (!had) return false;
+  if (box) box.value = '';
+  searchText = '';
+  paintSearchClear();
+  renderRows();
+  return true;
 }
 
 export function setFilter(code) {
@@ -4250,6 +4293,18 @@ function paintBanner() {
   reasoning lives, and WRITTEN here, once, together with the state they are merged with. paintBanner()
   draws the band and never touches this line. `columns` defaults to visibleColumns() for the callers
   that repaint this row alone after a write; renderAttendance() hands over the ones it just drew.
+
+  AND SINCE WO-2.58 THE LINE HOLDS A SECOND THING, AND IT HAS ITS OWN WRITER — ON PURPOSE, AND
+  WITHOUT BREAKING THE RULE ABOVE. The term and year totals moved from a line of their own to the far
+  end of this one. The work order offered two shapes: this function writes the totals too, or the
+  line becomes two spans with one writer each. It is the second. This function is never handed the
+  totals — they are computed by totalsForRender() — and on the write path it runs BEFORE
+  paintRenderedTotals() recomputes them, so writing them here would put the previous mark's figures
+  on screen and need a second call to correct them: two paints of one node, decided by call order,
+  which is the very thing WO-2.56 refused. So the <p> has two child spans in index.html. This
+  function writes #attendanceStateText and the <p>'s class, title and accessible name, and nothing
+  else; paintClassTotals() writes #attendanceStateTotals and nothing else. Neither sets the <p>'s
+  textContent, which is the one write that would take the other's span with it.
 */
 function paintActions(columns = visibleColumns()) {
   const cls = openClass();
@@ -4262,16 +4317,18 @@ function paintActions(columns = visibleColumns()) {
   const open = on === editDate();
   const dateEl = document.getElementById(DATE_ID);
   const stateEl = document.getElementById(STATE_ID);
+  const stateText = document.getElementById(STATE_TEXT_ID);
   const actions = document.getElementById(ACTIONS_ID);
   const note = document.getElementById(NOTE_ID);
   if (dateEl) dateEl.textContent = spokenDate(on);
-  if (!stateEl || !actions || !note) return;
+  if (!stateEl || !stateText || !actions || !note) return;
 
   const summary = cls ? stateSummary(cls.id, on)
     : { state: NOT_TAKEN, text: 'No class is open', marked: 0, unconfirmed: 0 };
   const place = cls ? stripPlace(columns, on, summary) : null;
   const text = place ? place.text : summary.text;
-  stateEl.textContent = text;
+  /* The day's span, never the <p>: see the WO-2.58 paragraph above this function. */
+  stateText.textContent = text;
   /* The caution palette while anybody is unconfirmed, on top of the state's own — a green "Taken"
      over twelve students nobody has looked at is the silent failure WO-2.10's Traps line is about.
      A MODIFIER RATHER THAN A STATE, and it stayed one when WO-2.3 added a real fourth: `unconfirmed`
@@ -4424,7 +4481,7 @@ function paintActions(columns = visibleColumns()) {
     the controls that write on this day, which is what the rule always said it was.
 
       not taken            [Everyone’s here] · [Didn’t meet]
-      taken, nothing on it [✓ Everyone’s here — pressed] · [Didn’t meet]
+      taken, nothing on it [Not taken yet] · [Didn’t meet]
       taken, only U's      [Everyone’s here] · [Not taken yet] · [Didn’t meet]
       taken, marks + U's   [Everyone’s here] · [Un-confirm everyone] · [Didn’t meet]
       taken, marks, no U   [Un-confirm everyone] · [Didn’t meet]
@@ -4434,20 +4491,17 @@ function paintActions(columns = visibleColumns()) {
     record must survive, so the reset puts every student back to `?` instead and says how many marks
     that costs. Neither one can destroy a mark by being tapped twice: the first is not offered once
     there is a mark to lose, and the second states the cost in its own title.
+
+    THE SECOND ROW CHANGED AT WO-2.58, the owner's ruling of 2026-10-09. It was a pressed
+    "✓ Everyone’s here" beside "Un-confirm everyone": the first said what the green state line
+    already says, and the second was offered on a record with no mark on it — the opposite of what
+    unconfirmAll()'s own comment says, and the wrong undo for the realistic mistake here, a tap on
+    the wrong class, because it leaves the class MET with every student on `?`, which counts as the
+    whole roster absent. So that row now offers the un-take in words, the same control the third row
+    offers, and "Un-confirm everyone" waits for a mark. `.attendance-toggle-on`, the pressed look
+    that row wore, went with it.
   */
-  if (summary.state === TAKEN && summary.unconfirmed === 0 && summary.marked === 0) {
-    /* The same control that took the class, now pressed, now meaning "actually, I have not taken
-       this". */
-    const undo = actionButton('✓ Everyone’s here', 'data-attendance-untake', on);
-    /* Its own class rather than a variant of `.class-action-btn`: shell.css owns that name and its
-       variants, and src/shell.css's header sets the rule that two stylesheets never style one
-       class. So the pressed look is `.attendance-toggle-on`, declared in this screen's own sheet
-       and winning on load order. */
-    undo.classList.add('attendance-toggle-on');
-    undo.setAttribute('aria-pressed', 'true');
-    undo.title = 'Taken, with everyone present. Tap to take that back.';
-    actions.append(undo);
-  } else if (summary.state === NOT_TAKEN || summary.unconfirmed) {
+  if (summary.state === NOT_TAKEN || summary.unconfirmed) {
     const take = actionButton('Everyone’s here', 'data-attendance-take', on, 'primary');
     take.setAttribute('aria-pressed', 'false');
     take.title = summary.unconfirmed
@@ -4457,17 +4511,18 @@ function paintActions(columns = visibleColumns()) {
     actions.append(take);
   }
 
-  if (summary.state === TAKEN && summary.marked === 0 && summary.unconfirmed) {
+  /* `marked === 0` covers both the row of only `?`s and the row with nothing on it at all: in both
+     the record holds nothing a teacher chose, so removing it loses nothing. */
+  if (summary.state === TAKEN && summary.marked === 0) {
     const notYet = actionButton('Not taken yet', 'data-attendance-untake', on);
     notYet.title = 'Take this class back to not taken yet. Nothing is marked on it, so nothing is '
       + 'lost.';
     actions.append(notYet);
-  } else if (summary.state === TAKEN && seedIds(cls).length) {
+  } else if (summary.state === TAKEN && summary.marked > 0 && seedIds(cls).length) {
     const reset = actionButton('Un-confirm everyone', 'data-attendance-unconfirm-all', on);
-    reset.title = summary.marked
-      ? 'Put every student back to a question mark. The ' + summary.marked
-        + (summary.marked === 1 ? ' mark' : ' marks') + ' on this day will be cleared.'
-      : 'Put every student back to a question mark, ready to take again.';
+    /* Only ever drawn over a mark since WO-2.58, so the title always has a cost to state. */
+    reset.title = 'Put every student back to a question mark. The ' + summary.marked
+      + (summary.marked === 1 ? ' mark' : ' marks') + ' on this day will be cleared.';
     actions.append(reset);
   }
 
@@ -4523,8 +4578,8 @@ function termDatesDoor() {
   return door;
 }
 
-/* The pills and the sort pair, which are markup in index.html and only have their pressed state
-   set from here — the same arrangement as the search field, and for the same reason: a control the
+/* The pills and the sort toggle, which are markup in index.html and only have their state set
+   from here — the same arrangement as the search field, and for the same reason: a control the
    renderer re-creates is a control that cannot hold focus. */
 function paintToolbar() {
   const pills = document.getElementById(PILLS_ID);
@@ -4533,12 +4588,19 @@ function paintToolbar() {
     p.classList.toggle('active', on);
     p.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
+  /* THE SORT TOGGLE (WO-2.58), one button where there was a pair. It READS the order on screen —
+     "Sort: Last" — and its hook carries the order a tap CHANGES TO, so the route in src/shell.js is
+     the pair's own, unchanged: setSort(value). The label is rebuilt rather than edited, out of a
+     text node and a <b>, so no name or markup string is ever parsed here. No `aria-pressed`: this is
+     a choice between two orders, not an on and an off, and the label says which one is in force. */
   const sort = document.getElementById(SORT_ID);
-  if (sort) sort.querySelectorAll('[data-attendance-sort]').forEach((b) => {
-    const on = b.getAttribute('data-attendance-sort') === sortBy;
-    b.classList.toggle('active', on);
-    b.setAttribute('aria-pressed', on ? 'true' : 'false');
-  });
+  if (sort) {
+    const first = sortBy === 'first';
+    sort.setAttribute('data-attendance-sort', first ? 'last' : 'first');
+    sort.title = first ? 'Sorted by first name — tap for last' : 'Sorted by last name — tap for first';
+    sort.textContent = '';
+    sort.append(document.createTextNode('Sort: '), el('b', '', first ? 'First' : 'Last'));
+  }
 }
 
 /* Earlier · Today · Later. "Later" is disabled at the far end of the calendar and says why. Since
@@ -4672,6 +4734,10 @@ function totalsForRender(cls, term, students) {
     year: year, selected: selected };
 }
 
+/* The class's term and year figures, at the far end of the state line since WO-2.58 — a span inside
+   #attendanceState, and this is its only writer. It writes the span's textContent and nothing on
+   the line around it; paintActions() owns the line. The sentence is word for word what the line of
+   its own carried. */
 function paintClassTotals(totals) {
   const totalsEl = document.getElementById(TOTALS_ID);
   if (!totalsEl) return;
@@ -5117,4 +5183,5 @@ export function resetRegistry(date) {
   selectedId = '';
   const search = document.getElementById(SEARCH_ID);
   if (search) search.value = '';
+  paintSearchClear();
 }

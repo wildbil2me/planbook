@@ -76,13 +76,13 @@ console.log('\n--- recorded-meeting counts and Roll Call! percentage (WO-2.4) --
       term.start = '2026-09-01'; term.end = '2026-09-14';
       a.renderAttendance();
       datedDom = {
-        classText:(document.getElementById('attendanceTotals') || {}).textContent || '',
+        classText:(document.getElementById('attendanceStateTotals') || {}).textContent || '',
         studentText:((document.querySelector('[data-attendance-row="' + fixtureStudent
           + '"] .attendance-student-totals') || {}).textContent || '')
       };
       term.start = ''; term.end = ''; a.renderAttendance();
       undatedDom = {
-        classText:(document.getElementById('attendanceTotals') || {}).textContent || '',
+        classText:(document.getElementById('attendanceStateTotals') || {}).textContent || '',
         studentText:((document.querySelector('[data-attendance-row="' + fixtureStudent
           + '"] .attendance-student-totals') || {}).textContent || '')
       };

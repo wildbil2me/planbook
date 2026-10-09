@@ -357,7 +357,11 @@ const INSTALL_ATT_READER = `(function(){
         .map(function(b){ return (b.textContent || '').trim(); }),
       className: (document.getElementById('attendanceClassName') || {}).textContent,
       dateText: (document.getElementById('attendanceDate') || {}).textContent,
-      stateText: (document.getElementById('attendanceState') || {}).textContent,
+      /* The DAY'S half of the state line. Since WO-2.58 the line holds the term and year totals in a
+         span of their own at its far end, so the line's whole textContent is the two run together;
+         every check in this file is about the day's words, which are this span. (No backticks in
+         this comment: it is inside a template literal.) */
+      stateText: (document.getElementById('attendanceStateText') || {}).textContent,
       stateClass: (document.getElementById('attendanceState') || {}).className,
       /* The rule a question mark stands for lives on the state line's title since WO-2.56, where
          it moved from a note that pushed the grid down under the first tap. (No backticks in this
@@ -392,9 +396,16 @@ const INSTALL_ATT_READER = `(function(){
         .map(function(b){ return { code: b.getAttribute('data-attendance-filter'),
                                    active: b.classList.contains('active'),
                                    pressed: b.getAttribute('aria-pressed') }; }),
-      sorts: Array.prototype.slice.call(document.querySelectorAll('#attendanceSort button'))
-        .map(function(b){ return { which: b.getAttribute('data-attendance-sort'),
-                                   active: b.classList.contains('active') }; }),
+      /* ONE TOGGLE SINCE WO-2.58, which reads the order on screen in its own label and carries
+         the order a tap changes TO on its hook. Read as one active entry naming the order in
+         force, so the checks below that ask which sort is active read the same as they did of the
+         pair; the hook is read too, so a toggle whose label and hook agree is a defect it can see.
+         (No backticks in this comment: it is inside a template literal.) */
+      sorts: (function(){ var b = document.getElementById('attendanceSort');
+        if (!b) return [];
+        var shown = ((b.querySelector('b') || {}).textContent || '').trim().toLowerCase();
+        var next = b.getAttribute('data-attendance-sort');
+        return [{ which: shown, active: !!shown && !!next && next !== shown, next: next }]; })(),
       rowCount: rows.length,
       /* Per row: whose it is, the name as drawn, and the glyph in every column of that row read
          left to right — "P?PP-P" is a whole row's story in six characters, and it is what makes a

@@ -13,6 +13,29 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The attendance header gives back two rows to the grid — 2026-10-09
+
+WO-2.58, owner-directed, lifted from `design/mockups/attendance-header.html`. Shell cache v174 → v175.
+
+- **Eight rows above the first student become six upright, and seven become five lying down.**
+  The term and year totals sit at the far end of the state line, muted. The action buttons share
+  the pager's row directly over the grid, writes on the left and paging on the right, and that row
+  never wraps on an iPad, so the grid holds still on the first tap.
+- **Sort is one button that names the order in use** (*Sort: Last* / *Sort: First*). Keys,
+  Record and Passes show their glyphs only, and keep their names for a screen reader and on hover.
+- **Both search boxes, attendance and Scores, have a ✕** once there is text in them. It empties
+  the box, brings the whole list back and puts the iPad keyboard away. Escape also empties the box
+  and leaves the focus where it was.
+- **A class taken with everyone present offers *Not taken yet*** where it offered a pressed
+  *✓ Everyone's here*. *Un-confirm everyone* appears only once there is a mark to reset.
+- **The state line has two writers, one per span**, so a mark no longer wipes the totals. This
+  keeps WO-2.56's rule of one writer per node.
+- Ruling 3's fallbacks were not needed. The widest state uses 630px of the strip's 740px upright,
+  and the owner read the fit on the teaching iPad. On a phone (640px or narrower) the strip may wrap
+  on purpose, as noted at the CSS rule.
+- Harness: a new `tools/verify/attendance-header.mjs`, 1878 → 1898 checks, mutation-proved three
+  times. Verified by a fresh verifier after the first verifier's session crashed.
+
 ### The shared-box excuse matches a box's whole wording, not a fragment of it — 2026-10-09
 
 WO-1.68, the 🎒 booked out of WO-1.67's verdict. Tooling only; nothing in `src/` moved.

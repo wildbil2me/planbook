@@ -132,7 +132,7 @@ if (!seam) {
               .filter(function(v, i, all){ return all.indexOf(v) === i; }).join(' | '),
             label: cells.length ? (cells[0].getAttribute('aria-label') || '') : '' };
         }),
-        stateLine: state ? state.textContent : '',
+        stateLine: ((document.getElementById('attendanceStateText') || {}).textContent) || '',
         stateClass: state ? state.className : '',
         note: note && !note.classList.contains('hidden') ? note.textContent : '',
         actions: Array.prototype.slice.call(

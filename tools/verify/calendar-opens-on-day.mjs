@@ -119,7 +119,7 @@ if (!seam) {
       /* The arrival's sentence is the state line's since WO-2.56 — the band above it carries only
          the two term messages now — so the words are read where they are drawn.
          (No backticks in this comment: it is inside a template literal.) */
-      var stateEl = document.getElementById('attendanceState');
+      var stateEl = document.getElementById('attendanceStateText');
       var todayBtn = document.querySelector('#attendancePager [data-attendance-page="today"]');
       var newest = dates[0] || '';
       return {

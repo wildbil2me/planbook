@@ -6145,7 +6145,7 @@ again.
 
 ## WO-2.58 — the attendance header gives back the rows it does not need
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-10-09 · **Size** M · **Depends on** —
 **Closes roadmap** *(no box. Owner-directed, 2026-10-09.)*
 
 **Booked 2026-10-09**, owner-directed, out of a sitting with two photographs of the teaching iPad. On
@@ -6208,22 +6208,22 @@ measured, not ruled; the owner reads the result.
 - **`TESTING.md` § WO-2.58**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] At 820px under a coarse pointer, in the state with three action buttons, the strip is one line
+- [x] At 820px under a coarse pointer, in the state with three action buttons, the strip is one line
       and the grid's first row is at the same height before and after the first mark on a class.
-- [ ] At 1180px under a coarse pointer the toolbar is one line; at 820px it is two, with Sort and the
+- [x] At 1180px under a coarse pointer the toolbar is one line; at 820px it is two, with Sort and the
       three doors together on the second.
-- [ ] In the state *taken, nothing marked, nobody unconfirmed* the strip offers exactly "Not taken
+- [x] In the state *taken, nothing marked, nobody unconfirmed* the strip offers exactly "Not taken
       yet" and "Didn't meet", and "Not taken yet" leaves the day with no record. "Un-confirm
       everyone" appears only when the day carries a mark.
-- [ ] The term and year totals are inside the state line, and stay correct after a mark and after a
+- [x] The term and year totals are inside the state line, and stay correct after a mark and after a
       term change. `#attendanceTotals` does not exist.
-- [ ] On both screens the ✕ is absent on an empty field and present with text; a tap empties the
+- [x] On both screens the ✕ is absent on an empty field and present with text; a tap empties the
       field, shows the whole list and leaves the field unfocused; Escape empties it. It is ≥44px
       under a coarse pointer.
-- [ ] The sort toggle flips the order and its own label; the three doors are icons whose accessible
+- [x] The sort toggle flips the order and its own label; the three doors are icons whose accessible
       names are unchanged.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] 👤 On the iPad, after a force-quit, upright and lying down: take a class, mark one student, use
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the iPad, after a force-quit, upright and lying down: take a class, mark one student, use
       both search boxes' ✕, and read the strip's fit and whether the grid held still on the first
       tap.
 

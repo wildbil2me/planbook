@@ -89,7 +89,7 @@ input[type="date"] { -webkit-appearance: none; appearance: none; }
 button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class-action-btn,
 .install-banner-dismiss, .hdr-year-btn, .year-row, .backup-nag-btn, .loading-error-btn,
 .toggle-btn, .support-dot, .hdr-mode-btn, .hdr-sync-btn, .presentation-strip-btn,
-.update-banner-btn, .log-door, .log-quick, .log-kind {
+.update-banner-btn, .log-door, .log-quick, .log-kind, .search-clear {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -515,6 +515,22 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
    a keyboard user with no idea where they are. */
 .search-box input { border: none; font-size: 13px; width: 100%; background: transparent; color: #1a1a2e; }
 .search-box input::placeholder { color: #a0aab8; }
+/* THE CLEAR BUTTON (WO-2.58), inside `.search-box` on both screens that have one — the registry and
+   the score grid — which is why it is here and not in either screen's sheet. Lifted from
+   design/mockups/proposed-attendance.css § ATTENDANCE HEADER, value for value. Drawn only when the
+   field has text (`.hidden` is toggled by src/attendance.js and src/scores.js). A tap clears the
+   field, re-runs the filter and BLURS the field — the owner's ruling, so the iPad keyboard goes away;
+   Escape clears it from the keyboard. The glyph is small and the target is not: the coarse block
+   below grows the box to 44px around the same small disc. The field's focus ring is untouched — the
+   ✕ is a sibling of the <input>, so the global `:focus-visible` ring above still lands on the field
+   (the owner's ruling 6). */
+.search-clear {
+  flex-shrink: 0; width: 20px; height: 20px; margin: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 50%; background: #e0e4ea; color: #6b7a8d;
+  font-size: 11px; font-weight: 800; line-height: 1; cursor: pointer;
+}
+.search-clear:hover { background: #d0d8e4; color: #1a1a2e; }
 .pills { display: flex; gap: 5px; position: absolute; left: 50%; transform: translateX(-50%); }
 .pill {
   padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
@@ -2314,6 +2330,14 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
      height, which is also what makes the caret land on the first tap. */
   .search-box { min-height: 44px; padding: 0 11px; }
   .search-box input { min-height: 44px; font-size: 14px; }
+  /* The ✕'s target is the full 44px square; the 22px disc is drawn inside it by the padding and
+     `background-clip`, so the visible glyph stays small (WO-2.58, lifted from the drawing's § TOUCH).
+     The negative margin hands back part of the box's own 11px right padding, so the square does not
+     push the field narrower than it needs to. */
+  .search-clear {
+    width: 44px; height: 44px; margin-right: -8px; background-clip: content-box; padding: 11px;
+    font-size: 12px;
+  }
   .date-batch-bar { font-size: 13px; }
   .modal-body p { font-size: 14px; }
   /* `.panel-title p` rather than the `.shelf-note` that used to be here: the shelf's notes went

@@ -7534,6 +7534,149 @@ the stamp's regex. **A typed time that is not an hour and a minute is refused, n
 a time inside a spring-forward gap (02:30 on the one Sunday) would come out as 03:30 — the `Date`
 constructor's own answer, and not an hour a class meets.
 
+### WO-2.58 — the attendance header gives back the rows it does not need
+
+**What this changes for a teacher: two rows of the attendance screen come back to the grid.** On an
+upright iPad the header above the first student was eight rows — the title, the screen switcher, the
+state line, a totals line, the action buttons, the toolbar twice and the pager — and is six; lying
+down seven became five. The term and year totals sit at the far end of the state line, muted. The
+action buttons share the pager's row directly over the grid, writes on the left and paging on the
+right, and that row never wraps. Sort is one button that says which order is on (*Sort: Last*), and
+Keys, Record and Passes are their glyphs, keeping their names for a screen reader and on hover. Both
+search boxes — attendance and Scores — have a ✕ once there is text in them, which empties the box,
+brings the whole list back and puts the iPad keyboard away. And a class taken with everyone present
+offers *Not taken yet* where it offered a pressed *✓ Everyone's here*; *Un-confirm everyone* waits
+until there is a mark to reset. Lifted from `design/mockups/proposed-attendance.css` § ATTENDANCE
+HEADER under its own names; the picture is `design/mockups/attendance-header.html`.
+
+**The state line has two writers now, one per span — the Traps line, decided.** `paintActions()` was
+the line's only writer and set its `textContent`, which would wipe a totals span on every mark. The
+work order offered two shapes and the build took the second: the `<p id="attendanceState">` holds
+`<span id="attendanceStateTotals">` (written by `paintClassTotals()` alone) and
+`<span id="attendanceStateText">` (written by `paintActions()` alone), and `paintActions()` keeps the
+`<p>`'s class, title and accessible name. **The first shape was refused because of call order**:
+`paintActions()` is never handed the totals and runs *before* `paintRenderedTotals()` recomputes them
+on the write path, so writing them there would paint the previous mark's figures and need a second
+paint to correct them — two writers decided by order, which is what WO-2.56 refused. Said at
+`paintActions()`, at `paintClassTotals()` and in `index.html` above the line.
+
+**Ruling 3's fallbacks were not needed — measured, for the owner to read.** At 820px under a coarse
+pointer the strip is 740px wide. Its widest state — *Everyone's here · Un-confirm everyone · Didn't
+meet* — needs **630px** (actions 385 + gap 10 + pager 235), leaving **110px** to spare; the other
+states need 470 (not taken), 587 (only `?`s) and 502 (a mark, none left). So "Un-confirm everyone"
+keeps its words and ◀ ▶ keep theirs. Lying down at 1180 the strip is 1100px wide and the widest state
+leaves 470px.
+
+- [x] At 820px under a coarse pointer, in the state with three action buttons, the strip is one line
+      and the grid's first row is at the same height before and after the first mark on a class.
+      — `verify/attendance-header.mjs` at 820×1180 with touch emulation (`matchMedia('(pointer:
+      coarse)')` asserted true): the strip's six buttons share one top in all six states read (not
+      taken, taken with nothing, un-taken, the first tap, the first mark, everyone confirmed), its
+      `scrollWidth` never exceeds its `clientWidth`, and its height stays under two buttons'. The
+      grid's first row reads `[42,799.97,738,62.5]` in document coordinates (on the delivered full run) in every one of the six,
+      compared with `===`; the state line reads `41.59px` tall at arrival and at the first mark, the
+      totals and *12 unconfirmed · 1 absent* on one line. The same at 1180 for the first mark.
+- [x] At 1180px under a coarse pointer the toolbar is one line; at 820px it is two, with Sort and the
+      three doors together on the second.
+      — Same section. At 1180 the box (360px), the six pills and `.attendance-tools` all start above
+      the box's bottom edge. At 820 the box gives up width (289px, from its 360 cap toward its 200
+      floor) and shares the first line with the six pills, whose tops are equal; `.attendance-tools`
+      starts below both and holds exactly `#attendanceSort`, ⌨, 🖨 and 🚪, all on one top.
+- [x] In the state *taken, nothing marked, nobody unconfirmed* the strip offers exactly "Not taken
+      yet" and "Didn't meet", and "Not taken yet" leaves the day with no record. "Un-confirm
+      everyone" appears only when the day carries a mark.
+      — Same section: after *Everyone's here* the record is `classId,date,marks` with no mark and the
+      strip is exactly `["Not taken yet","Didn’t meet"]` on hooks `untake` and `drop`; *Not taken yet*
+      leaves no record for the day and the line reads *Not taken yet*. *Un-confirm everyone* is absent
+      not taken, absent taken with nothing, absent with only `?`s (12 `U`), present with a mark and
+      `?`s, present with a mark and none. `verify/attendance.mjs`'s own un-take checks read the same
+      hook and pass unchanged.
+- [x] The term and year totals are inside the state line, and stay correct after a mark and after a
+      term change. `#attendanceTotals` does not exist.
+      — Same section: `#attendanceStateTotals` is a child of `#attendanceState`, classed
+      `attendance-state-totals`, and the line's whole text is the totals followed by the day's words.
+      *Quarter 2: 2 recorded meetings · Year: 5 recorded meetings* on arrival; *3 · 6* after the take,
+      *2 · 5* after the un-take, *3 · 6* after the first tap, the first mark and the last confirm —
+      read after each of those writes, which is the Trap — and *Quarter 1: 3 recorded meetings · Year:
+      6 recorded meetings* after the term nav's Quarter 1 tab, Quarter 2's again after its own. No
+      element has the id `attendanceTotals` and none the class `.attendance-totals`. The five
+      sections that read the old line (`term-nav`, `term-ended`, `recorded-meeting-counts`,
+      `attendance-history`, `totals-render-cost`) read the span and pass with their figures unchanged.
+- [x] On both screens the ✕ is absent on an empty field and present with text; a tap empties the
+      field, shows the whole list and leaves the field unfocused; Escape empties it. It is ≥44px
+      under a coarse pointer.
+      — `verify/score-search.mjs`, against its six-student fixture, on each box: no ✕ while empty, a
+      ✕ beside the field (a sibling of the `<input>`, never a re-render) once it holds *ma* (3 rows);
+      the ✕'s own `click()` **with the field focused** empties it, all 6 rows return and focus is off
+      the field — a `click()` and not a CDP mouse press, because a press moves focus to the button by
+      itself and would pass a build that never blurs. Escape typed into the registry's box (*bell*, 1
+      row) empties it and brings 6 back, caret staying put; the Scores box's Escape is the shipped
+      WO-3.29 check, with the ✕ asserted hidden after it. Under touch emulation at 1024×768 both ✕s
+      measure 44×44 around a 22px disc (`background-clip: content-box`), and a real press at the
+      centre empties each box.
+- [x] The sort toggle flips the order and its own label; the three doors are icons whose accessible
+      names are unchanged.
+      — `verify/attendance-header.mjs`: *Sort: Last* over the class by surname (the fixture's first
+      and last names sort in opposite orders), one tap to *Sort: First* over the class by first name
+      with its hook now `last` and its title naming first name, one more and back. The three doors'
+      text is the glyph alone, each `aria-label` is the shipped string word for word (*Keyboard
+      shortcuts for marking attendance*, *Print or export this class’s attendance record*, *Every
+      hall pass recorded for this class*), and each `title` leads with its word (*Keys — …*).
+      `verify/attendance.mjs`'s sort check reads the toggle and passes.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      — `node tools/verify-shell.mjs`: `1898 checks · 1898 passed · 0 failed · 0 skipped`, 60,411 lines, 31.8 lines per check, 886s, exit 0, 2026-10-09 on the real clock, with `tools/README.md`'s call-site count moved 1878 → 1895. `node tools/wo-sweep.mjs`: **50 checks · 47 passed · 0 failed · 3 to review**, the three standing REVIEWs (sensitive field names, due dates beside late/missing, the mockup banners — which now also name `.search-clear` going to `src/shell.css`, said in the drawing's own banner). `CACHE` is `planbook-shell-v174` → `v175`.
+- [x] 👤 On the iPad, after a force-quit, upright and lying down: take a class, mark one student, use
+      both search boxes' ✕, and read the strip's fit and whether the grid held still on the first
+      tap.
+      — **Read by the owner on the teaching iPad, 2026-10-09**, against v175 served from the laptop
+      over the LAN (`tools/serve-https.mjs`), force-quit first. Every item on the verifier's checklist
+      passed: the strip one line upright and lying down in the not-taken and three-button states, the
+      grid still on the first tap, the state line with its totals on one line including the long
+      *Editing …* state after ◀ Earlier lying down, and both search boxes' ✕ emptying the box,
+      restoring the list and putting the keyboard away. So ruling 3's fallbacks stay unbuilt — the
+      strip fits in Safari's font as it did in Edge's. The slack was read as "fits", not measured in
+      pixels.
+
+**Mutation-proved three times, each reverted by copying the pre-mutation file back (`cmp`-identical)
+before anything else was written.** Trimmed runs: a scratch copy of `tools/verify-shell.mjs` running
+only `verify/localstorage-prefs.mjs` (which sets the seam) and the named sections, deleted before the
+sweep ran; nothing in the boxes above rests on it.
+
+| Tree | Result |
+|---|---|
+| Delivered `src/`, trimmed to `attendance-header` and `score-search` | `45 checks · 45 passed · 0 failed` |
+| **Mutation 1, the Trap**: `paintActions()` rebuilds the line — `stateEl.replaceChildren(stateText)` before writing the day's words — taking the totals span with it | `18 checks · 15 passed · 3 failed`: all three totals checks red (`inside: false`, `totals: null` on arrival, after every write and after both term taps) |
+| **Mutation 2, ruling 4 undone**: `paintActions()`'s two branches put back as v174 had them | `18 checks · 14 passed · 4 failed`: line 3 (the strip offered *Un-confirm everyone · Didn't meet* on an empty record, and *Not taken yet* was never drawn), the five-state check, the totals-after-writes check (the un-take never happened) and the strip check (its three-button state never arose). An earlier draft of the section threw at the missing button instead of reporting; it presses actions only when drawn now |
+| **Mutation 3**: `clearSearch()` without its `blur()` | `31 checks · 30 passed · 1 failed`: the registry's ✕ check, `"tapped": {"focused": true}` |
+| Delivered tree, full run | `1898 checks · 1898 passed · 0 failed · 0 skipped`, 886s, exit 0 (an earlier full run, before the strip's coarse margin went back to the drawing's 10px and the section learned to report a missing button, was the same 1898 of 1898 in 888s) |
+
+**Decisions the work order left open, taken and written down at the point of departure.**
+**The ids `#attendanceActions` and `#attendancePager` stay, on the strip's two children**, so each
+keeps its one writer and every harness selector that names them kept working; the strip is a wrapper
+with no writer (`index.html`). **The sort toggle's hook carries the order a tap changes to**, so the
+shell's existing `data-attendance-sort` route is its whole wiring; no `aria-pressed`, because it is a
+choice of two orders rather than an on and off. **The ✕ appears on the field's raw value**, so typed
+spaces that narrow nothing can still be cleared. **Escape clears and does not blur**: the blur is the
+✕'s, for the software keyboard, and Escape is a hardware key pressed mid-typing — the Scores box's
+WO-3.29 behaviour, now the registry's too (Escape in it did nothing before, because the shell's INPUT
+guard returned first; the route is a new branch in `src/shell.js`'s keydown beside the Scores box's).
+**The doors' titles lead with their word** (*Keys — mark this class from the keyboard; press ? for
+the list*), which keeps the word on hover without losing the sentence that was there. **The strip
+wraps on a phone** (`≤640px`), the pager on its own line in every state — a departure from ruling 3
+written at the rule: at 390px five buttons are ~500px in ~350, and `nowrap` would scroll the page
+sideways, which `verify/horizontal-overflow.mjs` measures; the ruling is measured at 820 and holds at
+every width above 640. **`.attendance-state-totals` gained `white-space: nowrap`** beyond the drawing,
+so the float cannot break inside itself. **The pager carries `margin-left: auto`**, so a day whose
+action row is empty (a locked or covered day) still has the pager at the right. **Rules for classes
+nothing wears any more went with them**: `.attendance-toggle-on`, `.attendance-totals`,
+`.attendance-sort`, `.attendance-sort-label`, `.attendance-sort-btn` and the
+`.attendance-actions-door:not(:only-child)` margin (ruling 9 — it never fired on the one state that
+draws the door), each with a note where it stood. **`src/scores.css` still names
+`.attendance-sort-label` in two comments** as the source of a type value; those are provenance and
+were left, outside this work order's files. **The aria-label on the state line** still names the
+day's words and the count-as-absent rule but not the totals, in the one state that sets it (WO-2.56's
+shape, unchanged).
+
 ---
 
 ## Phase 3 — Gradebook

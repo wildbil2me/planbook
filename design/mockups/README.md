@@ -862,7 +862,10 @@ whose Rulings carry every answer.
 ## What the drawings propose
 
 Styled in [`proposed-attendance.css`](proposed-attendance.css): § ATTENDANCE HEADER bound for
-`src/attendance.css` and § STUDENT ATTENDANCE bound for `src/detail.css`, both *not yet lifted*.
+`src/attendance.css` and § STUDENT ATTENDANCE bound for `src/detail.css`. **§ ATTENDANCE HEADER
+landed 2026-10-09 with WO-2.58**, under the drawn names — `.search-clear` in `src/shell.css` rather
+than `src/attendance.css`, because both search boxes wear it — and § STUDENT ATTENDANCE is *not yet
+lifted*.
 `mockup.css` gained `.mk-device`, a frame at a device's own CSS width, so a toolbar that wraps in
 the drawing wraps on the device. **The iPad frames show 44px controls only when the page is opened on
 a touch device**, so read them on the iPad.
@@ -919,6 +922,8 @@ All seven are the owner's, 2026-10-09.
 
 1. **The strip's fit at 820px.** If "Un-confirm everyone" plus the pager does not fit under a coarse
    pointer, the fallbacks are "Un-confirm all", then ◀ and ▶ without words, in that order.
+   **Measured at the build (WO-2.58): it fits, so neither fallback was taken** — the widest state
+   needs 630px of a 740px strip under a coarse pointer at 820. The owner reads it on the iPad.
 2. **The Record's tabs**: `.screen-nav`'s look (drawn), and which tab opens first (drawn: By student).
 3. **Keys at 640px** — the drawing's guess.
 4. **The today card's door**: drawn as "Attendance history and grades →".

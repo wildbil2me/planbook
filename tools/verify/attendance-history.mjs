@@ -158,7 +158,7 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
       return {
         up: !document.getElementById('classView').classList.contains('hidden'),
         rows: rows.map(function(r){ return r.getAttribute('data-attendance-row'); }),
-        totals: (document.getElementById('attendanceTotals') || {}).textContent || '',
+        totals: (document.getElementById('attendanceStateTotals') || {}).textContent || '',
         rowLine: (function(){
           var r = document.querySelector('[data-attendance-row="wo26-s1"] .attendance-student-totals');
           return r ? r.textContent : ''; })(),

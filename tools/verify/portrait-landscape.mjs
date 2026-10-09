@@ -206,7 +206,7 @@ console.log('\n--- portrait shows today, landscape shows the week (WO-2.12) ---'
       await clickSel('#attendanceHead [data-attendance-edit="' + past + '"]');
       await new Promise(r => setTimeout(r, 250));
       const unlocked = await evalJs(`(function(){
-        var s = document.getElementById('attendanceState');
+        var s = document.getElementById('attendanceStateText');
         return { banner: !!s && (s.textContent || '').indexOf('Editing ') === 0,
                  editing: !!document.querySelector('#attendanceHead th[data-attendance-col="'
                    + ${JSON.stringify(past)} + '"] [data-attendance-lock]') }; })()`);
@@ -214,7 +214,7 @@ console.log('\n--- portrait shows today, landscape shows the week (WO-2.12) ---'
         { width: 834, height: 1112, deviceScaleFactor: 2, mobile: true });
       await new Promise(r => setTimeout(r, 500));
       const turned = await evalJs(`(function(){
-        var s = document.getElementById('attendanceState');
+        var s = document.getElementById('attendanceStateText');
         var cell = document.querySelector(${JSON.stringify(CELL_SEL)});
         return { banner: !!s && (s.textContent || '').indexOf('Editing ') === 0,
                  cols: document.querySelectorAll('#attendanceHead th[data-attendance-col]').length,

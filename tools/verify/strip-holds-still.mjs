@@ -163,7 +163,7 @@ if (!seam) {
           disabled: { earlier: !!(btn('earlier') || {}).disabled, today: !!(btn('today') || {}).disabled,
                       later: !!(btn('later') || {}).disabled },
           stateRect: box(state), bandRect: shown(band) ? box(band) : null,
-          stateText: state ? state.textContent : '',
+          stateText: (document.getElementById('attendanceStateText') || {}).textContent || '',
           stateClass: state ? state.className : '',
           stateTitle: state ? (state.getAttribute('title') || '') : '',
           stateLabel: state ? (state.getAttribute('aria-label') || '') : '',
@@ -178,6 +178,10 @@ if (!seam) {
             return k.tagName + ':' + (k.getAttribute('data-attendance-page') || k.className || ''); }) : [],
           rangeSpans: document.querySelectorAll('.attendance-pager-range').length,
           pagerBox: box(pager),
+          /* The row the pager is the right half of since WO-2.58 (.attendance-strip). The pager's
+             own box is only as wide as its three buttons there, so "Earlier is not in the left half"
+             is asked of the row it shares with the action buttons. */
+          stripBox: box(pager ? pager.closest('.attendance-strip') : null),
           pagerPadRight: pagerStyle ? parseFloat(pagerStyle.paddingRight) || 0 : 0,
           newest: heads.length ? heads[0].getAttribute('data-attendance-col') : '',
           cols: heads.length,
@@ -288,7 +292,8 @@ if (!seam) {
         shapeFaults.push(name + ' gaps ' + gap1 + ' / ' + gap2);
       }
       if (Math.abs(rightGap) >= 1) shapeFaults.push(name + ' Later ▶ ends ' + rightGap + 'px short of the pager’s right edge');
-      if (e[0] < p[0] + p[2] / 2) shapeFaults.push(name + ' ◀ Earlier starts in the left half, at ' + e[0]);
+      const row = r.stripBox || p;
+      if (e[0] < row[0] + row[2] / 2) shapeFaults.push(name + ' ◀ Earlier starts in the left half of the strip, at ' + e[0]);
     });
     check('the pager is ◀ Earlier · Today · Later ▶, in that order, grouped at the right edge with one '
       + 'gap between them, and no date range — at all three sizes, portrait’s disabled pair keeping its place',

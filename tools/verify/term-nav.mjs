@@ -174,7 +174,7 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
     return {
       terms: btns.map(function(b){ return { id: b.getAttribute('data-term-select'),
         label: b.textContent, active: b.classList.contains('active') }; }),
-      classText: (document.getElementById('attendanceTotals') || {}).textContent || '',
+      classText: (document.getElementById('attendanceStateTotals') || {}).textContent || '',
       rowText: line ? line.textContent : '',
       sentinel: !!(row && row.getAttribute('data-wo217-sentinel')),
       summary: (document.getElementById('assignmentsSummary') || {}).textContent || '',
@@ -230,7 +230,7 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
     /* THE OTHER SCREEN THE NAV SITS ON, which is WO-3.3's line and must not regress — and the same
        tap must leave the registry it is not on alone. */
     await clickSel('#classView [data-class-screen="assignments"]');
-    await evalJs(`(function(){ var t = document.getElementById('attendanceTotals');
+    await evalJs(`(function(){ var t = document.getElementById('attendanceStateTotals');
       if (t) t.textContent = ${JSON.stringify(SENTINEL)}; return 1; })()`);
     await clickSel('#termNav [data-term-select="' + TERM_A + '"]');
     const onList = await evalJs(READ);
@@ -249,7 +249,7 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
        landed at all. A blanket repaint passes every check above this one and fails this. */
     await clickSel('#assignmentsView [data-view-home]');
     await evalJs(`(function(){
-      var t = document.getElementById('attendanceTotals');
+      var t = document.getElementById('attendanceStateTotals');
       var s = document.getElementById('assignmentsSummary');
       if (t) t.textContent = ${JSON.stringify(SENTINEL)};
       if (s) s.textContent = ${JSON.stringify(SENTINEL)};
@@ -286,7 +286,7 @@ console.log('\n--- the term nav repaints the screen it is sitting on (WO-2.17) -
           active: btns.filter(function(b){ return b.classList.contains('active'); })
             .map(function(b){ return b.getAttribute('data-term-select'); }).join(','),
           offered: btns.map(function(b){ return b.getAttribute('data-term-select'); }).join(','),
-          totals: (document.getElementById('attendanceTotals') || {}).textContent || '' };
+          totals: (document.getElementById('attendanceStateTotals') || {}).textContent || '' };
       };
       var live = document.getElementById('srLive');
       if (live) live.textContent = ${JSON.stringify(SR_SENTINEL)};

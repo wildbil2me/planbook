@@ -276,6 +276,8 @@
       data-scores-search              on an <input>: narrows the score grid's rows as it is typed,
                                       by the registry's own rule (WO-3.29); Escape in it empties
                                       it. Remembered nowhere, and emptied on every arrival
+      data-scores-search-clear        the ✕ beside it (WO-2.58): empties it, shows every row and
+                                      blurs the field. Drawn only while the field holds text
       data-scores-category="<catId>"  the score grid's category pills (WO-3.28): only that
                                       category's assignment columns are built, with its average
                                       as a third frozen column; an empty value is All. Remembered
@@ -503,8 +505,13 @@
       data-attendance-filter="all|P|T|A|E|D"      shows only students with that mark on the day
                                       being edited. There is no pill for `U` — it is not a code a
                                       teacher marks, and the count is on the column head instead
-      data-attendance-sort="first|last"           sorts the rows by that name
-      data-attendance-search          on an <input>: narrows the rows as it is typed
+      data-attendance-sort="first|last"           sorts the rows by that name. Since WO-2.58 it is
+                                      ONE toggle whose value is the order a tap changes to, rewritten
+                                      by paintToolbar() after every sort
+      data-attendance-search          on an <input>: narrows the rows as it is typed; Escape in it
+                                      empties it (WO-2.58)
+      data-attendance-search-clear    the ✕ beside it (WO-2.58): empties it, shows every row and
+                                      blurs the field. Drawn only while the field holds text
       data-pass-issue="<studentId>" + data-pass-type="bathroom|nurse|quick": sends that student out
                                       of the room and records the time. Three at once per class,
                                       after which these are disabled and the reason is above the grid
@@ -3053,6 +3060,9 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-score-note-done]')) { scores.closeScoreNote(); return; }
   if (e.target.closest('[data-score-note-remove]')) { scores.removeScoreNote(); return; }
   if (e.target.closest('[data-scores-keys]')) { scores.toggleScoreKeys(); return; }
+  /* The ✕ in the score grid's search box (WO-2.58). Writes nothing and chains nothing, like the box
+     it empties; `true` is the blur, which is the ✕'s and not Escape's — src/scores.js says why. */
+  if (e.target.closest('[data-scores-search-clear]')) { scores.clearScoreSearch(true); return; }
   /* WO-3.46's Hold / Commit on a column head, and the confirm both it and the editor's box open. The
      control opens the confirm and writes nothing; Hold it / Commit it writes, and is the one hook in
      this block that chains a repaint, because a column that stops counting moves every grade beside
@@ -3386,6 +3396,9 @@ document.addEventListener('click', (e) => {
   if (attFilter) { attendance.setFilter(attFilter.getAttribute('data-attendance-filter')); return; }
   const attSort = e.target.closest('[data-attendance-sort]');
   if (attSort) { attendance.setSort(attSort.getAttribute('data-attendance-sort')); return; }
+  /* The ✕ in the registry's search box (WO-2.58): empties it, shows every row, and blurs the field so
+     the iPad keyboard goes away. Writes nothing and chains nothing, like the box itself. */
+  if (e.target.closest('[data-attendance-search-clear]')) { attendance.clearSearch(true); return; }
 
   /* ── hall passes (WO-2.8, WO-2.11) ──
      Three taps, and NONE OF THEM CHAINS afterAttendanceChange(). That omission is the acceptance
@@ -3815,6 +3828,15 @@ document.addEventListener('keydown', (e) => {
   const scoreSearch = e.target.closest ? e.target.closest('[data-scores-search]') : null;
   if (scoreSearch) {
     if (e.key === 'Escape' && scores.clearScoreSearch()) e.preventDefault();
+    return;
+  }
+  /* AND THE REGISTRY'S SEARCH BOX, THE SAME WAY (WO-2.58). Until then Escape in it did nothing: the
+     guards below return on any INPUT, so it never reached the selection's own Escape either. It is
+     scoped by its element for the reason the branch above is, and every other key is the box's own
+     — returning here is exactly what the INPUT guard below would have done with it. */
+  const attSearchKey = e.target.closest ? e.target.closest('[data-attendance-search]') : null;
+  if (attSearchKey) {
+    if (e.key === 'Escape' && attendance.clearSearch()) e.preventDefault();
     return;
   }
 
