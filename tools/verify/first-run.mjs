@@ -332,7 +332,9 @@ async function goFresh(wipe) {
     await pause(250);
     await send('Storage.clearDataForOrigin', { origin: FRESH, storageTypes: 'all' });
   }
-  await send('Page.navigate', { url: FRESH + '/index.html' });
+  /* `?door=skip`: a fresh device is exactly the front door's condition (WO-8.16), and this section
+     is about the home screen's doors behind it. verify/front-door.mjs drives the front door itself. */
+  await send('Page.navigate', { url: FRESH + '/index.html?door=skip' });
   await pause(800);
   const up = await waitForBoot();
   try { await evalJs(KILL_ANIM); await evalJs(INSTALL_WALKER); } catch (e) { /* the check reports it */ }

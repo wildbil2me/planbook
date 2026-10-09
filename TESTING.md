@@ -17361,6 +17361,103 @@ match what Safari and Edge actually draw this month. Both are line 5.*
 
 ---
 
+### WO-8.16 — a first-time visitor meets the front page, not an empty gradebook
+
+**What changed.** A new module and sheet, `src/front-door.js` and `src/front-door.css`, both added to
+`SHELL` with `CACHE` bumped to v174; `#frontDoor` in `index.html` (the door's own chrome only, hidden
+in the markup); one read-only export in `src/store.js`, `yearDatabaseListed()`, which calls
+`indexedDB.databases()` and never opens anything; `src/shell.js` asks the door at the head of the
+`DOMContentLoaded` boot, before `store.boot()`, and answers `data-front-door-enter` in its click
+listener; and `about.html` gained nine invisible `data-front-door` markers naming the pieces the door
+lifts. **The words are fetched from `about.html` at the moment the door is drawn**, not retyped and
+not lifted into the shell — `about.html` carries no script by construction, so it could not load a
+shell copy, and without one a second copy is what the third Deliverable forbids. The worker is
+untouched apart from the two `SHELL` entries and the bump. Harness: one new section,
+`tools/verify/front-door.mjs` (eighteen checks); `load()` and `verify/first-run.mjs`'s fresh device now
+navigate with `?door=skip`.
+
+*Evidence for the Acceptance list in `plans/work-orders/phase-8-packaging.md` § WO-8.16.*
+
+- [x] A cold, non-installed visit with no stored year shows the front door; an installed launch, and
+      a browser visit to a device that already holds a year, both open the app with no flash of it.
+      **Evidence:** `verify/front-door.mjs`, on a wiped second origin with no flag: the cold visit
+      settles on the door — `"variants":["laptop"]`, header and main not laid out, the loading screen
+      down, `"seen":{"doorSeen":true,"appSeen":false,"appBeforeDoor":false}` from a page-start
+      MutationObserver that records the state at every task boundary. The same device reloaded once
+      it holds a year: `settled = app`, `doorSeen: false`. With the preference removed and the
+      database kept: `databases = ["planbook"]`, `doorSeen: false`. With `databases()` standing in as
+      empty and the preference present: `doorSeen: false` — the preference is asked first. An
+      installed launch (iOS's `navigator.standalone` standing in) on a cold device and on a device
+      holding a year: `doorSeen: false` both times. *What the harness cannot see is a paint*: "no
+      flash" is read as the DOM at task boundaries, and the boot runs under the loading screen that
+      covers the app from the first paint, so the door can only appear before that screen comes
+      down. The real launches are line 5.
+- [x] The door is never the only way forward: *use it in this browser* is present on every device.
+      **Evidence:** the laptop door's one visible enter control reads `"Use it in this browser"`,
+      `primary: true`; Firefox's (user-agent stand-in) the same; the iPad's (user-agent stand-in)
+      `"Use it in Safari for now"`, `primary: false`, as drawn. All three are `data-front-door-enter`
+      and measure 44px under a coarse pointer (`{"w":149,"h":44}` on the laptop door, beside the two
+      `.block-link` rows at `h: 44`). The tap lands on the home screen with
+      `#homeFirstRun [data-backup-panel]` drawn — `"restore":true` — which is trap 4 checked rather
+      than assumed.
+- [x] An offline launch of the installed app is unchanged — `/` is still answered from Cache Storage.
+      **Evidence:** `sw.js`'s fetch handler is unchanged (diff: `CACHE` and two `SHELL` rows), and the
+      section asserts it names no door, no about page and no preference. Driven: on the second origin
+      once the worker controls it, an installed launch to `/index.html?wo816=<unique>` with
+      `navigator.standalone` standing in — `requests for the document = 0, for the door or about.html
+      = [], out of 0 request(s)`, app booted, no door. `verify/policy-url.mjs`'s existing check that
+      the app's navigation is answered from Cache Storage stays green. Network emulation was not
+      used: the reading is what the static server was asked for, which is the same evidence WO-8.12's
+      check rests on.
+- [x] Detecting "no school year stored" writes nothing: no IndexedDB database is created by the probe
+      and no `localStorage` key is set until the teacher chooses.
+      **Evidence:** with the door up — `databases = [], localStorage keys = [], a document open =
+      false`. After the tap, and only then: `"databases":["planbook"]`,
+      `"keys":["planbook_openYear","planbook_openView"]`. Statically, `yearDatabaseListed()` calls
+      `indexedDB.databases()` and no `open()`/`connect()`, `src/front-door.js` calls no `.open(`, no
+      `setPref` and no store function but that one, and `src/shell.js` asks the door before
+      `await store.boot()`.
+- [x] 👤 On the iPad, in Safari and then installed, and on the laptop in Edge, the owner walks in
+      cold and meets the right screen each time. **Read by the owner 2026-10-09 against the
+      uncommitted tree served by `serve-https.mjs` (v174), reported "everything looks good"** — the
+      verifier's four-item checklist: the iPad Safari door (prompt, no hang on the probe at
+      `src/front-door.js:159`), *Use it in Safari for now* landing on home with *Restore* and no door
+      on reload, the installed cold launch with no door, and the laptop Edge door. The two wording
+      points the implementer raised — step 1's *Open Planbook.* and a Mac's Safari getting the laptop
+      door — were put to the owner in the same report and accepted as they stand.
+      *The dispatch-time note, kept:* **Not run — no iPad here.** A user-agent string is
+      not Safari: the iPad door's wording, the safe-area padding on the band, whether iPadOS 17's
+      `indexedDB.databases()` behaves as Chromium's does, and the installed launch are all this line.
+      To walk in cold the iPad needs this origin's storage gone (Settings → Safari → Advanced →
+      Website Data, or a home-screen delete for the installed copy — which wipes its storage).
+
+**Both tools.** `node tools/verify-shell.mjs` on the delivered tree: **`1881 checks · 1881 passed ·
+0 failed · 0 skipped`, 59,925 lines, 31.9 lines per check, 877s, exit 0**, 2026-10-09, real clock —
+1863 plus the eighteen new. `node tools/wo-sweep.mjs`: `50 checks · 46 passed · 0 failed · 4 to
+review` — the four standing REVIEWs, one of them listing the new sheet's six non-control classes
+(`.front-door-band`, `-band-inner`, `-main`, `-caution`, `-actions`, `-note`): none is a touch target;
+the controls on the door are `.class-action-btn` (floored in `src/shell.css`) and
+`.front-door-body .block-link` (floored in the sheet's own coarse block). § 11 reads 1878 call sites
+against `tools/README.md`.
+
+**The mutation round — four breaks, each run on a scratchpad copy of the harness filtered to
+`localstorage-prefs` and `front-door`, each marked `MUTATION` and reverted before the next.**
+- **M1** — `yearDatabaseListed()` opens `planbook` before listing: red on the static probe check,
+  the cold door, the nothing-written reading, the words, the 44px, and both browser doors (7 red).
+- **M2** — `standAtDoor()` draws on `null` as well as `false`: red on "doubt draws no door" alone.
+- **M3** — `mightBeAStranger()` skips the preference: red on "the preference is asked first" alone —
+  the only check that can see the ordering, since the database half answers the same on every other
+  arm.
+- **M4** — `sw.js`'s navigate branch fetched from the network: red on the Acceptance 3 check,
+  `requests for the document = 1 … ["/index.html"]`; restored from a scratchpad copy.
+- And the first draft of the probe check itself went red on the unmutated tree (it read
+  `'./store.js'` in an import as a store call) — fixed to match calls only, and given a positive
+  clause so an empty match cannot pass.
+`grep -rn MUTATION` over `src/`, `sw.js`, `index.html`, `about.html` and the two harness files reads
+nothing but `src/shell.js`'s long-standing prose line *"A CLASS MUTATION ADDED LATER"*.
+
+---
+
 ### WO-8.17 — an open app only looks for an update when it loads a page
 
 `src/shell.js` now calls `registration.update()` when the page comes back to `visible`, at most once

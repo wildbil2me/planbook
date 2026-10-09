@@ -727,6 +727,35 @@ export async function untouchedYear() {
   }
 }
 
+/*
+  HAS THIS BROWSER EVER STORED A YEAR AT ALL — the async half of the front door's question
+  (WO-8.16, the owner's ruling 3), asked BEFORE boot() and never after it. src/front-door.js asks
+  the `openYear` preference first and comes here only when that is absent.
+
+  IT NEVER OPENS THE DATABASE, AND THAT IS THE WHOLE OF ITS SHAPE. indexedDB.open() on a fresh
+  origin CREATES what it was asked to open, so a probe that opened to find out would leave an empty
+  `planbook` behind and answer its own question wrong on the next launch — and boot() goes further,
+  saving a rev-1 year (WO-8.16 trap 2). indexedDB.databases() lists names and creates nothing. It
+  lives here rather than in the door's module so that this file stays the only one that knows
+  DB_NAME, which the header of this file says is the point.
+
+  THREE ANSWERS, AND ONLY ONE OF THEM DRAWS A DOOR. `true` — the database is there; `false` — this
+  browser lists its databases and `planbook` is not among them; `null` — it cannot say, because
+  databases() is missing (an older engine) or threw. The caller draws a door on `false` alone:
+  doubt opens the app, because this is a front door and not a gate. It is not untouchedYear() and
+  must not become it — "no year stored" is the ruling, not "nothing in the year" (ruling 1).
+*/
+export async function yearDatabaseListed() {
+  try {
+    if (typeof indexedDB === 'undefined' || !indexedDB || typeof indexedDB.databases !== 'function') return null;
+    const list = await indexedDB.databases();
+    if (!Array.isArray(list)) return null;
+    return list.some((d) => !!d && d.name === DB_NAME);
+  } catch (e) {
+    return null;
+  }
+}
+
 /* ────────────────────────────── restore ────────────────────────────── */
 
 /* The stored record for a year, exactly as it sits on disk — NOT migrated, NOT opened, and not

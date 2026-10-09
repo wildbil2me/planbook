@@ -160,6 +160,7 @@ import { run as driveSignIn } from './verify/drive-sign-in.mjs';
 import { run as driveSync } from './verify/drive-sync.mjs';
 import { run as syncButton } from './verify/sync-button.mjs';
 import { run as firstRun } from './verify/first-run.mjs';
+import { run as frontDoor } from './verify/front-door.mjs';
 import { run as logEntries } from './verify/log-entries.mjs';
 import { run as mergeFields } from './verify/merge-fields.mjs';
 import { run as templates } from './verify/templates.mjs';
@@ -447,6 +448,12 @@ const BROWSER_SECTIONS = [
      IndexedDB — so the run's fixture is never touched, wipes that origin between arms, and hands
      the page back at 127.0.0.1 through load(), asserting the fixture unchanged. */
   { file: 'verify/first-run.mjs', run: firstRun },
+  /* AND THE FRONT DOOR IN FRONT OF THOSE DOORS (WO-8.16), directly after them for their reason: it is
+     the one section that navigates WITHOUT `?door=skip`, on the same second origin first-run.mjs
+     uses, wiped between arms. It installs a page-start observer and per-arm stand-ins, takes all of
+     them back out, wipes the origin and hands the page back at 127.0.0.1 through load(), asserting
+     the fixture unchanged. */
+  { file: 'verify/front-door.mjs', run: frontDoor },
   { file: 'verify/log-entries.mjs', run: logEntries },
   { file: 'verify/merge-fields.mjs', run: mergeFields },
   /* AFTER THE RESOLVER AND BEFORE THE RESTORE (WO-5.2). It drives the screen over
@@ -1073,8 +1080,15 @@ const SHIFT_PAGE_CLOCK = `(function(){
 })();`;
 if (SHIFT_MS) await send('Page.addScriptToEvaluateOnNewDocument', { source: SHIFT_PAGE_CLOCK });
 
+/* `?door=skip` (WO-8.16). Every run is a cold visitor — a fresh profile, not installed, no year — so
+   without it the very first navigation lands on the front door, not the app, and every section after
+   it with it. The flag is read only on a loopback host (src/front-door.js's skipAllowedOn()), so the
+   deployed app cannot be told to skip it, and it is a flag rather than a seeded `planbook_openYear`
+   because a seeded preference passes today and silently stops passing the day the probe order
+   changes (the work order's trap 5). `Page.reload` keeps the query, which is how every section's own
+   reload keeps it too. verify/front-door.mjs is the one section that navigates WITHOUT it. */
 async function load() {
-  await send('Page.navigate', { url: 'http://127.0.0.1:' + PORT + '/index.html' });
+  await send('Page.navigate', { url: 'http://127.0.0.1:' + PORT + '/index.html?door=skip' });
   await new Promise(r => setTimeout(r, 800));
   await waitForBoot();
   await evalJs(KILL_ANIM);

@@ -735,6 +735,9 @@
       data-first-run-open             the confirm's "Open it": pulls that year onto this device,
                                       with its own docId and a sync bookmark at the remote's rev
       data-first-run-cancel           the confirm's Cancel; writes nothing
+      data-front-door-enter           the front door's way in (WO-8.16) — "Use it in this browser",
+                                      on every variant of the door. Lets the boot that is waiting
+                                      behind the door go; writes nothing itself
 
     Delegation also means markup rendered later needs no re-binding, which is what makes it
     the right default for a screen whose rows come from the year document. The year rows are
@@ -973,6 +976,11 @@ import * as syncButton from './sync-button.js';
    paint; what lives here is the chain a pull ends in, afterPull(), because a pull replaces the whole
    document and every screen is this file's to repaint. */
 import * as firstRun from './first-run.js';
+/* The front door (WO-8.16). Asked once, at the head of boot and BEFORE store.boot(), whether this
+   visitor is a stranger — not installed, no year stored — and if so it stands in front of the app
+   until the way in is tapped. Its probe never opens IndexedDB, which is the reason it runs here and
+   not after the store: boot() creates the database and saves a year. */
+import * as frontDoor from './front-door.js';
 
 /* WO-5.2, and it is TWO modules for the reason `signals` and `signalsView` are two: `templates` is
    the model — what a record is, which templates exist for a tone and an audience, and the eight the
@@ -2367,6 +2375,10 @@ document.addEventListener('click', (e) => {
     if (overlay) dismissModal(overlay);
     return;
   }
+
+  /* The front door's way in (WO-8.16). Nothing else on the page is live while it is up — the app
+     behind it has not booted — so it is answered first among the page's own hooks. */
+  if (e.target.closest('[data-front-door-enter]')) { frontDoor.enter(); return; }
 
   if (e.target.closest('[data-install-dismiss]')) { dismissInstallBanner(); return; }
 
@@ -4263,6 +4275,16 @@ document.addEventListener('drop', (e) => {
    two lies. The copy behind #loadingError says what to do about it — and since WO-1.5 it also
    carries the way out, because a screen with no exit is not a recovery path either. */
 document.addEventListener('DOMContentLoaded', async () => {
+  /* THE FRONT DOOR, FIRST, AND BEFORE ANYTHING OPENS THE STORE (WO-8.16). A visitor who is not
+     installed and has no year stored meets the front page here instead of an empty gradebook, and
+     boot waits behind it until she taps the way in. For everyone else this is one synchronous test
+     — the `openYear` preference, read through src/prefs.js — and the boot below starts with no
+     await in front of it (the owner's ruling 3). Before store.boot() because boot() is what
+     creates the database and saves a year: asking anything of the store but its read-only list of
+     database names would answer "no year stored" wrong for every launch after (trap 2). The
+     loading screen is still up throughout, which is what keeps an installed launch, and a browser
+     that already holds a year, from ever drawing a frame of the door (trap 6). */
+  if (frontDoor.mightBeAStranger()) await frontDoor.standAtDoor();
   refreshInstallBanner();
   /* Before the store, and deliberately outside the try: presentation mode is a fact about this
      browser rather than about the year document, it is read from localStorage, and it has to be
@@ -4701,6 +4723,10 @@ window.planbook = {
      tools/verify-shell.mjs drives the round trip, the refusals and the confirm through it. The
      real file paths stay owed to a human on an iPad. */
   backup,
+  /* `frontDoor` joined at WO-8.16, for the reading reason `firstRun` gives: the door is driven by its
+     real control, and what no page can show is the answer for a host it is not served from — the
+     loopback-only skip flag asked about the deployed origin — or for a browser it is not. */
+  frontDoor,
   /* `classes` joined at WO-1.6, and unlike the others it is NOT here because the feature is
      unreachable — every control it owns is on the page and a teacher can touch all of them. It is
      here so tools/verify-shell.mjs can READ the answers: which class and which term are open, what

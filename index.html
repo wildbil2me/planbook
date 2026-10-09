@@ -183,6 +183,10 @@
        from design/mockups/proposed-phase6.css § GLANCE, rows that nothing wears yet included —
        the sheet says why at its own head. -->
   <link rel="stylesheet" href="src/glance.css">
+  <!-- The front door's own sheet (WO-8.16): what a first-time visitor who is not installed and has
+       no school year stored meets instead of the app. Lifted from design/mockups/proposed-phase8.css
+       § FRONT DOOR; it styles nothing but `front-door-` names and the about.html words it lifts. -->
+  <link rel="stylesheet" href="src/front-door.css">
 </head>
 <body>
 
@@ -227,6 +231,92 @@
     <button class="loading-error-btn" data-backup-panel aria-haspopup="dialog">
       Restore from a backup file
     </button>
+  </div>
+</div>
+
+<!-- THE FRONT DOOR (WO-8.16). Shown INSTEAD of the header and main below — never inside them — to a
+     visitor who is not running installed and has no school year stored in this browser, and to
+     nobody else. HIDDEN IN THE MARKUP: src/front-door.js is the only thing that ever un-hides it, and
+     it decides before the store is opened, under the loading screen above, so an installed launch
+     and a browser that already holds a year never see a frame of it.
+
+     WHAT IS HERE IS THE DOOR'S OWN CHROME AND NOTHING ELSE. Every sentence about what Planbook is,
+     where the data goes and how to install it is about.html's, fetched and dropped into the
+     `data-front-door-slot` placeholders below by name, so the two pages cannot say different
+     things (the work order's third Deliverable). The headings, subtitles, buttons and notes are the
+     words design/mockups/front-door.html drew that about.html has no place for.
+
+     THREE PANELS, ONE DRAWN. iOS: install steps first, the caution beside them, and the way past
+     last and NOT primary, because the next step happens in Safari's own toolbar. A browser that
+     cannot install (Firefox on a desktop): its own words. Everything else, a Chromebook with
+     installing switched off included, since nothing can tell one apart: the laptop door, where the
+     way in is the primary. The other two panels are removed when one is drawn.
+
+     `data-front-door-enter` is on every panel and is the door's ONE control: it boots the app onto
+     the home screen, where Restore already is — so a teacher who cleared this device to restore a
+     backup onto it meets the door once and is one tap from Restore (trap 4). -->
+<div class="front-door hidden" id="frontDoor">
+  <div class="front-door-band">
+    <div class="front-door-band-inner">
+      <h1>Planbook</h1>
+      <div data-front-door-slot="lede"></div>
+    </div>
+  </div>
+  <div class="front-door-main">
+    <section class="panel hidden" data-front-door-for="ios" aria-labelledby="frontDoorIosHeading">
+      <div class="panel-header">
+        <div class="panel-title-row">
+          <div class="panel-title">
+            <h2 id="frontDoorIosHeading">Install it on this <span data-front-door-noun>iPad</span></h2>
+            <p>About a minute, and nothing to download from an app store.</p>
+          </div>
+        </div>
+      </div>
+      <div class="front-door-body">
+        <div data-front-door-slot="steps-ios"></div>
+        <div data-front-door-slot="caution"></div>
+        <div class="front-door-actions">
+          <button class="class-action-btn" type="button" data-front-door-enter>Use it in <span data-front-door-browser>this browser</span> for now</button>
+        </div>
+        <p class="front-door-note">You can install it later from the banner inside the app.</p>
+      </div>
+    </section>
+    <section class="panel hidden" data-front-door-for="laptop" aria-labelledby="frontDoorLaptopHeading">
+      <div class="panel-header">
+        <div class="panel-title-row">
+          <div class="panel-title">
+            <h2 id="frontDoorLaptopHeading">Use it here, or install it</h2>
+            <p>Both keep everything on this computer.</p>
+          </div>
+        </div>
+      </div>
+      <div class="front-door-body">
+        <div data-front-door-slot="install"></div>
+        <div data-front-door-slot="steps-laptop"></div>
+        <div class="front-door-actions">
+          <button class="class-action-btn primary" type="button" data-front-door-enter>Use it in this browser</button>
+        </div>
+        <div data-front-door-slot="backup"></div>
+      </div>
+    </section>
+    <section class="panel hidden" data-front-door-for="cannot" aria-labelledby="frontDoorCannotHeading">
+      <div class="panel-header">
+        <div class="panel-title-row">
+          <div class="panel-title">
+            <h2 id="frontDoorCannotHeading">Planbook works in this browser</h2>
+            <p>Everything stays on this computer.</p>
+          </div>
+        </div>
+      </div>
+      <div class="front-door-body">
+        <div data-front-door-slot="cannot-install"></div>
+        <div class="front-door-actions">
+          <button class="class-action-btn primary" type="button" data-front-door-enter>Use it in this browser</button>
+        </div>
+        <div data-front-door-slot="backup"></div>
+      </div>
+    </section>
+    <div data-front-door-slot="panels"></div>
   </div>
 </div>
 

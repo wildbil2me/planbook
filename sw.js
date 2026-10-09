@@ -35,7 +35,7 @@
    below reads this cache and no other, and every older copy under SHELL_PREFIX is deleted — in
    `activate`, and again on each launch (clearOldShells) — which is what makes a deploy replace
    the shell rather than layer on top of it. */
-const CACHE = 'planbook-shell-v173';
+const CACHE = 'planbook-shell-v174';
 
 /* Every cache this worker has ever made is SHELL_PREFIX plus a version. Nothing outside the prefix
    is ever deleted: another cache at this origin is not ours to judge, and IndexedDB, where the
@@ -81,6 +81,9 @@ const SHELL = [
      screen every launch draws — so an offline launch without it is a home screen unstyled from
      the grid down. */
   './src/glance.css',
+  /* WO-8.16. The front door, worn only by a visitor who is not installed and has no year stored.
+     Precached anyway: it is linked from index.html, and rule 2 above is about exactly that. */
+  './src/front-door.css',
   './src/shell.js',
   './src/home.js',
   /* WO-6.7. Imported by src/home.js and by src/shell.js and reached no other way, which is exactly
@@ -100,6 +103,9 @@ const SHELL = [
   './src/save-indicator.js',
   './src/prefs.js',
   './src/install-banner.js',
+  /* WO-8.16. Imported by src/shell.js and reached no other way; asked on every launch before the
+     store opens, so an installed launch offline needs it as much as the store itself. */
+  './src/front-door.js',
   './src/store.js',
   './src/year-picker.js',
   './src/backup.js',

@@ -13,6 +13,27 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A first-time visitor meets the front page, not an empty gradebook — 2026-10-09
+
+WO-8.16. Someone who types the domain into a browser that has never held a school year now sees
+what Planbook is and how to install it, rather than an app with nothing in it.
+
+- **The door is shown only to a browser visit with no stored year.** An installed launch, and any
+  device that already holds a year, opens straight into the app. When in doubt, no door is shown.
+- **The check writes nothing.** It lists the device's databases with `indexedDB.databases()` before
+  `store.boot()` runs, and never opens one, because opening creates it. Nothing is stored until the
+  visitor taps.
+- **The words come from `about.html`, never retyped.** The door lifts the sections marked
+  `data-front-door`. If one is missing, the door is not drawn at all.
+- **Three versions: iPad, laptop and Firefox.** Each has its own install steps and a way past the
+  door (*Use it in this browser*, or *Use it in Safari for now* on the iPad) that lands on home
+  with *Restore a backup file* in view, so a teacher restoring onto a cleared device is not held up.
+- **The service worker still does not choose.** `/` is answered from the cache as before, so an
+  offline launch is unchanged. `sw.js` CACHE v173 → v174, with `src/front-door.js` and
+  `src/front-door.css` added to `SHELL`.
+- Harness: `tools/verify/front-door.mjs`, 18 new checks, 1881/1881 green. The owner walked the iPad
+  in Safari and installed, and the laptop in Edge, cold, on 2026-10-09.
+
 ### A work order cannot close without a TESTING.md section — 2026-10-09
 
 WO-1.66, the owner's ruling of the same day. Tooling and pipeline documents only; nothing in `src/`

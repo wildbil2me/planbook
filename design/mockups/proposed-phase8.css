@@ -34,6 +34,7 @@
    WHERE IT SPLITS ON LIFT:
 
      § PRINT HEADER   →  src/shell.css   (WO-8.4 — lifted 2026-09-21)
+     § FRONT DOOR     →  src/front-door.css   (WO-8.16 — lifted 2026-10-09)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -84,7 +85,18 @@
 .print-header-running b { color: #000; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § FRONT DOOR   →  src/front-door.css   (WO-8.16)
+   § FRONT DOOR   →  src/front-door.css   (WO-8.16 — lifted 2026-10-09)
+
+   LIFTED WHOLE, NAMES AND VALUES UNCHANGED: every class below is in src/front-door.css. The
+   question this banner left open is answered FETCHED, not "the shell carries them" — about.html
+   carries no script, so it could not load a copy from the shell, and a second copy is what the
+   work order forbids. So this section and about.html's <style> block stay two stylesheets.
+   What the lift added that this file could not draw: the rule that takes the app's header, main
+   and banner strips off the glass while the door is up, `.front-door-caution strong`, and
+   about.html's own values for the words the drawing shortened away — its in-sentence links, its
+   `.quiet` line, its <code> and its two `.block-link` rows, which take the 44px touch pass —
+   scoped under `.front-door-body`. Where this drawing and WO-8.16's Rulings disagree (Open line
+   2's "proposed: yes, once"), the Rulings are what shipped.
 
    Drawn 2026-10-01, before a line of the door exists. The screen `/` shows a
    visitor who is not running installed and has no school year stored; anybody

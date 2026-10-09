@@ -1325,7 +1325,7 @@ removing it is a change to `hostAllowsSignIn()` and to the policy, not to this p
 
 ## WO-8.16 — a first-time visitor meets the front page, not an empty gradebook
 
-**Ship** 4 · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-8.15 — the words it shows ·
+**Ship** 4 · **Status** ✅ DONE — 2026-10-09 · **Size** M · **Depends on** WO-8.15 — the words it shows ·
 **Blocks** WO-8.6 — onboarding's path starts at *install*, and this is the step before it
 **Closes roadmap** *(no box. It is the front half of Phase 8's "Onboarding: install → marking
 attendance with no documentation", and WO-8.6 closes that one.)*
@@ -1391,14 +1391,14 @@ the pre-dispatch read found that `store.boot()` changes the answer to two of its
 6. **The harness passes the door with a loopback-only URL flag**, ruled under trap 5.
 
 **Acceptance**
-- [ ] A cold, non-installed visit with no stored year shows the front door; an installed launch, and
+- [x] A cold, non-installed visit with no stored year shows the front door; an installed launch, and
       a browser visit to a device that already holds a year, both open the app with no flash of it.
-- [ ] The door is never the only way forward: *use it in this browser* is present on every device.
-- [ ] An offline launch of the installed app is unchanged — `/` is still answered from Cache Storage.
-- [ ] Detecting "no school year stored" writes nothing: no IndexedDB database is created by the probe
+- [x] The door is never the only way forward: *use it in this browser* is present on every device.
+- [x] An offline launch of the installed app is unchanged — `/` is still answered from Cache Storage.
+- [x] Detecting "no school year stored" writes nothing: no IndexedDB database is created by the probe
       and no `localStorage` key is set until the teacher chooses.
-- [ ] 👤 On the iPad, in Safari and then installed, and on the laptop in Edge, the owner walks in
-      cold and meets the right screen each time.
+- [x] 👤 On the iPad, in Safari and then installed, and on the laptop in Edge, the owner walks in
+      cold and meets the right screen each time. *(The owner, 2026-10-09 — `TESTING.md` § WO-8.16.)*
 
 **Traps** — **1. The decision is made in the app, never in the worker.** The navigate branch answers
 `/` from the cache so an installed app opens offline; teaching the worker to choose between two

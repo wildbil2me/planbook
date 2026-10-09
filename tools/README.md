@@ -1309,7 +1309,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1860 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1878 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2665,6 +2665,25 @@ arm** (the fixture guard), so the gap between sites and results moves from −4 
 back out, closes the sheet, puts the open class back and leaves the page on the home view. The run
 prints `1863 checks · 1863 passed · 0 failed · 0 skipped`, 59,453 lines, 31.9 lines per check, 873s,
 exit 0, 2026-10-08 on the real clock. Mutation round in `TESTING.md` § WO-3.47.
+
+**WO-8.16 moved it from 1860 to 1878, and the executed count from 1863 to 1881 — eighteen sites,
+eighteen results, and the file count moves by one.** All eighteen are in a new section,
+`verify/front-door.mjs`, straight after `verify/first-run.mjs` in `BROWSER_SECTIONS`. **It is the one
+section that navigates without `?door=skip`**, which `load()` now carries on every run because the
+harness is a cold visitor and would otherwise land on the front door — and `Page.reload` keeps the
+query, which is how every other section's own reloads keep it too. `verify/first-run.mjs`'s fresh
+device carries the flag for the same reason. The section drives first-run's second origin,
+`http://localhost:<port>`, wiped from `about:blank` before each arm: the pure halves (the
+loopback-only flag and the door per browser), two read off disk (the worker untaught and both new
+files precached; the probe opening nothing and asked before `store.boot()`), then the cold door, the
+nothing-written reading, the words against about.html, the 44px, the tap to the home screen with
+Restore on it, a reload of a device holding a year, the preference asked first, the database alone,
+an installed launch answered from Cache Storage, a cold installed launch, the three doubts, the flag,
+the iPad and Firefox doors, and the fixture's teardown. Stand-ins are page-start scripts, each
+removed before the next arm, and one page-start observer records whether the door or the bare app
+was ever on the glass at a task boundary. None sits in a loop and none is a failure arm (its guard
+is a `skip()`), so the gap between sites and results stays at −3. Mutation round in `TESTING.md`
+§ WO-8.16.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

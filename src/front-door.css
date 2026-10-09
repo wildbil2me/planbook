@@ -1,0 +1,88 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   The front door (WO-8.16) — what a first-time visitor meets instead of an empty
+   gradebook. src/front-door.js decides who that is and fills it; index.html's
+   #frontDoor carries its own chrome; every other word on it is about.html's.
+
+   LIFTED FROM design/mockups/proposed-phase8.css § FRONT DOOR, NAMES AND VALUES
+   UNCHANGED. The band is about.html's value for value, as the drawing says. What
+   the lift adds that the drawing could not show is in two places below, each
+   marked: the rule that takes the app's chrome off the glass while the door is
+   up, and the styles for the words lifted out of about.html — its links, its
+   quiet line and its <code> — which the drawing shortened away and the build
+   carries whole. Those are about.html's own values, scoped under
+   `.front-door-body` so that nothing here styles a link anywhere else in the
+   app (src/shell.css has no rule for `a` at all, and says why at `.doc-link`).
+
+   Colors inline, no custom properties, no dark mode: design/style-guide.md.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ADDED IN THE LIFT. The door REPLACES the app's header and main rather than
+   sitting inside them (the drawing's caption), so while it is up they are not laid
+   out at all — and nor are the banner strips, which are about an app the visitor
+   has not entered yet. The loading screen is hidden by src/front-door.js in the
+   same task, and the door is in normal flow, so the page scrolls as a page. */
+body.front-door-open > header,
+body.front-door-open > main,
+body.front-door-open > aside { display: none; }
+
+.front-door-band {
+  background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 60%, #2a2a6e 100%);
+  color: #fff;
+  padding: 32px 20px calc(32px + env(safe-area-inset-top, 0px));
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+.front-door-band-inner { max-width: 760px; margin: 0 auto; }
+.front-door-band h1 { font-size: 28px; font-weight: 700; }
+.front-door-band p { font-size: 15px; color: rgba(255,255,255,0.7); margin-top: 6px; max-width: 56ch; }
+
+.front-door-main { max-width: 760px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.front-door-body { padding: 0 20px 20px; font-size: 14px; line-height: 1.6; color: #1a1a2e; }
+.front-door-body p + p, .front-door-body p + ol, .front-door-body ol + p { margin-top: 10px; }
+.front-door-body ol, .front-door-body ul { margin-left: 20px; }
+.front-door-body li + li { margin-top: 6px; }
+
+/* The one caution on the door, and only on iOS: the caution palette about.html
+   already uses for the same sentence. Beside the steps that fix it, never above
+   the band — WO-8.16 trap 3, it is not a warning screen. */
+.front-door-caution {
+  background: #fff8e6; border: 1.5px solid #f0dfa8; border-radius: 8px;
+  color: #8a6d1a; padding: 12px 14px; margin-top: 12px;
+}
+.front-door-caution strong { color: #8a6d1a; }
+
+/* The way forward. Install is a set of steps a browser carries out, so it is
+   prose; the button is always the way past, and it sits last in the panel so it
+   is the last thing read on iOS (Open line 1, as proposed) and beside the steps
+   everywhere else. It is `.class-action-btn`, worn as shipped, whose 44px floor
+   is already in src/shell.css's coarse block. */
+.front-door-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.front-door-note { font-size: 12px; color: #6b7a8d; margin-top: 8px; }
+/* about.html's backup paragraph, lifted under the button on the two laptop doors. */
+.front-door-actions + p { margin-top: 12px; }
+
+/* ADDED IN THE LIFT — the rest of about.html's words, in about.html's values.
+   The "What it does" list runs into its quiet line, and the "Where" list into its
+   two document links. */
+.front-door-body ul + p, .front-door-body p + ul { margin-top: 10px; }
+.front-door-body a { color: #5b6fcc; }
+.front-door-body .quiet { color: #6b7a8d; font-size: 13px; }
+.front-door-body code {
+  font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+  background: #f8f9fc; border: 1px solid #e0e4f0; border-radius: 6px;
+  padding: 1px 4px; font-size: 12px;
+}
+/* privacy.html's distinction, which about.html follows: a link on its own line is
+   a control and takes the touch pass below; a link inside a sentence is text. */
+.front-door-body .block-link { display: block; font-weight: 600; padding: 8px 0; }
+.front-door-body ul + .block-link { margin-top: 4px; }
+
+@media (pointer: coarse) {
+  .front-door-body .block-link { min-height: 44px; display: flex; align-items: center; }
+}
+
+@media (max-width: 640px) {
+  .front-door-main { padding: 10px; }
+  .front-door-band { padding: 22px 14px calc(22px + env(safe-area-inset-top, 0px)); }
+  .front-door-band h1 { font-size: 24px; }
+  .front-door-body { padding: 0 14px 14px; }
+}

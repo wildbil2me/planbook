@@ -32,6 +32,15 @@
   need the same wrapper and the same check in verify-deploy.mjs, and would buy nothing a reader
   cannot reach in one tap.
 
+  THE APP'S FRONT DOOR READS THIS PAGE (WO-8.16). A first-time visitor to the app itself, not
+  installed and with no school year stored, is shown these words instead of an empty gradebook.
+  They are fetched from this file at that moment and never retyped, so the app's copy and this one
+  cannot drift. The `data-front-door` attributes below name the pieces it lifts, and src/front-door.js
+  names the same words. Rename or remove one and the door is not drawn at all, which is the safe
+  direction: the visitor goes straight into the app, and tools/verify/front-door.mjs goes red.
+  The door lifts sections and paragraphs, never the two links back into the app, which on the door
+  would lead to the door.
+
   DO NOT WRITE A COMMENT DELIMITER AS LITERAL TEXT INSIDE THIS COMMENT. privacy.html's header
   escaped onto the deployed page once that way, and tools/verify/about-page.mjs now reads this
   file's visible text for repository vocabulary for the same reason.
@@ -144,7 +153,7 @@
 <div class="band">
   <div class="band-inner">
     <h1>Planbook</h1>
-    <p>
+    <p data-front-door="lede">
       A gradebook and classroom assistant for teachers. Attendance, grades, the students who need
       you, and the messages that follow — all kept on your own device.
     </p>
@@ -154,7 +163,7 @@
 
 <main>
 
-  <section class="panel">
+  <section class="panel" data-front-door="what">
     <h2>What it does</h2>
     <ul>
       <li>
@@ -186,7 +195,7 @@
     </p>
   </section>
 
-  <section class="panel">
+  <section class="panel" data-front-door="where">
     <h2>Where your students' information goes</h2>
     <ul>
       <li>
@@ -214,26 +223,26 @@
 
   <section class="panel">
     <h2>Installing it</h2>
-    <p>
+    <p data-front-door="install">
       Planbook runs in a web browser and needs no download from an app store. Installing it puts
       an icon on your home screen or desktop, opens it in its own window, and lets it work with no
       internet connection at all.
     </p>
-    <p class="caution">
+    <p class="caution" data-front-door="caution">
       <strong>On an iPad or iPhone, install it before you enter real grades.</strong> Safari can
       clear a website's stored information after about a week of not being used. An installed app
       is exempt from that.
     </p>
 
     <h3>iPad or iPhone</h3>
-    <ol>
+    <ol data-front-door="steps-ios">
       <li>Open Planbook in <strong>Safari</strong>.</li>
       <li>Tap the <strong>Share</strong> button, then <strong>Add to Home Screen</strong>.</li>
       <li>Open it from the new icon from then on, not from Safari.</li>
     </ol>
 
     <h3>Chrome or Edge, on a laptop or a Chromebook</h3>
-    <ol>
+    <ol data-front-door="steps-laptop">
       <li>Open Planbook.</li>
       <li>
         Choose the install icon at the right-hand end of the address bar, or look for
@@ -243,11 +252,11 @@
     </ol>
 
     <h3>Anything else</h3>
-    <p>
+    <p data-front-door="cannot-install">
       Some browsers cannot install web apps, and some school-managed devices have installing turned
       off. Planbook still works in an ordinary browser tab.
     </p>
-    <p>
+    <p data-front-door="backup">
       <strong>Whichever way you use it, download a backup regularly</strong> from the ⤓ button in
       the app. It is the copy that can bring a school year back.
     </p>
