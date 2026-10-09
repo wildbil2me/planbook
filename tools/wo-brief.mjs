@@ -112,8 +112,28 @@ function constraintsBlock() {
 
 // ---------------------------------------------------------------------------- emit
 
+// ---------------------------------------------------------------------------- the TESTING.md section
+
+// Every work order owes one (WO-1.66, the owner's ruling of 2026-10-09: no exemption for docs-only or
+// process work), and `wo-gate.mjs --tick` refuses ✅ DONE without a heading naming the id. So the brief
+// states it as a deliverable, with the heading and the phase section written out — not as something
+// the implementer *may* do, which is how WO-1.65's brief came to say "not demanded". The gates are the
+// one exception, as they are at the tick: their boxes live in `gates.md`. The phase is the FILE's,
+// the same rule `testingSection()` in wo-gate.mjs uses; no script in `tools/` imports another, so the
+// lookup is repeated here rather than shared.
+function testingLine() {
+  if (/^WO-G/.test(id) || path.basename(wo.file) === 'gates.md') return null;
+  const n = (/^phase-(\d+)-/.exec(path.basename(wo.file)) || /^WO-(\d+)\./.exec(id) || [])[1];
+  const testing = path.join(REPO, 'TESTING.md');
+  const lines = fs.existsSync(testing) ? read(testing).split(/\r?\n/) : [];
+  const phase = n ? lines.find(l => new RegExp(`^##\\s+Phase\\s+${n}\\b`).test(l)) : null;
+  const where = phase ? `under \`${phase.trim()}\`` : `under a \`## Phase ${n || 'N'} — …\` section, which TESTING.md does not have yet — add it`;
+  return `**Write \`TESTING.md\` § ${id} — it is a deliverable, not a permission.** Add \`### ${id} — ${title}\` ${where}, with this work order's Acceptance lines copied verbatim and the evidence for each beside it. If there is nothing to run, the section says so in two lines; a missing section cannot be told from a forgotten one, and \`node tools/wo-gate.mjs --tick ${id}\` refuses ✅ DONE without it.`;
+}
+
 const acc = acceptanceLines(wo.text);
 const refs = referencedFiles(wo.text);
+const testingDue = testingLine();
 const contextDoc = route === 'codex' ? 'AGENTS.md' : 'CLAUDE.md';
 
 const out = [];
@@ -179,11 +199,13 @@ p('');
 if (acc.length) {
   acc.forEach((a, i) => { p(`${i + 1}. ${a}`); });
   p('');
+  if (testingDue) { p(testingDue); p(''); }
   p('Report honestly rather than favorably. A separate verifier reads your work cold against this');
   p('list and sees none of your reasoning — claiming a line you did not meet costs a correction');
   p('round, not a pass. Anything needing a real iPad or human eyes: say so, do not assume it.');
 } else {
   p('<!-- ORCHESTRATOR: this work order has no parseable Acceptance list — restate it by hand. -->');
+  if (testingDue) { p(''); p(testingDue); }
 }
 p('');
 

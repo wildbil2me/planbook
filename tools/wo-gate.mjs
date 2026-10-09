@@ -10,7 +10,8 @@
 //   node tools/wo-gate.mjs --release WO-1.7 [--dry-run]   the way back: 🤖 CLAIMED → ⬜ NOT STARTED
 //   node tools/wo-gate.mjs --handoff WO-1.7 [--dispatch <label>] [--dry-run]
 //                              the implementer returned: 🤖 CLAIMED → 🔍 AWAITING VERDICT
-//   node tools/wo-gate.mjs --tick WO-1.7 [--dry-run]
+//   node tools/wo-gate.mjs --tick WO-1.7 [--dry-run]       the verdict: ✅ DONE, or 🔨 over an open line —
+//                                                         and nothing at all with no TESTING.md section
 //   node tools/wo-gate.mjs --audit                        the trackers' standing rot check
 //   node tools/wo-gate.mjs --self-check [--against <path>] this file's standing check on itself
 //
@@ -1885,6 +1886,60 @@ function clip(s, n = 100) {
   return s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s;
 }
 
+// ------------------------------------------------- the TESTING.md section a tick needs (WO-1.66)
+//
+// **Every work order owes a `TESTING.md` section, and --tick will not write ✅ DONE without one.**
+// The owner's ruling, 2026-10-09: no exemption for docs-only or process work, because a section can
+// be two lines saying there is nothing to run, and a MISSING section cannot be told apart from a
+// forgotten one. `TESTING.md` § "How to use it" had said so since WO-1.1, and `plans/ROADMAP.md`'s
+// protocol ticks a box only when its `TESTING.md` items pass — but nothing else in the pipeline said
+// it and nothing checked it, so 58 work orders read ✅ DONE with no section by the day this landed.
+//
+// WHAT IS MATCHED: the id as a WHOLE TOKEN anywhere in a `#`-level heading. So `### WO-1.66 — …`
+// does not satisfy WO-1.6, nor does `### WO-1.6.1` or `WO-1.6x`; `### WO-3.52 and WO-3.53 — …`
+// satisfies both; and `### ~~WO-2.1 — …~~` satisfies WO-2.1, because `~` is not part of an id. The
+// id in BODY text satisfies nothing: a mention is not a section. Which `## Phase N` section the
+// heading sits under is NOT checked — the refusal names the one it belongs in, as advice, because a
+// phase heading reworded next month must not turn a correct section into a refusal.
+//
+// **The contents are not checked, on purpose.** Whether the lines under the heading are the work
+// order's Acceptance lines copied verbatim, with evidence, is a reading for the verifier. A grep
+// comparing them would break on the first `*(italic note)*`, which § "How to use it" asks for.
+//
+// **The gates are outside the rule.** WO-G1 … WO-G4 keep their boxes in `gates.md` and have never
+// had a `TESTING.md` section; `isGateWorkOrder()` is the test, so the gate fixture's WO-G9 is exempt
+// by the same arm a real gate is.
+//
+// **Forward only, and --audit does not read this.** The 58 past gaps are not reported anywhere. A
+// check that goes red on the day it lands, for work nobody can now reconstruct, teaches its reader to
+// ignore it — and writing those sections now would be reconstruction rather than a record of what
+// was run, which the owner was asked about and refused. The one moment this is asked is the tick,
+// where the person running it can still write the section from evidence they have.
+const TESTING = path.join(REPO, 'TESTING.md');
+
+function testingSection(wo) {
+  if (isGateWorkOrder(wo)) return { exempt: true };
+  const esc = wo.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const token = new RegExp(`(?<![\\w.-])${esc}(?![\\w-]|\\.\\w)`);
+  const want = `### ${wo.id} — ${wo.title}`;
+  // The phase is the FILE's, not the id's: the two agree on every real work order, and where they
+  // could differ — the self-check's WO-9.9 lives in phase-3-gradebook.md — the file is where it is.
+  const phaseNo = (/^phase-(\d+)-/.exec(path.basename(wo.file)) || /^WO-(\d+)\./.exec(wo.id) || [])[1];
+  if (!fs.existsSync(TESTING)) return { found: false, want, phaseNo, noFile: true };
+  const lines = read(TESTING).split(/\r?\n/);
+  const found = lines.some(l => /^#{1,6}\s/.test(l) && token.test(l));
+  const at = phaseNo ? lines.findIndex(l => new RegExp(`^##\\s+Phase\\s+${phaseNo}\\b`).test(l)) : -1;
+  return { found, want, phaseNo, phase: at >= 0 ? { line: at + 1, text: lines[at].trim() } : null };
+}
+
+// Where the section goes, in words. Shared by the refusal and by the held path's NOTE so the two
+// cannot name different places.
+function testingWhere(ts) {
+  if (ts.phase) return `under ${ts.phase.text}   (TESTING.md:${ts.phase.line})`;
+  if (ts.phaseNo) return `under a \`## Phase ${ts.phaseNo} — …\` section, which TESTING.md does not have yet — add it in phase order`;
+  return 'under the phase section its work belongs to';
+}
+
 function applyTick(id, wos, dryRun) {
   const wo = wos.get(id);
   if (!wo) { console.error(`FAIL | no work order ${id}`); return 1; }
@@ -1930,6 +1985,7 @@ function applyTick(id, wos, dryRun) {
   // is all 🔨 means, --start having taken 🤖 CLAIMED for the other half.
   const open = wo.acceptance ? wo.acceptance.filter(a => !a.ticked && !rehome.holds.includes(a)) : [];
   const held = open.length > 0;
+  const ts = testingSection(wo);                                   // read only; see testingSection()
 
   const planned = [];
 
@@ -2022,6 +2078,11 @@ function applyTick(id, wos, dryRun) {
         console.log(`NOTE | ${cal.length} of those ${cal.length === 1 ? 'is' : 'are'} ${CALENDAR_MARK} — waiting on the calendar, not on a build. That does NOT close them and it does not tick ${id}; it only stops ${id} gating the work orders that depend on it for its code. A gate work order still refuses ${id}, and so does this tick.`);
       }
     }
+    // Said here rather than saved for the run that would close it (WO-1.66): a held work order is
+    // the one with time left to write its section from evidence, and 🔨 is still the true status.
+    if (!ts.exempt && !ts.found) {
+      console.log(`NOTE | TESTING.md has no heading naming ${id} either, and ✅ DONE will be refused until it does — "${ts.want}", ${testingWhere(ts)}.`);
+    }
     if (!dryRun) fs.writeFileSync(wo.file, phaseLines.join('\n'));
     console.log(dryRun
       ? 'DRY RUN | re-run without --dry-run to write 🔨 IN PROGRESS. It will still refuse to write ✅ DONE.'
@@ -2055,6 +2116,25 @@ function applyTick(id, wos, dryRun) {
     console.log('');
     console.log('NOTE | nothing was written — not the status line, not a roadmap box, not either dashboard.');
     console.log('NOTE | the roadmap dashboard is never written by this tool; it is ROADMAP.md\'s own maintenance step 3. Fix it by hand, then run this again. `--audit` lists every fragment and every row in one pass.');
+    return 1;
+  }
+
+  // The fourth refusal, and the one WO-1.66 added. Same style as the third — nothing written at all,
+  // not even 🔨 IN PROGRESS — and for the reason WO-2.15 gave: 🔨 means the WORK is part-built, and
+  // a missing `TESTING.md` section is a missing RECORD of finished work, which no status makes true.
+  // It comes before every write, so --dry-run prints this refusal word for word. See testingSection()
+  // for what is matched, why the contents are not, and why the gates and --audit are outside it.
+  if (ts.exempt) {
+    console.log(`NOTE | ${id} is a gate work order — its boxes are in gates.md, and no TESTING.md section is asked of it`);
+  } else if (!ts.found) {
+    console.log('');
+    console.log(`HELD | ${id}'s Acceptance list is complete, and TESTING.md has no section for it — no \`#\` heading names ${id}:`);
+    console.log(`  looked for   a heading naming ${id} as a whole token, e.g.  ${ts.want}`);
+    console.log(`  belongs      ${testingWhere(ts)}`);
+    if (ts.noFile) console.log(`  and          ${path.relative(REPO, TESTING)} does not exist at all`);
+    console.log('');
+    console.log('NOTE | nothing was written — not the status line, not a roadmap box, not either dashboard.');
+    console.log('NOTE | every work order owes a section, process and docs-only work included: its Acceptance lines copied verbatim, with the evidence for each (TESTING.md § "How to use it"). Two lines saying there is nothing to run is a section; a missing one cannot be told from a forgotten one. Add it, then run this again.');
     return 1;
   }
 
@@ -2495,6 +2575,20 @@ is a fixture that makes every green light here mean less than it did.**
 `;
 }
 
+// The sandbox's TESTING.md (WO-1.66). `sections` is the list of `###` headings under the fixture's
+// phase; the default names all three numbered fixtures, so every plant that ticks one through finds
+// its section, and the gate fixture is left out because a gate is exempt and the plant says so by
+// ticking nothing it needs. `body` lands under the phase heading and above the sections, which is
+// where the plant puts the fixture's bare id in prose to prove a mention is not a section.
+function testingFixture({ sections = [`${FIXTURE_ID} — self-check fixture`, `${TARGET_ID} — self-check target fixture`,
+                                      `${CHAIN_ID} — self-check chain fixture`], body = '' } = {}) {
+  return `# self-check TESTING.md — written into a temp copy by wo-gate.mjs --self-check
+
+## Phase ${FIXTURE_PHASE} — self-check fixture phase
+${body ? `\n${body}\n` : ''}
+${sections.map(s => `### ${s}\n\n- [x] a line copied from the fixture, and nothing to run\n`).join('\n')}`;
+}
+
 // Nothing inside the repository, ever. Called on every path a plant writes, and on the sandbox that
 // holds them.
 //
@@ -2717,6 +2811,16 @@ function runPlants(subject, sandbox) {
   fs.copyFileSync(subject, assertOutsideRepo(path.join(sandbox, 'tools', 'wo-gate.mjs')));
   fs.cpSync(path.join(REPO, 'plans'), assertOutsideRepo(path.join(sandbox, 'plans')), { recursive: true });
 
+  // 1a. A TESTING.md at the sandbox root, because since WO-1.66 --tick refuses ✅ DONE without a
+  //     heading naming the work order, and every plant that ticks a fixture through would otherwise
+  //     go red for a reason that is not about it. SYNTHETIC rather than copied, for the reason the
+  //     fixture is: a real section is not what any plant asserts about, and this one is rewritten by
+  //     reset() so the one plant that edits it cannot leak a missing heading into the next plant.
+  //     It sits outside plans/, so snapshot() does not see it — --tick never writes TESTING.md, and
+  //     the plant that asserts "writes nothing" reads that from the trackers, as every other does.
+  const writeTesting = text => fs.writeFileSync(assertOutsideRepo(path.join(sandbox, 'TESTING.md')), text);
+  writeTesting(testingFixture());
+
   // 1b. The precondition, stated and checked before anything is planted. See the section comment: the
   //     copy inherits the trackers' drift, drift earns a `HELD`, and a `HELD` makes a healthy plant
   //     report a failure that is not about the script. Stopping here costs no plant — every plant is
@@ -2830,6 +2934,7 @@ function runPlants(subject, sandbox) {
   const reset = opts => {
     for (const [f, text] of pristine) plantWrite(f, text);
     plantWrite(path.join('work-orders', FIXTURE_FILE), basePhase + fixtureBlock(opts));
+    writeTesting(testingFixture());
   };
 
   const run = args => {
@@ -3108,6 +3213,61 @@ function runPlants(subject, sandbox) {
         const rowAfter = readmeRow();
         if (rowBefore.length < 5 || rowAfter.length < 5) bad.push('no Phase 3 row in the work-orders dashboard to read');
         else if (Number(rowAfter[3]) !== Number(rowBefore[3]) + 1) bad.push(`the dashboard Done cell went ${rowBefore[3].trim()} → ${rowAfter[3].trim()}, expected +1`);
+        return bad;
+      },
+    },
+    {
+      // WO-1.66. One plant over the whole claim, because the halves are one rule about one heading:
+      // missing refuses and writes nothing, on --dry-run identically; a neighbour id and a mention
+      // in prose do not count; a heading naming two ids counts for both; and a gate is not asked.
+      name: 'no TESTING.md heading naming the work order refuses ✅ DONE and writes nothing — a neighbour id and a prose mention do not count, a two-id heading counts for both, a gate is not asked',
+      run: () => {
+        const bad = [];
+        reset({ status: `${CLAIM} — 2026-01-01`, fragment: FIXTURE_BOX, open: false, target: 'ticked' });
+        // WO-9.99 is WO-1.65 to WO-9.9's WO-1.6, and WO-9.9x and WO-9.9.1 are the other two ways a
+        // prefix match goes wrong. The bare id sits in prose under the phase heading.
+        writeTesting(testingFixture({
+          sections: [`${FIXTURE_ID}9 — a neighbour whose id begins with the fixture's`,
+                     `${FIXTURE_ID}x — a suffixed neighbour`, `${FIXTURE_ID}.1 — a dotted neighbour`,
+                     `${TARGET_ID} — self-check target fixture`, `${CHAIN_ID} — self-check chain fixture`],
+          body: `${FIXTURE_ID} is named here in prose, under no heading of its own.`,
+        }));
+        const want = `### ${FIXTURE_ID} — self-check fixture`;
+        const phase = `## Phase ${FIXTURE_PHASE} — self-check fixture phase`;
+        const refusal = out => out.split('\n').filter(l => /^HELD \|.*TESTING\.md|^\s+(looked for|belongs)\s/.test(l)).join('\n');
+        const before = snapshot();
+
+        const dry = run(['--tick', FIXTURE_ID, '--dry-run']);
+        if (dry.code === 0) bad.push('--tick --dry-run exited 0 with no TESTING.md heading naming the work order');
+        if (!refusal(dry.out)) bad.push('--tick --dry-run printed no TESTING.md refusal:', ...verdict(dry.out));
+        if (/re-run without --dry-run to apply/.test(dry.out)) bad.push('--tick --dry-run offered to apply a tick it must refuse');
+        const real = run(['--tick', FIXTURE_ID]);
+        if (real.code === 0) bad.push(`--tick exited 0 and wrote "${fixtureStatus()}" with no TESTING.md heading — ${FIXTURE_ID}9, ${FIXTURE_ID}x, ${FIXTURE_ID}.1 or a prose mention was read as a section`);
+        if (!real.out.includes(want)) bad.push(`the refusal did not name the heading it looked for ("${want}")`);
+        if (!real.out.includes(phase)) bad.push(`the refusal did not name the phase section the heading belongs under ("${phase}")`);
+        if (refusal(dry.out) !== refusal(real.out)) bad.push('--dry-run and the real run printed different refusals — a dry run must report exactly what the run would');
+        const changed = changedSince(before);
+        if (changed.length) bad.push(`the refused --tick wrote ${changed.join(', ')} — it may write nothing at all, 🔨 IN PROGRESS included`);
+        if (!fixtureStatus().startsWith(CLAIM)) bad.push(`the refused --tick moved the status line to "${fixtureStatus()}"`);
+        if (/^-\s*\[x\]/.test(fixtureBoxLine())) bad.push('the refused --tick ticked the roadmap box');
+
+        // One heading naming two work orders satisfies both. The target first: it closes no roadmap
+        // box, so ticking it leaves ROADMAP.md as it was and the fixture's tick after it is not held
+        // over a dashboard the first tick moved.
+        writeTesting(testingFixture({ sections: [`${TARGET_ID} and ${FIXTURE_ID} — one section for two work orders`,
+                                                 `${CHAIN_ID} — self-check chain fixture`] }));
+        for (const who of [TARGET_ID, FIXTURE_ID]) {
+          const t = run(['--tick', who]);
+          if (t.code !== 0) bad.push(`--tick ${who} exited ${t.code} under a heading naming two work orders, one of them ${who}:`, ...verdict(t.out));
+        }
+        if (!/✅ DONE — \d{4}-\d{2}-\d{2}/.test(fixtureStatus())) bad.push(`with the two-id heading the fixture reads "${fixtureStatus()}", not ✅ DONE`);
+        if (!/✅ DONE/.test(readSb(path.join('work-orders', FIXTURE_FILE)).split(`## ${TARGET_ID} —`)[1] || '')) bad.push(`with the two-id heading ${TARGET_ID} was not ticked to ✅ DONE`);
+
+        // The gate is not asked. WO-G9's line is open, so it holds at 🔨 whatever happens; what must
+        // not appear is the NOTE saying its section is missing, because gates.md is where its boxes are.
+        writeTesting(testingFixture({ sections: [] }));
+        const g = run(['--tick', GATE_ID, '--dry-run']);
+        if (/TESTING\.md has no heading naming/.test(g.out)) bad.push(`--tick ${GATE_ID} asked a gate work order for a TESTING.md section`);
         return bad;
       },
     },
@@ -4641,6 +4801,13 @@ function runPlants(subject, sandbox) {
   console.log('  them: the real walk over ~/.claude/projects, which no plant reads on purpose, and');
   console.log('  whether the reference points are still TRUE — they are calibration, and nothing here');
   console.log('  re-measures them.');
+  console.log('  And WO-1.66\'s ONE, the first here to write outside plans/ on every reset: with no');
+  console.log('  TESTING.md heading naming the work order, --tick refuses ✅ DONE, names the heading and');
+  console.log('  the phase section it belongs under, writes nothing — not even 🔨 — and --dry-run prints');
+  console.log('  the same refusal; WO-9.99, WO-9.9x, WO-9.9.1 and the bare id in prose do not satisfy');
+  console.log('  WO-9.9; one heading naming two work orders ticks both; and a gate is not asked. NOT');
+  console.log('  covered by it: what the section SAYS, which is the verifier\'s reading by design, and');
+  console.log('  the real TESTING.md — the sandbox\'s is synthetic, and --audit reads neither.');
   console.log('  NOT covered: the Acceptance parser otherwise. It is still never run');
   console.log('  against a real work order\'s list, and one terminator is one way it can go blind and');
   console.log('  not the class of them — a narrowed gap, not a closed one. Nor is gate()\'s');

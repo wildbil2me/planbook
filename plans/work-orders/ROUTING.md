@@ -64,8 +64,10 @@ stale claim raises.)*
 
 **Ticking follows the verdict.** On a verifier PASS, and once you say go, the orchestrator applies
 the ticks whose evidence is a command the verifier ran: the work order `Status`, the roadmap box,
-the dashboard counts, and the 👤-free `TESTING.md` lines. `--tick` reads the work order's own
-Acceptance list before it writes anything: one line still `[ ]` and it writes `🔨 IN PROGRESS`
+the dashboard counts, and the 👤-free `TESTING.md` lines. **`--tick` writes no ✅ DONE until
+`TESTING.md` has a heading naming the work order** (WO-1.66) — the section is the implementer's
+deliverable, and a tick that refuses for want of one writes nothing at all. It also reads the work
+order's own Acceptance list before it writes anything: one line still `[ ]` and it writes `🔨 IN PROGRESS`
 instead of `✅ DONE`, names the lines that held it open, and leaves the roadmap boxes alone. Landing
 at `🔨 IN PROGRESS` with 👤 lines owed is the project's own convention — WO-2.1, WO-2.11 and WO-2.12
 all did — and it was hand-edited every time until WO-2.14, because the tool could only write done.
@@ -407,7 +409,12 @@ into every brief, verbatim:
 - Taken · dropped · not-taken-yet are three states. Everything counts recorded meetings, never
   calendar days.
 - Stay inside the work order's **Out of scope** line.
-- You may tick the boxes your own run closed, and update `plans/` and `TESTING.md` as you go. Two
+- Write `TESTING.md` § <your work order>, every time: its Acceptance lines copied verbatim and the
+  evidence for each. **It is a deliverable, not a permission** — the brief's § 5 names the heading,
+  docs-only and process work owe one too (only a gate, whose boxes live in `gates.md`, does not), and
+  `wo-gate.mjs --tick` refuses ✅ DONE without it.
+- You may tick the boxes your own run closed, and update `plans/` and the rest of `TESTING.md` as
+  you go. Two
   exceptions: **never tick a 👤 or 📆 line** — one needs a real iPad you do not have, the other a date
   that has not arrived — and leave the `CHANGELOG.md` entry to the teacher, who decides what a change
   means. Anything you do tick must be

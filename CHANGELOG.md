@@ -13,6 +13,21 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A work order cannot close without a TESTING.md section — 2026-10-09
+
+WO-1.66, the owner's ruling of the same day. Tooling and pipeline documents only; nothing in `src/`
+moved.
+
+- **`wo-gate.mjs --tick` refuses ✅ DONE, `--dry-run` included, until `TESTING.md` carries a
+  `### WO-x.y — <title>` heading naming the work order** under its phase. The refusal names the
+  heading it wants and the phase line to put it under. A heading naming two IDs counts for both,
+  and `WO-1.60` does not count as `WO-1.6`. Gates are exempt; their boxes live in `gates.md`.
+- **Forward only**: the 58 work orders that closed without a section are not backfilled, and
+  `--audit` does not report them.
+- **Every generated brief now states the section as a deliverable, not a permission**, and no
+  pipeline file calls it optional. `CLAUDE.md` and `AGENTS.md` carry the rule together.
+- `--self-check` runs 47 plants. It checks that a heading exists, never what the section says.
+
 ### The sweep now fences the glance reader's no-arithmetic rule — 2026-10-09
 
 WO-1.65. Tooling only; nothing in `src/` moved.

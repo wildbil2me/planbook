@@ -595,6 +595,15 @@ gates — `node tools/wo-gate.mjs next` — never by opening an editor.
 If you were dispatched *with* a work order, [`AGENTS.md`](AGENTS.md) has your rules. The two files
 must never drift apart: **a rule changed here is changed there in the same sitting.**
 
+**Every work order owes a `TESTING.md` section, and `--tick` will not write ✅ DONE without one**
+(WO-1.66, the owner's ruling of 2026-10-09). A `### WO-x.y — <title>` heading under its phase, its
+Acceptance lines copied verbatim, the evidence for each — **no exemption for docs-only or process
+work**, because two lines saying there is nothing to run is a section and a missing one cannot be
+told from a forgotten one. Only the gates are outside it; their boxes live in `gates.md`. Every brief
+states it as a deliverable, and an orchestrator never writes that the section is optional. **Forward
+only**: the 58 work orders that closed without one before that day are not backfilled — that would
+be reconstruction, not a record of what was run — and `--audit` does not report them.
+
 **Before editing the pipeline, read `plans/work-orders/README.md` § "The pipeline's own files"**
 (WO-1.40, 2026-08-30). It is the map of which of these files are watched and by what, and two of its
 rows say **"Nothing"** on purpose. It exists because WO-1.38 changed the pipeline in six files, wrote

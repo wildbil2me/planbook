@@ -178,7 +178,8 @@ node tools/wo-brief.mjs <WO-ID> --route <claude|codex> > .claude/dispatch/<WO-ID
 That emits the verbatim parts — the work order, the constraints block from `ROUTING.md`, the
 referenced files, the verification commands, the Acceptance list restated as what to report against.
 **You fill in the `<!-- ORCHESTRATOR: … -->` markers and delete them.** A brief that still carries a
-marker when it reaches an implementer is incomplete.
+marker when it reaches an implementer is incomplete. **Never write that the `TESTING.md` section is
+optional or "not demanded"** — § 5 of the generated brief makes it a deliverable (WO-1.66).
 
 The brief is the audit trail on both routes: the record of what was actually asked for, separate
 from what the agent decided to do.
@@ -422,8 +423,10 @@ node tools/wo-gate.mjs --tick <WO-ID>
 ```
 
 It sets the work order `Status`, ticks the roadmap boxes named in **Closes roadmap**, and recomputes
-the README dashboard counts and bar from the phase files. Then say what it applied, and apply the
-👤-free `TESTING.md` lines by hand.
+the README dashboard counts and bar from the phase files. Then say what it applied, and tick the
+👤-free lines of the work order's `TESTING.md` section by hand. **That section is owed, not
+optional** (WO-1.66): `--tick` refuses ✅ DONE and writes nothing until a heading names the work
+order. A refusal for it is the implementer's missing deliverable — report it as owed, never as done.
 
 **It reads the Acceptance list first.** Any line still `[ ]` and it writes `🔨 IN PROGRESS` instead
 of `✅ DONE`, names the lines, leaves the roadmap alone, and exits non-zero. That is not a failure —
@@ -462,8 +465,9 @@ You never inspected the work, so recording someone else's verdict is transcripti
   WO-2.37's `--budget` line and exit-3 rule to 330, WO-2.40's `--self-check` at step 2b to 341, and
   WO-2.45's detach-and-poll at step 4 to 354. **It then read 354 while the file stood at 412** —
   uncorrected through every edit between, which is this rule failing on itself in exactly the way its
-  last sentence predicts. WO-1.38's fresh-session verifier at steps 1, 2c, 3b, 4b, 5 and 6 takes it to
-  **469** — every dispatch pays to read all of it. New lessons go to `plans/dispatch-retro.md`; only
+  last sentence predicts. WO-1.38's fresh-session verifier at steps 1, 2c, 3b, 4b, 5 and 6 took it to
+  469, and WO-1.66's owed `TESTING.md` section at steps 3 and "Applying the maintenance" to
+  **473** — every dispatch pays to read all of it. New lessons go to `plans/dispatch-retro.md`; only
   the imperative belongs here. **If you edit this file, correct that number in the same edit** — count
   it with `wc -l`, do not estimate it. A length rule that misstates the length is the first rule a
   reader discounts.

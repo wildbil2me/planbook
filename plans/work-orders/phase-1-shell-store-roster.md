@@ -5772,7 +5772,7 @@ pass ran 30 plants, all red at the planted line and all reverted. The record is
 
 ## WO-1.66 — a work order can close with no TESTING.md section, and the brief says it need not write one
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-09 · **Size** S · **Depends on** — · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.65 made.)*
 
 **Booked 2026-10-09**, owner-directed, out of a bookkeeping pass over the work orders landed since
@@ -5814,17 +5814,17 @@ cannot be told apart from a forgotten one.
 - `--self-check` gains a plant for the new refusal, and `tools/README.md` records any count that moves.
 
 **Acceptance**
-- [ ] `--tick` on a work order whose Acceptance lines are all `[x]` but which has no `TESTING.md`
+- [x] `--tick` on a work order whose Acceptance lines are all `[x]` but which has no `TESTING.md`
       heading refuses, writes nothing (`git diff` empty after), exits non-zero and names the heading.
       Shown in a scratch copy of the tree, never on `main`. The same run with the heading added ticks.
-- [ ] `WO-1.6`-against-`### WO-1.65` does not satisfy the check, and a heading naming two ids satisfies
+- [x] `WO-1.6`-against-`### WO-1.65` does not satisfy the check, and a heading naming two ids satisfies
       both. Both are shown in `--self-check` or a scratch tree.
-- [ ] `node tools/wo-gate.mjs --audit` and `--self-check` pass, `node tools/wo-sweep.mjs` is green,
+- [x] `node tools/wo-gate.mjs --audit` and `--self-check` pass, `node tools/wo-sweep.mjs` is green,
       and `tools/README.md`'s recorded counts match.
-- [ ] A brief generated for any work order after this lands tells the implementer to write the section.
+- [x] A brief generated for any work order after this lands tells the implementer to write the section.
       Quote the line in the result. No pipeline file still says the section is optional or "not
       demanded".
-- [ ] `plans/work-orders/README.md` § "The pipeline's own files" is current for every pipeline file
+- [x] `plans/work-orders/README.md` § "The pipeline's own files" is current for every pipeline file
       this changes. `CLAUDE.md` and `AGENTS.md` are changed together if either is.
 
 **Traps** — **Do not backfill the 58.** Writing their sections now would be reconstruction, not a

@@ -29,6 +29,10 @@ before designing anything yourself — the suite has one visual language and it 
 - **Nothing but UI preferences in `localStorage`**, prefix `planbook_`. Student data is IndexedDB.
 - **Accommodation, medical, and plan data never leaves the roster** — not via a merge field, a log
   line, a print surface, or an export. The JSON backup is the sole exception and its own UI says so.
+- **Write the work order's `TESTING.md` section** — `### WO-x.y — <title>` under its phase, the
+  Acceptance lines copied verbatim, the evidence for each. It is owed on docs-only and process work
+  too (only a gate is exempt), § 5 of your brief names the heading, and `--tick` refuses ✅ DONE
+  without it (WO-1.66).
 - Match the surrounding code's naming, comment density, and idiom. If there is no surrounding code
   yet, you are setting the convention for everything after — choose deliberately and note the choice.
 

@@ -167,6 +167,13 @@ Full schema and grade math: [`docs/data-model.md`](docs/data-model.md).
 
 Stay inside its **Deliverables** and honor its **Out of scope** line.
 
+**Write the work order's `TESTING.md` section — it is a deliverable, not a permission** (WO-1.66,
+the owner's ruling of 2026-10-09). A `### WO-x.y — <title>` heading under its phase, the Acceptance
+lines copied verbatim, the evidence for each. Docs-only and process work owe one too; two lines
+saying there is nothing to run is a section, and a missing one cannot be told from a forgotten one.
+Only the gates are outside it — their boxes live in `gates.md`. `wo-gate.mjs --tick` refuses ✅ DONE
+without the heading and writes nothing, and your brief's § 5 names it.
+
 **You may tick the boxes your own run closed, and update `plans/` and `TESTING.md` as you go.** This
 file said the opposite until 2026-08-13 — *"no agent has the authority to tick a box"* — and that
 ban was **retired on 2026-08-06**, so the sentence outlived the rule by a week and briefed Codex

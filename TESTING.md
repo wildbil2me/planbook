@@ -3344,6 +3344,58 @@ pass). `wo-gate.mjs --audit` PASS.
 had called this file optional, which is why the dispatch left it out. The plant tables are in
 `.claude/dispatch/WO-1.65-result.md`.*
 
+### WO-1.66 — a work order can close with no TESTING.md section, and the brief says it need not write one
+
+**What this changes.** Nothing a teacher sees: `git diff -- src/` is empty and no `CACHE` bump is owed.
+`node tools/wo-gate.mjs --tick` refuses ✅ DONE, writing nothing, when no `#`-level heading in this file
+names the work order's id as a whole token; the gates are exempt, and `--audit` does not report the 58
+past gaps. `tools/wo-brief.mjs` writes the owed section into every brief's § 5, naming the heading and
+the phase section. `ROUTING.md`'s constraints block, `AGENTS.md`, `CLAUDE.md`, the orchestrator and the
+implementer definitions say the same. `--self-check` goes 46 → 47 plants. **This is the first work
+order the check applies to**, which is why this section exists before the tick.
+
+- [x] `--tick` on a work order whose Acceptance lines are all `[x]` but which has no `TESTING.md`
+      heading refuses, writes nothing (`git diff` empty after), exits non-zero and names the heading.
+      Shown in a scratch copy of the tree, never on `main`. The same run with the heading added ticks.
+      *Scratch copy of `plans/`, `TESTING.md` and the new `tools/wo-gate.mjs`, put under `git init` in
+      the session scratchpad, with WO-1.66's own five boxes ticked there. `--tick WO-1.66 --dry-run` and
+      `--tick WO-1.66` each printed `HELD | WO-1.66's Acceptance list is complete, and TESTING.md has no
+      section for it`, `looked for … ### WO-1.66 — <title>` and `belongs under ## Phase 1 — Shell,
+      store, roster (TESTING.md:195)`, both exit 1, and `git status --short` was empty afterwards. With
+      `### WO-3.44 and WO-1.66 — one heading naming two work orders` added: `PASS | WO-1.66 ticked.`,
+      exit 0.*
+- [x] `WO-1.6`-against-`### WO-1.65` does not satisfy the check, and a heading naming two ids satisfies
+      both. Both are shown in `--self-check` or a scratch tree.
+      *Both. `--self-check`'s new plant puts `### WO-9.99`, `### WO-9.9x`, `### WO-9.9.1` and the bare
+      `WO-9.9` in prose in place of the fixture's heading and asserts the refusal; then one heading
+      naming WO-9.8 and WO-9.9 ticks both. In the scratch tree, `### WO-1.661 — a neighbour, and nothing
+      else` plus `WO-1.66` in prose refused (exit 1, nothing written), and the two-id heading ticked.
+      The plant was proved by `--against` the HEAD script (1 red of 47) and by five mutations of scratch
+      copies of the script: no lookahead, any line rather than a heading, a write before the refusal,
+      the gate exemption deleted, a start-of-heading match. Each reddened this plant and no other.*
+- [x] `node tools/wo-gate.mjs --audit` and `--self-check` pass, `node tools/wo-sweep.mjs` is green,
+      and `tools/README.md`'s recorded counts match.
+      *`--audit` PASS, exit 0. `--self-check` `PASS | 47 of 47 plants were caught`, exit 0, and
+      `tools/README.md` now records 47. `wo-sweep.mjs` `50 checks · 47 passed · 0 failed · 3 to review`,
+      exit 0, the standing three. The sweep's count does not move.*
+- [x] A brief generated for any work order after this lands tells the implementer to write the section.
+      Quote the line in the result. No pipeline file still says the section is optional or "not
+      demanded".
+      *`node tools/wo-brief.mjs WO-5.15 --route claude` prints, in § 5: "**Write `TESTING.md` § WO-5.15 —
+      it is a deliverable, not a permission.** Add `### WO-5.15 — One contact, several audiences` under
+      `## Phase 5 — Outreach`, …". The constraints block every brief inlines carries a generic twin.
+      A grep of the pipeline files for "not demanded", "optional" and "if that file carries" near
+      `TESTING` finds only this file's history notes.*
+- [x] `plans/work-orders/README.md` § "The pipeline's own files" is current for every pipeline file
+      this changes. `CLAUDE.md` and `AGENTS.md` are changed together if either is.
+      *The orchestrator, implementer and `AGENTS.md` rows still describe their files and watchers
+      truly. `ROUTING.md`'s constraints block had no row and now has one, because every brief inlines
+      it. The two scripts are mapped in `tools/README.md`, and both rows there were updated. `CLAUDE.md`
+      § "How work is run here" and `AGENTS.md` § "If you were dispatched with a work order" each gained
+      the rule in this sitting. § 21 is green on both pairs.*
+
+*No 👤 line and no 📆 line: tooling only.*
+
 ---
 
 ## Phase 2 — Attendance

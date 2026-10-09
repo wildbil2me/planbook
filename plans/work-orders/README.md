@@ -418,6 +418,7 @@ because nothing was reading it — and *"named nowhere"* is the state this table
 | [work-order-implementer.md](../../.claude/agents/work-order-implementer.md) | What a Claude implementer is dispatched with | Nothing |
 | [work-order-verifier.md](../../.claude/agents/work-order-verifier.md) | What the verifier reads, cold, on a fresh session | Nothing |
 | [AGENTS.md](../../AGENTS.md) | What a dispatched agent is told — Codex reads this and not `CLAUDE.md` | `tools/wo-sweep.mjs` § 21, against [`CLAUDE.md`](../../CLAUDE.md), on four claims about **the rules both files carry** — WO-1.41, 2026-08-30. It is the **second pair**, and `CLAUDE.md` is its **reference** half: the rules are maintained there, and `AGENTS.md`'s own first paragraph says so |
+| [ROUTING.md](ROUTING.md) § "What every Codex brief must carry" | The constraints block `tools/wo-brief.mjs` copies **verbatim into every brief, on both routes** — so a sentence here is a sentence every implementer is handed. Since WO-1.66 (2026-10-09) it carries the owed `TESTING.md` section, beside the concrete heading `wo-brief.mjs` writes into the brief's § 5 | **Only its heading**: `tools/wo-brief.mjs` refuses to write a brief if the section is gone. Nothing reads its words, and `--tick`'s refusal is what enforces the `TESTING.md` line it carries |
 
 *The scripts are not here — they are in [`tools/README.md`](../../tools/README.md), which is their
 own map and says which of them checks itself.*
@@ -425,7 +426,8 @@ own map and says which of them checks itself.*
 **`.claude/` is in `wo-sweep.mjs`'s `IGNORE_DIRS` and stays there.** Every app-code claim in that
 directory is prose *stating the prohibition*, so a walk that reached it would have all twenty
 sections above § 21 reading agent instructions as source. § 21 gets to its files by **naming their
-paths** instead, which is also why three of the five rows are watched and two are not: a pair is a
+paths** instead, which is also why three of the six rows are watched, two are not, and the sixth —
+`ROUTING.md`'s constraints block, added at WO-1.66 — is watched only for being there: a pair is a
 hand-maintained thing and not a directory scan. Adding a row here watches nothing on its own.
 *(**The second pair needs no path trick and is still named rather than walked**: `AGENTS.md` and
 `CLAUDE.md` sit at the repository root, where the walk already reaches them — but every other section
@@ -453,7 +455,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 66 | 65 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 66 | 66 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 55 | 54 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 52 | 51 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 6 | 6 | — | ✅ DONE — 2026-09-30 |
@@ -462,7 +464,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 17 | 16 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.4 ✅ DONE 2026-09-26, the sign-in opened on the deployed domain and read on the laptop and the iPad; WO-7.5 ✅ DONE 2026-09-26, the header's sync button; WO-7.6 ✅ DONE 2026-09-26, the privacy documents say when Google's library loads, read off the deployed /privacy; WO-7.7 ✅ DONE 2026-09-26, a download repaints the open screen, read both ways on laptop and iPad; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 18 | 12 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 3 | — | WO-G2 ✅ **2026-09-30**: worked 2026-09-29 with six of eight boxes closed, and the letter-scale setting and the backup drill closed the next day on the owner's reading; WO-G3 ✅ **2026-09-30** on the owner's ruling, watched across four weeks of the term with nothing recorded |
-| | **243** | **231** | **3** | `[█████████░] 95%` |
+| | **243** | **232** | **3** | `[█████████░] 95%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)
