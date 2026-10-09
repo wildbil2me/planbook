@@ -146,6 +146,11 @@ import { formatWeight } from './categories.js';
 /* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4, extended for this screen at WO-3.7). */
 import { nextBandFor, openWork, projectedClassGrade,
   classGrade, gradingModeOf } from './grade-engine.js';
+/* A held column's open work (WO-3.47), from the engine's sibling of openWork() rather than from a
+   test of the assignment here. It is LISTED and never PROJECTED: `rows` above feeds the to-move card
+   and every figure on it, and nothing out of this call is handed to projectedClassGrade() — which
+   could not count it anyway, because the engine's projection walks live columns only. */
+import { heldWork } from './grade-engine.js';
 /* What is graded, asked of the cells, and what to say when there is no grade (WO-3.38, lifted at
    WO-3.42). One copy, shared with the score grid and the grade sheet, so the three screens cannot
    disagree about a bonus graded at 0. None of it is grade arithmetic — see that file's header. */
@@ -607,6 +612,50 @@ function missingCard(grade, rows, person) {
   return card;
 }
 
+/*
+  WORK IN A HELD COLUMN (WO-3.47, the owner's table of 2026-10-07: "open work lists a held column,
+  marked held"). The rows are the engine's heldWork() — work in a column the teacher is holding out
+  of the grade that this student has no score on yet, or is marked missing on — in the engine's own
+  three states. It agrees with the home card's `N to grade` and the glance queue, which count the
+  same column, so a teacher reading one student sees what is still being reconciled.
+
+  ITS OWN CARD, not rows in the two beside it, because each of those makes a promise a held row
+  would break: the missing card says its work is "already in the grade above", and the to-move card
+  projects every piece it names. A held column is in neither figure. The mark is the score grid's
+  own `Held`, in its indigo, so the word on this card and on the column head it came from is one
+  word; the state is said in words rather than by the missing card's red, because nothing here is a
+  zero the grade is carrying.
+*/
+const HELD_STATE_SAY = {
+  open: 'not graded yet',
+  missing: 'marked missing',
+  bonus: 'bonus, not graded yet',
+};
+
+function heldCard(grade, held, person) {
+  if (!held.length) return null;
+  const card = el('div', 'detail-card');
+  card.setAttribute('data-detail-held', '');
+  card.append(el('div', 'detail-card-title',
+    'Held out of the grade · ' + plural(held.length, 'piece', 'pieces')));
+  held.forEach((row) => {
+    const line = el('div', 'detail-missing-row');
+    line.append(el('span', 'detail-missing-name', assignmentName(row.id)));
+    const where = categoryName(grade, row.categoryId);
+    if (where) line.append(el('span', 'detail-missing-when', where));
+    line.append(el('span', 'detail-held-state', HELD_STATE_SAY[row.state] || ''));
+    const mark = el('span', 'detail-held-mark', 'Held');
+    mark.title = 'Held out of the grade — it counts toward nothing until you commit it.';
+    line.append(mark);
+    card.append(line);
+  });
+  card.append(el('p', 'detail-card-note',
+    'You are holding these columns out of the grade while you reconcile them — the columns the '
+      + 'Scores screen marks Held. Nothing in them counts toward ' + person + '’s grade above or '
+      + 'toward what it would take to move, a missing mark included, until you commit the column.'));
+  return card;
+}
+
 /* ────────────────────────────── what it would take to move ────────────────────────────── */
 
 /*
@@ -812,6 +861,7 @@ export function renderDetail() {
 
   const grade = classGrade(doc, cls, termId, student.id);
   const rows = openWork(doc, cls, termId, student.id);
+  const held = heldWork(doc, cls, termId, student.id);
   /* Which rows hold a graded piece (WO-3.38) — see gradedPieces(), which answers null in a weighted
      class without reading a cell. The breakdown, the to-move card and the hero's label all take it
      from here, so they say one thing. */
@@ -833,7 +883,11 @@ export function renderDetail() {
   sub.append(el('span', 'detail-hero-where', cls.name + ' · ' + (termLabel || 'No term set') + ' · '));
   sub.append(el('span', '',
     plural(rows.filter((r) => r.state === 'open').length, 'piece', 'pieces')
-    + ' outstanding · ' + plural(rows.filter((r) => r.state === 'missing').length, 'missing', 'missing')));
+    + ' outstanding · ' + plural(rows.filter((r) => r.state === 'missing').length, 'missing', 'missing')
+    /* Held work is named beside the other two and counted in neither (WO-3.47): it is not in the
+       grade, so it is not "outstanding" in the sense the to-move card means, and the card below
+       says what it is. Absent when nothing is held, so the line reads as it always did. */
+    + (held.length ? ' · ' + held.length + ' held' : '')));
   who.append(sub);
   hero.append(avatar, who);
   printHead = {
@@ -888,6 +942,11 @@ export function renderDetail() {
   left.append(toMoveCard(doc, cls, termId, student, grade, rows, noGradeSays));
   const right = el('div');
   right.append(missingCard(grade, rows, person));
+  /* Under the missing work and apart from it (WO-3.47): the missing card's note promises that what
+     it lists is already in the grade above, and a held column's missing mark is not. Absent when
+     nothing is held. */
+  const holding = heldCard(grade, held, person);
+  if (holding) right.append(holding);
   /* Under the missing work, because both are about particular assignments and this is where a
      teacher reads "why is that one blank" beside "which ones are missing". Absent when empty. */
   const notes = scoreNotesCard(doc, cls, termId, student.id);
@@ -993,6 +1052,7 @@ export function detailModel() {
   const termId = term ? term.id : '';
   const grade = classGrade(doc, cls, termId, student.id);
   const rows = openWork(doc, cls, termId, student.id);
+  const held = heldWork(doc, cls, termId, student.id);
   return {
     className: cls.name,
     termLabel: term ? (term.label || 'Untitled term') : '',
@@ -1008,6 +1068,10 @@ export function detailModel() {
     grade: grade,
     share: grade.percentage === null ? {} : contributionCents(grade.categories, grade.percentage),
     work: rows.map((row) => ({ name: assignmentName(row.id),
+      category: categoryName(grade, row.categoryId), points: row.points, state: row.state })),
+    /* The held card's rows (WO-3.47), in the file as on the screen. Kept apart from `work` so that
+       nothing reading `work` — the file's live rows — has to tell the two kinds apart. */
+    onHold: held.map((row) => ({ name: assignmentName(row.id),
       category: categoryName(grade, row.categoryId), points: row.points, state: row.state })),
     attendance: termTotals(cls.id, student.id, term),
   };
@@ -1072,6 +1136,10 @@ export function studentCsv(model) {
     rows.push([row.name, row.category, row.points,
       row.state === 'missing' ? 'marked missing'
         : row.state === 'bonus' ? 'outstanding bonus work' : 'outstanding']);
+  });
+  /* Under the live rows and marked held in the State cell (WO-3.47), in the held card's words. */
+  (model.onHold || []).forEach((row) => {
+    rows.push([row.name, row.category, row.points, 'held — ' + (HELD_STATE_SAY[row.state] || '')]);
   });
   rows.push([]);
 

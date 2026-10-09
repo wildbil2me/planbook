@@ -99,8 +99,10 @@ import { getSelectedClass, getSelectedTerm } from './classes.js';
 import { rosterName } from './roster.js';
 /* The category an assignment is filed under, for the column key in the file. */
 import { categoriesOf } from './categories.js';
-/* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4). See this file's header. */
-import { classGrade } from './grade-engine.js';
+/* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4). See this file's header. isHeld() joined at WO-3.47:
+   it is the one asker of whether a column is held, and this file marks a held column's head from its
+   answer — see gradesRecord(). */
+import { classGrade, isHeld } from './grade-engine.js';
 /* What the grade column's em dash says when there is no grade (WO-3.42): the sentence student detail
    and the score grid say, from the same function, so the sheet never calls a bonus graded at 0
    nothing graded. No grade arithmetic — see that file's header; in a weighted class it reads no cell
@@ -295,6 +297,12 @@ export function gradesRecord() {
     category: categoryNameOf(cls, a),
     due: String(a.due || ''),
     points: pointsOf(a),
+    /* A HELD COLUMN IS ON THE SHEET, MARKED (WO-3.47, the owner's table of 2026-10-07). The sheet is
+       what is re-keyed into the SIS, and the SIS has its own commit, so leaving the column off would
+       hide the very work being reconciled. It is marked in its head on paper and in its header cell
+       in the file, and the grade printed beside it is classGrade()'s, which does not count it — so
+       this file asks isHeld() for the word and decides nothing about the arithmetic. */
+    onHold: isHeld(a),
   }));
 
   const students = gridOrder(cls).map((student) => {
@@ -418,10 +426,14 @@ function slice(record, from) {
     const due = assignment.due ? numericDate(assignment.due) : '';
     if (due) th.append(el('span', 'grades-report-col-due', 'due ' + due));
     th.append(el('span', 'grades-report-col-pts', 'out of ' + assignment.points));
+    /* The score grid's word for the same column (WO-3.47). On the head's last line, under the
+       points, so a held column's head is the same height as its neighbours plus one line. */
+    if (assignment.onHold) th.append(el('span', 'grades-report-col-held', 'held'));
     /* The whole date and the category, for a reader who is not looking at a printed page. */
     th.title = assignment.name + ' · ' + assignment.category
       + (assignment.due ? ' · due ' + plainDate(assignment.due) : ' · no due date')
-      + ' · out of ' + assignment.points;
+      + ' · out of ' + assignment.points
+      + (assignment.onHold ? ' · held out of the grade' : '');
     hrow.append(th);
   });
   hrow.append(cell('th', 'grades-report-total-head', 'Grade'));
@@ -545,6 +557,12 @@ export function openGrades(opener) {
     ['M', 'marked missing by you, and counted as zero out of the full points'],
     ['Ex', 'excused — out of the grade entirely, neither earned nor possible'],
     ['(empty)', 'not graded yet. A blank counts toward nothing and is never a zero']]
+    /* The fifth entry only when a column on this sheet IS held (WO-3.47), so a sheet with none
+       reads as it always did. */
+    .concat(record.assignments.some((a) => a.onHold)
+      ? [['held', 'a column you are holding out of the grade while you reconcile it. Its marks are '
+        + 'printed and counted toward no grade on this sheet until you commit it']]
+      : [])
     .forEach(([glyph, meaning]) => {
       const item = el('span', 'grades-report-key-item');
       item.append(el('b', '', glyph));
@@ -641,7 +659,7 @@ export function gradesCsv(record) {
      so they are a section of their own rather than a header row three deep — three header rows
      would read as students called "Due" and "Out of". */
   rows.push(['Assignment', 'Category', 'Due', 'Out of']);
-  record.assignments.forEach((a) => rows.push([a.name, a.category, a.due, a.points]));
+  record.assignments.forEach((a) => rows.push([columnLabel(a), a.category, a.due, a.points]));
   rows.push([]);
 
   /* ONE `Student` COLUMN HOLDING `Last, First`, and it is a departure from WO-2.6's CSV, which
@@ -650,7 +668,7 @@ export function gradesCsv(record) {
      name display the owner pinned as the join against the SIS. Two columns here would be a file
      whose first column is not the sheet's first column. */
   const head = ['Student'];
-  record.assignments.forEach((a) => head.push(a.name));
+  record.assignments.forEach((a) => head.push(columnLabel(a)));
   head.push('Grade', 'Letter');
   rows.push(head);
 
@@ -663,6 +681,14 @@ export function gradesCsv(record) {
 
   const text = '﻿' + rows.map((row) => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
   return { name: csvName(record), text: text };
+}
+
+/* A column's name in the file, with `(held)` after it when it is held (WO-3.47) — in the grid's
+   header cell, where the work order puts the mark, and in the column key above it, so the key's
+   first column still names the grid's columns word for word. A live column's name is unchanged, so
+   a file with no held column is the bytes it always was. */
+function columnLabel(a) {
+  return a.onHold ? a.name + ' (held)' : a.name;
 }
 
 function csvCell(value) {

@@ -13,6 +13,21 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A held column shows up wherever unfinished work is listed — 2026-10-09
+
+WO-3.47, the last of WO-3.46's four pieces. Shell cache bumped to v173.
+
+- **The home card's *N to grade* and the *Waiting to be graded* queue count a held column's blanks**,
+  and its queue row ends *· held*. Committing the column leaves the count where it was until the
+  blanks are filled.
+- **A student's page has a *Held out of the grade* card** under the missing work, and the hero line
+  adds *· N held*. Held work stays out of the missing card and out of every *what it would take to
+  move* figure; the engine reports it through a new `heldWork()` beside an unchanged `openWork()`.
+- **The grade sheet prints *held* under a held column's head**, and the CSV's header cell reads
+  *Name (held)*. The student CSV's Work section carries held rows as *held — …*.
+- In every case the grade beside it still does not count the column until it is committed. Read on
+  the iPad by the owner the same day.
+
 ### A score column can be held out of the grade — 2026-10-08
 
 WO-3.46, the third of its four pieces, and the one that makes holding possible. Shell cache bumped

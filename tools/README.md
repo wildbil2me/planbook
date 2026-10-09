@@ -1283,7 +1283,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1854 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1860 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2623,6 +2623,22 @@ coarse pass: the ten head controls and the hold confirm's controls at 44px, the 
 declined. One in `verify/assigned-and-due.mjs` at 390px: the editor's box at 44px. The first block puts
 both classes back out and leaves the page on the home view. The run prints `1858 checks · 1858 passed · 0 failed · 0 skipped`, 59,161 lines, 31.8 lines per
 check, 882s, exit 0, 2026-10-08 on the real clock. Mutation round in `TESTING.md` § WO-3.46.
+
+**WO-3.47 moved it from 1854 to 1860, and the executed count from 1858 to 1863 — six sites, five
+results, and the file count stays where it was.** All six are at the foot of
+`verify/held-readers.mjs`, in a third block, `heldShown()`, called after `heldWriters()`. It plants one
+weighted class through the store with two held columns (one of them zero-point), reads the home card's
+chip and the glance queue — repainted by walking to the calendar and back — then two students' detail
+through `renderDetail()`, `detailModel()` and `studentCsv()`, then the grade sheet through
+`gradesRecord()`, `openGrades()` and `gradesCsv()`, and finally commits one column through
+`commitColumn()` and fills a blank. The CSV's lines are cut out in Node, not inside the page: a `\r\n`
+inside an `evalJs` template literal is spliced into the page's source as two real characters, and the
+first draft's regex literal threw on it — the section's containment reported the throw and the rest of
+the run went on, which is the WO-1.44 behaviour doing its job. None sits in a loop. **One is a failure
+arm** (the fixture guard), so the gap between sites and results moves from −4 to −3. It takes the class
+back out, closes the sheet, puts the open class back and leaves the page on the home view. The run
+prints `1863 checks · 1863 passed · 0 failed · 0 skipped`, 59,453 lines, 31.9 lines per check, 873s,
+exit 0, 2026-10-08 on the real clock. Mutation round in `TESTING.md` § WO-3.47.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

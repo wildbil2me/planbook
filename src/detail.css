@@ -190,6 +190,16 @@
 }
 .detail-missing-when { font-size: 11px; font-weight: 700; color: #8a9bb0; white-space: nowrap; }
 .detail-missing-none { font-size: 12px; color: #27ae60; font-weight: 700; }
+/* WORK IN A HELD COLUMN (WO-3.47), in the missing card's row shape. The mark is the score grid's
+   `.scores-col-held` lifted (src/scores.css) — indigo #5b6fcc, the colour of a thing the teacher
+   chose — so the card and the column head it came from wear one word in one colour. The state is
+   plain grey text and deliberately not the missing chip's red: nothing on this card is a zero the
+   grade is carrying. */
+.detail-held-state { font-size: 11px; font-weight: 700; color: #6b7a8d; white-space: nowrap; }
+.detail-held-mark {
+  font-size: 9px; font-weight: 800; color: #5b6fcc;
+  text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+}
 /* A NOTE ON A SCORE (WO-3.32), beside its assignment in the row shape above. Italic and grey, which
    is the hall-pass note's own register (src/attendance.css `.pass-history-note`, after Roll Call!'s
    `.sr-pass-note`): a teacher's aside under a record, not a finding. It takes the rest of the row
@@ -406,6 +416,8 @@
     font-size: 7pt; color: #000; background: none !important; border-color: #999 !important;
   }
   body[data-detail-print] .detail-missing-none { font-size: 8pt; color: #000; }
+  body[data-detail-print] .detail-held-state,
+  body[data-detail-print] .detail-held-mark { font-size: 7pt; color: #000; }
 
   body[data-detail-print] .detail-att-stat {
     background: none !important; border: 0.2mm solid #999 !important;
@@ -512,6 +524,8 @@
   .detail-move p, .detail-move-head { font-size: 14px; }
   .detail-missing-name { font-size: 14px; }
   .detail-missing-pts, .detail-missing-bonus, .detail-missing-when { font-size: 12px; }
+  .detail-held-state { font-size: 12px; }
+  .detail-held-mark { font-size: 10px; }
   .detail-score-note { font-size: 13px; }
   .detail-history-trail { font-size: 13px; }
   .detail-missing-none { font-size: 13px; }

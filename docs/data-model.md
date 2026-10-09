@@ -596,8 +596,13 @@ never sees the column. The rule lives at the engine's two walks over a class's w
 - **`excused` is not a way to hold a column.** It is a decision about one student and is already in
   the math; a held column is the teacher's decision about a whole piece of work.
 - **`openWork()` loses a held column** as a side effect of the walk. That is correct for a grade, and
-  the screens that list outstanding work get their own engine call in WO-3.47. Until it lands, the
-  home card's *N to grade* does not count a held column — a known gap, not worked around.
+  since WO-3.47 the screens that list outstanding work ask a **sibling**, `heldWork(doc, cls, termId,
+  studentId)`: the same rows from the same per-cell branch (`open`, `missing`, `bonus`), over the held
+  columns of the class's categories only, each stamped `column: 'held'` (`HELD_COLUMN`). It is a
+  second array rather than a new state in `openWork()`, because `openWork()` feeds the projection —
+  `planned()` sums its `open` and `missing` rows — and a held row there would put a column that counts
+  toward nothing into *what it would take to move*. The two sources are cut from one walk by the one
+  asker, so a column is in exactly one of them and a commit moves it across without counting it twice.
 
 **Holding and committing** *(WO-3.46, 2026-10-08)*. A teacher holds a column with *Hold* on its
 score-grid head, or with *Hold out of the grade* in the assignment editor, and commits it with
@@ -639,9 +644,9 @@ test of its own, because a second filter over a list already filtered is a secon
 | `src/past-due.js` — the set the prompt offers | **Not offered.** A held column is work in progress, and the prompt asks about work that is finished and late. The sentence, the review, the column-head tint and accept lose it together; once live it is asked about like any other | WO-3.53 |
 | `src/graded-pieces.js` | **Skips it**: a category whose only work is held has no counted work, and the screen says the engine's own sentence | WO-3.53 |
 | `src/merge-fields.js` — `{{missing.count}}`, `{{missing.list}}`, `{{grade.percent}}`, `{{grade.letter}}` | **Follows the engine**, by construction: the four are `openWork()` and `classGrade()`. A guardian is never told about a zero that does not count | WO-3.53 *(no filter of its own)* |
-| `src/glance.js` `queueRows()` and the home card's *N to grade* | **Counted as waiting**, its row marked *held*, through a new engine call beside `openWork()` | WO-3.47 — *not yet built* |
-| `src/detail.js` — open work and projections | Open work **lists it, marked *held***; projections leave it out | WO-3.47 — *not yet built* |
-| `src/grades-report.js` — the grade sheet and CSV | **Includes it, marked held** in its head and the CSV's header cell; the class grade beside it does not count it | WO-3.47 — *not yet built* |
+| `src/glance.js` `queueRows()` and the home card's *N to grade* | **Counted as waiting**: `heldWork()`'s `open` rows join `openWork()`'s, under the same `open`-only rule — a held cell marked missing, or a zero-point blank, is no more "to grade" than on a live column. The queue row forwards the engine's `column` marker and its line reads *· held*. Neither reader asks whether a column is held | WO-3.47 |
+| `src/detail.js` — open work and projections | Open work **lists it, marked *held***: a card of its own, *Held out of the grade*, under the missing work, in the engine's three states and the score grid's indigo `Held`; the hero line adds *· N held*; the student CSV's Work section carries the same rows, its State cell reading *held — …*. **Projections leave it out**: the to-move card is fed `openWork()` alone, and the missing card's *already in the grade* sentence never lists a held row | WO-3.47 |
+| `src/grades-report.js` — the grade sheet and CSV | **Includes it, marked held** — a *held* line in the printed column head (and a fifth key entry when any column is held), and `(held)` after the name in the CSV's header cell and its column key, both asked of `isHeld()`. The class grade beside it is `classGrade()`'s and does not count it | WO-3.47 |
 | `src/calendar-derived.js` — due dates | **Unchanged.** A due date is a date whether or not the column counts | Nobody |
 | `src/score-history.js` `scoreHistoryCard()`, `src/score-notes.js` `scoreNotesCard()` | **Unchanged.** Both cards are about the cell, not the grade | Nobody |
 

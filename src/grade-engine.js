@@ -58,15 +58,26 @@ export function isHeld(assignment) {
    (WO-3.52): every category percentage, class grade, letter, points share, projection and openWork()
    row is built on this walk or on looseAssignments() below. Filtering here and nowhere else in the
    engine is the point — a second filter is a second opinion about what "held" excludes. openWork()
-   loses held columns as a side effect, which is right for a grade and is WO-3.47's to answer for the
-   queue; it is not worked around here. */
+   loses held columns as a side effect, which is right for a grade; WO-3.47 answered the queue with
+   heldWork() below rather than by working around this. */
 function assignmentsFor(doc, cls, termId, categoryId) {
+  return categoryColumns(doc, cls, termId, categoryId).filter((assignment) => !isHeld(assignment));
+}
+
+/* The held half of the same category (WO-3.47), for heldWork() and nothing else. Both halves are cut
+   from ONE walk with the one asker, so a column is in exactly one of them by construction — the
+   property that makes a commit move a queue row from one source to the other without counting it
+   twice or dropping it. */
+function heldColumnsFor(doc, cls, termId, categoryId) {
+  return categoryColumns(doc, cls, termId, categoryId).filter((assignment) => isHeld(assignment));
+}
+
+function categoryColumns(doc, cls, termId, categoryId) {
   const classId = cls && cls.id;
   return arrayOf(doc && doc.assignments).filter((assignment) => assignment
     && assignment.classId === classId
     && assignment.termId === termId
-    && assignment.categoryId === categoryId
-    && !isHeld(assignment));
+    && assignment.categoryId === categoryId);
 }
 
 function scoreCell(doc, assignmentId, studentId) {
@@ -197,6 +208,43 @@ export function openWork(doc, cls, termId, studentId) {
     const categoryId = category && category.id;
     workRows(doc, assignmentsFor(doc, cls, termId, categoryId), studentId, categoryId, rows);
   });
+  return rows;
+}
+
+/*
+  THE HELD COLUMNS' UNFINISHED WORK (WO-3.47) — the same question openWork() answers, asked of the
+  columns a teacher is holding out of the grade, so the queue and student detail can show work that
+  is still being reconciled.
+
+  A SIBLING, NOT A NEW STATE IN openWork(), and the reason is the projection. openWork() feeds
+  planned() through categoryRows(), and planned() sums its `open` and `missing` rows into every
+  "what it would take to move" figure; a held row put back into that array under either state would
+  put a column that counts toward nothing into a projection of the grade. A new state (`held`) that
+  planned() happened to ignore was the other shape and was refused: it erases the open / missing /
+  bonus distinction a held column still has, and every reader of openWork() that tests `!==` rather
+  than `===` — src/detail.js's CSV wording is one — would quietly start describing held work as
+  live. So openWork() returns exactly what it always did, and this is a second array.
+
+  THE SAME BRANCH DECIDES THE STATE. Each row comes out of workRows(), the one test for "not graded
+  yet", so a held blank and a live blank cannot disagree about which they are — and a commit, which
+  moves the column from heldColumnsFor() to assignmentsFor(), hands the same rows with the same
+  states to openWork(). Categorized work only, exactly as openWork(): the two sources have the same
+  scope, so nothing is counted on one side of a commit and not the other.
+
+  EACH ROW CARRIES `column: 'held'`, which is the engine supplying the marker so that no reader
+  has to ask the assignment again (src/glance.js forwards it onto its queue row). openWork()'s rows
+  carry no `column`; absent means live, as it does on the assignment itself. Ids, points and states,
+  never names — the rule above.
+*/
+export const HELD_COLUMN = 'held';
+
+export function heldWork(doc, cls, termId, studentId) {
+  const rows = [];
+  categoriesOf(cls).forEach((category) => {
+    const categoryId = category && category.id;
+    workRows(doc, heldColumnsFor(doc, cls, termId, categoryId), studentId, categoryId, rows);
+  });
+  rows.forEach((row) => { row.column = HELD_COLUMN; });
   return rows;
 }
 

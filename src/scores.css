@@ -772,6 +772,13 @@
   display: block; font-size: 10px; font-weight: 700; color: #8a9bb0;
   font-variant-numeric: tabular-nums; margin-top: 2px;
 }
+/* A HELD COLUMN'S HEAD (WO-3.47) — `.scores-col-held`'s indigo and type, as the grid wears it on the
+   column this sheet is printed off. On paper it goes to black with the rest of the head (the print
+   block below), where the word is what carries it. */
+.grades-report-col-held {
+  display: block; font-size: 9px; font-weight: 800; color: #5b6fcc;
+  text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;
+}
 
 /* ── ONE CELL ── */
 /* A score, a mark, or nothing. The three washes are the score grid's exactly — `late` here and
@@ -976,6 +983,7 @@
   .grades-report-col-name { font-size: 12px; }
   .grades-report-col-due { font-size: 10px; }
   .grades-report-col-pts { font-size: 11px; }
+  .grades-report-col-held { font-size: 10px; }
   .grades-report-cell { padding-left: 4px; padding-right: 4px; }
   .grades-report-mark { font-size: 12px; padding: 3px 7px; }
   .grades-report-pct { font-size: 14px; }
@@ -1134,6 +1142,7 @@
   body[data-grades-print] .grades-report-col-name { font-size: 6pt; max-width: 16mm; }
   body[data-grades-print] .grades-report-col-due { font-size: 5.5pt; color: #333; }
   body[data-grades-print] .grades-report-col-pts { font-size: 5.5pt; color: #333; }
+  body[data-grades-print] .grades-report-col-held { font-size: 5.5pt; color: #000; }
   body[data-grades-print] .grades-report-cell { padding: 1mm 0.5mm; }
   body[data-grades-print] .grades-report-mark {
     min-width: 0; padding: 0; border: none !important;

@@ -157,8 +157,8 @@ import { getActiveClasses, getSelectedClassId, getOpenTermId, initials, avatarCl
 /* The signals slot's first content, from the module that owns what "not graded yet" IS. Nothing
    here looks at a cell: src/grade-engine.js's openWork() answers that question once, for this card
    and for the grade detail both, which is what stops a card and the screen it opens disagreeing
-   about the same class's unfinished work. */
-import { openWork } from './grade-engine.js';
+   about the same class's unfinished work. heldWork() is its sibling for held columns (WO-3.47). */
+import { openWork, heldWork } from './grade-engine.js';
 /* The students who need attention, POST-COOLDOWN, from the module that owns both answers. Nothing
    here decides whether a rule fired or whether a signal is silenced: src/signals.js decides it once,
    for this card and for the list the card's own class opens onto, which is what stops a chip saying
@@ -405,6 +405,12 @@ function rosterIdsOf(cls, doc) {
   piece of work waiting rather than ten. A new engine function for the class-wide question was the
   other route and was not taken — the union needs nothing openWork() does not already return, and a
   second entry point into the same walk is a second place for the three states to drift apart.
+
+  A HELD COLUMN WITH BLANKS IS STILL TO GRADE (WO-3.47, the owner's table of 2026-10-07). The grade
+  leaves it out and this chip does not: a column held while it is re-keyed against the SIS is the
+  most unfinished work a class has. Its rows are the engine's heldWork() — the same branch, the same
+  three states, the same `open`-only filter — so nothing here asks whether a column is held, and a
+  commit moves the column from that source to openWork() without the Set ever holding it twice.
 */
 function ungradedCount(cls) {
   const doc = getDoc();
@@ -412,10 +418,10 @@ function ungradedCount(cls) {
   const termId = getOpenTermId(cls.id);
   if (!termId) return 0;
   const waiting = new Set();
+  const take = (row) => { if (row.state === 'open') waiting.add(row.id); };
   rosterIdsOf(cls, doc).forEach((studentId) => {
-    openWork(doc, cls, termId, studentId).forEach((row) => {
-      if (row.state === 'open') waiting.add(row.id);
-    });
+    openWork(doc, cls, termId, studentId).forEach(take);
+    heldWork(doc, cls, termId, studentId).forEach(take);
   });
   return waiting.size;
 }

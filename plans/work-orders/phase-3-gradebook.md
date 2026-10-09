@@ -3682,7 +3682,7 @@ stops counting it on the day this lands. That gap is
 
 ## WO-3.47 — every reader outside the grade engine agrees about a held column
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.46
+**Ship** — · **Status** ✅ DONE — 2026-10-09 · **Size** M · **Depends on** WO-3.46
 **Closes roadmap** *(no box. Owner-directed, 2026-10-05.)*
 
 **Booked 2026-10-05** with [WO-3.46](#wo-346--a-score-column-can-be-held-out-of-the-grade-until-it-is-committed),
@@ -3724,14 +3724,14 @@ rows were missing from the booking and were ruled the same day.
 - `CACHE` in `sw.js` is bumped if any SHELL file moves.
 
 **Acceptance**
-- [ ] The home card's *N to grade* and the waiting queue count a held column with blanks, and its
+- [x] The home card's *N to grade* and the waiting queue count a held column with blanks, and its
       queue row says *held*. Committing it leaves the count unchanged until the blanks are filled.
-- [ ] A student's detail lists a held column's open work marked *held*, and no projection counts it.
-- [ ] The grade sheet and CSV include the held column, marked held in its head and in the CSV's
+- [x] A student's detail lists a held column's open work marked *held*, and no projection counts it.
+- [x] The grade sheet and CSV include the held column, marked held in its head and in the CSV's
       header cell, and the class grade printed beside it does not count it.
-- [ ] `tools/verify/glance-quiet.mjs` (or its successor) still finds no arithmetic in
+- [x] `tools/verify/glance-quiet.mjs` (or its successor) still finds no arithmetic in
       `src/glance.js`, and the sweep claim from WO-3.53 is green.
-- [ ] 👤 On the iPad: a held column with a missing score, read on the home card, the concern list and
+- [x] 👤 On the iPad: a held column with a missing score, read on the home card, the concern list and
       the student's detail, all three agreeing with the grade.
 
 **Traps** — **The queue ruling is the one most likely to be got wrong by symmetry**: the readers

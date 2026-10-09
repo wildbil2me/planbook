@@ -11442,6 +11442,93 @@ writes over blanks, and a blank never counted — so no plant there could be cau
 tree: `49 checks · 46 passed · 0 failed · 3 to review`, exit 0, the three reviews the same three as
 before this work order.
 
+### WO-3.47 — every reader outside the grade engine agrees about a held column
+
+**What this changes.** The three readers that **show** a held column, the other half of the owner's
+table of 2026-10-07. The engine gains a sibling of `openWork()`, `heldWork(doc, cls, termId,
+studentId)`: the same rows from the same per-cell branch (`open`, `missing`, `bonus`), over the held
+columns of the class's categories only, each stamped `column: 'held'` (`HELD_COLUMN`, exported).
+`openWork()` returns exactly what it did. The home card's *N to grade* and `src/glance.js`'s
+`queueRows()` take `heldWork()`'s `open` rows beside `openWork()`'s; the queue row forwards the
+engine's marker and its line reads *· held*. Student detail gains a card, *Held out of the grade*,
+under the missing work, its rows in the engine's three states and the score grid's indigo `Held`; the
+hero line adds *· N held*; the student CSV's Work section carries the same rows with State *held — …*.
+The grade sheet marks a held column's printed head with a *held* line (and a fifth key entry when any
+column is held), and the CSV's header cell and column key read *Name (held)*. `CACHE` is
+`planbook-shell-v173`. Six new `check()` sites in a third block of `tools/verify/held-readers.mjs`,
+`heldShown()` — five claims and one fixture-guard failure arm.
+
+**The queue's engine call, and why it is a sibling.** `openWork()` feeds `planned()` through
+`categoryRows()`, and `planned()` sums its `open` and `missing` rows into every projection; a held row
+back in that array under either state would put a column that counts toward nothing into *what it would
+take to move*. A new state that `planned()` ignored was the other shape and was refused: it erases the
+open / missing / bonus distinction a held column still has, and a reader that tests `!==` rather than
+`===` — `studentCsv()`'s State wording is one — would start describing held work as live. The two
+sources are cut from one walk (`categoryColumns()`) by the one asker, `isHeld()`, so a column is in
+exactly one of them and a commit moves it across. M1 and M7 below are the two halves of that claim.
+
+**A decision the brief named and left open: what *blanks* means for a held column.** The queue's rule
+for a live column is `open` rows only, and it is followed unchanged: a held cell marked `missing` is a
+decision already made and is not *to grade*, and a held zero-point blank is not owed. M8 below is that
+rule broken for held rows only.
+
+**Hand reading: `src/glance.js` still holds no arithmetic of its own** (the fourth Acceptance line,
+read because a grep cannot tell a reader from a recomputation). `queueRows()`'s change is a second
+engine call per roster id, the same `row.state !== 'open'` equality on the engine's own token, the same
+`open += 1` (the size of a list the engine handed back), and `if (row.column) … = row.column` — a field
+forwarded as it came. The panel's change is `row.column === HELD_COLUMN`, an equality on the engine's
+token, choosing between two constant strings. No `Math.*`, no `%`, no `/`, no threshold, no cell read,
+and no `isHeld()` call: `HELD_COLUMN` is a token constant that reads no document, the ruling under
+WO-6.8's sixth Acceptance line. The WO-6.7 agreement checks in `tools/verify/glance-quiet.mjs` are green
+on the full run below.
+
+- [x] Held: the card reads `3 to grade` and `queueRows()` holds `L3:3`, `L1:1`, `H1:1:held` — live rows
+      first, then the held column — and the drawn row for H1 reads `… · Essays · held` where the live
+      rows carry no *held*. The held zero-point column and Bea's held `missing` count nowhere.
+- [x] Committed through `commitColumn()`: still `3 to grade`, the same three rows with H1 unmarked; Ada's
+      blank in H1 filled: `2 to grade`, H1 off the queue.
+- [x] Ada's detail: the *Held out of the grade · 2 pieces* card lists H1 *not graded yet* and H2 *bonus,
+      not graded yet*, each `Held`; the hero ends *· 2 held*; grade 84.00%; the to-move figures are
+      60.00% and 90.00% — `projectedClassGrade()` over L3 alone (52.00% and 92.00% had H1 been projected)
+      — naming one piece and not the held one.
+- [x] Bea's detail: H1 *marked missing*, `Held`, on the held card and not on the missing card (*Nothing is
+      marked missing.*); grade 66.00% (45.00% counted); no *handed in* sentence; the CSV's Work section
+      reads her live row, then `held — marked missing` and `held — bonus, not graded yet`. Committed:
+      45.00%, H1 on the missing card, only H2 on the held card.
+- [x] Grade sheet: both held heads carry *held*, the three live heads none, the key has five entries with
+      *held* fifth; the CSV header cell and the column key read `Wo347 held essay (held)` and
+      `Wo347 held bonus (held)`, the live names unchanged; Bea's grade is 66.00% on the sheet and in the
+      file, her held `M` printed.
+- [x] § 30 green on the delivered tree: no reader added a `.held` read (`onHold` on the sheet's record,
+      `onHold` on the detail model and `column` on a queue row are not the assignment's key).
+- [x] `CACHE` bumped v172 → v173.
+- [x] 👤 On the iPad: a held column with a missing score, read on the home card, the concern list and the
+      student's detail, all three agreeing with the grade.
+
+**The harness's own mutation round.** In a scratch copy of the tree whose `verify-shell.mjs` ran two
+sections, `year-document-store.mjs` and `held-readers.mjs`; each plant made in the copy, the copy's file
+restored from the working tree after its run, and `diff -r` of the copy's `src/` against the tree empty
+after the round. **Unmutated control: `45 checks · 44 passed · 1 failed`**, and the one red is not this
+work order's: WO-3.46's writer-shape check reads `rev` 4 before the hold, after it and after the commit
+in a two-section run. The same two-section run of an untouched `git archive HEAD` reads `40 · 39 · 1`
+with the same red, so it is the trimmed run and not this tree; the full run below is green on it.
+
+| Mutation | Result (beyond the control's one red) |
+|---|---|
+| M1 · `openWork()` walks `categoryColumns()` — held rows reach `planned()` | **5 red**: Ada's (projection 52/92, H1 named), Bea's, the queue check, and WO-3.53's concern and `{{missing.list}}` checks |
+| M2 · `queueRows()` drops the `heldWork()` line | **1 red**: the queue check |
+| M3 · the card's `ungradedCount()` drops the `heldWork()` line | **1 red**: the queue check (card `2 to grade`) |
+| M4 · the held card built and never appended | **3 red**: Ada's, Bea's, and the commit check |
+| M5 · the sheet's `onHold` forced false | **1 red**: the grade-sheet check |
+| M6 · the queue panel drops the `· held` tail | **1 red**: the queue check |
+| M7 · `heldColumnsFor()` returns every column, held or not | **4 red**: the queue, Ada's, Bea's and the commit check |
+| M8 · the queue takes a held row in any state | **2 red**: the queue check and the commit check |
+
+**Full run on the delivered tree:** `1863 checks · 1863 passed · 0 failed · 0 skipped`, 59,453 lines,
+31.9 lines per check, 873s, exit 0, 2026-10-08 on the real clock. `node tools/wo-sweep.mjs` on the same tree: `49 checks · 46 passed · 0 failed ·
+3 to review`, exit 0, the three reviews the same three as before this work order (the past-due line
+numbers in two of them moved with the edits). Both commands re-run after the last edit to `src/`.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

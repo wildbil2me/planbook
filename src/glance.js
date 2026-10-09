@@ -13,8 +13,9 @@
     weekItems()        src/calendar.js's scheduledIn() — every authored event but a grades-due date
                        — and src/calendar-derived.js's due dates and term edges, today through six
                        days on                                            (WO-6.1 · WO-6.2 · WO-6.8)
-    queueRows()        src/grade-engine.js's openWork(), the `open` rows, one row per assignment —
-                       the engine behind the card's "N to grade"          (WO-3.26)
+    queueRows()        src/grade-engine.js's openWork() and heldWork(), the `open` rows, one row
+                       per assignment — the engine behind the card's "N to grade"
+                                                                          (WO-3.26 · WO-3.47)
     attentionHits()    src/signals.js's evaluate() through applyCooldown(), the `shown` half — the
                        engine behind the card's "N need you"              (WO-4.5)
     closingIn()        grades-due dates inside src/calendar.js's lead window, term edges inside it,
@@ -169,8 +170,10 @@
 import { getDoc } from './store.js';
 import { getActiveClasses, getOpenTermId } from './classes.js';
 /* The engine behind "N to grade" — src/home.js's own import, for its own reason: nothing here looks
-   at a cell, and what "not graded yet" means is decided once, over there. */
-import { openWork } from './grade-engine.js';
+   at a cell, and what "not graded yet" means is decided once, over there. heldWork() and its marker
+   joined at WO-3.47: nothing here asks whether a column is held either — the engine answers it on
+   the row, and HELD_COLUMN is a token constant that reads no document. */
+import { openWork, heldWork, HELD_COLUMN } from './grade-engine.js';
 /* The engine behind "N need you" and behind the quiet middle. Nothing here decides whether a rule
    fired, whether a hit is silenced, or who is on the third list. */
 import { evaluate, applyCooldown, quietMiddle } from './signals.js';
@@ -309,23 +312,36 @@ export function weekItems() {
   how many roster students the engine reported the assignment open for. That last number is the
   size of a list the engine handed back and nothing else; it is here so WO-6.8's panel can say "0 of
   24" without importing the engine, which its own Acceptance forbids. Ids only, never a name.
+
+  A HELD COLUMN WITH BLANKS IS WAITING TOO (WO-3.47, the owner's table of 2026-10-07), and this is
+  the reader most likely to get it wrong by symmetry: the readers WO-3.53 built all HIDE a held
+  column, and this one deliberately does not, because unfinished work is exactly what a queue is for.
+  Its rows come from the engine's heldWork() — never from a test of the assignment here — and carry
+  the engine's own `column` marker, forwarded as it came, so the panel can say *held*. The same
+  `open`-only rule applies to both sources: a held cell marked missing is a decision already made,
+  and a zero-point blank is not owed, exactly as on a live column. Live rows first, then held, per
+  class, so a document with no held column produces the array it always did. A commit moves a
+  column from the second source to the first, and the two are disjoint by construction in the
+  engine, so nothing is counted twice or dropped on the way.
 */
 export function queueRows() {
   const doc = getDoc();
   const rows = [];
   openTerms(doc).forEach(({ cls, termId }) => {
     const byAssignment = Object.create(null);
-    rosterIdsOf(cls, doc).forEach((studentId) => {
-      openWork(doc, cls, termId, studentId).forEach((row) => {
-        if (row.state !== 'open') return;
-        if (!byAssignment[row.id]) {
-          byAssignment[row.id] = { classId: cls.id, termId: termId, assignmentId: row.id,
-            categoryId: row.categoryId, points: row.points, open: 0 };
-          rows.push(byAssignment[row.id]);
-        }
-        byAssignment[row.id].open += 1;
-      });
-    });
+    const ids = rosterIdsOf(cls, doc);
+    const take = (row) => {
+      if (row.state !== 'open') return;
+      if (!byAssignment[row.id]) {
+        byAssignment[row.id] = { classId: cls.id, termId: termId, assignmentId: row.id,
+          categoryId: row.categoryId, points: row.points, open: 0 };
+        if (row.column) byAssignment[row.id].column = row.column;
+        rows.push(byAssignment[row.id]);
+      }
+      byAssignment[row.id].open += 1;
+    };
+    ids.forEach((studentId) => openWork(doc, cls, termId, studentId).forEach(take));
+    ids.forEach((studentId) => heldWork(doc, cls, termId, studentId).forEach(take));
   });
   return rows;
 }
@@ -563,6 +579,8 @@ const WEEK_TEXT_TAIL = '. Grades-due dates are under Closing in.';
 const QUEUE_TITLE = 'Waiting to be graded';
 const QUEUE_TEXT = 'Assignments in the open term with blanks in them. Each one opens on its own '
   + 'column in the score grid.';
+/* The tail a held column's queue row wears (WO-3.47). */
+const QUEUE_HELD = ' · held';
 const CLOSING_TITLE = 'Closing in';
 /* WHOSE LEAD TIME IT IS, said on the panel's head (the owner, 2026-09-16). The one window is the
    lead time the teacher set for GRADES on the events panel, and term edges and reviews ride it too;
@@ -719,7 +737,10 @@ function queuePanel(rows, classes, doc) {
     const cls = classes.filter((c) => c && c.id === row.classId)[0] || null;
     const cats = cls && Array.isArray(cls.categories) ? cls.categories : [];
     const cat = cats.filter((c) => c && c.id === row.categoryId)[0] || null;
-    const why = (cls ? cls.name : '') + (cat && cat.name ? ' · ' + cat.name : '');
+    /* A held column's row says so (WO-3.47), off the marker the engine put on the record — the
+       score grid's own word for the same column, so the row and the column head it opens agree. */
+    const why = (cls ? cls.name : '') + (cat && cat.name ? ' · ' + cat.name : '')
+      + (row.column === HELD_COLUMN ? QUEUE_HELD : '');
     const button = glRow((work && String(work.name || '').trim()) || UNTITLED_ASSIGNMENT, why,
       plural(row.open, 'blank', 'blanks'), false);
     button.setAttribute('data-scores-open', row.assignmentId);

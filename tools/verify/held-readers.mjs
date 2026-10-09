@@ -222,6 +222,7 @@ await evalJs(`(async function(){
   return 1; })()`);
 
 await heldWriters(h);
+await heldShown(h);
 }
 
 /* ═══════════════ WO-3.46 — holding a column, from the grid and the editor ═══════════════
@@ -801,4 +802,295 @@ await evalJs(`(async function(){
   return 1; })()`);
 await clickVisible('[data-view-home]');
 await sleep(200);
+}
+
+/* ═══════════════ WO-3.47 — the readers that SHOW a held column ═══════════════
+ *
+ * The other half of the owner's table of 2026-10-07. WO-3.53's block at the head of this file proves
+ * four readers HIDE a held column; these three deliberately do not, and the trap the work order names
+ * is getting them wrong by symmetry. The home card's `N to grade` and the glance queue COUNT a held
+ * column with blanks and the queue row says *held*; student detail LISTS its open work, marked held,
+ * and no projection counts it; the grade sheet and its CSV INCLUDE the column, marked held, and the
+ * grade beside it does not count it. Committing moves the column from heldWork() to openWork() and
+ * the count does not move until the blank is filled.
+ *
+ * THE FIXTURE. One weighted class, Essays 60 / Quizzes 40, one undated term, three students — Ada,
+ * Bea, Cy — planted through the store; the commit is the app's own writer, commitColumn().
+ *   L1  Essays   100   Ada 80 · Bea 70 · Cy blank           live, open for Cy
+ *   L2  Quizzes  100   Ada 90 · Bea 60 · Cy 75              live, graded
+ *   L3  Essays   100   all three blank                      live, open for three — the projection's work
+ *   H1  Essays   100   Ada blank · Bea MISSING · Cy 50      HELD — open for Ada, missing for Bea
+ *   H2  Quizzes    0   no cells                             HELD bonus — not owed, never counted
+ *
+ * HAND-WORKED. Held: the queue is L1 (1), L3 (3) and H1 (1, held) — `3 to grade`; H2 is bonus and
+ * Bea's H1 is a decision, so neither counts, exactly as on a live column. Ada's grade is
+ * 80 x .6 + 90 x .4 = 84.00%; her to-move floor (L3 at 0) is 80/200 = 40 -> 60.00% and her ceiling
+ * 180/200 = 90 -> 90.00%. Were H1 in the projection those would be 52.00% and 92.00%. Bea's grade is
+ * 70 x .6 + 60 x .4 = 66.00%; with H1 counted it would be 70/200 = 35 -> 45.00%. Committed: the queue is
+ * still three, H1 now unmarked, and Bea's grade is 45.00%. Ada's H1 filled with 70: `2 to grade`.
+ *
+ * It takes the class, its students, its work and their score columns back out at its foot, puts the
+ * open class back, closes the sheet if it is open, and leaves the page on the home view.
+ */
+async function heldShown(h) {
+const { check, skip, evalJs, clickSel } = h;
+
+console.log('\n--- the readers that show a held column (WO-3.47) ---');
+if (!(await evalJs("!!(window.planbook && window.planbook.store && window.planbook.classes"
+  + " && window.planbook.gradeEngine && window.planbook.glance && window.planbook.detail"
+  + " && window.planbook.gradesReport && window.planbook.heldColumn)"))) {
+  skip('the readers that show a held column (WO-3.47)', 'window.planbook is missing one of store, '
+    + 'classes, gradeEngine, glance, detail, gradesReport or heldColumn, so nothing can be planted or read');
+  return;
+}
+
+const CLS = 'c_wo347', TERM = 'tm_wo347', KE = 'k_wo347e', KQ = 'k_wo347q';
+const ADA = 's_wo347a', BEA = 's_wo347b', CY = 's_wo347c';
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const plant = await evalJs(`(async function(){
+  var s = window.planbook.store, c = window.planbook.classes;
+  if (!s.getDoc()) return { ok: false, why: 'no year document is open' };
+  var was = c.getSelectedClassId();
+  var a = function(id, cat, name, pts, hold){
+    var o = { id: id, classId: '${CLS}', termId: '${TERM}', categoryId: cat, name: name, points: pts,
+      assigned: '', due: '' };
+    if (hold) { o.held = true; o.heldAt = '2026-10-08T09:00:00-04:00'; }
+    return o; };
+  var work = [a('wo347-L1', '${KE}', 'Wo347 live essay', 100), a('wo347-L2', '${KQ}', 'Wo347 live quiz', 100),
+    a('wo347-L3', '${KE}', 'Wo347 open essay', 100), a('wo347-H1', '${KE}', 'Wo347 held essay', 100, true),
+    a('wo347-H2', '${KQ}', 'Wo347 held bonus', 0, true)];
+  var sc = {
+    'wo347-L1': { '${ADA}': { v: 80 }, '${BEA}': { v: 70 } },
+    'wo347-L2': { '${ADA}': { v: 90 }, '${BEA}': { v: 60 }, '${CY}': { v: 75 } },
+    'wo347-H1': { '${BEA}': { v: null, flag: 'missing' }, '${CY}': { v: 50 } } };
+  s.update(function(doc){
+    doc.classes.push({ id: '${CLS}', name: 'WO-3.47 Held shown', archived: false,
+      terms: [{ id: '${TERM}', label: 'WO-3.47 Term', start: '', end: '' }],
+      categories: [{ id: '${KE}', name: 'Essays', weight: 60 }, { id: '${KQ}', name: 'Quizzes', weight: 40 }],
+      roster: ['${ADA}', '${BEA}', '${CY}'] });
+    [['${ADA}', 'Ada'], ['${BEA}', 'Bea'], ['${CY}', 'Cy']].forEach(function(p){
+      doc.students.push({ id: p[0], first: p[1], last: 'Wo347' }); });
+    work.forEach(function(w){ doc.assignments.push(w); });
+    if (!doc.scores) doc.scores = {};
+    Object.keys(sc).forEach(function(id){ doc.scores[id] = sc[id]; });
+  });
+  await s.flush();
+  c.selectClass('${CLS}');
+  c.refreshClassBar();
+  var d = s.getDoc();
+  return { ok: true, was: was, open: c.getSelectedClassId(), term: c.getOpenTermId('${CLS}'),
+    holding: d.assignments.filter(function(x){ return x.classId === '${CLS}'
+      && window.planbook.gradeEngine.isHeld(x); }).length }; })()`);
+
+if (!plant || !plant.ok || plant.open !== CLS || plant.term !== TERM || plant.holding !== 2) {
+  check('WO-3.47: the fixture is real — one weighted class, two of five columns held, open on screen',
+    false, JSON.stringify(plant));
+  return;
+}
+
+/* The home page redrawn the way a teacher gets it redrawn — by arriving. A store write repaints
+   nothing on its own (glance-quiet.mjs's rehome67() says so), so every reading walks off the grid
+   onto the calendar and back. */
+const onView = () => evalJs("(function(){var e=document.querySelector('main > :not(.hidden)');return e?e.id:'';})()");
+async function goHome() {
+  if ((await onView()) === 'homeView') return;
+  const nth = await evalJs(`(function(){
+    var all = document.querySelectorAll('[data-view-home]');
+    for (var i = 0; i < all.length; i++) {
+      var r = all[i].getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) return i;
+    }
+    return -1; })()`);
+  if (nth < 0) throw new Error('no visible [data-view-home] on this screen');
+  await clickSel('[data-view-home]', nth);
+  await sleep(250);
+}
+async function rehome() {
+  if ((await onView()) === 'homeView') {
+    await clickSel('#homeView [data-calendar-open]');
+    await sleep(200);
+  }
+  await goHome();
+}
+
+/* The card's chip, the reader's rows for this class, and the queue panel's rows for them. */
+const homeRead = async () => {
+  await rehome();
+  return evalJs(`(function(){
+    var card = document.querySelector('#homeGrid [data-class-tab="${CLS}"]');
+    var chips = card ? Array.prototype.map.call(card.querySelectorAll('.class-card-signals .class-card-count'),
+      function(n){ return n.textContent; }) : null;
+    var rows = window.planbook.glance.queueRows().filter(function(r){ return r.classId === '${CLS}'; })
+      .map(function(r){ return r.assignmentId + ':' + r.open + (r.column ? ':' + r.column : ''); });
+    var panel = document.querySelector('#homeView [data-glance-panel="queue"]');
+    var drawn = {};
+    if (panel) Array.prototype.forEach.call(panel.querySelectorAll('[data-scores-class="${CLS}"]'), function(b){
+      drawn[b.getAttribute('data-scores-open')] = (b.querySelector('.gl-row-why') || {}).textContent || ''; });
+    return { view: (document.querySelector('main > :not(.hidden)') || {}).id || '',
+      chip: (chips || []).filter(function(t){ return / to grade$/.test(t); })[0] || '',
+      rows: rows, drawn: drawn }; })()`);
+};
+
+const heldHome = await homeRead();
+check('WO-3.47: the home card says `3 to grade` and the glance queue holds three rows for the class, '
+  + 'live rows first — L3 (3 blanks), L1 (1 blank) — then the HELD column H1 (1 blank), whose engine row carries `column: '
+  + '\'held\'` and whose drawn row reads `· held` where the live rows do not; the held zero-point column '
+  + 'and the held cell marked missing are counted by neither, exactly as on a live column',
+  heldHome.view === 'homeView' && heldHome.chip === '3 to grade'
+    && JSON.stringify(heldHome.rows) === JSON.stringify(['wo347-L3:3', 'wo347-L1:1', 'wo347-H1:1:held'])
+    && / · held$/.test(heldHome.drawn['wo347-H1'] || '')
+    && Object.keys(heldHome.drawn).length === 3
+    && !/held/.test(heldHome.drawn['wo347-L1'] || 'held') && !/held/.test(heldHome.drawn['wo347-L3'] || 'held'),
+  JSON.stringify(heldHome));
+
+/* One student's detail: the screen as drawn, the held card's rows, the model, the file, and the
+   engine's own projection figures for the same student. */
+const detailRead = (id) => evalJs(`(function(){
+  var p = window.planbook, d = p.store.getDoc();
+  var cls = d.classes.filter(function(x){ return x.id === '${CLS}'; })[0];
+  p.detail.openDetail(${JSON.stringify(id)});
+  p.detail.renderDetail();
+  var v = document.getElementById('detailContent');
+  var card = v ? v.querySelector('[data-detail-held]') : null;
+  var m = p.detail.detailModel();
+  var pc = function(plan){ var g = p.gradeEngine.projectedClassGrade(d, cls, '${TERM}', ${JSON.stringify(id)}, plan);
+    return g.percentage === null ? null : g.percentage.toFixed(2); };
+  var cards = v ? Array.prototype.map.call(v.querySelectorAll('.detail-card'), function(c){
+    return (c.querySelector('.detail-card-title') || {}).textContent || ''; }) : [];
+  var missing = v ? Array.prototype.filter.call(v.querySelectorAll('.detail-card'), function(c){
+    return /^Missing work/.test((c.querySelector('.detail-card-title') || {}).textContent || ''); })[0] : null;
+  return {
+    sub: v ? ((v.querySelector('.detail-hero-sub') || {}).textContent || '') : '',
+    big: v ? ((v.querySelector('.detail-grade-big') || {}).textContent || '') : '',
+    move: v ? ((v.querySelector('.detail-move') || {}).textContent || '') : '',
+    missing: missing ? missing.textContent : '',
+    cards: cards,
+    rows: card ? Array.prototype.map.call(card.querySelectorAll('.detail-missing-row'), function(r){
+      return [(r.querySelector('.detail-missing-name') || {}).textContent || '',
+        (r.querySelector('.detail-held-state') || {}).textContent || '',
+        (r.querySelector('.detail-held-mark') || {}).textContent || ''].join('|'); }) : null,
+    work: m ? m.work.map(function(w){ return w.name + ':' + w.state; }) : null,
+    onHold: m ? m.onHold.map(function(w){ return w.name + ':' + w.state; }) : null,
+    csv: m ? p.detail.studentCsv(m).text : '',
+    floor: pc({ outstanding: 0 }), ceiling: pc({ outstanding: 1 }), handedIn: pc({ missing: 1 }),
+    grade: (function(){ var g = p.gradeEngine.classGrade(d, cls, '${TERM}', ${JSON.stringify(id)});
+      return g.percentage === null ? null : g.percentage.toFixed(2); })() }; })()`);
+
+const ada = await detailRead(ADA);
+const bea = await detailRead(BEA);
+check('WO-3.47: Ada\'s detail lists the held column\'s open work on a card of its own, `Held out of the '
+  + 'grade`, marked `Held` — H1 not graded yet and H2 bonus — and the hero says `· 2 held`; her '
+  + 'grade is 84.00% and the to-move card\'s figures are 60.00% and 90.00%, the engine\'s projection '
+  + 'over L3 alone (52.00% and 92.00% had H1 been projected), naming one piece and not the held one',
+  ada.big === '84.00%' && ada.grade === '84.00' && /· 2 held$/.test(ada.sub)
+    && JSON.stringify(ada.rows) === JSON.stringify(['Wo347 held essay|not graded yet|Held',
+      'Wo347 held bonus|bonus, not graded yet|Held'])
+    && ada.cards.indexOf('Held out of the grade · 2 pieces') >= 0
+    && ada.floor === '60.00' && ada.ceiling === '90.00'
+    && ada.move.indexOf('60.00%') >= 0 && ada.move.indexOf('90.00%') >= 0
+    && /1 piece of work is still outstanding/.test(ada.move) && ada.move.indexOf('Wo347 held') < 0
+    && JSON.stringify(ada.work) === JSON.stringify(['Wo347 open essay:open'])
+    && JSON.stringify(ada.onHold) === JSON.stringify(['Wo347 held essay:open', 'Wo347 held bonus:bonus']),
+  JSON.stringify({ sub: ada.sub, big: ada.big, rows: ada.rows, cards: ada.cards, floor: ada.floor,
+    ceiling: ada.ceiling, work: ada.work, onHold: ada.onHold, move: ada.move.slice(0, 260) }));
+
+check('WO-3.47: Bea\'s held MISSING mark is on the held card (`marked missing`, `Held`) and not on the '
+  + 'missing card, which says nothing is marked missing; her grade is 66.00% (45.00% had it counted) and '
+  + 'no "handed in" projection is offered; her CSV\'s Work section carries the held rows with State '
+  + '`held — marked missing` and `held — bonus, not graded yet` under her one live row',
+  bea.big === '66.00%' && bea.grade === '66.00' && bea.handedIn === '66.00'
+    && JSON.stringify(bea.rows) === JSON.stringify(['Wo347 held essay|marked missing|Held',
+      'Wo347 held bonus|bonus, not graded yet|Held'])
+    && /Nothing is marked missing\./.test(bea.missing) && bea.missing.indexOf('Wo347 held') < 0
+    && bea.move.indexOf('Separately') < 0
+    && bea.csv.indexOf('\r\nWo347 open essay,Essays,100,outstanding\r\n'
+      + 'Wo347 held essay,Essays,100,held — marked missing\r\n'
+      + 'Wo347 held bonus,Quizzes,0,"held — bonus, not graded yet"\r\n') >= 0,
+  JSON.stringify({ big: bea.big, handedIn: bea.handedIn, rows: bea.rows, missing: bea.missing.slice(0, 80),
+    work: (bea.csv.match(/Work,Category[\s\S]*?\r\n\r\n/) || [''])[0] }));
+
+/* The grade sheet: its record, the dialog as drawn, and the file. */
+const sheet = await evalJs(`(function(){
+  var p = window.planbook;
+  var rec = p.gradesReport.gradesRecord();
+  p.gradesReport.openGrades(null);
+  var heads = {};
+  Array.prototype.forEach.call(document.querySelectorAll('#gradesRecordModal .grades-report-col'), function(th){
+    var n = (th.querySelector('.grades-report-col-name') || {}).textContent || '';
+    heads[n] = (th.querySelector('.grades-report-col-held') || {}).textContent || ''; });
+  var key = Array.prototype.map.call(document.querySelectorAll('#gradesRecordModal .grades-report-key-item b'),
+    function(b){ return b.textContent; });
+  var rows = {};
+  Array.prototype.forEach.call(document.querySelectorAll('#gradesRecordModal .grades-report-grid tbody tr'), function(tr){
+    rows[(tr.querySelector('th') || {}).textContent || ''] = (tr.querySelector('.grades-report-pct') || {}).textContent || ''; });
+  p.closeModal('gradesRecordModal');
+  return { heads: heads, key: key, rows: rows, csv: p.gradesReport.gradesCsv(rec).text }; })()`);
+/* The file's three lines this check reads, cut out here in Node rather than inside the page, so that
+   a `\r\n` in a pattern is a regex escape and not two characters spliced into the page's source. */
+sheet.grid = (sheet.csv.match(/Student,[^\r\n]*/) || [''])[0];
+sheet.bea = (sheet.csv.match(/"Wo347, Bea"[^\r\n]*/) || [''])[0];
+sheet.colKey = (sheet.csv.match(/Assignment,Category,Due,Out of\r\n[\s\S]*?\r\n\r\n/) || [''])[0];
+delete sheet.csv;
+check('WO-3.47: the grade sheet includes both held columns, each head carrying a `held` line where the '
+  + 'live heads carry none, with a fifth key entry; the CSV\'s header cell and its column key read '
+  + '`Wo347 held essay (held)`; and the grade beside them is the engine\'s — Bea 66.00% on paper and in '
+  + 'the file, her held `M` printed and not counted',
+  sheet.heads['Wo347 held essay'] === 'held' && sheet.heads['Wo347 held bonus'] === 'held'
+    && sheet.heads['Wo347 live essay'] === '' && sheet.heads['Wo347 live quiz'] === ''
+    && sheet.heads['Wo347 open essay'] === '' && Object.keys(sheet.heads).length === 5
+    && sheet.key.indexOf('held') === 4 && sheet.key.length === 5
+    && sheet.grid.indexOf(',Wo347 held essay (held),') >= 0 && sheet.grid.indexOf(',Wo347 held bonus (held),') >= 0
+    && sheet.grid.indexOf(',Wo347 live essay,') >= 0
+    && sheet.colKey.indexOf('\r\nWo347 held essay (held),Essays,,100\r\n') >= 0
+    && sheet.colKey.indexOf('\r\nWo347 live essay,Essays,,100\r\n') >= 0
+    && sheet.rows['Wo347, Bea'] === '66.00%' && /,66\.00%,/.test(sheet.bea) && /,M,/.test(sheet.bea),
+  JSON.stringify(sheet));
+
+/* COMMIT H1 through the app's own writer, then fill Ada's blank. */
+const committed = await evalJs(`(async function(){
+  var wrote = window.planbook.heldColumn.commitColumn('wo347-H1');
+  await window.planbook.store.flush();
+  return wrote; })()`);
+const liveHome = await homeRead();
+const beaLive = await detailRead(BEA);
+await evalJs(`(async function(){
+  var s = window.planbook.store;
+  s.update(function(doc){ doc.scores['wo347-H1']['${ADA}'] = { v: 70 }; });
+  await s.flush();
+  return 1; })()`);
+const filledHome = await homeRead();
+check('WO-3.47: committing H1 through commitColumn() leaves the card at `3 to grade` and the queue at '
+  + 'the same three rows — H1 now unmarked and drawn without `held`, counted once — and moves Bea\'s '
+  + 'missing mark into her grade (45.00%) and onto the missing card; filling Ada\'s blank in H1 then '
+  + 'takes the card to `2 to grade` and H1 off the queue',
+  !!committed && liveHome.chip === '3 to grade'
+    && JSON.stringify(liveHome.rows.slice().sort()) === JSON.stringify(['wo347-H1:1', 'wo347-L1:1', 'wo347-L3:3'])
+    && !/held/.test(liveHome.drawn['wo347-H1'] || 'held')
+    && beaLive.grade === '45.00' && beaLive.missing.indexOf('Wo347 held essay') >= 0
+    && JSON.stringify(beaLive.rows) === JSON.stringify(['Wo347 held bonus|bonus, not graded yet|Held'])
+    && filledHome.chip === '2 to grade'
+    && JSON.stringify(filledHome.rows.slice().sort()) === JSON.stringify(['wo347-L1:1', 'wo347-L3:3']),
+  JSON.stringify({ committed: committed, live: liveHome, beaGrade: beaLive.grade, beaRows: beaLive.rows,
+    filled: filledHome }));
+
+/* THE FIXTURE COMES BACK OUT, in one update, for the reason the two teardowns above give. */
+await evalJs(`(async function(){
+  var s = window.planbook.store, c = window.planbook.classes;
+  if (!document.getElementById('gradesRecordModal').classList.contains('hidden')) {
+    window.planbook.closeModal('gradesRecordModal'); }
+  s.update(function(doc){
+    doc.classes = doc.classes.filter(function(x){ return x.id !== '${CLS}'; });
+    doc.students = doc.students.filter(function(x){ return String(x.id).indexOf('s_wo347') !== 0; });
+    doc.assignments = doc.assignments.filter(function(a){ return a.classId !== '${CLS}'; });
+    Object.keys(doc.scores || {}).forEach(function(k){
+      if (String(k).indexOf('wo347-') === 0) delete doc.scores[k]; });
+  });
+  window.planbook.detail.openDetail('');
+  var was = ${JSON.stringify(plant.was || '')};
+  if (was) c.selectClass(was);
+  c.refreshClassBar();
+  await s.flush();
+  return 1; })()`);
+await goHome();
 }
