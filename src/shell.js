@@ -200,6 +200,10 @@
                                       assignment under the term its due date is in, scores and all,
                                       and closes it and the editor behind it
       data-assignment-move-keep       its Keep it in <term>: closes both, having written nothing
+      data-assignment-hold="<id>"     the editor's "Hold out of the grade" box (WO-3.46): opens the
+                                      hold confirm over the editor on the tap — never at the close —
+                                      except on a column the open create flow has only just written
+                                      with nothing entered, which it holds or commits on the tap
       data-assignment-copy-class="<id>"  the tick on one class's line of the copy dialog (WO-3.48, a
                                       line since WO-3.49); a tick matches that class's category BY
                                       NAME, never by carrying an id across, and starts both dates on
@@ -276,6 +280,12 @@
                                       category's assignment columns are built, with its average
                                       as a third frozen column; an empty value is All. Remembered
                                       nowhere, and back to All on every arrival
+      data-score-hold="<id>"          Hold or Commit on a score-grid column head (WO-3.46): opens the
+                                      confirm naming every grade the flip would move, which writes
+                                      nothing until its button. The direction is the column's state
+      data-hold-confirm               that confirm's Hold it / Commit it: one update() flips the
+                                      column and touches no score, and the screens behind it redraw
+      data-hold-cancel                its other button: closes it, having written nothing
       data-past-due                   not a control: the empty host each screen carries for the
                                       past-due prompt, painted by src/past-due.js. Two of them, on
                                       the score grid and on the assignment list
@@ -916,6 +926,12 @@ import * as accommodationPrompt from './accommodation-prompt.js';
    draws a grade. It imports src/grade-engine.js and nothing in it computes one; the chains below are
    what make "live" true from more than one direction. */
 import * as scores from './scores.js';
+/* WO-3.46. Holding a score column out of the grade and committing it back: the two writers, the
+   preview and the confirm. Imported here for the grid's Hold / Commit control and the confirm's two
+   buttons; src/assignments.js imports it too, for the editor's checkbox. It paints only its own
+   dialog and answers whether it wrote, so the repaint of whatever stands behind it is chained here,
+   as every other "what has to be redrawn now" answer in this file is. */
+import * as heldColumn from './held-column.js';
 /* WO-3.6's past-due prompt — the banner both of those two screens wear, and the one module in this
    app that reads a due date and offers to act on it. It is imported here for one hook only: accept
    writes score cells, and the screen standing under the banner has to be redrawn afterwards. That
@@ -1386,6 +1402,24 @@ function afterLetterScaleChange() {
 function editorFollows() {
   const view = views.currentView();
   return view === 'assignments' || view === 'scores';
+}
+
+/*
+  A COLUMN WAS HELD OR COMMITTED (WO-3.46), from the grid's control or the editor's box. Every grade
+  in the class can have moved, so the chain is afterAssignmentChange()'s — the grid, the detail and the
+  calendar — plus the assignment list, whose past-due banner stops or starts asking about the column
+  (WO-3.53), and the editor's box when the editor is the dialog the confirm sat over. The grid is
+  rebuilt under the confirm, so the control it would hand focus back to is gone; its replacement
+  takes the focus instead. `assignmentId` is '' when the write came from the editor, whose box was
+  repainted in place and still has it.
+*/
+function afterHoldWrote(assignmentId) {
+  afterAssignmentChange();
+  if (views.currentView() === 'assignments') assignments.renderAssignments();
+  assignments.paintEditorHold();
+  if (assignmentId && views.currentView() === 'scores' && !anyModalOpen()) {
+    scores.focusColumnHold(assignmentId);
+  }
 }
 
 function afterEditorSettled(result) {
@@ -2942,6 +2976,15 @@ document.addEventListener('click', (e) => {
     afterEditorSettled(assignments.confirmEditorMove()); return;
   }
   if (e.target.closest('[data-assignment-move-keep]')) { assignments.keepEditorTerm(); return; }
+  /* THE EDITOR'S HOLD BOX (WO-3.46). The tap opens the hold confirm over the editor at once — never
+     at the close, where WO-3.50's scored-move confirm lives — except on a column this create flow has
+     only just written, which nothing can move and which is written on the tap (src/assignments.js
+     says why). Only that write chains a repaint; the confirm's own buttons chain theirs below. */
+  const holdTick = e.target.closest('[data-assignment-hold]');
+  if (holdTick) {
+    if (assignments.tapEditorHold(holdTick).wrote) afterHoldWrote('');
+    return;
+  }
   const copyClass = e.target.closest('[data-assignment-copy-class]');
   if (copyClass) {
     assignments.setCopyClass(copyClass.getAttribute('data-assignment-copy-class')); return;
@@ -2998,6 +3041,19 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-score-note-done]')) { scores.closeScoreNote(); return; }
   if (e.target.closest('[data-score-note-remove]')) { scores.removeScoreNote(); return; }
   if (e.target.closest('[data-scores-keys]')) { scores.toggleScoreKeys(); return; }
+  /* WO-3.46's Hold / Commit on a column head, and the confirm both it and the editor's box open. The
+     control opens the confirm and writes nothing; Hold it / Commit it writes, and is the one hook in
+     this block that chains a repaint, because a column that stops counting moves every grade beside
+     it. The other button writes nothing and chains nothing — its ✕, Escape and backdrop are
+     src/modal.js's and the same. */
+  const scoreHold = e.target.closest('[data-score-hold]');
+  if (scoreHold) { heldColumn.openHoldConfirm(scoreHold.getAttribute('data-score-hold'), scoreHold); return; }
+  if (e.target.closest('[data-hold-confirm]')) {
+    const held = heldColumn.confirmHold();
+    if (held.wrote) afterHoldWrote(held.assignmentId);
+    return;
+  }
+  if (e.target.closest('[data-hold-cancel]')) { heldColumn.cancelHold(); return; }
   /* WO-3.28's category pills — a lens on which COLUMNS are drawn, writing nothing, remembered
      nowhere and chaining nothing, for the reasons the two hooks above chain nothing. */
   const scoreCategory = e.target.closest('[data-scores-category]');
@@ -4729,6 +4785,12 @@ window.planbook = {
      through the real field and then reads `scores` off the document to tell the two apart. Nothing in
      the app reads window.planbook — see the block above for why the seam outlived the shelf. */
   scores,
+  /* `heldColumn` joined at WO-3.46, for the reading reason `gradingMode` gives: every control it has
+     is a button a teacher can touch, and tools/verify-shell.mjs touches them. What no click can show
+     is that the confirm's names and figures are the engine's — holdPreview() is the whole dialog as
+     data, read beside classGrade() asked directly after the write. Nothing in the app reads
+     window.planbook — see the block above for why the seam outlived the shelf. */
+  heldColumn,
   /* `detail` joined at WO-3.7, and its reason is src/backup.js's and src/attendance-report.js's
      rather than the reading reason `classes` gives: a page cannot be handed a real file by a script
      and no harness can open a print dialog or read what came out of a spreadsheet. detailModel() and

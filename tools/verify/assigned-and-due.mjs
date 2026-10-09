@@ -395,6 +395,19 @@ console.log('\n--- the Assigned and Due fields (WO-3.17) ---');
         JSON.stringify(geoEmpty.boxes && geoEmpty.boxes.map((b) => b.field + ': appearance '
           + b.appearance + ', -webkit-appearance ' + b.webkit)));
 
+      /* WO-3.46's box, in the same dialog at the same width and pointer: the editor's fourth row,
+         added in the same pass as its coarse rule. Measured, never tapped — a tap here would write. */
+      const holdTick = await evalJs(`(function(){
+        var t = document.querySelector('#assignmentModal [data-assignment-hold]');
+        if (!t) return null; var r = t.getBoundingClientRect();
+        var p = document.querySelector('#assignmentModal .modal-panel').getBoundingClientRect();
+        return { w: Math.round(r.width * 100) / 100, h: Math.round(r.height * 100) / 100,
+          checked: t.getAttribute('aria-checked'), inside: r.left >= p.left && r.right <= p.right }; })()`);
+      check('WO-3.46: the editor\'s "Hold out of the grade" box measures >=44px both ways at 390px on a coarse pointer, inside the panel, and is unticked on a new assignment',
+        coarseNarrow === true && !!holdTick && holdTick.h >= 44 && holdTick.w >= 44 && holdTick.inside
+          && holdTick.checked === 'false',
+        JSON.stringify(holdTick));
+
       /*
         The fixture comes back out — the class and both assignments — and the class that was open
         before this block is put back under it. One update rather than the real Delete confirm, for

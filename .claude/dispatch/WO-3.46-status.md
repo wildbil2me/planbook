@@ -1,0 +1,9 @@
+- 2026-10-08T22:39:11Z gates PASS (deps WO-3.52, WO-3.53 DONE; tree clean)
+- 2026-10-08T22:39:11Z route Claude Opus — new grid controls + confirm dialog (UI, teacher prose), judgment traps (no second engine, no stacked dialogs at editor close, § 30 exception kept to one file). Runner-up: writer is mechanical, but UI/traps put it in Claude column on merits; no Codex probe needed.
+- 2026-10-08T22:39:12Z claimed: --start ran
+- 2026-10-08T22:39:36Z brief written: .claude/dispatch/WO-3.46-brief.md (markers filled)
+- 2026-10-08T22:39:36Z implementer spawned at Opus with .claude/dispatch/WO-3.46-brief.md, awaiting return (expect 20-40 min; a flat trail for the first 20 is normal)
+- 2026-10-08T23:41:22Z implementer returned: 9/10 ticked (👤 open), claims verify-shell 1858/1858 and sweep 46/0/3 green; new src/held-column.js; preview lives in writer file; § 30 exception narrowed to the two write shapes; untested gap: heldAt misspelling in acceptPastDue uncatchable
+- 2026-10-08T23:41:22Z handoff written (🔍 AWAITING VERDICT); verifier owed in a fresh session
+- 2026-10-09T00:02:23Z fresh session: row 🔍 AWAITING VERDICT, handoff clean; grep MUTATION run; spawning verifier at Opus as FIRST pass
+- 2026-10-09T00:22:39Z verifier returned: PASS WITH MANUAL CHECKS — 9/9 agent lines confirmed (verify-shell 1858/1858, sweep 46/0/3 re-run), 👤 iPad line open; mutation V3 (creatingId guard) survived = fixture gap, not defect; tree byte-identical

@@ -137,7 +137,13 @@ import { categoriesOf, formatWeight } from './categories.js';
    points most of that was false: uncategorized work counts there, an empty category has no weight
    to share, and no weight is part of the grade. src/grade-engine.js imports src/categories.js and nothing
    that reaches back here, so this closes no loop. */
-import { gradingModeOf } from './grade-engine.js';
+import { gradingModeOf, isHeld } from './grade-engine.js';
+/* HOLDING A COLUMN OUT OF THE GRADE (WO-3.46). The editor's checkbox asks isHeld() above for its
+   state — never the key — and hands every change to that module: the confirm that shows which grades
+   move, and the two writers. This file writes no `held`, `heldAt` or `committedAt` of its own, which
+   is what tools/wo-sweep.mjs § 30 holds it to. That module imports src/scores.js and nothing that
+   reaches back here, so no loop closes. */
+import { holdColumn, commitColumn, openHoldConfirm } from './held-column.js';
 /* What today is, and this is the ONE thing in this file that reads a clock. Imported rather than
    re-derived for the reason src/home.js imports the same function: two answers to "what day is it"
    is how a screen and a record end up disagreeing about a date, and src/attendance.js's todayISO()
@@ -962,6 +968,93 @@ export function refreshAccommodationPrompt() {
   paintEditorSupports();
 }
 
+/*
+  HOLD OUT OF THE GRADE (WO-3.46, the owner's ruling 4): A NEW COLUMN IS LIVE, so the box is
+  unticked on every assignment createAssignment() writes and on every assignment from every earlier
+  build, and nothing a teacher does today changes unless she ticks it.
+
+  A CHECKBOX IN MEANING AND A BUTTON IN MARKUP — `role="checkbox"` with `aria-checked`, the copy
+  dialog's tick for its look. Not `<input type="checkbox">`, which src/shell.css's `.toggle-btn`
+  note refuses for this app: 16px of target that no padding makes bigger. The role is the honest
+  name for what it is, so a screen reader says "checkbox, not checked" rather than "toggle button".
+
+  ITS CONFIRM OPENS ON THE TAP, NEVER AT THE CLOSE (the work order's Traps). The editor already has a
+  confirm at the close — WO-3.50's scored move, settleEditor() — and a teacher who moves a due date
+  and ticks the hold must never be shown two dialogs stacked at Done. So the tap opens
+  src/held-column.js's confirm over this dialog at once, the same confirm the grid's Hold / Commit
+  opens, and the box changes only when that confirm has written. Declining leaves it as it was.
+
+  ONE EXCEPTION, and it is ruling 3's own premise rather than a way round it: a column this create
+  flow has only just written, with nothing entered on it, cannot move a grade — the confirm's whole
+  content would be "no student's grade changes" — so the tap writes there and then. The moment a
+  score is on it, or it is any other column, the tap goes through the confirm.
+*/
+function holdField(assignment) {
+  const wrap = document.createElement('div');
+  wrap.className = 'assign-hold';
+  const held = isHeld(assignment);
+  const tick = document.createElement('button');
+  tick.type = 'button';
+  tick.className = 'assign-hold-tick';
+  tick.setAttribute('role', 'checkbox');
+  tick.setAttribute('aria-checked', held ? 'true' : 'false');
+  tick.setAttribute('data-assignment-hold', assignment.id);
+  tick.setAttribute('aria-describedby', 'assignmentHoldNote');
+  const box = document.createElement('span');
+  box.className = 'assign-hold-box';
+  box.setAttribute('aria-hidden', 'true');
+  box.textContent = held ? '✓' : '';
+  tick.append(box);
+  const label = document.createElement('span');
+  label.textContent = 'Hold out of the grade';
+  tick.append(label);
+  wrap.append(tick);
+  const note = document.createElement('span');
+  note.className = 'assign-field-note';
+  note.id = 'assignmentHoldNote';
+  note.textContent = 'A held column takes scores, flags and notes and counts toward nothing until '
+    + 'you commit it — here, or with Commit on its column in the score grid.';
+  wrap.append(note);
+  return wrap;
+}
+
+/* The box redrawn in place after the confirm has written — never the whole field set, for the
+   reason editAssignmentField() gives: replacing the controls would take the focus the confirm has
+   just handed back to this box. Nothing when the editor is shut. */
+export function paintEditorHold() {
+  if (!editorIsOpen()) return;
+  const assignment = findAssignment(editingId);
+  const box = document.getElementById(EDITOR_FIELDS_ID);
+  const tick = box && box.querySelector('[data-assignment-hold]');
+  if (!assignment || !tick) return;
+  const held = isHeld(assignment);
+  tick.setAttribute('aria-checked', held ? 'true' : 'false');
+  const glyph = tick.querySelector('.assign-hold-box');
+  if (glyph) glyph.textContent = held ? '✓' : '';
+}
+
+/* The tap. `{ wrote }` so src/shell.js can repaint the screens behind the dialog when the create
+   flow's exception wrote; otherwise the confirm is up and has written nothing yet. */
+export function tapEditorHold(tick) {
+  const id = tick ? tick.getAttribute('data-assignment-hold') : '';
+  const assignment = id ? findAssignment(id) : null;
+  const cls = assignment ? findClass(assignment.classId) : null;
+  if (!assignment || !cls || id !== editingId) return { wrote: false };
+  if (id === creatingId && enteredCount(assignment, cls) === 0) {
+    const toHeld = !isHeld(assignment);
+    const wrote = toHeld ? holdColumn(id) : commitColumn(id);
+    paintEditorHold();
+    if (wrote) {
+      announce(toHeld
+        ? 'This assignment will be held out of the grade until you commit it.'
+        : 'This assignment counts toward the grade.');
+    }
+    return { wrote };
+  }
+  openHoldConfirm(id, tick);
+  return { wrote: false };
+}
+
 function renderEditorFields() {
   const box = document.getElementById(EDITOR_FIELDS_ID);
   const title = document.getElementById(EDITOR_TITLE_ID);
@@ -1015,6 +1108,8 @@ function renderEditorFields() {
   third.append(dateField(assignment, 'assigned'));
   third.append(dateField(assignment, 'due'));
   box.append(third);
+
+  box.append(holdField(assignment));
 
   /* Last, and outside `box`, because the prompt is about the fields rather than one of them — it
      lives in its own host in index.html, under this panel and above the two hints. Painted from

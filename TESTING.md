@@ -11320,6 +11320,128 @@ file restored, and `diff -r` of the copy's `src/` against the tree empty afterwa
 moved.)* `node tools/wo-sweep.mjs` on the final tree: `49 checks · 46 passed · 0 failed · 3 to review`,
 exit 0, the three reviews the same three as before this work order.
 
+### WO-3.46 — a score column can be held out of the grade until it is committed
+
+**What this changes.** Holding becomes possible. Every score-grid column head carries a last line:
+*Hold* on a live column, or an indigo *Held* mark and *Commit* on a held one, the head washed
+`#eef2ff`, and "held out of the grade" in every cell's accessible name. The assignment editor gains a
+fourth row, *Hold out of the grade*, a `role="checkbox"` button that starts unticked. Both open one
+confirm, `#holdModal`, filled by a new module, `src/held-column.js`, which also holds the only two
+writers. § 30 names that file as the one place outside the engine that may write `held`, by shape, and
+now also refuses `held` named in a destructured parameter. `CACHE` is `planbook-shell-v172`; the new
+module is on `SHELL`.
+
+**The head is taller, and that is a cost to read on the iPad.** The hold line adds 29px to a head on a
+fine pointer (91 → 120) and 48px on a coarse one (98 → 146), measured in headless Edge. The stuck
+head's `scroll-padding-top` moved with it, 96 → 126 and 104 → 152: WO-3.27's driven Enter checks went
+red on all four of their arms with the old figures on the first run, which is what they were written to
+catch. On a portrait iPad that is a row of scores fewer above the fold.
+
+**Decisions the work order did not settle.**
+- *Where the preview lives:* in the writer's file. `withColumnFlipped()` in `src/held-column.js` builds
+  the shallow clone (`Object.assign({}, a, { held: true })`, or a copy with `delete copy.held`), and
+  `classGrade()` is asked on the document and on the clone. A helper in the engine was the other
+  option and was declined: flipping the key on a copy is a write of the key, and the engine's job is
+  reading it. No widening of § 30 was needed for it — the `delete` is a write shape, and the literal is
+  not a member read.
+- *The writer exception is by shape, not by file:* only `.held = true` and `delete ….held`, so the
+  writer's own file still cannot read the key. The work order asked for "the writer's file as an
+  exception"; this is narrower, and the stale-exception rule still applies (no write found → FAIL).
+- *A just-created column writes on the tap, with no confirm:* the editor's box in a create flow, on a
+  column with nothing entered, holds or commits directly. Ruling 3's confirm "shows what moves" and
+  nothing can; the deliverable's "changing it on an existing column goes through the same confirm"
+  draws the same line. The moment a score is on it, the tap goes through the confirm.
+- *A no-op flip is refused rather than written:* `holdColumn()` on a held column and `commitColumn()` on
+  a live one write nothing, so `rev` never moves for nothing. The confirm also re-checks the column's
+  state at Yes, so a stale question writes nothing.
+- *Names and figures:* the grid's — `rosterName()` and `formatPercent()` with the letter — so the
+  confirm can be read straight down against the grid behind it.
+
+- [x] Holding writes `held: true` and `heldAt` and nothing else, committing deletes `held`, stamps
+      `committedAt`, keeps `heldAt`, and touches no cell; `rev` +1 each, `flush()` awaited.
+- [x] Weighted class (E2: Alpha 60, Bravo missing, Charlie excused, Delta no cell): the confirm names
+      Alpha and Bravo only, and the write moves exactly those two to the figures named, both ways.
+      Points class (PB): Papa only, 130/170 → 90/120, both ways.
+- [x] An empty column's confirm: *No student’s grade in WO-3.46 Term changes — holding it moves nothing
+      yet.* Declining a hold (Keep) and a commit (Escape) leaves the document byte-identical.
+- [x] A new assignment's editor shows the box unticked, `role="checkbox"`, no `held` key. On an existing
+      column the box opens the confirm with the same title, label, button and lines as the grid's;
+      declining leaves the document byte-identical and the box unticked; confirming ticks it; unticking
+      commits through the same confirm.
+- [x] Ruling 1 typed through the grid: R1 held, 72 then 74 — no `was`; committed, 75 — `was` [74].
+- [x] Ruling 2 typed through the grid: R2 `[55]`, 60 stamped a minute ago, held, 65 then 66 — `was`
+      [55, 60]; committed, 70 — `was` [55, 60, 66].
+- [x] `acceptPastDue()` on a column held under an offer made while it was live: Alpha's `[72]` kept as
+      is (the live control beside it pushes the blank: `[72, null]`); committed and typed 80 over
+      Bravo's missing — `was` [missing]; a column committed two seconds after its blank was stamped
+      pushes the blank through `acceptPastDue()` — `[70, null]`.
+- [x] A held column that is the only work in its category: 82.857142…% by hand (80×50 + 90×20 over
+      70), equal to the same document with the column deleted, and 73% live; the effective weights
+      71.43 / — / 28.57.
+- [x] § 30: names `src/held-column.js` by shape, catches a destructured parameter; green on the tree.
+- [x] Every new control ≥44px on a coarse pointer: the ten head controls and the confirm's three
+      (score-grid.mjs), the editor's box at 390px (assigned-and-due.mjs).
+- [x] 👤 On the iPad, after a force-quit: hold a column, type scores, see the grade not move; commit,
+      read the confirm's names against the grid, and see the grade move. *(Also worth a look while
+      there: the taller head — see above.)* *(Owner, iPad, 2026-10-08, v172: confirmed,
+      the taller head accepted.)*
+
+**§ 30's plants**, each appended to a copy of `src/glance.js` (a file this work order does not touch)
+or made in `src/held-column.js`, the sweep run, and the file restored from a copy taken first;
+`git diff --quiet src/glance.js` and `cmp` of `src/held-column.js` against its copy both clean after,
+and `grep -rn MUTATION src tools sw.js index.html` reading nothing from a plant:
+
+| Plant | § 30 |
+|---|---|
+| A · `list.filter(({ held }) => !held)` | **FAIL** — `({ held }) =>` (a destructured parameter) |
+| B · `function mutB({ held }) { … }` | **FAIL** — `({ held }) {` |
+| C · `function mutC({` / `id,` / `held = false,` / `}) { … }` over four lines | **FAIL** — `({ id, held = false, }) {` |
+| D · `async ({ id, held }) => …` | **FAIL** — `({ id, held }) =>` |
+| E · `for (const { held } of list) { … }` | **FAIL** — `(const { held } of list) {` |
+| N1 · `const held = xs.length;` — a bare local | PASS, as it must |
+| N2 · `Object.assign({}, a, { held: true })` outside the writer — a call argument | PASS, as it must |
+| N3 · a string holding `({ held })` | PASS, as it must |
+| W1 · a read, `….assignments[0].held`, in `src/held-column.js` itself | **FAIL** — a member read in the writer's own file |
+| W2 · `assignment.held = false` in the writer | **FAIL** — not a write shape the exception allows |
+| W3 · `a.held = true` in `src/glance.js` | **FAIL** — a write outside the writer's file |
+| W4 · every write in the writer re-spelt `["h" + "eld"]` | **FAIL** — the writer exception is stale |
+
+The sweep as it stood before this work order (`git show HEAD:tools/wo-sweep.mjs`, its `REPO` pinned to
+this tree) read the delivered writer as three member reads — red, as the work order said it would be —
+and with plant A added named only those three lines, never `src/glance.js`: a destructured parameter
+passed it.
+
+**The harness's own mutation round**, so that the two call sites WO-3.52's verifier could confirm only
+by reading are now confirmed by something that fails. A scratch copy of `verify-shell.mjs` (imports
+pointed back at this tree's `tools/verify/`, run limited to `verify/held-readers.mjs`); each plant made
+in the working file from a copy taken first, the section run, and the file copied back and `cmp`-clean
+before the next. Unmutated control: `14 checks · 14 passed · 0 failed · 0 skipped`, exit 0.
+
+| Mutation | Result |
+|---|---|
+| M1 · `putCell()` hands `reviseCell()` `hold:` for `held:` | **1 red of 14** — ruling 2: the 60 typed a minute before the hold is replaced, not pushed |
+| M2 · `putCell()` hands `heldat:` for `heldAt:` | **1 red of 14** — ruling 2, the same way |
+| M3 · `putCell()` hands `commitedAt:` for `committedAt:` | **3 red of 14** — ruling 1 (75 replaces the committed 74), ruling 2 (70 replaces 66), and the accept check's typed 80 |
+| M4 · `acceptPastDue()` hands `hold:` for `held:` | **1 red of 14** — the held column's blank is pushed as if live |
+| M5 · `acceptPastDue()` hands `commitedAt:` for `committedAt:` | **1 red of 14** — the committed blank is replaced, not pushed |
+| M6 · the preview's `after` asked of the document instead of the clone | **4 red of 14** — weighted, points, the declined confirm's line count, and the editor's |
+| M7 · a hold that also stamps `committedAt` | **1 red of 14** — the writer-shape check |
+| M8 · declining writes the flip it declined | **2 red of 14** — both byte-identical checks |
+
+**One fixture change made while planning the round.** R2's 60 was planted ten minutes old on the first
+draft, which is outside the five minutes — so a column read as live pushes it too, and M1 and M2 could
+not have gone red against it. *That is reasoned from `reviseCell()`, not run: the fixture was changed
+before the round, so no red-against-the-old-fixture reading exists.* It is planted a minute old now,
+inside the window, where only the hold boundary pushes it; that is the ruling's own wording ("the first
+edit inside the window of the cell's `at`, so a live column would replace"). The other half of the
+same limit is stated rather than closed: `heldAt` cannot matter to `acceptPastDue()` at all — it only
+writes over blanks, and a blank never counted — so no plant there could be caught, and none is claimed.
+
+**Full run on the delivered tree:** `1858 checks · 1858 passed · 0 failed · 0 skipped`, 59,161 lines,
+31.8 lines per check, 882s, exit 0, 2026-10-08 on the real clock. `node tools/wo-sweep.mjs` on the same
+tree: `49 checks · 46 passed · 0 failed · 3 to review`, exit 0, the three reviews the same three as
+before this work order.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

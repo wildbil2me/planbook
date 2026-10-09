@@ -3793,8 +3793,23 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
      · src/signals-view.js — `pass.held`. An unrelated word: collect()'s list of rows held back by
        the cooldown (WO-4.5), which predates held columns by five weeks. Nothing on it is an
        assignment.
-   WO-3.46 adds its writer's file as the one further exception, by file, because a writer SETS the
-   key — that is the only thing that may — and says so here in the same edit.
+   AND ONE WRITER, added by WO-3.46 in the same edit as the writer: src/held-column.js, by FILE and
+   by SHAPE rather than by receiver. In that file, and nowhere else, a member match is let through
+   when it is `<x>.held = true` or `delete <x>.held` — the two writers and the preview's clone — and
+   nothing else: a read of the key in the writer's own file still goes red, so the file that sets
+   the key asks isHeld() about it like every other. The exception is stale, and FAILs, if that file
+   writes the key nowhere. Widening it to the whole file was the easy repair the work order named
+   and refused.
+
+   AND A DESTRUCTURED PARAMETER (WO-3.46, the owner's ruling of 2026-10-08): `({ held }) => !held`,
+   `function f({ held })`, read off the whole file so a list broken over lines is one list — a
+   `( … )` with no parenthesis inside it, followed by `=>` or `{`, holding a `{ … held … }`. It is
+   the shape a filter over assignments is most often written in, and the `{ … } =` clause above
+   never saw it because a parameter list ends in `)`. NOTHING WIDER: a bare `held` is a local
+   variable in src/assignments.js and a word in prose all over src/, and matching the token would go
+   red on a clean tree; a call argument such as `Object.assign({}, a, { held: true })` is followed
+   by neither `=>` nor `{`. PROVED 2026-10-08 against each shape planted in a scratch copy of one
+   file and restored from git (TESTING.md § WO-3.46).
 
    IT IS LOUD WHEN IT MOVES, for § 11's reason. No src/grade-engine.js, or no `assignment.held` read
    inside its `export function isHeld(`, and the owner this section protects has moved — FAIL. An
@@ -3825,6 +3840,22 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
     { file: 'src/score-history.js', receiver: 'column', why: 'reviseCell()\'s descriptor, built by its callers from isHeld()' },
     { file: 'src/signals-view.js', receiver: 'pass', why: 'collect()\'s cooldown list, an unrelated word' },
   ];
+  /* THE WRITER (WO-3.46), by file and by SHAPE rather than by receiver: in this one file, and only as
+     `<x>.held = true` or `delete <x>.held`. A read there is still a read and still goes red. */
+  const WRITER = { file: 'src/held-column.js', why: 'the two writers and the preview\'s clone, WO-3.46' };
+  const isWrite = (line, m) => /\bdelete\s+$/.test(line.slice(0, m.index))
+    || /^\s*=\s*true\b/.test(line.slice(m.index + m[0].length));
+  /* `held` NAMED IN A DESTRUCTURED PARAMETER (WO-3.46, the owner's ruling of 2026-10-08) —
+     `({ held }) => !held`, `function f({ held })`, `({ id, held = false }) => …` — the shape a filter
+     over assignments is most often written in, and one `{ … } =` above cannot see because a
+     parameter list ends in `)`. Read off the whole file rather than a line, so a parameter list
+     broken over lines is still one list: a `( … )` holding no parenthesis of its own and followed by
+     `=>` or `{` is a parameter list (a `for (const { held } of …) {` head reads as one too, and is a
+     destructure of the key all the same), and one with a `{ … held … }` in it is a read. NOTHING
+     WIDER: a bare `held` is a local at src/assignments.js's category walk and a word in prose, and a
+     call argument like `Object.assign({}, a, { held: true })` is followed by neither `=>` nor `{`. */
+  const PARAMS = /\(([^()]*)\)\s*(?:=>|\{)/g;
+  const PARAM_HELD = /\{[^{}]*\bheld\b[^{}]*\}/;
   const FILTERS = ['src/signals.js', 'src/past-due.js', 'src/graded-pieces.js'];
   const MEMBER = /([A-Za-z_$][\w$]*|[)\]}])?\s*(?:\?\.|\.)\s*held\b/g;
   const OTHER = [
@@ -3846,10 +3877,13 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
       faults.push(`no \`export function isHeld(\` reading \`assignment.held\` in ${OWNER} — the one reader this section protects has moved or been rewritten, and a fence round a reader that is not there passes over anything. Re-point § 30`);
     }
   }
+  let writes = 0;
   srcFiles.filter(f => rel(f) !== OWNER).forEach((f) => {
     const file = rel(f);
-    codeOf(f).forEach((line, i) => {
+    const lines = codeOf(f);
+    lines.forEach((line, i) => {
       for (const m of line.matchAll(MEMBER)) {
+        if (file === WRITER.file && isWrite(line, m)) { writes += 1; continue; }
         const pass = EXCEPT.find(e => e.file === file && e.receiver === m[1]);
         if (pass) { used.add(pass.file + ':' + pass.receiver); continue; }
         reads.push(`${file}:${i + 1} "${line.trim().length > 80 ? line.trim().slice(0, 77) + '…' : line.trim()}" (a member read of \`held\`${m[1] ? ` on \`${m[1]}\`` : ''})`);
@@ -3858,10 +3892,18 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
         if (o.re.test(line)) reads.push(`${file}:${i + 1} "${line.trim().length > 80 ? line.trim().slice(0, 77) + '…' : line.trim()}" (${o.what})`);
       });
     });
+    const code = lines.join('\n');
+    for (const p of code.matchAll(PARAMS)) {
+      if (!PARAM_HELD.test(p[1])) continue;
+      const at = code.slice(0, p.index).split('\n').length;
+      const shown = p[0].replace(/\s+/g, ' ').trim();
+      reads.push(`${file}:${at} "${shown.length > 80 ? shown.slice(0, 77) + '…' : shown}" (\`held\` named in a destructured parameter)`);
+    }
   });
-  if (reads.length) faults.push(`${reads.join(', ')} — reads an assignment's \`held\` outside ${OWNER}. WO-3.52 and WO-3.53: whether a column is held is asked of isHeld() and nothing else, because a reader that tests the key itself is a second opinion about what "held" means, and the grade and that reader drift apart the day the meaning grows. Call isHeld(assignment) instead. If this is a WRITER (WO-3.46), add its file to EXCEPT with its reason, in the same edit`);
+  if (reads.length) faults.push(`${reads.join(', ')} — reads an assignment's \`held\` outside ${OWNER}. WO-3.52 and WO-3.53: whether a column is held is asked of isHeld() and nothing else, because a reader that tests the key itself is a second opinion about what "held" means, and the grade and that reader drift apart the day the meaning grows. Call isHeld(assignment) instead. The one file that may WRITE the key is ${WRITER.file} (WO-3.46), and only as \`.held = true\` or \`delete ….held\` — a second writer goes through its two exported functions rather than widening this`);
   const stale = EXCEPT.filter(e => !used.has(e.file + ':' + e.receiver));
   if (stale.length) faults.push(`${stale.map(e => `${e.file} \`${e.receiver}.held\` (${e.why})`).join(', ')} — an exception in § 30 that no line in its file uses any more. Take it out of EXCEPT: an allowance nothing needs is an allowance waiting for something to use it`);
+  if (!writes) faults.push(`${WRITER.file} writes no \`.held = true\` and no \`delete ….held\` — § 30's writer exception (${WRITER.why}) is stale, or the writer moved. Take the exception out, or re-point it at the file that holds the writers: an allowance nothing needs is an allowance waiting for something to use it`);
   const notAsking = FILTERS.filter((file) => {
     const p = path.join(REPO, file);
     if (!fs.existsSync(p)) return true;
@@ -3871,7 +3913,7 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
   });
   if (notAsking.length) faults.push(`${notAsking.join(', ')} does not import and call isHeld() from ./grade-engine.js — WO-3.53 built a held-column filter at each of these readers, and one that stopped asking reads exactly like one that never reads \`held\`, which is green here and wrong on screen. Restore the call, or re-point § 30 if the reader moved`);
   if (!faults.length) {
-    check(NAME, true, `${srcFiles.length - 1} file(s) under src/ outside ${OWNER} read with comments blanked, and none reads an assignment's \`held\` — the ${EXCEPT.length} named exceptions (${EXCEPT.map(e => `${e.file} \`${e.receiver}.held\``).join(', ')}) each still in use; ${FILTERS.join(', ')} each import and call isHeld()`);
+    check(NAME, true, `${srcFiles.length - 1} file(s) under src/ outside ${OWNER} read with comments blanked, and none reads an assignment's \`held\`, by member, bracket, \`in\`, hasOwnProperty, destructuring or a destructured parameter — the ${EXCEPT.length} named exceptions (${EXCEPT.map(e => `${e.file} \`${e.receiver}.held\``).join(', ')}) each still in use, and ${WRITER.file} writing the key ${writes} time(s), each as \`.held = true\` or \`delete ….held\`; ${FILTERS.join(', ')} each import and call isHeld()`);
   } else {
     check(NAME, false, faults.join(' · '));
   }

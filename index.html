@@ -3351,6 +3351,35 @@
   </div>
 </div>
 
+<!-- HOLDING A COLUMN OUT OF THE GRADE, AND COMMITTING IT BACK (WO-3.46, the owner's ruling 3).
+     Opened by the Hold / Commit control on a score-grid column head, and by the assignment editor's
+     "Hold out of the grade" checkbox on an existing column — over the editor, where src/modal.js's
+     stack closes it alone on Escape. It names every student whose class grade changes, before and
+     after, in the grid's order and the grid's figures, and says so in words when none does. Every
+     figure is the grade engine's, asked once on the document and once on a copy with the column
+     flipped; nothing is written until the first button, and then one update() flips the column and
+     touches no score. The second button, the ✕, Escape and the backdrop write nothing.
+     Filled by src/held-column.js. -->
+<div class="modal-overlay hidden" id="holdModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="holdTitle">
+    <div class="modal-header">
+      <h2 id="holdTitle">Hold this column out of the grade?</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="holdLead"></p>
+      <div class="modal-section-label" id="holdChangesLabel">Grades that change</div>
+      <div class="mode-change-facts" id="holdChanges"></div>
+      <div class="modal-actions">
+        <button class="class-action-btn primary hold-confirm-btn" type="button" id="holdConfirmBtn"
+                data-hold-confirm>Hold it out of the grade</button>
+        <button class="class-action-btn hold-confirm-btn" type="button" id="holdKeepBtn"
+                data-hold-cancel>Keep it as it is</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- DUPLICATING ONE, into this class or into another section of the same course — the owner
      teaches the same content to more than one class, and re-typing an assignment five times is the
      thing this exists to stop.

@@ -58,7 +58,7 @@
    has one: a control covered only by some other selector's rule is a control the next reader has
    to go and prove is covered. */
 .scores-input, .scores-keys-btn, .scores-flag-btn, .scores-name-btn, .scores-note-input,
-.scores-note-action {
+.scores-note-action, .scores-col-hold, .hold-confirm-btn {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -248,6 +248,11 @@
    tied, because the head is four lines of text and nothing declares its height: 91px in headless
    Edge on a fine pointer and 98 on a coarse one, written as 96 and 104 so another engine's line
    heights have a few pixels to spend before a cell Enter lands on is half under the head.
+   WO-3.46 GREW THE HEAD BY A LINE — the Hold / Commit control under the due date, a 44px button on
+   a coarse pointer — and these two numbers moved with it, measured again rather than added up:
+   120px fine and 146px coarse in headless Edge, written as 126 and 152, the same few pixels of
+   slack. WO-3.27's driven Enter checks in tools/verify/score-grid.mjs are what found it — all four
+   went red on the first run with the old figures, which is the job they were written for.
 
    `scroll-snap-type: x proximity` lets a trackpad swipe settle with a column's left edge on the
    frozen edge rather than half under it — `scroll-snap-align` is on the head cells below. Never
@@ -262,7 +267,7 @@
   overflow: auto; -webkit-overflow-scrolling: touch;
   max-height: calc(100dvh - 160px);
   overscroll-behavior: contain;
-  scroll-padding: 96px 0 0 274px;
+  scroll-padding: 126px 0 0 274px;
   scroll-snap-type: x proximity;
   /* The drawing's 1px `border`, drawn as a ring OUTSIDE the box instead, and that is a departure
      rather than a restyle: a border moves the scrollport 1px in from the box's edge, so the frozen
@@ -532,6 +537,34 @@
    work order for work nobody was going to do. WO-3.19 exists as much for that sentence as for the
    pixel. */
 .scores-col-due.overdue { color: #8a6d1a; }
+
+/* THE HOLD LINE (WO-3.46) — the head's last line: whether the column counts, and the control that
+   changes it. src/scores.js's holdLine() says why a live column carries only *Hold* and a held one
+   the mark and *Commit*.
+
+   NOT DRAWN, because no drawing has a held column: built from what this sheet and src/shell.css
+   already wear. The control is `.class-action-btn` worn as-is — the outline button, never a fill,
+   because on a live column it is offered on every head and a row of solid buttons across the grid
+   would be the loudest thing on the screen. This class only spaces it and gives the coarse block
+   below something to name, as `.scores-flag-btn` does.
+
+   THE MARK AND THE WASH ARE INDIGO, the colour of a thing the teacher chose (the note mark's reason
+   in this sheet): #5b6fcc is the interactive indigo and #eef2ff is `.toggle-btn.active`'s wash in
+   src/shell.css, lifted rather than chosen. NOT AMBER: amber is the past-due tint one line up, and a
+   column both held and past due must read as two facts, not one louder one. The wash is on the head
+   only — the cells under it are typed into as any column's are, and a tinted cell is this grid's
+   flag grammar, which a held column is not. */
+.scores-col-hold-line {
+  display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px;
+}
+.scores-col-held {
+  font-size: 9px; font-weight: 800; color: #5b6fcc;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.scores-grid thead th.held { background: #eef2ff; }
+/* THE CONFIRM'S TWO BUTTONS (src/held-column.js). `.class-action-btn` as shipped; named for the
+   coarse block below, which holds every control this work order added. */
+.hold-confirm-btn { }
 
 /* ── ONE CELL ── */
 .scores-cell { position: relative; display: inline-flex; }
@@ -829,7 +862,7 @@
      Left at the base 274 it would park every cell a focus move reaches 22px clear of an edge that
      is not there — harmless to look at and wrong to keep, because it is the fourth number in the
      pair and the check counts it. The top grows with the head's coarse type sizes. */
-  .scores-grid-wrap { scroll-padding: 104px 0 0 252px; }
+  .scores-grid-wrap { scroll-padding: 152px 0 0 252px; }
   /* And the third column with them (WO-3.28): it starts where the coarse pair ends, 168 + 84, and
      the filtered padding is that plus its own 84. */
   .scores-grid-wrap.filtered { scroll-padding-left: 336px; }
@@ -880,6 +913,14 @@
   .scores-col-name { font-size: 12px; }
   .scores-col-pts { font-size: 11px; }
   .scores-col-due { font-size: 10px; }
+  /* THE HOLD LINE AT THE FLOOR (WO-3.46), in the same pass that added it. `.class-action-btn` is
+     already 44 in src/shell.css's coarse block; named here anyway for the reason `.past-due-btn` is
+     in src/assignments.css — one of these takes a whole column out of every grade in the class. The
+     mark is a label and only steps up to read. The confirm's two buttons are this work order's too. */
+  .scores-col-hold-line { gap: 8px; margin-top: 4px; }
+  .scores-col-hold { min-height: 44px; min-width: 44px; }
+  .scores-col-held { font-size: 10px; }
+  .hold-confirm-btn { min-height: 44px; min-width: 44px; }
   /* `.scores-col-due.overdue` takes that step up with it and gets no line of its own: the tint is a
      colour and nothing else, on a label rather than on a control, so there is no target here to hold
      at 44px. Named rather than left out, for the reason this block names everything it only

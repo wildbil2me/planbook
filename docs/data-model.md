@@ -596,16 +596,40 @@ never sees the column. The rule lives at the engine's two walks over a class's w
 - **`excused` is not a way to hold a column.** It is a decision about one student and is already in
   the math; a held column is the teacher's decision about a whole piece of work.
 - **`openWork()` loses a held column** as a side effect of the walk. That is correct for a grade, and
-  the screens that list outstanding work get their own engine call when a teacher can first hold one
-  (WO-3.46, WO-3.47). Until WO-3.46 lands, nothing in the app writes `held`, `heldAt` or
-  `committedAt`.
+  the screens that list outstanding work get their own engine call in WO-3.47. Until it lands, the
+  home card's *N to grade* does not count a held column — a known gap, not worked around.
+
+**Holding and committing** *(WO-3.46, 2026-10-08)*. A teacher holds a column with *Hold* on its
+score-grid head, or with *Hold out of the grade* in the assignment editor, and commits it with
+*Commit* on the same head, or by unticking that box. `src/held-column.js` holds the only two writers:
+
+- **Hold** is one `update()`: `held: true` and a fresh `heldAt` (`localStamp()`), overwriting an
+  earlier one. A column created held gets both.
+- **Commit** is one `update()`: `held` deleted and a fresh `committedAt`, overwriting an earlier one.
+  `heldAt` stays.
+- **Neither touches a score cell**, and each refuses rather than writes when it would change nothing
+  (holding a held column, committing a live one), so `rev` never moves for a no-op.
+- **A new column is live.** The editor's box starts unticked, and a copy is live whatever its source
+  is (`confirmCopy()` builds a copy from named fields, so `held` cannot ride across).
+
+**Every hold and every commit is one tap behind a confirm that shows what moves** (the owner's ruling
+3). The confirm names each student whose class grade in the column's term changes, in the grid's
+order, with the grid's figures, before and after — *"Reed, Jordan — 84.00% B → 78.00% C+"* — and
+says so in words when none does. **Both figures are `classGrade()`'s**, asked once on the document and
+once on a shallow clone with that one column's `held` flipped; the confirm has no arithmetic of its
+own, which is what stops it disagreeing with the grid behind it. Declining — its second button, the
+✕, Escape or the backdrop — writes nothing. The editor's box opens the same confirm **on the tap,
+never at the close**, so it cannot stack with WO-3.50's scored-move confirm at Done. The one tap that
+writes without it is a column the editor's create flow has only just written, with nothing entered:
+nothing on it can move a grade.
 
 **Every reader outside the engine, and what it does with a held column** *(the owner's table of
 2026-10-07, started by WO-3.53 on 2026-10-08 and completed by WO-3.47)*. Each reader that needs to
 know asks `isHeld()`; **no file in `src/` outside `src/grade-engine.js` reads the key**, which
 `tools/wo-sweep.mjs` § 30 asserts — with two named exceptions that are not an assignment's key, a
-`reviseCell()` descriptor and the cooldown list's own word, and the one further exception WO-3.46's
-writer will add. A reader that follows the engine through `classGrade()` or `openWork()` holds no
+`reviseCell()` descriptor and the cooldown list's own word, and the writer: `src/held-column.js`, and
+only as `.held = true` or `delete ….held` — a read of the key there is still a read. Since WO-3.46 the
+sweep also refuses `held` named in a destructured parameter, `({ held }) => …`. A reader that follows the engine through `classGrade()` or `openWork()` holds no
 test of its own, because a second filter over a list already filtered is a second opinion about what
 *held* excludes.
 

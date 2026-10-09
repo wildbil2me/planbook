@@ -13,6 +13,28 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A score column can be held out of the grade — 2026-10-08
+
+WO-3.46, the third of its four pieces, and the one that makes holding possible. Shell cache bumped
+to v172.
+
+- **Hold and Commit on the score grid's column head.** *Hold* shows which students' grades would
+  move, by name, before and after, and then keeps the column counting toward nothing. Scores, flags
+  and notes can still be typed into it, and none of it keeps history until *Commit*, which shows the
+  same list the other way and makes the column count. A confirm that moves nothing says so, and
+  declining either leaves the year untouched. Built for re-keying against the SIS without a
+  half-entered column moving every grade.
+- **The assignment editor has *Hold out of the grade*,** unticked on a new assignment. On an
+  existing column with scores it opens the same confirm on the tap, never at the close, so it is
+  never stacked on WO-3.50's scored-move warning.
+- **The confirm's figures come from the grade engine**, not a second computation, and the writers
+  live in `src/held-column.js`, the one file § 30 of the sweep lets write `held`. § 30 now also
+  catches `held` named in a destructured parameter.
+- **The column head is about 48px taller on a touch screen**, roughly one row of scores in
+  portrait. Accepted on the iPad by the owner the same day.
+- **Still open, in WO-3.47:** the home card's *N to grade*, the queue, the grade sheet and student
+  detail do not yet show a held column under its own word.
+
 ### Every reader that hides a held column asks the engine — 2026-10-08
 
 WO-3.53, the second of WO-3.46's four pieces. Shell cache bumped to v171.

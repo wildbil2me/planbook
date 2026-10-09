@@ -2023,6 +2023,24 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
             + (under44.length > 6 ? ' … and ' + (under44.length - 6) + ' more' : '')
             + '; New assignment = ' + JSON.stringify(create44));
 
+        /* WO-3.46's two controls under the same pointer: the Hold on every live column head — named
+           here rather than left inside the sweep above, so a build that drew none passes nothing — and
+           the confirm it opens, measured open and then declined, which writes nothing. */
+        const hold44 = grid44.filter((m) => /scores-col-hold/.test(m.t));
+        await clickSel('#scoresHead [data-score-hold]');
+        await new Promise(r => setTimeout(r, 200));
+        const holdOpen = await evalJs("!document.getElementById('holdModal').classList.contains('hidden')");
+        const confirm44 = holdOpen ? await evalJs(measureIn('#holdModal')) : [];
+        if (holdOpen) await clickSel('#holdModal [data-hold-cancel]');
+        await new Promise(r => setTimeout(r, 150));
+        const confirmButtons = confirm44.filter((m) => /hold-confirm-btn/.test(m.t));
+        check('WO-3.46: the Hold control on every one of the ten column heads, and the hold confirm\'s controls, measure >=44px on a coarse pointer',
+          coarseNow === true && hold44.length === 10 && hold44.every((m) => m.h >= 44 && m.w >= 44)
+            && holdOpen && confirmButtons.length === 2
+            && confirm44.every((m) => m.h >= 44 && m.w >= 44),
+          'head controls ' + JSON.stringify(hold44.slice(0, 3)) + ' (' + hold44.length + ') · confirm open '
+            + holdOpen + ', ' + JSON.stringify(confirm44));
+
         const pinnedCoarse = await evalJs(PIN);
         check('and the frozen pair holds on the coarse pointer too, where the name column is narrower and the offset had to move with it',
           !!pinnedCoarse && pinnedCoarse.scrollable > 0 && pinnedCoarse.scrolled > 0

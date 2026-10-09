@@ -25,6 +25,12 @@
   presses it twice, two thirds of the way down a column, with a freshly typed digit in the field,
   and asserts the caret, the digit and the screen are all where they were.
 
+  ONE DIALOG CAN SIT OVER IT SINCE WO-3.46, and it does not break the rule above: the Hold / Commit
+  control on a column head opens src/held-column.js's confirm, by one deliberate tap and by no key
+  the grid binds. The grid stays the surface underneath; `Esc` closes the confirm (src/modal.js) and
+  leaves the grid and every typed digit where they were. What the rule forbids is a dialog a hand
+  typing a column can open or lose by accident, and this is neither. See holdLine().
+
   ── NOTHING HERE COMPUTES A GRADE ──
 
   Every number on this screen comes out of src/grade-engine.js (WO-3.4), which is the only grade
@@ -625,7 +631,68 @@ function columnHead(assignment, cls) {
     }
     th.append(dueLine);
   }
+  th.append(holdLine(assignment));
+  if (isHeld(assignment)) th.classList.add('held');
   return th;
+}
+
+/*
+  THE HEAD'S LAST LINE (WO-3.46): whether this column counts, and the one control that changes it.
+
+  A HELD COLUMN SAYS SO THREE WAYS, the flag rule this file already follows for a cell: an indigo
+  `Held` mark and a washed head for the eye, the word in the head's own text and in every cell's
+  accessible name for a screen reader (cellLabel()), and a *Commit* control beside the mark. A LIVE
+  column carries *Hold* and no mark at all — a live column is every column a teacher has ever had,
+  and a mark on all of them would be a mark on nothing. Indigo because a hold is something the
+  teacher chose, the colour the note mark wears for the same reason; amber is the past-due tint's,
+  and a held column that is also past due must not read as one signal.
+
+  THE CONTROL OPENS A CONFIRM, and that is this screen's first dialog — read the header's "THERE IS
+  NO DIALOG ANYWHERE IN IT" with this beside it. That rule is about the typing path: `Esc` is the key
+  nearest a hand typing a column, and a surface that closed on it would cost her her place. This
+  dialog is reached by one deliberate tap on a column head, never by a key the grid binds, and it
+  sits over a grid that is still there underneath when it closes. The confirm itself is
+  src/held-column.js's — this file asks isHeld() and draws a button, and computes nothing about what
+  the flip would move (the work order's Traps: the preview is not a second grade engine).
+
+  `data-score-hold` carries the id; src/shell.js routes the tap, and the direction is the column's
+  state at the tap. Not `data-score-col`, which every reader means as "this column's head".
+*/
+function holdLine(assignment) {
+  const held = isHeld(assignment);
+  const line = el('span', 'scores-col-hold-line');
+  const name = assignment.name || 'Untitled assignment';
+  if (held) {
+    const mark = el('span', 'scores-col-held', 'Held');
+    mark.title = 'Held out of the grade — it counts toward nothing until you commit it.';
+    line.append(mark);
+    line.append(el('span', 'sr-only', ' out of the grade'));
+  }
+  const btn = el('button', 'class-action-btn scores-col-hold', held ? 'Commit' : 'Hold');
+  btn.type = 'button';
+  btn.setAttribute('data-score-hold', assignment.id);
+  btn.setAttribute('aria-haspopup', 'dialog');
+  btn.setAttribute('aria-label', held
+    ? 'Commit ' + name + ' to the grade'
+    : 'Hold ' + name + ' out of the grade');
+  btn.title = held
+    ? 'Count this column toward the grade — you see which grades move first'
+    : 'Keep this column out of the grade until you commit it — you see which grades move first';
+  line.append(btn);
+  return line;
+}
+
+/* The grid's Hold / Commit control for one column, focused after the confirm has written and the
+   grid has been rebuilt under it (WO-3.46). The rebuild replaces the button the confirm would hand
+   focus back to, so src/shell.js asks for its replacement here rather than leaving focus on <body>.
+   Answers whether there was one. */
+export function focusColumnHold(assignmentId) {
+  const id = String(assignmentId || '');
+  const buttons = document.querySelectorAll('#' + HEAD_ID + ' [data-score-hold]');
+  const btn = Array.prototype.filter.call(buttons, (b) => b.getAttribute('data-score-hold') === id)[0];
+  if (!btn) return false;
+  btn.focus({ preventScroll: true });
+  return true;
 }
 
 /*
@@ -688,7 +755,10 @@ function cellLabel(assignment, student, cell) {
   return (assignment.name || 'Untitled assignment')
     + ', out of ' + pointsOf(assignment) + ', for ' + fullName(student)
     + (flag ? ' — ' + flag : '')
-    + noteClause(cell) + historyClause(cell);
+    + noteClause(cell) + historyClause(cell)
+    /* WO-3.46: a held column is said in every cell's name, because a screen-reader user typing down
+       a column hears the cells and not the head. Asked of the engine, never of the key. */
+    + (isHeld(assignment) ? ', held out of the grade' : '');
 }
 
 /*

@@ -3560,7 +3560,7 @@ reason the comment above it gives. Leave it in place.
 
 ## WO-3.46 — a score column can be held out of the grade until it is committed
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.52, WO-3.53
+**Ship** — · **Status** ✅ DONE — 2026-10-08 · **Size** M · **Depends on** WO-3.52, WO-3.53
 **Closes roadmap** *(no box. Owner-directed, 2026-10-05.)*
 
 **Booked 2026-10-05**, owner-directed, from the owner's reconciling against the SIS: *"Sometimes you
@@ -3625,25 +3625,25 @@ cleared) moved to
 - **`CACHE` in `sw.js` is bumped.**
 
 **Acceptance**
-- [ ] Holding a column writes `held: true` and `heldAt` and nothing else; committing deletes it, stamps
+- [x] Holding a column writes `held: true` and `heldAt` and nothing else; committing deletes it, stamps
       `committedAt`, and touches no cell. Each is one `update()` and `rev` moves by one.
-- [ ] Committing the column moves exactly the grades the confirm named, to the figures it named, in
+- [x] Committing the column moves exactly the grades the confirm named, to the figures it named, in
       a weighted class and in a points class. Holding does the same in the other direction.
-- [ ] A confirm whose column moves no grade says so in words, and declining either confirm leaves the
+- [x] A confirm whose column moves no grade says so in words, and declining either confirm leaves the
       document byte-identical (`flush()` awaited).
-- [ ] A new assignment is live, and its editor shows the checkbox unticked. Ticking it on an existing
+- [x] A new assignment is live, and its editor shows the checkbox unticked. Ticking it on an existing
       column opens the same confirm as the grid's control.
-- [ ] Edits typed through the grid into a held column and then committed reach `reviseCell()` with
+- [x] Edits typed through the grid into a held column and then committed reach `reviseCell()` with
       the column's state, so WO-3.52's rulings 1 and 2 hold end to end, not only in the unit checks.
-- [ ] A held column is driven through **both** of `reviseCell()`'s callers, `putCell()` in
+- [x] A held column is driven through **both** of `reviseCell()`'s callers, `putCell()` in
       `src/scores.js` and `acceptPastDue()` in `src/past-due.js`, and each records no history while
       held and the committed figure after. *(WO-3.52's verifier, 2026-10-08: those two call sites
       were confirmed by reading only, so a misnamed field in either would pass every check. This is
       the first work order that can hold a column through them.)*
-- [ ] A held column that is the only work in its category leaves that category empty, and its weight
+- [x] A held column that is the only work in its category leaves that category empty, and its weight
       passes to the other categories exactly as an empty category's does, checked against a hand
       computation. *(Also WO-3.52's verifier: the engine filter implies it, and no check showed it.)*
-- [ ] `wo-sweep.mjs` § 30 names the writer's file as an exception in the same edit that adds the
+- [x] `wo-sweep.mjs` § 30 names the writer's file as an exception in the same edit that adds the
       writer, and the sweep is green. *(WO-3.53's deliverables promised this and nothing on this list
       held it: § 30 forbids every `.held` outside `src/grade-engine.js`, so the writer turns it red,
       and the easy repair is a wider exception than one file.)* **In the same edit, § 30 also catches
@@ -3654,9 +3654,10 @@ cleared) moved to
       a destructured parameter passes § 30 today, and it is the shape a filter over assignments is
       most often written in. The owner's ruling, the same day: close it here, where § 30 is open
       anyway, before WO-3.47 builds the readers most likely to use it.)*
-- [ ] `CACHE` in `sw.js` is bumped.
-- [ ] 👤 On the iPad, after a force-quit: hold a column, type scores, see the grade not move; commit,
-      read the confirm's names against the grid, and see the grade move.
+- [x] `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the iPad, after a force-quit: hold a column, type scores, see the grade not move; commit,
+      read the confirm's names against the grid, and see the grade move. *(The owner, on the iPad,
+      2026-10-08, v172: all four readings confirmed — the taller head accepted as built.)*
 
 **Traps** — **The preview is not a second grade engine.** If the confirm computes a percentage
 itself, the confirm and the grid can disagree, which is the failure this repository refuses

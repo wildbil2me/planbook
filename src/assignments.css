@@ -45,7 +45,7 @@
    has one: a control covered only by some other selector's rule is a control the next reader has
    to go and prove is covered. */
 .screen-nav-btn, .assign-row-btn, .assign-field-input, .assign-field-select, .assign-field-date,
-.assign-copy-tick {
+.assign-copy-tick, .assign-hold-tick {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -359,6 +359,23 @@
 .assign-field-input:focus, .assign-field-select:focus, .assign-field-date:focus {
   border-color: #5b6fcc;
 }
+/* HOLD OUT OF THE GRADE (WO-3.46) — the editor's fourth row. The copy dialog's tick lifted value for
+   value (`.assign-copy-tick` and `.assign-copy-box` below), because a box with a label beside it
+   is the one shape this sheet already has for "a yes or no about this assignment". The ticked box
+   is indigo rather than that tick's green: green there means "a copy goes here", and here the box
+   says the column is held, which the score grid marks in indigo (src/scores.css's hold line). */
+.assign-hold { display: flex; flex-direction: column; gap: 4px; }
+.assign-hold-tick {
+  display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; min-height: 34px;
+  padding: 4px 2px; border: none; background: none; cursor: pointer; text-align: left;
+  font-family: inherit; font-size: 13px; font-weight: 700; color: #1a1a2e;
+}
+.assign-hold-box {
+  flex: 0 0 18px; height: 18px; border-radius: 4px; border: 1.5px solid #c5cdd8; background: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: #fff; line-height: 1;
+}
+.assign-hold-tick[aria-checked='true'] .assign-hold-box { background: #5b6fcc; border-color: #5b6fcc; }
 /* THE TWO DATE FIELDS ARE THE ONE CONTROL IN THIS DIALOG THAT WEBKIT DRAWS ITSELF, and on the iPad
    that is not a cosmetic difference. Diagnosed on the owner's hardware 2026-08-10 (WO-3.17), in both
    orientations, with the fields empty: the pair OVERLAPPED instead of sitting in the row's 12px
@@ -637,6 +654,10 @@
      44px — and the source line's name, which is not a control but lines up with the ticks. The
      create door is `.class-action-btn` too, named for the rule this block opens with. */
   .assign-copy-tick { min-height: 44px; font-size: 14px; }
+  /* THE EDITOR'S HOLD BOX (WO-3.46), in the same pass that added it: the label is the control, so
+     it is the 44 — both ways, because a short label is a target a thumb misses sideways. */
+  .assign-hold-tick { min-height: 44px; min-width: 44px; font-size: 14px; }
+  .assign-hold-box { flex-basis: 22px; height: 22px; font-size: 14px; }
   .assign-copy-box { flex-basis: 22px; height: 22px; font-size: 14px; }
   .assign-copy-line { padding: 10px 12px; column-gap: 12px; row-gap: 8px; }
   .assign-copy-cue { font-size: 12px; }
