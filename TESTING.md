@@ -3311,6 +3311,39 @@ which cost nothing visible (each ~14m15s, against ~14m on the run alone).
 
 *No 👤 line and no 📆 line: nothing here renders and nothing reaches a device.*
 
+### WO-1.65 — the glance reader's no-arithmetic rule is read by nobody
+
+**What this changes.** Nothing a teacher sees: `git diff -- src/` is empty and no `CACHE` bump is owed.
+`tools/wo-sweep.mjs` gains **§ 31**, which reads `src/glance.js` with comments stripped (by a character
+scanner that keeps `${…}` bodies as code, so the file's markup does not go red) and refuses `Math.`,
+`%`, `*`, `/` as an operator, binary `-`, relational comparisons, `new Date`/`Date.`, a numeric `+=`,
+reads of a score cell's fields, and calls to `thresholdsOf`, `leadDaysOf`, `isHeld`, `shiftDays` and
+`daysBetween`, among others its header argues. **Three allowances are named**, each covering only the
+finding its own match spans: `queueRows()`'s `open += 1`, `weekWindow()`'s rolling week and
+`leadShown()`'s width read back off the window. `tools/README.md`'s recorded count goes 49 → 50.
+
+- [x] `node tools/wo-sweep.mjs` is green on the tree with the new claim, and its check count matches
+      `tools/README.md`. `50 checks · 47 passed · 0 failed · 3 to review`, EXIT=0; § 22 reads *"50
+      results emitted this run, matching tools/README.md:10"*. The three to review are the standing
+      three.
+- [x] Each refused shape is proved by a mutation in `src/glance.js` that turns the claim red at the
+      line, and every mutation is reverted before anything else is written. Implementer: 16 refused
+      plants and 4 negative controls, then 21 in the correction round, including the verifier's three.
+      Verifier's second pass: 30 plants, all red at the planted line, all reverted, `src/` clean after.
+- [x] The claim's header states what it cannot see: a sum written with `+`, and arithmetic moved into
+      a helper whose name is not on the list. *(The first verifier pass FAILed this line, though not
+      for the two blind spots. The header also claimed that a second finding on an allowed line was
+      red, and de-duplication on `line|message` dropped it. Plants at lines 341, 268 and 506 left § 31
+      green. The correction round keyed findings on their offset and made an allowance cover only its
+      own span, and the header's claims became true without being softened.)*
+
+**Harness:** `node tools/verify-shell.mjs` — `1863 checks · 1863 passed`, EXIT=0 (verifier, second
+pass). `wo-gate.mjs --audit` PASS.
+
+*No 👤 line and no 📆 line: tooling only. Section added 2026-10-09 in a bookkeeping pass. The brief
+had called this file optional, which is why the dispatch left it out. The plant tables are in
+`.claude/dispatch/WO-1.65-result.md`.*
+
 ---
 
 ## Phase 2 — Attendance
@@ -10713,6 +10746,30 @@ that bumps it, which is that check doing its job on a case it has no exemption f
       `weighted()` in `src/grade-engine.js`.
 - [x] `git diff src/` shows changed lines inside `/* … */` blocks only; `git diff --stat` reads
       `src/assignments.js | 11`, `src/detail.js | 3`; no CRLF churn; `sw.js` untouched.
+
+### WO-3.44 — a comment says a misfiled copy looks identical on the list
+
+**Comments only.** One comment block in `src/shell.js`, above `assignments, screenNav` in the
+`window.planbook` seam, no longer says the naive duplicate and this build's are *"invisible on screen
+because both look identical on the list"*. It now names the two cases. If the target class has a
+category of the same name, this build files the copy under it and the naive copy lands under *Not in
+a category*. If it has none, both land there and look identical. The half about the ids and the
+missing `scores` column, which no click shows, is kept. The copy rule is unchanged. **`CACHE` not
+bumped**: `c84e02a` landed before WO-1.60's `Shell-Cache` trailer existed, so § 9 stayed red until
+`3f3369b` bumped to v165 (see WO-1.60 above).
+
+- [x] The comment no longer says the two duplicates always look identical on the list. `git diff
+      src/shell.js`: the removed lines hold the clause, and of the added lines only the no-match case
+      says *look identical*.
+- [x] No line outside a comment moves. `git diff --stat` reads `src/shell.js | 17`, and all 10 removed
+      and 13 added lines sit inside the block's `/* … */`; no `\r` in the diff; `sw.js` untouched.
+
+**Harness:** `node tools/verify-shell.mjs` — `1760 checks · 1760 passed · 0 failed · 0 skipped`,
+EXIT=0, run by the implementer and again by the verifier.
+
+*No 👤 line and no 📆 line: a comment has no runtime effect. Section added 2026-10-09 in a
+bookkeeping pass; it was missing when the work order landed. The record is
+`.claude/dispatch/WO-3.44-result.md`.*
 
 ### WO-3.45 — a class tab on the assignment list or the score grid drops you on Attendance
 
