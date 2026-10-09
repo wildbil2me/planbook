@@ -5897,7 +5897,7 @@ read `plans/work-orders/README.md` § "The pipeline's own files" before editing 
 
 ## WO-1.68 — the shared-box excuse says exact and matches a substring, and its mismatch branch is proved by nothing
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-09 · **Size** XS · **Depends on** — · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.67 made.)*
 
 **Booked 2026-10-09**, owner-directed, out of WO-1.67's verdict. A ride-along on `tools/wo-gate.mjs`:
@@ -5928,14 +5928,14 @@ Reading the code adds a second thing, and it is the one worth the row.
   `--self-check`'s own output, updated to what is now covered.
 
 **Acceptance**
-- [ ] The comment above `SHARED_BOXES` and the matching code say the same thing, shown by quoting
+- [x] The comment above `SHARED_BOXES` and the matching code say the same thing, shown by quoting
       both in `TESTING.md` § WO-1.68.
-- [ ] Each new plant is red under a mutation of the branch it covers, on a scratch copy, and every
+- [x] Each new plant is red under a mutation of the branch it covers, on a scratch copy, and every
       mutation is reverted before anything else is written.
-- [ ] `node tools/wo-gate.mjs --audit` and `--self-check` pass, `node tools/wo-sweep.mjs` is green,
+- [x] `node tools/wo-gate.mjs --audit` and `--self-check` pass, `node tools/wo-sweep.mjs` is green,
       and `tools/README.md`'s recorded counts match. The excused WO-2.1 / WO-2.10 box still reads
       excused on the real tree.
-- [ ] `TESTING.md` § WO-1.68 carries these lines verbatim with the evidence for each.
+- [x] `TESTING.md` § WO-1.68 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Do not add a rule for `amends`.** WO-1.67 excused the one case by name on purpose; a
 rule would be a reading of the sentence, which its Traps refuse. **Do not touch the real excuse's

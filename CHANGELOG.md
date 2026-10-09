@@ -13,6 +13,20 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The shared-box excuse matches a box's whole wording, not a fragment of it — 2026-10-09
+
+WO-1.68, the 🎒 booked out of WO-1.67's verdict. Tooling only; nothing in `src/` moved.
+
+- **An excuse in `SHARED_BOXES` now matches the box's whole line**, checkbox taken off, where it
+  used to match any substring. The comment above it always said exact; now the code does too. So
+  rewording an excused box makes its excuse stale rather than quietly keeping it. The one excuse in
+  the tree now carries the full text of `ROADMAP.md:275`, and `--audit` still reads that box as
+  excused.
+- `--self-check` 49 → 52 plants, covering the claimant-subset, stale-excuse and reworded-box
+  branches. A fresh verifier broke each branch on a scratch copy and saw a plant go red every time.
+- One branch is still unproved: an excuse naming more work orders than actually claim its box.
+  Booked as a follow-up out of the verdict.
+
 ### `--tick` no longer ticks a roadmap box a "no box" line quotes — 2026-10-09
 
 WO-1.67, out of WO-8.16's close, where `--tick` ticked WO-8.6's onboarding box off a line that quoted

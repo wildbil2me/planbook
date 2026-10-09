@@ -3454,6 +3454,72 @@ nothing. `--audit` gains a section reporting a roadmap box claimed by two or mor
 
 *No 👤 line and no 📆 line: tooling only.*
 
+### WO-1.68 — the shared-box excuse says exact and matches a substring, and its mismatch branch is proved by nothing
+
+**The decision: exact, and "exact" means the box's whole line.** An excuse's `box` is now the roadmap
+box's whole (first) line with its checkbox taken off, compared with `===` after `norm()`. A literal
+`===` against the old `box` string — the fragment `'Marking screen, exceptions-only'` — would have
+dropped the real excuse, so **the excuse's `box` string was changed, and the matching rule required
+it**; no plant needed it (the plants carry their own synthetic excuse). It now reads
+`'🚩 Marking screen, **exceptions-only** — the *finished* document holds nothing but exceptions'`,
+copied from `plans/ROADMAP.md:275`. Measured with `node -e` over that line: the old fragment is
+`===` **false** and `.includes()` **true**; the new string is `===` **true**. The reason is written at
+`SHARED_BOXES`: a fragment is what a *claim* matches on and is meant to survive edits; an excuse is a
+judgment about the box as worded, and the words after the fragment are where a box changes what it
+promises. No rule for `amends` was added.
+
+- [x] The comment above `SHARED_BOXES` and the matching code say the same thing, shown by quoting
+      both in `TESTING.md` § WO-1.68.
+      *The comment (`tools/wo-gate.mjs`, above `const SHARED_BOXES`): "**The excuse is an exact
+      roadmap-line match after norm()** — `box` is the box's WHOLE line with its checkbox taken off,
+      compared with `===`, and not a fragment of it found with `includes()`. So a rewording of that
+      line, however small, drops the excuse and the box reports (as an unexcused double claim AND as a
+      stale excuse), which is the right direction to fail." The code, in `doublyClaimedBoxes()`:*
+      ```
+      const box = norm(lines[line]).replace(/^-\s*\[[ x]\]\s*/, '');
+      const ex = SHARED_BOXES.find(s => box === norm(s.box));
+      ```
+      *The comment also names the two deliberate limits: only the box's first line is compared (the
+      same line `roadmapHits()` reads), and a marker after the checkbox drops the excuse. The `BAD`
+      row's advice now says to excuse a box "by its whole line, checkbox off".*
+- [x] Each new plant is red under a mutation of the branch it covers, on a scratch copy, and every
+      mutation is reverted before anything else is written.
+      *Three new plants. Each mutation was made with `sed` on a copy in the session scratchpad
+      (outside the repository), one changed line each by `diff`, and run with
+      `node tools/wo-gate.mjs --self-check --against <copy>`; the real `tools/wo-gate.mjs` was never
+      mutated, so there was nothing in the tree to revert, and no `MUTATION` marker was written.
+      Run against the final file:*
+      *— claimant-subset test `ids.every(id => ex.ids.includes(id))` replaced with `true`:
+      `FAIL | 1 of 52 plants were not caught.` — the third-claimant plant ("--audit did not report
+      the excused box once WO-9.7 became its third claimant", the row reading `ok … WO-9.9 + WO-9.8 +
+      WO-9.7 — excused`).*
+      *— the stale-excuse loop disabled (`if (false && !used.has(s))`): `FAIL | 2 of 52` — the stale
+      plant, and the reworded-box plant's own stale assertion.*
+      *— the match put back to `box.includes(norm(s.box))`: `FAIL | 1 of 52` — the reworded-box plant
+      ("--audit still read the reworded box as excused").*
+      *— the excused branch never taken (`if (false && ex && …)`), for the controls: `FAIL | 5 of 52`
+      — the third-claimant and reworded-box controls, plus three older plants that expect a clean
+      `--audit` over the real tree (its WO-2.1 / WO-2.10 box loses the excuse).*
+      *And against the pre-WO-1.68 script (`git show HEAD:tools/wo-gate.mjs` into the scratchpad):
+      `FAIL | 1 of 52` — the reworded-box plant, which is the defect this work order names.*
+- [x] `node tools/wo-gate.mjs --audit` and `--self-check` pass, `node tools/wo-sweep.mjs` is green,
+      and `tools/README.md`'s recorded counts match. The excused WO-2.1 / WO-2.10 box still reads
+      excused on the real tree.
+      *`--audit` exit 0, `PASS | every fragment matches exactly one roadmap box and no box is claimed
+      twice unexcused, …`; its section reads `ok   ROADMAP.md:275  WO-2.1 + WO-2.10 — excused: WO-2.10
+      amends the box WO-2.1 closed (its own line says \`amends\`); both are ✅ DONE` and `1 box(es)
+      claimed by more than one work order, 1 excused in SHARED_BOXES, 0 problem(s)`. `--self-check`
+      exit 0, `52 plants, 52 caught, 0 missed.` / `PASS | 52 of 52 plants were caught.`;
+      `tools/README.md` now says fifty-two and `52 of 52`, and the "NOT covered by them: SHARED_BOXES"
+      lines in the run's own output now name WO-1.68's three and what they still do not cover (the
+      real excuse, and a wrapped box's continuation lines). `wo-sweep.mjs` exit 0, `50 checks · 47 passed · 0 failed · 3 to review` — the standing three REVIEWs; the sweep's count does not move.*
+- [x] `TESTING.md` § WO-1.68 carries these lines verbatim with the evidence for each.
+      *This section.*
+
+*No 👤 line and no 📆 line: tooling only. Nothing in `src/` moved, so no `CACHE` bump; the brief's
+`node tools/verify-shell.mjs` was run anyway on the finished tree: exit 0, `1881 checks · 1881 passed · 0
+failed · 0 skipped`.*
+
 ---
 
 ## Phase 2 — Attendance

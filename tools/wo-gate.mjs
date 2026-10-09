@@ -1769,11 +1769,27 @@ function roadmapDashboardDrift(roadmapText) {
 // **An excuse names the box AND every claimant**, and goes stale loudly: a listed box with fewer than
 // two claimants, or with a claimant the entry does not name, is reported. A box closed in halves — two
 // work orders each owning part of one promise — would be excused the same way, with the reason
-// written beside it; none exists today. The excuse is an exact roadmap-line match after norm(), so a
-// rewording of the box drops the excuse and the box reports, which is the right direction to fail.
+// written beside it; none exists today.
+//
+// **The excuse is an exact roadmap-line match after norm()** — `box` is the box's WHOLE line with
+// its checkbox taken off, compared with `===`, and not a fragment of it found with `includes()`. So
+// a rewording of that line, however small, drops the excuse and the box reports (as an unexcused
+// double claim AND as a stale excuse), which is the right direction to fail. *(WO-1.68, 2026-10-09:
+// until then the comment said exact and the code was `.includes(norm(s.box))` over the fragment
+// `'Marking screen, exceptions-only'` — a substring test, under which a rewording that kept those
+// four words kept the excuse.)* Why exact rather than a fragment: a fragment is what a CLAIM matches
+// on, and is meant to survive edits to the rest of the box; an excuse is a person's judgment that
+// two work orders may share THIS box as it read on the day, and the words after the fragment are
+// where a box changes what it promises. A new clause there is a new question about who closes it,
+// and the person re-pasting the line is the person who asks it. Two limits, both deliberate: the
+// line is the box's FIRST line, the same one line roadmapHits() reads, so a rewording of a wrapped
+// continuation does not drop the excuse; and a marker written after the checkbox (⏳, 🚫) does,
+// because it is on the line. `--self-check` plants all three outcomes — a reworded line, a third
+// claimant, and an excuse whose box has one claimant — through a copy of this script with a
+// synthetic excuse put in front of the real ones.
 const SHARED_BOXES = [
   {
-    box: 'Marking screen, exceptions-only',
+    box: '🚩 Marking screen, **exceptions-only** — the *finished* document holds nothing but exceptions',
     ids: ['WO-2.1', 'WO-2.10'],
     why: 'WO-2.10 amends the box WO-2.1 closed (its own line says `amends`); both are ✅ DONE',
   },
@@ -1796,13 +1812,14 @@ function doublyClaimedBoxes(wos, lines) {
     if (set.size < 2) continue;
     boxes++;
     const ids = [...set];
-    const ex = SHARED_BOXES.find(s => norm(lines[line]).includes(norm(s.box)));
+    const box = norm(lines[line]).replace(/^-\s*\[[ x]\]\s*/, '');
+    const ex = SHARED_BOXES.find(s => box === norm(s.box));
     const where = `ROADMAP.md:${line + 1}`;
     if (ex) used.add(ex);
     if (ex && ids.every(id => ex.ids.includes(id)) && ex.ids.every(id => set.has(id))) {
       excused.push(`${where.padEnd(15)} ${ids.join(' + ')} — excused: ${ex.why}`);
     } else {
-      problems.push(`${where} is claimed by ${ids.length} work orders — ${ids.join(', ')} — ${clip(norm(lines[line]).replace(/^-\s*\[[ x]\]\s*/, ''), 60)}. One box is closed by one work order: write *(no box.* at the head of the line that only names it, or excuse it in SHARED_BOXES with the reason${ex ? ` (an excuse for this box names ${ex.ids.join(', ')}, which is not this set)` : ''}`);
+      problems.push(`${where} is claimed by ${ids.length} work orders — ${ids.join(', ')} — ${clip(box, 60)}. One box is closed by one work order: write *(no box.* at the head of the line that only names it, or excuse it in SHARED_BOXES by its whole line, checkbox off, with the reason${ex ? ` (an excuse for this box names ${ex.ids.join(', ')}, which is not this set)` : ''}`);
     }
   }
   for (const s of SHARED_BOXES) {
@@ -2634,10 +2651,13 @@ ${second}${third}${rehome ? `\n- [ ] ${rehome}` : ''}`;
 // `Phase 3 → "…"` and all — so a plant can make it a second claimant on the fixture's box, or quote
 // that box behind a *(no box* opening. Default '', which writes no line: the target has closed
 // nothing since WO-3.11, and every other plant reads it that way.
+//
+// `chainCloses` (WO-1.68) does the same for ${CHAIN_ID}, so one plant can make it the THIRD claimant
+// on a box an excuse names for the other two. Default '', which writes no line.
 function fixtureBlock({ status, fragment, open, owes = '', rehome = '', target = 'open', boxes = true,
                         calendar = false, depends = 'nothing',
                         afterStatus = '', closesProse = '', trailer = '',
-                        chainStatus = '⬜ NOT STARTED', chainCalendar = false, targetCloses = '' }) {
+                        chainStatus = '⬜ NOT STARTED', chainCalendar = false, targetCloses = '', chainCloses = '' }) {
   return `
 ---
 
@@ -2684,7 +2704,7 @@ against one tree in one plant, so "the mark did not eat the gate" is measured ra
 
 ## ${CHAIN_ID} — self-check chain fixture
 
-**Ship** — · **Status** ${chainStatus} · **Size** S · **Depends on** nothing
+**Ship** — · **Status** ${chainStatus} · **Size** S · **Depends on** nothing${chainCloses ? `\n**Closes roadmap** ${chainCloses}` : ''}
 
 **Why it exists.** The far hop. When a plant points ${FIXTURE_ID}'s **Depends on** at this one and
 gives both a 📆 line, a gate report on ${TARGET_ID} has two hops to name and not one.
@@ -3066,6 +3086,34 @@ function runPlants(subject, sandbox) {
                         { cwd: sandbox, encoding: 'utf8' });
     return { code: r.status === null ? 1 : r.status, out: `${r.stdout || ''}${r.stderr || ''}` };
   };
+
+  // WO-1.68. SHARED_BOXES is a const in the script under test, and its one real excuse names a real
+  // box, so a plant about how an excuse MATCHES needs an excuse of its own about the fixture's box.
+  // It gets one by writing a second copy of the sandbox's script with `entries` put in front of the
+  // real excuses, and running that. Made from the sandbox copy and not from this file, so `--against`
+  // carries: every mutation of the subject is in the second copy too, and the excuse list is the only
+  // thing the plant supplies. That is the whole seam — no flag or environment variable on the script
+  // itself, because an input that excuses a double claim is a hole for a person to reach as well. The
+  // real excuses stay in the copy, so the real WO-2.1 / WO-2.10 box still reads excused there and a
+  // plant's problem count moves only by what the plant did.
+  const EXCUSED_COPY = path.join(sandbox, 'tools', 'wo-gate-excused.mjs');
+  const runExcused = (entries, args) => {
+    const src = fs.readFileSync(path.join(sandbox, 'tools', 'wo-gate.mjs'), 'utf8');
+    const anchor = /^const SHARED_BOXES = \[$/m;
+    if (!anchor.test(src)) throw new Error('--self-check found no `const SHARED_BOXES = [` line in the script under test to put a synthetic excuse after');
+    fs.writeFileSync(assertOutsideRepo(EXCUSED_COPY),
+                     src.replace(anchor, m => `${m}\n${entries.map(e => `  ${JSON.stringify(e)},`).join('\n')}`));
+    const r = spawnSync(process.execPath, [EXCUSED_COPY, ...args], { cwd: sandbox, encoding: 'utf8' });
+    return { code: r.status === null ? 1 : r.status, out: `${r.stdout || ''}${r.stderr || ''}` };
+  };
+  // --audit's two-claims section and its verdict, read off a run's output (WO-1.67's plant reads them
+  // the same way, locally; these three plants share them).
+  const claimsSection = out => (out.split('Roadmap boxes, against the work orders whose fragments claim them')[1] || '')
+    .split('`**Owes**` and its')[0];
+  const auditProblems = out => { const m = /^FAIL \| (\d+) problem\(s\)/m.exec(out); return m ? Number(m[1]) : 0; };
+  const claimRows = (out, kind) => claimsSection(out).split('\n').filter(l => new RegExp(`^\\s+${kind}\\s`).test(l));
+  const FIXTURE_EXCUSE = { box: FIXTURE_BOX, ids: [FIXTURE_ID, TARGET_ID], why: 'self-check: a synthetic excuse for the fixture pair' };
+  const FIXTURE_CLAIM = `Phase ${FIXTURE_PHASE} → "${FIXTURE_BOX}"`;
 
   // Readers over the copy, deliberately independent of the parser above: the subject is what is
   // being tested, so nothing here may ask it what it wrote.
@@ -3492,6 +3540,80 @@ function runPlants(subject, sandbox) {
         const disowned = run(['--audit']);
         if (fixtureRow(disowned.out)) bad.push('--audit still counted a quotation in a no-box line as a claim on the box');
         if (problemsIn(disowned.out) !== problemsIn(base.out)) bad.push(`with the second line opening *(no box* --audit counted ${problemsIn(disowned.out)} problem(s), against ${problemsIn(base.out)} at baseline`);
+        return bad;
+      },
+    },
+    // ------------------------------------------------------------------ WO-1.68's three
+    //
+    // SHARED_BOXES, which WO-1.67 proved against the real tree only. Each plant runs --audit through
+    // runExcused() with one synthetic excuse — the fixture's box, for WO-9.9 and WO-9.8 — and each
+    // carries the excused case as its control, because a check that reported every excused box would
+    // pass all three outcomes below and excuse nothing. Counts are against a run of the same copy
+    // one step earlier, never against zero (WO-1.29: the sandbox is the real plans/).
+    {
+      name: 'an excused box that a third work order also claims is reported, and the excuse is named as not this set',
+      run: () => {
+        const bad = [];
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false, targetCloses: FIXTURE_CLAIM });
+        const two = runExcused([FIXTURE_EXCUSE], ['--audit']);
+        const okRow = out => claimRows(out, 'ok').find(l => l.includes(FIXTURE_ID) && l.includes(TARGET_ID) && /excused/.test(l)) || '';
+        if (!okRow(two.out)) bad.push(`the control: with the excuse naming exactly ${FIXTURE_ID} and ${TARGET_ID}, --audit did not read their box as excused:`, ...claimsSection(two.out).split('\n').filter(l => l.trim()).slice(0, 6).map(l => `  ${l.trim()}`));
+        if (claimRows(two.out, 'BAD').some(l => l.includes(FIXTURE_ID))) bad.push('the control: --audit reported the fixture box with its excuse matching the claimant set exactly');
+
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false, targetCloses: FIXTURE_CLAIM, chainCloses: FIXTURE_CLAIM });
+        const before = snapshot();
+        const three = runExcused([FIXTURE_EXCUSE], ['--audit']);
+        const row = claimRows(three.out, 'BAD').find(l => l.includes(FIXTURE_ID) && l.includes(TARGET_ID) && l.includes(CHAIN_ID)) || '';
+        if (!row) bad.push(`--audit did not report the excused box once ${CHAIN_ID} became its third claimant:`, ...claimsSection(three.out).split('\n').filter(l => l.trim()).slice(0, 6).map(l => `  ${l.trim()}`));
+        else if (!/which is not this set/.test(row)) bad.push(`the row did not say the excuse names a different set: ${row.trim()}`);
+        if (okRow(three.out)) bad.push('--audit still read the box as excused with a claimant the excuse does not name');
+        if (auditProblems(three.out) !== auditProblems(two.out) + 1) bad.push(`--audit counted ${auditProblems(three.out)} problem(s) with a third claimant against ${auditProblems(two.out)} with the excused pair — one box, one problem`);
+        if (three.code === 0) bad.push('--audit exited 0 with an excused box carrying a claimant its excuse does not name');
+        if (changedSince(before).length) bad.push(`--audit wrote ${changedSince(before).join(', ')}`);
+        return bad;
+      },
+    },
+    {
+      name: 'an excuse whose box has one claimant is reported as stale',
+      run: () => {
+        const bad = [];
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        const base = run(['--audit']);
+        const stale = runExcused([FIXTURE_EXCUSE], ['--audit']);
+        const row = claimRows(stale.out, 'BAD').find(l => l.includes('SHARED_BOXES excuses') && l.includes(FIXTURE_BOX)) || '';
+        if (!row) bad.push(`--audit did not report an excuse for a box only ${FIXTURE_ID} claims:`, ...claimsSection(stale.out).split('\n').filter(l => l.trim()).slice(0, 6).map(l => `  ${l.trim()}`));
+        else if (!/stale excuse/.test(row)) bad.push(`the row did not call the excuse stale: ${row.trim()}`);
+        if (auditProblems(stale.out) !== auditProblems(base.out) + 1) bad.push(`--audit counted ${auditProblems(stale.out)} problem(s) with the stale excuse against ${auditProblems(base.out)} without it`);
+        if (stale.code === 0) bad.push('--audit exited 0 with a stale excuse in SHARED_BOXES');
+        // The control: the same excuse with its second claimant back is used, so nothing is stale.
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false, targetCloses: FIXTURE_CLAIM });
+        const used = runExcused([FIXTURE_EXCUSE], ['--audit']);
+        if (claimRows(used.out, 'BAD').some(l => l.includes('SHARED_BOXES excuses') && l.includes(FIXTURE_BOX))) bad.push('the control: --audit called the excuse stale with both its claimants present');
+        return bad;
+      },
+    },
+    {
+      name: 'a reworded box that keeps the excuse\'s words drops the excuse — the box reports as claimed twice and the excuse as stale',
+      run: () => {
+        const bad = [];
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false, targetCloses: FIXTURE_CLAIM });
+        const asWritten = runExcused([FIXTURE_EXCUSE], ['--audit']);
+        if (!claimRows(asWritten.out, 'ok').some(l => l.includes(FIXTURE_ID) && l.includes(TARGET_ID))) bad.push('the control: the box as the excuse quotes it was not read as excused');
+
+        // A clause after the quoted words: both claims still find the box, because a fragment is a
+        // substring and is meant to survive this, and the excuse no longer equals the line.
+        const lines = readSb('ROADMAP.md').split('\n');
+        const i = lines.findIndex(l => l.includes(FIXTURE_BOX) && /^-\s*\[/.test(l));
+        if (i < 0) { bad.push('--self-check could not find the fixture box to reword'); return bad; }
+        lines[i] = `${lines[i]} — and a clause added after the excuse was written`;
+        plantWrite('ROADMAP.md', lines.join('\n'));
+        const before = snapshot();
+        const reworded = runExcused([FIXTURE_EXCUSE], ['--audit']);
+        if (claimRows(reworded.out, 'ok').some(l => l.includes(FIXTURE_ID))) bad.push('--audit still read the reworded box as excused — the excuse matched a fragment of the line, not the line');
+        if (!claimRows(reworded.out, 'BAD').some(l => l.includes(FIXTURE_ID) && l.includes(TARGET_ID) && /claimed by 2 work orders/.test(l))) bad.push(`--audit did not report the reworded box as claimed by ${FIXTURE_ID} and ${TARGET_ID}`);
+        if (!claimRows(reworded.out, 'BAD').some(l => l.includes('SHARED_BOXES excuses') && l.includes(FIXTURE_BOX))) bad.push('--audit did not report the excuse as stale once its box was reworded');
+        if (auditProblems(reworded.out) !== auditProblems(asWritten.out) + 2) bad.push(`--audit counted ${auditProblems(reworded.out)} problem(s) over the reworded box against ${auditProblems(asWritten.out)} as written — the double claim and the stale excuse are one each`);
+        if (changedSince(before).length) bad.push(`--audit wrote ${changedSince(before).join(', ')}`);
         return bad;
       },
     },
@@ -5021,8 +5143,15 @@ function runPlants(subject, sandbox) {
   console.log('  ticks nothing it quotes from 🔍 AWAITING VERDICT and says it quotes no box, while the');
   console.log('  same quotation with no such opening, or with `no box` mid-line, still ticks; and --audit');
   console.log('  names a box two work orders claim, counts it as one problem, and stops counting the');
-  console.log('  claim once it moves behind a no-box opening. NOT covered by them: SHARED_BOXES, whose');
-  console.log('  one excuse is read against the real tree only, and its stale-excuse report.');
+  console.log('  claim once it moves behind a no-box opening.');
+  console.log('  And WO-1.68\'s THREE, for SHARED_BOXES, each through a copy of the script with one');
+  console.log('  synthetic excuse put in front of the real ones: an excused box with a third claimant is');
+  console.log('  reported and names the excuse as not this set; an excuse whose box has one claimant is');
+  console.log('  reported as stale; and a box reworded after the quoted words drops its excuse, because');
+  console.log('  the excuse is the whole line and not a fragment — each with the excused case as its');
+  console.log('  control. NOT covered by them: the REAL excuse, which --audit reads on every run and no');
+  console.log('  plant does, and a rewording of a wrapped box\'s continuation lines, which the match');
+  console.log('  never reads by design.');
   console.log('  NOT covered: the Acceptance parser otherwise. It is still never run');
   console.log('  against a real work order\'s list, and one terminator is one way it can go blind and');
   console.log('  not the class of them — a narrowed gap, not a closed one. Nor is gate()\'s');

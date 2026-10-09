@@ -119,7 +119,7 @@ node tools/wo-gate.mjs --self-check    plant every violation this script is supp
 ```
 
 `--self-check` copies `plans/` to a temp directory, writes four **synthetic** work orders into the copy,
-plants forty-nine violations against them, runs the script over the copy, and deletes the directory on
+plants fifty-two violations against them, runs the script over the copy, and deletes the directory on
 both exit paths. *(Thirteen until 2026-08-16; WO-1.21 added four, for the two statuses that mean the
 work is not coming and for the § The files index. WO-2.49 added the eighteenth on 2026-08-18, and it
 is the first that is about the **reader** rather than about a refusal — a fixture written CRLF in its
@@ -252,9 +252,29 @@ line (1 red — the control); `closesFragments()` returning nothing (10 red, thi
 the two-claims problems dropped from the verdict (1 red — the second); and the two-claims walk reading
 raw quotations instead of `closesFragments()` (4 red — the second, plus three plants that expect a
 clean `--audit` over the real tree, because WO-8.16 against WO-8.6 is a live double claim under that
-mutation). **`SHARED_BOXES` is not planted**: its one excuse (WO-2.1 and WO-2.10, an amendment) is
-read against the real tree only, and its stale-excuse report was proved on a scratch copy by hand.
-`49 plants, 49 caught, 0 missed` / `PASS | 49 of 49 plants were caught`, read
+mutation). *(Until WO-1.68 this paragraph said **`SHARED_BOXES` is not planted** — its one excuse
+was read against the real tree only, and its stale-excuse report had been proved on a scratch copy by
+hand.)*
+**WO-1.68 added three on 2026-10-09**, the fiftieth to fifty-second, all about `SHARED_BOXES` — and it
+changed the match they test: an excuse is now the box's **whole line** with its checkbox taken off,
+compared with `===` after `norm()`, where it had been `.includes()` of a fragment while the comment
+above it said *exact*. Each plant runs `--audit` through a **second copy of the sandbox's script**
+with one synthetic excuse — the fixture's box, for WO-9.9 and WO-9.8 — put in front of the real ones
+(`runExcused()`); being made from the sandbox copy, it carries an `--against` mutation with it, and the
+script itself gains no flag. The first gives the chain fixture a **Closes roadmap** line through a new
+`chainCloses` option, so the excused box has a third claimant: a `BAD` row naming all three and
+*which is not this set*, one more problem than the excused pair. The second leaves the box with one
+claimant: the excuse is reported as stale, one more problem than the same run without it. The third
+appends a clause to the fixture box's line after the quoted words: both claims still find the box,
+and it reports as claimed twice **and** the excuse as stale, two more problems. Each carries the
+excused case as its control. Proved against the pre-WO-1.68 script with `--against` (1 red of 52 — the
+reworded-box plant, which is the defect) and by four mutations of scratch copies: the claimant-subset
+test replaced with `true` (1 red — the third-claimant plant); the stale-excuse loop disabled (2 red —
+the stale plant, and the reworded-box plant's stale assertion); the match put back to `.includes()`
+(1 red — the reworded-box plant); and the excused branch never taken (5 red — the third-claimant and
+reworded-box controls, plus three plants that expect a clean `--audit` over the real tree, whose
+WO-2.1 / WO-2.10 box loses its excuse).
+`52 plants, 52 caught, 0 missed` / `PASS | 52 of 52 plants were caught`, read
 off the run and not added up. The counts further down are readings from dated
 runs against older copies of the script and stay at the number that was true then.)* Two things about it are load-bearing. **Every plant path — and, since WO-2.44, the
 sandbox that holds them — goes through a guard that
