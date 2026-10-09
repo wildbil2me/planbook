@@ -3734,6 +3734,15 @@ rows were missing from the booking and were ruled the same day.
 - [x] 👤 On the iPad: a held column with a missing score, read on the home card, the concern list and
       the student's detail, all three agreeing with the grade.
 
+*(**Three outcomes the plan did not predict, 2026-10-09.** The queue's engine call is a **sibling
+export**, `heldWork()`, rather than a new row state: `openWork()` feeds `planned()`, and a state it
+ignored would have erased the open / missing / bonus distinction a held column still has. The brief
+left *blanks* open for a held column, and it follows the live rule unchanged: only `open` rows count
+toward *N to grade*, so a held cell marked `missing` and a held zero-point blank count nowhere. And
+**the student CSV's Work section now carries held rows** as *held — …*, which no Acceptance line asked
+for; it is documented in `docs/data-model.md` and checked in `tools/verify/held-readers.mjs`, and
+whether it stays is the owner's call.)*
+
 **Traps** — **The queue ruling is the one most likely to be got wrong by symmetry**: the readers
 WO-3.53 built all hide a held column, and these three deliberately do not. **A reader that
 re-implements "is this column held" is the second opinion** that the glance-reader rule forbids.

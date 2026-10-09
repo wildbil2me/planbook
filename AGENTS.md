@@ -63,6 +63,11 @@ dependencies.
   `isHeld()` — **never read `.held` outside `src/grade-engine.js`** — and write it only in
   `src/held-column.js`; `wo-sweep.mjs` § 30 enforces both, destructured parameters included. The
   hold and commit confirms take their figures from the engine, never a second computation.
+  **Counting toward nothing is not the same as hidden** (WO-3.47): the readers that list unfinished
+  work — the home card's *N to grade*, the queue, student detail, the grade sheet and both CSVs —
+  **show** a held column under its own word, from `heldWork()` beside `openWork()`. Never fold held
+  rows into `openWork()`: it feeds every *what it would take to move* projection. A new reader picks
+  its half on purpose, because copying the hiding readers by symmetry is the likeliest mistake.
 - **An absent threshold key IS its default** (WO-4.1). `signals` holds only what the teacher has
   changed, and *Put every threshold back* **deletes** the keys rather than writing today's numbers
   into the year — otherwise a default re-tuned in a later build never reaches anyone who once
