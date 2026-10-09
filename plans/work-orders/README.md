@@ -122,7 +122,7 @@ want it read; it is no longer a change to what the field above it means if you f
 | **Owes** | The work orders carrying this one's re-homed Acceptance lines, and **the one field here that is acted on rather than only reported**. Present exactly when a line has been moved, absent everywhere else. Each named ID must be pointed at by a `- [ ] … → WO-x.y` line below, and each of those pointers must land on **exactly one box that is still `[ ]`** under the target — `--tick` refuses the work order when one does not, and `--audit` resolves every pointer in the directory each run. Quote the target's box after the marker, the way **Closes roadmap** quotes a roadmap box, whenever the wording changed on the way; write the marker **bare**, because a `→ WO-x.y` inside backticks is read as prose about markers. **A value from which no ID parses is refused** — by `--audit`, naming the work order and its file line, and by `--tick`, which writes nothing (WO-1.29). There is no legitimate reading of one: the two sentences above say the field is present exactly when a line has moved and that every ID on it must be pointed at, and a value with no ID satisfies neither. It is a **refusal** where a field name written in prose draws only a NOTE, because that is prose discussing a field and this is the value of a field really at a field position. **The prose goes in the body**, where a reader looks for it and no parser does — which is where WO-4.3's went on 2026-09-07, after a fortnight in this slot in which both of the cross-checks above ran over an empty list and reported it clean |
 | **Blocks** | Reported, never acted on, and **never a dependency** — it is the opposite of one. Prose written by a hand rather than a list of IDs: WO-1.1's says `everything` and WO-1.5's ends `— **unblocked as of 2026-08-04**`. Until WO-2.16 the `WO-` tokens on it reached the dependency walk, so WO-1.5 — the backup work order the whole sprint waits on — was reported as *depending on* WO-1.6. Both were ✅ DONE so nothing was gated wrongly, which was luck: the same line between two open work orders is a cycle the gate would have called satisfied |
 | **Target** | Reported, never acted on. A date, on three of the four gate work orders — WO-G4 has none, because the 1.0.0 call is the one gate no calendar can set — because a gate is otherwise calendar-bound rather than work-bound. It sat inside `Depends on` until WO-2.16 for the same reason **Blocks** did, and got away with it because a date carries no `WO-` token |
-| **Closes roadmap** | Each `"quoted fragment"` must match **exactly one** box in `ROADMAP.md`, which `--tick` then ticks |
+| **Closes roadmap** | Each `"quoted fragment"` must match **exactly one** box in `ROADMAP.md`, which `--tick` then ticks — **unless the line opens *(no box***, in which case nothing on it is a fragment and a quotation there only says whose box it is (WO-1.67). **One box, one work order**: `--audit` fails a box two work orders' fragments both reach, unless it is excused by name in `SHARED_BOXES` in `tools/wo-gate.mjs` — one is, WO-2.1 and WO-2.10's *Marking screen*, an amendment |
 | **Amends roadmap** | Reported, never acted on. This work order changes the promise of a box some earlier one already closed — WO-2.12 and WO-2.13 carry it. The *(italic paren note)* it owes `ROADMAP.md` is still a hand edit |
 | **Takes from WO-x.y** | Prose. Nothing reads it |
 | *anything with no row here* | **Read by nothing, and said so once per gate report.** It is parsed far enough to keep it out of the field written above it, and `node tools/wo-gate.mjs WO-x.y` names it as a field with no row. If it is real, give it both a row here and a line in `KNOWN_FIELDS`; if it is not, take it out of the header block. This row exists because three fields — **Amends roadmap**, **Blocks**, **Target** — were each invented by a hand, absorbed in silence, and found one at a time by a human reading the gate's output and thinking it looked odd |
@@ -168,6 +168,10 @@ whether one roadmap line *contains* the fragment.
    paren note)*. Write notes about fragments in backticks, and use no quotation marks at all when the
    work order closes no box — WO-1.13, WO-3.10 and WO-G4 each pointed at a heading or a paragraph
    rather than a checkbox, and each was reported as rot until the quotation marks came off.
+   **The one exception is a line that opens *(no box*** (WO-1.67, 2026-10-09): nothing on it is read
+   as a fragment, so a no-box line may quote another work order's box to say whose it is — WO-8.16's
+   does, and before that rule `--tick WO-8.16` ticked WO-8.6's box. The test is the opening words,
+   after an optional `Phase N →`; `no box` anywhere else on the line is prose and changes nothing.
 
 **A re-homed Acceptance line stays `- [ ]`.** *(2026-08-09, WO-3.11.)* When a line names work another
 work order will actually do, leave the box open, add `**Owes** WO-x.y` to the header beside
@@ -379,7 +383,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.67 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.68 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.57 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.53 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.6 | Phase 4 |
@@ -455,7 +459,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 67 | 66 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 68 | 67 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 55 | 54 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 52 | 51 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 6 | 6 | — | ✅ DONE — 2026-09-30 |
@@ -464,7 +468,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 17 | 16 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.4 ✅ DONE 2026-09-26, the sign-in opened on the deployed domain and read on the laptop and the iPad; WO-7.5 ✅ DONE 2026-09-26, the header's sync button; WO-7.6 ✅ DONE 2026-09-26, the privacy documents say when Google's library loads, read off the deployed /privacy; WO-7.7 ✅ DONE 2026-09-26, a download repaints the open screen, read both ways on laptop and iPad; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 18 | 13 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 3 | — | WO-G2 ✅ **2026-09-30**: worked 2026-09-29 with six of eight boxes closed, and the letter-scale setting and the backup drill closed the next day on the owner's reading; WO-G3 ✅ **2026-09-30** on the owner's ruling, watched across four weeks of the term with nothing recorded |
-| | **244** | **233** | **3** | `[█████████░] 95%` |
+| | **245** | **234** | **3** | `[█████████░] 96%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)
@@ -557,6 +561,8 @@ addressed to the primary.)*
 ***And Phase 1's by hand again on 2026-10-09, from `65 | 65` to `66 | 65`, the total from `242 | 231` to `243 | 231`.*** *Booked out of that day's bookkeeping pass, which found WO-1.65 and WO-3.44 closed with no* `TESTING.md` *section:* [WO-1.66](phase-1-shell-store-roster.md#wo-166--a-work-order-can-close-with-no-testingmd-section-and-the-brief-says-it-need-not-write-one) *makes* `--tick` *refuse one and the brief demand one. 231 of 243 is 95%, as before; the bar stays at nine. The next* `--tick` *is still the authority.*
 
 ***And Phase 1's by hand a third time on 2026-10-09, from `66 | 66` to `67 | 66`, the total from `243 | 233` to `244 | 233`.*** *Booked out of WO-8.16's close, where* `--tick` *ticked WO-8.6's roadmap box off a line that quoted it to say it was not WO-8.16's:* [WO-1.67](phase-1-shell-store-roster.md#wo-167----tick-ticks-a-roadmap-box-that-a-closes-roadmap-line-quotes-in-order-to-disown-it)*. 233 of 244 is 95%, down from 96%; the bar stays at nine. The next* `--tick` *is still the authority.*
+
+***And Phase 1's by hand a fourth time on 2026-10-09, from `67 | 66` to `68 | 66`, the total from `244 | 233` to `245 | 233`.*** *Booked out of WO-1.67's verdict, minutes before its tick:* [WO-1.68](phase-1-shell-store-roster.md#wo-168--the-shared-box-excuse-says-exact-and-matches-a-substring-and-its-mismatch-branch-is-proved-by-nothing) *makes the* `SHARED_BOXES` *comment and code agree and plants the branches nothing proves, a 🎒 on* `tools/wo-gate.mjs`*. 233 of 245 is 95%, as before; the bar stays at nine. The next* `--tick` *is still the authority.*
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -2006,6 +2012,7 @@ it, never from a reading taken earlier in the same session.)*
 | 139 | [WO-1.65](phase-1-shell-store-roster.md#wo-165--the-glance-readers-no-arithmetic-rule-is-read-by-nobody) The glance reader's no-arithmetic rule is read by nobody | S | — | 🎒 `tools/wo-sweep.mjs` — **Nothing blocks it.** An hour, whenever the sweep is open for something else. Booked **2026-10-09**, owner-directed, out of WO-3.47's verdict: `src/glance.js`'s no-arithmetic rule had only a behavioural check and a verifier's throwaway script. One claim on § 20's claim-5 model, every refused shape mutation-proved, `+` deliberately unfenced |
 | 140 | [WO-1.66](phase-1-shell-store-roster.md#wo-166--a-work-order-can-close-with-no-testingmd-section-and-the-brief-says-it-need-not-write-one) A work order can close with no `TESTING.md` section, and the brief says it need not write one | S | — | **At the foot, booked 2026-10-09**, owner-directed, out of a bookkeeping pass: WO-1.65 and WO-3.44 had closed with no section, and 58 work orders have since WO-1.9. `--tick` refuses ✅ DONE without a heading naming the id, and every brief demands the section. The owner ruled **every work order, no exemption**, except the gates, which keep their boxes in `gates.md`. Forward only, no backfill. Pipeline files and `tools/wo-gate.mjs`; nothing in `src/` moves |
 | 141 | [WO-1.67](phase-1-shell-store-roster.md#wo-167----tick-ticks-a-roadmap-box-that-a-closes-roadmap-line-quotes-in-order-to-disown-it) `--tick` ticks a roadmap box that a **Closes roadmap** line quotes in order to disown it | S | — | **At the foot, booked 2026-10-09**, owner-directed, out of WO-8.16's close. WO-8.16's line reads *(no box. It is the front half of … "Onboarding: install → marking …", and WO-8.6 closes that one.)*, and `--tick` ticked WO-8.6's box anyway, because `roadmapEdits()` takes every double-quoted run on the line as a fragment. Reverted by hand before `1482edc`. `--audit` passed throughout, because it checks that a fragment matches one box, never that one box is claimed by two work orders. `tools/wo-gate.mjs` only; nothing in `src/` moves |
+| 142 | [WO-1.68](phase-1-shell-store-roster.md#wo-168--the-shared-box-excuse-says-exact-and-matches-a-substring-and-its-mismatch-branch-is-proved-by-nothing) The shared-box excuse says exact and matches a substring, and its mismatch branch is proved by nothing | XS | — | 🎒 `tools/wo-gate.mjs` — **Nothing blocks it.** An hour, whenever the gate tool is open for something else. Booked **2026-10-09**, owner-directed, out of WO-1.67's verdict: the comment above `SHARED_BOXES` says an excuse is an exact line match and the code uses `.includes`, and no plant covers an excused box with the wrong claimants or a stale excuse. Nothing in `src/` moves |
 
 ***Rows 17 through 32 were added 2026-08-28, and the reason is the third occurrence of the failure
 this section exists to prevent.*** *Before that sitting,* **sixteen open work orders had no row in

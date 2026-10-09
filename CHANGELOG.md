@@ -13,6 +13,23 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### `--tick` no longer ticks a roadmap box a "no box" line quotes — 2026-10-09
+
+WO-1.67, out of WO-8.16's close, where `--tick` ticked WO-8.6's onboarding box off a line that quoted
+it only to say it was WO-8.6's. Tooling only; nothing in `src/` moved.
+
+- **A Closes roadmap line that opens with a "no box" note quotes nothing.** `closesFragments()` is
+  now the one reader of quoted boxes for `--tick`, `--audit` and the tracker-drift check. Quoting a
+  box in such a line stays legal: it is how a work order says whose box it is.
+- **`--audit` fails on a roadmap box claimed by two work orders.** Today's tree has one,
+  `ROADMAP.md:275` (WO-2.1 and WO-2.10), excused by name in `SHARED_BOXES` because WO-2.10's line
+  says it amends that box. An excuse that stops matching is reported as stale.
+- `--self-check` 47 → 49 plants. A scratch `--tick WO-8.16` left `ROADMAP.md` untouched; the old
+  script on the same copy ticked line 712.
+- Booked [WO-1.68](plans/work-orders/phase-1-shell-store-roster.md#wo-168--the-shared-box-excuse-says-exact-and-matches-a-substring-and-its-mismatch-branch-is-proved-by-nothing)
+  as a 🎒 out of the verdict: the excuse's comment says exact match while the code matches a
+  substring, and no plant covers an excuse with the wrong claimants.
+
 ### A first-time visitor meets the front page, not an empty gradebook — 2026-10-09
 
 WO-8.16. Someone who types the domain into a browser that has never held a school year now sees

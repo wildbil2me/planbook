@@ -5845,7 +5845,7 @@ by nothing. **Nothing in `src/` moves**, so no `CACHE` bump is owed.
 
 ## WO-1.67 — `--tick` ticks a roadmap box that a **Closes roadmap** line quotes in order to disown it
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-09 · **Size** S · **Depends on** — · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.66 made.)*
 
 **Booked 2026-10-09**, owner-directed, out of WO-8.16's close.
@@ -5877,15 +5877,15 @@ both "closing" the onboarding box was invisible to it.
   claiming one box are reported. `tools/README.md` records any count that moves.
 
 **Acceptance**
-- [ ] In a scratch copy of the tree, never on `main`, `--tick WO-8.16` against a copy whose row is set
+- [x] In a scratch copy of the tree, never on `main`, `--tick WO-8.16` against a copy whose row is set
       back to 🔍 AWAITING VERDICT leaves `plans/ROADMAP.md` untouched and says the line quotes no box.
-- [ ] A work order whose **Closes roadmap** line quotes a box without a no-box note still ticks that
+- [x] A work order whose **Closes roadmap** line quotes a box without a no-box note still ticks that
       box, shown by an existing or new `--self-check` plant.
-- [ ] `--audit` names a box claimed by two work orders, shown with a plant. The count on today's tree
+- [x] `--audit` names a box claimed by two work orders, shown with a plant. The count on today's tree
       is stated in the result, with any excused case named.
-- [ ] `node tools/wo-gate.mjs --audit` and `--self-check` pass, `node tools/wo-sweep.mjs` is green,
+- [x] `node tools/wo-gate.mjs --audit` and `--self-check` pass, `node tools/wo-sweep.mjs` is green,
       and `tools/README.md`'s recorded counts match.
-- [ ] `TESTING.md` § WO-1.67 carries these lines verbatim with the evidence for each.
+- [x] `TESTING.md` § WO-1.67 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Do not fix it by rewording WO-8.16's line.** Changing the quotes to backticks would make
 this one tick correct and leave the parser waiting for the next author who quotes a box to disown it.
@@ -5894,3 +5894,51 @@ make `--tick` read the sentence.** A no-box line is recognised by its opening wo
 understanding *"and WO-8.6 closes that one"*. **This changes `tools/wo-gate.mjs`, a pipeline file**:
 read `plans/work-orders/README.md` § "The pipeline's own files" before editing it. **Nothing in
 `src/` moves**, so no `CACHE` bump is owed.
+
+## WO-1.68 — the shared-box excuse says exact and matches a substring, and its mismatch branch is proved by nothing
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** — · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.67 made.)*
+
+**Booked 2026-10-09**, owner-directed, out of WO-1.67's verdict. A ride-along on `tools/wo-gate.mjs`:
+fold it into the next sitting that has that file open.
+
+**Why it exists.** WO-1.67 added `doublyClaimedBoxes()` and a `SHARED_BOXES` excuse list. Its
+verifier passed it and named one gap: no `--self-check` plant tests whether an excuse is too loose.
+Reading the code adds a second thing, and it is the one worth the row.
+
+- **The comment and the code disagree.** The comment above `SHARED_BOXES` says the excuse is *"an
+  exact roadmap-line match after norm(), so a rewording of the box drops the excuse and the box
+  reports"*. The code is `norm(lines[line]).includes(norm(s.box))` — a substring test. A rewording
+  that keeps the quoted words intact keeps the excuse. Harm today is close to nil, because only a box
+  with two claimants is looked at and the claimant set must still match, but it is a comment that
+  runs ahead of its code, which is the shape `plans/dispatch-retro.md` records.
+- **The mismatch branch has no plant.** An excused box whose claimant set differs from the entry's
+  (a third claimant, or a different pair) is reported, and so is an excuse whose box no longer has two
+  claimants. The real tree exercises only the excused case, on every `--audit`; the other two are
+  proved by nothing standing, only by WO-1.67's verifier mutating once.
+
+**Deliverables**
+- Make the comment and the code agree on how an excuse matches its box. Exact is the likelier answer,
+  since it is what the comment argues for; decide it and say why where `SHARED_BOXES` is defined.
+- `--self-check` gains plants for: an excused box with a third claimant (reported), and an excuse
+  whose box has one claimant (reported as stale). If the match goes exact, a plant for a reworded box
+  that keeps the excuse's words (reported).
+- `tools/README.md`'s recorded self-check count, and the "NOT covered by them: SHARED_BOXES" lines in
+  `--self-check`'s own output, updated to what is now covered.
+
+**Acceptance**
+- [ ] The comment above `SHARED_BOXES` and the matching code say the same thing, shown by quoting
+      both in `TESTING.md` § WO-1.68.
+- [ ] Each new plant is red under a mutation of the branch it covers, on a scratch copy, and every
+      mutation is reverted before anything else is written.
+- [ ] `node tools/wo-gate.mjs --audit` and `--self-check` pass, `node tools/wo-sweep.mjs` is green,
+      and `tools/README.md`'s recorded counts match. The excused WO-2.1 / WO-2.10 box still reads
+      excused on the real tree.
+- [ ] `TESTING.md` § WO-1.68 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Do not add a rule for `amends`.** WO-1.67 excused the one case by name on purpose; a
+rule would be a reading of the sentence, which its Traps refuse. **Do not touch the real excuse's
+wording to make a plant pass.** **This changes `tools/wo-gate.mjs`, a pipeline file**: read
+`plans/work-orders/README.md` § "The pipeline's own files" before editing it. **Nothing in `src/`
+moves**, so no `CACHE` bump is owed.

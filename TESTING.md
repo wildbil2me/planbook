@@ -3400,6 +3400,60 @@ order the check applies to**, which is why this section exists before the tick.
 
 *No 👤 line and no 📆 line: tooling only.*
 
+### WO-1.67 — `--tick` ticks a roadmap box that a **Closes roadmap** line quotes in order to disown it
+
+**What this changes.** Nothing a teacher sees: `git diff -- src/` is empty and no `CACHE` bump is owed.
+In `tools/wo-gate.mjs`, a **Closes roadmap** value that opens `*(no box` — after an optional
+`Phase N →`, case-blind, through `*`, `_` and `(` — yields no fragments, through one reader,
+`closesFragments()`, which `--tick`, `--audit`, `notComingProblems()` and `--self-check`'s precondition
+all now call. The test was read off all 212 **Closes roadmap** values in the directory: 156 open
+`*(no box` (one of them, WO-8.16, quotes a box), 54 quote the box they close, and WO-1.13 and WO-G4 quote
+nothing. `--audit` gains a section reporting a roadmap box claimed by two or more work orders, as a
+**failure**, with one excuse written down by name in `SHARED_BOXES`. `--self-check` goes 47 → 49 plants.
+
+- [x] In a scratch copy of the tree, never on `main`, `--tick WO-8.16` against a copy whose row is set
+      back to 🔍 AWAITING VERDICT leaves `plans/ROADMAP.md` untouched and says the line quotes no box.
+      *`plans/`, `TESTING.md` and the new `tools/wo-gate.mjs` copied to the session scratchpad, WO-8.16's
+      status set to `🔍 AWAITING VERDICT — scratch` there. `--tick WO-8.16`: `PASS | WO-8.16 ticked.`,
+      exit 0, the status edit and no `ROADMAP.md` edit, and `NOTE | this work order's **Closes roadmap**
+      line quotes no box — it opens with a no-box note, so the box it quotes is named as another work
+      order's and not closed here; no roadmap box to tick`. `ROADMAP.md`'s md5 was the same before and
+      after, and `diff` against `git show HEAD:plans/ROADMAP.md` was empty. **The same run with the HEAD
+      script** in a second copy reproduced the defect: `plans\ROADMAP.md:712` `- [ ]` → `- [x]` and the
+      two dashboard NOTEs (Phase 8 3/8 → 4/8, Overall 75/81 → 76/81). The real tree's `ROADMAP.md` has
+      no diff.*
+- [x] A work order whose **Closes roadmap** line quotes a box without a no-box note still ticks that
+      box, shown by an existing or new `--self-check` plant.
+      *Both. The existing plant `a fully ticked work order still gets ✅ DONE, its roadmap box, and the
+      dashboard` is green, and the new plant's control half ticks the same quotation from 🔍 AWAITING
+      VERDICT with no opening note and with `no box` written mid-line after the quotation, asserting the
+      box `[x]` and no *quotes no box*. Widening the test to anywhere on the line (a scratch-copy
+      mutation, `--against`) reddens exactly that control: 1 red of 49.*
+- [x] `--audit` names a box claimed by two work orders, shown with a plant. The count on today's tree
+      is stated in the result, with any excused case named.
+      *The new plant gives the target fixture a **Closes roadmap** line quoting the fixture's box:
+      `--audit` prints a `BAD` row naming `ROADMAP.md:<the box>`, `WO-9.9` and `WO-9.8`, counts one more
+      problem than a baseline run of the same copy, and exits non-zero; behind a `*(no box` opening the
+      row and the extra problem are gone. **Today's tree: one box claimed by two work orders**, Phase 2's
+      *Marking screen, exceptions-only* at `ROADMAP.md:275` — WO-2.1, which closed it, and WO-2.10,
+      whose line reads `amends "Marking screen, exceptions-only"` — **excused** by name in
+      `SHARED_BOXES`. **Without the no-box fix it would be two**: WO-8.6 and WO-8.16 on `ROADMAP.md:712`
+      (measured with the opening test disabled in a scratch copy). WO-8.16 stops counting once the
+      first deliverable lands, and does. Failure rather than note, argued at `doublyClaimedBoxes()`.*
+- [x] `node tools/wo-gate.mjs --audit` and `--self-check` pass, `node tools/wo-sweep.mjs` is green,
+      and `tools/README.md`'s recorded counts match.
+      *`--audit` exit 0, `PASS | every fragment matches exactly one roadmap box and no box is claimed
+      twice unexcused, …`; its new section reads `1 box(es) claimed by more than one work order, 1
+      excused in SHARED_BOXES, 0 problem(s)`. `--self-check` `PASS | 49 of 49 plants were caught.`,
+      exit 0, and `tools/README.md` now says forty-nine and `49 of 49`. `wo-sweep.mjs` `50 checks · 47
+      passed · 0 failed · 3 to review`, exit 0, the standing three; the sweep's count does not move.
+      The new plants were proved against the HEAD script with `--against` (2 red of 49) and by four
+      mutations of scratch copies, recorded in `tools/README.md`.*
+- [x] `TESTING.md` § WO-1.67 carries these lines verbatim with the evidence for each.
+      *This section.*
+
+*No 👤 line and no 📆 line: tooling only.*
+
 ---
 
 ## Phase 2 — Attendance

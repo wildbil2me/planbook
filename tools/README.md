@@ -107,6 +107,7 @@ Two flags that write nothing anywhere:
 
 ```
 node tools/wo-gate.mjs --audit         every **Closes roadmap** fragment against ROADMAP.md's boxes,
+                                       every box against the work orders claiming it (WO-1.67),
                                        every **Owes** pointer against the box it names, every 🚫/⏳
                                        work order against the box it takes out of the count,
                                        `README.md` § The files against the work orders each file
@@ -118,7 +119,7 @@ node tools/wo-gate.mjs --self-check    plant every violation this script is supp
 ```
 
 `--self-check` copies `plans/` to a temp directory, writes four **synthetic** work orders into the copy,
-plants forty-seven violations against them, runs the script over the copy, and deletes the directory on
+plants forty-nine violations against them, runs the script over the copy, and deletes the directory on
 both exit paths. *(Thirteen until 2026-08-16; WO-1.21 added four, for the two statuses that mean the
 work is not coming and for the § The files index. WO-2.49 added the eighteenth on 2026-08-18, and it
 is the first that is about the **reader** rather than about a refusal — a fixture written CRLF in its
@@ -236,7 +237,24 @@ WO-9.9 ticks both; then the gate fixture is not asked for a section. Proved agai
 script with `--against` (1 red of 47) and by five mutations of scratch copies — no lookahead on the
 token, any line rather than a heading, a write before the refusal, the gate exemption deleted, and a
 start-of-heading match — each reddening this plant and no other.
-`47 plants, 47 caught, 0 missed` / `PASS | 47 of 47 plants were caught`, read
+**WO-1.67 added two on 2026-10-09**, the forty-eighth and forty-ninth, both about a **Closes roadmap**
+line that quotes a box in order to disown it — WO-8.16's *(no box. … "Onboarding: install → …", and
+WO-8.6 closes that one.)*, which `--tick` ticked at `ROADMAP.md:712`. The first ticks the fixture from
+`🔍 AWAITING VERDICT` under three spellings of a *(no box* opening, with a wrapped second header line
+naming the owner, and asserts `ROADMAP.md` unwritten, the box `[ ]` and *quotes no box* printed; its
+control ticks the same quotation with no such opening and with `no box` mid-line, both of which must
+still close the box. The second gives the target fixture a **Closes roadmap** line of its own through
+a new `targetCloses` option on `fixtureBlock()`: quoting the fixture's box, `--audit` names the box's
+line and both ids and counts **one** more problem than a baseline run of the same copy; behind a
+*(no box* opening, no row and no extra problem. Proved against the pre-WO-1.67 script with `--against`
+(2 red of 49) and by four mutations of scratch copies: the opening test widened to anywhere on the
+line (1 red — the control); `closesFragments()` returning nothing (10 red, this pair among them);
+the two-claims problems dropped from the verdict (1 red — the second); and the two-claims walk reading
+raw quotations instead of `closesFragments()` (4 red — the second, plus three plants that expect a
+clean `--audit` over the real tree, because WO-8.16 against WO-8.6 is a live double claim under that
+mutation). **`SHARED_BOXES` is not planted**: its one excuse (WO-2.1 and WO-2.10, an amendment) is
+read against the real tree only, and its stale-excuse report was proved on a scratch copy by hand.
+`49 plants, 49 caught, 0 missed` / `PASS | 49 of 49 plants were caught`, read
 off the run and not added up. The counts further down are readings from dated
 runs against older copies of the script and stay at the number that was true then.)* Two things about it are load-bearing. **Every plant path — and, since WO-2.44, the
 sandbox that holds them — goes through a guard that

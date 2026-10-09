@@ -1581,8 +1581,44 @@ function roadmapHits(frag, lines) {
 //
 // **"Already ticked" stays a NOTE**, deliberately: the box IS closed, it was just closed earlier, by
 // hand or by an amending work order. Nothing is untrue and nothing needs a human.
+//
+// **A line that says it closes no box yields no fragments — WO-1.67, 2026-10-09.** Until then every
+// double-quoted run on the line was a fragment, and WO-8.16's reads *(no box. It is the front half of
+// Phase 8's "Onboarding: install → marking …", and WO-8.6 closes that one.)* — it quotes the box
+// precisely to say whose it is. `--tick WO-8.16` ticked it, at ROADMAP.md:712, for a work order that
+// was ⬜ NOT STARTED; it was reverted by hand before `1482edc`.
+//
+// The test is the line's OPENING WORDS and nothing else, read off every **Closes roadmap** value in
+// this directory on the day it was written — 212 of them:
+//   - 156 open `*(no box` — bare, as `*(no box.)*`, or after `Phase N →`, which 49 of them carry. One
+//     of the 156 quotes a box (WO-8.16); the other 155 quote nothing and read the same either way.
+//   - 1 opens `*(no roadmap line;` — WO-1.13, quote-free since 2026-08-08. **Deliberately NOT read as
+//     a no-box opening**, though it looks like one: --self-check's bold-prose plant (WO-1.27) writes
+//     `*(no roadmap line for the note itself — see **Why it exists** below)*` AHEAD of a fragment that
+//     must still tick, which is a note about the note and not about the box. Two readings of those
+//     words already exist; `no box` has one.
+//   - 1 opens `→ the *What 1.0.0 means* section` — WO-G4, a heading rather than a box, no quotes. Not
+//     an opening this test reads; it yields nothing because it quotes nothing, as before.
+//   - 54 quote the box they close and open with a quotation or with `amends` — untouched.
+// So: after an optional `Phase N` and `→`, any run of `*`, `_`, `(` and spaces, then the words
+// `no box`, case-blind. **It does not read the sentence** — *"and WO-8.6 closes that one"* is a
+// person's business — and a quotation inside a no-box line stays legal and stays inert: that is how a
+// work order says whose box it is. Anywhere else on the line, `no box` means nothing here; none of the
+// 54 carries it, and a test that fired mid-line would read prose.
+//
+// **One reader, read by every caller**: `--tick` (below), `--audit`'s fragment walk and its
+// two-claims check, notComingProblems() and --self-check's trackerDrift() all take their fragments
+// from here. Four copies of the matchAll were how this one went unnoticed — fixing one would have left
+// --audit reporting the box WO-8.16 quotes as a claim.
+const NO_BOX_OPENING = /^(?:Phase\s+\d+\s*)?(?:→\s*)?[*_(\s]*no\s+box\b/i;
+
+function closesFragments(closesRoadmap) {
+  if (!closesRoadmap || NO_BOX_OPENING.test(closesRoadmap)) return [];
+  return [...closesRoadmap.matchAll(/"([^"]+)"/g)].map(m => m[1]);
+}
+
 function roadmapEdits(wo, roadmapText) {
-  const fragments = [...wo.closesRoadmap.matchAll(/"([^"]+)"/g)].map(m => m[1]);
+  const fragments = closesFragments(wo.closesRoadmap);
   const lines = roadmapText.split('\n');
   const edits = [], notes = [], blockers = [];
   for (const frag of fragments) {
@@ -1711,6 +1747,70 @@ function roadmapDashboardDrift(roadmapText) {
   return problems;
 }
 
+// ------------------------------------------------- one box, two claimants (WO-1.67)
+//
+// Every roadmap box that fragments from two or more work orders resolve to. --audit used to ask only
+// whether each fragment matched exactly one box, which is a question about the fragment; it never
+// asked whether one box was claimed twice, which is a question about the box — so WO-8.16 and WO-8.6
+// both "closing" Phase 8's onboarding box was invisible to it, and the first of the two to be ticked
+// closed the other's box for it. Fragments come from closesFragments(), so a no-box line is not a
+// claim and WO-8.16 stops counting the moment the parser stops reading its quotation.
+//
+// **A FAILURE, and not a note — decided on today's evidence.** On 2026-10-09 the check finds exactly
+// one box with two claimants once WO-8.16 is read as disowning its quotation: Phase 2's
+// *"Marking screen, exceptions-only"*, closed by WO-2.1 and re-quoted by WO-2.10, whose line reads
+// `amends "Marking screen, exceptions-only", closes "`U` for unconfirmed" …`. That is the one
+// legitimate shape this directory has — an amending work order — and it is excused by name in
+// SHARED_BOXES below rather than by a rule, because a rule here would be a reading of `amends`, which
+// is the sentence-reading WO-1.67's Traps refuse. Nothing else fires. A double claim is a box whose
+// state depends on which of two work orders ticks first, and a note is what WO-8.16's two dashboard
+// NOTEs already were on the day it went wrong: printed, accurate, and read as bookkeeping.
+//
+// **An excuse names the box AND every claimant**, and goes stale loudly: a listed box with fewer than
+// two claimants, or with a claimant the entry does not name, is reported. A box closed in halves — two
+// work orders each owning part of one promise — would be excused the same way, with the reason
+// written beside it; none exists today. The excuse is an exact roadmap-line match after norm(), so a
+// rewording of the box drops the excuse and the box reports, which is the right direction to fail.
+const SHARED_BOXES = [
+  {
+    box: 'Marking screen, exceptions-only',
+    ids: ['WO-2.1', 'WO-2.10'],
+    why: 'WO-2.10 amends the box WO-2.1 closed (its own line says `amends`); both are ✅ DONE',
+  },
+];
+
+function doublyClaimedBoxes(wos, lines) {
+  const claims = new Map();                                    // roadmap line → Set of work order ids
+  for (const wo of wos.values()) {
+    for (const frag of closesFragments(wo.closesRoadmap)) {
+      const { tooShort, hits } = roadmapHits(frag, lines);
+      if (tooShort || hits.length !== 1) continue;             // the fragment walk owns these
+      if (!claims.has(hits[0])) claims.set(hits[0], new Set());
+      claims.get(hits[0]).add(wo.id);
+    }
+  }
+  const problems = [], excused = [];
+  const used = new Set();
+  let boxes = 0;
+  for (const [line, set] of claims) {
+    if (set.size < 2) continue;
+    boxes++;
+    const ids = [...set];
+    const ex = SHARED_BOXES.find(s => norm(lines[line]).includes(norm(s.box)));
+    const where = `ROADMAP.md:${line + 1}`;
+    if (ex) used.add(ex);
+    if (ex && ids.every(id => ex.ids.includes(id)) && ex.ids.every(id => set.has(id))) {
+      excused.push(`${where.padEnd(15)} ${ids.join(' + ')} — excused: ${ex.why}`);
+    } else {
+      problems.push(`${where} is claimed by ${ids.length} work orders — ${ids.join(', ')} — ${clip(norm(lines[line]).replace(/^-\s*\[[ x]\]\s*/, ''), 60)}. One box is closed by one work order: write *(no box.* at the head of the line that only names it, or excuse it in SHARED_BOXES with the reason${ex ? ` (an excuse for this box names ${ex.ids.join(', ')}, which is not this set)` : ''}`);
+    }
+  }
+  for (const s of SHARED_BOXES) {
+    if (!used.has(s)) problems.push(`SHARED_BOXES excuses "${s.box}" for ${s.ids.join(', ')}, and no box is claimed by two work orders under that wording — a stale excuse is a hole waiting for a claim; take it out`);
+  }
+  return { problems, excused, boxes };
+}
+
 // ------------------------------------------------- work that is not coming (WO-1.21)
 //
 // A struck or deferred work order leaves both dashboards' denominators, and the box it closes leaves
@@ -1730,7 +1830,7 @@ function notComingProblems(wos, lines) {
   for (const wo of wos.values()) {
     if (!notComing(wo.status)) continue;
     const want = wo.status.startsWith(STRUCK) ? '🚫' : '⏳';
-    const frags = [...wo.closesRoadmap.matchAll(/"([^"]+)"/g)].map(m => m[1]);
+    const frags = closesFragments(wo.closesRoadmap);
     if (!frags.length) { ok.push(`${wo.id.padEnd(8)} ${want} closes no roadmap box — nothing to mark`); continue; }
     for (const frag of frags) {
       const { tooShort, hits } = roadmapHits(frag, lines);
@@ -2157,9 +2257,13 @@ function applyTick(id, wos, dryRun) {
   }
   for (const m of rm.notes) console.log(`NOTE | roadmap: ${m}`);
   if (!rm.fragments.length) {
-    console.log(wo.closesRoadmap
-      ? 'NOTE | this work order\'s **Closes roadmap** line quotes no box — no roadmap box to tick'
-      : 'NOTE | this work order has no **Closes roadmap** line — no roadmap box to tick');
+    // Same NOTE for a no-box line that quotes somebody else's box (WO-1.67) — "quotes no box" is the
+    // claim the run makes, and the clause after it says why a quotation on the line is not one.
+    console.log(!wo.closesRoadmap
+      ? 'NOTE | this work order has no **Closes roadmap** line — no roadmap box to tick'
+      : /"[^"]+"/.test(wo.closesRoadmap)
+        ? 'NOTE | this work order\'s **Closes roadmap** line quotes no box — it opens with a no-box note, so the box it quotes is named as another work order\'s and not closed here; no roadmap box to tick'
+        : 'NOTE | this work order\'s **Closes roadmap** line quotes no box — no roadmap box to tick');
   }
 
   if (!dryRun) {
@@ -2248,7 +2352,7 @@ function audit(wos) {
     }
     if (!wo.closesRoadmap) continue;
     withField++;
-    const frags = [...wo.closesRoadmap.matchAll(/"([^"]+)"/g)].map(m => m[1]);
+    const frags = closesFragments(wo.closesRoadmap);
     if (!frags.length) {
       console.log(`  —    ${wo.id.padEnd(8)} **Closes roadmap** quotes no box: ${clip(wo.closesRoadmap, 70)}`);
       continue;
@@ -2268,6 +2372,18 @@ function audit(wos) {
   }
   console.log('');
   console.log(`  ${wos.size} work orders, ${withField} with a **Closes roadmap** field, ${fragments} quoted fragments, ${bad} problem(s)`);
+
+  // WO-1.67. The question the walk above never asked: not whether a fragment finds one box, but
+  // whether one box is found by two work orders. See doublyClaimedBoxes() for why it is a failure.
+  console.log('');
+  console.log('Roadmap boxes, against the work orders whose fragments claim them');
+  console.log('');
+  const dc = doublyClaimedBoxes(wos, lines);
+  for (const e of dc.excused) console.log(`  ok   ${e}`);
+  for (const p of dc.problems) console.log(`  BAD  ${p}`);
+  if (!dc.excused.length && !dc.problems.length) console.log('  —    every claimed box is claimed by one work order');
+  console.log('');
+  console.log(`  ${dc.boxes} box(es) claimed by more than one work order, ${dc.excused.length} excused in SHARED_BOXES, ${dc.problems.length} problem(s)`);
 
   // The third section, added at WO-3.11 for the same reason as the first: a pointer quoted from a box
   // that has since been reworded fails silently and only at tick time, and the tick that finds out is
@@ -2373,11 +2489,11 @@ function audit(wos) {
   console.log('');
   for (const d of drift) console.log(`FAIL | ${d}`);
 
-  const problems = bad + drift.length + owesBad + nc.problems.length + fr.problems.length + gl.problems.length;
+  const problems = bad + dc.problems.length + drift.length + owesBad + nc.problems.length + fr.problems.length + gl.problems.length;
   console.log('');
   console.log(problems
     ? `FAIL | ${problems} problem(s) across the two trackers. Nothing was written; all of it is a hand edit.`
-    : `PASS | every fragment matches exactly one roadmap box, every **Owes** pointer lands on an open box, every uncounted box has a struck or deferred work order behind it, § The files names what its files hold, every ${GATED} work order says what it is gated on, and every dashboard row matches its own boxes.${ride.notes.length ? `\n     | ${ride.notes.length} ${RIDE_ALONG_MARK} row(s) above have run out of shelf. That is a NOTE and not one of the problems counted here — read the section and decide.` : ''}`);
+    : `PASS | every fragment matches exactly one roadmap box and no box is claimed twice unexcused, every **Owes** pointer lands on an open box, every uncounted box has a struck or deferred work order behind it, § The files names what its files hold, every ${GATED} work order says what it is gated on, and every dashboard row matches its own boxes.${ride.notes.length ? `\n     | ${ride.notes.length} ${RIDE_ALONG_MARK} row(s) above have run out of shelf. That is a NOTE and not one of the problems counted here — read the section and decide.` : ''}`);
   return problems ? 1 : 0;
 }
 
@@ -2513,10 +2629,15 @@ ${second}${third}${rehome ? `\n- [ ] ${rehome}` : ''}`;
 //
 // Whatever goes in them must carry no `"`: the **Closes roadmap** fragment matcher reads anything in
 // double quotes on that line, and a second quoted run is a second fragment matching no box.
+//
+// `targetCloses` (WO-1.67) gives ${TARGET_ID} a **Closes roadmap** line of its own, written whole —
+// `Phase 3 → "…"` and all — so a plant can make it a second claimant on the fixture's box, or quote
+// that box behind a *(no box* opening. Default '', which writes no line: the target has closed
+// nothing since WO-3.11, and every other plant reads it that way.
 function fixtureBlock({ status, fragment, open, owes = '', rehome = '', target = 'open', boxes = true,
                         calendar = false, depends = 'nothing',
                         afterStatus = '', closesProse = '', trailer = '',
-                        chainStatus = '⬜ NOT STARTED', chainCalendar = false }) {
+                        chainStatus = '⬜ NOT STARTED', chainCalendar = false, targetCloses = '' }) {
   return `
 ---
 
@@ -2538,7 +2659,7 @@ ${acceptanceSection({ open, rehome, boxes, calendar })}
 
 ## ${TARGET_ID} — self-check target fixture
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** ${FIXTURE_ID}
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** ${FIXTURE_ID}${targetCloses ? `\n**Closes roadmap** ${targetCloses}` : ''}
 
 **Why it exists.** The work order ${FIXTURE_ID}'s re-homed line points at, and the dependent its
 status gates. Written into the same temp copy and deleted with it.
@@ -2719,7 +2840,7 @@ function trackerDrift(plansDir) {
   const files = fs.readdirSync(dir).filter(f => f.endsWith('.md') && f !== 'README.md' && f !== 'ROUTING.md');
   for (const f of files) {
     for (const wo of parseFile(path.join(dir, f))) {
-      for (const frag of [...wo.closesRoadmap.matchAll(/"([^"]+)"/g)].map(m => m[1])) {
+      for (const frag of closesFragments(wo.closesRoadmap)) {
         const { tooShort, hits } = roadmapHits(frag, lines);
         if (tooShort) problems.push(`${wo.id} (${f}:${wo.headingLine}) quotes "${frag}", which is too short to match a roadmap box safely`);
         else if (hits.length !== 1) problems.push(`${wo.id} (${f}:${wo.headingLine}) quotes "${clip(frag, 60)}", which matches ${hits.length} roadmap boxes and must match exactly one`);
@@ -3286,6 +3407,91 @@ function runPlants(subject, sandbox) {
         if (!/matched 0/.test(r.out)) bad.push('the run did not say the fragment matched 0 boxes');
         const changed = changedSince(before);
         if (changed.length) bad.push(`it wrote ${changed.join(', ')}`);
+        return bad;
+      },
+    },
+    // ------------------------------------------------------------------ WO-1.67's two
+    //
+    // WO-8.16's line, in the fixture's clothes: a **Closes roadmap** that opens *(no box*, quotes the
+    // box anyway to say whose it is, and wraps onto a second header line naming the work order that
+    // owns it — `trailer` is that wrap. The tick runs from 🔍 AWAITING VERDICT, which is where WO-8.16
+    // stood when it ticked a box that was WO-8.6's. Three spellings of the opening, because the
+    // test is the opening words and a plant with one spelling proves one regex.
+    //
+    // The control is in the same plant and is not a spare: the same quotation with no no-box opening
+    // still ticks, and so does one where `no box` sits mid-line in a note — the opening is the test,
+    // and a check that fired anywhere on the line would read prose. A fix that stopped reading
+    // fragments altogether passes the first half and fails this one.
+    {
+      name: 'a **Closes roadmap** line opening *(no box* ticks nothing it quotes and says it quotes no box — and without that opening, or with `no box` mid-line, the same quotation still ticks',
+      run: () => {
+        const bad = [];
+        const disowning = [
+          ['*(no box. It is the front half of ', `and ${TARGET_ID} closes that one.)*`],
+          ['*(No box — named here only: ', `${TARGET_ID} owns it.)*`],
+          ['_(no box)_ the box it names is ', `the one ${TARGET_ID} closes.`],
+        ];
+        for (const [closesProse, trailer] of disowning) {
+          reset({ status: `${AWAITING} — fixture-dispatch`, fragment: FIXTURE_BOX, open: false, closesProse, trailer });
+          const before = snapshot();
+          const r = run(['--tick', FIXTURE_ID]);
+          const label = `with the line opening ${closesProse.trim()}`;
+          if (r.code !== 0) { bad.push(`--tick exited ${r.code} ${label}:`, ...verdict(r.out)); continue; }
+          if (/^-\s*\[x\]/.test(fixtureBoxLine())) bad.push(`--tick ticked the box a no-box line quotes, ${label} — the defect WO-8.16 hit at ROADMAP.md:712`);
+          if (changedSince(before).includes('ROADMAP.md')) bad.push(`--tick wrote ROADMAP.md ${label}`);
+          if (!/quotes no box/.test(r.out)) bad.push(`--tick did not say the line quotes no box, ${label}`);
+          if (!/✅ DONE — \d{4}-\d{2}-\d{2}/.test(fixtureStatus())) bad.push(`the status reads "${fixtureStatus()}" ${label} — a no-box line holds nothing open`);
+        }
+
+        const controls = [
+          ['', '', 'with no prose on the line at all'],
+          ['', '*(a note here that says no box mid-line is prose, not an opening)*', 'with `no box` mid-line, after the quotation'],
+        ];
+        for (const [closesProse, trailer, label] of controls) {
+          reset({ status: `${AWAITING} — fixture-dispatch`, fragment: FIXTURE_BOX, open: false, closesProse, trailer });
+          const r = run(['--tick', FIXTURE_ID]);
+          if (r.code !== 0) { bad.push(`--tick exited ${r.code} ${label}:`, ...verdict(r.out)); continue; }
+          if (!/^-\s*\[x\]/.test(fixtureBoxLine())) bad.push(`the quoted box was left unticked ${label} — a line that does not open *(no box* still closes what it quotes`);
+          if (/quotes no box/.test(r.out)) bad.push(`--tick said the line quotes no box ${label}`);
+        }
+        return bad;
+      },
+    },
+    // The other half: --audit asks whether one box is claimed by two work orders. The second claimant
+    // is the target fixture, given a **Closes roadmap** line through `targetCloses` — and then given
+    // the same quotation behind a *(no box* opening, which must stop counting as a claim. Problem
+    // counts are compared against a baseline run of the same copy rather than against zero, because
+    // the sandbox is the real plans/ and carries whatever that week's directory carries (WO-1.29).
+    {
+      name: '--audit names a roadmap box claimed by two work orders, counts it in the verdict, and stops counting a claim made from a no-box line',
+      run: () => {
+        const bad = [];
+        const section = out => (out.split('Roadmap boxes, against the work orders whose fragments claim them')[1] || '')
+          .split('`**Owes**` and its')[0];
+        const problemsIn = out => { const m = /^FAIL \| (\d+) problem\(s\)/m.exec(out); return m ? Number(m[1]) : 0; };
+        const fixtureRow = out => section(out).split('\n').find(l => /^\s+BAD\s/.test(l) && l.includes(FIXTURE_ID) && l.includes(TARGET_ID)) || '';
+
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false });
+        const base = run(['--audit']);
+        if (!section(base.out)) { bad.push('--audit has no section about boxes claimed by more than one work order'); return bad; }
+        if (fixtureRow(base.out)) bad.push('--audit reported the fixture box as claimed twice with one claimant');
+        const boxAt = readSb('ROADMAP.md').split('\n').findIndex(l => l.includes(FIXTURE_BOX) && /^-\s*\[/.test(l)) + 1;
+
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false, targetCloses: `Phase ${FIXTURE_PHASE} → "${FIXTURE_BOX}"` });
+        const before = snapshot();
+        const twice = run(['--audit']);
+        const row = fixtureRow(twice.out);
+        if (!row) bad.push(`--audit did not name the box ${FIXTURE_ID} and ${TARGET_ID} both quote as claimed by two work orders:`, ...section(twice.out).split('\n').filter(l => l.trim()).slice(0, 6).map(l => `  ${l.trim()}`));
+        else if (!row.includes(`ROADMAP.md:${boxAt}`)) bad.push(`the row did not name the box's line, ROADMAP.md:${boxAt}: ${row.trim()}`);
+        if (problemsIn(twice.out) !== problemsIn(base.out) + 1) bad.push(`--audit's verdict counted ${problemsIn(twice.out)} problem(s) against ${problemsIn(base.out)} without the second claim — the row has to reach the verdict, as one problem`);
+        if (twice.code === 0) bad.push('--audit exited 0 with a box claimed by two work orders');
+        if (changedSince(before).length) bad.push(`--audit wrote ${changedSince(before).join(', ')}`);
+
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false,
+                targetCloses: `Phase ${FIXTURE_PHASE} → *(no box. It names "${FIXTURE_BOX}" to say whose it is, and ${FIXTURE_ID} closes that one.)*` });
+        const disowned = run(['--audit']);
+        if (fixtureRow(disowned.out)) bad.push('--audit still counted a quotation in a no-box line as a claim on the box');
+        if (problemsIn(disowned.out) !== problemsIn(base.out)) bad.push(`with the second line opening *(no box* --audit counted ${problemsIn(disowned.out)} problem(s), against ${problemsIn(base.out)} at baseline`);
         return bad;
       },
     },
@@ -4811,6 +5017,12 @@ function runPlants(subject, sandbox) {
   console.log('  WO-9.9; one heading naming two work orders ticks both; and a gate is not asked. NOT');
   console.log('  covered by it: what the section SAYS, which is the verifier\'s reading by design, and');
   console.log('  the real TESTING.md — the sandbox\'s is synthetic, and --audit reads neither.');
+  console.log('  And WO-1.67\'s TWO: a **Closes roadmap** line opening *(no box* — three spellings —');
+  console.log('  ticks nothing it quotes from 🔍 AWAITING VERDICT and says it quotes no box, while the');
+  console.log('  same quotation with no such opening, or with `no box` mid-line, still ticks; and --audit');
+  console.log('  names a box two work orders claim, counts it as one problem, and stops counting the');
+  console.log('  claim once it moves behind a no-box opening. NOT covered by them: SHARED_BOXES, whose');
+  console.log('  one excuse is read against the real tree only, and its stale-excuse report.');
   console.log('  NOT covered: the Acceptance parser otherwise. It is still never run');
   console.log('  against a real work order\'s list, and one terminator is one way it can go blind and');
   console.log('  not the class of them — a narrowed gap, not a closed one. Nor is gate()\'s');
@@ -4849,7 +5061,9 @@ if (!argv.length || argv.includes('--help') || argv.includes('-h')) {
                                                         owed — 🤖 CLAIMED → 🔍 AWAITING VERDICT
   node tools/wo-gate.mjs --tick WO-1.7 [--dry-run]
   node tools/wo-gate.mjs --audit                        every **Closes roadmap** fragment against
-                                                        ROADMAP.md, every **Owes** pointer against
+                                                        ROADMAP.md, every box against the work
+                                                        orders claiming it — one each, unless
+                                                        excused (WO-1.67) — every **Owes** pointer against
                                                         the box it names, every 🚫/⏳ work order
                                                         against the box it takes out of the count,
                                                         every 🔒 GATED one against the gate it is
