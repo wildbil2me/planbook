@@ -25,7 +25,8 @@ WO-1.68, the 🎒 booked out of WO-1.67's verdict. Tooling only; nothing in `src
 - `--self-check` 49 → 52 plants, covering the claimant-subset, stale-excuse and reworded-box
   branches. A fresh verifier broke each branch on a scratch copy and saw a plant go red every time.
 - One branch is still unproved: an excuse naming more work orders than actually claim its box.
-  Booked as a follow-up out of the verdict.
+  Booked as [WO-1.70](plans/work-orders/phase-1-shell-store-roster.md#wo-170--an-excuse-naming-a-work-order-that-does-not-claim-its-box-is-proved-by-nothing),
+  a 🎒 out of the verdict.
 
 ### `--tick` no longer ticks a roadmap box a "no box" line quotes — 2026-10-09
 

@@ -383,7 +383,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.69 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.70 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.60 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.53 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.6 | Phase 4 |
@@ -459,7 +459,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 69 | 68 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 70 | 68 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 58 | 54 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 52 | 51 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 6 | 6 | — | ✅ DONE — 2026-09-30 |
@@ -468,7 +468,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 17 | 16 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.4 ✅ DONE 2026-09-26, the sign-in opened on the deployed domain and read on the laptop and the iPad; WO-7.5 ✅ DONE 2026-09-26, the header's sync button; WO-7.6 ✅ DONE 2026-09-26, the privacy documents say when Google's library loads, read off the deployed /privacy; WO-7.7 ✅ DONE 2026-09-26, a download repaints the open screen, read both ways on laptop and iPad; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 18 | 13 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 3 | — | WO-G2 ✅ **2026-09-30**: worked 2026-09-29 with six of eight boxes closed, and the letter-scale setting and the backup drill closed the next day on the owner's reading; WO-G3 ✅ **2026-09-30** on the owner's ruling, watched across four weeks of the term with nothing recorded |
-| | **249** | **235** | **3** | `[█████████░] 94%` |
+| | **250** | **235** | **3** | `[█████████░] 94%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)
@@ -567,6 +567,8 @@ addressed to the primary.)*
 ***And Phase 2's by hand on 2026-10-09, from `55 | 54` to `58 | 54`, the total from `245 | 234` to `248 | 234`.*** *Three rows booked in one sitting, each drawn before it was booked:* [WO-2.58](phase-2-attendance.md#wo-258--the-attendance-header-gives-back-the-rows-it-does-not-need)*,* [WO-2.59](phase-2-attendance.md#wo-259--the-attendance-dialogs-are-as-wide-as-they-were-meant-to-be-and-the-record-has-two-tabs) *and* [WO-2.60](phase-2-attendance.md#wo-260--a-tap-on-a-name-opens-today-and-the-history-moves-to-the-student-page)*, the attendance screen's header, dialogs and name tap. 234 of 248 is 94%, down from 96%; the bar stays at nine. Recomputed against* `recomputeDashboard()`*'s rule. The next* `--tick` *is still the authority.*
 
 ***And Phase 1's by hand a fifth time on 2026-10-09, from `68 | 67` to `69 | 67`, the total from `248 | 234` to `249 | 234`.*** *Booked out of the same sitting:* [WO-1.69](phase-1-shell-store-roster.md#wo-169--a-proposed-stylesheet-whose-sections-cannot-be-read-passes-the-collision-check-unread) *makes § 19 fail a proposed stylesheet whose sections it cannot read, a 🎒 on* `tools/wo-sweep.mjs`*. 234 of 249 is 94%, as before; the bar stays at nine. The next* `--tick` *is still the authority.*
+
+***And Phase 1's by hand a sixth time on 2026-10-09, from `69 | 68` to `70 | 68`, the total from `249 | 235` to `250 | 235`.*** *Booked out of WO-1.68's verdict, minutes after its tick:* [WO-1.70](phase-1-shell-store-roster.md#wo-170--an-excuse-naming-a-work-order-that-does-not-claim-its-box-is-proved-by-nothing) *plants the one `SHARED_BOXES` branch WO-1.68's verifier could delete with all 52 plants green, a 🎒 on* `tools/wo-gate.mjs`*. 235 of 250 is 94%, as before; the bar stays at nine. The next* `--tick` *is still the authority.*
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -2021,6 +2023,7 @@ it, never from a reading taken earlier in the same session.)*
 | 144 | [WO-2.59](phase-2-attendance.md#wo-259--the-attendance-dialogs-are-as-wide-as-they-were-meant-to-be-and-the-record-has-two-tabs) The attendance dialogs are as wide as they were meant to be, and the record has two tabs | S | — | **At the foot, booked 2026-10-09** with row 143, drawn in `design/mockups/attendance-dialogs.html`. Record, Passes, the history dialog and the Grade sheet set `max-width` over `.modal-panel`'s `width: 480px` and have been 480px since they shipped. `width` instead, Keys at 640, and the Record in two tabs with Print printing the one on screen. `src/`, harness checks, a 👤; bumps `CACHE` |
 | 145 | [WO-2.60](phase-2-attendance.md#wo-260--a-tap-on-a-name-opens-today-and-the-history-moves-to-the-student-page) A tap on a name opens today, and the history moves to the student page | M | — | **At the foot, booked 2026-10-09** with row 143, drawn in `design/mockups/attendance-today.html`. The history dialog becomes today's card — mark, time, note, Un-confirm and one door — and its term table and day by day move to the student page's attendance card. `src/`, harness checks, a 👤 on the iPad; bumps `CACHE` |
 | 146 | [WO-1.69](phase-1-shell-store-roster.md#wo-169--a-proposed-stylesheet-whose-sections-cannot-be-read-passes-the-collision-check-unread) A proposed stylesheet whose sections cannot be read passes the collision check unread | XS | — | 🎒 `tools/wo-sweep.mjs` — **Nothing blocks it.** An hour, whenever the sweep is open for something else. Booked **2026-10-09**, owner-directed, out of drawing the attendance screen: `proposed-attendance.css` was first written with one-line banners, § 19 parsed neither section, and the sweep stayed green, because its empty-parse guard fires only when every sheet parses to nothing. Nothing in `src/` moves |
+| 147 | [WO-1.70](phase-1-shell-store-roster.md#wo-170--an-excuse-naming-a-work-order-that-does-not-claim-its-box-is-proved-by-nothing) An excuse naming a work order that does not claim its box is proved by nothing | XS | — | 🎒 `tools/wo-gate.mjs` — **Nothing blocks it.** An hour, whenever the gate tool is open for something else. Booked **2026-10-09**, owner-directed, out of WO-1.68's verdict: the verifier deleted the half of the `SHARED_BOXES` check that requires every work order an excuse names to claim the box, and all 52 plants stayed green. One plant. Nothing in `src/` moves |
 
 ***Rows 17 through 32 were added 2026-08-28, and the reason is the third occurrence of the failure
 this section exists to prevent.*** *Before that sitting,* **sixteen open work orders had no row in

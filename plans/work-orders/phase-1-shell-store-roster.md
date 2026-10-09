@@ -5986,3 +5986,43 @@ count a sheet with no classes as a failure** — a sheet that only carries cross
 legitimate. **This changes `tools/wo-sweep.mjs`, a pipeline file**: read `plans/work-orders/README.md`
 § "The pipeline's own files" before editing it. **Nothing in `src/` moves**, so no `CACHE` bump is
 owed.
+
+## WO-1.70 — an excuse naming a work order that does not claim its box is proved by nothing
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** — · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.69 made.)*
+
+**Booked 2026-10-09**, owner-directed, out of WO-1.68's verdict. A ride-along on `tools/wo-gate.mjs`:
+fold it into the next sitting that has that file open.
+
+**Why it exists.** The `SHARED_BOXES` check excuses a doubly claimed box only when the claimants and
+the excuse's `ids` are the same set, and it tests that in two halves: every claimant is named
+(`ids.every(id => ex.ids.includes(id))`), and every named work order claims the box
+(`ex.ids.every(id => set.has(id))`). WO-1.68's plants prove the first half — a third claimant the
+excuse does not name goes red. **Nothing proves the second.** WO-1.68's verifier deleted it on a
+scratch copy and all 52 plants stayed green. So an excuse for A, B and C over a box only A and B
+claim reads as excused, and the excuse goes on vouching for a claim that does not exist — the stale
+excuse, one work order wide.
+
+**Deliverables**
+- **One `--self-check` plant**: an excuse naming the fixture's two claimants and a third work order
+  that does not claim the box. `--audit` reports the box, with the message naming the excuse as not
+  this set, and carries the exactly-matching excuse as its control, as WO-1.68's three do.
+- **`tools/README.md`** and the self-check's own coverage lines give the new count and drop this case
+  from what is not covered.
+
+**Acceptance**
+- [ ] On a scratch copy, deleting `ex.ids.every(id => set.has(id))` turns the new plant red, and
+      every other plant stays as it was. Reverted before anything else is written.
+- [ ] The real `--audit` still reads `ROADMAP.md:275` as excused.
+- [ ] `node tools/wo-gate.mjs --self-check` and `--audit` pass, `node tools/wo-sweep.mjs` is green,
+      and the plant count in `tools/README.md` matches the run.
+- [ ] `TESTING.md` § WO-1.70 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Do not change the check to make the plant pass**: the code is right, and only the proof
+is missing. If the plant goes red against today's script, that is a defect found, and it is reported
+as one before anything is repaired. **Build the plant through `runExcused()`**, as WO-1.68's three
+are, and never by a flag or environment variable on the script: an input that excuses a double claim
+is a hole for a person to reach as well. **This changes `tools/wo-gate.mjs`, a pipeline file**: read
+`plans/work-orders/README.md` § "The pipeline's own files" before editing it. **Nothing in `src/`
+moves**, so no `CACHE` bump is owed.
