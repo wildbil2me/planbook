@@ -7677,6 +7677,104 @@ were left, outside this work order's files. **The aria-label on the state line**
 day's words and the count-as-absent rule but not the totals, in the one state that sets it (WO-2.56's
 shape, unchanged).
 
+### WO-2.59 — the attendance dialogs are as wide as they were meant to be, and the record has two tabs
+
+**What this changes for a teacher: Record, Passes and the history dialog are 900px wide, the Grade
+sheet 980 and Keys 640, where all four had been 480 since they shipped; and the Record is two tabs,
+By student and Day by day.** Most of the length was a bug: `.attendance-report-panel` and
+`.grades-report-panel` set only `max-width` over `.modal-panel`'s `width: 480px`, so the cap never
+came into play. Each is now a `width`, in the base rule and in the `(pointer: coarse)` block, and
+`.modal-panel`'s `95vw` still governs a narrow window. Keys is a new class, `.attendance-keys-panel`,
+on its panel in `index.html`. Print prints the tab on screen and the printed title names it
+(*Attendance record · By student*); Download CSV saves both parts, byte for byte what it saved before.
+The picture is `design/mockups/attendance-dialogs.html`.
+
+**Built as drawn, and ruled as drawn by the owner on 2026-10-09** — the three Open items, none of them
+used to tick a box below: the tabs wear `.screen-nav` / `.screen-nav-btn` as shipped; **By student** opens first; Keys is
+**640px**.
+
+**The coarse rule is restated, not load-bearing — read from the cascade, not proved by a mutation.** The brief warned that
+leaving the coarse block's `max-width: 900px` would hold the iPad at 480. It would not: the base rule's
+`width: 900px` applies under a coarse pointer too, and a `max-width` of 900 beside it caps nothing. The
+coarse line is now `width: 900px` anyway (and the Grade sheet's `980px`, and Keys gained one), so the
+block says what the panel is; the harness reads all four at 1194px under a really coarse pointer.
+But no mutation of the coarse line alone can turn a check red, and none was claimed.
+
+- [x] In a 1280px window under a fine pointer, Record and Passes measure 900px wide, the Grade sheet
+      980 and Keys 640. In an 820px window each is no wider than 95vw. Mutation-proved against
+      restoring `max-width` alone.
+      — `verify/attendance-history.mjs` opens each dialog through its real door and reads the panel's
+      `offsetWidth` (a layout width, so the opening keyframe's scale cannot shrink it): at 1280, fine
+      pointer, `{"Record":900,"Passes":900,"history":900,"Keys":640}`; at 820,
+      `{"Record":779,"Passes":779,"history":779,"Keys":640}` — 779 is 95vw; at 1194×834 under touch
+      emulation with `matchMedia('(pointer: coarse)')` asserted true, `900/900/900/640` again.
+      `verify/grade-sheet.mjs` reads the open Grade sheet the same way: 980 at 1280, 779 at 820, 980 at
+      1194 coarse. Mutation 1–3 below restore `max-width` alone on every rule (base and coarse) of all
+      three panel classes: every reading drops to **480**, and all four width checks go red.
+- [x] The Record opens on its first tab; each tab shows its own part and only that; reopening the
+      dialog returns to the first tab.
+      — `verify/attendance-history.mjs`: on open, `shown "students"`, the strip `["students*!","days"]`
+      (`*` = `aria-selected`, `!` = `.active`), one summary table, no grid and no slice. Tapping *Day
+      by day*: `shown "days"`, no summary table, one slice of six columns, focus on the tab that was
+      pressed. Tapping *By student*: the summary back, no slice. Closed on *Day by day* and opened
+      again: `shown "students"`. The other part is not hidden — it is not in the dialog: the module
+      draws one part at a time. Mutation 4 (the reset on open commented out) turns the reopen check
+      red with `shown "days"`.
+- [x] Printing from either tab puts that part on paper and not the other. The CSV is byte-identical
+      to v174's for the same document.
+      — Paper: `verify/print-sheets.mjs` prints the record from each tab, presentation mode off and
+      on, and counts elements with a box under print media: By student `{"summary":1,"grids":0}`
+      titled *Attendance record · By student*, Day by day `{"summary":0,"grids":1}` titled *Attendance
+      record · Day by day*; no control has a box on either sheet, the tab strip included; neither
+      leaks a support value. In `verify/attendance-history.mjs` a thirty-meeting term on *Day by day*
+      carries the continuation line on its second slice only (`[1]`), reading *Attendance record · Day
+      by day · WO-2.6 Record · WO-2.6 Long… continued*. The first slice's page break is lifted by a
+      `:first-child` rule, the grade sheet's WO-8.4 shape — **that rule is read, not measured**: no
+      check here counts printed pages for the record. CSV: a SHA-256 of `recordCsv()`'s bytes for the WO-2.6
+      fixture was captured **before any file changed**, by a temporary capture in this section run
+      against the tree at `cba8dff` (shell v175, whose CSV path is v174's — WO-2.58 did not touch
+      `src/attendance-report.js`, and `classRecord()` was not in its diff); that capture was deleted.
+      The check presses the real ⬇ Download CSV with each tab showing, on both terms, takes the Blob
+      handed to `URL.createObjectURL` as bytes, and compares: four reads, BOM present, 270 and 686
+      bytes, `4beb3f89afdb…` and `e40c3da925da…`, all equal to the golden.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      — `node tools/verify-shell.mjs`: `1911 checks · 1911 passed · 0 failed · 0 skipped`, 60,703
+      lines, 31.8 lines per check, 907s, exit 0, 2026-10-09 on the real clock, after the mutations
+      were reverted, with `tools/README.md`'s call-site count moved 1895 → 1907. `node
+      tools/wo-sweep.mjs`: **50 checks · 47 passed · 0 failed · 3 to review**, the three standing
+      REVIEWs. `CACHE` is `planbook-shell-v175` → `v176`.
+- [x] 👤 On the laptop, print-preview both tabs; on the iPad lying down, after a force-quit, open all
+      three attendance dialogs and the Grade sheet and read their widths.
+      — Read by the owner, 2026-10-09, all three items: By student prints one sheet titled *Attendance
+      record · By student* with no tab strip; Day by day's first page carries the header and the first
+      block of dates, which is the `:first-child` rule's only reading; on the iPad lying down after a
+      force-quit, About reads v176 and the four dialogs read at their widths.
+
+**Mutation-proved in one full run, every mutation marked `MUTATION WO-2.59` in the tree while live and
+reverted (`grep -rn MUTATION src/` clean) before this section was written.**
+
+| Tree | Result |
+|---|---|
+| Delivered tree, first full run | `1911 checks · 1910 passed · 1 failed`: the CSV check, red on my own golden — byte counts written as the string's length (268/684) where the BOM is three bytes (270/686). Every SHA-256 matched. The counts were corrected; the hashes were not touched |
+| **M1** `.attendance-report-panel { max-width: 900px }` in the base rule and the coarse block (v174's shape) · **M2** the same for `.attendance-keys-panel` at 640 · **M3** the same for `.grades-report-panel` at 980 · **M4** `openRecord()` without `recordPart = RECORD_PARTS[0].id` | `1911 checks · 1904 passed · 7 failed`, exit 1: the three attendance width checks (`480/480/480/480` at 1280, at 820 and at 1194 coarse), the Grade sheet check (`480` at all three), the reopen check (`shown "days"`), and two in `print-sheets.mjs` — the mode-on record sheet opened on the tab the mode-off pass left it on, so its title read *Day by day* and its parts `{"summary":0,"grids":1}`. The CSV check stayed green under all four, as it should |
+| Delivered tree, after the revert | `1911 checks · 1911 passed · 0 failed · 0 skipped`, 907s, exit 0 |
+
+**Decisions the work order left open, taken and written down at the point of departure.** **The part
+is named in `#printHeader`'s title**, not a third line, because the continuation line carries the
+title, so a loose page of dates says which part it is too; the calendar's *Calendar · May 2027* is
+the precedent. **The first slice on *Day by day* neither breaks the page nor carries a continuation
+line** — the grade sheet's WO-8.4 rule, met with `:first-child` inside the part's wrapper. **The two
+section labels the tabs replaced are gone** (*Attendance by student*, *Day by day*), as drawn. **The
+note under the record prints under both tabs**, because it is the sentence saying no support data is
+on the page. **The empty-term message on *Day by day*** no longer says "the counts above", because
+the counts are on the other tab. **The hook is `data-attendance-record-part`**, routed in
+`src/shell.js` and listed in its census; it is not a print gate. **Passes and the history dialog are
+measured in `verify/attendance-history.mjs` with the Record and Keys**, all four from one screen,
+rather than in `verify/attendance-passes.mjs`; that file was not changed. **The tabs have no
+arrow-key behaviour**: they are buttons in the Tab order with `role="tab"` and `aria-selected`, as
+drawn; a full ARIA tabs keyboard pattern was not built. **The history dialog widened to 900 too**, as
+the Traps line expects until WO-2.60 moves it off the class.
+
 ---
 
 ## Phase 3 — Gradebook

@@ -277,6 +277,45 @@ console.log('\n--- the class\'s grade sheet, printed and exported (WO-3.9) ---')
         + JSON.stringify(g.className) + ', ' + g.slices.length + ' slice(s), '
         + rowNames.length + ' row(s)');
 
+    /*
+      ── WO-2.59: THE GRADE SHEET IS AS WIDE AS IT WAS MEANT TO BE ──
+
+      `.grades-report-panel` asked for 980px with `max-width` over `.modal-panel`'s `width: 480px`,
+      so the cap never came into play and the sheet was 480 on every screen since WO-3.9. The same
+      one-line bug as the attendance record's, fixed in the same work order and measured the same
+      way (tools/verify/attendance-history.mjs): the panel's offsetWidth, with the dialog open, at
+      1280 under a fine pointer, at 820, and at 1194 under a really coarse pointer, where the
+      stylesheet's coarse block carries the panel's second rule.
+    */
+    {
+      const sheetWidth = () => evalJs(`(function(){
+        var m = document.getElementById('gradesRecordModal');
+        var p = m && !m.classList.contains('hidden') ? m.querySelector('.modal-panel') : null;
+        return { w: p ? p.offsetWidth : -1, vw: window.innerWidth,
+          coarse: matchMedia('(pointer: coarse)').matches }; })()`);
+      const at1280 = await sheetWidth();
+      await send('Emulation.setDeviceMetricsOverride',
+        { width: 820, height: 1100, deviceScaleFactor: 1, mobile: false });
+      await new Promise(r => setTimeout(r, 300));
+      const at820 = await sheetWidth();
+      await send('Emulation.setDeviceMetricsOverride',
+        { width: 1194, height: 834, deviceScaleFactor: 2, mobile: true });
+      await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+      await new Promise(r => setTimeout(r, 400));
+      const lying = await sheetWidth();
+      await send('Emulation.setDeviceMetricsOverride',
+        { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+      await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+      await new Promise(r => setTimeout(r, 300));
+      check('WO-2.59 · the Grade sheet measures 980px in a 1280px window under a fine pointer, no '
+        + 'wider than 95vw (779px) in an 820px one, and 980 again on an iPad lying down under a '
+        + 'really coarse pointer — width, not a max-width that never comes into play',
+        at1280.vw === 1280 && at1280.coarse === false && at1280.w === 980
+          && at820.vw === 820 && at820.w <= 820 * 0.95 && Math.abs(at820.w - 779) <= 1
+          && lying.vw === 1194 && lying.coarse === true && lying.w === 980,
+        JSON.stringify({ at1280: at1280, at820: at820, lying: lying }));
+    }
+
     /* THE ROW ORDER, which is half of the layout the owner pinned: alphabetical by LAST NAME, drawn
        `Last, First`, and no student-id column anywhere on the sheet. The roster is stored in a third
        order, so this cannot pass by drawing what it was handed. */

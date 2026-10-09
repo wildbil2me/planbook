@@ -119,6 +119,10 @@
 
   The slices are on screen as well as on paper, deliberately: what the dialog shows is what comes
   out of the printer, and a preview that quietly reflows is a preview.
+
+  SINCE WO-2.59 THE SUMMARY AND THE SLICES ARE TWO TABS, not one page with the summary above, and
+  Print prints the tab on screen — so the summary alone is one sheet for a conference. The slices
+  and their twenty-four are unchanged. See § the class's record below.
 */
 
 import { openModal } from './modal.js';
@@ -612,15 +616,70 @@ function totalsRow(label, totals, open) {
 
 /* ────────────────────────────── the class's record ────────────────────────────── */
 
+/*
+  TWO PARTS, ONE AT A TIME (WO-2.59, the owner's ruling of 2026-10-09). The record is two tabs under
+  its head — By student, the summary a conference asks for, and Day by day, the slices of twenty-four
+  meetings — and the dialog DRAWS one part at a time rather than hiding the other. That is what makes
+  "Print prints the tab on screen" a property of the page rather than of a print rule: the part that
+  is not showing is not in the dialog, so there is nothing for @media print to leave behind, and the
+  dialog stays the print preview WO-2.6 built it to be. #printHeader's title names the part.
+
+  DOWNLOAD CSV DOES NOT FOLLOW THE TAB, and that is the other half of the same ruling. recordCsv()
+  below is handed classRecord() and nothing about which tab is up; it writes both parts, byte for
+  byte what it wrote before there were tabs. A CSV is data, not a preview.
+
+  THE TAB IS THIS MODULE'S OWN STATE, put back to the first on every open and never stored — no
+  `localStorage`, no field on the document. A remembered tab is a dialog that opens on Day by day
+  for a teacher who does not recall leaving it there, which is the remembered-calendar-filter defect
+  CLAUDE.md refuses, one screen over. By student opens first because it is the shorter part and the
+  one a conference asks for; the mockup drew it that way and the order was not ruled on at dispatch.
+*/
+const RECORD_PARTS = [
+  { id: 'students', label: 'By student' },
+  { id: 'days', label: 'Day by day' },
+];
+let recordPart = RECORD_PARTS[0].id;
+/* Whether the dialog drew the tabs at all — it does not when there is no class or nobody on the
+   roster, and then the printed title names no part. Read by headOfRecord() at `beforeprint`. */
+let recordParted = false;
+
+function partOf(id) {
+  return RECORD_PARTS.filter((part) => part.id === id)[0] || null;
+}
+
 export function openRecord(opener) {
+  recordPart = RECORD_PARTS[0].id;
+  if (!paintRecord()) return;
+  openModal(RECORD_MODAL, opener);
+}
+
+/* A tab tapped. Routed from src/shell.js's delegated listener on `data-attendance-record-part`, a
+   hook and not a print gate (src/print-gate.js's invariant). The repaint replaces the button that was
+   pressed, so focus goes to its replacement — otherwise it would land on <body>, outside the dialog's
+   Tab trap. Returns false, and changes nothing, for a part this module does not have or a dialog that
+   is not up. */
+export function showRecordPart(id) {
+  if (!partOf(id) || !recordOnScreen()) return false;
+  recordPart = id;
+  paintRecord();
+  const tab = document.querySelector('#' + RECORD_MODAL
+    + ' [data-attendance-record-part="' + id + '"]');
+  if (tab && typeof tab.focus === 'function') tab.focus({ preventScroll: true });
+  return true;
+}
+
+/* Everything inside #attendanceRecordBody, from the open document and the tab on screen. Returns
+   false only when the host element is missing. */
+function paintRecord() {
   const body = document.getElementById(RECORD_BODY);
-  if (!body) return;
+  if (!body) return false;
   body.textContent = '';
+  recordParted = false;
 
   const record = classRecord();
   /* What #printHeader says when this dialog prints — taken now, from the record the dialog is
-     drawn from, so the band and the page under it are one reading of the ledger. The print DATE is
-     not in it: that is asked at the moment of printing (headOfRecord() below). */
+     drawn from, so the band and the page under it are one reading of the ledger. The print DATE and
+     the PART are not in it: both are asked at the moment of printing (headOfRecord() below). */
   printHead = record ? {
     title: 'Attendance record',
     subject: record.className,
@@ -630,8 +689,7 @@ export function openRecord(opener) {
   if (!record) {
     body.append(el('p', 'attendance-report-empty',
       'No class is open, so there is no record to print. Open a class first.'));
-    openModal(RECORD_MODAL, opener);
-    return;
+    return true;
   }
 
   /* THE PRINTED HEADER, and it is the same element on screen. Class, term, date range and the
@@ -658,47 +716,79 @@ export function openRecord(opener) {
     body.append(el('p', 'attendance-report-empty',
       'There is nobody on this class’s roster yet, so the record is empty. Paste the roster in '
         + 'and every student appears here.'));
-    openModal(RECORD_MODAL, opener);
-    return;
+    return true;
   }
 
-  /* ── the summary: one row per student, and the page a conference needs ── */
-  body.append(el('div', 'attendance-report-label', 'Attendance by student'));
-  const summary = el('table', 'attendance-report-table');
-  const shead = el('thead');
-  const srow = el('tr');
-  srow.append(cell('th', '', 'Student'));
-  MARKS.forEach((mark) => srow.append(cell('th', 'attendance-report-num', mark.code)));
-  srow.append(cell('th', 'attendance-report-num', 'Meetings'));
-  srow.append(cell('th', 'attendance-report-num', 'Attendance'));
-  shead.append(srow);
-  summary.append(shead);
-  const sbody = el('tbody');
-  record.students.forEach((student) => {
-    sbody.append(totalsRow(student.name, student.totals, false));
-  });
-  summary.append(sbody);
-  body.append(summary);
-
-  /* ── day by day, in slices ── */
-  if (!record.dates.length) {
-    body.append(el('p', 'attendance-report-empty',
-      'No meetings have been recorded in this term yet, so there is nothing to lay out day by day. '
-        + 'The counts above are all zero for the same reason.'));
-  } else {
-    body.append(el('div', 'attendance-report-label', 'Day by day'));
-    for (let from = 0; from < record.dates.length; from += DATES_PER_SLICE) {
-      const dates = record.dates.slice(from, from + DATES_PER_SLICE);
-      body.append(slice(record, dates, from, record.dates.length));
+  /* ── the tabs, and the one part they show ──
+     The section labels that used to head each part ("Attendance by student", "Day by day") are the
+     tab names now; on paper the part is named in #printHeader's title instead. */
+  recordParted = true;
+  body.append(partTabs());
+  const part = el('div', 'attendance-report-part');
+  part.id = 'attendanceRecordPart';
+  part.setAttribute('role', 'tabpanel');
+  part.setAttribute('aria-labelledby', 'attendanceRecordTab-' + recordPart);
+  part.setAttribute('data-attendance-record-shown', recordPart);
+  if (recordPart === 'days') {
+    /* ── day by day, in slices — and nothing else in this wrapper, because the print block's
+       first-child rule is what keeps the first slice on page one ── */
+    if (!record.dates.length) {
+      part.append(el('p', 'attendance-report-empty',
+        'No meetings have been recorded in this term yet, so there is nothing to lay out day by '
+          + 'day.'));
+    } else {
+      for (let from = 0; from < record.dates.length; from += DATES_PER_SLICE) {
+        const dates = record.dates.slice(from, from + DATES_PER_SLICE);
+        part.append(slice(record, dates, from, record.dates.length));
+      }
     }
+  } else {
+    /* ── the summary: one row per student, and the page a conference needs ── */
+    const summary = el('table', 'attendance-report-table');
+    const shead = el('thead');
+    const srow = el('tr');
+    srow.append(cell('th', '', 'Student'));
+    MARKS.forEach((mark) => srow.append(cell('th', 'attendance-report-num', mark.code)));
+    srow.append(cell('th', 'attendance-report-num', 'Meetings'));
+    srow.append(cell('th', 'attendance-report-num', 'Attendance'));
+    shead.append(srow);
+    summary.append(shead);
+    const sbody = el('tbody');
+    record.students.forEach((student) => {
+      sbody.append(totalsRow(student.name, student.totals, false));
+    });
+    summary.append(sbody);
+    part.append(summary);
   }
+  body.append(part);
 
   body.append(el('p', 'attendance-report-note',
     'This is attendance and nothing else: names, marks and the dates the class actually met. '
       + 'Nothing from a student’s support details is on this page or in the CSV, in either '
       + 'mode — those live on the roster and go nowhere but your own backup file.'));
+  return true;
+}
 
-  openModal(RECORD_MODAL, opener);
+/* The strip. It wears the class screen switcher's `.screen-nav` as shipped (src/assignments.css),
+   so a teacher who knows one segmented control knows both; `.attendance-report-tabs` and
+   `.attendance-report-tab` are src/attendance.css's names for the spacing and the coarse floor. */
+function partTabs() {
+  const nav = el('nav', 'screen-nav attendance-report-tabs');
+  nav.setAttribute('role', 'tablist');
+  nav.setAttribute('aria-label', 'Which part of the record');
+  RECORD_PARTS.forEach((part) => {
+    const on = part.id === recordPart;
+    const tab = el('button', 'screen-nav-btn attendance-report-tab' + (on ? ' active' : ''),
+      part.label);
+    tab.type = 'button';
+    tab.id = 'attendanceRecordTab-' + part.id;
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('aria-selected', on ? 'true' : 'false');
+    tab.setAttribute('aria-controls', 'attendanceRecordPart');
+    tab.setAttribute('data-attendance-record-part', part.id);
+    nav.append(tab);
+  });
+  return nav;
 }
 
 /* One printed page's worth of date columns, with the student column repeated. The caption is drawn
@@ -706,10 +796,13 @@ export function openRecord(opener) {
    label about nothing. */
 function slice(record, dates, from, total) {
   const wrap = el('div', 'attendance-report-slice');
-  /* THE CONTINUATION LINE (WO-8.4). Every slice starts a printed page (src/attendance.css), so a
-     loose page of dates would otherwise say nothing about whose class it is. Empty here and hidden
-     on screen: src/print-gate.js writes it at `beforeprint` from the same words as #printHeader. */
-  wrap.append(el('div', 'print-header-running'));
+  /* THE CONTINUATION LINE (WO-8.4). Every slice after the first starts a printed page
+     (src/attendance.css), so a loose page of dates would otherwise say nothing about whose class it
+     is. Empty here and hidden on screen: src/print-gate.js writes it at `beforeprint` from the same
+     words as #printHeader. THE FIRST SLICE CARRIES NONE SINCE WO-2.59: with the record in tabs, Day
+     by day prints its slices alone and the first one is on page one under #printHeader itself — a
+     second title two lines under the first is noise, which is the grade sheet's own call. */
+  if (from > 0) wrap.append(el('div', 'print-header-running'));
   if (total > dates.length) {
     wrap.append(el('div', 'attendance-report-slice-label',
       'Meetings ' + (from + 1) + '–' + (from + dates.length) + ' of ' + total));
@@ -767,9 +860,17 @@ function recordOnScreen() {
 const syncPrintGate = registerPrintGate(PRINT_ATTR, recordOnScreen, headOfRecord);
 
 /* The header's words for the open record, with the print date asked NOW — the moment the page is
-   serialised, which is the moment src/print-gate.js calls this. */
+   serialised, which is the moment src/print-gate.js calls this — and, since WO-2.59, the part on
+   screen named in the title: "Attendance record · Day by day". It is the title rather than a third
+   line because the continuation line at each forced break carries the title, so a loose page of
+   dates names its part too. */
 function headOfRecord() {
-  return printHead ? Object.assign({}, printHead, { printed: plainDate(todayISO()) }) : null;
+  if (!printHead) return null;
+  const part = recordParted ? partOf(recordPart) : null;
+  return Object.assign({}, printHead, {
+    title: printHead.title + (part ? ' · ' + part.label : ''),
+    printed: plainDate(todayISO()),
+  });
 }
 
 export function printRecord() {

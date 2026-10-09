@@ -13,6 +13,26 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The attendance dialogs are as wide as they were meant to be — 2026-10-09
+
+WO-2.59, owner-directed, from `design/mockups/attendance-dialogs.html`. Shell cache v175 → v176.
+
+- **Record, Passes and the history dialog are 900px wide, the Grade sheet 980.** All four asked
+  for that width with `max-width` over a 480px panel, so the cap never applied and every one of them
+  had been 480 on every screen since it shipped. Each is now a `width`; a narrow window still caps
+  them at 95% of the screen.
+- **Keys is 640px**, on a class of its own: it is prose, and prose much past 80 characters a line
+  reads worse.
+- **The Record is two tabs, By student and Day by day.** It opens on By student every time. Print
+  prints the tab on screen and the printed header names it, so the summary alone is one sheet for a
+  conference. Download CSV still saves the whole record from either tab, byte for byte what it saved
+  before.
+- Built as drawn, and ruled as drawn by the owner the same day on three points: the tabs wear the
+  class screen switcher's look, By student opens first, and Keys is 640. Read by the owner in print
+  preview and on the iPad.
+- Harness: twelve new checks across `attendance-history`, `grade-sheet` and `print-sheets`, widths
+  read at 1280, 820 and an iPad lying down, mutation-proved against restoring `max-width`.
+
 ### The attendance header gives back two rows to the grid — 2026-10-09
 
 WO-2.58, owner-directed, lifted from `design/mockups/attendance-header.html`. Shell cache v174 → v175.

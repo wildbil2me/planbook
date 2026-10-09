@@ -187,6 +187,15 @@ const READ_SHEET = (surfaceSel, ownHeadSel, extraSel) => `(function(){
     controls: controls,
     running: running,
     extraH: ${extraSel ? 'box(document.querySelector(' + JSON.stringify(extraSel) + '))' : 'null'},
+    /* WO-2.59: which part of the attendance record has a box on paper — its summary table, its
+       day-by-day grids — counted as elements with a height, so a part hidden by a rule and a part
+       never drawn read the same and only a part that PRINTS counts. */
+    recordParts: (function(){ var m = document.getElementById('attendanceRecordModal');
+      if (!m) return null;
+      var boxed = function(sel){ return Array.prototype.filter.call(m.querySelectorAll(sel),
+        function(e){ return e.getBoundingClientRect().height > 0; }).length; };
+      return { summary: boxed('table.attendance-report-table:not(.attendance-report-grid)'),
+        grids: boxed('table.attendance-report-grid') }; })(),
     page: getComputedStyle(document.body).getPropertyValue('page'),
     text: document.body.innerText || '' }; })()`;
 
@@ -261,6 +270,12 @@ for (const mode of [false, true]) {
   await openRecord();
   sheets['record-' + tag] = await readOnPaper('#attendanceRecordModal',
     '#attendanceRecordModal .attendance-report-print-head');
+  /* The record's second tab (WO-2.59), printed from the same open dialog: Print prints the tab on
+     screen, so it is a sheet of its own. */
+  await clickSel('#attendanceRecordModal [data-attendance-record-part="days"]');
+  await new Promise(r => setTimeout(r, 150));
+  sheets['recorddays-' + tag] = await readOnPaper('#attendanceRecordModal',
+    '#attendanceRecordModal .attendance-report-print-head');
   await closeAll();
 
   await openGrades();
@@ -286,7 +301,12 @@ for (const mode of [false, true]) {
 }
 
 const EXPECT = {
-  record: { title: 'Attendance record', surface: 'the attendance record',
+  /* Since WO-2.59 the record is two tabs and the title names the one that printed. */
+  record: { title: 'Attendance record · By student', surface: 'the attendance record (By student)',
+    lines: (l) => l.length === 1 && l[0].indexOf(LABEL) === 0 && l[0].indexOf(RANGE) !== -1
+      && l[0].indexOf('3 recorded meetings') !== -1 },
+  recorddays: { title: 'Attendance record · Day by day',
+    surface: 'the attendance record (Day by day)',
     lines: (l) => l.length === 1 && l[0].indexOf(LABEL) === 0 && l[0].indexOf(RANGE) !== -1
       && l[0].indexOf('3 recorded meetings') !== -1 },
   grades: { title: 'Grade sheet', surface: 'the grade sheet',
@@ -317,7 +337,7 @@ for (const key of Object.keys(EXPECT)) {
 
 /* ── ruling 1: each surface's own head is off the sheet, so the band is the ONE title ── */
 {
-  const heads = ['record', 'grades', 'detail', 'calendar'].map((k) =>
+  const heads = ['record', 'recorddays', 'grades', 'detail', 'calendar'].map((k) =>
     ({ k: k, off: sheets[k + '-off'].ownH, on: sheets[k + '-on'].ownH }));
   const where = ['off', 'on'].map((t) => sheets['detail-' + t].heroWhereH);
   check('WO-8.4 · each surface\'s own head is not drawn on its sheet — the record\'s and the grade '
@@ -364,21 +384,38 @@ for (const key of Object.keys(EXPECT)) {
 
 /* ── ruling 2: the continuation line at the two forced breaks, and nowhere else ── */
 {
-  /* The record's one day-by-day slice starts page two, so it carries one line; the grade sheet's
-     two slices carry ONE between them — the first prints on page one under #printHeader itself. */
+  /* The grade sheet's two slices carry ONE line between them — the first prints on page one under
+     #printHeader itself. SINCE WO-2.59 THE RECORD CARRIES NONE ON THIS FIXTURE, and that is the
+     same rule rather than a lost reading: its By student tab prints no slice at all, and its Day by
+     day tab's one slice is the first, on page one. The record's line at a REAL break — the second
+     slice of a thirty-meeting term — is read in tools/verify/attendance-history.mjs. */
   const want = (s) => s.running.length === 1 && s.running.every((r) =>
-    r.text.indexOf('Attendance record') !== -1 || r.text.indexOf('Grade sheet') !== -1)
+    r.text.indexOf('Grade sheet') !== -1)
     && s.running.every((r) => r.text.indexOf(CLASS_NAME) !== -1 && r.text.indexOf(LABEL) !== -1
       && r.text.indexOf('Printed ' + TODAY) !== -1 && r.text.indexOf('continued') !== -1);
-  const r = ['record-off', 'record-on', 'grades-off', 'grades-on'].map((k) => sheets[k]);
-  const none = ['detail-off', 'detail-on', 'calendar-off', 'calendar-on']
-    .map((k) => sheets[k].running.length);
-  check('WO-8.4 · every slice the record and the grade sheet break onto a page of its own opens '
-    + 'with the continuation line — class, term, print date and "continued" — the grade sheet\'s '
-    + 'first slice, which prints on page one under the header, carries none, and the two sheets '
-    + 'that force no break draw none (ruling 2)',
+  const r = ['grades-off', 'grades-on'].map((k) => sheets[k]);
+  const none = ['record-off', 'record-on', 'recorddays-off', 'recorddays-on', 'detail-off',
+    'detail-on', 'calendar-off', 'calendar-on'].map((k) => sheets[k].running.length);
+  check('WO-8.4 · every slice the grade sheet breaks onto a page of its own opens with the '
+    + 'continuation line — class, term, print date and "continued" — its first slice, which prints '
+    + 'on page one under the header, carries none, and a sheet that forces no break draws none: '
+    + 'the record\'s two tabs on a one-slice term, the student report and the calendar (ruling 2)',
     r.every(want) && none.every((n) => n === 0),
-    r.map((s) => JSON.stringify(s.running)).join(' · ') + '; on the other two: ' + JSON.stringify(none));
+    r.map((s) => JSON.stringify(s.running)).join(' · ') + '; on the other eight: ' + JSON.stringify(none));
+}
+
+/* ── WO-2.59 ACCEPTANCE LINE 3: printing from either tab puts that part on paper, not the other ── */
+{
+  const parts = ['record-off', 'record-on', 'recorddays-off', 'recorddays-on']
+    .map((k) => ({ k: k, parts: sheets[k].recordParts, title: sheets[k].title }));
+  const ok = (x) => !!x.parts && (x.k.indexOf('recorddays') === 0
+    ? x.parts.summary === 0 && x.parts.grids >= 1 && /Day by day$/.test(x.title)
+    : x.parts.summary === 1 && x.parts.grids === 0 && /By student$/.test(x.title));
+  check('WO-2.59 · printing the Record from By student puts the summary table on paper and no '
+    + 'day-by-day grid; printing from Day by day puts the grid on paper and no summary; and the '
+    + 'printed header names which part it is — with presentation mode off and on',
+    parts.every(ok),
+    JSON.stringify(parts));
 }
 
 /* ── ruling 5: the calendar band names the filter in words, and the term only when it is shared ── */

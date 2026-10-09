@@ -1347,7 +1347,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1895 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1907 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2735,6 +2735,17 @@ failure arm (the section's guard is a `skip()`), so the gap between sites and re
 Reads in eleven existing sections moved with the ids — the day's words are `#attendanceStateText`
 and the totals `#attendanceStateTotals` — and moved no count. Full run: `1898 checks · 1898 passed · 0 failed · 0 skipped`, 60,411 lines, 31.8 lines per check, 886s, exit 0, 2026-10-09 on the real clock. Mutation round
 in `TESTING.md` § WO-2.58.
+
+**WO-2.59 moved it from 1895 to 1907, and the executed count from 1898 to 1911 — twelve sites,
+thirteen results, and no new file.** Ten are in `verify/attendance-history.mjs`: the Record's first
+tab, each tab's own part, the reopen, the continuation line's place and words on a thirty-meeting
+term, the CSV byte-identical to v174 through the real button from either tab, and the four dialogs'
+widths at 1280, 820 and 1194 under a coarse pointer. One is in `verify/grade-sheet.mjs` (the Grade
+sheet's width at the same three), and one in `verify/print-sheets.mjs` (which part prints from which
+tab). The thirteenth result is `print-sheets.mjs`'s `EXPECT` loop reading a fifth sheet, the Record's
+*Day by day* tab, so the gap between sites and results moves from −3 to −4. None is a failure arm.
+Full run: `1911 checks · 1911 passed · 0 failed · 0 skipped`, 60,703 lines, 31.8 lines per check,
+907s, exit 0, 2026-10-09 on the real clock. Mutation round in `TESTING.md` § WO-2.59.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

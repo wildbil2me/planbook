@@ -691,9 +691,14 @@
    registry's own oranges, reds and purples one screen further out). A second amber for a late score
    would be a second answer to "what colour is late". */
 
-/* Wider than a form dialog because a term's worth of columns is what is in it. `.modal-panel`
-   supplies the frame and the 95vw; this raises the cap only, so a narrow screen is unchanged. */
-.grades-report-panel { max-width: 980px; }
+/* Wider than a form dialog because a term's worth of columns is what is in it — and it is `width`,
+   not `max-width` (WO-2.59). This said "this raises the cap only" until 2026-10-09, which was
+   accurate and was the defect: `.modal-panel` sets `width: 480px`, so a cap above 480 never came
+   into play and the Grade sheet was 480px on every screen from the day it shipped. The attendance
+   record had the same one-line bug and was fixed in the same work order; `.assign-copy-panel
+   { width: 880px }` is the shape that works. `.modal-panel`'s `max-width: 95vw` still governs, so
+   a narrow window is unchanged, and the print block below restates `width: 100%` over this. */
+.grades-report-panel { width: 980px; }
 
 /* The door in the toolbar. Wears shell.css's `.class-action-btn`; the name exists so the control is
    listed by name in the coarse block below and to carry the one rule that is its own — it does not
@@ -958,7 +963,8 @@
      reader has to go and prove was considered. What they get is one step up in size, because a
      coarse pointer is the device held at arm's length. */
   .grades-report-actions { gap: 10px; margin-bottom: 18px; }
-  .grades-report-panel { max-width: 980px; }
+  /* `width` here too (WO-2.59) — this line was the base rule's `max-width` defect, copied. */
+  .grades-report-panel { width: 980px; }
   .grades-report-head { gap: 14px; padding-bottom: 14px; }
   .grades-report-who { min-width: 0; }
   .grades-report-name { font-size: 17px; }

@@ -364,8 +364,12 @@
                                       <body> at `beforeprint`, and the hook and the gate are
                                       different strings, which this pair has by luck of naming
                                       rather than on purpose (WO-2.25)
-      data-attendance-record-csv      downloads the same record as a CSV
-                                      (These four reach src/attendance-report.js rather than
+      data-attendance-record-csv      downloads the same record as a CSV — both parts, whichever
+                                      tab is showing (WO-2.59)
+      data-attendance-record-part="<part>": one of the record's two tabs, `students` or `days`;
+                                      draws that part in place of the other (WO-2.59). A hook, not
+                                      a gate — print-gate.js's invariant holds
+                                      (These five reach src/attendance-report.js rather than
                                       src/attendance.js, for the reason that module's header gives:
                                       they are read-only surfaces over the same ledger, and nothing
                                       about a printed page belongs in the flow that runs while
@@ -3381,6 +3385,10 @@ document.addEventListener('click', (e) => {
   }
   const record = e.target.closest('[data-attendance-record]');
   if (record) { attendanceReport.openRecord(record); return; }
+  const recPart = e.target.closest('[data-attendance-record-part]');
+  if (recPart) {
+    attendanceReport.showRecordPart(recPart.getAttribute('data-attendance-record-part')); return;
+  }
   if (e.target.closest('[data-attendance-record-print]')) {
     attendanceReport.printRecord(); return;
   }

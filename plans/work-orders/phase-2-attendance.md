@@ -6239,7 +6239,7 @@ one tap in.
 
 ## WO-2.59 — the attendance dialogs are as wide as they were meant to be, and the record has two tabs
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-10-09 · **Size** S · **Depends on** —
 **Closes roadmap** *(no box. Owner-directed, 2026-10-09.)*
 
 **Booked 2026-10-09**, owner-directed, in the same sitting as WO-2.58. The owner asked for the
@@ -6266,8 +6266,8 @@ styles, so the frames set their widths inline.
 4. **Print prints the tab on screen**, so the dialog stays the print preview it was built to be.
    **Download CSV saves everything**, both parts, exactly as it does today.
 
-**Open — the owner's ruling, at dispatch.** The tabs are drawn in the class screen switcher's look
-(`.screen-nav`); which tab opens first is drawn as By student; Keys at 640 is the drawing's guess.
+**Ruled by the owner, 2026-10-09, after the verdict: all three as drawn.** The tabs wear the class
+screen switcher's look (`.screen-nav`); By student opens first; Keys is 640px.
 
 **Deliverables**
 - **`src/attendance.css`**: `width: 900px` on `.attendance-report-panel`, its comment rewritten; a
@@ -6283,15 +6283,15 @@ styles, so the frames set their widths inline.
 - **`TESTING.md` § WO-2.59**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] In a 1280px window under a fine pointer, Record and Passes measure 900px wide, the Grade sheet
+- [x] In a 1280px window under a fine pointer, Record and Passes measure 900px wide, the Grade sheet
       980 and Keys 640. In an 820px window each is no wider than 95vw. Mutation-proved against
       restoring `max-width` alone.
-- [ ] The Record opens on its first tab; each tab shows its own part and only that; reopening the
+- [x] The Record opens on its first tab; each tab shows its own part and only that; reopening the
       dialog returns to the first tab.
-- [ ] Printing from either tab puts that part on paper and not the other. The CSV is byte-identical
+- [x] Printing from either tab puts that part on paper and not the other. The CSV is byte-identical
       to v174's for the same document.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] 👤 On the laptop, print-preview both tabs; on the iPad lying down, after a force-quit, open all
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the laptop, print-preview both tabs; on the iPad lying down, after a force-quit, open all
       three attendance dialogs and the Grade sheet and read their widths.
 
 **Traps** — **Do not drop the blocks of 24 dates**: they are what fits across a sheet, and the

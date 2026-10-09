@@ -894,6 +894,10 @@ Eight rows above the grid become six upright and five lying down; seven become f
 7. **The Record in two tabs, By student and Day by day**, wearing `.screen-nav`.
 8. **Keys at 640px**, because it is prose.
 
+**Items 6 to 8 landed 2026-10-09 with WO-2.59**, built as drawn. Nothing was in the proposed sheet, so
+there is no banner to amend. The three captions marked as asks — the tabs' look, which tab opens
+first, and 640 — were ruled as drawn by the owner the same day.
+
 [`attendance-today.html`](attendance-today.html):
 
 9. **Tapping a name opens today's card**: the student's name as the title, the write block as it

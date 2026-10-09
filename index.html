@@ -4564,9 +4564,13 @@
 
   The copy lives here rather than in a JavaScript file for the reason the hint paragraphs under the
   grid do: it is what a teacher reads, and prose that a renderer builds is prose nobody edits.
+
+  `.attendance-keys-panel` is its width, 640px (WO-2.59): wider than a form dialog's 480 because the
+  key list and the prose were wrapping at 480, narrower than the record's 900 because prose past ~80
+  characters a line reads worse. src/attendance.css carries the rule.
 -->
 <div class="modal-overlay hidden" id="attendanceKeysModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="attendanceKeysTitle">
+  <div class="modal-panel attendance-keys-panel" role="dialog" aria-modal="true" aria-labelledby="attendanceKeysTitle">
     <div class="modal-header">
       <h2 id="attendanceKeysTitle">Marking from the keyboard</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -4672,6 +4676,12 @@
   The two output buttons are in the body rather than in a `.modal-actions` row at the foot, because
   the table between them is long: a control at the bottom of a term's worth of dates is a control a
   teacher scrolls past the whole record to reach.
+
+  TWO TABS SINCE WO-2.59 — By student and Day by day, drawn under the record's head by the module,
+  one part at a time. PRINT PRINTS THE TAB ON SCREEN, so the dialog stays the preview it was built
+  to be and the summary alone is one sheet for a conference. DOWNLOAD CSV SAVES BOTH PARTS, exactly
+  as it always has, whichever tab is showing: a CSV is data and not a preview. The two titles below
+  say so to a teacher who hovers.
 -->
 <div class="modal-overlay hidden" id="attendanceRecordModal">
   <div class="modal-panel attendance-report-panel" role="dialog" aria-modal="true"
@@ -4683,11 +4693,11 @@
     <div class="modal-body">
       <div class="attendance-report-actions">
         <button type="button" class="class-action-btn primary" data-attendance-record-print
-                title="Print this record, or save it as a PDF from the print dialog">
+                title="Print this tab, or save it as a PDF from the print dialog">
           <span aria-hidden="true">🖨</span> Print
         </button>
         <button type="button" class="class-action-btn" data-attendance-record-csv
-                title="Save this record as a CSV file that opens in any spreadsheet">
+                title="Save the whole record — both tabs — as a CSV file that opens in any spreadsheet">
           <span aria-hidden="true">⬇</span> Download CSV
         </button>
       </div>

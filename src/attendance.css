@@ -55,7 +55,8 @@
    and for the reason home.css states: a control only covered by another selector's rule is a
    control the next reader has to go and prove is covered. */
 .attendance-cell, .attendance-day-btn, .attendance-sort-toggle,
-.attendance-student-door, .attendance-pass-btn, .attendance-pass-card-btn, .attendance-keys-btn {
+.attendance-student-door, .attendance-pass-btn, .attendance-pass-card-btn, .attendance-keys-btn,
+.attendance-report-tab {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -875,6 +876,13 @@
 .attendance-keys { display: flex; flex-direction: column; gap: 7px; margin: 14px 0 16px; }
 .attendance-keys-lead { font-weight: 600; }
 .attendance-key-row { display: flex; align-items: baseline; gap: 12px; }
+/* THE KEYS DIALOG'S WIDTH (WO-2.59), a class of its own beside `.modal-panel` the way
+   `.assign-copy-panel` sits beside it. 640 rather than the record's 900 because this panel is
+   prose and a key list, and a line of prose much past 80 characters reads worse, not better; at 640
+   the dialog is about a third shorter than at 480. `.modal-panel`'s `max-width: 95vw` still governs
+   a narrow window. The number is the mockup's (design/mockups/attendance-dialogs.html, frame D) and
+   was not ruled on at dispatch. */
+.attendance-keys-panel { width: 640px; }
 /* Wide enough for the two arrows side by side and for `Esc`, so every description starts on the
    same column and the list reads as a list rather than as eight ragged sentences. */
 .attendance-key-row dt { flex: 0 0 76px; display: flex; flex-wrap: wrap; gap: 4px; }
@@ -908,9 +916,22 @@
    shrink, for the reason `.attendance-keys-btn` beside it states. */
 .attendance-record-btn { flex-shrink: 0; }
 
-/* Wider than a form dialog because a table of dates is what is in it. `.modal-panel` supplies the
-   frame and the 95vw; this raises the cap only, so a narrow screen is unchanged. */
-.attendance-report-panel { max-width: 900px; }
+/* Wider than a form dialog because a table of dates is what is in it — and it is `width`, not
+   `max-width` (WO-2.59). This said "this raises the cap only" until 2026-10-09, which was accurate
+   and was the defect: `.modal-panel` sets `width: 480px`, a cap above 480 never comes into play, and
+   Record, Passes and the history dialog were all 480px on every screen from the day they shipped.
+   `.assign-copy-panel { width: 880px }` is the shape that works and this is that shape.
+   `.modal-panel`'s `max-width: 95vw` still governs, so a narrow window is unchanged. At 900 a slice
+   of twenty-four meetings fits across without scrolling sideways, which at 480 it never could. */
+.attendance-report-panel { width: 900px; }
+
+/* THE RECORD'S TWO TABS (WO-2.59): By student and Day by day, under the record's head. They wear the
+   class screen switcher's `.screen-nav` / `.screen-nav-btn` as shipped from src/assignments.css, so
+   a teacher who knows one segmented control knows both; the mockup drew them that way and the look
+   was not ruled on at dispatch. This sheet adds its own names for the spacing and the coarse floor
+   and restyles nothing of that sheet's. The space under the strip is the margin the section label it
+   replaced used to carry above the table. */
+.attendance-report-tabs { margin: 14px 0 12px; }
 
 /* Print and Download CSV, at the TOP of the body — index.html says why: the table under them is a
    term long, and a control below it is a control reached by scrolling past the whole record. */
@@ -1220,6 +1241,9 @@
      reason `.attendance-student-cell` gives above: a rule missing from this block is a rule the
      next reader has to go and prove was considered. What they get is the same step up in size
      everything else here takes, because a coarse pointer is the device held at arm's length. */
+  /* The Keys dialog's width (WO-2.59), restated for the reason `.attendance-report-panel`'s is
+     restated in this block's WO-2.6 half below. */
+  .attendance-keys-panel { width: 640px; }
   .attendance-keys { gap: 9px; margin: 16px 0 18px; }
   .attendance-keys-lead { font-size: 15px; }
   .attendance-key-row { gap: 14px; }
@@ -1438,7 +1462,16 @@
      this block is a rule the next reader has to go and prove was considered. What they get is one
      step up in size, because a coarse pointer is the device held at arm's length. */
   .attendance-report-actions { gap: 10px; margin-bottom: 18px; }
-  .attendance-report-panel { max-width: 900px; }
+  /* `width` here too (WO-2.59). This line was `max-width: 900px` until 2026-10-09, the base rule's
+     defect copied into the block an iPad reads; it is restated rather than deleted so the panel's
+     width under a coarse pointer is declared where this block's reader looks for it. */
+  .attendance-report-panel { width: 900px; }
+  /* The record's two tabs (WO-2.59). Each segment wears `.screen-nav-btn`, which src/assignments.css's
+     own coarse block already floors at 44px; `.attendance-report-tab` is this sheet's name for the
+     same button and restates the floor, so the control is listed here rather than proved covered
+     somewhere else. */
+  .attendance-report-tabs { margin: 16px 0 14px; }
+  .attendance-report-tab { min-height: 44px; min-width: 44px; }
   .attendance-report-head { gap: 14px; padding-bottom: 14px; }
   .attendance-report-who { min-width: 0; }
   .attendance-report-name { font-size: 17px; }
@@ -1631,6 +1664,10 @@
      are Print and Download CSV. */
   body[data-attendance-print] #attendanceRecordModal .modal-header,
   body[data-attendance-print] .attendance-report-actions { display: none !important; }
+  /* AND THE TAB STRIP, WHICH IS A CONTROL TOO (WO-2.59). What prints is the part on screen and only
+     that part, because src/attendance-report.js draws one part at a time — the other is not hidden,
+     it is not in the dialog — and #printHeader's title names which part it is. */
+  body[data-attendance-print] .attendance-report-tabs { display: none !important; }
 
   body[data-attendance-print] .attendance-report-head {
     border-bottom: 2px solid #000; padding-bottom: 6mm; margin-bottom: 4mm;
@@ -1665,6 +1702,13 @@
   body[data-attendance-print] .attendance-report-slice {
     overflow: visible !important; break-before: page; margin-bottom: 0;
   }
+  /* EXCEPT THE FIRST, WHICH FOLLOWS THE HEADER ON PAGE ONE (WO-2.59) — the grade sheet's WO-8.4 rule
+     in src/scores.css, met here for the same reason. Until the record had tabs, the summary filled
+     page one and every slice broke after it, the first included. The Day by day tab prints its
+     slices alone, so a first slice that still broke would leave page one holding the header and
+     nothing else. The slices are the only children of their part's wrapper, so first-child is the
+     whole selector; slices two onward still start a page each and carry the continuation line. */
+  body[data-attendance-print] .attendance-report-slice:first-child { break-before: auto; }
   body[data-attendance-print] .attendance-report-slice-label { font-size: 8pt; color: #000; }
   body[data-attendance-print] .attendance-report-grid th,
   body[data-attendance-print] .attendance-report-grid td { padding: 0.8mm 0.5mm; }

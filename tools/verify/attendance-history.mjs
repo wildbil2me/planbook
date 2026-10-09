@@ -275,9 +275,35 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
         slices: slices.length,
         columns: slices.map(function(s){
           return s.querySelectorAll('thead th').length - 1; }),
+        /* WO-2.59: which part is drawn, what the strip says about it, and where focus is. A part
+           is read as what is IN the dialog, not as what is visible — the other part is not hidden,
+           it is not there. */
+        shown: (function(){ var p = m.querySelector('[data-attendance-record-shown]');
+          return p ? p.getAttribute('data-attendance-record-shown') : ''; })(),
+        tabs: Array.prototype.slice.call(m.querySelectorAll('[data-attendance-record-part]'))
+          .map(function(b){ return b.getAttribute('data-attendance-record-part')
+            + (b.getAttribute('aria-selected') === 'true' ? '*' : '')
+            + (b.classList.contains('active') ? '!' : ''); }),
+        summaries: m.querySelectorAll('table.attendance-report-table:not(.attendance-report-grid)').length,
+        grids: m.querySelectorAll('table.attendance-report-grid').length,
+        running: Array.prototype.slice.call(m.querySelectorAll('.print-header-running'))
+          .map(function(e){ var sl = e.closest('.attendance-report-slice');
+            return slices.indexOf(sl); }),
+        focused: (document.activeElement && document.activeElement.getAttribute
+          && document.activeElement.getAttribute('data-attendance-record-part')) || '',
         printAttr: document.body.hasAttribute('data-attendance-print'),
         text: m.textContent || '' }; })()`;
     const rec = await evalJs(READ_RECORD);
+
+    /* ── WO-2.59 ACCEPTANCE LINE 2: the first tab, its own part, and only that ── */
+    check('WO-2.59 · the Record opens on its first tab, By student — the strip marks it selected and '
+      + 'active, and the dialog holds the summary table and not one day-by-day slice',
+      rec.up && rec.shown === 'students'
+        && JSON.stringify(rec.tabs) === JSON.stringify(['students*!', 'days'])
+        && rec.summaries === 1 && rec.grids === 0 && rec.slices === 0,
+      'shown ' + JSON.stringify(rec.shown) + ', tabs ' + JSON.stringify(rec.tabs) + ', '
+        + rec.summaries + ' summary table(s), ' + rec.grids + ' grid(s), ' + rec.slices
+        + ' slice(s)');
 
     /* ACCEPTANCE LINE 3, the half a laptop can see: the header carries the class, the term and the
        date range, and the count of meetings beside them — because everything in this app counts
@@ -341,13 +367,48 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
        meetings are one slice with no page break in it; thirty are two. Asserted on both terms
        through the real term nav, because the count is a fact about the term and not about the
        dialog. */
-    check('a term that fits is drawn as one table, with one column per recorded meeting',
-      rec.slices === 1 && JSON.stringify(rec.columns) === JSON.stringify([6]),
-      rec.slices + ' slice(s), ' + JSON.stringify(rec.columns) + ' date column(s) in each');
+    await clickSel('#attendanceRecordModal [data-attendance-record-part="days"]');
+    const recDays = await evalJs(READ_RECORD);
+    check('WO-2.59 · tapping Day by day draws that part and only that — the slices and no summary '
+      + 'table — moves the selection to it, and leaves focus on the tab that was pressed rather '
+      + 'than on <body>',
+      recDays.up && recDays.shown === 'days'
+        && JSON.stringify(recDays.tabs) === JSON.stringify(['students', 'days*!'])
+        && recDays.summaries === 0 && recDays.grids === recDays.slices && recDays.slices >= 1
+        && recDays.focused === 'days',
+      'shown ' + JSON.stringify(recDays.shown) + ', tabs ' + JSON.stringify(recDays.tabs) + ', '
+        + recDays.summaries + ' summary table(s), ' + recDays.slices + ' slice(s), focus on '
+        + JSON.stringify(recDays.focused));
+    check('a term that fits is drawn as one table, with one column per recorded meeting — and that '
+      + 'one slice carries no continuation line, because on paper it is on page one under the header '
+      + '(WO-2.59)',
+      recDays.slices === 1 && JSON.stringify(recDays.columns) === JSON.stringify([6])
+        && recDays.running.length === 0,
+      recDays.slices + ' slice(s), ' + JSON.stringify(recDays.columns)
+        + ' date column(s) in each, continuation lines in slice(s) ' + JSON.stringify(recDays.running));
+    await clickSel('#attendanceRecordModal [data-attendance-record-part="students"]');
+    const recBack = await evalJs(READ_RECORD);
+    check('WO-2.59 · and tapping By student again puts the summary back and takes the slices away',
+      recBack.shown === 'students' && recBack.summaries === 1 && recBack.slices === 0
+        && JSON.stringify(recBack.tabs) === JSON.stringify(['students*!', 'days'])
+        && recBack.focused === 'students',
+      'shown ' + JSON.stringify(recBack.shown) + ', tabs ' + JSON.stringify(recBack.tabs) + ', '
+        + recBack.summaries + ' summary table(s), ' + recBack.slices + ' slice(s), focus on '
+        + JSON.stringify(recBack.focused));
+    /* Left on Day by day, so the reopen below is a reopen from the second tab. */
+    await clickSel('#attendanceRecordModal [data-attendance-record-part="days"]');
 
     await evalJs("window.planbook.closeModal('attendanceRecordModal'); 1");
     await clickSel('#termNav [data-term-select="' + TERM_B + '"]');
     await clickSel('#classView [data-attendance-record]');
+    const reopened = await evalJs(READ_RECORD);
+    check('WO-2.59 · closed on Day by day and opened again, the Record is back on its first tab — '
+      + 'the tab is the module\'s own state, reset on every open',
+      reopened.up && reopened.shown === 'students'
+        && JSON.stringify(reopened.tabs) === JSON.stringify(['students*!', 'days'])
+        && reopened.slices === 0 && reopened.summaries === 1,
+      'shown ' + JSON.stringify(reopened.shown) + ', tabs ' + JSON.stringify(reopened.tabs));
+    await clickSel('#attendanceRecordModal [data-attendance-record-part="days"]');
     const long = await evalJs(READ_RECORD);
     check('and a term of thirty meetings is cut into pages of twenty-four columns rather than into one table nobody could print',
       long.up && long.slices === 2
@@ -355,6 +416,27 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
         && (long.subs[0] || '').indexOf('30 recorded meetings') !== -1,
       long.slices + ' slice(s), ' + JSON.stringify(long.columns) + ' date column(s) in each :: '
         + JSON.stringify(long.subs[0]));
+    check('WO-2.59 · and only the slice that breaks onto a page of its own carries the continuation '
+      + 'line — the second; the first prints on page one under #printHeader',
+      JSON.stringify(long.running) === JSON.stringify([1]),
+      'continuation lines in slice(s) ' + JSON.stringify(long.running));
+    /* What that line SAYS, written by src/print-gate.js at `beforeprint` from the record's head —
+       which since WO-2.59 names the part, so a loose page of dates says which part it is too. */
+    const runningText = await evalJs(`(function(){
+      window.dispatchEvent(new Event('beforeprint'));
+      var t = Array.prototype.map.call(
+        document.querySelectorAll('#attendanceRecordModal .print-header-running'),
+        function(e){ return e.textContent; });
+      window.dispatchEvent(new Event('afterprint'));
+      return t; })()`);
+    check('WO-2.59 · and on paper that line names the part as well as the class and the term — '
+      + '"Attendance record · Day by day", then "continued"',
+      runningText.length === 1
+        && runningText[0].indexOf('Attendance record · Day by day') === 0
+        && runningText[0].indexOf('WO-2.6 Record') !== -1
+        && runningText[0].indexOf(LABEL_B) !== -1
+        && runningText[0].indexOf('continued') !== -1,
+      JSON.stringify(runningText));
 
     /* ── the CSV, as text ── */
     await evalJs("window.planbook.closeModal('attendanceRecordModal'); 1");
@@ -415,6 +497,66 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
       csv.name.indexOf('Planbook WO-2.6 Record ' + LABEL_A + ' attendance ') === 0
         && /\.csv$/.test(csv.name),
       JSON.stringify(csv.name));
+
+    /*
+      ── WO-2.59 ACCEPTANCE LINE 3, THE CSV HALF: BYTE-IDENTICAL TO v174, FROM EITHER TAB ──
+
+      The golden is a SHA-256 of the bytes recordCsv() produced for THIS fixture before WO-2.59
+      changed anything — captured from the tree at cba8dff (shell v175, whose CSV path is v174's:
+      WO-2.58 did not touch src/attendance-report.js) by a run of this same section, and written down
+      here rather than recomputed, because a golden the run computes for itself agrees with any
+      build. The bytes are taken through the real ⬇ Download CSV button with each tab showing — the
+      Blob handed to URL.createObjectURL, read as an ArrayBuffer so the BOM is three bytes and not a
+      decoded character — and the anchor's click is stubbed so nothing actually downloads.
+    */
+    const GOLDEN = {
+      [TERM_A]: { bytes: 270, sha: '4beb3f89afdb93f95a19d10d10346031263c18721ec2d077ad9dd2072aeca60c' },
+      [TERM_B]: { bytes: 686, sha: 'e40c3da925dae72ae10a1e2e71b2681e508dd170625c07be1465d7407993c6f7' },
+    };
+    const { createHash } = await import('node:crypto');
+    const csvFromButton = async () => {
+      const bytes = await evalJs(`(async function(){
+        var realUrl = URL.createObjectURL, realClick = HTMLAnchorElement.prototype.click;
+        var blob = null, name = '';
+        URL.createObjectURL = function(b){ blob = b; return 'blob:wo259'; };
+        HTMLAnchorElement.prototype.click = function(){ name = this.download; };
+        try {
+          var b = document.querySelector('#attendanceRecordModal [data-attendance-record-csv]');
+          if (!b) return { why: 'no Download CSV control in the open record' };
+          b.click();
+        } finally {
+          URL.createObjectURL = realUrl; HTMLAnchorElement.prototype.click = realClick;
+        }
+        if (!blob) return { why: 'the button handed no Blob to the browser' };
+        var buf = new Uint8Array(await blob.arrayBuffer());
+        return { name: name, bytes: Array.prototype.slice.call(buf) }; })()`);
+      if (!bytes || !bytes.bytes) return { why: (bytes && bytes.why) || 'no reading' };
+      const buf = Buffer.from(bytes.bytes);
+      return { name: bytes.name, bytes: buf.length,
+        bom: buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF,
+        sha: createHash('sha256').update(buf).digest('hex') };
+    };
+    const csvReads = [];
+    for (const term of [TERM_A, TERM_B]) {
+      await clickSel('#termNav [data-term-select="' + term + '"]');
+      await clickSel('#classView [data-attendance-record]');
+      for (const part of ['students', 'days']) {
+        await clickSel('#attendanceRecordModal [data-attendance-record-part="' + part + '"]');
+        const shownNow = (await evalJs(READ_RECORD)).shown;
+        csvReads.push(Object.assign({ term: term, part: part, shown: shownNow },
+          await csvFromButton()));
+      }
+      await evalJs("window.planbook.closeModal('attendanceRecordModal'); 1");
+    }
+    await clickSel('#termNav [data-term-select="' + TERM_A + '"]');
+    check('WO-2.59 · ⬇ Download CSV saves the whole record from either tab, byte-identical to v174\'s '
+      + 'for the same document — a BOM, and the SHA-256 captured before the tabs existed, on both '
+      + 'terms with each tab showing (the CSV is not a preview and does not follow the tab)',
+      csvReads.length === 4 && csvReads.every((r) => r.shown === r.part && r.bom
+        && r.bytes === GOLDEN[r.term].bytes && r.sha === GOLDEN[r.term].sha),
+      JSON.stringify(csvReads.map((r) => ({ term: r.term, tab: r.shown, bytes: r.bytes, bom: r.bom,
+        sha: r.sha ? r.sha.slice(0, 12) : r.why,
+        golden: r.sha === (GOLDEN[r.term] || {}).sha }))));
 
     /*
       ── THE PRINT GATE, THROUGH THE REAL 🖨 Print BUTTON (WO-2.25) ──
@@ -554,6 +696,10 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
       await evalJs("window.planbook.closeModal('attendanceHistoryModal'); 1");
       await clickSel('#classView [data-attendance-record]');
       const r = await evalJs(READ_RECORD);
+      /* Both parts since WO-2.59, which draws one at a time: the Day by day text is appended to
+         the By student text, so the search below covers everything either tab can put on screen. */
+      await clickSel('#attendanceRecordModal [data-attendance-record-part="days"]');
+      r.text += ' ' + (await evalJs(READ_RECORD)).text;
       const text = await evalJs(`(function(){
         var rc = window.planbook.attendance.classRecord();
         return window.planbook.attendanceReport.recordCsv(rc).text
@@ -579,6 +725,76 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
           + out.history.length + ', ' + out.record.length + ' and ' + out.csv.length
           + ' characters, so none of them was empty');
     }
+
+    /*
+      ── WO-2.59 ACCEPTANCE LINE 1: THE THREE ATTENDANCE DIALOGS AND THE KEYS, MEASURED ──
+
+      `.modal-panel` is `width: 480px`, and until WO-2.59 `.attendance-report-panel` set only a
+      `max-width` above it — so a cap that never came into play, and Record, Passes and the history
+      dialog at 480 on every screen, with every check in this file green. What is measured here is
+      the panel's own offsetWidth (a layout width, which a transform cannot shrink), through each
+      dialog's real door, at three windows: 1280 under a fine pointer, where each must be its own
+      width; 820, where each must be no wider than 95vw; and 1194 x 834 under a REALLY coarse
+      pointer — an iPad lying down — because src/attendance.css carries a second rule for the panel
+      in its coarse block, and a laptop-only reading would never see that one. The Grade sheet is
+      measured the same way in tools/verify/grade-sheet.mjs.
+    */
+    const DIALOGS = [
+      { id: 'attendanceRecordModal', door: '#classView [data-attendance-record]', want: 900, name: 'Record' },
+      { id: 'passHistoryModal', door: '#classView [data-pass-history]', want: 900, name: 'Passes' },
+      { id: 'attendanceHistoryModal', door: '[data-attendance-history="wo26-s1"]', want: 900, name: 'history' },
+      { id: 'attendanceKeysModal', door: '#classView [data-modal-open="attendanceKeysModal"]', want: 640, name: 'Keys' },
+    ];
+    const measureDialogs = async () => {
+      const out = {};
+      for (const d of DIALOGS) {
+        let w = -1;
+        try {
+          await clickSel(d.door);
+          await new Promise(r => setTimeout(r, 150));
+          w = await evalJs(`(function(){ var m = document.getElementById(${JSON.stringify(d.id)});
+            if (!m || m.classList.contains('hidden')) return -1;
+            var p = m.querySelector('.modal-panel'); return p ? p.offsetWidth : -2; })()`);
+        } catch (e) { w = 'no door: ' + e.message; }
+        await evalJs(`(function(){ var m = document.getElementById(${JSON.stringify(d.id)});
+          if (m && !m.classList.contains('hidden')) window.planbook.closeModal(${JSON.stringify(d.id)});
+          return 1; })()`);
+        out[d.name] = w;
+      }
+      out.vw = await evalJs('window.innerWidth');
+      out.coarse = await evalJs("matchMedia('(pointer: coarse)').matches");
+      return out;
+    };
+    const fits = (got, cap) => DIALOGS.every((d) => typeof got[d.name] === 'number'
+      && Math.abs(got[d.name] - Math.min(d.want, Math.floor(cap * 0.95))) <= 1);
+    await evalJs(KILL_ANIM);
+    const wide = await measureDialogs();
+    check('WO-2.59 · in a 1280px window under a fine pointer, Record, Passes and the history dialog '
+      + 'measure 900px wide and Keys 640 — width, not a max-width that never comes into play',
+      wide.vw === 1280 && wide.coarse === false && fits(wide, 1280),
+      JSON.stringify(wide));
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 820, height: 1100, deviceScaleFactor: 1, mobile: false });
+    await new Promise(r => setTimeout(r, 300));
+    const narrow = await measureDialogs();
+    check('WO-2.59 · in an 820px window each of the four is no wider than 95vw — the three wide ones '
+      + 'at the 779px cap, Keys still at 640',
+      narrow.vw === 820 && fits(narrow, 820)
+        && DIALOGS.every((d) => narrow[d.name] <= 820 * 0.95),
+      JSON.stringify(narrow));
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 1194, height: 834, deviceScaleFactor: 2, mobile: true });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+    await new Promise(r => setTimeout(r, 400));
+    const lying = await measureDialogs();
+    check('WO-2.59 · and on an iPad lying down — 1194px under a really coarse pointer, where the coarse '
+      + 'block\'s own rule for the panel applies — the same 900 and 640',
+      lying.vw === 1194 && lying.coarse === true && fits(lying, 1194),
+      JSON.stringify(lying));
+    await send('Emulation.setDeviceMetricsOverride',
+      { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await new Promise(r => setTimeout(r, 300));
 
     /*
       The document back as it was, IN PLACE rather than as a fresh object — every module holds the
