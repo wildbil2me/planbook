@@ -923,7 +923,8 @@ All seven are the owner's, 2026-10-09.
 1. **The strip's fit at 820px.** If "Un-confirm everyone" plus the pager does not fit under a coarse
    pointer, the fallbacks are "Un-confirm all", then ◀ and ▶ without words, in that order.
    **Measured at the build (WO-2.58): it fits, so neither fallback was taken** — the widest state
-   needs 630px of a 740px strip under a coarse pointer at 820. The owner reads it on the iPad.
+   needs 630px of a 740px strip under a coarse pointer at 820. **Read on the iPad by the owner on
+   2026-10-09: it fits there too. Closed.**
 2. **The Record's tabs**: `.screen-nav`'s look (drawn), and which tab opens first (drawn: By student).
 3. **Keys at 640px** — the drawing's guess.
 4. **The today card's door**: drawn as "Attendance history and grades →".

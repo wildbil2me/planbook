@@ -6186,8 +6186,9 @@ amend its banner in the same sitting.
 9. **On an off-term day, the term-dates door sits with the actions on the left** rather than pushing
    to the far edge, where the pager now is.
 
-**Open — the owner's ruling, at the 👤 reading.** Whether the fallbacks in ruling 3 were needed is
-measured, not ruled; the owner reads the result.
+**Answered — the owner, at the 👤 reading, 2026-10-09: neither fallback.** The widest state took
+630px of a 740px strip in Edge, and on the teaching iPad, in Safari's font, the strip held one line
+upright and lying down. "Un-confirm everyone" keeps its words and ◀ ▶ keep theirs.
 
 **Deliverables**
 - **`index.html`**: the totals line goes; `#attendanceActions` and `#attendancePager` move into one
