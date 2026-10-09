@@ -35,6 +35,10 @@ WO-2.58, owner-directed, lifted from `design/mockups/attendance-header.html`. Sh
   on purpose, as noted at the CSS rule.
 - Harness: a new `tools/verify/attendance-header.mjs`, 1878 → 1898 checks, mutation-proved three
   times. Verified by a fresh verifier after the first verifier's session crashed.
+- Out of the close: both search boxes draw the focus ring as a square inside the rounded box,
+  because the border belongs to a wrapper and the ring lands on the borderless field. Booked as
+  [WO-2.61](plans/work-orders/phase-2-attendance.md#wo-261--the-search-boxs-focus-ring-traces-the-field-inside-it-not-the-box-you-see),
+  a 🎒 riding with WO-2.59. The field takes the border, and the focus rule is not touched.
 
 ### The shared-box excuse matches a box's whole wording, not a fragment of it — 2026-10-09
 

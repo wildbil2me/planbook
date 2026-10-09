@@ -6374,3 +6374,66 @@ it ships. **Lift the section rather than re-deriving it**, and amend its banner 
 Un-confirm stays, for the reason written over it. **The note field must not re-render on a
 keystroke.** **The running percentage survives the move** — it is what makes a row checkable by eye.
 **Presentation mode**: read what the student page hides before adding a table to it.
+
+## WO-2.61 — the search box's focus ring traces the field inside it, not the box you see
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** —
+**Closes roadmap** *(no box. Owner-directed, 2026-10-09.)*
+
+**Booked 2026-10-09**, owner-directed, the day WO-2.58 gave both search boxes a ✕. The owner
+compared two screenshots: the Relation field in the guardian dialog, whose focus ring is a rounded
+halo just outside its border, and the Scores box's *Find a student…*, whose ring is a square
+rectangle drawn **inside** the rounded box, with the 🔍 left outside it. **It is the same ring.**
+`src/shell.css`'s one global `:focus-visible` outline lands on whatever has focus, and in
+`.search-box` that is a borderless, square-cornered `<input>` sitting beside the glyph — the visible
+rounded border belongs to the wrapper `<div>`, which never has focus. A text field draws
+`:focus-visible` on a tap as well as from a keyboard, so this is what a teacher sees on every
+search. **It is the only field in the app built this way**; the guardian dialog, the score cells
+and the template editor all put the border on the field itself.
+
+**Rulings, the owner's, 2026-10-09**
+1. **Rebuild the box; do not move the ring.** The `<input>` becomes the rounded, bordered thing —
+   `.search-box`'s border, radius and padding move onto it — and the 🔍 and the ✕ sit over its left
+   and right edges, with the field's own padding keeping the text clear of both. The global ring
+   then draws around it exactly as it does around Relation.
+2. **The focus rule is not touched.** The rejected alternative — the ring drawn on the wrapper with
+   `:focus-within` and the field's own ring suppressed — is two lines of CSS, and breaks WO-1.2's
+   *"no rule removes an outline anywhere"*, `wo-sweep.mjs` § 8 and `tools/verify/focus-ring.mjs`'s
+   second check, all three of which would need an exception written into them. This shape needs none.
+
+**Deliverables**
+- **`src/shell.css`**: `.search-box` and `.search-box input` rebuilt per ruling 1; `.search-clear`
+  placed over the field's right edge; the coarse block's `.search-box` rules moved with them, the
+  44px still on the `<input>` (the WO-1.2 `.search-box` lesson, written at the coarse block). The
+  comment at `.search-box input` that explains why the source template's suppressed outline was not
+  lifted stays true and is kept.
+- **`src/attendance.css`**: `.attendance-find`'s 360→200 width still governs the box on the
+  attendance screen; and § the coarse note at its line ~1202 kept true.
+- **`src/scores.css`**: the Scores toolbar's box, likewise, if anything there reaches into it.
+- **`index.html`**: only if the glyph needs a hook to position — the box stays markup and the ✕ stays
+  a sibling of the field, per WO-2.58.
+- **The harness**: `tools/verify/score-search.mjs` (both boxes), and the WO-2.58 strip and toolbar
+  checks in `tools/verify/attendance-header.mjs` re-read, not loosened.
+- **`TESTING.md` § WO-2.61**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] On both screens the focused element is the bordered one: with the field focused, the
+      `<input>`'s bounding box equals the visible border's box (it carries the border-radius and the
+      border), and the 🔍 and the ✕ lie inside it. Mutation-proved against putting the border back
+      on the wrapper.
+- [ ] Typed text never runs under the glyph or the ✕: with a long string in the field, the text's
+      visible start is right of the 🔍 and its end is left of the ✕.
+- [ ] The ✕ keeps every WO-2.58 behaviour on both screens — absent on an empty field, a tap empties it,
+      restores the list and leaves the field unfocused, Escape empties it — and is still a 44px
+      target under a coarse pointer; the field is still ≥44px tall there.
+- [ ] `tools/verify/focus-ring.mjs` and `wo-sweep.mjs` § 8 pass **unchanged**: one global ring, and
+      no rule removes an outline.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] 👤 On the iPad, after a force-quit: tap into each search box and read the ring — rounded,
+      outside the border, the 🔍 inside it, the same shape as the guardian dialog's Relation field.
+
+**Traps** — **Do not suppress the field's outline** — not on `:focus`, not on `:focus-visible`, not
+in the coarse block; ruling 2 is the whole reason for this shape. **Do not put the 44px on the
+wrapper**: that is the WO-1.2 defect this file names a dozen times. **The ✕ is not a re-render** —
+WO-2.58's rule, written above the attendance box in `index.html`. **Safari's ring follows a
+border-radius only since 16.4**; the 👤 line is where that is settled, not a headless run.
