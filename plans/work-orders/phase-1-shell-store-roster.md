@@ -5708,3 +5708,51 @@ changes which runs the check measures, and the check would still be false on hal
 the June term is not in scope. **No upper bound** is in scope either. **Nothing in `src/` moves**:
 `src/past-due.js`'s banner is correct, and the check was wrong to depend on it. No `check()` is
 needed for the refusal paths; running the command proves them, as it did in WO-1.63.
+
+---
+
+## WO-1.65 — the glance reader's no-arithmetic rule is read by nobody
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.64 made.)*
+
+**Booked 2026-10-09**, owner-directed, out of WO-3.47's verdict, whose verifier closed that work
+order's fourth Acceptance line by reading `src/glance.js` and running a throwaway script — the line
+said a check "still finds no arithmetic", and no check had ever looked.
+
+**Why it exists.** `CLAUDE.md`'s glance-reader rule (WO-6.7) says the file holds **no arithmetic of
+its own**: no percentage, no threshold read, no rule re-run, no date compared to another date and no
+`Math.*`. The cost of breaking it is a screen that disagrees with itself — the card's *3 to grade*
+beside a queue of two. `tools/verify/glance-quiet.mjs` proves the agreement **behaviourally**, on the
+fixtures it builds; nothing reads the file for the **shape**. The rule has been broken once already,
+in WO-6.7's first draft, which re-read `leadDaysOf()` and re-clamped it one file away from
+`leadWindowOf()`'s own clamp. Most home-screen work passes through this file, and WO-3.47 has just
+added a second engine call to it.
+
+**Deliverables**
+- A claim in `tools/wo-sweep.mjs`, modelled on § 20's claim 5 for `src/merge-fields.js`: over
+  `src/glance.js` with comments stripped, no `Math.`, no `%`, no `*`, no `/` as an operator, no binary
+  `-`, no relational `<` / `>` / `<=` / `>=`, no `new Date` or `Date.`, and no call to an engine
+  function that reads the document for a number — `thresholdsOf`, `leadDaysOf`, `isHeld` at least,
+  and a read of a score cell's fields. The list is the implementer's to finish and to argue in the
+  claim's own header.
+- **The allowed shapes named, not merely tolerated**: `.length`, `+` building a string, and the
+  queue's `open += 1`, which counts rows the engine handed back. A pass on 2026-10-09 found those and
+  nothing else, so the claim should land green with a short exception list.
+- `tools/README.md`'s recorded check count, and the claim's limits written where the next reader of
+  the section will find them.
+
+**Acceptance**
+- [ ] `node tools/wo-sweep.mjs` is green on the tree with the new claim, and its check count matches
+      `tools/README.md`.
+- [ ] Each refused shape is proved by a mutation in `src/glance.js` that turns the claim red at the
+      line — at minimum a `Math.` call, a `/` or `*`, a date comparison, and a `leadDaysOf()` read —
+      and every mutation is reverted before anything else is written.
+- [ ] The claim's header states what it cannot see: a sum written with `+`, and arithmetic moved into
+      a helper whose name is not on the list.
+
+**Traps** — **A fence, not a reading**: it catches the shapes it names, and meaning still belongs to
+a person or to `glance-quiet.mjs`. **Do not fence `+`** — it is mostly string building here and a
+grep cannot tell the two apart; a false red teaches the next reader to disbelieve the claim. **Nothing
+in `src/` moves.** **Do not widen it to other files**: every other module computes legitimately, which
+is the same reason § 20's claim 5 reads one file on purpose.
