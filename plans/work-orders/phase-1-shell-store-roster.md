@@ -5713,7 +5713,7 @@ needed for the refusal paths; running the command proves them, as it did in WO-1
 
 ## WO-1.65 — the glance reader's no-arithmetic rule is read by nobody
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-09 · **Size** S · **Depends on** — · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.64 made.)*
 
 **Booked 2026-10-09**, owner-directed, out of WO-3.47's verdict, whose verifier closed that work
@@ -5743,12 +5743,12 @@ added a second engine call to it.
   the section will find them.
 
 **Acceptance**
-- [ ] `node tools/wo-sweep.mjs` is green on the tree with the new claim, and its check count matches
+- [x] `node tools/wo-sweep.mjs` is green on the tree with the new claim, and its check count matches
       `tools/README.md`.
-- [ ] Each refused shape is proved by a mutation in `src/glance.js` that turns the claim red at the
+- [x] Each refused shape is proved by a mutation in `src/glance.js` that turns the claim red at the
       line — at minimum a `Math.` call, a `/` or `*`, a date comparison, and a `leadDaysOf()` read —
       and every mutation is reverted before anything else is written.
-- [ ] The claim's header states what it cannot see: a sum written with `+`, and arithmetic moved into
+- [x] The claim's header states what it cannot see: a sum written with `+`, and arithmetic moved into
       a helper whose name is not on the list.
 
 **Traps** — **A fence, not a reading**: it catches the shapes it names, and meaning still belongs to
@@ -5756,3 +5756,16 @@ a person or to `glance-quiet.mjs`. **Do not fence `+`** — it is mostly string 
 grep cannot tell the two apart; a false red teaches the next reader to disbelieve the claim. **Nothing
 in `src/` moves.** **Do not widen it to other files**: every other module computes legitimately, which
 is the same reason § 20's claim 5 reads one file on purpose.
+
+*(**Landed 2026-10-09, and two things went differently from the plan.** **§ 31 names three
+allowances, not one.** The plan expected `open += 1` alone. The implementer also refused the date
+helpers `shiftDays` and `daysBetween` and then allowed their two existing uses, each with its
+reason: `weekWindow()`'s rolling week, which no engine owns, and `leadShown()`'s width read back off
+the window `leadWindowOf()` handed over. Naming them is what keeps a third date computation from
+riding in beside them. **The first verifier pass failed Acceptance line 3.** De-duplication was
+keyed on line and message, so a second finding of the same kind on a line that already held an
+allowance was dropped, and the header's "a second site is red" was false there. Three plants at
+`src/glance.js` lines 341, 268 and 506 left § 31 green. A correction round keyed findings on their
+position in the line and let an allowance cover only the finding its own match spans. The second
+pass ran 30 plants, all red at the planted line and all reverted. The record is
+`.claude/dispatch/WO-1.65-result.md`.)*

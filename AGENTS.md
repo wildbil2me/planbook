@@ -132,7 +132,10 @@ dependencies.
   A window is something a reader **asks the engine for** (`eventsCovering()`, `gradesDueIn()`,
   `leadWindowOf()` in `src/calendar.js`), never something it computes — the first draft re-clamped
   the lead time one file away from `leadWindowOf()`'s own clamp, and that duplicate is what the rule
-  exists to stop. Break it and the screen disagrees with itself: the card's *2 to grade*, the queue
+  exists to stop. Since WO-1.65 (2026-10-09) `wo-sweep.mjs` § 31 fences it — operators, date
+  comparisons and numeric engine calls are refused outside three named allowances — and it is a
+  fence, not a reading: a sum written with `+` and arithmetic behind an unlisted helper name both
+  pass. Break it and the screen disagrees with itself: the card's *2 to grade*, the queue
   panel and the attention chips move together only because one reader feeds each. Two riders. The
   empty state is **structural, not a toggle** — a source with nothing draws no panel at all, and
   there is no `classList.toggle('hidden')` anywhere in the file. And the one record the file

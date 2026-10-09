@@ -13,6 +13,20 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The sweep now fences the glance reader's no-arithmetic rule — 2026-10-09
+
+WO-1.65. Tooling only; nothing in `src/` moved.
+
+- **`wo-sweep.mjs` § 31 reads `src/glance.js` and refuses arithmetic of its own**: `Math.`,
+  division, multiplication, modulo, date comparisons, numeric `+=`, `new Date`, sorts, score reads,
+  and calls to threshold or lead functions. Three named allowances are each permitted exactly once:
+  `queueRows()`'s `open += 1`, `weekWindow()`'s rolling week and `leadShown()`'s width read back off
+  the window.
+- **Its header says what it cannot see**: a sum written with `+`, and arithmetic moved into a helper
+  whose name is not on the list.
+- The sweep runs 50 checks. The first verifier pass found a gap on lines that already held an
+  allowance, and it was closed before the work order was ticked.
+
 ### A held column shows up wherever unfinished work is listed — 2026-10-09
 
 WO-3.47, the last of WO-3.46's four pieces. Shell cache bumped to v173.

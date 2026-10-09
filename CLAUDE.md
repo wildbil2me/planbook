@@ -492,7 +492,10 @@ Things that will bite:
   `Math.*`. A window is something a reader **asks the engine for** — `eventsCovering()`,
   `gradesDueIn()` and `leadWindowOf()` went into `src/calendar.js` for that — never something it
   computes; the first draft re-read `leadDaysOf()` for a chip and re-clamped it one file away from
-  `leadWindowOf()`'s own clamp, which is the exact duplicate this rule exists to stop. **The cost of
+  `leadWindowOf()`'s own clamp, which is the exact duplicate this rule exists to stop. **Since
+  WO-1.65 (2026-10-09) `wo-sweep.mjs` § 31 fences it** — operators, date comparisons and numeric
+  engine calls are refused outside three named allowances — and it is **a fence, not a reading**: a
+  sum written with `+` and arithmetic behind an unlisted helper name both pass. **The cost of
   breaking it is a screen disagreeing with itself**: the card's *2 to grade*, the queue panel and the
   attention chips move together only because one reader feeds each, and a second opinion anywhere in
   the chain is how they drift apart. Two riders. **The empty state is structural, not a toggle** —

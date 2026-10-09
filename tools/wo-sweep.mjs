@@ -3919,6 +3919,253 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
   }
 }
 
+/* ══════ 31. the glance reader holds no arithmetic of its own ══════
+   WO-1.65, and it sits ABOVE § 22 for § 23's and § 30's reason: § 22's census has to be the last
+   thing that pushes a result. The number is the order this section was written in.
+
+   CLAUDE.md's glance-reader rule (WO-6.7) says src/glance.js holds NO ARITHMETIC OF ITS OWN — no
+   percentage, no threshold read, no rule re-run, no date compared to another date and no `Math.*` —
+   because the cost of breaking it is a screen that disagrees with itself: the card's "3 to grade"
+   beside a queue of two. tools/verify/glance-quiet.mjs proves the agreement BEHAVIOURALLY, on the
+   fixtures it builds. Until this section nothing read the file for the SHAPE, and WO-3.47's fourth
+   Acceptance line was closed by a verifier's throwaway script because a line said a check "still
+   finds no arithmetic" and no check had ever looked. The rule has been broken once already, in
+   WO-6.7's first draft, which re-read `leadDaysOf()` and re-clamped it one file away from
+   `leadWindowOf()`'s own clamp. This is § 20 claim 5's division of labour over a different file:
+   the harness proves what the readers did, and this proves the file holds none of the shapes below.
+
+   ONE FILE, ON PURPOSE. Every other module in src/ computes legitimately — the engines are where the
+   arithmetic is SUPPOSED to live — so widening this to the tree would go red everywhere at once and
+   teach its reader to skip it. § 20's claim 5 reads one file for the same reason.
+
+   WHAT IS READ. src/glance.js with comments taken out, and with the TEXT of every string and
+   template literal taken out — but the BODY of every `${ … }` kept, because arithmetic inside an
+   interpolation is exactly what must still be seen. That is a small scanner rather than a regex
+   chain, because the file builds markup and a regex strip that left `</div>` or `gl-row` behind
+   would land this red on the first line of HTML. Newlines survive everything, so a line this
+   section prints is a line of the file a reader opens.
+
+   WHAT IS REFUSED, AND WHY EACH ONE IS ON THE LIST:
+     · `Math.` — the rule names it.
+     · `%`, `*`, `/` — a percentage and a ratio need one of them. `/` is refused whether it divides
+       or opens a regular-expression literal: the scanner does not model regex literals, the file
+       holds none, and a red on a regex here is the loud failure rather than a quiet pass.
+     · `-` as an operator: binary, `--`, `-=`, and unary negation of a value. A NEGATIVE NUMERIC
+       LITERAL passes — `-1` is a sentinel, not a computation.
+     · `<`, `>`, `<=`, `>=`, and the shifts — every relational. `=>` is an arrow and is not matched.
+       EQUALITY IS NOT FENCED: eventWhen() compares two dates by `!==`, and its comment says why
+       ("equality and not order"); asking whether two things are the same thing is not arithmetic.
+     · single `|`, `&`, `^`, `~` — bitwise arithmetic, `x | 0` being the rounding idiom. `||`,
+       `&&` and their assignments are logic and are not matched.
+     · `Number(`/`Number.`, `parseInt`, `parseFloat`, `.toFixed(`, `.toPrecision(`,
+       `.toExponential(` — a number made or rounded here is a number no engine handed back.
+     · `++`, and `+=` with anything but a string literal on its right — counting and summing. A
+       string grown with `+= '…'` passes, for the same reason `+` does (below).
+     · `Date` in any form (`new Date`, `Date.now()`, `Date(`), `localeCompare`, and `.sort(` — the
+       ways a date is compared to another date in this codebase. ISO dates compare as strings, so
+       a comparator is where a date comparison hides; the file's own header says it ranks nothing.
+     · a member read of a score cell's fields or of a settings block: `.scores`, `.v`, `.flag`,
+       `.was`, `.signals`, `.leadDays`. A threshold read off `doc.signals` and a lead time read off
+       `doc.calendar.leadDays` are both CLAUDE.md's "read it through the engine, never off the
+       document", and a cell's `v` and `flag` are what openWork() exists to read on this file's
+       behalf.
+     · ENGINE NAMES THAT ANSWER WITH A NUMBER, read off the document: the threshold readers
+       (`thresholdsOf`, `thresholdOf`, `defaultThreshold`, `changedThresholds`,
+       `ruleThresholdText`, `SIGNAL_SETTINGS`), the lead time (`leadDaysOf`, `DEFAULT_LEAD_DAYS`),
+       the grade engine's numeric answers (`isHeld`, `classGrade`, `projectedClassGrade`,
+       `categoryResult`, `categoryPercentage`, `letterFromPercentage`, `nextBandFor`, `pointsShare`,
+       `weightTotal`), the letter scale (`letterFor`, `letterScaleOf`, `scaleForClass`,
+       `bandRanges`), the attendance ledger's counts (`attendanceTotals`, `termTotals`,
+       `attendanceHistory`, `termHistory`, `percentText`, `ledgerCountsIn`, `countsFor`,
+       `lastMeetings`, `meetingsBetween`), a rule re-run (`signalRules`), and the two date-arithmetic
+       helpers (`shiftDays`, `daysBetween`). Matched as a USE — anywhere in the code but an
+       `import { … } from …;` declaration, which is blanked first — because an import computes
+       nothing, and the use is the line a reader needs cited. `isHeld` is on it because WO-3.47
+       made the held column the queue's business through heldWork(), and a reader that asked
+       isHeld() itself would be deciding what "held" means a second time.
+   `evaluate`, `applyCooldown` and `quietMiddle` are NOT on it: they ARE the readers' sources, and
+   asking them is the file's whole job. Nor is `.reduce(`: shownOf() and quietOf() concatenate with
+   it, and a sum written as a fold is the `+` blind spot below, not a different one.
+
+   THE ALLOWED SHAPES ARE NAMED, NOT MERELY TOLERATED, in two lists:
+     · ALLOWED — a refused shape let through at ONE named site, each with its reason. Each allows
+       exactly one finding (a second site matching the same text is red, on its own line or on the
+       allowed line itself, since an allowance covers only the finding its own match spans), and
+       each FAILs as STALE if no finding uses it — § 30's rule, an allowance nothing needs is an allowance waiting for
+       something to use it. Three today: queueRows()'s `open += 1`, which counts rows the engine
+       handed back; weekWindow()'s `shiftDays(today, WEEK_DAYS_AHEAD)`, the page's rolling week,
+       which no engine owns; and leadShown()'s `daysBetween(w.from, w.to)`, which reads the width
+       back off the window leadWindowOf() handed over rather than off the setting with a second
+       clamp — its comment says so. The last two are the nearest the file comes to the rule's edge,
+       and naming them is what keeps a third date computation from riding in beside them.
+     · ANCHORS — shapes that were never refused: `.length`, which is the size of a list an engine
+       handed back and is the one count the page is built on, and `+` building a string. Each must
+       be FOUND at least once, so a scanner that silently ate the code reports zero of them and
+       goes red, rather than a clean pass over an empty haystack — this file's own first rule, the
+       one claim 5's subscript count lives by.
+
+   A FENCE, NOT A READING — WHAT THIS CANNOT SEE, stated so nobody reads a green § 31 as "the file
+   holds no arithmetic":
+     · A SUM WRITTEN WITH `+`. `a + b` on two numbers and `'' + n` on a string are one operator, and
+       a grep cannot tell them apart; the file is mostly string building, so fencing `+` would go
+       red on a clean tree and teach the next reader to disbelieve the claim. `total += row.points`
+       IS caught (above); `total = total + row.points` and `xs.reduce((s, x) => s + x, 0)` are not.
+     · ARITHMETIC MOVED INTO A HELPER WHOSE NAME IS NOT ON THE LIST. A new engine export that
+       answers with a number, a utility module, or a helper imported from anywhere under a name
+       this section has never heard of — `sumOf(rows)` — passes. The name list is a list, not a
+       universal, and a new import into this file is read by eye.
+     · A number composed from things this does not fence: `.length` of an array the file built
+       itself, `slice()` arithmetic hidden in its arguments, `Array(n)`, an index read.
+     · A regular-expression literal containing a quote would derail the scanner. There is none.
+   What answers those is the other half of the pair — glance-quiet.mjs asks what the readers DID —
+   and a person reading the file, which is what found WO-6.7's re-clamp.
+
+   PROVED 2026-10-09 against shapes planted one at a time in src/glance.js and reverted with
+   `git checkout -- src/glance.js` before anything else was written — the table is in
+   .claude/dispatch/WO-1.65-result.md, and its "Correction round 1" section adds the plants that
+   share a line with an allowance. */
+
+{
+  const NAME = 'src/glance.js holds no arithmetic of its own — no operator, date comparison, cell read or numeric engine call outside its named allowances';
+  const FILE = 'src/glance.js';
+  const filePath = path.join(REPO, 'src', 'glance.js');
+  if (!fs.existsSync(filePath)) {
+    check(NAME, false, `${FILE} is not where § 31 expects it — the glance readers moved or were renamed, and a fence round a file that is not there passes over anything. Re-point tools/wo-sweep.mjs § 31`);
+  } else {
+    const src = fs.readFileSync(filePath, 'utf8');
+
+    /* Code only: comments gone, the TEXT of every string and template blanked to its delimiters,
+       the body of every `${ … }` kept and scanned as code (nested templates included). Every
+       newline survives, so offsets map to the file's own lines. */
+    const codeOnly = (text) => {
+      let out = '';
+      let mode = 'code';
+      let quote = '';
+      const depth = [];                     // one brace counter per open `${`
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        const d = text[i + 1];
+        if (mode === 'code') {
+          if (c === '/' && d === '*') { mode = 'block'; i++; continue; }
+          if (c === '/' && d === '/') { mode = 'line'; i++; continue; }
+          if (c === "'" || c === '"') { mode = 'str'; quote = c; out += c; continue; }
+          if (c === '`') { mode = 'tpl'; out += c; continue; }
+          if (depth.length && c === '{') depth[depth.length - 1] += 1;
+          if (depth.length && c === '}') {
+            if (depth[depth.length - 1] === 0) { depth.pop(); mode = 'tpl'; out += c; continue; }
+            depth[depth.length - 1] -= 1;
+          }
+          out += c;
+        } else if (mode === 'block') {
+          if (c === '*' && d === '/') { mode = 'code'; out += ' '; i++; } else if (c === '\n') out += '\n';
+        } else if (mode === 'line') {
+          if (c === '\n') { mode = 'code'; out += '\n'; }
+        } else if (mode === 'str') {
+          if (c === '\\') { if (d === '\n') out += '\n'; i++; } else if (c === quote) { mode = 'code'; out += c; } else if (c === '\n') { mode = 'code'; out += '\n'; }
+        } else {                            // template text
+          if (c === '\\') { if (d === '\n') out += '\n'; i++; } else if (c === '`') { mode = 'code'; out += c; } else if (c === '$' && d === '{') { out += '${'; depth.push(0); mode = 'code'; i++; } else if (c === '\n') out += '\n';
+        }
+      }
+      return out;
+    };
+    const code = codeOnly(src);
+    const lines = code.split('\n');
+    const lineOf = (index) => code.slice(0, index).split('\n').length;
+    const shown = (n) => { const t = (lines[n - 1] || '').trim(); return t.length > 90 ? t.slice(0, 87) + '…' : t; };
+    // Import declarations blanked (newlines kept) for the NAME scan only: an import computes nothing.
+    const usesOnly = code.replace(/\bimport\s*\{[^}]*\}\s*from\s*['"`][^'"`]*['"`]\s*;?/g, m => m.replace(/[^\n]/g, ' '));
+
+    const findings = [];
+    const add = (index, kind, why) => findings.push({ index, line: lineOf(index), kind, why });
+
+    const FENCE = [
+      { kind: 'math', re: /\bMath\s*\./g, why: '`Math.`' },
+      { kind: 'op', re: /%/g, why: '`%`' },
+      { kind: 'op', re: /\*/g, why: '`*`' },
+      { kind: 'op', re: /\//g, why: '`/` — division, or a regular-expression literal this scan cannot tell from one' },
+      { kind: 'op', re: /</g, why: 'a relational `<`, `<=` or `<<`' },
+      { kind: 'op', re: /(?<!=)>/g, why: 'a relational `>`, `>=` or `>>`' },
+      { kind: 'op', re: /(?<![|&])[|&](?![|&])/g, why: 'a bitwise `|` or `&`' },
+      { kind: 'op', re: /[~^]/g, why: 'a bitwise `~` or `^`' },
+      { kind: 'number', re: /\bNumber\s*[.(]|\bparse(?:Int|Float)\s*\(|\.\s*to(?:Fixed|Precision|Exponential)\s*\(/g, why: 'a number made or rounded here' },
+      { kind: 'counting', re: /\+\+/g, why: '`++` — a count kept here' },
+      { kind: 'counting', re: /\+=(?!\s*['"`])/g, why: '`+=` with no string literal on its right — a count or a sum kept here' },
+      { kind: 'date', re: /\bDate\b/g, why: '`Date` — a date made or read here' },
+      { kind: 'date', re: /\blocaleCompare\b/g, why: '`localeCompare` — how two ISO dates are compared' },
+      { kind: 'date', re: /\.\s*sort\s*\(/g, why: '`.sort(` — a comparator, which is where a date comparison hides, and the file ranks nothing' },
+      { kind: 'read', re: /\.\s*(?:scores|v|flag|was|signals|leadDays)\b/g, why: 'a member read of a score cell or a settings block — the engine reads those for this file' },
+    ];
+    FENCE.forEach(f => { for (const m of code.matchAll(f.re)) add(m.index, f.kind, f.why); });
+    /* `-`, by hand rather than by one regex, because a negative numeric literal passes and the
+       three refused spellings need their neighbours to tell apart. */
+    for (let i = 0; i < code.length; i++) {
+      if (code[i] !== '-') continue;
+      const next = code[i + 1];
+      if (next === '-' || next === '=') { add(i, 'op', next === '-' ? '`--`' : '`-=`'); i++; continue; }
+      const before = code.slice(0, i).replace(/\s+$/, '').slice(-1);
+      if (/[A-Za-z0-9_$)\]'"`]/.test(before)) { add(i, 'op', 'a binary `-`'); continue; }
+      const after = code.slice(i + 1).replace(/^\s+/, '')[0] || '';
+      if (!/[0-9.]/.test(after)) add(i, 'op', 'a unary `-` negating a value');
+    }
+    const ENGINE = ['thresholdsOf', 'thresholdOf', 'defaultThreshold', 'changedThresholds', 'ruleThresholdText', 'SIGNAL_SETTINGS',
+      'leadDaysOf', 'DEFAULT_LEAD_DAYS',
+      'isHeld', 'classGrade', 'projectedClassGrade', 'categoryResult', 'categoryPercentage', 'letterFromPercentage', 'nextBandFor', 'pointsShare', 'weightTotal',
+      'letterFor', 'letterScaleOf', 'scaleForClass', 'bandRanges',
+      'attendanceTotals', 'termTotals', 'attendanceHistory', 'termHistory', 'percentText', 'ledgerCountsIn', 'countsFor', 'lastMeetings', 'meetingsBetween',
+      'signalRules', 'shiftDays', 'daysBetween'];
+    for (const m of usesOnly.matchAll(new RegExp(`\\b(?:${ENGINE.join('|')})\\b`, 'g'))) {
+      add(m.index, 'engine', `\`${m[0]}\` — an engine name that answers with a number read off the document, or does date arithmetic`);
+    }
+
+    /* The named allowances: one site each, and STALE if unused. An allowance covers a finding only
+       when its own match in the code SPANS that finding's offset — not when the text merely appears
+       somewhere on the line. Correction round 1 of WO-1.65: matched against the whole line, and with
+       findings de-duplicated on line and message, `….open += 1; total += row.points;` and
+       `shiftDays(today, WEEK_DAYS_AHEAD), back: shiftDays(today, 7)` both passed — the second finding
+       was dropped as a duplicate of the first, and the first used up the allowance. */
+    const ALLOWED = [
+      { kind: 'counting', re: /\.open \+= 1;/, why: 'queueRows()\'s `open += 1`, counting the rows openWork() and heldWork() handed back' },
+      { kind: 'engine', re: /\bshiftDays\(today, WEEK_DAYS_AHEAD\)/, why: 'weekWindow()\'s rolling week, which no engine owns' },
+      { kind: 'engine', re: /\bdaysBetween\(w\.from, w\.to\)/, why: 'leadShown()\'s width read back off the window leadWindowOf() handed over' },
+    ];
+    const used = new Map();
+    const faults = [];
+    const refused = [];
+    const seen = new Set();
+    const covers = (a, f) => {
+      const lineStart = code.lastIndexOf('\n', f.index - 1) + 1;
+      const text = lines[f.line - 1] || '';
+      const re = new RegExp(a.re.source, 'g');
+      for (const m of text.matchAll(re)) {
+        if (f.index >= lineStart + m.index && f.index < lineStart + m.index + m[0].length) return true;
+      }
+      return false;
+    };
+    findings.sort((a, b) => a.index - b.index).forEach(f => {
+      const key = `${f.index}|${f.why}`;    // one finding per offset and message, never per line
+      if (seen.has(key)) return;
+      seen.add(key);
+      const allow = ALLOWED.find(a => a.kind === f.kind && covers(a, f));
+      if (allow && !used.has(allow)) { used.set(allow, f.line); return; }
+      refused.push(`${FILE}:${f.line} "${shown(f.line)}" (${f.why}${allow ? ' — and a SECOND site matching an allowance that names one' : ''})`);
+    });
+    if (refused.length) faults.push(`${refused.slice(0, 6).join(', ')}${refused.length > 6 ? `, and ${refused.length - 6} more` : ''} — ${FILE} computes something of its own. CLAUDE.md's glance-reader rule (WO-6.7): each reader is a call into an engine that already exists, handing back that engine's own array, and the file holds no percentage, no threshold read, no rule re-run, no date compared to another date and no Math.*. A second computation here is how the card's "3 to grade" comes to sit beside a queue of two. Put the question INTO the engine (src/calendar.js gained leadWindowOf() for exactly this) and call it from here; if the shape is genuinely not arithmetic, name it in § 31's ALLOWED with its reason`);
+    const stale = ALLOWED.filter(a => !used.has(a));
+    if (stale.length) faults.push(`${stale.map(a => a.why).join('; ')} — an allowance in § 31 that no line of ${FILE} uses any more. Take it out of ALLOWED: an allowance nothing needs is an allowance waiting for something to use it`);
+    const ANCHORS = [
+      { re: /\.length\b/g, what: '`.length`' },
+      { re: /(?:''|""|``)\s*\+(?!=)|\+\s*(?:''|""|``)/g, what: '`+` building a string' },
+    ];
+    const anchored = ANCHORS.map(a => ({ what: a.what, n: [...code.matchAll(a.re)].length }));
+    const empty = anchored.filter(a => !a.n);
+    if (empty.length) faults.push(`no ${empty.map(a => a.what).join(' and no ')} found in the code of ${FILE} — the file is built on both, so the scanner has stopped reading code and every absence claim above is being made over nothing. Mend the scanner, or, if the file genuinely no longer uses the shape, take it out of § 31's ANCHORS`);
+    if (code.length > src.length * 0.9) faults.push(`the scanner removed only ${src.length - code.length} of ${src.length} characters of ${FILE}, which is implausible for a file that is mostly comment — it has stopped working`);
+
+    check(NAME, !faults.length, faults.length ? faults.join(' · ')
+      : `${lines.filter(l => l.trim()).length} line(s) of code in ${FILE} read with comments and string text blanked and \`\${…}\` bodies kept; no refused operator, date comparison, cell or settings read, numeric conversion, count, or any of ${ENGINE.length} engine names in use — the ${ALLOWED.length} named allowances each used once (${ALLOWED.map(a => `${FILE}:${used.get(a)}`).join(', ')}), and the anchors found (${anchored.map(a => `${a.n} × ${a.what}`).join(', ')}). A fence, not a reading: a sum written with \`+\` and arithmetic in a helper whose name is not on the list both pass`);
+  }
+}
+
 /* ══════ 22. the count of checks in tools/README.md is the number this run emits ══════
    WO-1.42. § 11 holds `tools/README.md`'s figures for `verify-shell.mjs` against what the tree
    actually contains. This is that census turned on the sweep itself. The same file records how many
