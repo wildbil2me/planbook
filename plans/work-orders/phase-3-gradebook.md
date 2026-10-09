@@ -3659,6 +3659,17 @@ cleared) moved to
       read the confirm's names against the grid, and see the grade move. *(The owner, on the iPad,
       2026-10-08, v172: all four readings confirmed — the taller head accepted as built.)*
 
+*(**Outcome, 2026-10-08.** Built, verified PASS and read on the iPad the same day. Four things
+differed from the plan. **The column head grew** about 29px on a fine pointer and 48px on a coarse
+one, roughly one row of scores in portrait; `scroll-padding-top` was re-measured to match, and the
+owner accepted it on glass. **The editor's box commits a hold on an empty column with no confirm**,
+the implementer's reading of ruling 3, since nothing on it can move a grade; once a score is on it,
+the tap goes through the confirm. If ruling 3 means *every hold, always*, it is one `if` in
+`tapEditorHold()`. **Two traps are held by structure, not by a check:** no fixture ticks the box on
+an existing empty column (a mutation dropping the `creatingId` guard survived), and the fixture's term
+has no dates, so the stacked-dialog trap at Done cannot fire there. And **the assignment list row does
+not mark a held column**, which nothing asked for and is a candidate for WO-3.47's table.)*
+
 **Traps** — **The preview is not a second grade engine.** If the confirm computes a percentage
 itself, the confirm and the grid can disagree, which is the failure this repository refuses
 everywhere else. **Do not read `.held` in the grid or the editor**; ask `isHeld()`, or WO-3.53's

@@ -57,6 +57,12 @@ dependencies.
   date, and a move that carries scores asks first. This is a date the teacher typed, not the clock:
   nothing may re-file work because time passed, and nothing migrates an old `termId`.
 - **Empty categories redistribute their weight.**
+- **A held column counts toward nothing, and only the engine says which columns are held**
+  (WO-3.52, WO-3.53, WO-3.46). A teacher can hold a score column while re-keying it against the
+  SIS: it takes scores, flags and notes, moves no grade, and keeps no history until *Commit*. Ask
+  `isHeld()` — **never read `.held` outside `src/grade-engine.js`** — and write it only in
+  `src/held-column.js`; `wo-sweep.mjs` § 30 enforces both, destructured parameters included. The
+  hold and commit confirms take their figures from the engine, never a second computation.
 - **An absent threshold key IS its default** (WO-4.1). `signals` holds only what the teacher has
   changed, and *Put every threshold back* **deletes** the keys rather than writing today's numbers
   into the year — otherwise a default re-tuned in a later build never reaches anyone who once
