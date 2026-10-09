@@ -5942,3 +5942,47 @@ rule would be a reading of the sentence, which its Traps refuse. **Do not touch 
 wording to make a plant pass.** **This changes `tools/wo-gate.mjs`, a pipeline file**: read
 `plans/work-orders/README.md` § "The pipeline's own files" before editing it. **Nothing in `src/`
 moves**, so no `CACHE` bump is owed.
+
+## WO-1.69 — a proposed stylesheet whose sections cannot be read passes the collision check unread
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** — · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.68 made.)*
+
+**Booked 2026-10-09**, owner-directed, out of drawing the attendance screen (`8bfff03`). A ride-along
+on `tools/wo-sweep.mjs` § 19: fold it into the next sitting that has that file open.
+
+**Why it exists.** `design/mockups/proposed-attendance.css` was first written with one-line section
+banners — `/* ══ § ATTENDANCE HEADER → src/attendance.css (WO-2.58 — not yet lifted) ══ */`. § 19
+reads a section only where a `§` line sits directly under a rule of `═`, so it parsed **neither
+section**, and the sweep stayed green: *"a pending mockup section styles no class src/ already
+styles"* reported two pending sections, both from other sheets, and never looked at the nine new
+class names; *"every drawing names an unbuilt work order that names it back"* never saw WO-2.58 or
+WO-2.60. Caught by reading the PASS line's list, not by any FAIL, and fixed in the same sitting by
+reshaping the banners.
+
+**The guard that should have caught it is sheet-blind.** § 19's empty-parse check fires only when
+*every* `proposed*.css` parses to zero sections (`!sheets.length || !sections.length`). One sheet
+parsing to nothing among a dozen that parse is invisible — which is the guard's own warning, *"reads
+green from a distance and is not"*, one level down.
+
+**Deliverables**
+- **§ 19 fails a `proposed*.css` that declares a class but parses to zero body sections**, naming the
+  sheet and the banner shape it expects.
+- **§ 19 fails a section named in a sheet's header index (`§ NAME → src/…`) that has no body banner**,
+  which is what a mis-shaped banner looks like from the outside. If the header index turns out to be
+  too loose to read reliably, say so at the check and keep only the first rule.
+- **`tools/README.md`** and the § 19 banner in the sweep say what is now checked.
+
+**Acceptance**
+- [ ] On a scratch copy, rewriting one body banner of a real `proposed*.css` as a one-line comment
+      turns the sweep red, naming that sheet. Reverted before anything else is written.
+- [ ] Every `proposed*.css` in the tree today passes unchanged.
+- [ ] `node tools/wo-sweep.mjs` is green and `node tools/wo-gate.mjs --audit` passes.
+- [ ] `TESTING.md` § WO-1.69 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Do not widen the banner shape the parser accepts** to make the one-liner pass: the
+shape is `PROTOCOL.md` rule 4's, and a looser parser is a second shape to keep in step. **Do not
+count a sheet with no classes as a failure** — a sheet that only carries cross-cutting blocks is
+legitimate. **This changes `tools/wo-sweep.mjs`, a pipeline file**: read `plans/work-orders/README.md`
+§ "The pipeline's own files" before editing it. **Nothing in `src/` moves**, so no `CACHE` bump is
+owed.
