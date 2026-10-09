@@ -5769,3 +5769,68 @@ allowance was dropped, and the header's "a second site is red" was false there. 
 position in the line and let an allowance cover only the finding its own match spans. The second
 pass ran 30 plants, all red at the planted line and all reverted. The record is
 `.claude/dispatch/WO-1.65-result.md`.)*
+
+## WO-1.66 — a work order can close with no TESTING.md section, and the brief says it need not write one
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.65 made.)*
+
+**Booked 2026-10-09**, owner-directed, out of a bookkeeping pass over the work orders landed since
+Oct 4. Two of the 23 had no `TESTING.md` section: WO-1.65 and WO-3.44. Both were added by hand the
+same day. Across all phases, **58 work orders read ✅ DONE with no section**, going back to WO-1.9.
+
+**Why it exists.** `TESTING.md` § "How to use it" says that when a work order lands, its Acceptance
+lines are copied into its phase's section. `plans/ROADMAP.md`'s protocol ticks a box only when its
+`TESTING.md` items pass. **Nothing else in the pipeline says so, and nothing checks it.** The brief
+says an implementer *may* update `TESTING.md`. The orchestrator's § "Applying the maintenance" says to
+"apply the 👤-free `TESTING.md` lines by hand", one sentence that a sitting can skip. So a section gets
+written when the work order's own Acceptance lines happen to say "recorded in `TESTING.md` § WO-x".
+WO-1.59 through WO-1.64 said that. WO-1.65's did not, and its orchestrator wrote *"No `TESTING.md`
+section is demanded"* into the brief. WO-3.40's and WO-3.44's briefs hedged the same way (*"if that
+file carries one per work order"*).
+
+**The owner's ruling, 2026-10-09: every work order owes a section, with no exemption for docs-only
+or process work.** A section can be two lines saying there is nothing to run. A missing section
+cannot be told apart from a forgotten one.
+
+**Deliverables**
+- **`node tools/wo-gate.mjs --tick <id>` refuses to write ✅ DONE when `TESTING.md` has no heading
+  naming the id.** It writes nothing and exits non-zero. Its message names the heading it looked for
+  (`### WO-x.y — <title>`) and the phase section it belongs under. `--dry-run` reports the same
+  refusal. This is unlike the open-Acceptance path, which writes 🔨 IN PROGRESS. A missing section is a
+  missing record, not part-built work, and the status line should not move for it. The match is the id
+  as a whole token anywhere in a `#`-level heading, so `WO-1.6` does not match `### WO-1.65`, and a
+  heading naming two work orders satisfies both.
+- **The gates are outside the rule.** WO-G1 … WO-G4 keep their boxes in `gates.md` and have never had
+  a `TESTING.md` section. Say so where the check is defined.
+- **Forward only.** `--audit` does not start reporting the 58 past gaps. A check that goes red on the
+  day it lands, for work nobody can now reconstruct, teaches its reader to ignore it. Say that in the
+  check's comment too.
+- **The brief says it as a deliverable, not a permission.** Wherever the brief text comes from
+  (`tools/wo-brief.mjs`, `ROUTING.md`'s constraints block, or the orchestrator's markers), every brief
+  now tells the implementer to add `TESTING.md` § <id> with the Acceptance lines copied verbatim and
+  the evidence for each. The orchestrator's § "Applying the maintenance" sentence is reworded to
+  match. An orchestrator can no longer write "not demanded".
+- `--self-check` gains a plant for the new refusal, and `tools/README.md` records any count that moves.
+
+**Acceptance**
+- [ ] `--tick` on a work order whose Acceptance lines are all `[x]` but which has no `TESTING.md`
+      heading refuses, writes nothing (`git diff` empty after), exits non-zero and names the heading.
+      Shown in a scratch copy of the tree, never on `main`. The same run with the heading added ticks.
+- [ ] `WO-1.6`-against-`### WO-1.65` does not satisfy the check, and a heading naming two ids satisfies
+      both. Both are shown in `--self-check` or a scratch tree.
+- [ ] `node tools/wo-gate.mjs --audit` and `--self-check` pass, `node tools/wo-sweep.mjs` is green,
+      and `tools/README.md`'s recorded counts match.
+- [ ] A brief generated for any work order after this lands tells the implementer to write the section.
+      Quote the line in the result. No pipeline file still says the section is optional or "not
+      demanded".
+- [ ] `plans/work-orders/README.md` § "The pipeline's own files" is current for every pipeline file
+      this changes. `CLAUDE.md` and `AGENTS.md` are changed together if either is.
+
+**Traps** — **Do not backfill the 58.** Writing their sections now would be reconstruction, not a
+record of what was run. That is the owner's call, and the answer was no. **Do not widen it to
+`--audit`.** **Do not make it check the section's contents.** Whether the lines match the Acceptance
+list is a reading for the verifier. A grep that compares them breaks on the first `*(italic note)*`.
+**This changes pipeline files**: read § "The pipeline's own files" before editing any of them, and
+remember that `.claude/` is in the sweep's `IGNORE_DIRS`, so a sentence left stale there is caught
+by nothing. **Nothing in `src/` moves**, so no `CACHE` bump is owed.
