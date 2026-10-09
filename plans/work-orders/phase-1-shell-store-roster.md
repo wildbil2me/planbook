@@ -5842,3 +5842,55 @@ list is a reading for the verifier. A grep that compares them breaks on the firs
 **This changes pipeline files**: read § "The pipeline's own files" before editing any of them, and
 remember that `.claude/` is in the sweep's `IGNORE_DIRS`, so a sentence left stale there is caught
 by nothing. **Nothing in `src/` moves**, so no `CACHE` bump is owed.
+
+## WO-1.67 — `--tick` ticks a roadmap box that a **Closes roadmap** line quotes in order to disown it
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.66 made.)*
+
+**Booked 2026-10-09**, owner-directed, out of WO-8.16's close.
+
+**Why it exists.** WO-8.16's header reads **Closes roadmap** *(no box. It is the front half of Phase
+8's "Onboarding: install → marking attendance with no documentation", and WO-8.6 closes that one.)*
+The line quotes the box precisely to say it is someone else's. `node tools/wo-gate.mjs --tick WO-8.16`
+ticked it anyway, at `plans/ROADMAP.md:712`, and printed two dashboard NOTEs about the count it had
+just moved. **The box belongs to WO-8.6, which is ⬜ NOT STARTED.** It was reverted by hand before
+`1482edc`, and a sitting that read the NOTEs as bookkeeping would have committed it.
+
+The cause is `roadmapEdits()` in `tools/wo-gate.mjs`: every double-quoted run on the **Closes
+roadmap** line is a fragment, with no regard for the *(no box* that opens the line. And `--audit`
+passed before the tick and would have passed after it, because it asks whether each fragment matches
+exactly one box. It never asks whether one box is claimed by two work orders, so WO-8.16 and WO-8.6
+both "closing" the onboarding box was invisible to it.
+
+**Deliverables**
+- **A **Closes roadmap** line that says it closes no box yields no fragments.** Decide the test from
+  the lines actually in this directory (*(no box*, *no box*, and whatever else `grep` finds), state it
+  where `roadmapEdits()` is defined, and have `--tick` report "quotes no box" as it already does for a
+  line with no quotes. Quoting a box in a no-box line stays legal: it is how a work order says whose
+  box it is.
+- **`--audit` reports a roadmap box matched by fragments from two or more work orders.** First count
+  how many boxes that is today. If a legitimate case exists (an amending work order, a box closed in
+  halves), write down how it is excused rather than weakening the check. Decide on the evidence
+  whether it is a failure or a note, and say why in the check's comment.
+- `--self-check` gains a plant for each: a no-box line quoting a box ticks nothing, and two work orders
+  claiming one box are reported. `tools/README.md` records any count that moves.
+
+**Acceptance**
+- [ ] In a scratch copy of the tree, never on `main`, `--tick WO-8.16` against a copy whose row is set
+      back to 🔍 AWAITING VERDICT leaves `plans/ROADMAP.md` untouched and says the line quotes no box.
+- [ ] A work order whose **Closes roadmap** line quotes a box without a no-box note still ticks that
+      box, shown by an existing or new `--self-check` plant.
+- [ ] `--audit` names a box claimed by two work orders, shown with a plant. The count on today's tree
+      is stated in the result, with any excused case named.
+- [ ] `node tools/wo-gate.mjs --audit` and `--self-check` pass, `node tools/wo-sweep.mjs` is green,
+      and `tools/README.md`'s recorded counts match.
+- [ ] `TESTING.md` § WO-1.67 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Do not fix it by rewording WO-8.16's line.** Changing the quotes to backticks would make
+this one tick correct and leave the parser waiting for the next author who quotes a box to disown it.
+WO-8.16 is ✅ and will not be ticked again, so its line is the test case, not the repair. **Do not
+make `--tick` read the sentence.** A no-box line is recognised by its opening words, not by
+understanding *"and WO-8.6 closes that one"*. **This changes `tools/wo-gate.mjs`, a pipeline file**:
+read `plans/work-orders/README.md` § "The pipeline's own files" before editing it. **Nothing in
+`src/` moves**, so no `CACHE` bump is owed.
