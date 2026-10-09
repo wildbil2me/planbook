@@ -5827,6 +5827,14 @@ cannot be told apart from a forgotten one.
 - [x] `plans/work-orders/README.md` § "The pipeline's own files" is current for every pipeline file
       this changes. `CLAUDE.md` and `AGENTS.md` are changed together if either is.
 
+*(**Two things the verifier found, recorded after the tick on 2026-10-09.** First, the match does not
+know about code fences: a `### WO-x.y` line inside a ``` block in `TESTING.md` counts as a section.
+No such line exists today, and the verifier called it theoretical; the hole is named in the check's
+comment in `tools/wo-gate.mjs` rather than closed. Second, the `TESTING.md` evidence for the fourth
+line overstated its grep. It said the grep found only that file's history notes, when it also finds
+the orchestrator's prohibition and a comment in `tools/wo-brief.mjs`. Neither allows skipping the
+section, and the note is corrected in place.)*
+
 **Traps** — **Do not backfill the 58.** Writing their sections now would be reconstruction, not a
 record of what was run. That is the owner's call, and the answer was no. **Do not widen it to
 `--audit`.** **Do not make it check the section's contents.** Whether the lines match the Acceptance

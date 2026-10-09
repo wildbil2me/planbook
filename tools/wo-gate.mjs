@@ -1901,6 +1901,9 @@ function clip(s, n = 100) {
 // id in BODY text satisfies nothing: a mention is not a section. Which `## Phase N` section the
 // heading sits under is NOT checked — the refusal names the one it belongs in, as advice, because a
 // phase heading reworded next month must not turn a correct section into a refusal.
+// **One known hole, left open:** fenced code blocks are not tracked, so a `### WO-x.y` line inside
+// a ``` fence counts as a heading. `TESTING.md` holds no such line today; the verifier found the hole
+// by reading, and called it theoretical. Close it if a fenced example ever names a real id.
 //
 // **The contents are not checked, on purpose.** Whether the lines under the heading are the work
 // order's Acceptance lines copied verbatim, with evidence, is a reading for the verifier. A grep

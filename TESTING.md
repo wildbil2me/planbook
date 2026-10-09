@@ -3385,7 +3385,11 @@ order the check applies to**, which is why this section exists before the tick.
       it is a deliverable, not a permission.** Add `### WO-5.15 — One contact, several audiences` under
       `## Phase 5 — Outreach`, …". The constraints block every brief inlines carries a generic twin.
       A grep of the pipeline files for "not demanded", "optional" and "if that file carries" near
-      `TESTING` finds only this file's history notes.*
+      `TESTING` finds no permission left anywhere.* *(Corrected after the tick, 2026-10-09: this note
+      said the grep finds "only this file's history notes", and the verifier found more. It finds two
+      lines, both against the old wording: `.claude/agents/work-order-orchestrator.md:182`, the
+      orchestrator's rule that a brief may not call the section optional or "not demanded", and the
+      comment at `tools/wo-brief.mjs:120` recording how WO-1.65's brief came to say it.)*
 - [x] `plans/work-orders/README.md` § "The pipeline's own files" is current for every pipeline file
       this changes. `CLAUDE.md` and `AGENTS.md` are changed together if either is.
       *The orchestrator, implementer and `AGENTS.md` rows still describe their files and watchers
