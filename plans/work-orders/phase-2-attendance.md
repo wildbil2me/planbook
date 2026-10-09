@@ -10,6 +10,14 @@ record without an `exception`.
 WO-2.1 through WO-2.4 are Ship 1 (day one). WO-2.5 through WO-2.7 are explicitly cut from Ship 1
 and land in Ship 2.
 
+**Drawings, 2026-10-09: read them before building WO-2.58, WO-2.59 or WO-2.60.**
+[`attendance-header.html`](../../design/mockups/attendance-header.html),
+[`attendance-dialogs.html`](../../design/mockups/attendance-dialogs.html) and
+[`attendance-today.html`](../../design/mockups/attendance-today.html), styled in
+[`proposed-attendance.css`](../../design/mockups/proposed-attendance.css), with every question
+collected in `design/mockups/README.md` § "The attendance screen". The iPad frames show their 44px
+controls only on a touch device, so read them on the iPad.
+
 ---
 
 ## WO-2.1 — Attendance registry: students × recent days
@@ -6134,3 +6142,234 @@ first makes every device the trial. **Do not rename the key** to reset everyone;
 the sound off chose that. **Do not touch the tone, the thresholds or `tools/audio-probe.html`** — the
 probe page is kept on the owner's call (WO-2.33) as the first thing to run if the tone goes quiet
 again.
+
+## WO-2.58 — the attendance header gives back the rows it does not need
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** —
+**Closes roadmap** *(no box. Owner-directed, 2026-10-09.)*
+
+**Booked 2026-10-09**, owner-directed, out of a sitting with two photographs of the teaching iPad. On
+an upright iPad the attendance screen draws **eight rows above the first student**: the title, the
+screen switcher, the state line, a totals line, the action buttons, the toolbar twice (it wraps) and
+the pager, whose left half is empty. Lying down it draws seven. It was drawn before it was booked,
+and every ruling below was made against the drawing.
+
+**Surface.** [`design/mockups/attendance-header.html`](../../design/mockups/attendance-header.html),
+frames A to D, styled in [`design/mockups/proposed-attendance.css`](../../design/mockups/proposed-attendance.css)
+§ ATTENDANCE HEADER, with `design/mockups/README.md` § "The attendance screen". Frame 0 is v174 as it
+ships. **Lift the section rather than re-deriving it** (`PROTOCOL.md` § When the drawing lands), and
+amend its banner in the same sitting.
+
+**Rulings, the owner's, 2026-10-09**
+1. **The totals move inside the state line**, at its far end, muted (`.attendance-state-totals`).
+   `#attendanceTotals` goes. The figures and their reader (`paintClassTotals()`) do not change.
+2. **The action buttons move down to the pager's row** (`.attendance-strip`), writes on the left and
+   paging on the right, directly over the grid. The state line stays where it is.
+3. **The strip never wraps.** It grows from two buttons to three on the first mark, and a row that
+   wraps only then drops the grid under the finger aiming at the second student — the defect WO-2.56
+   removed. If the widest state does not fit at 820px under a coarse pointer, the fallbacks are
+   "Un-confirm all", then ◀ and ▶ without their words, in that order, and the build says which it took.
+4. **The pressed "✓ Everyone's here" goes, and "Not taken yet" takes its place** in the state *taken,
+   nothing marked, nobody unconfirmed*. It removes the record, as the pressed button did.
+   **"Un-confirm everyone" is offered only once there is a mark on the day** — what the comment over
+   `unconfirmAll()` already says and `paintActions()` stopped doing. Offered on an empty record it
+   leaves the class met with every student absent, which is the wrong undo for a wrong-class tap.
+5. **A clear ✕ in both search boxes**, attendance and Scores (`.search-clear`): drawn only when the
+   field has text; a tap clears it, re-runs the filter and **blurs the field**, so the iPad keyboard
+   goes away; Escape clears it too. Its glyph is small and its target is 44px under a coarse pointer.
+6. **The focus ring on the search box stays.** It is the app's one global `:focus-visible` ring.
+7. **Sort is one toggle** (`.attendance-sort-toggle`, "Sort: **Last**"), and **⌨ Keys, 🖨 Record and
+   🚪 Passes are icons only**, each keeping its words as its `aria-label` and `title`. The four are
+   one group (`.attendance-tools`) that wraps together.
+8. **The attendance search box gives up width before the toolbar wraps**, 360px down to 200
+   (`.attendance-find`, worn beside `.search-box`). The Scores box keeps its 360.
+9. **On an off-term day, the term-dates door sits with the actions on the left** rather than pushing
+   to the far edge, where the pager now is.
+
+**Open — the owner's ruling, at the 👤 reading.** Whether the fallbacks in ruling 3 were needed is
+measured, not ruled; the owner reads the result.
+
+**Deliverables**
+- **`index.html`**: the totals line goes; `#attendanceActions` and `#attendancePager` move into one
+  `.attendance-strip` under the toolbar; the toolbar's sort pair becomes one button and the three
+  doors lose their words; a `.search-clear` button in both `.search-box`es.
+- **`src/attendance.js`**: `paintActions()` per ruling 4; the totals written into the state line
+  (see Traps); the sort toggle's handler and label; the clear button's show, clear, re-filter and
+  blur; Escape in the attendance search box.
+- **`src/scores.js`**: the same clear button behaviour on the Scores search box.
+- **`src/attendance.css`**: § ATTENDANCE HEADER lifted; `.attendance-toggle-on` and its coarse rule
+  go if nothing else wears them; the strip's children lose the bottom margins the strip now owns.
+  `src/shell.css` takes `.search-clear`, because both screens wear it.
+- **The harness**: `tools/verify/attendance.mjs`, `strip-holds-still.mjs`, `portrait-landscape.mjs`,
+  `recorded-meeting-counts.mjs` and `score-search.mjs` at least, for the moved totals, the removed
+  toggle, the new sort control and the clear button.
+- **`design/mockups/proposed-attendance.css`'s banner, its `README.md` section and its `index.html`
+  entry** amended to say the section landed.
+- **`TESTING.md` § WO-2.58**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] At 820px under a coarse pointer, in the state with three action buttons, the strip is one line
+      and the grid's first row is at the same height before and after the first mark on a class.
+- [ ] At 1180px under a coarse pointer the toolbar is one line; at 820px it is two, with Sort and the
+      three doors together on the second.
+- [ ] In the state *taken, nothing marked, nobody unconfirmed* the strip offers exactly "Not taken
+      yet" and "Didn't meet", and "Not taken yet" leaves the day with no record. "Un-confirm
+      everyone" appears only when the day carries a mark.
+- [ ] The term and year totals are inside the state line, and stay correct after a mark and after a
+      term change. `#attendanceTotals` does not exist.
+- [ ] On both screens the ✕ is absent on an empty field and present with text; a tap empties the
+      field, shows the whole list and leaves the field unfocused; Escape empties it. It is ≥44px
+      under a coarse pointer.
+- [ ] The sort toggle flips the order and its own label; the three doors are icons whose accessible
+      names are unchanged.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] 👤 On the iPad, after a force-quit, upright and lying down: take a class, mark one student, use
+      both search boxes' ✕, and read the strip's fit and whether the grid held still on the first
+      tap.
+
+**Traps** — **The state line has one writer, and this adds a second thing to it.** `paintActions()`
+sets `#attendanceState`'s `textContent`, which would wipe a totals `<span>` inside it on every write;
+WO-2.56 argued at length against two writers on that node. Either `paintActions()` writes the totals
+too, from the figures it is handed, or the line becomes two spans each with one writer — decide, and
+say which at the line. **The search box is markup and must stay markup** (`index.html`'s note above
+the toolbar): the ✕ is a sibling inside it, never a re-render of the field. **Do not change the
+focus ring.** **Do not let the strip wrap "only in the rare state"** — that state is every class,
+one tap in.
+
+## WO-2.59 — the attendance dialogs are as wide as they were meant to be, and the record has two tabs
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** —
+**Closes roadmap** *(no box. Owner-directed, 2026-10-09.)*
+
+**Booked 2026-10-09**, owner-directed, in the same sitting as WO-2.58. The owner asked for the
+attendance screen's dialogs to be wider on the laptop and a landscape iPad, and for the Record to be
+shorter. **Most of the length is a bug.** `.modal-panel` sets `width: 480px`;
+`.attendance-report-panel` (Record, Passes, the history dialog) and `.grades-report-panel` (the
+Scores screen's Grade sheet) set only `max-width` — 900 and 980 — so the cap never comes into play,
+and all four have been 480px on every screen since they shipped. Their comments say *"this raises the
+cap only"*, which is accurate and is the defect. `.assign-copy-panel { width: 880px }` is the shape
+that works.
+
+**Surface.** [`design/mockups/attendance-dialogs.html`](../../design/mockups/attendance-dialogs.html),
+frames A to E, with `design/mockups/README.md` § "The attendance screen". Frame 0 is v174 as it
+ships. Nothing here is in `proposed-attendance.css`: every change is to a class `src/` already
+styles, so the frames set their widths inline.
+
+**Rulings, the owner's, 2026-10-09**
+1. **`width`, not `max-width`**: Record and Passes at 900px, the Grade sheet at 980. `.modal-panel`'s
+   `95vw` still governs a narrow window. The Grade sheet is a Phase 3 dialog and rides here because it
+   is the same one-line fix with the same check.
+2. **Keys at 640px**, on a class of its own beside `.modal-panel`: it is prose, and prose past ~80
+   characters a line reads worse.
+3. **The Record in two tabs, By student and Day by day**, under the record's head.
+4. **Print prints the tab on screen**, so the dialog stays the print preview it was built to be.
+   **Download CSV saves everything**, both parts, exactly as it does today.
+
+**Open — the owner's ruling, at dispatch.** The tabs are drawn in the class screen switcher's look
+(`.screen-nav`); which tab opens first is drawn as By student; Keys at 640 is the drawing's guess.
+
+**Deliverables**
+- **`src/attendance.css`**: `width: 900px` on `.attendance-report-panel`, its comment rewritten; a
+  new Keys panel class at 640; the tab strip's spacing.
+- **`src/scores.css`**: `width: 980px` on `.grades-report-panel`, its comment rewritten.
+- **`src/attendance-report.js`**: `openRecord()` draws the tab strip and one part at a time; the tab
+  is the module's own state, reset to the first tab on every open and never stored.
+- **The print gate**: the attendance print block prints the part on screen and nothing else, and the
+  printed header or caption says which part it is.
+- **`index.html`**: the Keys dialog's panel class.
+- **The harness**: `tools/verify/attendance-history.mjs`, `attendance-passes.mjs`, `grade-sheet.mjs`
+  and `print-sheets.mjs` at least.
+- **`TESTING.md` § WO-2.59**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] In a 1280px window under a fine pointer, Record and Passes measure 900px wide, the Grade sheet
+      980 and Keys 640. In an 820px window each is no wider than 95vw. Mutation-proved against
+      restoring `max-width` alone.
+- [ ] The Record opens on its first tab; each tab shows its own part and only that; reopening the
+      dialog returns to the first tab.
+- [ ] Printing from either tab puts that part on paper and not the other. The CSV is byte-identical
+      to v174's for the same document.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] 👤 On the laptop, print-preview both tabs; on the iPad lying down, after a force-quit, open all
+      three attendance dialogs and the Grade sheet and read their widths.
+
+**Traps** — **Do not drop the blocks of 24 dates**: they are what fits across a sheet, and the
+screen shows the page breaks so the preview is a preview. **The CSV is not a preview** and does not
+follow the tab. **If WO-2.60 has not landed, the history dialog widens too**, because it wears the
+same class; that is expected, and WO-2.60 takes it off that class.
+
+## WO-2.60 — a tap on a name opens today, and the history moves to the student page
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** —
+**Closes roadmap** *(no box. Owner-directed, 2026-10-09.)*
+
+**Booked 2026-10-09**, owner-directed, in the same sitting as WO-2.58. The owner's concern: the
+attendance history dialog is **too much information in the wrong place**. A tap on a name during roll
+call is "came in at 8:20", "left for the nurse", "un-confirm him" — standing up, one student, today.
+The dialog puts that fourth, under a rate badge, a door and a pass count, and over a term table, a
+row for every meeting and a paragraph. Those tables are what a conference reads, sitting down — and
+the **›** at the end of the same name already goes to the student page, which carries this student's
+attendance counts and every hall pass.
+
+**Surface.** [`design/mockups/attendance-today.html`](../../design/mockups/attendance-today.html),
+frames A to E, styled in [`design/mockups/proposed-attendance.css`](../../design/mockups/proposed-attendance.css)
+§ STUDENT ATTENDANCE, with `design/mockups/README.md` § "The attendance screen". Frame 0 is v174 as
+it ships. **Lift the section rather than re-deriving it**, and amend its banner in the same sitting.
+
+**Rulings, the owner's, 2026-10-09**
+1. **The name tap opens today's card**: the student's name as the dialog's title, the write block as
+   it ships (mark, time, note, Un-confirm — the same hooks to the same writers), and one door to the
+   student page. The rate badge, the pass count, the "Grades for" door, the term table, the
+   day-by-day table and the footnote leave the dialog. It is the stock 480px `.modal-panel`.
+2. **A present student's hint in a teacher's words** — drawn as *"Nothing to note on a present mark.
+   Change the mark on the grid and a note field appears here."*
+3. **On a day the card cannot write to, it shows the mark read-only and says what would open it**,
+   instead of drawing no block.
+4. **The term-by-term table and day by day move to the student page's attendance card**, under its
+   five counts, from the same readers. Day by day is a closed `<details>`.
+
+**Open — the owner's ruling, at dispatch.**
+- The door's words: drawn as *"Attendance history and grades →"*.
+- The term percentage on the card: drawn without it.
+- The read-only card's sentence for each refusal — locked, paged away, did not meet, covered, off
+  term — worded from the reasons `editableMark()` refuses on, not a second list. Drawn for a locked
+  day only. On a day the class did not meet there is no mark to show.
+- Whether day by day opens and scrolls into view when the card's door brings the teacher there
+  (drawn closed), and whether it lists newest first (drawn so; the dialog listed oldest first).
+
+**Deliverables**
+- **`src/attendance-report.js`**: `paintHistory()` draws the card per rulings 1–3; the term table and
+  day by day leave it; the read-only block needs the refusal reason, which comes from the module that
+  owns `editableMark()`, not from a test written here.
+- **`src/detail.js`**: `attendanceCard()` gains the term table (every term, the open one marked, and
+  the whole year) and the `<details>` day by day, read through `termTotals()`, `attendanceTotals()` and
+  `termHistory()` — no walk of `doc.attendance` in this file.
+- **`src/detail.css`**: § STUDENT ATTENDANCE lifted, and its print block told what to do with the
+  table and the `<details>`.
+- **`index.html`**: the history dialog's comment and title; it comes off `.attendance-report-panel`.
+- **`src/pass-history.js`**: `studentPassSummary()` goes if nothing else calls it.
+- **The harness**: `tools/verify/attendance-history.mjs`, `history-dialog-write.mjs`,
+  `note-panel.mjs`, `grade-detail.mjs` and `print-sheets.mjs` at least.
+- **`design/mockups/proposed-attendance.css`'s banner, its `README.md` section and its `index.html`
+  entry** amended to say the section landed.
+- **`TESTING.md` § WO-2.60**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] A tap on a name opens a dialog titled with the student's name, holding the write block and one
+      door and no table. The door opens that student's page.
+- [ ] Time, note and Un-confirm write exactly as they did, through the same hooks, and Un-confirm
+      repaints the card with focus inside it.
+- [ ] On a locked past day the card shows that day's mark, read-only, with its sentence and no input.
+- [ ] The student page's attendance card shows every term and the whole year with the same figures
+      the dialog showed at v174 for the same document, and a day by day that is closed until opened
+      and then lists every recorded meeting in the open term with its running fraction.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] 👤 On the iPad, after a force-quit, upright: tap three names mid-roll-call — a tardy, a present
+      student and a student on a locked day — and read each card; follow the door and open day by
+      day.
+
+**Traps** — **The card is not a second writer.** Its controls carry the hooks they carry today, and
+`src/shell.js` routes them to the same functions; the `window` listener that repaints after an
+Un-confirm stays, for the reason written over it. **The note field must not re-render on a
+keystroke.** **The running percentage survives the move** — it is what makes a row checkable by eye.
+**Presentation mode**: read what the student page hides before adding a table to it.

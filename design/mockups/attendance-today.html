@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — The name tap</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="../../src/attendance.css">
+<link rel="stylesheet" href="../../src/detail.css">
+<link rel="stylesheet" href="proposed-attendance.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Static HTML. Nothing here marks, notes or reads a document; every value is typed in.</span>
+  <span>A tap on a student’s name, and where their history goes · drawn 2026-10-09 · booked as <a href="../../plans/work-orders/phase-2-attendance.md#wo-260--a-tap-on-a-name-opens-today-and-the-history-moves-to-the-student-page">WO-2.60</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="attendance-header.html">The attendance header</a>
+  <a href="attendance-dialogs.html">Record, Passes and Keys</a>
+  <a href="attendance-today.html" class="here">The name tap</a>
+</nav>
+
+<main class="main">
+
+<div class="mk-caption">
+  <strong>Two jobs in one dialog today.</strong> A tap on a name mid-roll-call is “Jay came in at
+  8:20”, “left for the nurse”, “un-confirm him”: standing up, one student, today. The term-by-term
+  table and a row for every meeting are what a conference reads, sitting down — and the
+  <strong>›</strong> at the end of the same name already goes to the student page, which carries
+  this student’s attendance counts and every hall pass. So the dialog becomes the first job only, and
+  the second moves to the page that already holds the rest of it.
+</div>
+
+<!-- ═══════════════════════════ 0 · AS SHIPPED ═══════════════════════════ -->
+
+<p class="mk-section">0 · As it ships at v174 — the top of it, at 480px</p>
+<div style="max-width:480px;margin:12px auto 0">
+  <div class="modal-panel attendance-report-panel" style="width:100%;animation:none">
+    <div class="modal-header"><h2>Attendance history</h2><button class="modal-close" type="button" aria-label="Close">✕</button></div>
+    <div class="modal-body">
+      <div class="attendance-report-head"><div class="avatar av8" aria-hidden="true">JG</div><div class="attendance-report-who"><div class="attendance-report-name">Jay Gatsby</div><div class="attendance-report-sub">P2 · English III · Quarter 1 · Aug 31 – Oct 30 · 28 recorded meetings</div></div><div class="attendance-report-rate">96%</div></div>
+      <button class="class-action-btn attendance-report-door" type="button">Grades for Jay Gatsby</button>
+      <div class="attendance-report-passes"><p class="attendance-report-sub">Hall passes · 4 trips · 27 minutes</p></div>
+      <div class="attendance-report-write">
+        <div class="attendance-report-write-day">Today · Friday, October 9</div>
+        <span class="attendance-report-mark attendance-report-write-mark attendance-cell-T">Tardy at 8:20 AM</span>
+        <input class="attendance-report-write-time" type="time" value="08:20" aria-label="Time">
+        <input class="attendance-report-write-note" type="text" value="Bus was late" aria-label="Note">
+        <button class="class-action-btn" type="button">Un-confirm</button>
+      </div>
+      <div class="attendance-report-label">Term by term</div>
+      <p class="attendance-report-empty">… a table of every term and the whole year, then <strong>Quarter 1, day by day</strong> — 28 rows, one per meeting, each with the running “26 of 27 · 96%” — then a paragraph on what counts …</p>
+    </div>
+  </div>
+</div>
+<div class="mk-caption">
+  <strong>The thing the tap was for is fourth</strong>, under a percentage, a door and a pass count,
+  and over two tables nobody needs with a class walking in.
+</div>
+
+<!-- ═══════════════════════════ A · TARDY ═══════════════════════════ -->
+
+<p class="mk-section">A · Today’s card — a tardy, with its time and a note</p>
+<div style="max-width:480px;margin:12px auto 0">
+  <div class="modal-panel" style="width:100%;animation:none">
+    <div class="modal-header"><h2>Jay Gatsby</h2><button class="modal-close" type="button" aria-label="Close">✕</button></div>
+    <div class="modal-body">
+      <div class="attendance-report-write">
+        <div class="attendance-report-write-day">Today · Friday, October 9 · P2 · English III</div>
+        <span class="attendance-report-mark attendance-report-write-mark attendance-cell-T">Tardy at 8:20 AM</span>
+        <input class="attendance-report-write-time" type="time" value="08:20" aria-label="Time of Jay Gatsby’s tardy mark on Friday, October 9">
+        <input class="attendance-report-write-note" type="text" value="Bus was late" placeholder="Add a note — missed the bus, left for the nurse…" aria-label="Note on Jay Gatsby’s mark for Friday, October 9">
+        <button class="class-action-btn" type="button" title="Put this student back to a question mark, as if nobody had looked at them yet.">Un-confirm</button>
+      </div>
+      <div class="modal-actions">
+        <button class="class-action-btn" type="button" data-student-detail="s7">Attendance history and grades →</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="mk-caption">
+  <strong>The student’s name is the dialog’s title</strong>, and the write block — unchanged, the
+  same hooks to the same two writers in <code>src/attendance.js</code> — is the whole body. One door
+  under it: the student page, which the row’s <strong>›</strong> also opens. The pass count, the
+  term percentage and the separate “Grades for” door all go, because the page behind that one door
+  shows all three.
+</div>
+<div class="mk-caption ask">
+  <strong>The door’s words.</strong> Drawn as “Attendance history and grades →”, because that is
+  where the history went and a teacher looking for it will read the first word. Not ruled on.
+</div>
+<div class="mk-caption ask">
+  <strong>The term percentage.</strong> Drawn without it. It is on the row the teacher just tapped
+  (“Q1 · … · 96%”), on the student page, and on the Record. Putting it back is one line in the head.
+  Not ruled on.
+</div>
+
+<!-- ═══════════════════════════ B · PRESENT ═══════════════════════════ -->
+
+<p class="mk-section">B · Today’s card — present</p>
+<div style="max-width:480px;margin:12px auto 0">
+  <div class="modal-panel" style="width:100%;animation:none">
+    <div class="modal-header"><h2>Elizabeth Bennet</h2><button class="modal-close" type="button" aria-label="Close">✕</button></div>
+    <div class="modal-body">
+      <div class="attendance-report-write">
+        <div class="attendance-report-write-day">Today · Friday, October 9 · P2 · English III</div>
+        <span class="attendance-report-mark attendance-report-write-mark attendance-cell-P">Present</span>
+        <span class="attendance-report-write-hint">Nothing to note on a present mark. Change the mark on the grid and a note field appears here.</span>
+        <button class="class-action-btn" type="button">Un-confirm</button>
+      </div>
+      <div class="modal-actions">
+        <button class="class-action-btn" type="button">Attendance history and grades →</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="mk-caption">
+  <strong>The hint in a teacher’s words.</strong> Today it reads “Present is stored as no mark at
+  all, so there is nothing here to note”, which explains the data model. The unconfirmed hint
+  (“Nobody has confirmed this student yet. Tap their question mark once for present.”) already reads
+  well and stays.
+</div>
+
+<!-- ═══════════════════════════ C · NOTHING TO WRITE ═══════════════════════════ -->
+
+<p class="mk-section">C · Today’s card — on a day it cannot write to</p>
+<div style="max-width:480px;margin:12px auto 0">
+  <div class="modal-panel" style="width:100%;animation:none">
+    <div class="modal-header"><h2>Hester Prynne</h2><button class="modal-close" type="button" aria-label="Close">✕</button></div>
+    <div class="modal-body">
+      <div class="attendance-report-write">
+        <div class="attendance-report-write-day">Monday, October 5 · P2 · English III</div>
+        <span class="attendance-report-mark attendance-report-write-mark attendance-cell-A">Absent</span>
+        <span class="attendance-report-write-hint">This day is locked. Press its ✏ on the grid to change the mark or add a note.</span>
+      </div>
+      <div class="modal-actions">
+        <button class="class-action-btn" type="button">Attendance history and grades →</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="mk-caption">
+  <strong>Today the dialog draws no write block at all on such a day</strong> — a past column still
+  locked, a window paged away, a day the class did not meet, a covered day, a day outside every term
+  — and the tables fill the space. Without the tables, an empty card would be a dialog about nothing,
+  so it shows the mark on the day the screen is about, read-only, and says what would open it.
+</div>
+<div class="mk-caption ask">
+  <strong>Which day, and which sentence.</strong> Drawn for a locked past day. The other four reasons
+  each want their own sentence — the note row under the action strip already words three of them —
+  and on a day the class did not meet there is no mark to show at all. The build words them from the
+  same reasons <code>editableMark()</code> refuses on, rather than inventing a second list. Not ruled on.
+</div>
+
+<!-- ═══════════════════════════ D · STUDENT PAGE ═══════════════════════════ -->
+
+<p class="mk-section">D · The student page’s attendance card — where the history goes (laptop, right-hand column)</p>
+<div style="max-width:520px;margin:12px auto 0">
+  <div class="detail-card">
+    <div class="detail-card-title">Attendance · 96%</div>
+    <div class="detail-att">
+      <div class="detail-att-stat"><div class="detail-att-num">24</div><div class="detail-att-label">Present</div></div>
+      <div class="detail-att-stat"><div class="detail-att-num">1</div><div class="detail-att-label">Tardy</div></div>
+      <div class="detail-att-stat"><div class="detail-att-num">1</div><div class="detail-att-label">Absent</div></div>
+      <div class="detail-att-stat"><div class="detail-att-num">1</div><div class="detail-att-label">Event</div></div>
+      <div class="detail-att-stat"><div class="detail-att-num">1</div><div class="detail-att-label">Dismissed</div></div>
+    </div>
+    <table class="attendance-report-table detail-att-terms">
+      <thead><tr><th>Term</th><th class="attendance-report-num">P</th><th class="attendance-report-num">T</th><th class="attendance-report-num">A</th><th class="attendance-report-num">E</th><th class="attendance-report-num">D</th><th class="attendance-report-num">Meetings</th><th class="attendance-report-num">Attendance</th></tr></thead>
+      <tbody>
+        <tr class="attendance-report-open"><th class="attendance-report-row-head">Quarter 1 — open</th><td class="attendance-report-num">24</td><td class="attendance-report-num">1</td><td class="attendance-report-num">1</td><td class="attendance-report-num">1</td><td class="attendance-report-num">1</td><td class="attendance-report-num">28</td><td class="attendance-report-num">96%</td></tr>
+        <tr><th class="attendance-report-row-head">Quarter 2</th><td class="attendance-report-num">0</td><td class="attendance-report-num">0</td><td class="attendance-report-num">0</td><td class="attendance-report-num">0</td><td class="attendance-report-num">0</td><td class="attendance-report-num">0</td><td class="attendance-report-num">—</td></tr>
+        <tr><th class="attendance-report-row-head">Whole year</th><td class="attendance-report-num">24</td><td class="attendance-report-num">1</td><td class="attendance-report-num">1</td><td class="attendance-report-num">1</td><td class="attendance-report-num">1</td><td class="attendance-report-num">28</td><td class="attendance-report-num">96%</td></tr>
+      </tbody>
+    </table>
+    <p class="detail-att-note">Out of 28 recorded meetings in Quarter 1 — not school days. A day this class did not meet, a holiday, and a day nobody has marked yet all count toward nothing in either direction.</p>
+    <details class="detail-att-days">
+      <summary class="detail-att-days-summary">Quarter 1, day by day · 28 meetings</summary>
+      <p class="attendance-report-empty">(open in frame E)</p>
+    </details>
+  </div>
+  <div class="detail-card">
+    <div class="detail-card-title">Hall passes · 4 trips · 27 minutes</div>
+    <p class="attendance-report-empty">… the trip table, as it ships …</p>
+  </div>
+</div>
+<div class="mk-caption">
+  <strong>The term table moves in under the five counts</strong>, and day by day sits under the
+  card’s note, closed. The card is in the page’s right-hand column, which is ~520px on a laptop and
+  the full width on a phone, and a three-column day table fits either.
+</div>
+<div class="mk-caption ask">
+  <strong>Open or closed when the today card’s door brings you here?</strong> Drawn closed. Arriving
+  from “Attendance history and grades →” could open it and scroll to it, since that is what the
+  teacher asked for; arriving by the row’s <strong>›</strong> or from the Scores grid would leave it
+  closed, since that teacher came for the grade. Not ruled on.
+</div>
+
+<!-- ═══════════════════════════ E · DAY BY DAY OPEN ═══════════════════════════ -->
+
+<p class="mk-section">E · The same card, day by day opened</p>
+<div style="max-width:520px;margin:12px auto 0">
+  <div class="detail-card">
+    <div class="detail-card-title">Attendance · 96%</div>
+    <p class="attendance-report-empty">… the five counts, the term table and the note, as in frame D …</p>
+    <details class="detail-att-days" open>
+      <summary class="detail-att-days-summary">Quarter 1, day by day · 28 meetings</summary>
+      <table class="attendance-report-table">
+        <thead><tr><th>Date</th><th>Mark</th><th class="attendance-report-num">Attendance so far</th></tr></thead>
+        <tbody>
+          <tr><th class="attendance-report-row-head"><span class="attendance-report-dow">Fri</span> <span class="attendance-report-date">October 9, 2026</span></th><td><span class="attendance-report-mark attendance-cell-T">Tardy</span></td><td class="attendance-report-num">27 of 28 · 96%</td></tr>
+          <tr><th class="attendance-report-row-head"><span class="attendance-report-dow">Thu</span> <span class="attendance-report-date">October 8, 2026</span></th><td><span class="attendance-report-mark attendance-cell-P">Present</span></td><td class="attendance-report-num">26 of 27 · 96%</td></tr>
+          <tr><th class="attendance-report-row-head"><span class="attendance-report-dow">Wed</span> <span class="attendance-report-date">October 7, 2026</span></th><td><span class="attendance-report-mark attendance-cell-D">Dismissed</span></td><td class="attendance-report-num">25 of 26 · 96%</td></tr>
+          <tr><th class="attendance-report-row-head"><span class="attendance-report-dow">Tue</span> <span class="attendance-report-date">October 6, 2026</span></th><td><span class="attendance-report-mark attendance-cell-P">Present</span></td><td class="attendance-report-num">24 of 25 · 96%</td></tr>
+          <tr><th class="attendance-report-row-head"><span class="attendance-report-dow">Mon</span> <span class="attendance-report-date">October 5, 2026</span></th><td><span class="attendance-report-mark attendance-cell-E">Event</span></td><td class="attendance-report-num">23 of 24 · 96%</td></tr>
+          <tr><th class="attendance-report-row-head"><span class="attendance-report-dow">Fri</span> <span class="attendance-report-date">October 2, 2026</span></th><td><span class="attendance-report-mark attendance-cell-P">Present</span></td><td class="attendance-report-num">23 of 23 · 100%</td></tr>
+        </tbody>
+      </table>
+      <p class="attendance-report-empty">… 22 more rows, back to August 31 …</p>
+    </details>
+  </div>
+</div>
+<div class="mk-caption ask">
+  <strong>Newest first here.</strong> The dialog lists oldest first. On a card a teacher opens to
+  answer “what happened this week”, the recent rows are the ones wanted, and this table is not a
+  print preview — the student page prints its own way. Drawn newest first. Not ruled on.
+</div>
+<div class="mk-caption">
+  <strong>What the student page prints</strong> keeps its current content: the term table joins the
+  attendance card on paper as it does on screen, and day by day prints only if it is open. That is
+  the build’s to confirm against <code>src/detail.css</code>’s print block, which already lays out
+  this card.
+</div>
+
+</main>
+</body>
+</html>

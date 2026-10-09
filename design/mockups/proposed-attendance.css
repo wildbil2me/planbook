@@ -1,0 +1,150 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   PROPOSED STYLES — the attendance screen's header, its three dialogs, and the
+   tap on a student's name.
+
+   Eleventh room, and the third drawn of a screen that already ships. Talked
+   through with the owner on 2026-10-09 against two photographs of the teaching
+   iPad (portrait and landscape) and drawn the same day. Three pages, three work
+   orders:
+
+     attendance-header.html  →  WO-2.58   the rows above the grid
+     attendance-dialogs.html →  WO-2.59   Record, Passes and Keys
+     attendance-today.html   →  WO-2.60   the name tap, and where history goes
+
+   WHY THE HEADER IS TALL TODAY. Above the first student an upright iPad draws
+   eight rows: the title, the screen switcher, the state line, a totals line,
+   the action buttons, the toolbar twice (it wraps), and the pager, whose left
+   half is empty. The totals are reference figures nobody reads while taking
+   roll; the action row and the pager are each half a row; and the pressed
+   "✓ Everyone's here" sits beside "Un-confirm everyone" in the one state where
+   both are drawn, saying what the green state line above them already says.
+
+   WHY THE DIALOGS ARE NARROW. `.attendance-report-panel` and
+   `.grades-report-panel` raise `max-width` and nothing else, while
+   `.modal-panel` sets `width: 480px` — so the cap never comes into play and
+   both have been 480px on every screen since they shipped. Their comments say
+   "this raises the cap only, so a narrow screen is unchanged", which is true and
+   is the bug: nothing raised the width. `.assign-copy-panel` sets `width` and is
+   the shape to copy. THAT FIX IS NOT IN THIS FILE: it is one declaration on a
+   class src/ already styles, which rule 5 keeps out of a pending section. The
+   drawing sets the width inline on its frames instead, as copy-classes.html did.
+
+   THE RULE THIS FILE OBEYS, from PROTOCOL.md rule 5: a pending section styles
+   no class src/*.css already styles. Every name below is new. `.panel*`,
+   `.attendance-*` (the shipped ones), `.search-box`, `.pill`, `.class-action-btn`,
+   `.screen-nav*`, `.modal-*`, `.avatar`, `.attendance-report-*` and `.detail-*`
+   (the shipped ones) are worn as shipped.
+
+   Colours inline, no custom properties, no dark mode — src/shell.css's rules.
+
+     § ATTENDANCE HEADER     →  src/attendance.css   (WO-2.58 — not yet lifted)
+     § STUDENT ATTENDANCE    →  src/detail.css       (WO-2.60 — not yet lifted)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.search-clear, .attendance-sort-toggle, .detail-att-days-summary {
+  touch-action: manipulation; user-select: none; -webkit-user-select: none;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § ATTENDANCE HEADER   →  src/attendance.css   (WO-2.58 — not yet lifted)
+
+   The rows above the grid: the totals, the strip, the search box, the clear button and the
+   toolbar's end group. Drawn in attendance-header.html.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* THE TOTALS, INSIDE THE STATE LINE. A <span> at the line's far end, so the line
+   keeps its one slot and its one height — WO-2.56's rule that nothing under it
+   moves when it changes colour. Muted, and it inherits the state's own colour at
+   reduced strength rather than carrying a palette of its own: it is a fact about
+   the term, and the line around it is the fact about today. It floats right
+   inside the <p> rather than turning the line into a flex row, which leaves
+   `.attendance-state`'s own rules untouched. */
+.attendance-state-totals {
+  float: right; margin-left: 12px;
+  font-size: 12px; font-weight: 700; opacity: 0.75;
+}
+
+/* THE STRIP: the action buttons and the pager on one row. Writes on the left,
+   paging on the right, and it NEVER WRAPS — the action row grows from two
+   buttons to three on the first mark, and a row that wraps only in its wider
+   state drops the grid under the finger aimed at the second student, which is
+   the defect WO-2.56 removed. The build measures the widest state at 820px
+   under a coarse pointer; the drawing's frame A is that state.
+
+   The two children are the shipped `.attendance-actions` and
+   `.attendance-pager`. Their own bottom margins are what this row neutralises
+   here; the build moves the spacing onto the strip and drops it from them. */
+.attendance-strip {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: nowrap; gap: 8px; margin-bottom: 8px;
+}
+.attendance-strip > * { margin-bottom: 0; }
+
+/* THE SEARCH BOX'S WIDTH ON THIS SCREEN. Worn beside `.search-box`, which
+   stays 360px everywhere else. Here it gives up width before the toolbar wraps:
+   down to 200px, which still holds "Search students…" and the clear button. */
+.attendance-find { flex: 1 1 200px; min-width: 200px; max-width: 360px; }
+
+/* THE CLEAR BUTTON, inside `.search-box` on both screens that have one. Drawn
+   only when the field has text. A tap clears the field, re-runs the filter and
+   BLURS the field — the owner's ruling, so the iPad keyboard goes away. Escape
+   clears it from the keyboard. The glyph is small and the target is not. */
+.search-clear {
+  flex-shrink: 0; width: 20px; height: 20px; margin: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 50%; background: #e0e4ea; color: #6b7a8d;
+  font-size: 11px; font-weight: 800; line-height: 1; cursor: pointer;
+}
+.search-clear:hover { background: #d0d8e4; color: #1a1a2e; }
+
+/* SORT AND THE THREE DOORS, AS ONE GROUP. They wrap together or not at all,
+   so an upright iPad puts them on the toolbar's second line side by side and a
+   landscape iPad or a laptop keeps them on the first. */
+.attendance-tools {
+  display: flex; align-items: center; gap: 6px; margin-left: auto; flex-wrap: nowrap;
+}
+
+/* ONE SORT CONTROL. A `.class-action-btn` that reads its current state —
+   "Sort: Last" — and flips to First on a tap. The label and two-button pair it
+   replaces is three controls' width for a setting chosen once. */
+.attendance-sort-toggle b { color: #5b6fcc; font-weight: 800; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § STUDENT ATTENDANCE   →  src/detail.css   (WO-2.60 — not yet lifted)
+
+   The student page's attendance card, holding what the history dialog held. Drawn in
+   attendance-today.html.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* THE TERM TABLE ON THE STUDENT PAGE. The history dialog's term-by-term
+   table, moved into the attendance card under its five counts. It wears the
+   shipped `.attendance-report-table` from src/attendance.css, so this only
+   spaces it inside the card. */
+.detail-att-terms { margin-top: 12px; }
+
+/* DAY BY DAY, CLOSED UNTIL ASKED FOR. A native <details>: no script, a
+   keyboard and a screen reader get it for free, and it prints open (the build
+   adds the print rule). The summary is a full-width row with its own chevron. */
+.detail-att-days { margin-top: 12px; border-top: 1px solid #eef0f4; padding-top: 10px; }
+.detail-att-days-summary {
+  display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none;
+  font-size: 12px; font-weight: 700; color: #5b6fcc;
+}
+.detail-att-days-summary::-webkit-details-marker { display: none; }
+.detail-att-days-summary::before { content: '▸'; font-size: 11px; transition: transform 0.15s; }
+.detail-att-days[open] .detail-att-days-summary::before { transform: rotate(90deg); }
+.detail-att-days[open] .detail-att-days-summary { margin-bottom: 10px; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § TOUCH
+   ══════════════════════════════════════════════════════════════════════════════ */
+@media (pointer: coarse) {
+  /* The ✕'s target is the full 44px square; the 22px disc is drawn inside it
+     by the padding, so the visible glyph stays small. */
+  .search-clear { width: 44px; height: 44px; margin-right: -8px; background-clip: content-box; padding: 11px; font-size: 12px; }
+  .attendance-strip { gap: 10px; margin-bottom: 10px; }
+  .attendance-tools { gap: 10px; }
+  .attendance-sort-toggle { min-height: 44px; }
+  .attendance-state-totals { font-size: 13px; }
+  .detail-att-days-summary { min-height: 44px; font-size: 13px; }
+}

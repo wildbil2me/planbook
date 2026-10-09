@@ -81,6 +81,25 @@ body { padding-bottom: 60px; }
   vertical-align: 1px;
 }
 
+/* A device at its own width (attendance-header.html, 2026-10-09). The frame is the
+   screen's CSS width — 820 for an upright iPad, 1180 lying down — so a toolbar that
+   wraps in the drawing wraps on the device. Wider than the window, it scrolls
+   sideways rather than squeezing, which would be the drawing lying about the fit.
+   The coarse-pointer sizes only apply when the page is opened on a touch device:
+   read the iPad frames on the iPad. */
+.mk-device { margin: 12px auto 0; padding: 0 20px; overflow-x: auto; }
+/* The bezel is a shadow, not a border, so it takes no width: the frame is the screen's CSS
+   width exactly, and its 20px padding is .main's own gutter, so the panel inside is as wide as
+   the panel on the device. */
+.mk-device-screen {
+  box-sizing: border-box; margin: 10px auto; background: #f0f2f5;
+  box-shadow: 0 0 0 10px #1a1a2e; border-radius: 2px; padding: 20px;
+}
+.mk-device-label {
+  display: block; margin: 0 auto 4px; max-width: 1300px;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 11px; color: #3a4250;
+}
+
 /* The contents page. */
 .mk-index { max-width: 760px; margin: 0 auto; padding: 32px 20px; }
 .mk-index h1 { font-size: 22px; margin-bottom: 6px; }

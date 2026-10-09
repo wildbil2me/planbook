@@ -845,3 +845,85 @@ would draw it grey; and the name row's margin, written inline here, is a class t
 **Outside this drawing:** the assignment editor still files new work under the term being viewed, not
 the term its due date falls in. The owner wants it to follow the SIS rule too, booked as
 [WO-3.50](../../plans/work-orders/phase-3-gradebook.md#wo-350--the-due-date-picks-an-assignments-term-in-the-editor-too).
+
+---
+
+# The attendance screen — WO-2.58, WO-2.59 and WO-2.60, drawn 2026-10-09
+
+**The eleventh room, and the third drawn of a screen that already ships.** Three pages, talked
+through with the owner against two photographs of the teaching iPad (portrait and landscape) and
+drawn the same day, after a stand-in drawing outside the repository had been read and amended. Each
+page has a frame 0 showing v174 as it ships. Booked the same day as
+[WO-2.58](../../plans/work-orders/phase-2-attendance.md#wo-258--the-attendance-header-gives-back-the-rows-it-does-not-need),
+[WO-2.59](../../plans/work-orders/phase-2-attendance.md#wo-259--the-attendance-dialogs-are-as-wide-as-they-were-meant-to-be-and-the-record-has-two-tabs)
+and [WO-2.60](../../plans/work-orders/phase-2-attendance.md#wo-260--a-tap-on-a-name-opens-today-and-the-history-moves-to-the-student-page),
+whose Rulings carry every answer.
+
+## What the drawings propose
+
+Styled in [`proposed-attendance.css`](proposed-attendance.css): § ATTENDANCE HEADER bound for
+`src/attendance.css` and § STUDENT ATTENDANCE bound for `src/detail.css`, both *not yet lifted*.
+`mockup.css` gained `.mk-device`, a frame at a device's own CSS width, so a toolbar that wraps in
+the drawing wraps on the device. **The iPad frames show 44px controls only when the page is opened on
+a touch device**, so read them on the iPad.
+
+[`attendance-header.html`](attendance-header.html):
+
+1. **The totals move inside the state line**, at its far end and muted.
+2. **The action buttons share the pager's row**: writes on the left, paging on the right. The row
+   never wraps, because it grows from two buttons to three on the first mark, and a row that wraps
+   only then drops the grid under the finger. Frame A is that widest state at 820px.
+3. **A clear ✕ in both search boxes** (attendance and Scores), shown when there is text.
+4. **Sort is one toggle, and Keys, Record and Passes are icons**, the four as one group that wraps
+   together. The attendance search box gives up width, down to 200px, before the toolbar wraps.
+5. **"Not taken yet" replaces the pressed "✓ Everyone's here"**, and "Un-confirm everyone" waits for
+   real marks.
+
+Eight rows above the grid become six upright and five lying down; seven become five on a laptop.
+
+[`attendance-dialogs.html`](attendance-dialogs.html):
+
+6. **The read-back dialogs at the width they asked for.** `.attendance-report-panel` and
+   `.grades-report-panel` set only `max-width` over `.modal-panel`'s `width: 480px`, so Record,
+   Passes, the history dialog and the Grade sheet have been 480px everywhere since they shipped.
+   Drawn at 900px (and 980 for the Grade sheet, not drawn). The fix is a `width` on a class `src/`
+   already styles, so it is not in the proposed sheet; the frames set it inline.
+7. **The Record in two tabs, By student and Day by day**, wearing `.screen-nav`.
+8. **Keys at 640px**, because it is prose.
+
+[`attendance-today.html`](attendance-today.html):
+
+9. **Tapping a name opens today's card**: the student's name as the title, the write block as it
+   ships (mark, time, note, Un-confirm), and one door to the student page. The rate badge, the pass
+   count, the "Grades for" door and both tables go.
+10. **A present student's hint in a teacher's words**, and **a read-only card on a day nothing can
+    be written to**, which today draws no block at all.
+11. **The term table and day by day move to the student page's attendance card**, day by day in a
+    closed `<details>`.
+
+## Decided before drawing
+
+- **The clear button blurs the field**, so the iPad keyboard goes away; Escape clears it too.
+- **The search box's focus ring stays.** It is the app's one global `:focus-visible` ring.
+- **The actions move down to the pager's row**, not the pager up.
+- **Sort travels with the three doors, and they are icons only.**
+- **The pressed "✓ Everyone's here" goes**, for "Not taken yet" — the one-tap undo for a wrong-class
+  tap, which "Un-confirm everyone" is not: it leaves the class met with every student absent.
+- **The Record prints the tab on screen**; the CSV saves everything.
+- **The history leaves the name tap for the student page.** The owner, on the reasoning in
+  `attendance-today.html`'s first caption: two jobs, standing up and sitting down, in one dialog.
+
+All seven are the owner's, 2026-10-09.
+
+## The open questions, collected
+
+1. **The strip's fit at 820px.** If "Un-confirm everyone" plus the pager does not fit under a coarse
+   pointer, the fallbacks are "Un-confirm all", then ◀ and ▶ without words, in that order.
+2. **The Record's tabs**: `.screen-nav`'s look (drawn), and which tab opens first (drawn: By student).
+3. **Keys at 640px** — the drawing's guess.
+4. **The today card's door**: drawn as "Attendance history and grades →".
+5. **The term percentage on the today card**: drawn without it.
+6. **The read-only card**: drawn for a locked past day; the other four reasons need their own
+   sentences, worded from the same reasons `editableMark()` refuses on.
+7. **Day by day on arrival from the today card's door**: drawn closed; it could open and scroll.
+8. **Day by day newest first** on the student page (drawn); the dialog listed oldest first.

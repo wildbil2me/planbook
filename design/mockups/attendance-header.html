@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — The attendance header</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="../../src/assignments.css">
+<link rel="stylesheet" href="../../src/attendance.css">
+<link rel="stylesheet" href="../../src/scores.css">
+<link rel="stylesheet" href="proposed-attendance.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Static HTML. Nothing here marks, filters, sorts or reads a document; every value is typed in.</span>
+  <span>The attendance header · drawn 2026-10-09 · booked as <a href="../../plans/work-orders/phase-2-attendance.md#wo-258--the-attendance-header-gives-back-the-rows-it-does-not-need">WO-2.58</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="attendance-header.html" class="here">The attendance header</a>
+  <a href="attendance-dialogs.html">Record, Passes and Keys</a>
+  <a href="attendance-today.html">The name tap</a>
+</nav>
+
+<main class="main">
+
+<div class="mk-caption">
+  <strong>The same class in every frame:</strong> P2 · English III, Friday 9 October, Quarter 1. The
+  navy app header is left out: nothing in it changes. <strong>Only what is above the first student is
+  proposed</strong>; the grid under it is a stub of two rows so the header has something to sit on.
+  The iPad frames are drawn at the iPad's own CSS width, and their 44px controls only appear when
+  this page is opened on a touch device — <strong>read frames A and B on the iPad</strong>, over
+  <code>node tools/serve-https.mjs</code>.
+</div>
+
+<!-- ═══════════════════════════ AS SHIPPED ═══════════════════════════ -->
+
+<p class="mk-section">0 · As it ships at v174, lying down (1180px) — not taken yet</p>
+<div class="mk-device"><span class="mk-device-label">iPad landscape · 1180</span>
+<div class="mk-device-screen" style="width:1180px">
+  <div class="panel attendance-panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title"><h2>P2 · English III</h2><p>Attendance · Friday, October 9, 2026</p></div>
+        <button class="class-action-btn" type="button"><span aria-hidden="true">←</span> All classes</button>
+      </div>
+      <nav class="screen-nav"><button class="screen-nav-btn active" type="button">Attendance</button><button class="screen-nav-btn" type="button">Assignments</button><button class="screen-nav-btn" type="button">Scores</button><button class="screen-nav-btn" type="button">Calendar</button><button class="screen-nav-btn" type="button">Signals</button></nav>
+    </div>
+    <div class="attendance-body">
+      <p class="attendance-state not-taken">Not taken yet</p>
+      <p class="attendance-totals">Q1: 27 recorded meetings · Year: 27 recorded meetings</p>
+      <div class="attendance-actions">
+        <button class="class-action-btn primary" type="button">Everyone’s here</button>
+        <button class="class-action-btn archive" type="button">Didn’t meet</button>
+      </div>
+      <div class="attendance-toolbar">
+        <div class="search-box"><span aria-hidden="true">🔍</span><input type="text" placeholder="Search students…" aria-label="Search students by name"></div>
+        <div class="attendance-pills"><button class="pill active" type="button">All</button><button class="pill" type="button">Present</button><button class="pill" type="button">Tardy</button><button class="pill" type="button">Absent</button><button class="pill" type="button">Event</button><button class="pill" type="button">Dismissed</button></div>
+        <div class="attendance-sort"><span class="attendance-sort-label">Sort</span><button class="attendance-sort-btn" type="button">First</button><button class="attendance-sort-btn active" type="button">Last</button></div>
+        <button class="class-action-btn attendance-keys-btn" type="button"><span aria-hidden="true">⌨</span> Keys</button>
+        <button class="class-action-btn attendance-record-btn" type="button"><span aria-hidden="true">🖨</span> Record</button>
+        <button class="class-action-btn attendance-passes-btn" type="button"><span aria-hidden="true">🚪</span> Passes</button>
+      </div>
+      <div class="attendance-pager">
+        <button class="class-action-btn" type="button">◀ Earlier</button>
+        <button class="class-action-btn" type="button" disabled>Today</button>
+        <button class="class-action-btn" type="button" disabled>Later ▶</button>
+      </div>
+      <div class="attendance-grid-wrap"><table class="attendance-grid"><tbody>
+        <tr class="attendance-row"><td class="attendance-name"><div class="attendance-student-cell"><div class="avatar av4" aria-hidden="true">EB</div><div class="attendance-student-identity"><span class="attendance-student-name">Bennet, Elizabeth</span><span class="attendance-student-totals">Q1 · P 25 · T 0 · A 2 · E 0 · D 0 · 93%</span></div></div></td><td class="attendance-cell-td"><span class="attendance-cell attendance-cell-untaken">?</span></td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+</div></div>
+<div class="mk-caption">
+  <strong>Eight rows above the first student</strong> on an upright iPad, seven here. The totals line
+  is reference figures nobody reads during roll call. The action row and the pager are half a row
+  each — the pager's left half is empty. The three doors wrap onto a line of their own.
+</div>
+
+<!-- ═══════════════════════════ A · PORTRAIT ═══════════════════════════ -->
+
+<p class="mk-section">A · Upright (820px) — part way through roll call, the widest the strip ever gets</p>
+<div class="mk-device"><span class="mk-device-label">iPad portrait · 820</span>
+<div class="mk-device-screen" style="width:820px">
+  <div class="panel attendance-panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title"><h2>P2 · English III</h2><p>Attendance · Friday, October 9, 2026</p></div>
+        <button class="class-action-btn" type="button"><span aria-hidden="true">←</span> All classes</button>
+      </div>
+      <nav class="screen-nav"><button class="screen-nav-btn active" type="button">Attendance</button><button class="screen-nav-btn" type="button">Assignments</button><button class="screen-nav-btn" type="button">Scores</button><button class="screen-nav-btn" type="button">Calendar</button><button class="screen-nav-btn" type="button">Signals</button></nav>
+    </div>
+    <div class="attendance-body">
+      <p class="attendance-state taken unconfirmed"><span class="attendance-state-totals">Q1: 28 meetings · Year: 28</span>Taken · 2 absent · 14 unconfirmed</p>
+      <div class="attendance-toolbar">
+        <div class="search-box attendance-find"><span aria-hidden="true">🔍</span><input type="text" value="fin" aria-label="Search students by name"><button class="search-clear" type="button" aria-label="Clear the search" title="Clear the search">✕</button></div>
+        <div class="attendance-pills"><button class="pill active" type="button">All</button><button class="pill" type="button">Present</button><button class="pill" type="button">Tardy</button><button class="pill" type="button">Absent</button><button class="pill" type="button">Event</button><button class="pill" type="button">Dismissed</button></div>
+        <div class="attendance-tools">
+          <button class="class-action-btn attendance-sort-toggle" type="button" title="Sorted by last name — tap for first">Sort: <b>Last</b></button>
+          <button class="class-action-btn attendance-keys-btn" type="button" aria-label="Keyboard shortcuts for marking attendance" title="Keys"><span aria-hidden="true">⌨</span></button>
+          <button class="class-action-btn attendance-record-btn" type="button" aria-label="Print or export this class’s attendance record" title="Record"><span aria-hidden="true">🖨</span></button>
+          <button class="class-action-btn attendance-passes-btn" type="button" aria-label="Every hall pass recorded for this class" title="Passes"><span aria-hidden="true">🚪</span></button>
+        </div>
+      </div>
+      <div class="attendance-strip">
+        <div class="attendance-actions">
+          <button class="class-action-btn primary" type="button">Everyone’s here</button>
+          <button class="class-action-btn" type="button">Un-confirm everyone</button>
+          <button class="class-action-btn archive" type="button">Didn’t meet</button>
+        </div>
+        <div class="attendance-pager">
+          <button class="class-action-btn" type="button">◀ Earlier</button>
+          <button class="class-action-btn" type="button" disabled>Today</button>
+          <button class="class-action-btn" type="button" disabled>Later ▶</button>
+        </div>
+      </div>
+      <div class="attendance-grid-wrap"><table class="attendance-grid"><tbody>
+        <tr class="attendance-row"><td class="attendance-name"><div class="attendance-student-cell"><div class="avatar av2" aria-hidden="true">SF</div><div class="attendance-student-identity"><span class="attendance-student-name">Finch, Scout</span><span class="attendance-student-totals">Q1 · P 26 · T 1 · A 1 · E 0 · D 0 · 96%</span></div></div></td><td class="attendance-cell-td"><span class="attendance-cell attendance-cell-A">A</span></td></tr>
+        <tr class="attendance-row"><td class="attendance-name"><div class="attendance-student-cell"><div class="avatar av7" aria-hidden="true">AF</div><div class="attendance-student-identity"><span class="attendance-student-name">Finn, Huckleberry</span><span class="attendance-student-totals">Q1 · P 24 · T 2 · A 2 · E 0 · D 0 · 93%</span></div></div></td><td class="attendance-cell-td"><span class="attendance-cell attendance-cell-untaken">?</span></td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+</div></div>
+<div class="mk-caption">
+  <strong>Six rows above the grid, from eight.</strong> The totals sit at the end of the state line.
+  The three action buttons and the pager share one row and fit with room to spare at 820px, in the
+  one state that draws three action buttons — so the row never wraps on the first tap and the grid
+  never drops under a finger. Sort and the three doors are one group, so here they wrap together
+  onto the toolbar's second line.
+</div>
+<div class="mk-caption decided">
+  <strong>The clear button</strong> appears once the box has text, clears it, re-runs the filter and
+  takes the cursor out of the box, so the iPad keyboard goes away. Escape clears it on the laptop.
+  Its glyph is small and its target is 44px. The owner, 2026-10-09.
+</div>
+<div class="mk-caption decided">
+  <strong>The focus ring on the search box stays as it is.</strong> It is the app's one global
+  <code>:focus-visible</code> ring, which browsers draw on a text field even after a tap. The owner,
+  2026-10-09.
+</div>
+<div class="mk-caption decided">
+  <strong>The actions move down to the pager's row, not the pager up</strong> (option a): everything
+  that acts on the grid sits directly over the grid. The owner, 2026-10-09.
+</div>
+<div class="mk-caption decided">
+  <strong>Sort is one toggle, and the three doors are icons only</strong>, with their names kept as
+  each button's accessible name and title. Sort travels with them. The owner, 2026-10-09.
+</div>
+<div class="mk-caption ask">
+  <strong>The two lengths to watch.</strong> “Un-confirm everyone” is the longest label in the strip.
+  If a real measurement at 820px under a coarse pointer says the strip does not fit, the fallback is
+  “Un-confirm all”, then ◀ and ▶ without their words — in that order, and the build says which it
+  took.
+</div>
+
+<!-- ═══════════════════════════ B · LANDSCAPE ═══════════════════════════ -->
+
+<p class="mk-section">B · Lying down (1180px) — not taken yet</p>
+<div class="mk-device"><span class="mk-device-label">iPad landscape · 1180</span>
+<div class="mk-device-screen" style="width:1180px">
+  <div class="panel attendance-panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title"><h2>P2 · English III</h2><p>Attendance · Friday, October 9, 2026</p></div>
+        <button class="class-action-btn" type="button"><span aria-hidden="true">←</span> All classes</button>
+      </div>
+      <nav class="screen-nav"><button class="screen-nav-btn active" type="button">Attendance</button><button class="screen-nav-btn" type="button">Assignments</button><button class="screen-nav-btn" type="button">Scores</button><button class="screen-nav-btn" type="button">Calendar</button><button class="screen-nav-btn" type="button">Signals</button></nav>
+    </div>
+    <div class="attendance-body">
+      <p class="attendance-state not-taken"><span class="attendance-state-totals">Q1: 27 meetings · Year: 27</span>Not taken yet</p>
+      <div class="attendance-toolbar">
+        <div class="search-box attendance-find"><span aria-hidden="true">🔍</span><input type="text" placeholder="Search students…" aria-label="Search students by name"></div>
+        <div class="attendance-pills"><button class="pill active" type="button">All</button><button class="pill" type="button">Present</button><button class="pill" type="button">Tardy</button><button class="pill" type="button">Absent</button><button class="pill" type="button">Event</button><button class="pill" type="button">Dismissed</button></div>
+        <div class="attendance-tools">
+          <button class="class-action-btn attendance-sort-toggle" type="button" title="Sorted by last name — tap for first">Sort: <b>Last</b></button>
+          <button class="class-action-btn attendance-keys-btn" type="button" aria-label="Keyboard shortcuts for marking attendance" title="Keys"><span aria-hidden="true">⌨</span></button>
+          <button class="class-action-btn attendance-record-btn" type="button" aria-label="Print or export this class’s attendance record" title="Record"><span aria-hidden="true">🖨</span></button>
+          <button class="class-action-btn attendance-passes-btn" type="button" aria-label="Every hall pass recorded for this class" title="Passes"><span aria-hidden="true">🚪</span></button>
+        </div>
+      </div>
+      <div class="attendance-strip">
+        <div class="attendance-actions">
+          <button class="class-action-btn primary" type="button">Everyone’s here</button>
+          <button class="class-action-btn archive" type="button">Didn’t meet</button>
+        </div>
+        <div class="attendance-pager">
+          <button class="class-action-btn" type="button">◀ Earlier</button>
+          <button class="class-action-btn" type="button" disabled>Today</button>
+          <button class="class-action-btn" type="button" disabled>Later ▶</button>
+        </div>
+      </div>
+      <div class="attendance-grid-wrap"><table class="attendance-grid"><tbody>
+        <tr class="attendance-row"><td class="attendance-name"><div class="attendance-student-cell"><div class="avatar av4" aria-hidden="true">EB</div><div class="attendance-student-identity"><span class="attendance-student-name">Bennet, Elizabeth</span><span class="attendance-student-totals">Q1 · P 25 · T 0 · A 2 · E 0 · D 0 · 93%</span></div></div></td><td class="attendance-cell-td"><span class="attendance-cell attendance-cell-untaken">?</span></td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+</div></div>
+<div class="mk-caption">
+  <strong>Five rows above the grid, from seven.</strong> The toolbar fits on one line: the doors are
+  icons, Sort is one control, and the search box gives up width (360px down to no less than 200)
+  before anything wraps.
+</div>
+
+<!-- ═══════════════════════════ C · LAPTOP ═══════════════════════════ -->
+
+<p class="mk-section">C · Laptop — taken, everyone present, nothing marked</p>
+<div class="mk-device"><span class="mk-device-label">laptop · as wide as this window, up to the app’s 1300</span>
+<div class="mk-device-screen" style="max-width:1300px">
+  <div class="panel attendance-panel">
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div class="panel-title"><h2>P2 · English III</h2><p>Attendance · Friday, October 9, 2026</p></div>
+        <button class="class-action-btn" type="button"><span aria-hidden="true">←</span> All classes</button>
+      </div>
+      <nav class="screen-nav"><button class="screen-nav-btn active" type="button">Attendance</button><button class="screen-nav-btn" type="button">Assignments</button><button class="screen-nav-btn" type="button">Scores</button><button class="screen-nav-btn" type="button">Calendar</button><button class="screen-nav-btn" type="button">Signals</button></nav>
+    </div>
+    <div class="attendance-body">
+      <p class="attendance-state taken"><span class="attendance-state-totals">Q1: 28 meetings · Year: 28</span>Taken · All present</p>
+      <div class="attendance-toolbar">
+        <div class="search-box attendance-find"><span aria-hidden="true">🔍</span><input type="text" placeholder="Search students…" aria-label="Search students by name"></div>
+        <div class="attendance-pills"><button class="pill active" type="button">All</button><button class="pill" type="button">Present</button><button class="pill" type="button">Tardy</button><button class="pill" type="button">Absent</button><button class="pill" type="button">Event</button><button class="pill" type="button">Dismissed</button></div>
+        <div class="attendance-tools">
+          <button class="class-action-btn attendance-sort-toggle" type="button" title="Sorted by last name — click for first">Sort: <b>Last</b></button>
+          <button class="class-action-btn attendance-keys-btn" type="button" aria-label="Keyboard shortcuts for marking attendance" title="Keys"><span aria-hidden="true">⌨</span></button>
+          <button class="class-action-btn attendance-record-btn" type="button" aria-label="Print or export this class’s attendance record" title="Record"><span aria-hidden="true">🖨</span></button>
+          <button class="class-action-btn attendance-passes-btn" type="button" aria-label="Every hall pass recorded for this class" title="Passes"><span aria-hidden="true">🚪</span></button>
+        </div>
+      </div>
+      <div class="attendance-strip">
+        <div class="attendance-actions">
+          <button class="class-action-btn" type="button" title="Take this class back to not taken yet. Nothing is marked on it, so nothing is lost.">Not taken yet</button>
+          <button class="class-action-btn archive" type="button">Didn’t meet</button>
+        </div>
+        <div class="attendance-pager">
+          <button class="class-action-btn" type="button">◀ Earlier</button>
+          <button class="class-action-btn" type="button" disabled>Today</button>
+          <button class="class-action-btn" type="button" disabled>Later ▶</button>
+        </div>
+      </div>
+      <div class="attendance-grid-wrap"><table class="attendance-grid"><tbody>
+        <tr class="attendance-row"><td class="attendance-name"><div class="attendance-student-cell"><div class="avatar av4" aria-hidden="true">EB</div><div class="attendance-student-identity"><span class="attendance-student-name">Bennet, Elizabeth</span><span class="attendance-student-totals">Q1 · P 26 · T 0 · A 2 · E 0 · D 0 · 93%</span></div></div></td><td class="attendance-cell-td"><span class="attendance-cell attendance-cell-P">P</span></td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+</div></div>
+<div class="mk-caption decided">
+  <strong>The pressed “✓ Everyone’s here” goes, and “Not taken yet” takes its place.</strong> It is
+  the one-tap undo for the realistic mistake here — the wrong class, or a class taken before it
+  started — and it leaves the day not taken, as it was. “Un-confirm everyone” is offered only once
+  there are real marks to reset, which is what the comment over <code>unconfirmAll()</code> has
+  always said and what <code>paintActions()</code> stopped doing. Offered in this state, it leaves
+  the class <em>met</em> with every student on <code>?</code>, so a wrong-class tap would read as
+  the whole roster absent. The owner, 2026-10-09.
+</div>
+
+<!-- ═══════════════════════════ D · SCORES ═══════════════════════════ -->
+
+<p class="mk-section">D · The Scores screen’s search box, with text in it</p>
+<div class="mk-device"><span class="mk-device-label">laptop · the toolbar only</span>
+<div class="mk-device-screen" style="width:820px">
+  <div class="panel"><div class="panel-header" style="padding-bottom:12px">
+    <div class="scores-toolbar">
+      <div class="search-box"><span aria-hidden="true">🔍</span><input type="text" value="gats" aria-label="Search students by name"><button class="search-clear" type="button" aria-label="Clear the search" title="Clear the search">✕</button></div>
+      <span class="scores-found">1 of 27 students</span>
+    </div>
+  </div></div>
+</div></div>
+<div class="mk-caption">
+  <strong>The same ✕ on the second search box</strong>, with the same three behaviours. Nothing else
+  on the Scores screen changes, and its box keeps its 360px.
+</div>
+
+</main>
+</body>
+</html>
