@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1923 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1931 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2798,6 +2798,18 @@ is a `skip()`. The re-pointing of eighteen other sections onto `openSettingsDoor
 assertions in `verify/sync-button.mjs`, `verify/attendance-passes.mjs`, `verify/modal.mjs` and
 `verify/classes-terms.mjs` changed no count. Full run: `1927 checks · 1927 passed · 0 failed · 0
 skipped`, 61,366 lines, 31.8 lines per check, 934s, exit 0, 2026-10-10 on the real clock.
+
+**WO-1.72 moved it from 1923 to 1931, and the executed count from 1927 to 1935 — eight sites, eight
+results, and one new file.** All eight are `verify/settings-back.mjs`, registered straight after
+`verify/settings-hub.mjs`: "‹ Settings" drawn on the three dialogs the hub opens, back reopening the
+hub with focus on the door used, the reopened hub still opened by the gear, ✕ and Done closing all the
+way, no button on any other opening (the + tab, a script's click on a shut hub's door, `openModal()`
+itself), the flag forgotten across ✕, Escape, the backdrop and back and then a second door, first
+level only over Edit student and Categories, and the 390×844 coarse measurement. None is a failure
+arm, and the section's one guard is a `skip()`. `touch-targets.mjs`'s roster block now measures one
+more control (95, the button drawn because it walks through the door) and changed no count. Full run:
+`1935 checks · 1935 passed · 0 failed · 0 skipped`, 61,714 lines, 31.9 lines per check, 988s, exit 0,
+2026-10-10 on the real clock. Mutation round in `TESTING.md` § WO-1.72.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

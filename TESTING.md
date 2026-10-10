@@ -3801,6 +3801,87 @@ looked for `homeView`) and was corrected. No `MUTATION` was ever inserted in the
 
 ---
 
+### WO-1.72 — a dialog opened from Settings has a way back to it
+
+**"‹ Settings" in the header of the three dialogs the hub opens directly** — `#rosterModal`,
+`#classesModal`, `#teacherModal` — wrapped with the title in `.modal-header-lead`, `.hidden` in the
+markup. `src/shell.js`: the three door routes go through `throughSettings()`, which asks whether the
+door's hub was **on screen** (not merely whether the door lives in its markup), lets
+`leaveSettings()` hand the gear on as before, and then `showWayBack()` draws the button and remembers
+the door — or hides it and forgets, on every other opening. Every close forgets too, through a new
+`setCloseHook()` in `src/modal.js` that `closeModal()` runs, which every way out reaches (✕, Done,
+Escape, the backdrop, back, a module's own close). Back is `goBackToSettings()`: `dismissModal()` the
+dialog (focus goes to its opener, the gear), `openSettings(gear)`, then focus onto the door used.
+`src/shell.css` § SETTINGS BACK lifted from `design/mockups/proposed-settings.css` with its § TOUCH
+line. Measured by a new section, `tools/verify/settings-back.mjs` (eight checks, after
+`settings-hub.mjs`, on one class and one student of its own that it removes at its foot).
+
+**First level only, as ruled — and what shape each inner dialog is.** Roster → Edit student
+(`#studentModal`) and Classes and terms → Categories (`#categoriesModal`) both **stack over** their
+parent: `openModal()` on top, the parent never closed. So the parent keeps its button underneath, the
+inner dialog has none, and closing the inner one lands back on a parent still wearing it.
+
+- [x] Opened from Settings, Roster, Classes and terms and Your details draw "‹ Settings"; opened any
+      other way, they do not.
+      *`settings-back.mjs`: from the hub — `rosterModal: open ["rosterModal"], drawn
+      [{"in":"rosterModal","beforeTitle":true,"text":"‹ Settings"}]`, and the same for `classesModal`
+      and `teacherModal`. Any other way — `plus: open ["classesModal"], drawn []`, and for each of the
+      three a script's click on the door of a shut hub and `openModal()` directly: `drawn []` all six.
+      The Traps sequence, driven: `hub → Roster → ✕ → + tab`, `hub → Roster → ✕ →
+      openModal(rosterModal)` (no route at all, so only the close can have forgotten it), `hub →
+      Classes → ✕ / Escape / backdrop / ‹ Settings → + tab`, and `hub → Classes → ✕ → the grades
+      screen's Categories` — every one `drawn []`. Categories never carries the button in its markup,
+      so that last case is a check that nothing anywhere is drawn rather than a check on Categories.*
+- [x] "‹ Settings" closes the dialog and reopens the hub with focus on the door that opened it; ✕ and
+      Done close the dialog and leave the hub closed.
+      *`settings-back.mjs`: `rosterModal → open ["settingsModal"], focus on "data-roster-manage" ·
+      classesModal → open ["settingsModal"], focus on "data-class-manage" · teacherModal → open
+      ["settingsModal"], focus on "data-teacher-panel"` — one overlay open, so a close and an open,
+      never a hub stacked over the dialog. The reopened hub's ✕: `open [], focus on "settingsBtn"`, so
+      the gear is still its opener. ✕ on all three and Done on Your details: `open [], focus
+      "settingsBtn"` all four. First level only: `Roster → Edit student: open
+      ["rosterModal","studentModal"], drawn [rosterModal]`; after Escape `open ["rosterModal"], drawn
+      [rosterModal]`; the same for Classes → Categories, and its back then lands on `focus
+      "data-class-manage"`.*
+- [x] Under a coarse pointer the button is at least 44px tall.
+      *`settings-back.mjs` at 390×844, coarse: `{"coarse":true,"w":88.3,"h":44,"font":"14px",
+      "xh":44,"xRight":true,"title":true,"overlap":false,"overflow":0}` on all three. The 44 is also
+      carried by the coarse block's bare `button { min-height: 44px }`, which a planted delete of the
+      `.modal-back` coarse rule proved (the height check alone stayed green); the 14px type is what
+      only the named rule gives, so the check asserts it too. `touch-targets.mjs`'s roster block, which
+      walks through the door, now measures the button among its controls: `measured 95; under = []`.*
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      *`node tools/verify-shell.mjs` on the finished tree: exit 0, `1935 checks · 1935 passed · 0
+      failed · 0 skipped`, 61,714 lines, 988s. `node tools/wo-sweep.mjs`: exit 0, `50 checks · 46
+      passed · 0 failed · 4 to review` — the standing three and one that is this work order's: *CSS
+      selectors added in the working tree with no coarse-block rule* names `.modal-header-lead`, a
+      flex wrapper around the button and the title, not a target; the button itself is in the coarse
+      block. It is a diff-against-HEAD check and goes quiet at the commit. The `tools/README.md`
+      call-site line moved 1923 → 1931 from the sweep's own count. `sw.js`: `planbook-shell-v179` →
+      `planbook-shell-v180`.*
+- [x] `TESTING.md` § WO-1.72 carries these lines verbatim with the evidence for each.
+      *This section.*
+- [x] 👤 On the iPad, after a force-quit: Settings → Classes and terms → ‹ Settings → Roster →
+      ‹ Settings → Your details → Done, and the `+` tab's dialog with no back button.
+      — *The owner, 2026-10-10, on the iPad against the local server (v180) after a force-quit: all
+      five checklist items good — "‹ Settings" before the title with ✕ still at the right and nothing
+      overlapping; back reopens the hub alone with no dialog beneath; Roster → ‹ Settings → Your
+      details → Done closes everything and the hub stays closed; the `+` tab's Classes and terms has
+      no back button; the button is comfortable under a thumb in portrait.*
+
+*Mutation round, run by the implementer on a two-section copy of the harness (the seam section and
+this one) with each fault planted in `src/`, run, and the file restored from a copy taken first;
+`grep -rn "/\* MUTATION" src` read nothing after. Clean: `12 checks · 12 passed`. **No close hook**
+(the `setCloseHook()` registration deleted): the forgetting check went red, on the *openModal() with
+no route* case only — every routed opening re-decides the button on the way in, which is defence in
+depth and is why that case exists. **Every route counted as from the hub**: the any-other-way check
+and the forgetting check red. **Back stacks the hub over the dialog** (no dismiss): three checks red.
+**No focus onto the door**: two red. **The hub reopened with the door as its opener**: the
+reopened-hub check red. **The `.modal-back` coarse rule deleted**: green at first, because the bare
+`button` rule carries the 44 — the check gained the 14px assertion and then went red.*
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*

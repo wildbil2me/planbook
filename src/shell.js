@@ -36,6 +36,10 @@
                                       roster door, then opens Settings. A door inside that dialog
                                       carries the hook its header icon carried and is routed below
                                       exactly as the icon was, after leaveSettings()
+      data-settings-back              "‹ Settings" in the header of Roster, Classes and terms and
+                                      Your details (WO-1.72). Drawn only when the hub opened that
+                                      dialog, forgotten on every close; closes the dialog, reopens
+                                      Settings and puts focus on the door that was used
       data-year-picker                renders the year list, then opens the year modal
       data-year-switch="<year>"       opens that year document
       data-year-create                on a <form>: creates the year typed into it
@@ -819,7 +823,7 @@
     in is a modal that flickers.
 */
 
-import { openModal, closeModal, dismissModal, setCloseGuard, anyModalOpen } from './modal.js';
+import { openModal, closeModal, dismissModal, setCloseGuard, setCloseHook, anyModalOpen } from './modal.js';
 import { announce } from './live-region.js';
 import { getPref, setPref } from './prefs.js';
 import { refreshInstallBanner, dismissInstallBanner, isInstalled } from './install-banner.js';
@@ -2388,6 +2392,77 @@ function leaveSettings(door) {
   return document.getElementById('settingsBtn') || door;
 }
 
+/*
+  "‹ SETTINGS" — THE WAY BACK FROM A DIALOG THE HUB OPENED (WO-1.72, the owner's rulings of
+  2026-10-10). Three dialogs carry the button, hidden in the markup: the three the hub opens DIRECTLY.
+  Message templates is a view, not a dialog, and its way out is the class tabs.
+
+  WHERE THE DIALOG CAME FROM IS A FACT ABOUT THIS OPENING, NOT ABOUT THE DIALOG — the work order's
+  Traps line. The + tab and the empty state's "Add your first class" open Classes and terms too, and
+  from there the button would be a way back to somewhere the teacher never was. So the fact is
+  written at the one point that already knows it — the door's route, where leaveSettings() has just
+  answered "was this inside the hub" — and it is forgotten on EVERY close by a hook src/modal.js runs
+  from closeModal(), which ✕, Done, Escape, the backdrop and back itself all reach. It is also
+  rewritten on every opening through a route, both ways, so a close that somehow went unheard still
+  cannot carry a stale button onto the next + tap.
+
+  FIRST LEVEL ONLY, ruled at dispatch: the inner dialogs — Roster → Edit student, Classes and terms →
+  Categories — stack OVER their parent rather than replacing it, carry no button, and already return
+  to the dialog that opened them. The parent stays open underneath with its button still drawn,
+  because nothing closed it; nothing has to outlive an inner dialog's open and close.
+
+  `wayBack` holds the DOOR that was used, per dialog, because going back lands focus on it.
+*/
+const SETTINGS_BACK_DIALOGS = ['rosterModal', 'classesModal', 'teacherModal'];
+const wayBack = new Map();
+
+function showWayBack(overlayId, door) {
+  const overlay = document.getElementById(overlayId);
+  const button = overlay && overlay.querySelector('[data-settings-back]');
+  if (!button) return;
+  /* The route may not have opened anything — Your details opens nothing with no year document — and
+     a button drawn on a closed dialog would be waiting for the next opening, whoever made it. */
+  const drawn = !!door && !overlay.classList.contains('hidden');
+  button.classList.toggle('hidden', !drawn);
+  if (drawn) wayBack.set(overlayId, door);
+  else wayBack.delete(overlayId);
+}
+
+SETTINGS_BACK_DIALOGS.forEach((id) => setCloseHook(id, () => showWayBack(id, null)));
+
+/* A door's route: leave the hub if the door was in it, open the dialog, and draw the way back only
+   when it was. `open` is the module's own opener, handed the gear or the door exactly as before.
+   "In the hub" means the hub was ON SCREEN, not merely that the door lives inside its markup: a
+   script's `.click()` on a door of a shut hub — fifteen-odd harness sections open these dialogs that
+   way — is not a teacher who was ever in Settings, and gets no way back to it. */
+function throughSettings(door, overlayId, open) {
+  const hub = door.closest('#' + SETTINGS_MODAL_ID);
+  const fromHub = !!hub && !hub.classList.contains('hidden');
+  open(leaveSettings(door));
+  showWayBack(overlayId, fromHub ? door : null);
+}
+
+/*
+  Back is a CLOSE AND AN OPEN, never Settings over the dialog — src/modal.js keeps a stack, and a hub
+  stacked on the roster would leave the roster open underneath it. dismissModal() rather than
+  closeModal(): back is one of the teacher's ways out, like ✕, so it asks the dialog's guard if one is
+  ever given (none of the three has one today), and does not reopen the hub if the dialog stayed up.
+
+  FOCUS IS TWO STEPS, in this order. Closing gives focus back to the dialog's opener, the gear. Then
+  the hub opens with the GEAR as its opener — so ✕ on the hub still returns focus to the gear, as it
+  does from any other opening — and openModal() focuses the hub's first control; only after that does
+  focus move to the door that was used, which is where a teacher going back is looking.
+*/
+function goBackToSettings(button) {
+  const overlay = button.closest('.modal-overlay');
+  if (!overlay) return;
+  const door = wayBack.get(overlay.id);
+  dismissModal(overlay);
+  if (!overlay.classList.contains('hidden')) return;
+  openSettings(document.getElementById('settingsBtn'));
+  if (door && door.isConnected) door.focus({ preventScroll: true });
+}
+
 /* One click listener for the whole document. Order matters only in that the first hook to
    match wins, and no element carries two of them. */
 document.addEventListener('click', (e) => {
@@ -2473,6 +2548,9 @@ document.addEventListener('click', (e) => {
      a header icon, after leaveSettings(). */
   const settingsOpen = e.target.closest('[data-settings-open]');
   if (settingsOpen) { openSettings(settingsOpen); return; }
+  /* "‹ Settings" (WO-1.72), on a dialog one of those doors opened: closes it and reopens the hub. */
+  const settingsBack = e.target.closest('[data-settings-back]');
+  if (settingsBack) { goBackToSettings(settingsBack); return; }
 
   /* THE TWO DRIVE CONTROLS (WO-7.1), AND THE CHAIN THE COMMENT HERE SAID WO-7.2 WOULD ADD. It read
      "a sign-in changes no screen but that section, because this build moves no data — the day one
@@ -2617,7 +2695,7 @@ document.addEventListener('click', (e) => {
   /* ── classes and terms ── */
 
   const classManage = e.target.closest('[data-class-manage]');
-  if (classManage) { classes.openClassManager(leaveSettings(classManage)); return; }
+  if (classManage) { throughSettings(classManage, 'classesModal', classes.openClassManager); return; }
 
   /* The way back to the class grid. High here, beside the control that leaves it: these two are
      the app's navigation, and everything below them is something you do once you have arrived. */
@@ -3511,7 +3589,7 @@ document.addEventListener('click', (e) => {
   /* ── roster, contacts, and the teacher's own details ── */
 
   const rosterManage = e.target.closest('[data-roster-manage]');
-  if (rosterManage) { roster.openRoster(leaveSettings(rosterManage)); return; }
+  if (rosterManage) { throughSettings(rosterManage, 'rosterModal', roster.openRoster); return; }
 
   const paste = e.target.closest('[data-roster-paste]');
   if (paste) { roster.openPaste(paste); return; }
@@ -3615,7 +3693,7 @@ document.addEventListener('click', (e) => {
   }
 
   const teacherPanel = e.target.closest('[data-teacher-panel]');
-  if (teacherPanel) { teacher.openTeacherSettings(leaveSettings(teacherPanel)); return; }
+  if (teacherPanel) { throughSettings(teacherPanel, 'teacherModal', teacher.openTeacherSettings); return; }
   if (e.target.closest('[data-teacher-cc]')) { teacher.toggleDefaultCc(); return; }
 
   /* WO-5.2's fourteen hooks. The first is the door and the rest are on the screen behind it; three

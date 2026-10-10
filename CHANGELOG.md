@@ -13,6 +13,20 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A dialog opened from Settings has a way back to it — 2026-10-10
+
+WO-1.72, owner-directed, from `design/mockups/settings-hub.html` frames D and E. Shell cache v179 → v180.
+
+- **Roster, Classes and terms and Your details now show "‹ Settings" in their header when you opened
+  them from Settings.** It takes you back to Settings, on the row you came from, so setting up the
+  roster, the classes and the templates in one sitting no longer starts again at the gear each time.
+  ✕ and Done still close all the way.
+- Opened any other way, such as the + tab or the dialogs inside them (Edit student, Categories), there
+  is no back button, because there is no Settings to go back to.
+- `tools/verify/settings-back.mjs` is new. All 1935 harness checks pass under a fresh verifier, and
+  five of six planted faults failed as predicted; the sixth led to a sharper check. Read on the iPad
+  by the owner the same day.
+
 ### The roster dialog's width is booked — 2026-10-10
 
 Owner-directed, out of WO-1.71's iPad reading. Nothing in the app changed.

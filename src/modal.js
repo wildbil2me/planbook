@@ -153,6 +153,26 @@ export function setCloseGuard(overlayId, guard) {
   else guards.delete(overlayId);
 }
 
+/*
+  A HOOK ON EVERY CLOSE OF ONE DIALOG (WO-1.72), the guard's sibling and its opposite: a guard is
+  asked BEFORE a close and can refuse it, a hook is told AFTER one and cannot. It exists for a fact
+  that belongs to one OPENING of a dialog rather than to the dialog — "‹ Settings" is drawn only when
+  Settings opened it (src/shell.js) — and such a fact has to be forgotten on every way out: ✕, Done,
+  Escape, the backdrop, a module's own closeModal(). Every one of those reaches closeModal() below,
+  so this is the one place that sees them all; a caller that cleared it at each door would be one
+  door short the day a fifth way out is added.
+
+  ONE HOOK PER OVERLAY, keyed by id, set once at load, exactly as the guard is. It runs only when the
+  overlay was actually open, and before focus goes back, so whatever the opener does on focus sees
+  the dialog's state already forgotten.
+*/
+const closeHooks = new Map();
+
+export function setCloseHook(overlayId, hook) {
+  if (typeof hook === 'function') closeHooks.set(overlayId, hook);
+  else closeHooks.delete(overlayId);
+}
+
 export function dismissModal(overlay) {
   const el = resolve(overlay);
   if (!el) return;
@@ -173,6 +193,9 @@ export function closeModal(overlay) {
   el.removeEventListener('mousedown', entry.onPress);
   el.removeEventListener('touchstart', entry.onPress);
   el.removeEventListener('click', entry.onClick);
+
+  const hook = closeHooks.get(el.id);
+  if (hook) hook();
 
   /* The opener can be gone by now — a re-render, or a button inside a modal that closed
      first. try/catch rather than a check, because a detached node still has .focus.

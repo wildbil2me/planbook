@@ -35,7 +35,7 @@
    Colours inline, no custom properties, no dark mode — src/shell.css's rules.
 
      § SETTINGS HUB     →  src/shell.css   (WO-1.71 — lifted 2026-10-10)
-     § SETTINGS BACK    →  src/shell.css   (WO-1.72 — not yet lifted)
+     § SETTINGS BACK    →  src/shell.css   (WO-1.72 — lifted 2026-10-10)
      § ROSTER WHO       →  src/shell.css   (WO-1.74 — not yet lifted)
    ══════════════════════════════════════════════════════════════════════════════ */
 
@@ -110,7 +110,19 @@
 .toggle-switch input:checked + .toggle-track .toggle-thumb { left: 21px; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SETTINGS BACK   →  src/shell.css   (WO-1.72 — not yet lifted)
+   § SETTINGS BACK   →  src/shell.css   (WO-1.72 — lifted 2026-10-10)
+
+   LANDED, class for class and value for value, in src/shell.css § SETTINGS BACK,
+   and the § TOUCH line below with it, into src/shell.css's coarse block beside
+   `.modal-close`'s 44 — that line was in this sheet already, so it was lifted
+   rather than written at the lift. Two things the lift
+   found that the drawing could not say: the bare `button { min-height: 44px }` at
+   the head of the coarse block already gives this button its 44, so what the
+   named rule adds is the drawing's padding and 14px type (the harness asserts the
+   type for that reason); and `.modal-back` joined src/shell.css's grouped
+   touch-action selector, which this sheet's own first rule already named it in.
+   The owner ruled "first level only" at dispatch: Edit student and Categories,
+   which open over these dialogs, draw no button of their own.
 
    "‹ Settings", in the header of a dialog opened FROM the hub, and only then —
    the + tab, the grades screen's Categories button and the class manager open

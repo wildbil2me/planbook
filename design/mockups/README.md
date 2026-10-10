@@ -969,8 +969,12 @@ the orange rule on `.header` and items 1–5 below. One rule departs from the dr
 input, 0x0 at opacity 0 here and in Roll Call!, ships laid over the track and drawn as nothing by
 `appearance: none`, so the app's one global focus ring lands around the track instead of on nothing
 — the reason is at its point of departure in `src/shell.css`.
-§ SETTINGS BACK (WO-1.72) and § ROSTER WHO (WO-1.74) are still pending, and Sync at phone width is
-still WO-1.73's to measure.
+**§ SETTINGS BACK landed 2026-10-10 with WO-1.72**, class for class and value for value, its § TOUCH
+line with it into `src/shell.css`'s coarse block. The lift found one thing the drawing could not say:
+the coarse block's bare `button { min-height: 44px }` already gives the button its 44, so what the
+named rule adds is the drawing's padding and 14px type — and the harness asserts the type for that
+reason. § ROSTER WHO (WO-1.74) is still pending, and Sync at phone width is still WO-1.73's to
+measure.
 
 [`settings-hub.html`](settings-hub.html):
 
@@ -1005,7 +1009,9 @@ All five are the owner's, 2026-10-09 and 2026-10-10.
 
 1. **Does "‹ Settings" survive a second hop** — Roster → Edit student, Classes and terms →
    Categories? The drawing's lean is first level only, since the inner dialogs already return to
-   their parent. WO-1.72's to settle.
+   their parent. **Answered at WO-1.72's dispatch, the owner, 2026-10-10: first level only.** Both
+   inner dialogs open over their parent rather than replacing it, so the parent keeps its button
+   underneath and the inner one draws none.
 2. **Does Sync fit at 390px once Mute has gone?** Not drawn. WO-1.73 measures it.
 3. **The alert-sound move and WO-2.57.** WO-2.57 is 🔒 on a classroom trial deciding the tone's
    default. The move changes where the switch lives and nothing about its default, so neither waits

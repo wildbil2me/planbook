@@ -115,6 +115,7 @@ import { run as keyboardMarking } from './verify/keyboard-marking.mjs';
 import { run as touchTargets } from './verify/touch-targets.mjs';
 import { run as horizontalOverflow } from './verify/horizontal-overflow.mjs';
 import { run as settingsHub } from './verify/settings-hub.mjs';
+import { run as settingsBack } from './verify/settings-back.mjs';
 import { run as notePanel } from './verify/note-panel.mjs';
 import { run as passCard } from './verify/pass-card.mjs';
 import { run as portraitLandscape } from './verify/portrait-landscape.mjs';
@@ -336,6 +337,10 @@ const BROWSER_SECTIONS = [
      both of those, asked of the header and the dialog. It plants two classes of its own and takes
      them, the open-class and sound preferences, and the viewport back out at its foot. */
   { file: 'verify/settings-hub.mjs', run: settingsHub },
+  /* "‹ Settings" on the three dialogs the hub opens (WO-1.72), straight after the section about the
+     hub itself. It plants one class and one student of its own and takes them, the open-class
+     preference and the viewport back out at its foot. */
+  { file: 'verify/settings-back.mjs', run: settingsBack },
   { file: 'verify/note-panel.mjs', run: notePanel },
   { file: 'verify/pass-card.mjs', run: passCard },
   { file: 'verify/portrait-landscape.mjs', run: portraitLandscape },

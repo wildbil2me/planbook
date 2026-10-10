@@ -6131,7 +6131,7 @@ rows' heights and the 390px fit are measured, not assumed.
 
 ## WO-1.72 — a dialog opened from Settings has a way back to it
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.71 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-10 · **Size** S · **Depends on** WO-1.71 · **Blocks** nothing
 **Closes roadmap** *(no box. Owner-directed, 2026-10-10.)*
 
 **Booked 2026-10-10**, owner-directed, out of the same conversation as WO-1.71. The setup weeks are
@@ -6169,14 +6169,14 @@ open and close on the modal stack.
 - **`TESTING.md` § WO-1.72**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] Opened from Settings, Roster, Classes and terms and Your details draw "‹ Settings"; opened any
+- [x] Opened from Settings, Roster, Classes and terms and Your details draw "‹ Settings"; opened any
       other way, they do not.
-- [ ] "‹ Settings" closes the dialog and reopens the hub with focus on the door that opened it; ✕ and
+- [x] "‹ Settings" closes the dialog and reopens the hub with focus on the door that opened it; ✕ and
       Done close the dialog and leave the hub closed.
-- [ ] Under a coarse pointer the button is at least 44px tall.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] `TESTING.md` § WO-1.72 carries these lines verbatim with the evidence for each.
-- [ ] 👤 On the iPad, after a force-quit: Settings → Classes and terms → ‹ Settings → Roster →
+- [x] Under a coarse pointer the button is at least 44px tall.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] `TESTING.md` § WO-1.72 carries these lines verbatim with the evidence for each.
+- [x] 👤 On the iPad, after a force-quit: Settings → Classes and terms → ‹ Settings → Roster →
       ‹ Settings → Your details → Done, and the `+` tab's dialog with no back button.
 
 **Traps** — **Where the dialog came from is a fact about this opening, not about the dialog.** A flag

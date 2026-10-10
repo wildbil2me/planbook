@@ -2556,6 +2556,10 @@
      The one thing the listener adds is the step before the route: a door inside this dialog closes
      it first and hands the GEAR on as the opener, so ✕ on the dialog behind it puts focus somewhere
      a teacher can see rather than on a button inside a closed dialog (src/shell.js, leaveSettings()).
+     And since WO-1.72 the three DIALOGS a door opens — #rosterModal, #classesModal, #teacherModal —
+     carry "‹ Settings" in their headers, `.hidden` here and drawn only when this dialog opened them
+     (the + tab and the empty state open the same dialogs and get no button); it closes the dialog and
+     reopens this one, focused on the door that was used (src/shell.js, goBackToSettings()).
 
      THE ROSTER DOOR NAMES THE CLASS IT WILL OPEN ON (ruling 5): #settingsRosterClass is written every
      time this dialog opens, from getSelectedClass() — the class the roster dialog itself will open
@@ -2709,7 +2713,10 @@
 <div class="modal-overlay hidden" id="classesModal">
   <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="classesModalTitle">
     <div class="modal-header">
-      <h2 id="classesModalTitle">Classes &amp; terms</h2>
+      <div class="modal-header-lead">
+        <button class="modal-back hidden" type="button" data-settings-back aria-label="Back to Settings">‹ Settings</button>
+        <h2 id="classesModalTitle">Classes &amp; terms</h2>
+      </div>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
@@ -3684,7 +3691,10 @@
 <div class="modal-overlay hidden" id="rosterModal">
   <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="rosterModalTitle">
     <div class="modal-header">
-      <h2 id="rosterModalTitle">Roster &amp; contacts</h2>
+      <div class="modal-header-lead">
+        <button class="modal-back hidden" type="button" data-settings-back aria-label="Back to Settings">‹ Settings</button>
+        <h2 id="rosterModalTitle">Roster &amp; contacts</h2>
+      </div>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
@@ -4187,7 +4197,10 @@
 <div class="modal-overlay hidden" id="teacherModal">
   <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle">
     <div class="modal-header">
-      <h2 id="teacherModalTitle">Your details</h2>
+      <div class="modal-header-lead">
+        <button class="modal-back hidden" type="button" data-settings-back aria-label="Back to Settings">‹ Settings</button>
+        <h2 id="teacherModalTitle">Your details</h2>
+      </div>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
