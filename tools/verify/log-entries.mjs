@@ -12,7 +12,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 export async function run(h) {
-const { ROOT, check, skip, send, evalJs, has, clickSel, clickVisible, KILL_ANIM, waitForBoot, seam } = h;
+const { ROOT, check, skip, send, evalJs, has, clickSel, clickVisible, KILL_ANIM, waitForBoot, seam, openSettingsDoor } = h;
 
 /*
  * ───────── the log, written down (WO-4.4) ─────────
@@ -233,7 +233,7 @@ if (!seam) {
     await goHome44();
     await clickSel('#homeGrid [data-class-tab="' + CLS44 + '"]');
     await new Promise(r => setTimeout(r, 250));
-    await clickVisible('[data-roster-manage]');
+    await openSettingsDoor('[data-roster-manage]');
     await new Promise(r => setTimeout(r, 250));
     const door44 = await evalJs(`(function(){
       var rows = document.querySelectorAll('#rosterList .roster-row');

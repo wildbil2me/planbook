@@ -11,7 +11,7 @@
 import { measureIn } from './touch-targets.mjs';
 
 export async function run(h) {
-const { PORT, check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, seam } = h;
+const { PORT, check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, seam, openSettingsDoor } = h;
 
 /* ───────── the score entry grid (WO-3.5) ─────────
  *
@@ -644,7 +644,7 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           The disappearing half first, which is the one the work order warns a build can pass while
           getting wrong.
         */
-        await clickSel('header [data-class-manage]');
+        await openSettingsDoor('[data-class-manage]');
         await new Promise(r => setTimeout(r, 350));
         await clickSel('#classList [data-category-manage="c_wo35"]');
         await new Promise(r => setTimeout(r, 350));

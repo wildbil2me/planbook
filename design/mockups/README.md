@@ -961,8 +961,16 @@ whose Rulings carry every answer.
 ## What the drawing proposes
 
 Styled in [`proposed-settings.css`](proposed-settings.css): § SETTINGS HUB, § SETTINGS BACK and
-§ ROSTER WHO, all bound for `src/shell.css` and none lifted yet. `mockup.css` gained `.mk-stage`, which
-pins a dialog's overlay to its own frame, and `.mk-row`, two dialogs side by side.
+§ ROSTER WHO, all bound for `src/shell.css`. `mockup.css` gained `.mk-stage`, which pins a dialog's
+overlay to its own frame, and `.mk-row`, two dialogs side by side.
+
+**§ SETTINGS HUB landed 2026-10-10 with WO-1.71**, class for class and value for value, together with
+the orange rule on `.header` and items 1–5 below. One rule departs from the drawing: the switch's
+input, 0x0 at opacity 0 here and in Roll Call!, ships laid over the track and drawn as nothing by
+`appearance: none`, so the app's one global focus ring lands around the track instead of on nothing
+— the reason is at its point of departure in `src/shell.css`.
+§ SETTINGS BACK (WO-1.72) and § ROSTER WHO (WO-1.74) are still pending, and Sync at phone width is
+still WO-1.73's to measure.
 
 [`settings-hub.html`](settings-hub.html):
 

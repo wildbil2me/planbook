@@ -13,7 +13,7 @@ import { INSTALL_CLASS_READER } from './classes-terms.mjs';
 
 export async function run(h) {
 const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, seam,
-  classesBooted, classSeam } = h;
+  classesBooted, classSeam, openSettingsDoor } = h;
 
 /* ───────────────── assignments and the screen switcher (WO-3.3) ─────────────────
  *
@@ -236,7 +236,7 @@ if (!classesBooted || !classSeam || !assignSeam) {
     */
     let planted = [];
     if (src.roster === 0) {
-      await clickSel('#headerRightControls [data-roster-manage]');
+      await openSettingsDoor('[data-roster-manage]');
       for (const who of ['Coverage, Ada', 'Coverage, Bo']) {
         await evalJs('(function(){ document.getElementById("rosterNewInput").value = '
           + JSON.stringify(who) + '; return 1; })()');
@@ -537,7 +537,7 @@ if (!classesBooted || !classSeam || !assignSeam) {
     let termTabs = await evalJs(TERM_NAV);
     let plantedTerm = '';
     if (termTabs.length < 2) {
-      await clickSel('header [data-class-manage]');
+      await openSettingsDoor('[data-class-manage]');
       await clickSel('#classList [data-term-manage="' + src.id + '"]');
       await clickSel('#termsModal [data-term-add]');
       await clickSel('#termsModal [data-modal-close]');
@@ -597,7 +597,7 @@ if (!classesBooted || !classSeam || !assignSeam) {
     /* Distinctive on purpose: the claim below is that no OTHER class has a category of this name,
        and a name a teacher might plausibly reuse would make that an accident rather than a fixture. */
     const PROBE_CAT = 'Copy probe — labs (WO-3.3)';
-    await clickSel('header [data-class-manage]');
+    await openSettingsDoor('[data-class-manage]');
     await clickSel('#classList [data-category-manage="' + src.id + '"]');
     await evalJs(`(function(){
       var f = document.querySelectorAll('#categoryList .category-name-input')[${catRowIndex}];
@@ -727,7 +727,7 @@ if (!classesBooted || !classSeam || !assignSeam) {
       come out wearing THAT class's id for that name. This is the half no run in this tree exercised
       before today.
     */
-    await clickSel('header [data-class-manage]');
+    await openSettingsDoor('[data-class-manage]');
     await clickSel('#classList [data-category-manage="' + dst.id + '"]');
     await clickSel('#categoriesModal [data-category-add]');
     await evalJs(`(function(){
@@ -839,7 +839,7 @@ if (!classesBooted || !classSeam || !assignSeam) {
        class's row, and Remove on the category that holds one real assignment. "1 assignment" is the
        claim; an unguarded count says 2 and the teacher agrees to move work in a class the dialog
        does not name (to destroy it, before WO-3.43). */
-    await clickSel('header [data-class-manage]');
+    await openSettingsDoor('[data-class-manage]');
     await clickSel('#classList [data-category-manage="' + src.id + '"]');
     await clickSel('#categoryList .category-row:nth-child(' + (catRowIndex + 1) + ') [data-category-remove]');
     const removalCount = await evalJs(`(function(){

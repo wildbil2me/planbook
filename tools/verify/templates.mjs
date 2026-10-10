@@ -19,7 +19,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, clickSel, KILL_ANIM, waitForBoot, seam, openSettingsDoor } = h;
 
 /*
  * ───────── message templates (WO-5.2) ─────────
@@ -75,7 +75,7 @@ if (!seam) {
   }
   /* The door a teacher uses, and the only one there is. */
   async function openTemplates() {
-    await clickSel('header [data-templates-open]');
+    await openSettingsDoor('[data-templates-open]');
     await new Promise(r => setTimeout(r, 300));
   }
   /* Typing, as the app hears it: the value goes in and an `input` event bubbles to the one

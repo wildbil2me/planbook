@@ -13,7 +13,7 @@ import { INSTALL_ROSTER_READER } from './roster-contacts.mjs';
 
 export async function run(h) {
 const { check, skip, readLocalStore, oursIn, foreignIn, storeDetail, send, evalJs, has, clickSel,
-  KILL_ANIM, INSTALL_WALKER, dateResetOn, waitForBoot, seam } = h;
+  KILL_ANIM, INSTALL_WALKER, dateResetOn, waitForBoot, seam, openSettingsDoor } = h;
 
 /* ───────────────── support details ─────────────────
  *
@@ -125,7 +125,7 @@ if (!supportSeam) {
       });
       return { tab: best, students: n }; })()`);
     if (fullest.tab >= 0) await clickSel('[data-class-tab]', fullest.tab);
-    await clickSel('header [data-roster-manage]');
+    await openSettingsDoor('[data-roster-manage]');
     return fullest;
   };
   const typeField = (id, text) => evalJs('(function(){ var e = document.getElementById('

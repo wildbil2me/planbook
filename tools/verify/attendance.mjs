@@ -13,7 +13,7 @@ import { passes } from './attendance-passes.mjs';
 
 export async function run(h) {
 const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, seam,
-  residue } = h;
+  residue, openSettingsDoor } = h;
 
 /* ───────────────── attendance ─────────────────
  *
@@ -644,7 +644,7 @@ if (!attBooted || !attSeam) {
     section's fixture and handing it back afterwards is a state juggle that fails silently.
   */
   await closeAll();
-  await clickSel('header [data-class-manage]');
+  await openSettingsDoor('[data-class-manage]');
   await evalJs('(function(){ document.getElementById("classNewInput").value = "Study Hall";'
     + ' return 1; })()');
   await clickSel('[data-class-create] button[type="submit"]');
@@ -1498,7 +1498,7 @@ if (!attBooted || !attSeam) {
   const second = ids[3];
   await closeAll();
   await clickSel('[data-class-tab]', 3);
-  await clickSel('header [data-roster-manage]');
+  await openSettingsDoor('[data-roster-manage]');
   /* Deliberately not in alphabetical order: the grid's own order is the claim below. */
   for (const name of ['Zeta, Ada', 'Alpha, Bo', 'Mid, Cy']) {
     await evalJs('(function(){ var e = document.getElementById("rosterNewInput"); e.value = '
@@ -1530,7 +1530,7 @@ if (!attBooted || !attSeam) {
   */
   const beforeLate = await read();
   await closeAll();
-  await clickSel('header [data-roster-manage]');
+  await openSettingsDoor('[data-roster-manage]');
   await evalJs('(function(){ var e = document.getElementById("rosterNewInput");'
     + ' e.value = "Late, Ida"; return 1; })()');
   await clickSel('[data-roster-create] button[type="submit"]');

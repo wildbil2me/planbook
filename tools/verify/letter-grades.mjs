@@ -12,7 +12,7 @@ import { INSTALL_CLASS_READER } from './classes-terms.mjs';
 
 export async function run(h) {
 const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, seam,
-  classesBooted, classSeam } = h;
+  classesBooted, classSeam, openSettingsDoor } = h;
 
 /* ───────────────── letter grades (WO-3.2) ─────────────────
  *
@@ -155,7 +155,7 @@ if (!classesBooted || !classSeam || !scaleSeam) {
   await evalJs("['categoryRemoveModal','categoriesModal','termsModal','classesModal']"
     + ".forEach(function(m){ window.planbook.closeModal(m); }); 1");
 
-  await clickSel('header [data-class-manage]');
+  await openSettingsDoor('[data-class-manage]');
   await clickSel('#classesModal [data-letter-scale]');
   const seededScale = await evalJs('window.__scale()');
   /*
@@ -452,7 +452,7 @@ if (!classesBooted || !classSeam || !scaleSeam) {
   await evalJs(INSTALL_WALKER);
   await evalJs(INSTALL_CLASS_READER);
   await evalJs(INSTALL_SCALE_READER);
-  await clickSel('header [data-class-manage]');
+  await openSettingsDoor('[data-class-manage]');
   await clickSel('#classesModal [data-letter-scale]');
   const reloadedScale = await evalJs('window.__scale()');
   check('the bands survive a reload — the document scale and the one class override both come back out of IndexedDB',

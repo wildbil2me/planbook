@@ -111,7 +111,7 @@ export const INSTALL_CLASS_READER = `(function(){
 
 export async function run(h) {
 const { ROOT, check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, dateResetOn,
-  waitForBoot, seam } = h;
+  waitForBoot, seam, openSettingsDoor } = h;
 
 /* ───────────────── classes & terms ─────────────────
  *
@@ -227,7 +227,7 @@ if (!classesBooted || !classSeam) {
      stay those characters rather than become bold. */
   const NEW_CLASSES = ['Period 1 — Biology', 'Period 2 — Chemistry', 'Period 4 — Physics',
     'Honors Bio <b>lab</b>', 'AP Bio', 'Homeroom'];
-  await clickSel('header [data-class-manage]');
+  await openSettingsDoor('[data-class-manage]');
   for (const name of NEW_CLASSES) {
     await evalJs('(function(){document.getElementById("classNewInput").value='
       + JSON.stringify(name) + ';return 1})()');
@@ -779,7 +779,7 @@ if (!classesBooted || !classSeam) {
     });
     await s.flush(); return 1; })()`);
 
-  await clickSel('header [data-class-manage]');
+  await openSettingsDoor('[data-class-manage]');
   await clickSel('#classList .class-row:nth-child(7) [data-class-archive]');
   const archived = await evalJs('window.__cls()');
   check('archiving takes the class off the tab bar and destroys nothing at all',
@@ -954,7 +954,10 @@ if (!classesBooted || !classSeam) {
                addText: add ? add.textContent : '',
                dividerHidden: document.getElementById('headerDivider').classList.contains('hidden'),
                navButtons: document.getElementById('termNav').querySelectorAll('button').length,
-               manageReachable: !!document.querySelector('#headerRightControls [data-class-manage]')
+               /* Since WO-1.71 the manager's second door is behind the header's gear, in Settings:
+                  reachable means the gear is shown and the door is in the dialog it opens. */
+               manageReachable: !!document.querySelector('#headerRightControls [data-settings-open]')
+                 && !!document.querySelector('#settingsModal [data-class-manage]')
                  && !document.getElementById('headerRightControls').classList.contains('hidden'),
                selectedClass: window.planbook.classes.getSelectedClassId(),
                selectedTerm: window.planbook.classes.getSelectedTermId(),
@@ -1212,7 +1215,7 @@ if (!classesBooted || !classSeam) {
      section: the measurement above was taken on the grid, and the check under the archive is about
      what the SWITCHER shows once a class has left it. */
   await toClassView();
-    await clickSel('header [data-class-manage]');
+    await openSettingsDoor('[data-class-manage]');
   }
 
   /* One class is left archived on purpose. The delete confirm has nothing to open from otherwise,

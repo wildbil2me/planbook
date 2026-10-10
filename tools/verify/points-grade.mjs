@@ -13,7 +13,7 @@
  */
 
 export async function run(h) {
-const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, waitForBoot } = h;
+const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, waitForBoot, openSettingsDoor } = h;
 
 /* ───────── a points class on every screen (WO-3.30) ─────────
  *
@@ -1057,7 +1057,7 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
         saidFiled: saidFiled, saidLoose: saidLoose }));
 
     /* ── and the class copied, through the real Copy button ── */
-    await clickSel('header [data-class-manage]');
+    await openSettingsDoor('[data-class-manage]');
     await new Promise(r => setTimeout(r, 300));
     await clickSel('[data-class-copy="' + C4 + '"]');
     await new Promise(r => setTimeout(r, 250));

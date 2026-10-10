@@ -21,7 +21,7 @@ import { nodeToday, nodeNow, nodeColumns, nodeWeekdayAhead, nodeDaysFromToday, t
   firstClearDayFrom, nextWeekday } from './lib-dates.mjs';
 
 export async function passes(h, ctx) {
-const { ROOT, check, skip, send, evalJs, has, clickSel, openCalendarPanel, dateResetOn } = h;
+const { ROOT, check, skip, send, evalJs, has, clickSel, openCalendarPanel, dateResetOn, openSettingsDoor } = h;
 const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, first, others, seen,
   absent, finished, three, noted, dismissed, taken, untaken, dropped, week, apart, paged, marked,
   home, typed, searched, sorted, second, day, back, reset, passClass, passRoster, outA, outB,
@@ -620,6 +620,16 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
     restoring `!== false`, or the key drifting back to `soundsOn`, would be invisible to every other
     check in this section once the tap below has run.
   */
+  /* THE REAL CONTROL, SINCE WO-1.71: the gear, then the Sound alerts row in Settings — the whole row
+     is the switch's <label>, so the tap lands on the row as a thumb would — and then Settings shut
+     again so the registry behind it is what the next read sees. Until WO-1.71 this was one tap on
+     `#soundsBtn` in the header. */
+  async function flipSoundSwitch() {
+    await clickSel('#settingsBtn');
+    await clickSel('#settingsModal .hub-pref');
+    await evalJs(`(function(){ var m = document.getElementById('settingsModal');
+      if (m && !m.classList.contains('hidden')) window.planbook.closeModal(m); return 1; })()`);
+  }
   const soundDefault = await evalJs(`(function(){
     return { on: window.planbook.alertSound.soundsOn(),
              stored: localStorage.getItem('planbook_alertSoundOn'),
@@ -629,7 +639,7 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
     'soundsOn() = ' + soundDefault.on + ', planbook_alertSoundOn = '
       + JSON.stringify(soundDefault.stored) + ', the retired planbook_soundsOn = '
       + JSON.stringify(soundDefault.legacy));
-  await clickSel('#soundsBtn');
+  await flipSoundSwitch();
 
   await hush();
   await clickSel('[data-pass-issue="' + outB + '"][data-pass-type="nurse"]');
@@ -847,8 +857,8 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
   /*
     ── WO-2.29: THE OFF SWITCH, WHICH IS THE OTHER HALF OF SHIPPING A SOUND ──
 
-    Driven through the real control in the header — a teacher proctoring a test has one tap and this
-    is it — and then two more thresholds are crossed, the first with the sound off and the second
+    Driven through the real control — the Sound alerts switch in Settings since WO-1.71, the header's
+    speaker before that — and then two more thresholds are crossed, the first with the sound off and the second
     with it back on. What must survive the mute is everything that is NOT the tone: the sentence, the
     card colour and the level on the record. The preference silences an alert's loudest channel; it
     does not turn the alert off, and a build that took the announcement with it fails here.
@@ -859,25 +869,23 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
     of the log in Node rather than assuming any of them, which is what makes that safe.
   */
   const mutedBefore = await soundLog();
-  await clickSel('#soundsBtn');
+  await flipSoundSwitch();
   const muteChrome = await evalJs(`(function(){
-    var b = document.getElementById('soundsBtn');
+    var b = document.getElementById('soundsSwitch');
     if (!b) return null;
-    return { pressed: b.getAttribute('aria-pressed'), lit: b.classList.contains('active'),
-             label: b.getAttribute('aria-label') || '',
-             slashes: b.querySelectorAll('[data-sound-icon] line').length,
+    return { checked: b.checked, on: window.planbook.alertSound.soundsOn(),
+             inHeader: !!document.querySelector('header [data-sounds-toggle]'),
              stored: localStorage.getItem('planbook_alertSoundOn'),
              inDoc: JSON.stringify(window.planbook.store.getDoc()).indexOf('alertSoundOn') >= 0 }; })()`);
-  check('one tap on the header switch mutes the alert, says so on the button, and writes a `planbook_` preference and nothing in the year document',
-    !!muteChrome && muteChrome.pressed === 'true' && muteChrome.lit === true
-      && /OFF/.test(muteChrome.label) && muteChrome.slashes === 2
+  check('one tap on the Sound alerts switch in Settings mutes the alert, the switch reads off, and it writes a `planbook_` preference and nothing in the year document (WO-1.71: the switch, not a header button)',
+    !!muteChrome && muteChrome.checked === false && muteChrome.on === false
+      && muteChrome.inHeader === false
       && muteChrome.stored === 'false' && muteChrome.inDoc === false,
-    muteChrome ? 'aria-pressed = ' + muteChrome.pressed + ', lit = ' + muteChrome.lit
-      + ', slash strokes on the icon = ' + muteChrome.slashes
+    muteChrome ? 'switch checked = ' + muteChrome.checked + ', soundsOn() = ' + muteChrome.on
+      + ', a sound control in the header = ' + muteChrome.inHeader
       + ', planbook_alertSoundOn = ' + JSON.stringify(muteChrome.stored)
       + ', the string "alertSoundOn" anywhere in the year document = ' + muteChrome.inDoc
-      + ', label = ' + JSON.stringify(muteChrome.label)
-      : 'there is no #soundsBtn in the header');
+      : 'there is no #soundsSwitch on the page');
 
   await hush();
   const woundMute = await windBack(outB, 5.2);
@@ -907,7 +915,7 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
      written around an absence is always one step away from. It also leaves the browser with the
      sound ON, which is the default every fixture after this one is entitled to. */
   const unmutedBefore = await soundLog();
-  await clickSel('#soundsBtn');
+  await flipSoundSwitch();
   await hush();
   const woundBack = await windBack(outB, 5.2);
   await wakeUp();
@@ -915,9 +923,8 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
   const atUnmuted = await read();
   const unmutedTones = (await soundLog()).slice(unmutedBefore.length);
   const soundBackOn = await evalJs(`(function(){
-    var b = document.getElementById('soundsBtn');
-    return { pressed: b ? b.getAttribute('aria-pressed') : '', lit: !!b && b.classList.contains('active'),
-             slashes: b ? b.querySelectorAll('[data-sound-icon] line').length : -1,
+    var b = document.getElementById('soundsSwitch');
+    return { checked: !!b && b.checked, on: window.planbook.alertSound.soundsOn(),
              stored: localStorage.getItem('planbook_alertSoundOn') }; })()`);
   check('and turning it back on is the same one tap: the next threshold sounds again, at the second pattern',
     !!woundBack.now && unmutedTones.length === 1
@@ -925,10 +932,10 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
       && unmutedTones[0].oscillators === 12 && unmutedTones[0].first === 700
       && unmutedTones[0].error === ''
       && (atUnmuted.openPasses.filter((p) => p.studentId === outB)[0] || {}).alerted === 2
-      && soundBackOn.pressed === 'false' && soundBackOn.lit === false && soundBackOn.slashes === 0
+      && soundBackOn.checked === true && soundBackOn.on === true
       && soundBackOn.stored === 'true',
-    'what the tick asked for = ' + JSON.stringify(unmutedTones) + ', aria-pressed = '
-      + soundBackOn.pressed + ', lit = ' + soundBackOn.lit + ', slash strokes = ' + soundBackOn.slashes
+    'what the tick asked for = ' + JSON.stringify(unmutedTones) + ', switch checked = '
+      + soundBackOn.checked + ', soundsOn() = ' + soundBackOn.on
       + ', planbook_alertSoundOn = ' + JSON.stringify(soundBackOn.stored));
 
   /*
@@ -2040,7 +2047,7 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
       + ' active class(es), this one first = ' + (fallback30.first === passClass)
       + ', the one archiving would fall to = ' + JSON.stringify(fallback30.next));
 
-  await clickSel('header [data-class-manage]');
+  await openSettingsDoor('[data-class-manage]');
   await hush();
   await clickSel('#classList [data-class-archive="' + passClass + '"]');
   const refused30 = await evalJs(`(function(){
@@ -2096,7 +2103,7 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
     no refusal in it the class really is archived by now, and everything below would be driving a
     class that is off the bar. It is defensive plumbing, not a claim — the claims are the checks.
   */
-  await clickSel('header [data-class-manage]');
+  await openSettingsDoor('[data-class-manage]');
   if (await has('#classArchivedList [data-class-restore="' + passClass + '"]')) {
     await clickSel('#classArchivedList [data-class-restore="' + passClass + '"]');
   }
@@ -2105,7 +2112,7 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
   if (await has('[data-pass-cancel="' + outA + '"]')) {
     await clickSel('[data-pass-cancel="' + outA + '"]');
   }
-  await clickSel('header [data-class-manage]');
+  await openSettingsDoor('[data-class-manage]');
   await clickSel('#classList [data-class-archive="' + passClass + '"]');
   const lifted30 = await evalJs(`(function(){
     var id = ${JSON.stringify(passClass)};

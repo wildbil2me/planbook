@@ -13,6 +13,21 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The header keeps what is used in class, and the rest goes behind a gear — 2026-10-10
+
+WO-1.71, owner-directed, from `design/mockups/settings-hub.html`. Shell cache v178 → v179.
+
+- **The header's top row reads Backup · Sync · Presentation · Year · About**, and the row below
+  holds the class tabs, the terms and one gear. Roll Call!'s orange rule now runs under the header
+  on every screen.
+- **The gear opens Settings**: Roster and contacts (naming the class it will open on), Classes and
+  terms, Message templates, Your details (now with a person icon), and Sound alerts as a switch.
+  The + tab still adds a class in one tap.
+- The sound control left the header, so a silenced device no longer shows it at a glance. An overdue
+  pass is still announced and still tints its card.
+- `tools/verify/settings-hub.mjs` is new; 1927 harness checks green, and a fresh verifier's three
+  mutations all bit. Read on the iPad by the owner the same day, upright and lying down.
+
 ### The self-check proves the other half of the shared-box excuse — 2026-10-10
 
 WO-1.70, booked out of WO-1.68's verifier. Tooling only; nothing in `src/` moved.

@@ -31,7 +31,8 @@
   that constructs, resumes or closes an AudioContext.
 
   WHAT THIS FILE OWNS AND WHAT IT DELIBERATELY DOES NOT. It owns the tones, the unlock, the
-  `soundsOn` preference and the header control that flips it. It owns NO part of when an alert is
+  `soundsOn` preference and the control that flips it — the header button until WO-1.71, the Sound
+  alerts switch inside Settings since. It owns NO part of when an alert is
   due: src/passes.js decides what `alerted` means and src/attendance.js decides that a threshold was
   crossed, and this module is asked for a tone at a level. The pass code should ask for an alert, not
   own an oscillator, which is the whole reason this is a file rather than twenty lines in
@@ -50,25 +51,13 @@
 import { getPref, setPref } from './prefs.js';
 import { announce } from './live-region.js';
 
-const BUTTON_ID = 'soundsBtn';
-const ICON_SELECTOR = '[data-sound-icon]';
-
-/* The button's own label, which is also its tooltip. It says the state AND what the tap does, for
-   the reason src/presentation.js's pair does: a label that is only the control's name leaves a
-   teacher about to start a test guessing which way round the switch is. */
-const ON_LABEL = 'Alert sounds are on. Tap to silence the overdue-pass alert.';
-const OFF_LABEL = 'Alert sounds are OFF — an overdue pass will not make a sound. Tap to turn them back on.';
-
-/* Feather's `volume-2` and `volume-x`, at the 24x24 / stroke 2.2 the other header icons are drawn
-   at. The icon carries the state here, where presentation mode's carries only the mode: a speaker
-   with a slash through it means muted whichever way you read it, and the objection src/presentation.js
-   raises to a crossed-out eye — that it reads as "things are hidden" on a button that is currently
-   hiding nothing — does not apply to a slash that is only DRAWN while the thing is off. */
-const ICON_ON = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>'
-  + '<path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>'
-  + '<path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>';
-const ICON_OFF = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>'
-  + '<line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
+/* The Sound alerts switch in Settings (WO-1.71) — a checkbox inside Roll Call!'s `.toggle-switch`,
+   CHECKED MEANS THE SOUND IS ON. It replaced a header button that carried the state three ways — a
+   speaker icon that gained a slash, the on-dark fill, and `aria-pressed` with a label that said the
+   state and the tap — and a switch carries it in one: `checked`, which a screen reader reads out and
+   the track draws. Its name is the row's own <label> text in index.html, so there is no label here
+   to keep in step with it. */
+const SWITCH_ID = 'soundsSwitch';
 
 /* ── THE PREFERENCE ──
 
@@ -94,8 +83,8 @@ const ICON_OFF = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>'
    NOTHING ELSE ABOUT THE ALERT MOVED. The tint, the announcement and the level written on the pass
    are all upstream of this and are exactly what they were with the sound on — the check at
    tools/verify-shell.mjs's "with the sound off the tone is not played" is the one that says so. The
-   speaker in the header still turns it on for a device, which is what keeps this a withdrawal rather
-   than a deletion: WO-2.29's and WO-2.31's machinery is all still here and still under test. */
+   Sound alerts switch in Settings (the header's speaker until WO-1.71) still turns it on for a
+   device, which is what keeps this a withdrawal rather than a deletion: WO-2.29's and WO-2.31's machinery is all still here and still under test. */
 export function soundsOn() {
   return getPref('alertSoundOn') === true;
 }
@@ -509,30 +498,33 @@ export function playOverdueAlert(level) {
 
   Read back from soundsOn() rather than from the value just written, which is this feature's whole
   error path and is src/presentation.js's rule applied to the opposite failure: localStorage can
-  refuse a write (Safari in a private window throws on access), and a button that showed itself
-  muted anyway would promise a silence the next alert would break. Refused, the button does not
-  move.
+  refuse a write (Safari in a private window throws on access), and a switch that showed itself off
+  anyway would promise a silence the next alert would break. Refused, the switch goes back to where
+  the preference is — and since WO-1.71 that is load-bearing in a way it was not for a button: a
+  checkbox flips ITSELF on the tap, before this runs, so writing `checked` from the preference here
+  is what undoes a flip that did not take.
 
   NO STRIP UNDER THE HEADER, which presentation mode has and this deliberately does not. That strip
   exists because the cost of forgetting presentation mode is a disclosure to a room; the cost of
   forgetting this one is a missed tone on a screen that is still tinted and a sentence that is still
-  announced. A second permanent band across every screen is more than that is worth — and the muted
-  icon is on the glass either way.
+  announced. A second permanent band across every screen is more than that is worth.
+
+  THAT ARGUMENT USED TO END "and the muted icon is on the glass either way", AND FROM WO-1.71 IT IS
+  NOT. The switch is behind the gear, so a silenced device shows nothing in the header at all. What
+  remains on the glass is the tinted card and the announced sentence — which is the half of the alert
+  that was never a preference — and the owner's call (2026-10-09) is that this is enough: the sound
+  is set and forgotten, not flipped mid-period. Recorded here, where the premise used to be, so the
+  next reader does not restore a header icon on the strength of the old sentence.
 */
 export function refreshSoundChrome() {
   const on = soundsOn();
-  const button = document.getElementById(BUTTON_ID);
-  if (!button) return;
-  button.classList.toggle('active', !on);
-  button.setAttribute('aria-pressed', on ? 'false' : 'true');
-  button.setAttribute('aria-label', on ? ON_LABEL : OFF_LABEL);
-  button.title = on ? ON_LABEL : OFF_LABEL;
-  const icon = button.querySelector(ICON_SELECTOR);
-  if (icon) icon.innerHTML = on ? ICON_ON : ICON_OFF;
+  const input = document.getElementById(SWITCH_ID);
+  if (!input) return;
+  input.checked = on;
 }
 
 /*
-  Flip it. Announced, like every other header switch, and what is announced is the state — a teacher
+  Flip it. Announced, like every other switch here, and what is announced is the state — a teacher
   who has just turned the sound off is entitled to hear that the sentence and the card colour are
   still there, because that is the difference between a quieter alert and no alert.
 

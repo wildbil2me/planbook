@@ -12,7 +12,7 @@ import { INSTALL_CLASS_READER } from './classes-terms.mjs';
 
 export async function run(h) {
 const { check, skip, send, evalJs, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, seam,
-  classesBooted, classSeam } = h;
+  classesBooted, classSeam, openSettingsDoor } = h;
 
 /* ───────────────── categories & weights (WO-3.1) ─────────────────
  *
@@ -99,7 +99,7 @@ if (!classesBooted || !classSeam || !catSeam) {
       var b = r && r.querySelector('[data-category-manage]');
       return b ? b.getAttribute('data-category-manage') : ''; })()`);
 
-  await clickSel('header [data-class-manage]');
+  await openSettingsDoor('[data-class-manage]');
 
   /*
     Row 1 is the class the backup section restored — written by a build older than this work order,

@@ -19,7 +19,7 @@
 import { nodeDaysFromToday } from './lib-dates.mjs';
 
 export async function run(h) {
-const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, waitForBoot } = h;
+const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, waitForBoot, openSettingsDoor } = h;
 
 /* ───────── the categories editor offers total points (WO-3.31) ─────────
  *
@@ -253,7 +253,7 @@ const toScores = async (id) => {
 /* The editor, through the class manager's own Categories button — the door with no term in view,
    which is the one the work order says the open term has to be resolved for. */
 const openEditor = async (id) => {
-  await clickSel('header [data-class-manage]');
+  await openSettingsDoor('[data-class-manage]');
   await new Promise(r => setTimeout(r, 200));
   await clickSel('#classList [data-category-manage="' + id + '"]');
   await new Promise(r => setTimeout(r, 200));

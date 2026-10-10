@@ -89,7 +89,7 @@ input[type="date"] { -webkit-appearance: none; appearance: none; }
 button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class-action-btn,
 .install-banner-dismiss, .hdr-year-btn, .year-row, .backup-nag-btn, .loading-error-btn,
 .toggle-btn, .support-dot, .hdr-mode-btn, .hdr-sync-btn, .presentation-strip-btn,
-.update-banner-btn, .log-door, .log-quick, .log-kind, .search-clear {
+.update-banner-btn, .log-door, .log-quick, .log-kind, .search-clear, .hub-door, .hub-pref {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -150,6 +150,12 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   display: flex; flex-direction: column;
   box-shadow: 0 2px 12px rgba(0,0,0,0.3);
   padding-top: env(safe-area-inset-top, 0px);
+  /* THE ORANGE RULE, LIFTED ON PURPOSE (WO-1.71, ruling 3). In Roll Call! it is the collapsed
+     `#activePassBanner`'s own `border-bottom: 2px solid #e67e22` showing through at zero height
+     (its src/dashboard.html ~321) — an accident that became that app's signature. Here it is the
+     header's own, so it is under the header on every screen and on no dialog, which draws its own
+     navy header and none of this. */
+  border-bottom: 2px solid #e67e22;
 }
 .header-top {
   display: flex; align-items: center; justify-content: space-between;
@@ -780,6 +786,77 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
    make a fix portable between the two apps, so the name keeps its meaning and only the
    top margin is added. */
 .modal-actions { display: flex; gap: 8px; margin-top: 18px; margin-bottom: 4px; }
+
+/* ── SETTINGS HUB ── (WO-1.71, lifted from design/mockups/proposed-settings.css § SETTINGS HUB)
+
+   The contents of the dialog behind the header's gear: three groups, four doors and one switch.
+   Drawn in design/mockups/settings-hub.html, frames B and F. The dialog itself is the stock 480px
+   `.modal-panel` and is not restyled here — four doors and a switch is not Roll Call!'s two-column
+   `.config-modal-panel`, which holds thirty settings.
+
+   A DOOR is a whole-row button — icon, name, one line of what is behind it, chevron — and it carries
+   the SAME `data-*` hook the header icon it replaced carried, so src/shell.js's routing did not move.
+   52px tall at every pointer, so it is a thumb-sized target before the coarse block says a word. */
+.hub-section + .hub-section { margin-top: 16px; }
+.hub-door {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  min-height: 52px; padding: 8px 4px; border: none; background: none;
+  border-bottom: 1px solid #f0f2f5; cursor: pointer; text-align: left; font-family: inherit;
+}
+.hub-door:last-child { border-bottom: none; }
+.hub-door:hover { background: #f7f8fb; }
+.hub-door-icon {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #eef2ff; color: #5b6fcc;
+}
+.hub-door-text { flex: 1; min-width: 0; }
+.hub-door-name { display: block; font-size: 13px; font-weight: 700; color: #1a1a2e; }
+.hub-door-hint { display: block; font-size: 12px; color: #8a9bb0; margin-top: 1px; }
+/* The open class, named on the roster door (frame F, option 2, the owner's ruling of 2026-10-10).
+   The interactive indigo, because it is the one part of the line that changes with where you are.
+   src/shell.js's openSettings() writes it from getSelectedClass() every time the dialog opens. */
+.hub-door-class { font-weight: 700; color: #5b6fcc; }
+.hub-door-chev { color: #b0bac8; font-size: 18px; flex-shrink: 0; }
+
+/* A preference set in place. The whole row is the <label>, so the row is the target and the
+   switch is only where the state is drawn. Roll Call!'s `.config-row` at its own hairline. */
+.hub-pref {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 52px; padding: 8px 4px; cursor: pointer;
+}
+.hub-pref-name { display: block; font-size: 13px; color: #3a4050; }
+.hub-pref-hint { display: block; font-size: 12px; color: #8a9bb0; margin-top: 1px; }
+
+/* Roll Call!'s switch, value for value (its src/dashboard.html ~723-735), BUT FOR ITS INPUT — and
+   Checked means the sound is ON, which is what that app's Settings row means by it too.
+
+   THE ONE DEPARTURE, and it is this stylesheet's focus rule beating Roll Call!'s silence. Over there
+   the input is `opacity: 0; width: 0; height: 0`: driven only by a mouse, nobody noticed that the
+   focus ring of a 0x0, fully transparent element draws nothing. Here the one global `:focus-visible`
+   rule above is the only focus rule there is (tools/verify/focus-ring.mjs holds it to exactly one),
+   so a second ring on the track was not available — and an `opacity: 0` input takes its own outline
+   down with it. So the input is laid exactly over the track instead, drawn as nothing by
+   `appearance: none` and a transparent fill rather than by opacity, and the global ring lands on its
+   box: around the track, where a keyboard user is looking. It is still the input that takes the tap,
+   the focus and the name, and `:checked + .toggle-track` still draws the state. */
+.toggle-switch { position: relative; display: inline-flex; align-items: center; flex-shrink: 0; }
+.toggle-switch input {
+  -webkit-appearance: none; appearance: none; position: absolute; inset: 0; z-index: 1;
+  width: 100%; height: 100%; margin: 0; border: none; border-radius: 11px;
+  background: transparent; cursor: pointer;
+}
+.toggle-track {
+  display: inline-block; width: 40px; height: 22px; background: #cdd0d8;
+  border-radius: 11px; transition: background 0.2s; position: relative;
+}
+.toggle-switch input:checked + .toggle-track { background: #27ae60; }
+.toggle-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 16px; height: 16px; background: #fff; border-radius: 50%;
+  transition: left 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.toggle-switch input:checked + .toggle-track .toggle-thumb { left: 21px; }
 
 /* ── ABOUT: THE WAY OUT TO THE TWO PUBLISHED DOCUMENTS ── */
 /* THE FIRST ANCHORS THIS APP HAS EVER HAD. Before these, `index.html` contained zero <a> tags —
@@ -1982,11 +2059,17 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
      the two gaps are the cheapest thing in the row — the alternative was taking the 📓 out at phone
      width, and WO-1.9 already spent the title to buy its own button (see the 640px block). 8→6 here
      over four gaps and 12→8 on `.header-top` frees 12px, which leaves ~8px of slack rather than an
-     overflow. `tools/verify-shell.mjs` measures that width at 390x844 on every run. */
+     overflow. `tools/verify-shell.mjs` measures that width at 390x844 on every run.
+
+     WO-1.71 TOOK THAT FOURTH CONTROL BACK OUT — the sound switch is in Settings now — and left these
+     gaps where they are, on purpose: whether the ~50px it freed is enough for the sync button at
+     phone width is WO-1.73's measurement, and re-spacing the row here would move the figure that
+     work order is booked to take. */
   .header-actions { gap: 6px; }
   .hdr-icon-btn { width: 44px; height: 44px; border-radius: 10px; }
   .hdr-icon-btn svg { width: 18px; height: 18px; }
-  /* Both mode buttons take their 44x44 from `.hdr-icon-btn` above, which they also wear. Named here
+  /* The mode button takes its 44x44 from `.hdr-icon-btn` above, which it also wears (there were
+     two until WO-1.71 moved the sound switch into Settings). Named here
      anyway, with the radius the coarse pass gives every icon button, so that the control appears in
      this block by name — the rule this stylesheet's own header states is that every interactive
      control does, and a control that is only covered by another class's rule is a control the next
@@ -2002,6 +2085,14 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
      it takes no pointer events — and has no floor to state. */
   .hdr-about-btn { width: 44px; height: 44px; border-radius: 10px; }
   .hdr-sync-badge { top: -4px; right: -4px; }
+  /* WO-1.71's controls, in the same pass that adds them. The gear is a `.hdr-icon-btn` and takes
+     its 44x44 from the rule above — it has no class of its own to name. The doors and the switch
+     row in Settings are 52px tall at every pointer (§ SETTINGS HUB), so what they are named here
+     with is that same floor, restated so the control appears in this block by its own name, and the
+     larger type the drawing's § TOUCH gives them. The switch's 40x22 track is not a target: the
+     whole `.hub-pref` row is the <label>, so a tap anywhere on it flips the box. */
+  .hub-door, .hub-pref { min-height: 52px; }
+  .hub-door-name, .hub-pref-name { font-size: 14px; }
   .presentation-strip { font-size: 13.5px; }
   .presentation-strip-btn { padding: 8px 16px; font-size: 13px; min-height: 44px; }
   .update-banner { font-size: 13.5px; }
@@ -2426,6 +2517,12 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
 
     49px lands the class strip at ~114px — seven clear of what that check needs, where it was two
     before. Nothing above 640px moves: an iPad has the room and never reaches this block.
+
+    WO-1.71 PUT THREE OF THOSE FOUR ICONS BEHIND ONE GEAR, which frees ~144px of this row, and left
+    both departures standing. Taking them back is a re-cut of a screen used every period, and that
+    work order's brief was to move controls, not to re-space the row; the class strip simply gets the
+    room. If the divider is ever wanted back at phone width, this paragraph is the measurement to
+    redo, not to cite.
   */
   .hdr-divider { display: none; }
   .hdr-term-nav { min-width: 64px; }

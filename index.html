@@ -336,21 +336,23 @@
         <p id="headerSubtitle">Grades, attendance, and the outreach that follows</p>
       </div>
     </div>
+    <!--
+      THE TOP ROW HOLDS WHAT IS USED IN CLASS, AND THE ORDER IS THE OWNER'S (WO-1.71, ruling 1 of
+      2026-10-09): Backup · Sync · Presentation · Year · About. The rows were first sorted at WO-1.7,
+      WO-1.9 and WO-2.29 by "a switch for the whole app goes on top, a way into the open class goes
+      below", and that sort had drifted — the second row's own comment called its icons "about the
+      class that is open" and the comment on its fourth called them "about no single class". The test
+      that replaced it is USED IN CLASS, OR SET AND FORGET: presentation mode is flipped mid-period and
+      stays here; the alert sound is a preference and went behind the gear in the second row, with the
+      roster, the classes and terms, the teacher's own details and the templates.
+
+      Every control in this row is icon-only bar the year, and that is still a measurement: at 390px
+      under a coarse pointer the title steps aside (src/shell.css's 640px block) and the row is paid
+      for in 44px squares. tools/verify-shell.mjs measures its width on every run.
+    -->
     <div class="header-actions">
-      <!-- The open school year, and the way to change it. It is a button rather than a label
-           because there is always more than one year eventually and the switch has to be
-           reachable at a touch. The visible text is the year alone; the `.sr-only` span in
-           front of it is what makes it read as "School year: 2026-2027" rather than as a
-           number a screen reader has no name for. -->
-      <button class="hdr-year-btn" id="yearButton" data-year-picker aria-haspopup="dialog"
-              title="Choose or start a school year">
-        <span class="sr-only">School year: </span>
-        <span id="yearButtonLabel">—</span>
-        <span aria-hidden="true">▾</span>
-      </button>
-      <!-- Backup & restore, in the header rather than on the shelf: it is the one control in
-           this build that has to still be reachable at a touch when everything else has gone
-           wrong, and the shelf it would otherwise have sat on is gone (WO-1.10). -->
+      <!-- Backup & restore: the one control in this build that has to still be reachable at a
+           touch when everything else has gone wrong (WO-1.10). First in the row since WO-1.71. -->
       <button class="hdr-icon-btn" data-backup-panel title="Backup and restore"
               aria-label="Backup and restore" aria-haspopup="dialog">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -359,21 +361,34 @@
           <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
       </button>
-      <!-- Presentation mode (WO-1.9). In the TOP row rather than beside the roster and class
-           buttons below, because those three are ways into the class that is open and this is a
-           mode for the whole app — the same kind of control as the year and the backup beside it.
+      <!-- THE SYNC BUTTON (WO-7.5): how fresh this device's Google Drive sync is, and the tap that
+           does what that state needs. HIDDEN IN THE MARKUP AND ON EVERY DEVICE THAT HAS NOT OPTED
+           IN — a teacher who never connected Drive sees exactly the header she had before, and
+           src/sync-button.js is the only thing that ever un-hides it. Its label, its icon and its
+           state class are all written there from the state; nothing here is a claim about sync.
+
+           BESIDE BACKUP SINCE WO-1.71 (ruling 1), which replaces WO-7.5's ruling 3 — "last before
+           About" — and keeps the other two. BELOW 640px IT IS STILL NOT LAID OUT AT ALL (ruling 2,
+           src/shell.css's 640px block), and the About button wears the badge instead; whether the
+           row now has room for it at phone width is WO-1.73's measurement, not this one's. The
+           row's width at 390px does not move when it is revealed, and tools/verify/sync-button.mjs
+           measures that it does not.
+
+           Icon-only with a corner badge (ruling 1). The reading lives in the label. -->
+      <button class="hdr-icon-btn hdr-sync-btn hidden" id="syncBtn" data-sync-button
+              title="Google Drive sync" aria-label="Google Drive sync">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-sync-icon></svg>
+        <span class="hdr-sync-badge hidden" data-sync-badge aria-hidden="true"></span>
+      </button>
+      <!-- Presentation mode (WO-1.9). The one switch in this row a teacher flips with a class in the
+           room, which is the whole of why it is in the top row under WO-1.71's test.
 
            It is a monitor rather than a crossed-out eye on purpose: the icon names the mode, which
            is true whichever way the switch is, where an eye-with-a-slash reads as "things are
            hidden" on a button that is currently hiding nothing. The state is carried by the fill —
            solid white on the navy header when it is on, which is the suite's on-dark active
            grammar — and by the strip below the header, which is the half a teacher sees without
-           looking at the header at all. src/presentation.js owns both.
-
-           Icon-only, and that is a measurement rather than a preference: at 390px under a coarse
-           pointer this row has 46px of slack once the title steps aside (see src/shell.css's
-           640px block), which pays for a 44px control and not for a label beside it.
-           tools/verify-shell.mjs measures that width on every run. -->
+           looking at the header at all. src/presentation.js owns both. -->
       <button class="hdr-icon-btn hdr-mode-btn" id="presentationBtn" data-presentation-toggle
               aria-pressed="false"
               title="Presentation mode is off. Tap to hide every support detail before you project."
@@ -383,49 +398,17 @@
           <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
         </svg>
       </button>
-      <!-- Alert sounds (WO-2.29). Beside presentation mode rather than in a settings screen, and
-           that is the work order's own call: a teacher about to proctor a test needs ONE tap to
-           silence the overdue-pass alert, mid-period, without leaving the registry. It is the same
-           kind of control as the three beside it — a switch for the whole app rather than a way
-           into the class that is open — which is what puts it in this row.
-
-           The icon carries the state and the fill repeats it: `.hdr-mode-btn.active` here means
-           MUTED, which is this switch away from its default, exactly as it means "support details
-           are hidden" on the button before it. Both are the position a teacher chose and has to be
-           able to see she chose. src/alert-sound.js owns the swap and the labels.
-
-           The fourth control in this row is what the coarse block's `.header-actions` gap pays for:
-           at 390px on a coarse pointer the row had 45.9px of slack and a 44px control plus its gap
-           wants 52, so the gaps come in rather than the 📓 going out (src/shell.css). -->
-      <button class="hdr-icon-btn hdr-mode-btn" id="soundsBtn" data-sounds-toggle
-              aria-pressed="false"
-              title="Alert sounds are on. Tap to silence the overdue-pass alert."
-              aria-label="Alert sounds are on. Tap to silence the overdue-pass alert.">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-sound-icon>
-          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-        </svg>
-      </button>
-      <!-- THE SYNC BUTTON (WO-7.5): how fresh this device's Google Drive sync is, and the tap that
-           does what that state needs. HIDDEN IN THE MARKUP AND ON EVERY DEVICE THAT HAS NOT OPTED
-           IN — a teacher who never connected Drive sees exactly the header she had before, and
-           src/sync-button.js is the only thing that ever un-hides it. Its label, its icon and its
-           state class are all written there from the state; nothing here is a claim about sync.
-
-           LAST BEFORE ABOUT, the owner's ruling 3 — the drawing put it beside the year, and the
-           ruling moved it here so that at phone width it can fold into its neighbour rather than
-           move somewhere else. BELOW 640px IT IS NOT LAID OUT AT ALL (ruling 2, src/shell.css's
-           640px block): the row has 5.92px of slack at 390px after the fourth control (measured;
-           the ruling said ~8) and a fifth 44px one does not fit, so the About button beside it
-           wears the badge instead. The row's
-           width at 390px does not move, and tools/verify/sync-button.mjs measures that it does not.
-
-           Icon-only with a corner badge (ruling 1). The reading lives in the label. -->
-      <button class="hdr-icon-btn hdr-sync-btn hidden" id="syncBtn" data-sync-button
-              title="Google Drive sync" aria-label="Google Drive sync">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-sync-icon></svg>
-        <span class="hdr-sync-badge hidden" data-sync-badge aria-hidden="true"></span>
+      <!-- The open school year, and the way to change it. It is a button rather than a label
+           because there is always more than one year eventually and the switch has to be
+           reachable at a touch. The visible text is the year alone; the `.sr-only` span in
+           front of it is what makes it read as "School year: 2026-2027" rather than as a
+           number a screen reader has no name for. Fourth since WO-1.71, beside About: both say
+           which app and which year this is, and neither is a switch. -->
+      <button class="hdr-year-btn" id="yearButton" data-year-picker aria-haspopup="dialog"
+              title="Choose or start a school year">
+        <span class="sr-only">School year: </span>
+        <span id="yearButtonLabel">—</span>
+        <span aria-hidden="true">▾</span>
       </button>
       <!-- About carries an id and a badge since WO-7.5, and nothing else about it changed. The badge
            is the sync button's, worn here only below the phone breakpoint where the sync button is
@@ -456,7 +439,7 @@
          between classes, and NOT on the home view, where the cards in <main> are how you enter a
          class and a tab row beside them would be the same control twice. On the home view this
          strip carries a caption in that same .hdr-empty voice. The divider, the term nav and the
-         three buttons on the right belong to both views and do not move between them.
+         gear on the right (WO-1.71) belong to both views and do not move between them.
 
          The divider and the right-hand controls ship `hidden` and are revealed by that module,
          because an empty divider on a first run is furniture explaining nothing. -->
@@ -465,53 +448,29 @@
     </nav>
     <div class="hdr-divider hidden" id="headerDivider" aria-hidden="true"></div>
     <nav class="hdr-term-nav" id="termNav" aria-label="Terms in the open class"></nav>
-    <!-- Three ways in, all of them about the class that is open. WO-1.7 added the first and the
-         third: the roster of the open class, and the teacher's own details.
+    <!--
+      ONE GEAR, AND BEHIND IT EVERYTHING THAT IS SET AND FORGOTTEN (WO-1.71, ruling 2 of 2026-10-09).
+      This cluster held four icons until then — the roster, the classes and terms, the teacher's own
+      details and the template editor — and its comment called them "three ways in, all of them about
+      the class that is open" while the comment on the fourth called them "about no single class". The
+      sort had drifted. The owner's test replaced it: USED IN CLASS, OR SET AND FORGET. The roster is
+      never opened during class — after class for an incident, or at the start of a semester — and
+      neither are the other three, so all four went behind this gear into #settingsModal, with the
+      alert sound from the row above. Their hooks went with them unchanged (see that dialog).
 
-         Both are here rather than in the row above, and that is a measurement rather than a
-         preference — the top row already carries the year, the backup button and About beside a
-         title, and a fourth control there puts the page into horizontal overflow at 390px.
-         tools/verify-shell.mjs measures that width on every run. -->
+      The + at the end of the class tabs still opens Classes and terms directly, so adding a class is
+      still one tap.
+
+      #headerRightControls ships `hidden` and src/classes.js reveals it on the condition it always
+      used — there is a year open — so on a device with no year yet the gear is as hidden as the four
+      icons were. That is the inherited rule, not an oversight.
+    -->
     <div class="hdr-right-controls hidden" id="headerRightControls">
-      <button class="hdr-icon-btn" data-roster-manage title="Roster and contacts"
-              aria-label="Roster and contacts" aria-haspopup="dialog">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-      </button>
-      <button class="hdr-icon-btn" data-class-manage title="Classes and terms"
-              aria-label="Classes and terms" aria-haspopup="dialog">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
-          <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
-          <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-        </svg>
-      </button>
-      <button class="hdr-icon-btn" data-teacher-panel title="Your details"
-              aria-label="Your details" aria-haspopup="dialog">
+      <button class="hdr-icon-btn" id="settingsBtn" data-settings-open title="Settings"
+              aria-label="Settings" aria-haspopup="dialog">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="3"/>
-          <path d="M12 1v6m0 10v6M4.2 4.2l4.3 4.3m7 7l4.3 4.3M1 12h6m10 0h6M4.2 19.8l4.3-4.3m7-7l4.3-4.3"/>
-        </svg>
-      </button>
-      <!--
-        THE FOURTH ICON, AND IT IS THE ONE DOOR ONTO THE TEMPLATE EDITOR (WO-5.2, the owner's call
-        of 2026-08-28). This cluster already holds exactly the surfaces that are about no single
-        class — the roster, the classes and terms, the teacher's own details — so a template belongs
-        here rather than on the class switcher: `{{class.name}}` resolves per draft at send time, and
-        a tab row implying a template is a property of Biology I teaches the wrong model on the first
-        screen. A sixth screen-nav segment is what WO-6.6 ruled against twice, and *Your details* was
-        weighed and rejected — a message a hundred guardians read is not a setting.
-
-        IT CARRIES NO `aria-haspopup`, unlike the three beside it, and that is the difference rather
-        than an omission: those open dialogs and this one swaps the view in <main>.
-      -->
-      <button class="hdr-icon-btn" data-templates-open title="Message templates"
-              aria-label="Message templates">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
-          <polyline points="22 6 12 13 2 6"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
       </button>
     </div>
@@ -856,8 +815,9 @@
         <!-- The way back to the class grid, and the second of the two doors onto it — the first is
              the "All classes" tab at the head of the class row, which src/classes.js draws. Both
              carry `data-view-home`, so they are one route with two doors rather than two controls
-             that mean the same thing, exactly as `data-class-manage` has three (the header's gear,
-             the "Add a class" tab, and the home screen's empty state).
+             that mean the same thing, exactly as `data-class-manage` has three (the Settings door
+             behind the header's gear since WO-1.71, the "Add a class" tab, and the home screen's
+             empty state).
 
              It is here as well as in the header because "always reachable" has to survive a 390px
              screen, where six class tabs and this one do not fit the strip at once and the strip
@@ -875,8 +835,9 @@
            else — a hand-written specimen tab here would be a second truth.
 
            Under the panel title rather than in the navy header, and that is a measurement: the
-           header strip already carries the class tabs, the term nav and three icon buttons, and a
-           fourth control up there overflows at 390px (src/classes.js, classRow()). The class tabs
+           header strip carried the class tabs, the term nav and three icon buttons, and a
+           fourth control up there overflowed at 390px (src/classes.js, classRow()). Those icons are
+           one gear since WO-1.71; the reason this nav was put here is unchanged by that. The class tabs
            answer "which class"; this answers "which screen of it".
            plans/gradebook-surfaces.md § "How the class view navigates between its screens". -->
       <nav class="screen-nav" data-screen-nav aria-label="Screens for this class"></nav>
@@ -2580,6 +2541,123 @@
         <button class="class-action-btn primary" type="button" id="drivePullConfirmBtn"
                 data-first-run-open>Open it</button>
         <button class="class-action-btn" type="button" data-first-run-cancel>Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS — what is behind the header's gear (WO-1.71). Lifted from design/mockups/settings-hub.html,
+     frames B and F, onto the stock 480px `.modal-panel`: four doors and one switch is not Roll Call!'s
+     two-column config panel, and the stock panel is what every dialog behind a door already is.
+
+     A DOOR CARRIES THE HOOK ITS HEADER ICON CARRIED — `data-roster-manage`, `data-class-manage`,
+     `data-templates-open`, `data-teacher-panel` — so src/shell.js routes it exactly as it routed the
+     icon, and so do the fifteen-odd harness files that open these dialogs by `.click()` on the hook.
+     The one thing the listener adds is the step before the route: a door inside this dialog closes
+     it first and hands the GEAR on as the opener, so ✕ on the dialog behind it puts focus somewhere
+     a teacher can see rather than on a button inside a closed dialog (src/shell.js, leaveSettings()).
+
+     THE ROSTER DOOR NAMES THE CLASS IT WILL OPEN ON (ruling 5): #settingsRosterClass is written every
+     time this dialog opens, from getSelectedClass() — the class the roster dialog itself will open
+     on, so the door and the dialog cannot name two classes. From All classes that is the last class
+     visited, which is what the header icon did. Empty markup, for #yearList's reason.
+
+     SOUND ALERTS IS ROLL CALL!'s SWITCH (ruling 6), in a row that is its own <label>, so the whole row
+     is the target and the switch is only where the state is drawn. Checked means the sound is on.
+     src/alert-sound.js paints `checked` from the preference; the click route is the one the header
+     button used, unchanged. -->
+<div class="modal-overlay hidden" id="settingsModal">
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+    <div class="modal-header">
+      <h2 id="settingsModalTitle">Settings</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="hub-section">
+        <div class="modal-section-label">Your classes</div>
+        <button class="hub-door" type="button" data-roster-manage aria-haspopup="dialog">
+          <span class="hub-door-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </span>
+          <span class="hub-door-text">
+            <span class="hub-door-name">Roster and contacts</span>
+            <span class="hub-door-hint" id="settingsRosterHint"><span class="hub-door-class" id="settingsRosterClass"></span><span id="settingsRosterSep" aria-hidden="true"> · </span><span id="settingsRosterWords">students, guardians and supports</span></span>
+          </span>
+          <span class="hub-door-chev" aria-hidden="true">›</span>
+        </button>
+        <button class="hub-door" type="button" data-class-manage aria-haspopup="dialog">
+          <span class="hub-door-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+              <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </span>
+          <span class="hub-door-text">
+            <span class="hub-door-name">Classes and terms</span>
+            <span class="hub-door-hint">Add, rename and order classes · term dates · categories</span>
+          </span>
+          <span class="hub-door-chev" aria-hidden="true">›</span>
+        </button>
+      </div>
+      <div class="hub-section">
+        <div class="modal-section-label">Outreach</div>
+        <!--
+          THE ONE DOOR ONTO THE TEMPLATE EDITOR, AND IT IS BEHIND SETTINGS SINCE WO-1.71 (ruling 8, the
+          owner, 2026-10-09). WO-5.2 put it in the header and argued it out of anything called a
+          setting — "a message a hundred guardians read is not a setting". That reason is replaced
+          rather than answered: the test now is USED IN CLASS, OR SET AND FORGET, and templates are set
+          up once and revisited when they need tweaking, and some teachers will ignore them altogether.
+          What WO-5.2 ruled about WHERE ELSE it must not go still stands — not on the class switcher,
+          because `{{class.name}}` resolves per draft and a template is a property of no class, and not
+          as a sixth screen-nav segment, which WO-6.6 ruled against twice.
+
+          IT CARRIES NO `aria-haspopup`, unlike the doors beside it, and that is the difference rather
+          than an omission: they open dialogs and this one swaps the view in <main>.
+        -->
+        <button class="hub-door" type="button" data-templates-open>
+          <span class="hub-door-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
+              <polyline points="22 6 12 13 2 6"/>
+            </svg>
+          </span>
+          <span class="hub-door-text">
+            <span class="hub-door-name">Message templates</span>
+            <span class="hub-door-hint">What every message home starts from</span>
+          </span>
+          <span class="hub-door-chev" aria-hidden="true">›</span>
+        </button>
+        <!-- A person, not the cog-like glyph this wore in the header (ruling 7): beside a real gear that
+             glyph read as a second settings button. -->
+        <button class="hub-door" type="button" data-teacher-panel aria-haspopup="dialog">
+          <span class="hub-door-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+          </span>
+          <span class="hub-door-text">
+            <span class="hub-door-name">Your details</span>
+            <span class="hub-door-hint">Name, school and email that messages are signed with</span>
+          </span>
+          <span class="hub-door-chev" aria-hidden="true">›</span>
+        </button>
+      </div>
+      <div class="hub-section">
+        <div class="modal-section-label">Hall passes</div>
+        <label class="hub-pref">
+          <span>
+            <span class="hub-pref-name">Sound alerts</span>
+            <span class="hub-pref-hint">A tone when a pass runs over</span>
+          </span>
+          <span class="toggle-switch">
+            <input type="checkbox" id="soundsSwitch" data-sounds-toggle>
+            <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
+          </span>
+        </label>
       </div>
     </div>
   </div>

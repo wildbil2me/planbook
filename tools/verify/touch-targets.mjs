@@ -44,7 +44,7 @@ export function measureIn(rootSel) {
 
 export async function run(h) {
 const { check, skip, send, evalJs, has, clickSel, openCalendarPanel, KILL_ANIM, INSTALL_WALKER,
-  waitForBoot, seam } = h;
+  waitForBoot, seam, openSettingsDoor } = h;
 
 /* ───────────────── touch targets, under a pointer that is REALLY coarse ─────────────────
  *
@@ -247,8 +247,8 @@ if (coarse !== true) {
       `byHand` — for a reason none of the other three has: THIS LOOP CANNOT OPEN IT. openView()
       knows two doors, the "All classes" one and a `data-class-screen` segment, and the template
       editor has neither. It is not a class screen (src/views.js says why: a template is about no
-      class at all), so it carries no segment, and its one door is the fourth icon in the header's
-      right-hand cluster.
+      class at all), so it carries no segment, and its one door is in Settings, behind the header's
+      gear (the fourth icon in the header's right-hand cluster until WO-1.71).
 
       The second reason is this table's own arithmetic. The screen's controls are the eight starter
       rows, the sixteen field chips and the editor — and by the time this block runs the assignments
@@ -262,7 +262,7 @@ if (coarse !== true) {
       COVERAGE AND NEVER A WAY OUT OF ONE — if that section is ever deleted, delete this line with
       it and let the loop go red.
     */
-    templatesView: { byHand: 'the template editor is reached from a header icon rather than from a '
+    templatesView: { byHand: 'the template editor is reached from a door in Settings rather than from a '
       + 'class screen, so this loop has no door to it — and the document is empty by the time this '
       + 'block runs, so its preview would have no student. It is opened through its real icon and '
       + 'measured at 390px in § "message templates (WO-5.2)"' },
@@ -581,7 +581,7 @@ if (coarse !== true) {
         + "window.planbook.closeModal('backupModal');"
         + "window.planbook.closeModal('yearModal');window.planbook.closeModal('aboutModal');1");
     }
-    await clickSel('header [data-class-manage]');
+    await openSettingsDoor('[data-class-manage]');
     await new Promise(r => setTimeout(r, 400));
     /* Rename first, so the field and its two buttons are on screen and inside the sweep. */
     await clickSel('#classList .class-row:nth-child(1) [data-class-rename]');
@@ -902,7 +902,9 @@ if (coarse !== true) {
     measured is the control INSIDE each of them, which is the WO-1.2 .search-box lesson: a 44px
     declaration on a wrapper is what a stylesheet review calls compliant and a thumb calls broken.
   */
-  if (seam && await has('header [data-roster-manage]')) {
+  /* The roster's door is in Settings since WO-1.71, behind the header's gear — asked for there, not in
+     the header, or this whole block would SKIP silently on a build where the roster is fine. */
+  if (seam && await has('#settingsModal [data-roster-manage]')) {
     const closeStack = () => evalJs("(function(){ ['studentDeleteModal','studentModal',"
       + "'rosterPasteModal','rosterModal','teacherModal','classesModal','backupModal',"
       + "'yearModal','aboutModal'].forEach(function(m){ window.planbook.closeModal(m); });"
@@ -934,7 +936,7 @@ if (coarse !== true) {
       });
       return { tab: best, students: n, was: window.planbook.classes.getSelectedClassId() }; })()`);
     if (fullest.tab >= 0) await clickSel('[data-class-tab]', fullest.tab);
-    await clickSel('header [data-roster-manage]');
+    await openSettingsDoor('[data-roster-manage]');
     await new Promise(r => setTimeout(r, 300));
     const rm = await measureIn('rosterModal');
     if (!rm || rm.length < 5) {
@@ -1086,7 +1088,7 @@ if (coarse !== true) {
     }
 
     await closeStack();
-    await clickSel('header [data-teacher-panel]');
+    await openSettingsDoor('[data-teacher-panel]');
     await new Promise(r => setTimeout(r, 300));
     const tp = await measureIn('teacherModal');
     if (!tp || tp.length < 5) {

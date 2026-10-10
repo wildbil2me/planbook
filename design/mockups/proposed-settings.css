@@ -34,7 +34,7 @@
 
    Colours inline, no custom properties, no dark mode — src/shell.css's rules.
 
-     § SETTINGS HUB     →  src/shell.css   (WO-1.71 — not yet lifted)
+     § SETTINGS HUB     →  src/shell.css   (WO-1.71 — lifted 2026-10-10)
      § SETTINGS BACK    →  src/shell.css   (WO-1.72 — not yet lifted)
      § ROSTER WHO       →  src/shell.css   (WO-1.74 — not yet lifted)
    ══════════════════════════════════════════════════════════════════════════════ */
@@ -44,10 +44,18 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SETTINGS HUB   →  src/shell.css   (WO-1.71 — not yet lifted)
+   § SETTINGS HUB   →  src/shell.css   (WO-1.71 — lifted 2026-10-10)
 
    The contents of the dialog behind the gear: three groups, four doors and one
    switch. Drawn in settings-hub.html, frames B and F.
+
+   LANDED, class for class and value for value, in src/shell.css § SETTINGS HUB,
+   with the orange rule on `.header` beside it — but for `.toggle-switch input`.
+   Here (and in Roll Call!) it is 0x0 at opacity 0, so the app's one global
+   focus ring drew nothing a keyboard user could see; it shipped laid over the
+   track, invisible by `appearance: none` instead, so the ring lands around the
+   track. Argued at its point of departure. The `.hub-door, .hub-pref` half of
+   this sheet's touch-action rule joined src/shell.css's grouped selector.
 
    A DOOR is a whole-row button — icon, name, one line of what is behind it,
    chevron — and it carries the SAME `data-*` hook the header icon it replaces

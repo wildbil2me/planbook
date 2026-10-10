@@ -162,7 +162,7 @@ const READ = `(function(){
   var actions = document.querySelector('.header-actions');
   var laidButtons = actions ? Array.prototype.filter.call(actions.querySelectorAll('button'),
     function (x) { return x.getClientRects().length > 0; }).map(function (x) {
-      return x.id || x.className; }) : [];
+      return x.id || (x.hasAttribute('data-backup-panel') ? 'backup' : x.className); }) : [];
   var m = document.getElementById('aboutModal');
   return {
     hidden: !b || b.classList.contains('hidden'),
@@ -176,7 +176,8 @@ const READ = `(function(){
     aboutLabel: a ? a.getAttribute('aria-label') : null,
     aboutBadgeShown: !!(ab && ab.getClientRects().length > 0),
     aboutBadgeText: ab ? ab.textContent : '',
-    beforeAbout: !!(b && b.nextElementSibling === a),
+    /* WO-1.71 moved it from last-before-About (WO-7.5's ruling 3) to beside Backup (ruling 1). */
+    afterBackup: !!(b && b.previousElementSibling && b.previousElementSibling.hasAttribute('data-backup-panel')),
     optIn: raw,
     signedIn: au.signedIn, authBusy: au.busy, authError: au.lastError,
     statusClass: (document.getElementById('driveStatus') || {}).className || '',
@@ -259,13 +260,13 @@ const never = await read();
 const googleNever = netLog.filter((r) => /^https?:\/\/accounts\.google\.com\//i.test(r.url));
 const ownNever = netLog.filter((r) => r.url.indexOf('http://127.0.0.1:') === 0);
 check('a device that never connected draws the header exactly as it was — no sync button, no badge '
-  + 'on About, About named only "About Planbook", the same five controls laid out — and through a '
+  + 'on About, About named only "About Planbook", the same four controls laid out (five until WO-1.71 '
+  + 'took the sound switch into Settings) — and through a '
   + 'launch and a return to view it asks accounts.google.com for nothing, measured on the wire '
   + '(WO-7.5 Acceptance 1)',
   never.hidden === true && never.state === '' && never.aboutBadgeShown === false
     && never.aboutLabel === 'About Planbook' && never.optIn === null
-    && never.laidButtons.length === 5 && never.laidButtons.indexOf('syncBtn') < 0
-    && never.laidButtons[never.laidButtons.length - 1] === 'aboutBtn'
+    && JSON.stringify(never.laidButtons) === JSON.stringify(['backup', 'presentationBtn', 'yearButton', 'aboutBtn'])
     && googleNever.length === 0 && ownNever.length > 5 && never.fake === null,
   googleNever.length + ' request(s) to accounts.google.com and ' + ownNever.length
     + ' to this origin; sync button hidden = ' + never.hidden + ', About badge = '
@@ -1374,7 +1375,7 @@ const phoneBad = widths.filter((w) => {
   const wantBadge = w.label !== 'current';
   return !(w.phone.coarse === true && w.phone.width === 390 && w.phone.hidden === false
     && w.phone.btn && w.phone.btn.laid === false
-    && w.phone.laidButtons.length === 5 && w.phone.laidButtons.indexOf('syncBtn') < 0
+    && w.phone.laidButtons.length === 4 && w.phone.laidButtons.indexOf('syncBtn') < 0
     && w.phone.aboutBadgeShown === wantBadge
     && (wantBadge ? w.phone.aboutLabel.indexOf('About Planbook. ') === 0 : w.phone.aboutLabel === 'About Planbook')
     && Math.abs(w.phoneSlack.slack - baseSlack.slack) < 0.5 && w.phoneSlack.overflow <= 0);
@@ -1383,7 +1384,7 @@ check('at 390×844 under a coarse pointer the header draws NO fifth button in an
   + 'button carries the badge in every state but up to date (and says what it means in its label), '
   + 'and the top row’s slack is the same figure as on a device that never opted in (ruling 2)',
   widths.length === 6 && phoneBad.length === 0 && baseCoarse.coarse === true
-    && baseSlack.slack > 0 && baseCoarse.laidButtons.length === 5,
+    && baseSlack.slack > 0 && baseCoarse.laidButtons.length === 4,
   'slack with no opt-in = ' + baseSlack.slack + 'px; ' + widths.map((w) => w.label + ': slack '
     + w.phoneSlack.slack + ', laid ' + w.phone.laidButtons.length + ', About badge '
     + w.phone.aboutBadgeShown).join(' · ')
@@ -1391,17 +1392,16 @@ check('at 390×844 under a coarse pointer the header draws NO fifth button in an
 
 const padBad = widths.filter((w) => !(w.pad.coarse === true && w.pad.hidden === false
   && w.pad.btn && w.pad.btn.laid === true && w.pad.btn.w >= 44 && w.pad.btn.h >= 44
-  && w.pad.beforeAbout === true && w.pad.btn.right <= w.pad.about.left
-  && w.pad.laidButtons.length === 6
-  && w.pad.laidButtons[w.pad.laidButtons.length - 2] === 'syncBtn'
-  && w.pad.laidButtons[w.pad.laidButtons.length - 1] === 'aboutBtn'
+  && w.pad.afterBackup === true && w.pad.btn.right <= w.pad.about.left
+  && JSON.stringify(w.pad.laidButtons)
+    === JSON.stringify(['backup', 'syncBtn', 'presentationBtn', 'yearButton', 'aboutBtn'])
   && w.pad.aboutBadgeShown === false && w.padSlack.overflow <= 0));
-check('at iPad width (834×1194, coarse) the sync button is drawn in every state, 44 by 44, and sits '
-  + 'LAST BEFORE ABOUT — ruling 3, where the drawing put it beside the year — with About carrying no '
-  + 'badge of its own',
+check('at iPad width (834×1194, coarse) the sync button is drawn in every state, 44 by 44, and the row '
+  + 'reads Backup · Sync · Presentation · Year · About — WO-1.71 ruling 1, which replaced WO-7.5 ruling '
+  + '3’s last-before-About — with About carrying no badge of its own',
   widths.length === 6 && padBad.length === 0,
   widths.map((w) => w.label + ': ' + (w.pad.btn ? w.pad.btn.w + 'x' + w.pad.btn.h : '-') + ', order '
-    + JSON.stringify(w.pad.laidButtons.slice(-2)) + ', slack ' + w.padSlack.slack).join(' · ')
+    + JSON.stringify(w.pad.laidButtons) + ', slack ' + w.padSlack.slack).join(' · ')
     + (padBad.length ? ' — WRONG in ' + JSON.stringify(padBad.map((w) => w.label)) : ''));
 
 /* At phone width a badged About opens at the Drive section. Reached with a save (ahead). */
@@ -1450,7 +1450,7 @@ await reload();
 const handedBack = await read();
 const schoolBack = await evalJs('(window.planbook.store.getDoc().teacher || {}).school || ""');
 check('this section handed the page back as it found it — reloaded with no stand-in library and no '
-  + 'stand-in Drive, signed out, opted out with the key gone, the header back to five controls, the '
+  + 'stand-in Drive, signed out, opted out with the key gone, the header back to its four controls, the '
   + 'desktop viewport, and the one field it typed into the document put back',
   handedBack.fake === null && handedBack.driveCalls === null && handedBack.signedIn === false
     && handedBack.optIn === null && handedBack.hidden === true && handedBack.coarse === false

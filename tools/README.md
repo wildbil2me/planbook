@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1914 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1923 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2787,6 +2787,17 @@ text area starts right of the 🔍 and ends left of the ✕ with the string scro
 again under a coarse pointer, with the ✕'s whole 44px square and the field's 44px height. None is a
 failure arm. Full run: `1918 checks · 1918 passed · 0 failed · 0 skipped`, 60,979 lines, 31.8 lines
 per check, 922s, exit 0, 2026-10-10 on the real clock. Mutation rounds in `TESTING.md` § WO-2.61.
+
+**WO-1.71 moved it from 1914 to 1923, and the executed count from 1918 to 1927 — nine sites, nine
+results, and one new file.** All nine are `verify/settings-hub.mjs`, registered after
+`verify/horizontal-overflow.mjs`: the header's two rows, the orange rule on the home view and every
+class screen the switcher reaches, no rule on a dialog, the roster door's class from inside a class,
+from All classes and from a stale preference, the other three doors, the Sound alerts switch through
+two reloads, and the 390×844 coarse measurement. None is a failure arm, and the section's one guard
+is a `skip()`. The re-pointing of eighteen other sections onto `openSettingsDoor()` and the rewritten
+assertions in `verify/sync-button.mjs`, `verify/attendance-passes.mjs`, `verify/modal.mjs` and
+`verify/classes-terms.mjs` changed no count. Full run: `1927 checks · 1927 passed · 0 failed · 0
+skipped`, 61,366 lines, 31.8 lines per check, 934s, exit 0, 2026-10-10 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

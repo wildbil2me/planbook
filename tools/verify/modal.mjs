@@ -39,9 +39,23 @@ const { check, skip, send, evalJs, has, clickSel } = h;
 console.log('\n--- modal behaviour ---');
 const MODAL = '#classesModal';
 const OPENER = 'header [data-class-manage]';
-/* Visible openers, not present ones, for the reason in the block above. */
+/*
+  WO-1.71 TOOK THE GEAR'S PLACE OUT FROM UNDER THIS FIXTURE, and the fixture is better for it. The
+  second opener used to be a header icon carrying `data-class-manage`; it is now a DOOR inside
+  Settings, reached by tapping the header's gear, and that door closes Settings and hands the GEAR on
+  as the opener (src/shell.js, leaveSettings()). So "returns focus to ITS opener, a different button"
+  now asserts the work order's Traps line as well: focus comes back to the gear a teacher can see,
+  never to a door inside a closed dialog. The first opener is still the + tab, in the header.
+*/
+const GEAR = '#settingsBtn';
+const DOOR = '#settingsModal [data-class-manage]';
+/* Visible openers, not present ones, for the reason in the block above. The door is counted as an
+   opener when the gear that reaches it is on screen. */
 const openerCount = await evalJs("Array.prototype.slice.call(document.querySelectorAll("
-  + JSON.stringify(OPENER) + ")).filter(function(e){return e.offsetWidth>0||e.offsetHeight>0}).length");
+  + JSON.stringify(OPENER) + ")).filter(function(e){return e.offsetWidth>0||e.offsetHeight>0}).length"
+  + " + ((function(){var g=document.querySelector(" + JSON.stringify(GEAR) + ");"
+  + "return g&&(g.offsetWidth>0||g.offsetHeight>0)&&document.querySelector(" + JSON.stringify(DOOR)
+  + ")?1:0})())");
 if (!(await has(MODAL)) || openerCount < 2) {
   /* Two openers for one modal is what makes focus-return falsifiable: an implementation that
      always returns focus to the first opener on the page passes with one and fails with two. */
@@ -67,11 +81,17 @@ if (!(await has(MODAL)) || openerCount < 2) {
     await new Promise(r => setTimeout(r, 120));
   };
   const isOpen = () => evalJs("!document.querySelector('" + MODAL + "').classList.contains('hidden')");
-  const activeIs = (nth) => evalJs("document.activeElement===document.querySelectorAll("
-    + JSON.stringify(OPENER) + ")[" + nth + "]");
+  /* 'door' is the gear-then-door walk and returns focus to the gear; 'tab' is the + tab. */
+  const activeIs = (which) => evalJs(which === 'door'
+    ? "document.activeElement===document.querySelector(" + JSON.stringify(GEAR) + ")"
+    : "document.activeElement===document.querySelectorAll(" + JSON.stringify(OPENER) + ")[0]");
+  const openVia = async (which) => {
+    if (which === 'door') { await clickSel(GEAR); await clickSel(DOOR); }
+    else await clickSel(OPENER, 0);
+  };
 
-  const second = Math.min(2, openerCount - 1);
-  await clickSel(OPENER, second);
+  const second = 'door';
+  await openVia(second);
   check('modal opens on click', await isOpen());
   check('focus moved inside the panel', await evalJs('window.__panel().contains(document.activeElement)'));
 
@@ -88,8 +108,8 @@ if (!(await has(MODAL)) || openerCount < 2) {
   check('Escape returns focus to the opener that was clicked, not the first on the page',
     await activeIs(second));
 
-  const other = second === 1 ? 0 : 1;
-  await clickSel(OPENER, other);
+  const other = 'tab';
+  await openVia(other);
   const bd = await evalJs("(function(){var r=document.querySelector('" + MODAL + "').getBoundingClientRect();return {x:r.x+6,y:r.y+6}})()");
   await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: bd.x, y: bd.y, button: 'left', clickCount: 1 });
   await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: bd.x, y: bd.y, button: 'left', clickCount: 1 });
@@ -99,7 +119,7 @@ if (!(await has(MODAL)) || openerCount < 2) {
 
   /* A press that starts inside the panel and ends on the backdrop is a text selection, not a
      dismissal. Closing on it loses whatever the teacher was typing. */
-  await clickSel(OPENER, other);
+  await openVia(other);
   const ins = await evalJs("(function(){var r=document.querySelector('" + MODAL + " .modal-body').getBoundingClientRect();return {x:r.x+12,y:r.y+12}})()");
   await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: ins.x, y: ins.y, button: 'left', clickCount: 1 });
   await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: bd.x, y: bd.y, button: 'left', clickCount: 1 });

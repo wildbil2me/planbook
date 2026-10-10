@@ -21,7 +21,7 @@
 import { nodeDaysFromToday } from './lib-dates.mjs';
 
 export async function run(h) {
-const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, waitForBoot } = h;
+const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, waitForBoot, openSettingsDoor } = h;
 
 /* ───────── removing a category moves its work to no category (WO-3.43) ─────────
  *
@@ -198,7 +198,7 @@ const readScreen = () => evalJs(`(function(){
   }; })()`);
 
 const openEditor = async (id) => {
-  await clickSel('header [data-class-manage]');
+  await openSettingsDoor('[data-class-manage]');
   await new Promise(r => setTimeout(r, 200));
   await clickSel('#classList [data-category-manage="' + id + '"]');
   await new Promise(r => setTimeout(r, 200));

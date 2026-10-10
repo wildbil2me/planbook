@@ -20,7 +20,7 @@ import { measureIn } from './touch-targets.mjs';
 import { nodeToday } from './lib-dates.mjs';
 
 export async function run(h) {
-const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, waitForBoot, seam, openSettingsDoor } = h;
 
 /*
   ══════════ COPYING A CLASS, TERMS AND CATEGORIES ONLY (WO-1.22) ══════════
@@ -132,7 +132,7 @@ console.log('\n--- copying a class, terms and categories only (WO-1.22) ---');
       plant122.ok === true && plant122.classes === 3 && plant122.students === 2,
       JSON.stringify(plant122));
 
-    await clickSel('header [data-class-manage]');
+    await openSettingsDoor('[data-class-manage]');
     await new Promise((r) => setTimeout(r, 300));
 
     /* ACCEPTANCE LINE 1 — scoped to the three fixture classes AND asked of the whole panel, so a

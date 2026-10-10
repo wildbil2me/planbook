@@ -1,0 +1,11 @@
+# WO-1.71 dispatch status
+- 2026-10-10T13:37:02Z gates PASS (no deps; WO-1.5 ordering satisfied; tree clean)
+- 2026-10-10T13:37:02Z route Claude Opus — design-system lift from Roll Call! (orange rule, .toggle-switch), new header convention + teacher-facing UI under a mockup, judgment Traps (hooks, opener focus, no re-resolution of class); ROUTING § Route to Claude. Runner-up Codex set aside: visual acceptance + 👤, not mechanically specified. No Codex probe needed.
+- 2026-10-10T13:37:03Z claimed: --start ran (🤖 CLAIMED)
+- 2026-10-10T13:37:09Z NOTE: --start reported rolling 5h window at 16.3M proxy units, already at the p25 death mark (16.4M) — this dispatch is at elevated session-limit risk. If dead: grep -rn MUTATION first, then read the tree.
+- 2026-10-10T13:37:49Z brief written: .claude/dispatch/WO-1.71-brief.md (markers filled, ~17KB)
+- 2026-10-10T13:37:49Z implementer spawned at Opus (no override) with .claude/dispatch/WO-1.71-brief.md, awaiting return — expect 30–60 min, first write may take 20+
+- 2026-10-10T14:23:03Z implementer returned: built, verify-shell 1927/1927 exit 0, sweep 46·0·4 review; 7/8 boxes ticked by implementer (👤 open); no mutation round run; uncommitted
+- 2026-10-10T14:23:03Z handoff written (🔍 AWAITING VERDICT); verifier owed in a fresh session
+- 2026-10-10T16:45:41Z fresh session: row reads 🔍 AWAITING VERDICT, gate PASS; verifier spawned at Opus as FIRST pass, awaiting verdict
+- 2026-10-10T17:21:17Z verdict in: PASS WITH MANUAL CHECKS — 7/8 ✅ re-derived (verify-shell 1927/1927 EXIT=0, sweep 46·0·4 review all non-findings, audit PASS), 3 mutations planted/caught/reverted (tree diffstat matches delivered), 👤 iPad line open; no tick applied

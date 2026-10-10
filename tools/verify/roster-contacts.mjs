@@ -98,7 +98,7 @@ export const INSTALL_ROSTER_READER = `(function(){
 
 export async function run(h) {
 const { ROOT, check, skip, readLocalStore, oursIn, foreignIn, storeDetail, send, evalJs, has,
-  clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, seam } = h;
+  clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, seam, openSettingsDoor } = h;
 
 /* index.html, read here since WO-1.26. The strapline check below used to reach the
    module-scope `const html` in the safe-area section four thousand lines above it — the
@@ -144,7 +144,7 @@ if (!rosterBooted || !rosterSeam) {
   const openRosterOn = async (tab) => {
     await closeAll();
     await clickSel('[data-class-tab]', tab);
-    await clickSel('header [data-roster-manage]');
+    await openSettingsDoor('[data-roster-manage]');
     return evalJs('window.__ros()');
   };
 
@@ -383,7 +383,7 @@ if (!rosterBooted || !rosterSeam) {
   /* ── the teacher's own details, which are the other half of this work order's deliverables ── */
 
   await closeAll();
-  await clickSel('header [data-teacher-panel]');
+  await openSettingsDoor('[data-teacher-panel]');
   await evalJs(`(function(){
     function set(id, v){ var e = document.getElementById(id); e.value = v;
       e.dispatchEvent(new Event('input', { bubbles: true })); }

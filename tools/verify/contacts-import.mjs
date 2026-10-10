@@ -9,7 +9,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, waitForBoot, seam, openSettingsDoor } = h;
 
 /*
   ══════════ IMPORTING A CLASS'S CONTACTS FROM THE SIS CSV (WO-1.23) ══════════
@@ -124,7 +124,7 @@ console.log('\n--- importing contacts from the SIS CSV (WO-1.23) ---');
     const openImportOn = async (classId) => {
       await closeAll123();
       await evalJs('window.planbook.classes.selectClass(' + JSON.stringify(classId) + ');1');
-      await clickSel('header [data-roster-manage]');
+      await openSettingsDoor('[data-roster-manage]');
       await new Promise((r) => setTimeout(r, 200));
       await clickSel('#rosterModal [data-roster-import]');
       await new Promise((r) => setTimeout(r, 150));
@@ -543,7 +543,7 @@ console.log('\n--- importing contacts from the SIS CSV (WO-1.23) ---');
 
     await closeAll123();
     await evalJs("window.planbook.classes.selectClass('c_wo123_a');1");
-    await clickSel('header [data-roster-manage]');
+    await openSettingsDoor('[data-roster-manage]');
     await new Promise((r) => setTimeout(r, 200));
     await clickSel('#rosterList .roster-row:nth-child(1) [data-student-edit]');
     await new Promise((r) => setTimeout(r, 200));

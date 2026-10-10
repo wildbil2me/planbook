@@ -27,10 +27,15 @@
       data-presentation-toggle        turns presentation mode on or off — on the header button and
                                       on the strip's own "Turn it off", which are the same flip
       data-sounds-toggle              silences the overdue-pass tone, or lets it sound again
-                                      (WO-2.29). One control, in the header beside the switch above,
-                                      because a teacher about to proctor a test needs it in one tap
-                                      mid-period. It silences the TONE only: the announcement and the
-                                      card colour are not a preference and are never taken away
+                                      (WO-2.29). The Sound alerts switch inside Settings since
+                                      WO-1.71, which moved it out of the header: the owner's test is
+                                      used in class or set and forget, and the sound is a preference.
+                                      It silences the TONE only: the announcement and the card
+                                      colour are not a preference and are never taken away
+      data-settings-open              the header's gear (WO-1.71): names the open class on the
+                                      roster door, then opens Settings. A door inside that dialog
+                                      carries the hook its header icon carried and is routed below
+                                      exactly as the icon was, after leaveSettings()
       data-year-picker                renders the year list, then opens the year modal
       data-year-switch="<year>"       opens that year document
       data-year-create                on a <form>: creates the year typed into it
@@ -600,11 +605,12 @@
       data-teacher-panel              fills the teacher's own details, then opens them
       data-teacher-field="<name>"     an input; edits that field as it is typed
       data-teacher-cc                 toggles whether outreach drafts copy the teacher
-      data-templates-open             puts the message-template editor in <main>. It is the FOURTH
-                                      icon in the header's right-hand cluster and the one door onto
-                                      that screen: a template is about no class at all, so it is not
-                                      on the class switcher (WO-6.6 ruled against a sixth segment
-                                      twice) and it is not a class screen (src/views.js)
+      data-templates-open             puts the message-template editor in <main>. It is a door in
+                                      Settings since WO-1.71 (the header's fourth icon until then)
+                                      and the one door onto that screen: a template is about no class
+                                      at all, so it is not on the class switcher (WO-6.6 ruled
+                                      against a sixth segment twice) and it is not a class screen
+                                      (src/views.js)
       data-templates-tone="<tone>"    which tone the template list is filtered to; an empty value is
                                       every template. A filter rather than a mode, recomputed on
                                       arrival and stored nowhere, like every other filter in this app
@@ -2339,6 +2345,49 @@ function openAbout(opener, atDrive) {
   paintBuildLine().then(land, land);
 }
 
+/*
+  SETTINGS, BEHIND THE HEADER'S GEAR (WO-1.71). Two functions and no module of their own: the dialog
+  is four doors that route through hooks this file already handles and one switch src/alert-sound.js
+  already owns, so there is nothing here to own but the two seams below.
+
+  openSettings() paints before it opens, for the flicker reason `data-year-picker` gives. What it
+  paints is the roster door's class, and it ASKS getSelectedClass() rather than resolving the
+  preference itself — that is the function src/roster.js's dialog asks, so the door and the dialog
+  name the same class by construction. A second resolution here is how they would come to name two
+  (a stale `openClassId` resolves to the first class there; a hand-rolled read would say nothing, or
+  the stale class). From All classes that is the last class visited, which is what the header icon
+  opened on. With no class at all the door says what it opens and names nothing.
+*/
+const SETTINGS_MODAL_ID = 'settingsModal';
+
+function openSettings(opener) {
+  const cls = classes.getSelectedClass();
+  const name = document.getElementById('settingsRosterClass');
+  const sep = document.getElementById('settingsRosterSep');
+  const words = document.getElementById('settingsRosterWords');
+  if (name) name.textContent = cls ? cls.name : '';
+  if (sep) sep.classList.toggle('hidden', !cls);
+  if (words) words.textContent = cls ? 'students, guardians and supports' : 'Students, guardians and supports';
+  alertSound.refreshSoundChrome();
+  openModal(SETTINGS_MODAL_ID, opener);
+}
+
+/*
+  THE STEP BEFORE A DOOR'S OWN ROUTE, and the only thing in the routing WO-1.71 added. A door inside
+  Settings closes Settings first and hands the GEAR on as the opener of whatever it opens — the
+  Traps line: `openModal(id, opener)` gives focus back to the opener it was given, and a door is a
+  button inside a dialog that is now closed, so ✕ on the roster would put focus nowhere a teacher can
+  see. closeModal() rather than dismissModal(): Settings has no close guard and the teacher has
+  already decided. Anything outside Settings — the + tab, the empty state, a harness `.click()` on a
+  hook — comes back unchanged, so every other door onto these dialogs routes exactly as before.
+*/
+function leaveSettings(door) {
+  const hub = door.closest('#' + SETTINGS_MODAL_ID);
+  if (!hub) return door;
+  closeModal(hub);
+  return document.getElementById('settingsBtn') || door;
+}
+
 /* One click listener for the whole document. Order matters only in that the first hook to
    match wins, and no element carries two of them. */
 document.addEventListener('click', (e) => {
@@ -2419,6 +2468,11 @@ document.addEventListener('click', (e) => {
      changes what the NEXT alert does and touches no screen that is currently drawn, which is the
      opposite of the mode above, where the redraw is the point. */
   if (e.target.closest('[data-sounds-toggle]')) { alertSound.toggleAlertSounds(); return; }
+
+  /* The header's gear (WO-1.71). Its doors are routed further down, each by the hook it carried as
+     a header icon, after leaveSettings(). */
+  const settingsOpen = e.target.closest('[data-settings-open]');
+  if (settingsOpen) { openSettings(settingsOpen); return; }
 
   /* THE TWO DRIVE CONTROLS (WO-7.1), AND THE CHAIN THE COMMENT HERE SAID WO-7.2 WOULD ADD. It read
      "a sign-in changes no screen but that section, because this build moves no data — the day one
@@ -2563,7 +2617,7 @@ document.addEventListener('click', (e) => {
   /* ── classes and terms ── */
 
   const classManage = e.target.closest('[data-class-manage]');
-  if (classManage) { classes.openClassManager(classManage); return; }
+  if (classManage) { classes.openClassManager(leaveSettings(classManage)); return; }
 
   /* The way back to the class grid. High here, beside the control that leaves it: these two are
      the app's navigation, and everything below them is something you do once you have arrived. */
@@ -3457,7 +3511,7 @@ document.addEventListener('click', (e) => {
   /* ── roster, contacts, and the teacher's own details ── */
 
   const rosterManage = e.target.closest('[data-roster-manage]');
-  if (rosterManage) { roster.openRoster(rosterManage); return; }
+  if (rosterManage) { roster.openRoster(leaveSettings(rosterManage)); return; }
 
   const paste = e.target.closest('[data-roster-paste]');
   if (paste) { roster.openPaste(paste); return; }
@@ -3561,13 +3615,14 @@ document.addEventListener('click', (e) => {
   }
 
   const teacherPanel = e.target.closest('[data-teacher-panel]');
-  if (teacherPanel) { teacher.openTeacherSettings(teacherPanel); return; }
+  if (teacherPanel) { teacher.openTeacherSettings(leaveSettings(teacherPanel)); return; }
   if (e.target.closest('[data-teacher-cc]')) { teacher.toggleDefaultCc(); return; }
 
   /* WO-5.2's fourteen hooks. The first is the door and the rest are on the screen behind it; three
      of them write (`save`, `duplicate`, `delete`) and every other one changes what is drawn, which
      is a fact about this browser and this minute. */
-  if (e.target.closest('[data-templates-open]')) { showTemplates(); return; }
+  const templatesOpen = e.target.closest('[data-templates-open]');
+  if (templatesOpen) { leaveSettings(templatesOpen); showTemplates(); return; }
   const templatesTone = e.target.closest('[data-templates-tone]');
   if (templatesTone) {
     templatesView.setTemplatesTone(templatesTone.getAttribute('data-templates-tone'));

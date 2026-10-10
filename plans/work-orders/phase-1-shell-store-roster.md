@@ -6029,7 +6029,7 @@ moves**, so no `CACHE` bump is owed.
 
 ## WO-1.71 — the header keeps what is used in class, and the rest goes behind a gear
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** WO-1.72, WO-1.73
+**Ship** — · **Status** ✅ DONE — 2026-10-10 · **Size** M · **Depends on** — · **Blocks** WO-1.72, WO-1.73
 **Closes roadmap** *(no box. Owner-directed, 2026-10-09.)*
 
 **Booked 2026-10-10**, owner-directed, out of a conversation held on 2026-10-09 while WO-2.60 was in
@@ -6097,22 +6097,22 @@ than re-deriving it**, and amend its banner in the same sitting.
 - **`TESTING.md` § WO-1.71**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] The top row draws Backup, Sync (opted-in devices), Presentation, Year and About, in that order,
+- [x] The top row draws Backup, Sync (opted-in devices), Presentation, Year and About, in that order,
       and no sounds button; the second row draws the tabs, the terms and one *Settings* gear; a 2px
       `#e67e22` rule sits under the header on the home view and on every class screen, and on no
       dialog.
-- [ ] The gear opens *Settings*; each of the four doors opens the dialog or view its header icon
+- [x] The gear opens *Settings*; each of the four doors opens the dialog or view its header icon
       opened at v177, for the same class, and the hub is closed behind it.
-- [ ] The roster door names the class `getSelectedClassId()` resolves to, from *All classes* and from
+- [x] The roster door names the class `getSelectedClassId()` resolves to, from *All classes* and from
       inside a class, and the roster dialog opens on that class.
-- [ ] The switch reads and writes the same preference the header button did: off, then on, then a
+- [x] The switch reads and writes the same preference the header button did: off, then on, then a
       reload, and `soundsOn()` and the switch agree at every step. An overdue pass with the sound off
       is still announced and still tints its card.
-- [ ] At 390×844 under a coarse pointer the page has no horizontal overflow, and every control in both
+- [x] At 390×844 under a coarse pointer the page has no horizontal overflow, and every control in both
       header rows and in the hub is at least 44px.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] `TESTING.md` § WO-1.71 carries these lines verbatim with the evidence for each.
-- [ ] 👤 On the iPad, after a force-quit, upright and lying down: read both header rows and the orange
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] `TESTING.md` § WO-1.71 carries these lines verbatim with the evidence for each.
+- [x] 👤 On the iPad, after a force-quit, upright and lying down: read both header rows and the orange
       rule; open Settings from *All classes* and from a class and read the roster door's class; open
       each door; flip Sound alerts off and on.
 

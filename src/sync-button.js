@@ -51,12 +51,16 @@
      beside the icon, was declined and is not lifted.
   2. BELOW THE PHONE BREAKPOINT THERE IS NO FIFTH BUTTON. The top row has 5.92px of slack at 390px
      (measured; the ruling said ~8) after WO-2.29's fourth control, and a fifth 44px one does not fit. So at that width the button
-     is not laid out and the About button beside it wears the badge instead, and a tap on a badged
+     is not laid out and the About button wears the badge instead, and a tap on a badged
      About opens it at the Drive section, where Sync and Connect already are. The breakpoint lives
      in src/shell.css and ONLY there: this file never names a width, it asks the page whether the
      button was laid out (folded() below), so the two cannot disagree about where phone width is.
   3. At the end of the row, immediately before About — which is what makes ruling 2 clean: the
-     button folds into its neighbour rather than moving somewhere else.
+     button folds into its neighbour rather than moving somewhere else. REPLACED BY WO-1.71's
+     ruling 1 (the owner, 2026-10-09): the row is Backup · Sync · Presentation · Year · About, so the
+     button sits beside Backup. Rulings 1 and 2 stand — hidden until opted in, not laid out below
+     640px, About wearing the badge there — until WO-1.73 measures whether it can stand on its own.
+     Nothing in this file read the position, so nothing here moved.
   4. Not synced TODAY turns amber on its own — a calendar day, not a number of hours. freshnessOf().
   5. Opting in is also the consent to try reconnecting at launch. One consent, not two.
      REVERSED IN ITS SECOND HALF BY WO-7.10 (the owner, 2026-09-26): the "silent" reconnect was a

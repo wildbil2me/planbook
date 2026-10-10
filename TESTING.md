@@ -3689,6 +3689,118 @@ failed · 0 skipped`.*
 
 ---
 
+### WO-1.71 — the header keeps what is used in class, and the rest goes behind a gear
+
+**The header re-sorted by the owner's test, *used in class, or set and forget*.** The top row is
+Backup · Sync · Presentation · Year · About and the sound button is gone; the second row is tabs,
+terms and one gear; `.header` carries Roll Call!'s 2px `#e67e22` rule as its own `border-bottom`. The
+gear opens `#settingsModal`, a stock `.modal-panel` with four doors — each carrying the hook its header
+icon carried — and the Sound alerts switch (`#soundsSwitch`, `data-sounds-toggle`, inside a
+`<label class="hub-pref">`). `src/shell.js` gained `openSettings()` (paints the roster door from
+`classes.getSelectedClass()`) and `leaveSettings()` (a door inside Settings closes it and hands the
+**gear** on as the opener); the four routes wrap their opener in it and nothing else in the routing
+moved. Measured by a new section, `tools/verify/settings-hub.mjs` (nine checks, run after
+`horizontal-overflow.mjs`, on two classes of its own that it removes at its foot with the open-class
+and sound preferences and the viewport), and by the sections it touched: eighteen files that reached
+the old icons with `clickSel('header [data-…]')` now walk gear → door through one helper,
+`openSettingsDoor()` in `tools/verify-shell.mjs`.
+
+**One departure from the drawing, at its point of departure in `src/shell.css`.** Roll Call!'s
+switch input is `opacity: 0; width: 0; height: 0`, so the app's one global `:focus-visible` ring drew
+nothing on it — the first run proved the other repair (a second ring on `.toggle-track`) is refused by
+`focus-ring.mjs`'s *exactly one :focus-visible rule*. The input ships laid over the track, drawn as
+nothing by `appearance: none`, so the one ring lands around the track.
+
+- [x] The top row draws Backup, Sync (opted-in devices), Presentation, Year and About, in that order,
+      and no sounds button; the second row draws the tabs, the terms and one *Settings* gear; a 2px
+      `#e67e22` rule sits under the header on the home view and on every class screen, and on no
+      dialog.
+      *`settings-hub.mjs`: `top row ["backup","presentationBtn","yearButton","aboutBtn"]; right of the
+      second row [{"id":"settingsBtn","title":"Settings","label":"Settings"}]; sound controls in the
+      header 0; old icons in the header 0` on a device that never opted in; the rule read as
+      `2px solid rgb(230, 126, 34)` on `["homeView","classView","assignmentsView","scoresView",
+      "calendarView","signalsView"]; wrong on []`, tabs drawn 8 on the class view beside the gear; and
+      `[{"c":"modal-panel","w":"0px",…},{"c":"modal-header","w":"0px",…}]` with Settings open. Sync's
+      place on an opted-in device is `sync-button.mjs`'s, which now asserts the whole row at iPad
+      width: `order ["backup","syncBtn","presentationBtn","yearButton","aboutBtn"]` in all six sync
+      states (its old *last before About* assertion was WO-7.5 ruling 3, which ruling 1 here replaces).*
+- [x] The gear opens *Settings*; each of the four doors opens the dialog or view its header icon
+      opened at v177, for the same class, and the hub is closed behind it.
+      *`settings-hub.mjs`: Roster → `["rosterModal"]` naming the selected class; `Classes and terms →
+      ["classesModal"]; Your details → ["teacherModal"]; Message templates → view templatesView with []
+      open`. And the Traps line about the opener: after ✕ on the roster `focus is on "settingsBtn"`;
+      `modal.mjs` now uses the gear → door walk as its second opener and passes *Escape returns focus
+      to the opener that was clicked* and *backdrop close returns focus to ITS opener, a different
+      button* against the gear. The eighteen re-pointed sections all open their dialogs through the
+      doors and are green.*
+- [x] The roster door names the class `getSelectedClassId()` resolves to, from *All classes* and from
+      inside a class, and the roster dialog opens on that class.
+      *`settings-hub.mjs`, three cases: inside English III — `door says "WO-1.71 English III · students,
+      guardians and supports" with c_wo171b selected … roster names "WO-1.71 English III"`; from All
+      classes — `on homeView the door names "WO-1.71 English III" (selected c_wo171b); the roster names
+      "WO-1.71 English III"`; and a stale `openClassId` — `resolved to c_b1 ("Period 3 — Biology"); door names "Period 3 — Biology";
+      roster names "Period 3 — Biology"`, the run's own first class, which is where
+      `getSelectedClassId()` sends a stale id. The door asks `getSelectedClass()` and nothing else
+      (`src/shell.js`, `openSettings()`).*
+- [x] The switch reads and writes the same preference the header button did: off, then on, then a
+      reload, and `soundsOn()` and the switch agree at every step. An overdue pass with the sound off
+      is still announced and still tints its card.
+      *`settings-hub.mjs`, by real taps on the row: `0: switch true, soundsOn() true, stored true · 1:
+      switch false, soundsOn() false, stored false · 2: switch true, soundsOn() true, stored true · 3
+      (after a reload): switch true, soundsOn() true, stored true · 4 (a tap, a reload): switch false,
+      soundsOn() false, stored false`, announced `"Alert sounds are off. An overdue hall pass is still
+      announced and still colours its card."`. The second sentence is `attendance-passes.mjs`
+      § "THE OFF SWITCH", now driven through this switch (gear, then the row): *with the sound off the
+      tone is not played — and the announcement, the card colour and the level on the record are all
+      exactly as they were* and *turning it back on … sounds again* both PASS.*
+- [x] At 390×844 under a coarse pointer the page has no horizontal overflow, and every control in both
+      header rows and in the hub is at least 44px.
+      *`settings-hub.mjs`: `home: 6 measured, overflow 0, under 44 [] · home + Settings: 12 measured,
+      overflow 0, under 44 [] · class: 16 measured, overflow 0, under 44 [] · class + Settings: 22
+      measured, overflow 0, under 44 []` — the header's buttons, the doors, the switch's `<label>` row
+      and ✕. `touch-targets.mjs`'s roster block, which had gated on `header [data-roster-manage]` and
+      would have skipped silently, now gates on the door: `every control on the roster panel measures
+      >=44px on a coarse pointer :: measured 94; under = []`.*
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      *`node tools/verify-shell.mjs` on the finished tree: exit 0, `1927 checks · 1927 passed · 0
+      failed · 0 skipped`, 61,366 lines, 934s. `node tools/wo-sweep.mjs`: exit 0, `50 checks · 46
+      passed · 0 failed · 4 to review` — the standing three REVIEWs and one more that is this work
+      order's: *CSS selectors added in the working tree with no coarse-block rule* names `.hub-section,
+      .hub-door-icon, .hub-door-text, .hub-door-hint, .hub-door-class, .hub-door-chev, .hub-pref-hint,
+      .toggle-switch, .toggle-track, .toggle-thumb`. Read and confirmed: none is a target — they are
+      the pieces inside a door or inside the switch row, and the targets they sit in (`.hub-door`,
+      `.hub-pref`, 52px at every pointer) are named in the coarse block and measured above. It is a
+      diff-against-HEAD check and goes quiet at the commit. The tools/README.md call-site line moved
+      1914 → 1923 from the sweep's own count. `sw.js`: `planbook-shell-v178` → `planbook-shell-v179`.*
+- [x] `TESTING.md` § WO-1.71 carries these lines verbatim with the evidence for each.
+      *This section.*
+- [x] 👤 On the iPad, after a force-quit, upright and lying down: read both header rows and the orange
+      rule; open Settings from *All classes* and from a class and read the roster door's class; open
+      each door; flip Sound alerts off and on.
+      — **Read by the owner on the teaching iPad, 2026-10-10**, against v179 served from the laptop
+      over the LAN (`tools/serve-https.mjs`), force-quit first. Every item on the verifier's checklist
+      passed: both header rows and the orange rule upright and lying down (no Sync button, as
+      expected on a LAN origin), the roster door naming the last-visited class from *All classes* and
+      the open class from inside one, each of the four doors closing Settings behind it, and Sound
+      alerts flipping off and on with the thumb moving and the whole row tappable. One observation
+      outside this work order's lines: the support dot sits awkwardly in a narrow dialog — a
+      candidate for a later dispatch that widens the dialogs further.
+
+*The verifier ran the owed mutation round on 2026-10-10: three planted faults — Settings returning
+focus to the wrong control, the open class resolved a second way, and the switch not repainting its
+look — each produced the predicted failures, and the tree was confirmed back to as-delivered with no
+marker left. The paragraph below is the implementer's account as written.*
+
+*No mutation round was run: a full `verify-shell.mjs` run takes about fifteen minutes here and the
+session window was tight, so no check in `settings-hub.mjs` has been proved non-vacuous by a planted
+fault — that is owed if anyone wants it. What the first run did show is that the neighbouring checks
+bite on this change: `focus-ring.mjs` refused the first shape of the switch's focus ring (a second
+`:focus-visible` rule on the track), which is how the input came to be laid over the track instead;
+and the new rule check went red on its own fixture (it named the home view `home` where it then
+looked for `homeView`) and was corrected. No `MUTATION` was ever inserted in the tree.*
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*

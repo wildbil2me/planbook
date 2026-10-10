@@ -9,7 +9,7 @@
  */
 
 export async function run(h) {
-const { check, evalJs, has, clickSel, seam } = h;
+const { check, evalJs, has, clickSel, seam, openSettingsDoor } = h;
 
 /* ───────── the signal engine and its thresholds (WO-4.1) ─────────
  *
@@ -94,7 +94,7 @@ console.log('\n--- the signal engine and its thresholds (WO-4.1) ---');
     await evalJs(`['signalsModal','letterScaleModal','categoryRemoveModal','categoriesModal',
       'termsModal','studentModal','rosterModal','classesModal']
       .forEach(function(m){ window.planbook.closeModal(m); }); 1`);
-    await clickSel('header [data-class-manage]');
+    await openSettingsDoor('[data-class-manage]');
     await clickSel('#classesModal [data-signal-panel]');
 
     const panel = await evalJs(`(function(){

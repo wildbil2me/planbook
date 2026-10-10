@@ -114,6 +114,7 @@ import { run as todayGoesToTerm } from './verify/today-goes-to-term.mjs';
 import { run as keyboardMarking } from './verify/keyboard-marking.mjs';
 import { run as touchTargets } from './verify/touch-targets.mjs';
 import { run as horizontalOverflow } from './verify/horizontal-overflow.mjs';
+import { run as settingsHub } from './verify/settings-hub.mjs';
 import { run as notePanel } from './verify/note-panel.mjs';
 import { run as passCard } from './verify/pass-card.mjs';
 import { run as portraitLandscape } from './verify/portrait-landscape.mjs';
@@ -279,7 +280,7 @@ const h = {
      surface of this harness is one object literal a reader can take in at a glance. */
   PORT: 0, SERVED: null, udd: '', consoleLog: null, netLog: null,
   send: null, evalJs: null, has: null, clickSel: null, clickVisible: null, openCalendarPanel: null,
-  KILL_ANIM: '', INSTALL_WALKER: '', dateResetOn: null, waitForBoot: null, load: null,
+  openSettingsDoor: null, KILL_ANIM: '', INSTALL_WALKER: '', dateResetOn: null, waitForBoot: null, load: null,
 
   /* Three readings one section takes and later ones live on. `seam` is "is window.planbook on the
      page at all", read once by `tools/verify/localstorage-prefs.mjs`; fifteen sections after it
@@ -330,6 +331,11 @@ const BROWSER_SECTIONS = [
   { file: 'verify/keyboard-marking.mjs', run: keyboardMarking },
   { file: 'verify/touch-targets.mjs', run: touchTargets },
   { file: 'verify/horizontal-overflow.mjs', run: horizontalOverflow },
+  /* The header's two rows, the orange rule and Settings behind the gear (WO-1.71), beside the two
+     sections that measure touch targets and sideways scroll because its fifth Acceptance line is
+     both of those, asked of the header and the dialog. It plants two classes of its own and takes
+     them, the open-class and sound preferences, and the viewport back out at its foot. */
+  { file: 'verify/settings-hub.mjs', run: settingsHub },
   { file: 'verify/note-panel.mjs', run: notePanel },
   { file: 'verify/pass-card.mjs', run: passCard },
   { file: 'verify/portrait-landscape.mjs', run: portraitLandscape },
@@ -851,6 +857,26 @@ async function openCalendarPanel(hook) {
   await new Promise(r => setTimeout(r, 250));
 }
 
+/*
+  THE FOUR DOORS THAT USED TO BE HEADER ICONS ARE BEHIND THE GEAR NOW (WO-1.71), AND THIS IS THE ONE
+  PLACE THAT KNOWS THE WALK. Roster and contacts, Classes and terms, Your details and Message
+  templates left the header's second row for #settingsModal, and every `clickSel('header [data-…]')`
+  that reached them by a real click became a click on nothing — or, for `[data-class-manage]`, on the
+  + tab when the class view is up and on nothing when it is not. The walk is the teacher's: tap the
+  gear, tap the door. The door closes Settings before it opens its own dialog (src/shell.js,
+  leaveSettings()), so what the caller gets back is exactly what the header icon used to leave.
+
+  `hook` is the door's attribute selector, e.g. '[data-roster-manage]'. A section that only wants the
+  dialog and not the walk can still `.click()` the hook from page-side code — a button inside a
+  closed dialog takes a programmatic click — and roughly fifteen do; this helper is for the ones
+  that drive a real pointer.
+*/
+async function openSettingsDoor(hook) {
+  await clickSel('#settingsBtn');
+  await clickSel('#settingsModal ' + hook);
+  await new Promise(r => setTimeout(r, 100));
+}
+
 /* Headless Chromium with no visible frame never advances a transition or a keyframe, so
    getBoundingClientRect returns start-of-animation values. `.modal-close` measures 42.24px —
    which is 44 x 0.96, the srIn keyframe's opening scale — and reads exactly like a failed
@@ -1108,7 +1134,7 @@ if (booted < 20) bail('the page did not render — is index.html a placeholder?'
 /* The browser half of the harness, now that all of it exists. */
 Object.assign(h, {
   PORT, SERVED, udd, consoleLog, netLog,
-  send, evalJs, has, clickSel, clickVisible, openCalendarPanel,
+  send, evalJs, has, clickSel, clickVisible, openCalendarPanel, openSettingsDoor,
   KILL_ANIM, INSTALL_WALKER, dateResetOn, waitForBoot, load,
 });
 
