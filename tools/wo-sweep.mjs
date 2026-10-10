@@ -1688,6 +1688,18 @@ function commentLines(file) {
    - A class also declared by a LANDED section of the same sheet. `§ TOUCH` is not the only place a
      name gets re-mentioned, and a re-mention is not a declaration.
 
+   A SHEET WHOSE SECTIONS CANNOT BE READ FAILS THE COLLISION CHECK, PER SHEET (WO-1.69, 2026-10-10).
+   The rule reads a section only from a banner box — a § line directly under a rule of ═ — and
+   proposed-attendance.css was first written with one-line `══ § … ══` comment banners, so neither of
+   its sections parsed and nine new class names were never compared against src/, under a green
+   sweep. The guard against an empty parse fired only when EVERY sheet parsed to nothing. Now two
+   per-sheet faults fold into the collision check's FAIL, naming the sheet and the shape expected:
+   a sheet that DECLARES a class and parses to zero sections (a sheet declaring none is legitimate),
+   and a section the sheet's header index names (`§ NAME → …`, read only inside the opening comment)
+   with no body banner of that name. The parser's shape is not widened to read a one-liner; rule 4
+   owns it. One gap is left open and named at the code: a one-line banner in a sheet with no index
+   and at least one good section is read as part of whatever sits above it, preamble or section.
+
    THE REVIEW AT THE END IS THE ONE THAT FOUND SOMETHING. `proposed-phase6.css` § CALENDAR declares
    twenty-eight `.cal-*` classes and names `src/calendar-view.css` as its target; WO-6.3 shipped that
    file with twenty classes of its own under `.calendar-*`, and NOT ONE of the drawn names reached it.
@@ -1885,6 +1897,8 @@ function commentLines(file) {
       // sheet" — splitting on the first § instead lands in the header index and cuts the grouped
       // selector out, which is how this arrived red the first time it ran.
       const preambles = new Map();
+      const unreadable = []; // per-sheet parse faults — see the block after preambles.set() below
+      let indexedTotal = 0;   // header-index entries read, so a PASS says rule 2 was not run over nothing
       for (const sheet of sheets) {
         const lines = readMock(sheet).split('\n');
         const marks = [];
@@ -1911,6 +1925,43 @@ function commentLines(file) {
           });
         });
         preambles.set(sheet, declaredClasses(stripCssComments(lines.slice(0, marks.length ? marks[0].i : lines.length).join('\n'))));
+
+        // A SHEET WHOSE SECTIONS CANNOT BE READ, judged one sheet at a time (WO-1.69). The empty-parse
+        // guard below fires only when EVERY sheet parses to nothing, so one sheet of one-line banners
+        // among a dozen good ones passed this whole section unread — proposed-attendance.css did, on
+        // 2026-10-09, and nine new class names were never compared against src/. Two readings of the
+        // same fault, and the parser's shape is NOT widened to meet either (PROTOCOL.md rule 4 owns it):
+        //   1. the sheet declares a class and parses to zero body sections. A sheet declaring NO class
+        //      is legitimate — it may carry only cross-cutting blocks — and is not counted.
+        //   2. a section the sheet's header index names (`§ NAME → …`) has no body banner, which is
+        //      what one mis-shaped banner looks like in a sheet whose other sections still parse.
+        // THE INDEX IS BOUNDED TO THE OPENING COMMENT, not found by regex across the file: body banners
+        // carry the same `§ NAME → src/…` text, and proposed-phase7.css has one indented exactly like an
+        // index line. An index line is a § line followed by → ; its continuation lines carry no §, and
+        // the target is not read (proposed-phase6.css indexes `§ SHARED → whichever lands first`), so
+        // wrapping and a non-src target both read the same as the one-line shape. Prose in the opening
+        // comment that starts with § (proposed-scores.css: `§ SCORE SCROLL BOX WENT ACROSS…`) has no →
+        // and is not an entry. WHAT NEITHER RULE REACHES: a one-line banner in a sheet with NO index
+        // and at least one good section — proposed-phase7.css § SYNC BUTTON is one, in the tree today,
+        // and its rules are read into the preamble above § FIRST RUN, where nothing compares them.
+        {
+          const head = lines.findIndex(l => l.trim() !== '');
+          const indexed = [];
+          if (head >= 0 && /^\s*\/\*/.test(lines[head])) {
+            for (let i = head; i < lines.length; i++) {
+              const e = lines[i].match(/^\s*§\s+([A-Z][A-Z ]*[A-Z])\s+→/);
+              if (e) indexed.push({ name: e[1].trim(), line: i + 1 });
+              if (lines[i].includes('*/')) break;
+            }
+          }
+          indexedTotal += indexed.length;
+          const parsed = new Set(marks.map(mk => mk.name));
+          const declares = declaredClasses(stripCssComments(lines.join('\n'))).size;
+          const missing = indexed.filter(e => !parsed.has(e.name));
+          const named = missing.length ? `; its header index names ${missing.map(e => `§ ${e.name} (line ${e.line})`).join(', ')} and no body banner of that name parses` : '';
+          if (declares && !marks.length) unreadable.push(`${at(sheet)} declares ${declares} class(es) and parsed to ZERO § sections${named}`);
+          else if (missing.length) unreadable.push(`${at(sheet)}:${named.slice(1)}`);
+        }
         marks.forEach((mk, k) => {
           const end = k + 1 < marks.length ? marks[k + 1].i : lines.length;
           sections.push({
@@ -1959,11 +2010,12 @@ function commentLines(file) {
 
         const pending = sections.filter(s => !s.landed && !s.crossCutting);
         const faults = [];
+        if (unreadable.length) faults.push(`${unreadable.join(' · ')} — a sheet whose sections cannot be read is one whose collisions cannot be either. This check reads a section only from a banner box: a rule of ═ on one line, and DIRECTLY under it a line \`§ NAME → src/<file>.css (WO-x.y …)\` (design/mockups/PROTOCOL.md rule 4). A one-line \`/* ══ § NAME → … ══ */\` is read as nothing. Reshape the banner; do not widen the parser`);
         if (collisions.length) faults.push(`${collisions.join(' · ')} — a pending section styles a class src/ already styles. Two stylesheets must never style the same class, and this one is about to become the second. Rename it in the drawing (design/mockups/PROTOCOL.md rule 5), or wear the shipped class as-is and delete the rule`);
         if (orphans.length) faults.push(`${orphans.join(' · ')} — declared in a cross-cutting block and nowhere else in its own sheet. Those blocks are exempt from the collision check because they only re-mention controls declared above them; a class that appears ONLY there is unchecked against src/ entirely. Declare it in the section it belongs to`);
         check(NAMES.collide, !faults.length,
           faults.length ? faults.join(' · ')
-            : `${pending.length} pending section(s) — ${pending.map(s => s.name + ' → ' + (s.target || 'unnamed target') + (s.saysPending ? ' (says not yet lifted)' : '')).join(', ')} — declaring ${pending.reduce((n, s) => n + s.classes.size, 0)} class(es), none of them styled in any of the ${srcSheets.length} src/*.css. ${sections.filter(s => s.landed).length} landed section(s) exempt by construction; ${sections.filter(s => s.crossCutting).length} cross-cutting, none of which declares a class its own sheet does not declare elsewhere`);
+            : `${pending.length} pending section(s) — ${pending.map(s => s.name + ' → ' + (s.target || 'unnamed target') + (s.saysPending ? ' (says not yet lifted)' : '')).join(', ')} — declaring ${pending.reduce((n, s) => n + s.classes.size, 0)} class(es), none of them styled in any of the ${srcSheets.length} src/*.css. ${sections.filter(s => s.landed).length} landed section(s) exempt by construction; ${sections.filter(s => s.crossCutting).length} cross-cutting, none of which declares a class its own sheet does not declare elsewhere. None of the ${sheets.length} sheet(s) declares a class and parses to zero sections, and all ${indexedTotal} section(s) named in a header index have a body banner`);
 
         // The review: a banner and a build that disagree about where a section went. Never a fault —
         // see the section header for why a rename can be right, and for why a drawn class that reached

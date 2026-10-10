@@ -3522,6 +3522,76 @@ failed · 0 skipped`.*
 
 ---
 
+### WO-1.69 — a proposed stylesheet whose sections cannot be read passes the collision check unread
+
+**Both rules kept.** The header index read reliably on every sheet in the tree, so the work order's
+exit (keep only the first rule) was not taken. The index is bounded to the sheet's **opening
+comment** — from the first non-blank line, if it opens `/*`, to the first `*/` — and an entry is a
+line `^\s*§\s+NAME\s+→`. That holds on all the shapes the brief flagged: a wrapped entry
+(`proposed-phase4.css:25`, `proposed-scores.css:37`, `:39`) reads by its first line, whose name is
+complete; `proposed-phase6.css:27`'s `§ SHARED → whichever lands first` reads the same as a `src/`
+target, because the target is not read; opening-comment prose that starts with `§`
+(`proposed-scores.css:42`, `§ SCORE SCROLL BOX WENT ACROSS IN HALF on …`) has no `→` and is not an
+entry; and the body banners that carry the same text, including `proposed-phase7.css:79` with an
+index-like indent, are outside the opening comment. **28 index entries read across 9 sheets** (the
+PASS line prints the count, so rule 2 cannot pass over nothing unnoticed); `proposed-phase7.css` has
+no index. Both faults fold into the existing collision check's FAIL — **no new `check()` call site**,
+so the sweep stays at 50 checks and `tools/README.md`'s counts do not move.
+
+- [x] On a scratch copy, rewriting one body banner of a real `proposed*.css` as a one-line comment
+      turns the sweep red, naming that sheet. Reverted before anything else is written.
+      *The sweep reads `design/mockups/` by fixed path, so the method was: copy the sheet to the
+      session scratchpad, rewrite the banner box in place with a scratchpad script (`mut.mjs`, never
+      in the repository — it splices the box from its `═` rule to its `*/` into one line
+      `/* ══ <the § line> ══ */`, the shape the attendance sheet was first written in), run
+      `node tools/wo-sweep.mjs`, copy the backup straight back, and confirm with `git status --short
+      design/` (empty) before the next step. Three runs:*
+      *— **A, the acceptance case**: `proposed-attendance.css` § ATTENDANCE HEADER (lines 48–60)
+      collapsed. Exit 1, `50 checks · 46 passed · 1 failed · 3 to review`, `FAIL | a pending mockup
+      section styles no class src/ already styles :: design/mockups/proposed-attendance.css: its
+      header index names § ATTENDANCE HEADER (line 40) and no body banner of that name parses — a
+      sheet whose sections cannot be read is one whose collisions cannot be either. …` (rule 2; the
+      sheet's other section still parses, so rule 1 correctly stays quiet). **Against the
+      pre-WO-1.69 sweep** (`git show HEAD:tools/wo-sweep.mjs` into a temporary `tools/zz-head-sweep.mjs`,
+      deleted in the same command) the same mutation was **exit 0, `47 passed · 0 failed`, PASS** —
+      the defect this work order names, reproduced. Run A was repeated against the **final**
+      `tools/wo-sweep.mjs` (after its § 19 banner was last edited) with the same exit 1 and the same
+      FAIL, then restored, and the clean tree re-run at exit 0.*
+      *— **B**: `proposed-copy.css` § COPY LIST and § TOUCH both collapsed. Exit 1, one FAIL naming
+      `design/mockups/proposed-copy.css declares 14 class(es) and parsed to ZERO § sections; its
+      header index names § COPY LIST (line 57) and no body banner of that name parses` (both rules,
+      one entry).*
+      *— **C**: `proposed-phase7.css` (no header index) § FIRST RUN and § TOUCH collapsed. Exit 1, one
+      FAIL naming `design/mockups/proposed-phase7.css declares 4 class(es) and parsed to ZERO §
+      sections` (rule 1 alone).*
+      *Each was restored from its scratchpad backup before the next began; no `MUTATION` marker was
+      written anywhere. `grep -rn MUTATION` over the four files this work order changed and every
+      `proposed*.css` finds only pre-existing prose, and `git diff -U0 | grep MUTATION` finds only the
+      lines of this paragraph.*
+- [x] Every `proposed*.css` in the tree today passes unchanged.
+      *`git status --short design/` is empty — no sheet was edited, including `proposed-phase7.css:19`'s
+      live one-line `§ SYNC BUTTON` banner, which neither rule reaches (the sheet has no index and
+      `§ FIRST RUN` parses; see below). The sweep's PASS line on the real tree: `None of the 10
+      sheet(s) declares a class and parses to zero sections, and all 28 section(s) named in a header
+      index have a body banner`.*
+- [x] `node tools/wo-sweep.mjs` is green and `node tools/wo-gate.mjs --audit` passes.
+      *Final tree: `wo-sweep.mjs` exit 0, `50 checks · 47 passed · 0 failed · 3 to review` — the
+      standing three REVIEWs, unchanged from before this work order. `wo-gate.mjs --audit` exit 0.*
+- [x] `TESTING.md` § WO-1.69 carries these lines verbatim with the evidence for each.
+      *This section.*
+
+**The gap left open, named at the code and in `tools/README.md`:** a one-line banner in a sheet with
+**no** header index and at least one good section is still read as nothing — its rules are counted
+into whatever sits above it, the preamble or the previous section. `proposed-phase7.css:19` is such a banner today (it reads into the
+preamble, above `§ FIRST RUN`). Closing it means either giving that sheet an index or a rule that
+does not depend on one; both are outside this work order and are proposed in its result file.
+
+*No 👤 line and no 📆 line: tooling only. Nothing in `src/` moved, so no `CACHE` bump; the brief's
+`node tools/verify-shell.mjs` was run on the finished tree: exit 0, `1915 checks · 1915 passed · 0 failed
+· 0 skipped`.*
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*

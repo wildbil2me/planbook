@@ -13,6 +13,23 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The sweep catches a proposed stylesheet whose sections it cannot read — 2026-10-10
+
+WO-1.69, the 🎒 booked out of drawing the attendance screen. Tooling only; nothing in `src/` moved.
+
+- **`wo-sweep.mjs` § 19 now judges each proposed stylesheet on its own.** A sheet that declares
+  classes but parses to no sections fails, naming the sheet and the banner shape it expects. It used
+  to pass unless every sheet failed at once, which is how `proposed-attendance.css`, first drawn
+  with one-line banners, had nine new class names go unchecked against `src/` under a green sweep.
+- **A section a sheet's header index names, with no matching banner in the body, fails too.** That
+  is what one mis-shaped banner looks like in a sheet whose other sections still parse. The parser
+  still accepts only `PROTOCOL.md` rule 4's banner box.
+- A fresh verifier broke each rule on a scratch copy and watched the sweep go red; every sheet in
+  `design/` passes unchanged.
+- One case neither rule reaches: a one-line banner in a sheet with no header index, which
+  `proposed-phase7.css:19` already is. Booked as
+  [WO-1.75](plans/work-orders/phase-1-shell-store-roster.md#wo-175--a-one-line-banner-in-a-sheet-with-no-header-index-is-still-read-as-part-of-the-section-above-it).
+
 ### The header and Settings are drawn and booked — 2026-10-10
 
 Owner-directed, out of a conversation held while WO-2.60 was in flight. Nothing in the app changed.

@@ -5945,7 +5945,7 @@ moves**, so no `CACHE` bump is owed.
 
 ## WO-1.69 — a proposed stylesheet whose sections cannot be read passes the collision check unread
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-10 · **Size** XS · **Depends on** — · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.68 made.)*
 
 **Booked 2026-10-09**, owner-directed, out of drawing the attendance screen (`8bfff03`). A ride-along
@@ -5974,11 +5974,11 @@ green from a distance and is not"*, one level down.
 - **`tools/README.md`** and the § 19 banner in the sweep say what is now checked.
 
 **Acceptance**
-- [ ] On a scratch copy, rewriting one body banner of a real `proposed*.css` as a one-line comment
+- [x] On a scratch copy, rewriting one body banner of a real `proposed*.css` as a one-line comment
       turns the sweep red, naming that sheet. Reverted before anything else is written.
-- [ ] Every `proposed*.css` in the tree today passes unchanged.
-- [ ] `node tools/wo-sweep.mjs` is green and `node tools/wo-gate.mjs --audit` passes.
-- [ ] `TESTING.md` § WO-1.69 carries these lines verbatim with the evidence for each.
+- [x] Every `proposed*.css` in the tree today passes unchanged.
+- [x] `node tools/wo-sweep.mjs` is green and `node tools/wo-gate.mjs --audit` passes.
+- [x] `TESTING.md` § WO-1.69 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Do not widen the banner shape the parser accepts** to make the one-liner pass: the
 shape is `PROTOCOL.md` rule 4's, and a looser parser is a second shape to keep in step. **Do not
@@ -6262,3 +6262,46 @@ it is still built only when `supportsVisible()` says so — WO-1.9's acceptance 
 from the DOM under a projector, not hidden in it. **`.roster-row-name`'s own `flex` is not edited**:
 the column takes it, and its children take none, which is what keeps a stacked name from growing
 140px tall.
+
+## WO-1.75 — a one-line banner in a sheet with no header index is still read as part of the section above it
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** — · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.70 made.)*
+
+**Booked 2026-10-10**, owner-directed, out of WO-1.69's verdict. A ride-along on `tools/wo-sweep.mjs`
+§ 19: fold it into the next sitting that has that file open.
+
+**Why it exists.** WO-1.69 gave § 19 two per-sheet rules — a sheet that declares a class and parses
+to zero sections fails, and a section named in a sheet's header index with no body banner fails —
+and **both reach a one-line banner only through something else in the sheet**. A sheet with no
+header index and at least one good banner box passes with a one-liner in it, and the one-liner's
+rules are read into whatever sits above it, preamble or section. `design/mockups/proposed-phase7.css:19`
+(§ SYNC BUTTON) is exactly that, in the tree today. It costs nothing now only because the section
+was lifted at WO-7.5 and the collision check skips lifted sections; the next sheet drawn without an
+index is unguarded. The gap is named at the check, in the `tools/README.md` row and in `TESTING.md`
+§ WO-1.69.
+
+**Deliverables**
+- **§ 19 fails a one-line banner wherever it appears**: a comment line that carries a `§` and a run
+  of `═` on the same line (`/* ══ § NAME → … ══ */`), naming the sheet, the line, and the banner box
+  `PROTOCOL.md` rule 4 expects. It depends on no header index.
+- **`design/mockups/proposed-phase7.css:19` reshaped into a banner box**, so the sheet passes. Its
+  words do not change.
+- **The gap paragraph** at the check, in the § 19 banner and in `tools/README.md` comes out, replaced
+  by what is now checked.
+- **`TESTING.md` § WO-1.75** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] On a scratch copy, `proposed-phase7.css` as it stood before this work order turns the sweep
+      red, naming that sheet and line 19. Reverted before anything else is written.
+- [ ] Every `proposed*.css` in the tree passes, with `proposed-phase7.css` reshaped and no other
+      sheet under `design/` changed.
+- [ ] `node tools/wo-sweep.mjs` is green and `node tools/wo-gate.mjs --audit` passes.
+- [ ] `TESTING.md` § WO-1.75 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Do not widen the parser to read a one-liner as a section**: WO-1.69's Trap stands, and
+rule 4's banner box stays the only shape. This rule refuses the other shape; it does not accept it.
+**A banner box's own rule lines carry `═` and no `§`, and its § line carries `§` and no `═`** — test
+both lines of every banner in the tree before trusting the pattern. **This changes
+`tools/wo-sweep.mjs`, a pipeline file**: read `plans/work-orders/README.md` § "The pipeline's own
+files" before editing it. **Nothing in `src/` moves**, so no `CACHE` bump is owed.
