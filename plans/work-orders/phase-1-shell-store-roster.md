@@ -6265,7 +6265,7 @@ the column takes it, and its children take none, which is what keeps a stacked n
 
 ## WO-1.75 — a one-line banner in a sheet with no header index is still read as part of the section above it
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-10 · **Size** XS · **Depends on** — · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.70 made.)*
 
 **Booked 2026-10-10**, owner-directed, out of WO-1.69's verdict. A ride-along on `tools/wo-sweep.mjs`
@@ -6292,12 +6292,12 @@ index is unguarded. The gap is named at the check, in the `tools/README.md` row 
 - **`TESTING.md` § WO-1.75** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] On a scratch copy, `proposed-phase7.css` as it stood before this work order turns the sweep
+- [x] On a scratch copy, `proposed-phase7.css` as it stood before this work order turns the sweep
       red, naming that sheet and line 19. Reverted before anything else is written.
-- [ ] Every `proposed*.css` in the tree passes, with `proposed-phase7.css` reshaped and no other
+- [x] Every `proposed*.css` in the tree passes, with `proposed-phase7.css` reshaped and no other
       sheet under `design/` changed.
-- [ ] `node tools/wo-sweep.mjs` is green and `node tools/wo-gate.mjs --audit` passes.
-- [ ] `TESTING.md` § WO-1.75 carries these lines verbatim with the evidence for each.
+- [x] `node tools/wo-sweep.mjs` is green and `node tools/wo-gate.mjs --audit` passes.
+- [x] `TESTING.md` § WO-1.75 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Do not widen the parser to read a one-liner as a section**: WO-1.69's Trap stands, and
 rule 4's banner box stays the only shape. This rule refuses the other shape; it does not accept it.

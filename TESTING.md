@@ -3590,6 +3590,56 @@ does not depend on one; both are outside this work order and are proposed in its
 `node tools/verify-shell.mjs` was run on the finished tree: exit 0, `1915 checks · 1915 passed · 0 failed
 · 0 skipped`.*
 
+### WO-1.75 — a one-line banner in a sheet with no header index is still read as part of the section above it
+
+**A third per-sheet rule, beside WO-1.69's two.** Any line of a `proposed*.css` carrying both a `§`
+and a run of `═` (`/═{2,}/`) is pushed onto the same per-sheet `unreadable` list WO-1.69's rules
+feed, so it folds into the collision check's existing FAIL — **no new `check()` call site**: the sweep
+stays at 50 checks and `tools/README.md`'s counts do not move. It reads no header index and no other
+section, and it refuses the shape rather than reading it: the parser that finds sections is
+untouched. **The pattern was tested against both lines of every banner in the tree before it was
+trusted**: a scratchpad script walked all ten `proposed*.css` and found **39 banner boxes, none of
+whose `═` rule line carries a `§` and none of whose `§` line carries a `═`**; across `design/` and
+`src/` the only other line carrying both is `src/detail.css:246`, outside § 19's reach (it reads
+`design/mockups/proposed*.css` only) — noted in the result file, not touched.
+
+- [x] On a scratch copy, `proposed-phase7.css` as it stood before this work order turns the sweep
+      red, naming that sheet and line 19. Reverted before anything else is written.
+      *Twice. **First, before the reshape**, with the new rule in place and the sheet still as
+      committed: `node tools/wo-sweep.mjs` exit 1, `50 checks · 46 passed · 1 failed · 3 to review`,
+      the one FAIL `a pending mockup section styles no class src/ already styles ::
+      design/mockups/proposed-phase7.css:19 is a one-line banner (\`/* ══ § SYNC BUTTON   →
+      src/shell.css   (WO-7.5 — lifted 2026-09-26) ════════ */\`), which is read as part of whatever
+      sits above it, never as a section — PROTOCOL.md rule 4 expects a banner box: …`. **Then, after
+      the reshape, as a round trip**: the reshaped sheet copied to the session scratchpad,
+      `git show HEAD:design/mockups/proposed-phase7.css` written over it, the sweep run (exit 1, the
+      same `46 passed · 1 failed`, the same `proposed-phase7.css:19 is a one-line banner`), and the
+      scratchpad copy put straight back in the same command; `git diff --stat design/` then showed
+      only the reshape (`3 insertions(+), 1 deletion(-)`) and the sweep was exit 0 again. No
+      `MUTATION` marker was written anywhere.*
+- [x] Every `proposed*.css` in the tree passes, with `proposed-phase7.css` reshaped and no other
+      sheet under `design/` changed.
+      *Line 19 became a three-line banner box — a 78-`═` rule, the § line, a 78-`═` rule closing the
+      comment, the shape of the sheet's own § FIRST RUN box — and the § line's words are the old
+      line's byte for byte: `§ SYNC BUTTON   →  src/shell.css   (WO-7.5 — lifted 2026-09-26)`.
+      `git diff --stat design/` lists `proposed-phase7.css` alone. § SYNC BUTTON now parses as a
+      **landed** section (its target exists and it does not say *not yet lifted*), so it is exempt
+      from the collision rule, and it raises no review: the standing three REVIEWs are unchanged. The
+      PASS line: `25 landed section(s) exempt by construction; … None of the 10 sheet(s) declares a
+      class and parses to zero sections, all 28 section(s) named in a header index have a body
+      banner, and no sheet carries a one-line banner`.*
+- [x] `node tools/wo-sweep.mjs` is green and `node tools/wo-gate.mjs --audit` passes.
+      *Final tree: `wo-sweep.mjs` exit 0, `50 checks · 47 passed · 0 failed · 3 to review` — the
+      same three REVIEWs as before this work order. `wo-gate.mjs --audit` exit 0, its last line
+      `PASS | every fragment matches exactly one roadmap box …`.*
+- [x] `TESTING.md` § WO-1.75 carries these lines verbatim with the evidence for each.
+      *This section.*
+
+*No 👤 line and no 📆 line: tooling only. Nothing in `src/` moved, so no `CACHE` bump. The brief's
+`node tools/verify-shell.mjs` was run on the finished tree: exit 0, `1915 checks · 1915 passed · 0
+failed · 0 skipped`. § WO-1.69 above still names the gap; it is that work order's record of the tree
+it left and is not rewritten.*
+
 ---
 
 ## Phase 2 — Attendance

@@ -13,6 +13,22 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The sweep refuses a one-line banner wherever it sits — 2026-10-10
+
+WO-1.75, booked out of WO-1.69 the same day. Tooling and one drawing; nothing in `src/` moved.
+
+- **`wo-sweep.mjs` § 19 now fails any line of a `proposed*.css` that carries both a `§` and a run of
+  `═`**, naming the sheet and the line. A sheet needs no header index for this to fire, which closes
+  the case WO-1.69 left open: a sheet with no index and one good banner box used to pass with a
+  one-liner in it, and read that section's rules into the one above. The parser's banner shape is
+  not widened — the one-liner is refused, never read.
+- **`design/mockups/proposed-phase7.css`** had the one instance in the tree, at line 19. It is now a
+  three-line banner box, same words.
+- A fresh verifier ran the old sheet on a scratch copy and watched the sweep go red at line 19, then
+  removed only the new rule and watched it go green. All ten proposed sheets pass.
+- Three shapes still pass, none present in the tree: a one-liner with a single `═`, one with no `═`
+  at all, and one with the `§` and the `═` on separate lines.
+
 ### The sweep catches a proposed stylesheet whose sections it cannot read — 2026-10-10
 
 WO-1.69, the 🎒 booked out of drawing the attendance screen. Tooling only; nothing in `src/` moved.

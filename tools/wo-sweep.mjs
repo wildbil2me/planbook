@@ -1692,13 +1692,17 @@ function commentLines(file) {
    The rule reads a section only from a banner box — a § line directly under a rule of ═ — and
    proposed-attendance.css was first written with one-line `══ § … ══` comment banners, so neither of
    its sections parsed and nine new class names were never compared against src/, under a green
-   sweep. The guard against an empty parse fired only when EVERY sheet parsed to nothing. Now two
+   sweep. The guard against an empty parse fired only when EVERY sheet parsed to nothing. Now three
    per-sheet faults fold into the collision check's FAIL, naming the sheet and the shape expected:
    a sheet that DECLARES a class and parses to zero sections (a sheet declaring none is legitimate),
-   and a section the sheet's header index names (`§ NAME → …`, read only inside the opening comment)
-   with no body banner of that name. The parser's shape is not widened to read a one-liner; rule 4
-   owns it. One gap is left open and named at the code: a one-line banner in a sheet with no index
-   and at least one good section is read as part of whatever sits above it, preamble or section.
+   a section the sheet's header index names (`§ NAME → …`, read only inside the opening comment)
+   with no body banner of that name, and — since WO-1.75, the same day — any ONE-LINE BANNER at all,
+   a line carrying both a § and a run of ═, named by sheet and line wherever it sits. The first two
+   reached a one-liner only through something else in the sheet, so a sheet with no index and one
+   good banner box passed with a one-liner in it and read its rules into whatever sat above it
+   (proposed-phase7.css § SYNC BUTTON did, until WO-1.75 reshaped it). The third depends on nothing
+   else in the sheet. The parser's shape is still not widened to read a one-liner: rule 4 owns it,
+   and this refuses the other shape rather than accepting it.
 
    THE REVIEW AT THE END IS THE ONE THAT FOUND SOMETHING. `proposed-phase6.css` § CALENDAR declares
    twenty-eight `.cal-*` classes and names `src/calendar-view.css` as its target; WO-6.3 shipped that
@@ -1941,10 +1945,21 @@ function commentLines(file) {
         // the target is not read (proposed-phase6.css indexes `§ SHARED → whichever lands first`), so
         // wrapping and a non-src target both read the same as the one-line shape. Prose in the opening
         // comment that starts with § (proposed-scores.css: `§ SCORE SCROLL BOX WENT ACROSS…`) has no →
-        // and is not an entry. WHAT NEITHER RULE REACHES: a one-line banner in a sheet with NO index
-        // and at least one good section — proposed-phase7.css § SYNC BUTTON is one, in the tree today,
-        // and its rules are read into the preamble above § FIRST RUN, where nothing compares them.
+        // and is not an entry.
+        //   3. a ONE-LINE BANNER anywhere in the sheet (WO-1.75): a line carrying a § AND a run of ═,
+        //      the `/* ══ § NAME → … ══ */` shape. Rules 1 and 2 reach one only through something else
+        //      in the sheet, so a sheet with no index and one good banner box passed with a one-liner in
+        //      it, and the one-liner's rules were read into whatever sat above it — proposed-phase7.css
+        //      § SYNC BUTTON was exactly that until WO-1.75 reshaped it. This reads no index and no other
+        //      section. It rests on the banner box's two line kinds never mixing: a box's rule lines carry
+        //      ═ and no §, its § line carries § and no ═ — true of every banner in the tree on the day
+        //      it was written. It REFUSES the shape; it does not read it as a section.
         {
+          lines.forEach((line, i) => {
+            if (/§/.test(line) && /═{2,}/.test(line)) {
+              unreadable.push(`${at(sheet)}:${i + 1} is a one-line banner (\`${line.trim()}\`), which is read as part of whatever sits above it, never as a section — PROTOCOL.md rule 4 expects a banner box: a rule of ═, the § line directly under it, a rule of ═ to close`);
+            }
+          });
           const head = lines.findIndex(l => l.trim() !== '');
           const indexed = [];
           if (head >= 0 && /^\s*\/\*/.test(lines[head])) {
@@ -2010,12 +2025,12 @@ function commentLines(file) {
 
         const pending = sections.filter(s => !s.landed && !s.crossCutting);
         const faults = [];
-        if (unreadable.length) faults.push(`${unreadable.join(' · ')} — a sheet whose sections cannot be read is one whose collisions cannot be either. This check reads a section only from a banner box: a rule of ═ on one line, and DIRECTLY under it a line \`§ NAME → src/<file>.css (WO-x.y …)\` (design/mockups/PROTOCOL.md rule 4). A one-line \`/* ══ § NAME → … ══ */\` is read as nothing. Reshape the banner; do not widen the parser`);
+        if (unreadable.length) faults.push(`${unreadable.join(' · ')} — a sheet whose sections cannot be read is one whose collisions cannot be either. This check reads a section only from a banner box: a rule of ═ on one line, and DIRECTLY under it a line \`§ NAME → src/<file>.css (WO-x.y …)\` (design/mockups/PROTOCOL.md rule 4). A one-line \`/* ══ § NAME → … ══ */\` is never read as a section. Reshape the banner; do not widen the parser`);
         if (collisions.length) faults.push(`${collisions.join(' · ')} — a pending section styles a class src/ already styles. Two stylesheets must never style the same class, and this one is about to become the second. Rename it in the drawing (design/mockups/PROTOCOL.md rule 5), or wear the shipped class as-is and delete the rule`);
         if (orphans.length) faults.push(`${orphans.join(' · ')} — declared in a cross-cutting block and nowhere else in its own sheet. Those blocks are exempt from the collision check because they only re-mention controls declared above them; a class that appears ONLY there is unchecked against src/ entirely. Declare it in the section it belongs to`);
         check(NAMES.collide, !faults.length,
           faults.length ? faults.join(' · ')
-            : `${pending.length} pending section(s) — ${pending.map(s => s.name + ' → ' + (s.target || 'unnamed target') + (s.saysPending ? ' (says not yet lifted)' : '')).join(', ')} — declaring ${pending.reduce((n, s) => n + s.classes.size, 0)} class(es), none of them styled in any of the ${srcSheets.length} src/*.css. ${sections.filter(s => s.landed).length} landed section(s) exempt by construction; ${sections.filter(s => s.crossCutting).length} cross-cutting, none of which declares a class its own sheet does not declare elsewhere. None of the ${sheets.length} sheet(s) declares a class and parses to zero sections, and all ${indexedTotal} section(s) named in a header index have a body banner`);
+            : `${pending.length} pending section(s) — ${pending.map(s => s.name + ' → ' + (s.target || 'unnamed target') + (s.saysPending ? ' (says not yet lifted)' : '')).join(', ')} — declaring ${pending.reduce((n, s) => n + s.classes.size, 0)} class(es), none of them styled in any of the ${srcSheets.length} src/*.css. ${sections.filter(s => s.landed).length} landed section(s) exempt by construction; ${sections.filter(s => s.crossCutting).length} cross-cutting, none of which declares a class its own sheet does not declare elsewhere. None of the ${sheets.length} sheet(s) declares a class and parses to zero sections, all ${indexedTotal} section(s) named in a header index have a body banner, and no sheet carries a one-line banner`);
 
         // The review: a banner and a build that disagree about where a section went. Never a fault —
         // see the section header for why a rename can be right, and for why a drawn class that reached
