@@ -119,7 +119,7 @@ node tools/wo-gate.mjs --self-check    plant every violation this script is supp
 ```
 
 `--self-check` copies `plans/` to a temp directory, writes four **synthetic** work orders into the copy,
-plants fifty-two violations against them, runs the script over the copy, and deletes the directory on
+plants fifty-three violations against them, runs the script over the copy, and deletes the directory on
 both exit paths. *(Thirteen until 2026-08-16; WO-1.21 added four, for the two statuses that mean the
 work is not coming and for the § The files index. WO-2.49 added the eighteenth on 2026-08-18, and it
 is the first that is about the **reader** rather than about a refusal — a fixture written CRLF in its
@@ -274,7 +274,20 @@ the stale plant, and the reworded-box plant's stale assertion); the match put ba
 (1 red — the reworded-box plant); and the excused branch never taken (5 red — the third-claimant and
 reworded-box controls, plus three plants that expect a clean `--audit` over the real tree, whose
 WO-2.1 / WO-2.10 box loses its excuse).
-`52 plants, 52 caught, 0 missed` / `PASS | 52 of 52 plants were caught`, read
+**WO-1.70 added one on 2026-10-10**, the fifty-third, and it is the half of WO-1.68's set test that
+nothing proved: an excuse is honoured only when its `ids` and the box's claimants are the **same
+set**, tested as two conjuncts — every claimant is named, and every named work order claims the box
+(`ex.ids.every(id => set.has(id))`). The third-claimant plant above proves the first; WO-1.68's
+verifier deleted the second on a scratch copy and all fifty-two stayed green. This plant keeps the
+fixture pair as the claimants and runs `--audit` through `runExcused()` with an excuse naming them
+**and** the chain fixture, which exists in the copy and claims nothing there: a `BAD` row for the
+box, claimed by 2, naming the excuse — the chain id included — as *which is not this set*; no
+stale-excuse row, because the excuse's box matched and it is still used; one more problem than the
+exact excuse, which is its control and must read as excused. Proved by one mutation of a scratch
+copy, through `--against`: that conjunct deleted, 1 red of 53 — this plant — and the other
+fifty-two green. It went green against the script as it stood, so the check was right and only the
+proof was missing.
+`53 plants, 53 caught, 0 missed` / `PASS | 53 of 53 plants were caught`, read
 off the run and not added up. The counts further down are readings from dated
 runs against older copies of the script and stay at the number that was true then.)* Two things about it are load-bearing. **Every plant path — and, since WO-2.44, the
 sandbox that holds them — goes through a guard that

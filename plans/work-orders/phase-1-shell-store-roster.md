@@ -5989,7 +5989,7 @@ owed.
 
 ## WO-1.70 — an excuse naming a work order that does not claim its box is proved by nothing
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-10 · **Size** XS · **Depends on** — · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.69 made.)*
 
 **Booked 2026-10-09**, owner-directed, out of WO-1.68's verdict. A ride-along on `tools/wo-gate.mjs`:
@@ -6012,12 +6012,12 @@ excuse, one work order wide.
   from what is not covered.
 
 **Acceptance**
-- [ ] On a scratch copy, deleting `ex.ids.every(id => set.has(id))` turns the new plant red, and
+- [x] On a scratch copy, deleting `ex.ids.every(id => set.has(id))` turns the new plant red, and
       every other plant stays as it was. Reverted before anything else is written.
-- [ ] The real `--audit` still reads `ROADMAP.md:275` as excused.
-- [ ] `node tools/wo-gate.mjs --self-check` and `--audit` pass, `node tools/wo-sweep.mjs` is green,
+- [x] The real `--audit` still reads `ROADMAP.md:275` as excused.
+- [x] `node tools/wo-gate.mjs --self-check` and `--audit` pass, `node tools/wo-sweep.mjs` is green,
       and the plant count in `tools/README.md` matches the run.
-- [ ] `TESTING.md` § WO-1.70 carries these lines verbatim with the evidence for each.
+- [x] `TESTING.md` § WO-1.70 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Do not change the check to make the plant pass**: the code is right, and only the proof
 is missing. If the plant goes red against today's script, that is a defect found, and it is reported

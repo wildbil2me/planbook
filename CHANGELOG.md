@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The self-check proves the other half of the shared-box excuse — 2026-10-10
+
+WO-1.70, booked out of WO-1.68's verifier. Tooling only; nothing in `src/` moved.
+
+- **`wo-gate.mjs --self-check` now plants an excuse in `SHARED_BOXES` that names a work order which
+  does not claim the box**, and proves `--audit` reports the box as one problem and names the excuse
+  as *not this set* — still used, so never called stale. Until now that half of the set test was
+  proved by nothing: deleting `ex.ids.every(id => set.has(id))` left all 52 plants green.
+- No change to the check itself; the plant went green against the script as it stood. The count is
+  **53 plants**, in `tools/README.md` and the self-check's coverage print-out.
+- A fresh verifier deleted the conjunct on a scratch copy and watched the new plant go red alone
+  (52 of 53 caught); the real `--audit` still reads `ROADMAP.md:275` as excused.
+
 ### The search boxes draw their focus ring where you'd expect — 2026-10-10
 
 WO-2.61, owner-directed, booked the day WO-2.58 gave both boxes a ✕.

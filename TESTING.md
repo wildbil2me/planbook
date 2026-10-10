@@ -3640,6 +3640,53 @@ whose `═` rule line carries a `§` and none of whose `§` line carries a `═`
 failed · 0 skipped`. § WO-1.69 above still names the gap; it is that work order's record of the tree
 it left and is not rewritten.*
 
+### WO-1.70 — an excuse naming a work order that does not claim its box is proved by nothing
+
+**One plant, no change to the check.** `--self-check` gains a fifty-third plant beside WO-1.68's
+three, built through `runExcused()` as they are: the fixture box claimed by WO-9.9 and WO-9.8, and an
+excuse whose `ids` are those two **plus WO-9.7** — the chain fixture, which exists in the sandbox and,
+with no `chainCloses`, claims nothing. Its control is the exactly-matching `FIXTURE_EXCUSE` over the
+same tree, which must read `ok … excused`. The plant asserts a `BAD` row for the box (*claimed by 2
+work orders*) whose message names the excuse — WO-9.7 included — as *which is not this set*; that the
+box is not also read as excused; **no stale-excuse row** (the excuse's box matched, so line 1818's
+`used.add(ex)` runs before the set test fails, and `used` is all the stale loop reads); exactly one
+problem more than the control; a non-zero exit; and no file written. It went **green against the
+script as it stood** — the check was right and only the proof was missing, so there was no defect to
+report.
+
+- [x] On a scratch copy, deleting `ex.ids.every(id => set.has(id))` turns the new plant red, and
+      every other plant stays as it was. Reverted before anything else is written.
+      *`tools/wo-gate.mjs` copied to the session scratchpad as `wo-gate-mut.mjs`, the conjunct deleted
+      there by `sed` (`diff` against the real file: line 1819 alone, `if (ex && ids.every(id =>
+      ex.ids.includes(id))) {`), and run as `node tools/wo-gate.mjs --self-check --against <scratch
+      copy>`: exit 1, `53 plants, 52 caught, 1 missed.` / `FAIL | 1 of 53 plants were not caught.` The
+      one FAIL is this plant — `--audit did not report the box once its excuse also named WO-9.7`, its
+      claims section reading `ok ROADMAP.md:409 WO-9.9 + WO-9.8 — excused`, `0 problem(s)`, exit 0 —
+      and the other fifty-two lines read `ok`. The scratch copy was deleted straight after; the real
+      file was never mutated (`git diff --stat` at that point showed `tools/wo-gate.mjs` with insertions
+      only, the plant), and `grep -rn MUTATION tools/` reads only the pre-existing prose mentions in
+      `tools/README.md`, `tools/verify/*.mjs` and `wo-gate.mjs:2800` that are in `HEAD` too. No
+      documentation was written until after this run.*
+- [x] The real `--audit` still reads `ROADMAP.md:275` as excused.
+      *`node tools/wo-gate.mjs --audit` on the finished tree, exit 0, its claims section:
+      `ok   ROADMAP.md:275  WO-2.1 + WO-2.10 — excused: WO-2.10 amends the box WO-2.1 closed (its own
+      line says \`amends\`); both are ✅ DONE` and `1 box(es) claimed by more than one work order, 1
+      excused in SHARED_BOXES, 0 problem(s)`.*
+- [x] `node tools/wo-gate.mjs --self-check` and `--audit` pass, `node tools/wo-sweep.mjs` is green,
+      and the plant count in `tools/README.md` matches the run.
+      *`--self-check` exit 0, `53 plants, 53 caught, 0 missed.` / `PASS | 53 of 53 plants were
+      caught.`; `--audit` exit 0 with its `PASS | every fragment matches exactly one roadmap box …`
+      line; `wo-sweep.mjs` exit 0, `50 checks · 47 passed · 0 failed · 3 to review` — the standing
+      three REVIEWs. `tools/README.md` now says *plants fifty-three violations* and quotes
+      `53 plants, 53 caught, 0 missed` / `PASS | 53 of 53 plants were caught`, with a paragraph for
+      this plant after WO-1.68's; the self-check's own coverage print-out gains *And WO-1.70's ONE*.*
+- [x] `TESTING.md` § WO-1.70 carries these lines verbatim with the evidence for each.
+      *This section.*
+
+*No 👤 line and no 📆 line: tooling only. Nothing in `src/` moved, so no `CACHE` bump. The brief's
+`node tools/verify-shell.mjs` was run on the finished tree: exit 0, `1918 checks · 1918 passed · 0
+failed · 0 skipped`.*
+
 ---
 
 ## Phase 2 — Attendance

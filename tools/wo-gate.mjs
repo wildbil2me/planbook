@@ -3573,6 +3573,36 @@ function runPlants(subject, sandbox) {
         return bad;
       },
     },
+    // WO-1.70: the other half of the set test. The plant above proves every CLAIMANT is named; this
+    // one proves every NAMED work order claims — ex.ids.every(id => set.has(id)) — which WO-1.68's
+    // verifier deleted on a scratch copy with all 52 plants staying green. ${CHAIN_ID} exists in the
+    // copy and claims nothing here (no chainCloses), so it is a real id the box is not claimed by.
+    // The excuse is still USED — its box matched — so no stale-excuse line is expected, and the
+    // plant asserts that too: the box is the one problem, not the excuse.
+    {
+      name: 'an excuse naming a work order that does not claim its box is reported, and the excuse is named as not this set',
+      run: () => {
+        const bad = [];
+        reset({ status: OK, fragment: FIXTURE_BOX, open: false, targetCloses: FIXTURE_CLAIM });
+        const exact = runExcused([FIXTURE_EXCUSE], ['--audit']);
+        const okRow = out => claimRows(out, 'ok').find(l => l.includes(FIXTURE_ID) && l.includes(TARGET_ID) && /excused/.test(l)) || '';
+        if (!okRow(exact.out)) bad.push(`the control: with the excuse naming exactly ${FIXTURE_ID} and ${TARGET_ID}, --audit did not read their box as excused:`, ...claimsSection(exact.out).split('\n').filter(l => l.trim()).slice(0, 6).map(l => `  ${l.trim()}`));
+        if (claimRows(exact.out, 'BAD').some(l => l.includes(FIXTURE_ID))) bad.push('the control: --audit reported the fixture box with its excuse matching the claimant set exactly');
+
+        const wide = { ...FIXTURE_EXCUSE, ids: [FIXTURE_ID, TARGET_ID, CHAIN_ID] };
+        const before = snapshot();
+        const named = runExcused([wide], ['--audit']);
+        const row = claimRows(named.out, 'BAD').find(l => l.includes(FIXTURE_ID) && l.includes(TARGET_ID) && /claimed by 2 work orders/.test(l)) || '';
+        if (!row) bad.push(`--audit did not report the box once its excuse also named ${CHAIN_ID}, which does not claim it:`, ...claimsSection(named.out).split('\n').filter(l => l.trim()).slice(0, 6).map(l => `  ${l.trim()}`));
+        else if (!/which is not this set/.test(row) || !row.includes(CHAIN_ID)) bad.push(`the row did not name the excuse, ${CHAIN_ID} and all, as not this set: ${row.trim()}`);
+        if (okRow(named.out)) bad.push(`--audit still read the box as excused with an excuse naming ${CHAIN_ID}, which does not claim it`);
+        if (claimRows(named.out, 'BAD').some(l => l.includes('SHARED_BOXES excuses') && l.includes(FIXTURE_BOX))) bad.push('--audit called the excuse stale although its box matched — the box is the problem, not the excuse');
+        if (auditProblems(named.out) !== auditProblems(exact.out) + 1) bad.push(`--audit counted ${auditProblems(named.out)} problem(s) with the excuse naming a non-claimant against ${auditProblems(exact.out)} with it exact — one box, one problem`);
+        if (named.code === 0) bad.push(`--audit exited 0 with an excuse naming ${CHAIN_ID}, which does not claim the box`);
+        if (changedSince(before).length) bad.push(`--audit wrote ${changedSince(before).join(', ')}`);
+        return bad;
+      },
+    },
     {
       name: 'an excuse whose box has one claimant is reported as stale',
       run: () => {
@@ -5152,6 +5182,11 @@ function runPlants(subject, sandbox) {
   console.log('  control. NOT covered by them: the REAL excuse, which --audit reads on every run and no');
   console.log('  plant does, and a rewording of a wrapped box\'s continuation lines, which the match');
   console.log('  never reads by design.');
+  console.log('  And WO-1.70\'s ONE, the other half of that set test: an excuse naming the two claimants');
+  console.log('  and a third work order that does not claim the box is reported, the box as one problem');
+  console.log('  and the excuse as not this set — still used, so never stale — with the exact excuse as');
+  console.log('  its control. Until it, every NAMED work order claiming the box was proved by nothing:');
+  console.log('  that conjunct deleted, all 52 plants stayed green.');
   console.log('  NOT covered: the Acceptance parser otherwise. It is still never run');
   console.log('  against a real work order\'s list, and one terminator is one way it can go blind and');
   console.log('  not the class of them — a narrowed gap, not a closed one. Nor is gate()\'s');
