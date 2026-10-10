@@ -943,3 +943,62 @@ All seven are the owner's, 2026-10-09.
    sentences, worded from the same reasons `editableMark()` refuses on.
 7. **Day by day on arrival from the today card's door**: drawn closed; it could open and scroll.
 8. **Day by day newest first** on the student page (drawn); the dialog listed oldest first.
+
+---
+
+# The header and Settings — WO-1.71, WO-1.72, WO-1.73 and WO-1.74, drawn 2026-10-10
+
+**The twelfth room, and the fourth drawn of a screen that already ships.** One page, talked through
+with the owner on 2026-10-09 and 2026-10-10 against Roll Call!'s running header and a stand-in drawn
+outside the repository while WO-2.60 was in flight. Frame 0 is the header as it ships at v177.
+Booked the same day as
+[WO-1.71](../../plans/work-orders/phase-1-shell-store-roster.md#wo-171--the-header-keeps-what-is-used-in-class-and-the-rest-goes-behind-a-gear),
+[WO-1.72](../../plans/work-orders/phase-1-shell-store-roster.md#wo-172--a-dialog-opened-from-settings-has-a-way-back-to-it),
+[WO-1.73](../../plans/work-orders/phase-1-shell-store-roster.md#wo-173--the-sync-button-stands-on-its-own-at-phone-width-if-the-row-now-has-room)
+and [WO-1.74](../../plans/work-orders/phase-1-shell-store-roster.md#wo-174--a-roster-rows-also-in-note-sits-under-the-name),
+whose Rulings carry every answer.
+
+## What the drawing proposes
+
+Styled in [`proposed-settings.css`](proposed-settings.css): § SETTINGS HUB, § SETTINGS BACK and
+§ ROSTER WHO, all bound for `src/shell.css` and none lifted yet. `mockup.css` gained `.mk-stage`, which
+pins a dialog's overlay to its own frame, and `.mk-row`, two dialogs side by side.
+
+[`settings-hub.html`](settings-hub.html):
+
+1. **The orange rule.** 2px `#e67e22` under the header on every screen, not on dialogs. In Roll Call!
+   it is the collapsed pass banner's bottom border showing through at zero height; here it is the
+   header's own. Drawn inline, because it is a declaration on `.header`.
+2. **The top row: Backup · Sync · Presentation · Year · About.** Mute leaves the header.
+3. **The second row: tabs and terms, then one gear.** Roster, Classes and terms, Your details and
+   Templates leave the header.
+4. **Settings** is the stock `.modal-panel`: *Your classes* (Roster and contacts, naming the open
+   class · Classes and terms), *Outreach* (Message templates · Your details), *Hall passes* (Sound
+   alerts, Roll Call!'s own switch). Each door carries the hook its header icon carried.
+5. **Your details gets a person icon**; its cog-like glyph beside a gear would read as two settings.
+6. **"‹ Settings"** in the header of a dialog opened from the hub, and only then.
+7. **The roster row's "also in" note under the name**, so the actions never wrap.
+
+## Decided before booking
+
+- **The test is "used in class, or set and forget".** Presentation is flipped mid-period and stays;
+  the alert sound is a preference and moves. It replaces WO-5.2's "a message a hundred guardians read
+  is not a setting" as the reason templates live where they do.
+- **The roster is never opened mid-class** — after class for an incident, or at the start of a
+  semester — so two taps to reach it cost nothing.
+- **The roster door names the open class** (frame F, option 2). A class switcher inside the roster
+  dialog is likely later and not booked.
+- **A dialog opened from Settings gets "‹ Settings"** (frame D), not the hand-off with no way back.
+- **The orange rule goes on every screen and on no dialog.**
+
+All five are the owner's, 2026-10-09 and 2026-10-10.
+
+## The open questions, collected
+
+1. **Does "‹ Settings" survive a second hop** — Roster → Edit student, Classes and terms →
+   Categories? The drawing's lean is first level only, since the inner dialogs already return to
+   their parent. WO-1.72's to settle.
+2. **Does Sync fit at 390px once Mute has gone?** Not drawn. WO-1.73 measures it.
+3. **The alert-sound move and WO-2.57.** WO-2.57 is 🔒 on a classroom trial deciding the tone's
+   default. The move changes where the switch lives and nothing about its default, so neither waits
+   for the other.

@@ -1,0 +1,145 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   PROPOSED STYLES — the header's two rows, the Settings dialog behind its gear,
+   the way back to it, and the roster row's "also in" note.
+
+   Twelfth room, and the fourth drawn of a screen that already ships. Talked
+   through with the owner on 2026-10-09 and 2026-10-10 against Roll Call!'s
+   running header and drawn in a stand-in outside the repository first. One page,
+   four work orders:
+
+     settings-hub.html  →  WO-1.71   the header's rows, the orange rule, the gear, Settings
+                        →  WO-1.72   "‹ Settings" on a dialog opened from it
+                        →  WO-1.73   Sync at phone width (measured; nothing here to lift)
+                        →  WO-1.74   the roster row's note under the name
+
+   WHAT IS NOT IN THIS FILE, AND WHY. The orange rule is one declaration on
+   `.header`, a class src/shell.css already styles, so rule 5 keeps it out of a
+   pending section; the drawing sets it inline on its headers, as copy-classes.html
+   set its width. The header's rows are rearranged markup wearing classes that
+   ship (`.hdr-icon-btn`, `.hdr-year-btn`, `.cls-tab`, `.q-btn`), so they need no
+   rule either.
+
+   THE DIALOG IS THE STOCK `.modal-panel`, not Roll Call!'s `.config-modal-panel`.
+   Over there that panel is 660px and two columns because it holds thirty
+   settings; this one holds four doors and a switch, and the stock 480px panel is
+   what every dialog the doors open already is. The switch IS Roll Call!'s
+   (dashboard.html ~723-735), lifted value for value, because over there it sits in
+   that dialog for exactly this setting.
+
+   THE RULE THIS FILE OBEYS, from PROTOCOL.md rule 5: a pending section styles
+   no class src/*.css already styles. Every name below is new. `.modal-*`,
+   `.hdr-*`, `.cls-tab*`, `.q-btn`, `.roster-*` (the shipped ones), `.avatar`,
+   `.support-dot`, `.log-door`, `.class-action-btn`, `.toggle-btn` and
+   `.student-*` are worn as shipped.
+
+   Colours inline, no custom properties, no dark mode — src/shell.css's rules.
+
+     § SETTINGS HUB     →  src/shell.css   (WO-1.71 — not yet lifted)
+     § SETTINGS BACK    →  src/shell.css   (WO-1.72 — not yet lifted)
+     § ROSTER WHO       →  src/shell.css   (WO-1.74 — not yet lifted)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.hub-door, .hub-pref, .modal-back {
+  touch-action: manipulation; user-select: none; -webkit-user-select: none;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § SETTINGS HUB   →  src/shell.css   (WO-1.71 — not yet lifted)
+
+   The contents of the dialog behind the gear: three groups, four doors and one
+   switch. Drawn in settings-hub.html, frames B and F.
+
+   A DOOR is a whole-row button — icon, name, one line of what is behind it,
+   chevron — and it carries the SAME `data-*` hook the header icon it replaces
+   carried (`data-roster-manage`, `data-class-manage`, `data-teacher-panel`,
+   `data-templates-open`), so src/shell.js's routing does not move. 52px tall, so
+   it is a thumb-sized target with no coarse rule of its own.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.hub-section + .hub-section { margin-top: 16px; }
+.hub-door {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  min-height: 52px; padding: 8px 4px; border: none; background: none;
+  border-bottom: 1px solid #f0f2f5; cursor: pointer; text-align: left; font-family: inherit;
+}
+.hub-door:last-child { border-bottom: none; }
+.hub-door:hover { background: #f7f8fb; }
+.hub-door-icon {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: #eef2ff; color: #5b6fcc;
+}
+.hub-door-text { flex: 1; min-width: 0; }
+.hub-door-name { display: block; font-size: 13px; font-weight: 700; color: #1a1a2e; }
+.hub-door-hint { display: block; font-size: 12px; color: #8a9bb0; margin-top: 1px; }
+/* The open class, named on the roster door (frame F, option 2, the owner's ruling of 2026-10-10).
+   The interactive indigo, because it is the one part of the line that changes with where you are. */
+.hub-door-class { font-weight: 700; color: #5b6fcc; }
+.hub-door-chev { color: #b0bac8; font-size: 18px; flex-shrink: 0; }
+
+/* A preference set in place. The whole row is the <label>, so the row is the target and the
+   switch is only where the state is drawn. Roll Call!'s `.config-row` at its own hairline. */
+.hub-pref {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 52px; padding: 8px 4px; cursor: pointer;
+}
+.hub-pref-name { display: block; font-size: 13px; color: #3a4050; }
+.hub-pref-hint { display: block; font-size: 12px; color: #8a9bb0; margin-top: 1px; }
+
+/* Roll Call!'s switch, value for value (dashboard.html ~723-735). The input is visually hidden,
+   not removed, so it keeps its own focus and its own name. */
+.toggle-switch { position: relative; display: inline-flex; align-items: center; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+  display: inline-block; width: 40px; height: 22px; background: #cdd0d8;
+  border-radius: 11px; transition: background 0.2s; position: relative;
+}
+.toggle-switch input:checked + .toggle-track { background: #27ae60; }
+.toggle-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 16px; height: 16px; background: #fff; border-radius: 50%;
+  transition: left 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.toggle-switch input:checked + .toggle-track .toggle-thumb { left: 21px; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § SETTINGS BACK   →  src/shell.css   (WO-1.72 — not yet lifted)
+
+   "‹ Settings", in the header of a dialog opened FROM the hub, and only then —
+   the + tab, the grades screen's Categories button and the class manager open
+   the same dialogs, and from there it would be a way back to somewhere the
+   teacher never was. On-dark, in `.modal-close`'s own fill, so the header carries
+   one grammar. Words, not a lone chevron: "back to what" is the question a bare
+   ‹ leaves open. Drawn in settings-hub.html, frame D.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.modal-header-lead { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.modal-back {
+  background: rgba(255,255,255,0.12); border: none; color: #fff; cursor: pointer;
+  height: 28px; padding: 0 10px 0 8px; border-radius: 6px; flex-shrink: 0;
+  font-family: inherit; font-size: 12px; font-weight: 700;
+}
+.modal-back:hover { background: rgba(255,255,255,0.22); }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § ROSTER WHO   →  src/shell.css   (WO-1.74 — not yet lifted)
+
+   The name and its "also in" note, stacked in one column that takes the row's
+   free width, so the note can never be what pushes ✎ · Edit · Remove onto a
+   second line. src/roster.js's studentRow() wraps the two; the note is not built
+   at all when it would be empty (today an empty span goes on every row).
+
+   The column takes the flex the name has today; its children take none, because
+   `.roster-row-name`'s `flex: 1 1 140px` read down a column would be a 140px-tall
+   name. Written as a child rule so this section restyles no shipped class.
+   Drawn in settings-hub.html, frame G.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.roster-row-who { flex: 1 1 140px; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.roster-row-who > * { flex: none; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § TOUCH
+   ══════════════════════════════════════════════════════════════════════════════ */
+@media (pointer: coarse) {
+  /* `.modal-close` beside it goes to 44 in src/shell.css's coarse block; the way back matches. */
+  .modal-back { height: 44px; padding: 0 14px 0 12px; font-size: 14px; }
+  .hub-door-name, .hub-pref-name { font-size: 14px; }
+}

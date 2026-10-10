@@ -383,7 +383,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.70 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.74 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.61 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.53 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.6 | Phase 4 |
@@ -459,7 +459,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 70 | 68 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 74 | 68 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 59 | 57 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 52 | 51 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 6 | 6 | — | ✅ DONE — 2026-09-30 |
@@ -468,7 +468,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 17 | 16 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.4 ✅ DONE 2026-09-26, the sign-in opened on the deployed domain and read on the laptop and the iPad; WO-7.5 ✅ DONE 2026-09-26, the header's sync button; WO-7.6 ✅ DONE 2026-09-26, the privacy documents say when Google's library loads, read off the deployed /privacy; WO-7.7 ✅ DONE 2026-09-26, a download repaints the open screen, read both ways on laptop and iPad; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 18 | 13 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 3 | — | WO-G2 ✅ **2026-09-30**: worked 2026-09-29 with six of eight boxes closed, and the letter-scale setting and the backup drill closed the next day on the owner's reading; WO-G3 ✅ **2026-09-30** on the owner's ruling, watched across four weeks of the term with nothing recorded |
-| | **251** | **238** | **3** | `[█████████░] 95%` |
+| | **255** | **238** | **3** | `[█████████░] 93%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)
@@ -571,6 +571,8 @@ addressed to the primary.)*
 ***And Phase 1's by hand a sixth time on 2026-10-09, from `69 | 68` to `70 | 68`, the total from `249 | 235` to `250 | 235`.*** *Booked out of WO-1.68's verdict, minutes after its tick:* [WO-1.70](phase-1-shell-store-roster.md#wo-170--an-excuse-naming-a-work-order-that-does-not-claim-its-box-is-proved-by-nothing) *plants the one `SHARED_BOXES` branch WO-1.68's verifier could delete with all 52 plants green, a 🎒 on* `tools/wo-gate.mjs`*. 235 of 250 is 94%, as before; the bar stays at nine. The next* `--tick` *is still the authority.*
 
 ***And Phase 2's by hand on 2026-10-09, after WO-2.58's tick, from `58 | 55` to `59 | 55`, the total from `250 | 236` to `251 | 236`.*** *Booked out of WO-2.58's close:* [WO-2.61](phase-2-attendance.md#wo-261--the-search-boxs-focus-ring-traces-the-field-inside-it-not-the-box-you-see) *gives the border of both search boxes to the field, so the one global focus ring draws around the box a teacher sees, a 🎒 riding with WO-2.59. 236 of 251 is 94%, as before; the bar stays at nine. The next* `--tick` *is still the authority.*
+
+***And Phase 1's by hand a seventh time on 2026-10-10, from `70 | 68` to `74 | 68`, the total from `251 | 238` to `255 | 238`.*** *Four rows booked out of one conversation about the header, drawn in* `design/mockups/settings-hub.html`*:* [WO-1.71](phase-1-shell-store-roster.md#wo-171--the-header-keeps-what-is-used-in-class-and-the-rest-goes-behind-a-gear) *keeps what is used in class in the header and puts the rest behind a gear,* [WO-1.72](phase-1-shell-store-roster.md#wo-172--a-dialog-opened-from-settings-has-a-way-back-to-it) *gives a dialog opened from it a way back,* [WO-1.73](phase-1-shell-store-roster.md#wo-173--the-sync-button-stands-on-its-own-at-phone-width-if-the-row-now-has-room) *measures whether Sync now fits at 390px, and* [WO-1.74](phase-1-shell-store-roster.md#wo-174--a-roster-rows-also-in-note-sits-under-the-name) *moves a roster row's note under the name. 238 of 255 is 93%; the bar stays at nine. The next* `--tick` *is still the authority.*
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -2027,6 +2029,10 @@ it, never from a reading taken earlier in the same session.)*
 | 146 | [WO-1.69](phase-1-shell-store-roster.md#wo-169--a-proposed-stylesheet-whose-sections-cannot-be-read-passes-the-collision-check-unread) A proposed stylesheet whose sections cannot be read passes the collision check unread | XS | — | 🎒 `tools/wo-sweep.mjs` — **Nothing blocks it.** An hour, whenever the sweep is open for something else. Booked **2026-10-09**, owner-directed, out of drawing the attendance screen: `proposed-attendance.css` was first written with one-line banners, § 19 parsed neither section, and the sweep stayed green, because its empty-parse guard fires only when every sheet parses to nothing. Nothing in `src/` moves |
 | 147 | [WO-1.70](phase-1-shell-store-roster.md#wo-170--an-excuse-naming-a-work-order-that-does-not-claim-its-box-is-proved-by-nothing) An excuse naming a work order that does not claim its box is proved by nothing | XS | — | 🎒 `tools/wo-gate.mjs` — **Nothing blocks it.** An hour, whenever the gate tool is open for something else. Booked **2026-10-09**, owner-directed, out of WO-1.68's verdict: the verifier deleted the half of the `SHARED_BOXES` check that requires every work order an excuse names to claim the box, and all 52 plants stayed green. One plant. Nothing in `src/` moves |
 | 148 | [WO-2.61](phase-2-attendance.md#wo-261--the-search-boxs-focus-ring-traces-the-field-inside-it-not-the-box-you-see) The search box's focus ring traces the field inside it, not the box you see | XS | — | 🎒 `WO-2.59` — **Nothing blocks it.** An hour of `src/shell.css`, folded into WO-2.59's sitting, which is already a CSS-and-`CACHE` sitting on the attendance screen. Booked **2026-10-09**, owner-directed, out of WO-2.58's close: the global focus ring lands on the borderless `<input>` inside `.search-box`, so both search boxes draw a square ring inside a rounded box. The field takes the border and the glyphs sit over it; the focus rule is not touched. `src/`, harness checks, a 👤 on the iPad; bumps `CACHE` |
+| 149 | [WO-1.71](phase-1-shell-store-roster.md#wo-171--the-header-keeps-what-is-used-in-class-and-the-rest-goes-behind-a-gear) The header keeps what is used in class, and the rest goes behind a gear | M | — | **At the foot, booked 2026-10-10**, drawn in `design/mockups/settings-hub.html`. Top row Backup · Sync · Presentation · Year · About over Roll Call!'s orange rule; one gear opens Settings — Roster (naming the open class), Classes and terms, Templates, Your details and the alert sound. The doors keep their hooks. `src/`, harness checks, a 👤 on the iPad; bumps `CACHE` |
+| 150 | [WO-1.72](phase-1-shell-store-roster.md#wo-172--a-dialog-opened-from-settings-has-a-way-back-to-it) A dialog opened from Settings has a way back to it | S | WO-1.71 | **Booked 2026-10-10** with row 149. "‹ Settings" in the header of a dialog the hub opened, and only then. One open question at dispatch: a second hop. `src/`, harness checks, a 👤; bumps `CACHE` |
+| 151 | [WO-1.73](phase-1-shell-store-roster.md#wo-173--the-sync-button-stands-on-its-own-at-phone-width-if-the-row-now-has-room) The sync button stands on its own at phone width, if the row now has room | S | WO-1.71 | **Booked 2026-10-10** with row 149. A measurement first: if the 44px WO-1.71 frees fits a sync button at 390px, it lays out and About's badge is retired (reversing WO-7.5 ruling 2); if not, nothing changes |
+| 152 | [WO-1.74](phase-1-shell-store-roster.md#wo-174--a-roster-rows-also-in-note-sits-under-the-name) A roster row's "also in" note sits under the name | XS | — | **Booked 2026-10-10** with row 149, drawn in frame G. `src/roster.js`'s `studentRow()` and one rule; no empty note in the DOM. Bumps `CACHE` |
 
 ***Rows 17 through 32 were added 2026-08-28, and the reason is the third occurrence of the failure
 this section exists to prevent.*** *Before that sitting,* **sixteen open work orders had no row in

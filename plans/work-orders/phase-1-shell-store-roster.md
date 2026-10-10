@@ -6026,3 +6026,239 @@ are, and never by a flag or environment variable on the script: an input that ex
 is a hole for a person to reach as well. **This changes `tools/wo-gate.mjs`, a pipeline file**: read
 `plans/work-orders/README.md` § "The pipeline's own files" before editing it. **Nothing in `src/`
 moves**, so no `CACHE` bump is owed.
+
+## WO-1.71 — the header keeps what is used in class, and the rest goes behind a gear
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** WO-1.72, WO-1.73
+**Closes roadmap** *(no box. Owner-directed, 2026-10-09.)*
+
+**Booked 2026-10-10**, owner-directed, out of a conversation held on 2026-10-09 while WO-2.60 was in
+flight. The header's two rows were sorted at WO-1.7, WO-1.9 and WO-2.29 by *a switch for the whole app
+goes on top, a way into the open class goes below*, and the sort has drifted: the second row's own
+comment says its icons are *"all of them about the class that is open"* and the comment on the fourth
+says they are *"about no single class"*. The owner's test replaces it — **used in class, or set and
+forget**. Presentation is flipped mid-period and stays; the alert sound is a preference, and the
+roster is never opened during class — after class for an incident, or at the start of a semester.
+
+**Surface.** [`design/mockups/settings-hub.html`](../../design/mockups/settings-hub.html), frames 0,
+A, B, E and F, styled in [`design/mockups/proposed-settings.css`](../../design/mockups/proposed-settings.css)
+§ SETTINGS HUB, with `design/mockups/README.md` § "The header and Settings". **Lift the section rather
+than re-deriving it**, and amend its banner in the same sitting.
+
+**Rulings, the owner's, 2026-10-09 and 2026-10-10**
+1. **Top row, in this order: Backup · Sync · Presentation · Year · About.** The alert-sound button
+   leaves the header. Sync keeps WO-7.5's other rulings — hidden until opted in, not laid out below
+   640px, About wearing its badge there — until WO-1.73 measures whether it can stand on its own.
+2. **Second row: tabs and terms, then one gear**, `title` and `aria-label` *Settings*. Roster and
+   contacts, Classes and terms, Your details and Message templates leave the header.
+3. **The orange rule.** `.header` gains `border-bottom: 2px solid #e67e22`, on every screen and on no
+   dialog. It is Roll Call!'s, where it is the collapsed `#activePassBanner`'s border showing through
+   at zero height (its `src/dashboard.html` ~321); here it is the header's own, and the comment at the
+   rule says it is lifted on purpose.
+4. **The gear opens Settings**: the stock `.modal-panel`, titled *Settings*, holding *Your classes*
+   (Roster and contacts · Classes and terms), *Outreach* (Message templates · Your details) and *Hall
+   passes* (Sound alerts). Each door closes the hub and opens what exists today, unchanged.
+5. **The roster door names the open class** — *"English III · students, guardians and supports"* —
+   from `getSelectedClass()`, the class the dialog will open on. From *All classes* that is the last
+   class visited, as the header icon does today. A class switcher inside the roster dialog is likely
+   later and is not this work order.
+6. **Sound alerts is Roll Call!'s switch**, `.toggle-switch`, in a row that is its own `<label>`.
+   Checked means the sound is on. Over there it is the first row of that app's Settings.
+7. **Your details gets a person icon.** Its cog-like glyph beside a real gear reads as a second
+   settings button.
+8. **Templates live behind Settings.** WO-5.2 put the door in the header on the ground that *"a
+   message a hundred guardians read is not a setting"*; the owner's test above replaces that reason,
+   and `index.html`'s comment over the door is rewritten to say so rather than left arguing the old one.
+
+**Deliverables**
+- **`index.html`**: the top row reordered and the sounds button gone; the second row's four icons
+  replaced by the gear; a Settings dialog with the doors and the switch. **Each door carries the hook
+  its header icon carried** — `data-roster-manage`, `data-class-manage`, `data-teacher-panel`,
+  `data-templates-open` — so `src/shell.js` routes them as it does today. The comments over both rows
+  rewritten for the new sort, citing this work order.
+- **`src/shell.js`**: the gear opens the hub; a door closes the hub before its own dialog or view
+  opens. Nothing else in the routing moves.
+- **`src/alert-sound.js`**: `refreshSoundChrome()` drives the switch's `checked` instead of the header
+  button's icon, fill and `aria-pressed`; `toggleAlertSounds()` and its announcement are unchanged. The
+  comment that justifies *no strip under the header* by *"the muted icon is on the glass either way"*
+  is rewritten: from this build it is not, and what remains on the glass is the tinted card and the
+  announced sentence — the owner's call, recorded where the premise used to be.
+- **The roster door's hint** is painted with the open class's name whenever the hub opens, by asking
+  `getSelectedClass()` — not by a second resolution of the preference.
+- **`src/shell.css`**: § SETTINGS HUB lifted; the orange rule on `.header`.
+- **The harness**: `tools/verify/sync-button.mjs` (its `laidButtons` count and order assume Year
+  first and Sync last-before-About), `touch-targets.mjs`, `horizontal-overflow.mjs`,
+  `attendance-passes.mjs` (it reaches `#soundsBtn`), `templates.mjs`, `roster-contacts.mjs`, and any
+  check that clicks a header icon by position rather than by hook. A new section for the hub: the gear
+  opens it, every door reaches its target, the roster door names the open class from *All classes* and
+  from inside a class, and the switch flips `soundsOn()` both ways.
+- **`design/mockups/proposed-settings.css`'s banner, its `README.md` section and its `index.html`
+  entry** amended to say the section landed.
+- **`TESTING.md` § WO-1.71**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] The top row draws Backup, Sync (opted-in devices), Presentation, Year and About, in that order,
+      and no sounds button; the second row draws the tabs, the terms and one *Settings* gear; a 2px
+      `#e67e22` rule sits under the header on the home view and on every class screen, and on no
+      dialog.
+- [ ] The gear opens *Settings*; each of the four doors opens the dialog or view its header icon
+      opened at v177, for the same class, and the hub is closed behind it.
+- [ ] The roster door names the class `getSelectedClassId()` resolves to, from *All classes* and from
+      inside a class, and the roster dialog opens on that class.
+- [ ] The switch reads and writes the same preference the header button did: off, then on, then a
+      reload, and `soundsOn()` and the switch agree at every step. An overdue pass with the sound off
+      is still announced and still tints its card.
+- [ ] At 390×844 under a coarse pointer the page has no horizontal overflow, and every control in both
+      header rows and in the hub is at least 44px.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] `TESTING.md` § WO-1.71 carries these lines verbatim with the evidence for each.
+- [ ] 👤 On the iPad, after a force-quit, upright and lying down: read both header rows and the orange
+      rule; open Settings from *All classes* and from a class and read the roster door's class; open
+      each door; flip Sound alerts off and on.
+
+**Traps** — **The doors keep the hooks.** About fifteen harness files open these dialogs with
+`.click()` on `[data-class-manage]` or `[data-roster-manage]`, which works on a button inside a closed
+dialog; renaming a hook breaks them all for no gain, and the `+` tab already carries
+`data-class-manage` for the same reason. **The opener a dialog returns focus to is the door that
+opened it, inside a closed hub** — `openModal(id, opener)` takes it as given. Hand the gear in as the
+opener, or close the hub first, so that ✕ on Roster puts focus somewhere a teacher can see. **Do not
+re-resolve the open class** for the door's hint: `getSelectedClassId()` already resolves a stale id
+to the first class, and a second resolution here is how the door and the dialog name different
+classes. **`#headerRightControls` is revealed by `src/classes.js`** on its existing condition; the
+gear inherits it, so on a device with no class yet the gear is as hidden as the four icons were —
+read that before deciding it is a bug. **This changes a screen a teacher uses every period**: the
+rows' heights and the 390px fit are measured, not assumed.
+
+## WO-1.72 — a dialog opened from Settings has a way back to it
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.71 · **Blocks** nothing
+**Closes roadmap** *(no box. Owner-directed, 2026-10-10.)*
+
+**Booked 2026-10-10**, owner-directed, out of the same conversation as WO-1.71. The setup weeks are
+the case: Classes and terms, then the roster, then the templates, in one sitting — and with WO-1.71
+alone each one ends at the page, and the next starts at the gear.
+
+**Surface.** [`design/mockups/settings-hub.html`](../../design/mockups/settings-hub.html), frames D
+and E, styled in [`design/mockups/proposed-settings.css`](../../design/mockups/proposed-settings.css)
+§ SETTINGS BACK.
+
+**Rulings, the owner's, 2026-10-10**
+1. **"‹ Settings" in the dialog's header**, before its title, in `.modal-close`'s on-dark fill. It
+   closes the dialog and reopens the hub. **✕ and Done still close all the way.**
+2. **Only when the dialog was opened from the hub.** The `+` tab, the class manager's rows and the
+   grades screen's *Categories* button open the same dialogs, and from there it would be a way back
+   to somewhere the teacher never was.
+3. **Message templates gets none.** It is a view, not a dialog; its way out is the class tabs, as now.
+
+**Open — the owner's ruling, at dispatch.** Whether the button survives a second hop — Roster →
+Edit student, Classes and terms → Categories. The drawing's lean is the first level only, because the
+inner dialogs already return to the one that opened them.
+
+**Deliverables**
+- **`index.html`**: the button in the headers of the three dialogs the hub opens — `#rosterModal`,
+  `#teacherModal` and the Classes and terms dialog — hidden in the markup.
+- **`src/shell.js`** (or `src/modal.js`, if the answer is a general one): the hub records that it is
+  the opener; the button is shown only then and hidden on every other way in.
+- **`src/shell.css`**: § SETTINGS BACK lifted, with its coarse rule.
+- **The harness**: the button drawn from the hub and absent from the `+` tab and the Categories
+  button; back reopens the hub with focus on the door that was used; ✕ closes everything.
+- **`design/mockups/proposed-settings.css`'s banner** and its `README.md` section amended.
+- **`TESTING.md` § WO-1.72**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] Opened from Settings, Roster, Classes and terms and Your details draw "‹ Settings"; opened any
+      other way, they do not.
+- [ ] "‹ Settings" closes the dialog and reopens the hub with focus on the door that opened it; ✕ and
+      Done close the dialog and leave the hub closed.
+- [ ] Under a coarse pointer the button is at least 44px tall.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] `TESTING.md` § WO-1.72 carries these lines verbatim with the evidence for each.
+- [ ] 👤 On the iPad, after a force-quit: Settings → Classes and terms → ‹ Settings → Roster →
+      ‹ Settings → Your details → Done, and the `+` tab's dialog with no back button.
+
+**Traps** — **Where the dialog came from is a fact about this opening, not about the dialog.** A flag
+left set by the last hub opening draws the button on the next `+` tap; clear it on every close.
+**`src/modal.js` keeps a stack** — reopening the hub from inside a dialog is a close and an open,
+never a dialog over a dialog.
+
+## WO-1.73 — the sync button stands on its own at phone width, if the row now has room
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.71 · **Blocks** nothing
+**Closes roadmap** *(no box. Owner-directed, 2026-10-10.)*
+
+**Booked 2026-10-10**, owner-directed, out of the same conversation as WO-1.71. WO-7.5's ruling 2 took
+the sync button off the top row below 640px because the row had **5.92px** of slack at 390px after its
+fourth control, and moved its badge onto About. WO-1.71 takes a 44px control out of that row. Whether
+that buys the sync button back is a measurement, not a drawing — which is why this is its own row.
+
+**Rulings, the owner's, 2026-10-10**
+1. **Measure first.** At 390×844 under a coarse pointer, with WO-1.71 landed, the top row's slack is
+   read by the harness and printed.
+2. **If a 44px control and its gap fit, the sync button lays out at every width** and the About badge
+   is retired — `#aboutSyncBadge`, its CSS and its label branch in `src/sync-button.js`. That
+   **reverses WO-7.5's ruling 2**, and the comments that state it say so.
+3. **If it does not fit, nothing changes**, and the work order closes on the number with WO-7.5's
+   ruling 2 standing.
+
+**Deliverables**
+- **The measurement**, printed by `tools/verify/sync-button.mjs` and quoted in `TESTING.md`.
+- **Under ruling 2 only**: `src/shell.css`'s 640px block, `src/sync-button.js`, `index.html`'s About
+  badge, and `tools/verify/sync-button.mjs` and `drive-sync.mjs`, whose checks assert the fallback.
+- **`TESTING.md` § WO-1.73**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped** if anything
+  in `SHELL` moved.
+
+**Acceptance**
+- [ ] The top row's slack at 390×844 under a coarse pointer, with an opted-in device, is printed by
+      the harness and quoted in `TESTING.md`.
+- [ ] Either the sync button is laid out at 390px with no horizontal overflow and About carries no
+      badge at any width, or nothing changed and the number shows why.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-1.73 carries these lines verbatim with the evidence for each.
+- [ ] 👤 On the iPad in split view at phone width, or a phone, after a force-quit: read the top row
+      with sync opted in.
+
+**Traps** — **The title steps aside below 640px** (`src/shell.css`'s 640px block), and that is what
+the slack is measured against; do not take it from a desktop width. **A fit by a pixel is not a fit**:
+the teacher's name on the second line is teacher-typed, and the harness measures the row's own box,
+not the text in it.
+
+## WO-1.74 — a roster row's "also in" note sits under the name
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** — · **Blocks** nothing
+**Closes roadmap** *(no box. Owner-directed, 2026-10-10.)*
+
+**Booked 2026-10-10**, owner-directed, out of reading the roster dialog drawn as the heaviest door
+behind WO-1.71's hub. A student in two classes gets *"also in AP Literature"* right-aligned before the
+row's actions, and at 480px that pushes ✎ · Edit · Remove onto a second line — so the students a
+teacher shares with a colleague are the rows twice the height of everyone else's.
+
+**Surface.** [`design/mockups/settings-hub.html`](../../design/mockups/settings-hub.html), frame G,
+styled in [`design/mockups/proposed-settings.css`](../../design/mockups/proposed-settings.css)
+§ ROSTER WHO.
+
+**Rulings, the owner's, 2026-10-10**
+1. **The note goes under the name**, in its own grey, and the actions stay on the first line.
+2. **The note is not built when it would be empty.** Today `studentRow()` appends an empty span to
+   every row.
+
+**Deliverables**
+- **`src/roster.js`**: `studentRow()` wraps the name and the note in `.roster-row-who`. The same rows
+  draw under *Not in any class*, so they change too.
+- **`src/shell.css`**: § ROSTER WHO lifted.
+- **The harness**: a row with a note and a row without are one line tall at 480px; the note is the
+  name's sibling, under it; no empty note in the DOM.
+- **`design/mockups/proposed-settings.css`'s banner** and its `README.md` section amended.
+- **`TESTING.md` § WO-1.74**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] At 480px a roster row for a student in three classes is the height of a row for a student in
+      one, with the note under the name and ✎ · Edit · Remove on the name's line.
+- [ ] No row carries an empty `.roster-row-note`.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] `TESTING.md` § WO-1.74 carries these lines verbatim with the evidence for each.
+
+**Traps** — **The support dot stays where it is**, after the name block and before the actions, and
+it is still built only when `supportsVisible()` says so — WO-1.9's acceptance is that it is absent
+from the DOM under a projector, not hidden in it. **`.roster-row-name`'s own `flex` is not edited**:
+the column takes it, and its children take none, which is what keeps a stacked name from growing
+140px tall.

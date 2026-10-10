@@ -211,3 +211,22 @@ body { padding-bottom: 60px; }
   .mk-nav a { min-height: 44px; display: flex; align-items: center; }
   .mk-index-list a { min-height: 44px; }
 }
+
+/* A dialog on a stage (settings-hub.html, 2026-10-10). The app's overlay is `position: fixed`
+   over the whole viewport; on a page of several frames that would be one dialog covering all of
+   them, so a stage pins it to its own box. The open animation is switched off so a screenshot
+   never catches a panel mid-fade and reads it as disabled. */
+.mk-stage {
+  position: relative; max-width: 1100px; margin: 10px auto 0; overflow: hidden;
+  background: #f0f2f5; box-shadow: 0 0 0 1px #c0c8d4;
+}
+.mk-stage .modal-overlay { position: absolute; }
+.mk-stage .modal-panel { animation: none; }
+/* Several stages side by side, when the frame is a comparison rather than a screen. */
+.mk-row { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; max-width: 1300px; margin: 10px auto 0; padding: 0 20px; }
+.mk-row > div { flex: 0 1 480px; min-width: 0; }
+.mk-row-label {
+  display: block; margin-bottom: 6px;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 11px; color: #3a4250;
+}
+.mk-row .modal-panel { width: 100%; margin: 0; animation: none; }

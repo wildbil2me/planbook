@@ -13,6 +13,25 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The header and Settings are drawn and booked — 2026-10-10
+
+Owner-directed, out of a conversation held while WO-2.60 was in flight. Nothing in the app changed.
+
+- **`design/mockups/settings-hub.html`** draws the header sorted by a new test — *used in class, or
+  set and forget*. The top row keeps Backup, Sync, Presentation, Year and About; the second row keeps
+  the class tabs and terms and gains one gear; and a 2px orange rule runs under the header, lifted
+  from Roll Call!, where it is the collapsed pass banner's border showing through.
+- **The gear opens Settings**: Roster and contacts (naming the class it will open on), Classes and
+  terms, Message templates, Your details, and the alert sound as a switch — Roll Call!'s own, from
+  that app's Settings. A dialog opened from it gets *‹ Settings* to go back.
+- **A roster row's "also in" note moves under the name**, so a student in two classes no longer gets
+  a row twice the height of everyone else's.
+- Booked as [WO-1.71](plans/work-orders/phase-1-shell-store-roster.md#wo-171--the-header-keeps-what-is-used-in-class-and-the-rest-goes-behind-a-gear),
+  [WO-1.72](plans/work-orders/phase-1-shell-store-roster.md#wo-172--a-dialog-opened-from-settings-has-a-way-back-to-it),
+  [WO-1.73](plans/work-orders/phase-1-shell-store-roster.md#wo-173--the-sync-button-stands-on-its-own-at-phone-width-if-the-row-now-has-room)
+  — whether Sync now fits at phone width, which is a measurement rather than a drawing — and
+  [WO-1.74](plans/work-orders/phase-1-shell-store-roster.md#wo-174--a-roster-rows-also-in-note-sits-under-the-name).
+
 ### A tap on a name opens today — 2026-10-10
 
 WO-2.60, owner-directed, from `design/mockups/attendance-today.html`. Shell cache v176 → v177.
