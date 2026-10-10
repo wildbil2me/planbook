@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1931 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1933 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2810,6 +2810,16 @@ arm, and the section's one guard is a `skip()`. `touch-targets.mjs`'s roster blo
 more control (95, the button drawn because it walks through the door) and changed no count. Full run:
 `1935 checks · 1935 passed · 0 failed · 0 skipped`, 61,714 lines, 31.9 lines per check, 988s, exit 0,
 2026-10-10 on the real clock. Mutation round in `TESTING.md` § WO-1.72.
+
+**WO-1.73 moved it from 1931 to 1933, and the executed count from 1935 to 1937 — two sites, two
+results, no new file.** Both are in `verify/sync-button.mjs`, directly after the phone-width check of
+the widths block: the top row's slack at 390×844 on an opted-in device, measured with the title
+stepped aside and printed on a `MEASURE |` line beside what the sync button and its gap would cost,
+and a tripwire holding WO-7.5's ruling 2 — red when the room left over reaches the 8px fit margin,
+which means the row has gained room and the ruling is to be re-made, not that the app is broken.
+Neither is a failure arm. Full run: `1937 checks · 1937 passed · 0 failed · 0 skipped`, 61,761
+lines, 31.9 lines per check, 967s, exit 0, 2026-10-10 on the real clock. The margin is argued in
+`TESTING.md` § WO-1.73.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

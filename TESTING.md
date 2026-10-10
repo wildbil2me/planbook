@@ -3880,6 +3880,91 @@ and the forgetting check red. **Back stacks the hub over the dialog** (no dismis
 reopened-hub check red. **The `.modal-back` coarse rule deleted**: green at first, because the bare
 `button` rule carries the 44 — the check gained the 14px assertion and then went red.*
 
+### WO-1.73 — the sync button stands on its own at phone width, if the row now has room
+
+**Ruling 3 applied: nothing changed.** The row has room for the sync button and its gap with
+**5.92px** left over, and the fit margin this work order counts is **8px**, so WO-7.5's ruling 2
+stands: no sync button below 640px, About wearing the badge. No file in `SHELL` moved and `CACHE` is
+not bumped. What changed is the harness: `tools/verify/sync-button.mjs` measures and prints the
+figure, and holds the ruling with a tripwire (two checks, both in the WO-7.5 section's widths block).
+
+**The measurement.** 390×844, `pointer: coarse`, an opted-in and signed-in device in the up-to-date
+state, the title stepped aside by the 640px block. `.header-top`'s content box is 366px (390 less
+12+12 of padding); `.header-left` is 34px, which is the 📓's box and nothing else — the title, and
+the teacher's name under it, are out of the layout at this width; the row's gap is 8; the actions are
+Backup 44 · Presentation 44 · Year 118.08 · About 44 over three 6px gaps, 268.08. **Slack 55.92px.**
+A fifth control costs the sync button's own width read where it is laid out (44, at 834) plus the
+row's 6px gap: **50px. Left over: 5.92px** — the same five-control row WO-2.29 carried, to the
+hundredth (WO-7.5 measured 5.92 with the sound switch in; WO-1.71 took out exactly 44+6).
+
+**Why 8px, and why 5.92 is not a fit.** The margin was set after the number was read, and is argued
+here rather than taken from it:
+
+1. *The one width in this row that is text is the year button's*, and it is not teacher-typed —
+   `normalizeYear()` stores only `YYYY-YYYY`. The Trap's name on the second line is out of the layout
+   at this width (`.header-left` measured 34 = the 📓). What is left to vary is **the face**: this
+   harness draws the year in Segoe UI, and the iPad draws it in SF (`system-ui`), which Edge on this
+   machine cannot render.
+2. *How much a face moves it*, from a one-off probe (headless Edge, `--dump-dom` on a scratch page,
+   not kept): "2026-2027" at 700 14px is **70.09px in Segoe UI**, 66.95 Arial, 70.77 Trebuchet MS,
+   **77.36 Tahoma**, 64.92 Bahnschrift — the ordinary sans faces this machine has span −5.17 to
+   **+7.27px** around the one the harness uses (Calibri 61.06 and Verdana 86.36 are the outliers).
+   5.92 is inside that spread; a fit has to be outside it.
+3. *A shortfall is invisible to the overflow checks.* `.header-left` is `min-width: 0`, so a row that
+   is too wide shrinks it and the 📓 slides under the first control with `scrollWidth` unchanged. A
+   one-off probe in the sync-button section (a style forcing the button into the layout, run once in
+   `verify-shell.mjs` and removed before this was written) showed it at **375**: header-left 24.92px,
+   the actions' left edge at 44.92 against the 📓's right edge at 46 — overlapping, overflow 0.
+4. *8 is the space the shortfall eats first* — the coarse block's `.header-top` gap, between the 📓
+   and Backup — and it clears the 7.27 above. Two independent readings agree on it; neither is 5.92.
+
+This is a judgment, as the work order's Traps meant it to be. If the owner reads 5.92 as a fit, the
+flip is ruling 2's deliverables as written, and the tripwire's margin is one constant.
+
+**Found and not touched (out of scope): the shipped row already collides at 320.** The same probe
+at 320×844, coarse, sync hidden — today's four-control row — measured `.header-left` at 19.92px with
+the actions starting at 39.92 against the 📓's right edge at 46: **the 📓 sits ~6px under Backup**, and
+no overflow check sees it. 320 is an iPad's Slide Over and portrait one-third split width, which is
+where the 👤 line below will be read. A booking for the owner, not part of this one.
+
+- [x] The top row's slack at 390×844 under a coarse pointer, with an opted-in device, is printed by
+      the harness and quoted in `TESTING.md`.
+      *`tools/verify/sync-button.mjs`, in the run below, prints:
+      `MEASURE | WO-1.73 — top row at 390×844, coarse, opted in: slack 55.92px; the sync button and its
+      gap want 50px; left over if it were laid out 5.92px, against a fit margin of 8px`, and checks it:
+      `PASS | WO-1.73 — the top row’s slack … is measured with the title stepped aside and printed … ::
+      slack 55.92px (header-left 34px, the 📓 34px); sync button 44px + gap 6px = 50px; left over
+      5.92px; opt-in "true"`. The WO-7.5 phone check beside it reads the same 55.92 in all six states
+      and on the device that never opted in.*
+- [x] Either the sync button is laid out at 390px with no horizontal overflow and About carries no
+      badge at any width, or nothing changed and the number shows why.
+      *Nothing changed: 5.92px left over against an 8px margin, argued above. `git diff --stat` touches
+      no file in `SHELL` — only `tools/verify/sync-button.mjs`, `tools/README.md`, this file and the
+      phase file. The WO-7.5 checks that assert the fallback are untouched and green in the run below:
+      at 390 no sync button laid out and About badged in every state but up to date; at 834 the
+      button drawn 44×44 beside Backup with no badge on About.*
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      *`node tools/verify-shell.mjs` on the finished tree: exit 0, `1937 checks · 1937 passed · 0
+      failed · 0 skipped`, 61,761 lines, 967s, 2026-10-10 on the real clock — including the tripwire,
+      `PASS | WO-1.73 — and what would be left over is under the 8px fit margin … :: left over 5.92px
+      against a margin of 8px`. `node tools/wo-sweep.mjs`: exit 0, `50 checks · 47 passed · 0 failed · 3
+      to review` (the standing three). The `tools/README.md` call-site line moved 1931 → 1933 from the
+      sweep's own count. Not mutation-proved: the tripwire is one comparison of two printed numbers,
+      and a planted run costs a sixteen-minute harness pass.*
+- [x] `TESTING.md` § WO-1.73 carries these lines verbatim with the evidence for each.
+      *This section.*
+- [x] 👤 On the iPad in split view at phone width, or a phone, after a force-quit: read the top row
+      with sync opted in.
+      — *Read by the owner on the iPad, 2026-10-10, v180 from `planbook.hwgteach.com` with sync
+      opted in: the sync button leaves the row below the breakpoint, the row reads Backup ·
+      Presentation · Year · About, About carries the badge, the 📓 is not crowded and the year is not
+      clipped — all green. (A first look was on a copy installed from the LAN address, where
+      `hostAllowsSignIn()` draws no Drive section at all; read again on the deployed origin.) What was
+      expected, kept for the record: What to expect under ruling 3: Backup · Presentation · Year · About, no
+      sync button, and About wearing an amber dot whenever the sync button would. At 320 (Slide Over,
+      portrait one-third), expect the 📓 to sit partly under Backup — the pre-existing collision
+      above, not this work order's change.*
+
 ---
 
 ## Phase 2 — Attendance

@@ -596,7 +596,14 @@ const SLACK = `(function(){
   var inner = top.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
   var used = left.getBoundingClientRect().width + parseFloat(cs.columnGap || cs.gap || 0)
     + actions.getBoundingClientRect().width;
+  /* gap, left and logo since WO-1.73: the gap a fifth control would bring with it, and whether the
+     title has stepped aside — at phone width .header-left should be the 📓's box and nothing else,
+     because the title and the teacher's name under it are out of the layout there. */
+  var logo = document.querySelector('.header-logo');
   return { slack: Math.round((inner - used) * 100) / 100,
+    gap: parseFloat(getComputedStyle(actions).columnGap || 0),
+    left: Math.round(left.getBoundingClientRect().width * 100) / 100,
+    logo: logo ? Math.round(logo.getBoundingClientRect().width * 100) / 100 : null,
     overflow: document.documentElement.scrollWidth - window.innerWidth }; })()`;
 
 async function atWidth(width, height) {
@@ -1389,6 +1396,46 @@ check('at 390×844 under a coarse pointer the header draws NO fifth button in an
     + w.phoneSlack.slack + ', laid ' + w.phone.laidButtons.length + ', About badge '
     + w.phone.aboutBadgeShown).join(' · ')
     + (phoneBad.length ? ' — WRONG in ' + JSON.stringify(phoneBad.map((w) => w.label)) : ''));
+
+/* WO-1.73 — WHETHER THE ROW HAS ROOM FOR THE SYNC BUTTON NOW, measured rather than drawn (its ruling
+   1). WO-1.71 took the sound switch out of this row, and WO-7.5's ruling 2 — no sync button below
+   640px, About wearing the badge — was taken on the 5.92px the row had with it in. The figure is the
+   opted-in device's, in the up-to-date state, at 390×844 under a coarse pointer, with the title
+   stepped aside (the 640px block): what a fifth control would cost is the sync button's own width,
+   read where it IS laid out (834, the iPad), plus the gap this row puts between controls at 390.
+
+   THE MARGIN IS 8px, and it is a judgment that TESTING.md § WO-1.73 argues; it is written here so the
+   check can hold it. A fit by a pixel is not a fit (the work order's Traps): the one width in this row
+   that is text is the year button's, and this browser draws it in Segoe UI where the iPad draws it in
+   SF. And a shortfall does not show as an overflow — `.header-left` is `min-width: 0`, so the row
+   shrinks it and the 📓 slides under the first control, which no scrollWidth sees.
+
+   THE SECOND CHECK IS A TRIPWIRE ON THE RULING, not on the figure. It goes red when the room left
+   over reaches the margin — something has freed the row, and WO-7.5's ruling 2 should be re-made
+   with the new number rather than left standing on this one. A row that loses room stays green: that
+   only makes the fallback more right. */
+const FIT_MARGIN = 8;
+const fitAt = widths.find((w) => w.label === 'current');
+const fitNeed = fitAt && fitAt.pad.btn ? Math.round((fitAt.pad.btn.w + fitAt.phoneSlack.gap) * 100) / 100 : NaN;
+const fitLeft = fitAt ? Math.round((fitAt.phoneSlack.slack - fitNeed) * 100) / 100 : NaN;
+console.log('MEASURE | WO-1.73 — top row at 390×844, coarse, opted in: slack ' + (fitAt ? fitAt.phoneSlack.slack : '?')
+  + 'px; the sync button and its gap want ' + fitNeed + 'px; left over if it were laid out ' + fitLeft
+  + 'px, against a fit margin of ' + FIT_MARGIN + 'px');
+check('WO-1.73 — the top row’s slack at 390×844 under a coarse pointer, on an opted-in device, is '
+  + 'measured with the title stepped aside and printed, beside what the sync button and its gap would '
+  + 'cost',
+  !!fitAt && fitAt.phone.coarse === true && fitAt.phone.width === 390 && fitAt.phone.optIn === 'true'
+    && fitAt.phoneSlack.left === fitAt.phoneSlack.logo && Number.isFinite(fitAt.phoneSlack.slack)
+    && fitAt.pad.btn && fitAt.pad.btn.w >= 44 && fitAt.phoneSlack.gap > 0 && Number.isFinite(fitLeft),
+  fitAt ? 'slack ' + fitAt.phoneSlack.slack + 'px (header-left ' + fitAt.phoneSlack.left + 'px, the 📓 '
+    + fitAt.phoneSlack.logo + 'px); sync button ' + fitAt.pad.btn.w + 'px + gap ' + fitAt.phoneSlack.gap
+    + 'px = ' + fitNeed + 'px; left over ' + fitLeft + 'px; opt-in ' + JSON.stringify(fitAt.phone.optIn)
+    : 'no up-to-date reading was taken');
+check('WO-1.73 — and what would be left over is under the ' + FIT_MARGIN + 'px fit margin, which is why '
+  + 'WO-7.5’s ruling 2 still stands at phone width (WO-1.73 ruling 3); red here means the row has '
+  + 'gained room and the ruling is to be re-made on the new figure, not that the app is broken',
+  Number.isFinite(fitLeft) && fitLeft < FIT_MARGIN,
+  'left over ' + fitLeft + 'px against a margin of ' + FIT_MARGIN + 'px');
 
 const padBad = widths.filter((w) => !(w.pad.coarse === true && w.pad.hidden === false
   && w.pad.btn && w.pad.btn.laid === true && w.pad.btn.w >= 44 && w.pad.btn.h >= 44

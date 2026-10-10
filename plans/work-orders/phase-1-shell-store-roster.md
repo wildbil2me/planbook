@@ -6186,7 +6186,7 @@ never a dialog over a dialog.
 
 ## WO-1.73 — the sync button stands on its own at phone width, if the row now has room
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.71 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-10 · **Size** S · **Depends on** WO-1.71 · **Blocks** nothing
 **Closes roadmap** *(no box. Owner-directed, 2026-10-10.)*
 
 **Booked 2026-10-10**, owner-directed, out of the same conversation as WO-1.71. WO-7.5's ruling 2 took
@@ -6203,6 +6203,17 @@ that buys the sync button back is a measurement, not a drawing — which is why 
 3. **If it does not fit, nothing changes**, and the work order closes on the number with WO-7.5's
    ruling 2 standing.
 
+**Measured 2026-10-10 — ruling 3.** Slack **55.92px** at 390×844, coarse, opted in; the sync
+button and its gap want 50, leaving **5.92px** against a fit margin of **8px** — the space between
+the 📓 and Backup, and above the 7.27px the year label moves by between ordinary sans faces. Nothing
+in `SHELL` moved; the figure is printed by `tools/verify/sync-button.mjs`, which also holds the
+ruling with a tripwire. The margin is argued in `TESTING.md` § WO-1.73.
+*(**The 8px margin is the owner's ruling, 2026-10-10**, given after reading the row on the iPad at
+phone width: 5.92px left over is not a fit. The Traps named no number and the implementer chose 8
+after seeing the measurement, so the verifier passed it on condition the owner agreed — which is
+why it is recorded here rather than left as the implementer's. Calling 5.92 a fit would have meant
+building ruling 2; in the harness that is one constant.)*
+
 **Deliverables**
 - **The measurement**, printed by `tools/verify/sync-button.mjs` and quoted in `TESTING.md`.
 - **Under ruling 2 only**: `src/shell.css`'s 640px block, `src/sync-button.js`, `index.html`'s About
@@ -6211,13 +6222,13 @@ that buys the sync button back is a measurement, not a drawing — which is why 
   in `SHELL` moved.
 
 **Acceptance**
-- [ ] The top row's slack at 390×844 under a coarse pointer, with an opted-in device, is printed by
+- [x] The top row's slack at 390×844 under a coarse pointer, with an opted-in device, is printed by
       the harness and quoted in `TESTING.md`.
-- [ ] Either the sync button is laid out at 390px with no horizontal overflow and About carries no
+- [x] Either the sync button is laid out at 390px with no horizontal overflow and About carries no
       badge at any width, or nothing changed and the number shows why.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-1.73 carries these lines verbatim with the evidence for each.
-- [ ] 👤 On the iPad in split view at phone width, or a phone, after a force-quit: read the top row
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-1.73 carries these lines verbatim with the evidence for each.
+- [x] 👤 On the iPad in split view at phone width, or a phone, after a force-quit: read the top row
       with sync opted in.
 
 **Traps** — **The title steps aside below 640px** (`src/shell.css`'s 640px block), and that is what

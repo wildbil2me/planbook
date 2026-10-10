@@ -13,6 +13,21 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The sync button stays off the top row at phone width, measured — 2026-10-10
+
+WO-1.73, owner-directed. Nothing in the app changed; the shell cache stays at v180.
+
+- **WO-1.71 took a control out of the header's top row, so we measured whether the sync button now
+  fits at phone width.** It does not: at 390px the row has 55.92px spare, the sync button and its gap
+  need 50, and the 5.92px left over is under the 8px the owner ruled a fit must leave. Below the
+  breakpoint the row stays Backup · Presentation · Year · About, and About keeps the badge — WO-7.5's
+  ruling stands.
+- `tools/verify/sync-button.mjs` now prints the spare width and goes red if the row ever has room, so
+  the question gets asked again rather than forgotten. All 1937 harness checks pass under a fresh
+  verifier; read on the iPad by the owner the same day.
+- **Found, not booked:** at 320px (Slide Over), the 📓 sits about 6px under Backup in the row that
+  already ships, and no overflow check sees it. One measurement by the implementer, not repeated.
+
 ### A dialog opened from Settings has a way back to it — 2026-10-10
 
 WO-1.72, owner-directed, from `design/mockups/settings-hub.html` frames D and E. Shell cache v179 → v180.
