@@ -1,0 +1,11 @@
+# WO-1.74 dispatch status
+- 2026-10-10T17:42:14-04:00 gates PASS (no deps, tree clean, no prior dispatch files)
+- 2026-10-10T17:42:14-04:00 route Claude Opus — support-dot Trap touches presentation mode/supportsVisible (sensitive surface) + TESTING/CHANGELOG prose; Codex (XS mockup lift) set aside. No probe needed.
+- 2026-10-10T17:42:14-04:00 --start ran: 🤖 CLAIMED — 2026-10-10
+- 2026-10-10T17:42:14-04:00 brief written: .claude/dispatch/WO-1.74-brief.md (markers filled)
+- 2026-10-10T17:42:14-04:00 implementer spawned at Opus with .claude/dispatch/WO-1.74-brief.md, awaiting return (expect 20-40 min; flat trail during reading is normal)
+- 2026-10-10T18:36:26-04:00 implementer returned: built, claims verify-shell 1942/1942 and sweep green, 4 boxes ticked; one departure (line-height 1.25 on .roster-row-who children) to make Acceptance 1 fit; CHANGELOG drafted not written
+- 2026-10-10T18:36:26-04:00 --handoff written: 🔍 AWAITING VERDICT; verifier owed in a fresh session
+- 2026-10-10T18:40:21-04:00 fresh session entered at 🔍 AWAITING VERDICT; MUTATION grep over delivered files run; verifier (Opus, first pass) about to be spawned
+- 2026-10-10T18:40:33-04:00 verifier spawned at Opus (first pass), awaiting verdict
+- 2026-10-10T18:59:32-04:00 verdict in: PASS — 4/4 Acceptance verified, no 👤; mutation round 7/7 red on a scratch copy, real tree untouched; CHANGELOG + --tick owed on user's go

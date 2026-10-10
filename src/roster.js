@@ -455,10 +455,33 @@ function studentRow(student, cls) {
   avatar.textContent = initialsOf(student);
   row.append(avatar);
 
+  /*
+    The name and the "also in" note share one column (WO-1.74, the owner's rulings of 2026-10-10):
+    the note goes UNDER the name, so a student shared with a colleague is a row the height of
+    everyone else's rather than the one whose note pushed ✎ · Edit · Remove onto a second line at
+    480px. `.roster-row-who` takes the flex the name used to take and its children take none — see
+    src/shell.css § ROSTER WHO, which is why `.roster-row-name`'s own rule is not edited.
+  */
+  const who = document.createElement('span');
+  who.className = 'roster-row-who';
   const name = document.createElement('span');
   name.className = 'roster-row-name';
   name.textContent = rosterName(student) + (student.nickname ? ' “' + student.nickname + '”' : '');
-  row.append(name);
+  who.append(name);
+
+  /* The other classes this student is on, which is the one fact about a roster row that cannot be
+     seen from anywhere else — and the visible proof that a student in two classes is one student
+     rather than two rows that happen to match. Not built at all when there are none: an empty span
+     on every row was the shape before WO-1.74, and a reader that wants the note asks whether it is
+     there rather than whether it is blank. */
+  const others = classesFor(student.id).filter((c) => !cls || c.id !== cls.id);
+  if (others.length) {
+    const note = document.createElement('span');
+    note.className = 'roster-row-note';
+    note.textContent = 'also in ' + others.map((c) => c.name).join(', ');
+    who.append(note);
+  }
+  row.append(who);
 
   /*
     The support indicator. Present only when there is something on file, identical for every
@@ -489,15 +512,6 @@ function studentRow(student, cls) {
     dot.append(glyph);
     row.append(dot);
   }
-
-  /* The other classes this student is on, which is the one fact about a roster row that cannot be
-     seen from anywhere else — and the visible proof that a student in two classes is one student
-     rather than two rows that happen to match. */
-  const others = classesFor(student.id).filter((c) => !cls || c.id !== cls.id);
-  const note = document.createElement('span');
-  note.className = 'roster-row-note';
-  note.textContent = others.length ? 'also in ' + others.map((c) => c.name).join(', ') : '';
-  row.append(note);
 
   const actions = document.createElement('div');
   actions.className = 'roster-row-actions';

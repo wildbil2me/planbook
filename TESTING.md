@@ -3968,6 +3968,75 @@ room. Re-open it only if the header's top row gains a control or its left side g
       portrait one-third), expect the 📓 to sit partly under Backup — the pre-existing collision
       above, not this work order's change.*
 
+### WO-1.74 — a roster row's "also in" note sits under the name
+
+**The name and the note are one column, and the note is built only when it names a class.**
+`src/roster.js`'s `studentRow()` wraps the name and the note in `.roster-row-who`; the note goes into
+it only when the student is on another class, so the empty span every row used to carry is gone. The
+row reads avatar, the column, the support dot (still built only when `supportsVisible() &&
+hasSupports()`), the actions — the dot did not move relative to the actions, it is simply after the
+column instead of before the note. The same rows draw under *Not in any class* and change with it.
+`src/shell.css` § ROSTER WHO is the drawing's two rules as child rules, so `.roster-row-name` and
+`.roster-row-note` — shared with the days-off and events rows in `src/days-off.js` and
+`src/events.js` — are not edited. Measured by a new section, `tools/verify/roster-who.mjs` (five
+checks, after `settings-back.mjs`, on four classes and four students of its own that it removes at
+its foot, with the open-class and presentation preferences put back).
+
+**One departure from the drawing, found by the first run.** Lifted value for value, the column was
+33px in the harness's Segoe UI (a 17px name, the 1px gap, a 15px note) beside the 32px avatar that
+sets every other row: the three-class row measured **51px against the one-class row's 50**. The
+children now carry `line-height: 1.25`, which puts the column at ~31px whatever face the device draws
+— the iPad's SF is not a face this harness can render — and both rows measure 50. Argued at its point
+of departure in `src/shell.css`, and named in the mockup sheet's banner and `design/mockups/README.md`.
+
+- [x] At 480px a roster row for a student in three classes is the height of a row for a student in
+      one, with the note under the name and ✎ · Edit · Remove on the name's line.
+      *`roster-who.mjs` at 1280×800, fine pointer, the stock panel measured `480px`: `one-class row
+      50px, three-class row 50px` · the three-class name `{"top":308.3,"bottom":324.5,"left":473,…}`,
+      its note `{"top":325.5,"bottom":339.3,"left":473,…}` reading `"also in English IV, AP
+      Literature"` — under the name, same left edge, the name's next sibling inside the column — and
+      the buttons ✎ `top 308.8`, Edit `311.3`, Remove `311.3`, every one starting above the name's
+      bottom and right of the column's right edge (683.5 → 693.5). Read under a fine pointer only:
+      under a coarse one the buttons are 44px and the column (33.5px by the arithmetic in
+      `src/shell.css`) is not what sets the row, but that was not measured.*
+- [x] No row carries an empty `.roster-row-note`.
+      *`roster-who.mjs`: `wo174-one: null (0 empty) · wo174-three: "also in English IV, AP Literature"
+      (0 empty) · wo174-dot: "also in AP Literature" (0 empty) · s_v1: null · s_v2: null · wo174-none:
+      null (0 empty)` — the one-class student's row has no note element, and neither does the *Not in
+      any class* row (`wo174-none`). `s_v1`/`s_v2` are students another section left on the open
+      class's list; they are read too.*
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      *`node tools/verify-shell.mjs` on the finished tree: exit 0, `1942 checks · 1942 passed · 0
+      failed · 0 skipped`, 61,993 lines, 970s, 2026-10-10 on the real clock. `node tools/wo-sweep.mjs`:
+      exit 0, `50 checks · 46 passed · 0 failed · 4 to review` — the standing three and one that is
+      this work order's: *CSS selectors added in the working tree with no coarse-block rule* names
+      `.roster-row-who`, a text column holding the name and the note, not a touch target. It is a
+      diff-against-HEAD check and goes quiet at the commit. The `tools/README.md` call-site line moved 1933 → 1938 from the sweep's own count.
+      `sw.js`: `planbook-shell-v180` → `planbook-shell-v181`.*
+- [x] `TESTING.md` § WO-1.74 carries these lines verbatim with the evidence for each.
+      *This section.*
+
+**Also asserted, from the Traps line.** The row's order on both lists, with the dot only on the
+student with a plan on file: `wo174-dot: ["avatar","roster-row-who","support-dot","roster-row-actions"]`,
+every other row `["avatar","roster-row-who","roster-row-actions"]`. Under presentation mode, toggled by
+the header button: `supportsVisible() false · dot row ["avatar","roster-row-who","roster-row-actions"],
+dots 0, note under the name true · one-class row 50px, three-class row 50px` — absent from the DOM,
+not hidden. And inside the column every name computes `flex "0 0 auto"` at 16.3px tall, while a bare
+`.roster-row-name` outside one still computes `1 1 140px`.
+
+*Mutation round, run by the implementer on the full harness with two faults planted at once — the
+note built on every row with `''` when there is no other class, and `flex: none` deleted from
+`.roster-row-who > *` — after copying both files aside, and restored from those copies;
+`grep -rn MUTATION src` reads only `src/shell.js`'s pre-existing "A CLASS MUTATION" comment after.
+Result: `1942 checks · 1938 passed · 4 failed`, all four this section's: the empty-note check red
+(`wo174-one: "" (1 empty)`, `wo174-none: "" (1 empty)`), the flex check red (`flex "1 1 140px",
+140px` on every row — the Traps line's 140px-tall name, reproduced), and both height checks red
+(`one-class row 159px, three-class row 172.8px`). The order check stayed green, correctly: neither
+fault moves an element. The first run, on the drawing's values before the line-height, is the round
+for the height checks' 1px sensitivity: both went red at `50px` against `51px`. No fault was planted
+for the dot's position or its presence under presentation mode; those claims are support-details.mjs's
+too, and the order check here reads `support-dot` in third place by name.*
+
 ---
 
 ## Phase 2 — Attendance

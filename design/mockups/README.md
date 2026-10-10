@@ -973,8 +973,13 @@ input, 0x0 at opacity 0 here and in Roll Call!, ships laid over the track and dr
 line with it into `src/shell.css`'s coarse block. The lift found one thing the drawing could not say:
 the coarse block's bare `button { min-height: 44px }` already gives the button its 44, so what the
 named rule adds is the drawing's padding and 14px type — and the harness asserts the type for that
-reason. § ROSTER WHO (WO-1.74) is still pending, and Sync at phone width is still WO-1.73's to
-measure.
+reason. **§ ROSTER WHO landed 2026-10-10 with WO-1.74**, class for class and value for value, as a
+child rule beside the shipped `.roster-row-note`, so the days-off and events rows that share that
+class and `.roster-row-name` are untouched; the note is now built only when it names a class. One
+rule departs: the column's children ship at `line-height: 1.25`, because at the drawing's values the
+column measured 33px beside the 32px avatar and a three-class row stood a pixel taller than a
+one-class row — the reason is at its point of departure in `src/shell.css`.
+Sync at phone width was WO-1.73's to measure.
 
 [`settings-hub.html`](settings-hub.html):
 

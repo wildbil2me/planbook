@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A roster row's "also in" note sits under the name — 2026-10-10
+
+WO-1.74. Shell cache v180 → v181.
+
+- **A student you share with another class no longer has a row twice as tall as everyone else's.**
+  The note naming their other classes is set in grey under the name, and ✎ · Edit · Remove stay on
+  the name's line. At 480px a three-class row and a one-class row are both 50px.
+- Rows for students in only one class no longer carry an empty note.
+- `tools/verify/roster-who.mjs` measures both. All 1942 harness checks pass under a fresh verifier,
+  and three planted faults were each caught.
+- **Known limit:** the equal height holds while the note fits on one line (about 210px at 480px).
+  Long class names or a fourth class wrap it, which belongs to WO-1.76, the roster dialog's width.
+
 ### The sync button stays off the top row at phone width, measured — 2026-10-10
 
 WO-1.73, owner-directed. Nothing in the app changed; the shell cache stays at v180.

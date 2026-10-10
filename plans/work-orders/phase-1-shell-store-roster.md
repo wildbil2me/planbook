@@ -6238,7 +6238,7 @@ not the text in it.
 
 ## WO-1.74 — a roster row's "also in" note sits under the name
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-10 · **Size** XS · **Depends on** — · **Blocks** nothing
 **Closes roadmap** *(no box. Owner-directed, 2026-10-10.)*
 
 **Booked 2026-10-10**, owner-directed, out of reading the roster dialog drawn as the heaviest door
@@ -6265,11 +6265,11 @@ styled in [`design/mockups/proposed-settings.css`](../../design/mockups/proposed
 - **`TESTING.md` § WO-1.74**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] At 480px a roster row for a student in three classes is the height of a row for a student in
+- [x] At 480px a roster row for a student in three classes is the height of a row for a student in
       one, with the note under the name and ✎ · Edit · Remove on the name's line.
-- [ ] No row carries an empty `.roster-row-note`.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] `TESTING.md` § WO-1.74 carries these lines verbatim with the evidence for each.
+- [x] No row carries an empty `.roster-row-note`.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] `TESTING.md` § WO-1.74 carries these lines verbatim with the evidence for each.
 
 **Traps** — **The support dot stays where it is**, after the name block and before the actions, and
 it is still built only when `supportsVisible()` says so — WO-1.9's acceptance is that it is absent

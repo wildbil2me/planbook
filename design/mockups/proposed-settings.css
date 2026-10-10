@@ -36,7 +36,7 @@
 
      § SETTINGS HUB     →  src/shell.css   (WO-1.71 — lifted 2026-10-10)
      § SETTINGS BACK    →  src/shell.css   (WO-1.72 — lifted 2026-10-10)
-     § ROSTER WHO       →  src/shell.css   (WO-1.74 — not yet lifted)
+     § ROSTER WHO       →  src/shell.css   (WO-1.74 — lifted 2026-10-10)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 .hub-door, .hub-pref, .modal-back {
@@ -140,7 +140,17 @@
 .modal-back:hover { background: rgba(255,255,255,0.22); }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § ROSTER WHO   →  src/shell.css   (WO-1.74 — not yet lifted)
+   § ROSTER WHO   →  src/shell.css   (WO-1.74 — lifted 2026-10-10)
+
+   LANDED, class for class and value for value, in src/shell.css § ROSTER WHO, directly under the
+   shipped `.roster-row-note` it sits beside; studentRow() in src/roster.js builds the column and
+   builds the note only when there is a class to name. The shared `.roster-row-name` and
+   `.roster-row-note` rules were not edited — src/days-off.js and src/events.js wear them outside
+   any column — which is what writing this as a child rule was for. Nothing here needed a § TOUCH
+   line: the column holds text, not a control. One rule departs from the drawing: the children ship
+   with `line-height: 1.25`, because at the values below the column measured 33px beside the 32px
+   avatar and a three-class row stood a pixel taller than a one-class row — argued at its point of
+   departure in src/shell.css.
 
    The name and its "also in" note, stacked in one column that takes the row's
    free width, so the note can never be what pushes ✎ · Edit · Remove onto a

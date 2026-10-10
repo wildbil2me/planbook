@@ -1442,6 +1442,29 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 .roster-row-name { flex: 1 1 140px; min-width: 0; font-size: 13px; font-weight: 600; color: #1a1a2e; }
 /* "also in Period 5" — the one fact about a roster row that cannot be seen from anywhere else. */
 .roster-row-note { font-size: 11px; font-weight: 700; color: #8a9bb0; }
+/* ── ROSTER WHO ── (WO-1.74, lifted from design/mockups/proposed-settings.css § ROSTER WHO)
+
+   The name and its "also in" note, stacked in one column that takes the row's free width, so the
+   note can never be what pushes ✎ · Edit · Remove onto a second line. src/roster.js's studentRow()
+   wraps the two, and builds the note only when there is something in it.
+
+   The column takes the flex the name has above; its children take none, because
+   `.roster-row-name`'s `flex: 1 1 140px` read down a column would be a 140px-tall name. Written as a
+   child rule so it restyles no shared class: src/days-off.js and src/events.js build rows with the
+   same `.roster-row-name` and `.roster-row-note`, outside any `.roster-row-who`, and are untouched.
+   Drawn in design/mockups/settings-hub.html, frame G.
+
+   ONE DEPARTURE FROM THE DRAWING, AND IT IS THE LINE-HEIGHT. Lifted value for value, the column
+   measured 33px in the harness's Segoe UI — a 17px name, the 1px gap, a 15px note — against the 32px
+   avatar that sets every other row's height, so a student in three classes was a row 51px tall
+   beside a one-class row's 50: the defect this rule exists to remove, shrunk to a pixel rather than
+   gone. The drawing never measured it. `line-height: 1.25` puts the column at 31px (16.25 + 1 +
+   13.75) whatever face the device draws — the iPad's SF is not the face this harness can render, so
+   a fit that depended on Segoe's own `normal` would be a fit on one machine — and under a coarse
+   pointer, at 14px and 12px, it is 33.5 beside 44px buttons. tools/verify/roster-who.mjs measures the
+   two rows' boxes against each other. */
+.roster-row-who { flex: 1 1 140px; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.roster-row-who > * { flex: none; line-height: 1.25; }
 .roster-row-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-left: auto; }
 .roster-empty { font-size: 13px; color: #a0aab8; padding: 4px 2px 6px; line-height: 1.5; }
 .modal-body .roster-count { font-size: 11px; font-weight: 700; color: #8a9bb0; margin-bottom: 6px; }

@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1933 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1938 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2820,6 +2820,17 @@ which means the row has gained room and the ruling is to be re-made, not that th
 Neither is a failure arm. Full run: `1937 checks · 1937 passed · 0 failed · 0 skipped`, 61,761
 lines, 31.9 lines per check, 967s, exit 0, 2026-10-10 on the real clock. The margin is argued in
 `TESTING.md` § WO-1.73.
+
+**WO-1.74 moved it from 1933 to 1938, and the executed count from 1937 to 1942 — five sites, five
+results, and one new file.** All five are `verify/roster-who.mjs`, registered straight after
+`verify/settings-back.mjs`: at the stock 480px panel a three-class row is a one-class row's height
+with the note under the name and the actions on the name's line; no empty `.roster-row-note` on the
+roster or under *Not in any class*; the row's order, with the support dot only where a plan is on
+file; the name a line tall inside the column while `.roster-row-name`'s own rule still reads
+`1 1 140px`; and the same row under presentation mode with the dot absent from the DOM. None is a
+failure arm, and the section's one guard is a `skip()`. Full run: `1942 checks · 1942 passed · 0 failed · 0 skipped`, 61,993
+lines, 31.9 lines per check, 970s, exit 0, 2026-10-10 on the real clock. Mutation round in
+`TESTING.md` § WO-1.74.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
