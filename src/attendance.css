@@ -922,7 +922,9 @@
    Record, Passes and the history dialog were all 480px on every screen from the day they shipped.
    `.assign-copy-panel { width: 880px }` is the shape that works and this is that shape.
    `.modal-panel`'s `max-width: 95vw` still governs, so a narrow window is unchanged. At 900 a slice
-   of twenty-four meetings fits across without scrolling sideways, which at 480 it never could. */
+   of twenty-four meetings fits across without scrolling sideways, which at 480 it never could.
+   THE HISTORY DIALOG CAME OFF IT AT WO-2.60: it holds today's mark and one door now, and is the stock
+   480px `.modal-panel`. Record and Passes still wear it. */
 .attendance-report-panel { width: 900px; }
 
 /* THE RECORD'S TWO TABS (WO-2.59): By student and Day by day, under the record's head. They wear the
@@ -939,9 +941,10 @@
   display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px;
 }
 
-/* Roll Call!'s `.sr-header-left` — avatar, then name over a quiet subtitle — with its rate badge
-   pushed to the far end. On the record dialog the same row carries the class name and the printed
-   header instead, with no avatar, because a class has no face. */
+/* Roll Call!'s `.sr-header-left` — a name over a quiet subtitle. It was the history dialog's identity
+   row, with an avatar and a rate badge, until WO-2.60 cut that dialog to today's card; on the record
+   dialog the same row carries the class name and the printed header, with no avatar, because a
+   class has no face. */
 .attendance-report-head {
   display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
   padding: 0 0 12px; margin: 0 0 4px;
@@ -954,15 +957,10 @@
    under a coarse pointer from src/shell.css's block. */
 .attendance-report-door { margin: 12px 0 4px; }
 
-/* How often this student has been out of the room (WO-2.26) — one line under the door above it, and
-   no door of its own: the trips themselves are inline on the Student Report screen. A block rather
-   than a bare paragraph so the margin belongs to the line and not to the button above, which is
-   inline-block and would otherwise decide the gap. The count wears `.attendance-report-sub` — the
-   quiet 12px line the identity row above already uses — because it is the same kind of sentence
-   about the same student and a third grey is a third thing to keep in step. src/pass-history.js
-   draws what goes in here, and nothing in this block is a control. */
-.attendance-report-passes { margin: 12px 0 4px; }
-.attendance-report-passes .attendance-report-sub { margin: 0; }
+/* `.attendance-report-passes` STOOD HERE — WO-2.26's hall-pass count line in the history dialog —
+   and went with the line at WO-2.60, when the name tap's card became today's mark and one door. So
+   did `.attendance-report-rate`, the rate badge, and the "Grades for …" door's use of
+   `.attendance-report-door` above: the ← All students way back inside the trips still wears it. */
 
 /* ── THE WRITE BLOCK (WO-2.53) ──
    The one thing in this dialog that changes a mark: the day being edited, that day's mark in words,
@@ -1015,15 +1013,6 @@
 .attendance-report-name { font-size: 16px; font-weight: 700; color: #1a1a2e; line-height: 1.3; }
 .attendance-report-sub {
   font-size: 12px; font-weight: 600; color: #8a9bb0; line-height: 1.5; margin-top: 2px;
-}
-/* Roll Call!'s `.sr-rate-badge`, in this app's positive green rather than that app's three
-   threshold colours: a threshold is Phase 4's to decide, and a badge that turned amber here would
-   be this file inventing what "at risk" means before the work order that owns it is written. */
-.attendance-report-rate {
-  flex: 0 0 auto;
-  padding: 6px 14px; border-radius: 999px;
-  border: 1.5px solid #a3e4bc; background: #eafaf1; color: #27ae60;
-  font-size: 18px; font-weight: 700; line-height: 1.2;
 }
 
 /* design/style-guide.md §9's uppercase micro label, which shell.css calls `.modal-section-label` on
@@ -1476,7 +1465,6 @@
   .attendance-report-who { min-width: 0; }
   .attendance-report-name { font-size: 17px; }
   .attendance-report-sub { font-size: 13px; }
-  .attendance-report-rate { font-size: 19px; padding: 7px 16px; }
   .attendance-report-label { font-size: 11px; margin-top: 20px; }
   /* ── THE WRITE BLOCK (WO-2.53) ──
      The field is the one touch target the block adds and it takes the floor. The other three are the
@@ -1484,8 +1472,8 @@
      `.attendance-student-cell` is named above: a rule missing from this block is a rule the next
      reader has to go and prove was considered. The "Un-confirm" beside the field is a
      `.class-action-btn` and takes its 44px from src/shell.css's own coarse rule for that component,
-     the same arrangement the "Grades for …" door below makes — and the same one the button had
-     inside the row panel this block replaces. */
+     the same arrangement the door to the student page under the block makes (WO-2.60) — and the
+     same one the button had inside the row panel this block replaces. */
   .attendance-report-write { gap: 10px; padding: 12px 14px; }
   .attendance-report-write-day { font-size: 13px; }
   .attendance-report-write-mark { font-size: 13px; padding: 4px 11px; }
@@ -1512,8 +1500,9 @@
   .attendance-report-cell { text-align: center; }
   /* ── THE DOORS OUT OF THE HISTORY DIALOG (WO-3.7, WO-2.9) ──
 
-     THE FLOOR IS DECLARED AND NOT INHERITED. Both controls wearing this class — the "Grades for …"
-     door out of a student's history and the "← All students" way back inside the trips — also wear
+     THE FLOOR IS DECLARED AND NOT INHERITED. The control wearing this class — the "← All students"
+     way back inside the trips; the "Grades for …" door out of a student's history wore it too until
+     WO-2.60 replaced that door with a plain `.class-action-btn` in a `.modal-actions` row — also wears
      `.class-action-btn`, which already carries 44px in src/shell.css's own coarse block. That
      reasoning was correct about this exact selector at WO-3.7 and still cost that work order a
      correction round: src/scores.css's own block records it. "It inherits one", answered by reading,
@@ -1525,11 +1514,9 @@
      through its own border (src/shell.css:410 has the scar). These are block children of a dialog
      body, so nothing is shrinking them and a rule saying otherwise would be a rule about nothing.
 
-     `.attendance-report-passes` is WO-2.26's count line and holds NO control at all — its door was
-     deleted in that work order's re-cut. It gets the block's margin and nothing more; the line
-     itself is `.attendance-report-sub`, which took its step up with the identity row above. */
+     `.attendance-report-passes`, WO-2.26's count line, stood here until WO-2.60 took the line off
+     the dialog. */
   .attendance-report-door { min-height: 44px; min-width: 44px; }
-  .attendance-report-passes { margin: 14px 0 4px; }
   /* ── THE HALL PASS HISTORY (WO-2.9) ──
      One real touch target in this dialog: the name that opens a student's own trips. It is a row of
      a table rather than a button-shaped button, so it takes its 44px as a MIN-HEIGHT and gets it
@@ -1676,8 +1663,8 @@
      the style guide's one hidden element, laid out the same way on all four printable surfaces and
      shown by src/shell.css under this gate. src/attendance-report.js's "it is the same element on
      screen" argument is heard and overruled for print by the owner's ruling of 2026-09-21, and it
-     says so at the head it built. The class is this surface's own print hook; the history dialog's
-     head wears `.attendance-report-head` without it and never prints. */
+     says so at the head it built. The class is this surface's own print hook; any other head wearing
+     `.attendance-report-head` without it never prints under this gate. */
   body[data-attendance-print] .attendance-report-print-head { display: none !important; }
   body[data-attendance-print] .attendance-report-name { font-size: 14pt; color: #000; }
   body[data-attendance-print] .attendance-report-sub { font-size: 9pt; color: #333; }
@@ -1719,9 +1706,6 @@
   body[data-attendance-print] .attendance-report-mark {
     min-width: 0; padding: 0.3mm 1mm; font-size: 7.5pt;
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
-  }
-  body[data-attendance-print] .attendance-report-rate {
-    font-size: 12pt; -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
   body[data-attendance-print] .attendance-report-note { font-size: 7pt; color: #333; }
   body[data-attendance-print] .attendance-report-empty { font-size: 9pt; color: #333; }

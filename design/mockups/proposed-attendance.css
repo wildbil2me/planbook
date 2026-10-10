@@ -38,7 +38,7 @@
    Colours inline, no custom properties, no dark mode — src/shell.css's rules.
 
      § ATTENDANCE HEADER     →  src/attendance.css   (WO-2.58 — lifted 2026-10-09)
-     § STUDENT ATTENDANCE    →  src/detail.css       (WO-2.60 — not yet lifted)
+     § STUDENT ATTENDANCE    →  src/detail.css       (WO-2.60 — lifted 2026-10-09)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 .search-clear, .attendance-sort-toggle, .detail-att-days-summary {
@@ -117,10 +117,18 @@
 .attendance-sort-toggle b { color: #5b6fcc; font-weight: 800; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § STUDENT ATTENDANCE   →  src/detail.css   (WO-2.60 — not yet lifted)
+   § STUDENT ATTENDANCE   →  src/detail.css   (WO-2.60 — lifted 2026-10-09)
 
    The student page's attendance card, holding what the history dialog held. Drawn in
    attendance-today.html.
+
+   LIFTED THE SAME DAY IT WAS DRAWN, under the same names, value for value, into
+   src/detail.css § STUDENT ATTENDANCE — with one departure the build says at its own rule:
+   the head of this file gives `.detail-att-days-summary` its touch-action and no-select in a
+   rule shared with two attendance-screen controls, and src/detail.css restates them on the
+   summary alone, because that sheet styles its own names only. The print rule the comment
+   below promised was added as "prints only if it is open" — frame E's own caption, and
+   src/detail.css's standing "what prints is what is on screen" — rather than "prints open".
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* THE TERM TABLE ON THE STUDENT PAGE. The history dialog's term-by-term

@@ -418,6 +418,53 @@ for (const key of Object.keys(EXPECT)) {
     JSON.stringify(parts));
 }
 
+/* ── WO-2.60: the student page's attendance card on paper — the term table always, day by day only
+   when it is open ──
+
+   The term table and day by day moved onto the student report at WO-2.60. The table's print rules
+   are src/attendance.css's, selected under this surface's gate, and the decision about the <details>
+   is src/detail.css's: what prints is what is on screen, so a closed one leaves nothing on the sheet
+   — its summary is a control, not a fact — and an open one prints its rows. Read under the print
+   medium with the gate on, by box height, once closed and once opened, and put back closed. */
+{
+  await closeAll();
+  await evalJs('window.planbook.supports.setPresentationMode(false); 1');
+  await toClass();
+  await openDetail();
+  const readAtt = async () => {
+    await evalJs("window.dispatchEvent(new Event('beforeprint')); 1");
+    await send('Emulation.setEmulatedMedia', { media: 'print' });
+    await new Promise(r => setTimeout(r, 150));
+    const out = await evalJs(`(function(){ var v = document.getElementById('detailView');
+      var h = function(e){ return e ? Math.round(e.getBoundingClientRect().height) : -1; };
+      var days = v ? v.querySelector('details.detail-att-days') : null;
+      return { gate: document.body.hasAttribute('data-detail-print'),
+        terms: h(v ? v.querySelector('table.detail-att-terms') : null),
+        days: h(days), table: h(days ? days.querySelector('table') : null),
+        open: !!(days && days.open) }; })()`);
+    await send('Emulation.setEmulatedMedia', { media: '' });
+    await evalJs("window.dispatchEvent(new Event('afterprint')); 1");
+    await new Promise(r => setTimeout(r, 80));
+    return out;
+  };
+  /* Closed by hand first, so this reading is about the PRINT rule and not about how the page drew
+     the disclosure — that is attendance-history.mjs's check, and one mutation should turn one of
+     them red, not both. */
+  await evalJs("(function(){ var d = document.querySelector('#detailView details.detail-att-days'); "
+    + "if (d) d.open = false; return 1; })()");
+  const shut = await readAtt();
+  await evalJs("(function(){ var d = document.querySelector('#detailView details.detail-att-days'); "
+    + "if (d) d.open = true; return 1; })()");
+  const opened = await readAtt();
+  await evalJs("(function(){ var d = document.querySelector('#detailView details.detail-att-days'); "
+    + "if (d) d.open = false; return 1; })()");
+  check('WO-2.60 · the student report prints the attendance card\'s term table, and day by day only '
+    + 'when it is open — a closed one has no box on paper at all, an open one prints its rows',
+    shut.gate === true && shut.terms > 0 && shut.open === false && shut.days === 0
+      && opened.gate === true && opened.open === true && opened.days > 0 && opened.table > 0,
+    'closed: ' + JSON.stringify(shut) + ' · opened: ' + JSON.stringify(opened));
+}
+
 /* ── ruling 5: the calendar band names the filter in words, and the term only when it is shared ── */
 {
   await closeAll();

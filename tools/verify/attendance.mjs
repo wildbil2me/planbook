@@ -478,13 +478,7 @@ const INSTALL_ATT_READER = `(function(){
         var body = document.getElementById('attendanceHistoryBody');
         var box = body ? body.querySelector('[data-attendance-write]') : null;
         var note = box ? box.querySelector('[data-attendance-note]') : null;
-        var rows = body ? Array.prototype.slice.call(body.querySelectorAll('tbody tr')) : [];
         var flat = function(el){ return (el.textContent || '').replace(/\\s+/g, ' ').trim(); };
-        var rowText = function(label){
-          var hit = rows.filter(function(tr){
-            var th = tr.querySelector('th');
-            return !!th && flat(th).indexOf(label) === 0; })[0];
-          return hit ? flat(hit) : ''; };
         var pick = function(sel){ var el = box ? box.querySelector(sel) : null;
           return el ? flat(el) : ''; };
         return { up: !!(modal && !modal.classList.contains('hidden')),
@@ -496,19 +490,10 @@ const INSTALL_ATT_READER = `(function(){
                  hasNote: !!note, note: note ? note.value : '',
                  noteDate: note ? note.getAttribute('data-attendance-note-date') : '',
                  unconfirms: box ? box.querySelectorAll('[data-attendance-unconfirm]').length : 0,
-                 boxes: body ? body.querySelectorAll('[data-attendance-write]').length : 0,
-                 /* The three figures beside the block that an un-confirm goes stale, read the way the
-                    teacher reads them: the badge in the head, the open term's row, and the year. */
-                 rate: body && body.querySelector('.attendance-report-rate')
-                   ? flat(body.querySelector('.attendance-report-rate')) : '',
-                 openTerm: (function(){
-                   var hit = rows.filter(function(tr){
-                     return tr.className.indexOf('attendance-report-open') >= 0; })[0];
-                   return hit ? flat(hit) : ''; })(),
-                 year: rowText('Whole year'),
-                 /* And the fourth: the day-by-day table, one string per row of it. */
-                 days: rows.filter(function(tr){
-                   return !!tr.querySelector('.attendance-report-mark'); }).map(flat) }; })(),
+                 boxes: body ? body.querySelectorAll('[data-attendance-write]').length : 0 }; })(),
+                 /* The badge, the term rows and day by day were read here until WO-2.60 moved them to
+                    the student page; nothing in this file asserted them, and
+                    tools/verify/history-dialog-write.mjs reads them on that page now. */
       /* Anything that would turn one tap into two, or one screen into two. */
       submenus: document.querySelectorAll('#attendanceGridWrap select, #attendanceGridWrap [aria-expanded], #attendanceGridWrap details').length,
       /* The Traps line, as a structure rather than as a promise: no form to submit, and no control

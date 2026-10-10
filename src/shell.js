@@ -316,8 +316,9 @@
       data-grades-record-csv          downloads the same sheet as a CSV
       data-student-detail="<id>"      opens that student's grade detail — the category breakdown,
                                       what is missing, and what it would take to move. Carried by
-                                      the student's own NAME in the score grid, by the door in their
-                                      attendance history, and since WO-2.53 by the › at the end of
+                                      the student's own NAME in the score grid, by the door on the
+                                      card their name opens on the registry ("Attendance history and
+                                      grades →" since WO-2.60), and since WO-2.53 by the › at the end of
                                       their name on the attendance registry — three elements, one
                                       hook, one route, because that screen owns no navigation target
                                       of its own: you arrive there from a name and never from the
@@ -345,18 +346,20 @@
                                       the one control allowed to change every row at once
       data-attendance-untake="<iso>"  takes that back — offered only while nothing is marked
       data-attendance-unconfirm-all="<iso>"  the class reset: every student back to a question mark
-      data-attendance-unconfirm="<id>"       one student back to a question mark, from the block at
-                                      the top of their attendance history (their own row until
-                                      WO-2.53, which deleted the panel it sat in)
+      data-attendance-unconfirm="<id>"       one student back to a question mark, from the block
+                                      their name opens (their own row until WO-2.53, which deleted
+                                      the panel it sat in)
       data-attendance-note="<id>" + data-attendance-note-date="<iso>": an input; writes the note on
                                       that student's mark as it is typed. In that same block, on the
                                       one day the registry accepts writes on
       data-attendance-time="<id>" + data-attendance-time-date="<iso>": a time input beside that
                                       note, on a `T` or a `D` with no pass (WO-2.55); writes the
                                       mark's `at` on `input` and again on `change`
-      data-attendance-history="<id>"  opens that student's own attendance report — every mark they
-                                      have in the open term, and since WO-2.26 their hall-pass count
-                                      for it. Carried by the name in the registry row
+      data-attendance-history="<id>"  opens that student's card for the day the registry is on —
+                                      the mark, its time and note and the un-confirm, or the mark
+                                      read-only and why — and one door to their page. It held their
+                                      term table, day by day and pass count until WO-2.60 moved those
+                                      to the student page. Carried by the name in the registry row
       data-attendance-record          opens the class's attendance record for the open term: the
                                       printed page and the CSV, one dialog, built at open time
       data-attendance-record-print    prints that record. Like the two other print doors it only

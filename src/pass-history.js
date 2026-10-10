@@ -15,9 +15,10 @@
   so putting it in there would mean writing "this file does not import that module" directly above
   the import. Two files, two promises, both true.
 
-  WO-2.26 JOINED THREE SURFACES WITHOUT JOINING ANY OF THE FILES. Two blocks below are built here
+  WO-2.26 JOINED THREE SURFACES WITHOUT JOINING ANY OF THE FILES. Two blocks below were built here
   and drawn somewhere else — studentPassCard(), the hall-pass card inline on WO-3.7's Student Report
-  screen, and studentPassSummary(), the count line on the attendance history dialog. In both cases
+  screen, and studentPassSummary(), the count line on the attendance history dialog, which WO-2.60
+  deleted when that dialog stopped drawing it. In both cases
   the host owns the container and this file owns everything inside it, the way src/assignments.js's
   editor appends src/accommodation-prompt.js's summary one screen over. The imports run one way —
   nothing here knows either of those files exists — and BOTH of their headers make the promise this
@@ -589,32 +590,15 @@ export function studentPassCard(classId, studentId, term) {
 }
 
 /*
-  AND THE COUNT LINE ON THE ATTENDANCE HISTORY DIALOG — the fact a teacher sees while she is marking
-  attendance, on the surface where the question usually comes up. There is no door under it: since
-  the re-cut the breakdown has one home, and it is the card above.
-
-  IT CARRIES NO LABEL RECONCILING IT WITH ANYTHING, and that is WO-2.26's third acceptance line
-  rather than a saving. It is the same call over the same window as the card, so the two numbers are
-  one number; and the dialog it lands in already prints its term and its dates one line above
-  (recordCaption()), so a scope note here would be the second date window the traps line refuses.
+  studentPassSummary() STOOD HERE — the count line on the attendance history dialog, WO-2.26's
+  second surface — and WO-2.60 deleted it with nothing else calling it: the name tap's card became
+  today's mark and one door, and the door leads to the card above, which carries the same count in
+  its title.
 */
-export function studentPassSummary(classId, studentId, term) {
-  const wrap = el('div', 'attendance-report-passes');
-
-  if (presentationMode()) {
-    wrap.append(modeHidden());
-    return wrap;
-  }
-
-  const totals = passes.tallyPasses(
-    passes.passesForStudentInTerm(getDoc(), classId, studentId, term));
-  wrap.append(el('p', 'attendance-report-sub', 'Hall passes · ' + countText(totals)));
-  return wrap;
-}
 
 /* Why the trips are gone, in the same purple strip and the same sentence structure the dialog's own
-   presentationStrip() uses — same mode, same colour, said on whichever of the two surfaces the
-   teacher is standing on. One sentence for both, because they are hidden for one reason. */
+   presentationStrip() uses — same mode, same colour. It was said on two surfaces until WO-2.60 took
+   the count line off the attendance history dialog; the student page's card is the one left. */
 function modeHidden() {
   return el('p', 'pass-history-quiet',
     'Presentation mode is on, so this student’s hall passes are not shown. Turn the mode off in the '

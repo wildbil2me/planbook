@@ -864,8 +864,9 @@ whose Rulings carry every answer.
 Styled in [`proposed-attendance.css`](proposed-attendance.css): § ATTENDANCE HEADER bound for
 `src/attendance.css` and § STUDENT ATTENDANCE bound for `src/detail.css`. **§ ATTENDANCE HEADER
 landed 2026-10-09 with WO-2.58**, under the drawn names — `.search-clear` in `src/shell.css` rather
-than `src/attendance.css`, because both search boxes wear it — and § STUDENT ATTENDANCE is *not yet
-lifted*.
+than `src/attendance.css`, because both search boxes wear it — and **§ STUDENT ATTENDANCE landed
+2026-10-09 with WO-2.60**, in `src/detail.css` under the drawn names; its summary's touch-action is
+restated there rather than shared, and day by day prints only when it is open.
 `mockup.css` gained `.mk-device`, a frame at a device's own CSS width, so a toolbar that wraps in
 the drawing wraps on the device. **The iPad frames show 44px controls only when the page is opened on
 a touch device**, so read them on the iPad.
@@ -907,6 +908,11 @@ first, and 640 — were ruled as drawn by the owner the same day.
     be written to**, which today draws no block at all.
 11. **The term table and day by day move to the student page's attendance card**, day by day in a
     closed `<details>`.
+
+**Items 9 to 11 landed 2026-10-09 with WO-2.60**, built as drawn, with open questions 4 to 8 below
+built as drawn and still the owner's to rule on. The read-only card's sentences for the three
+reasons the drawing did not word are in `src/attendance-report.js` and quoted in
+`.claude/dispatch/WO-2.60-result.md`.
 
 ## Decided before drawing
 

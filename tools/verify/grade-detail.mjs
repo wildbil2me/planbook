@@ -1156,9 +1156,11 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
 
     /*
       AND THE OTHER DOOR, MEASURED RATHER THAN INHERITED. This work order adds a second way in — a
-      button inside the attendance history dialog — and `src/attendance.css` gives it a margin and
+      button inside the attendance history dialog — and `src/attendance.css` gave it a margin and
       nothing else, on the stated grounds that it wears `.class-action-btn` and that component
-      already carries its 44px floor in `src/shell.css`'s coarse block. That reasoning is correct and
+      already carries its 44px floor in `src/shell.css`'s coarse block. (Since WO-2.60 it is a plain
+      `.class-action-btn` in a `.modal-actions` row on the name tap's card, so the inherited floor is
+      the only one it has — which is the claim this measures.) That reasoning is correct and
       it is still a CLAIM: `wo-sweep.mjs` flags every new selector with no coarse rule and asks a
       human to confirm it is not a target, and "it inherits one" answered by reading is exactly the
       shape of the BOM this work order was told not to inherit — asserted present, never asserted
@@ -1192,11 +1194,14 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
       await evalJs("window.planbook.closeModal('attendanceHistoryModal'); 1");
       await new Promise(r => setTimeout(r, 200));
     }
+    /* Its words changed at WO-2.60 — "Grades for <name>" became "Attendance history and grades →",
+       the drawing's, on a card titled with the name — so the label is asserted whole. A longer label
+       is exactly the shape the spill reading below exists for. */
     check('the door from a student\'s attendance history to their grades is a 44px target too, and '
       + 'does not spill through its own border',
       historyDoor === true && !!door44 && door44.open === true && door44.found === true
         && door44.h >= 44 && door44.w >= 44 && door44.spill <= 0
-        && door44.label.indexOf(S1_FULL) !== -1,
+        && door44.label === 'Attendance history and grades →',
       historyDoor
         ? JSON.stringify(door44)
         : 'no student name on the registry to open a history from, so the door was never reached');

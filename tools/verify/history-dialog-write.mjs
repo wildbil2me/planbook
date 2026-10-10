@@ -84,19 +84,9 @@ console.log('\n--- the history dialog writes, and the row goes to the grades (WO
     var modal = document.getElementById('attendanceHistoryModal');
     var box = body ? body.querySelector('[data-attendance-write]') : null;
     var note = box ? box.querySelector('[data-attendance-note]') : null;
-    var rows = body ? Array.prototype.slice.call(body.querySelectorAll('tbody tr')) : [];
     var flat = function(el){ return (el.textContent || '').replace(/\\s+/g, ' ').trim(); };
     var pick = function(sel){ var el = box ? box.querySelector(sel) : null;
       return el ? flat(el) : ''; };
-    /* A row's cells, in order, as the strings a teacher reads. Read as a LIST rather than as the
-       row's textContent, which concatenates them with no separator and turns five counts into one
-       unreadable number. */
-    var cellsOf = function(tr){
-      return Array.prototype.slice.call(tr.children).map(flat); };
-    var labelled = function(label){
-      var hit = rows.filter(function(tr){ var th = tr.querySelector('th');
-        return !!th && flat(th).indexOf(label) === 0; })[0];
-      return hit ? cellsOf(hit) : []; };
     var doorOf = function(tr){ return tr.querySelector('[data-student-detail]'); };
     var gridRow = function(id){
       var tr = document.querySelector('#attendanceBody tr[data-attendance-row="' + id + '"]');
@@ -131,16 +121,27 @@ console.log('\n--- the history dialog writes, and the row goes to the grades (WO
          value that came back. */
       sameField: !!(note && note.__wo253),
       focused: !!(note && document.activeElement === note),
-      /* The four figures in the dialog that an un-confirm goes stale. */
-      rate: body && body.querySelector('.attendance-report-rate')
-        ? flat(body.querySelector('.attendance-report-rate')) : '',
-      openTerm: (function(){
-        var hit = rows.filter(function(tr){
-          return tr.className.indexOf('attendance-report-open') >= 0; })[0];
-        return hit ? cellsOf(hit) : []; })(),
-      year: labelled('Whole year'),
-      days: rows.filter(function(tr){ return !!tr.querySelector('.attendance-report-mark'); })
-        .map(cellsOf),
+      /* WO-2.60: the card's own shape. The four figures an un-confirm used to go stale in here — the
+         badge, the open term's row, the year row and day by day — are the student page's now, and
+         are read off that page by READ_PAGE below. */
+      title: (document.getElementById('attendanceHistoryTitle') || {}).textContent || '',
+      tables: body ? body.querySelectorAll('table').length : 0,
+      inputs: body ? body.querySelectorAll('input, textarea, select').length : 0,
+      doors: body ? Array.prototype.slice.call(body.querySelectorAll('[data-student-detail]'))
+        .map(function(b){ return b.getAttribute('data-student-detail'); }) : [],
+      readonly: (function(){ var b = body ? body.querySelector('[data-attendance-readonly]') : null;
+        if (!b) return null;
+        var chip = b.querySelector('.attendance-report-write-mark');
+        var hint = b.querySelector('.attendance-report-write-hint');
+        return { reason: b.getAttribute('data-attendance-readonly'),
+          day: flat(b.querySelector('.attendance-report-write-day') || b),
+          chip: chip ? flat(chip) : '', hint: hint ? flat(hint) : '',
+          /* Every attribute a writer or a router answers, anywhere inside it. */
+          hooks: b.querySelectorAll('input, button, [data-attendance-note], [data-attendance-time], '
+            + '[data-attendance-unconfirm], [data-attendance-cell], [tabindex]').length }; })(),
+      /* Where focus is after the un-confirm's repaint: inside the dialog, on the write box. */
+      focusInBox: !!(box && document.activeElement === box),
+      focusInDialog: !!(modal && modal.contains(document.activeElement)),
       /* And the grid behind it. */
       grid: { dismissed: gridRow('wo253-dismissed'), present: gridRow('wo253-present'),
               waiting: gridRow('wo253-waiting') },
@@ -169,6 +170,30 @@ console.log('\n--- the history dialog writes, and the row goes to the grades (WO
         if (r.exception) return 'exception: ' + r.exception;
         return JSON.stringify((r.marks || {})['wo253-dismissed'] || null); })() }; })()`;
   const read253 = () => evalJs(READ);
+  /* THE STUDENT PAGE'S ATTENDANCE CARD (WO-2.60), where the term table and day by day went. Each row
+     is read as a LIST of its cells rather than as its textContent, which would run five counts into
+     one unreadable number. NO BACKTICKS INSIDE. */
+  const READ_PAGE = `(function(){
+    var v = document.getElementById('detailView');
+    var flat = function(el){ return (el.textContent || '').replace(/\\s+/g, ' ').trim(); };
+    var cellsOf = function(tr){ return Array.prototype.slice.call(tr.children).map(flat); };
+    var att = v ? Array.prototype.slice.call(v.querySelectorAll('.detail-card')).filter(function(c){
+      var t = c.querySelector('.detail-card-title');
+      return !!t && flat(t).indexOf('Attendance · ') === 0; })[0] : null;
+    var terms = att ? Array.prototype.slice.call(att.querySelectorAll('table.detail-att-terms tbody tr')) : [];
+    var det = att ? att.querySelector('details.detail-att-days') : null;
+    return { up: !!(v && !v.classList.contains('hidden')),
+      title: att ? flat(att.querySelector('.detail-card-title')) : '',
+      openTerm: (terms.filter(function(tr){
+        return tr.className.indexOf('attendance-report-open') >= 0; })[0] || null),
+      rows: terms.map(cellsOf),
+      days: det ? Array.prototype.slice.call(det.querySelectorAll('tbody tr')).map(cellsOf) : [] }; })()`;
+  const readPage = async () => {
+    const out = await evalJs(READ_PAGE);
+    out.openTerm = (out.rows.filter((r) => /— open$/.test(r[0]))[0]) || [];
+    out.year = (out.rows.filter((r) => r[0] === 'Whole year')[0]) || [];
+    return out;
+  };
   const openFor = async (id) => {
     await clickSel('#attendanceBody [data-attendance-history="' + id + '"]');
     return read253();
@@ -184,14 +209,13 @@ console.log('\n--- the history dialog writes, and the row goes to the grades (WO
     check('the WO-2.53 fixture is real: three students on a dated term that holds today, one dismissed, one present, one unconfirmed',
       onD.dialogUp && !!onD.grid.dismissed && onD.grid.dismissed.code === 'D'
         && onD.grid.present.code === 'P' && onD.grid.waiting.code === '?'
-        && onD.openTerm[0] === 'WO-2.53 term — open'
-        && onD.year[0] === 'Whole year'
-        /* Every count after the label, not the label: this term holds both of the class's meetings,
-           so the open term's row and the year's row are the same figures under two names. */
-        && JSON.stringify(onD.openTerm.slice(1)) === JSON.stringify(onD.year.slice(1)),
+        /* WO-2.60: the dialog is titled with the student and holds no table and one door. */
+        && onD.title === 'Dee Dismissed' && onD.tables === 0
+        && JSON.stringify(onD.doors) === JSON.stringify([D_ID]),
       'the column reads ' + JSON.stringify([onD.grid.dismissed && onD.grid.dismissed.code,
         onD.grid.present && onD.grid.present.code, onD.grid.waiting && onD.grid.waiting.code])
-        + ' :: ' + JSON.stringify(onD.openTerm) + ' / ' + JSON.stringify(onD.year));
+        + ' :: titled ' + JSON.stringify(onD.title) + ', ' + onD.tables + ' table(s), doors '
+        + JSON.stringify(onD.doors));
     check('a confirmed mark gets the note field and the un-confirm, in ONE block that names the day it writes on',
       onD.block && onD.blocks === 1 && onD.student === D_ID
         && onD.day.indexOf('Today · ') === 0 && onD.day.indexOf(', ') > 0
@@ -223,45 +247,50 @@ console.log('\n--- the history dialog writes, and the row goes to the grades (WO
     /* ── the un-confirm, and the four figures in the dialog that go stale with it ── */
     await clickSel('#attendanceHistoryModal [data-attendance-unconfirm]');
     const undone = await read253();
-    check('un-confirm from inside the dialog moves all five surfaces in one paint — the head percentage, the open term\'s row, the Whole year row, the day-by-day table, and the grid behind it',
-      undone.dialogUp
-        /* The badge in the head: two meetings, one of them now an absence. */
-        && reopened.rate === '100%' && undone.rate === '50%'
-        /* The open term's row and the year row, cell by cell — P T A E D, meetings, percentage. */
-        && JSON.stringify(reopened.openTerm)
-          === JSON.stringify(['WO-2.53 term — open', '1', '0', '0', '0', '1', '2', '100%'])
-        && JSON.stringify(undone.openTerm)
-          === JSON.stringify(['WO-2.53 term — open', '1', '0', '1', '0', '0', '2', '50%'])
-        && JSON.stringify(reopened.year)
-          === JSON.stringify(['Whole year', '1', '0', '0', '0', '1', '2', '100%'])
-        && JSON.stringify(undone.year)
-          === JSON.stringify(['Whole year', '1', '0', '1', '0', '0', '2', '50%'])
-        /* The day-by-day table: today's row is the second of the two, and its mark is a word. */
-        && reopened.days.length === 2 && undone.days.length === 2
-        && reopened.days[1][1] === 'Dismissed' && undone.days[1][1] === 'Absent'
-        && reopened.days[1][2] === '2 of 2 · 100%' && undone.days[1][2] === '1 of 2 · 50%'
-        /* And the grid behind the dialog, which is the surface that repaints itself. */
+    check('WO-2.60 · Un-confirm from inside the card writes `{ code: "U" }` through the same hook, moves the grid behind it, and repaints the card with focus INSIDE it — on the write box, not on <body>',
+      undone.dialogUp && undone.block && undone.focusInBox && undone.focusInDialog
         && undone.grid.dismissed.code === '?'
         && undone.entry === JSON.stringify({ code: 'U' }),
-      'rate ' + JSON.stringify(reopened.rate) + ' -> ' + JSON.stringify(undone.rate)
-        + ' :: term ' + JSON.stringify(reopened.openTerm) + ' -> '
-        + JSON.stringify(undone.openTerm) + ' :: year ' + JSON.stringify(reopened.year) + ' -> '
-        + JSON.stringify(undone.year) + ' :: today\'s row ' + JSON.stringify(reopened.days[1])
-        + ' -> ' + JSON.stringify(undone.days[1]) + ' :: the cell behind it reads '
-        + JSON.stringify(undone.grid.dismissed.code) + ' and the entry is ' + undone.entry);
+      'dialog up = ' + undone.dialogUp + ', block = ' + undone.block + ', focus on the box = '
+        + undone.focusInBox + ', focus inside the dialog = ' + undone.focusInDialog
+        + ' :: the cell behind it reads ' + JSON.stringify(undone.grid.dismissed.code)
+        + ' and the entry is ' + undone.entry);
     check('and the block redraws as the case it now is — the un-confirmed hint, and neither control',
       undone.block && !undone.hasNote && undone.unconfirms === 0
         && undone.hint.indexOf('Nobody has confirmed this student yet') === 0
         && undone.mark === 'Not confirmed',
       JSON.stringify(undone.mark) + ' :: ' + JSON.stringify(undone.hint)
         + ' :: field = ' + undone.hasNote + ', un-confirm(s) = ' + undone.unconfirms);
-    await shut();
+
+    /*
+      AND THE FOUR FIGURES IT MOVED, ON THE PAGE THEY MOVED TO (WO-2.60). The badge, the open term's
+      row, the Whole year row and the day-by-day table were read in this dialog until that work order;
+      they are the student page's now, so the card's one door is followed and the same strings are
+      read there. Two meetings, one of them now an absence. Day by day is NEWEST FIRST on the page, so
+      today's row is the first of the two.
+    */
+    await clickSel('#attendanceHistoryModal [data-student-detail="' + D_ID + '"]');
+    await new Promise(r => setTimeout(r, 250));
+    const page = await readPage();
+    check('WO-2.60 · and the student page behind the card\'s door shows what the un-confirm moved — the card title, the open term\'s row, the Whole year row and today\'s row of day by day, with its running fraction',
+      page.up && page.title === 'Attendance · 50%'
+        && JSON.stringify(page.openTerm)
+          === JSON.stringify(['WO-2.53 term — open', '1', '0', '1', '0', '0', '2', '50%'])
+        && JSON.stringify(page.year)
+          === JSON.stringify(['Whole year', '1', '0', '1', '0', '0', '2', '50%'])
+        && page.days.length === 2 && page.days[0][1] === 'Absent' && page.days[0][2] === '1 of 2 · 50%'
+        && page.days[1][1] === 'Present' && page.days[1][2] === '1 of 1 · 100%',
+      'page up = ' + page.up + ' :: ' + JSON.stringify(page.title) + ' :: term '
+        + JSON.stringify(page.openTerm) + ' :: year ' + JSON.stringify(page.year) + ' :: days '
+        + JSON.stringify(page.days));
+    await clickSel('#detailView [data-class-screen="class"]');
+    await new Promise(r => setTimeout(r, 250));
 
     /* ── case 2: a confirmed present student ── */
     const onP = await openFor(P_ID);
     check('a confirmed present student gets the un-confirm and the sentence saying why there is nothing to note',
       onP.block && !onP.hasNote && onP.unconfirms === 1 && onP.mark === 'Present'
-        && onP.hint.indexOf('Present is stored as no mark at all') === 0,
+        && onP.hint === 'Nothing to note on a present mark. Change the mark on the grid and a note field appears here.',
       JSON.stringify(onP.mark) + ' :: ' + JSON.stringify(onP.hint) + ' :: field = ' + onP.hasNote
         + ', un-confirm(s) = ' + onP.unconfirms);
     await shut();
@@ -279,13 +308,16 @@ console.log('\n--- the history dialog writes, and the row goes to the grades (WO
     await evalJs(`(async function(){ var a = window.planbook.attendance;
       a.dropClass(); await window.planbook.store.flush(); return 1; })()`);
     const onDropped = await openFor(P_ID);
-    check('a day the class did not meet draws no write block — there is no mark on it to edit, and no path through the dialog that would make one',
+    check('a day the class did not meet draws no write block — the card is read-only, says why, and shows no mark because there is none, with no input and no hook on it (WO-2.60)',
       onDropped.dialogUp && !onDropped.block && onDropped.blocks === 0
-        && !onDropped.hasNote && onDropped.unconfirms === 0
-        && onDropped.year[0] === 'Whole year',
-      'dialog up = ' + onDropped.dialogUp + ', block(s) = ' + onDropped.blocks
+        && !onDropped.hasNote && onDropped.unconfirms === 0 && onDropped.inputs === 0
+        && !!onDropped.readonly && onDropped.readonly.reason === 'did-not-meet'
+        && onDropped.readonly.chip === '' && onDropped.readonly.hooks === 0
+        && onDropped.readonly.hint.indexOf('The class didn’t meet this day') === 0
+        && JSON.stringify(onDropped.doors) === JSON.stringify([P_ID]),
+      'dialog up = ' + onDropped.dialogUp + ', write block(s) = ' + onDropped.blocks
         + ', field = ' + onDropped.hasNote + ', un-confirm(s) = ' + onDropped.unconfirms
-        + '; the year row is still drawn: ' + JSON.stringify(onDropped.year));
+        + ', input(s) = ' + onDropped.inputs + '; read-only ' + JSON.stringify(onDropped.readonly));
     await shut();
     await evalJs(`(async function(){ var a = window.planbook.attendance;
       a.undropClass(); await window.planbook.store.flush(); return 1; })()`);
@@ -306,19 +338,31 @@ console.log('\n--- the history dialog writes, and the row goes to the grades (WO
       var p = function(n){ return (n < 10 ? '0' : '') + n; };
       var iso = function(off){ var t = new Date(); t.setDate(t.getDate() + off);
         return t.getFullYear() + '-' + p(t.getMonth() + 1) + '-' + p(t.getDate()); };
-      s.update(function(){ cls.terms = [{ id:'tm_wo253over', label:'WO-2.53 ended',
-        start: iso(-60), end: iso(-30) }]; });
+      s.update(function(doc){ cls.terms = [{ id:'tm_wo253over', label:'WO-2.53 ended',
+        start: iso(-60), end: iso(-30) }];
+        /* WO-2.60: a meeting ON the ended term's last day, the day the strip stands on, with an
+           absence for the dismissed student — so the read-only card has that day's mark to show. */
+        doc.attendance.push({ classId: cls.id, date: iso(-30), marks: {
+          'wo253-dismissed': { code:'A' } } }); });
       await s.flush();
       c.selectTerm('tm_wo253over');
       a.renderAttendance();
       return { end: iso(-30) }; })()`);
     const onLocked = await openFor(D_ID);
-    check('with the strip standing on a past day that has not been unlocked, the dialog draws no write block — the day it writes on is the day the registry accepts writes on, and there is none',
+    const lockedSaid = await evalJs('window.planbook.attendance.spokenDate('
+      + JSON.stringify(ended.end) + ')');
+    check('WO-2.60 · on a locked past day the card shows THAT day\'s mark, read-only, with its sentence — no write block, no input, no hook — and names the day it is about',
       onLocked.dialogUp && !onLocked.block && onLocked.blocks === 0
-        && !onLocked.hasNote && onLocked.unconfirms === 0,
-      'the selected term ended ' + ended.end + '; dialog up = ' + onLocked.dialogUp
-        + ', block(s) = ' + onLocked.blocks + ', field = ' + onLocked.hasNote
-        + ', un-confirm(s) = ' + onLocked.unconfirms);
+        && !onLocked.hasNote && onLocked.unconfirms === 0 && onLocked.inputs === 0
+        && !!onLocked.readonly && onLocked.readonly.reason === 'locked'
+        && onLocked.readonly.chip === 'Absent' && onLocked.readonly.hooks === 0
+        && onLocked.readonly.hint === 'This day is locked. Press its ✏ on the grid to change the mark or add a note.'
+        && onLocked.readonly.day.indexOf(lockedSaid + ' · ') === 0
+        && onLocked.readonly.day.indexOf('Today') < 0,
+      'the selected term ended ' + ended.end + ' (' + lockedSaid + '); dialog up = '
+        + onLocked.dialogUp + ', write block(s) = ' + onLocked.blocks + ', field = '
+        + onLocked.hasNote + ', un-confirm(s) = ' + onLocked.unconfirms + ', input(s) = '
+        + onLocked.inputs + '; read-only ' + JSON.stringify(onLocked.readonly));
     await shut();
 
     /*

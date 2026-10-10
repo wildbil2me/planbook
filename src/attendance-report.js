@@ -1,6 +1,8 @@
 /*
-  Attendance, read back — one student's history, and the whole class's record for a term as a page
-  that prints and a file that opens in a spreadsheet (WO-2.6).
+  Attendance, read back — the whole class's record for a term as a page that prints and a file that
+  opens in a spreadsheet (WO-2.6), and the card a tap on one student's name opens (WO-2.53, WO-2.60).
+  *(The first half said "one student's history" until WO-2.60 moved that history — the term table and
+  day by day — to the student page's attendance card, src/detail.js, on the same readers.)*
 
   ── WHY THIS IS A SEPARATE FILE FROM THE REGISTRY ──
 
@@ -13,8 +15,8 @@
 
   WHAT IS NOT DUPLICATED HERE, AND THIS IS THE PART TO LEAVE ALONE. Nothing in this file decides
   which meetings count, walks `doc.attendance`, tests `exception`, or asks the calendar anything.
-  Every number and every row comes out of three readers in src/attendance.js — classRecord(),
-  termHistory(), termTotals() — and all three sit on ONE walk over ONE set of records
+  Every number and every row comes out of readers in src/attendance.js — classRecord() here, and
+  termHistory() and termTotals() for the student page since WO-2.60 — and all three sit on ONE walk over ONE set of records
   (walkMeetings). That is WO-2.6's first acceptance line in its own terms: *"a student's history
   lists exactly the meetings counted in their percentage — the two agree"* is a statement about a
   shared source, not about two implementations landing on the same number. A second filter chain in
@@ -46,28 +48,15 @@
   docs/data-model.md § "Accommodations" and src/supports.js's own header are the rule; the teacher's
   JSON backup is the single exception in this app and its UI says so in words.
 
-  AND WO-2.26 DID NOT SPEND ANY OF THAT, which is worth a paragraph because it is the one change to
-  this file that could have. The history dialog now carries a hall-pass count for the student whose
-  history it is, and NOT ONE LINE OF IT IS COMPUTED OR WORDED HERE: src/pass-history.js's
-  studentPassSummary() is handed a class id, a student id and the open term, and hands back an
-  element this file appends without looking inside it. That is the arrangement src/assignments.js
-  has with src/accommodation-prompt.js one screen over — the host owns the dialog, the module owns
-  the rule — and it is why the sentence above is still true rather than nearly true. The alternative
-  shapes were both worse and both were tried on paper first: a count summed here would be a second
-  loop over a log this file cannot see (the same defect the paragraph above refuses about meetings),
-  and a line drawn here would have had to ask whether presentation mode is on, which is a question
-  only src/supports.js answers and which this file may not ask. So it asks nobody. The import that
-  pays for that is at the foot of the list below, with its own note; what crosses it is two ids and
-  the term this dialog is already about.
-
-  WHAT IS NOT HERE ANY MORE IS THE DOOR. The first cut of WO-2.26 put a 🚪 Every trip button under
-  that line, and the re-cut deleted it (owner, 2026-08-14): the breakdown of one student's trips now
-  lives inline on WO-3.7's Student Report screen, which is the page a teacher is on when she wants
-  it, and one room with two doors is two rooms to the teacher who found the second one first.
+  AND NEITHER WO-2.26 NOR WO-2.60 SPENT ANY OF THAT. From WO-2.26 until WO-2.60 the history dialog
+  carried a hall-pass count for its student, drawn by src/pass-history.js and appended here without
+  being looked inside — the arrangement src/assignments.js has with src/accommodation-prompt.js. WO-2.60
+  took the count off (the student page behind the dialog's one door shows every trip), and with it
+  the one import of a screen this file had; what is left imports models and shared components only.
 
   ── THE ONE THING IN HERE THAT WRITES (WO-2.53) ──
 
-  One block, high in the history dialog, about the one day the registry accepts writes on: the mark
+  One block, the body of the name tap's card, about the one day the registry accepts writes on: the mark
   in words with its time, the note field when there is a mark to hang one on, and the un-confirm when
   there is a record to put back. It is the row detail panel WO-2.10 built, moved — not a new
   capability. The panel it came from was hollow on the state every row is in at the start of every
@@ -75,18 +64,22 @@
   twenty-six times before the first student was marked was the name, the date and the counts the
   screen behind it was already showing.
 
-  IT SITS ABOVE *Term by term*, under the pass count, for the reason those two are where they are:
-  a teacher who opened this dialog to talk about one child should not have to scroll a term of dates
-  to find the thing she came for. Its date is editDate()'s — asked for through editableMark() — which
-  is the only day the registry has ever let a note be typed on, so a note on a PAST mark still wants
-  that column's ✏ first, exactly as before. When there is no such day the block is not drawn, and
-  then there is no path through this file that changes a mark at all.
+  SINCE WO-2.60 IT IS THE WHOLE DIALOG, with one door under it. The term table and day by day that
+  sat under it moved to the student page's attendance card (src/detail.js), read through the same
+  three readers, so the figures did not change when they moved. Its date is editDate()'s — asked for
+  through editableMark() — which is the only day the registry has ever let a note be typed on, so a
+  note on a PAST mark still wants that column's ✏ first, exactly as before. When there is no such day
+  the block is drawn READ-ONLY — that day's mark and a sentence saying what would open it, out of
+  readOnlyMark() — with no input and no hook, so there is still no path through this file that changes
+  a mark on it.
 
   ── THE TWO DOORS ──
 
-  A student's own name in the grid opens their history. 🖨 Record in the registry's toolbar opens the
-  class's record, which is one surface carrying two outputs: Print, and a CSV. Both doors are on the
-  registry because that is the screen a teacher is already on when either question comes up.
+  A student's own name in the grid opens today's card for them (the dialog's id still says history,
+  which is what it held from WO-2.6 to WO-2.60; renaming it would move every hook and harness read for
+  a word). 🖨 Record in the registry's toolbar opens the class's record, which is one surface carrying
+  two outputs: Print, and a CSV. Both doors are on the registry because that is the screen a teacher
+  is already on when either question comes up.
 
   ── PRINTING, AND WHY IT IS AN ATTRIBUTE ON <body> ──
 
@@ -127,11 +120,9 @@
 
 import { openModal } from './modal.js';
 import { announce } from './live-region.js';
-/* The class, its terms, and the avatar the roster row and the home card already wear — imported
-   rather than re-derived, the same call src/attendance.js makes at the same import for the same
-   reason: the colour is part of how a teacher recognises a person, so there is one answer per
-   student and not one per screen. */
-import { getSelectedClass, getSelectedTerm, getTerms, initials, avatarClass } from './classes.js';
+/* The open class. The avatar and the term list went with the history at WO-2.60: today's card
+   carries no face and no term table — the student page does, from the same imports. */
+import { getSelectedClass } from './classes.js';
 /* "Mary Van Dyke" in a sentence, off the same shape src/roster.js owns. */
 import { fullName } from './roster.js';
 /* The one way a file reaches the browser in this app (src/backup.js). Imported rather than copied:
@@ -144,7 +135,7 @@ import { registerPrintGate } from './print-gate.js';
 /*
   The ledger, and every number on both surfaces.
 
-  READ-ONLY UNTIL WO-2.53, AND NO LONGER — THE HISTORY DIALOG WRITES. Exactly three writers reach the
+  READ-ONLY UNTIL WO-2.53, AND NO LONGER — THE NAME TAP'S CARD WRITES. Exactly three writers reach the
   document from this file's surfaces, all of them in src/attendance.js, which is the module that
   owns the ledger: setNote(), unconfirmStudent() and — since WO-2.55 — setMarkTime(). None is
   imported here and none is called here. What this file paints is the elements that carry their hooks —
@@ -154,35 +145,25 @@ import { registerPrintGate } from './print-gate.js';
   the registry row. So there is still no second writer, no second hook and no third gate; what moved
   is where the controls are drawn.
 
-  AND NOTHING HERE RECOMPUTES WHAT THEY WROTE. editableMark() is the one reader this work order added
-  and it is the whole of what this file knows about a writable day: the date the writers default to,
-  the reading in that student's cell, its time and note, and the two booleans that decide which of
-  the four cases the block draws. The gate stays in the module with the writers in it — a dialog
-  asking writableDate() for itself would be a second opinion about what is writable, held by a file
-  that cannot see the ledger.
+  AND NOTHING HERE RECOMPUTES WHAT THEY WROTE. editableMark() is the one reader WO-2.53 added and it
+  is the whole of what this file knows about a writable day: the date the writers default to, the
+  reading in that student's cell, its time and note, and the booleans that decide which of the cases
+  the block draws. readOnlyMark() (WO-2.60) is its other half — which refusal, on which day, and the
+  mark there was — out of the same private gate. The gate stays in the module with the writers in it:
+  a dialog asking writableDate() for itself would be a second opinion about what is writable, held by
+  a file that cannot see the ledger.
 
   The class's record — the print surface and the CSV — is still read-only, all of it. There is no
   path through openRecord(), recordCsv() or printRecord() that changes a mark.
 */
 import {
-  MARKS, UNCONFIRMED, classRecord, termHistory, termTotals, attendanceTotals, editableMark,
+  MARKS, UNCONFIRMED, classRecord, editableMark, readOnlyMark,
   percentText, plainDate, numericDate, dayAbbr, spokenDate, clockTime, wallClock, todayISO,
 } from './attendance.js';
-/*
-  THE HALL-PASS COUNT (WO-2.26), drawn by the module that owns the pass log rather than by this one —
-  the header's own paragraph says why, and it is the reason this is an import of a SCREEN where every
-  other one above is an import of a model.
-
-  This file passes two ids and the open term, and appends what comes back. It never reads `passes`,
-  never counts a trip, never words one, and never asks whether presentation mode is on — all three
-  live behind that module, and src/supports.js behind the third. The same one-way arrangement
-  src/assignments.js has with src/accommodation-prompt.js: nothing in src/pass-history.js knows this
-  file exists.
-*/
-import { studentPassSummary } from './pass-history.js';
 
 const HISTORY_MODAL = 'attendanceHistoryModal';
 const HISTORY_BODY = 'attendanceHistoryBody';
+const HISTORY_TITLE = 'attendanceHistoryTitle';
 const RECORD_MODAL = 'attendanceRecordModal';
 const RECORD_BODY = 'attendanceRecordBody';
 
@@ -252,7 +233,7 @@ function meetingsText(n) {
 }
 
 /* Class, term, range, count — the four things WO-2.6's third acceptance line asks the printed
-   header to carry, in one sentence that also serves the history dialog and the record preview. */
+   header to carry, in one sentence that serves the record's own head and its printed one. */
 function recordCaption(record) {
   const parts = [];
   parts.push(record.termLabel ? record.termLabel : 'All recorded meetings');
@@ -263,24 +244,18 @@ function recordCaption(record) {
   return parts.join(' · ');
 }
 
-/* ────────────────────────────── one student's history ────────────────────────────── */
+/* ────────────────────────────── one student, today ────────────────────────────── */
 
 /*
-  ROLL CALL!'s STUDENT REPORT, TRIMMED TO WHAT THIS WORK ORDER OWNS. Over there
-  (openStudentModal / renderStudentModalContent) the panel is an avatar and a name, a rate badge, a
-  term-by-term table and a strip of recent days. The first three come across as they are; the strip
-  of coloured day cells becomes a TABLE here, because the deliverable asks for the running
-  percentage beside each mark and a 40px cell has nowhere to put one.
-
-  What deliberately did not come across: the at-risk banner, the absence letter and the email
-  composer. Those are Phase 4's (praise and concern, and the outreach that follows), and a threshold
-  invented here would be a second opinion about what "at risk" means before the work order that owns
-  the first one has been written.
+  WAS ROLL CALL!'s STUDENT REPORT, AND IS TODAY'S CARD SINCE WO-2.60. From WO-2.6 this dialog was
+  that app's openStudentModal() trimmed — avatar and name, a rate badge, a term-by-term table and the
+  days as a table with a running percentage. WO-2.60 moved the two tables to the student page's
+  attendance card, where that shape now lives (src/detail.js), and left this dialog the one day.
 
   IT IS TWO FUNCTIONS SINCE WO-2.53 AND THE SPLIT IS WHAT MAKES THE UN-CONFIRM HONEST. Opening is
   this one: remember whose dialog it is, draw it, and hand it to src/modal.js with its opener.
   Drawing is paintHistory() below, which is called again — with no openModal() and no focus dance —
-  when a write made INSIDE the dialog goes four of its figures stale. See repaintAfterUnconfirm().
+  when a write made INSIDE the dialog goes the card stale. See the `window` click listener below.
 */
 let historyFor = '';       /* whose history the dialog is showing, or '' — one at a time, and it is
                               read only to redraw the dialog that is already on screen. Not
@@ -293,156 +268,59 @@ export function openHistory(studentId, opener) {
   openModal(HISTORY_MODAL, opener);
 }
 
-/* Everything inside #attendanceHistoryBody, from the open document. Returns false only when the
-   host element is missing, which is a page this module cannot draw on at all. */
+/* Everything inside #attendanceHistoryBody, and the dialog's title, from the open document. Returns
+   false only when the host element is missing, which is a page this module cannot draw on at all.
+
+   TODAY'S CARD, AND NOTHING ELSE (WO-2.60, the owner's ruling of 2026-10-09). A tap on a name during
+   roll call is "came in at 8:20", "left for the nurse", "un-confirm him" — standing up, one student,
+   today. Until that day this dialog put the write block fourth, under a rate badge, a door and a
+   pass count, and over a term table, a row for every meeting and a paragraph; those are what a
+   conference reads sitting down, and they moved to the student page's attendance card
+   (src/detail.js attendanceCard()), which the one door below opens. So the body is the write block —
+   or, on a day nothing can be written to, the same block read-only — and the door. No avatar, no
+   percentage, no table: the student's name is the title. */
 function paintHistory() {
   const studentId = historyFor;
   const body = document.getElementById(HISTORY_BODY);
   if (!body) return false;
   body.textContent = '';
+  const title = document.getElementById(HISTORY_TITLE);
 
   const cls = getSelectedClass();
   const record = classRecord();
   const student = record ? record.students.filter((s) => s.id === studentId)[0] : null;
   if (!cls || !record || !student) {
+    if (title) title.textContent = 'Attendance';
     body.append(el('p', 'attendance-report-empty',
-      'That student is not on this class’s roster any more, so there is no history to show.'));
+      'That student is not on this class’s roster any more, so there is nothing to show.'));
     return true;
   }
 
   const person = fullName({ first: student.first, last: student.last });
-  const rows = termHistory(cls.id, student.id, getSelectedTerm());
+  if (title) title.textContent = person;
 
-  /* The identity row: Roll Call!'s `.sr-header-left` — avatar, name — with its `.sr-rate-badge` on
-     the far side. The badge is the term percentage, which is the number the whole dialog is an
-     explanation of. */
-  const head = el('div', 'attendance-report-head');
-  const avatar = el('div', 'avatar ' + avatarClass(student.id), initials(student.name));
-  avatar.setAttribute('aria-hidden', 'true');
-  const who = el('div', 'attendance-report-who');
-  who.append(el('div', 'attendance-report-name', person));
-  who.append(el('div', 'attendance-report-sub', cls.name + ' · ' + recordCaption(record)));
-  head.append(avatar, who, el('div', 'attendance-report-rate', percentText(student.totals)));
-  body.append(head);
-
-  /*
-    AND THE WAY FROM HERE TO THE SAME STUDENT'S GRADES (WO-3.7). That screen owns no navigation
-    target of its own — you arrive from a name — and on the registry the name is already spoken for:
-    it opens this dialog, and historyDoor() in src/attendance.js records why it must not become a
-    seventh control on a row whose width is budgeted in day columns. So the door from attendance is
-    HERE, one step further in, on the surface that has already narrowed the question to one student.
-
-    THERE IS A SECOND ONE ON THE ROW SINCE WO-2.53, and this button is untouched by it. That work
-    order re-pointed the ⋯ at the end of the name — an existing control, inside the same name cell,
-    costing no day column — so the sentence above is still the whole of the ruling: a control of its
-    OWN on that row was refused and still is. Both doors carry the one delegated hook, so they are
-    two ways to one room rather than two rooms; this one is the way a teacher who is already talking
-    about one child gets there, and the row's is the way she skips this dialog entirely.
-
-    It carries an id and nothing else. Nothing about the grade screen is imported into this file:
-    src/shell.js routes the hook, closes this dialog and swaps the view, which is where the order of
-    operations lives — and it keeps this module's promise that the only thing it knows about a
-    student is the name they are marked under and the marks against them.
-  */
-  const toGrades = el('button', 'class-action-btn attendance-report-door',
-    'Grades for ' + person);
-  toGrades.type = 'button';
-  toGrades.setAttribute('data-student-detail', student.id);
-  toGrades.title = 'Where ' + person + '’s grade comes from, and what it would take to move';
-  body.append(toGrades);
-
-  /*
-    AND HOW OFTEN THIS STUDENT HAS BEEN OUT OF THE ROOM (WO-2.26) — one line, no door. The breakdown
-    is inline on the Student Report screen the button above leads to, so this is the fact rather than
-    the way to it: a teacher marking attendance wants to know there were nine trips, and the teacher
-    who wants to see the nine is one tap away on a page that lists them without opening anything.
-
-    IT IS THE SAME NUMBER THAT CARD SHOWS, over the same term, because it is the same call — the
-    block arrives built (see the import) and the window is src/passes.js's. That is this work order's
-    third acceptance line, and it is a property of there being one function rather than of two
-    surfaces being kept in step.
-
-    It sits directly under the door to the grades because both are facts about this one student, and
-    a teacher who opened this dialog to talk about one child should not have to scroll a term of
-    dates to find either.
-  */
-  body.append(studentPassSummary(cls.id, student.id, getSelectedTerm()));
-
-  /* ── the one day this dialog can write on (WO-2.53) ──
-     Under the two facts above it and over the term table below it, for the reason the pass line
-     gives: a teacher who opened this dialog to talk about one child should not have to scroll a term
-     of dates to find the thing she came for, and a note on today's mark is the third thing that
-     sentence is about. Nothing is appended at all when there is no writable day. */
-  const write = writeBlock(student, person);
+  /* ── the one day this card is about (WO-2.53, and read-only since WO-2.60) ── */
+  const write = writeBlock(student, person, cls) || readOnlyBlock(student, cls);
   if (write) body.append(write);
 
-  /* ── every term, and the year ── */
-  body.append(el('div', 'attendance-report-label', 'Term by term'));
-  const summary = el('table', 'attendance-report-table');
-  const shead = el('thead');
-  const srow = el('tr');
-  ['Term', 'P', 'T', 'A', 'E', 'D', 'Meetings', 'Attendance'].forEach((label, i) => {
-    srow.append(cell('th', i === 0 ? '' : 'attendance-report-num', label));
-  });
-  shead.append(srow);
-  summary.append(shead);
-  const sbody = el('tbody');
-  const openTerm = getSelectedTerm();
-  getTerms(cls.id).forEach((term) => {
-    const totals = termTotals(cls.id, student.id, term);
-    const open = !!(openTerm && openTerm.id === term.id);
-    sbody.append(totalsRow(term.label + (open ? ' — open' : ''), totals, open));
-  });
-  /* The year sits under the terms rather than beside them: it is the same student over a wider
-     window, and it is what a guardian asks about second. */
-  sbody.append(totalsRow('Whole year', attendanceTotals(cls.id, student.id), false));
-  summary.append(sbody);
-  body.append(summary);
+  /*
+    ONE DOOR, TO THE PAGE THE HISTORY WENT TO (WO-2.60). It carries `data-student-detail` — the hook
+    the row's › and the score grid's names carry — so it is a third way into one room rather than a
+    room of its own, and src/shell.js closes this dialog and swaps the view; nothing about that screen
+    is imported here. The "Grades for …" door that stood under the badge until WO-2.60 is this one:
+    the page behind it shows the grade, both attendance tables and every hall pass, so a second door
+    or a pass count here would be two answers to the question the page already answers.
 
-  /* ── every recorded meeting in the open term ── */
-  body.append(el('div', 'attendance-report-label',
-    (record.termLabel || 'All recorded meetings') + ', day by day'));
-  if (!rows.length) {
-    body.append(el('p', 'attendance-report-empty',
-      'No meetings have been recorded for ' + cls.name + ' in this term yet. A day only appears '
-        + 'here once it has been taken — a day nobody has marked is not a day nobody met.'));
-  } else {
-    const table = el('table', 'attendance-report-table');
-    const thead = el('thead');
-    const hrow = el('tr');
-    hrow.append(cell('th', '', 'Date'));
-    hrow.append(cell('th', '', 'Mark'));
-    hrow.append(cell('th', 'attendance-report-num', 'Attendance so far'));
-    thead.append(hrow);
-    table.append(thead);
-    const tbody = el('tbody');
-    rows.forEach((row) => {
-      const tr = el('tr');
-      const date = cell('th', 'attendance-report-row-head', '');
-      date.append(el('span', 'attendance-report-dow', dayAbbr(row.date)));
-      date.append(el('span', 'attendance-report-date', plainDate(row.date)));
-      tr.append(date);
-      const mark = el('td');
-      /* The registry's own palette, worn rather than re-chosen — `.attendance-cell-A` and its four
-         siblings are this sheet's, and the row's detail panel already wears them the same way. */
-      mark.append(el('span', 'attendance-report-mark attendance-cell-' + row.code,
-        wordFor(row.code)));
-      tr.append(mark);
-      /* The fraction beside the percentage is what makes the first acceptance line something a
-         teacher can check by eye: the last row's denominator is the number of meetings, and the
-         table above it has exactly that many rows. */
-      tr.append(el('td', 'attendance-report-num',
-        row.attended + ' of ' + row.meetings + ' · ' + percentText(row)));
-      tbody.append(tr);
-    });
-    table.append(tbody);
-    body.append(table);
-  }
-
-  body.append(el('p', 'attendance-report-note',
-    'Every day this class was taken is a row, and nothing else is: a day the class didn’t meet, '
-      + 'a holiday, and a day nobody has marked yet all count toward nothing. A student nobody had '
-      + 'confirmed when the class was taken reads as absent, which is what it counts as.'));
+    THE WORDS ARE THE DRAWING'S AND WERE NOT RULED ON AT DISPATCH — "Attendance history and grades
+    →", because that is where the history went and a teacher looking for it reads the first word.
+  */
+  const actions = el('div', 'modal-actions');
+  const toPage = el('button', 'class-action-btn', 'Attendance history and grades →');
+  toPage.type = 'button';
+  toPage.setAttribute('data-student-detail', student.id);
+  toPage.title = person + '’s page: attendance by term and day by day, grades and hall passes';
+  actions.append(toPage);
+  body.append(actions);
 
   return true;
 }
@@ -459,9 +337,12 @@ function paintHistory() {
 
   IT DECIDES NONE OF THAT. editableMark() answers with the date, the reading, the time, the note and
   the two booleans, out of the module that owns the writers; this function words and lays out the
-  answer. `null` means there is no day to write on — a past column still locked, a window paged off
-  the edit date, a day the class did not meet, a covered day, a day outside every term — and then
-  nothing is drawn and there is no path through this file that changes a mark.
+  answer. `null` means there is no day to write on — a past column still locked, a day the class did
+  not meet, a covered day, a day outside every term — and then readOnlyBlock() below draws the card
+  instead, which carries no input and no hook, so there is still no path through this file that
+  changes a mark on such a day. (This said "a window paged off the edit date" until WO-2.60; it was
+  never one — editDate() does not move when the window pages, and the block names the day it writes
+  on.)
 
   `tabindex="-1"` ON THE BOX IS FOR THE UN-CONFIRM. Pressing it destroys the control that was
   pressed: the mark goes back to `?`, so the block redraws without the button and without the note
@@ -470,15 +351,14 @@ function paintHistory() {
   that just changed is. It is not in the Tab order (src/modal.js's focusablesIn() skips
   `[tabindex="-1"]`), so nothing about tabbing through the dialog changes.
 */
-function writeBlock(student, person) {
+function writeBlock(student, person, cls) {
   const now = editableMark(student.id);
   if (!now) return null;
 
   const box = el('div', 'attendance-report-write');
   box.setAttribute('tabindex', '-1');
   box.setAttribute('data-attendance-write', student.id);
-  box.append(el('div', 'attendance-report-write-day',
-    (now.date === todayISO() ? 'Today · ' : '') + spokenDate(now.date)));
+  box.append(el('div', 'attendance-report-write-day', dayLine(now.date, cls)));
 
   const says = el('span', 'attendance-report-mark attendance-report-write-mark '
     + 'attendance-cell-' + (now.code === UNCONFIRMED ? 'untaken' : now.code),
@@ -523,8 +403,8 @@ function writeBlock(student, person) {
   } else {
     box.append(el('span', 'attendance-report-write-hint', now.code === UNCONFIRMED
       ? 'Nobody has confirmed this student yet. Tap their question mark once for present.'
-      : 'Present is stored as no mark at all, so there is nothing here to note. Mark them absent, '
-        + 'tardy, at an event or dismissed and the note field appears.'));
+      : 'Nothing to note on a present mark. Change the mark on the grid and a note field '
+        + 'appears here.'));
   }
 
   if (now.canUnconfirm) {
@@ -534,6 +414,58 @@ function writeBlock(student, person) {
     back.title = 'Put this student back to a question mark, as if nobody had looked at them yet.';
     box.append(back);
   }
+  return box;
+}
+
+/* "Today · Friday, October 9 · P2 · English III" — the day the card is about and the class, because
+   the dialog's title is now the student's name and nothing else on it says which class this is. */
+function dayLine(date, cls) {
+  return (date === todayISO() ? 'Today · ' : '') + spokenDate(date) + ' · ' + cls.name;
+}
+
+/*
+  THE CARD ON A DAY IT CANNOT WRITE TO (WO-2.60, ruling 3). Until that work order the dialog drew no
+  block at all on such a day and the term tables filled the space; with the tables gone, an empty
+  card would be a dialog about nothing. So it shows the mark on the day the screen is about,
+  read-only, and says what would open it.
+
+  THE REASON IS NOT DECIDED HERE. readOnlyMark() in src/attendance.js runs the same five tests
+  editableMark() does — one private gate, two readers — and hands back which one refused; this
+  function owns the sentence for each and nothing else. A test written here (is the day past? is it
+  covered?) would be a second opinion about what is writable, held by a file that cannot see the
+  ledger, which is the reason the gate was put beside the writers in the first place.
+
+  IT CARRIES NO INPUT AND NO HOOK. `data-attendance-readonly` names the reason for a reader and is
+  routed by nothing; there is no `data-attendance-write` on it, so the un-confirm repaint below never
+  focuses it, and no `tabindex`, because nothing on it changes under the teacher.
+
+  THE SENTENCES. The drawing worded the locked day only; the other three are this build's, out of
+  the reasons and in the words the registry's own note row and controls already use — "The class met
+  after all", the 📅 on a covered column, Terms — so the card points at a control the teacher can see.
+  None was ruled on at dispatch. A dropped, covered or off-term day has no record of a mark, so it
+  draws no chip: there is no mark to show.
+*/
+const READ_ONLY_SAYS = {
+  locked: 'This day is locked. Press its ✏ on the grid to change the mark or add a note.',
+  'did-not-meet': 'The class didn’t meet this day, so there is no mark to show. Tap “The class '
+    + 'met after all” above the grid if it did.',
+  covered: 'This day is off on the calendar, so nobody has a mark on it. Tap the 📅 on its column '
+    + 'to see why.',
+  'off-term': 'This day is outside every term this class has, so nothing can be marked on it. Add '
+    + 'a term or widen one in Terms to open it.',
+};
+
+function readOnlyBlock(student, cls) {
+  const was = readOnlyMark(student.id);
+  if (!was) return null;
+  const box = el('div', 'attendance-report-write');
+  box.setAttribute('data-attendance-readonly', was.reason);
+  box.append(el('div', 'attendance-report-write-day', dayLine(was.date, cls)));
+  if (was.code) {
+    box.append(el('span', 'attendance-report-mark attendance-report-write-mark '
+      + 'attendance-cell-' + (was.code === UNCONFIRMED ? 'untaken' : was.code), markSays(was)));
+  }
+  box.append(el('span', 'attendance-report-write-hint', READ_ONLY_SAYS[was.reason] || ''));
   return box;
 }
 
@@ -563,13 +495,15 @@ window.addEventListener('input', followTime);
 window.addEventListener('change', followTime);
 
 /*
-  AND THE FOUR FIGURES THIS DIALOG OWES AN UN-CONFIRM MADE INSIDE IT.
+  AND THE CARD AN UN-CONFIRM MADE INSIDE IT GOES STALE.
 
   src/attendance.js repaints the registry behind this dialog on every write, and src/shell.js redraws
   the home cards after it — that chain is untouched and it is exactly why this listener exists. The
-  grid visibly updating under the overlay looks like the whole answer and is not: the percentage in
-  the head, the open term's row, the *Whole year* row and the day-by-day table are all drawn from the
-  same ledger, and all four are stale the moment a student goes back to `?`.
+  grid visibly updating under the overlay looks like the whole answer and is not: the card's chip,
+  its note field and the Un-confirm itself are all drawn from the same ledger, and all three are
+  wrong the moment a student goes back to `?`. (Until WO-2.60 it was four figures — the badge, two
+  table rows and the day-by-day table — which are the student page's to draw now, and that page is
+  drawn fresh on arrival.)
 
   IT LISTENS ON `window`, WHICH IS NOT AN ACCIDENT AND IS THE ONLY DETAIL HERE WORTH ARGUING. The
   write is routed by the one delegated listener in src/shell.js, which is on `document`; a listener
@@ -596,8 +530,8 @@ window.addEventListener('click', (e) => {
 });
 
 /* `U` is deliberately not in MARKS — it is not a sixth code to a teacher — and it is the one reading
-   the write block can be handed that the day-by-day table below never sees, because the history rows
-   fold it into an absence on the way out of the ledger. Worded the same way src/attendance.js words
+   the write block can be handed that no day-by-day table ever sees, because the history rows fold it
+   into an absence on the way out of the ledger. Worded the same way src/attendance.js words
    it for a cell's accessible name, so the block and the grid behind it say one thing. */
 function wordFor(code) {
   if (code === UNCONFIRMED) return 'Not confirmed';

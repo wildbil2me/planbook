@@ -7777,6 +7777,110 @@ the Traps line expects until WO-2.60 moves it off the class.
 
 ---
 
+### WO-2.60 — a tap on a name opens today, and the history moves to the student page
+
+**What this changes for a teacher: a tap on a student's name during roll call opens a card titled
+with the name, holding that day's mark, its time and note and the Un-confirm, and one door —
+*Attendance history and grades →* — to the student page; the term-by-term table and day by day are on
+that page's attendance card now, under the five counts, day by day closed until tapped and newest
+first.** On a day the card cannot write to — a locked past day, a day the class did not meet, a
+covered day, a day outside every term — it shows that day's mark read-only and says what would open
+it, where it used to draw nothing. The reason comes from `readOnlyMark()` in `src/attendance.js`,
+which shares one private gate (`markGate()`) with `editableMark()`; `src/attendance-report.js` only
+words it. The pass count, the rate badge, the avatar and the "Grades for" door left the dialog, and
+`studentPassSummary()` was deleted with no caller left. The dialog is the stock 480px `.modal-panel`.
+The picture is `design/mockups/attendance-today.html`; § STUDENT ATTENDANCE is lifted into
+`src/detail.css`.
+
+**Built as drawn, owner's ruling still owed** — the four Open items, and none of them is used to tick a
+box below: the door reads *Attendance history and grades →*; the card carries no term percentage;
+day by day is closed when the door lands and lists newest first; and the read-only sentences for the
+three reasons the drawing did not word are this build's —
+*"The class didn’t meet this day, so there is no mark to show. Tap “The class met after all” above
+the grid if it did."* · *"This day is off on the calendar, so nobody has a mark on it. Tap the 📅 on
+its column to see why."* · *"This day is outside every term this class has, so nothing can be marked
+on it. Add a term or widen one in Terms to open it."* The locked day's is the drawing's.
+
+**"Paged away" is not a refusal, and that is the code rather than a gap.** The work order lists five
+reasons; `editDate()` does not move when the window pages, so a paged-back screen still writes on
+today and the card names today. `src/attendance.js` says so at `readOnlyMark()`.
+
+- [x] A tap on a name opens a dialog titled with the student's name, holding the write block and one
+      door and no table. The door opens that student's page.
+      — `verify/attendance-history.mjs`: through the real name in the grid, one dialog
+      (`attendanceHistoryModal`), title `"Sam Probe"`, 0 tables, 1 block, 0 badge/pass/avatar
+      elements, panel `offsetWidth` 480, and exactly one door, `wo26-s1:Attendance history and grades
+      →`. Clicking it: the page is up for *Sam Probe* with 0 dialogs open.
+      `verify/history-dialog-write.mjs`: on the writable fixture the dialog is titled *Dee Dismissed*
+      with 0 tables and one door to that student. `verify/grade-detail.mjs`: the door lands on
+      `detailView` with focus on the heading and is ≥44px under a coarse pointer without spilling its
+      new, longer label. Mutation M1 turns the dialog check red (`blocks: 0` on the locked fixture).
+- [x] Time, note and Un-confirm write exactly as they did, through the same hooks, and Un-confirm
+      repaints the card with focus inside it.
+      — The write block's markup and hooks are unchanged (`data-attendance-note`/`-note-date`,
+      `-time`/`-time-date`, `-unconfirm`; `src/shell.js`'s routes untouched). The WO-2.53 note checks
+      (typed note lands on the day's mark, same `<input>` element survives the keystroke, reopened
+      field reads it) and all five WO-2.55 time checks pass unchanged in `verify/history-dialog-write.mjs`,
+      as do the un-confirm checks in `verify/attendance.mjs`. New: after Un-confirm the entry is
+      `{"code":"U"}`, the grid cell behind reads `?`, the dialog is still up, and
+      `document.activeElement` is the write box inside the dialog; the existing redraw check reads the
+      card as *Not confirmed* with the unconfirmed hint and no field. **Honest limit:** with the repaint
+      removed (M4) the focus check stays green — the old box is still in the DOM to be focused — and it
+      is the redraw check that goes red. The `window` listener stays, for the reason over it.
+- [x] On a locked past day the card shows that day's mark, read-only, with its sentence and no input.
+      — `verify/history-dialog-write.mjs`, the strip standing on an ended term's last day with a record
+      on it: no write block, 0 inputs, read-only reason `locked`, chip `Absent`, the drawing's sentence
+      word for word, the day line starting with that day's spoken date and not *Today*, and 0
+      inputs/buttons/hooks/`tabindex` inside the block. The dropped-day case reads reason
+      `did-not-meet`, no chip and its sentence. Mutation M1 (no read-only card) turns both red.
+- [x] The student page's attendance card shows every term and the whole year with the same figures
+      the dialog showed at v174 for the same document, and a day by day that is closed until opened
+      and then lists every recorded meeting in the open term with its running fraction.
+      — `verify/attendance-history.mjs` on the WO-2.6 fixture: term rows cell by cell
+      `["WO-2.6 Term — open","1","1","2","1","1","6","67%"]`, `["WO-2.6 Long","30","0","0","0","0","30","100%"]`,
+      `["Whole year","31","1","3","1","1","37","92%"]`, one row marked open. Those are the figures
+      v174's dialog drew for this document: its table was `termTotals()` per term and
+      `attendanceTotals()` for the year, the same two calls `attendanceCard()` makes now, over the same
+      fixture its own WO-2.6 checks pinned (6 meetings at 67%, 37 on the year) — **the comparison is to
+      the readers and to hand-computed figures, not to a v174 tree run side by side.** Day by day:
+      closed on arrival (`checkVisibility()` false on its table), opened by a click on the summary, six
+      dates exactly the counted meetings newest first with the dropped and out-of-term days absent,
+      running `4 of 6 · 67%` on top and `0 of 1 · 0%` at the foot, marks
+      `Dismissed, Event, Present, Absent, Tardy, Absent` with the `U` day reading *Absent*.
+      `verify/history-dialog-write.mjs` reads the same page after an Un-confirm: title
+      *Attendance · 50%*, the open term and the year `1,0,1,0,0,2,50%`, today's row first *Absent*
+      `1 of 2 · 50%`. `verify/print-sheets.mjs`: on paper the term table prints, a closed day by day has
+      no box, an open one prints its rows. Mutations M2 (oldest first), M3 (drawn open) and M5 (the
+      print rule) each turn their checks red.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      — `node tools/verify-shell.mjs`: `1915 checks · 1915 passed · 0 failed · 0 skipped`, 60,894 lines, 31.8 lines per check, 920s, exit 0, 2026-10-09 on the real clock, after the mutations were reverted, with `tools/README.md`'s call-site count moved 1907 → 1911. `node tools/wo-sweep.mjs`: **50 checks · 46 passed · 0 failed · 4 to review** — the three standing REVIEWs and `.detail-att-terms` with no coarse rule, which is a `<table>` and not a touch target (the one control added, `.detail-att-days-summary`, has its 44px in `src/detail.css`'s coarse block). `CACHE` is
+      `planbook-shell-v176` → `v177`.
+- [x] 👤 On the iPad, after a force-quit, upright: tap three names mid-roll-call — a tardy, a present
+      student and a student on a locked day — and read each card; follow the door and open day by
+      day.
+      — Read by the owner on the iPad against v177 from the dev server, 2026-10-10: "Everything looks
+      good." The same word ruled the four open items as drawn — the door's words, no percentage on
+      the card, the three read-only sentences in `READ_ONLY_SAYS`, and day by day closed, not
+      scrolled into view, newest first.
+
+**Presentation mode, read before the tables were added (the Traps line).** The student page hides
+support data by never receiving it, and the hall-pass, log, score-note and score-history cards go
+quiet behind their own modules. Attendance is none of those: the five counts on this card were drawn
+in both modes since WO-3.7, and the dialog these tables came from drew them in both modes, so the
+tables are drawn in both modes and `src/detail.js` still asks the mode nothing. The sentinel sweep in
+`verify/attendance-history.mjs` reads the name tap's card and the student page's attendance card with
+day by day open, with presentation mode off and on, and finds no support value either time.
+
+**Mutation-proved in one full run, every mutation marked `MUTATION WO-2.60` in the tree while live and
+reverted (`grep -rn "MUTATION WO-2.60" src tools index.html sw.js` empty, `git diff --stat src` empty
+against the staged pre-mutation tree) before this section was written.**
+
+| Tree | Result |
+|---|---|
+| Delivered tree, first full run | `1915 checks · 1914 passed · 1 failed`: the closed-on-arrival check, which asked the day table's height — 231px on a closed `<details>`, because current Chromium lays it out under `content-visibility: hidden`. Re-aimed at `checkVisibility()` and the disclosure's own height; the app was not touched |
+| **M1** `paintHistory()` without `readOnlyBlock()` · **M2** day by day oldest first (no `.reverse()`) · **M3** `<details>` drawn open · **M4** the `window` listener's `paintHistory()` commented out · **M5** `src/detail.css`'s `:not([open]) { display: none }` print rule removed | `1915 checks · 1905 passed · 10 failed`, exit 1: M1 — the dialog check (`blocks: 0`), the dropped-day and the locked-day checks (`read-only null`); M2 — the date order, the running figure (`top row "0 of 1 · 0%"`), the `U` fold, and the page-after-Un-confirm check; M3 — closed on arrival (`open = true`); M4 — the redraw check (`"Dismissed at 8:14 AM"`, field still there); M5 — the print check (closed day by day `24px` on paper) |
+| Mutations reverted | `1915 checks · 1915 passed · 0 failed · 0 skipped`, 920s, exit 0 |
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

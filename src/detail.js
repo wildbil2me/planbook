@@ -11,9 +11,9 @@
   IT ALSO OWNS NO NAVIGATION TARGET. The switcher above it carries three segments and this is not
   one of them (the owner, 2026-08-09): a tab you cannot enter without first choosing a student is
   either dead on a freshly-opened class or it invents a selection nobody made. You arrive from a
-  NAME — the student's own name in the score grid, or the door in their attendance history — and
-  the strip shows that name as a BREADCRUMB while you are standing here. src/screen-nav.js draws it
-  and refuses to draw it on any other screen; this file is what sets it, because this file is the
+  NAME — the student's own name in the score grid, or the door on the card their name opens on the
+  registry — and the strip shows that name as a BREADCRUMB while you are standing here.
+  src/screen-nav.js draws it and refuses to draw it on any other screen; this file is what sets it, because this file is the
   one that has already decided a student is on display.
 
   THE WAY BACK IS THE THREE SEGMENTS BESIDE THE BREADCRUMB, plus the "All classes" door in the
@@ -136,7 +136,7 @@ import { announce } from './live-region.js';
    attendance history all already wear — imported rather than re-derived, because the colour is
    part of how a teacher recognises a person and there is one answer per student, not one per
    screen. */
-import { getSelectedClass, getSelectedTerm, termIsDated, initials, avatarClass } from './classes.js';
+import { getSelectedClass, getSelectedTerm, getTerms, termIsDated, initials, avatarClass } from './classes.js';
 /* "Mary Van Dyke" in a sentence, and "Van Dyke, Mary" on a row. One shape, owned by src/roster.js,
    worn by every screen that prints a name. */
 import { fullName, rosterName } from './roster.js';
@@ -166,8 +166,11 @@ import { formatPercent } from './scores.js';
 /* The attendance summary, from WO-2.4's readers and WO-2.6's formatters — the same walk the
    registry's own percentage comes out of, so the line a guardian reads here and the line above the
    grid it was taken from cannot come apart. Read-only: there is no writer in src/attendance.js
-   imported below, and no path through this file changes a mark. */
-import { MARKS, termTotals, percentText, plainDate, todayISO } from './attendance.js';
+   imported below, and no path through this file changes a mark. attendanceTotals(), termHistory()
+   and dayAbbr() joined at WO-2.60, when the term table and day by day moved here from the history
+   dialog — the same calls that dialog made, so the figures did not change when they moved. */
+import { MARKS, termTotals, attendanceTotals, termHistory, percentText, plainDate, dayAbbr,
+  todayISO } from './attendance.js';
 /* The breadcrumb this screen is the only setter of. A leaf that imports src/views.js and nothing
    else, so wearing it closes no loop. */
 import { setDetailBreadcrumb } from './screen-nav.js';
@@ -782,6 +785,26 @@ function toMoveCard(doc, cls, termId, student, grade, rows, noGradeSays) {
 
   RECORDED MEETINGS AND NEVER CALENDAR DAYS, said out loud on the card, because a percentage with no
   denominator on a conference screen is a percentage a parent reads as days of school.
+
+  AND SINCE WO-2.60 THE HISTORY THE NAME TAP USED TO OPEN (the owner's ruling of 2026-10-09). The
+  term-by-term table and day by day were in the attendance history dialog, which a tap on a name
+  opens mid-roll-call, standing up; they are what a conference reads sitting down, and this is the
+  page a conference is on. They come across with their readers — termTotals() per term,
+  attendanceTotals() for the year, termHistory() for the days — and with src/attendance.css's
+  `.attendance-report-*` table classes worn as shipped, so a row here reads exactly as the row there
+  did. This file adds an arrangement and nothing that counts.
+
+  PRESENTATION MODE, READ BEFORE THESE WERE ADDED (the work order's Traps line). What this page hides
+  under a projector is decided elsewhere and drawn by the module that asks: support data never
+  arrives here at all (the header), the hall-pass card and the log card go quiet behind
+  src/pass-history.js and src/log-sheet.js, and the score notes and a score's history behind their
+  own modules. Attendance is none of those. The five counts under this card's title have been drawn
+  in both modes since WO-3.7, and the dialog these tables came from drew them in both modes too — so
+  they are drawn in both modes here, and this file still asks the mode nothing. A table that hid
+  under the projector when the counts above it did not would be the screen disagreeing with itself.
+
+  THE RUNNING FRACTION SURVIVES THE MOVE, because it is what makes a row checkable by eye: the top
+  row's denominator is the number of meetings, and the table has exactly that many rows.
 */
 function attendanceCard(cls, student, term) {
   const totals = termTotals(cls.id, student.id, term);
@@ -797,6 +820,27 @@ function attendanceCard(cls, student, term) {
   });
   card.append(stats);
 
+  /* ── every term, the open one marked, and the whole year (WO-2.60) ── */
+  const terms = el('table', 'attendance-report-table detail-att-terms');
+  const thead = el('thead');
+  const hrow = el('tr');
+  ['Term', 'P', 'T', 'A', 'E', 'D', 'Meetings', 'Attendance'].forEach((label, i) => {
+    hrow.append(attCell('th', i === 0 ? '' : 'attendance-report-num', label));
+  });
+  thead.append(hrow);
+  terms.append(thead);
+  const tbody = el('tbody');
+  getTerms(cls.id).forEach((t) => {
+    const open = !!(term && term.id === t.id);
+    tbody.append(attTotalsRow(t.label + (open ? ' — open' : ''),
+      termTotals(cls.id, student.id, t), open));
+  });
+  /* The year under the terms rather than beside them: the same student over a wider window, and what
+     a guardian asks about second. */
+  tbody.append(attTotalsRow('Whole year', attendanceTotals(cls.id, student.id), false));
+  terms.append(tbody);
+  card.append(terms);
+
   const dated = !!(term && term.start && term.end);
   card.append(el('p', 'detail-att-note',
     'Out of ' + plural(totals.meetings, 'recorded meeting', 'recorded meetings')
@@ -804,7 +848,92 @@ function attendanceCard(cls, student, term) {
         + 'every meeting on the year')
       + ' — not school days. A day this class did not meet, a holiday, and a day nobody has marked '
       + 'yet all count toward nothing in either direction.'));
+
+  card.append(dayByDay(cls, student, term));
   return card;
+}
+
+/*
+  DAY BY DAY, CLOSED UNTIL ASKED FOR (WO-2.60, ruling 4). A native <details>, so a keyboard and a
+  screen reader get the disclosure for free and there is no script holding it open or shut. It is
+  drawn closed on every paint, so a repaint of this screen closes it — accepted, because nothing
+  repaints this page under a teacher who is reading it: src/shell.js repaints it on a door and on a
+  presentation-mode flip, never on a save.
+
+  TWO OPEN QUESTIONS, BUILT AS DRAWN AND NOT RULED ON AT DISPATCH. Arriving through the name tap's
+  door does not open it or scroll to it — every door to this page lands the same way; and the rows
+  run NEWEST FIRST, where the dialog ran oldest first, because "what happened this week" is the
+  question this card is opened for. termHistory() still answers oldest first — its running figures
+  are only running in that order — and the reversal is of the finished rows, here, so every row
+  still carries the fraction as it stood after that day.
+
+  ON PAPER IT PRINTS ONLY IF IT IS OPEN (src/detail.css's print block), which is "what prints is
+  what is on screen" applied to a disclosure: a closed one's summary is a control, not a fact.
+
+  The summary names the term and the count, so the closed row says what opening it will show.
+*/
+function dayByDay(cls, student, term) {
+  const rows = termHistory(cls.id, student.id, term);
+  const label = term && term.label ? term.label : 'All recorded meetings';
+  const days = el('details', 'detail-att-days');
+  days.append(el('summary', 'detail-att-days-summary',
+    label + ', day by day · ' + plural(rows.length, 'meeting', 'meetings')));
+  if (!rows.length) {
+    days.append(el('p', 'attendance-report-empty',
+      'No meetings have been recorded for ' + cls.name + ' in this term yet. A day only appears '
+        + 'here once it has been taken — a day nobody has marked is not a day nobody met.'));
+    return days;
+  }
+  const table = el('table', 'attendance-report-table');
+  const thead = el('thead');
+  const hrow = el('tr');
+  hrow.append(attCell('th', '', 'Date'));
+  hrow.append(attCell('th', '', 'Mark'));
+  hrow.append(attCell('th', 'attendance-report-num', 'Attendance so far'));
+  thead.append(hrow);
+  table.append(thead);
+  const tbody = el('tbody');
+  rows.slice().reverse().forEach((row) => {
+    const tr = el('tr');
+    const date = attCell('th', 'attendance-report-row-head', '');
+    date.append(el('span', 'attendance-report-dow', dayAbbr(row.date)));
+    date.append(el('span', 'attendance-report-date', plainDate(row.date)));
+    tr.append(date);
+    const mark = el('td');
+    /* The registry's own palette, worn rather than re-chosen. A history row never carries `U` —
+       termHistory() folds it into an absence — so every code here is one of MARKS. */
+    const known = MARKS.filter((m) => m.code === row.code)[0];
+    mark.append(el('span', 'attendance-report-mark attendance-cell-' + row.code,
+      known ? known.word : row.code));
+    tr.append(mark);
+    tr.append(el('td', 'attendance-report-num',
+      row.attended + ' of ' + row.meetings + ' · ' + percentText(row)));
+    tbody.append(tr);
+  });
+  table.append(tbody);
+  days.append(table);
+  return days;
+}
+
+/* A cell of the two attendance tables, scoped the way src/attendance-report.js scoped them in the
+   dialog — a row head is `row`, every other `th` is a column head. cell() above belongs to the
+   breakdown and keys its scope on that table's own class. */
+function attCell(tag, className, text) {
+  const node = el(tag, className, text);
+  if (tag === 'th') node.setAttribute('scope', className === 'attendance-report-row-head'
+    ? 'row' : 'col');
+  return node;
+}
+
+/* One row of the term table: the label, the five counts in MARKS order, the meetings and the
+   percentage in the registry's own words. The dialog's totalsRow(), moved with its table. */
+function attTotalsRow(label, totals, open) {
+  const tr = el('tr', open ? 'attendance-report-open' : '');
+  tr.append(attCell('th', 'attendance-report-row-head', label));
+  MARKS.forEach((mark) => tr.append(el('td', 'attendance-report-num', String(totals[mark.code]))));
+  tr.append(el('td', 'attendance-report-num', String(totals.meetings)));
+  tr.append(el('td', 'attendance-report-num', percentText(totals)));
+  return tr;
 }
 
 /* ────────────────────────────── the screen ────────────────────────────── */

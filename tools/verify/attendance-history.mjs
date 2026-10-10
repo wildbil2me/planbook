@@ -174,21 +174,83 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
         + JSON.stringify(ready.totals) + ', every support sentinel is in the document = ' + planted
         + ', support data is visible in this mode = ' + plant.visible);
 
-    /* ── the history, opened the way a teacher opens it: by tapping the name ── */
+    /*
+      ── the name, tapped the way a teacher taps it — and where the history went (WO-2.60) ──
+
+      Until WO-2.60 the name opened a dialog holding the term table and a row per meeting, and the
+      checks below read both out of it. The owner's ruling moved them to the student page's
+      attendance card, under the same readers, so the CLAIMS are unchanged and the SURFACE moved:
+      the dialog is read for what it must now be (titled with the name, one block, one door, no
+      table), the door is followed, and the same six dates, marks and running figures are read off
+      the card on the page it lands on. The fixture's open term ended in February, so today is in no
+      term and the strip stands on that term's last day, locked — the dialog draws the block
+      read-only, which is WO-2.60's third ruling and is asserted with its sentence in
+      tools/verify/history-dialog-write.mjs.
+    */
     await clickSel('[data-attendance-history="wo26-s1"]');
-    const READ_HISTORY = `(function(){
+    const READ_CARD = `(function(){
       var m = document.getElementById('attendanceHistoryModal');
       if (!m || m.classList.contains('hidden')) return { up:false, text:'' };
-      var days = Array.prototype.slice.call(m.querySelectorAll('tbody tr'))
-        .filter(function(tr){ return !!tr.querySelector('.attendance-report-date'); });
       return {
         up: true,
         openDialogs: Array.prototype.slice.call(document.querySelectorAll('.modal-overlay'))
           .filter(function(o){ return !o.classList.contains('hidden'); })
           .map(function(o){ return o.id; }),
-        name: (m.querySelector('.attendance-report-name') || {}).textContent || '',
-        sub: (m.querySelector('.attendance-report-sub') || {}).textContent || '',
-        rate: (m.querySelector('.attendance-report-rate') || {}).textContent || '',
+        title: (document.getElementById('attendanceHistoryTitle') || {}).textContent || '',
+        tables: m.querySelectorAll('table').length,
+        blocks: m.querySelectorAll('.attendance-report-write').length,
+        readonly: (function(){ var b = m.querySelector('[data-attendance-readonly]');
+          return b ? b.getAttribute('data-attendance-readonly') : ''; })(),
+        inputs: m.querySelectorAll('.modal-body input, .modal-body textarea, .modal-body select').length,
+        doors: Array.prototype.slice.call(m.querySelectorAll('.modal-body [data-student-detail]'))
+          .map(function(b){ return b.getAttribute('data-student-detail') + ':' + (b.textContent || '').trim(); }),
+        badge: m.querySelectorAll('.attendance-report-rate, .attendance-report-passes, .avatar').length,
+        panelW: (function(){ var p = m.querySelector('.modal-panel'); return p ? p.offsetWidth : -1; })(),
+        text: m.textContent || '' }; })()`;
+    const card = await evalJs(READ_CARD);
+    check('WO-2.60 · a tap on a name opens a dialog titled with the student\'s name, holding the day\'s block and ONE door to their page — no table, no rate badge, no pass count, no avatar — on the stock 480px panel',
+      card.up && card.openDialogs.length === 1 && card.openDialogs[0] === 'attendanceHistoryModal'
+        && card.title === 'Sam Probe' && card.tables === 0 && card.blocks === 1
+        && card.badge === 0 && card.panelW === 480
+        && JSON.stringify(card.doors) === JSON.stringify(['wo26-s1:Attendance history and grades →']),
+      JSON.stringify({ dialogs: card.openDialogs, title: card.title, tables: card.tables,
+        blocks: card.blocks, readonly: card.readonly, doors: card.doors, badge: card.badge,
+        panelW: card.panelW }));
+
+    /* The door, followed: it closes the dialog and lands on that student's page. */
+    await clickSel('#attendanceHistoryModal [data-student-detail="wo26-s1"]');
+    await new Promise(r => setTimeout(r, 250));
+    const READ_HISTORY = `(function(){
+      var v = document.getElementById('detailView');
+      if (!v || v.classList.contains('hidden')) return { up:false, text:'' };
+      var cards = Array.prototype.slice.call(v.querySelectorAll('.detail-card'));
+      var att = cards.filter(function(c){ var t = c.querySelector('.detail-card-title');
+        return !!t && (t.textContent || '').indexOf('Attendance · ') === 0; })[0] || null;
+      var flat = function(e){ return (e.textContent || '').replace(/\\s+/g, ' ').trim(); };
+      var terms = att ? att.querySelector('table.detail-att-terms') : null;
+      var det = att ? att.querySelector('details.detail-att-days') : null;
+      var days = det ? Array.prototype.slice.call(det.querySelectorAll('tbody tr')) : [];
+      /* WHETHER THE ROWS ARE RENDERED, asked the way the engine answers it. A closed <details> in
+         current Chromium keeps its content laid out under content-visibility: hidden, so the
+         table still reports a height — 231px on the first run of this check — and only
+         checkVisibility() tells shown from hidden. The disclosure's own height is read beside it,
+         which no engine can fake: closed it is the summary row, open it is the table too. */
+      var dayTable = det ? det.querySelector('table') : null;
+      var dayShown = dayTable ? dayTable.checkVisibility() : null;
+      var dayBox = det ? Math.round(det.getBoundingClientRect().height) : -1;
+      return {
+        up: true,
+        openDialogs: Array.prototype.slice.call(document.querySelectorAll('.modal-overlay'))
+          .filter(function(o){ return !o.classList.contains('hidden'); }).length,
+        heading: (document.getElementById('detailStudentName') || {}).textContent || '',
+        cards: cards.length, card: !!att,
+        rate: att ? flat(att.querySelector('.detail-card-title')) : '',
+        terms: terms ? Array.prototype.slice.call(terms.querySelectorAll('tbody tr'))
+          .map(function(tr){ return Array.prototype.slice.call(tr.children).map(flat); }) : [],
+        openRow: terms ? Array.prototype.slice.call(terms.querySelectorAll('tbody tr'))
+          .filter(function(tr){ return tr.className.indexOf('attendance-report-open') >= 0; }).length : 0,
+        details: !!det, open: !!(det && det.open), dayBox: dayBox, dayShown: dayShown,
+        summary: det ? flat(det.querySelector('summary')) : '',
         dates: days.map(function(tr){
           return (tr.querySelector('.attendance-report-date') || {}).textContent || ''; }),
         marks: days.map(function(tr){
@@ -196,7 +258,11 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
         running: days.map(function(tr){
           var tds = tr.querySelectorAll('td');
           return (tds[tds.length - 1] || {}).textContent || ''; }),
-        text: m.textContent || '' }; })()`;
+        text: att ? (att.textContent || '') : '' }; })()`;
+    const closed = await evalJs(READ_HISTORY);
+    /* Opened the way a teacher opens it — a click on the summary. */
+    await clickSel('#detailView details.detail-att-days > summary');
+    await new Promise(r => setTimeout(r, 120));
     const hist = await evalJs(READ_HISTORY);
     /* The app's own words for the six dates, so the comparison is against a list of DATES and not
        against a count. plainDate() is the formatter both surfaces use. */
@@ -207,51 +273,74 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
     const saidOutside = await evalJs(
       'window.planbook.attendance.plainDate(' + JSON.stringify(OUTSIDE) + ')');
 
-    check('a student\'s own name in the grid opens their history, and it opens nothing else',
-      hist.up && hist.openDialogs.length === 1
-        && hist.openDialogs[0] === 'attendanceHistoryModal'
-        && hist.name === 'Sam Probe',
-      'dialogs open = ' + JSON.stringify(hist.openDialogs) + ', named '
-        + JSON.stringify(hist.name) + ' :: ' + JSON.stringify(hist.sub));
+    check('WO-2.60 · the card\'s one door opens that student\'s page and closes the dialog behind it, and day by day is CLOSED on arrival — its rows are not rendered until it is opened',
+      closed.up && closed.openDialogs === 0 && closed.heading === 'Sam Probe' && closed.card
+        && closed.details && closed.open === false && closed.dayShown === false
+        && closed.summary === LABEL_A + ', day by day · 6 meetings'
+        && hist.open === true && hist.dayShown === true && hist.dayBox > closed.dayBox + 100,
+      'page up = ' + closed.up + ' for ' + JSON.stringify(closed.heading) + ' with '
+        + closed.openDialogs + ' dialog(s) open; details present = ' + closed.details + ', open = '
+        + closed.open + ', rows rendered = ' + closed.dayShown + ', disclosure ' + closed.dayBox
+        + 'px; summary ' + JSON.stringify(closed.summary) + '; opened by a click: ' + hist.open
+        + ', rows rendered = ' + hist.dayShown + ', disclosure ' + hist.dayBox + 'px');
 
-    /* ACCEPTANCE LINE 1, and it is asserted as a list rather than as a number: these six dates in
-       this order, with the day that did not meet and the day outside the term absent from it. */
-    check('the history lists exactly the meetings that count — the six recorded ones, oldest first, with the dropped day and the out-of-term day absent',
-      JSON.stringify(hist.dates) === JSON.stringify(said)
+    /* WO-2.60 ACCEPTANCE LINE 4, THE TERM HALF. Every term, the open one marked, and the whole year,
+       cell by cell as the strings a teacher reads. The figures are written down here rather than
+       asked of the app, and they are the ones the dialog's own table printed at v174 for this
+       document: that table was termTotals() per term and attendanceTotals() for the year, the same
+       two calls the card makes. Term B holds thirty all-present meetings; the year adds the
+       out-of-term absence on March 2, and never the dropped day. */
+    check('WO-2.60 · the student page\'s attendance card shows every term — the open one marked — and the whole year, with the figures the history dialog showed for the same document',
+      JSON.stringify(hist.terms) === JSON.stringify([
+        [LABEL_A + ' — open', '1', '1', '2', '1', '1', '6', S1_PCT],
+        [LABEL_B, '30', '0', '0', '0', '0', '30', '100%'],
+        ['Whole year', '31', '1', '3', '1', '1', '37', '92%']])
+        && hist.openRow === 1,
+      JSON.stringify(hist.terms) + ', ' + hist.openRow + ' row(s) marked open');
+
+    /* ACCEPTANCE LINE 1 of WO-2.6, on its new surface, and it is asserted as a list rather than as a
+       number: these six dates — NEWEST FIRST since WO-2.60, as drawn — with the day that did not
+       meet and the day outside the term absent from it. */
+    check('the history lists exactly the meetings that count — the six recorded ones, newest first on the student page, with the dropped day and the out-of-term day absent',
+      JSON.stringify(hist.dates) === JSON.stringify(said.slice().reverse())
         && hist.dates.indexOf(saidDropped) === -1
         && hist.dates.indexOf(saidOutside) === -1,
       hist.dates.length + ' row(s): ' + JSON.stringify(hist.dates) + ' — expected '
-        + JSON.stringify(said) + '; the dropped day ' + JSON.stringify(saidDropped)
+        + JSON.stringify(said.slice().reverse()) + '; the dropped day ' + JSON.stringify(saidDropped)
         + ' and the out-of-term day ' + JSON.stringify(saidOutside) + ' are absent = '
         + (hist.dates.indexOf(saidDropped) === -1 && hist.dates.indexOf(saidOutside) === -1));
 
-    /* AND THE OTHER HALF OF THE SAME LINE: the two agree. The last row's running percentage, the
-       badge at the top of the dialog and the line under the student's name on the registry behind it
-       are three renderings of one number, and the fraction beside the first one has the row count as
-       its denominator. */
-    const last = hist.running[hist.running.length - 1] || '';
-    check('and the running percentage on the last row is the percentage the registry prints for that student, over a denominator that is the number of rows',
-      last === '4 of 6 · ' + S1_PCT && hist.rate === S1_PCT
+    /* AND THE OTHER HALF OF THE SAME LINE: the two agree. The top row's running percentage — the
+       latest meeting, newest first — the card's title and the line under the student's name on the
+       registry are three renderings of one number, and the fraction beside the first one has the
+       row count as its denominator. The running figure SURVIVES THE MOVE, which is WO-2.60's Traps
+       line: each row still reads as it stood after that day, oldest at the foot. */
+    const top = hist.running[0] || '';
+    check('and the running percentage on the newest row is the percentage the registry prints for that student, over a denominator that is the number of rows — and every row still carries its fraction',
+      top === '4 of 6 · ' + S1_PCT && hist.rate === 'Attendance · ' + S1_PCT
         && hist.dates.length === 6
+        && hist.running[5] === '0 of 1 · 0%'
         && ready.rowLine === LABEL_A + ' · P 1 · T 1 · A 2 · E 1 · D 1 · ' + S1_PCT,
-      'last row ' + JSON.stringify(last) + ', badge ' + JSON.stringify(hist.rate)
-        + ', the registry row behind it ' + JSON.stringify(ready.rowLine));
+      'top row ' + JSON.stringify(top) + ', foot row ' + JSON.stringify(hist.running[5])
+        + ', card title ' + JSON.stringify(hist.rate)
+        + ', the registry row ' + JSON.stringify(ready.rowLine));
 
     /* THE `U` FOLD. It is an absence in the arithmetic and it is not a code a teacher has ever seen
        in a report — src/attendance.js's header promises both. The mark column is read for the day
-       the U was planted on, and the whole dialog is searched for the letter as a chip. */
+       the U was planted on, and the whole card is searched for the letter as a chip. */
     const uRow = hist.dates.indexOf(await evalJs(
       'window.planbook.attendance.plainDate("2026-02-05")'));
     check('a student nobody had confirmed reads as Absent in the history and never as U, which is what it counts as',
       uRow !== -1 && hist.marks[uRow] === 'Absent'
         && hist.marks.indexOf('U') === -1
         && JSON.stringify(hist.marks) === JSON.stringify(
-          ['Absent', 'Tardy', 'Absent', 'Present', 'Event', 'Dismissed']),
+          ['Dismissed', 'Event', 'Present', 'Absent', 'Tardy', 'Absent']),
       'the unconfirmed day is row ' + uRow + ' and reads ' + JSON.stringify(hist.marks[uRow])
         + '; the six marks are ' + JSON.stringify(hist.marks));
 
-    /* ── the record, and the CSV ── */
-    await evalJs("window.planbook.closeModal('attendanceHistoryModal'); 1");
+    /* ── the record, and the CSV ── back on the registry, through the switcher a teacher taps */
+    await clickSel('#detailView [data-class-screen="class"]');
+    await new Promise(r => setTimeout(r, 250));
     await clickSel('#classView [data-attendance-record]');
     const READ_RECORD = `(function(){
       var m = document.getElementById('attendanceRecordModal');
@@ -691,9 +780,16 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
     const sweep = async (mode) => {
       await evalJs('window.planbook.supports.setPresentationMode(' + (mode ? 'true' : 'false') + ');1');
       await evalJs("window.planbook.closeModal('attendanceRecordModal'); 1");
+      /* The name tap's card and, behind its door, the student page's attendance card with day by
+         day opened — the two surfaces the history is split across since WO-2.60. */
       await clickSel('[data-attendance-history="wo26-s1"]');
-      const h = await evalJs(READ_HISTORY);
-      await evalJs("window.planbook.closeModal('attendanceHistoryModal'); 1");
+      const h = await evalJs(READ_CARD);
+      await clickSel('#attendanceHistoryModal [data-student-detail="wo26-s1"]');
+      await new Promise(r => setTimeout(r, 250));
+      await clickSel('#detailView details.detail-att-days > summary');
+      h.text += ' ' + (await evalJs(READ_HISTORY)).text;
+      await clickSel('#detailView [data-class-screen="class"]');
+      await new Promise(r => setTimeout(r, 250));
       await clickSel('#classView [data-attendance-record]');
       const r = await evalJs(READ_RECORD);
       /* Both parts since WO-2.59, which draws one at a time: the Day by day text is appended to
@@ -742,7 +838,8 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
     const DIALOGS = [
       { id: 'attendanceRecordModal', door: '#classView [data-attendance-record]', want: 900, name: 'Record' },
       { id: 'passHistoryModal', door: '#classView [data-pass-history]', want: 900, name: 'Passes' },
-      { id: 'attendanceHistoryModal', door: '[data-attendance-history="wo26-s1"]', want: 900, name: 'history' },
+      /* 480 since WO-2.60: today's card is the stock `.modal-panel`, off `.attendance-report-panel`. */
+      { id: 'attendanceHistoryModal', door: '[data-attendance-history="wo26-s1"]', want: 480, name: 'history' },
       { id: 'attendanceKeysModal', door: '#classView [data-modal-open="attendanceKeysModal"]', want: 640, name: 'Keys' },
     ];
     const measureDialogs = async () => {
@@ -769,16 +866,17 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
       && Math.abs(got[d.name] - Math.min(d.want, Math.floor(cap * 0.95))) <= 1);
     await evalJs(KILL_ANIM);
     const wide = await measureDialogs();
-    check('WO-2.59 · in a 1280px window under a fine pointer, Record, Passes and the history dialog '
-      + 'measure 900px wide and Keys 640 — width, not a max-width that never comes into play',
+    check('WO-2.59 · in a 1280px window under a fine pointer, Record and Passes measure 900px wide, '
+      + 'Keys 640 and — since WO-2.60 — the name tap\'s card the stock 480 — width, not a '
+      + 'max-width that never comes into play',
       wide.vw === 1280 && wide.coarse === false && fits(wide, 1280),
       JSON.stringify(wide));
     await send('Emulation.setDeviceMetricsOverride',
       { width: 820, height: 1100, deviceScaleFactor: 1, mobile: false });
     await new Promise(r => setTimeout(r, 300));
     const narrow = await measureDialogs();
-    check('WO-2.59 · in an 820px window each of the four is no wider than 95vw — the three wide ones '
-      + 'at the 779px cap, Keys still at 640',
+    check('WO-2.59 · in an 820px window each of the four is no wider than 95vw — the two wide ones '
+      + 'at the 779px cap, Keys still at 640 and the name tap\'s card at 480',
       narrow.vw === 820 && fits(narrow, 820)
         && DIALOGS.every((d) => narrow[d.name] <= 820 * 0.95),
       JSON.stringify(narrow));
@@ -788,7 +886,7 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
     await new Promise(r => setTimeout(r, 400));
     const lying = await measureDialogs();
     check('WO-2.59 · and on an iPad lying down — 1194px under a really coarse pointer, where the coarse '
-      + 'block\'s own rule for the panel applies — the same 900 and 640',
+      + 'block\'s own rule for the panel applies — the same 900, 640 and 480',
       lying.vw === 1194 && lying.coarse === true && fits(lying, 1194),
       JSON.stringify(lying));
     await send('Emulation.setDeviceMetricsOverride',

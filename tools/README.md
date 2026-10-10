@@ -1347,7 +1347,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1907 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1911 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2746,6 +2746,23 @@ tab). The thirteenth result is `print-sheets.mjs`'s `EXPECT` loop reading a fift
 *Day by day* tab, so the gap between sites and results moves from −3 to −4. None is a failure arm.
 Full run: `1911 checks · 1911 passed · 0 failed · 0 skipped`, 60,703 lines, 31.8 lines per check,
 907s, exit 0, 2026-10-09 on the real clock. Mutation round in `TESTING.md` § WO-2.59.
+
+**WO-2.60 moved it from 1907 to 1911, and the executed count from 1911 to 1915 — four sites, four
+results, and no new file.** The name tap's dialog stopped holding the term table and day by day, so
+the checks that read them there were re-aimed rather than added: in `verify/attendance-history.mjs`
+the six dates, the running figure and the `U` fold are read off the student page's attendance card
+(newest first), and two sites are new — the card's door lands on the page with day by day closed, and
+the term table's three rows cell by cell. One is new in `verify/history-dialog-write.mjs`: the old
+"five surfaces in one paint" check split into the card's repaint with focus inside it and the page's
+figures behind the door; its dropped and locked cases now assert the read-only card. One is new in
+`verify/print-sheets.mjs`: day by day prints only when it is open. `verify/attendance-passes.mjs`'s
+three dialog-count checks were re-cut in place to assert the count is gone. **One thing a reader of
+the new checks needs**: a closed `<details>` in current Chromium keeps its content laid out under
+`content-visibility: hidden`, so its table reports a height (231px) while nothing is drawn — the check
+asks `checkVisibility()` and the disclosure's own height, and the first run, which asked the table's
+height, went red on a build that was behaving. None is a failure arm. Full run:
+`1915 checks · 1915 passed · 0 failed · 0 skipped`, 60,894 lines, 31.8 lines per check, 920s, exit 0,
+2026-10-09 on the real clock. Mutation round in `TESTING.md` § WO-2.60.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

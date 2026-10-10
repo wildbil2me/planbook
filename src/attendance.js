@@ -2495,7 +2495,8 @@ export function setMarkTime(studentId, text, date) {
   un-confirm. `null` means there is nothing to draw at all: no class, no such student, a day with no
   meeting on it (dropped or covered — a day with no mark has no mark to edit), a day outside every
   term of this class, or an edit date of `''`, which is what a strip standing on a past day answers
-  until its ✏ is pressed.
+  until its ✏ is pressed. Since WO-2.60 those refusals are markGate()'s, shared with readOnlyMark()
+  below, which is how the card says WHICH one it met without asking a second time.
 
   THE GATE STAYS HERE BECAUSE THE WRITERS ARE HERE. The alternative was the dialog asking
   writableDate() and offTermDay() for itself, which is a second opinion about what is writable held
@@ -2504,13 +2505,10 @@ export function setMarkTime(studentId, text, date) {
   it decides none of it.
 */
 export function editableMark(studentId) {
+  const gate = markGate(studentId);
+  if (!gate || gate.refused) return null;
   const cls = openClass();
-  if (!cls || !studentId || !getDoc()) return null;
-  if (!findStudent(studentId)) return null;
-  const on = editDate();
-  if (!on || !writableDate(on, cls) || offTermDay(cls.id, on)) return null;
-  const state = stateOf(cls.id, on);
-  if (state === DID_NOT_MEET || state === COVERED) return null;
+  const on = gate.date;
   const record = recordFor(cls.id, on);
   const entry = marksOf(record)[studentId];
   const code = readingOf(record, studentId);
@@ -2528,6 +2526,65 @@ export function editableMark(studentId) {
     canTime: !!entry && (code === 'T' || code === 'D') && !passIdOf(entry),
     timeLocked: !!entry && code === 'D' && !!passIdOf(entry),
   };
+}
+
+/*
+  AND WHY NOT, WHEN THE ANSWER ABOVE IS `null` (WO-2.60). The name tap's card shows the mark it
+  cannot write to, read-only, and says what would open it — so it needs the REASON, and the reason
+  is the same five tests editableMark() runs, run once, here. markGate() below is the one copy of
+  them; editableMark() is "the gate said yes" and this is "the gate said no, and here is which no".
+  A sibling that re-asked editDate() and stateOf() for itself would be the second list the work
+  order refuses, and the day the two drifted the card would offer a field on a day it called locked.
+
+  Four reasons, and they are FACTS, not sentences — src/attendance-report.js words them:
+
+    'locked'        editDate() answered '': the strip stands on a past day (or a calendar arrival)
+                    nobody has pressed the ✏ on. The date is focusDate(), the day the screen is
+                    ABOUT, which is the one the card should name.
+    'off-term'      outside every term of this class, or a future day writableDate() refuses.
+    'did-not-meet'  dropped — the record carries an exception and no marks.
+    'covered'       the calendar has the day off and nothing is recorded under it.
+
+  PAGING THE WINDOW IS NOT ON THE LIST, and that is the code rather than an omission: the anchor does
+  not move when the window does, so editDate() still answers today while the teacher looks at last
+  week, and the card writes on today and names it. tools/verify/history-dialog-write.mjs has said so
+  since WO-2.53.
+
+  `code` is the reading on a day that HAS a record — the only kind with a mark to show — and '' on
+  every other, so a dropped, covered or off-term day shows no chip at all and a locked day nobody
+  took shows none either. `null` is "there is nothing to say": no class, no such student, or a day
+  the writers would accept (ask editableMark()). It hands back no hook and no writer; the card it
+  feeds carries none.
+*/
+export function readOnlyMark(studentId) {
+  const gate = markGate(studentId);
+  if (!gate || !gate.refused) return null;
+  const cls = openClass();
+  const record = gate.date ? recordFor(cls.id, gate.date) : null;
+  const met = !!record && !record.exception;
+  const entry = met ? marksOf(record)[studentId] : null;
+  return {
+    reason: gate.refused,
+    date: gate.date,
+    code: met ? readingOf(record, studentId) : '',
+    at: entry ? timeOf(entry) : '',
+  };
+}
+
+/* The five tests, once. `null` when there is no class or no such student; otherwise the date the
+   card is about and the refusal, '' when there is none. Private: the two exports above are the only
+   readers, and both are about one student on the day the screen is showing. */
+function markGate(studentId) {
+  const cls = openClass();
+  if (!cls || !studentId || !getDoc()) return null;
+  if (!findStudent(studentId)) return null;
+  const on = editDate();
+  if (!on) return { date: focusDate(), refused: 'locked' };
+  if (!writableDate(on, cls) || offTermDay(cls.id, on)) return { date: on, refused: 'off-term' };
+  const state = stateOf(cls.id, on);
+  if (state === DID_NOT_MEET) return { date: on, refused: 'did-not-meet' };
+  if (state === COVERED) return { date: on, refused: 'covered' };
+  return { date: on, refused: '' };
 }
 
 /* And back off again. Offered only while the record holds no MARK — `U`s do not count, because a

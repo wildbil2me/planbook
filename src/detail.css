@@ -243,6 +243,33 @@
 }
 .detail-att-note { font-size: 11px; color: #8a9bb0; margin-top: 8px; line-height: 1.5; }
 
+/* ══ § STUDENT ATTENDANCE (WO-2.60) — the history the name tap used to open ══
+   Lifted from design/mockups/proposed-attendance.css § STUDENT ATTENDANCE, under the drawn names and
+   at the drawn values, drawn in attendance-today.html frames D and E. The two tables wear
+   src/attendance.css's `.attendance-report-table` and its row classes as shipped — that sheet owns
+   them, on screen and under this surface's print gate — so what is here is only the spacing inside
+   this card and the disclosure.
+
+   ONE DEPARTURE, SAID HERE: the drawing's shared head rule gives `.detail-att-days-summary`
+   `touch-action: manipulation` and no text selection, beside two attendance-screen controls; it is
+   restated on the summary alone below, because this sheet styles its own names and nothing else. */
+
+/* THE TERM TABLE ON THE STUDENT PAGE, under the five counts. */
+.detail-att-terms { margin-top: 12px; }
+
+/* DAY BY DAY, CLOSED UNTIL ASKED FOR. A native <details>: no script, and a keyboard and a screen
+   reader get it for free. The summary is a full-width row with its own chevron. */
+.detail-att-days { margin-top: 12px; border-top: 1px solid #eef0f4; padding-top: 10px; }
+.detail-att-days-summary {
+  display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none;
+  font-size: 12px; font-weight: 700; color: #5b6fcc;
+  touch-action: manipulation; user-select: none; -webkit-user-select: none;
+}
+.detail-att-days-summary::-webkit-details-marker { display: none; }
+.detail-att-days-summary::before { content: '▸'; font-size: 11px; transition: transform 0.15s; }
+.detail-att-days[open] .detail-att-days-summary::before { transform: rotate(90deg); }
+.detail-att-days[open] .detail-att-days-summary { margin-bottom: 10px; }
+
 /* ══════════════════════════ THE PRINTED PAGE (WO-3.7) ══════════════════════════
 
    The app's SECOND @media print block, and the second thing it can print: one student's
@@ -426,6 +453,20 @@
   body[data-detail-print] .detail-att-num { font-size: 11pt; color: #000; }
   body[data-detail-print] .detail-att-label { font-size: 6pt; color: #333; }
   body[data-detail-print] .detail-att-note { font-size: 7pt; color: #333; }
+  /* THE TERM TABLE AND DAY BY DAY (WO-2.60). The tables' own print rules are src/attendance.css's,
+     selected under this gate beside the hall-pass card's, because that sheet owns the classes; what
+     is decided here is the disclosure. It prints ONLY WHEN IT IS OPEN — what prints is what is on
+     screen, and a closed one's summary is a control rather than a fact, so a closed one leaves no
+     line on the sheet. Open, the summary prints as the table's label with no chevron. (The drawing's
+     sheet said "it prints open"; its own frame E caption said "only if it is open", and the second
+     is this file's standing rule.) */
+  body[data-detail-print] .detail-att-terms { margin-top: 3mm; }
+  body[data-detail-print] .detail-att-days:not([open]) { display: none !important; }
+  body[data-detail-print] .detail-att-days {
+    border-top: 0.2mm solid #999; margin-top: 3mm; padding-top: 2mm;
+  }
+  body[data-detail-print] .detail-att-days-summary { font-size: 8pt; color: #000; }
+  body[data-detail-print] .detail-att-days-summary::before { content: none; }
   body[data-detail-print] .detail-note { font-size: 7pt; color: #333; margin-top: 4mm; }
   body[data-detail-print] .detail-empty { font-size: 9pt; color: #333; }
 }
@@ -505,11 +546,15 @@
    IT STOPPED BEING TRUE AT WO-4.4, which is the second work order to add a whole card and the first
    to add a control with it: `.log-more` opens the older entries inline. It is this sheet's own class,
    declared above, so its floor is declared here — which is the rule the paragraph above states,
-   obeyed rather than amended. Every other control on this screen still belongs to another sheet.
+   obeyed rather than amended. WO-2.60 added the second, the day-by-day summary. Every other control
+   on this screen still belongs to another sheet.
 
    What is also here is the type this page is read at with a parent sitting beside you. */
 @media (pointer: coarse) {
   .log-more { min-height: 44px; }
+  /* WO-2.60's summary is the second control this sheet owns, and it takes its floor here in the same
+     pass — the rule above, obeyed. */
+  .detail-att-days-summary { min-height: 44px; font-size: 13px; }
   .log-list, .log-entry-top { gap: 10px; }
   .log-entry-kind, .log-entry-when { font-size: 11px; }
   .log-entry-subject { font-size: 13px; }

@@ -13,6 +13,29 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A tap on a name opens today — 2026-10-10
+
+WO-2.60, owner-directed, from `design/mockups/attendance-today.html`. Shell cache v176 → v177.
+
+- **A student's name on the attendance screen opens today's card.** The dialog is titled with the
+  name and holds that day's mark, its time and note, and Un-confirm — the same controls as before —
+  and one door, *Attendance history and grades →*, to the student page. The rate badge, the pass
+  count and the tables are gone from it; it is a normal-width dialog again.
+- **On a day the card cannot write to, it says so.** A locked past day shows that day's mark and
+  tells you to press its ✏; a day the class didn't meet, a day off on the calendar and a day outside
+  every term each say what would open them. It used to show nothing.
+- **The history moved to the student page.** The attendance card there now has the term-by-term
+  table and the whole year under its five counts, and *day by day* below them — closed until you tap
+  it, newest first, each row with its running *4 of 6 · 67%*. On paper, day by day prints only if
+  it is open.
+- A present student's hint now reads *"Nothing to note on a present mark. Change the mark on the
+  grid and a note field appears here."*
+- Built as drawn and ruled as drawn by the owner on the iPad, 2026-10-10: the door's words, no
+  percentage on the card, day by day closed and newest first, and the wording of the read-only
+  sentences.
+- The old mockup's frame 0 ("v174 as it ships") now draws its rate badge and pass line unstyled —
+  the CSS behind them was dead in the app and came out.
+
 ### The attendance dialogs are as wide as they were meant to be — 2026-10-09
 
 WO-2.59, owner-directed, from `design/mockups/attendance-dialogs.html`. Shell cache v175 → v176.

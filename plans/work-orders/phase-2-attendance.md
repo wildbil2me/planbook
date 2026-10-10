@@ -6301,7 +6301,7 @@ same class; that is expected, and WO-2.60 takes it off that class.
 
 ## WO-2.60 — a tap on a name opens today, and the history moves to the student page
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-10-10 · **Size** M · **Depends on** —
 **Closes roadmap** *(no box. Owner-directed, 2026-10-09.)*
 
 **Booked 2026-10-09**, owner-directed, in the same sitting as WO-2.58. The owner's concern: the
@@ -6356,18 +6356,19 @@ it ships. **Lift the section rather than re-deriving it**, and amend its banner 
 - **`TESTING.md` § WO-2.60**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] A tap on a name opens a dialog titled with the student's name, holding the write block and one
+- [x] A tap on a name opens a dialog titled with the student's name, holding the write block and one
       door and no table. The door opens that student's page.
-- [ ] Time, note and Un-confirm write exactly as they did, through the same hooks, and Un-confirm
+- [x] Time, note and Un-confirm write exactly as they did, through the same hooks, and Un-confirm
       repaints the card with focus inside it.
-- [ ] On a locked past day the card shows that day's mark, read-only, with its sentence and no input.
-- [ ] The student page's attendance card shows every term and the whole year with the same figures
+- [x] On a locked past day the card shows that day's mark, read-only, with its sentence and no input.
+- [x] The student page's attendance card shows every term and the whole year with the same figures
       the dialog showed at v174 for the same document, and a day by day that is closed until opened
       and then lists every recorded meeting in the open term with its running fraction.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] 👤 On the iPad, after a force-quit, upright: tap three names mid-roll-call — a tardy, a present
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the iPad, after a force-quit, upright: tap three names mid-roll-call — a tardy, a present
       student and a student on a locked day — and read each card; follow the door and open day by
-      day.
+      day. *(Read by the owner 2026-10-10, and the four Open items above ruled as drawn in the same
+      word.)*
 
 **Traps** — **The card is not a second writer.** Its controls carry the hooks they carry today, and
 `src/shell.js` routes them to the same functions; the `window` listener that repaints after an

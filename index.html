@@ -4633,27 +4633,29 @@
 </div>
 
 <!--
-  ONE STUDENT'S ATTENDANCE, DAY BY DAY (WO-2.6) — opened by tapping their name in the registry.
+  ONE STUDENT, TODAY (WO-2.6, WO-2.53, cut down by WO-2.60) — opened by tapping their name in the
+  registry. The id still says history, which is what it held from WO-2.6 until WO-2.60.
 
-  Roll Call!'s student report (`#studentModal` / `.sr-panel`) is the counterpart, and what came
-  across is its shape: the avatar and name, the rate badge, the term-by-term table. The body is
-  empty here because src/attendance-report.js draws it from the open document — the same call every
-  other list in this file makes, and for the same reason: a specimen row written here would be a
-  second truth to keep in step with the real one.
+  THE WHOLE BODY IS ONE BLOCK AND ONE DOOR. The block is about the single day the registry accepts
+  writes on: that day's mark in words, its time on a tardy or a dismissal, a note field, and the
+  un-confirm that puts one student back to a question mark. It is the row detail panel WO-2.10 built,
+  moved here by WO-2.53, and it is not a second writer — the controls carry the same hooks they
+  carried on the row, src/shell.js routes them to the same functions in src/attendance.js. On a day
+  nothing can be written to it draws the same block read-only: the mark, and a sentence saying what
+  would open it. The door, under it, is the student page (`data-student-detail`), where the term
+  table and day by day went at WO-2.60.
 
-  THERE IS ONE THING TO EDIT IN IT, AND ONLY ONE (WO-2.53). High in the body, over the term table,
-  is a block about the single day the registry accepts writes on: that day's mark in words, a note
-  field, and the un-confirm that puts one student back to a question mark. It is the row detail panel
-  WO-2.10 built, moved here, and it is not a second writer — the two controls carry the same hooks
-  they carried on the row, src/shell.js routes them to the same two functions in src/attendance.js,
-  and every OTHER mark in this dialog is read-only. A note on a past mark still wants that column's ✏
-  on the registry first, exactly as before.
+  THE TITLE IS THE STUDENT'S NAME, set by src/attendance-report.js on every paint; the words below
+  are what a dialog drawn before any paint would say. It is the stock 480px `.modal-panel` since
+  WO-2.60 — `.attendance-report-panel`'s 900 was for the tables, and the tables are gone. The body is
+  empty here for the reason every list in this file is: a specimen written here would be a second
+  truth to keep in step with the real one.
 -->
 <div class="modal-overlay hidden" id="attendanceHistoryModal">
-  <div class="modal-panel attendance-report-panel" role="dialog" aria-modal="true"
+  <div class="modal-panel" role="dialog" aria-modal="true"
        aria-labelledby="attendanceHistoryTitle">
     <div class="modal-header">
-      <h2 id="attendanceHistoryTitle">Attendance history</h2>
+      <h2 id="attendanceHistoryTitle">Attendance</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
     </div>
     <div class="modal-body" id="attendanceHistoryBody"></div>

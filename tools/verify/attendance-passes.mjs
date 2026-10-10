@@ -1457,10 +1457,11 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
   const wantYearLine = 'Hall passes · ' + countText226(wantYear);
 
   /*
-    THE COUNT LINE ON THE ATTENDANCE HISTORY DIALOG, and the door that must no longer be under it.
-    The heading is read as well as the absences, so that "no door" can be told apart from "no
-    dialog": a report that failed to draw at all would satisfy every absence below and pass for the
-    wrong reason.
+    THE COUNT LINE THAT WAS ON THE ATTENDANCE HISTORY DIALOG, and is not since WO-2.60: a tap on a
+    name opens today's card, and the count is on the student page behind its one door. So this reader
+    now asks for ABSENCES — no count line, no trip door — and the title and the one door are read as
+    well, so that "no count" can be told apart from "no dialog": a card that failed to draw at all
+    would satisfy every absence below and pass for the wrong reason.
   */
   const reportPasses = () => evalJs(`(function(){
     var m = document.getElementById('attendanceHistoryModal');
@@ -1470,7 +1471,7 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
     var line = block ? block.querySelector('.attendance-report-sub') : null;
     return {
       shown: !m.classList.contains('hidden'),
-      heading: ((body.querySelector('.attendance-report-name') || {}).textContent || '').trim(),
+      heading: ((document.getElementById('attendanceHistoryTitle') || {}).textContent || '').trim(),
       block: !!block,
       line: line ? (line.textContent || '').trim() : '',
       quiet: !!(block && block.querySelector('.pass-history-quiet')),
@@ -1655,25 +1656,29 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
         + scoped.inTerm + ' in the term against ' + scoped.year + ' on the year');
 
     /*
-      ACCEPTANCE LINE 3. One number on two surfaces, compared as STRINGS rather than as tallies: a
-      build that agreed on the count and disagreed on the wording would still be two answers to one
-      question. The door is asked for across the whole dialog, and so is the year-wide label the
-      first cut put on that line — the term-scoping decision makes it untrue rather than merely
-      unnecessary.
+      ACCEPTANCE LINE 3, RE-CUT BY WO-2.60. It was "one number on two surfaces": the dialog's count
+      line and the card's title, compared as strings. The owner's ruling took the line off the
+      dialog — a tap on a name is today's mark, and the count is on the page behind its one door —
+      so there is one surface now and the number cannot disagree with itself. What is asserted is
+      that the dialog carries NO count line and no trip door, that its one door is the way to the
+      card that does, and that the card's title is the count.
     */
-    check('the attendance history dialog shows the same count and no door: `Hall passes · N trips · N minutes out` character for character with the card, `Every trip` gone from the dialog, and no label reconciling the two',
-      !!onDialog && onDialog.shown && onDialog.block
-        && onDialog.line === wantLine
+    check('WO-2.60 · the name tap\'s card carries no hall-pass count and no trip door — its one door leads to the student page, whose card carries `Hall passes · N trips · N minutes out`',
+      !!onDialog && onDialog.shown && onDialog.block === false
+        && onDialog.line === ''
         && onDialog.doors === 0
-        && onDialog.text.indexOf('Every trip') < 0
-        && !/whole year, not just this term/.test(onDialog.text)
-        /* The rest of the dialog drew, so the missing door is a decision rather than a dialog that
+        && onDialog.text.indexOf('Hall passes') < 0
+        && onDialog.text.indexOf(countText226(wantTerm)) < 0
+        /* The rest of the card drew, so the missing line is a decision rather than a dialog that
            failed to build — and the ONE door that belongs there is still there. */
-        && onDialog.heading.length > 0 && onDialog.len > 200 && onDialog.toGrades === 1,
-      'the dialog said ' + JSON.stringify(onDialog && onDialog.line) + ' and the card said '
-        + JSON.stringify(onCard && onCard.title) + '; ' + (onDialog ? onDialog.doors : '?')
-        + ' trip door(s) and ' + (onDialog ? onDialog.toGrades : '?') + ' door(s) to the grades in '
-        + (onDialog ? onDialog.len : 0) + ' character(s) of dialog');
+        && onDialog.heading.length > 0 && onDialog.len > 40 && onDialog.toGrades === 1
+        && !!onCard && onCard.title === wantLine,
+      'the dialog\'s count block = ' + (onDialog && onDialog.block) + ', line '
+        + JSON.stringify(onDialog && onDialog.line) + ', titled ' + JSON.stringify(onDialog && onDialog.heading)
+        + '; ' + (onDialog ? onDialog.doors : '?') + ' trip door(s) and '
+        + (onDialog ? onDialog.toGrades : '?') + ' door(s) to the page in '
+        + (onDialog ? onDialog.len : 0) + ' character(s) of dialog; the card said '
+        + JSON.stringify(onCard && onCard.title));
 
     /*
       AND THE OTHER HALF OF ACCEPTANCE LINE 2: a term with no dates set falls back to the whole year
@@ -1831,7 +1836,8 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
 
     /*
       AND THE SAME PAIR ON THE OTHER SURFACE. Back to the registry through the switcher a teacher
-      taps, because the count line lives on a dialog opened from a row there. Both flips are made
+      taps, because the name tap's card is a dialog opened from a row there — and since WO-2.60 the
+      claim is that the card has no count to take off, in either mode. Both flips are made
       with no dialog on screen: the header is BEHIND the scrim, and a click at its coordinates with
       an overlay up lands on the backdrop — the note at the WO-2.9 check above.
     */
@@ -1844,16 +1850,21 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
     await evalJs("document.getElementById('presentationBtn').click(); 1");
     await clickSel(rowDoor226);
     const dialogOff = await reportPasses();
-    check('and it takes the count line off the attendance history dialog too, on a dialog otherwise still drawn in full — and flipping back brings the same number to the same line',
-      !!dialogOn && dialogOn.shown && dialogOn.block && dialogOn.quiet === true
+    /* Since WO-2.60 the dialog has no count line in EITHER mode, so there is nothing for the mode to
+       take off it: this pair now asserts the card is drawn the same way both sides of a flip — no
+       count, no quiet strip, the title and the one door present. */
+    check('WO-2.60 · the name tap\'s card draws no count line and no "hidden" strip in either presentation mode — there is no count on it for the mode to take off — and is otherwise drawn both times',
+      !!dialogOn && dialogOn.shown && dialogOn.block === false && dialogOn.quiet === false
         && dialogOn.text.indexOf(countText226(wantTerm)) < 0
-        && dialogOn.heading.length > 0 && dialogOn.len > 200
-        && !!dialogOff && dialogOff.quiet === false && dialogOff.line === wantLine,
-      'with the mode on the dialog says why = ' + (dialogOn && dialogOn.quiet) + ' over '
-        + (dialogOn ? dialogOn.len : 0) + ' character(s), and the count '
-        + JSON.stringify(countText226(wantTerm)) + ' is on it = '
-        + (!!dialogOn && dialogOn.text.indexOf(countText226(wantTerm)) >= 0)
-        + '; with it off the line reads ' + JSON.stringify(dialogOff && dialogOff.line));
+        && dialogOn.heading.length > 0 && dialogOn.len > 40 && dialogOn.toGrades === 1
+        && !!dialogOff && dialogOff.shown && dialogOff.block === false && dialogOff.quiet === false
+        && dialogOff.text.indexOf(countText226(wantTerm)) < 0 && dialogOff.toGrades === 1,
+      'mode on: block ' + (dialogOn && dialogOn.block) + ', strip ' + (dialogOn && dialogOn.quiet)
+        + ', ' + (dialogOn ? dialogOn.len : 0) + ' character(s); mode off: block '
+        + (dialogOff && dialogOff.block) + ', strip ' + (dialogOff && dialogOff.quiet)
+        + '; the count ' + JSON.stringify(countText226(wantTerm)) + ' on either = '
+        + (!!dialogOn && dialogOn.text.indexOf(countText226(wantTerm)) >= 0) + '/'
+        + (!!dialogOff && dialogOff.text.indexOf(countText226(wantTerm)) >= 0));
 
     /*
       ACCEPTANCE LINE 4: A STUDENT WITH NO TRIPS IS STATED AS NONE ON BOTH SURFACES. Roll Call!
@@ -1873,14 +1884,14 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
     if (quietRowLive && await has(quietDoor)) await clickSel(quietDoor);
     await new Promise(r => setTimeout(r, 250));
     const quietCard = await detailCard();
-    check('a student with no trips is stated as none on BOTH surfaces — `Hall passes · none` on the dialog, and a card that says so in a sentence rather than an empty table — on two surfaces that otherwise drew in full',
-      !!quietDialog && quietDialog.block && quietDialog.line === 'Hall passes · none'
-        && quietDialog.heading.length > 0 && quietDialog.len > 200
+    check('a student with no trips is stated as none — a card that says so in a sentence rather than an empty table — on a page reached through the name tap\'s one door, which itself carries no count (WO-2.60)',
+      !!quietDialog && quietDialog.block === false && quietDialog.line === ''
+        && quietDialog.heading.length > 0 && quietDialog.len > 40 && quietDialog.toGrades === 1
         && !!quietCard && quietCard.card && quietCard.title === 'Hall passes · none'
         && quietCard.table === false && quietCard.trips.length === 0
         && /No hall passes are recorded for this student in WO-2\.26 window\./.test(quietCard.empty)
         && quietCard.heading.length > 0 && quietCard.len > 400,
-      'the dialog said ' + JSON.stringify(quietDialog && quietDialog.line) + ' over '
+      'the dialog\'s count block = ' + (quietDialog && quietDialog.block) + ' over '
         + (quietDialog ? quietDialog.len : 0) + ' character(s); the card said '
         + JSON.stringify(quietCard && quietCard.title) + ' and '
         + JSON.stringify(quietCard && quietCard.empty) + ' over '
@@ -1910,8 +1921,9 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
       Report screen holds NO CONTROL AT ALL, which is the only honest reason a new block on a touch
       screen owes no floor — src/detail.css says so in as many words, and this is that sentence
       measured rather than read. The second is that `.attendance-report-door` still declares its
-      floor BY NAME for the two controls that do wear it — WO-3.7's "Grades for …" and WO-2.9's
-      ← All students — because deleting the third one must not take the rule with it. That half is a
+      floor BY NAME for the control that does wear it — WO-2.9's ← All students; WO-3.7's "Grades
+      for …" wore it too until WO-2.60 replaced that door with a plain `.class-action-btn` — because
+      deleting the others must not take the rule with it. That half is a
       RULE and not a measurement, and it is weaker on purpose: the coarse sweep at the foot of this
       file measures `#classView` and the modals it opens, and this dialog is reached from a
       student's name with no roster on screen by the time that sweep runs. "It inherits one from
@@ -1934,7 +1946,7 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
       }
       return out; })()`);
     const floored = doorRule.filter((r) => parseFloat(r.h) >= 44 && parseFloat(r.w) >= 44);
-    check('the hall-pass card holds no control at all, which is why this screen owes it no 44px floor — and the class the two surviving doors DO wear still declares one by name in the coarse block',
+    check('the hall-pass card holds no control at all, which is why this screen owes it no 44px floor — and the class the surviving door DOES wear still declares one by name in the coarse block',
       !!onCard && onCard.controls.length === 0 && floored.length >= 1,
       'the card drew ' + (onCard ? onCard.controls.length : '?') + ' control(s) '
         + JSON.stringify(onCard && onCard.controls) + '; the coarse rules naming that class are '
