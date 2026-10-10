@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The roster dialog's width is booked — 2026-10-10
+
+Owner-directed, out of WO-1.71's iPad reading. Nothing in the app changed.
+
+- **The support dot sits awkwardly in the roster dialog**, which still draws at the 480px every
+  dialog starts from. Booked as
+  [WO-1.76](plans/work-orders/phase-1-shell-store-roster.md#wo-176--the-roster-dialog-is-wide-enough-for-its-rows):
+  a width of its own, the way WO-2.59 widened the attendance dialogs, after WO-1.74 moves a row's
+  *also in* note under the name. The width, whether any other dialog widens with it, and whether the
+  dot moves are the owner's to rule at dispatch.
+
 ### The header keeps what is used in class, and the rest goes behind a gear — 2026-10-10
 
 WO-1.71, owner-directed, from `design/mockups/settings-hub.html`. Shell cache v178 → v179.

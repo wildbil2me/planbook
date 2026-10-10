@@ -383,7 +383,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.75 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.76 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.61 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.53 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.6 | Phase 4 |
@@ -459,7 +459,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 75 | 72 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 76 | 72 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 59 | 58 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 52 | 51 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 6 | 6 | — | ✅ DONE — 2026-09-30 |
@@ -468,7 +468,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 17 | 16 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.4 ✅ DONE 2026-09-26, the sign-in opened on the deployed domain and read on the laptop and the iPad; WO-7.5 ✅ DONE 2026-09-26, the header's sync button; WO-7.6 ✅ DONE 2026-09-26, the privacy documents say when Google's library loads, read off the deployed /privacy; WO-7.7 ✅ DONE 2026-09-26, a download repaints the open screen, read both ways on laptop and iPad; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 18 | 13 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 3 | — | WO-G2 ✅ **2026-09-30**: worked 2026-09-29 with six of eight boxes closed, and the letter-scale setting and the backup drill closed the next day on the owner's reading; WO-G3 ✅ **2026-09-30** on the owner's ruling, watched across four weeks of the term with nothing recorded |
-| | **256** | **243** | **3** | `[█████████░] 95%` |
+| | **257** | **243** | **3** | `[█████████░] 95%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)
@@ -575,6 +575,8 @@ addressed to the primary.)*
 ***And Phase 1's by hand a seventh time on 2026-10-10, from `70 | 68` to `74 | 68`, the total from `251 | 238` to `255 | 238`.*** *Four rows booked out of one conversation about the header, drawn in* `design/mockups/settings-hub.html`*:* [WO-1.71](phase-1-shell-store-roster.md#wo-171--the-header-keeps-what-is-used-in-class-and-the-rest-goes-behind-a-gear) *keeps what is used in class in the header and puts the rest behind a gear,* [WO-1.72](phase-1-shell-store-roster.md#wo-172--a-dialog-opened-from-settings-has-a-way-back-to-it) *gives a dialog opened from it a way back,* [WO-1.73](phase-1-shell-store-roster.md#wo-173--the-sync-button-stands-on-its-own-at-phone-width-if-the-row-now-has-room) *measures whether Sync now fits at 390px, and* [WO-1.74](phase-1-shell-store-roster.md#wo-174--a-roster-rows-also-in-note-sits-under-the-name) *moves a roster row's note under the name. 238 of 255 is 93%; the bar stays at nine. The next* `--tick` *is still the authority.*
 
 ***And Phase 1's by hand an eighth time on 2026-10-10, after WO-1.69's tick, from `74 | 69` to `75 | 69`, the total from `255 | 239` to `256 | 239`.*** *Booked out of WO-1.69's verdict:* [WO-1.75](phase-1-shell-store-roster.md#wo-175--a-one-line-banner-in-a-sheet-with-no-header-index-is-still-read-as-part-of-the-section-above-it) *makes § 19 refuse a one-line banner on its own, without leaning on a header index, and reshapes the one in* `proposed-phase7.css`*, a 🎒 on* `tools/wo-sweep.mjs`*. 239 of 256 is 93%, down from 94%; the bar stays at nine. The next* `--tick` *is still the authority.*
+
+***And Phase 1's by hand a ninth time on 2026-10-10, after WO-1.71's tick, from `75 | 72` to `76 | 72`, the total from `256 | 243` to `257 | 243`.*** *Booked out of WO-1.71's iPad reading:* [WO-1.76](phase-1-shell-store-roster.md#wo-176--the-roster-dialog-is-wide-enough-for-its-rows) *widens the roster dialog past the 480px default, where the support dot sits awkwardly. 243 of 257 is 95%; the bar stays at nine. The next* `--tick` *is still the authority.*
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -2036,6 +2038,7 @@ it, never from a reading taken earlier in the same session.)*
 | 151 | [WO-1.73](phase-1-shell-store-roster.md#wo-173--the-sync-button-stands-on-its-own-at-phone-width-if-the-row-now-has-room) The sync button stands on its own at phone width, if the row now has room | S | WO-1.71 | **Booked 2026-10-10** with row 149. A measurement first: if the 44px WO-1.71 frees fits a sync button at 390px, it lays out and About's badge is retired (reversing WO-7.5 ruling 2); if not, nothing changes |
 | 152 | [WO-1.74](phase-1-shell-store-roster.md#wo-174--a-roster-rows-also-in-note-sits-under-the-name) A roster row's "also in" note sits under the name | XS | — | **Booked 2026-10-10** with row 149, drawn in frame G. `src/roster.js`'s `studentRow()` and one rule; no empty note in the DOM. Bumps `CACHE` |
 | 153 | [WO-1.75](phase-1-shell-store-roster.md#wo-175--a-one-line-banner-in-a-sheet-with-no-header-index-is-still-read-as-part-of-the-section-above-it) A one-line banner in a sheet with no header index is still read as part of the section above it | XS | — | 🎒 `tools/wo-sweep.mjs` — **Nothing blocks it.** An hour, whenever the sweep is open for something else. Booked **2026-10-10**, owner-directed, out of WO-1.69's verdict: both of WO-1.69's rules reach a one-line banner only through a header index or an empty parse, and `proposed-phase7.css:19` is one neither sees. A rule that refuses the one-line shape on its own, and that sheet reshaped. Nothing in `src/` moves |
+| 154 | [WO-1.76](phase-1-shell-store-roster.md#wo-176--the-roster-dialog-is-wide-enough-for-its-rows) The roster dialog is wide enough for its rows | S | WO-1.74 | **At the foot, booked 2026-10-10**, owner-directed, out of WO-1.71's iPad reading: the support dot sits awkwardly in the roster dialog, which still draws at `.modal-panel`'s default 480px. A width class on that panel, the way WO-2.59 gave Keys 640; the width, any second dialog, and whether the dot moves are the owner's at dispatch. After WO-1.74, whose 480px measurement it would otherwise void. Bumps `CACHE` |
 
 ***Rows 17 through 32 were added 2026-08-28, and the reason is the third occurrence of the failure
 this section exists to prevent.*** *Before that sitting,* **sixteen open work orders had no row in

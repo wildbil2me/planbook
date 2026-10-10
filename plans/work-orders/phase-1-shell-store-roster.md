@@ -6305,3 +6305,59 @@ rule 4's banner box stays the only shape. This rule refuses the other shape; it 
 both lines of every banner in the tree before trusting the pattern. **This changes
 `tools/wo-sweep.mjs`, a pipeline file**: read `plans/work-orders/README.md` § "The pipeline's own
 files" before editing it. **Nothing in `src/` moves**, so no `CACHE` bump is owed.
+
+## WO-1.76 — the roster dialog is wide enough for its rows
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.74 · **Blocks** nothing
+**Closes roadmap** *(no box. Owner-directed, 2026-10-10.)*
+
+**Booked 2026-10-10**, owner-directed, out of WO-1.71's iPad reading. Every line of that checklist
+passed; the one remark was that **the support dot sits in an awkward position, probably because the
+dialog is narrow**. The roster dialog is the heaviest door behind Settings, and it still draws at
+`.modal-panel`'s default 480px — the width WO-2.59 found the attendance dialogs stuck at, and widened
+to 640, 900 and 980 on classes of their own.
+
+**What the row does today.** `studentRow()` in `src/roster.js` appends name · dot · note · actions.
+`.roster-row-name` is `flex: 1 1 140px`, so the name grows and pushes the dot away from it, towards
+the actions; at 480px with a long name or an *also in* note, the row wraps and the dot can land on a
+line of its own. **The cause has been named by the owner, not measured** — read the row before
+deciding that width alone fixes it.
+
+**Questions at dispatch, for the owner**
+1. **How wide.** 640px, on a class of its own the way `.attendance-keys-panel` is, is the starting
+   proposal; the owner rules on the number after seeing it on the iPad.
+2. **Which dialogs.** The roster is the one named. Classes and terms is the other door behind
+   Settings that draws rows of names; widen it too only if the owner says so. Confirm dialogs and the
+   small forms (Your details, a single student) stay at 480.
+3. **Whether the dot moves.** If the dot still sits away from the name at the new width, say so with
+   a screenshot and ask: beside the name, or where WO-1.74 left it. Do not move it without a ruling.
+
+**Deliverables**
+- **`src/shell.css`**: a width class on the roster dialog's panel (and on any other the owner names),
+  restated in the coarse-pointer block if `.modal-panel { width: 95vw }` there would otherwise win,
+  as `src/attendance.css` does for Keys. `.modal-panel`'s `max-width: 95vw` still governs at phone
+  width.
+- **`index.html`**: the class on the panel.
+- **The harness**: the roster panel measures the chosen width at a laptop viewport and stays within
+  95vw at 390×844; a row with the support dot, a note and a long name is one line tall at the new
+  width.
+- **`TESTING.md` § WO-1.76**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] The roster dialog's panel is the width the owner ruled at a 1280px viewport, and no wider than
+      95vw at 390×844, with no horizontal overflow.
+- [ ] At that width a roster row for a student with supports, a note and a long name is one line
+      tall, the dot is where the owner ruled, and ✎ · Edit · Remove are on that line.
+- [ ] Every dialog the owner did not name still measures 480px.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] `TESTING.md` § WO-1.76 carries these lines verbatim with the evidence for each.
+- [ ] 👤 On the iPad, after a force-quit, upright and lying down: open Roster from Settings in a class
+      with a student who has supports and one in two classes, and read where the dot sits.
+
+**Traps** — **Depends on WO-1.74 on purpose**: its Acceptance measures a row at 480px, and widening
+first would make that measurement pass for the wrong reason. **The dot is still built only when
+`supportsVisible()` says so** — WO-1.9's acceptance is that it is absent from the DOM under a
+projector, not hidden in it; a width change must not touch that branch. **Do not widen
+`.modal-panel` itself**: thirty-odd dialogs share it, and a confirm at 640px is a sentence across a
+laptop. **Width is not a substitute for a ruling on the dot** — if the measurement shows the flex
+growth is the real cause, report it rather than fixing it under a width work order.
