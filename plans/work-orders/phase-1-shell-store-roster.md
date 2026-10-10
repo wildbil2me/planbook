@@ -6150,9 +6150,12 @@ and E, styled in [`design/mockups/proposed-settings.css`](../../design/mockups/p
    to somewhere the teacher never was.
 3. **Message templates gets none.** It is a view, not a dialog; its way out is the class tabs, as now.
 
-**Open — the owner's ruling, at dispatch.** Whether the button survives a second hop — Roster →
-Edit student, Classes and terms → Categories. The drawing's lean is the first level only, because the
-inner dialogs already return to the one that opened them.
+**Ruled — the owner, 2026-10-10, at dispatch** *(this block was* Open — the owner's ruling, at
+dispatch *until then)*. **First level only.** The button is drawn on the three dialogs the hub opens
+directly and nowhere else; it does not survive a second hop — Roster → Edit student, Classes and
+terms → Categories — because the inner dialogs already return to the one that opened them. So the
+opener flag clears on every close, as the Traps say, and nothing has to outlive an inner dialog's
+open and close on the modal stack.
 
 **Deliverables**
 - **`index.html`**: the button in the headers of the three dialogs the hub opens — `#rosterModal`,
