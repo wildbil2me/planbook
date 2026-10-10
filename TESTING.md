@@ -8001,6 +8001,91 @@ against the staged pre-mutation tree) before this section was written.**
 | **M1** `paintHistory()` without `readOnlyBlock()` · **M2** day by day oldest first (no `.reverse()`) · **M3** `<details>` drawn open · **M4** the `window` listener's `paintHistory()` commented out · **M5** `src/detail.css`'s `:not([open]) { display: none }` print rule removed | `1915 checks · 1905 passed · 10 failed`, exit 1: M1 — the dialog check (`blocks: 0`), the dropped-day and the locked-day checks (`read-only null`); M2 — the date order, the running figure (`top row "0 of 1 · 0%"`), the `U` fold, and the page-after-Un-confirm check; M3 — closed on arrival (`open = true`); M4 — the redraw check (`"Dismissed at 8:14 AM"`, field still there); M5 — the print check (closed day by day `24px` on paper) |
 | Mutations reverted | `1915 checks · 1915 passed · 0 failed · 0 skipped`, 920s, exit 0 |
 
+### WO-2.61 — the search box's focus ring traces the field inside it, not the box you see
+
+**What this changes for a teacher: tapping into either search box — the registry's *Search
+students…* and the Scores box's *Find a student…* — now draws the focus ring as a rounded halo just
+outside the box she sees, with the 🔍 inside it, the way the guardian dialog's Relation field draws
+it.** Until now the ring traced the borderless square `<input>` inside the rounded wrapper, with the
+glyph left outside it. Ruling 1 is built as written: `src/shell.css` moves `.search-box`'s border,
+radius and padding onto `.search-box input`; the wrapper is a positioning context and a flex item
+with no border, padding or height of its own; the 🔍 (the existing `<span aria-hidden="true">`, no
+markup change) and the ✕ are absolutely positioned over the field's left and right edges, the glyph
+with `pointer-events: none`; and the field's padding keeps text clear of both (36px left; 38px right
+on a fine pointer, 49px under a coarse one, where the ✕ is its 44px square 3px in from the edge).
+The coarse block no longer names `.search-box` at all; the 44px is on the `<input>`. The focus rule,
+`tools/verify/focus-ring.mjs` and `wo-sweep.mjs` § 8 are untouched (ruling 2). `index.html`,
+`src/attendance.css` and `src/scores.css` did not need to change — their comments about the box were
+re-read and are still true.
+
+- [x] On both screens the focused element is the bordered one: with the field focused, the
+      `<input>`'s bounding box equals the visible border's box (it carries the border-radius and the
+      border), and the 🔍 and the ✕ lie inside it. Mutation-proved against putting the border back
+      on the wrapper.
+      — `verify/score-search.mjs`, new check *"WO-2.61: on both screens the focused element is the
+      bordered one…"* on a fine pointer at 1200×900, and again inside *"WO-2.61: under the coarse
+      pointer…"* at 1024×768: the field focused by a real press (`clickSel`) holding a long string,
+      `document.activeElement` is the `<input>`, it matches `:focus-visible` with outline
+      `solid 2px`, its computed border is solid on all four sides with an 8px radius, the wrapper's
+      border and padding are 0 on all sides and its rect equals the field's to within 0.5px, the 🔍's
+      and the ✕'s rects lie inside the field's, and `elementFromPoint` at the 🔍's centre is the
+      field. Read on this run, fine pointer: registry field `{l:40,r:400,h:33}`, wrapper identical,
+      🔍 52.5–71.7, ✕ 369–389; Scores the same. **Mutation M1** (marked `MUTATION WO-2.61`): border
+      and radius back on `.search-box`, `border: none` on the field — the run went red on both the
+      fine and the coarse WO-2.61 line-1 checks (`35 checks · 32 passed · 2 failed`, the
+      `focus-ring`/`score-search`/`attendance-header` subset), and green again after the revert.
+- [x] Typed text never runs under the glyph or the ✕: with a long string in the field, the text's
+      visible start is right of the 🔍 and its end is left of the ✕.
+      — `verify/score-search.mjs`, new check *"WO-2.61: typed text never runs under the glyph or the
+      ✕…"* (fine) and the coarse check: a 140-character string, caret set to the end and the field
+      scrolled to it (`scrollLeft` 565 on a fine pointer; 767 and 361 under the coarse one, so the
+      string really is up against the right edge), and the field's content box — where the text is
+      drawn and clipped — measured against the glyph and the ✕. Fine: text area 77–361, 🔍 ends at
+      71.7, ✕ begins at 369, both screens. Coarse: registry 77–224 against the ✕'s 44px square at
+      227; Scores 77–630 against 633. **Mutation M2**: the field's padding back to 11px each side
+      on both pointers — red on the fine line-2 check and the coarse check, green after the revert.
+      **Limit:** the measure is the content box, not glyph ink — Chromium clips an `<input>`'s text
+      to that box, which is the claim; a Range cannot be put over an input's value.
+- [x] The ✕ keeps every WO-2.58 behaviour on both screens — absent on an empty field, a tap empties it,
+      restores the list and leaves the field unfocused, Escape empties it — and is still a 44px
+      target under a coarse pointer; the field is still ≥44px tall there.
+      — The three WO-2.58 checks in `verify/score-search.mjs` pass **unedited** (the registry's ✕, the
+      grid's ✕, and both at 44×44 around a 22px disc with a real press at the centre clearing the
+      box); the WO-3.29 Escape check and the Scores field's ≥44px check pass unedited too. New in the
+      coarse WO-2.61 check: both fields measured at `h: 44` and both ✕ at 44×44 *inside* the field.
+      `verify/attendance-header.mjs` (the strip and toolbar lines at 820 and 1180) was re-read and
+      passes unchanged.
+- [x] `tools/verify/focus-ring.mjs` and `wo-sweep.mjs` § 8 pass **unchanged**: one global ring, and
+      no rule removes an outline.
+      — Neither file is in `git diff`. Full run: *"exactly one :focus-visible rule, and its selector
+      is global"*, *"it is outline 2px solid rgb(91,111,204) + offset 2px…"* and *"no rule in any
+      loaded sheet, including inside @media, removes an outline"* PASS; sweep § 8 *"no rule removes a
+      focus outline"* PASS.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      — `node tools/verify-shell.mjs`: `1918 checks · 1918 passed · 0 failed · 0 skipped`, 60,979
+      lines, 31.8 lines per check, 922s, exit 0, 2026-10-10 on the real clock, after both mutations
+      were reverted, with `tools/README.md`'s call-site count moved 1911 → 1914. `node
+      tools/wo-sweep.mjs`: `50 checks · 47 passed · 0 failed · 3 to review` (the standing REVIEWs),
+      exit 0. `CACHE` is `planbook-shell-v177` → `v178`.
+- [x] 👤 On the iPad, after a force-quit: tap into each search box and read the ring — rounded,
+      outside the border, the 🔍 inside it, the same shape as the guardian dialog's Relation field.
+      — **Read by the owner on the iPad, 2026-10-10**, v178 served from the local dev server after
+      a force-quit: About read v178; both boxes drew a rounded ring outside the border with the 🔍
+      inside it, matching Relation; a long name stayed clear of the 🔍 and the ✕, and a tap on the
+      🔍 put the caret in the field. All five checklist items good.
+
+**Mutation rounds, each marked `MUTATION WO-2.61` while live and reverted with `git checkout` against
+the staged delivered tree (`grep -rn "MUTATION WO-2.61" src tools` empty) before this section was
+written.** Both were run on a scratch copy of the entry file restricted to `focus-ring`,
+`score-search` and `attendance-header`; the full run above is on the reverted tree.
+
+| Tree | Result |
+|---|---|
+| Delivered tree, subset | `35 checks · 34 passed · 0 failed · 1 skipped` (the skip: `attendance-header`'s own guard reported no `window.planbook` on the page in this cut-down run — cause not chased; in the full run it runs and passes) |
+| **M1** border and radius back on `.search-box`, `border: none` on the field | `35 checks · 32 passed · 2 failed`: the fine line-1 check and the coarse check |
+| **M2** the field's padding back to 11px left and right, fine and coarse | `35 checks · 32 passed · 2 failed`: the fine line-2 check and the coarse check |
+| Reverted, full run | `1918 checks · 1918 passed · 0 failed · 0 skipped`, 922s, exit 0 |
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

@@ -195,6 +195,69 @@ console.log('\n--- the score grid narrows by student (WO-3.29) ---');
     + '); e.value = ' + JSON.stringify(v) + '; e.dispatchEvent(new Event("input", { bubbles: true }));'
     + ' return 1; })()');
 
+  /* ── WO-2.61: the box a teacher sees is the field that has focus ──
+
+     Read off the live layout, never off a stylesheet: the defect was a ring drawn on the right element
+     around the wrong rectangle. GEOM reads, for one search box, (a) the field — its rect, its own
+     border and radius, whether it is the focused element and matches `:focus-visible`; (b) the
+     wrapper — its rect and whether it draws a border or padding of its own, because a wrapper that
+     does is the visible box the ring is NOT on; (c) the 🔍 and the ✕ rects; (d) the field's content
+     box, which is where typed text is drawn and clipped, against the glyph's right edge and the ✕'s
+     left (the ✕'s whole box — under a coarse pointer its 44px target, not just its disc); and (e) a
+     hit test at the glyph's centre, which must land on the field. With a value longer than the field
+     the caret is put at the end and `scrollLeft` read, so the "end" half is a string actually
+     scrolled up against the right padding rather than one that happens to stop short of it. */
+  const GEOM = (boxId, xId) => `(function(){
+    var f = document.getElementById(${JSON.stringify(boxId)}), x = document.getElementById(${JSON.stringify(xId)});
+    if (!f || !x) return null;
+    var w = f.parentNode, g = w.querySelector(':scope > span[aria-hidden="true"]');
+    var R = function(e){ var r = e.getBoundingClientRect();
+      return { l: r.left, t: r.top, r: r.right, b: r.bottom, w: r.width, h: r.height }; };
+    var fs = getComputedStyle(f), ws = getComputedStyle(w), px = function(v){ return parseFloat(v) || 0; };
+    var fr = R(f), wr = R(w), gr = g ? R(g) : null, xr = R(x);
+    f.setSelectionRange(f.value.length, f.value.length);
+    f.scrollLeft = f.scrollWidth;
+    var gc = gr ? document.elementFromPoint((gr.l + gr.r) / 2, (gr.t + gr.b) / 2) : null;
+    var inside = function(a){ return !!a && a.l >= fr.l - 0.5 && a.r <= fr.r + 0.5
+      && a.t >= fr.t - 0.5 && a.b <= fr.b + 0.5; };
+    return {
+      focused: document.activeElement === f, fv: f.matches(':focus-visible'),
+      outline: fs.outlineStyle + ' ' + fs.outlineWidth,
+      field: fr, fieldBorder: [fs.borderTopWidth, fs.borderRightWidth, fs.borderBottomWidth,
+        fs.borderLeftWidth].map(px), fieldBorderStyle: fs.borderTopStyle, fieldRadius: px(fs.borderTopLeftRadius),
+      wrap: wr, wrapBorder: [ws.borderTopWidth, ws.borderRightWidth, ws.borderBottomWidth,
+        ws.borderLeftWidth].map(px), wrapPad: [ws.paddingTop, ws.paddingRight, ws.paddingBottom,
+        ws.paddingLeft].map(px),
+      sameBox: Math.abs(wr.l - fr.l) < 0.5 && Math.abs(wr.r - fr.r) < 0.5
+        && Math.abs(wr.t - fr.t) < 0.5 && Math.abs(wr.b - fr.b) < 0.5,
+      glyph: gr, x: xr, xShown: !x.classList.contains('hidden') && x.getClientRects().length > 0,
+      glyphInside: inside(gr), xInside: inside(xr),
+      glyphTapsField: gc === f,
+      textStart: fr.l + px(fs.borderLeftWidth) + px(fs.paddingLeft),
+      textEnd: fr.r - px(fs.borderRightWidth) - px(fs.paddingRight),
+      scrolled: f.scrollLeft, overflows: f.scrollWidth > f.clientWidth, value: f.value.length
+    }; })()`;
+  /* Long enough to overflow the widest box this section draws — the Scores box under the coarse
+     pointer at 1024, which `(max-width: 1024px)` lets run to ~640px — so `scrollLeft` is never 0. */
+  const LONG = 'Bartholomew Alexander Montgomery-Fitzwilliam Worthington the Third, '
+    + 'Esquire, of the Hampshire Montgomery-Fitzwilliams, Class of Twenty-Seven';
+  /* The line-1 and line-2 verdicts on one GEOM reading. The field is focused through a real press at
+     its centre (clickSel), which is what draws the ring on a tap. */
+  const bordered = (m) => !!m && m.focused && m.fv && /^solid/.test(m.outline)
+    && m.fieldBorder.every((b) => b >= 1) && m.fieldBorderStyle === 'solid' && m.fieldRadius > 0
+    && m.wrapBorder.every((b) => b === 0) && m.wrapPad.every((p) => p === 0) && m.sameBox
+    && m.xShown && m.glyphInside && m.xInside && m.glyphTapsField;
+  const clear = (m) => !!m && !!m.glyph && m.xShown && m.overflows && m.scrolled > 0
+    && m.textStart >= m.glyph.r && m.textEnd <= m.x.l && m.value === LONG.length;
+  const geomOf = async (boxId, xId) => {
+    await setBox(boxId, LONG);
+    await clickSel('#' + boxId);
+    const m = await evalJs(GEOM(boxId, xId));
+    await setBox(boxId, '');
+    await evalJs("(function(){ var a = document.activeElement; if (a && a.blur) a.blur(); return 1; })()");
+    return m;
+  };
+
   const doorOk = await evalJs("!!document.querySelector('#classView [data-class-screen=\"scores\"]')");
   if (!doorOk) {
     check('the Scores segment is reachable from the class screen, so the search box can be driven the way a teacher reaches it',
@@ -251,6 +314,9 @@ console.log('\n--- the score grid narrows by student (WO-3.29) ---');
         && attX.keyed.value === 'bell' && attX.keyed.xShown && attX.keyedRows === 1
         && attX.escaped.value === '' && !attX.escaped.xShown && attX.escapedRows === 6,
       JSON.stringify(attX));
+    /* WO-2.61, the registry's half, read here while the registry is on screen; checked below beside
+       the grid's, so the two boxes are one verdict. */
+    const geomFine = { attendance: await geomOf('attendanceSearch', 'attendanceSearchClear') };
 
     await clickSel('#classView [data-class-screen="scores"]');
     await new Promise(r => setTimeout(r, 300));
@@ -355,6 +421,15 @@ console.log('\n--- the score grid narrows by student (WO-3.29) ---');
         && scX.tapped.value === '' && !scX.tapped.xShown && scX.tappedRows === 6
         && scX.found === '' && !scX.tapped.focused,
       JSON.stringify(scX));
+    /* ── WO-2.61 lines 1 and 2, on a fine pointer, both screens ── */
+    geomFine.scores = await geomOf('scoresSearch', 'scoresSearchClear');
+    check('WO-2.61: on both screens the focused element is the bordered one — with the field focused by a press, the <input> matches :focus-visible and draws the ring, carries the border (every side) and the radius, the box around it draws no border and no padding and has exactly the field\'s rect, the 🔍 and the ✕ lie inside the field\'s rect, and a hit test at the 🔍\'s centre finds the field',
+      bordered(geomFine.attendance) && bordered(geomFine.scores), JSON.stringify(geomFine));
+    check('WO-2.61: typed text never runs under the glyph or the ✕ — with a string longer than the field, scrolled to its end, the field\'s text area starts right of the 🔍 and ends left of the ✕ on both screens',
+      clear(geomFine.attendance) && clear(geomFine.scores),
+      JSON.stringify(['attendance', 'scores'].map((k) => { const m = geomFine[k]; return m && { k: k,
+        glyphRight: m.glyph && m.glyph.r, textStart: m.textStart, textEnd: m.textEnd, xLeft: m.x.l,
+        scrolled: m.scrolled, overflows: m.overflows }; })));
     /* The section goes on to type into the box from where the caret was left; put it back there. */
     await clickSel('#scoresSearch');
 
@@ -685,6 +760,8 @@ console.log('\n--- the score grid narrows by student (WO-3.29) ---');
       var disc = r.width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
       return { w: r.width, h: r.height, disc: disc, clip: cs.backgroundClip, value: b ? b.value : null,
                display: cs.display }; })()`;
+    /* WO-2.61 under the coarse pointer: the registry's box read now, while it is on screen. */
+    const geomCoarse = { attendance: await geomOf('attendanceSearch', 'attendanceSearchClear') };
     const xSizes = {};
     await setBox('attendanceSearch', 'ma');
     xSizes.attendance = await evalJs(X44('attendanceSearch', 'attendanceSearchClear'));
@@ -709,6 +786,14 @@ console.log('\n--- the score grid narrows by student (WO-3.29) ---');
     check('the score grid\'s search box measures at least 44px tall and 44px wide under the coarse pointer, on the open grid',
       coarse === true && !!box && !box.viewHidden && box.display !== 'none' && box.h >= 44 && box.w >= 44,
       'coarse = ' + coarse + ' · ' + JSON.stringify(box));
+    /* WO-2.61 lines 1–3 under the coarse pointer, both screens: the same two verdicts as on the fine
+       pointer, now with the ✕ at its 44px square (whose whole box, not its disc, must lie inside the
+       field and right of the text), and the field — the bordered thing — at least 44px tall on each. */
+    geomCoarse.scores = await geomOf('scoresSearch', 'scoresSearchClear');
+    check('WO-2.61: under the coarse pointer, on both screens, the focused field is the bordered box with the 🔍 and the ✕\'s 44px square inside it, typed text clears both, and the field is at least 44px tall',
+      coarse === true && ['attendance', 'scores'].every((k) => bordered(geomCoarse[k]) && clear(geomCoarse[k])
+        && geomCoarse[k].field.h >= 44 && geomCoarse[k].x.w >= 44 && geomCoarse[k].x.h >= 44),
+      'coarse = ' + coarse + ' · ' + JSON.stringify(geomCoarse));
     /* WO-3.28 line 7: the category pills, every one of them, measured on the open grid. */
     const pills44 = await evalJs(`(function(){
       return Array.prototype.slice.call(document.querySelectorAll('#scoresCategories [data-scores-category]'))

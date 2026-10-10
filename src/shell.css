@@ -506,14 +506,36 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 .panel-title h2 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .panel-title p  { font-size: 11px; color: #8a9bb0; margin-top: 2px; }
 .search-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; position: relative; }
-.search-box {
-  flex: 0 0 360px; display: flex; align-items: center; gap: 7px;
-  border: 1.5px solid #e0e4ea; border-radius: 8px; padding: 7px 11px;
+/* THE BORDER IS THE FIELD'S, NOT THE BOX'S (WO-2.61, the owner's ruling 1 of 2026-10-09). Until then
+   `.search-box` drew the rounded border and held a borderless square <input> beside the 🔍, so the
+   global `:focus-visible` ring — which lands on whatever has focus, and a wrapper never does — drew
+   a square rectangle INSIDE the rounded box with the glyph left outside it. Every other field in
+   the app (the guardian dialog's Relation, the score cells, the template editor) carries its own
+   border, and the ring follows it. So the <input> is now the rounded, bordered thing, and the
+   wrapper is only a positioning context and a flex item for the width rules (`flex: 0 0 360px`
+   here, the `(max-width: 1024px)` rule below, `.attendance-find` in src/attendance.css): no border,
+   no padding, no height of its own, so its box IS the field's. The 🔍 and the ✕ sit over the field's
+   left and right edges, and the field's own padding keeps typed text clear of both —
+   tools/verify/score-search.mjs measures the text's ends against them on both screens. The
+   rejected shape — the ring moved to the wrapper with `:focus-within` and the field's suppressed —
+   is ruling 2's, and is why nothing here touches the focus rule. */
+.search-box { flex: 0 0 360px; position: relative; display: flex; align-items: center; }
+/* The glyph. Positioned rather than in flow so the field can run under it; `pointer-events: none` so
+   a tap on it reaches the field and puts the caret there, as a tap on the old box's padding did not. */
+.search-box > span[aria-hidden="true"] {
+  position: absolute; left: 12.5px; top: 50%; transform: translateY(-50%);
+  line-height: 1; pointer-events: none;
 }
 /* The source template suppresses the focus outline on this input. That is dropped rather
    than lifted: the box draws no focus affordance of its own, so losing the ring would leave
-   a keyboard user with no idea where they are. */
-.search-box input { border: none; font-size: 13px; width: 100%; background: transparent; color: #1a1a2e; }
+   a keyboard user with no idea where they are. (Since WO-2.61 the field IS the box, so the
+   one global ring now traces the border a teacher sees.) Padding: 11px to the glyph, ~18px of
+   glyph and 7px to the text on the left — the old box's 11px padding and 7px gap, re-spent
+   inside the field — and on the right the ✕'s 20px disc at 11px from the edge plus 7px. */
+.search-box input {
+  width: 100%; min-width: 0; font-size: 13px; background: transparent; color: #1a1a2e;
+  border: 1.5px solid #e0e4ea; border-radius: 8px; padding: 7px 38px 7px 36px;
+}
 .search-box input::placeholder { color: #a0aab8; }
 /* THE CLEAR BUTTON (WO-2.58), inside `.search-box` on both screens that have one — the registry and
    the score grid — which is why it is here and not in either screen's sheet. Lifted from
@@ -523,8 +545,11 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
    Escape clears it from the keyboard. The glyph is small and the target is not: the coarse block
    below grows the box to 44px around the same small disc. The field's focus ring is untouched — the
    ✕ is a sibling of the <input>, so the global `:focus-visible` ring above still lands on the field
-   (the owner's ruling 6). */
+   (the owner's ruling 6). Since WO-2.61 it is positioned over the field's right edge rather than
+   sitting beside it in the box's flow, because the box no longer has a border or padding of its
+   own to sit inside — the field's right padding is the room it takes. */
 .search-clear {
+  position: absolute; right: 11px; top: 50%; transform: translateY(-50%);
   flex-shrink: 0; width: 20px; height: 20px; margin: 0;
   display: inline-flex; align-items: center; justify-content: center;
   border: 0; border-radius: 50%; background: #e0e4ea; color: #6b7a8d;
@@ -2327,15 +2352,20 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
      min-height and leaving its 7px vertical padding in place makes a 44px box holding a
      19px input: the strip above and below the text looks tappable, does nothing, and the
      teacher taps twice. So the padding goes horizontal-only and the input carries the
-     height, which is also what makes the caret land on the first tap. */
-  .search-box { min-height: 44px; padding: 0 11px; }
-  .search-box input { min-height: 44px; font-size: 14px; }
+     height, which is also what makes the caret land on the first tap. Since WO-2.61 that is the
+     only shape left: the box has no border, padding or height of its own anywhere, so nothing
+     here names it, and the field — which now carries the border too — takes the 44px with its
+     vertical padding zeroed. Its side padding stays the base rule's on the left (the glyph has
+     not moved) and widens on the right to clear the ✕'s 44px square below. */
+  .search-box input { min-height: 44px; font-size: 14px; padding-top: 0; padding-bottom: 0;
+    padding-right: 49px; }
   /* The ✕'s target is the full 44px square; the 22px disc is drawn inside it by the padding and
      `background-clip`, so the visible glyph stays small (WO-2.58, lifted from the drawing's § TOUCH).
-     The negative margin hands back part of the box's own 11px right padding, so the square does not
-     push the field narrower than it needs to. */
+     It sits 3px in from the field's right edge, so the square lies within the field's box — the
+     field is 44px tall, the square's height exactly — which puts the disc's right edge 14px in, about where the base rule's 11px
+     puts the small one. Until WO-2.61 a negative margin did this job against the box's padding. */
   .search-clear {
-    width: 44px; height: 44px; margin-right: -8px; background-clip: content-box; padding: 11px;
+    right: 3px; width: 44px; height: 44px; background-clip: content-box; padding: 11px;
     font-size: 12px;
   }
   .date-batch-bar { font-size: 13px; }

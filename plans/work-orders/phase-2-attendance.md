@@ -6378,7 +6378,7 @@ keystroke.** **The running percentage survives the move** — it is what makes a
 
 ## WO-2.61 — the search box's focus ring traces the field inside it, not the box you see
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-10-10 · **Size** XS · **Depends on** —
 **Closes roadmap** *(no box. Owner-directed, 2026-10-09.)*
 
 **Booked 2026-10-09**, owner-directed, the day WO-2.58 gave both search boxes a ✕. The owner
@@ -6418,19 +6418,19 @@ and the template editor all put the border on the field itself.
 - **`TESTING.md` § WO-2.61**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] On both screens the focused element is the bordered one: with the field focused, the
+- [x] On both screens the focused element is the bordered one: with the field focused, the
       `<input>`'s bounding box equals the visible border's box (it carries the border-radius and the
       border), and the 🔍 and the ✕ lie inside it. Mutation-proved against putting the border back
       on the wrapper.
-- [ ] Typed text never runs under the glyph or the ✕: with a long string in the field, the text's
+- [x] Typed text never runs under the glyph or the ✕: with a long string in the field, the text's
       visible start is right of the 🔍 and its end is left of the ✕.
-- [ ] The ✕ keeps every WO-2.58 behaviour on both screens — absent on an empty field, a tap empties it,
+- [x] The ✕ keeps every WO-2.58 behaviour on both screens — absent on an empty field, a tap empties it,
       restores the list and leaves the field unfocused, Escape empties it — and is still a 44px
       target under a coarse pointer; the field is still ≥44px tall there.
-- [ ] `tools/verify/focus-ring.mjs` and `wo-sweep.mjs` § 8 pass **unchanged**: one global ring, and
+- [x] `tools/verify/focus-ring.mjs` and `wo-sweep.mjs` § 8 pass **unchanged**: one global ring, and
       no rule removes an outline.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] 👤 On the iPad, after a force-quit: tap into each search box and read the ring — rounded,
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the iPad, after a force-quit: tap into each search box and read the ring — rounded,
       outside the border, the 🔍 inside it, the same shape as the guardian dialog's Relation field.
 
 **Traps** — **Do not suppress the field's outline** — not on `:focus`, not on `:focus-visible`, not

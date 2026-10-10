@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The search boxes draw their focus ring where you'd expect — 2026-10-10
+
+WO-2.61, owner-directed, booked the day WO-2.58 gave both boxes a ✕.
+
+- **Tapping into *Search students…* on the attendance screen or *Find a student…* on Scores now
+  outlines the rounded box you see**, with the 🔍 inside the ring — the same halo every other field
+  in the app draws. It used to trace a square inside the box and leave the magnifier outside it.
+- The border, radius and padding moved from `.search-box` onto its `<input>`, with the 🔍 and the ✕
+  placed over the field's edges; the 44px coarse height stays on the input. The global
+  `:focus-visible` rule is untouched, so `focus-ring.mjs` and sweep § 8 pass unchanged.
+- `tools/verify/score-search.mjs` gained geometry and focus checks for both boxes. Nothing about
+  searching or the ✕ changed. Read on the iPad by the owner the same day.
+
 ### The sweep refuses a one-line banner wherever it sits — 2026-10-10
 
 WO-1.75, booked out of WO-1.69 the same day. Tooling and one drawing; nothing in `src/` moved.

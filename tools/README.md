@@ -1347,7 +1347,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1911 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1914 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2763,6 +2763,17 @@ asks `checkVisibility()` and the disclosure's own height, and the first run, whi
 height, went red on a build that was behaving. None is a failure arm. Full run:
 `1915 checks · 1915 passed · 0 failed · 0 skipped`, 60,894 lines, 31.8 lines per check, 920s, exit 0,
 2026-10-09 on the real clock. Mutation round in `TESTING.md` § WO-2.60.
+
+**WO-2.61 moved it from 1911 to 1914, and the executed count from 1915 to 1918 — three sites, three
+results, and no new file.** All three are in `verify/score-search.mjs`, beside the WO-2.58 checks on
+the same two boxes, and all three read one `GEOM` measurement taken with the field focused by a real
+press and holding a string longer than the field: on a fine pointer, the focused `<input>` is the
+bordered, rounded box — the wrapper draws no border or padding and has exactly the field's rect, the
+🔍 and the ✕ lie inside it, and a hit test on the 🔍 finds the field; on a fine pointer, the field's
+text area starts right of the 🔍 and ends left of the ✕ with the string scrolled to its end; and both
+again under a coarse pointer, with the ✕'s whole 44px square and the field's 44px height. None is a
+failure arm. Full run: `1918 checks · 1918 passed · 0 failed · 0 skipped`, 60,979 lines, 31.8 lines
+per check, 922s, exit 0, 2026-10-10 on the real clock. Mutation rounds in `TESTING.md` § WO-2.61.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
