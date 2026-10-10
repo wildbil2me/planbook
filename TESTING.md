@@ -3926,6 +3926,9 @@ at 320×844, coarse, sync hidden — today's four-control row — measured `.hea
 the actions starting at 39.92 against the 📓's right edge at 46: **the 📓 sits ~6px under Backup**, and
 no overflow check sees it. 320 is an iPad's Slide Over and portrait one-third split width, which is
 where the 👤 line below will be read. A booking for the owner, not part of this one.
+*(**Read on the iPad by the owner, 2026-10-10, and not booked:** at the narrow width, the 📓 does
+not sit under Backup. The 6px was Edge's font and the harness's row; the iPad's own drawing has
+room. Re-open it only if the header's top row gains a control or its left side gains width.)*
 
 - [x] The top row's slack at 390×844 under a coarse pointer, with an opted-in device, is printed by
       the harness and quoted in `TESTING.md`.
