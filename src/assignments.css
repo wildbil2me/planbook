@@ -240,8 +240,17 @@
 .assign-actions.end { justify-content: flex-end; }
 /* Horizontal scroll belongs to the table, never to the page — a page that scrolls sideways on an
    iPad is a teacher swiping the app instead of the list. `.attendance-grid-wrap`'s rule, restated
-   in this sheet's own name. */
-.assign-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+   in this sheet's own name.
+   `position: relative` IS WHAT MAKES THAT TRUE OF EVERYTHING IN THE TABLE, NOT ONLY THE TABLE
+   (WO-3.59). `.sr-only` is `position: absolute`, and an overflow box clips an absolutely positioned
+   descendant only if it is, or contains, that descendant's containing block. Without this the
+   Actions heading's hidden "Actions" had the page itself for a containing block, so the wrap
+   scrolled the table out of the way and left the span standing where its column would have been —
+   149px past a 390px phone's right edge on a real-shaped class, carrying the page with it. On the wrap rather than on the span or
+   on `.sr-only`, because it is the wrap's promise and it then covers anything positioned that a
+   heading or a row grows later: WO-3.55's button in that same `<th>` included. No z-index, so no
+   stacking context — nothing about how the list paints changes. */
+.assign-table-wrap { position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .assign-table { width: 100%; border-collapse: collapse; }
 .assign-table thead th {
   padding: 9px 10px; text-align: left;

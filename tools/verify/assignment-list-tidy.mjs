@@ -19,8 +19,8 @@
  * fails on any that suppresses an outline, which is the fence the Traps line asks for.
  *
  * IT PRINTS, AND DOES NOT ASSERT, the page's sideways scroll at 390×844 under a coarse pointer over
- * this fixture — WO-3.59's baseline. Fixing it is that work order's, and an assertion here would be a
- * decision this one was told not to make.
+ * this fixture — WO-3.59's baseline. WO-3.59 fixed it and asserts it in horizontal-overflow.mjs, over
+ * a class of its own; this line stays a reading, so the two fixtures can still be compared.
  *
  * THE FIXTURE IS TWO CLASSES, ONE STUDENT AND SEVEN ASSIGNMENTS OF ITS OWN — a weighted class with
  * work in two categories, an empty one at a real weight, an empty one at 0% and one unfiled piece; a
@@ -255,7 +255,7 @@ try {
       page: d.scrollWidth - d.clientWidth, wrap: t ? t.scrollWidth - t.clientWidth : null }; })()`);
   console.log('  MEASURE | WO-3.54 at 390×844 (coarse ' + phone.coarse + ', vw ' + phone.vw + ') the assignments '
     + 'screen over this fixture scrolls sideways by ' + phone.page + 'px (its table box by ' + phone.wrap
-    + 'px) — WO-3.59\'s to fix, reported here and not ruled on');
+    + 'px) — asserted in horizontal-overflow.mjs since WO-3.59, reported here');
   await size(1280, 800, false);
 
   /* ══ Acceptance 4 — an empty category is one heading ══ */

@@ -13114,6 +13114,110 @@ second is a heading. The review reads uncommitted diff and goes quiet once this 
 
 ---
 
+### WO-3.59 — the assignments screen scrolls sideways at phone width
+
+**What overflowed, and why.** Reproduced, not taken on trust from § WO-3.54. At 390×844,
+`deviceScaleFactor` 3, `mobile: true`, touch emulation on and `matchMedia('(pointer: coarse)')` read
+true, headless Edge, over a **real-shaped** class planted for the purpose — a Quarter 1 dated
+`today − 30 … today + 30`, three weighted categories (Essays 40, Reading quizzes 35, Homework 25),
+two students, and four assignments with real assigned and due dates, two under Essays and two under
+Reading quizzes — the assignment list scrolled the **page** sideways by **149px** while its table
+scrolled 228px inside its own box. The element carrying the page out is the Actions column head's
+`<span class="sr-only">Actions</span>` (`index.html`, the last `<th>` of `#assignmentsTable`'s
+head). The new check finds it by taking every `absolute`/`fixed` box out of the page in turn and
+re-reading `scrollWidth`, and on the tree with the fix reverted it reads, verbatim:
+
+> `span.sr-only "Actions" in <th> · position absolute · offsetParent body · page scrolls 0px without it`
+
+— the only out-of-flow box whose removal moves the page, and removing it takes the page from 149px to
+0. **Why:** `.sr-only` (`src/shell.css`) is `position: absolute`, and an `overflow` box clips an
+absolutely positioned descendant only when it is, or contains, that descendant's containing block.
+Nothing between the span and `<html>` was positioned (`offsetParent` is `<body>`), so its containing
+block was the page: `.assign-table-wrap`'s `overflow-x: auto` scrolled the table but not the span,
+which stood at its static position — inside the last column, past the screen's right edge — and the
+document's `scrollWidth` followed it.
+
+**The blank-dated term is ruled out.** It was WO-1.77's other candidate. This fixture has no blank
+date anywhere and overflowed by 149px; WO-3.54's fixture (blank-dated, four categories) read 135px
+on the same run and WO-1.77's (blank-dated, one category) 134px in § WO-3.54. Every fixture
+overflowed, by the span, so it was never the fixture.
+
+**The fix is on the wrap, and why not on the span or on `.sr-only`.** `src/assignments.css`:
+`.assign-table-wrap { position: relative; … }`, which makes the wrap the containing block of
+everything absolutely positioned inside the table, so its own scroll clips it. Weighed against two
+alternatives. *The one span* — `position: static` or a `left` on it — is the fix the work order
+forbids, and it would not hold for WO-3.55's button, whose own `.sr-only` name escapes the same way
+(see Acceptance 2's second check). *`.sr-only` globally* — anchoring every hidden span with
+`top: 0; left: 0` against the page — would lay out every hidden span in the app — the box a screen reader's cursor
+draws around it — at the page's top-left corner, touches a class the header copies by hand (`src/shell.css` ~2656), and would
+change every other `.sr-only` in the app to keep one wrapper's promise. The wrap's own comment already said
+*horizontal scroll belongs to the table, never to the page*; `position: relative` is what makes that
+true of everything in the table rather than only the table. No `z-index`, so no stacking context and
+nothing about how the list paints changes.
+
+**Other screens at phone width — reported, not fixed.** The same run reads the page's sideways scroll
+on the same class's Attendance and Scores screens at 390×844, coarse: **0px on both**, on the fixed
+tree and on the reverted tree alike. `#attendanceCaption` and `#scoresCaption` are `.sr-only` too, but
+a `<caption>` sits at the table's left edge, inside the viewport, so it has nothing to carry out.
+Nothing else at phone width was measured.
+
+**Acceptance**
+
+- [x] `TESTING.md` § WO-3.59 names the element that overflowed and why, or shows that only the
+      fixture did.
+      — Above: the Actions `<th>`'s `<span class="sr-only">Actions</span>`, absolutely positioned
+      with `<body>` as its offset parent, so the scroll wrap could not clip it; the blank-dated term
+      ruled out on a dated fixture.
+- [x] At 390×844 under a coarse pointer, the assignments screen with assignments in at least two
+      categories has no horizontal overflow, and `horizontal-overflow.mjs` checks it there. With the
+      fix reverted, that check fails.
+      — `tools/verify/horizontal-overflow.mjs` gained a block at its foot that plants the class
+      above, walks to the list the way a teacher does (home → the class's card → Assignments) and
+      asserts: on `assignmentsView`, coarse true, layout width 390, all four rows drawn in two
+      categories, the table box really scrolling (`> 0`, so the check cannot pass on a list too
+      narrow to test anything), and the page's `scrollWidth − clientWidth ≤ 0`. A second check plants
+      WO-3.55's shape — a `<button>` holding an `.sr-only` name — in the Actions `<th>` and asserts
+      the same, then removes it. A `MEASURE |` line takes the fix off **in the page** (a `<style>`
+      forcing the wrap back to `position: static`) on every run and names what carries the page, so
+      the cause stays visible after this lands.
+      Fixed tree: `PASS | WO-3.59: at 390x844 … :: view assignmentsView · coarse true · vw 390 · rows
+      4 in 2 categories · table box scrolls 228px · page scrolls 0px`, and `PASS | WO-3.59: and with a
+      button … :: planted true · page scrolls 0px`.
+      **Mutation.** Work staged; `position: relative` removed from `.assign-table-wrap` with a
+      `/* MUTATION WO-3.59 … */` comment in its place; one full run; `git checkout -- src/assignments.css`
+      from the index; `grep -rn "MUTATION WO-3.59" src index.html tools sw.js` read nothing. That run:
+      `1982 checks · 1980 passed · 2 failed · 0 skipped`, 1043s, exit 1 — the two WO-3.59 checks and
+      nothing else:
+      `FAIL | … :: … table box scrolls 228px · page scrolls 149px · reaching the page edge: ["span.sr-only
+      \"Actions\" in <th> · position absolute · offsetParent body · page scrolls 0px without it"]` and
+      `FAIL | … with a button … :: planted true · page scrolls 161px · reaching the page edge:
+      ["span.sr-only \"Your order\" in <button> · position absolute · offsetParent body · page scrolls
+      149px without it"]` — the planted button's own hidden name escapes the same way, 12px further
+      out, which is why the fix had to be the wrap and not the span. (An earlier mutation run, on a
+      first draft of the block whose cause-finder compared right edges, read the same two FAILs at the
+      same 149/161px; its edge test found nothing on the first and only the probe button on the
+      second, and its report-only screen changes missed — a mobile viewport zooms out to fit a page
+      that scrolls sideways, so a press at layout coordinates lands elsewhere. Both were rewritten
+      before the run above; the assertions did not change.)
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. If `src/` or `index.html`
+      changed, `CACHE` in `sw.js` is bumped.
+      — `node tools/verify-shell.mjs` on the delivered tree, after the mutation revert:
+      `1982 checks · 1982 passed · 0 failed · 0 skipped`, 63,562 lines, 32.1 lines per check, 1042s,
+      exit 0, 2026-10-11 on the real clock (the run before the mutation, on the first draft of the
+      block, read the same `1982 · 1982 · 0 · 0`, 1040s, exit 0). Its `MEASURE |` lines: the fix taken
+      off in the page, 149px carried by the Actions span; Attendance and Scores 0px; WO-3.54's own
+      fixture now 0px (135px on the reverted tree). `node tools/wo-sweep.mjs`: `50 checks · 46 passed ·
+      0 failed · 4 to review`, exit 0 — after `tools/README.md`'s call-site line went 1976 → 1978, which
+      the sweep's call-site check had turned red until it was. The four reviews are the standing three and *CSS
+      selectors added in the working tree with no coarse-block rule: `.assign-table-wrap`* — read and
+      answered: it is the table's scroll box, not a control, and gains no rule under a coarse pointer;
+      the review reads uncommitted diff and goes quiet once this lands.
+      `CACHE` `planbook-shell-v185` → `planbook-shell-v186` (`src/assignments.css` is in `SHELL`).
+- [x] `TESTING.md` § WO-3.59 carries these lines verbatim with the evidence for each.
+      — This section.
+
+---
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

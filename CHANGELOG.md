@@ -13,6 +13,16 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The assignment list no longer slides sideways on a phone — 2026-10-11
+
+WO-3.59, booked from WO-1.77's findings. Shell cache v185 → v186.
+
+- **The page stays put at phone width; only the table scrolls.** A hidden "Actions" label meant for
+  screen readers sat outside the table's scroll box and pushed the page 149px past the right edge of
+  a 390px screen, so the whole screen dragged sideways under a thumb. The scroll box now holds it, and
+  anything WO-3.55 later puts in that heading — a button included — is held the same way.
+- Attendance and Scores were measured at the same width and never had the problem.
+
 ### The assignment list matches the other class screens — 2026-10-11
 
 WO-3.54, owner-directed. Shell cache v184 → v185.

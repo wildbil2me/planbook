@@ -4651,7 +4651,7 @@ settings), which have their own work orders.
 
 ## WO-3.59 — the assignments screen scrolls sideways at phone width
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.54
+**Ship** — · **Status** ✅ DONE — 2026-10-11 · **Size** S · **Depends on** WO-3.54
 **Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
 
 **Booked 2026-10-11**, owner-directed, out of WO-1.77's verdict. Measuring the assignment editor at
@@ -4677,13 +4677,13 @@ the fix must hold for a heading cell that holds a button as well as the span. Fi
 the one span.
 
 **Acceptance**
-- [ ] `TESTING.md` § WO-3.59 names the element that overflowed and why, or shows that only the
+- [x] `TESTING.md` § WO-3.59 names the element that overflowed and why, or shows that only the
       fixture did.
-- [ ] At 390×844 under a coarse pointer, the assignments screen with assignments in at least two
+- [x] At 390×844 under a coarse pointer, the assignments screen with assignments in at least two
       categories has no horizontal overflow, and `horizontal-overflow.mjs` checks it there. With the
       fix reverted, that check fails.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. If `src/` or `index.html`
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. If `src/` or `index.html`
       changed, `CACHE` in `sw.js` is bumped.
-- [ ] `TESTING.md` § WO-3.59 carries these lines verbatim with the evidence for each.
+- [x] `TESTING.md` § WO-3.59 carries these lines verbatim with the evidence for each.
 
 **Not in scope** — other screens at phone width, unless the same element causes theirs. Report them.

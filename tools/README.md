@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1976 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1978 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2887,6 +2887,17 @@ for WO-3.59, asserting nothing. Three existing sections moved to the new heading
 its painted cell) and `verify/category-removal.mjs` (the re-filed work's notice). Full run:
 `1980 checks · 1980 passed · 0 failed · 0 skipped`, 63,328 lines, 32.0 lines per check, 1023s, exit 0,
 2026-10-11 on the real clock. Planted faults in `TESTING.md` § WO-3.54.
+
+**WO-3.59 moved it from 1976 to 1978, and the executed count from 1980 to 1982 — two sites, two
+results, no new file.** Both are at the foot of `verify/horizontal-overflow.mjs`, in a block that plants
+one class, two students and four assignments of its own and takes them back out with the open-class
+preference: the assignment list at 390×844 under a coarse pointer does not scroll the page sideways,
+and still does not with a button carrying an `.sr-only` name planted in the Actions heading. Neither is
+a failure arm, and the block's one guard is a `skip()`. It also prints two `MEASURE |` lines — the
+cause with the fix taken off in the page, and the same class's Attendance and Scores at phone width —
+asserting nothing. Full run: `1982 checks · 1982 passed · 0 failed · 0 skipped`, 63,562 lines, 32.1
+lines per check, 1042s, exit 0, 2026-10-11 on the real clock. The planted fault is in `TESTING.md`
+§ WO-3.59.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
