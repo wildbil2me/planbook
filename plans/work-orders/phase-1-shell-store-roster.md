@@ -6413,10 +6413,13 @@ records its kind in its markup, so the next person to add or edit one can see it
   paragraph. This is the Keys argument from WO-2.59: prose much past 80 characters a line reads worse,
   and prose at 480 wraps too soon.
 - **`modal-report`, 900.** A record, a sheet or a grid of classes, wide enough for a table. The
-  Attendance record and Hall passes are 900 already.
+  Attendance record and Hall passes are 900 already. **Duplicate joins them at 900, up from 880**
+  (owner, 2026-10-11). 880 was the narrowest its four columns fit, a floor and not a ruling, and
+  nothing asserts it. Its fold is a *window* breakpoint at 920 (`src/assignments.css`), and below a
+  ~947px window the panel is 95vw at either width, so the fold is untouched.
 
 **A dialog may override its kind's width only with a class of its own and a comment saying why.**
-The Grade sheet stays at 980 and Duplicate at 880 this way. An override is visible beside the kind
+The Grade sheet stays at 980 this way, and is the only override. An override is visible beside the kind
 it departs from, rather than replacing it.
 
 **The fallback is two layers.** `.modal-panel` stays at 480, so a dialog someone forgets to classify
@@ -6433,7 +6436,7 @@ owner named are settled.
 | **form, owner-named** | `assignmentModal` (Assignment), `aboutModal` (About Planbook) |
 | **form, proposed** | `settingsModal`, `yearModal`, `classesModal`, `termsModal`, `categoriesModal`, `letterScaleModal`, `signalsModal`, `signalCardModal`, `outreachModal`, `rosterPasteModal`, `rosterImportModal`, `studentModal`, `logSheetModal`, `daysOffModal`, `eventsModal`, `attendanceHistoryModal` |
 | **confirm, proposed** | `drivePullModal`, `drivePullConfirmModal`, `classDeleteModal`, `gradingModeModal`, `categoryRemoveModal`, `outreachConfirmModal`, `assignmentMoveModal`, `holdModal`, `assignmentDeleteModal`, `studentDeleteModal`, `restoreConfirmModal`, `daysOffConfirmModal`, `teacherModal`, `backupModal` |
-| **Already ruled, width unchanged** | report: `attendanceRecordModal`, `passHistoryModal` (900) · report with override: `gradesRecordModal` (980), `assignmentCopyModal` (880) · form: `rosterModal`, `attendanceKeysModal` (640) |
+| **Already ruled, width unchanged** | report: `attendanceRecordModal`, `passHistoryModal` (900) · report, width 880 → 900: `assignmentCopyModal` · report with override: `gradesRecordModal` (980) · form: `rosterModal`, `attendanceKeysModal` (640) |
 
 **Questions at dispatch, for the owner**
 1. **The table.** Rule each "proposed" row. The owner may know a dialog better than its markup
@@ -6441,8 +6444,6 @@ owner named are settled.
 2. **Whether `outreachModal` wants more than 640.** A draft email is a body of prose with a subject and
    recipients over it. If the owner wants it wider, it gets a class of its own, the way Keys did. This
    work order does not add a fourth tier.
-3. **Whether Duplicate is a report or a form with an override.** It is a class picker at 880, which is
-   closer to a report's width than a form's. Either works; the kind should say what it is.
 
 **Deliverables**
 - **`src/shell.css`**: `.modal-confirm`, `.modal-form` and `.modal-report`, each a `width` and
@@ -6450,7 +6451,8 @@ owner named are settled.
   `(max-width: 640px)` block still puts every panel at 95vw on a phone. **`.modal-panel` itself stays
   at 480** as the fallback. `.roster-panel`, `.attendance-keys-panel` and `.attendance-report-panel`
   become the kind they already measure. Move their ruling comments to the kind or to the dialog's
-  markup rather than losing them. `.grades-report-panel` and `.assign-copy-panel` stay as overrides.
+  markup rather than losing them. `.assign-copy-panel`'s width goes; the class stays if its other rules hang on it.
+  `.grades-report-panel` stays as the one override.
 - **`index.html`**: exactly one kind class on every `.modal-panel`, as the owner rules.
 - **`design/style-guide.md` § 5**: the three kinds, what decides each, the override rule and the
   fallback. A new dialog then has a place to look before it is written.
@@ -6479,7 +6481,9 @@ owner named are settled.
 `max-width` on top of the 480 base, so they had been 480 since they shipped. **Do not widen
 `.modal-panel` itself**: it is the fallback, and a forgotten class should land on the narrowest width,
 not the widest. **A kind names what a dialog is, not how wide it should be.** If a form needs 700,
-that is an override with a comment, not a reason to call it a report. **Width only**: the assignment
+that is an override with a comment, not a reason to call it a report. **`tools/verify/copy-class.mjs` asserts both sides of the 920 fold** — it must still pass with
+the panel at 900; if it does not, the premise above is wrong, so report it rather than moving the
+breakpoint. **Width only**: the assignment
 editor's *needs a name* message draws under its buttons, and moving it belongs to WO-3.58, which this
 work order runs before on purpose so that WO-3.58 draws the editor at its new width. Do not move any
 message here. **The print rules** for the Record and the Grade sheet set their own `width: 100%` under
