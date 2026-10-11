@@ -6337,14 +6337,9 @@ the actions; at 480px with a long name or an *also in* note, the row wraps and t
 line of its own. **The cause has been named by the owner, not measured** — read the row before
 deciding that width alone fixes it.
 
-**Questions at dispatch, for the owner**
-1. **How wide.** 640px, on a class of its own the way `.attendance-keys-panel` is, is the starting
-   proposal; the owner rules on the number after seeing it on the iPad.
-2. **Which dialogs.** The roster is the one named. Classes and terms is the other door behind
-   Settings that draws rows of names; widen it too only if the owner says so. Confirm dialogs and the
-   small forms (Your details, a single student) stay at 480.
-3. **Whether the dot moves.** If the dot still sits away from the name at the new width, say so with
-   a screenshot and ask: beside the name, or where WO-1.74 left it. Do not move it without a ruling.
+**Nothing is open at dispatch.** The eight dialogs in the table's third row are built at the kind
+shown and settled by the 👤 reading. A dialog the owner reads the other way is a one-word change in
+`index.html` before the work order closes, not a new work order.
 
 **Deliverables**
 - **`src/shell.css`**: a width class on the roster dialog's panel (and on any other the owner names),
@@ -6428,14 +6423,14 @@ draws at today. **The harness also fails a `.modal-panel` that carries no kind, 
 the forgotten class is caught before deploy rather than found by a teacher. The default is a safety
 net, and the check is the rule.
 
-**The proposed classification.** This is a starting point for the owner's ruling. Only the three the
-owner named are settled.
+**The classification, ruled by the owner on 2026-10-11** except for eight dialogs, which are read
+on the iPad.
 
 | Kind | Dialogs |
 |---|---|
-| **form, owner-named** | `assignmentModal` (Assignment), `aboutModal` (About Planbook), `outreachModal` (Draft an email, ruled 2026-10-11: 640, not a wider override) |
-| **form, proposed** | `settingsModal`, `yearModal`, `classesModal`, `termsModal`, `categoriesModal`, `letterScaleModal`, `signalsModal`, `signalCardModal`, `rosterPasteModal`, `rosterImportModal`, `studentModal`, `logSheetModal`, `daysOffModal`, `eventsModal`, `attendanceHistoryModal` |
-| **confirm, proposed** | `drivePullModal`, `drivePullConfirmModal`, `classDeleteModal`, `gradingModeModal`, `categoryRemoveModal`, `outreachConfirmModal`, `assignmentMoveModal`, `holdModal`, `assignmentDeleteModal`, `studentDeleteModal`, `restoreConfirmModal`, `daysOffConfirmModal`, `teacherModal`, `backupModal` |
+| **form, ruled** | `assignmentModal`, `aboutModal`, `outreachModal` (named by the owner; Draft an email is 640, not a wider override) · `settingsModal`, `yearModal`, `classesModal`, `termsModal`, `categoriesModal`, `letterScaleModal`, `signalsModal`, `rosterPasteModal`, `rosterImportModal`, `studentModal`, `daysOffModal`, `eventsModal` |
+| **confirm, ruled** | `classDeleteModal`, `categoryRemoveModal`, `outreachConfirmModal`, `assignmentMoveModal`, `holdModal`, `assignmentDeleteModal`, `studentDeleteModal`, `restoreConfirmModal`, `daysOffConfirmModal` |
+| **Read on the iPad**, built at the proposed kind | confirm: `teacherModal` (Your details), `backupModal` (Backup & restore), `drivePullModal` (Open a year from Google Drive), `drivePullConfirmModal`, `gradingModeModal` · form: `signalCardModal` (Why they are on the list), `attendanceHistoryModal` (Attendance), `logSheetModal` |
 | **Already ruled, width unchanged** | report: `attendanceRecordModal`, `passHistoryModal` (900) · report, width 880 → 900: `assignmentCopyModal` · report with override: `gradesRecordModal` (980) · form: `rosterModal`, `attendanceKeysModal` (640) |
 
 **Questions at dispatch, for the owner**
@@ -6472,7 +6467,9 @@ owner named are settled.
 - [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
 - [ ] `TESTING.md` § WO-1.77 carries these lines verbatim with the evidence for each.
 - [ ] 👤 On the iPad, after a force-quit, upright and lying down, the owner opens About, a new
-      assignment, Settings and one confirm, and reads that each is the width it was ruled.
+      assignment, Draft an email, Settings and one ruled confirm and reads each at its width. Then the
+      owner rules each of the eight dialogs read on the iPad, and any changed kind lands before this
+      box is ticked.
 
 **Traps** — **`width`, never `max-width`.** WO-2.59 found four dialogs that had asked for 900 with
 `max-width` on top of the 480 base, so they had been 480 since they shipped. **Do not widen
