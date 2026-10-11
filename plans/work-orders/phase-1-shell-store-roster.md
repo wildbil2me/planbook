@@ -6481,3 +6481,67 @@ message here. **The print rules** for the Record and the Grade sheet set their o
 `body[data-…-print]`; leave them alone. **A form at 640 can leave its fields at 480's widths**, so a
 wider panel with an empty right half has not fixed anything. Read each named dialog at the new width,
 and report a field that does not use the room rather than restyling it here.
+
+## WO-1.78 — the style guide's rendered twin does not show the three dialog kinds
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-1.77
+**Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
+
+**Booked 2026-10-11**, owner-directed, out of WO-1.77's verdict. WO-1.77 put three dialog kinds into
+`design/style-guide.md` § 5 — `modal-confirm` 480, `modal-form` 640, `modal-report` 900, with
+`.modal-panel`'s 480 as the fallback. Its rendered twin, `design/style-guide.html`, still shows one
+modal at "480px wide" (its § 5 card and the `.modal-panel` rule it practises). The `.md` says the two
+are kept in step by hand, and this time they were not. **The implementer left it alone on purpose**:
+the twin is meant to be copied into a sibling suite app, and the kinds are a Planbook departure, not
+a suite rule.
+
+**The question is the owner's, at dispatch.** One of:
+- **A note only** — the twin keeps the suite's single 480 modal and gains one line saying Planbook
+  sizes its dialogs by kind, pointing at the `.md` § 5. Nothing a sibling app copies changes.
+- **The kinds in full** — three panels drawn at their widths, labelled as Planbook's. A sibling app
+  copying the page then copies them too.
+- **Nothing** — the `.md`'s "kept in step" sentence is narrowed to say a Planbook-only rule lives in
+  the `.md` alone.
+
+**Acceptance**
+- [ ] The owner's choice is recorded in `TESTING.md` § WO-1.78, and `design/style-guide.html` and
+      `design/style-guide.md` agree with it.
+- [ ] `style-guide.html` still opens from `file://`, links no stylesheet and fetches nothing.
+- [ ] `node tools/wo-sweep.mjs` is green.
+- [ ] `TESTING.md` § WO-1.78 carries these lines verbatim with the evidence for each.
+
+**Traps** — **The twin's values are literal, not variables**, and it practises what it documents:
+anything added is written the way a sibling app would copy it. **It is not in `SHELL`**, so no
+`CACHE` bump is owed. Nothing in `src/` moves.
+
+## WO-1.79 — the browser harness's header comment counts its files, and the count is wrong
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** — · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.75 made.)*
+
+**Booked 2026-10-11**, owner-directed, out of WO-1.77's verdict. A ride-along on
+`tools/verify-shell.mjs`: fold it into the next sitting that has that file open.
+
+**Why it exists.** The comment above the section imports in `tools/verify-shell.mjs` opens
+*"Seventy-five files, named after the surface they drive"*. There were ninety when WO-1.77 started
+and there are ninety-one now. `tools/README.md` carries the count too and WO-1.77 updated it there;
+nobody updates the comment, because nothing reads it. **A count written in prose is a count nothing
+maintains** — the rule `CLAUDE.md` applies to its own status line.
+
+**Deliverables**
+- **The comment names no count.** It keeps what it says about naming and about the two files that
+  are not sections. Do not swap in "ninety-one": that is the same defect, one file later.
+- **`tools/README.md`'s count**: either the sweep already checks it against the import list, and it
+  stays, or it does not, and it goes the same way. Find out which before touching it.
+- **`TESTING.md` § WO-1.79** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] The header comment in `tools/verify-shell.mjs` states no number of files.
+- [ ] `TESTING.md` § WO-1.79 says whether `tools/README.md`'s count is checked by anything, with the
+      line that checks it or the grep that found none, and what was done with it.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-1.79 carries these lines verbatim with the evidence for each.
+
+**Traps** — **This changes `tools/verify-shell.mjs`, a pipeline file**: read
+`plans/work-orders/README.md` § "The pipeline's own files" first. **Nothing in `src/` moves**, so no
+`CACHE` bump is owed.

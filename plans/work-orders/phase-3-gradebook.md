@@ -4613,3 +4613,34 @@ that are missing and drop any that are out.
 
 **Not in scope** — building any of it, and the dialogs outside this scope (attendance, roster,
 settings), which have their own work orders.
+
+## WO-3.59 — the assignments screen scrolls sideways at phone width
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.54
+**Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
+
+**Booked 2026-10-11**, owner-directed, out of WO-1.77's verdict. Measuring the assignment editor at
+390×844 under a coarse pointer, the implementer found the dialog inside 95vw with nothing in it
+scrolling, and **the assignments screen underneath scrolling sideways by 134px**, with one planted
+assignment. That is the page, not a dialog. `tools/verify/horizontal-overflow.mjs` checks the page at
+three sizes but never opens the assignments screen, so nothing has looked.
+
+**Check the premise first.** The cause is not diagnosed. The implementer named one candidate: the
+fixture's term with a blank date. Reproduce the 134px with a real-shaped class before changing
+anything, find the element that is wider than the screen, and write it down. If it is the fixture
+alone, close this work order on that finding and fix the fixture.
+
+**After WO-3.54**, which reshapes the list's top row and its rows. Fixing the overflow first would be
+undone by it, or would hide whether WO-3.54 caused a new one.
+
+**Acceptance**
+- [ ] `TESTING.md` § WO-3.59 names the element that overflowed and why, or shows that only the
+      fixture did.
+- [ ] At 390×844 under a coarse pointer, the assignments screen with assignments in at least two
+      categories has no horizontal overflow, and `horizontal-overflow.mjs` checks it there. With the
+      fix reverted, that check fails.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. If `src/` or `index.html`
+      changed, `CACHE` in `sw.js` is bumped.
+- [ ] `TESTING.md` § WO-3.59 carries these lines verbatim with the evidence for each.
+
+**Not in scope** — other screens at phone width, unless the same element causes theirs. Report them.
