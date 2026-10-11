@@ -6428,22 +6428,19 @@ draws at today. **The harness also fails a `.modal-panel` that carries no kind, 
 the forgotten class is caught before deploy rather than found by a teacher. The default is a safety
 net, and the check is the rule.
 
-**The proposed classification.** This is a starting point for the owner's ruling. Only the two the
+**The proposed classification.** This is a starting point for the owner's ruling. Only the three the
 owner named are settled.
 
 | Kind | Dialogs |
 |---|---|
-| **form, owner-named** | `assignmentModal` (Assignment), `aboutModal` (About Planbook) |
-| **form, proposed** | `settingsModal`, `yearModal`, `classesModal`, `termsModal`, `categoriesModal`, `letterScaleModal`, `signalsModal`, `signalCardModal`, `outreachModal`, `rosterPasteModal`, `rosterImportModal`, `studentModal`, `logSheetModal`, `daysOffModal`, `eventsModal`, `attendanceHistoryModal` |
+| **form, owner-named** | `assignmentModal` (Assignment), `aboutModal` (About Planbook), `outreachModal` (Draft an email, ruled 2026-10-11: 640, not a wider override) |
+| **form, proposed** | `settingsModal`, `yearModal`, `classesModal`, `termsModal`, `categoriesModal`, `letterScaleModal`, `signalsModal`, `signalCardModal`, `rosterPasteModal`, `rosterImportModal`, `studentModal`, `logSheetModal`, `daysOffModal`, `eventsModal`, `attendanceHistoryModal` |
 | **confirm, proposed** | `drivePullModal`, `drivePullConfirmModal`, `classDeleteModal`, `gradingModeModal`, `categoryRemoveModal`, `outreachConfirmModal`, `assignmentMoveModal`, `holdModal`, `assignmentDeleteModal`, `studentDeleteModal`, `restoreConfirmModal`, `daysOffConfirmModal`, `teacherModal`, `backupModal` |
 | **Already ruled, width unchanged** | report: `attendanceRecordModal`, `passHistoryModal` (900) · report, width 880 → 900: `assignmentCopyModal` · report with override: `gradesRecordModal` (980) · form: `rosterModal`, `attendanceKeysModal` (640) |
 
 **Questions at dispatch, for the owner**
 1. **The table.** Rule each "proposed" row. The owner may know a dialog better than its markup
    suggests; `teacherModal` and `backupModal` are the closest calls.
-2. **Whether `outreachModal` wants more than 640.** A draft email is a body of prose with a subject and
-   recipients over it. If the owner wants it wider, it gets a class of its own, the way Keys did. This
-   work order does not add a fourth tier.
 
 **Deliverables**
 - **`src/shell.css`**: `.modal-confirm`, `.modal-form` and `.modal-report`, each a `width` and
