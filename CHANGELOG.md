@@ -13,6 +13,21 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Opening an assignment from the calendar shows it on its own list — 2026-10-11
+
+WO-3.57, owner-directed, out of WO-3.56's verdict. Shell cache v187 → v188.
+
+- **Tapping a due date on the calendar now moves the class's list to that assignment's term**, and
+  remembers it. Before, the editor opened over whichever term the list was last on, so the work you
+  had just edited could be nowhere on screen when you closed it.
+- **The indigo note says the list moved**: *This list has moved to Quarter 2, the term "Persuasive
+  essay" is due in.* For work filed in one term but due in another, it says *is filed in*, because
+  that is the term the list goes to. No note when the list was already there.
+- **Close it with no name and the amber warning leads that same line**, as it does from the list.
+- **Known limit:** *+ New assignment* on the Scores screen still shows that warning only on the
+  list, the next time you open it. Where it should appear on the grid is being decided with the
+  rest of the dialogs.
+
 ### The assignment list sorts — 2026-10-11
 
 WO-3.55, owner-directed. Shell cache v186 → v187.

@@ -1778,8 +1778,16 @@ function openCalendarItem(button) {
     return;
   }
   if (item.kind === calendarDerived.ASSIGNMENT_DUE) {
+    /* THE LIST GOES TO THE ASSIGNMENT'S TERM (WO-3.57), and the term selection is here, in this
+       branch, and never in openClassOn(), whose other callers move no term. The open term is read
+       BEFORE openClassOn(), because that call's arrival can already have moved it to the term nearest
+       today, and whether the list "moved" is a question about where the teacher had it. Selecting the
+       term, opening the editor and setting the note are one call into src/assignments.js, whose
+       comment on openAssignmentFromCalendar() argues why: the editor's open clears the list's note, so
+       the order of the three is that file's to keep. */
+    const wasOnTermId = classes.getOpenTermId(item.classId);
     if (!openClassOn(item.classId, 'assignments')) return;
-    if (item.ref) assignments.openAssignmentEditor(item.ref, button);
+    if (item.ref) assignments.openAssignmentFromCalendar(item.ref, wasOnTermId, button);
     return;
   }
   if (item.kind === calendarDerived.MEETING_STATE) {

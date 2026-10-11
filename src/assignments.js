@@ -1499,6 +1499,71 @@ export function openAssignmentEditor(id, opener) {
 }
 
 /*
+  THE CALENDAR'S DOOR INTO THE EDITOR (WO-3.57, the owner's rulings 1 and 2). src/shell.js's
+  openClassOn() has already made the class the open one and put its assignment list up — on whichever
+  term was last open for it, which is not always the term the tapped assignment is filed in. Left
+  there, the row being edited is on no list behind the dialog, so the teacher closes the editor and
+  the work she just changed is nowhere on screen, and a nameless close's amber warning (WO-3.56) is set
+  for a term that is not up and dropped by the next paint.
+
+  So the list goes to the assignment's term, the move is STORED (selectTerm() writes
+  `planbook_openTermIds`, exactly as a create's move does), and the indigo note says so. That is not
+  CLAUDE.md's calendar-filter rule — "a door, never a stored preference" — which stops a remembered
+  filter silently hiding most of the year; this move is visible, said in a sentence, and shows the
+  teacher the work she tapped (ruling 1).
+
+  THE `termId`, NEVER THE TERM THE DUE DATE FALLS IN (the work order's Traps). They differ for work
+  WO-3.50 left unplaced and for any row filed before that rule, whose term is kept until a date is
+  next edited; the term the date picks is a list the row is not on. The sentence follows the same
+  fact: "is due in" only when the due date really is in that term, and "is filed in" when it is not,
+  because the owner's wording would otherwise be false for exactly the rows the Traps line is about.
+
+  `wasOnTermId` IS THE CLASS'S OPEN TERM AS IT STOOD BEFORE THE TAP, read by the caller before
+  openClassOn() — not the term the list is on now. openClassOn()'s arrival (src/attendance.js's
+  resetRegistry()) can already have moved the open term to the one nearest today, and that move is
+  not the one this note is about: the question ruling 2 asks is whether the teacher's list was
+  somewhere else, and her list is the term she last had open. So an arrival that moved the term away
+  and this function that moves it back draws no note and leaves the stored term where it started; an
+  arrival that already landed on the assignment's term still says the list moved, because from where
+  the teacher stood it did.
+
+  ONE FUNCTION, HERE, RATHER THAN A selectTerm() IN src/shell.js AND A NOTE ASKED FOR AFTER — the
+  choice the work order left to be argued. The reason is an ordering this file owns:
+  openAssignmentEditor() clears `listNote` on every open (beginSession(): "a note about an earlier move
+  is not about the row now being edited"), which is right for the list's own doors and would wipe an
+  arrival note set before it. The note has to be set AFTER the open, the term selected BEFORE it, and
+  the list repainted once both have happened — three steps whose order is the whole of the feature,
+  and splitting them across two files would leave src/shell.js knowing a fact about this file's
+  session state. The selection still happens in the calendar's ASSIGNMENT_DUE branch and nowhere in
+  openClassOn(), whose other callers (a meeting day, a row under Waiting to be graded) must move no
+  term (the Traps).
+*/
+export function openAssignmentFromCalendar(id, wasOnTermId, opener) {
+  const assignment = findAssignment(id);
+  if (!assignment) return;
+  const cls = getSelectedClass();
+  const term = cls && cls.id === assignment.classId ? termOf(cls.id, assignment.termId) : null;
+  /* selectTerm() refuses a term the class does not have, so a stale `termId` opens the editor exactly
+     as this door always did, over whichever list is up, and says nothing about a move it did not make. */
+  if (term && (getSelectedTerm() || {}).id !== term.id) selectTerm(term.id);
+  const moved = !!term && (getSelectedTerm() || {}).id === term.id && wasOnTermId !== term.id;
+  openAssignmentEditor(id, opener);
+  if (moved) {
+    /* Read after the open, which names a blank row before the dialog shows it (WO-3.56, ruling 2). */
+    const name = '“' + ((findAssignment(id) || assignment).name || UNTITLED_ASSIGNMENT) + '”';
+    const placed = termContaining(cls.id, dateOf(assignment.due));
+    const text = 'This list has moved to ' + termName(term) + ', the term ' + name
+      + (placed && placed.id === term.id ? ' is due in.' : ' is filed in.');
+    listNote = { classId: cls.id, termId: term.id, text };
+    announce(text);
+  }
+  /* Once, after both: the list behind the dialog is the assignment's term, with its note. Neither
+     selectTerm() nor the open repaints <main> — the first repaints the class bar only, the second only
+     when it had a note to clear. */
+  renderAssignments();
+}
+
+/*
   A NEW ASSIGNMENT, which is written to the document immediately and then opened for editing.
 
   There is no draft and no Save, which is this app's standing contract everywhere a teacher types

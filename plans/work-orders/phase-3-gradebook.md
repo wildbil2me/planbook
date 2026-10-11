@@ -4582,7 +4582,7 @@ as WO-3.49's `termId`.
 
 ## WO-3.57 — the nameless warning reaches the teacher wherever the editor closed
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.56
+**Ship** — · **Status** ✅ DONE — 2026-10-11 · **Size** S · **Depends on** WO-3.56
 **Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
 
 **Booked 2026-10-11**, out of WO-3.56's verdict (its ruling 7). Ruling 5's warning, *"Untitled
@@ -4610,6 +4610,12 @@ changed is nowhere on screen.
 The Scores screen is named in `editorFollows()` as a screen the editor can be open over, but no door
 from it opens the editor today.
 
+*(**That last sentence is wrong**, and the read-only premise check missed it: the Scores screen has
+had its own `+ New assignment` (`#scoresActions`, `data-assignment-new`) since WO-3.15. The
+implementer found it and the verifier confirmed it from the tree on 2026-10-11. A blank close from
+there sets the warning on the list's note, which the grid does not draw, so the teacher on Scores
+sees nothing; it is drawn the next time that class's list is opened on that term. Rulings 4 and 5.)*
+
 **Rulings, the owner's, 2026-10-11**
 1. **The calendar door moves the list to the assignment's term, and the move is stored.** It calls
    `selectTerm()` for the assignment's term before the editor opens, so the class's saved open term
@@ -4628,6 +4634,16 @@ from it opens the editor today.
    note sits, not which doors reach it, and goes to
    [WO-3.58](#wo-358--the-dialogs-behind-the-assignments-and-scores-screens-are-read-together-and-a-layout-is-ruled).
 
+**Rulings, the owner's, 2026-10-11, at the verdict**
+4. **The Scores screen's create door is accepted as it is and recorded.** A blank close from it
+   shows no warning on screen: it is said in the live region and drawn on the list's next visit for
+   that class and term. Where a warning should sit on the grid is a placement question and goes to
+   [WO-3.58](#wo-358--the-dialogs-behind-the-assignments-and-scores-screens-are-read-together-and-a-layout-is-ruled).
+   Acceptance 1 and 3 are reworded to say so; nothing in `src/` moves for it here.
+5. **The implementer's wording stands for a row filed outside its due date's term**: *…the term
+   X is filed in.* Ruling 2's *is due in* is false for those rows, and the note keeps it for every
+   other row.
+
 **Deliverables**
 - **`src/shell.js`**: the `ASSIGNMENT_DUE` branch of the calendar's item handler selects the
   assignment's term after `openClassOn()` and before `openAssignmentEditor()`.
@@ -4636,21 +4652,23 @@ from it opens the editor today.
   exports one function that does both, is the implementer's to argue in a comment. Either works;
   leaving it undecided does not.
 - **The harness**: checks for each Acceptance line, beside WO-3.56's.
-- **`TESTING.md` § WO-3.57**, with the door table above, the Scores screen named as having no door,
-  the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+- **`TESTING.md` § WO-3.57**, with the door table above, the Scores screen's create door named
+  (ruling 4), the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] Every door into the assignment editor is named in `TESTING.md` § WO-3.57, with whether a blank
-      close from it shows the warning. The Scores screen is named as having no door today.
-- [ ] Opening an assignment from the calendar while its class's list is open on another term moves
+- [x] Every door into the assignment editor is named in `TESTING.md` § WO-3.57, with whether a blank
+      close from it shows the warning. The Scores screen's `+ New assignment` is named as a door
+      whose warning is not drawn on screen, only said in the live region and drawn on the list's
+      next visit (ruling 4).
+- [x] Opening an assignment from the calendar while its class's list is open on another term moves
       the list to the assignment's term, stores that term as the class's open term, and the indigo
       note says the list moved. When the list was already on that term, no note is drawn and the
       stored term is unchanged.
-- [ ] A blank close from each door leaves the owner's sentence, in amber, on the list behind the
-      editor. From the calendar door it is checked with the list starting on another term, and the
-      arrival note follows the warning on the same line (checked in the DOM and computed style, not
-      the live region).
-- [ ] `CACHE` in `sw.js` is bumped.
+- [x] A blank close from each door that opens over the list leaves the owner's sentence, in amber,
+      on the list behind the editor; the Scores door is ruling 4's. From the calendar door it is
+      checked with the list starting on another term, and the arrival note follows the warning on
+      the same line (checked in the DOM and computed style, not the live region).
+- [x] `CACHE` in `sw.js` is bumped.
 
 **Traps** — **A term with no room for the date.** An assignment's `termId` is the term it is filed
 in, which is not always the term holding its due date (WO-3.50's unplaced work). Select the
@@ -4676,7 +4694,9 @@ rows. Nothing in `src/` moves here.
 
 **Why it waits for three rows.** WO-3.54 and WO-3.55 change the list the editor opens from, and
 WO-3.57 may move where the nameless warning shows. Reviewing before them would mean drawing dialogs
-that are about to change. **If any of those three ends up changing a dialog's layout, that change is
+that are about to change. **WO-3.57 hands it one case** (its ruling 4): a blank close from the Scores
+screen's `+ New assignment` sets the amber warning on the list's note, which the grid does not draw.
+Where that warning goes on the Scores screen is this review's to rule. **If any of those three ends up changing a dialog's layout, that change is
 input to this review, not a reason to start it early.** Read what they changed before drawing.
 
 **It also waits for WO-1.77**, added 2026-10-11, which gives the editor and its neighbours a

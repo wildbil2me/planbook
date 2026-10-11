@@ -13359,6 +13359,127 @@ selectors added in the working tree with no coarse-block rule: `.assign-sort-mar
 answered: it is the ↕ ▲ ▼ glyph inside the button, not a control, and the button around it carries
 the floor.
 
+### WO-3.57 — the nameless warning reaches the teacher wherever the editor closed
+
+**What was built.** The calendar's `ASSIGNMENT_DUE` branch in `src/shell.js`'s `openCalendarItem()`
+reads the class's open term (`classes.getOpenTermId()`) **before** `openClassOn()`, then hands the
+assignment, that term and the chip to `src/assignments.js`'s new `openAssignmentFromCalendar()`. That
+function calls `selectTerm()` for the assignment's **`termId`** when the list is not on it, opens the
+editor through the unchanged `openAssignmentEditor()`, and only then sets the indigo `listNote` —
+*This list has moved to Q2, the term "Persuasive essay" is due in.* — when the term the teacher had
+open before the tap was another one, and repaints the list once. `openClassOn()` is untouched, so the
+meeting-state chip and the *Waiting to be graded* row move no term. A blank close needed no new code:
+`applyPlan()` → `setNamelessNote()` already keeps a standing note for the same class and term behind
+the warning.
+
+**The doors into the assignment editor**, and whether a blank close from each shows the warning:
+
+| Door | A blank close shows the warning? |
+|---|---|
+| The name on a list row (`data-assignment-edit`, `src/shell.js`) | **Yes.** The row is on the list that is up, so the note is set for the term on screen. Unchanged by this work order. |
+| `+ New assignment` (`data-assignment-new`) | **Yes.** A create filed under another term moves the list there first (WO-3.50, ruling 1), so the note is set for the term on screen. Unchanged by this work order. |
+| A due date on the calendar (`ASSIGNMENT_DUE`, `src/shell.js`) | **Yes, since this work order.** Before it, only when the class's open term was the assignment's own; the list now moves to the assignment's `termId` first, so the warning is set for the term on screen, with the arrival note behind it on the same line. |
+| `+ New assignment` **on the Scores screen** (`data-assignment-new`, `index.html` `#scoresActions`) | **Not on screen.** The work order's premise says the Scores screen has no door, and it has this one: the same create through the same hook (the markup's own comment: *"it performs the same create action as the assignment list's button, through the same data-assignment-new hook and editor"*). A blank close names the row and sets the warning on the **list's** note, `#assignmentsMoved`, which exists only in `#assignmentsView`; the grid behind the editor draws no note, so the warning is said in the live region and nowhere visible. It is drawn later, the next time that class's list is opened on that term (`paintListNote()` keeps a note whose class and term match). **Accepted as it is**, the owner's ruling 4 at the verdict: where a warning goes on the grid is WO-3.58's to rule. |
+| The Scores screen, any other control | **No door.** `editorFollows()` in `src/shell.js` names Scores as a screen the editor can be open over; nothing on the grid opens an *existing* assignment's editor (`grep -n "openAssignmentEditor" src/*.js` finds callers only in `src/shell.js`'s `data-assignment-edit` route and `src/assignments.js`). |
+
+**Three decisions the work order left open, and which way they went.**
+- *One function in `src/assignments.js`, not a `selectTerm()` in `src/shell.js` and a note asked for
+  afterwards.* `openAssignmentEditor()` clears `listNote` on every open (`beginSession()`), which is
+  right for the list's own doors and would wipe an arrival note set before it. So the term is selected
+  before the open, the note set after it, and the list repainted once both have happened — an order
+  that is that file's session state, argued in the comment above `openAssignmentFromCalendar()`. The
+  selection is still reached only from the `ASSIGNMENT_DUE` branch.
+- *"Already on that term" means the term the class had open before the tap.* `openClassOn()`'s arrival
+  (`resetRegistry()` → `openTermNearToday()`, WO-2.54) can move the open term to the one nearest today
+  before the editor opens. Judged against that, a teacher whose list was on Q2 would see a note about a
+  move she never saw happen, and the stored term would read "unchanged" only by accident of the clock.
+  Judged against the term before the tap, an arrival that moved it away and this door that moves it
+  back draws no note and leaves the stored term where it started; an arrival that already landed on
+  the assignment's term still says the list moved, because from where she stood it did.
+- *"is due in" or "is filed in".* The owner's sentence says *the term X is due in*, and for a row
+  whose `termId` is not the term its due date falls in (the Traps line's case) that is false. The note
+  says *is filed in* for exactly those rows, and the owner's words for every other. **The owner ruled
+  at the verdict that this wording stands** (ruling 5).
+
+**Acceptance**
+
+- [x] Every door into the assignment editor is named in `TESTING.md` § WO-3.57, with whether a blank
+      close from it shows the warning. The Scores screen's `+ New assignment` is named as a door
+      whose warning is not drawn on screen, only said in the live region and drawn on the list's
+      next visit (ruling 4).
+      — *Reworded at the verdict, 2026-10-11, on the owner's ruling 4: it read "The Scores screen is
+      named as having no door today", which is false.* The table above names every door, read from the code: `openAssignmentEditor()` is called from
+      `src/shell.js`'s `data-assignment-edit` route and (through `openAssignmentFromCalendar()`) from the
+      calendar's `ASSIGNMENT_DUE` branch; `createAssignment()` is the `data-assignment-new` route, and
+      `grep -n "data-assignment-new" index.html` finds **two** buttons carrying it — line 1131 in
+      `#assignmentsView` and line 1322 in `#scoresActions`. The Scores screen has a create door, and a
+      blank close from it shows no warning on screen. Its row in the table says so, as ruling 4 asks.
+      Confirmed independently by the verifier from the tree, 2026-10-11.
+- [x] Opening an assignment from the calendar while its class's list is open on another term moves
+      the list to the assignment's term, stores that term as the class's open term, and the indigo
+      note says the list moved. When the list was already on that term, no note is drawn and the
+      stored term is unchanged.
+      — `tools/verify/copy-class.mjs`, beside WO-3.56's checks, driven through the real controls: the
+      source's list put on a term by its tab, the class's own Calendar pill, the real pager to November,
+      and the chip found by `data-calendar-ref`. Started on Q1 (`planbook_openTermIds` read `tm349_src1`), a
+      Q2 row's chip: `PASS | WO-3.57: opening an assignment from the calendar while its class's list is
+      open on another term moves the list to the assignment's term, stores that term … ::
+      {"in":{"reached":true,"chips":1,"before":["tm349_src1","tm349_src1"],"after":["assignmentsView",
+      "tm349_src2","tm349_src2","tm349_src2",true,"a357_cal"],"note":"This list has moved to Q2, the term
+      “WO-3.57 Persuasive essay” is due in.","amber":false,"color":"rgb(61, 79, 158)"},…}` — the stored
+      term, the open term and the active tab all Q2, the editor up on that row, the row on the list
+      behind it, and the note's four computed colours `.assign-moved`'s indigo with no amber modifier.
+      A plain ✕ close afterwards leaves the same note and the same `rev`.
+      Started on Q2: `PASS | WO-3.57: when the list was already on the assignment's term, the calendar
+      door draws no note and the stored term is unchanged … :: {"before":["tm349_src2","tm349_src2"],
+      "after":["assignmentsView","tm349_src2","tm349_src2","tm349_src2",true,"a357_cal"],"note":""…}`.
+      On this run's real October clock the arrival nearest today moved the open term to Q1 inside
+      `openClassOn()` before the door moved it back, so this is the case the "before the tap" decision
+      above exists for, not the trivial one.
+      And the Traps line, an assignment filed in Q1 with its due date in Q2: `PASS | WO-3.57: an assignment filed in
+      Q1 with its due date in Q2 takes the list to Q1 … :: {"before":["tm349_src2","tm349_src2"],
+      "after":["assignmentsView","tm349_src1","tm349_src1","tm349_src1",true,"a357_filed"],"note":"This
+      list has moved to Q1, the term “WO-3.57 Filed early” is filed in."…}`.
+- [x] A blank close from each door that opens over the list leaves the owner's sentence, in amber,
+      on the list behind the editor; the Scores door is ruling 4's. From the calendar door it is
+      checked with the list starting on another term, and the arrival note follows the warning on
+      the same line (checked in the DOM and computed style, not the live region).
+      — *Reworded at the verdict, 2026-10-11, on the owner's ruling 4: it read "from each door",
+      which the Scores screen's `+ New assignment` cannot meet, since a grid and no list is behind
+      it.* For the three doors that open over the list: one check, reading `#assignmentsMoved`'s text, its `assign-moved-nameless` class and its four
+      computed colours. The row-name door and `+ New assignment` are WO-3.56's own two checks re-read
+      (`clearedPost`, `byX`); the calendar door starts on Q1, opens a Q2 row, clears its name with an
+      `input` event and closes with the ✕. `PASS | WO-3.57: a blank close from each door
+      leaves the owner's sentence, in amber, on the list behind the editor … :: {"calendar":{"before":
+      ["tm349_src1","tm349_src1"],"after":[…,"tm349_src2",…,true,"a357_clear"],"note":"This list has
+      moved to Q2, the term “WO-3.57 To clear” is due in."…},"out":[false,"tm349_src2","“Untitled
+      assignment” was saved without a name. Edit it to give it a name. This list has moved to Q2, the
+      term “WO-3.57 To clear” is due in.","rgb(138, 109, 26)","rgb(255, 248, 230)","rgb(224, 168, 0)"],
+      "name":"Untitled assignment"}` — the editor closed, the list on Q2 with the row on it, the stored
+      name `Untitled assignment`, the warning first and the arrival note after it in one element, and
+      that element amber in all four computed colours. `byX.ok` and `clearedPost` are the same objects
+      WO-3.56's own checks read a few lines up, re-asserted here.
+- [x] `CACHE` in `sw.js` is bumped.
+      — `planbook-shell-v187` → `planbook-shell-v188` (`src/assignments.js` and `src/shell.js` are both
+      in `SHELL`).
+
+**The runs.** `node tools/verify-shell.mjs` on the delivered tree: `2012 checks · 2012 passed · 0 failed
+· 0 skipped`, 64,252 lines, 31.9 lines per check, 1081s, exit 0, 2026-10-11 on the real clock — and
+again after the mutation round was reverted, the same `2012 · 2012 · 0 · 0`, 1085s, exit 0.
+`node tools/wo-sweep.mjs`: `50 checks · 47 passed · 0 failed · 3 to review`, exit 0, after
+`tools/README.md`'s call-site line went 1996 → 2000; the reviews are the standing three.
+
+**Mutation, two plants in one run**, each marked `MUTATION WO-3.57`, both in
+`openAssignmentFromCalendar()`, the delivered file copied aside first and copied back after, `cmp`
+reporting it identical and `grep -rn "MUTATION WO-3.57" src index.html tools sw.js TESTING.md` empty
+before the next write. *M1, the Traps' mistake — the term the due date falls in instead of the
+`termId`*: the filed-early check went red, `"after":["assignmentsView","tm349_src2",…]` with *"This list
+has moved to Q2, the term “WO-3.57 Filed early” is due in."* — the list on a term its row is not on.
+*M2, "already on that term" judged after `openClassOn()`'s arrival instead of before the tap*: the
+same-term check went red, `"note":"This list has moved to Q2, …"` on a list that started on Q2 —
+because the real October clock's arrival had moved it to Q1 on the way. `2012 checks · 2010 passed ·
+2 failed`, exit 1, those two and no others.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

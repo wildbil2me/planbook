@@ -1500,6 +1500,149 @@ console.log('\n--- one assignment into several classes, one line per class (WO-3
       color: moved356.color, bg: moved356.bg, left: moved356.left }));
   await backToQ2();
 
+  /*
+    ── THE CALENDAR'S DOOR INTO THE EDITOR TAKES THE LIST TO THE ASSIGNMENT'S TERM (WO-3.57) ──
+
+    Beside WO-3.56's checks because they are the other two doors: the name on a list row (the cleared-
+    and-closed check above) and + New assignment (`byX` above). This is the third — a due date on the
+    calendar — reached the way a teacher reaches it: the source's list put on one term by its tab, the
+    class's own Calendar pill, the real pager to November, and the chip for that assignment.
+
+    Three assignments of its own. CAL is filed in Q2 and due in Q2, for the arrival note and the
+    stored term. CLEAR is the same shape, for a blank close. FILED is filed in Q1 with a due date in Q2
+    — an old row the due-date rule has not re-filed yet (WO-3.50's no-migration) — for the Traps line:
+    the list must go to Q1, where the row IS, and never to Q2, where its date is.
+
+    THE CLOCK. openClassOn()'s arrival moves the open term to the one nearest today (WO-2.54) before the
+    editor opens, so on a real October clock it lands on Q1 and under --today in November on Q2. Every
+    case below is built to pass either way, because the note is judged against the term the teacher had
+    open before the tap and the stored term is read after it.
+  */
+  const CAL = 'a357_cal', CLEAR = 'a357_clear', FILED = 'a357_filed';
+  await evalJs(`(async function(){ var s = window.planbook.store;
+    s.update(function(doc){
+      function a(id, termId, name, due){ doc.assignments.push({ id:id, classId:'${SRC}', termId:termId,
+        categoryId:'${SRC_ESSAYS}', name:name, points:10, assigned:'2026-11-16', due:due }); }
+      a('${CAL}', 'tm349_src2', 'WO-3.57 Persuasive essay', '2026-11-18');
+      a('${CLEAR}', 'tm349_src2', 'WO-3.57 To clear', '2026-11-19');
+      a('${FILED}', 'tm349_src1', 'WO-3.57 Filed early', '2026-11-20');
+    });
+    await s.flush(); return 1; })()`);
+  const monthIndex357 = (iso) => Number(iso.slice(0, 4)) * 12 + Number(iso.slice(5, 7));
+  /* Through the real pager, capped — calendar-drawn.mjs's pageToMonth(), for the reason it gives. */
+  const pageTo357 = async (iso) => {
+    for (let i = 0; i < 30; i++) {
+      const from = await evalJs('window.planbook.calendarView.calendarModel().from');
+      const delta = monthIndex357(iso) - monthIndex357(from);
+      if (delta === 0) return true;
+      await clickSel('#calendarView [data-calendar-page="' + (delta < 0 ? 'earlier' : 'later') + '"]');
+      await sleep(80);
+    }
+    return false;
+  };
+  const READ357 = `(function(){ var r = (${READ356});
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('#termNav [data-term-select]'));
+    var raw = localStorage.getItem('planbook_openTermIds');
+    r.view = (function(){ var e = document.querySelector('main > :not(.hidden)'); return e ? e.id : ''; })();
+    r.stored = raw ? (JSON.parse(raw)['${SRC}'] || '') : '';
+    r.clearName = (window.planbook.store.getDoc().assignments.filter(function(x){ return x.id === '${CLEAR}'; })[0] || {}).name;
+    r.open = window.planbook.classes.getSelectedTermId();
+    r.tab = tabs.filter(function(b){ return b.classList.contains('active'); })
+      .map(function(b){ return b.getAttribute('data-term-select'); }).join(',');
+    r.editing = (document.querySelector('#assignmentModal [data-assignment-id]') || { getAttribute: function(){ return ''; } })
+      .getAttribute('data-assignment-id');
+    r.rows = Array.prototype.map.call(document.querySelectorAll('#assignmentsView [data-assignment-edit]'),
+      function(b){ return b.getAttribute('data-assignment-edit'); });
+    return r; })()`;
+  const read357 = async () => { await flush(); return evalJs(READ357); };
+  /* The source's list on `termId` by its own tab, then its Calendar pill, then the chip. */
+  const fromCalendar = async (termId, assignmentId) => {
+    await closeIfOpen349();
+    await toSourceList();
+    await clickSel('#termNav [data-term-select="' + termId + '"]');
+    await sleep(200);
+    const before = await read357();
+    await clickSel('#assignmentsView [data-screen-nav] [data-class-screen="calendar"]');
+    await sleep(250);
+    const reached = await pageTo357('2026-11-01');
+    const chips = await evalJs(`document.querySelectorAll('#calendarGrid .calendar-chip[data-calendar-kind="assignment-due"]'
+      + '[data-calendar-ref="${assignmentId}"]').length`);
+    await clickSel('#calendarGrid .calendar-chip[data-calendar-kind="assignment-due"][data-calendar-ref="'
+      + assignmentId + '"]');
+    await sleep(250);
+    const after = await read357();
+    return { before, after, reached, chips };
+  };
+  const arrival = (name, term, verb) => 'This list has moved to ' + term + ', the term “' + name + '” is '
+    + verb + ' in.';
+  const isIndigo = (r) => !r.amber && r.color === INDIGO.color && r.bg === INDIGO.bg && r.left === INDIGO.left
+    && r.top === INDIGO.top;
+  const said357 = (t) => ({ reached: t.reached, chips: t.chips,
+    before: [t.before.stored, t.before.tab], after: [t.after.view, t.after.stored, t.after.open, t.after.tab,
+      t.after.editorOpen, t.after.editing], note: t.after.note, amber: t.after.amber, color: t.after.color });
+
+  /* ── Acceptance 2: from another term, the list moves, the term is stored, and the note says so ── */
+  const moveIn = await fromCalendar('tm349_src1', CAL);
+  const plainClose = async () => { await xClose(); return read357(); };
+  const moveClosed = await plainClose();
+  check('WO-3.57: opening an assignment from the calendar while its class\'s list is open on another term '
+    + 'moves the list to the assignment\'s term, stores that term as the class\'s open term '
+    + '(planbook_openTermIds), and the indigo note says the list moved — the editor up on that row, and the '
+    + 'row on the list behind it; a plain close leaves the note',
+    moveIn.reached && moveIn.chips === 1 && moveIn.before.stored === 'tm349_src1'
+      && moveIn.after.view === 'assignmentsView' && moveIn.after.editorOpen && moveIn.after.editing === CAL
+      && moveIn.after.stored === 'tm349_src2' && moveIn.after.open === 'tm349_src2'
+      && moveIn.after.tab === 'tm349_src2' && moveIn.after.rows.indexOf(CAL) !== -1
+      && moveIn.after.note === arrival('WO-3.57 Persuasive essay', 'Q2', 'due') && isIndigo(moveIn.after)
+      && !moveClosed.editorOpen && moveClosed.note === moveIn.after.note && isIndigo(moveClosed)
+      && moveClosed.rev === moveIn.after.rev,
+    JSON.stringify({ in: said357(moveIn), closed: [moveClosed.note, moveClosed.rev, moveIn.after.rev] }));
+
+  /* ── and from the same term: no note, and the stored term is where it was ── */
+  const stayIn = await fromCalendar('tm349_src2', CAL);
+  await xClose();
+  check('WO-3.57: when the list was already on the assignment\'s term, the calendar door draws no note and '
+    + 'the stored term is unchanged — whatever term the arrival nearest today passed through on the way',
+    stayIn.reached && stayIn.chips === 1 && stayIn.before.stored === 'tm349_src2'
+      && stayIn.after.editorOpen && stayIn.after.editing === CAL
+      && stayIn.after.stored === 'tm349_src2' && stayIn.after.tab === 'tm349_src2' && stayIn.after.note === '',
+    JSON.stringify(said357(stayIn)));
+
+  /* ── the Traps: the term it is FILED in, never the term its date falls in ── */
+  const filedIn = await fromCalendar('tm349_src2', FILED);
+  await xClose();
+  check('WO-3.57: an assignment filed in Q1 with its due date in Q2 takes the list to Q1, where its row is, '
+    + 'not to Q2 where its date is — and the note says "is filed in", because "is due in" would be false',
+    filedIn.reached && filedIn.chips === 1 && filedIn.before.stored === 'tm349_src2'
+      && filedIn.after.editorOpen && filedIn.after.editing === FILED
+      && filedIn.after.stored === 'tm349_src1' && filedIn.after.tab === 'tm349_src1'
+      && filedIn.after.rows.indexOf(FILED) !== -1
+      && filedIn.after.note === arrival('WO-3.57 Filed early', 'Q1', 'filed') && isIndigo(filedIn.after),
+    JSON.stringify(said357(filedIn)));
+
+  /* ── Acceptance 3: a blank close from the calendar door, the list starting on another term ── */
+  const blankIn = await fromCalendar('tm349_src1', CLEAR);
+  await typeName(EDITOR_NAME, '');
+  const blankTyped = await read357();
+  await xClose();
+  const blankOut = await read357();
+  const clearArrival = arrival('WO-3.57 To clear', 'Q2', 'due');
+  check('WO-3.57: a blank close from each door leaves the owner\'s sentence, in amber, on the list behind the '
+    + 'editor — the row name and + New assignment (WO-3.56\'s checks above, re-read here) and the calendar, '
+    + 'started on another term, where the arrival note follows the warning on the same line (the DOM and '
+    + 'computed style, not the live region)',
+    byX.ok && isAmber(clearedPost) && clearedPost.note === NAMELESS
+      && blankIn.reached && blankIn.chips === 1 && blankIn.before.stored === 'tm349_src1'
+      && blankIn.after.note === clearArrival && blankTyped.editorOpen && blankTyped.fieldValue === ''
+      && !blankOut.editorOpen && blankOut.view === 'assignmentsView' && blankOut.tab === 'tm349_src2'
+      && blankOut.rows.indexOf(CLEAR) !== -1
+      && blankOut.clearName === UNTITLED
+      && blankOut.note === NAMELESS + ' ' + clearArrival && isAmber(blankOut),
+    JSON.stringify({ calendar: said357(blankIn), out: [blankOut.editorOpen, blankOut.tab, blankOut.note,
+      blankOut.color, blankOut.bg, blankOut.left], name: blankOut.clearName }));
+  await closeIfOpen349();
+  await backToQ2();
+
   /* ── THE WIDE LIST (Acceptance 8) ── at 1280px under a fine pointer, and either side of the measured
      919/920 breakpoint src/assignments.css records. Read with the source and three classes on. */
   const LAYOUT349 = `(function(){

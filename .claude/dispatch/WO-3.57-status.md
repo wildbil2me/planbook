@@ -1,0 +1,11 @@
+# WO-3.57 dispatch status
+
+- 2026-10-11 16:54 EDT gates PASS (dep WO-3.56 DONE, tree clean, no dispatch files).
+- 2026-10-11 16:54 EDT route Claude Opus — on its own merits: teacher-facing prose (the indigo arrival sentence, TESTING.md section, CHANGELOG entry) and a judgment trap (select termId, never the date's term; keep it out of openClassOn()). Runner-up Codex (Size S, fully ruled, mechanically checkable) set aside on the prose. No Codex probe run, not a Codex route.
+- 2026-10-11 16:54 EDT claimed: --start ran (🤖 CLAIMED — 2026-10-11). wo-gate printed rolling-window 21.0M proxy units, above the p25/median death marks — a session-limit death is plausible this run.
+- 2026-10-11 16:54 EDT brief written: .claude/dispatch/WO-3.57-brief.md (~13 KB, markers filled; flags the listNote clear in openAssignmentEditor's edit path as the ordering trap).
+- 2026-10-11 16:54 EDT implementer spawned at Opus (no model override), handed .claude/dispatch/WO-3.57-brief.md; awaiting return (expect 20-40 min; a flat trail for the first ~20 min is reading, not death).
+- 2026-10-11 17:54 EDT implementer returned: calendar door built (openAssignmentFromCalendar in src/assignments.js, called from shell.js ASSIGNMENT_DUE), CACHE v188, verify-shell 2012/2012 and sweep green by its claim; it left Acceptance 1 and 3 OPEN — it says the Scores screen HAS a door (+ New assignment in #scoresActions, index.html ~1322) and a blank close there draws no warning. Owner ruling needed.
+- 2026-10-11 17:54 EDT handoff written: --handoff ran, row reads 🔍 AWAITING VERDICT. Verifier owed in a fresh session.
+- 2026-10-11 21:57 GMT fresh session (2nd invocation): gate PASS on 🔍 AWAITING VERDICT; spawning work-order-verifier at Opus as a FIRST pass, told to confirm/refute the implementer's Scores-door claim (index.html ~1322) from the tree. Awaiting verdict.
+- 2026-10-11 22:16 GMT verdict in: FAIL — premise defect, not build defect. Scores + New assignment door (index.html:1322, since WO-3.15/c279498) confirmed from the tree; blank close sets the warning on #assignmentsMoved which is not in #scoresView. AC2, AC4 met; AC1, AC3 correctly open. verify-shell 2012/2012 EXIT 0, sweep 47·0·3 EXIT 0, no live MUTATION. No correction dispatched: needs owner ruling (accept+reword / grid placement / Scores follows list). Row stays 🔍 AWAITING VERDICT.

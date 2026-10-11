@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1996 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2000 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2914,6 +2914,15 @@ held while the editor is open in two cases. None is a failure arm, and the secti
 sort tap — one site out, one in. Full run: `2008 checks · 2008 passed · 0 failed · 0 skipped`, 64,109
 lines, 31.9 lines per check, 1067s, exit 0, 2026-10-11 on the real clock. The two planted faults are
 in `TESTING.md` § WO-3.55.
+
+**WO-3.57 moved it from 1996 to 2000, and the executed count from 2008 to 2012 — four sites, four
+results, no new file.** All four are literal call sites in `verify/copy-class.mjs`, straight after
+WO-3.56's nameless-warning checks and on the same fixture: the calendar door from another term (the
+list moves, `planbook_openTermIds` stores it, the indigo note), from the same term (no note, the stored
+term unchanged), the Traps case (a row filed in Q1 and due in Q2 takes the list to Q1), and a blank
+close from each door. None is in a loop and none is a failure arm. Full run: `2012 checks · 2012
+passed · 0 failed · 0 skipped`, 64,252 lines, 31.9 lines per check, 1081s, exit 0, 2026-10-11 on the
+real clock. The planted faults are in `TESTING.md` § WO-3.57.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
