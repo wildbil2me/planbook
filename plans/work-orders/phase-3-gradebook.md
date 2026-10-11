@@ -4421,7 +4421,9 @@ the way `paintListNote()` keys `listNote`, and clear it on the switch away from 
 - **`src/assignments.css`**: § ASSIGN SORT lifted, its coarse rule into the existing block (with
   `min-width: 44px`, see above) and its button into the `touch-action` selector.
 - **The harness**: a new check file for the rulings above, including the write-nothing line.
-  It also runs `horizontal-overflow.mjs`'s assignments-screen check (WO-3.59) with a sort on.
+  It also runs `horizontal-overflow.mjs`'s assignments-screen check (WO-3.59) with a sort on: that
+  block plants a stand-in button in the Actions `<th>` (`data-wo359-probe`), and once the real
+  ↺ Your order exists, a real sort tap there replaces the stand-in.
 - **`design/mockups/proposed-assign-tidy.css`'s § ASSIGN SORT banner, `README.md` section and
   `index.html` entry** amended to say the section landed.
 - **`TESTING.md` § WO-3.55**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
