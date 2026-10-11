@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1946 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1953 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2844,6 +2844,17 @@ failure arm, and the section's one guard is a `skip()`. `roster-who.mjs` gained 
 now pins the panel at 480 so the wider panel cannot make WO-1.74's measurement pass for the wrong
 reason. Full run: `1950 checks · 1950 passed · 0 failed · 0 skipped`, 62,335 lines, 32.0 lines per
 check, 1015s, exit 0, 2026-10-10 on the real clock. Mutation round in `TESTING.md` § WO-1.76.
+
+**WO-3.56 moved it from 1946 to 1953, and the executed count from 1950 to 1957 — seven sites, seven
+results, and no new file.** All seven are in `verify/copy-class.mjs`, after the WO-3.49 block: the copy
+dialog's button disabled on a blank or all-spaces name from both doors; an unnamed assignment named
+once on open, and a named one not written; `+ New assignment` still blank and still undone by Cancel;
+Duplicate on an unnamed source pre-named, its Cancel writing nothing and its copy naming the source in
+the same save; Done refusing a blank name; the ✕, Escape and the backdrop each closing and leaving the
+amber warning; and the moved-work note still indigo on its own. None is a failure arm. One existing
+check moved without a new site: WO-3.50's *Done on that new assignment* in `verify/assignments.mjs` now
+types a name before Done, because Done refuses a blank one. Full run: `1957 checks · 1957 passed · 0
+failed · 0 skipped`, 62,614 lines, 32.0 lines per check, 1025s, exit 0, 2026-10-11 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

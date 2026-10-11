@@ -216,6 +216,26 @@ const MOVE_KEEP_ID = 'assignmentMoveKeep';
 const EDITOR_TERM_NOTE_ID = 'assignmentTermNote';
 const LIST_NOTE_ID = 'assignmentsMoved';
 
+/*
+  WHAT AN ASSIGNMENT WITH NO NAME IS CALLED (WO-3.56) — a fact, not a fallback string. Every reader in
+  this file draws a nameless assignment under these words, and since WO-3.56 they are also the name
+  one TAKES: opened to edit or to duplicate (the owner's ruling 2), or closed with the name field blank
+  (ruling 5). So the words on screen before and after the write are the same words, and they live
+  here once. Exported for the readers in other modules that each keep a quoted copy today
+  (src/calendar-derived.js's UNTITLED, src/glance.js's UNTITLED_ASSIGNMENT and the rest) — moving
+  them onto this one is a follow-up that work order left out of its scope, not a thing done here.
+*/
+export const UNTITLED_ASSIGNMENT = 'Untitled assignment';
+
+/* Blank is blank with whitespace in it (the owner's rulings 1 and 4): a name of only spaces draws as
+   nothing on every row it is on, so it is refused, and named, exactly as an empty one is. */
+function nameIsBlank(name) { return !String(name == null ? '' : name).trim(); }
+
+/* The owner's sentence for ruling 5, word for word. It says "Edit it", not "Tap Edit", because
+   WO-3.54 takes the Edit button away and the name opens the editor instead. */
+const NAMELESS_WARNING = '“' + UNTITLED_ASSIGNMENT + '” was saved without a name. Edit it to give it '
+  + 'a name.';
+
 const DELETE_LEAD_ID = 'assignmentDeleteLead';
 const DELETE_FACTS_ID = 'assignmentDeleteFacts';
 const DELETE_BTN_ID = 'assignmentDeleteBtn';
@@ -309,7 +329,8 @@ let pendingMove = null;
    editor's Cancel — "Nothing was added" — can put the list back where the teacher had it. */
 let createdFromTermId = '';
 /* THE LIST'S NOTE (WO-3.50, ruling 1 and Acceptance 2): `{ classId, termId, text }` — what moved onto
-   the term on screen, and why. A VIEW STATE: drawn only while that class and that term are the ones
+   the term on screen, and why. Since WO-3.56 it can also carry `nameless: true`, which is the warning
+   that an assignment was closed with no name and took one (ruling 5), drawn in amber. A VIEW STATE: drawn only while that class and that term are the ones
    up, dropped the first time they are not, and never stored anywhere. */
 let listNote = null;
 
@@ -483,7 +504,7 @@ function assignmentRow(assignment, cls, index, siblings) {
   const row = document.createElement('tr');
 
   const name = cell(row, 'assign-name');
-  name.textContent = assignment.name || 'Untitled assignment';
+  name.textContent = assignment.name || UNTITLED_ASSIGNMENT;
   /* EXTRA CREDIT, in words. A lone 0 in the points column reads as a mistake somebody made; the
      badge says it is a thing the teacher chose, which is what the owner's 2026-08-09 decision
      makes it. Quiet indigo rather than amber — nothing is wrong here. */
@@ -616,6 +637,10 @@ function paintListNote(cls, termId) {
   if (!el) return;
   el.textContent = listNote ? listNote.text : '';
   el.classList.toggle('hidden', !listNote);
+  /* THE AMBER MODIFIER (WO-3.56, ruling 5) is set for the nameless warning and for nothing else, and
+     taken off on every paint that is not one — the element is reused, so a moved-work note drawn
+     after a warning would otherwise inherit its amber. */
+  el.classList.toggle('assign-moved-nameless', !!listNote && !!listNote.nameless);
 }
 
 /*
@@ -1082,7 +1107,7 @@ function renderEditorFields() {
   }
   if (title) {
     title.textContent = assignment && cls
-      ? (assignment.name || 'Untitled assignment') + ' — ' + cls.name
+      ? (assignment.name || UNTITLED_ASSIGNMENT) + ' — ' + cls.name
       : 'Assignment';
   }
   if (!assignment || !cls) { paintTermNote(''); paintAccommodationPrompt(null, ''); return; }
@@ -1132,6 +1157,22 @@ export function openAssignmentEditor(id, opener) {
     if (!settled.close) return;
     /* The row it moved is no longer on the list behind the dialog, and nothing else here repaints. */
     if (settled.wrote) renderAssignments();
+  }
+  /*
+    AN EXISTING ASSIGNMENT WITH NO NAME TAKES ONE WHEN IT IS OPENED (WO-3.56, the owner's ruling 2),
+    and it is WRITTEN here, on open, because this editor has no Cancel to promise anything to: every
+    field in it is written as it is typed. The words are the ones every reader already draws for it,
+    so nothing on screen changes; what changes is that the field now shows them, as a name the teacher
+    can see and type over. Once — the next opening finds a name and writes nothing — and only for the
+    row being opened: nothing names the rest of the year (the work order's Out of scope).
+
+    NEVER A CREATE (the Traps). createAssignment() writes `name: ''` and opens this same panel without
+    coming through here, and a create's empty field is a field waiting to be typed into, not an
+    assignment nobody named. `creatingId` is checked anyway, before it is cleared below, so a create
+    re-opened through this door is still not pre-named under the teacher's caret.
+  */
+  if (id !== creatingId && nameIsBlank(assignment.name)) {
+    update(() => { assignment.name = UNTITLED_ASSIGNMENT; });
   }
   editingId = id;
   creatingId = '';
@@ -1403,17 +1444,33 @@ function scoresCarried(assignment, cls) { return enteredCount(assignment, cls); 
 */
 function applyPlan(assignment, cls, plan, follow) {
   const moving = plan.kind === 'move';
-  if (!moving && !plan.fill) return false;
+  /* RULING 5'S NAME GOES IN THIS SAME update() (WO-3.56's Traps): a close that both names a blank
+     assignment and moves it is one save and one `rev`, never two. Done refuses a blank name before it
+     gets here (settleEditor()), so every blank this function finds is a close ruling 5 governs — the
+     ✕, Escape, the backdrop, opening another row, or the scored-move confirm one of those opened — and
+     it is read here rather than passed in, so no caller can forget to pass it. */
+  const naming = nameIsBlank(assignment.name);
+  if (!moving && !plan.fill && !naming) return false;
   const from = termOf(cls.id, assignment.termId);
   const scores = moving ? scoresCarried(assignment, cls) : 0;
   update(() => {
+    if (naming) assignment.name = UNTITLED_ASSIGNMENT;
     if (plan.fill) assignment.due = plan.fill;
     if (moving) assignment.termId = plan.term.id;
   });
-  const named = '“' + (assignment.name || 'Untitled assignment') + '”';
+  /* The warning LEADS whatever else the close says, in the list's note and in the live region alike:
+     the region holds one message, so two announce() calls would leave only the second, and a note
+     about a move replacing the warning would hide the one thing the teacher has to act on. */
+  const warn = naming ? NAMELESS_WARNING + ' ' : '';
+  const named = '“' + (assignment.name || UNTITLED_ASSIGNMENT) + '”';
   if (!moving) {
-    announce(named + ' had no due date, so it is now due on its assigned date, ' + shortDate(plan.fill)
-      + '.');
+    if (plan.fill) {
+      announce(warn + named + ' had no due date, so it is now due on its assigned date, '
+        + shortDate(plan.fill) + '.');
+    } else {
+      announce(NAMELESS_WARNING);
+    }
+    if (naming) setNamelessNote(cls.id, assignment.termId, '');
     return true;
   }
   const why = plan.fill
@@ -1424,16 +1481,41 @@ function applyPlan(assignment, cls, plan, follow) {
   const selected = getSelectedClass();
   if (follow && selected && selected.id === cls.id) {
     selectTerm(plan.term.id);
-    listNote = { classId: cls.id, termId: plan.term.id,
-      text: named + ' moved here from ' + termName(from) + ': ' + why
-        + ', and the due date picks the term.' + carried };
-    announce('Moved ' + named + ' to ' + termName(plan.term) + ', because ' + why + '. The list has '
-      + 'moved to ' + termName(plan.term) + ' with it.' + carried);
+    const moved = named + ' moved here from ' + termName(from) + ': ' + why
+      + ', and the due date picks the term.' + carried;
+    listNote = { classId: cls.id, termId: plan.term.id, text: moved };
+    if (naming) setNamelessNote(cls.id, plan.term.id, moved);
+    announce(warn + 'Moved ' + named + ' to ' + termName(plan.term) + ', because ' + why + '. The list '
+      + 'has moved to ' + termName(plan.term) + ' with it.' + carried);
   } else {
-    announce('Moved ' + named + ' from ' + termName(from) + ' to ' + termName(plan.term) + ', because '
-      + why + '.' + carried);
+    if (naming) setNamelessNote(cls.id, assignment.termId, '');
+    announce(warn + 'Moved ' + named + ' from ' + termName(from) + ' to ' + termName(plan.term)
+      + ', because ' + why + '.' + carried);
   }
   return true;
+}
+
+/*
+  RULING 5'S VISIBLE WARNING (WO-3.56): on the list's note, the line under the list's head the
+  moved-work note already uses, in amber. announce() is beside it at the call and is NOT the warning —
+  it writes to an .sr-only region and draws nothing. Set for the class and the term the assignment is
+  now in, so it is drawn on that list and dropped by the first render of any other (paintListNote()),
+  the same view-state life the moved-work note has. When the same close also moved the work, both
+  sentences share the one line, the warning first, and the line is amber: the move is something to
+  read and the warning is something to act on.
+
+  NO MARK ON THE ROW (the work order's Deliverables): the row reads "Untitled assignment" exactly as it
+  always did, and the note is the one thing that says the words are now a stored name.
+*/
+function setNamelessNote(classId, termId, moved) {
+  /* A note already up for this same list — a create that took the list onto today's term — is kept
+     behind the warning rather than replaced by it: it is still true, and it is the only sentence
+     saying why the list is on a term the teacher did not pick. */
+  const standing = !moved && listNote && !listNote.nameless && listNote.classId === classId
+    && listNote.termId === termId ? listNote.text : '';
+  const after = moved || standing;
+  listNote = { classId, termId, nameless: true,
+    text: NAMELESS_WARNING + (after ? ' ' + after : '') };
 }
 
 /*
@@ -1447,13 +1529,38 @@ function applyPlan(assignment, cls, plan, follow) {
   scores opens the confirm (ruling 4) — before ANY write, so declining leaves the document exactly as
   it was. Dates no term holds paint the editor's amber line, once: the same close again is the
   teacher having read it, and goes through, writing ruling 3's copy if there is one.
+
+  A THIRD STOP, AND IT IS DONE'S ALONE (WO-3.56, the owner's ruling 4). `door` names the gesture when
+  it is one that may refuse: 'done' for the Done button, 'copy' for the create door. Done with a blank
+  name — whitespace is blank — does not close: the editor says the assignment needs a name and puts the
+  caret in the field, before anything else is asked or written. Every other close (`door` absent: the
+  ✕, Escape, the backdrop, opening another row) is ruling 5's and is never refused for a name — a
+  dialog that will not let Escape out is a trap, and the no-lost-draft contract keeps a half-written
+  assignment rather than discarding it — so it closes and applyPlan() names it. `follow` was never this
+  distinction: it says whether a term-filtered list is up behind the dialog, and Done, the ✕ and
+  Escape all pass the same value for it.
+
+  THE CREATE DOOR REFUSES TOO ('copy'), and that is a decision this work order left open (its Traps).
+  The other way — let the blank through and lean on the copy dialog's own refusal (ruling 1) — fails
+  at both ends. The editor would close as ruling 5 says a non-Done close does, so the new assignment
+  would be stored as "Untitled assignment" and the copy dialog would open with those words already in
+  its name field and its button enabled: the very nameless copies ruling 1 exists to stop, one tap
+  away. And if the door instead skipped ruling 5, the copy dialog's Cancel — which writes nothing,
+  its standing promise — would leave a nameless row behind, with no warning, from a create the
+  teacher had already ended. Refusing here costs one sentence and keeps everything she typed: the
+  editor stays up, Cancel is still the create's way out, and the name she types is the one every
+  copy then starts from. The door is a Done that also copies, so it asks what Done asks.
 */
-export function settleEditor(follow) {
+export function settleEditor(follow, door) {
   const assignment = editingId ? findAssignment(editingId) : null;
   const cls = assignment ? findClass(assignment.classId) : null;
   if (!assignment || !cls || !editorDates || editorDates.id !== assignment.id) {
     endSession();
     return { close: true, wrote: false };
+  }
+  if ((door === 'done' || door === 'copy') && nameIsBlank(assignment.name)) {
+    refuseBlankName(door);
+    return { close: false, wrote: false };
   }
   const plan = closePlan(assignment);
   if (plan.kind === 'unplaced') {
@@ -1475,6 +1582,21 @@ export function settleEditor(follow) {
   return { close: true, wrote };
 }
 
+/* Done's refusal (ruling 4): said on the editor's own error line — which also speaks it, for a
+   screen-reader user (showAssignmentError()) — and the caret put in the name field, the way the
+   editor already stops on dates no term holds. Typing into the field takes the line down again
+   (editAssignmentField()). The name field is found by its hook rather than by being first, so a
+   reordered panel cannot send the caret somewhere else. */
+function refuseBlankName(door) {
+  showAssignmentError(door === 'copy'
+    ? 'This assignment needs a name before it is copied. Type one in the Name field, and every copy '
+      + 'starts from it.'
+    : 'This assignment needs a name. Type one in the Name field, then press Done.');
+  const box = document.getElementById(EDITOR_FIELDS_ID);
+  const field = box && box.querySelector('[data-assignment-field="name"]');
+  if (field) field.focus();
+}
+
 /*
   A MOVE THAT CARRIES SCORES SAYS SO BEFORE IT HAPPENS (ruling 4). Scores are keyed by assignment, so
   moving a scored one takes them out of one term's grades and into another's — and the one it leaves
@@ -1488,7 +1610,7 @@ function openMoveConfirm(assignment, cls, plan, follow) {
   pendingMove = { id: assignment.id, follow: !!follow };
   const from = termOf(cls.id, assignment.termId);
   const scores = scoresCarried(assignment, cls);
-  const named = '“' + (assignment.name || 'Untitled assignment') + '”';
+  const named = '“' + (assignment.name || UNTITLED_ASSIGNMENT) + '”';
   const title = document.getElementById(MOVE_TITLE_ID);
   if (title) title.textContent = 'Move it to ' + termName(plan.term) + '?';
   const lead = document.getElementById(MOVE_LEAD_ID);
@@ -1533,7 +1655,13 @@ export function confirmEditorMove() {
 
 /* No: nothing is written — not the move, and not ruling 3's copy either, so declining leaves the
    document byte for byte as it was (Acceptance 4). The editor closes, because closing it is what she
-   was doing. */
+   was doing.
+
+   ONE EXCEPTION SINCE WO-3.56, and it is not about the move: a name left blank. Done refuses a blank
+   name before this confirm can open, so a blank here came through the ✕, Escape or the backdrop —
+   ruling 5's closes — and the editor closing through Keep takes "Untitled assignment" and the amber
+   warning exactly as it would have without the confirm in between. Nothing about the dates or the
+   term is written, so "Nothing moved" stays true. `{ wrote }` for the caller's repaint. */
 export function keepEditorTerm() {
   const pending = pendingMove;
   pendingMove = null;
@@ -1542,10 +1670,15 @@ export function keepEditorTerm() {
   const cls = assignment ? findClass(assignment.classId) : null;
   endSession();
   closeModal(EDITOR_MODAL_ID);
-  if (assignment && cls) {
-    announce('Kept “' + (assignment.name || 'Untitled assignment') + '” in '
-      + termName(termOf(cls.id, assignment.termId)) + '. Nothing moved, and no score changed term.');
+  if (!assignment || !cls) return { wrote: false };
+  const naming = nameIsBlank(assignment.name);
+  if (naming) {
+    update(() => { assignment.name = UNTITLED_ASSIGNMENT; });
+    setNamelessNote(cls.id, assignment.termId, '');
   }
+  announce((naming ? NAMELESS_WARNING + ' ' : '') + 'Kept “' + (assignment.name || UNTITLED_ASSIGNMENT)
+    + '” in ' + termName(termOf(cls.id, assignment.termId)) + '. Nothing moved, and no score changed term.');
+  return { wrote: naming };
 }
 
 /*
@@ -1601,7 +1734,7 @@ export function editAssignmentField(input) {
   const title = document.getElementById(EDITOR_TITLE_ID);
   const cls = findClass(assignment.classId);
   if (title && cls) {
-    title.textContent = (assignment.name || 'Untitled assignment') + ' — ' + cls.name;
+    title.textContent = (assignment.name || UNTITLED_ASSIGNMENT) + ' — ' + cls.name;
   }
   renderAssignments();
 }
@@ -2244,11 +2377,14 @@ function renderCopyList() {
   copyOffered().forEach((cls) => box.append(targetLine(cls, copyTargetFor(cls.id), sourceClass)));
 }
 
-/* Can every ticked line be written? Each into a class that still exists and a term its dates find. */
-function copyReady() {
+/* Can every ticked line be written? Each into a class that still exists and a term its dates find —
+   and, since WO-3.56 (the owner's ruling 1), under a name: a blank one, whitespace included, would put
+   a nameless copy into every ticked class, each drawing as "Untitled assignment". */
+function copyLinesReady() {
   return copyTargets.length > 0 && copyTargets.every((t) => !!findClass(t.classId)
     && !!copyPlacement(t.classId, t.assigned, t.due).term);
 }
+function copyReady() { return copyLinesReady() && !nameIsBlank(copyName); }
 
 /* "Period 2", "Period 2 and Period 4", "Period 2, Period 4 and Period 6". */
 function listNames(names) {
@@ -2268,10 +2404,16 @@ function paintCopyFoot(source, sourceClass) {
        to today. */
     const said = 'Each copy’s dates start on this one’s and can be changed on its own line. Nothing '
       + 'is re-dated to today.';
+    /* THE NAME, WHEN IT IS THE ONLY REASON THE BUTTON IS OFF (WO-3.56's Deliverables). A blocked
+       line already says why on its own amber line, and nothing ticked has its own sentence above, so
+       this one is said only when every line could be written and the name is all that is missing. */
+    const nameless = copyLinesReady() && nameIsBlank(copyName);
     note.textContent = !copyOffered().length
       ? 'There is no other class to copy this into. A second copy in ' + sourceClass.name
         + ' is made with New.'
       : !copyTargets.length ? 'Tick the classes to copy it into; nothing is ticked for you. ' + said
+      : nameless ? (copyTargets.length > 1 ? 'Each copy needs a name' : 'The copy needs a name')
+        + '. Type one in the name field above to copy it.'
       : said;
   }
   if (button) {
@@ -2297,7 +2439,7 @@ function renderCopy() {
 
   if (title) title.textContent = copyFromCreate ? 'Copy into other classes' : 'Duplicate this assignment';
   if (lead) {
-    const named = '“' + (source.name || 'Untitled assignment') + '”';
+    const named = '“' + (source.name || UNTITLED_ASSIGNMENT) + '”';
     const worth = plural(pointsOf(source), 'point', 'points');
     /* THE CREATE DOOR'S LEAD SAYS THE COPIES ARE SEPARATE (WO-3.48). That door is reached from an
        assignment still being written, and the next thing a teacher does there is often to go back
@@ -2355,7 +2497,13 @@ function startCopy(id, fromCreate) {
   const source = findAssignment(id);
   if (!source) return false;
   copyId = id;
-  copyName = source.name || '';
+  /* THE SOURCE'S OWN NAME (ruling 3), and for a source that never had one, "Untitled assignment"
+     (WO-3.56, the owner's ruling 2) — the words its row already shows, now in the field as a name the
+     teacher can see and type over. HELD, NOT WRITTEN (the Traps): Duplicate's Cancel promises that
+     nothing reaches the document before the button, so the source takes its name in confirmCopy()'s
+     update() with the copies, and never here. This is why the two doors write at different moments —
+     the editor has no such promise and names on open. */
+  copyName = nameIsBlank(source.name) ? UNTITLED_ASSIGNMENT : source.name;
   copyTargets = [];
   copySource = {
     categoryId: source.categoryId || '',
@@ -2398,8 +2546,10 @@ export function openCopyFromCreate(follow) {
   /* THE DOOR CLOSES THE EDITOR, SO IT SETTLES IT FIRST (WO-3.50): a due date typed into another term
      before the tap moves the new assignment here, exactly as Done would have, and the copy dialog then
      reads the assignment where it now is. A new assignment has no scores, so this never stops on the
-     move confirm; dates no term holds stop it once, and the editor says why. */
-  const settled = settleEditor(follow);
+     move confirm; dates no term holds stop it once, and the editor says why. A blank name stops it
+     every time, as it stops Done (WO-3.56 — settleEditor()'s header argues why the door refuses
+     rather than handing the blank on to the copy dialog). */
+  const settled = settleEditor(follow, 'copy');
   if (!settled.close) return settled;
   const opener = createOpener;
   creatingId = '';
@@ -2499,7 +2649,14 @@ export function copyFieldCleared(input) {
 /* The name is read as it is typed and the panel is NOT re-rendered for it, for the reason
    editAssignmentField() gives: rebuilding the fields would take the caret out of the one being
    typed into. Nothing is written to the document here — this is a proposal until the button. */
-export function setCopyName(input) { copyName = input.value; }
+export function setCopyName(input) {
+  copyName = input.value;
+  /* ...but the FOOT is repainted (WO-3.56, ruling 1): the button enables and disables as the name is
+     typed, and the note says why when the name is the reason. paintCopyFoot() touches neither field. */
+  const source = findAssignment(copyId);
+  const sourceClass = source ? findClass(source.classId) : null;
+  if (source && sourceClass) paintCopyFoot(source, sourceClass);
+}
 
 /*
   The copies themselves, and the only lines in this section that write anything.
@@ -2532,6 +2689,8 @@ export function confirmCopy(follow) {
   /* Nothing ticked is not a way to save the source alone (ruling 4): the button is disabled, and a
      press that reached here anyway writes nothing and leaves the dialog where it is. */
   if (!copyTargets.length) return;
+  /* Nor is a blank name (WO-3.56, ruling 1): disabled too, and refused here for the same reason. */
+  if (nameIsBlank(copyName)) return;
   const placed = copyTargets.map((target) => ({
     target, cls: findClass(target.classId),
     place: copyPlacement(target.classId, target.assigned, target.due),
@@ -2577,6 +2736,14 @@ export function confirmCopy(follow) {
     if (!Array.isArray(doc.assignments)) doc.assignments = [];
     const live = doc.assignments.filter((a) => a.id === source.id)[0];
     if (live) Object.keys(edits).forEach((field) => { live[field] = edits[field]; });
+    /* A NAMELESS SOURCE TAKES THE NAME ITS COPIES TAKE, IN THIS SAME update() (WO-3.56, ruling 2 and
+       Acceptance 4): the name ruling 2 held when the dialog opened, written now and only now. The
+       copies' name and not a second "Untitled assignment": the field opened on those words, and if
+       the teacher typed over them she was naming this work — the same name in every period is what
+       ruling 3 says she means, and a source left under the old words beside copies under hers would
+       be the one period that disagrees. Kept out of sourceEdits() on purpose, so the button does not
+       start saying "Save …" for a name the teacher never asked to save. */
+    if (live && nameIsBlank(live.name)) live.name = copyName;
     copies.forEach((copy) => doc.assignments.push(copy));
   });
 
@@ -2593,7 +2760,7 @@ export function confirmCopy(follow) {
   if (moved && follow && selected && selected.id === sourceClass.id) {
     selectTerm(moved.id);
     listNote = { classId: sourceClass.id, termId: moved.id,
-      text: '“' + (source.name || 'Untitled assignment') + '” moved here from ' + termName(fromTerm)
+      text: '“' + (source.name || UNTITLED_ASSIGNMENT) + '” moved here from ' + termName(fromTerm)
         + ' when it was saved with its copies: its due date, ' + shortDate(edits.due || source.due)
         + ', is in ' + termName(moved) + ', and the due date picks the term.' };
   }

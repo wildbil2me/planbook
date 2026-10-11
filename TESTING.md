@@ -12800,6 +12800,81 @@ numbers in two of them moved with the edits). Both commands re-run after the las
 
 ---
 
+### WO-3.56 — an assignment needs a name, and an unnamed one takes one when it is opened
+
+**What this changes.** An assignment can no longer be copied without a name, and Done will not close
+the editor on a blank one. An assignment that already has no name gets *Untitled assignment* the first
+time it is opened to edit or to duplicate. If the editor is closed some other way (the ✕, Escape or the
+backdrop) with the name blank, the assignment takes that name and the list shows the owner's warning in
+amber. The words live once, as `UNTITLED_ASSIGNMENT` in `src/assignments.js`. The editor's Done carries
+`data-assignment-done` and `src/shell.js` answers it ahead of the generic close. **The create door
+refuses a blank name as Done does.** The work order's Traps left that open; the argument is in the
+comment above `settleEditor()`. `CACHE` bumped v182 → v183.
+
+**How this record was made.** The implementer's dispatch died in a machine crash after its code and
+harness checks had landed and before it wrote this section, the `tools/README.md` count or a result
+file. Those three were finished in the orchestrating session on 2026-10-11, from the tree as found. The
+evidence below is from that session's own runs, not from the implementer's claims. `grep -rn MUTATION`
+over the diff found nothing. **No mutation round was run** on this work order; the verifier should
+decide whether one is owed.
+
+- [x] With at least one class ticked, clearing the copy dialog's name field disables the copy button
+      and the foot note says the copy needs a name. Typing a name enables it again without any
+      other input. A name of only spaces stays disabled. Both doors behave the same.
+      — `verify/copy-class.mjs`, first WO-3.56 check: from Duplicate and from the create door alike,
+      `ticked` enabled → `empty` disabled, *"The copy needs a name…"* → `spaces` disabled → `typed`
+      enabled; Duplicate's Cancel left `rev` at 384 → 384.
+- [x] Opening the editor on an existing assignment whose stored name is empty writes *Untitled
+      assignment* as its name, once, and the editor's name field shows it. Opening it on a named
+      assignment writes nothing: no `rev` change after `flush()`.
+      — second check: `rev` 385 → 386 on the first opening, then 386 through a re-open and a named
+      assignment's opening; stored name and field both *Untitled assignment*.
+- [x] **A brand-new assignment is not affected.** `+ New assignment` still opens the editor with an
+      empty name field, and Cancel still removes the row and writes nothing else.
+      — third check: field `""`, assignment count 3 → 4 → 3, every other assignment byte-for-byte as
+      before.
+- [x] Opening Duplicate on an unnamed assignment shows *Untitled assignment* in the name field, and
+      the button is enabled once a class is ticked. Copying gives every copy that name, **and the
+      source too, in the same `update()`**. Cancel writes nothing (`rev` unchanged after `flush()`),
+      which is the dialog's standing rule for every held edit.
+      — fourth check: button disabled → enabled on the tick; Cancel `rev` 388 → 388 with the source
+      still unnamed; the copy `rev` 388 → 389 (one save) with both copies and the source named
+      *Untitled assignment*.
+- [x] With the editor's name field blank, Done does not close it: the editor says the assignment
+      needs a name and focuses the name field. Typing a name and pressing Done closes it as before.
+      Cancel during a create with a blank name still removes the row.
+      — fifth check: refused with *"This assignment needs a name. Type one in the Name field, then
+      press Done."* and focus in the name field, for spaces too; typed name then Done closed; a blank
+      create's Cancel took the count 5 → 4.
+- [x] With the name blank, Close, Escape and the backdrop each close the editor. The assignment's
+      stored name is then *Untitled assignment*, and the list's note reads the owner's sentence in
+      amber, while the moved-work note on its own is still indigo (checked in the DOM and computed
+      style, not the live region). The same applies when a teacher
+      clears an existing assignment's name and closes.
+      — sixth check: ✕, Escape and backdrop each closed, and the note read *"“Untitled assignment” was
+      saved without a name. Edit it to give it a name."* at computed `rgb(138, 109, 26)` on
+      `rgb(255, 248, 230)` with an `rgb(224, 168, 0)` rule; the same for a cleared existing name.
+      Seventh check: the moved-work note drawn after the warning carries no amber modifier and reads
+      `rgb(61, 79, 158)` on `rgb(238, 242, 255)`.
+- [x] 👤 On the teaching iPad: Done refuses a blank name readably, and the nameless warning is
+      noticed after a Close.
+      — read by the owner on the teaching iPad, 2026-10-11, and accepted for this work order. The
+      refusal draws **under the dialog's buttons**, where it is hard to see; the owner booked the
+      layout as WO-3.58 rather than reopen this one.
+- [x] `CACHE` in `sw.js` is bumped.
+      — `planbook-shell-v182` → `planbook-shell-v183`.
+
+**One existing check changed.** WO-3.50's *Done on that new assignment, its dates untouched* in
+`verify/assignments.mjs` now types a name before pressing Done and compares `rev` from after that save.
+What it asserts about the dates is unchanged; it had to move because Done now refuses a blank name.
+
+**Full run on the delivered tree:** `1957 checks · 1957 passed · 0 failed · 0 skipped`, 62,614 lines,
+32.0 lines per check, 1025s, exit 0, 2026-10-11 on the real clock. `node tools/wo-sweep.mjs` after the
+`tools/README.md` count was updated: `50 checks · 47 passed · 0 failed · 3 to review`, exit 0, the usual
+three.
+
+---
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

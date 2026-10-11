@@ -13,6 +13,27 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### An assignment needs a name — 2026-10-11
+
+WO-3.56, owner-directed. Shell cache v182 → v183.
+
+- **Duplicate will not copy an assignment without a name.** The copy button stays disabled while the
+  name is blank, and the note under it says why. A name of only spaces counts as blank. This applies
+  both to a row's Duplicate and to the editor's *Copy into other classes…*.
+- **Done will not close the editor on a blank name.** It says the assignment needs a name and puts
+  the cursor in the Name field. Cancel on a new assignment still removes it.
+- **Closing a blank editor another way keeps the work.** ✕, Escape or tapping outside save it as
+  *Untitled assignment*, and an amber line under the list reads *"Untitled assignment" was saved
+  without a name. Edit it to give it a name.*
+- **An assignment that already has no name takes *Untitled assignment*** the first time it is opened
+  to edit or to duplicate. A new assignment still opens with an empty name. Duplicate writes nothing
+  until you copy, and then the original takes the same name as its copies, in one save (the owner's
+  ruling, 2026-10-11).
+- All 1957 harness checks pass under a fresh verifier. Read on the iPad by the owner. The refusal
+  draws under the dialog's buttons, where it is hard to see. That is booked as **WO-3.58**, a review
+  of where messages go in the Assignments and Scores dialogs. **WO-3.57** is booked to check whether
+  the amber line can be missed when the editor is opened from the calendar.
+
 ### The roster dialog is wide enough for its rows — 2026-10-10
 
 WO-1.76, owner-directed. Shell cache v181 → v182.

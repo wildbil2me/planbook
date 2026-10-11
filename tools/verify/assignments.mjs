@@ -1293,13 +1293,21 @@ console.log('\n--- the due date picks an assignment\'s term in the editor (WO-3.
         : created.note === ''),
     JSON.stringify({ today: nodeToday, viewOn, made, active: created.active, summary: created.summary,
       note: created.note }));
+  /* NAMED FIRST, SINCE WO-3.56: Done refuses a blank name (the owner's ruling 4), so the Done this check
+     is about — one with the dates untouched — is pressed on a name typed the way a teacher types it,
+     and `rev` is compared from after that name's own save. What it asserts about the dates is unchanged. */
+  await evalJs(`(function(){ var f = document.querySelector('#assignmentFields [data-assignment-field="name"]');
+    if (!f) return 0; f.value = 'WO-3.50 New'; f.dispatchEvent(new Event('input', { bubbles: true })); return 1; })()`);
+  await sleep(120);
+  const namedCreate = await read();
   await done();
   const keptCreate = await read();
   check('WO-3.50: Done on that new assignment, its dates untouched, closes at once and writes nothing — it '
-    + 'stays in ' + LABEL[wantTerm] + ', `rev` unmoved after a flush, the list still on ' + LABEL[wantTerm],
-    !keptCreate.editorOpen && keptCreate.rev === created.rev && keptCreate.created.length === 1
+    + 'stays in ' + LABEL[wantTerm] + ', `rev` unmoved after a flush, the list still on ' + LABEL[wantTerm]
+    + ' (named before Done, which since WO-3.56 refuses a blank name)',
+    !keptCreate.editorOpen && keptCreate.rev === namedCreate.rev && keptCreate.created.length === 1
       && keptCreate.created[0].termId === wantTerm && keptCreate.active.join() === wantTerm,
-    'rev ' + created.rev + ' -> ' + keptCreate.rev + ', term ' + (keptCreate.created[0] || {}).termId);
+    'rev ' + namedCreate.rev + ' -> ' + keptCreate.rev + ', term ' + (keptCreate.created[0] || {}).termId);
   /* The editor's Cancel undoes the create, the list's move included. */
   await toList(P1, viewOn);
   await clickSel('#assignmentsView [data-assignment-new]');

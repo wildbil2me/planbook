@@ -245,7 +245,13 @@
       data-assignment-copy-source="categoryId|assigned|due"  a field on the source's own line of the
                                       copy dialog; HELD, not written as typed — the confirm saves it
                                       with the copies, and Cancel, the ✕ and Escape drop it
-      data-assignment-copy-name       an input; the copy's name, held as a proposal until confirmed
+      data-assignment-copy-name       an input; the copy's name, held as a proposal until confirmed.
+                                      Each keystroke repaints the dialog's foot, so the confirm
+                                      disables while the name is blank (WO-3.56)
+      data-assignment-done            the editor's Done, which also carries data-modal-close: the one
+                                      close that may refuse a blank name (WO-3.56, ruling 4), so it
+                                      is answered ahead of the generic close and asks the guard's
+                                      question itself, saying which gesture it is
       data-accommodation-prompt       on a container inside the assignment editor: the host
                                       src/accommodation-prompt.js paints the summary into. Markup,
                                       never a click target
@@ -2505,6 +2511,19 @@ document.addEventListener('click', (e) => {
     return;
   }
 
+  /* THE EDITOR'S DONE (WO-3.56) is answered ahead of the generic close below, because it is the one
+     gesture on that dialog allowed to refuse a blank name — the owner's ruling 4 — and the close guard
+     src/modal.js asks cannot tell which gesture asked it. So Done settles the editor itself, naming
+     itself as 'done', and closes with closeModal() on a yes: the guard's question has just been asked
+     and answered, which is exactly the case closeModal() stays unguarded for. The button keeps
+     data-modal-close so every reader that finds the dialog's ways out by that hook still finds it. */
+  if (e.target.closest('[data-assignment-done]')) {
+    const result = assignments.settleEditor(editorFollows(), 'done');
+    afterEditorSettled(result);
+    if (result.close) closeModal('assignmentModal');
+    return;
+  }
+
   const close = e.target.closest('[data-modal-close]');
   if (close) {
     const overlay = close.closest('.modal-overlay');
@@ -3133,7 +3152,11 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-assignment-move-confirm]')) {
     afterEditorSettled(assignments.confirmEditorMove()); return;
   }
-  if (e.target.closest('[data-assignment-move-keep]')) { assignments.keepEditorTerm(); return; }
+  /* Keep writes nothing about the move; since WO-3.56 it can still name a blank assignment (ruling 5),
+     so it chains the same repaint Move does. */
+  if (e.target.closest('[data-assignment-move-keep]')) {
+    afterEditorSettled(assignments.keepEditorTerm()); return;
+  }
   /* THE EDITOR'S HOLD BOX (WO-3.46). The tap opens the hold confirm over the editor at once — never
      at the close, where WO-3.50's scored-move confirm lives — except on a column this create flow has
      only just written, which nothing can move and which is written on the tap (src/assignments.js

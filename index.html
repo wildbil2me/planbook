@@ -3521,7 +3521,10 @@
         scored 5 adds 5 to the category’s earned points and nothing to its possible ones.
       </p>
       <div class="modal-actions">
-        <button class="class-action-btn primary" type="button" data-modal-close>Done</button>
+        <!-- DONE REFUSES A BLANK NAME (WO-3.56, the owner's ruling 4), so src/shell.js answers it by
+             data-assignment-done ahead of the generic close; data-modal-close stays for every reader
+             that finds the dialog's ways out by it. The ✕, Escape and the backdrop never refuse. -->
+        <button class="class-action-btn primary" type="button" data-assignment-done data-modal-close>Done</button>
         <!-- THE CREATE DOOR (WO-3.48, the owner's ruling of 2026-10-05). Shown by src/assignments.js
              on the same condition as Cancel below — a create flow — and only when another active
              class exists. It closes this editor and opens the duplicate dialog with the new

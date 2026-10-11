@@ -1230,6 +1230,276 @@ console.log('\n--- one assignment into several classes, one line per class (WO-3
       && /no other class to copy this into/.test(loneDup.note) && /made with New/.test(loneDup.note),
     JSON.stringify({ lines: loneDup.lines.length, note: loneDup.note, disabled: loneDup.disabled }));
 
+  /*
+    ── AN ASSIGNMENT NEEDS A NAME, AND AN UNNAMED ONE TAKES ONE WHEN IT IS OPENED (WO-3.56) ──
+
+    On this section's fixture, because both doors into the copy dialog are already driven here. Four
+    assignments of its own in the source's Q2: two never named (one for the editor, one for Duplicate),
+    one named that a teacher clears and closes, and one whose due date moves it, for the indigo note.
+    Every document read follows a flush — update() only schedules a save, and `rev` moves when it lands.
+    The note's colours are read off getComputedStyle, never off the live region: announce() draws
+    nothing, and a warning nobody can see is the defect the work order's Deliverables name.
+
+    WHAT IS NOT HERE AND IS OWED TO A HUMAN: Acceptance 7 — whether Done's refusal reads readably on
+    the teaching iPad, and whether the amber note is noticed after a Close. TESTING.md carries it.
+  */
+  const UNTITLED = 'Untitled assignment';
+  const NAMELESS = '“Untitled assignment” was saved without a name. Edit it to give it a name.';
+  const NONAME = 'a356_noname', DUPE = 'a356_dupe', NAMED = 'a356_named', MOVER = 'a356_mover';
+  await closeIfOpen349();
+  await evalJs(`(async function(){ var s = window.planbook.store;
+    s.update(function(doc){
+      function a(id, name){ doc.assignments.push({ id:id, classId:'${SRC}', termId:'tm349_src2',
+        categoryId:'${SRC_ESSAYS}', name:name, points:10, assigned:'2026-11-05', due:'2026-11-12' }); }
+      a('${NONAME}', ''); a('${DUPE}', ''); a('${NAMED}', 'WO-3.56 Named'); a('${MOVER}', 'WO-3.56 Mover');
+    });
+    await s.flush(); return 1; })()`);
+  await toSourceList();
+  const READ356 = `(function(){ var d = window.planbook.store.getDoc();
+    function byId(id){ var a = d.assignments.filter(function(x){ return x.id === id; })[0];
+      return a ? JSON.parse(JSON.stringify(a)) : null; }
+    var note = document.getElementById('assignmentsMoved');
+    var cs = note ? getComputedStyle(note) : null;
+    var err = document.getElementById('assignmentError');
+    var field = document.querySelector('#assignmentFields [data-assignment-field="name"]');
+    return { rev: d.rev, noname: byId('${NONAME}'), dupe: byId('${DUPE}'), named: byId('${NAMED}'),
+      mover: byId('${MOVER}'),
+      fresh: d.assignments.filter(function(x){ return x.classId === '${SRC}' && !/^a3(49|56)_/.test(x.id); })
+        .map(function(x){ return JSON.parse(JSON.stringify(x)); }),
+      all: JSON.stringify(d.assignments),
+      editorOpen: !document.getElementById('assignmentModal').classList.contains('hidden'),
+      fieldValue: field ? field.value : null, fieldFocused: !!field && document.activeElement === field,
+      error: err && !err.classList.contains('hidden') ? err.textContent : '',
+      note: note && !note.classList.contains('hidden') ? note.textContent.replace(/\\s+/g, ' ').trim() : '',
+      amber: !!note && note.classList.contains('assign-moved-nameless'),
+      color: cs ? cs.color : '', bg: cs ? cs.backgroundColor : '', left: cs ? cs.borderLeftColor : '',
+      top: cs ? cs.borderTopColor : '' }; })()`;
+  const read356 = async () => { await flush(); return evalJs(READ356); };
+  const typeName = async (sel, value) => pick(sel, value, 'input');
+  const EDITOR_NAME = '#assignmentFields [data-assignment-field="name"]';
+  const COPY_NAME = '[data-assignment-copy-name]';
+  const xClose = async () => { await clickSel('#assignmentModal .modal-header [data-modal-close]'); await sleep(200); };
+  const doneBtn = async () => { await clickSel('#assignmentModal [data-assignment-done]'); await sleep(200); };
+  const escape356 = async () => {
+    await evalJs("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); 1");
+    await sleep(200);
+  };
+  const backdrop356 = async () => {
+    await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: 8, y: 450, button: 'left', clickCount: 1 });
+    await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: 8, y: 450, button: 'left', clickCount: 1 });
+    await sleep(200);
+  };
+  const backToQ2 = async () => { await clickSel('#termNav [data-term-select="tm349_src2"]'); await sleep(200); };
+  /* The name field typed the four ways ruling 1 cares about, the dialog read after each. */
+  const nameRound = async () => {
+    const r = {};
+    r.ticked = await evalJs(READ349);
+    await typeName(COPY_NAME, ''); r.empty = await evalJs(READ349);
+    await typeName(COPY_NAME, '   '); r.spaces = await evalJs(READ349);
+    await typeName(COPY_NAME, 'WO-3.56 Retyped'); r.typed = await evalJs(READ349);
+    return r;
+  };
+  const roundOk = (r) => r.ticked.disabled === false
+    && r.empty.disabled === true && /^The copy needs a name\./.test(r.empty.note)
+    && r.spaces.disabled === true && /^The copy needs a name\./.test(r.spaces.note)
+    && r.typed.disabled === false && !/needs a name/.test(r.typed.note);
+  const roundSaid = (r) => JSON.stringify(['ticked', 'empty', 'spaces', 'typed'].map((k) =>
+    [k, r[k].disabled, r[k].note.slice(0, 60)]));
+
+  /* ── Acceptance 1, from Duplicate ── */
+  const pre356dup = await read356();
+  await clickSel('#assignmentsView [data-assignment-duplicate="' + ESSAY + '"]');
+  await sleep(150);
+  await tick(P2);
+  const dupRound = await nameRound();
+  await clickSel('[data-assignment-copy-cancel]');
+  await sleep(150);
+  const post356dup = await read356();
+  /* ── and from the create door ── */
+  await clickSel('#assignmentsView [data-assignment-new]');
+  await sleep(150);
+  await typeName(EDITOR_NAME, 'WO-3.56 Door');
+  await clickSel('#assignmentCopyDoor');
+  await sleep(150);
+  await tick(P2);
+  const doorRound = await nameRound();
+  await clickSel('[data-assignment-copy-cancel]');
+  await sleep(150);
+  check('WO-3.56: with a class ticked, clearing the copy dialog\'s name disables the copy button and the foot '
+    + 'note says the copy needs a name; typing a name enables it with no other input; a name of only spaces '
+    + 'stays disabled — from Duplicate and from the create door alike, and Duplicate\'s Cancel wrote nothing',
+    roundOk(dupRound) && roundOk(doorRound) && post356dup.rev === pre356dup.rev
+      && post356dup.all === pre356dup.all,
+    JSON.stringify({ dup: roundSaid(dupRound), door: roundSaid(doorRound),
+      rev: [pre356dup.rev, post356dup.rev] }));
+  await backToQ2();
+
+  /* ── Acceptance 2: the editor names an unnamed row once, and a named one not at all ── */
+  const pre356edit = await read356();
+  await clickSel('#assignmentsView [data-assignment-edit="' + NONAME + '"]');
+  await sleep(150);
+  const opened356 = await read356();
+  await xClose();
+  const closed356 = await read356();
+  await clickSel('#assignmentsView [data-assignment-edit="' + NONAME + '"]');
+  await sleep(150);
+  const reopened356 = await read356();
+  await xClose();
+  await clickSel('#assignmentsView [data-assignment-edit="' + NAMED + '"]');
+  await sleep(150);
+  const namedOpen = await read356();
+  await xClose();
+  const namedClosed = await read356();
+  check('WO-3.56: opening the editor on an assignment with an empty stored name writes "Untitled assignment" '
+    + 'once — `rev` +1, the field showing it — and opening it again, or opening a named one, writes nothing',
+    pre356edit.noname.name === '' && opened356.editorOpen && opened356.noname.name === UNTITLED
+      && opened356.fieldValue === UNTITLED && opened356.rev === pre356edit.rev + 1
+      && closed356.rev === opened356.rev && reopened356.rev === opened356.rev
+      && reopened356.noname.name === UNTITLED
+      && namedOpen.editorOpen && namedOpen.fieldValue === 'WO-3.56 Named' && namedOpen.rev === reopened356.rev
+      && namedClosed.rev === reopened356.rev && namedClosed.all === reopened356.all,
+    JSON.stringify({ rev: [pre356edit.rev, opened356.rev, closed356.rev, reopened356.rev, namedOpen.rev,
+      namedClosed.rev], name: opened356.noname.name, field: opened356.fieldValue }));
+
+  /* ── Acceptance 3: a brand-new assignment is not affected ── */
+  const pre356new = await read356();
+  await clickSel('#assignmentsView [data-assignment-new]');
+  await sleep(150);
+  const new356 = await read356();
+  await clickSel('#assignmentModal [data-assignment-create-cancel]');
+  await sleep(150);
+  const cancel356 = await read356();
+  check('WO-3.56: + New assignment still opens the editor on an empty name field over an empty stored name, '
+    + 'and Cancel still removes the row and leaves every other assignment as it was',
+    new356.editorOpen && new356.fieldValue === '' && new356.fresh.length === pre356new.fresh.length + 1
+      && new356.fresh.some((a) => a.name === '') && !cancel356.editorOpen
+      && cancel356.all === pre356new.all,
+    JSON.stringify({ field: new356.fieldValue, fresh: [pre356new.fresh.length, new356.fresh.length,
+      cancel356.fresh.length], same: cancel356.all === pre356new.all }));
+  await backToQ2();
+
+  /* ── Acceptance 4: Duplicate on an unnamed row — a proposal until the button ── */
+  const pre356d = await read356();
+  await clickSel('#assignmentsView [data-assignment-duplicate="' + DUPE + '"]');
+  await sleep(150);
+  const dupOpen = await evalJs(READ349);
+  await tick(P2);
+  const dupTicked = await evalJs(READ349);
+  await clickSel('[data-assignment-copy-cancel]');
+  await sleep(150);
+  const dupCancelled = await read356();
+  await clickSel('#assignmentsView [data-assignment-duplicate="' + DUPE + '"]');
+  await sleep(150);
+  await tick(P2); await tick(P4);
+  await clickSel('#assignmentCopyBtn');
+  const dupCopied = await read356();
+  const dupCopies = await evalJs(`(function(){ var d = window.planbook.store.getDoc();
+    return d.assignments.filter(function(a){ return (a.classId === '${P2}' || a.classId === '${P4}')
+      && a.points === 10 && a.assigned === '2026-11-05'; }).map(function(a){ return { classId:a.classId, name:a.name }; }); })()`);
+  check('WO-3.56: Duplicate on an unnamed assignment shows "Untitled assignment" in the name field and enables '
+    + 'once a class is ticked; Cancel writes nothing (`rev` unmoved, the source still unnamed); copying gives '
+    + 'both copies that name and the source too, `rev` +1',
+    dupOpen.open && dupOpen.name === UNTITLED && dupOpen.disabled === true && dupTicked.disabled === false
+      && dupCancelled.rev === pre356d.rev && dupCancelled.all === pre356d.all && dupCancelled.dupe.name === ''
+      && dupCopied.rev === pre356d.rev + 1 && dupCopied.dupe.name === UNTITLED
+      && dupCopies.length === 2 && dupCopies.every((c) => c.name === UNTITLED)
+      && dupCopies.some((c) => c.classId === P2) && dupCopies.some((c) => c.classId === P4),
+    JSON.stringify({ name: dupOpen.name, disabled: [dupOpen.disabled, dupTicked.disabled],
+      rev: [pre356d.rev, dupCancelled.rev, dupCopied.rev], source: dupCopied.dupe.name, copies: dupCopies }));
+  await backToQ2();
+
+  /* ── Acceptance 5: Done refuses a blank name; a typed name closes; Cancel still removes ── */
+  await clickSel('#assignmentsView [data-assignment-new]');
+  await sleep(150);
+  const fieldBefore = await read356();
+  await doneBtn();
+  const refused356 = await read356();
+  await typeName(EDITOR_NAME, '   ');
+  await doneBtn();
+  const refusedSpaces = await read356();
+  await typeName(EDITOR_NAME, 'WO-3.56 Named on Done');
+  const typedErr = await read356();
+  await doneBtn();
+  const doneOk = await read356();
+  await backToQ2();
+  await clickSel('#assignmentsView [data-assignment-new]');
+  await sleep(150);
+  const preCancel5 = await read356();
+  await doneBtn();
+  await clickSel('#assignmentModal [data-assignment-create-cancel]');
+  await sleep(150);
+  const cancel5 = await read356();
+  check('WO-3.56: with the name blank, Done does not close — the editor says the assignment needs a name and '
+    + 'the caret is in the name field, for spaces too; typing a name and pressing Done closes it as before; '
+    + 'Cancel during a create with a blank name still removes the row',
+    fieldBefore.editorOpen && fieldBefore.fieldValue === ''
+      && refused356.editorOpen && /needs a name/.test(refused356.error) && refused356.fieldFocused
+      && refusedSpaces.editorOpen && /needs a name/.test(refusedSpaces.error) && refusedSpaces.fieldFocused
+      && typedErr.error === ''
+      && !doneOk.editorOpen && doneOk.fresh.some((a) => a.name === 'WO-3.56 Named on Done')
+      && !doneOk.fresh.some((a) => a.name === UNTITLED || a.name === '')
+      && preCancel5.editorOpen && !cancel5.editorOpen
+      && cancel5.fresh.length === preCancel5.fresh.length - 1 && !cancel5.fresh.some((a) => a.name === ''),
+    JSON.stringify({ refused: [refused356.editorOpen, refused356.error, refused356.fieldFocused],
+      spaces: [refusedSpaces.editorOpen, refusedSpaces.fieldFocused], afterType: typedErr.error,
+      done: doneOk.editorOpen, fresh: [preCancel5.fresh.length, cancel5.fresh.length] }));
+
+  /* ── Acceptance 6: the ✕, Escape and the backdrop each close a blank name, and it takes one ── */
+  const AMBER = { color: 'rgb(138, 109, 26)', bg: 'rgb(255, 248, 230)', left: 'rgb(224, 168, 0)',
+    top: 'rgb(240, 223, 168)' };
+  const INDIGO = { color: 'rgb(61, 79, 158)', bg: 'rgb(238, 242, 255)', left: 'rgb(91, 111, 204)',
+    top: 'rgb(213, 220, 245)' };
+  const isAmber = (r) => r.amber && r.note.indexOf(NAMELESS) === 0 && r.color === AMBER.color
+    && r.bg === AMBER.bg && r.left === AMBER.left && r.top === AMBER.top;
+  const closeBlank = async (how) => {
+    await backToQ2();
+    await clickSel('#assignmentsView [data-assignment-new]');
+    await sleep(150);
+    const before = await read356();
+    await how();
+    const after = await read356();
+    const made = after.fresh.filter((a) => !before.fresh.some((b) => b.id === a.id));
+    const mine = after.fresh.filter((a) => before.fresh.some((b) => b.id === a.id && b.name === ''
+      && a.name === UNTITLED));
+    return { ok: before.editorOpen && !after.editorOpen && made.length === 0 && mine.length === 1
+      && isAmber(after), said: [after.editorOpen, after.note.slice(0, 90), after.color, after.bg, after.left,
+      mine.length] };
+  };
+  const byX = await closeBlank(xClose);
+  const byEsc = await closeBlank(escape356);
+  const byBack = await closeBlank(backdrop356);
+  /* An existing assignment whose name the teacher clears, then closes. */
+  await backToQ2();
+  await clickSel('#assignmentsView [data-assignment-edit="' + NAMED + '"]');
+  await sleep(150);
+  await typeName(EDITOR_NAME, '');
+  const clearedPre = await read356();
+  await xClose();
+  const clearedPost = await read356();
+  check('WO-3.56: with the name blank, the ✕, Escape and the backdrop each close the editor; the assignment\'s '
+    + 'stored name is then "Untitled assignment" and the list\'s note reads the owner\'s sentence in amber '
+    + '(the DOM and computed style); the same when an existing assignment\'s name is cleared and closed',
+    byX.ok && byEsc.ok && byBack.ok
+      && clearedPre.editorOpen && clearedPre.named.name === '' && !clearedPost.editorOpen
+      && clearedPost.named.name === UNTITLED && isAmber(clearedPost) && clearedPost.note === NAMELESS,
+    JSON.stringify({ x: byX.said, esc: byEsc.said, back: byBack.said,
+      cleared: [clearedPost.editorOpen, clearedPost.named && clearedPost.named.name, clearedPost.note,
+        clearedPost.color] }));
+  /* The moved-work note on its own, drawn straight after an amber one: the modifier must come off. */
+  await clickSel('#assignmentsView [data-assignment-edit="' + MOVER + '"]');
+  await sleep(150);
+  await typeName('#assignmentFields [data-assignment-field="due"]', '2026-10-20');
+  await doneBtn();
+  const moved356 = await read356();
+  check('WO-3.56: the moved-work note on its own, drawn after the amber warning, is still indigo — no amber '
+    + 'modifier, `.assign-moved`\'s own computed colours',
+    !moved356.editorOpen && moved356.mover.termId === 'tm349_src1' && /moved here from/.test(moved356.note)
+      && moved356.note.indexOf(NAMELESS) === -1 && !moved356.amber && moved356.color === INDIGO.color
+      && moved356.bg === INDIGO.bg && moved356.left === INDIGO.left && moved356.top === INDIGO.top,
+    JSON.stringify({ term: moved356.mover.termId, note: moved356.note.slice(0, 80), amber: moved356.amber,
+      color: moved356.color, bg: moved356.bg, left: moved356.left }));
+  await backToQ2();
+
   /* ── THE WIDE LIST (Acceptance 8) ── at 1280px under a fine pointer, and either side of the measured
      919/920 breakpoint src/assignments.css records. Read with the source and three classes on. */
   const LAYOUT349 = `(function(){

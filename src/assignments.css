@@ -324,6 +324,16 @@
   background: #eef2ff; color: #3d4f9e;
   font-size: 12px; font-weight: 700; line-height: 1.5;
 }
+/* AN ASSIGNMENT CLOSED WITH NO NAME TOOK ONE (WO-3.56, ruling 5). The same line and the same shape,
+   in `.assign-group-empty`'s amber with a `#e0a800` rule down its left — the owner's ruling of
+   2026-10-10, from a drawing. Amber because this one asks for something: the indigo above says back
+   what the teacher did, and this says what she has still to do. A modifier set by src/assignments.js
+   for this message only, and taken off for every other, so the moved-work note stays indigo. Not a
+   control: it adds nothing to the coarse block. */
+.assign-moved.assign-moved-nameless {
+  border-color: #f0dfa8; border-left-color: #e0a800;
+  background: #fff8e6; color: #8a6d1a;
+}
 
 /* NO TERM HOLDS THESE DATES (WO-3.50), in the editor. Amber, `.assign-group-empty`'s: the work stays
    where it is, which is a thing to read before closing again rather than a thing gone wrong.

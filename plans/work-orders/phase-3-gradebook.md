@@ -4431,7 +4431,7 @@ term long, and a collapsed group would hide the overdue tint and the part-filled
 
 ## WO-3.56 — an assignment needs a name, and an unnamed one takes one when it is opened
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-10-11 · **Size** M · **Depends on** —
 **Closes roadmap** *(no box. Owner-directed, 2026-10-10.)*
 
 **Booked 2026-10-10**, out of a reading that turned out not to be a bug. The owner duplicated an
@@ -4463,6 +4463,15 @@ the editor, folded in the same day.
    blocked because a dialog that refuses Escape is a trap, and the no-lost-draft contract
    (`createAssignment()`'s header) says a half-written assignment is kept, not discarded.
 
+**Rulings, the owner's, 2026-10-11, at the verdict**
+6. **Duplicate gives a nameless source the name its copies take**, not a second *Untitled
+   assignment*. If the teacher types over the words, she is naming this work, and the same name in
+   every period is what ruling 3 says she means. This is how ruling 2 reads at the Duplicate door,
+   and it is what `confirmCopy()` was built to do.
+7. **The nameless warning showing only on the list it was set for is accepted here** and booked as
+   [WO-3.57](#wo-357--the-nameless-warning-reaches-the-teacher-wherever-the-editor-closed). The row
+   still reads *Untitled assignment*, so nothing is lost but the reminder.
+
 **Deliverables**
 - **`src/assignments.js`**:
   - `copyReady()` also requires a non-blank `copyName`.
@@ -4487,29 +4496,31 @@ the editor, folded in the same day.
 - **`TESTING.md` § WO-3.56**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] With at least one class ticked, clearing the copy dialog's name field disables the copy button
+- [x] With at least one class ticked, clearing the copy dialog's name field disables the copy button
       and the foot note says the copy needs a name. Typing a name enables it again without any
       other input. A name of only spaces stays disabled. Both doors behave the same.
-- [ ] Opening the editor on an existing assignment whose stored name is empty writes *Untitled
+- [x] Opening the editor on an existing assignment whose stored name is empty writes *Untitled
       assignment* as its name, once, and the editor's name field shows it. Opening it on a named
       assignment writes nothing: no `rev` change after `flush()`.
-- [ ] **A brand-new assignment is not affected.** `+ New assignment` still opens the editor with an
+- [x] **A brand-new assignment is not affected.** `+ New assignment` still opens the editor with an
       empty name field, and Cancel still removes the row and writes nothing else.
-- [ ] Opening Duplicate on an unnamed assignment shows *Untitled assignment* in the name field, and
+- [x] Opening Duplicate on an unnamed assignment shows *Untitled assignment* in the name field, and
       the button is enabled once a class is ticked. Copying gives every copy that name, **and the
       source too, in the same `update()`**. Cancel writes nothing (`rev` unchanged after `flush()`),
       which is the dialog's standing rule for every held edit.
-- [ ] With the editor's name field blank, Done does not close it: the editor says the assignment
+- [x] With the editor's name field blank, Done does not close it: the editor says the assignment
       needs a name and focuses the name field. Typing a name and pressing Done closes it as before.
       Cancel during a create with a blank name still removes the row.
-- [ ] With the name blank, Close, Escape and the backdrop each close the editor. The assignment's
+- [x] With the name blank, Close, Escape and the backdrop each close the editor. The assignment's
       stored name is then *Untitled assignment*, and the list's note reads the owner's sentence in
       amber, while the moved-work note on its own is still indigo (checked in the DOM and computed
       style, not the live region). The same applies when a teacher
       clears an existing assignment's name and closes.
-- [ ] 👤 On the teaching iPad: Done refuses a blank name readably, and the nameless warning is
-      noticed after a Close.
-- [ ] `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the teaching iPad: Done refuses a blank name readably, and the nameless warning is
+      noticed after a Close. *(Read by the owner 2026-10-11 and accepted for this work order. The
+      refusal draws under the dialog's buttons, which is hard to see; that layout is
+      [WO-3.58](#wo-358--the-dialogs-behind-the-assignments-and-scores-screens-are-read-together-and-a-layout-is-ruled)'s.)*
+- [x] `CACHE` in `sw.js` is bumped.
 
 **Traps** — **A new assignment's empty name is not "an existing untitled assignment".** The create
 flow writes `name: ''` and opens the same editor, so ruling 2 has to skip a create (`creatingId`).
@@ -4531,3 +4542,71 @@ comment. Either works, but leaving it undecided does not.
 **Not in scope** — **Backfilling names across the year** at load or by
 migration: ruling 2 names an assignment only when a teacher opens it, the same forward-only shape
 as WO-3.49's `termId`.
+
+## WO-3.57 — the nameless warning reaches the teacher wherever the editor closed
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.56
+**Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
+
+**Booked 2026-10-11**, out of WO-3.56's verdict (its ruling 7). Ruling 5's warning, *"Untitled
+assignment" was saved without a name*, goes on the list's `listNote`, which is keyed by class and
+term. The verifier found that a blank editor closed from somewhere other than the assignment list
+shows the warning only if that list is on screen.
+
+**Check the premise first.** The calendar's door (`src/shell.js`, `ASSIGNMENT_DUE`) calls
+`openClassOn(classId, 'assignments')` before `openAssignmentEditor()`, so a list is behind the
+editor on that path. The gap may be narrower than the verdict says: a list showing a different term
+from the assignment's own. Find every door into the editor, find which of them can close with the
+warning unseen, and write that down before changing anything. If no door can, close this work order
+with that finding.
+
+**Acceptance**
+- [ ] Every door into the assignment editor is named in `TESTING.md` § WO-3.57, with whether a blank
+      close from it shows the warning.
+- [ ] A blank close from each door leaves the owner's sentence, in amber, somewhere the teacher is
+      looking when the editor closes.
+- [ ] If `src/` or `index.html` changed, `CACHE` in `sw.js` is bumped.
+
+**Not in scope** — changing the wording or the colour; both are WO-3.56's rulings.
+
+## WO-3.58 — the dialogs behind the Assignments and Scores screens are read together, and a layout is ruled
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.54, WO-3.55, WO-3.57
+**Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
+
+**Booked 2026-10-11**, out of WO-3.56's iPad reading. The editor's *needs a name* message draws
+**under the dialog's buttons**, where it is easy to miss. The owner accepted that for WO-3.56 and
+asked for the dialogs to be reviewed together instead of patched one at a time. They have each grown
+a work order at a time, so a message, a note or a warning lands wherever that work order put it.
+
+**This is a review, not a build.** It produces a drawing and rulings, and books the build as M or S
+rows. Nothing in `src/` moves here.
+
+**Why it waits for three rows.** WO-3.54 and WO-3.55 change the list the editor opens from, and
+WO-3.57 may move where the nameless warning shows. Reviewing before them would mean drawing dialogs
+that are about to change. **If any of those three ends up changing a dialog's layout, that change is
+input to this review, not a reason to start it early.** Read what they changed before drawing.
+
+**Scope.** The dialogs reached from the Assignments and Scores screens. From `index.html` that is at
+least `assignmentModal`, `assignmentMoveModal`, `holdModal`, `assignmentCopyModal`,
+`assignmentDeleteModal`, `categoriesModal`, `gradingModeModal`, `categoryRemoveModal`,
+`letterScaleModal` and `gradesRecordModal`. **The owner confirms the list at dispatch**: add any
+that are missing and drop any that are out.
+
+**Deliverables**
+- A drawing in `design/mockups/` under `PROTOCOL.md`, one frame per dialog as it is now and as
+  proposed. It shows where each message, note and warning sits relative to the buttons.
+- One rule, owner-ruled, for where a dialog's messages go. The first case is the editor's refusal:
+  above its buttons, or beside the field it is about.
+- The build booked as M or S rows at the foot of this file and the running order, each naming the
+  dialogs it touches.
+- **`TESTING.md` § WO-3.58**, the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] Every dialog in the confirmed scope has a frame as it is now, showing where its messages draw.
+- [ ] The rule for where messages go is written here as the owner's ruling, with the editor's
+      refusal as its first case.
+- [ ] The build is booked as rows below L, and the drawing passes `wo-sweep.mjs` § 19.
+
+**Not in scope** — building any of it, and the dialogs outside this scope (attendance, roster,
+settings), which have their own work orders.
