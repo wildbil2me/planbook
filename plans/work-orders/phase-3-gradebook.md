@@ -4351,7 +4351,7 @@ above them; carry each into its heading's hidden text, do not collapse them into
 
 ## WO-3.55 — the assignment list sorts within each category, and writes nothing
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.54
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.54, WO-3.59
 **Closes roadmap** *(no box. Owner-directed, 2026-10-10.)*
 
 **Booked 2026-10-10 with WO-3.54**, the second of the two pieces. Five column headings sort what is
@@ -4382,12 +4382,33 @@ frame C (frame B is the same list in the teacher's order), styled in
    teacher's order. Nothing reaches `localStorage`.
 7. **Names compare as a reader would** ("Quiz 2" before "Quiz 10"); **a blank date sorts last in
    both directions**; **ties keep the teacher's order**.
-8. **A held column sorts by its own count** under Entered, like any row, and keeps its *held* word.
+8. **A held column sorts by its own count** under Entered, like any row. *(This said "and keeps its
+   *held* word" until 2026-10-11, and the list has no such word: `assignmentRow()` never asks
+   `isHeld()`, and WO-3.47's readers were the queue, the home card, detail, the grade sheet and the
+   CSVs. The owner dropped the clause rather than add a marker here.)*
 9. **A sort survives an edit.** A due date changed while sorted by Due moves the row to its new place
-   when the editor closes — as a date crossing a term edge already moves it.
+   when the editor closes — as a date crossing a term edge already moves it. **The order holds while
+   the editor is open** (the owner, 2026-10-11): `editAssignmentField()` repaints the list on every
+   keystroke, so a sort read live would move rows around behind the dialog as she types a name or a
+   date. The list keeps the order it had when the editor opened, and sorts again when it settles.
 10. **The hint says it in words**: *tap a column heading to sort what is under each category; tap it
     again to reverse, a third time for your order. While a sort is on, the arrows rest — ↺ Your order
     brings them back.*
+
+**Answered — the owner, 2026-10-11, before dispatch.** Ruling 8 loses its *held* word, which
+the list never drew. Ruling 9's order holds while the editor is open. **WO-3.59 goes first**:
+WO-3.54's phone baseline (`TESTING.md` § WO-3.54) found that the page's sideways scroll at 390px is
+the Actions `<th>`'s absolutely positioned `.sr-only` span, and that is the cell ruling 4 rebuilds.
+With WO-3.59 landed, its overflow check is the fence this work order's new headings are measured
+against.
+
+**Folded in at the same reading.** The drawing's coarse rule gives `.assign-sort-btn` a 44px
+height and no width, and **DUE ↕** in the heading's 10px capitals is about 32px wide. Add
+`min-width: 44px` to the coarse rule and say so in the lifted section, as a departure from the
+drawing. `touch-targets.mjs` will not catch it: it measures `#assignmentsView` after the
+assignments section has emptied the list, when the table is hidden. **Ruling 6's resets** cannot
+live in `renderAssignments()`, which runs after every write. Key the state by class and term,
+the way `paintListNote()` keys `listNote`, and clear it on the switch away from the screen.
 
 **Deliverables**
 - **`index.html`**: the five `<th>` hold sort buttons; the Actions `<th>` is the reset's slot
@@ -4397,9 +4418,10 @@ frame C (frame B is the same list in the teacher's order), styled in
   the list the painter already has; arrows and reset per ruling 4.
 - **`src/shell.js`**: the click routes for a sort heading and for ↺ Your order, beside the other
   `data-assignment-*` routes.
-- **`src/assignments.css`**: § ASSIGN SORT lifted, its coarse rule into the existing block and its
-  button into the `touch-action` selector.
+- **`src/assignments.css`**: § ASSIGN SORT lifted, its coarse rule into the existing block (with
+  `min-width: 44px`, see above) and its button into the `touch-action` selector.
 - **The harness**: a new check file for the rulings above, including the write-nothing line.
+  It also runs `horizontal-overflow.mjs`'s assignments-screen check (WO-3.59) with a sort on.
 - **`design/mockups/proposed-assign-tidy.css`'s § ASSIGN SORT banner, `README.md` section and
   `index.html` entry** amended to say the section landed.
 - **`TESTING.md` § WO-3.55**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
@@ -4415,12 +4437,15 @@ frame C (frame B is the same list in the teacher's order), styled in
       turns the check red, and **the plant is reverted before anything else is written.**
 - [ ] Names compare naturally, blank dates sort last in both directions, and equal keys keep the
       teacher's order — each with a fixture built to fail the naive comparison.
-- [ ] A held column sorts under Entered by its own count and still shows *held*.
+- [ ] A held column sorts under Entered by its own count.
 - [ ] While sorted, every ↑ ↓ is disabled and titled with the column's name, and ↺ Your order is
       present; in the teacher's order it is absent and the arrows behave as before.
 - [ ] Leaving the list, changing class and changing term each return the teacher's order; no
       `planbook_` key is written by sorting.
 - [ ] Sorted by Due, an edited due date moves its row when the editor closes, and the sort stays on.
+      While the editor is open, typing into the name or a date moves no row.
+- [ ] Under a coarse pointer, every sort button and ↺ Your order measures at least 44×44. At 390×844
+      with a sort on, the assignments screen has no horizontal overflow.
 - [ ] The hint carries ruling 10's sentence.
 - [ ] 👤 On the teaching iPad: a heading tap sorts, the faint ↕ reads as tappable, and ↺ Your order
       brings the arrows back.
@@ -4642,6 +4667,14 @@ alone, close this work order on that finding and fix the fixture.
 
 **After WO-3.54**, which reshapes the list's top row and its rows. Fixing the overflow first would be
 undone by it, or would hide whether WO-3.54 caused a new one.
+
+**WO-3.54 named a cause, and WO-3.55 now waits for this one** (moved 2026-10-11, the owner's call).
+`TESTING.md` § WO-3.54 found the element whose right edge is the page's `scrollWidth` on every
+fixture: the Actions `<th>`'s `<span class="sr-only">Actions</span>`, absolutely positioned with
+no positioned ancestor, so `.assign-table-wrap`'s `overflow-x: auto` does not clip it. Reproduce
+that rather than taking it on trust. **WO-3.55 rebuilds that `<th>`** into the ↺ Your order slot, so
+the fix must hold for a heading cell that holds a button as well as the span. Fix the cause, not
+the one span.
 
 **Acceptance**
 - [ ] `TESTING.md` § WO-3.59 names the element that overflowed and why, or shows that only the
