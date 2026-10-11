@@ -13,6 +13,22 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The roster dialog is wide enough for its rows — 2026-10-10
+
+WO-1.76, owner-directed. Shell cache v181 → v182.
+
+- **Roster & contacts now opens at 640px on a laptop and an iPad**, instead of the 480px every other
+  dialog uses. A long name, the "also in" note, the support dot and ✎ · Edit · Remove all fit on one
+  line. On a phone the dialog still fits the screen.
+- Every other dialog, including confirms and the single-student form, stays at 480.
+- **The support dot stays immediately left of ✎**, as it was. The extra width goes to the name
+  column, so the dot sits beside the buttons rather than the name, and the owner ruled on the iPad
+  that this is where it belongs. Presentation mode still removes it.
+- `tools/verify/roster-width.mjs` measures the width, the one-line row and every other dialog's 480.
+  All 1950 harness checks pass under a fresh verifier, and a planted fault that widened every dialog
+  turned six checks red. Read on the iPad by the owner the same day, including a student in many
+  classes.
+
 ### A roster row's "also in" note sits under the name — 2026-10-10
 
 WO-1.74. Shell cache v180 → v181.

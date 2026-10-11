@@ -117,6 +117,7 @@ import { run as horizontalOverflow } from './verify/horizontal-overflow.mjs';
 import { run as settingsHub } from './verify/settings-hub.mjs';
 import { run as settingsBack } from './verify/settings-back.mjs';
 import { run as rosterWho } from './verify/roster-who.mjs';
+import { run as rosterWidth } from './verify/roster-width.mjs';
 import { run as notePanel } from './verify/note-panel.mjs';
 import { run as passCard } from './verify/pass-card.mjs';
 import { run as portraitLandscape } from './verify/portrait-landscape.mjs';
@@ -346,6 +347,11 @@ const BROWSER_SECTIONS = [
      through the same door. It plants four classes and four students of its own and takes them, the
      open-class and presentation preferences and the viewport back out at its foot. */
   { file: 'verify/roster-who.mjs', run: rosterWho },
+  /* The roster dialog's own width (WO-1.76), straight after the section that measures its row at the
+     stock 480 — which pins that read at 480, so this width cannot make it pass for the wrong reason.
+     It plants two classes and two students of its own and takes them, the open-class and
+     presentation preferences, the viewport and touch back out at its foot. */
+  { file: 'verify/roster-width.mjs', run: rosterWidth },
   { file: 'verify/note-panel.mjs', run: notePanel },
   { file: 'verify/pass-card.mjs', run: passCard },
   { file: 'verify/portrait-landscape.mjs', run: portraitLandscape },

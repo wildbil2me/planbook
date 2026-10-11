@@ -6322,7 +6322,7 @@ files" before editing it. **Nothing in `src/` moves**, so no `CACHE` bump is owe
 
 ## WO-1.76 — the roster dialog is wide enough for its rows
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.74 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-10 · **Size** S · **Depends on** WO-1.74 · **Blocks** nothing
 **Closes roadmap** *(no box. Owner-directed, 2026-10-10.)*
 
 **Booked 2026-10-10**, owner-directed, out of WO-1.71's iPad reading. Every line of that checklist
@@ -6358,15 +6358,25 @@ deciding that width alone fixes it.
 - **`TESTING.md` § WO-1.76**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] The roster dialog's panel is the width the owner ruled at a 1280px viewport, and no wider than
+- [x] The roster dialog's panel is the width the owner ruled at a 1280px viewport, and no wider than
       95vw at 390×844, with no horizontal overflow.
-- [ ] At that width a roster row for a student with supports, a note and a long name is one line
+- [x] At that width a roster row for a student with supports, a note and a long name is one line
       tall, the dot is where the owner ruled, and ✎ · Edit · Remove are on that line.
-- [ ] Every dialog the owner did not name still measures 480px.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] `TESTING.md` § WO-1.76 carries these lines verbatim with the evidence for each.
-- [ ] 👤 On the iPad, after a force-quit, upright and lying down: open Roster from Settings in a class
+- [x] Every dialog the owner did not name still measures 480px.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] `TESTING.md` § WO-1.76 carries these lines verbatim with the evidence for each.
+- [x] 👤 On the iPad, after a force-quit, upright and lying down: open Roster from Settings in a class
       with a student who has supports and one in two classes, and read where the dot sits.
+
+*(**Closed 2026-10-10 on two owner rulings, read on the iPad after a force-quit.** The width is
+**640**, upright and lying down. And **the dot stays where WO-1.74 left it** — "immediately left of
+the pencil icon," where the owner expects it. That differed from the booking's premise: the remark
+from WO-1.71 was that the dot sat awkwardly *because* the dialog was narrow, and the measurement
+showed width moves the dot further from the name, not nearer, since `.roster-row-who` takes every
+added pixel (123px past the name on a laptop, 52px on the iPad). The owner read that and ruled the
+neighbour, not the gap, is what matters, so no row-styling work order is owed. A row for a student in
+many classes — the case WO-1.74 handed here, which the harness fixture does not carry — was read on
+the iPad as "an extreme scenario, but it works.")*
 
 **Traps** — **Depends on WO-1.74 on purpose**: its Acceptance measures a row at 480px, and widening
 first would make that measurement pass for the wrong reason. **The dot is still built only when

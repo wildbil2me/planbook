@@ -71,7 +71,17 @@ if (!seam) {
   /* Every row in both lists, in one round trip: its children's order by first class name, its box,
      the name column's parts and their boxes, and the actions' boxes. A row is keyed by the student
      id its Edit button carries, so a check names the student it is about rather than a position. */
+  /* PINNED AT 480 SINCE WO-1.76. That work order widened #rosterModal's panel to 640, and its own
+     Traps line says why this section must not simply follow: WO-1.74's Acceptance measures a row at
+     the stock 480px, and a wider panel would make that measurement pass for the wrong reason. So the
+     panel is held at 480 inline for the length of one synchronous read — layout is forced by the
+     first getBoundingClientRect — and handed back before the read returns, leaving no residue on the
+     element. The 640 itself, and a row at that width, are tools/verify/roster-width.mjs's. */
   const READ = `(function(){
+    var pin = document.querySelector('#rosterModal .modal-panel'), was = pin ? pin.style.width : '';
+    if (pin) pin.style.width = '480px';
+    try { return read(); } finally { if (pin) pin.style.width = was; }
+    function read(){
     function box(el){ if (!el) return null; var r = el.getBoundingClientRect();
       return { top: Math.round(r.top * 10) / 10, bottom: Math.round(r.bottom * 10) / 10,
         left: Math.round(r.left * 10) / 10, right: Math.round(r.right * 10) / 10,
@@ -100,7 +110,7 @@ if (!seam) {
       }; }); }
     return { panel: box(document.querySelector('#rosterModal .modal-panel')),
       roster: rowsIn('#rosterList'), orphans: rowsIn('#rosterOrphanList'),
-      visible: window.planbook.supports.supportsVisible() }; })()`;
+      visible: window.planbook.supports.supportsVisible() }; } })()`;
   const openRoster = async () => {
     await shut();
     await openSettingsDoor('[data-roster-manage]');

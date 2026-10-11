@@ -1360,14 +1360,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1938 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1946 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the eighty files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the ninety files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -2831,6 +2831,19 @@ file; the name a line tall inside the column while `.roster-row-name`'s own rule
 failure arm, and the section's one guard is a `skip()`. Full run: `1942 checks · 1942 passed · 0 failed · 0 skipped`, 61,993
 lines, 31.9 lines per check, 970s, exit 0, 2026-10-10 on the real clock. Mutation round in
 `TESTING.md` § WO-1.74.
+
+**WO-1.76 moved it from 1938 to 1946, and the executed count from 1942 to 1950 — eight sites, eight
+results, and one new file.** All eight are `verify/roster-width.mjs`, registered straight after
+`verify/roster-who.mjs`: the roster panel at 640 in a 1280px window; the long row at 640 one line tall
+with its note under the name and ✎ · Edit · Remove on it; the support dot where WO-1.74 left it, with
+its distance from the name printed on a `MEASURE |` line rather than ruled on; 640 on an iPad upright
+and lying down under a coarse pointer; within 95vw at 390×844 with nothing scrolling sideways; the dot
+absent under presentation mode at 640; and every other dialog at 480, through five real doors and
+across every stock `.modal-panel` in the document, at 1280 and on the iPad lying down. None is a
+failure arm, and the section's one guard is a `skip()`. `roster-who.mjs` gained no check — its read
+now pins the panel at 480 so the wider panel cannot make WO-1.74's measurement pass for the wrong
+reason. Full run: `1950 checks · 1950 passed · 0 failed · 0 skipped`, 62,335 lines, 32.0 lines per
+check, 1015s, exit 0, 2026-10-10 on the real clock. Mutation round in `TESTING.md` § WO-1.76.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

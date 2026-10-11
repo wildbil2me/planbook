@@ -3687,9 +3687,13 @@
      One sentence in here is load-bearing rather than decorative: a student belongs to the school
      year and a class holds a list of students. That is not an implementation note — it is the
      difference between "Remove" taking a student off this class and deleting a person's contacts,
-     and the teacher has to be able to predict which one she is about to do. -->
+     and the teacher has to be able to predict which one she is about to do.
+
+     `.roster-panel` (WO-1.76) widens this one panel to 640px, the owner's ruling, so a row's name, note,
+     support dot and three buttons have room; every other dialog stays the stock 480. src/shell.css
+     says why at the rule. -->
 <div class="modal-overlay hidden" id="rosterModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="rosterModalTitle">
+  <div class="modal-panel roster-panel" role="dialog" aria-modal="true" aria-labelledby="rosterModalTitle">
     <div class="modal-header">
       <div class="modal-header-lead">
         <button class="modal-back hidden" type="button" data-settings-back aria-label="Back to Settings">‹ Settings</button>

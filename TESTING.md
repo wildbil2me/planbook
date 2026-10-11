@@ -4037,6 +4037,95 @@ for the height checks' 1px sensitivity: both went red at `50px` against `51px`. 
 for the dot's position or its presence under presentation mode; those claims are support-details.mjs's
 too, and the order check here reads `support-dot` in third place by name.*
 
+### WO-1.76 — the roster dialog is wide enough for its rows
+
+**One class on one panel.** `.roster-panel { width: 640px; }` sits in `src/shell.css` directly after
+`.modal-panel`, and is restated in the `(pointer: coarse)` block beside the roster rules the way
+`src/attendance.css` restates `.attendance-keys-panel`; `index.html` puts it on `#rosterModal`'s panel
+and nowhere else. `.modal-panel` is not edited, and the `(max-width: 640px)` block's `.modal-panel {
+width: 95vw }` comes later in the file, so it still wins on a phone. The three owner questions were
+taken at the work order's written defaults at dispatch — **640, the roster only, the dot not moved** —
+and 640 is marked provisional at the rule. Measured by a new section, `tools/verify/roster-width.mjs`
+(eight checks, after `roster-who.mjs`, on two classes and two students of its own that it removes at
+its foot). The long name is `Castellanos-Whitfield, Anastasia “Ana”` with a 504 on file and `also in
+AP Literature`. **`roster-who.mjs` now pins the panel at 480 for its one synchronous read** and hands
+it back before returning, so WO-1.74's 480px measurement cannot pass for the wrong reason — the
+work order's first Traps line; no check in that section was edited.
+
+- [x] The roster dialog's panel is the width the owner ruled at a 1280px viewport, and no wider than
+      95vw at 390×844, with no horizontal overflow.
+      ***Closed 2026-10-10 on the owner's ruling: 640**, read on the iPad upright and lying down
+      ("all set"), so the measurements below close it as they stand. What was measured is the dispatch default, 640: `roster-width.mjs` at
+      1280×800, fine pointer, `panel 640px · sideways page 0, overlay 0, panel 0, body 0, rows inside
+      true`; at 390×844 under a coarse pointer `panel 350px` (≤ 370.5, 95vw), `sideways page 0,
+      overlay 0, panel 0, body 0, rows inside true`; and on an iPad upright (820×1180) and lying down
+      (1194×834), coarse, `panel 640px` both, nothing sideways. If the owner rules 640 this line closes
+      on this evidence; another number is a two-line change in `src/shell.css` and `WANT` in the
+      section.*
+- [x] At that width a roster row for a student with supports, a note and a long name is one line
+      tall, the dot is where the owner ruled, and ✎ · Edit · Remove are on that line.
+      ***Closed 2026-10-10 on the owner's ruling: the dot stays where WO-1.74 left it** — "where I
+      expect it to, immediately left of the pencil icon," read on the iPad. So the flex growth reported
+      below is the intended layout, not a defect, and no follow-up work order is owed. The owner also
+      read an extreme many-class row on the iPad — the case WO-1.74 handed here and the harness
+      fixture does not carry — and ruled that it works. The rest measured at 640: fine pointer
+      `row {"top":272.5,"bottom":322.5,…} · order ["avatar","roster-row-who","support-dot",
+      "roster-row-actions"] · name lines 1 · buttons ["✎","Edit","Remove"] · note "also in AP
+      Literature"` — every child of the row overlapping every other vertically, which a wrapped row
+      cannot do; the same on the iPad upright and lying down (rows 62px tall, name one line). **Where
+      the dot lands, from the `MEASURE |` lines:** fine pointer — `name text ends 618.1 · note text
+      ends 497.5 · name column ends 731.5 · dot 741.5..763.5 · actions start 773.5 · dot sits 123.4px
+      past the longer of name and note, 10px before the actions`; coarse, upright and lying down —
+      `dot sits 52.4px past the longer of name and note, 10px before the actions`. **So the width did
+      not bring the dot to the name; it moved it further away.** The dot is the column's neighbour,
+      and the column (`.roster-row-who`, `flex: 1 1 140px`) takes every pixel the wider panel added, so
+      the dot rides on the actions' left shoulder at any width. That is the flex growth the work order
+      asked to have reported rather than fixed, and the dot was not moved: the question at dispatch
+      (beside the name, or where WO-1.74 left it) is still the owner's.*
+- [x] Every dialog the owner did not name still measures 480px.
+      *`roster-width.mjs`, at 1280×800 fine and again at 1194×834 coarse. Through their real doors:
+      `{"settingsModal":480,"classesModal":480,"teacherModal":480,"studentModal":480,
+      "rosterPasteModal":480}` — Settings, Classes and terms, Your details, the single-student form
+      over the roster, and Paste a list. And every stock `.modal-panel` in the document, each cloned
+      into a hidden holder and measured — 32 of them, every one `480`, among them the confirms
+      (`classDeleteModal`, `studentDeleteModal`, `restoreConfirmModal`, `daysOffConfirmModal`,
+      `drivePullConfirmModal`, `outreachConfirmModal`, …) — with the six panels that carry a width of
+      their own read separately: `{"assignmentCopyModal":880,"rosterModal":640,"attendanceKeysModal":640,
+      "attendanceRecordModal":900,"gradesRecordModal":980,"passHistoryModal":900}`. The clone is sound
+      because every width rule on a panel is keyed to the panel's own classes; the only
+      `#…Modal .modal-panel` rules are the two print gates.*
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      *`node tools/verify-shell.mjs` on the finished tree: `EXIT=0`, `1950 checks · 1950 passed · 0
+      failed · 0 skipped`, 62,335 lines, 1015s, 2026-10-10 on the real clock. `node tools/wo-sweep.mjs`
+      after the mutation was reverted: exit 0, `50 checks · 47 passed · 0 failed · 3 to review` — the
+      standing three. The `tools/README.md` call-site line moved 1938 → 1946 from the sweep's own count.
+      `sw.js`: `planbook-shell-v181` → `planbook-shell-v182`.*
+- [x] `TESTING.md` § WO-1.76 carries these lines verbatim with the evidence for each.
+      *This section.*
+- [x] 👤 On the iPad, after a force-quit, upright and lying down: open Roster from Settings in a class
+      with a student who has supports and one in two classes, and read where the dot sits.
+      *Read by the owner on the iPad, 2026-10-10, after a force-quit, at v182 off the local server:
+      upright and lying down both "all set"; the dot "immediately left of the pencil icon"; a student
+      in many classes, "an extreme scenario, but it works"; and under presentation mode the dot
+      disappears.*
+
+**Also asserted.** Under presentation mode at 640 the long row's dot is absent from the DOM —
+`supportsVisible() false · panel 640 · order ["avatar","roster-row-who","roster-row-actions"] · name
+lines 1 · dots 0` — so the width touched nothing of WO-1.9. And WO-1.74's 480px checks read exactly
+what they read before: `panel 480px · one-class row 50px, three-class row 50px`.
+
+*Mutation round, run by the implementer on the full harness with the work order's own Traps fault
+planted — `.modal-panel` itself widened to `width: 640px`, marked `MUTATION WO-1.76`, with
+`src/shell.css` copied aside first and restored from that copy; `grep -rn MUTATION src tools index.html
+sw.js` read only pre-existing prose after. Result: `1950 checks · 1944 passed · 6 failed`. Both of this
+section's 480 checks went red (`doors {"settingsModal":640,…}`, every stock panel `640`), and so did
+four that already guarded the same thing from the attendance side (WO-2.60's history card and WO-2.59's
+three window widths, each reading `"history":640`). WO-1.74's 480 row check **stayed green** at
+`panel 480px` while every stock panel was 640 — the pin doing its job. The 640 checks stayed green,
+correctly: the roster panel was still 640. No fault was planted for the coarse restatement: it is
+redundant by design (the base rule already applies under a coarse pointer), so deleting it moves no
+measurement, which is the position `src/attendance.css`'s restatement is in too.*
+
 ---
 
 ## Phase 2 — Attendance

@@ -743,6 +743,19 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   box-shadow: 0 8px 32px rgba(0,0,0,0.25); overflow: hidden;
   margin: auto; animation: srIn 0.18s ease;
 }
+/* THE ROSTER DIALOG'S WIDTH (WO-1.76), a class of its own on #rosterModal's panel the way
+   `.attendance-keys-panel` (src/attendance.css, WO-2.59) sits beside this rule — `width`, not
+   `max-width`, because a cap above `.modal-panel`'s 480 never comes into play, which is the defect
+   WO-2.59 found on four dialogs at once. The roster is the heaviest door behind Settings and the one
+   whose rows carry a name, an "also in" note, the support dot and three buttons; every other dialog
+   keeps the stock 480 on purpose, because thirty-odd share `.modal-panel` and a confirm at 640 is a
+   sentence across a laptop. `max-width: 95vw` above still governs a narrow window, and the
+   (max-width: 640px) block's `.modal-panel { width: 95vw }` comes later in this file and so wins on
+   a phone. 640 is the owner's ruling, read on the iPad upright and lying down on 2026-10-10. The
+   support dot stays where WO-1.74 left it, immediately left of ✎ — also the owner's ruling that day,
+   so the name column's flex growth is not a defect to fix. Restated in the coarse block below, as the
+   Keys panel's is. */
+.roster-panel { width: 640px; }
 @keyframes srIn {
   from { opacity: 0; transform: scale(0.96) translateY(8px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
@@ -2397,6 +2410,11 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
      things a teacher has to be able to see while she types them. */
   .roster-row-name { font-size: 14px; }
   .roster-row-note { font-size: 12px; }
+  /* The roster dialog's width (WO-1.76), restated so the panel's width under a coarse pointer is
+     declared where this block's reader looks for it — the reason src/attendance.css restates
+     `.attendance-keys-panel` in its own coarse block. The (max-width: 640px) block after this one
+     still puts it at 95vw on a phone. Not a control, so no 44px to carry. */
+  .roster-panel { width: 640px; }
   .roster-empty { font-size: 14px; }
   /* The two rows in this feature that put a destructive control shoulder to shoulder with a
      harmless one — Edit beside Remove, and "Contact first" beside the button that deletes a
