@@ -6337,9 +6337,8 @@ the actions; at 480px with a long name or an *also in* note, the row wraps and t
 line of its own. **The cause has been named by the owner, not measured** — read the row before
 deciding that width alone fixes it.
 
-**Nothing is open at dispatch.** The eight dialogs in the table's third row are built at the kind
-shown and settled by the 👤 reading. A dialog the owner reads the other way is a one-word change in
-`index.html` before the work order closes, not a new work order.
+**Nothing is open at dispatch.** If the 👤 reading finds a dialog the owner would now rule the other
+way, that is a one-word change in `index.html` before the work order closes, not a new work order.
 
 **Deliverables**
 - **`src/shell.css`**: a width class on the roster dialog's panel (and on any other the owner names),
@@ -6423,14 +6422,13 @@ draws at today. **The harness also fails a `.modal-panel` that carries no kind, 
 the forgotten class is caught before deploy rather than found by a teacher. The default is a safety
 net, and the check is the rule.
 
-**The classification, ruled by the owner on 2026-10-11** except for eight dialogs, which are read
-on the iPad.
+**The classification, every dialog ruled by the owner on 2026-10-11.** Eight were close calls, and the
+owner looked at each in the app before ruling it; they are marked *(read)*.
 
 | Kind | Dialogs |
 |---|---|
-| **form, ruled** | `assignmentModal`, `aboutModal`, `outreachModal` (named by the owner; Draft an email is 640, not a wider override) · `settingsModal`, `yearModal`, `classesModal`, `termsModal`, `categoriesModal`, `letterScaleModal`, `signalsModal`, `rosterPasteModal`, `rosterImportModal`, `studentModal`, `daysOffModal`, `eventsModal` |
-| **confirm, ruled** | `classDeleteModal`, `categoryRemoveModal`, `outreachConfirmModal`, `assignmentMoveModal`, `holdModal`, `assignmentDeleteModal`, `studentDeleteModal`, `restoreConfirmModal`, `daysOffConfirmModal` |
-| **Read on the iPad**, built at the proposed kind | confirm: `teacherModal` (Your details), `backupModal` (Backup & restore), `drivePullModal` (Open a year from Google Drive), `drivePullConfirmModal`, `gradingModeModal` · form: `signalCardModal` (Why they are on the list), `attendanceHistoryModal` (Attendance), `logSheetModal` |
+| **form, ruled** | `assignmentModal`, `aboutModal`, `outreachModal` (named by the owner; Draft an email is 640, not a wider override) · `settingsModal`, `yearModal`, `classesModal`, `termsModal`, `categoriesModal`, `letterScaleModal`, `signalsModal`, `rosterPasteModal`, `rosterImportModal`, `studentModal`, `daysOffModal`, `eventsModal` · *(read)* `signalCardModal`, `attendanceHistoryModal`, `logSheetModal`, `backupModal` |
+| **confirm, ruled** | `classDeleteModal`, `categoryRemoveModal`, `outreachConfirmModal`, `assignmentMoveModal`, `holdModal`, `assignmentDeleteModal`, `studentDeleteModal`, `restoreConfirmModal`, `daysOffConfirmModal` · *(read)* `teacherModal`, `drivePullModal`, `drivePullConfirmModal`, `gradingModeModal` |
 | **Already ruled, width unchanged** | report: `attendanceRecordModal`, `passHistoryModal` (900) · report, width 880 → 900: `assignmentCopyModal` · report with override: `gradesRecordModal` (980) · form: `rosterModal`, `attendanceKeysModal` (640) |
 
 **Questions at dispatch, for the owner**
@@ -6467,9 +6465,8 @@ on the iPad.
 - [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
 - [ ] `TESTING.md` § WO-1.77 carries these lines verbatim with the evidence for each.
 - [ ] 👤 On the iPad, after a force-quit, upright and lying down, the owner opens About, a new
-      assignment, Draft an email, Settings and one ruled confirm and reads each at its width. Then the
-      owner rules each of the eight dialogs read on the iPad, and any changed kind lands before this
-      box is ticked.
+      assignment, Draft an email, Settings and one ruled confirm and reads each at its width. Any kind
+      the owner changes on that reading lands before this box is ticked.
 
 **Traps** — **`width`, never `max-width`.** WO-2.59 found four dialogs that had asked for 900 with
 `max-width` on top of the 480 base, so they had been 480 since they shipped. **Do not widen
