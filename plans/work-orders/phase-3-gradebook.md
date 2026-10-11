@@ -4571,7 +4571,7 @@ with that finding.
 
 ## WO-3.58 — the dialogs behind the Assignments and Scores screens are read together, and a layout is ruled
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.54, WO-3.55, WO-3.57
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.54, WO-3.55, WO-3.57, WO-1.77
 **Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
 
 **Booked 2026-10-11**, out of WO-3.56's iPad reading. The editor's *needs a name* message draws
@@ -4586,6 +4586,9 @@ rows. Nothing in `src/` moves here.
 WO-3.57 may move where the nameless warning shows. Reviewing before them would mean drawing dialogs
 that are about to change. **If any of those three ends up changing a dialog's layout, that change is
 input to this review, not a reason to start it early.** Read what they changed before drawing.
+
+**It also waits for WO-1.77**, added 2026-10-11, which gives the editor and its neighbours a
+ruled width. Drawing them at 480 first would mean drawing a dialog about to get wider.
 
 **Scope.** The dialogs reached from the Assignments and Scores screens. From `index.html` that is at
 least `assignmentModal`, `assignmentMoveModal`, `holdModal`, `assignmentCopyModal`,

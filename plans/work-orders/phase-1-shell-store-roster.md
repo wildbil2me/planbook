@@ -6385,3 +6385,89 @@ projector, not hidden in it; a width change must not touch that branch. **Do not
 `.modal-panel` itself**: thirty-odd dialogs share it, and a confirm at 640px is a sentence across a
 laptop. **Width is not a substitute for a ruling on the dot** — if the measurement shows the flex
 growth is the real cause, report it rather than fixing it under a width work order.
+
+## WO-1.77 — every dialog is as wide as it was ruled, and 480 is for confirms
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.76 · **Blocks** WO-3.58
+**Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
+
+**Booked 2026-10-11**, owner-directed, from a conversation about modals that "continue to feel too
+narrow for their content." The owner named two: **the assignment editor**, which is the one they hit
+most recently, and **About Planbook**, which is "very narrow given how much text it has."
+
+**Why one work order and not two more WO-1.76s.** `.modal-panel` sets `width: 480px` for every
+dialog (`src/shell.css`). Six have been widened one at a time, each as a separate work order after the
+owner hit the problem on hardware: Grade sheet 980; Attendance record and Hall passes 900;
+Duplicate 880; Keys and Roster 640. **Thirty-two are still at 480**, and none of them was given that
+width on purpose. 480 is Roll Call!'s *standard* modal. Roll Call! itself had four sizes: standard 480,
+Settings 660, student report 640 and report 700 (its `design/portable-components.md` § 5). Settings
+here is 480, so it departs from the "lift the design with the function" rule without a note saying so.
+**Nothing in this repository says when a dialog gets more room**, so every narrow dialog is found by
+a teacher instead of by a rule.
+
+**What this work order produces is a rule plus a table.** There are three widths:
+- **480, confirms.** A question and its buttons, or a few lines of prose with one action.
+  The WO-1.76 comment stands: "a confirm at 640 is a sentence across a laptop."
+- **640, forms, lists and reading.** Fields side by side, rows of names, and prose longer than a
+  paragraph. This is the Keys argument from WO-2.59: prose much past 80 characters a line reads worse,
+  and prose at 480 wraps too soon.
+- **Reports, wider.** The four already widened, unchanged.
+
+Every one of the 38 dialogs gets a width, and the harness fails a dialog that has none, so a new
+dialog has to pick one.
+
+**The proposed table.** This is a starting point for the owner's ruling. Only the two the owner named
+are settled.
+
+| Width | Dialogs |
+|---|---|
+| **640, owner-named** | `assignmentModal` (Assignment), `aboutModal` (About Planbook) |
+| **640, proposed** | `settingsModal`, `yearModal`, `classesModal`, `termsModal`, `categoriesModal`, `letterScaleModal`, `signalsModal`, `signalCardModal`, `outreachModal`, `rosterPasteModal`, `rosterImportModal`, `studentModal`, `logSheetModal`, `daysOffModal`, `eventsModal`, `attendanceHistoryModal` |
+| **480, proposed** | `drivePullModal`, `drivePullConfirmModal`, `classDeleteModal`, `gradingModeModal`, `categoryRemoveModal`, `outreachConfirmModal`, `assignmentMoveModal`, `holdModal`, `assignmentDeleteModal`, `studentDeleteModal`, `restoreConfirmModal`, `daysOffConfirmModal`, `teacherModal`, `backupModal` |
+| **Already ruled, unchanged** | `gradesRecordModal` 980 · `attendanceRecordModal`, `passHistoryModal` 900 · `assignmentCopyModal` 880 · `rosterModal`, `attendanceKeysModal` 640 |
+
+**Questions at dispatch, for the owner**
+1. **The table.** Rule each "proposed" row. The owner may know a dialog better than its markup
+   suggests; `teacherModal` and `backupModal` are the closest calls.
+2. **Whether `outreachModal` wants more than 640.** A draft email is a body of prose with a subject and
+   recipients over it. If the owner wants it wider, it gets a class of its own, the way Keys did. This
+   work order does not add a fourth tier.
+3. **Whether `.roster-panel` and `.attendance-keys-panel` fold into the shared class.** Both are 640
+   and each carries its own ruling comment. Folding them is tidier but loses the comments at their
+   points of departure. The default is to leave them alone.
+
+**Deliverables**
+- **`src/shell.css`**: one shared 640 class (a name such as `.wide-panel`), with `width` and **not**
+  `max-width`, restated in the `pointer: coarse` block as `.roster-panel` is. The
+  `(max-width: 640px)` block still puts every panel at 95vw on a phone. **`.modal-panel` itself stays
+  at 480.**
+- **`index.html`**: the class on every panel the owner ruled 640.
+- **`design/style-guide.md` § 5**: the three widths written as the rule, with what decides each one.
+  A new dialog then has a place to look before it ships at 480 by default.
+- **The harness**: a table of every dialog id and its ruled width, checked at a 1280px viewport and on
+  an iPad viewport lying down. A `.modal-panel` in `index.html` with no row in the table fails, and so
+  does a table row with no dialog. Nothing is wider than 95vw at 390×844. **`tools/verify/roster-width.mjs`
+  Acceptance 3** ("every stock `.modal-panel` measures 480") becomes false on purpose. Move it into the
+  new check rather than deleting it, and say so in its header.
+- **`TESTING.md` § WO-1.77**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] Every dialog in `index.html` measures the width the owner ruled for it at a 1280px viewport and
+      on an iPad viewport lying down, and none is wider than 95vw or overflows horizontally at 390×844.
+- [ ] The harness fails a `.modal-panel` that has no ruled width, and a ruled width whose dialog is
+      gone. Both are proved by a planted fault.
+- [ ] `design/style-guide.md` § 5 states the three widths and what decides each.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] `TESTING.md` § WO-1.77 carries these lines verbatim with the evidence for each.
+- [ ] 👤 On the iPad, after a force-quit, upright and lying down, the owner opens About, a new
+      assignment, Settings and one confirm, and reads that each is the width it was ruled.
+
+**Traps** — **`width`, never `max-width`.** WO-2.59 found four dialogs that had asked for 900 with
+`max-width` on top of the 480 base, so they had been 480 since they shipped. **Do not widen
+`.modal-panel` itself**: confirms stay at 480 and keep it as their width. **Width only**: the assignment
+editor's *needs a name* message draws under its buttons, and moving it belongs to WO-3.58, which this
+work order runs before on purpose so that WO-3.58 draws the editor at its new width. Do not move any
+message here. **The print rules** for the Record and the Grade sheet set their own `width: 100%` under
+`body[data-…-print]`; leave them alone. **A form at 640 can leave its fields at 480's widths**, so a
+wider panel with an empty right half has not fixed anything. Read each named dialog at the new width,
+and report a field that does not use the room rather than restyling it here.
