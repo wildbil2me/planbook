@@ -1,0 +1,99 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   PROPOSED STYLES — the Scores screen, tidied.
+
+   Fourteenth room. Drawn 2026-10-11 in conversation with the owner, from a
+   photograph of the teaching iPad upright, as the third screen in the run that
+   tidied Attendance (WO-2.58) and Assignments (WO-3.54). The owner asked to see it
+   before any row was written; it was ruled and booked the same day as three M
+   rows: WO-3.60 (frame A, the top), WO-3.61 (frame D, the keys) and WO-3.62
+   (frame C, the column head).
+
+   IT PROPOSES what this sheet can say, each a name src/ does not use yet: a
+   search box that gives up width, pills that flow beside it, the group Sort and
+   the two icon doors sit in at the toolbar's end, the row the summary
+   shares with + New assignment, the summary folded into the title (frame B),
+   the one-line meta under a column's name, and the column name as the way into
+   the editor. Everything else on the page is a shipped class worn as-is — the
+   Keys dialog in frame D wears src/attendance.css's own `.attendance-keys`
+   rows, unchanged.
+
+   Two proposals are values on shipped classes and so are NOT styled here (rule
+   5): the frozen name column narrower, and the summary's `·` darker. Each is
+   said in its frame's caption instead.
+
+   Colours inline, no custom properties, no dark mode — src/shell.css's rules.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.scores-col-edit { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § SCORES TIDY   →  src/scores.css   (WO-3.60 · WO-3.61 · WO-3.62 — not yet lifted)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* THE TWO DOORS, AT THE TOOLBAR'S END. `.attendance-tools`, value for value: the
+   group takes the far end of the search row and does not wrap inside itself, so
+   ⌨ and 🖨 move together or not at all. They are `.class-action-btn`s with no
+   words, each keeping its words as `aria-label` and `title` (WO-2.58 ruling 7). */
+.scores-tools {
+  display: flex; align-items: center; gap: 6px; margin-left: auto; flex-wrap: nowrap;
+}
+
+/* THE BOX GIVES UP WIDTH BEFORE THE ROW WRAPS. Worn beside `.search-box`, as
+   `.attendance-find` is, but NOT with its values, and the difference is the point:
+   that box grows into spare room, and here the pills beside it want the room more.
+   A large shrink factor makes the box give up its width first — 360 down to 200 —
+   so the pills wrap only once the box is as small as it goes. This reverses WO-2.58
+   ruling 8's "the Scores box keeps its 360", at the owner's word on 2026-10-11:
+   upright under a thumb, a fixed 360 sent the whole pill group to a line of its own. */
+.scores-find { flex: 0 1000 360px; min-width: 200px; }
+
+/* THE PILLS FLOW BESIDE THE BOX. Worn beside the shipped `.scores-filter-pills`,
+   which already wraps inside itself; this lets the group take the room left on
+   the box's line rather than drop beneath it whole, so the pills start beside the
+   box and only the ones that do not fit go to a second line. */
+.scores-pills-flow { flex: 1 1 auto; min-width: 0; }
+
+/* THE SUMMARY AND + NEW ASSIGNMENT SHARE THE BODY'S FIRST ROW (frame A). The
+   figures on the left, the button at the right end — the edge WO-3.54 gave it on
+   Assignments, one level down from ← All classes. The shipped `.scores-summary`
+   keeps its own type; this only lays the row out and takes over its bottom margin. */
+.scores-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap; margin-bottom: 10px;
+}
+.scores-top > .scores-summary { margin-bottom: 0; }
+
+/* THE SUMMARY IN THE TITLE (frame B, the alternative). The class average leads in
+   the title's ink; the other two figures follow muted, the posture WO-2.58 gave
+   the attendance totals inside the state line. */
+.scores-headline-figs { display: block; margin-top: 3px; font-size: 12px; color: #6b7a8d; }
+.scores-headline-figs b { color: #1a1a2e; font-variant-numeric: tabular-nums; }
+
+/* A COLUMN HEAD ON FOUR LINES, NOT FIVE (frame C). Points and due date share one
+   line; the name may take two before it truncates. Hold stays under the category
+   chip on every column — the owner's ruling, 2026-10-11. */
+.scores-col-meta {
+  display: block; font-size: 9px; font-weight: 700; color: #8a9bb0;
+  font-variant-numeric: tabular-nums; margin-bottom: 4px;
+}
+.scores-col-name.wraps {
+  white-space: normal; display: -webkit-box; -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; line-clamp: 2; line-height: 1.3;
+}
+
+/* THE COLUMN NAME OPENS THE ASSIGNMENT EDITOR (frame C) — WO-3.54 ruling 2, carried
+   across: a real <button> in the name's own type, indigo with a dotted underline
+   under a pointer. The focus ring is the browser's. */
+.scores-col-edit {
+  background: none; border: 0; padding: 0; margin: 0 auto;
+  font: inherit; color: inherit; text-align: center; cursor: pointer; display: block;
+}
+.scores-col-edit:hover { color: #5b6fcc; text-decoration: underline dotted; text-underline-offset: 3px; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § TOUCH
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+@media (pointer: coarse) {
+  .scores-col-edit { min-height: 44px; }
+}

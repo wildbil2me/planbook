@@ -1087,3 +1087,65 @@ All five are the owner's, 2026-10-10.
    it*, now WO-3.54's ruling 6.
 2. **A view-only Due sort on the Scores grid** was raised and waits for the Scores conversation,
    which the owner has put next. It is WO-3.55's *Not in scope*, so it is not lost.
+
+# Scores, tidied — WO-3.60, WO-3.61 and WO-3.62, drawn, ruled and booked 2026-10-11
+
+**The fourteenth room, and the sixth drawn of a screen that already ships.** One page, drawn from a
+photograph of the teaching iPad upright, as the third screen in the run that tidied Attendance
+(WO-2.58) and Assignments (WO-3.54). **The owner asked to see it before any row was booked**; it was
+ruled and booked the same day as three M rows, cut to stay below L:
+[WO-3.60](../../plans/work-orders/phase-3-gradebook.md#wo-360--the-scores-screens-top-matches-the-other-class-screens),
+frame A, the top;
+[WO-3.61](../../plans/work-orders/phase-3-gradebook.md#wo-361--the-scores-keys-open-a-dialog-and-clear-and-note-get-a-key),
+frame D, the keys; and
+[WO-3.62](../../plans/work-orders/phase-3-gradebook.md#wo-362--the-scores-column-head-gets-lighter-and-the-name-column-narrower),
+frame C, the column head. Their Rulings carry every answer. Every student name on the page is
+invented.
+
+## What the drawing proposes
+
+Styled in [`proposed-scores-tidy.css`](proposed-scores-tidy.css): § SCORES TIDY, bound for
+`src/scores.css`. The page links the shipped `src/scores.css`, `src/assignments.css` and
+`src/attendance.css`, so frame 0 is today's screen drawn by today's rules.
+[`scores-tidy.html`](scores-tidy.html):
+
+- **0** — as it ships: six rows between the title and the grid, and a five-line column head.
+- **A** — five rows. Sort: Last, ⌨ and 🖨 sit in a group at the search row's right end, the doors as
+  icons; the search box gives up width so the pills start beside it; + New assignment takes the
+  right end of the summary's row; the flags move directly over the grid, relabelled *The cell you
+  are in*, with *Clear (C)* and *Note (N)*; the first hint paragraph shrinks and points at ⌨.
+- **B** — the alternative, not chosen: the summary folded into the title.
+- **C** — the column head on four lines: points and due share one, and the name may wrap to two.
+  Hold stays under the category chip. The column name opens the assignment editor.
+- **D** — ⌨ opens a dialog in Attendance's own key rows, the `modal-form` kind, with C and N listed.
+- **E** — the five class screens' tops, slot by slot: the map the owner's rule for this run is
+  checked against.
+
+## Decided, the owner, 2026-10-11
+
+- **The rule for the run: similar, matching or analogous controls sit in the same place on every
+  class screen.** Frame E maps the five screens' tops slot by slot, and is what the Calendar and
+  Signals passes read first.
+- **A, not B** — the summary keeps its own row, with + New assignment at its right end.
+- **⌨ and 🖨 as icons at the search row's right end**, as on Attendance, with **Attendance's
+  *Sort: Last* toggle** beside them — a view, never remembered, and never reaching the grade sheet.
+- **The search box does not take the whole row**: it gives up width, 360 down to 200, and the pills
+  start beside it and wrap below only when there are too many. Reverses WO-2.58 ruling 8.
+- **Clear and Note each get a key — C and N.** N keeps WO-3.32's Trap: it is not a key the grid
+  already uses.
+- **`?` opens the Keys dialog from the grid**, as it does on Attendance.
+- **The Keys dialog stays outside WO-3.58's review**: it has no message, note or warning to place —
+  a read-only list and a ✕, like Attendance's. WO-3.58's *Not in scope* names it.
+- **Hold stays in the column head, under the category chip**, on every column; the column name opens
+  the assignment editor. The head goes from five lines to four.
+- **The frozen name column narrows, 190px → 156px.** *190 is the laptop width; under a coarse
+  pointer the column is already 168, so on the iPad 156 buys 12px. Corrected at booking, and the
+  coarse width is an Open line in WO-3.62.*
+- **The summary's `·` separators stay as they ship.**
+
+## The open questions, collected
+
+None for Scores. The search row's wrap under a thumb is a 👤 line for the build, not a question for
+the drawing. Frame E's three disagreements — doors in the title row or the toolbar, where paging
+lives, and one sort control or several — are expected, the owner, 2026-10-11: the run is working
+toward Calendar and Signals, and they follow Attendance, Assignments and Scores when their turn comes.

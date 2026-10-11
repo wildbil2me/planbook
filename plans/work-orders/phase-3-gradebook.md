@@ -4704,7 +4704,10 @@ that are missing and drop any that are out.
 - [ ] The build is booked as rows below L, and the drawing passes `wo-sweep.mjs` § 19.
 
 **Not in scope** — building any of it, and the dialogs outside this scope (attendance, roster,
-settings), which have their own work orders.
+settings), which have their own work orders. **Nor the Scores Keys dialog** that
+[`design/mockups/scores-tidy.html`](../../design/mockups/scores-tidy.html) frame D proposes — the
+owner, 2026-10-11: it is a read-only list with a ✕ and no message, note or warning to place, like
+its twin on Attendance, so neither row waits on the other.
 
 ## WO-3.59 — the assignments screen scrolls sideways at phone width
 
@@ -4744,3 +4747,249 @@ the one span.
 - [x] `TESTING.md` § WO-3.59 carries these lines verbatim with the evidence for each.
 
 **Not in scope** — other screens at phone width, unless the same element causes theirs. Report them.
+
+## WO-3.60 — the Scores screen's top matches the other class screens
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** —
+**Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
+
+**Booked 2026-10-11**, owner-directed, out of a sitting that drew the screen first from a photograph
+of the teaching iPad upright. It is the third screen in the run that tidied Attendance (WO-2.58) and
+Assignments (WO-3.54), and **the owner's rule for that run is that similar, matching or analogous
+controls sit in the same place on every class screen.** Scores was built before either and draws six
+rows between its title and its grid. ⌨ Keys and 🖨 Grade sheet keep their words where Attendance's
+doors have none, + New assignment leads a row of its own, and the search row sits between the flag
+bar and the grid the flags write into. **The first of three pieces**, cut at booking to stay below
+L: [WO-3.61](#wo-361--the-scores-keys-open-a-dialog-and-clear-and-note-get-a-key) moves the keys
+into a dialog and gives Clear and Note a key, and
+[WO-3.62](#wo-362--the-scores-column-head-gets-lighter-and-the-name-column-narrower) lightens the
+grid's head.
+
+**Surface.** [`design/mockups/scores-tidy.html`](../../design/mockups/scores-tidy.html), frame 0 (as
+it ships) and frame A, styled in
+[`design/mockups/proposed-scores-tidy.css`](../../design/mockups/proposed-scores-tidy.css)
+§ SCORES TIDY, with `design/mockups/README.md` § "Scores, tidied". Frame E maps all five class
+screens' tops; Calendar and Signals diverge from it today, and the owner ruled that is expected until
+their own passes. **Lift the section rather than re-deriving it** (`PROTOCOL.md` § When the drawing
+lands), and amend its banner in the same sitting. `.scores-col-meta`, `.scores-col-name.wraps` and
+`.scores-col-edit` are WO-3.62's — leave them in the drawing.
+
+**Rulings, the owner's, 2026-10-11**
+1. **The summary keeps its own row** (frame A, not B), and **+ New assignment takes that row's right
+   end** (`.scores-top`) — the edge WO-3.54 gave it on Assignments, one level below ← All classes.
+   `#scoresActions` goes.
+2. **⌨ and 🖨 lose their words and sit at the search row's right end**, in a group
+   (`.scores-tools`, `.attendance-tools` value for value), each keeping its words as its
+   `aria-label` and `title`. Exactly as on Attendance (WO-2.58 ruling 7).
+3. **Attendance's sort toggle joins them, first in the group**: one `.class-action-btn` reading
+   *Sort: **Last***, flipping to First. **A view only**: a module variable, never a preference, back
+   to Last on a class switch, as `sortBy` is in `src/attendance.js`.
+4. **The search box does not take the whole row.** It gives up width first, 360px down to 200
+   (`.scores-find`, worn beside `.search-box`), and the pills flow beside it
+   (`.scores-pills-flow`, worn beside `.scores-filter-pills`) and wrap below only when there are too
+   many. **This reverses WO-2.58 ruling 8**, "the Scores box keeps its 360". The values are the
+   drawing's, not `.attendance-find`'s: that box grows into spare room, and here the pills want it.
+5. **The flag bar moves directly over the grid**, under the search row — Attendance's order: find,
+   then write, then the grid. Its label becomes **The cell you are in**, because Clear and Note are
+   not flags. The key strip and the note panel stay directly under it.
+6. **The search placeholder becomes Attendance's**, *Search students…*.
+7. **The summary's `·` separators stay as they ship.**
+
+**Deliverables**
+- **`index.html`**: `#scoresActions` goes; the summary and `data-assignment-new` share a
+  `.scores-top` row; `#scoresToolbar` gains `.scores-tools` holding the sort toggle, ⌨ and 🖨 (both
+  without words, hooks unchanged); the search box gains `.scores-find` and the new placeholder; the
+  pills host gains `.scores-pills-flow`; `#scoresFlags` moves under the toolbar with its new label.
+  **The comments that describe the old order go or are rewritten**, including the one above the
+  toolbar arguing where the pills sit relative to the count.
+- **`src/scores.js`**: the sort toggle's state, label and route; the grid drawn in that order. The
+  `toggle('hidden')` calls on the empty state still find every element they hid.
+- **`src/scores.css`**: § SCORES TIDY lifted — `.scores-tools`, `.scores-top`, `.scores-find`,
+  `.scores-pills-flow` — with the coarse rules into the existing `(pointer: coarse)` block.
+  `.scores-actions` goes if nothing else wears it.
+- **The harness**: `tools/verify/score-grid.mjs` (the actions row and the Keys button's words),
+  `keys-legend-scores.mjs` and `keys-legend-guards.mjs` (the button), `score-search.mjs` and
+  `class-tab-keeps-screen.mjs` (the search box), `score-history.mjs` and `score-notes.mjs` (the flag
+  bar), `touch-targets.mjs`, and new checks for the sort toggle. Grep `tools/verify/` for
+  `scoresActions`, `scores-actions` and `Flag the cell` before trusting that list.
+- **`design/mockups/proposed-scores-tidy.css`'s banner, `README.md` section and `index.html` entry**
+  amended to say § SCORES TIDY's frame A half landed.
+- **`TESTING.md` § WO-3.60**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] On Scores, the body's first row is the summary with + New assignment as its last control,
+      right-aligned. `#scoresActions` does not exist.
+- [ ] The search row ends in a group holding, in order, the sort toggle, ⌨ and 🖨. ⌨ and 🖨 carry
+      no visible words; their accessible names and their `data-scores-keys` and
+      `data-grades-record` hooks are unchanged.
+- [ ] The sort toggle reads *Sort: Last*, puts the grid in first-name order and reads *Sort: First*
+      on a tap, and is back to *Last* after a class switch. ↵ and ↓ walk the students **in the order
+      drawn** under either sort. The grade sheet prints in last-name order under either, and with
+      the sort's effect on `gridOrder()` planted, that check fails.
+- [ ] At 1180px under a coarse pointer the search row is one line. At 820px the box is narrower
+      than 360px and at least one pill sits on the box's line.
+- [ ] The flag bar is the last thing above the grid — or the key strip or note panel when either is
+      open — and its label reads *The cell you are in*. The search placeholder reads *Search
+      students…*.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] 👤 On the iPad, after a force-quit, upright and lying down: the top reads in the order the
+      drawing gives, the search row's wrap looks right with five categories, and the sort toggle
+      flips the grid.
+
+**Traps** — **Move the hooks, do not rename them.** `data-scores-keys`, `data-grades-record`,
+`data-assignment-new` and `data-scores-search` route in `src/shell.js` and are what the harness
+presses. **`gridOrder()` is shared with `src/grades-report.js`** so the printed sheet matches the
+SIS's order; the sort must not reach it — sort a copy for the screen. **The key handlers walk the
+rows the DOM holds** (`moveWithinColumn()`), so a sort that reorders data without redrawing the
+rows sends ↵ to the wrong student. **Do not touch Calendar or Signals** — their divergence is ruled
+expected until their own passes. **The ⌨ button still opens the strip here**; the dialog is
+WO-3.61's.
+
+**Not in scope** — the keys dialog, `?`, C and N (WO-3.61), and the column head (WO-3.62).
+
+## WO-3.61 — the Scores keys open a dialog, and Clear and Note get a key
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.60
+**Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
+
+**Booked 2026-10-11** with WO-3.60, same drawing, frame D. On Attendance ⌨ opens a dialog and `?`
+opens it from the keyboard; on Scores it unfolds a strip inside the panel. The strip's rows are
+`nowrap`, so each had to be measured for spilling through its border at 390px, and the `← →` row
+has been reworded twice to fit (WO-3.16, WO-3.24). The first hint paragraph under the grid restates
+nearly every key. And two of the flag bar's five buttons — Clear and Note — have no key at all.
+**After WO-3.60**, which moves ⌨ into the toolbar and the flag bar over the grid; both are edited
+again here.
+
+**Surface.** [`design/mockups/scores-tidy.html`](../../design/mockups/scores-tidy.html), frame D
+(the dialog) and frame A's flag bar and first hint paragraph. No new CSS: the dialog wears
+`src/attendance.css`'s `.attendance-keys`, `.attendance-key-row` and `.attendance-key` as shipped,
+and the `modal-form` kind (WO-1.77).
+
+**Rulings, the owner's, 2026-10-11**
+1. **⌨ opens a dialog**, *Entering scores from the keyboard*, of the `modal-form` kind, with the
+   rows frame D draws. `#scoresKeys` and the `keysOpen` disclosure go.
+2. **`?` opens it from the Scores screen, including from inside a score cell**, as it does on
+   Attendance, and closing it gives focus back to the cell. A score cell asks for a decimal keypad
+   and `?` is not a score.
+3. **C clears the cell** — exactly what the Clear button does, score and mark together, in one
+   press. **N opens the note on the cell**, exactly as the Note button does. Neither is a key the
+   grid already uses, so N keeps WO-3.32's Trap rather than reversing it. **Under presentation mode
+   N does nothing**, because the Note button is not there either.
+4. **The flag bar carries the letters**: *Clear (C)* and *Note (N)*, as it carries L, M and X.
+5. **The first hint paragraph shrinks** to frame A's two sentences and points at ⌨. The sentence
+   *Escape does nothing here because there is no dialog to close* is reworded to say Escape does
+   nothing **on the grid**; the dialog's last row says Escape closes it.
+6. **The dialog stays outside WO-3.58's review** — it has no message, note or warning to place.
+   WO-3.58's *Not in scope* names it.
+
+**Deliverables**
+- **`index.html`**: `#scoresKeys` goes; a `scoresKeysModal` dialog with frame D's rows; the ⌨
+  button opens it (`aria-haspopup="dialog"`, no `aria-expanded`); the flag bar's two labels; the
+  hint's first paragraph and its Escape sentence.
+- **`src/shell.js`**: `?` on the Scores screen opens the dialog with the focused cell as opener, the
+  way the Attendance branch does at `e.key === '?'`.
+- **`src/scores.js`**: C and N in `handleScoreKey()`; the strip's state and its decision-4 comment
+  go.
+- **`src/scores.css`**: `.scores-keys`, `.scores-key` and the keys button's expanded state go if
+  nothing else wears them.
+- **The harness**: `tools/verify/keys-legend-scores.mjs` and `keys-legend-guards.mjs` rewritten for
+  a dialog; `score-grid.mjs` and `score-notes.mjs` for the flag bar's words; new checks for `?`, C
+  and N.
+- **`design/mockups/proposed-scores-tidy.css`'s banner and `README.md` section** amended to say
+  frame D landed.
+- **`TESTING.md` § WO-3.61**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] ⌨ opens a `modal-form` dialog holding a row for ↵, ⇥, ↑ ↓, ← →, L, M, X, C, ⌫, N and Esc.
+      `#scoresKeys` does not exist, and every dialog in `index.html` still wears exactly one kind.
+- [ ] `?` pressed inside a score cell opens the dialog, writes nothing into the cell, and closing
+      the dialog puts focus back in that cell.
+- [ ] C in a cell holding a score and a flag leaves it blank with no flag, as the Clear button does;
+      `c` does the same. Ctrl+C in a cell still copies.
+- [ ] N in a cell opens that cell's note panel with focus in its field, as the Note button does; `n`
+      does the same. Under presentation mode N opens nothing and writes nothing into the cell.
+- [ ] The flag bar reads *Clear (C)* and *Note (N)*, and the first hint paragraph is frame A's.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] 👤 On the iPad with a keyboard attached, after a force-quit: `?`, C and N from a score cell,
+      and the dialog reads whole upright.
+
+**Traps** — **The character filter.** WO-3.25 refuses characters on their way into a score cell, so
+C, N and `?` must be taken by the key handler before that filter sees them, and the handler must
+`preventDefault` so none lands in the field. **Modifiers**: `src/shell.js` returns on Ctrl, Alt and
+Meta before the score branch, which is what keeps Ctrl+C as copy and Ctrl+N as a new window —
+measure that still holds rather than reading it. Shift is not a modifier here: `e.key` is `'C'` with
+Shift held, and refusing a modified letter refuses the capital (`handleScoreKey()`'s own comment).
+**Check first whether Escape already closes the note panel** and hands focus back; if not, say so in
+`TESTING.md` rather than building it — it is not ruled.
+
+**Not in scope** — the column head (WO-3.62), and Attendance's own keys dialog.
+
+## WO-3.62 — the Scores column head gets lighter, and the name column narrower
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** —
+**Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
+
+**Booked 2026-10-11** with WO-3.60, same drawing, frame C. In the photograph the column heads are
+the tallest thing on the screen: five stacked lines — the name, *out of 10*, the category chip,
+*due Sep 7*, and a Hold button. Names truncate at one line ("Summer Reading E…"), and the two frozen
+columns take a large share of an upright iPad.
+
+**Surface.** [`design/mockups/scores-tidy.html`](../../design/mockups/scores-tidy.html), frame C,
+styled in [`design/mockups/proposed-scores-tidy.css`](../../design/mockups/proposed-scores-tidy.css)
+§ SCORES TIDY — `.scores-col-meta`, `.scores-col-name.wraps` and `.scores-col-edit`.
+
+**Rulings, the owner's, 2026-10-11**
+1. **Points and due date share one line** (`.scores-col-meta`): *out of 10 · due Sep 7*.
+2. **The name may wrap to two lines** before it truncates (`.scores-col-name.wraps`).
+3. **The column name opens the assignment editor** for that assignment (`.scores-col-edit`), as
+   the name does on Assignments (WO-3.54 ruling 2): a real `<button>` in the name's own type, indigo
+   with a dotted underline under a pointer, 44px tall under a coarse one.
+4. **Hold stays in the head, under the category chip, on every column.** A held column shows its
+   shipped *Held* mark and *Commit* in the same place. The head goes from five lines to four.
+5. **The frozen name column narrows, 190px → 156px.** The pair's `left` offsets and the
+   `scroll-padding` values move with it.
+
+**Open — the owner, at dispatch: the width under a coarse pointer.** Ruling 5 was given on the
+drawing's figure, 190 → 156, and **190 is the laptop width**: under a coarse pointer
+`src/scores.css` already narrows the name column to 168px, so on the iPad 156 buys 12px. Either
+156 everywhere, or the coarse width narrows by the same 34px to 134 — measured against the longest
+name on a real roster at the coarse type size before it is chosen.
+
+**Deliverables**
+- **`src/scores.js`**: `columnHead()` builds the name as a button carrying `data-assignment-edit`
+  with the assignment's id, one meta line, the chip, and the hold line, in that order.
+- **`src/scores.css`**: the three classes lifted; the name column's width and every number tied to
+  it — the grade column's `left`, the third column's `left`, both `scroll-padding-left`s — at both
+  pointer sizes; the stuck head's `scroll-padding` top re-measured, because it is the head's
+  height and the head is shorter now.
+- **The harness**: `tools/verify/score-grid.mjs`, `past-due.mjs`, `ungraded-count.mjs`,
+  `held-readers.mjs`, `assigned-and-due.mjs`, `points-grade.mjs` and `score-history.mjs`, which read
+  the head's lines or the frozen widths; a new check that the name opens the editor. Grep
+  `tools/verify/` for `scores-col-pts`, `scores-col-due` and `190` first.
+- **`design/mockups/proposed-scores-tidy.css`'s banner and `README.md` section** amended to say
+  frame C landed.
+- **`TESTING.md` § WO-3.62**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] Every assignment head draws, in order, the name button, one meta line holding points and due
+      date, the category chip, and the hold line. No head carries a separate points or due line.
+- [ ] Tapping a column's name opens the assignment editor on that assignment; the button carries
+      `data-assignment-edit` and is at least 44px tall under a coarse pointer.
+- [ ] A name too long for one line takes two, and one too long for two truncates.
+- [ ] Every unheld column shows Hold under its chip; a held one shows *Held* and *Commit* there.
+- [ ] The name column is the ruled width at both pointer sizes, and the grade column, the category
+      average column and both `scroll-padding-left`s sit where the frozen pair now ends. A focus
+      move by ↵ and by ⇥ leaves the cell fully clear of the frozen columns and the stuck head.
+- [ ] A past-due column's due date still draws in its overdue colour inside the meta line.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] 👤 On the iPad, after a force-quit, upright: the head reads as four lines, a long name wraps,
+      the name opens the editor, and Hold sits under the chip.
+
+**Traps** — **The frozen widths are tied numbers.** `src/scores.css` names four that move together
+— the name width, the grade column's `left`, the third column's `left` and `scroll-padding-left` —
+at each pointer size, plus `.filtered`'s padding; a check asserts the pair. Change one and you change
+them all. **The overdue colour rides on `.scores-col-due.overdue`** (WO-3.19), so the due half of
+the meta line keeps that class as a span of its own. **The head is `position: sticky`** and its
+height is what the top `scroll-padding` covers; measure it after the change, do not compute it.
+
+**Not in scope** — the top of the screen (WO-3.60) and the keys (WO-3.61).
