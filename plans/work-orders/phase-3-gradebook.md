@@ -4241,3 +4241,189 @@ check holds a column by building a fixture.
 glance-reader rule forbids. **Do not touch the queue, the home card, student detail or the grade
 sheet.** Those show a held column rather than hide it, and they are WO-3.47's. Treating them by
 symmetry with these four is the mistake that row's Traps already name.
+
+## WO-3.54 — the assignment list's top matches the other class screens, and its rows get lighter
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** —
+**Closes roadmap** *(no box. Owner-directed, 2026-10-10.)*
+
+**Booked 2026-10-10**, owner-directed, out of a sitting that drew the screen first. The assignment
+list is the one class screen whose title row does not end in **← All classes**: *+ New assignment*
+holds that corner, and the door home is pushed into a row of its own in the body. Every row carries
+five buttons, and an empty category draws a boxed bar under a heading that already says *nothing in
+it yet*. **The first of two pieces**, cut at booking to stay below L: this one changes how the
+screen looks and adds no behaviour; [WO-3.55](#wo-355--the-assignment-list-sorts-within-each-category-and-writes-nothing)
+adds sorting after it.
+
+**Surface.** [`design/mockups/assignments-tidy.html`](../../design/mockups/assignments-tidy.html),
+frames A (as it ships at v182) and B, styled in
+[`design/mockups/proposed-assign-tidy.css`](../../design/mockups/proposed-assign-tidy.css)
+§ ASSIGN TIDY, with `design/mockups/README.md` § "The assignment list, tidied". **Lift the section
+rather than re-deriving it** (`PROTOCOL.md` § When the drawing lands), and amend its banner in the
+same sitting. Frame C and § ASSIGN SORT are WO-3.55's.
+
+**Rulings, the owner's, 2026-10-10**
+1. **← All classes moves to the right end of the title row**, the markup Attendance and Scores
+   carry. **+ New assignment takes the body row it vacated, at its right end**
+   (`.assign-actions.end`) — the same edge, one level down. The past-due prompt and the
+   "arrived from another term" line stay between that row and the table.
+2. **The assignment's name opens the editor, and the Edit button goes.** The name is a real
+   `<button>` (`.assign-name-btn`) in the name's own type; indigo with a dotted underline under a
+   pointer; 44px tall under a coarse one.
+3. **Duplicate is a copy icon — two offset squares — and Delete is a bin** (`.assign-icon-btn`, worn
+   beside `.class-action-btn` and `.assign-row-btn`). Each keeps an `aria-label` naming the
+   assignment and a `title`. Delete keeps `.delete`'s red hover. ✎ is not used: on a roster row it
+   opens the log sheet.
+4. **↑ ↓ are unchanged.** They set the Scores grid's column order as well as this list's.
+5. **An empty category's notice is its own heading** (`.assign-group-head.empty`), in the old bar's
+   amber, and the bar goes. The note, by case: *Nothing in it yet · its 20% is shared across the
+   others* (weighted, the weight its own); *Nothing in it yet · 0%, counts for nothing* (weight 0);
+   *Nothing in it yet · adds nothing until something is in it* (a class graded on total points).
+6. **"Not in a category" takes the same move** (`.assign-group-head.unfiled`): red in a weighted
+   class, the amber of `.counted` in a points class (WO-3.36), and the bar goes. Weighted note:
+   *N assignment(s) · counted toward nothing — tap its name to file it.*
+7. **Nothing lives only in a tooltip**, because a finger never shows one. Each removed bar's full
+   sentence is hidden text (`.sr-only`) inside its heading — a `title` on a row is not reliably read
+   — and the hint below the list carries, in words: *tap an assignment's name to edit it*; that
+   Duplicate is *the two squares on its row*; and that *a category with nothing in it yet does not
+   count as a zero — its weight is shared across the others until something is in it.*
+8. **The roster keeps "✎ · Edit · Remove"**, on purpose: those rows are people, and *Remove* is the
+   right word where a bin is not. A deliberate divergence, not a drift to tidy.
+
+**Open** — **the points-class note on "Not in a category"** was not drawn. Proposed: *N
+assignment(s) · counted, but in no category — tap its name to file it.* The owner's to confirm at
+dispatch.
+
+**Deliverables**
+- **`index.html`**: `#assignmentsView`'s title row ends in the `data-view-home` button; the body's
+  `.assign-actions` holds `data-assignment-new` and gains `end`; the hint gains ruling 7's sentences.
+- **`src/assignments.js`**: `assignmentRow()` builds the name button and the two icon buttons and no
+  Edit; the empty and unfiled branches of the list painter build a classed heading with its note and
+  hidden sentence and no `noticeRow()`; ruling 6's sentence stops saying *Open Edit*.
+- **`src/assignments.css`**: § ASSIGN TIDY lifted, its coarse rules into the existing
+  `(pointer: coarse)` block and its controls into the top-of-sheet `touch-action` selector.
+  `.assign-group-empty` and `.assign-group-orphan` go if nothing else wears them — check first:
+  three other rules in the sheet borrow that amber by name in their comments.
+- **The harness**: every check that presses Edit or Duplicate by its words, or reads
+  `.assign-group-empty` / `.assign-group-orphan`. At least `tools/verify/assignments.mjs`,
+  `category-removal.mjs`, `points-grade.mjs`, `copy-class.mjs`, `touch-targets.mjs` and
+  `class-tab-keeps-screen.mjs`; grep `tools/verify/` for the hooks before trusting that list.
+- **`design/mockups/proposed-assign-tidy.css`'s § ASSIGN TIDY banner, `README.md` section and
+  `index.html` entry** amended to say the section landed.
+- **`TESTING.md` § WO-3.54**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] On the assignment list, the title row's last control is ← All classes (`data-view-home`), and
+      + New assignment is the last control of the body's first row, right-aligned.
+- [ ] No row carries an Edit button. Tapping a name opens the editor for that assignment, and the
+      name button carries `data-assignment-edit`.
+- [ ] Each row's Duplicate and Delete are icon buttons whose `aria-label` names the assignment, with
+      the `data-assignment-duplicate` and `data-assignment-delete` hooks unchanged; each is at least
+      44px square under a coarse pointer.
+- [ ] An empty category draws one heading row with `.empty`, the note for its case word for word
+      (ruling 5, all three cases), its full sentence in hidden text, and no row after it before the
+      next heading. No `.assign-group-empty` element exists.
+- [ ] "Not in a category" draws one heading row with `.unfiled` — `.counted` added in a points class
+      — and no notice row; its sentence does not say *Edit*.
+- [ ] The hint carries ruling 7's three sentences.
+- [ ] 👤 On the teaching iPad, upright: the two doors sit where ruling 1 puts them, a name tap opens
+      the editor, both icons read as what they are, and the empty and unfiled headings are legible
+      without a bar.
+- [ ] `CACHE` in `sw.js` is bumped.
+
+**Traps** — **Move the hook, do not rename it.** `data-assignment-edit` routes in `src/shell.js` and
+is what the harness presses; it goes onto the name button as it is. **Do not touch the roster** —
+ruling 8. **The focus ring stays**: the name button is styled to look like text, and this repository
+forbids suppressing a ring to finish the look. **The three removed sentences differ by grading mode
+and weight** — the weighted, zero-weight and points branches each have their own, in the comment
+above them; carry each into its heading's hidden text, do not collapse them into one.
+
+## WO-3.55 — the assignment list sorts within each category, and writes nothing
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.54
+**Closes roadmap** *(no box. Owner-directed, 2026-10-10.)*
+
+**Booked 2026-10-10 with WO-3.54**, the second of the two pieces. Five column headings sort what is
+under each category; the categories stay where the teacher put them. **The risk here is a silent
+one**: the order a teacher sets with ↑ ↓ is the array order in the year document, and the Scores
+grid reads its columns from it (`src/scores.js`, *"Nothing here sorts"*). A sort that wrote its
+order back would rearrange the gradebook from a heading tap, invisibly. So the acceptance line this
+work order exists for is the one that proves nothing is written.
+
+**Surface.** [`design/mockups/assignments-tidy.html`](../../design/mockups/assignments-tidy.html),
+frame C (frame B is the same list in the teacher's order), styled in
+[`design/mockups/proposed-assign-tidy.css`](../../design/mockups/proposed-assign-tidy.css)
+§ ASSIGN SORT. Lift, do not re-derive, and amend the banner in the same sitting.
+
+**Rulings, the owner's, 2026-10-10**
+1. **Five headings sort: Assignment, Points, Assigned, Due and Entered.** Each is a `<button>`
+   (`.assign-sort-btn`) inside its `<th>`, which carries `aria-sort` while it is the active one.
+   Unsorted headings show a faint ↕; the active one ▲ or ▼ in indigo.
+2. **Categories stay put; what is under each one sorts**, "Not in a category" included.
+3. **The first tap gives the useful direction**: Assignment A→Z, Points largest first, Assigned and
+   Due soonest first, **Entered fewest first**. The second tap reverses; the third returns the
+   teacher's order.
+4. **The teacher's order — ↑ ↓ — is the default, and a sort overrides it.** While a sort is on, the
+   arrows are disabled with the title *Sorted by Due — tap Your order to move it* (naming the column),
+   and **↺ Your order** appears in the Actions column's heading, drawn only while a sort is on.
+5. **A sort is a view and writes nothing**: not the array order, not `rev`, not a save.
+6. **It is not remembered.** Leaving the screen, changing class or changing term returns the
+   teacher's order. Nothing reaches `localStorage`.
+7. **Names compare as a reader would** ("Quiz 2" before "Quiz 10"); **a blank date sorts last in
+   both directions**; **ties keep the teacher's order**.
+8. **A held column sorts by its own count** under Entered, like any row, and keeps its *held* word.
+9. **A sort survives an edit.** A due date changed while sorted by Due moves the row to its new place
+   when the editor closes — as a date crossing a term edge already moves it.
+10. **The hint says it in words**: *tap a column heading to sort what is under each category; tap it
+    again to reverse, a third time for your order. While a sort is on, the arrows rest — ↺ Your order
+    brings them back.*
+
+**Deliverables**
+- **`index.html`**: the five `<th>` hold sort buttons; the Actions `<th>` is the reset's slot
+  (`.assign-col-reset`); the hint gains ruling 10's sentence.
+- **`src/assignments.js`**: sort state held by the screen and nowhere else — column and direction —
+  cleared by the paths in ruling 6; the comparator per ruling 7; the sorted copy built per group from
+  the list the painter already has; arrows and reset per ruling 4.
+- **`src/shell.js`**: the click routes for a sort heading and for ↺ Your order, beside the other
+  `data-assignment-*` routes.
+- **`src/assignments.css`**: § ASSIGN SORT lifted, its coarse rule into the existing block and its
+  button into the `touch-action` selector.
+- **The harness**: a new check file for the rulings above, including the write-nothing line.
+- **`design/mockups/proposed-assign-tidy.css`'s § ASSIGN SORT banner, `README.md` section and
+  `index.html` entry** amended to say the section landed.
+- **`TESTING.md` § WO-3.55**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] Each of the five headings sorts the rows inside every group, groups in their own order; the
+      first tap's direction is ruling 3's for each column, the second reverses, the third restores
+      the teacher's order; the active `<th>` carries the matching `aria-sort` and no other does.
+- [ ] **A sort writes nothing.** After every sort tap, both directions on all five columns and
+      ↺ Your order, the stored year document is byte-identical to before and `rev` has not moved —
+      checked after `flush()`, since `update()` only schedules a save (WO-5.3's scar). The Scores
+      grid's column order is unchanged. **Mutation-proved**: a planted write of the sorted order
+      turns the check red, and **the plant is reverted before anything else is written.**
+- [ ] Names compare naturally, blank dates sort last in both directions, and equal keys keep the
+      teacher's order — each with a fixture built to fail the naive comparison.
+- [ ] A held column sorts under Entered by its own count and still shows *held*.
+- [ ] While sorted, every ↑ ↓ is disabled and titled with the column's name, and ↺ Your order is
+      present; in the teacher's order it is absent and the arrows behave as before.
+- [ ] Leaving the list, changing class and changing term each return the teacher's order; no
+      `planbook_` key is written by sorting.
+- [ ] Sorted by Due, an edited due date moves its row when the editor closes, and the sort stays on.
+- [ ] The hint carries ruling 10's sentence.
+- [ ] 👤 On the teaching iPad: a heading tap sorts, the faint ↕ reads as tappable, and ↺ Your order
+      brings the arrows back.
+- [ ] `CACHE` in `sw.js` is bumped.
+
+**Traps** — **The Entered key is the figure the row's bar already draws**: `enteredCount()` over
+`rosterOf(cls).length`, exactly as `progressCell()` reads it; a second count is the second opinion this repository refuses, and it
+is how the bar and the order drift apart. **Sort a copy, never `cls`'s array or the document's**:
+an in-place `sort()` on the list the painter was handed reorders the year without a single
+`update()` call, and the write-nothing check would catch it only if it reads the stored document
+rather than the live one. **Do not move the past-due prompt or the moved-work line** — they are
+WO-3.54's layout.
+
+**Not in scope** — **A view-only sort on the Scores grid**, by Due, reordering its columns on screen
+and never in the document. The owner raised it on 2026-10-10 and it waits for the Scores
+conversation, which comes next. **Collapsible categories**, deferred by the owner: the list is one
+term long, and a collapsed group would hide the overdue tint and the part-filled bars inside it.

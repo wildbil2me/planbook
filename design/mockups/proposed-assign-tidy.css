@@ -1,0 +1,103 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   PROPOSED STYLES — the assignment list, tidied.
+
+   Thirteenth room. Drawn 2026-10-10 in conversation with the owner, while
+   WO-1.76 was in flight, and booked the same day as two M rows: WO-3.54 (the
+   layout, § ASSIGN TIDY) and WO-3.55 (sorting, § ASSIGN SORT, after it). Every
+   ruling is drawn green on the page: "All classes" moves to the title row the way Attendance,
+   Scores, Calendar and Signals carry it; the name opens the editor and the Edit
+   button goes; Duplicate and Delete become icons; ↑ ↓ stay exactly as they are
+   and are the default order; five column headings sort, view-only and not
+   remembered; an empty category's notice folds into its own heading.
+
+   IT PROPOSES what this sheet can say, each a name src/ does not use yet: the
+   name as a button, the icon form of a row button, the sorting heading, the
+   reset cell, and state words on shipped classes (`.assign-group-head.empty`,
+   `.unfiled`, `.assign-actions.end`) — compound-qualified by the sheet's own
+   class, rule 5's sanctioned posture. Everything else on the page is a shipped
+   class worn as-is.
+
+   Colours inline, no custom properties, no dark mode — src/shell.css's rules.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.assign-name-btn, .assign-icon-btn, .assign-sort-btn { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § ASSIGN TIDY   →  src/assignments.css   (WO-3.54 — not yet lifted)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* THE NAME IS THE WAY INTO THE EDITOR. A real <button> holding the name, so it
+   is focusable and announced as a control, styled to read as the name it is: the
+   cell's own weight and ink, a dotted underline only on hover, and indigo — the
+   app's interactive colour — when pointed at. The focus ring is the browser's;
+   this repo forbids suppressing one. */
+.assign-name-btn {
+  background: none; border: 0; padding: 0; margin: 0;
+  font: inherit; color: inherit; text-align: left; cursor: pointer;
+}
+.assign-name-btn:hover { color: #5b6fcc; text-decoration: underline dotted; text-underline-offset: 3px; }
+
+/* THE ICON FORM OF A ROW BUTTON. Worn beside `.class-action-btn` and
+   `.assign-row-btn`, which give it its border, wash and hover; this only squares
+   it up around a 14px glyph so it sits level with the ↑ ↓ beside it. `.delete`
+   keeps its shipped red hover. */
+.assign-icon-btn { display: inline-flex; align-items: center; justify-content: center; padding: 4px 8px; }
+.assign-icon-btn svg { width: 14px; height: 14px; display: block; }
+
+/* AN EMPTY CATEGORY'S HEADING CARRIES THE NOTICE. The amber is
+   `.assign-group-empty`'s, value for value, so the colour still means what the
+   bar it replaces meant; a 3px rule on the left marks the group without a
+   second box. The short consequence goes in the note; the full sentence in the
+   row's title and accessible name. */
+.assign-group-head.empty td { background: #fff8e6; border-left: 3px solid #f0dfa8; border-bottom-color: #f0dfa8; }
+.assign-group-head.empty:hover td { background: #fff8e6; }
+.assign-group-head.empty .assign-group-note { color: #8a6d1a; }
+
+/* WORK FILED UNDER NO CATEGORY THIS CLASS HAS. `.assign-group-orphan`'s red in a
+   weighted class — it costs the assignment — and its amber in a total-points
+   class, where the work counts (WO-3.36). Same move: the bar's colour on the
+   heading, the bar gone. */
+.assign-group-head.unfiled td { background: #fdeaea; border-left: 3px solid #e74c3c; border-bottom-color: #f5b7b1; }
+.assign-group-head.unfiled:hover td { background: #fdeaea; }
+.assign-group-head.unfiled .assign-group-note { color: #c0392b; }
+.assign-group-head.unfiled.counted td { background: #fff8e6; border-left-color: #f0dfa8; border-bottom-color: #f0dfa8; }
+.assign-group-head.unfiled.counted:hover td { background: #fff8e6; }
+.assign-group-head.unfiled.counted .assign-group-note { color: #8a6d1a; }
+
+/* + NEW ASSIGNMENT, AT THE RIGHT END OF THE BODY ROW. The owner's ruling: the
+   same edge it sat on in the title row, one level down. A state word on the
+   row's own class, so the shipped `.assign-actions` is not restyled. */
+.assign-actions.end { justify-content: flex-end; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § ASSIGN SORT   →  src/assignments.css   (WO-3.55 — not yet lifted)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* A COLUMN HEADING THAT SORTS. A real button inside the <th>, wearing the
+   heading's own type so the row reads as headings rather than as a toolbar;
+   `aria-sort` goes on the <th>. The mark is a faint ↕ when unsorted — an iPad
+   has no hover to reveal it — and ▲ or ▼ in indigo on the one column sorting. */
+.assign-sort-btn {
+  background: none; border: 0; padding: 0; margin: 0; cursor: pointer;
+  font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.assign-sort-btn:hover { color: #5b6fcc; }
+.assign-sort-btn.on { color: #5b6fcc; }
+.assign-sort-mark { font-size: 9px; opacity: 0.5; }
+.assign-sort-btn.on .assign-sort-mark { opacity: 1; }
+
+/* The Actions heading holds ↺ Your order while a sort is on, right-aligned over
+   the row buttons it gives back. Lower-case: it is a control, not a heading. */
+.assign-table thead .assign-col-reset { text-align: right; text-transform: none; letter-spacing: 0; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § TOUCH
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+@media (pointer: coarse) {
+  .assign-name-btn { min-height: 44px; }
+  .assign-icon-btn { min-height: 44px; min-width: 44px; }
+  .assign-icon-btn svg { width: 16px; height: 16px; }
+  .assign-sort-btn { min-height: 44px; }
+}

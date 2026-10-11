@@ -1021,3 +1021,51 @@ All five are the owner's, 2026-10-09 and 2026-10-10.
 3. **The alert-sound move and WO-2.57.** WO-2.57 is 🔒 on a classroom trial deciding the tone's
    default. The move changes where the switch lives and nothing about its default, so neither waits
    for the other.
+
+# The assignment list, tidied — WO-3.54 and WO-3.55, drawn 2026-10-10
+
+**The thirteenth room, and the fifth drawn of a screen that already ships.** One page, talked through
+with the owner on 2026-10-10 while WO-1.76 was in flight. Frame A is the list as it ships at v182.
+Booked the same day as two M rows, cut at booking to stay below L:
+[WO-3.54](../../plans/work-orders/phase-3-gradebook.md#wo-354--the-assignment-lists-top-matches-the-other-class-screens-and-its-rows-get-lighter),
+the layout, and
+[WO-3.55](../../plans/work-orders/phase-3-gradebook.md#wo-355--the-assignment-list-sorts-within-each-category-and-writes-nothing),
+sorting, after it. Their Rulings carry every answer.
+
+## What the drawing proposes
+
+Styled in [`proposed-assign-tidy.css`](proposed-assign-tidy.css): § ASSIGN TIDY (WO-3.54) and
+§ ASSIGN SORT (WO-3.55), both bound for `src/assignments.css`. The page links the shipped
+`src/assignments.css` as well as `src/shell.css`, so frame A is today's screen drawn by today's rules,
+and frames B and C differ from it only by what the proposed sheet adds.
+
+[`assignments-tidy.html`](assignments-tidy.html):
+
+1. **← All classes at the right end of the title row**, as on every other class screen; **+ New
+   assignment** at the right end of the body row it vacated.
+2. **The name opens the editor**; the Edit button goes.
+3. **Duplicate is two offset squares and Delete is a bin.** ↑ ↓ unchanged.
+4. **An empty category's notice is its heading**, in the old bar's amber; **"Not in a category"** is
+   red the same way. No bars remain.
+5. **The hint carries in words what a tooltip cannot** on an iPad.
+6. **Frame C: sorted by Due.** Five headings sort what is under each category; the arrows rest and
+   ↺ Your order appears in the Actions heading.
+
+## Decided before booking
+
+- **A sort is a view, writes nothing, and is not remembered.** The arrow order is the Scores grid's
+  column order, and a remembered sort greys the arrows on a later day for a reason nobody recalls.
+- **Entered is sortable**, and fewest-first is its first tap — it is why the screen gets opened.
+- **Collapsible categories are deferred.** The list is one term long, and a collapsed group would hide
+  the overdue tint and the part-filled bars inside it.
+- **The roster keeps "✎ · Edit · Remove".** Its rows are people.
+- **Large work is cut at booking**, not only at dispatch: the owner's rule from this sitting.
+
+All five are the owner's, 2026-10-10.
+
+## The open questions, collected
+
+1. **The points-class note on "Not in a category"** was not drawn. Proposed in WO-3.54's Open line:
+   *counted, but in no category — tap its name to file it.*
+2. **A view-only Due sort on the Scores grid** was raised and waits for the Scores conversation,
+   which the owner has put next. It is WO-3.55's *Not in scope*, so it is not lost.
