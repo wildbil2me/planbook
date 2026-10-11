@@ -1065,7 +1065,8 @@ All five are the owner's, 2026-10-10.
 
 ## The open questions, collected
 
-1. **The points-class note on "Not in a category"** was not drawn. Proposed in WO-3.54's Open line:
-   *counted, but in no category — tap its name to file it.*
+1. **The points-class note on "Not in a category"** was not drawn. **Answered — the owner,
+   2026-10-10, before dispatch: as proposed**, *counted, but in no category — tap its name to file
+   it*, now WO-3.54's ruling 6.
 2. **A view-only Due sort on the Scores grid** was raised and waits for the Scores conversation,
    which the owner has put next. It is WO-3.55's *Not in scope*, so it is not lost.

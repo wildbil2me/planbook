@@ -4281,7 +4281,8 @@ same sitting. Frame C and § ASSIGN SORT are WO-3.55's.
    *Nothing in it yet · adds nothing until something is in it* (a class graded on total points).
 6. **"Not in a category" takes the same move** (`.assign-group-head.unfiled`): red in a weighted
    class, the amber of `.counted` in a points class (WO-3.36), and the bar goes. Weighted note:
-   *N assignment(s) · counted toward nothing — tap its name to file it.*
+   *N assignment(s) · counted toward nothing — tap its name to file it.* Points-class note:
+   *N assignment(s) · counted, but in no category — tap its name to file it.*
 7. **Nothing lives only in a tooltip**, because a finger never shows one. Each removed bar's full
    sentence is hidden text (`.sr-only`) inside its heading — a `title` on a row is not reliably read
    — and the hint below the list carries, in words: *tap an assignment's name to edit it*; that
@@ -4290,9 +4291,8 @@ same sitting. Frame C and § ASSIGN SORT are WO-3.55's.
 8. **The roster keeps "✎ · Edit · Remove"**, on purpose: those rows are people, and *Remove* is the
    right word where a bin is not. A deliberate divergence, not a drift to tidy.
 
-**Open** — **the points-class note on "Not in a category"** was not drawn. Proposed: *N
-assignment(s) · counted, but in no category — tap its name to file it.* The owner's to confirm at
-dispatch.
+**Answered — the owner, 2026-10-10, before dispatch: the points-class note on "Not in a
+category"**, which was not drawn, reads as proposed — now ruling 6's second sentence.
 
 **Deliverables**
 - **`index.html`**: `#assignmentsView`'s title row ends in the `data-view-home` button; the body's
@@ -4324,7 +4324,8 @@ dispatch.
       (ruling 5, all three cases), its full sentence in hidden text, and no row after it before the
       next heading. No `.assign-group-empty` element exists.
 - [ ] "Not in a category" draws one heading row with `.unfiled` — `.counted` added in a points class
-      — and no notice row; its sentence does not say *Edit*.
+      — and no notice row; its note is ruling 6's for its grading mode, word for word, and does not
+      say *Edit*.
 - [ ] The hint carries ruling 7's three sentences.
 - [ ] 👤 On the teaching iPad, upright: the two doors sit where ruling 1 puts them, a name tap opens
       the editor, both icons read as what they are, and the empty and unfiled headings are legible
