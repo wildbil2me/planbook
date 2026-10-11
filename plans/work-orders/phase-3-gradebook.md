@@ -4590,21 +4590,76 @@ assignment" was saved without a name*, goes on the list's `listNote`, which is k
 term. The verifier found that a blank editor closed from somewhere other than the assignment list
 shows the warning only if that list is on screen.
 
-**Check the premise first.** The calendar's door (`src/shell.js`, `ASSIGNMENT_DUE`) calls
-`openClassOn(classId, 'assignments')` before `openAssignmentEditor()`, so a list is behind the
-editor on that path. The gap may be narrower than the verdict says: a list showing a different term
-from the assignment's own. Find every door into the editor, find which of them can close with the
-warning unseen, and write that down before changing anything. If no door can, close this work order
-with that finding.
+**The premise, checked 2026-10-11, by reading the code; nothing was run.** It holds, but the gap is
+narrower than the verdict says. `openAssignmentEditor()` has two callers, and the editor has three
+doors:
+
+| Door | A blank close shows the warning? |
+|---|---|
+| The name on a list row (`data-assignment-edit`, `src/shell.js`) | **Yes.** The row is on the list that is up, so the note is set for the term on screen. |
+| `+ New assignment` | **Yes.** A create filed under another term moves the list there first (WO-3.50, ruling 1), so the note is set for the term on screen. |
+| A due date on the calendar (`ASSIGNMENT_DUE`, `src/shell.js`) | **Only when the class's open term is the assignment's own.** |
+
+The calendar door is the gap. `openClassOn(classId, 'assignments')` selects the class and shows the
+list, but **not the term**: the list shows whichever term was last open for that class. The close
+sets the note for the assignment's term, and `paintListNote()` drops a note set for any other term
+on the next render. **The lost warning is a symptom.** On that path the assignment being edited is
+not on the list behind the dialog at all, so the teacher closes the editor and the work she just
+changed is nowhere on screen.
+
+The Scores screen is named in `editorFollows()` as a screen the editor can be open over, but no door
+from it opens the editor today.
+
+**Rulings, the owner's, 2026-10-11**
+1. **The calendar door moves the list to the assignment's term, and the move is stored.** It calls
+   `selectTerm()` for the assignment's term before the editor opens, so the class's saved open term
+   (`planbook_openTermIds`) changes, exactly as a create already changes it. Showing the term for
+   one visit without storing it was declined: it needs a new mechanism in `src/classes.js`, and the
+   next repaint would snap the list back, taking the row away a second time. **This is not the
+   calendar-filter rule in CLAUDE.md** ("a door, never a stored preference"): that rule stops a
+   remembered filter silently hiding most of the year, and this move is visible, said in a sentence,
+   and shows the teacher the work she tapped.
+2. **The move says so, in the indigo note**, as a create's move does: *This list has moved to
+   Quarter 2, the term "Persuasive essay" is due in.* (The term's and the assignment's own names, not
+   those words.) No note when the list was already on that term. A blank close then puts the amber
+   warning ahead of it on one line, which `setNamelessNote()` already does for a standing note on the
+   same class and term, so that half needs no new code.
+3. **A list scrolled so the note is off screen is not this work order's.** It is about where the
+   note sits, not which doors reach it, and goes to
+   [WO-3.58](#wo-358--the-dialogs-behind-the-assignments-and-scores-screens-are-read-together-and-a-layout-is-ruled).
+
+**Deliverables**
+- **`src/shell.js`**: the `ASSIGNMENT_DUE` branch of the calendar's item handler selects the
+  assignment's term after `openClassOn()` and before `openAssignmentEditor()`.
+- **`src/assignments.js`**: the arrival note (ruling 2), set for the class and term the list moved
+  to. Whether `src/shell.js` calls `selectTerm()` and asks this file for the note, or this file
+  exports one function that does both, is the implementer's to argue in a comment. Either works;
+  leaving it undecided does not.
+- **The harness**: checks for each Acceptance line, beside WO-3.56's.
+- **`TESTING.md` § WO-3.57**, with the door table above, the Scores screen named as having no door,
+  the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
 - [ ] Every door into the assignment editor is named in `TESTING.md` § WO-3.57, with whether a blank
-      close from it shows the warning.
-- [ ] A blank close from each door leaves the owner's sentence, in amber, somewhere the teacher is
-      looking when the editor closes.
-- [ ] If `src/` or `index.html` changed, `CACHE` in `sw.js` is bumped.
+      close from it shows the warning. The Scores screen is named as having no door today.
+- [ ] Opening an assignment from the calendar while its class's list is open on another term moves
+      the list to the assignment's term, stores that term as the class's open term, and the indigo
+      note says the list moved. When the list was already on that term, no note is drawn and the
+      stored term is unchanged.
+- [ ] A blank close from each door leaves the owner's sentence, in amber, on the list behind the
+      editor. From the calendar door it is checked with the list starting on another term, and the
+      arrival note follows the warning on the same line (checked in the DOM and computed style, not
+      the live region).
+- [ ] `CACHE` in `sw.js` is bumped.
 
-**Not in scope** — changing the wording or the colour; both are WO-3.56's rulings.
+**Traps** — **A term with no room for the date.** An assignment's `termId` is the term it is filed
+in, which is not always the term holding its due date (WO-3.50's unplaced work). Select the
+`termId`, never the term the date falls in, or the list moves to a term the row is not on.
+**`openClassOn()` has other callers** (the meeting-state item, at least): the term selection
+belongs in the `ASSIGNMENT_DUE` branch, not in `openClassOn()`.
+
+**Not in scope** — changing the wording or the colour of the warning; both are WO-3.56's rulings.
+Where the note sits on a scrolled list (ruling 3).
 
 ## WO-3.58 — the dialogs behind the Assignments and Scores screens are read together, and a layout is ruled
 
