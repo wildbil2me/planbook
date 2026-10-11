@@ -4303,11 +4303,20 @@ category"**, which was not drawn, reads as proposed — now ruling 6's second se
 - **`src/assignments.css`**: § ASSIGN TIDY lifted, its coarse rules into the existing
   `(pointer: coarse)` block and its controls into the top-of-sheet `touch-action` selector.
   `.assign-group-empty` and `.assign-group-orphan` go if nothing else wears them — check first:
-  three other rules in the sheet borrow that amber by name in their comments.
+  **four** other rules in the sheet borrow that amber by name in their comments (the fourth,
+  `.assign-moved-nameless`, landed with WO-3.56 after this was booked). If the class goes, repoint
+  each comment at `.assign-group-head.empty` rather than leaving it naming a class that is gone.
 - **The harness**: every check that presses Edit or Duplicate by its words, or reads
   `.assign-group-empty` / `.assign-group-orphan`. At least `tools/verify/assignments.mjs`,
   `category-removal.mjs`, `points-grade.mjs`, `copy-class.mjs`, `touch-targets.mjs` and
-  `class-tab-keeps-screen.mjs`; grep `tools/verify/` for the hooks before trusting that list.
+  `class-tab-keeps-screen.mjs`; grep `tools/verify/` for the hooks before trusting that list. Since
+  booking, `copy-class.mjs` (WO-3.56's nameless checks) and `dialog-kinds.mjs` (WO-1.77, a coarse
+  `tap()`) also press `data-assignment-edit` — by hook, so they stay green if the hook moves intact.
+- **A phone-width baseline for [WO-3.59](#wo-359--the-assignments-screen-scrolls-sideways-at-phone-width)**,
+  measured and not fixed: the assignments screen's horizontal overflow at 390×844 under a coarse
+  pointer, before this work order's change and after it, written as a note (no box) in `TESTING.md`
+  § WO-3.54. WO-3.59 waits on this one partly to see whether it caused a new overflow, and needs the
+  two numbers to tell. Fixing the overflow here is WO-3.59's scope, not this one's.
 - **`design/mockups/proposed-assign-tidy.css`'s § ASSIGN TIDY banner, `README.md` section and
   `index.html` entry** amended to say the section landed.
 - **`TESTING.md` § WO-3.54**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
@@ -4329,7 +4338,8 @@ category"**, which was not drawn, reads as proposed — now ruling 6's second se
 - [ ] The hint carries ruling 7's three sentences.
 - [ ] 👤 On the teaching iPad, upright: the two doors sit where ruling 1 puts them, a name tap opens
       the editor, both icons read as what they are, and the empty and unfiled headings are legible
-      without a bar.
+      without a bar. WO-3.56's amber nameless warning, on the note line above the table, still
+      reads as its own message beside the new top row and the amber headings below it.
 - [ ] `CACHE` in `sw.js` is bumped.
 
 **Traps** — **Move the hook, do not rename it.** `data-assignment-edit` routes in `src/shell.js` and
