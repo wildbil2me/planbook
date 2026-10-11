@@ -6484,7 +6484,7 @@ and report a field that does not use the room rather than restyling it here.
 
 ## WO-1.78 — the style guide's rendered twin does not show the three dialog kinds
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-1.77
+**Ship** — · **Status** ✅ DONE — 2026-10-11 · **Size** XS · **Depends on** WO-1.77
 **Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
 
 **Booked 2026-10-11**, owner-directed, out of WO-1.77's verdict. WO-1.77 put three dialog kinds into
@@ -6504,11 +6504,11 @@ a suite rule.
   the `.md` alone.
 
 **Acceptance**
-- [ ] The owner's choice is recorded in `TESTING.md` § WO-1.78, and `design/style-guide.html` and
+- [x] The owner's choice is recorded in `TESTING.md` § WO-1.78, and `design/style-guide.html` and
       `design/style-guide.md` agree with it.
-- [ ] `style-guide.html` still opens from `file://`, links no stylesheet and fetches nothing.
-- [ ] `node tools/wo-sweep.mjs` is green.
-- [ ] `TESTING.md` § WO-1.78 carries these lines verbatim with the evidence for each.
+- [x] `style-guide.html` still opens from `file://`, links no stylesheet and fetches nothing.
+- [x] `node tools/wo-sweep.mjs` is green.
+- [x] `TESTING.md` § WO-1.78 carries these lines verbatim with the evidence for each.
 
 **Traps** — **The twin's values are literal, not variables**, and it practises what it documents:
 anything added is written the way a sibling app would copy it. **It is not in `SHELL`**, so no

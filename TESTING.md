@@ -4226,6 +4226,77 @@ and `horizontal-overflow.mjs` does not visit that screen. Reported as a follow-u
 false on purpose and moved into `dialog-kinds.mjs`, held against the ruled kind; its header says so.
 `attendance-history.mjs`'s four width checks read the history dialog at 640 where they read 480.
 
+### WO-1.78 — the style guide's rendered twin does not show the three dialog kinds
+
+**The owner's choice: option 2, "The kinds in full."** Given by the owner on 2026-10-11, at dispatch,
+in answer to the work order's question. `design/style-guide.html` draws the three panels at their
+widths — `modal-confirm` 480, `modal-form` 640, `modal-report` 900 — labelled as Planbook's, so a
+sibling app copying the page copies them too. The other two options (a note only; nothing) were
+declined. *(Recorded by the dispatching orchestrator; the implementer completes this section below.)*
+
+No 👤 and no 📆 line: the page is a design document, not in `SHELL` (no `CACHE` bump owed), and
+nothing in `src/` moved. `verify-shell.mjs` does not open `design/`, so the widths below were measured
+in headless Edge against a scratch copy of the page with a probe script appended — the copy, not the
+file, carried the probe.
+
+- [x] The owner's choice is recorded in `TESTING.md` § WO-1.78, and `design/style-guide.html` and
+      `design/style-guide.md` agree with it.
+      — The choice is the paragraph above. **`style-guide.html`**: `.modal-confirm 480` /
+      `.modal-form 640` / `.modal-report 900` sit directly after `.modal-panel` (which keeps its 480 and
+      `max-width: 95vw`), under a comment headed *"THE THREE KINDS OF DIALOG — PLANBOOK'S, NOT YET THE
+      SUITE'S"* that states width-never-`max-width`, the 480 fallback, and why they sit above the 640px
+      block; they are restated in the `(pointer: coarse)` block as `src/shell.css` does; § 6 gains a
+      section labelled *"Dialog kinds — Planbook's, not yet the suite's"* with three openers and a note
+      saying in the page's voice that this is where Planbook departs from the suite's single 480 modal;
+      `#sgModal` now wears `modal-confirm`, and `#sgModalForm` / `#sgModalReport` are new specimens.
+      **`style-guide.md`** § 5 gains a paragraph saying the twin draws all three labelled as Planbook's;
+      its "kept in step by hand" sentence (line 20) is true again and nothing in it says the twin shows
+      one modal. Measured `offsetWidth` per opener in headless Edge from `file://`: at a 1355px document
+      480 · 480 · 480 · 640 · 900; at 955px the same; at 555px all five 515 (the overlay's 20px padding
+      inside 95vw) — so the phone block still wins over the kinds. Each specimen: close button focused
+      on open, Escape / ✕ / backdrop each close it, focus returns to the opener; `window.onerror`
+      collected nothing.
+      **Correction round 1 (2026-10-11).** The first pass FAILED this line at verification, and the
+      sentence above calling `style-guide.md` consistent was wrong: both files still carried the
+      copy-out instruction from before the change — *"change the app name and the favicon emoji, and
+      nothing else is app-specific"* (`.html` header step 2, `.md` line 12–13) — on a page that now
+      holds a Planbook departure, and both said an app keeping the single modal deletes the six CSS
+      lines *"and nothing else"* (`.md` § 5, `.html` § 6 note), which would leave the specimen section
+      and two specimens on the page with buttons reading 640 and 900 drawing at 480. Repaired, prose
+      only: `.html` header step 2 and the "How to carry this" note now name the dialog kinds as
+      Planbook's, to keep or strip; the `.md` copy-out sentence says the same; the strip list in the
+      `.md` § 5 paragraph, the `.html` § 6 note and the CSS comment above the kinds now names the
+      three rules, their three touch-pass restatements, the § 6 *Dialog kinds* section, the
+      `#sgModalForm` / `#sgModalReport` specimens, and the confirm specimen's `modal-confirm` class and
+      first paragraph — the suite's 480 modal keeps its two original openers in § 6, so it survives
+      the strip. No value, rule or script moved. Box left unticked for the verifier.
+      **Correction round 2 (2026-10-11).** The second pass FAILED this line too: every strip list
+      closed on *"nothing else on the page changes"* (or *"lose nothing else"* in the CSS comment),
+      which was false — a literal strip leaves the "How to carry this" sentence pointing at the
+      removed § 6 section and comments describing the kinds (the CSS block above them, the touch-pass
+      comment, the specimen comment, the script comment, step 2 itself). Repaired on the owner's
+      ruling, prose only, without enumerating lines: each strip list (`.md` § 5 line 153, `.html`
+      header step 2, the CSS comment above the kinds, the `.html` § 6 note) now ends *"and every
+      sentence and comment that names them"*, and no "nothing else" claim about stripping the kinds
+      remains in either file (the two *"Nothing else is app-specific"* sentences, `.md` line 14–15
+      and `.html` step 2, are about what a copy must rename and stay). The line cited above for the
+      "kept in step by hand" sentence was corrected from 18 to 20. Box left unticked for the verifier.
+- [x] `style-guide.html` still opens from `file://`, links no stylesheet and fetches nothing.
+      — Opened from `file:///…/sg.html` by headless Edge `--dump-dom` at three widths, script ran,
+      no error. `grep -nE '<link[^>]*stylesheet|@import|url\(|fetch\(|XMLHttpRequest|src=|https?://'`
+      matches two lines only: line 7, the `data:` SVG favicon, and its escaped copy in § 11's `<pre>` —
+      both `http://www.w3.org/2000/svg` is an XML namespace inside a `data:` URI, not a request.
+      The modal script added is inline and fetches nothing.
+- [x] `node tools/wo-sweep.mjs` is green.
+      — `EXIT=0`, *50 checks · 47 passed · 0 failed · 3 to review*; the three to-review items are the
+      standing ones (sensitive field names, due-date/late, mockup banners) and none names
+      `design/style-guide.*`. § "STYLE" includes `design/`, so the colour, no-variable, no-dark-mode and
+      44px greps read the edited page.
+      `node tools/verify-shell.mjs` was also run (brief § 4), though it never opens `design/`:
+      `EXIT=0`, *2012 checks · 2012 passed · 0 failed · 0 skipped*.
+- [x] `TESTING.md` § WO-1.78 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ---
 
 ## Phase 2 — Attendance

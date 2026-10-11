@@ -13,6 +13,16 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The style guide's page draws the three dialog sizes — 2026-10-11
+
+WO-1.78, owner-directed. Design files only; nothing in the app changed and no cache bump.
+
+- **`design/style-guide.html` now shows Planbook's three dialog kinds** — a 480 confirm, a 640
+  form and a 900 report — each opening from its own button and each labelled as Planbook's, not
+  a suite rule. `design/style-guide.md` says the same.
+- **A sibling app copying the page is told how to take them out**: both files list what to delete,
+  ending with every sentence and comment that names them.
+
 ### Opening an assignment from the calendar shows it on its own list — 2026-10-11
 
 WO-3.57, owner-directed, out of WO-3.56's verdict. Shell cache v187 → v188.

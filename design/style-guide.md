@@ -10,7 +10,9 @@ swatch that copies its own hex, and the component shelf WO-1.2 shipped in `index
 and WO-1.10 took back out when the shelf left. It is a single self-contained page that
 links no stylesheet, loads no font and fetches nothing, so it opens from `file://` and
 **is meant to be copied out of this repo into a sibling app** — change the app name and
-the favicon emoji, and nothing else is app-specific.
+the favicon emoji. The one other app-specific thing in it is the three dialog kinds of § 5,
+which are Planbook's, not yet the suite's: keep them, or strip them as § 5 says. Nothing
+else is app-specific.
 
 Which one to reach for: **this file settles what a value is, the HTML settles what it
 looks like next to the others.** A wash that reads correctly in a table cell can still be
@@ -139,6 +141,16 @@ student report 640, report 700 — and no rule for when a dialog got more room; 
 was the standard 480 until a teacher found one too narrow, six of them one work order at a time.
 640 is the width this app had already ruled twice (the roster, the attendance keys), and 900 the
 one its records already measured.
+
+**The rendered twin draws all three, labelled as Planbook's** (WO-1.78, the owner's choice of
+2026-10-11). `style-guide.html` carries the three rules beside `.modal-panel`, restates them in its
+touch pass, and opens a specimen of each from § 6 *Components* under the label *Dialog kinds —
+Planbook's, not yet the suite's* — so a sibling app copying the page copies the kinds too, and can
+tell they are this app's departure from the suite's single 480 modal rather than a suite rule. An
+app that keeps the single modal deletes those six lines, the page's *Dialog kinds* section in its § 6,
+the `#sgModalForm` and `#sgModalReport` specimens, and the confirm specimen's `modal-confirm`
+class and first paragraph — the suite's 480 modal and its two openers stay as they were — and
+every sentence and comment that names them.
 
 ## 6. Responsive & touch
 
