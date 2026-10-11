@@ -119,6 +119,7 @@ import { run as settingsBack } from './verify/settings-back.mjs';
 import { run as rosterWho } from './verify/roster-who.mjs';
 import { run as rosterWidth } from './verify/roster-width.mjs';
 import { run as dialogKinds } from './verify/dialog-kinds.mjs';
+import { run as assignmentListTidy } from './verify/assignment-list-tidy.mjs';
 import { run as notePanel } from './verify/note-panel.mjs';
 import { run as passCard } from './verify/pass-card.mjs';
 import { run as portraitLandscape } from './verify/portrait-landscape.mjs';
@@ -358,6 +359,11 @@ const BROWSER_SECTIONS = [
      its own and takes them, the open-class preference, the viewport and touch back out at its foot,
      and reloads once at its head and once at its foot. */
   { file: 'verify/dialog-kinds.mjs', run: dialogKinds },
+  /* The assignment list's top row, its name-as-door and icon rows, and its folded headings (WO-3.54).
+     The same shape as the section above it: two classes, one student and seven assignments of its
+     own, planted at its head and taken back out — with the open-class preference, the viewport and
+     touch — at its foot, reloading once at each. */
+  { file: 'verify/assignment-list-tidy.mjs', run: assignmentListTidy },
   { file: 'verify/note-panel.mjs', run: notePanel },
   { file: 'verify/pass-card.mjs', run: passCard },
   { file: 'verify/portrait-landscape.mjs', run: portraitLandscape },

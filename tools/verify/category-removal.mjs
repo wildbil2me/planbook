@@ -239,9 +239,12 @@ const assignmentGroups = async (id) => {
         at = r.querySelector('.assign-group-title').firstChild.textContent; groups[at] = []; return; }
       var n = r.querySelector('.assign-name'); if (n && at) groups[at].push(n.textContent);
     });
-    var notice = body.querySelector('.assign-group-orphan');
+    /* Since WO-3.54 the notice is the "Not in a category" heading itself, its full sentence hidden
+       text inside it; the bar that used to sit under the heading is gone. */
+    var notice = body.querySelector('.assign-group-head.unfiled');
+    var said = notice && notice.querySelector('.sr-only');
     return { open: window.planbook.classes.getSelectedClassId(), groups: groups,
-      notice: notice ? notice.textContent : '', counted: !!(notice && notice.classList.contains('counted')) };
+      notice: said ? said.textContent : '', counted: !!(notice && notice.classList.contains('counted')) };
   })()`);
 };
 

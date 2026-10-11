@@ -971,17 +971,23 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
     /* ── the assignments screen, with an empty category and an unfiled piece both on it ── */
     await into('assignments');
     /* The unfiled notice's class and its computed colours as well as its words (WO-3.36): red is the
-       error state, and "not styled as an error" is a measurement of what is painted. */
-    const NOTICE_STYLE = `function(x){ var s = getComputedStyle(x);
-        return { cls: x.className, color: s.color, bg: s.backgroundColor, border: s.borderTopColor }; }`;
+       error state, and "not styled as an error" is a measurement of what is painted. Since WO-3.54 the
+       notice IS the heading — `.assign-group-head.unfiled` (and `.empty`) — so the paint is read where
+       it now is: the note's ink, the cell's wash and the cell's left rule. The full sentence is the
+       heading's hidden text. */
+    const NOTICE_STYLE = `function(x){ var td = x.querySelector('td'), n = x.querySelector('.assign-group-note');
+        var s = getComputedStyle(td);
+        return { cls: x.className, color: n ? getComputedStyle(n).color : '', bg: s.backgroundColor,
+          border: s.borderLeftColor }; }`;
+    const SAID = `function(x){ var h = x.querySelector('.sr-only'); return h ? h.textContent : ''; }`;
     const list = await evalJs(`(function(){
       var v = document.getElementById('assignmentsView');
       var style = ${NOTICE_STYLE};
       return { text: v ? v.textContent : '',
-        empty: Array.prototype.map.call(v.querySelectorAll('.assign-group-empty'), function(x){ return x.textContent; }),
-        emptyStyle: Array.prototype.map.call(v.querySelectorAll('.assign-group-empty'), style),
-        orphan: Array.prototype.map.call(v.querySelectorAll('.assign-group-orphan'), function(x){ return x.textContent; }),
-        orphanStyle: Array.prototype.map.call(v.querySelectorAll('.assign-group-orphan'), style) }; })()`);
+        empty: Array.prototype.map.call(v.querySelectorAll('.assign-group-head.empty'), ${SAID}),
+        emptyStyle: Array.prototype.map.call(v.querySelectorAll('.assign-group-head.empty'), style),
+        orphan: Array.prototype.map.call(v.querySelectorAll('.assign-group-head.unfiled'), ${SAID}),
+        orphanStyle: Array.prototype.map.call(v.querySelectorAll('.assign-group-head.unfiled'), style) }; })()`);
     /* AND THE SAME CLASS WEIGHTED, for one render: the mode key comes off (its weights total 100, so
        it is a balanced weighted class), the list is redrawn, read, and the key goes back on before
        anything below drives the picker. */
@@ -992,8 +998,8 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
       window.planbook.assignments.renderAssignments();
       var v = document.getElementById('assignmentsView');
       var style = ${NOTICE_STYLE};
-      var out = { orphan: Array.prototype.map.call(v.querySelectorAll('.assign-group-orphan'), function(x){ return x.textContent; }),
-        orphanStyle: Array.prototype.map.call(v.querySelectorAll('.assign-group-orphan'), style) };
+      var out = { orphan: Array.prototype.map.call(v.querySelectorAll('.assign-group-head.unfiled'), ${SAID}),
+        orphanStyle: Array.prototype.map.call(v.querySelectorAll('.assign-group-head.unfiled'), style) };
       s.update(function(doc){ var c = doc.classes.filter(function(x){ return x.id === '${C4}'; })[0];
         c.gradingMode = 'points'; });
       window.planbook.assignments.renderAssignments();
@@ -1006,11 +1012,12 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
     const wOrphan = (weightedList.orphanStyle || [])[0];
     check('WO-3.36: the "Not in a category" notice is not drawn as an error in a points class — it is '
       + 'painted in the empty-category notice\'s amber, not red — and in the same class made weighted it '
-      + 'is exactly what it always was: class "assign-group-orphan" alone, red, saying nothing counts it',
-      !!pOrphan && pOrphan.cls === 'assign-group-orphan counted'
+      + 'is exactly what it always was: red, saying nothing counts it — since WO-3.54 on the heading itself, '
+      + '"assign-group-head unfiled" with "counted" only in the points class',
+      !!pOrphan && pOrphan.cls === 'assign-group-head unfiled counted'
         && JSON.stringify(paint(pOrphan)) === JSON.stringify(AMBER)
         && JSON.stringify(paint(pOrphan)) === JSON.stringify(paint((list.emptyStyle || [])[0]))
-        && !!wOrphan && wOrphan.cls === 'assign-group-orphan'
+        && !!wOrphan && wOrphan.cls === 'assign-group-head unfiled'
         && JSON.stringify(paint(wOrphan)) === JSON.stringify(RED)
         && /so nothing counts it at all\./.test(weightedList.orphan[0] || ''),
       JSON.stringify({ points: pOrphan, weighted: wOrphan, weightedSays: weightedList.orphan }));

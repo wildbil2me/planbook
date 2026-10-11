@@ -12975,6 +12975,145 @@ three.
 
 ---
 
+### WO-3.54 — the assignment list's top matches the other class screens, and its rows get lighter
+
+**What this changes.** The assignment list's title row now ends in ← All classes, in the markup the
+Attendance and Scores title rows carry, and + New assignment is the body's first row, at its right end
+(`.assign-actions.end`). The name is a `<button class="assign-name-btn">` carrying
+`data-assignment-edit` — the hook moved, not renamed, so `src/shell.js` is untouched — and the Edit
+button is gone. Duplicate and Delete are `.assign-icon-btn` icons (two offset squares, a bin), built
+with `createElementNS`, the first SVG any module in `src/` builds. An empty category and *Not in a
+category* are each one heading (`.assign-group-head.empty`, `.unfiled`, `.unfiled.counted`), the old
+bar's full sentence kept as `.sr-only` text inside it and as the row's `title`; `.assign-group-empty`,
+`.assign-group-orphan` and `noticeRow()` are gone, and the three surviving comments that borrowed that
+amber by name now name `.assign-group-head.empty` (the fourth, on `.assign-group-orphan.counted`, went
+with its rule). § ASSIGN TIDY lifted under its drawn names; its banner, `design/mockups/README.md`
+section and contents entry amended. The roster is untouched (ruling 8). `CACHE` v184 → v185.
+
+**One decision the work order did not settle.** Ruling 7's third hint sentence says *its weight is
+shared across the others*, and WO-3.34 ruled that in a class graded on total points the assignments
+screen names no weight — `verify/points-grade.mjs` asserts it, and the sentence is false there. So the
+sentence's second half is a `<span id="assignmentsHintEmpty">` that `src/assignments.js` fills on every
+render: the owner's words in a weighted class (and in `index.html`, so the file reads as ruled), and
+ruling 5's points clause — *it adds nothing until something is in it* — in a points class. The first
+half, *a category with nothing in it yet does not count as a zero*, is the same in both.
+
+**Two smaller ones.** Ruling 6's notes carry a full stop inside the work order's italics and none in
+the drawing; the screen follows the drawing, as ruling 5's notes do. And the hidden sentence for
+unfiled work says *Tap its name* for one assignment and *Tap each one’s name* for more; the visible
+note is ruling 6's word for word in both cases.
+
+- [x] On the assignment list, the title row's last control is ← All classes (`data-view-home`), and
+      + New assignment is the last control of the body's first row, right-aligned.
+      — `verify/assignment-list-tidy.mjs`, first two checks: the title row's last element is a
+      `<button data-view-home>` reading *← All classes* whose normalised `outerHTML` equals the Scores
+      title row's, and no `data-assignment-new` is in the title row; the body's first row is
+      `assign-actions end`, one control, the last being `data-assignment-new`, computed
+      `justify-content: flex-end`, its right edge 0px from the row's content edge.
+- [x] No row carries an Edit button. Tapping a name opens the editor for that assignment, and the
+      name button carries `data-assignment-edit`.
+      — third check: 4 rows, 0 buttons reading *Edit* or labelled *Edit …*, every name a
+      `type="button"` `<button>` with `aria-haspopup="dialog"` carrying its own assignment's id, the
+      only `data-assignment-edit` in its row. Fourth: a real `Input.dispatchMouseEvent` press on
+      *Gatsby Ch 1–3 Response*'s name opened `#assignmentModal` with that id and that name in its
+      field. Every existing check that opens the editor by the hook (`verify/assignments.mjs`,
+      `copy-class.mjs`, `dialog-kinds.mjs`, `points-grade.mjs`) stayed green untouched.
+- [x] Each row's Duplicate and Delete are icon buttons whose `aria-label` names the assignment, with
+      the `data-assignment-duplicate` and `data-assignment-delete` hooks unchanged; each is at least
+      44px square under a coarse pointer.
+      — fifth check: on every row, one of each hook for its own id, both
+      `class-action-btn assign-row-btn assign-icon-btn` (Delete also `.delete`), an `<svg>` and no
+      text, labels *Duplicate Personal Narrative into other classes* / *Delete Personal Narrative*,
+      titles *Duplicate into other classes* / *Delete*. Sixth, at 834×1194 with `(pointer: coarse)`
+      asserted true first: every icon 44×44 and every name button 44 tall.
+- [x] An empty category draws one heading row with `.empty`, the note for its case word for word
+      (ruling 5, all three cases), its full sentence in hidden text, and no row after it before the
+      next heading. No `.assign-group-empty` element exists.
+      — weighted, 20%: `assign-group-head empty`, note *Nothing in it yet · its 20% is shared across
+      the others*, `.sr-only` and `title` both the old bar's sentence, next row a heading. 0%: note
+      *Nothing in it yet · 0%, counts for nothing*, its own sentence. Points class: note *Nothing in
+      it yet · adds nothing until something is in it*, the points sentence. No `.assign-group-empty`
+      or `.assign-group-orphan` in either class's list, and every tbody row is a heading or an
+      assignment (`["head","row","row","head","row","head","head","head","row"]`).
+- [x] "Not in a category" draws one heading row with `.unfiled` — `.counted` added in a points class
+      — and no notice row; its note is ruling 6's for its grading mode, word for word, and does not
+      say *Edit*.
+      — weighted: `assign-group-head unfiled`, note *1 assignment · counted toward nothing — tap its
+      name to file it*, an assignment row straight after it, no *Edit* in its text or title. Points:
+      `assign-group-head unfiled counted`, note *2 assignments · counted, but in no category — tap
+      its name to file it*, the same. `verify/points-grade.mjs`'s WO-3.36 check now reads the paint
+      off the heading — red `rgb(192, 57, 43)` / `rgb(253, 234, 234)` / `rgb(231, 76, 60)` weighted,
+      the empty heading's amber in a points class — and `verify/category-removal.mjs` finds re-filed
+      work under it.
+- [x] The hint carries ruling 7's three sentences.
+      — weighted: *Tap an assignment’s name to edit it.*, *Duplicate — the two squares on its row —*,
+      and *A category with nothing in it yet does not count as a zero — its weight is shared across
+      the others until something is in it.* all present. Points: the first two, and *… does not count
+      as a zero — it adds nothing until something is in it.*, with no *weight* anywhere in the hint.
+- [x] 👤 On the teaching iPad, upright: the two doors sit where ruling 1 puts them, a name tap opens
+      the editor, both icons read as what they are, and the empty and unfiled headings are legible
+      without a bar. WO-3.56's amber nameless warning, on the note line above the table, still
+      reads as its own message beside the new top row and the amber headings below it.
+      — the owner, 2026-10-11, on the teaching iPad against v185 served from `serve-https.mjs`
+      after a force-quit: every line of the verifier's six-item checklist read as written. The
+      same sitting kept both of the verifier's owner confirmations as built — the points-class
+      hint's third sentence (*… it adds nothing until something is in it.*, filled from ruling 5's
+      points clause because ruling 7's *weight is shared* is false there) and its placement at
+      the end of the existing hint paragraph rather than in a second one. No change.
+- [x] `CACHE` in `sw.js` is bumped.
+      — `planbook-shell-v184` → `planbook-shell-v185`.
+
+**The phone-width baseline for WO-3.59 (a note, no box).** The page's horizontal overflow
+(`scrollWidth − clientWidth` on `<html>`) on the assignments screen at 390×844, `deviceScaleFactor` 2,
+`mobile: true`, touch on, `(pointer: coarse)` asserted true, headless Edge:
+
+| Fixture | Before (HEAD `84f5656`) | After (this work order) |
+|---|---|---|
+| WO-1.77's — one category, one assignment, a blank-dated term | 134px | 134px |
+| `verify/assignment-list-tidy.mjs`'s weighted class — four categories, one unfiled | 134px | 135px |
+| a real-shaped class — four categories with dates, one unfiled | 149px | 151px |
+
+The first row is also `verify/dialog-kinds.mjs`'s own `MEASURE` line, which read 134 on the baseline
+run and 134 after; the second is this work order's `MEASURE` line after, and the same fixture in a
+scratch probe over a `git archive` of HEAD before. **This work order caused no new overflow**: the
+table itself got narrower (its box's own sideways scroll fell 254 → 214px on the first fixture), and
+the one or two pixels on the others are the next finding moving. **What overflows the page is not the
+table.** On every fixture, before and after, the one element whose right edge is the document's
+`scrollWidth` is the Actions column head's `<span class="sr-only">Actions</span>` — absolutely
+positioned with no positioned ancestor, so `.assign-table-wrap`'s `overflow-x: auto` does not clip it
+and it carries the page out to where the table's last column sits. That is WO-3.59's to confirm and
+fix, and it was not touched here. The `.sr-only` spans this work order adds inside the headings sit
+inside the viewport and are not on that list.
+
+**Mutation round.** The work staged first; five faults planted at once in `src/assignments.js` and
+`src/assignments.css`, each marked `MUTATION`; one full run; then `git checkout -- src/assignments.js
+src/assignments.css` from the index, and `grep -rn MUTATION` over `src/`, `index.html`, `sw.js` and the
+new section clean (its one hit is an unrelated comment in `src/shell.js`). The run read `1980 checks ·
+1972 passed · 8 failed · 0 skipped`, exit 1 — each fault red where it should be and nowhere else:
+
+| Planted | Red |
+|---|---|
+| M1 · `paintHintEmpty()` ignores the grading mode, so a points class gets the weighted words | **2**: this section's points-hint check (*"weightWord": "… its weight is shared across the others …"*), and WO-3.34's *says nothing about weights* in `points-grade.mjs` (`"wordFound": "weight"`) |
+| M2 · *Not in a category* is `unfiled` in every mode, never `counted` | **3**: this section's points-class unfiled check, WO-3.36's paint check (`"cls": "assign-group-head unfiled"`), and WO-3.43's points-class re-filed check (`"counted": false`) |
+| M3 · a 0% empty category falls through to the weighted note | **1**: the 0% heading check (*"Nothing in it yet · its 0% is shared across the others"*) |
+| M4 · `.assign-actions.end` deleted | **1**: the body-row check (`"justify": "normal", "gapRight": 1078`) |
+| M5 · `.assign-name-btn:focus { outline: none; }` added — the Traps line's own temptation | **1**: `focus-ring.mjs`'s *no rule in any loaded sheet … removes an outline* (`[{"sel": ".assign-name-btn:focus", "css": "outline: none;"}]`) |
+
+**Not mutated, and why.** The icons' own coarse floor, `.assign-icon-btn { min-height: 44px;
+min-width: 44px; }`, would not go red if deleted, and that is defence in depth rather than a blind
+spot: the icons also wear `.assign-row-btn` and `.class-action-btn`, both floored at 44 in their own
+coarse blocks. It stays, for the reason this sheet's touch block gives at its head — a control covered
+only by some other selector's rule is one the next reader has to prove is covered.
+
+**The sweep's fourth review** — *CSS selectors added in the working tree with no coarse-block rule:
+`.assign-actions`, `.assign-group-head`* — read and answered: neither is a touch target. The first is
+the row holding + New (a `.class-action-btn`, floored in `src/shell.css`'s coarse block), and the
+second is a heading. The review reads uncommitted diff and goes quiet once this lands.
+
+**Full run on the delivered tree:** `1980 checks · 1980 passed · 0 failed · 0 skipped`, 63,328 lines, 32.0 lines per check, 1019s, exit 0, 2026-10-11 on the real clock, after the mutation revert (the pre-mutation run on the same bytes read the same 1980, 1023s). The untouched tree before any edit read `1966 checks · 1966 passed · 0 failed · 0 skipped`, 1023s, exit 0. `node tools/wo-sweep.mjs` on the same tree: `50 checks · 46 passed · 0 failed · 4 to review`, exit 0 — the usual three and the coarse-block review answered above.
+
+---
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

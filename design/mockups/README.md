@@ -1032,6 +1032,17 @@ the layout, and
 [WO-3.55](../../plans/work-orders/phase-3-gradebook.md#wo-355--the-assignment-list-sorts-within-each-category-and-writes-nothing),
 sorting, after it. Their Rulings carry every answer.
 
+**§ ASSIGN TIDY landed 2026-10-11 (WO-3.54)**, lifted into `src/assignments.css` under the drawn
+names: the title row ends in ← All classes, + New assignment is the body row's right end, the name
+opens the editor, Duplicate and Delete are icons, and both notices are headings. Frame A's two bars
+now draw unstyled, because `.assign-group-empty` and `.assign-group-orphan` left the shipped sheet
+with the bars — frame A is the screen as it shipped at v182, kept as the record of what changed.
+**§ ASSIGN SORT is WO-3.55's and still pending.** One thing the build added that the drawing did
+not settle: in a class graded on total points the hint's empty-category sentence keeps its first half
+and takes ruling 5's points clause for its second — *it adds nothing until something is in it* —
+because the drawn second half names a weight, and WO-3.34 ruled that a points class's screen names
+none. The record is `TESTING.md` § WO-3.54.
+
 ## What the drawing proposes
 
 Styled in [`proposed-assign-tidy.css`](proposed-assign-tidy.css): § ASSIGN TIDY (WO-3.54) and

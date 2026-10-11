@@ -4244,7 +4244,7 @@ symmetry with these four is the mistake that row's Traps already name.
 
 ## WO-3.54 — the assignment list's top matches the other class screens, and its rows get lighter
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-10-11 · **Size** M · **Depends on** —
 **Closes roadmap** *(no box. Owner-directed, 2026-10-10.)*
 
 **Booked 2026-10-10**, owner-directed, out of a sitting that drew the screen first. The assignment
@@ -4322,25 +4322,25 @@ category"**, which was not drawn, reads as proposed — now ruling 6's second se
 - **`TESTING.md` § WO-3.54**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] On the assignment list, the title row's last control is ← All classes (`data-view-home`), and
+- [x] On the assignment list, the title row's last control is ← All classes (`data-view-home`), and
       + New assignment is the last control of the body's first row, right-aligned.
-- [ ] No row carries an Edit button. Tapping a name opens the editor for that assignment, and the
+- [x] No row carries an Edit button. Tapping a name opens the editor for that assignment, and the
       name button carries `data-assignment-edit`.
-- [ ] Each row's Duplicate and Delete are icon buttons whose `aria-label` names the assignment, with
+- [x] Each row's Duplicate and Delete are icon buttons whose `aria-label` names the assignment, with
       the `data-assignment-duplicate` and `data-assignment-delete` hooks unchanged; each is at least
       44px square under a coarse pointer.
-- [ ] An empty category draws one heading row with `.empty`, the note for its case word for word
+- [x] An empty category draws one heading row with `.empty`, the note for its case word for word
       (ruling 5, all three cases), its full sentence in hidden text, and no row after it before the
       next heading. No `.assign-group-empty` element exists.
-- [ ] "Not in a category" draws one heading row with `.unfiled` — `.counted` added in a points class
+- [x] "Not in a category" draws one heading row with `.unfiled` — `.counted` added in a points class
       — and no notice row; its note is ruling 6's for its grading mode, word for word, and does not
       say *Edit*.
-- [ ] The hint carries ruling 7's three sentences.
-- [ ] 👤 On the teaching iPad, upright: the two doors sit where ruling 1 puts them, a name tap opens
+- [x] The hint carries ruling 7's three sentences.
+- [x] 👤 On the teaching iPad, upright: the two doors sit where ruling 1 puts them, a name tap opens
       the editor, both icons read as what they are, and the empty and unfiled headings are legible
       without a bar. WO-3.56's amber nameless warning, on the note line above the table, still
       reads as its own message beside the new top row and the amber headings below it.
-- [ ] `CACHE` in `sw.js` is bumped.
+- [x] `CACHE` in `sw.js` is bumped.
 
 **Traps** — **Move the hook, do not rename it.** `data-assignment-edit` routes in `src/shell.js` and
 is what the harness presses; it goes onto the name button as it is. **Do not touch the roster** —

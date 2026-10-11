@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1962 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1976 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2870,6 +2870,23 @@ Four checks in `verify/attendance-history.mjs` changed their number without a ne
 dialog is a form now, 640 rather than 480. Full run: `1966 checks · 1966 passed · 0 failed · 0
 skipped`, 62,950 lines, 32.0 lines per check, 1032s, exit 0, 2026-10-11 on the real clock. Planted
 faults in `TESTING.md` § WO-1.77.
+
+**WO-3.54 moved it from 1962 to 1976, and the executed count from 1966 to 1980 — fourteen sites,
+fourteen results, and one new file.** The fourteen are `verify/assignment-list-tidy.mjs`, registered
+straight after `verify/dialog-kinds.mjs` and shaped like it — two classes, one student and seven
+assignments of its own, planted at its head and taken back out at its foot: the title row ending in
+← All classes in the Scores row's own markup; + New last in the body's first row, right-aligned; no
+Edit button and every name a button carrying `data-assignment-edit`; a real tap on a name opening the
+editor; the two icon buttons and their labels and hooks; both at 44px square under a coarse pointer;
+the three empty-category headings, word for word; the weighted and points-class *Not in a category*
+headings; no bar left; and the hint in both grading modes. None is a failure arm, and the section's
+one guard is a `skip()`. It also prints a `MEASURE |` line — the page's sideways scroll at 390×844 —
+for WO-3.59, asserting nothing. Three existing sections moved to the new headings without a new site:
+`verify/assignments.mjs` (the empty-category sentences and *4 controls per row*),
+`verify/points-grade.mjs` (WO-3.34's and WO-3.36's notice reads, now the heading's hidden sentence and
+its painted cell) and `verify/category-removal.mjs` (the re-filed work's notice). Full run:
+`1980 checks · 1980 passed · 0 failed · 0 skipped`, 63,328 lines, 32.0 lines per check, 1023s, exit 0,
+2026-10-11 on the real clock. Planted faults in `TESTING.md` § WO-3.54.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

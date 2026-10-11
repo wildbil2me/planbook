@@ -45,7 +45,7 @@
    has one: a control covered only by some other selector's rule is a control the next reader has
    to go and prove is covered. */
 .screen-nav-btn, .assign-row-btn, .assign-field-input, .assign-field-select, .assign-field-date,
-.assign-copy-tick, .assign-hold-tick {
+.assign-copy-tick, .assign-hold-tick, .assign-name-btn, .assign-icon-btn {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -232,6 +232,12 @@
    `.panel-header`'s 20px, top is zero because the header above already ends in a gap. */
 .assign-body { padding: 0 20px 20px; }
 .assign-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+/* + NEW ASSIGNMENT, AT THE RIGHT END OF THE BODY ROW (WO-3.54, the owner's ruling 1). ← All classes
+   took the title row's right end, where every other class screen keeps it, and + New took the row it
+   vacated — on the same edge it sat on, one level down. A state word on the row's own class, so the
+   shipped `.assign-actions` is not restyled. Lifted from design/mockups/proposed-assign-tidy.css
+   § ASSIGN TIDY, like every rule below marked WO-3.54. */
+.assign-actions.end { justify-content: flex-end; }
 /* Horizontal scroll belongs to the table, never to the page — a page that scrolls sideways on an
    iPad is a teacher swiping the app instead of the list. `.attendance-grid-wrap`'s rule, restated
    in this sheet's own name. */
@@ -249,6 +255,17 @@
 .assign-table tbody tr:hover { background: #fafbfc; }
 .assign-table tbody td { padding: 9px 10px; vertical-align: middle; }
 .assign-name { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+/* THE NAME IS THE WAY INTO THE EDITOR (WO-3.54, ruling 2). A real <button> holding the name, so it is
+   focusable and announced as a control, styled to read as the name it is: the cell's own weight and
+   ink, a dotted underline only on hover, and indigo — the app's interactive colour — when pointed at.
+   THE FOCUS RING IS THE BROWSER'S, through src/shell.css's global `:focus-visible`, and nothing here
+   takes it away to finish the look: this repo forbids suppressing one, and a button dressed as text
+   is exactly the control a keyboard user most needs to see land. */
+.assign-name-btn {
+  background: none; border: 0; padding: 0; margin: 0;
+  font: inherit; color: inherit; text-align: left; cursor: pointer;
+}
+.assign-name-btn:hover { color: #5b6fcc; text-decoration: underline dotted; text-underline-offset: 3px; }
 .assign-pts, .assign-date { font-size: 12px; color: #6b7a8d; font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* A due date that has gone past with the column still unfinished. IT IS A TINT AND NOTHING ELSE:
    nothing here marks a student, nothing here changes a grade, and no flag is ever inferred from a
@@ -276,6 +293,12 @@
 /* Row buttons are `.class-action-btn` worn as-is. This class only holds the row together and gives
    the coarse block below something to name; it never restyles the button. */
 .assign-row-btn { }
+/* THE ICON FORM OF A ROW BUTTON (WO-3.54, ruling 3) — Duplicate's two squares and Delete's bin. Worn
+   beside `.class-action-btn` and `.assign-row-btn`, which give it its border, wash and hover; this only
+   squares it up around a 14px glyph so it sits level with the ↑ ↓ beside it. `.delete` keeps its
+   shipped red hover. */
+.assign-icon-btn { display: inline-flex; align-items: center; justify-content: center; padding: 4px 8px; }
+.assign-icon-btn svg { width: 14px; height: 14px; display: block; }
 
 /* The category group heading. The list is grouped by category rather than flat because the weight
    is what makes a mark out of 20 mean anything, and because an empty category has to be visible —
@@ -290,27 +313,31 @@
   text-transform: uppercase; letter-spacing: 0.5px;
 }
 .assign-group-note { font-size: 11px; font-weight: 700; color: #8a9bb0; text-transform: none; letter-spacing: 0; }
-/* A category with no assignments in it. Its weight redistributes — the data model's rule, and the
-   one a teacher is most likely to be surprised by — so the row says so rather than showing an empty
-   group and letting her wonder whether the app lost her work. */
-.assign-group-empty {
-  font-size: 12px; color: #8a6d1a; background: #fff8e6;
-  border: 1.5px solid #f0dfa8; border-radius: 8px;
-  padding: 8px 12px; margin: 6px 0; line-height: 1.5; font-weight: 700;
-}
-/* Work filed under a category this class no longer has — reachable from a restored document, or
-   from a build older than WO-3.1. Red rather than amber in a WEIGHTED class: an empty category costs
-   nothing and this costs the assignment, which is counted by nothing until it is re-filed. */
-.assign-group-orphan {
-  font-size: 12px; color: #c0392b; background: #fdeaea;
-  border: 1.5px solid #e74c3c; border-radius: 8px;
-  padding: 8px 12px; margin: 6px 0; line-height: 1.5; font-weight: 700;
-}
+/* AN EMPTY CATEGORY'S HEADING CARRIES THE NOTICE (WO-3.54, ruling 5). A category with no assignments
+   in it: its weight redistributes — the data model's rule, and the one a teacher is most likely to be
+   surprised by — so the heading says so rather than showing an empty group and letting her wonder
+   whether the app lost her work. Until WO-3.54 that was a boxed bar under the heading, which already
+   said "nothing in it yet"; the bar is gone, and its amber is on the heading value for value — #fff8e6
+   wash, #f0dfa8 edge, #8a6d1a ink — so the colour still means what the bar meant. A 3px rule on the
+   left marks the group without a second box. The short consequence is the note; the bar's full
+   sentence is hidden text inside the heading (src/assignments.js, groupHead()). */
+.assign-group-head.empty td { background: #fff8e6; border-left: 3px solid #f0dfa8; border-bottom-color: #f0dfa8; }
+.assign-group-head.empty:hover td { background: #fff8e6; }
+.assign-group-head.empty .assign-group-note { color: #8a6d1a; }
+/* WORK FILED UNDER NO CATEGORY THIS CLASS HAS (WO-3.54, ruling 6) — reachable from a restored
+   document, from a build older than WO-3.1, and since WO-3.43 from removing its category. Red rather
+   than amber in a WEIGHTED class: an empty category costs nothing and this costs the assignment, which
+   is counted by nothing until it is re-filed. The same move as `.empty`: the old bar's colour on the
+   heading, the bar gone. */
+.assign-group-head.unfiled td { background: #fdeaea; border-left: 3px solid #e74c3c; border-bottom-color: #f5b7b1; }
+.assign-group-head.unfiled:hover td { background: #fdeaea; }
+.assign-group-head.unfiled .assign-group-note { color: #c0392b; }
 /* In a class graded on total points the same work COUNTS (WO-3.30), so red's "this costs the
-   assignment" would be false there (WO-3.36). It takes `.assign-group-empty`'s amber — a thing worth
-   tidying, not a thing gone wrong — and keeps every measurement above, so the notice sits where it
-   always did. Not a control: it adds nothing to the coarse block. */
-.assign-group-orphan.counted { color: #8a6d1a; background: #fff8e6; border-color: #f0dfa8; }
+   assignment" would be false there (WO-3.36). It takes the empty heading's amber — a thing worth
+   tidying, not a thing gone wrong. Not a control: neither heading adds anything to the coarse block. */
+.assign-group-head.unfiled.counted td { background: #fff8e6; border-left-color: #f0dfa8; border-bottom-color: #f0dfa8; }
+.assign-group-head.unfiled.counted:hover td { background: #fff8e6; }
+.assign-group-head.unfiled.counted .assign-group-note { color: #8a6d1a; }
 
 .assign-empty { font-size: 13px; color: #a0aab8; padding: 18px 2px; line-height: 1.6; }
 
@@ -325,7 +352,7 @@
   font-size: 12px; font-weight: 700; line-height: 1.5;
 }
 /* AN ASSIGNMENT CLOSED WITH NO NAME TOOK ONE (WO-3.56, ruling 5). The same line and the same shape,
-   in `.assign-group-empty`'s amber with a `#e0a800` rule down its left — the owner's ruling of
+   in `.assign-group-head.empty`'s amber with a `#e0a800` rule down its left — the owner's ruling of
    2026-10-10, from a drawing. Amber because this one asks for something: the indigo above says back
    what the teacher did, and this says what she has still to do. A modifier set by src/assignments.js
    for this message only, and taken off for every other, so the moved-work note stays indigo. Not a
@@ -335,7 +362,7 @@
   background: #fff8e6; color: #8a6d1a;
 }
 
-/* NO TERM HOLDS THESE DATES (WO-3.50), in the editor. Amber, `.assign-group-empty`'s: the work stays
+/* NO TERM HOLDS THESE DATES (WO-3.50), in the editor. Amber, `.assign-group-head.empty`'s: the work stays
    where it is, which is a thing to read before closing again rather than a thing gone wrong.
    Qualified with `.modal-body` because it is a <p> in there and `.modal-body p` would win. */
 .modal-body .assign-term-note {
@@ -600,7 +627,7 @@
   font-size: 13px; font-weight: 700; color: #1a1a2e;
 }
 
-/* A line's own fallback, under that line only. Amber, `.assign-group-empty`'s colour, indented to
+/* A line's own fallback, under that line only. Amber, `.assign-group-head.empty`'s colour, indented to
    sit under the name rather than under the tick box. */
 .assign-copy-flag {
   grid-column: 1 / -1; margin: 0; padding-left: 28px;
@@ -629,14 +656,20 @@
      instead of overflowing — is written out at the base rule. `min-height` is the floor and is what
      makes these thumb-sized; the horizontal padding never was. */
   .screen-nav-btn { min-height: 44px; padding: 6px 10px; }
-  /* Five controls per row is design/mockups/README.md's open question 4 — nine assignments × five
-     targets — and they are drawn wide on purpose so the crowding can be seen rather than argued
-     about. What this block can do about it is make each one a real target and give the row enough
-     gap that Delete is not shoulder to shoulder with Edit: 8px, the same widening
+  /* Five controls per row was design/mockups/README.md's open question 4 — nine assignments × five
+     targets — and WO-3.54 answered it: four now, Edit gone into the name and Duplicate and Delete
+     icons. What this block does is make each one a real target and give the row enough gap that
+     Delete is not shoulder to shoulder with Duplicate: 8px, the same widening
      `.category-row-actions` and `.roster-row-actions` both took, and for the same reason — a
      mis-tap here costs an assignment and the scores under it. */
   .assign-row-actions { gap: 8px; }
   .assign-row-btn { min-height: 44px; min-width: 44px; }
+  /* WO-3.54, in the same pass that added them: the icons square at 44 and their glyphs grow to 16 so
+     they read at arm's length; the name, which is the editor's door now, is 44 tall — a whole cell
+     of name to land a thumb on. */
+  .assign-icon-btn { min-height: 44px; min-width: 44px; }
+  .assign-icon-btn svg { width: 16px; height: 16px; }
+  .assign-name-btn { min-height: 44px; }
   .assign-table tbody td { padding: 7px 8px; }
   .assign-progress { min-width: 120px; }
   .assign-count { font-size: 12px; }
@@ -644,7 +677,6 @@
   .assign-pts, .assign-date { font-size: 13px; }
   .assign-group-title { font-size: 12px; }
   .assign-group-note { font-size: 12px; }
-  .assign-group-empty, .assign-group-orphan { font-size: 13px; }
   .assign-empty, .assign-hint { font-size: 13px; }
   .assign-fields { gap: 12px; }
   .assign-field-row { gap: 12px; }
@@ -752,7 +784,7 @@
 @media (max-width: 640px) {
   /* The name column's 200px floor is what makes the table scroll sideways rather than squeeze on a
      phone, and on a phone the actions wrap to a second line under the row. Both are accepted: the
-     alternative is hiding a control, and every one of the five writes something. */
+     alternative is hiding a control, and every one on the row writes something. */
   .assign-col-name { min-width: 160px; }
   .assign-progress { min-width: 96px; }
 }

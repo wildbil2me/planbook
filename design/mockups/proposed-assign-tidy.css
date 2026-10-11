@@ -23,8 +23,18 @@
 .assign-name-btn, .assign-icon-btn, .assign-sort-btn { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § ASSIGN TIDY   →  src/assignments.css   (WO-3.54 — not yet lifted)
+   § ASSIGN TIDY   →  src/assignments.css   (WO-3.54 — lifted 2026-10-11)
    ══════════════════════════════════════════════════════════════════════════════ */
+
+/* LIFTED 2026-10-11 by WO-3.54, every class under its own name and every value as drawn — the
+   name button, the icon form, `.assign-group-head.empty`, `.unfiled`, `.unfiled.counted` and
+   `.assign-actions.end` — with this section's § TOUCH lines in src/assignments.css's coarse block
+   and its two controls in that sheet's grouped `touch-action` selector. Two things moved under the
+   lift: `.assign-group-empty` and `.assign-group-orphan`, the bars these headings replace, left the
+   shipped sheet, so frame A's two bars on assignments-tidy.html now draw unstyled — frame A is the
+   screen as it shipped at v182, and is a record now rather than today's screen; and the comments
+   below that name those two classes describe where the colours came from, not a class still worn.
+   § ASSIGN SORT below is WO-3.55's and is still pending. */
 
 /* THE NAME IS THE WAY INTO THE EDITOR. A real <button> holding the name, so it
    is focusable and announced as a control, styled to read as the name it is: the

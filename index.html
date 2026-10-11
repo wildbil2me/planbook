@@ -1106,8 +1106,15 @@
           <h2 id="assignmentsClassName"></h2>
           <p id="assignmentsSummary"></p>
         </div>
-        <button class="class-action-btn primary" type="button" data-assignment-new
-                aria-haspopup="dialog">+ New assignment</button>
+        <!-- The way back to the class grid, in the title row exactly as the attendance panel and the
+             score grid have it (WO-3.54, the owner's ruling 1), so the door home is in the same place
+             on every screen of a class. Until then this corner held + New assignment and this door sat
+             in a row of its own in the body; the two swapped, and + New is now that row's, at its
+             right end. Same `data-view-home` hook the header's "All classes" tab carries — one route,
+             more doors. -->
+        <button class="class-action-btn" type="button" data-view-home>
+          <span aria-hidden="true">←</span> All classes
+        </button>
       </div>
 
       <!-- The same empty strip the attendance panel carries, filled by the same module. -->
@@ -1115,15 +1122,14 @@
     </div>
 
     <div class="assign-body">
-      <!-- The way back to the class grid, in the body rather than the title row: that row already
-           carries the primary control on this screen, and index.html's own 390px note about the
-           class view applies here — six class tabs and "All classes" do not fit the header strip
-           at once, so a teacher who has finished with this screen needs a door where she is
-           already looking. Same `data-view-home` hook: one route, more doors. -->
-      <div class="assign-actions">
-        <button class="class-action-btn" type="button" data-view-home>
-          <span aria-hidden="true">←</span> All classes
-        </button>
+      <!-- + NEW ASSIGNMENT, at the right end of the body's first row (WO-3.54, the owner's ruling 1):
+           the row the "All classes" door vacated when that door moved up into the title row, and the
+           same right-hand edge + New held up there, one level down. `.end` is the state word that
+           right-aligns it. The past-due prompt and the arrived-from-another-term line stay between
+           this row and the table. -->
+      <div class="assign-actions end">
+        <button class="class-action-btn primary" type="button" data-assignment-new
+                aria-haspopup="dialog">+ New assignment</button>
       </div>
 
       <!-- THE SAME PAST-DUE PROMPT (WO-3.6), on the other screen its work order names: "on opening
@@ -1173,7 +1179,8 @@
         without changing a date stays where it is.
         <strong>Nothing else is ever filled in for you.</strong> Planbook has no timetable and is not
         getting one, so there is no “next meeting” to guess at; a due date is a plain date you type,
-        and it changes no grade and marks nobody. <strong>Duplicate</strong> copies an assignment
+        and it changes no grade and marks nobody. <strong>Tap an assignment’s name to edit
+        it.</strong> <strong>Duplicate</strong> — the two squares on its row — copies an assignment
         into as many of the other classes you teach as you tick — each copy’s dates start on this
         one’s and can be changed for that class alone, <strong>each copy goes into the term its due
         date falls in</strong> (or its assigned date, if it has no due date), and every copy arrives
@@ -1185,6 +1192,12 @@
         adds 5 to what a student has earned in its category and nothing to what was possible, so it
         lifts the grade instead of diluting it. There is no separate extra-credit switch and there
         is not going to be one.
+        <!-- The second half differs by grading mode and src/assignments.js fills it on every render:
+             these words in a weighted class, and "it adds nothing until something is in it" in a class
+             graded on total points, whose screen names no weight (WO-3.34). WO-3.54, ruling 7. -->
+        <strong>A category with nothing in it yet does not count as a zero</strong>
+        <span id="assignmentsHintEmpty">— its weight is shared across the others until something is
+        in it.</span>
       </p>
     </div>
   </div>

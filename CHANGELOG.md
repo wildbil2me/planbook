@@ -13,6 +13,24 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The assignment list matches the other class screens — 2026-10-11
+
+WO-3.54, owner-directed. Shell cache v184 → v185.
+
+- **← All classes is at the right end of the title row**, where Attendance and Scores keep it, so the
+  way home is in the same place on every screen of a class. **+ New assignment** moved down to the
+  row above the list, at its right end.
+- **Tap an assignment's name to edit it.** The Edit button is gone. Duplicate is now two squares and
+  Delete a bin; both still say what they do to a screen reader, and both are full-size under a finger.
+  ↑ ↓ are unchanged.
+- **An empty category says so in its own heading**, in amber — *its 20% is shared across the others*,
+  *0%, counts for nothing*, or in a class graded on total points *adds nothing until something is in
+  it* — instead of a boxed bar underneath. **"Not in a category" does the same**, red in a weighted
+  class and amber in a points class, and now says *tap its name to file it*.
+- **The note under the list says in words what a tooltip cannot on an iPad**: tap a name to edit,
+  Duplicate is the two squares, and an empty category does not count as a zero.
+- The roster keeps *✎ · Edit · Remove* on purpose: those rows are people.
+
 ### Dialogs are as wide as what is in them — 2026-10-11
 
 WO-1.77, owner-directed. Shell cache v183 → v184.

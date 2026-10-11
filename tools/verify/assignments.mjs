@@ -108,9 +108,11 @@ if (!classesBooted || !classSeam || !assignSeam) {
         groups: rows.filter(function(r){ return r.classList.contains('assign-group-head'); })
           .map(function(r){ return r.querySelector('.assign-group-title').textContent
             .replace(/\\s+/g, ' ').trim(); }),
-        notes: Array.prototype.slice.call(body.querySelectorAll('.assign-group-empty'))
+        /* An empty category's consequence, and unfiled work's, are each the full sentence held as
+           hidden text inside its own heading since WO-3.54 — the boxed bar under the heading went. */
+        notes: Array.prototype.slice.call(body.querySelectorAll('.assign-group-head.empty .sr-only'))
           .map(function(p){ return p.textContent.replace(/\\s+/g, ' ').trim(); }),
-        orphans: Array.prototype.slice.call(body.querySelectorAll('.assign-group-orphan'))
+        orphans: Array.prototype.slice.call(body.querySelectorAll('.assign-group-head.unfiled .sr-only'))
           .map(function(p){ return p.textContent.replace(/\\s+/g, ' ').trim(); }),
         /* An assignment name and a category name are both teacher-typed, and one of each below
            carries markup on purpose. The chip's own <b> holds the weight, so it is excluded by
@@ -1011,7 +1013,7 @@ if (!classesBooted || !classSeam || !assignSeam) {
     check('the arrows reorder an assignment inside its own category, and the document order is the order drawn',
       pair.length === 2 && JSON.stringify(reordered.order) === JSON.stringify([pair[1], pair[0]])
         && reordered.names.length === 3
-        && reordered.rowButtons === 5,
+        && reordered.rowButtons === 4,
       'order ' + JSON.stringify(pair) + ' -> ' + JSON.stringify(reordered.order)
         + ', ' + reordered.rowButtons + ' controls per row');
 

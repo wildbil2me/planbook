@@ -192,6 +192,9 @@ const BODY_ID = 'assignmentsBody';
 const TABLE_WRAP_SEL = '#assignmentsView .assign-table-wrap';
 const EMPTY_ID = 'assignmentsEmpty';
 const HINT_TERM_ID = 'assignmentsHintTerm';
+/* The second half of the hint's sentence about an empty category (WO-3.54, ruling 7), which differs
+   by grading mode — see paintHintEmpty(). */
+const HINT_EMPTY_ID = 'assignmentsHintEmpty';
 
 const EDITOR_TITLE_ID = 'assignmentModalTitle';
 const EDITOR_FIELDS_ID = 'assignmentFields';
@@ -256,8 +259,8 @@ const DEFAULT_POINTS = 100;
 let editingId = '';
 /* Set only for the assignment made by the currently open create flow. An explicit Cancel removes
    it; every ordinary dismissal keeps it, preserving this app's no-lost-draft rule. Opening any row
-   through Edit clears the marker, so an assignment that has once been accepted is never mistaken
-   for a pending create. */
+   through its name (the Edit button's door until WO-3.54) clears the marker, so an assignment that
+   has once been accepted is never mistaken for a pending create. */
 let creatingId = '';
 let copyId = '';
 let pendingDeleteId = '';
@@ -451,6 +454,56 @@ function actionButton(label, hook, value, extraClass) {
   return btn;
 }
 
+/*
+  THE TWO ROW ICONS (WO-3.54, the owner's ruling 3): Duplicate is two offset squares and Delete is a
+  bin. The shapes are the drawing's, design/mockups/assignments-tidy.html frame B, which are the
+  header's own icon grammar — a 24-unit box, a 2.2 stroke in `currentColor`, round caps — so the row
+  takes `.class-action-btn`'s ink and Delete takes `.delete`'s red hover with nothing restated here.
+  ✎ is not used for anything on this row: on a roster row it opens the log sheet.
+
+  Built with createElementNS rather than innerHTML, for the reason assignmentRow() gives below about
+  names, and because an <svg> made by createElement is an unknown HTML element that draws nothing.
+  This is the first SVG any module in src/ builds; every other icon in the app is markup in
+  index.html. Kept as data — a tag and its attributes — so the two shapes read as the drawing's
+  markup does and nothing here computes a coordinate.
+*/
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const COPY_ICON = [
+  ['rect', { x: '9', y: '9', width: '13', height: '13', rx: '2', ry: '2' }],
+  ['path', { d: 'M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1' }],
+];
+const BIN_ICON = [
+  ['polyline', { points: '3 6 5 6 21 6' }],
+  ['path', { d: 'M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6' }],
+  ['path', { d: 'M10 11v6' }],
+  ['path', { d: 'M14 11v6' }],
+  ['path', { d: 'M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2' }],
+];
+const ICON_FRAME = {
+  viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.2',
+  'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', focusable: 'false',
+};
+
+function setAll(el, attrs) {
+  Object.keys(attrs).forEach((k) => el.setAttribute(k, attrs[k]));
+  return el;
+}
+
+/* An icon row button: `.class-action-btn` and `.assign-row-btn` worn as-is, `.assign-icon-btn`
+   squaring it round the glyph. Its words are its `aria-label`, naming the assignment, because the
+   glyph says nothing to a screen reader; the `title` is a laptop's extra, and the hint under the list
+   says in words what the two squares are, because a finger never shows a tooltip (ruling 7). */
+function iconButton(shapes, hook, value, extraClass, title, ariaLabel) {
+  const btn = actionButton('', hook, value, extraClass + ' assign-icon-btn');
+  btn.setAttribute('aria-haspopup', 'dialog');
+  btn.setAttribute('aria-label', ariaLabel);
+  btn.title = title;
+  const svg = setAll(document.createElementNS(SVG_NS, 'svg'), ICON_FRAME);
+  shapes.forEach((shape) => svg.append(setAll(document.createElementNS(SVG_NS, shape[0]), shape[1])));
+  btn.append(svg);
+  return btn;
+}
+
 function cell(row, className, text) {
   const td = document.createElement('td');
   if (className) td.className = className;
@@ -502,10 +555,27 @@ function progressCell(row, assignment, cls) {
 */
 function assignmentRow(assignment, cls, index, siblings) {
   const row = document.createElement('tr');
+  const label = assignment.name || 'this assignment';
 
+  /*
+    THE NAME IS THE WAY INTO THE EDITOR (WO-3.54, the owner's ruling 2), and the Edit button is gone.
+    A real <button> holding the name — focusable, announced as a control, pressed by Enter and Space —
+    that src/assignments.css styles to read as the name it is. It carries `data-assignment-edit`, the
+    hook the Edit button carried, MOVED AND NOT RENAMED: src/shell.js routes it, and every check that
+    opens the editor presses it. The focus ring is the browser's and nothing here or in the sheet
+    takes it away to finish the look.
+  */
   const name = cell(row, 'assign-name');
-  name.textContent = assignment.name || UNTITLED_ASSIGNMENT;
-  /* EXTRA CREDIT, in words. A lone 0 in the points column reads as a mistake somebody made; the
+  const open = document.createElement('button');
+  open.type = 'button';
+  open.className = 'assign-name-btn';
+  open.setAttribute('data-assignment-edit', assignment.id);
+  open.setAttribute('aria-haspopup', 'dialog');
+  open.title = 'Edit ' + label;
+  open.textContent = assignment.name || UNTITLED_ASSIGNMENT;
+  name.append(open);
+  /* EXTRA CREDIT, in words. Beside the name's button and not inside it, so the button is called what
+     the assignment is called. A lone 0 in the points column reads as a mistake somebody made; the
      badge says it is a thing the teacher chose, which is what the owner's 2026-08-09 decision
      makes it. Quiet indigo rather than amber — nothing is wrong here. */
   if (pointsOf(assignment) === 0) {
@@ -546,7 +616,6 @@ function assignmentRow(assignment, cls, index, siblings) {
   const actionsCell = cell(row, '');
   const actions = document.createElement('div');
   actions.className = 'assign-row-actions';
-  const label = assignment.name || 'this assignment';
 
   /* Explicit up/down rather than drag, for the reason src/classes.js gives about class rows:
      HTML5 drag-and-drop does not fire for touch on iPadOS at all, so a dragged row is a
@@ -560,29 +629,29 @@ function assignmentRow(assignment, cls, index, siblings) {
   down.disabled = index === siblings - 1;
   actions.append(up, down);
 
-  const edit = actionButton('Edit', 'data-assignment-edit', assignment.id, 'assign-row-btn');
-  edit.setAttribute('aria-haspopup', 'dialog');
-  edit.setAttribute('aria-label', 'Edit ' + label);
-  actions.append(edit);
-
-  const dup = actionButton('Duplicate', 'data-assignment-duplicate', assignment.id, 'assign-row-btn');
-  dup.setAttribute('aria-haspopup', 'dialog');
-  dup.setAttribute('aria-label', 'Duplicate ' + label + ' into other classes');
-  actions.append(dup);
-
-  const del = actionButton('Delete', 'data-assignment-delete', assignment.id,
-    'delete assign-row-btn');
-  del.setAttribute('aria-haspopup', 'dialog');
-  del.setAttribute('aria-label', 'Delete ' + label);
-  actions.append(del);
+  /* Duplicate and Delete keep their hooks and their spoken labels; only their faces changed
+     (WO-3.54, ruling 3). There is no Edit here any more — the name above is that door. */
+  actions.append(iconButton(COPY_ICON, 'data-assignment-duplicate', assignment.id, 'assign-row-btn',
+    'Duplicate into other classes', 'Duplicate ' + label + ' into other classes'));
+  actions.append(iconButton(BIN_ICON, 'data-assignment-delete', assignment.id, 'delete assign-row-btn',
+    'Delete', 'Delete ' + label));
 
   actionsCell.append(actions);
   return row;
 }
 
-function groupHead(title, chip, note) {
+/*
+  A category's heading. `state` and `said` are for the two headings that carry a notice (WO-3.54,
+  rulings 5 and 6): `state` is the state word src/assignments.css paints — `empty`, `unfiled`,
+  `unfiled counted` — and `said` is the full sentence the boxed bar under the heading used to carry.
+  NOTHING LIVES ONLY IN A TOOLTIP (ruling 7), so the sentence is hidden text inside the heading, read
+  out with it, and the row's `title` is a laptop's extra on top: a `title` on a row is not reliably
+  read, and a finger never shows one.
+*/
+function groupHead(title, chip, note, state, said) {
   const row = document.createElement('tr');
-  row.className = 'assign-group-head';
+  row.className = 'assign-group-head' + (state ? ' ' + state : '');
+  if (said) row.title = said;
   const td = document.createElement('td');
   td.colSpan = 6;
 
@@ -605,22 +674,33 @@ function groupHead(title, chip, note) {
     el.textContent = note;
     wrap.append(el);
   }
+  if (said) {
+    const el = document.createElement('span');
+    el.className = 'sr-only';
+    /* The leading space keeps the sentence from running into the note when the two are read as one. */
+    el.textContent = ' ' + said;
+    wrap.append(el);
+  }
 
   td.append(wrap);
   row.append(td);
   return row;
 }
 
-function noticeRow(className, text) {
-  const row = document.createElement('tr');
-  const td = document.createElement('td');
-  td.colSpan = 6;
-  const p = document.createElement('p');
-  p.className = className;
-  p.textContent = text;
-  td.append(p);
-  row.append(td);
-  return row;
+/*
+  THE HINT'S SENTENCE ABOUT AN EMPTY CATEGORY (WO-3.54, ruling 7), in two halves. The first is markup
+  and the same everywhere: a category with nothing in it yet does not count as a zero. The second is
+  the owner's words in a weighted class — its weight is shared across the others — and in a class
+  graded on total points it is ruling 5's points clause instead, because there the weight is not part
+  of the grade and WO-3.34 ruled that that screen names no weight at all. index.html carries the
+  weighted words, so the file a person reads says what the owner ruled.
+*/
+function paintHintEmpty(byPoints) {
+  const el = document.getElementById(HINT_EMPTY_ID);
+  if (!el) return;
+  el.textContent = byPoints
+    ? '— it adds nothing until something is in it.'
+    : '— its weight is shared across the others until something is in it.';
 }
 
 /*
@@ -670,6 +750,7 @@ export function renderAssignments() {
   const termLabel = term ? (term.label || 'Untitled term') : '';
 
   if (hintTerm) hintTerm.textContent = termLabel || 'this class';
+  paintHintEmpty(!!cls && gradingModeOf(cls) === 'points');
   paintListNote(cls, termId);
   if (summary) {
     summary.textContent = !doc ? 'No school year is open.'
@@ -730,13 +811,8 @@ export function renderAssignments() {
     /* NO WEIGHT CHIP IN A CLASS GRADED ON TOTAL POINTS (WO-3.34): "weight 40%" on a group whose
        weight the grade ignores is the screen telling her the grade is weighted. The head keeps its
        name and its count, which is what the "Not in a category" head has always carried. */
-    body.append(groupHead(
-      cat.name || 'Untitled category',
-      byPoints ? null : { text: formatWeight(Number.isFinite(weight) ? weight : 0) + '%', zero: zero },
-      held.length
-        ? plural(held.length, 'assignment', 'assignments') + ' · ' + plural(catPoints, 'point', 'points')
-        : 'nothing in it yet'
-    ));
+    const chip = byPoints ? null
+      : { text: formatWeight(Number.isFinite(weight) ? weight : 0) + '%', zero: zero };
 
     if (!held.length) {
       /*
@@ -752,20 +828,33 @@ export function renderAssignments() {
         so there is nothing to redistribute and nothing that "counts for nothing either way" because
         of a 0%. What an empty category costs in that formula is nothing at all — no points on
         either side — so the row says that and names no weight, zero or otherwise.
+
+        ONE HEADING AND NO BAR SINCE WO-3.54 (the owner's ruling 5). The three sentences are kept
+        whole, each its own, as the heading's hidden text; what shows is the owner's short note for
+        the same three cases, in the old bar's amber. One sentence for all three would be the
+        collapse this comment exists to prevent — read the paragraphs above before merging them.
       */
-      body.append(noticeRow('assign-group-empty', byPoints
-        ? 'Nothing is filed under “' + (cat.name || 'this category') + '” yet. This class is graded '
-          + 'on total points, so an empty category adds nothing to either side of the grade until '
-          + 'something is in it.'
-        : zero
-        ? 'Nothing is filed under “' + (cat.name || 'this category') + '” yet, and its weight is '
-          + '0% — so it counts for nothing either way until you put work in it and give it a weight.'
-        : 'Nothing is filed under “' + (cat.name || 'this category') + '” yet, so its '
-          + formatWeight(weight) + '% redistributes across the categories that do have work rather '
-          + 'than counting as a zero. Nothing is wrong; this category is simply not part of the '
-          + 'grade until something is in it.'));
+      const what = cat.name || 'this category';
+      body.append(groupHead(cat.name || 'Untitled category', chip,
+        'Nothing in it yet · ' + (byPoints ? 'adds nothing until something is in it'
+          : zero ? '0%, counts for nothing'
+            : 'its ' + formatWeight(weight) + '% is shared across the others'),
+        'empty',
+        byPoints
+          ? 'Nothing is filed under “' + what + '” yet. This class is graded '
+            + 'on total points, so an empty category adds nothing to either side of the grade until '
+            + 'something is in it.'
+          : zero
+          ? 'Nothing is filed under “' + what + '” yet, and its weight is '
+            + '0% — so it counts for nothing either way until you put work in it and give it a weight.'
+          : 'Nothing is filed under “' + what + '” yet, so its '
+            + formatWeight(weight) + '% redistributes across the categories that do have work rather '
+            + 'than counting as a zero. Nothing is wrong; this category is simply not part of the '
+            + 'grade until something is in it.'));
       return;
     }
+    body.append(groupHead(cat.name || 'Untitled category', chip,
+      plural(held.length, 'assignment', 'assignments') + ' · ' + plural(catPoints, 'point', 'points')));
     held.forEach((a, i) => body.append(assignmentRow(a, cls, i, held.length)));
   });
 
@@ -776,31 +865,41 @@ export function renderAssignments() {
     category the teacher removed, which src/categories.js now re-files here (its `categoryId`
     cleared to '') rather than deleting. The notice's wording was checked against that third way and
     left alone: "not filed under any category this class has" is exactly what a removal leaves, and
-    "Open Edit on each one" is how she files it again. In a WEIGHTED class it is red rather than
-    amber, because an empty category costs nothing and this costs the assignment — it is counted by
-    nothing until it is re-filed, and Edit is one tap away on its own row.
+    tapping each one's name is how she files it again — "Open Edit on each one" until WO-3.54 took the
+    Edit button away. In a WEIGHTED class it is red rather than amber, because an empty category
+    costs nothing and this costs the assignment — it is counted by nothing until it is re-filed, and
+    its editor is one tap away, on its own name.
 
     IN A CLASS GRADED ON TOTAL POINTS IT IS COUNTED (WO-3.30's ruling), so the notice there says so
     and still asks for a category — the work is in the grade, and filing it is what puts it in a
     row of the breakdown with a name a guardian recognises. The weighted sentence is unchanged.
     AND IT IS NOT RED THERE (WO-3.36): red says "this costs the assignment", which in that formula
-    is false. It keeps `.assign-group-orphan` and adds `.counted`, which src/assignments.css draws
-    in the amber of the empty-category notice — something to tidy, not something wrong.
+    is false. It adds `.counted`, which src/assignments.css draws in the amber of an empty
+    category's heading — something to tidy, not something wrong.
+
+    THE SAME MOVE AS AN EMPTY CATEGORY SINCE WO-3.54 (the owner's ruling 6): the heading carries the
+    colour and a short note, the bar under it is gone, and the full sentence is the heading's hidden
+    text. Neither note nor sentence says Edit, because there is no Edit to open — the name is the
+    door. The note is the owner's words for each mode, word for word; the sentence keeps its own
+    count, `it` or `them`, and says "its name" or "each one's name" to match.
   */
   const filed = cats.map((c) => c.id);
   const loose = list.filter((a) => filed.indexOf(a.categoryId) === -1);
   if (loose.length) {
+    const tap = loose.length === 1 ? 'Tap its name' : 'Tap each one’s name';
     body.append(groupHead('Not in a category', null,
-      plural(loose.length, 'assignment', 'assignments')));
-    body.append(noticeRow('assign-group-orphan' + (byPoints ? ' counted' : ''),
+      plural(loose.length, 'assignment', 'assignments') + ' · ' + (byPoints
+        ? 'counted, but in no category — tap its name to file it'
+        : 'counted toward nothing — tap its name to file it'),
+      byPoints ? 'unfiled counted' : 'unfiled',
       plural(loose.length, 'assignment', 'assignments')
       + ' below ' + (loose.length === 1 ? 'is' : 'are') + ' not filed under any category '
       + cls.name + ' has, ' + (byPoints
         ? 'so the grade counts ' + (loose.length === 1 ? 'it' : 'them') + ' under “no category” — '
           + cls.name + ' is graded on total points, and every point counts. '
-          + 'Open Edit on each one and choose a category to file it where it belongs.'
+          + tap + ' and choose a category to file it where it belongs.'
         : 'so nothing counts ' + (loose.length === 1 ? 'it' : 'them') + ' at all. '
-          + 'Open Edit on each one and choose a category.')));
+          + tap + ' and choose a category.')));
     loose.forEach((a, i) => body.append(assignmentRow(a, cls, i, loose.length)));
   }
 }
@@ -1097,8 +1196,9 @@ function renderEditorFields() {
      ordinary assignment edits still expose Delete exactly as before. */
   if (deleting) deleting.classList.toggle('hidden', isCreating);
   /* THE CREATE DOOR (WO-3.48), shown on exactly the condition Cancel is — a create flow — and only
-     when there is another active class to copy into. Opening a row through Edit clears `creatingId`,
-     so an assignment that was ever accepted never shows it; Duplicate on its row is that door. */
+     when there is another active class to copy into. Opening a row through its name clears
+     `creatingId`, so an assignment that was ever accepted never shows it; Duplicate on its row is
+     that door. */
   const copyDoor = document.getElementById(EDITOR_COPY_DOOR_ID);
   if (copyDoor) {
     const others = isCreating
@@ -1138,7 +1238,7 @@ function renderEditorFields() {
 
   /* Last, and outside `box`, because the prompt is about the fields rather than one of them — it
      lives in its own host in index.html, under this panel and above the two hints. Painted from
-     here so that every door into this editor gets it: Edit on a row, the Delete… that comes back,
+     here so that every door into this editor gets it: a row's name, the Delete… that comes back,
      and the brand-new assignment createAssignment() writes before opening. */
   paintEditorSupports();
 }
@@ -2531,7 +2631,7 @@ export function openCopyEditor(id, opener) {
     is already the one on the editor's glass. Closing is the same act Done is.
   - The editor's Cancel must not survive the copies. It removes the assignment this flow wrote and
     announces "Nothing was added" — true before a copy is made and false after, with the copies left
-    behind in other classes. Ending the flow here (`creatingId` cleared, the same as Edit clears it)
+    behind in other classes. Ending the flow here (`creatingId` cleared, as opening a row clears it)
     is what makes that sentence impossible to reach; the row's own Delete is still there.
   - One dialog at a time. A dialog stacked on a dialog is a thing to dismiss twice, the reason
     src/past-due.js's review is inline rather than a second modal, and Escape on the top one would
