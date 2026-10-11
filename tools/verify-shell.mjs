@@ -118,6 +118,7 @@ import { run as settingsHub } from './verify/settings-hub.mjs';
 import { run as settingsBack } from './verify/settings-back.mjs';
 import { run as rosterWho } from './verify/roster-who.mjs';
 import { run as rosterWidth } from './verify/roster-width.mjs';
+import { run as dialogKinds } from './verify/dialog-kinds.mjs';
 import { run as notePanel } from './verify/note-panel.mjs';
 import { run as passCard } from './verify/pass-card.mjs';
 import { run as portraitLandscape } from './verify/portrait-landscape.mjs';
@@ -352,6 +353,11 @@ const BROWSER_SECTIONS = [
      It plants two classes and two students of its own and takes them, the open-class and
      presentation preferences, the viewport and touch back out at its foot. */
   { file: 'verify/roster-width.mjs', run: rosterWidth },
+  /* Every dialog the kind the owner ruled, and the kind its width (WO-1.77), straight after the
+     section whose "every other dialog is 480" it took over. It plants one class and one student of
+     its own and takes them, the open-class preference, the viewport and touch back out at its foot,
+     and reloads once at its head and once at its foot. */
+  { file: 'verify/dialog-kinds.mjs', run: dialogKinds },
   { file: 'verify/note-panel.mjs', run: notePanel },
   { file: 'verify/pass-card.mjs', run: passCard },
   { file: 'verify/portrait-landscape.mjs', run: portraitLandscape },

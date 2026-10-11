@@ -402,7 +402,8 @@
    editor and the days-off form, sets no width at all and sits in a `flex-wrap: wrap` row of
    content-sized items — the widget's intrinsic width IS its layout width there, so nothing is ever
    forced narrower than it draws. This is the only date input in the app given `width: 100%`, inside
-   `flex: 1 1 140px`, in a 480px panel that shrinks the pair to about 210px each and never wraps.
+   `flex: 1 1 140px`, in a 480px panel that shrinks the pair to about 210px each and never wraps. (The editor is a
+   640px `.modal-form` since WO-1.77; the reset below is what holds at either width.)
 
    SO THE FIX IS THE RESET AND NOT A NUMBER, and that order is the point rather than a preference: a
    width tuned until it looks right at a laptop desk is how this comes back on the next device. One
@@ -532,11 +533,11 @@
    It replaced WO-3.48's pills and per-class cards (`.assign-copy-classes`, `.assign-copy-target*`)
    and their coarse rules, which are gone with them. */
 
-/* The panel. A second class worn beside `.modal-panel`, the way `.detail-avatar` sits beside
-   `.avatar`. 880px is what four columns need at their narrowest with a Clear beside each date
-   field; `.modal-panel`'s own `max-width: 95vw` still governs, so a narrow window gets the folded
-   lines below. */
-.assign-copy-panel { width: 880px; }
+/* The panel is src/shell.css's `.modal-report`, 900, since WO-1.77 (the owner, 2026-10-11). It was
+   `.assign-copy-panel { width: 880px }` here — what four columns need at their narrowest with a
+   Clear beside each date field, a floor and not a ruling — and that class went with its only rule.
+   `.modal-panel`'s own `max-width: 95vw` still governs, and the fold below is a WINDOW breakpoint at
+   920, so below a ~947px window the panel is 95vw at either width and the fold did not move. */
 .assign-copy-naming { margin: 14px 0; }
 
 /* The list: one framed box, the subdued card of design/style-guide.md §1 that WO-3.48's per-class

@@ -208,10 +208,10 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
         panelW: (function(){ var p = m.querySelector('.modal-panel'); return p ? p.offsetWidth : -1; })(),
         text: m.textContent || '' }; })()`;
     const card = await evalJs(READ_CARD);
-    check('WO-2.60 · a tap on a name opens a dialog titled with the student\'s name, holding the day\'s block and ONE door to their page — no table, no rate badge, no pass count, no avatar — on the stock 480px panel',
+    check('WO-2.60 · a tap on a name opens a dialog titled with the student\'s name, holding the day\'s block and ONE door to their page — no table, no rate badge, no pass count, no avatar — on a 640px `.modal-form` panel (480 from WO-2.60 until WO-1.77 ruled it a form)',
       card.up && card.openDialogs.length === 1 && card.openDialogs[0] === 'attendanceHistoryModal'
         && card.title === 'Sam Probe' && card.tables === 0 && card.blocks === 1
-        && card.badge === 0 && card.panelW === 480
+        && card.badge === 0 && card.panelW === 640
         && JSON.stringify(card.doors) === JSON.stringify(['wo26-s1:Attendance history and grades →']),
       JSON.stringify({ dialogs: card.openDialogs, title: card.title, tables: card.tables,
         blocks: card.blocks, readonly: card.readonly, doors: card.doors, badge: card.badge,
@@ -838,8 +838,9 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
     const DIALOGS = [
       { id: 'attendanceRecordModal', door: '#classView [data-attendance-record]', want: 900, name: 'Record' },
       { id: 'passHistoryModal', door: '#classView [data-pass-history]', want: 900, name: 'Passes' },
-      /* 480 since WO-2.60: today's card is the stock `.modal-panel`, off `.attendance-report-panel`. */
-      { id: 'attendanceHistoryModal', door: '[data-attendance-history="wo26-s1"]', want: 480, name: 'history' },
+      /* 480 from WO-2.60, when today's card came off the report width; 640 since WO-1.77, when the
+         owner read it in the app and ruled it a `.modal-form`. */
+      { id: 'attendanceHistoryModal', door: '[data-attendance-history="wo26-s1"]', want: 640, name: 'history' },
       { id: 'attendanceKeysModal', door: '#classView [data-modal-open="attendanceKeysModal"]', want: 640, name: 'Keys' },
     ];
     const measureDialogs = async () => {
@@ -867,7 +868,7 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
     await evalJs(KILL_ANIM);
     const wide = await measureDialogs();
     check('WO-2.59 · in a 1280px window under a fine pointer, Record and Passes measure 900px wide, '
-      + 'Keys 640 and — since WO-2.60 — the name tap\'s card the stock 480 — width, not a '
+      + 'Keys 640 and the name tap\'s card 640 (a form since WO-1.77) — width, not a '
       + 'max-width that never comes into play',
       wide.vw === 1280 && wide.coarse === false && fits(wide, 1280),
       JSON.stringify(wide));
@@ -876,7 +877,7 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
     await new Promise(r => setTimeout(r, 300));
     const narrow = await measureDialogs();
     check('WO-2.59 · in an 820px window each of the four is no wider than 95vw — the two wide ones '
-      + 'at the 779px cap, Keys still at 640 and the name tap\'s card at 480',
+      + 'at the 779px cap, Keys and the name tap\'s card still at 640',
       narrow.vw === 820 && fits(narrow, 820)
         && DIALOGS.every((d) => narrow[d.name] <= 820 * 0.95),
       JSON.stringify(narrow));
@@ -886,7 +887,7 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
     await new Promise(r => setTimeout(r, 400));
     const lying = await measureDialogs();
     check('WO-2.59 · and on an iPad lying down — 1194px under a really coarse pointer, where the coarse '
-      + 'block\'s own rule for the panel applies — the same 900, 640 and 480',
+      + 'block\'s own rule for the panel applies — the same 900 and 640',
       lying.vw === 1194 && lying.coarse === true && fits(lying, 1194),
       JSON.stringify(lying));
     await send('Emulation.setDeviceMetricsOverride',

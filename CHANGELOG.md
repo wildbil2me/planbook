@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Dialogs are as wide as what is in them — 2026-10-11
+
+WO-1.77, owner-directed. Shell cache v183 → v184.
+
+- **Every dialog is one of three kinds**: a confirm (480px), a form (640px) or a report (900px). The
+  kind is written on the dialog itself, so the next one added has a rule to follow instead of a
+  teacher to find it too narrow.
+- **About, the assignment editor, Draft an email, Settings and the other forms move from 480 to
+  640.** Duplicate goes from 880 to 900, beside the attendance record and hall passes. The Grade
+  sheet keeps its 980 as the one stated exception. Confirms stay at 480.
+- **A dialog nobody classified still draws at 480**, and the pre-deploy check fails it by name.
+  `design/style-guide.md` § 5 states the three kinds and the rule.
+
 ### An assignment needs a name — 2026-10-11
 
 WO-3.56, owner-directed. Shell cache v182 → v183.

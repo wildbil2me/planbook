@@ -103,6 +103,43 @@ skeletons. Collapsible banners animate `max-height` + `padding` over 0.3s.
 - Save indicator states (chip): saving=orange wash, saved=green wash, error=red wash,
   syncing/queued=indigo wash, retry=orange wash. Icons: ⏳ ✓ ✕ ↻ ⏸.
 
+### Dialogs: three kinds, and the kind is the width (WO-1.77)
+
+*(Under § 5 because that is where the work order put it, and because Roll Call!'s own modal tiers
+are its `design/portable-components.md` § 5. Read this before writing a new dialog.)*
+
+Every `.modal-panel` wears **exactly one** kind beside it, in its markup, so the next person to
+open the file can see what the dialog is. **The kind names what the dialog is, not how wide
+somebody wanted it** — decide the kind from the content, and the width follows.
+
+| Kind | Width | What decides it |
+|---|---|---|
+| `modal-confirm` | 480px | A question and its buttons, or a few lines of prose with one action. A confirm at 640 is a sentence across a laptop. |
+| `modal-form` | 640px | Fields side by side, rows of names, or prose longer than a paragraph. Prose much past ~80 characters a line reads worse, and at 480 it wraps too soon. |
+| `modal-report` | 900px | A record, a sheet or a grid of classes — wide enough for a table. |
+
+- **Width, never `max-width`.** Each kind is a `width`. A `max-width` above `.modal-panel`'s 480
+  never comes into play, which is how four dialogs that asked for 900 shipped at 480 (WO-2.59).
+- **An override is a class of the dialog's own, worn beside its kind, with a comment saying why.**
+  The departure is then visible next to what it departs from. If a form needs 700, that is an
+  override, never a reason to call it a report. There is one today: the Grade sheet,
+  `modal-report grades-report-panel`, at 980 for a term's worth of assignment columns.
+- **The fallback is `.modal-panel`'s own 480.** A dialog someone forgets to classify draws as a
+  confirm — the narrowest and least surprising width. That is a safety net, not the rule:
+  `tools/verify/dialog-kinds.mjs` fails a panel with no kind or with two, before deploy.
+- **The kinds sit above the phone block** in `src/shell.css` and are restated in its
+  `pointer: coarse` block. `(max-width: 640px)` still puts every panel at `95vw` on a phone, and
+  `.modal-panel`'s `max-width: 95vw` caps every kind and the override in a narrow window.
+- **A wider panel is not a fixed form.** A form at 640 can leave its fields at 480's widths, and a
+  panel with an empty right half has not been helped. Read a dialog at its kind's width before
+  calling it done.
+
+This departs from Roll Call! knowingly. Roll Call! had four sizes — standard 480, Settings 660,
+student report 640, report 700 — and no rule for when a dialog got more room; here every dialog
+was the standard 480 until a teacher found one too narrow, six of them one work order at a time.
+640 is the width this app had already ruled twice (the roster, the attendance keys), and 900 the
+one its records already measured.
+
 ## 6. Responsive & touch
 
 Breakpoints, in the order the stylesheet declares them:

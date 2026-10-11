@@ -6382,7 +6382,7 @@ growth is the real cause, report it rather than fixing it under a width work ord
 
 ## WO-1.77 — every dialog is as wide as it was ruled, and 480 is for confirms
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.76 · **Blocks** WO-3.58
+**Ship** — · **Status** ✅ DONE — 2026-10-11 · **Size** M · **Depends on** WO-1.76 · **Blocks** WO-3.58
 **Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
 
 **Booked 2026-10-11**, owner-directed, from a conversation about modals that "continue to feel too
@@ -6455,16 +6455,16 @@ owner looked at each in the app before ruling it; they are marked *(read)*.
 - **`TESTING.md` § WO-1.77**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] Every `.modal-panel` carries exactly one of `modal-confirm`, `modal-form` and `modal-report`, as
+- [x] Every `.modal-panel` carries exactly one of `modal-confirm`, `modal-form` and `modal-report`, as
       the owner ruled. Each measures its kind's width, or its named override's, at a 1280px viewport
       and on an iPad viewport lying down. None is wider than 95vw or overflows horizontally at 390×844.
-- [ ] The harness fails a `.modal-panel` with no kind and one with two kinds. Each is proved by a
+- [x] The harness fails a `.modal-panel` with no kind and one with two kinds. Each is proved by a
       planted fault, and with the class removed the dialog still draws at 480.
-- [ ] `design/style-guide.md` § 5 states the three kinds, what decides each, the override rule and the
+- [x] `design/style-guide.md` § 5 states the three kinds, what decides each, the override rule and the
       fallback.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] `TESTING.md` § WO-1.77 carries these lines verbatim with the evidence for each.
-- [ ] 👤 On the iPad, after a force-quit, upright and lying down, the owner opens About, a new
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] `TESTING.md` § WO-1.77 carries these lines verbatim with the evidence for each.
+- [x] 👤 On the iPad, after a force-quit, upright and lying down, the owner opens About, a new
       assignment, Draft an email, Settings and one ruled confirm and reads each at its width. Any kind
       the owner changes on that reading lands before this box is ticked.
 

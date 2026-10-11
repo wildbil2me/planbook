@@ -1,0 +1,11 @@
+# WO-1.77 dispatch status
+- 2026-10-11T06:29:49-04:00 gates PASS (dep WO-1.76 done, tree clean, no dispatch files). Owner rulings for all dialog kinds landed in ebd4cef/fd6a8f5 — 'Questions at dispatch' answered.
+- 2026-10-11T06:29:49-04:00 route Claude Opus — establishes a convention (three dialog kinds, style-guide § 5 rule, harness rule) + judgment traps (width not max-width, read forms for unused room) + TESTING prose; ROUTING § Claude bullets 2/4/5. Runner-up Codex (ruled table, CSS-mechanical) set aside: convention-setting work, and 1 clean + 2 planted-fault runs ~13 min is near the cap.
+- 2026-10-11T06:29:53-04:00 claimed (--start ran, 🤖 CLAIMED — 2026-10-11)
+- 2026-10-11T06:30:21-04:00 brief written: .claude/dispatch/WO-1.77-brief.md (~17 KB; markers filled — runtime About panel in src/modal.js, cascade-order trap, MUTATION rule)
+- 2026-10-11T06:30:34-04:00 brief written: .claude/dispatch/WO-1.77-brief.md (17 KB; markers filled — runtime About panel in src/modal.js, cascade-order trap, MUTATION rule)
+- 2026-10-11T06:30:34-04:00 implementer spawned at Opus (no override), brief .claude/dispatch/WO-1.77-brief.md, awaiting return — expect 20–40 min; a flat trail for the first 20 min is reading, not death
+- 2026-10-11T08:40:25-04:00 implementer returned: 5/6 boxes ticked by implementer (claims), 👤 iPad open; claims verify-shell 1966/1966, sweep 47/0/3, sw v184; new tools/verify/dialog-kinds.mjs; corrected brief — About is in index.html, not built in src/modal.js. Uncommitted.
+- 2026-10-11T08:40:28-04:00 handoff written (🔍 AWAITING VERDICT). Verifier owed from a fresh session; this session stops.
+- 2026-10-11T08:52:12-04:00 fresh session entered at 🔍 AWAITING VERDICT; verifier spawned at Opus as a FIRST pass, awaiting verdict
+- 2026-10-11T09:28:24-04:00 verifier returned: PASS WITH MANUAL CHECKS — 5/6 ✅ (own runs: verify-shell 1966/1966 EXIT=0, sweep 47/0/3; own mutation round M1 max-width + M2 relabel went red 13 fails, restored, no MUTATION left); 👤 iPad box open; CHANGELOG entry owed at commit. No tick applied — awaiting owner.

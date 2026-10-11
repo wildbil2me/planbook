@@ -743,19 +743,43 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   box-shadow: 0 8px 32px rgba(0,0,0,0.25); overflow: hidden;
   margin: auto; animation: srIn 0.18s ease;
 }
-/* THE ROSTER DIALOG'S WIDTH (WO-1.76), a class of its own on #rosterModal's panel the way
-   `.attendance-keys-panel` (src/attendance.css, WO-2.59) sits beside this rule — `width`, not
-   `max-width`, because a cap above `.modal-panel`'s 480 never comes into play, which is the defect
-   WO-2.59 found on four dialogs at once. The roster is the heaviest door behind Settings and the one
-   whose rows carry a name, an "also in" note, the support dot and three buttons; every other dialog
-   keeps the stock 480 on purpose, because thirty-odd share `.modal-panel` and a confirm at 640 is a
-   sentence across a laptop. `max-width: 95vw` above still governs a narrow window, and the
-   (max-width: 640px) block's `.modal-panel { width: 95vw }` comes later in this file and so wins on
-   a phone. 640 is the owner's ruling, read on the iPad upright and lying down on 2026-10-10. The
-   support dot stays where WO-1.74 left it, immediately left of ✎ — also the owner's ruling that day,
-   so the name column's flex growth is not a defect to fix. Restated in the coarse block below, as the
-   Keys panel's is. */
-.roster-panel { width: 640px; }
+/* THE THREE KINDS OF DIALOG (WO-1.77, the owner's ruling of 2026-10-11). Every `.modal-panel` in
+   index.html wears exactly one of these beside it, and the kind names WHAT THE DIALOG IS — not how
+   wide somebody wanted it. design/style-guide.md § 5 is the rule a new dialog is written against;
+   tools/verify/dialog-kinds.mjs fails a panel with no kind or with two.
+
+     · `.modal-confirm`, 480 — a question and its buttons, or a few lines of prose with one action.
+       Roll Call!'s standard modal, and WO-1.76's sentence stands: a confirm at 640 is a sentence
+       across a laptop.
+     · `.modal-form`, 640 — fields side by side, rows of names, prose longer than a paragraph. The
+       Keys argument (WO-2.59): prose much past ~80 characters a line reads worse, and at 480 it wraps
+       too soon. The roster was the first at this width (WO-1.76, read on the iPad upright and lying
+       down on 2026-10-10, its support dot left immediately left of ✎ on the same reading); Keys the
+       second (the mockup's number, design/mockups/attendance-dialogs.html frame D). Roll Call! had
+       no kind at exactly this job — its Settings was 660 and its student report 640 — and 640 is the
+       one this app had already ruled twice.
+     · `.modal-report`, 900 — a record, a sheet or a grid of classes, wide enough for a table. At 900
+       a slice of twenty-four meetings fits across the attendance record without scrolling sideways.
+       Duplicate came up to it from 880, which was the narrowest its four columns fit — a floor and
+       not a ruling; its fold is a WINDOW breakpoint at 920 (src/assignments.css), and below a ~947px
+       window the panel is 95vw at either width, so the fold did not move.
+
+   `width`, NEVER `max-width`. WO-2.59 found four dialogs that had asked for 900 with a `max-width`
+   over `.modal-panel`'s 480, so they had been 480 since they shipped. `.modal-panel`'s own
+   `max-width: 95vw` still caps every kind in a narrow window, and the (max-width: 640px) block's
+   `.modal-panel { width: 95vw }` comes later in this file at the same specificity and so wins on a
+   phone — which is why these three sit HERE, above it, and must never move below it.
+
+   `.modal-panel` ITSELF STAYS 480, and that is the fallback, not the rule: a dialog someone forgets
+   to classify draws as a confirm, the narrowest and least surprising width. The harness is the rule.
+
+   AN OVERRIDE is a class of the dialog's own, worn BESIDE its kind with a comment saying why, so the
+   departure is visible next to what it departs from. There is one: `.grades-report-panel`, 980, in
+   src/scores.css — a report that needs a term's worth of columns. A form that needs 700 is an
+   override with a comment, never a reason to call it a report. Restated in the coarse block below. */
+.modal-confirm { width: 480px; }
+.modal-form    { width: 640px; }
+.modal-report  { width: 900px; }
 @keyframes srIn {
   from { opacity: 0; transform: scale(0.96) translateY(8px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
@@ -803,9 +827,10 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 /* ── SETTINGS HUB ── (WO-1.71, lifted from design/mockups/proposed-settings.css § SETTINGS HUB)
 
    The contents of the dialog behind the header's gear: three groups, four doors and one switch.
-   Drawn in design/mockups/settings-hub.html, frames B and F. The dialog itself is the stock 480px
-   `.modal-panel` and is not restyled here — four doors and a switch is not Roll Call!'s two-column
-   `.config-modal-panel`, which holds thirty settings.
+   Drawn in design/mockups/settings-hub.html, frames B and F. The dialog itself is a `.modal-form`
+   (640 since WO-1.77, the owner's ruling; it was the stock 480 when this was drawn) and is not
+   restyled here — four doors and a switch is not Roll Call!'s two-column `.config-modal-panel`,
+   which holds thirty settings.
 
    A DOOR is a whole-row button — icon, name, one line of what is behind it, chevron — and it carries
    the SAME `data-*` hook the header icon it replaced carried, so src/shell.js's routing did not move.
@@ -2410,11 +2435,13 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
      things a teacher has to be able to see while she types them. */
   .roster-row-name { font-size: 14px; }
   .roster-row-note { font-size: 12px; }
-  /* The roster dialog's width (WO-1.76), restated so the panel's width under a coarse pointer is
-     declared where this block's reader looks for it — the reason src/attendance.css restates
-     `.attendance-keys-panel` in its own coarse block. The (max-width: 640px) block after this one
-     still puts it at 95vw on a phone. Not a control, so no 44px to carry. */
-  .roster-panel { width: 640px; }
+  /* The three dialog kinds (WO-1.77), restated so a panel's width under a coarse pointer is declared
+     where this block's reader looks for it — the reason WO-1.76 restated the roster's 640 here and
+     WO-2.59 the Keys and report widths in src/attendance.css's coarse block. The (max-width: 640px)
+     block after this one still puts every panel at 95vw on a phone. Not controls, so no 44px to carry. */
+  .modal-confirm { width: 480px; }
+  .modal-form    { width: 640px; }
+  .modal-report  { width: 900px; }
   .roster-empty { font-size: 14px; }
   /* The two rows in this feature that put a destructive control shoulder to shoulder with a
      harmless one — Edit beside Remove, and "Contact first" beside the button that deletes a

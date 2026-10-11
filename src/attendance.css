@@ -876,13 +876,10 @@
 .attendance-keys { display: flex; flex-direction: column; gap: 7px; margin: 14px 0 16px; }
 .attendance-keys-lead { font-weight: 600; }
 .attendance-key-row { display: flex; align-items: baseline; gap: 12px; }
-/* THE KEYS DIALOG'S WIDTH (WO-2.59), a class of its own beside `.modal-panel` the way
-   `.assign-copy-panel` sits beside it. 640 rather than the record's 900 because this panel is
-   prose and a key list, and a line of prose much past 80 characters reads worse, not better; at 640
-   the dialog is about a third shorter than at 480. `.modal-panel`'s `max-width: 95vw` still governs
-   a narrow window. The number is the mockup's (design/mockups/attendance-dialogs.html, frame D) and
-   was not ruled on at dispatch. */
-.attendance-keys-panel { width: 640px; }
+/* THE KEYS DIALOG'S WIDTH is src/shell.css's `.modal-form`, 640, since WO-1.77. It was a class of
+   its own here, `.attendance-keys-panel` (WO-2.59), and the argument it carried — prose much past
+   80 characters a line reads worse, and at 480 the key list wrapped — is now the argument for the
+   whole kind, at the kind's rule and in the dialog's markup comment in index.html. */
 /* Wide enough for the two arrows side by side and for `Esc`, so every description starts on the
    same column and the list reads as a list rather than as eight ragged sentences. */
 .attendance-key-row dt { flex: 0 0 76px; display: flex; flex-wrap: wrap; gap: 4px; }
@@ -916,16 +913,12 @@
    shrink, for the reason `.attendance-keys-btn` beside it states. */
 .attendance-record-btn { flex-shrink: 0; }
 
-/* Wider than a form dialog because a table of dates is what is in it — and it is `width`, not
-   `max-width` (WO-2.59). This said "this raises the cap only" until 2026-10-09, which was accurate
-   and was the defect: `.modal-panel` sets `width: 480px`, a cap above 480 never comes into play, and
-   Record, Passes and the history dialog were all 480px on every screen from the day they shipped.
-   `.assign-copy-panel { width: 880px }` is the shape that works and this is that shape.
-   `.modal-panel`'s `max-width: 95vw` still governs, so a narrow window is unchanged. At 900 a slice
-   of twenty-four meetings fits across without scrolling sideways, which at 480 it never could.
-   THE HISTORY DIALOG CAME OFF IT AT WO-2.60: it holds today's mark and one door now, and is the stock
-   480px `.modal-panel`. Record and Passes still wear it. */
-.attendance-report-panel { width: 900px; }
+/* RECORD AND PASSES ARE src/shell.css's `.modal-report`, 900, since WO-1.77. They wore
+   `.attendance-report-panel` here, and its scar is now the kind's: until 2026-10-09 that rule was a
+   `max-width: 900px` over `.modal-panel`'s `width: 480px`, a cap that never came into play, so
+   Record, Passes and the history dialog were 480 on every screen from the day they shipped (WO-2.59).
+   At 900 a slice of twenty-four meetings fits across without scrolling sideways. The history dialog
+   came off the report width at WO-2.60 and is a `.modal-form` since WO-1.77, the owner's reading. */
 
 /* THE RECORD'S TWO TABS (WO-2.59): By student and Day by day, under the record's head. They wear the
    class screen switcher's `.screen-nav` / `.screen-nav-btn` as shipped from src/assignments.css, so
@@ -1230,9 +1223,8 @@
      reason `.attendance-student-cell` gives above: a rule missing from this block is a rule the
      next reader has to go and prove was considered. What they get is the same step up in size
      everything else here takes, because a coarse pointer is the device held at arm's length. */
-  /* The Keys dialog's width (WO-2.59), restated for the reason `.attendance-report-panel`'s is
-     restated in this block's WO-2.6 half below. */
-  .attendance-keys-panel { width: 640px; }
+  /* The Keys dialog's width is restated in src/shell.css's coarse block now, as `.modal-form`
+     (WO-1.77) — it was `.attendance-keys-panel` here. */
   .attendance-keys { gap: 9px; margin: 16px 0 18px; }
   .attendance-keys-lead { font-size: 15px; }
   .attendance-key-row { gap: 14px; }
@@ -1451,10 +1443,9 @@
      this block is a rule the next reader has to go and prove was considered. What they get is one
      step up in size, because a coarse pointer is the device held at arm's length. */
   .attendance-report-actions { gap: 10px; margin-bottom: 18px; }
-  /* `width` here too (WO-2.59). This line was `max-width: 900px` until 2026-10-09, the base rule's
-     defect copied into the block an iPad reads; it is restated rather than deleted so the panel's
-     width under a coarse pointer is declared where this block's reader looks for it. */
-  .attendance-report-panel { width: 900px; }
+  /* Record's and Passes' width is restated in src/shell.css's coarse block now, as `.modal-report`
+     (WO-1.77). This line was `.attendance-report-panel`, and until 2026-10-09 a `max-width` — the
+     base rule's defect copied into the block an iPad reads (WO-2.59). */
   /* The record's two tabs (WO-2.59). Each segment wears `.screen-nav-btn`, which src/assignments.css's
      own coarse block already floors at 44px; `.attendance-report-tab` is this sheet's name for the
      same button and restates the floor, so the control is listed here rather than proved covered

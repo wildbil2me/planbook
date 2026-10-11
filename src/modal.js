@@ -5,11 +5,16 @@
   Markup contract — an overlay in index.html looks like this and nothing else:
 
       <div class="modal-overlay hidden" id="aboutModal">
-        <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+        <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
           <div class="modal-header"><h2 id="aboutTitle">…</h2><button class="modal-close">✕</button></div>
           <div class="modal-body">…</div>
         </div>
       </div>
+
+  The panel wears exactly one KIND beside `.modal-panel` — `modal-confirm`, `modal-form` or
+  `modal-report` (WO-1.77; design/style-guide.md § 5) — and the kind is its width. This module reads
+  none of them: width is the stylesheet's, and tools/verify/dialog-kinds.mjs holds every panel in
+  the document to exactly one, including any a later work order builds at runtime.
 
   Semantics (`role="dialog"`, `aria-modal`, `aria-labelledby`) live in the HTML; this
   module owns behavior only:

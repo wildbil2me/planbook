@@ -4126,6 +4126,106 @@ correctly: the roster panel was still 640. No fault was planted for the coarse r
 redundant by design (the base rule already applies under a coarse pointer), so deleting it moves no
 measurement, which is the position `src/attendance.css`'s restatement is in too.*
 
+### WO-1.77 — every dialog is as wide as it was ruled, and 480 is for confirms
+
+**Three kinds, one class each.** `src/shell.css` gains `.modal-confirm` 480, `.modal-form` 640 and
+`.modal-report` 900 — each a `width`, directly after `.modal-panel` and so above the `(max-width:
+640px)` block, and restated in the `pointer: coarse` block. `.modal-panel` itself is not edited and
+stays 480, the fallback. `index.html` puts exactly one kind on each of its 38 panels as the owner's
+table rules them (21 forms, 13 confirms, 4 reports). `.roster-panel`, `.attendance-keys-panel` and
+`.attendance-report-panel` are gone — their panels wear the kind they already measured, and their
+ruling comments moved to the kind's rule and to each dialog's markup comment. `.assign-copy-panel`
+had no rule but its width, so the class went with it; Duplicate is a `modal-report` at 900.
+`.grades-report-panel` stays as the one override, worn beside `modal-report`. **About is not built at
+runtime** — the brief said it was, from `src/modal.js` line 8, and that line is the module's doc
+comment showing the markup contract; About is in `index.html` with the other 37. The comment now
+shows a kind too. No dialog in the app is built at runtime today, so the harness's runtime half is a
+fence for the first one rather than a reading of an existing one.
+
+Measured by a new section, `tools/verify/dialog-kinds.mjs` (eleven checks, after `roster-width.mjs`,
+on one class, one student and one assignment of its own that it removes at its foot).
+
+- [x] Every `.modal-panel` carries exactly one of `modal-confirm`, `modal-form` and `modal-report`, as
+      the owner ruled. Each measures its kind's width, or its named override's, at a 1280px viewport
+      and on an iPad viewport lying down. None is wider than 95vw or overflows horizontally at 390×844.
+      *`dialog-kinds.mjs`, final run: index.html's source `38 panels in the source · every one wears
+      exactly one kind`; the live document `38 in the page, 38 in the source · one kind each`; against
+      the table `all 38 as ruled` (21 forms, 13 confirms, 4 reports). Every panel cloned and measured
+      at 1280×800 fine — `modal-form [640] · modal-confirm [480] · modal-report [900,980]`, the 980
+      being the Grade sheet's override and the only one — and the same at 1194×834 coarse. Through
+      eight real doors at both: `aboutModal 640px · settingsModal 640px · classesModal 640px ·
+      teacherModal 480px · rosterModal 640px · studentModal 640px · rosterPasteModal 640px ·
+      assignmentModal 640px`. At 390×844 coarse every clone is `371` (95vw is 370.5; offsetWidth
+      rounds) with no sideways scroll inside any panel, and the doors read `350px sideways
+      [0,0,0,0]` — page, overlay, panel, body — for the seven opened over home. The assignment editor
+      reads `371px sideways [134,0,0,0]`: the dialog is inside 95vw and nothing in it scrolls, and the
+      134 is the **assignments screen under it** — see "Found, not fixed" below. Record, Passes, Keys
+      and the history dialog through their own doors are `attendance-history.mjs`'s
+      (`{"Record":900,"Passes":900,"history":640,"Keys":640}`), the Grade sheet's 980 is
+      `grade-sheet.mjs`'s, and both are green. **The copy dialog's fold premise held:**
+      `copy-class.mjs`'s *"at 920px the list is still one line a class … and at 919px it has folded"*
+      is green with the panel at 900, so the 920 breakpoint was not moved.*
+- [x] The harness fails a `.modal-panel` with no kind and one with two kinds. Each is proved by a
+      planted fault, and with the class removed the dialog still draws at 480.
+      *Two planted runs of the full harness, each marked `MUTATION WO-1.77` in `index.html`, with the
+      good file copied aside first and copied back after; `grep -rn "MUTATION WO-1.77" index.html src/
+      tools/ sw.js` read nothing after the second revert. **A — no kind** (`settingsModal`'s panel
+      stripped to `modal-panel`): `1966 checks · 1959 passed · 7 failed`, all seven this section's —
+      the source check `WRONG: [{"overlay":"settingsModal","kinds":[]}]`, the live-document check the
+      same, the ruling check `{"wears":[],"ruled":"modal-form"}`, the 1280 and iPad width checks
+      `OFF: [{"overlay":"settingsModal","w":480,"ruled":640}]`, and both door checks `settingsModal
+      480px (ruled 640)` — **so with the class removed the dialog drew at 480**, through its real door,
+      on the laptop and on the iPad. **B — two kinds** (`classDeleteModal` as `modal-confirm
+      modal-form`): `1966 checks · 1961 passed · 5 failed`, all this section's — the source and
+      live-document checks `WRONG: [{"overlay":"classDeleteModal","kinds":["modal-confirm",
+      "modal-form"]}]`, the ruling check, and both width checks `OFF: [{"overlay":"classDeleteModal",
+      "w":640,"ruled":480}]` (the later rule wins, which is the harm a second class does). The
+      fallback is a standing check too, not only a planted one: every panel stripped of every class
+      but `.modal-panel` measures 480 at 1280 and on the iPad — `38 panels, every one 480 bare`.*
+- [x] `design/style-guide.md` § 5 states the three kinds, what decides each, the override rule and the
+      fallback.
+      *§ 5 gains "Dialogs: three kinds, and the kind is the width (WO-1.77)": a table of the three
+      kinds, their widths and what decides each; width never `max-width`; the override rule, with the
+      Grade sheet as its one instance; the 480 fallback, with the harness as the rule; the kinds' place
+      above the phone block; that a wider panel is not a fixed form; and the departure from Roll
+      Call!'s four sizes. It sits under § 5, which in this file is "States", because the work order
+      names § 5 — the note at its head says so.*
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      *`node tools/verify-shell.mjs` on the finished tree, after both faults were reverted: `EXIT=0`,
+      `1966 checks · 1966 passed · 0 failed · 0 skipped`, 62,950 lines, 1032s, 2026-10-11 on the real
+      clock. `node tools/wo-sweep.mjs` on the finished tree: exit 0, `50 checks · 47 passed · 0 failed · 3 to review` — the
+      standing three. The `tools/README.md`
+      call-site line moved 1953 → 1962 from the sweep's own count (eleven added, two moved out of
+      `roster-width.mjs`). `sw.js`: `planbook-shell-v183` → `planbook-shell-v184`.*
+- [x] `TESTING.md` § WO-1.77 carries these lines verbatim with the evidence for each.
+      *This section.*
+- [x] 👤 On the iPad, after a force-quit, upright and lying down, the owner opens About, a new
+      assignment, Draft an email, Settings and one ruled confirm and reads each at its width. Any kind
+      the owner changes on that reading lands before this box is ticked.
+      *Read by the owner on the iPad on 2026-10-11, at v184 off the local server after a force-quit,
+      upright and lying down: About, a new assignment, Draft an email, Settings and a confirm. All
+      good, and no kind changed, so nothing was owed to land before the tick.*
+
+**Fields at the new width, read rather than restyled** (the work order's last Traps line). The section
+prints a `MEASURE |` line per door at 1280: the width of the body's content box and how far the
+right-most field ends short of it. About and Settings hold no fields (prose and full-width doors).
+Edit student, Paste a list and the assignment editor end `0px short` of a 600px content box — their
+fields grow with the panel. Classes and terms ends `67px short` and the roster `55px short`: in both
+the one field shares its row with a button, so the gap is the button, not unused room. Your details is
+a confirm and ends `0px short` at 440. Draft an email has no door here (it needs a signal and a
+guardian); read from `src/shell.css`, its fields are `width: 100%` (`.student-select`,
+`.student-notes`) or `flex: 1 1 auto` (`.class-input`), so they take the room. **No field was found
+leaving the right half empty**, so none is proposed; the 👤 reading is the one that settles it.
+
+**Found, not fixed.** At 390×844 under a coarse pointer the **assignments screen** scrolls sideways by
+134px with one planted assignment on it — measured under the assignment editor, whose own panel,
+overlay and body scroll nothing. It is the page, not a dialog, nothing in this work order touched it,
+and `horizontal-overflow.mjs` does not visit that screen. Reported as a follow-up rather than fixed.
+
+**What moved in other sections.** `roster-width.mjs`'s Acceptance 3 — every other dialog at 480 — went
+false on purpose and moved into `dialog-kinds.mjs`, held against the ruled kind; its header says so.
+`attendance-history.mjs`'s four width checks read the history dialog at 640 where they read 480.
+
 ---
 
 ## Phase 2 — Attendance

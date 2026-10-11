@@ -691,8 +691,13 @@
    registry's own oranges, reds and purples one screen further out). A second amber for a late score
    would be a second answer to "what colour is late". */
 
-/* Wider than a form dialog because a term's worth of columns is what is in it — and it is `width`,
-   not `max-width` (WO-2.59). This said "this raises the cap only" until 2026-10-09, which was
+/* THE ONE OVERRIDE (WO-1.77). The Grade sheet is a `.modal-report` and wears this class beside the
+   kind in index.html, because a term's worth of columns wants 980 rather than the kind's 900 —
+   src/shell.css's rule for kinds says an override is a class of the dialog's own with a comment, so
+   the departure is visible next to what it departs from. Same specificity as `.modal-report` and
+   loaded after src/shell.css, so it wins on the laptop and the iPad; `.modal-panel`'s
+   `max-width: 95vw` still caps it on a phone.
+   It is `width`, not `max-width` (WO-2.59). This said "this raises the cap only" until 2026-10-09, which was
    accurate and was the defect: `.modal-panel` sets `width: 480px`, so a cap above 480 never came
    into play and the Grade sheet was 480px on every screen from the day it shipped. The attendance
    record had the same one-line bug and was fixed in the same work order; `.assign-copy-panel
@@ -963,7 +968,10 @@
      reader has to go and prove was considered. What they get is one step up in size, because a
      coarse pointer is the device held at arm's length. */
   .grades-report-actions { gap: 10px; margin-bottom: 18px; }
-  /* `width` here too (WO-2.59) — this line was the base rule's `max-width` defect, copied. */
+  /* `width` here too (WO-2.59) — this line was the base rule's `max-width` defect, copied. Kept beside
+     src/shell.css's coarse restatement of `.modal-report` (WO-1.77) so this block's reader sees the
+     override where the kind is restated; this sheet loads after src/shell.css, so the base rule
+     above would already win, and this line is declaration rather than repair. */
   .grades-report-panel { width: 980px; }
   .grades-report-head { gap: 14px; padding-bottom: 14px; }
   .grades-report-who { min-width: 0; }

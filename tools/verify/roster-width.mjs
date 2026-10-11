@@ -5,7 +5,14 @@
  * coarse one; no wider than 95vw at 390×844, with nothing in the dialog or the page scrolling
  * sideways; that at 640 a row for a student with a long name, an "also in" note and a plan on file is
  * one line tall with ✎ · Edit · Remove on it; that under presentation mode the same row is built
- * without its dot; and that every other dialog in the document still measures the stock 480.
+ * without its dot.
+ *
+ * ITS ACCEPTANCE 3 WENT FALSE ON PURPOSE AT WO-1.77, AND MOVED RATHER THAN WENT. It asserted that
+ * every dialog but the roster measured the stock 480 — through five real doors and across every
+ * `.modal-panel` in the document — and that stopped being true the day 480 became the confirm's width
+ * rather than every dialog's. Both measurements are in tools/verify/dialog-kinds.mjs now, held against
+ * the kind the owner ruled for each dialog instead of against 480. The roster's own 640 is still
+ * asserted here, and since WO-1.77 it is `.modal-form`'s 640 rather than `.roster-panel`'s.
  *
  * WHAT IT MEASURES AND DOES NOT RULE ON. Where the support dot lands at 640 is printed on a
  * `MEASURE |` line — how far it sits from the end of the name and of the note, and how far from the
@@ -199,7 +206,7 @@ if (!seam) {
       geometry(L));
 
     /* ══ Acceptance 1, the iPad halves — upright and lying down, under a really coarse pointer ══
-       The coarse block restates `.roster-panel`; a laptop-only reading would never see that rule. */
+       The coarse block restates `.modal-form` (`.roster-panel` until WO-1.77); a laptop-only reading would never see that rule. */
     await shut();
     await size(820, 1180, true);
     const upright = await openRoster();
@@ -238,69 +245,8 @@ if (!seam) {
     await clickSel('header [data-presentation-toggle]');
     await pause(200);
 
-    /* ══ Acceptance 3 — every dialog the owner did not name still measures 480 ══
-       Two readings. Through REAL DOORS, the representative set: the other two dialogs behind Settings
-       (Classes and terms, Your details), the Settings dialog itself, the single-student form and the
-       paste dialog stacked over the roster. And EVERY panel in the document, each cloned into a
-       hidden holder and measured, which is sound because every width rule on a panel is keyed to the
-       panel's own classes (the two `#…Modal .modal-panel` rules are print-only); a stock panel is one
-       wearing `.modal-panel` and nothing else, and every one of those must read 480. */
-    const panelOf = (id) => evalJs(`(function(){ var m = document.getElementById(${j(id)});
-      if (!m || m.classList.contains('hidden')) return -1;
-      var p = m.querySelector('.modal-panel'); return p ? p.offsetWidth : -2; })()`);
-    const viaDoors = async () => {
-      const out = {};
-      await shut(); await clickSel('#settingsBtn'); await pause(150);
-      out.settingsModal = await panelOf('settingsModal');
-      await shut(); await openSettingsDoor('[data-class-manage]'); await pause(150);
-      out.classesModal = await panelOf('classesModal');
-      await shut(); await openSettingsDoor('[data-teacher-panel]'); await pause(150);
-      out.teacherModal = await panelOf('teacherModal');
-      await shut(); await openSettingsDoor('[data-roster-manage]'); await pause(150);
-      await clickSel('#rosterModal [data-student-edit="' + S.plain.id + '"]'); await pause(150);
-      out.studentModal = await panelOf('studentModal');
-      await shut(); await openSettingsDoor('[data-roster-manage]'); await pause(150);
-      await clickSel('#rosterModal [data-roster-paste]'); await pause(150);
-      out.rosterPasteModal = await panelOf('rosterPasteModal');
-      await shut();
-      return out;
-    };
-    const everyPanel = () => evalJs(`(function(){
-      var hold = document.createElement('div');
-      hold.style.cssText = 'position:fixed;left:0;top:0;width:100vw;visibility:hidden;pointer-events:none';
-      document.body.appendChild(hold);
-      var stock = {}, own = {};
-      Array.prototype.forEach.call(document.querySelectorAll('.modal-overlay'), function(o){
-        var p = o.querySelector('.modal-panel'); if (!p) return;
-        var c = p.cloneNode(true); c.removeAttribute('id');
-        Array.prototype.forEach.call(c.querySelectorAll('[id]'), function(e){ e.removeAttribute('id'); });
-        hold.appendChild(c);
-        var w = c.offsetWidth; c.remove();
-        (p.classList.length === 1 ? stock : own)[o.id] = w;
-      });
-      hold.remove();
-      return { stock: stock, own: own }; })()`);
-    const all480 = (o) => Object.keys(o).length > 0 && Object.keys(o).every((k) => o[k] === 480);
-
-    const laptopDoors = await viaDoors();
-    const laptopAll = await everyPanel();
-    check('WO-1.76: in a 1280px window every dialog the owner did not name still measures 480 — through '
-      + 'their doors Settings, Classes and terms, Your details, the single-student form and Paste a list; '
-      + 'and every stock `.modal-panel` in the document, while the roster\'s own reads ' + WANT,
-      Object.keys(laptopDoors).length === 5 && all480(laptopDoors) && all480(laptopAll.stock)
-        && Object.keys(laptopAll.stock).length >= 25 && !('rosterModal' in laptopAll.stock)
-        && laptopAll.own.rosterModal === WANT,
-      'doors ' + j(laptopDoors) + ' · ' + Object.keys(laptopAll.stock).length + ' stock panels: '
-        + j(laptopAll.stock) + ' · panels with a width of their own: ' + j(laptopAll.own));
-
-    await size(1194, 834, true);
-    const ipadDoors = await viaDoors();
-    const ipadAll = await everyPanel();
-    check('WO-1.76: and on an iPad lying down under a coarse pointer, where the coarse block restates the '
-      + 'roster\'s width, the same five doors and every stock panel still measure 480',
-      Object.keys(ipadDoors).length === 5 && all480(ipadDoors) && all480(ipadAll.stock)
-        && ipadAll.own.rosterModal === WANT,
-      'doors ' + j(ipadDoors) + ' · stock ' + j(ipadAll.stock) + ' · own ' + j(ipadAll.own));
+    /* Acceptance 3 — "every other dialog still measures 480" — moved to tools/verify/dialog-kinds.mjs at
+       WO-1.77; see this file's header. */
   } finally {
     await shut();
     await size(1280, 800, false);

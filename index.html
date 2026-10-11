@@ -2239,10 +2239,17 @@
 
 </main>
 
-<!-- The standard modal tier: overlay (scrim 0.5, z-index 1000) + 480px panel with the
-     gradient header. Semantics live here; src/modal.js owns behavior only. -->
+<!-- The standard modal tier: overlay (scrim 0.5, z-index 1000) + panel with the gradient header.
+     Semantics live here; src/modal.js owns behavior only.
+
+     EVERY `.modal-panel` IN THIS FILE WEARS EXACTLY ONE KIND beside it (WO-1.77, the owner's ruling
+     of 2026-10-11): `modal-confirm` 480 · `modal-form` 640 · `modal-report` 900. The kind names what
+     the dialog is, not how wide somebody wanted it; design/style-guide.md § 5 says what decides each,
+     src/shell.css carries the widths, and tools/verify/dialog-kinds.mjs fails a panel with none or two.
+     A panel that forgets its kind draws at `.modal-panel`'s 480 — the fallback, not the rule.
+     About is a form: the owner named it "very narrow given how much text it has". -->
 <div class="modal-overlay hidden" id="aboutModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="aboutModalTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="aboutModalTitle">
     <div class="modal-header">
       <h2 id="aboutModalTitle">About Planbook</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -2497,7 +2504,7 @@
      Google's library and the browser blocks the window, src/auth.js says "tap again", and this is
      the tap — inside its own gesture, with the library now on the page. -->
 <div class="modal-overlay hidden" id="drivePullModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="drivePullTitle">
+  <div class="modal-panel modal-confirm" role="dialog" aria-modal="true" aria-labelledby="drivePullTitle">
     <div class="modal-header">
       <h2 id="drivePullTitle">Open a year from Google Drive</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -2525,7 +2532,7 @@
      the backup line is not, and it is the About panel's own sentence: the moment a teacher starts
      relying on sync is the moment she is likeliest to stop downloading backups. -->
 <div class="modal-overlay hidden" id="drivePullConfirmModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="drivePullConfirmTitle">
+  <div class="modal-panel modal-confirm" role="dialog" aria-modal="true" aria-labelledby="drivePullConfirmTitle">
     <div class="modal-header">
       <h2 id="drivePullConfirmTitle">Open this year from Google Drive?</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -2547,8 +2554,9 @@
 </div>
 
 <!-- SETTINGS — what is behind the header's gear (WO-1.71). Lifted from design/mockups/settings-hub.html,
-     frames B and F, onto the stock 480px `.modal-panel`: four doors and one switch is not Roll Call!'s
-     two-column config panel, and the stock panel is what every dialog behind a door already is.
+     frames B and F, onto a `.modal-panel`: four doors and one switch is not Roll Call!'s two-column
+     config panel. It was drawn at the stock 480 and is a `modal-form`, 640, since WO-1.77 — the
+     owner's ruling — which is closer to Roll Call!'s own 660 Settings than 480 ever was.
 
      A DOOR CARRIES THE HOOK ITS HEADER ICON CARRIED — `data-roster-manage`, `data-class-manage`,
      `data-templates-open`, `data-teacher-panel` — so src/shell.js routes it exactly as it routed the
@@ -2571,7 +2579,7 @@
      src/alert-sound.js paints `checked` from the preference; the click route is the one the header
      button used, unchanged. -->
 <div class="modal-overlay hidden" id="settingsModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
     <div class="modal-header">
       <h2 id="settingsModalTitle">Settings</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -2672,7 +2680,7 @@
      out of IndexedDB, and a hand-written specimen row here would be a second truth to keep in
      step with the real one. -->
 <div class="modal-overlay hidden" id="yearModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="yearModalTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="yearModalTitle">
     <div class="modal-header">
       <h2 id="yearModalTitle">School year</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -2711,7 +2719,7 @@
      And the hint in the Archived block says which of archive and delete is the destructive one,
      because that is the distinction a teacher has to get right on a tired afternoon. -->
 <div class="modal-overlay hidden" id="classesModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="classesModalTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="classesModalTitle">
     <div class="modal-header">
       <div class="modal-header-lead">
         <button class="modal-back hidden" type="button" data-settings-back aria-label="Back to Settings">‹ Settings</button>
@@ -2814,7 +2822,7 @@
 <!-- The term editor for one class, opened over the panel above — src/modal.js keeps a stack, so
      Escape closes this and leaves that open. #termList is rendered by src/classes.js. -->
 <div class="modal-overlay hidden" id="termsModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="termsModalTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="termsModalTitle">
     <div class="modal-header">
       <h2 id="termsModalTitle">Terms</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -2862,7 +2870,7 @@
      what is on screen when the teacher taps yes. The two empty elements are filled by
      src/classes.js; a specimen here would be a second truth. -->
 <div class="modal-overlay hidden" id="classDeleteModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="classDeleteTitle">
+  <div class="modal-panel modal-confirm" role="dialog" aria-modal="true" aria-labelledby="classDeleteTitle">
     <div class="modal-header">
       <h2 id="classDeleteTitle">Delete this class?</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -2908,7 +2916,7 @@
      #gradingModeModal, which says what would change first, and the class's current mode is the pill
      that is on. -->
 <div class="modal-overlay hidden" id="categoriesModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="categoriesModalTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="categoriesModalTitle">
     <div class="modal-header">
       <h2 id="categoriesModalTitle">Categories &amp; weights</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -2974,7 +2982,7 @@
      src/grading-mode.js from a preview computed on a copy of the class; nothing is written until
      the confirm button, and then one update() writes the key or deletes it. -->
 <div class="modal-overlay hidden" id="gradingModeModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="gradingModeTitle">
+  <div class="modal-panel modal-confirm" role="dialog" aria-modal="true" aria-labelledby="gradingModeTitle">
     <div class="modal-header">
       <h2 id="gradingModeTitle">Change how this class is graded?</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -3006,7 +3014,7 @@
      category, because a weighted grade changes. The reasoning in full is at removeCategory() in
      src/categories.js. The two empty elements are filled there. -->
 <div class="modal-overlay hidden" id="categoryRemoveModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="categoryRemoveTitle">
+  <div class="modal-panel modal-confirm" role="dialog" aria-modal="true" aria-labelledby="categoryRemoveTitle">
     <div class="modal-header">
       <h2 id="categoryRemoveTitle">Remove this category?</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -3058,7 +3066,7 @@
      it: a scale mid-edit is wrong for a second at a time, and an app that refused to save it would
      be arguing with a teacher who is typing. -->
 <div class="modal-overlay hidden" id="letterScaleModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="letterScaleTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="letterScaleTitle">
     <div class="modal-header">
       <h2 id="letterScaleTitle">Letter grades</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -3130,7 +3138,7 @@
      settings with nothing visibly reading them is otherwise a screen that looks broken. WO-4.2 and
      WO-4.3 delete that sentence when the lists arrive. -->
 <div class="modal-overlay hidden" id="signalsModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="signalsModalTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="signalsModalTitle">
     <div class="modal-header">
       <h2 id="signalsModalTitle">Signal thresholds</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -3194,7 +3202,7 @@
   have to change when outreach lands.
 -->
 <div class="modal-overlay hidden" id="signalCardModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="signalCardTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="signalCardTitle">
     <div class="modal-header">
       <h2 id="signalCardTitle">Why they are on the list</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -3228,7 +3236,7 @@
   header: there is no column here that names nobody. The fields are EMPTIED as well as hidden.
 -->
 <div class="modal-overlay hidden" id="outreachModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="outreachTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="outreachTitle">
     <div class="modal-header">
       <h2 id="outreachTitle">Draft an email</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -3430,7 +3438,7 @@
   it, and the panel is closed outright when presentation mode comes on.
 -->
 <div class="modal-overlay hidden" id="outreachConfirmModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="outreachConfirmTitle">
+  <div class="modal-panel modal-confirm" role="dialog" aria-modal="true" aria-labelledby="outreachConfirmTitle">
     <div class="modal-header">
       <h2 id="outreachConfirmTitle">Rebuild this draft?</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -3478,7 +3486,7 @@
      is how all four ways out reach it. The amber line under the fields is the editor saying that no
      term holds the dates; the confirm after this dialog is the scored move. -->
 <div class="modal-overlay hidden" id="assignmentModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="assignmentModalTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="assignmentModalTitle">
     <div class="modal-header">
       <h2 id="assignmentModalTitle">Assignment</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -3555,7 +3563,7 @@
      tier and grammar as the delete confirm below: it counts what goes before it goes.
      Filled by src/assignments.js. -->
 <div class="modal-overlay hidden" id="assignmentMoveModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="assignmentMoveTitle">
+  <div class="modal-panel modal-confirm" role="dialog" aria-modal="true" aria-labelledby="assignmentMoveTitle">
     <div class="modal-header">
       <h2 id="assignmentMoveTitle">Move it to another term?</h2>
       <button class="modal-close" data-modal-close title="Back to the assignment" aria-label="Back to the assignment">✕</button>
@@ -3587,7 +3595,7 @@
      touches no score. The second button, the ✕, Escape and the backdrop write nothing.
      Filled by src/held-column.js. -->
 <div class="modal-overlay hidden" id="holdModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="holdTitle">
+  <div class="modal-panel modal-confirm" role="dialog" aria-modal="true" aria-labelledby="holdTitle">
     <div class="modal-header">
       <h2 id="holdTitle">Hold this column out of the grade?</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -3631,9 +3639,13 @@
      disabled. The source's own category and dates are live fields and are HELD: the confirm saves
      them with the copies, and Cancel, the ✕ and Escape drop them.
 
+     A `modal-report`, 900 (WO-1.77, the owner): it was `.assign-copy-panel` at 880, the narrowest its
+     four columns fit — a floor, not a ruling. Its fold is a window breakpoint at 920 in
+     src/assignments.css, which a wider panel does not move.
+
      Filled by src/assignments.js. -->
 <div class="modal-overlay hidden" id="assignmentCopyModal">
-  <div class="modal-panel assign-copy-panel" role="dialog" aria-modal="true" aria-labelledby="assignmentCopyTitle">
+  <div class="modal-panel modal-report" role="dialog" aria-modal="true" aria-labelledby="assignmentCopyTitle">
     <div class="modal-header">
       <h2 id="assignmentCopyTitle">Duplicate this assignment</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -3666,7 +3678,7 @@
      design/mockups/README.md § 8 in the conservative direction — see removeAssignment() in
      src/assignments.js.) -->
 <div class="modal-overlay hidden" id="assignmentDeleteModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="assignmentDeleteTitle">
+  <div class="modal-panel modal-confirm" role="dialog" aria-modal="true" aria-labelledby="assignmentDeleteTitle">
     <div class="modal-header">
       <h2 id="assignmentDeleteTitle">Delete this assignment?</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -3692,11 +3704,12 @@
      difference between "Remove" taking a student off this class and deleting a person's contacts,
      and the teacher has to be able to predict which one she is about to do.
 
-     `.roster-panel` (WO-1.76) widens this one panel to 640px, the owner's ruling, so a row's name, note,
-     support dot and three buttons have room; every other dialog stays the stock 480. src/shell.css
-     says why at the rule. -->
+     A `modal-form`, 640 (WO-1.77). It was the first dialog at that width, as `.roster-panel` (WO-1.76,
+     the owner's ruling read on the iPad upright and lying down on 2026-10-10), so a row's name, note,
+     support dot and three buttons have room; the support dot stays immediately left of ✎ on the same
+     ruling. The class went at WO-1.77 when the width became the kind's. -->
 <div class="modal-overlay hidden" id="rosterModal">
-  <div class="modal-panel roster-panel" role="dialog" aria-modal="true" aria-labelledby="rosterModalTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="rosterModalTitle">
     <div class="modal-header">
       <div class="modal-header-lead">
         <button class="modal-back hidden" type="button" data-settings-back aria-label="Back to Settings">‹ Settings</button>
@@ -3759,7 +3772,7 @@
      list, so every line's split is shown in two editable fields with the guess already in them.
      A preview that only counted the rows would be counting the mistakes about to be committed. -->
 <div class="modal-overlay hidden" id="rosterPasteModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="rosterPasteTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="rosterPasteTitle">
     <div class="modal-header">
       <h2 id="rosterPasteTitle">Paste a roster</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -3828,7 +3841,7 @@
      afterwards. Nothing in the file reaches support details — accommodations, plans and medical
      needs are not in this export and this importer has no path to them (src/roster-import.js). -->
 <div class="modal-overlay hidden" id="rosterImportModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="rosterImportTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="rosterImportTitle">
     <div class="modal-header">
       <h2 id="rosterImportTitle">Import contacts from a file</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -3878,7 +3891,7 @@
      file — which matters most for the support panel's own copy, since what it says about
      projection is the feature. -->
 <div class="modal-overlay hidden" id="studentModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="studentModalTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="studentModalTitle">
     <div class="modal-header">
       <h2 id="studentModalTitle">Student</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -4128,7 +4141,7 @@
      meant "take them out of this class" and a teacher who meant "this person is not mine this
      year" make the same gesture. The two empty elements are filled by src/roster.js. -->
 <div class="modal-overlay hidden" id="studentDeleteModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="studentDeleteTitle">
+  <div class="modal-panel modal-confirm" role="dialog" aria-modal="true" aria-labelledby="studentDeleteTitle">
     <div class="modal-header">
       <h2 id="studentDeleteTitle">Delete this student?</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -4160,7 +4173,7 @@
      The two fields under the chips are the work order's "optional detail" and are genuinely
      optional. A teacher who only ever taps a chip still has a log. -->
 <div class="modal-overlay hidden" id="logSheetModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="logSheetTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="logSheetTitle">
     <div class="modal-header">
       <h2 id="logSheetTitle"></h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -4202,7 +4215,7 @@
      is any outreach to send. They live in the year document rather than in this browser's
      preferences: a name is not a UI preference, and it has to survive a new device. -->
 <div class="modal-overlay hidden" id="teacherModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle">
+  <div class="modal-panel modal-confirm" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle">
     <div class="modal-header">
       <div class="modal-header-lead">
         <button class="modal-back hidden" type="button" data-settings-back aria-label="Back to Settings">‹ Settings</button>
@@ -4271,7 +4284,7 @@
      teacher, and the price of the exception is saying so in words she will actually read.
      Do not soften it, and do not filter the file to make it go away. -->
 <div class="modal-overlay hidden" id="backupModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="backupModalTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="backupModalTitle">
     <div class="modal-header">
       <h2 id="backupModalTitle">Backup &amp; restore</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -4356,7 +4369,7 @@
      year from its own backup is what backups are for, and a red panel on that case would be one a
      teacher learns to tap through before she meets the case that can destroy a term. -->
 <div class="modal-overlay hidden" id="restoreConfirmModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="restoreConfirmTitle">
+  <div class="modal-panel modal-confirm" role="dialog" aria-modal="true" aria-labelledby="restoreConfirmTitle">
     <div class="modal-header">
       <h2 id="restoreConfirmTitle">Replace this school year?</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -4393,7 +4406,7 @@
   text field an ISO string has to be typed into — the same call src/classes.js's term dates make.
 -->
 <div class="modal-overlay hidden" id="daysOffModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="daysOffModalTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="daysOffModalTitle">
     <div class="modal-header">
       <h2 id="daysOffModalTitle">Days off &amp; drops</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -4474,7 +4487,7 @@
      calendar — so this says what STAYS rather than what goes, which is the opposite of the class
      delete confirm it borrows its shape from. The two elements are filled by src/days-off.js. -->
 <div class="modal-overlay hidden" id="daysOffConfirmModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="daysOffConfirmTitle">
+  <div class="modal-panel modal-confirm" role="dialog" aria-modal="true" aria-labelledby="daysOffConfirmTitle">
     <div class="modal-header">
       <h2 id="daysOffConfirmTitle">Some of those days were taught</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -4521,7 +4534,7 @@
   the day it was designed.
 -->
 <div class="modal-overlay hidden" id="eventsModal">
-  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="eventsModalTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="eventsModalTitle">
     <div class="modal-header">
       <h2 id="eventsModalTitle">Events</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">&#10005;</button>
@@ -4663,12 +4676,13 @@
   The copy lives here rather than in a JavaScript file for the reason the hint paragraphs under the
   grid do: it is what a teacher reads, and prose that a renderer builds is prose nobody edits.
 
-  `.attendance-keys-panel` is its width, 640px (WO-2.59): wider than a form dialog's 480 because the
-  key list and the prose were wrapping at 480, narrower than the record's 900 because prose past ~80
-  characters a line reads worse. src/attendance.css carries the rule.
+  A `modal-form`, 640 — WO-2.59's width, given then by `.attendance-keys-panel` and since WO-1.77 by
+  the kind: wider than 480 because the key list and the prose were wrapping at 480, narrower than the
+  record's 900 because prose past ~80 characters a line reads worse. That argument is now the
+  argument for every form; src/shell.css carries the rule.
 -->
 <div class="modal-overlay hidden" id="attendanceKeysModal">
-  <div class="modal-panel attendance-keys-panel" role="dialog" aria-modal="true" aria-labelledby="attendanceKeysTitle">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="attendanceKeysTitle">
     <div class="modal-header">
       <h2 id="attendanceKeysTitle">Marking from the keyboard</h2>
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
@@ -4744,13 +4758,14 @@
   table and day by day went at WO-2.60.
 
   THE TITLE IS THE STUDENT'S NAME, set by src/attendance-report.js on every paint; the words below
-  are what a dialog drawn before any paint would say. It is the stock 480px `.modal-panel` since
-  WO-2.60 — `.attendance-report-panel`'s 900 was for the tables, and the tables are gone. The body is
+  are what a dialog drawn before any paint would say. It came off the report width at WO-2.60 —
+  the 900 was for the tables, and the tables are gone — and is a `modal-form`, 640, since WO-1.77,
+  ruled by the owner after reading it in the app. The body is
   empty here for the reason every list in this file is: a specimen written here would be a second
   truth to keep in step with the real one.
 -->
 <div class="modal-overlay hidden" id="attendanceHistoryModal">
-  <div class="modal-panel" role="dialog" aria-modal="true"
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true"
        aria-labelledby="attendanceHistoryTitle">
     <div class="modal-header">
       <h2 id="attendanceHistoryTitle">Attendance</h2>
@@ -4784,7 +4799,7 @@
   say so to a teacher who hovers.
 -->
 <div class="modal-overlay hidden" id="attendanceRecordModal">
-  <div class="modal-panel attendance-report-panel" role="dialog" aria-modal="true"
+  <div class="modal-panel modal-report" role="dialog" aria-modal="true"
        aria-labelledby="attendanceRecordTitle">
     <div class="modal-header">
       <h2 id="attendanceRecordTitle">Attendance record</h2>
@@ -4829,9 +4844,14 @@
   The two output buttons are in the body rather than in a `.modal-actions` row at the foot, because
   the table between them is a term long: a control at the bottom of it is a control a teacher
   scrolls past the whole sheet to reach.
+
+  A `modal-report` WITH THE APP'S ONE OVERRIDE (WO-1.77): `.grades-report-panel`, 980 rather than the
+  kind's 900, because a term's worth of assignment columns is wider than a record. Worn beside the
+  kind, not instead of it, so the departure is visible next to what it departs from; src/scores.css
+  carries the rule and the reason.
 -->
 <div class="modal-overlay hidden" id="gradesRecordModal">
-  <div class="modal-panel grades-report-panel" role="dialog" aria-modal="true"
+  <div class="modal-panel modal-report grades-report-panel" role="dialog" aria-modal="true"
        aria-labelledby="gradesRecordTitle">
     <div class="modal-header">
       <h2 id="gradesRecordTitle">Grade sheet</h2>
@@ -4863,12 +4883,12 @@
   live class and this is what gets opened beside a guardian at a conference. The counts stay — what
   is protected is whose they are.
 
-  It wears `.attendance-report-panel` because it is the registry's third read-back dialog and the
-  two before it set the width; there is no Print and no CSV on it, which is why the body starts
+  It is a `modal-report`, 900, because it is the registry's third read-back dialog and the two
+  before it set the width (`.attendance-report-panel` until WO-1.77, the kind since); there is no Print and no CSV on it, which is why the body starts
   where the actions row starts on those two.
 -->
 <div class="modal-overlay hidden" id="passHistoryModal">
-  <div class="modal-panel attendance-report-panel" role="dialog" aria-modal="true"
+  <div class="modal-panel modal-report" role="dialog" aria-modal="true"
        aria-labelledby="passHistoryTitle">
     <div class="modal-header">
       <h2 id="passHistoryTitle">Hall passes</h2>

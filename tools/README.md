@@ -1360,14 +1360,14 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1953 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1962 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the ninety files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the ninety-one files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
@@ -2855,6 +2855,21 @@ amber warning; and the moved-work note still indigo on its own. None is a failur
 check moved without a new site: WO-3.50's *Done on that new assignment* in `verify/assignments.mjs` now
 types a name before Done, because Done refuses a blank one. Full run: `1957 checks · 1957 passed · 0
 failed · 0 skipped`, 62,614 lines, 32.0 lines per check, 1025s, exit 0, 2026-10-11 on the real clock.
+
+**WO-1.77 moved it from 1953 to 1962, and the executed count from 1957 to 1966 — eleven sites added,
+two moved out, and one new file.** The eleven are `verify/dialog-kinds.mjs`, registered straight after
+`verify/roster-width.mjs`: every `.modal-panel` in index.html's source with exactly one kind; the same
+of the live document, with as many panels as the source; every dialog the kind the owner ruled; every
+panel its kind's width (or the Grade sheet's 980 override) at 1280 fine; the fallback, every panel
+stripped of its classes at 480; eight real doors at 1280 and again on an iPad lying down; the census
+on the iPad lying down; the census and the eight doors at 390×844; and every panel added to the
+document while the section drove its doors. None is a failure arm, and the section's one guard is a
+`skip()`. The two that left are `verify/roster-width.mjs`'s Acceptance 3 — every other dialog at 480,
+at 1280 and on the iPad — which went false on purpose and moved into the new file, as its header says.
+Four checks in `verify/attendance-history.mjs` changed their number without a new site: the history
+dialog is a form now, 640 rather than 480. Full run: `1966 checks · 1966 passed · 0 failed · 0
+skipped`, 62,950 lines, 32.0 lines per check, 1032s, exit 0, 2026-10-11 on the real clock. Planted
+faults in `TESTING.md` § WO-1.77.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
