@@ -120,6 +120,7 @@ import { run as rosterWho } from './verify/roster-who.mjs';
 import { run as rosterWidth } from './verify/roster-width.mjs';
 import { run as dialogKinds } from './verify/dialog-kinds.mjs';
 import { run as assignmentListTidy } from './verify/assignment-list-tidy.mjs';
+import { run as assignmentSort } from './verify/assignment-sort.mjs';
 import { run as notePanel } from './verify/note-panel.mjs';
 import { run as passCard } from './verify/pass-card.mjs';
 import { run as portraitLandscape } from './verify/portrait-landscape.mjs';
@@ -364,6 +365,11 @@ const BROWSER_SECTIONS = [
      own, planted at its head and taken back out — with the open-class preference, the viewport and
      touch — at its foot, reloading once at each. */
   { file: 'verify/assignment-list-tidy.mjs', run: assignmentListTidy },
+  /* The list's column sort and that it writes nothing (WO-3.55), straight after the section about the
+     list it sorts and in the same shape: two classes, three students and eleven assignments of its own,
+     planted at its head and taken back out — with the open-class preference, the viewport and touch —
+     at its foot, reloading once at each. */
+  { file: 'verify/assignment-sort.mjs', run: assignmentSort },
   { file: 'verify/note-panel.mjs', run: notePanel },
   { file: 'verify/pass-card.mjs', run: passCard },
   { file: 'verify/portrait-landscape.mjs', run: portraitLandscape },

@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 1978 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 1996 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2898,6 +2898,22 @@ cause with the fix taken off in the page, and the same class's Attendance and Sc
 asserting nothing. Full run: `1982 checks · 1982 passed · 0 failed · 0 skipped`, 63,562 lines, 32.1
 lines per check, 1042s, exit 0, 2026-10-11 on the real clock. The planted fault is in `TESTING.md`
 § WO-3.59.
+
+**WO-3.55 moved it from 1978 to 1996, and the executed count from 1982 to 2008 — eighteen sites,
+twenty-six results, and one new file.** The new file is `verify/assignment-sort.mjs`, registered
+straight after `verify/assignment-list-tidy.mjs` and shaped like it — two classes, three students and
+eleven assignments of its own, planted at its head and taken back out at its foot. Sixteen of its
+eighteen sites run once; the other two sit in a loop over the five sortable columns and run five
+times each: each column's three taps and `aria-sort`, and each column's resting arrows and ↺ Your
+order. The rest: the starting state, the hint, the write-nothing line (stored record and `rev` after
+`flush()`, the open document and its array order, after twenty taps), no `planbook_` key written,
+the Scores grid's column order, natural names, blank dates last, ties, a held column under Entered,
+the three resets, the coarse floor with the table drawn, the arrows still moving a row, and the order
+held while the editor is open in two cases. None is a failure arm, and the section's one guard is a
+`skip()`. `verify/horizontal-overflow.mjs`'s WO-3.59 block swapped its planted stand-in for a real
+sort tap — one site out, one in. Full run: `2008 checks · 2008 passed · 0 failed · 0 skipped`, 64,109
+lines, 31.9 lines per check, 1067s, exit 0, 2026-10-11 on the real clock. The two planted faults are
+in `TESTING.md` § WO-3.55.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The assignment list sorts — 2026-10-11
+
+WO-3.55, owner-directed. Shell cache v186 → v187.
+
+- **Tap Assignment, Points, Assigned, Due or Entered to sort what is under each category.** A
+  second tap reverses the order and a third gives your own order back. Categories stay in their own
+  order; only the rows inside them move. Names sort the way you read them (Quiz 2 before Quiz 10),
+  and an assignment with no date goes to the bottom either way.
+- **While a sort is on, the ↑ ↓ arrows rest**, and **↺ Your order** appears to bring them back.
+- **A sort is only a view.** It changes nothing in your gradebook, the Scores grid keeps its columns
+  where you put them, and leaving the list, or changing class or term, returns your order.
+- Sorted by Due, a row whose date you change moves when you close the editor, not while you type.
+
 ### The assignment list no longer slides sideways on a phone — 2026-10-11
 
 WO-3.59, booked from WO-1.77's findings. Shell cache v185 → v186.

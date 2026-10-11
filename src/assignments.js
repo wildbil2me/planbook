@@ -87,10 +87,15 @@
      question the screen is opened to answer in the week before grades are due, and which is
      arithmetic over keys rather than over scores.
 
-  4. NOTHING IS SORTED. The list renders in the order the document holds, grouped by the class's
-     own category order, exactly as src/roster.js renders a roster and src/classes.js renders
-     terms. The teacher's ↑ ↓ are the only thing that changes it — sorting by due date behind her
-     back would be a second opinion about an order she can see and rearrange.
+  4. NOTHING IS SORTED BEHIND HER BACK. The list renders in the order the document holds, grouped by
+     the class's own category order, exactly as src/roster.js renders a roster and src/classes.js
+     renders terms. The teacher's ↑ ↓ are the only thing that changes THAT order — sorting by due
+     date behind her back would be a second opinion about an order she can see and rearrange.
+     SINCE WO-3.55 SHE CAN ASK FOR ONE, and it is a view and never a write: a tap on a column heading
+     sorts a COPY of each group for drawing, the document's array is not touched, `rev` does not move,
+     and the Scores grid — which reads its columns from that array — never knows. The section "the
+     sort" below holds the rules; the ↑ ↓ rest while it is on, because an arrow that moved a row in
+     an order nobody can see would be exactly the second opinion this paragraph refuses.
 
   5. AN EMPTY CATEGORY IS DRAWN, WITH ITS CONSEQUENCE IN WORDS. A category with nothing filed under
      it redistributes its weight across the categories that do have work (docs/data-model.md
@@ -336,6 +341,18 @@ let createdFromTermId = '';
    that an assignment was closed with no name and took one (ruling 5), drawn in amber. A VIEW STATE: drawn only while that class and that term are the ones
    up, dropped the first time they are not, and never stored anywhere. */
 let listNote = null;
+/* THE SORT (WO-3.55): `{ classId, termId, column, reversed }`, or null for the teacher's order. A VIEW
+   STATE held here and nowhere else — never in the document, never in `localStorage` (ruling 6). Keyed
+   by class and term the way `listNote` is, so the first render of any other class or term drops it;
+   src/shell.js's showClassScreen() clears it on every arrival, which is what makes leaving the list
+   and coming back a return to the teacher's order. See "the sort" below. */
+let listSort = null;
+/* THE ORDER THE LIST HAD WHEN THE EDITOR OPENED (WO-3.55, ruling 9): id → position, set only while a
+   sort is on, and held for exactly as long as the editor's session. editAssignmentField() repaints the
+   list on every keystroke, so a sort read live would move rows about behind the dialog as she types a
+   name or a date; this pins them, and endSession() lets go and repaints, which is "sorts again when
+   it settles". */
+let frozenRank = null;
 
 /* ────────────────────────────── reading the document ────────────────────────────── */
 
@@ -518,10 +535,18 @@ function cell(row, className, text) {
   reason src/home.css and src/attendance.css both do with a half-marked class: partly done must not
   read as done.
 */
-function progressCell(row, assignment, cls) {
-  const td = cell(row, '');
+/* THE BAR'S FIGURE, in one place since WO-3.55: what progressCell() draws and what the Entered sort
+   orders by are this one reading — enteredCount() over the roster — so the order and the bar cannot
+   drift apart. A second count for the sort is the second opinion that work order's Traps refuse. */
+function coverageOf(assignment, cls) {
   const total = rosterOf(cls).length;
   const done = enteredCount(assignment, cls);
+  return { done, total, share: total ? done / total : 0 };
+}
+
+function progressCell(row, assignment, cls) {
+  const td = cell(row, '');
+  const { done, total, share } = coverageOf(assignment, cls);
 
   const wrap = document.createElement('div');
   wrap.className = 'assign-progress';
@@ -529,7 +554,6 @@ function progressCell(row, assignment, cls) {
   const bar = document.createElement('div');
   bar.className = 'assign-bar';
   const fill = document.createElement('div');
-  const share = total ? done / total : 0;
   fill.className = 'assign-bar-fill' + (!done ? ' none' : (done < total ? ' partial' : ''));
   fill.style.width = Math.round(share * 100) + '%';
   bar.append(fill);
@@ -553,7 +577,7 @@ function progressCell(row, assignment, cls) {
   being a formality: an assignment called "Lab <write-up>" is typed by a teacher and has to be
   those characters rather than markup.
 */
-function assignmentRow(assignment, cls, index, siblings) {
+function assignmentRow(assignment, cls, index, siblings, sortedBy) {
   const row = document.createElement('tr');
   const label = assignment.name || 'this assignment';
 
@@ -627,6 +651,16 @@ function assignmentRow(assignment, cls, index, siblings) {
   const down = actionButton('↓', 'data-assignment-move-down', assignment.id, 'move assign-row-btn');
   down.setAttribute('aria-label', 'Move ' + label + ' later');
   down.disabled = index === siblings - 1;
+  /* WHILE A SORT IS ON THE ARROWS REST (WO-3.55, ruling 4), every one of them, and say why in the
+     column's own name. An arrow would move a row in the order the document holds while the screen
+     draws another — a tap whose effect nobody can see. ↺ Your order, in the Actions heading, is the
+     way back to them. */
+  if (sortedBy) {
+    [up, down].forEach((btn) => {
+      btn.disabled = true;
+      btn.title = 'Sorted by ' + sortedBy + ' — tap Your order to move it';
+    });
+  }
   actions.append(up, down);
 
   /* Duplicate and Delete keep their hooks and their spoken labels; only their faces changed
@@ -723,6 +757,179 @@ function paintListNote(cls, termId) {
   el.classList.toggle('assign-moved-nameless', !!listNote && !!listNote.nameless);
 }
 
+/* ────────────────────────────── the sort (WO-3.55) ──────────────────────────────
+
+   FIVE HEADINGS SORT WHAT IS UNDER EACH CATEGORY, AND THE CATEGORIES STAY WHERE THE TEACHER PUT THEM
+   (the owner's rulings 1 and 2, 2026-10-10). "Not in a category" is a group like any other.
+
+   A SORT IS A VIEW AND WRITES NOTHING (ruling 5), and this is the section most likely to break that
+   without anyone noticing. The order a teacher sets with ↑ ↓ IS the array order in the year document,
+   and the Scores grid reads its columns from that array (src/scores.js: "Nothing here sorts"). So
+   inViewOrder() sorts a NEW array built from the group the painter was handed, and never the group
+   itself, never `assignmentsIn(doc)` and never anything update() is given. An in-place `sort()` on the
+   wrong array here reorders the year with no update() call at all — the save that carries it is the
+   next unrelated keystroke — and the Scores grid rearranges from a heading tap on another screen.
+   tools/verify/assignment-sort.mjs reads the stored record, the open document and the grid's columns
+   after every tap, and was proved against both plants.
+
+   NOT REMEMBERED (ruling 6): `listSort` above, keyed by class and term, cleared on every arrival.
+
+   THE FIRST TAP GIVES THE USEFUL DIRECTION (ruling 3) — `first` below — the second reverses it and
+   the third gives back the teacher's order. `first` is 1 for ascending and -1 for descending, which is
+   also what `aria-sort` and the ▲ ▼ say: A→Z, soonest and fewest are ascending, largest is descending.
+*/
+const SORT_COLUMNS = {
+  name: { label: 'Assignment', first: 1, words: ['A to Z', 'Z to A'] },
+  points: { label: 'Points', first: -1, words: ['largest first', 'smallest first'] },
+  assigned: { label: 'Assigned', first: 1, words: ['soonest first', 'latest first'] },
+  due: { label: 'Due', first: 1, words: ['soonest first', 'latest first'] },
+  entered: { label: 'Entered', first: 1, words: ['fewest entered first', 'most entered first'] },
+};
+const RESET_LABEL = '↺ Your order';
+const SORT_HEAD_SEL = '#assignmentsView [data-assignment-sort]';
+const RESET_CELL_SEL = '#assignmentsView .assign-col-reset';
+
+/* NAMES COMPARE AS A READER WOULD (ruling 7): "Quiz 2" before "Quiz 10", and "quiz" beside "Quiz".
+   What is compared is what the row DRAWS — a nameless assignment sorts as the words it is shown under. */
+const NAME_ORDER = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
+/* The sort that applies to this class and term, or null. Asked rather than read off `listSort`, so a
+   state left from another class or term can never order this one even for a paint. */
+function activeSort(cls, termId) {
+  return listSort && cls && listSort.classId === cls.id && listSort.termId === termId
+    ? listSort : null;
+}
+
+/* Two assignments in one column's order, before the tie-break. `dir` is 1 or -1. A BLANK DATE SORTS
+   LAST IN BOTH DIRECTIONS (ruling 7): it is answered before the direction is applied, because a blank
+   is not an early date or a late one — it is a date nobody has typed, and reversing the list must not
+   put it at the top. */
+function compareIn(column, dir, a, b, cls) {
+  if (column === 'assigned' || column === 'due') {
+    const x = dateOf(a[column]);
+    const y = dateOf(b[column]);
+    if (!x || !y) return (x ? 0 : 1) - (y ? 0 : 1);
+    return dir * (x < y ? -1 : x > y ? 1 : 0);
+  }
+  if (column === 'name') {
+    return dir * NAME_ORDER.compare(a.name || UNTITLED_ASSIGNMENT, b.name || UNTITLED_ASSIGNMENT);
+  }
+  if (column === 'points') return dir * (pointsOf(a) - pointsOf(b));
+  /* Entered: the bar's own figure (coverageOf()), so a held column sorts by its own count like any
+     row (ruling 8) — nothing here asks isHeld(), because the bar does not. */
+  return dir * (coverageOf(a, cls).share - coverageOf(b, cls).share);
+}
+
+/*
+  ONE GROUP IN THE ORDER THE SCREEN DRAWS IT. With no sort on, the group itself — the document's
+  order. With one on, a NEW array: the group is decorated with each row's position, sorted, and
+  undecorated, and the position is the tie-break, so EQUAL KEYS KEEP THE TEACHER'S ORDER (ruling 7)
+  whatever the engine's sort happens to do with ties.
+
+  WHILE THE EDITOR IS OPEN THE ORDER IS THE ONE IT HAD WHEN IT OPENED (ruling 9, the owner,
+  2026-10-11): `frozenRank` stands in for the comparator, so a name or a date typed behind the dialog
+  moves no row. An id the snapshot does not know — none is expected — keeps its place after the rest.
+*/
+function inViewOrder(group, cls, sort) {
+  if (!sort) return group;
+  const dir = SORT_COLUMNS[sort.column].first * (sort.reversed ? -1 : 1);
+  const rank = frozenRank;
+  const at = (a) => (rank && rank.has(a.id) ? rank.get(a.id) : Infinity);
+  return group.map((a, i) => ({ a, i }))
+    .sort((x, y) => (rank
+      ? (at(x.a) === at(y.a) ? 0 : at(x.a) < at(y.a) ? -1 : 1)
+      : compareIn(sort.column, dir, x.a, y.a, cls)) || x.i - y.i)
+    .map((d) => d.a);
+}
+
+/* The snapshot ruling 9 holds while the editor is open: the order the list is drawn in at this
+   moment, over the whole term on screen. Ranked across groups rather than within each, which comes to
+   the same thing — every group is ordered by the same comparator — and keeps a row the editor files
+   into another category in its sorted place among its new neighbours until the close. */
+function freezeOrder() {
+  frozenRank = null;
+  const cls = getSelectedClass();
+  const term = getSelectedTerm();
+  const sort = activeSort(cls, term ? term.id : '');
+  if (!sort) return;
+  const rank = new Map();
+  inViewOrder(assignmentsOf(cls.id, term.id), cls, sort).forEach((a, i) => rank.set(a.id, i));
+  frozenRank = rank;
+}
+
+/* The five headings and the Actions heading, painted to the sort that applies. Only the active `<th>`
+   carries `aria-sort` (ruling 1) — the others carry none rather than "none", which is what a reader
+   expects of a heading that is not the one sorting. ↺ Your order is BUILT while a sort is on and
+   REMOVED when it is not (ruling 4), so it is never a dead control; the hidden "Actions" beside it
+   stays, so the column keeps its name for a screen reader either way. */
+function paintSortHeads(sort) {
+  Array.prototype.forEach.call(document.querySelectorAll(SORT_HEAD_SEL), (btn) => {
+    const column = btn.getAttribute('data-assignment-sort');
+    const th = btn.closest('th');
+    const on = !!sort && sort.column === column;
+    const dir = on ? SORT_COLUMNS[column].first * (sort.reversed ? -1 : 1) : 0;
+    btn.classList.toggle('on', on);
+    const mark = btn.querySelector('.assign-sort-mark');
+    if (mark) mark.textContent = !on ? '↕' : dir > 0 ? '▲' : '▼';
+    if (th) {
+      if (on) th.setAttribute('aria-sort', dir > 0 ? 'ascending' : 'descending');
+      else th.removeAttribute('aria-sort');
+    }
+  });
+  const slot = document.querySelector(RESET_CELL_SEL);
+  if (!slot) return;
+  const there = slot.querySelector('[data-assignment-sort-reset]');
+  if (sort && !there) {
+    const btn = actionButton(RESET_LABEL, 'data-assignment-sort-reset', '', 'assign-row-btn');
+    btn.title = 'Back to the order you set with the arrows';
+    slot.append(btn);
+  } else if (!sort && there) {
+    there.remove();
+  }
+}
+
+/* A heading tapped: first tap the useful direction, second the reverse, third the teacher's order.
+   Writes nothing — the state above and a repaint — and says the new order out loud, because a list
+   reordering under a heading is a change a screen-reader user cannot see happen. The heading buttons
+   are markup in index.html and survive the repaint, so the focus stays where the tap put it. */
+export function sortAssignmentsBy(column) {
+  const spec = SORT_COLUMNS[column];
+  const cls = getSelectedClass();
+  const term = getSelectedTerm();
+  if (!spec || !cls || !term) return;
+  const now = activeSort(cls, term.id);
+  if (!now || now.column !== column) {
+    listSort = { classId: cls.id, termId: term.id, column, reversed: false };
+  } else if (!now.reversed) {
+    listSort = { classId: cls.id, termId: term.id, column, reversed: true };
+  } else {
+    listSort = null;
+  }
+  renderAssignments();
+  announce(listSort
+    ? 'Sorted by ' + spec.label + ', ' + spec.words[listSort.reversed ? 1 : 0]
+      + ', inside each category. Your own order is kept — ' + RESET_LABEL + ' brings it back.'
+    : 'Back to your order.');
+}
+
+/* ↺ Your order. The button is gone after the repaint, so the focus goes to the heading that was
+   sorting — the control nearest the one that vanished, and the one that would sort again. */
+export function showTeacherOrder() {
+  const was = listSort ? listSort.column : '';
+  listSort = null;
+  renderAssignments();
+  const head = was ? document.querySelector(SORT_HEAD_SEL + '[data-assignment-sort="' + was + '"]') : null;
+  if (head && typeof head.focus === 'function') head.focus();
+  announce('Back to your order. The arrows move assignments again.');
+}
+
+/* Every arrival on the list (src/shell.js's showClassScreen(), before the view swaps): the teacher's
+   order, and nothing painted here — the arrival paints. */
+export function clearAssignmentSort() {
+  listSort = null;
+  frozenRank = null;
+}
+
 /*
   THE SCREEN, redrawn from the open document. Called by src/shell.js after anything that changes
   what is in it, and after a switch onto it — this module never subscribes to the store, for the
@@ -752,6 +959,12 @@ export function renderAssignments() {
   if (hintTerm) hintTerm.textContent = termLabel || 'this class';
   paintHintEmpty(!!cls && gradingModeOf(cls) === 'points');
   paintListNote(cls, termId);
+  /* A sort set on another class or term is dropped here, as the note above is (WO-3.55, ruling 6):
+     changing class or term returns the teacher's order, and coming back does not bring the sort. */
+  const sort = activeSort(cls, termId);
+  if (!sort) listSort = null;
+  paintSortHeads(sort);
+  const sortedBy = sort ? SORT_COLUMNS[sort.column].label : '';
   if (summary) {
     summary.textContent = !doc ? 'No school year is open.'
       : !cls ? 'Add a class from the class bar first.'
@@ -855,7 +1068,9 @@ export function renderAssignments() {
     }
     body.append(groupHead(cat.name || 'Untitled category', chip,
       plural(held.length, 'assignment', 'assignments') + ' · ' + plural(catPoints, 'point', 'points')));
-    held.forEach((a, i) => body.append(assignmentRow(a, cls, i, held.length)));
+    /* A sorted COPY of the group when a sort is on (WO-3.55) — `held` itself is never reordered. */
+    inViewOrder(held, cls, sort)
+      .forEach((a, i) => body.append(assignmentRow(a, cls, i, held.length, sortedBy)));
   });
 
   /*
@@ -900,7 +1115,8 @@ export function renderAssignments() {
           + tap + ' and choose a category to file it where it belongs.'
         : 'so nothing counts ' + (loose.length === 1 ? 'it' : 'them') + ' at all. '
           + tap + ' and choose a category.')));
-    loose.forEach((a, i) => body.append(assignmentRow(a, cls, i, loose.length)));
+    inViewOrder(loose, cls, sort)
+      .forEach((a, i) => body.append(assignmentRow(a, cls, i, loose.length, sortedBy)));
   }
 }
 
@@ -1439,6 +1655,9 @@ function beginSession(assignment) {
   unplacedSaid = '';
   pendingMove = null;
   createdFromTermId = '';
+  /* The order the list holds while this editor is open (WO-3.55, ruling 9), taken before anything
+     below repaints it. */
+  freezeOrder();
   /* A note about an earlier move is not about the row now being edited. */
   if (listNote) { listNote = null; renderAssignments(); }
 }
@@ -1448,6 +1667,16 @@ function endSession() {
   unplacedSaid = '';
   pendingMove = null;
   createdFromTermId = '';
+  /* THE LIST SORTS AGAIN WHEN THE EDITOR SETTLES (WO-3.55, ruling 9). The close repaints the list
+     only when the close wrote something (src/shell.js's afterEditorSettled()), and a due date typed
+     while sorted by Due was written per keystroke and moves nothing at the close — so without this
+     repaint the row would stay in its frozen place until the next unrelated paint. Painted only when
+     a freeze was held and the list is the screen up: an editor opened from the Scores grid holds none. */
+  if (frozenRank) {
+    frozenRank = null;
+    const view = document.getElementById('assignmentsView');
+    if (view && !view.classList.contains('hidden')) renderAssignments();
+  }
 }
 
 function termOf(classId, termId) {
@@ -1990,6 +2219,9 @@ function moveAssignment(id, delta) {
   const doc = getDoc();
   const assignment = findAssignment(id);
   if (!doc || !assignment) return;
+  /* The arrows are disabled while a sort is on (WO-3.55, ruling 4); refused here as well, so a route
+     that reached this some other way still could not move a row in an order the screen is not showing. */
+  if (activeSort(findClass(assignment.classId), assignment.termId)) return;
   const siblings = siblingsOf(assignment);
   const at = siblings.indexOf(assignment);
   const swapWith = siblings[at + delta];

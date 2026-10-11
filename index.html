@@ -1151,14 +1151,26 @@
       <div class="assign-table-wrap">
         <table class="assign-table">
           <caption class="sr-only" id="assignmentsCaption"></caption>
+          <!-- FIVE HEADINGS SORT WHAT IS UNDER EACH CATEGORY (WO-3.55), each a real button inside its
+               <th>, which carries `aria-sort` while it is the one sorting. A sort is a view and writes
+               nothing — not the order, not `rev` — and is not remembered; src/assignments.js § "the
+               sort" holds the rules. The Actions heading is ↺ Your order's slot (`.assign-col-reset`):
+               the button is built there only while a sort is on, and the hidden "Actions" stays. -->
           <thead>
             <tr>
-              <th class="assign-col-name">Assignment</th>
-              <th>Points</th>
-              <th>Assigned</th>
-              <th>Due</th>
-              <th class="assign-col-entered">Entered</th>
-              <th><span class="sr-only">Actions</span></th>
+              <th class="assign-col-name"><button class="assign-sort-btn" type="button"
+                  data-assignment-sort="name">Assignment <span class="assign-sort-mark"
+                  aria-hidden="true">↕</span></button></th>
+              <th><button class="assign-sort-btn" type="button" data-assignment-sort="points">Points
+                  <span class="assign-sort-mark" aria-hidden="true">↕</span></button></th>
+              <th><button class="assign-sort-btn" type="button" data-assignment-sort="assigned">Assigned
+                  <span class="assign-sort-mark" aria-hidden="true">↕</span></button></th>
+              <th><button class="assign-sort-btn" type="button" data-assignment-sort="due">Due
+                  <span class="assign-sort-mark" aria-hidden="true">↕</span></button></th>
+              <th class="assign-col-entered"><button class="assign-sort-btn" type="button"
+                  data-assignment-sort="entered">Entered <span class="assign-sort-mark"
+                  aria-hidden="true">↕</span></button></th>
+              <th class="assign-col-reset"><span class="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody id="assignmentsBody"></tbody>
@@ -1198,6 +1210,10 @@
         <strong>A category with nothing in it yet does not count as a zero</strong>
         <span id="assignmentsHintEmpty">— its weight is shared across the others until something is
         in it.</span>
+        <!-- WO-3.55, ruling 10, the owner's words. -->
+        <strong>Tap a column heading to sort</strong> what is under each category; tap it again to
+        reverse, a third time for your order. While a sort is on, the arrows rest —
+        <strong>↺ Your order</strong> brings them back.
       </p>
     </div>
   </div>

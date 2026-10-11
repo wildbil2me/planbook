@@ -114,7 +114,8 @@ for (const [w, h, dsf] of [[1024, 768, 2], [768, 1024, 2], [390, 844, 3]]) {
    THE FIX IS ON THE WRAP, NOT THE SPAN (src/assignments.css). `position: relative` makes the wrap the
    containing block of everything absolutely positioned inside the table, so its own scroll clips it.
    That holds for a heading cell carrying a button as well as a bare span — the shape WO-3.55 builds
-   into this `<th>` — and the second check below plants exactly that shape to say so.
+   into this `<th>` — and the second check below puts it there to say so: a planted stand-in until
+   WO-3.55 built the real ↺ Your order, and a real sort tap since.
 
    THE FIXTURE IS REAL-SHAPED ON PURPOSE. WO-1.77's 134px was found over a term with blank dates and a
    single category, and that blank-dated term was the other candidate cause. This class has a dated
@@ -264,22 +265,29 @@ if (!seam) {
         + ' in ' + shownCats.length + ' categories · table box scrolls ' + list.wrap + 'px · page scrolls '
         + page.page + 'px' + (page.reach.length ? ' · reaching the page edge: ' + j(page.reach) : ''));
 
-    /* WO-3.55 rebuilds the Actions heading around a button. Plant that shape — a real button in the
-       last <th>, its name in an `.sr-only` span — and read the page again, then take it back out. */
-    const planted = await evalJs(`(function(){
+    /* WITH A SORT ON (WO-3.55). Until that work order this block planted a stand-in — a button with an
+       `.sr-only` name, `data-wo359-probe` — in the Actions heading, because the real one did not exist
+       yet. It does now: ↺ Your order is built in that heading while a sort is on, so a real tap on a
+       real heading puts it there, and that is what is measured. The stand-in is gone rather than kept
+       beside it. Tapped with the element's own click(), for the zoom reason toScreen() gives below. */
+    const sorted = await evalJs(`(function(){
+      var b = document.querySelector('#assignmentsView [data-assignment-sort="due"]');
+      if (!b) return { ok:false };
+      b.click();
       var th = document.querySelector('#assignmentsView .assign-table thead th:last-child');
-      if (!th) return { ok:false };
-      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-wo359-probe', '');
-      b.textContent = '↺'; var s = document.createElement('span'); s.className = 'sr-only';
-      s.textContent = 'Your order'; b.appendChild(s); th.appendChild(b);
-      return { ok:true }; })()`);
-    const withButton = await evalJs(PAGE);
-    await evalJs("(function(){ var b = document.querySelector('[data-wo359-probe]'); if (b) b.remove(); return 1; })()");
-    check('WO-3.59: and with a button carrying an `.sr-only` name planted in the Actions heading — the shape '
-      + 'WO-3.55 builds there — the page still does not scroll sideways',
-      planted.ok && withButton.page <= 0,
-      'planted ' + planted.ok + ' · page scrolls ' + withButton.page + 'px'
-        + (withButton.reach.length ? ' · reaching the page edge: ' + j(withButton.reach) : ''));
+      var r = th ? th.querySelector('[data-assignment-sort-reset]') : null;
+      return { ok: !!r, reset: r ? r.textContent.replace(/\\s+/g, ' ').trim() : '' }; })()`);
+    await pause(150);
+    await evalJs('window.scrollTo(0, 0); 1');
+    const withSort = await evalJs(PAGE);
+    await evalJs(`(function(){ var r = document.querySelector('#assignmentsView [data-assignment-sort-reset]');
+      if (r) r.click(); return 1; })()`);
+    await pause(150);
+    check('WO-3.55: and with a sort on — Due tapped, so ↺ Your order stands in the Actions heading — the page '
+      + 'still does not scroll sideways at 390x844',
+      sorted.ok && sorted.reset === '↺ Your order' && withSort.page <= 0,
+      'sorted ' + sorted.ok + ' · ' + j(sorted.reset) + ' · page scrolls ' + withSort.page + 'px'
+        + (withSort.reach.length ? ' · reaching the page edge: ' + j(withSort.reach) : ''));
 
     /* The cause, read on every run rather than only on a red one: the wrap's `position` put back to
        `static` in the page for one reading — the fix taken off without touching the file — and every

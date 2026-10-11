@@ -4351,7 +4351,7 @@ above them; carry each into its heading's hidden text, do not collapse them into
 
 ## WO-3.55 — the assignment list sorts within each category, and writes nothing
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.54, WO-3.59
+**Ship** — · **Status** ✅ DONE — 2026-10-11 · **Size** M · **Depends on** WO-3.54, WO-3.59
 **Closes roadmap** *(no box. Owner-directed, 2026-10-10.)*
 
 **Booked 2026-10-10 with WO-3.54**, the second of the two pieces. Five column headings sort what is
@@ -4429,29 +4429,29 @@ the way `paintListNote()` keys `listNote`, and clear it on the switch away from 
 - **`TESTING.md` § WO-3.55**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] Each of the five headings sorts the rows inside every group, groups in their own order; the
+- [x] Each of the five headings sorts the rows inside every group, groups in their own order; the
       first tap's direction is ruling 3's for each column, the second reverses, the third restores
       the teacher's order; the active `<th>` carries the matching `aria-sort` and no other does.
-- [ ] **A sort writes nothing.** After every sort tap, both directions on all five columns and
+- [x] **A sort writes nothing.** After every sort tap, both directions on all five columns and
       ↺ Your order, the stored year document is byte-identical to before and `rev` has not moved —
       checked after `flush()`, since `update()` only schedules a save (WO-5.3's scar). The Scores
       grid's column order is unchanged. **Mutation-proved**: a planted write of the sorted order
       turns the check red, and **the plant is reverted before anything else is written.**
-- [ ] Names compare naturally, blank dates sort last in both directions, and equal keys keep the
+- [x] Names compare naturally, blank dates sort last in both directions, and equal keys keep the
       teacher's order — each with a fixture built to fail the naive comparison.
-- [ ] A held column sorts under Entered by its own count.
-- [ ] While sorted, every ↑ ↓ is disabled and titled with the column's name, and ↺ Your order is
+- [x] A held column sorts under Entered by its own count.
+- [x] While sorted, every ↑ ↓ is disabled and titled with the column's name, and ↺ Your order is
       present; in the teacher's order it is absent and the arrows behave as before.
-- [ ] Leaving the list, changing class and changing term each return the teacher's order; no
+- [x] Leaving the list, changing class and changing term each return the teacher's order; no
       `planbook_` key is written by sorting.
-- [ ] Sorted by Due, an edited due date moves its row when the editor closes, and the sort stays on.
+- [x] Sorted by Due, an edited due date moves its row when the editor closes, and the sort stays on.
       While the editor is open, typing into the name or a date moves no row.
-- [ ] Under a coarse pointer, every sort button and ↺ Your order measures at least 44×44. At 390×844
+- [x] Under a coarse pointer, every sort button and ↺ Your order measures at least 44×44. At 390×844
       with a sort on, the assignments screen has no horizontal overflow.
-- [ ] The hint carries ruling 10's sentence.
-- [ ] 👤 On the teaching iPad: a heading tap sorts, the faint ↕ reads as tappable, and ↺ Your order
+- [x] The hint carries ruling 10's sentence.
+- [x] 👤 On the teaching iPad: a heading tap sorts, the faint ↕ reads as tappable, and ↺ Your order
       brings the arrows back.
-- [ ] `CACHE` in `sw.js` is bumped.
+- [x] `CACHE` in `sw.js` is bumped.
 
 **Traps** — **The Entered key is the figure the row's bar already draws**: `enteredCount()` over
 `rosterOf(cls).length`, exactly as `progressCell()` reads it; a second count is the second opinion this repository refuses, and it

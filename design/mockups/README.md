@@ -1037,7 +1037,13 @@ names: the title row ends in ← All classes, + New assignment is the body row's
 opens the editor, Duplicate and Delete are icons, and both notices are headings. Frame A's two bars
 now draw unstyled, because `.assign-group-empty` and `.assign-group-orphan` left the shipped sheet
 with the bars — frame A is the screen as it shipped at v182, kept as the record of what changed.
-**§ ASSIGN SORT is WO-3.55's and still pending.** One thing the build added that the drawing did
+**§ ASSIGN SORT landed the same day (WO-3.55)**, lifted under the drawn names: five headings sort
+what is under each category, the arrows rest, and ↺ Your order stands in the Actions heading while a
+sort is on. Two departures, both in the lifted section's note: the sort button's coarse rule takes
+`min-width: 44px` as well as the drawn height, and the Actions heading keeps its hidden name beside
+↺ Your order. Frame C's note that a held column "keeps its *held* word" was dropped by the owner on
+2026-10-11 — the list never drew one. The record is `TESTING.md` § WO-3.55.
+One thing the WO-3.54 build added that the drawing did
 not settle: in a class graded on total points the hint's empty-category sentence keeps its first half
 and takes ruling 5's points clause for its second — *it adds nothing until something is in it* —
 because the drawn second half names a weight, and WO-3.34 ruled that a points class's screen names

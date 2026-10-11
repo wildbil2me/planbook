@@ -34,7 +34,7 @@
    shipped sheet, so frame A's two bars on assignments-tidy.html now draw unstyled — frame A is the
    screen as it shipped at v182, and is a record now rather than today's screen; and the comments
    below that name those two classes describe where the colours came from, not a class still worn.
-   § ASSIGN SORT below is WO-3.55's and is still pending. */
+   § ASSIGN SORT below is WO-3.55's and landed 2026-10-11 too — see its own banner. */
 
 /* THE NAME IS THE WAY INTO THE EDITOR. A real <button> holding the name, so it
    is focusable and announced as a control, styled to read as the name it is: the
@@ -80,8 +80,17 @@
 .assign-actions.end { justify-content: flex-end; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § ASSIGN SORT   →  src/assignments.css   (WO-3.55 — not yet lifted)
+   § ASSIGN SORT   →  src/assignments.css   (WO-3.55 — lifted 2026-10-11)
    ══════════════════════════════════════════════════════════════════════════════ */
+
+/* LIFTED 2026-10-11 by WO-3.55, every class under its own name and every value as drawn —
+   `.assign-sort-btn`, `.assign-sort-mark`, `.on` and `.assign-col-reset` — with the button in
+   src/assignments.css's grouped `touch-action` selector and its § TOUCH line in that sheet's coarse
+   block. TWO DEPARTURES, both recorded where they are made. The coarse rule there carries
+   `min-width: 44px` as well as the drawn `min-height`: "DUE ↕" in the heading's 10px capitals is
+   about 32px wide, and the work order folded the width in before dispatch. And frame C's Actions
+   heading holds ↺ Your order in place of the hidden "Actions"; the build keeps that hidden name
+   beside the button, so the column is still called Actions to a screen reader while a sort is on. */
 
 /* A COLUMN HEADING THAT SORTS. A real button inside the <th>, wearing the
    heading's own type so the row reads as headings rather than as a toolbar;

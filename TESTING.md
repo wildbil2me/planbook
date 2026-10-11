@@ -13218,6 +13218,149 @@ Nothing else at phone width was measured.
 
 ---
 
+### WO-3.55 — the assignment list sorts within each category, and writes nothing
+
+**What was built.** Five `<th>` of `#assignmentsView`'s table hold a `<button class="assign-sort-btn"
+data-assignment-sort="name|points|assigned|due|entered">` (`index.html`); the Actions `<th>` is
+`.assign-col-reset`, and `src/assignments.js` builds `↺ Your order` (`data-assignment-sort-reset`) there
+only while a sort is on. The sort state is `listSort` in `src/assignments.js` — `{ classId, termId,
+column, reversed }`, nowhere else — keyed by class and term the way `listNote` is, and cleared on
+every arrival at the list by `src/shell.js`'s `showClassScreen()`, beside the Scores grid's own arrival
+resets. `inViewOrder()` sorts a **new array** built from each group the painter already has, decorated
+with each row's position as the tie-break; it never touches `held`, `loose`, `assignmentsIn(doc)` or
+anything `update()` is given. The Entered key is `coverageOf()` — the one function `progressCell()`
+now reads its bar from too. While the editor is open, `frozenRank` (taken in `beginSession()`) stands
+in for the comparator; `endSession()` drops it and repaints the list when it is the screen up.
+§ ASSIGN SORT is lifted into `src/assignments.css`, its button in the grouped `touch-action` selector and
+`min-height: 44px; min-width: 44px` in the coarse block — the width a departure from the drawing that the
+work order folded in, said at the rule and in the drawing's lifted note.
+
+**Two decisions the work order left open, and which way they went.**
+- *Ruling 6's "switch away from the screen"* is implemented as a reset on **arrival**, in
+  `showClassScreen()`, not on departure. Every way onto the list goes through that function — the
+  switcher's pill, `openClassOn()`, and a class tab tapped while the list is up — and `REMEMBERED_AS`
+  writes the list down as `class`, so boot never lands on it; there is no single departure point to
+  hook without `src/views.js` learning about this screen. The effect is the ruling's: leaving and
+  coming back is the teacher's order. The class-and-term key is the second reset, for a term change
+  made on the list itself.
+- *The Actions heading keeps its hidden "Actions"* beside `↺ Your order` while a sort is on, where the
+  drawing's frame C replaces it, so the column keeps its name for a screen reader.
+
+A consequence worth knowing: a due date edited **across a term edge** while sorted moves the list to
+the new term (WO-3.50), and that is a change of term, so the sort goes with it. Within the term — the
+case Acceptance 7 names — the sort stays on.
+
+**Acceptance**
+
+- [x] Each of the five headings sorts the rows inside every group, groups in their own order; the
+      first tap's direction is ruling 3's for each column, the second reverses, the third restores
+      the teacher's order; the active `<th>` carries the matching `aria-sort` and no other does.
+      — `tools/verify/assignment-sort.mjs`, five checks, one per column, each tapping its heading three
+      times with a real pointer press over nine assignments in Quizzes, Essays and "Not in a category"
+      and comparing every group's ids to a hand-derived table, with the group headings' order asserted
+      unchanged each time. All five `PASS`, e.g. `PASS | WO-3.55: Due — the first tap sorts every group
+      soonest first … :: {"tap1":{"Quizzes":["q3","q2","q4","q1"],…},"aria1":[null,null,null,"ascending",null,null],
+      "tap2":{"Quizzes":["q2","q4","q3","q1"],…},"aria2":[null,null,null,"descending",null,null],
+      "tap3":{"Quizzes":["q1","q2","q3","q4"],…},"aria3":[null,null,null,null,null,null]}`. Points opens
+      `descending` (largest first); Assignment, Assigned, Due and Entered open `ascending`.
+- [x] **A sort writes nothing.** After every sort tap, both directions on all five columns and
+      ↺ Your order, the stored year document is byte-identical to before and `rev` has not moved —
+      checked after `flush()`, since `update()` only schedules a save (WO-5.3's scar). The Scores
+      grid's column order is unchanged. **Mutation-proved**: a planted write of the sorted order
+      turns the check red, and **the plant is reverted before anything else is written.**
+      — After each of 20 taps (three per column, plus a fourth and ↺ Your order per column), the check
+      awaits `store.flush()` and reads, in the page, a SHA-256 of `readStoredDocument(year)`, the stored
+      and live `rev`, a SHA-256 of the open document, and the fixture's array order. `PASS | WO-3.55: a
+      sort writes nothing … :: 20 taps read · rev 191 stored 191 · every one identical`. The Scores grid,
+      read through its own pill before the first tap and after the last: `PASS | … :: before
+      q1,q2,q3,q4,e1,e2,e3,u1,u2 · after q1,q2,q3,q4,e1,e2,e3,u1,u2`.
+      **Mutation, two plants**, each marked `MUTATION WO-3.55`, each in `sortAssignmentsBy()`, each a
+      full run on a tree whose real work was staged, each reverted with `git checkout -- src/assignments.js`
+      from the index, and `grep -rn "MUTATION WO-3.55" src index.html tools sw.js` read empty before the
+      next write.
+      *M1, an in-place reorder of the document's own array with no `update()`*: `2008 checks · 1991
+      passed · 17 failed`, exit 1, every failure in this section. The write-nothing check went red on
+      **"open document changed" and "array order"** for all twenty taps and **never on "stored record
+      changed"** — the stored record and `rev` stayed identical, because nothing scheduled a save. The
+      Scores grid check went red too: `after q3,e3,q4,e1,q1,u1,u2,e2,q2`. **So the dispatch brief's
+      expectation was the wrong way round:** an in-place sort is invisible to the *stored* record and
+      visible to the live one and to the grid. That is why the check reads all three.
+      *M2, a planted `update()` writing the sorted order*: `2008 checks · 1991 passed · 17 failed`,
+      exit 1, every failure in this section; the write-nothing check red on `stored record changed`,
+      `rev 192→193` (and onward), the open document and the array order; the grid check red.
+- [x] Names compare naturally, blank dates sort last in both directions, and equal keys keep the
+      teacher's order — each with a fixture built to fail the naive comparison.
+      — Three checks, each asserting the drawn order **and** that a naive comparison over the same
+      fixture, computed in the harness, gives a different one. Names: `quiz 1, Quiz 2, Quiz 3, Quiz 10`
+      and `alpha` before `Zeta`, where code points give `q1,q2,q4,q3` and `u1,u2`. Blank dates: last on
+      Due and on Assigned in both directions, where comparing the strings puts the blank first
+      ascending (`q1,q3,q2,q4`). Ties: Quiz 2 before Quiz 3 on a shared due date and Quiz 10 before
+      Quiz 3 on a shared count, in the reversed direction, where reversing the ascending list would give
+      `q1,q4,q2,q3` and `q2,q4,q1,q3`; the two unfiled pieces keep their order on their shared count both
+      ways. All three `PASS`.
+- [x] A held column sorts under Entered by its own count.
+      — "Essay 1: Narrative" is planted `held: true` (`gradeEngine.isHeld()` confirms it is the only held
+      fixture row) with 3 of 3 entered; `PASS | WO-3.55: a held column sorts under Entered by its own
+      count … :: held ["a355_e2"] · fewest first ["e3","e1","e2"] · most first ["e2","e1","e3"]`.
+- [x] While sorted, every ↑ ↓ is disabled and titled with the column's name, and ↺ Your order is
+      present; in the teacher's order it is absent and the arrows behave as before.
+      — Five checks in the column loop: after taps 1, 2 and 4 every arrow is `disabled` with the title
+      `Sorted by <column> — tap Your order to move it`, and `↺ Your order` is a `<button>` in the Actions
+      `<th>`; after tap 3 and after ↺ Your order it is gone, each group's first ↑ and last ↓ are the only
+      disabled arrows, no arrow has a title, and the focus is on the heading that was sorting. One more
+      check presses ↓ on the first quiz in the teacher's order: `PASS | … :: {"screen":["q2","q1","q3","q4"],
+      "doc":["q2","q1",…],"rev":"191→192"}` — the arrow still moves the row and still writes.
+- [x] Leaving the list, changing class and changing term each return the teacher's order; no
+      `planbook_` key is written by sorting.
+      — Three checks, each sorting by Due first: to Scores and back by the switcher; a class tab to the
+      other fixture class (which opens unsorted) and back; Quarter 2 (unsorted) and back to Quarter 1.
+      Each comes back in document order with no `aria-sort` and no ↺ Your order. And `PASS | WO-3.55: no
+      planbook_ key is written by sorting … :: identical` — every localStorage key and value, read
+      before and after the twenty taps.
+- [x] Sorted by Due, an edited due date moves its row when the editor closes, and the sort stays on.
+      While the editor is open, typing into the name or a date moves no row.
+      — Two checks, through the real name button and the real Done. Sorted by Assignment, "quiz 1"
+      retyped as "Quiz 50" with `input` events stays first while the editor is up, and at Done the list
+      reads `q2,q4,q1,q3` with the sort still on. Sorted by Due, a later due date (and an assigned date)
+      typed into the open editor moves no row (`q3,q2,q4,q1` while open); at Done the row is third —
+      `q2,q4,q3,q1` — `aria-sort` still `ascending` on Due, ↺ Your order still there, the arrows still
+      resting, and the assignment still in Quarter 1. That close writes nothing at the close (the dates
+      were written per keystroke), so the re-sort is `endSession()`'s repaint, not the shell's.
+- [x] Under a coarse pointer, every sort button and ↺ Your order measures at least 44×44. At 390×844
+      with a sort on, the assignments screen has no horizontal overflow.
+      — 1024×768, touch emulation, `matchMedia('(pointer: coarse)')` true, the table drawn and sorted by
+      Due: `PASS | … :: {"coarse":true,"sorts":[{"w":79.1,"h":44,"col":"name"},{"w":48.3,"h":44,…},
+      {"w":62.1,"h":44,…},{"w":44,"h":44,"col":"due"},{"w":56.1,"h":44,…}],"reset":{"w":103,"h":44}}` — Due
+      sits exactly on the `min-width` floor, which is the departure doing its work. At 390×844,
+      `horizontal-overflow.mjs`'s WO-3.59 block now taps the real Due heading where it used to plant
+      `data-wo359-probe`: `PASS | WO-3.55: and with a sort on — Due tapped, so ↺ Your order stands in
+      the Actions heading — the page still does not scroll sideways at 390x844 :: sorted true · "↺ Your
+      order" · page scrolls 0px`. The stand-in is gone.
+- [x] The hint carries ruling 10's sentence.
+      — `PASS | WO-3.55: the hint carries ruling 10's sentence, word for word :: found`, matching *Tap a
+      column heading to sort what is under each category; tap it again to reverse, a third time for your
+      order. While a sort is on, the arrows rest — ↺ Your order brings them back.* WO-3.54's two hint
+      checks (weighted and points) still pass beside it.
+- [x] 👤 On the teaching iPad: a heading tap sorts, the faint ↕ reads as tappable, and ↺ Your order
+      brings the arrows back.
+      — Read by the owner on the teaching iPad, 2026-10-11, at v187 served from the dev server after a
+      force-quit: a heading tap reordered rows within each category, the faint ↕ read as tappable, and
+      the arrows rested while sorted and came back on ↺ Your order. All three pass.
+- [x] `CACHE` in `sw.js` is bumped.
+      — `planbook-shell-v186` → `planbook-shell-v187` (`index.html`, `src/assignments.js`,
+      `src/assignments.css` and `src/shell.js` are all in `SHELL`).
+
+**The runs.** `node tools/verify-shell.mjs` on the delivered tree: `2008 checks · 2008 passed · 0 failed
+· 0 skipped`, 64,109 lines, 31.9 lines per check, 1067s, exit 0, 2026-10-11 on the real clock — and
+again after both mutation reverts and this doc pass, the same `2008 · 2008 · 0 · 0`, 1050s, exit 0.
+`node tools/wo-sweep.mjs`: `50 checks · 46 passed · 0 failed · 4 to review`, exit 0, after
+`tools/README.md`'s call-site line went 1978 → 1996. The reviews are the standing three and *CSS
+selectors added in the working tree with no coarse-block rule: `.assign-sort-mark`* — read and
+answered: it is the ↕ ▲ ▼ glyph inside the button, not a control, and the button around it carries
+the floor.
+
+---
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

@@ -201,6 +201,12 @@
       data-assignment-edit="<id>"     opens the editor for that assignment
       data-assignment-move-up="<id>"  moves it one place earlier inside its own category group
       data-assignment-move-down="<id>"  one place later
+      data-assignment-sort="name|points|assigned|due|entered"  a column heading of the list (WO-3.55):
+                                      sorts what is under each category — first tap the useful
+                                      direction, second the reverse, third the teacher's order. A
+                                      view, and it WRITES NOTHING, so it chains nothing
+      data-assignment-sort-reset      ↺ Your order, in the Actions heading while a sort is on: back to
+                                      the order the arrows set, and the arrows with it. Writes nothing
       data-assignment-duplicate="<id>"  opens the copy dialog — into other sections of the course
       data-assignment-copy-door       the editor's Copy into other classes…, shown during a create:
                                       settles the editor's dates (WO-3.50), closes it, and opens the
@@ -1243,6 +1249,13 @@ function showClassScreen(name) {
   /* AND ITS CATEGORY PILL GOES BACK TO *ALL* (WO-3.28), here and for the same two reasons — the
      calendar's ruling that a filter is a door and not a preference. */
   if (want === 'scores') scores.resetScoreCategory();
+  /* AND THE ASSIGNMENT LIST'S SORT GOES BACK TO THE TEACHER'S ORDER (WO-3.55, ruling 6), here and
+     for the same two reasons: a sort is a view she asked for on one visit, and every way onto the
+     list comes through this function — the switcher's pill, openClassOn(), and a class tab tapped
+     while the list is up — so clearing it on arrival is clearing it on every way back. A change of
+     term on the list is the other reset, and src/assignments.js keys the sort by class and term for
+     it, as it keys the moved-work note. */
+  if (want === 'assignments') assignments.clearAssignmentSort();
   const view = views.showView(want);
   classes.refreshClassBar();
   screenNav.refreshScreenNav();
@@ -3138,6 +3151,14 @@ document.addEventListener('click', (e) => {
     assignments.moveAssignmentDown(assignmentDown.getAttribute('data-assignment-move-down'));
     afterAssignmentChange(); return;
   }
+  /* THE LIST'S SORT (WO-3.55). Neither chains afterAssignmentChange(): a sort is a view of the list
+     and writes nothing, so the score grid — which reads its columns from the document's order — has
+     nothing to redraw, and chaining it would be the first step towards a sort that does. */
+  const assignmentSort = e.target.closest('[data-assignment-sort]');
+  if (assignmentSort) {
+    assignments.sortAssignmentsBy(assignmentSort.getAttribute('data-assignment-sort')); return;
+  }
+  if (e.target.closest('[data-assignment-sort-reset]')) { assignments.showTeacherOrder(); return; }
   const assignmentCopy = e.target.closest('[data-assignment-duplicate]');
   if (assignmentCopy) {
     assignments.openCopyEditor(assignmentCopy.getAttribute('data-assignment-duplicate'),

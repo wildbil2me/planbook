@@ -45,7 +45,7 @@
    has one: a control covered only by some other selector's rule is a control the next reader has
    to go and prove is covered. */
 .screen-nav-btn, .assign-row-btn, .assign-field-input, .assign-field-select, .assign-field-date,
-.assign-copy-tick, .assign-hold-tick, .assign-name-btn, .assign-icon-btn {
+.assign-copy-tick, .assign-hold-tick, .assign-name-btn, .assign-icon-btn, .assign-sort-btn {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -308,6 +308,26 @@
    shipped red hover. */
 .assign-icon-btn { display: inline-flex; align-items: center; justify-content: center; padding: 4px 8px; }
 .assign-icon-btn svg { width: 14px; height: 14px; display: block; }
+
+/* A COLUMN HEADING THAT SORTS (WO-3.55) — lifted from design/mockups/proposed-assign-tidy.css
+   § ASSIGN SORT, every class under its own name and every value as drawn. A real button inside the
+   <th>, wearing the heading's own type so the row reads as headings rather than as a toolbar;
+   `aria-sort` goes on the <th>. The mark is a faint ↕ when unsorted — an iPad has no hover to reveal
+   it — and ▲ or ▼ in indigo on the one column sorting. The focus ring is the browser's, as the name
+   button's is. */
+.assign-sort-btn {
+  background: none; border: 0; padding: 0; margin: 0; cursor: pointer;
+  font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.assign-sort-btn:hover { color: #5b6fcc; }
+.assign-sort-btn.on { color: #5b6fcc; }
+.assign-sort-mark { font-size: 9px; opacity: 0.5; }
+.assign-sort-btn.on .assign-sort-mark { opacity: 1; }
+/* The Actions heading holds ↺ Your order while a sort is on, right-aligned over the row buttons it
+   gives back. Lower-case: it is a control, not a heading. The button is `.class-action-btn` and
+   `.assign-row-btn` worn as-is, so it takes the row buttons' face and their coarse floor. */
+.assign-table thead .assign-col-reset { text-align: right; text-transform: none; letter-spacing: 0; }
 
 /* The category group heading. The list is grouped by category rather than flat because the weight
    is what makes a mark out of 20 mean anything, and because an empty category has to be visible —
@@ -679,6 +699,11 @@
   .assign-icon-btn { min-height: 44px; min-width: 44px; }
   .assign-icon-btn svg { width: 16px; height: 16px; }
   .assign-name-btn { min-height: 44px; }
+  /* WO-3.55, in the same pass that added it. The drawing gives the sort heading a 44px height and no
+     width, and "DUE ↕" in the heading's 10px capitals is about 32px wide — so `min-width: 44px` is
+     added here AS A DEPARTURE FROM THE DRAWING, which the work order folded in before dispatch.
+     ↺ Your order is `.assign-row-btn`, two lines up. */
+  .assign-sort-btn { min-height: 44px; min-width: 44px; }
   .assign-table tbody td { padding: 7px 8px; }
   .assign-progress { min-width: 120px; }
   .assign-count { font-size: 12px; }
