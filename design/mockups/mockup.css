@@ -230,3 +230,24 @@ body { padding-bottom: 60px; }
   font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 11px; color: #3a4250;
 }
 .mk-row .modal-panel { width: 100%; margin: 0; animation: none; }
+
+/* A message in a dialog, picked out (dialog-messages.html, 2026-10-12). A dashed outline rather
+   than a border, so it takes no width and the message sits exactly where the app would put it; and
+   a numbered tag inside it, so a caption can name it. Magenta because no colour in the app's palette
+   is magenta: the outline can never be read as one of the app's own red, amber or indigo notes. */
+.mk-hit { outline: 2px dashed #d6336c; outline-offset: 3px; }
+.mk-hit-tag {
+  display: inline-block; margin-right: 6px; padding: 1px 5px; border-radius: 3px;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 10px; font-weight: 700; line-height: 1.4; color: #fff; background: #d6336c;
+  vertical-align: 1px;
+}
+/* Content left out of a drawn dialog because it is not what the frame is about: a list of rows,
+   a term-long table. Hatched, so it reads as a hole in the drawing rather than as an empty state. */
+.mk-elide {
+  padding: 10px 12px; border: 1.5px dashed #a0aab8; border-radius: 4px;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 11px; line-height: 1.5;
+  color: #6b7a8d;
+  background: repeating-linear-gradient(135deg, #fff 0 8px, #f3f4f7 8px 16px);
+}
+.mk-elide + .mk-elide { margin-top: 6px; }

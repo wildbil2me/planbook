@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Where a dialog's messages go</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="../../src/assignments.css">
+<link rel="stylesheet" href="../../src/scores.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWINGS, NOT THE APP.</strong>
+  <span>Static HTML. Nothing is wired to anything and every value is typed in. Drawn 2026-10-12 against v191, after WO-3.54, WO-3.55, WO-3.57 and WO-1.77 landed.</span>
+  <span>The ten dialogs behind Assignments and Scores · <a href="../../plans/work-orders/phase-3-gradebook.md#wo-358--the-dialogs-behind-the-assignments-and-scores-screens-are-read-together-and-a-layout-is-ruled">WO-3.58</a> · booked as <a href="../../plans/work-orders/phase-3-gradebook.md#wo-363--the-assignment-editors-messages-draw-together-just-above-its-buttons">WO-3.63</a> · <a href="../../plans/work-orders/phase-3-gradebook.md#wo-364--the-move-confirms-note-and-the-categories-panels-error-line-draw-above-their-buttons">WO-3.64</a> · <a href="../../plans/work-orders/phase-3-gradebook.md#wo-365--the-grade-sheets-warning-and-empty-sentences-draw-above-print-and-csv">WO-3.65</a> · <a href="../../plans/work-orders/phase-3-gradebook.md#wo-366--a-nameless-close-from-the-scores-screen-shows-its-warning-on-the-scores-screen">WO-3.66</a> · <a href="index.html">contents</a></span>
+</div>
+
+<!-- No proposed*.css on this page, and that is a finding rather than an omission: every proposal
+     below is a shipped element moved, never a new class. The page links the shipped src/shell.css,
+     src/assignments.css and src/scores.css (rule 2), so every frame is drawn by today's rules and a
+     "proposed" frame differs from its "now" frame only in the ORDER of the same elements. The one
+     sheet this page adds to is mockup.css, for the magenta outline that picks a message out. Every
+     class name, student name and assignment name is invented. -->
+
+<div class="mk-frame">
+<div class="mk-caption"><strong>The question.</strong> WO-3.56’s iPad reading found the assignment editor’s <em>needs a name</em> refusal drawing <strong>under</strong> Done, where it is easy to miss. Each of these ten dialogs grew a work order at a time, so a message lands wherever its work order put it. Every dialog is drawn below as it ships at v191, at the width WO-1.77 ruled for its kind — <code>modal-confirm</code> 480, <code>modal-form</code> 640, <code>modal-report</code> 900, and the Grade sheet’s one override at 980 — and, beside it, as proposed under the rule.</div>
+<div class="mk-caption decided"><strong>The rule, the owner’s, 2026-10-12, at dispatch:</strong> option A. <em>A dialog’s messages — refusals, warnings, notes — draw ABOVE its buttons, in one place, for every dialog in scope.</em> First case: the editor’s <em>needs a name</em> refusal moves from under the buttons to just above them. <strong>Not “beside the field.”</strong> Every “proposed” frame on this page is drawn under it.</div>
+<div class="mk-caption decided"><strong>The scope, the owner’s, 2026-10-12, at dispatch:</strong> exactly these ten dialogs — <code>assignmentModal</code>, <code>assignmentMoveModal</code>, <code>holdModal</code>, <code>assignmentCopyModal</code>, <code>assignmentDeleteModal</code>, <code>categoriesModal</code>, <code>gradingModeModal</code>, <code>categoryRemoveModal</code>, <code>letterScaleModal</code> and <code>gradesRecordModal</code>. Nothing added. The Scores Keys dialog and the past-due banner stay out.</div>
+<div class="mk-caption"><strong>How to read it.</strong> A <span class="mk-hit" style="padding:0 4px">magenta dashed outline</span> picks out a <strong>message</strong>: a sentence the code draws only when something is the case — a refusal (red), a warning (amber), a note. Its tag numbers it for the caption. Standing prose that is always there — the opening paragraph, the grey hints, a field’s caption — is the dialog’s own text, not a message, and is not outlined. That line is the drawing’s reading of “messages”, and the few places it is not obvious are amber questions below. Hatched boxes are content left out because it is not what the frame is about.</div>
+</div>
+
+<!-- ═══════════════════════════ 1 · THE ASSIGNMENT EDITOR ═══════════════════════════ -->
+
+<p class="mk-section">1 · The assignment editor — <code>assignmentModal</code>, modal-form 640</p>
+<div class="mk-row">
+  <div style="flex-basis:640px"><span class="mk-row-label">Now, v191 — two messages in two places, one of them under Done</span><div class="modal-panel modal-form" role="dialog"><div class="modal-header"><h2>Untitled assignment — English III (B)</h2><button class="modal-close" type="button" aria-label="Close">✕</button></div><div class="modal-body">
+<p>What it is called, what it is out of, which category it counts in, and when. Everything here is editable later and nothing is settled by writing it down — moving an assignment to another category is one tap on the list below it.</p>
+<div class="assign-fields"><div class="assign-field-row"><label class="assign-field assign-field-wide"><span class="assign-field-label">Name</span><input class="assign-field-input" type="text" value="" aria-label="Name"></label><label class="assign-field"><span class="assign-field-label">Out of</span><input class="assign-field-input" type="text" value="20" aria-label="Out of"><span class="assign-field-note">0 is extra credit, and it stays 0.</span></label></div><div class="mk-elide">Category · Assigned · Due · Hold out of the grade — the field rows, unchanged</div></div>
+<p class="assign-term-note mk-hit"><span class="mk-hit-tag">1</span>None of English III (B)’s terms has its dates typed in, so no due date can pick a term for this assignment, and it stays in Quarter 1. Type the term dates in the class manager and the due date will place it.</p>
+<p class="class-hint"><strong>Both dates are plain dates, and a new assignment starts them on today.</strong> Type over either one, or clear it. <strong>The due date picks the term</strong> when you close this … — the first hint, unchanged.</p>
+<p class="class-hint"><strong>0 points is extra credit.</strong> Type it and it stays 0 … — the second hint, unchanged.</p>
+<div class="modal-actions"><button class="class-action-btn primary" type="button">Done</button><button class="class-action-btn" type="button">Copy into other classes…</button><button class="class-action-btn" type="button">Cancel</button></div>
+<p class="class-error mk-hit"><span class="mk-hit-tag">2</span>This assignment needs a name. Type one in the Name field, then press Done.</p>
+</div></div></div>
+  <div style="flex-basis:640px"><span class="mk-row-label">Proposed — both in one place, just above the buttons</span><div class="modal-panel modal-form" role="dialog"><div class="modal-header"><h2>Untitled assignment — English III (B)</h2><button class="modal-close" type="button" aria-label="Close">✕</button></div><div class="modal-body">
+<p>What it is called, what it is out of, which category it counts in, and when. Everything here is editable later and nothing is settled by writing it down — moving an assignment to another category is one tap on the list below it.</p>
+<div class="assign-fields"><div class="assign-field-row"><label class="assign-field assign-field-wide"><span class="assign-field-label">Name</span><input class="assign-field-input" type="text" value="" aria-label="Name"></label><label class="assign-field"><span class="assign-field-label">Out of</span><input class="assign-field-input" type="text" value="20" aria-label="Out of"><span class="assign-field-note">0 is extra credit, and it stays 0.</span></label></div><div class="mk-elide">Category · Assigned · Due · Hold out of the grade — the field rows, unchanged</div></div>
+<p class="class-hint"><strong>Both dates are plain dates, and a new assignment starts them on today.</strong> Type over either one, or clear it. <strong>The due date picks the term</strong> when you close this … — the first hint, unchanged.</p>
+<p class="class-hint"><strong>0 points is extra credit.</strong> Type it and it stays 0 … — the second hint, unchanged.</p>
+<p class="assign-term-note mk-hit"><span class="mk-hit-tag">1</span>None of English III (B)’s terms has its dates typed in, so no due date can pick a term for this assignment, and it stays in Quarter 1. Type the term dates in the class manager and the due date will place it.</p>
+<p class="class-error mk-hit"><span class="mk-hit-tag">2</span>This assignment needs a name. Type one in the Name field, then press Done.</p>
+<div class="modal-actions"><button class="class-action-btn primary" type="button">Done</button><button class="class-action-btn" type="button">Copy into other classes…</button><button class="class-action-btn" type="button">Cancel</button></div>
+</div></div></div>
+</div>
+<div class="mk-frame">
+<div class="mk-caption"><strong>Now.</strong> <strong>1</strong> is <code>#assignmentTermNote</code>, amber: no term holds the dates — painted on opening in a class whose terms carry no dates, or at a close the dates cannot place (WO-3.50). It sits under the fields and above the two hints. <strong>2</strong> is <code>#assignmentError</code>, red: Done (or <em>Copy into other classes…</em>) refused on a blank name (WO-3.56, ruling 4), and it sits <strong>after</strong> <code>.modal-actions</code> — the first case. The two rarely show together; they are drawn together so both places are on one picture.</div>
+<div class="mk-caption"><strong>Proposed.</strong> Both move into one place, directly above <code>.modal-actions</code>, after the two hints. Nothing else moves, and no class is added: <code>.class-error</code>’s and <code>.assign-term-note</code>’s own top margins already space them, and <code>.modal-actions</code>’ 18px separates them from the buttons. The wording of both stays as it is — neither says where it sits.</div>
+<div class="mk-caption ask"><strong>The drawing’s guess — order inside the place.</strong> The refusal is drawn <strong>last</strong>, touching the buttons, and the amber term note above it: the refusal is about the tap just made and is the one thing that can stop it, so it sits nearest the button that was tapped. The other order would be just as much “one place.”</div>
+<div class="mk-caption ask"><strong>The drawing’s reading — the accommodation prompt is not a message, and stays where it is.</strong> It is not drawn here because its whole state is “hidden” on most opens (and always under a projector). It is the <code>.supports-panel</code> under the fields: a fact about the <em>category picked above it</em>, with its own <em>Show which students</em> button, and its markup comment places it there deliberately (WO-3.8). Moving it into the message place would put a sentence about students’ accommodations directly on top of Done. If the owner reads the rule as taking it too, it joins 1 and 2 and WO-3.63 grows a line.</div>
+<div class="mk-caption"><strong>Not messages either:</strong> the field notes — <em>0 is extra credit, and it stays 0.</em> under Out of, and the hold box’s sentence — are standing captions, there on every open, and stay beside their fields.</div>
+</div>
+
+<!-- ═══════════════════════════ 2 · THE MOVE CONFIRM ═══════════════════════════ -->
+
+<p class="mk-section">2 · Move it to another term? — <code>assignmentMoveModal</code>, modal-confirm 480</p>
+<div class="mk-row">
+  <div><span class="mk-row-label">Now, v191 — a note under the buttons</span><div class="modal-panel modal-confirm" role="dialog"><div class="modal-header"><h2>Move it to Quarter 2?</h2><button class="modal-close" type="button" aria-label="Back to the assignment">✕</button></div><div class="modal-body">
+<p>“Gatsby chapters 1–3 quiz” is now due Nov 4, which is in Quarter 2, and it is filed in Quarter 1. The due date picks the term, so closing the editor moves it, and its scores go with it.</p>
+<div class="modal-section-label">What goes with it</div>
+<div class="class-delete-facts"><div class="class-delete-line">24 scores move from Quarter 1 to Quarter 2.</div><div class="class-delete-line">Quarter 1’s grades stop counting them and Quarter 2’s start. If Quarter 1’s grades are already in the SIS, they will no longer match.</div></div>
+<div class="modal-actions"><button class="class-action-btn primary" type="button">Move it to Quarter 2</button><button class="class-action-btn" type="button">Keep it in Quarter 1</button></div>
+<p class="class-hint mk-hit"><span class="mk-hit-tag">1</span>To change the date instead, close this and you are back in the assignment.</p>
+</div></div></div>
+  <div><span class="mk-row-label">Proposed — the note above the buttons</span><div class="modal-panel modal-confirm" role="dialog"><div class="modal-header"><h2>Move it to Quarter 2?</h2><button class="modal-close" type="button" aria-label="Back to the assignment">✕</button></div><div class="modal-body">
+<p>“Gatsby chapters 1–3 quiz” is now due Nov 4, which is in Quarter 2, and it is filed in Quarter 1. The due date picks the term, so closing the editor moves it, and its scores go with it.</p>
+<div class="modal-section-label">What goes with it</div>
+<div class="class-delete-facts"><div class="class-delete-line">24 scores move from Quarter 1 to Quarter 2.</div><div class="class-delete-line">Quarter 1’s grades stop counting them and Quarter 2’s start. If Quarter 1’s grades are already in the SIS, they will no longer match.</div></div>
+<p class="class-hint mk-hit"><span class="mk-hit-tag">1</span>To change the date instead, close this and you are back in the assignment.</p>
+<div class="modal-actions"><button class="class-action-btn primary" type="button">Move it to Quarter 2</button><button class="class-action-btn" type="button">Keep it in Quarter 1</button></div>
+</div></div></div>
+</div>
+<div class="mk-frame">
+<div class="mk-caption"><strong>1</strong> is static markup, the same on every open, so by this page’s own reading it is standing prose rather than a message — <strong>but it is a note, and it is the one thing in these ten dialogs other than the editor’s refusal that draws under its buttons.</strong> The rule says <em>notes</em> in as many words, and a reader who finishes at the buttons never sees the third answer (the ✕ goes back to the editor), so it moves. The red facts panel is the dialog’s content and stays.</div>
+</div>
+
+<!-- ═══════════════════════════ 3 · THE HOLD CONFIRM ═══════════════════════════ -->
+
+<p class="mk-section">3 · Hold this column out of the grade? — <code>holdModal</code>, modal-confirm 480</p>
+<div class="mk-row">
+  <div><span class="mk-row-label">Now, v191 — and proposed: nothing moves</span><div class="modal-panel modal-confirm" role="dialog"><div class="modal-header"><h2>Hold this column out of the grade?</h2><button class="modal-close" type="button" aria-label="Close">✕</button></div><div class="modal-body">
+<p>While it is held, “Gatsby chapters 1–3 quiz” counts toward nothing in English III (B). You can still type scores, flags and notes into it, and no grade, signal, past-due prompt or message home sees them until you commit it. A score changed while it is held keeps no history of the changes; the score it had before the hold is kept.</p>
+<div class="modal-section-label">Grades that change in Quarter 1</div>
+<div class="mode-change-facts"><div class="mode-change-line">Alvarez, Mateo — 76.39% C → 78.10% C+</div><div class="mode-change-line">Castellano, Ines — 57.87% F → 61.02% D-</div></div>
+<div class="modal-actions"><button class="class-action-btn primary" type="button">Hold it out of the grade</button><button class="class-action-btn" type="button">Keep it counting</button></div>
+</div></div></div>
+</div>
+<div class="mk-frame">
+<div class="mk-caption"><strong>No message.</strong> The lead and the list of changing grades are the question itself, and when no grade changes the list says so in words (<em>No student’s grade changes</em>) inside the same panel. Nothing draws under the buttons. Complies as it ships; no row touches it.</div>
+</div>
+
+<!-- ═══════════════════════════ 4 · DUPLICATE ═══════════════════════════ -->
+
+<p class="mk-section">4 · Duplicate this assignment — <code>assignmentCopyModal</code>, modal-report 900</p>
+<div class="mk-row">
+  <div style="flex-basis:900px"><span class="mk-row-label">Now, v191 — and proposed: nothing moves</span><div class="modal-panel modal-report" role="dialog"><div class="modal-header"><h2>Duplicate this assignment</h2><button class="modal-close" type="button" aria-label="Close">✕</button></div><div class="modal-body">
+<p>Copying “Gatsby chapters 1–3 quiz” (20 points) from English III (B). Each copy is its own assignment and arrives with no scores.</p>
+<div class="assign-fields assign-copy-naming"><div class="assign-field-row"><label class="assign-field assign-field-wide"><span class="assign-field-label">Name of each copy</span><input class="assign-field-input" type="text" value="Gatsby chapters 1–3 quiz" aria-label="Name of each copy"></label></div></div>
+<div class="assign-copy-list">
+<div class="mk-elide">Class · term | Category | Assigned | Due — the heads, then the source line: English III (B) · this assignment · Quarter 1</div>
+<div class="mk-elide">✓ English III (D) · Quarter 1 | Quizzes | Oct 12 | Oct 19</div>
+<div class="mk-elide">✓ English I (A) · — | — | Oct 12 | Oct 19</div>
+<div class="assign-copy-flag mk-hit"><span class="mk-hit-tag">1</span>Nothing here is called “Quizzes”, so this copy goes in no category. Pick one, or file it later.</div>
+<div class="mk-elide">☐ AP Literature · Not copied</div>
+</div>
+<p class="class-hint mk-hit" style="margin-top:12px"><span class="mk-hit-tag">2</span>Each copy’s dates start on this one’s and can be changed on its own line. Nothing is re-dated to today.</p>
+<div class="modal-actions"><button class="class-action-btn primary" type="button">Copy into 2 classes</button><button class="class-action-btn" type="button">Cancel</button></div>
+</div></div></div>
+</div>
+<div class="mk-frame">
+<div class="mk-caption"><strong>2</strong> is <code>#assignmentCopyNote</code>, the foot note: it changes with the ticks and the name — <em>Tick the classes…</em>, <em>Each copy needs a name…</em> (WO-3.56), or the sentence drawn — and it already sits directly above the buttons. <strong>1</strong> is one of the amber lines under a ticked class (<code>.assign-copy-flag</code>): why that line cannot be placed in a term, or has no category. They are above the buttons too. Complies as it ships.</div>
+<div class="mk-caption decided"><strong>Decided, the owner, 2026-10-12 — a line’s own amber flag stays on its line.</strong> Read strictly, “in one place” would gather every line’s flag into the foot note. That would lift <em>this copy goes in no category</em> away from the class it is about and make each one name its class to be understood — with five classes ticked, five sentences in a pile. Each flag is about one line of a list and sits under it; the dialog’s one place for messages about the whole dialog is the foot note. If the owner reads it the other way, it is a row of its own, not a line on any row below.</div>
+</div>
+
+<!-- ═══════════════════════════ 5 · DELETE ═══════════════════════════ -->
+
+<p class="mk-section">5 · Delete this assignment? — <code>assignmentDeleteModal</code>, modal-confirm 480</p>
+<div class="mk-row">
+  <div><span class="mk-row-label">Now, v191 — and proposed: nothing moves</span><div class="modal-panel modal-confirm" role="dialog"><div class="modal-header"><h2>Delete this assignment?</h2><button class="modal-close" type="button" aria-label="Close">✕</button></div><div class="modal-body">
+<p>Deleting “Gatsby chapters 1–3 quiz” from English III (B) removes it and every score on it. This cannot be undone, and a backup file is the only way back.</p>
+<div class="modal-section-label">What goes with it</div>
+<div class="class-delete-facts"><div class="class-delete-line">24 scores entered on it</div><div class="class-delete-line">20 points in Quizzes</div></div>
+<div class="modal-actions"><button class="class-action-btn danger" type="button">Delete Gatsby chapters 1–3 quiz</button><button class="class-action-btn" type="button">Cancel</button></div>
+</div></div></div>
+</div>
+<div class="mk-frame">
+<div class="mk-caption"><strong>No message.</strong> The lead and the red count are the question. Complies as it ships; no row touches it.</div>
+</div>
+
+<!-- ═══════════════════════════ 6 · CATEGORIES & WEIGHTS ═══════════════════════════ -->
+
+<p class="mk-section">6 · Categories &amp; weights — <code>categoriesModal</code>, modal-form 640</p>
+<div class="mk-row">
+  <div style="flex-basis:640px"><span class="mk-row-label">Now, v191 — the total above Add; an error line nothing writes, under everything</span><div class="modal-panel modal-form" role="dialog"><div class="modal-header"><h2>Categories &amp; weights</h2><button class="modal-close" type="button" aria-label="Close">✕</button></div><div class="modal-body">
+<p>What <strong>English III (B)</strong> is graded on, and how much each part counts. Every class has its own set …</p>
+<div class="modal-section-label">How this class is graded</div>
+<div class="grading-modes" role="group"><button class="pill active" type="button">Weighted categories</button><button class="pill" type="button">Total points</button></div>
+<div class="modal-section-label" style="margin-top:16px">Categories in this class</div>
+<div class="mk-elide">Essays 40 · Quizzes 35 · Participation 20 — one row each: name, weight, ↑ ↓, Remove</div>
+<p class="category-total warn mk-hit"><span class="mk-hit-tag">1</span>⚠ Weights total 95%, not 100% — 5% short. Nothing is blocked: keep setting up. Any grade in this class is provisional until they add up.</p>
+<div class="category-actions"><button class="class-action-btn" type="button">Add a category</button></div>
+<p class="class-hint">Weights are percentages of the final grade and want to add up to 100 … — the first hint, unchanged.</p>
+<p class="class-hint">To stop a category counting but keep it, set its weight to 0 … — the second hint, unchanged.</p>
+<div class="mk-elide mk-hit" style="margin-top:10px"><span class="mk-hit-tag">2</span><code>#categoryError</code> — a <code>.class-error</code> line, hidden. Nothing in <code>src/</code> has ever written a sentence into it.</div>
+</div></div></div>
+  <div style="flex-basis:640px"><span class="mk-row-label">Proposed — the error line joins the total, above Add</span><div class="modal-panel modal-form" role="dialog"><div class="modal-header"><h2>Categories &amp; weights</h2><button class="modal-close" type="button" aria-label="Close">✕</button></div><div class="modal-body">
+<p>What <strong>English III (B)</strong> is graded on, and how much each part counts. Every class has its own set …</p>
+<div class="modal-section-label">How this class is graded</div>
+<div class="grading-modes" role="group"><button class="pill active" type="button">Weighted categories</button><button class="pill" type="button">Total points</button></div>
+<div class="modal-section-label" style="margin-top:16px">Categories in this class</div>
+<div class="mk-elide">Essays 40 · Quizzes 35 · Participation 20 — one row each: name, weight, ↑ ↓, Remove</div>
+<p class="category-total warn mk-hit"><span class="mk-hit-tag">1</span>⚠ Weights total 95%, not 100% — 5% short. Nothing is blocked: keep setting up. Any grade in this class is provisional until they add up.</p>
+<div class="mk-elide mk-hit" style="margin-top:10px"><span class="mk-hit-tag">2</span><code>#categoryError</code> — still hidden, still written by nothing; now in the one place, under the total.</div>
+<div class="category-actions"><button class="class-action-btn" type="button">Add a category</button></div>
+<p class="class-hint">Weights are percentages of the final grade and want to add up to 100 … — the first hint, unchanged.</p>
+<p class="class-hint">To stop a category counting but keep it, set its weight to 0 … — the second hint, unchanged.</p>
+</div></div></div>
+</div>
+<div class="mk-frame">
+<div class="mk-caption"><strong>This dialog has no Done</strong>: every field writes as it is typed and the ✕ closes it. Its own button is <em>Add a category</em>, so that is the button “above its buttons” is read against. <strong>1</strong> is <code>#categoryTotal</code>, drawn in both states (grey when the weights add up, amber with ⚠ when they do not): already directly above Add. <strong>2</strong> is <code>#categoryError</code>, at the very foot, under Add and under both hints.</div>
+<div class="mk-caption"><strong>A finding, not a layout question: 2 has never said anything.</strong> <code>showCategoryError()</code> in <code>src/categories.js</code> is called five times, every one of them with <code>''</code>, since the file was written at WO-3.1 (<code>git log -S</code> finds no other caller). <code>tools/verify/categories-weights.mjs</code> reads it twice — to assert it is empty, because a wrong total blocks nothing. It is an error slot in exactly the place the rule forbids, waiting for the next message somebody adds.</div>
+<div class="mk-caption ask"><strong>The drawing’s proposal — move it, not delete it.</strong> Moving keeps the harness’s two reads meaningful and gives a future refusal the place the rule says. Deleting it is the other honest answer — a slot for a message nothing says is a slot nobody tests — and costs the two reads. WO-3.64 carries it as an Open line, the owner’s at dispatch. In a class graded on total points the total line is hidden and the slot sits alone above Add; the same move holds.</div>
+</div>
+
+<!-- ═══════════════════════════ 7 · GRADING MODE ═══════════════════════════ -->
+
+<p class="mk-section">7 · Change how this class is graded? — <code>gradingModeModal</code>, modal-confirm 480</p>
+<div class="mk-row">
+  <div><span class="mk-row-label">Now, v191 — and proposed: nothing moves</span><div class="modal-panel modal-confirm" role="dialog"><div class="modal-header"><h2>Go back to weighted categories?</h2><button class="modal-close" type="button" aria-label="Close">✕</button></div><div class="modal-body">
+<p>Back on weighted categories, every grade in English III (B) is worked out from the weights again, exactly as you typed them. This changes every grade in the class at once, in every term — including a finished one whose letters are already in the SIS.</p>
+<p class="category-total warn mk-hit"><span class="mk-hit-tag">1</span>These weights total 95%, not 100%, so on weighted categories no student in English III (B) has a grade at all — in any term — until they add up. Every letter below goes.</p>
+<div class="modal-section-label">Class average in Quarter 1</div>
+<div class="mode-change-facts"><div class="mode-change-line">Now, on total points: 78.90%</div><div class="mode-change-line">On weighted categories: no grade</div></div>
+<div class="modal-section-label" style="margin-top:16px">Letters that change in Quarter 1</div>
+<div class="mode-change-facts"><div class="mode-change-line">Alvarez, Mateo — C → no grade</div><div class="mode-change-line">Brennan, Sofia — A- → no grade</div><div class="mode-change-line">… one line per student</div></div>
+<div class="modal-actions"><button class="class-action-btn primary" type="button">Change</button><button class="class-action-btn" type="button">Cancel</button></div>
+</div></div></div>
+</div>
+<div class="mk-frame">
+<div class="mk-caption"><strong>1</strong> is <code>#gradingModeWarn</code>, amber: drawn only when the mode being switched <em>to</em> has no grade at all. It is the dialog’s only message, and it is above the buttons. <strong>Complies with the rule as written</strong> — above, and in one place — so no row touches it.</div>
+<div class="mk-caption decided"><strong>Decided, the owner, 2026-10-12 — “in one place” means above the buttons and together, so this stays.</strong> In the editor the one place is <em>directly</em> above the buttons. If “in one place” is read as that same spot in every dialog, this warning moves down under the list of letters — and its own sentence ends <em>Every letter below goes</em>, which would then be false, so its wording would move with it. The drawing reads the rule as written and leaves it where it is: here it is the headline of the question, and the list under it is what it summarises. The owner’s, if the stricter reading is meant.</div>
+</div>
+
+<!-- ═══════════════════════════ 8 · CATEGORY REMOVE ═══════════════════════════ -->
+
+<p class="mk-section">8 · Remove this category? — <code>categoryRemoveModal</code>, modal-confirm 480</p>
+<div class="mk-row">
+  <div><span class="mk-row-label">Now, v191 — and proposed: nothing moves</span><div class="modal-panel modal-confirm" role="dialog"><div class="modal-header"><h2>Remove this category?</h2><button class="modal-close" type="button" aria-label="Close">✕</button></div><div class="modal-body">
+<p>Removing “Participation” from English III (B) keeps the work filed under it. The assignments and their scores stay, under no category, and they stop counting toward the grade until you file them under another category.</p>
+<div class="modal-section-label">Where its work goes</div>
+<div class="mode-change-facts"><div class="mode-change-line">3 assignments and 71 scores move to no category.</div><div class="mode-change-line">The remaining categories keep the weights they have, so this class totals 75% until you set them.</div></div>
+<div class="modal-actions"><button class="class-action-btn primary" type="button">Remove Participation</button><button class="class-action-btn" type="button">Cancel</button></div>
+</div></div></div>
+</div>
+<div class="mk-frame">
+<div class="mk-caption"><strong>No message.</strong> Complies as it ships; no row touches it.</div>
+</div>
+
+<!-- ═══════════════════════════ 9 · LETTER GRADES ═══════════════════════════ -->
+
+<p class="mk-section">9 · Letter grades — <code>letterScaleModal</code>, modal-form 640</p>
+<div class="mk-row">
+  <div style="flex-basis:640px"><span class="mk-row-label">Now, v191 — and proposed: nothing moves</span><div class="modal-panel modal-form" role="dialog"><div class="modal-header"><h2>Letter grades</h2><button class="modal-close" type="button" aria-label="Close">✕</button></div><div class="modal-body">
+<p>A percentage takes the <strong>first band it reaches</strong>, reading down this list. So the boundary you type is the whole of the rule …</p>
+<div class="modal-section-label" style="margin-top:16px">These bands are for</div>
+<div class="scale-subjects" role="group"><button class="pill active" type="button">Every class</button><button class="pill" type="button">English III (B)</button><button class="pill" type="button">AP Literature</button></div>
+<div class="scale-override"><span class="scale-override-note">AP Literature has its own bands, so nothing you change here reaches it. Every other class uses these.</span></div>
+<div class="modal-section-label" style="margin-top:16px">Bands, highest first</div>
+<div class="mk-elide">A 93 · A- 90 · B+ 87 · B 83 · B- 85 · … — one row per band: letter, boundary, range, ↑ ↓, Remove</div>
+<p class="scale-note warn mk-hit"><span class="mk-hit-tag">1</span>⚠ B- can never be reached: a band above it starts at the same percentage or lower, and a percentage takes the first band it meets reading down. Move it higher, or change a boundary. Nothing is blocked: keep going.</p>
+<div class="band-actions"><button class="class-action-btn" type="button">Add a band</button></div>
+<p class="class-hint">Each band runs from its own boundary up to the next one above it … — the first hint, unchanged.</p>
+<p class="class-hint">A class only has its own bands if you give it them … — the second hint, unchanged.</p>
+</div></div></div>
+</div>
+<div class="mk-frame">
+<div class="mk-caption"><strong>1</strong> is <code>#scaleNote</code>, the categories total’s twin: drawn in both states, amber with ⚠ when a band cannot be reached or the bottom leaves a gap, and directly above <em>Add a band</em>. No Done here either; the ✕ closes. The grey sentence under the subject pills (<code>.scale-override-note</code>) says which scale is on screen and sits above its own button — <em>Give English III (B) its own bands</em> when a class is picked — so it complies whichever way it is read. Complies as it ships; no row touches it.</div>
+</div>
+
+<!-- ═══════════════════════════ 10 · GRADE SHEET ═══════════════════════════ -->
+
+<p class="mk-section">10 · Grade sheet — <code>gradesRecordModal</code>, modal-report with its 980 override</p>
+<div class="mk-row">
+  <div style="flex-basis:980px"><span class="mk-row-label">Now, v191 — the buttons first, the warning under them</span><div class="modal-panel modal-report grades-report-panel" role="dialog"><div class="modal-header"><h2>Grade sheet</h2><button class="modal-close" type="button" aria-label="Close">✕</button></div><div class="modal-body">
+<div class="grades-report-actions"><button type="button" class="class-action-btn primary"><span aria-hidden="true">🖨</span> Print</button><button type="button" class="class-action-btn"><span aria-hidden="true">⬇</span> Download CSV</button></div>
+<div class="grades-report-head"><div class="grades-report-who"><div class="grades-report-name">English III (B)</div><div class="grades-report-sub">Quarter 1 · Aug 31 – Oct 30 · 25 students · 15 assignments</div><div class="grades-report-sub">Printed Monday, October 12, 2026 · Planbook</div></div></div>
+<div class="grade-none mk-hit"><span class="grade-none-text"><span class="mk-hit-tag">1</span>The category weights total 95%, so there is no grade yet.</span></div>
+<div class="mk-elide">Grades by student — slices of eight assignment columns, a term long; then the key</div>
+<p class="grades-report-note">This is grades and nothing else: names, the work in this term, and the marks you made. Nothing from a student’s support details is on this page or in the CSV …</p>
+</div></div></div>
+</div>
+<div class="mk-row">
+  <div style="flex-basis:980px"><span class="mk-row-label">Proposed — the warning above Print and CSV, the sheet unchanged under them</span><div class="modal-panel modal-report grades-report-panel" role="dialog"><div class="modal-header"><h2>Grade sheet</h2><button class="modal-close" type="button" aria-label="Close">✕</button></div><div class="modal-body">
+<div class="grade-none mk-hit" style="margin-bottom:12px"><span class="grade-none-text"><span class="mk-hit-tag">1</span>The category weights total 95%, so there is no grade yet.</span></div>
+<div class="grades-report-actions"><button type="button" class="class-action-btn primary"><span aria-hidden="true">🖨</span> Print</button><button type="button" class="class-action-btn"><span aria-hidden="true">⬇</span> Download CSV</button></div>
+<div class="grades-report-head"><div class="grades-report-who"><div class="grades-report-name">English III (B)</div><div class="grades-report-sub">Quarter 1 · Aug 31 – Oct 30 · 25 students · 15 assignments</div><div class="grades-report-sub">Printed Monday, October 12, 2026 · Planbook</div></div></div>
+<div class="mk-elide">Grades by student — slices of eight assignment columns, a term long; then the key</div>
+<p class="grades-report-note">This is grades and nothing else: names, the work in this term, and the marks you made. Nothing from a student’s support details is on this page or in the CSV …</p>
+</div></div></div>
+</div>
+<div class="mk-frame">
+<div class="mk-caption"><strong>The one dialog whose buttons are at the top</strong>, on purpose: the table under them is a term long, and a control at the foot of it is a control the teacher scrolls the whole sheet to reach (its markup comment). So “above its buttons” here means above the first thing in the body. <strong>1</strong> is the <code>.grade-none</code> banner, drawn when the weights do not total 100 — today it sits under the buttons and under the head. The proposal puts it, and only it, above Print and CSV: a warning that the sheet has no grades on it is read before the button that prints it.</div>
+<div class="mk-caption"><strong>The three empty states move the same way.</strong> When no class is open, nobody is on the roster, or nothing is assigned in the term, the body today is the head (if any) and one grey <code>.grades-report-empty</code> sentence under the buttons — <em>Nothing has been assigned in English III (B) for Quarter 1 yet …</em>. Each is a note, and each goes in the same place as 1. Not drawn as its own frame: it is the same move with a different sentence.</div>
+<div class="mk-caption ask"><strong>The drawing’s reading — the key and the closing note are the sheet, not messages.</strong> Both are there on every sheet, and both <em>print</em>: they are the paper’s own legend and its promise about support details, read by whoever holds the printout. They stay under the table. The head stays under the buttons too: it is the sheet’s title, not a message.</div>
+<div class="mk-caption ask"><strong>One thing for the build to measure, not the drawing to decide.</strong> Today the banner prints — the print block in <code>src/scores.css</code> hides the actions row and the head, and nothing hides <code>.grade-none</code>. Moving it above the actions row must not change what prints. WO-3.65 carries it as a line.</div>
+</div>
+
+<!-- ═══════════════════════════ 11 · THE SCORES SCREEN ═══════════════════════════ -->
+
+<p class="mk-section">11 · Not a dialog: where the nameless warning goes on the Scores screen — a proposal awaiting the owner</p>
+<div class="mk-frame">
+<div class="mk-caption"><strong>Handed to this review by WO-3.57’s ruling 4; not ruled by the review, and ruled S1 by the owner on 2026-10-12.</strong> The rule above is about dialogs; this is a screen, so it does not settle it. A blank close of the editor opened from Scores’ <code>+ New assignment</code> names the assignment <em>Untitled assignment</em> and sets the amber warning on the assignment list’s note, <code>#assignmentsMoved</code> — which the Scores screen does not draw. Today the teacher on Scores sees nothing; a screen reader hears it, and the list shows it on its next visit for that class and term. Three frames, upright at 820: as it ships, S1, and S2. <strong>The owner rules S1, S2 or neither at WO-3.66’s dispatch.</strong></div>
+</div>
+
+<p class="mk-section">S0 · As it ships, after a blank close — nothing on screen</p>
+<div class="mk-device"><span class="mk-device-label">iPad portrait · 820 · v191 · the editor just closed with no name</span>
+<div class="mk-device-screen" style="width:820px">
+<main class="main"><div class="panel scores-panel"><div class="panel-header"><div class="panel-title-row"><div class="panel-title"><h2>English III (B)</h2><p>Scores · Q1 · 25 students · 16 assignments</p></div><button class="class-action-btn" type="button"><span aria-hidden="true">←</span> All classes</button></div><nav class="screen-nav" aria-label="Screens for this class"><button class="screen-nav-btn" type="button">Attendance</button><button class="screen-nav-btn" type="button">Assignments</button><button class="screen-nav-btn active" type="button" aria-current="page">Scores</button><button class="screen-nav-btn" type="button">Calendar</button><button class="screen-nav-btn" type="button">Signals</button></nav></div><div class="scores-body">
+<div class="past-due"><div class="past-due-said"><span class="past-due-lead">4 blanks on work that is past due.</span><span class="past-due-where">In Vocabulary check 2 (due Oct 5). Nothing has been marked and no grade has changed — Planbook never decides anything from a date.</span></div><div class="past-due-actions"><button class="class-action-btn past-due-btn" type="button">Review the 4</button><button class="class-action-btn past-due-btn primary" type="button">Mark them missing</button><button class="class-action-btn past-due-btn" type="button">Not now</button></div></div>
+<div class="scores-top"><div class="scores-summary"><span>Class average <b>78.90%</b></span><span class="sep">·</span><span><b>251</b> blanks across 11 assignments</span><span class="sep">·</span><span>Weights total <b>100%</b></span></div><button class="class-action-btn primary" type="button" aria-haspopup="dialog">+ New assignment</button></div>
+<div class="mk-elide">The search row, the flag bar and the grid — one new column on the right, headed <em>Untitled assignment</em></div>
+</div></div></main>
+</div></div>
+
+<p class="mk-section">S1 · Ruled, the owner, 2026-10-12 — the list’s note, drawn on Scores too, after the past-due prompt and before the summary row</p>
+<div class="mk-device"><span class="mk-device-label">iPad portrait · 820 · proposal S1</span>
+<div class="mk-device-screen" style="width:820px">
+<main class="main"><div class="panel scores-panel"><div class="panel-header"><div class="panel-title-row"><div class="panel-title"><h2>English III (B)</h2><p>Scores · Q1 · 25 students · 16 assignments</p></div><button class="class-action-btn" type="button"><span aria-hidden="true">←</span> All classes</button></div><nav class="screen-nav" aria-label="Screens for this class"><button class="screen-nav-btn" type="button">Attendance</button><button class="screen-nav-btn" type="button">Assignments</button><button class="screen-nav-btn active" type="button" aria-current="page">Scores</button><button class="screen-nav-btn" type="button">Calendar</button><button class="screen-nav-btn" type="button">Signals</button></nav></div><div class="scores-body">
+<div class="past-due"><div class="past-due-said"><span class="past-due-lead">4 blanks on work that is past due.</span><span class="past-due-where">In Vocabulary check 2 (due Oct 5). Nothing has been marked and no grade has changed — Planbook never decides anything from a date.</span></div><div class="past-due-actions"><button class="class-action-btn past-due-btn" type="button">Review the 4</button><button class="class-action-btn past-due-btn primary" type="button">Mark them missing</button><button class="class-action-btn past-due-btn" type="button">Not now</button></div></div>
+<p class="assign-moved assign-moved-nameless mk-hit"><span class="mk-hit-tag">1</span>“Untitled assignment” was saved without a name. Edit it to give it a name.</p>
+<div class="scores-top"><div class="scores-summary"><span>Class average <b>78.90%</b></span><span class="sep">·</span><span><b>251</b> blanks across 11 assignments</span><span class="sep">·</span><span>Weights total <b>100%</b></span></div><button class="class-action-btn primary" type="button" aria-haspopup="dialog">+ New assignment</button></div>
+<div class="mk-elide">The search row, the flag bar and the grid — unchanged</div>
+</div></div></main>
+</div></div>
+
+<p class="mk-section">S2 · The alternative — the same line under the summary row, beside the button that made it</p>
+<div class="mk-device"><span class="mk-device-label">iPad portrait · 820 · alternative S2</span>
+<div class="mk-device-screen" style="width:820px">
+<main class="main"><div class="panel scores-panel"><div class="panel-header"><div class="panel-title-row"><div class="panel-title"><h2>English III (B)</h2><p>Scores · Q1 · 25 students · 16 assignments</p></div><button class="class-action-btn" type="button"><span aria-hidden="true">←</span> All classes</button></div><nav class="screen-nav" aria-label="Screens for this class"><button class="screen-nav-btn" type="button">Attendance</button><button class="screen-nav-btn" type="button">Assignments</button><button class="screen-nav-btn active" type="button" aria-current="page">Scores</button><button class="screen-nav-btn" type="button">Calendar</button><button class="screen-nav-btn" type="button">Signals</button></nav></div><div class="scores-body">
+<div class="past-due"><div class="past-due-said"><span class="past-due-lead">4 blanks on work that is past due.</span><span class="past-due-where">In Vocabulary check 2 (due Oct 5). Nothing has been marked and no grade has changed — Planbook never decides anything from a date.</span></div><div class="past-due-actions"><button class="class-action-btn past-due-btn" type="button">Review the 4</button><button class="class-action-btn past-due-btn primary" type="button">Mark them missing</button><button class="class-action-btn past-due-btn" type="button">Not now</button></div></div>
+<div class="scores-top"><div class="scores-summary"><span>Class average <b>78.90%</b></span><span class="sep">·</span><span><b>251</b> blanks across 11 assignments</span><span class="sep">·</span><span>Weights total <b>100%</b></span></div><button class="class-action-btn primary" type="button" aria-haspopup="dialog">+ New assignment</button></div>
+<p class="assign-moved assign-moved-nameless mk-hit"><span class="mk-hit-tag">1</span>“Untitled assignment” was saved without a name. Edit it to give it a name.</p>
+<div class="mk-elide">The search row, the flag bar and the grid — unchanged</div>
+</div></div></main>
+</div></div>
+
+<div class="mk-frame">
+<div class="mk-caption"><strong>Both are the same line</strong> — the assignment list’s <code>.assign-moved.assign-moved-nameless</code>, the owner’s sentence in the owner’s amber (WO-3.56, rulings 5 and the colour), shipped and worn as it is: no class is added, which is why this page has no proposed stylesheet. Both read the one note the list already keeps, keyed by class and term, so the two screens can never disagree about it, and opening the editor clears it on both.</div>
+<div class="mk-caption decided"><strong>Decided, the owner, 2026-10-12: S1.</strong> S1 puts every notice on the Scores screen in one band at the top of the body — the no-grade banner, the past-due prompt, and now this — in the same order the assignment list draws them (past-due, then the note). That is this review’s rule carried to a screen by analogy, and the run’s rule (WO-3.60: similar things in the same place on every class screen). S2 puts it next to <em>+ New assignment</em>, which is where the teacher’s eye was when she made it, at the cost of a third place on the screen for a notice.</div>
+<div class="mk-caption decided"><strong>Decided, the owner, 2026-10-12:</strong> (a) yes — the Scores host draws the whole note, indigo included; (b) the scrolled-list case is accepted and recorded on WO-3.66, not built. <strong>The two questions, as they were asked:</strong> (a) <em>Does the indigo moved-work note draw on Scores too?</em> A create from Scores that is filed under another term moves the class’s open term; whether Scores then says so in the indigo line, as the list does, is the same reader and the same line, and S1/S2 would carry it for free — or the Scores host could take the amber case only. (b) <strong>WO-3.57’s ruling 3 also handed this review a case</strong>: on a long assignment list scrolled down, the note sits at the top, off screen. The dispatch’s scope ruling is the ten dialogs, and neither this page nor the rule settles a scrolled screen. It is carried as an Open line on WO-3.66 rather than dropped.</div>
+</div>
+
+<!-- ═══════════════════════════ SUMMARY ═══════════════════════════ -->
+
+<p class="mk-section">The ten, in one table</p>
+<div class="mk-frame">
+<div class="mk-caption">
+<strong>Under the buttons today, and moving:</strong> the editor’s refusal (1·2) and, with it, its term note (1·1) — WO-3.63; the move confirm’s note (2·1) and the categories panel’s empty error line (6·2) — WO-3.64; the Grade sheet’s no-grade banner and its three empty sentences (10·1) — WO-3.65.<br>
+<strong>Already above their buttons, in one place, and not touched:</strong> Hold (3), Duplicate (4), Delete (5), Grading mode (7), Remove category (8), Letter grades (9).<br>
+<strong>Not a dialog:</strong> the Scores screen’s nameless warning — S1, the owner’s, 2026-10-12 — WO-3.66.
+</div>
+</div>
+
+</body>
+</html>

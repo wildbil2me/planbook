@@ -1193,3 +1193,90 @@ None for Scores. The search row's wrap under a thumb is a 👤 line for the buil
 the drawing. Frame E's three disagreements — doors in the title row or the toolbar, where paging
 lives, and one sort control or several — are expected, the owner, 2026-10-11: the run is working
 toward Calendar and Signals, and they follow Attendance, Assignments and Scores when their turn comes.
+
+# Where a dialog's messages go — WO-3.58, drawn and booked 2026-10-12
+
+**The fifteenth room, and the seventh drawn of something that already ships — and the first drawn of
+ten things at once.** One page, [`dialog-messages.html`](dialog-messages.html): the ten dialogs
+reached from the Assignments and Scores screens, each as it ships at v191 and at the width
+[WO-1.77](../../plans/work-orders/phase-1-shell-store-roster.md#wo-177--every-dialog-is-as-wide-as-it-was-ruled-and-480-is-for-confirms)
+ruled for its kind, with every message picked out in a magenta dashed outline, and beside it as
+proposed. It is a review rather than a screen: WO-3.56's iPad reading found the editor's *needs a
+name* refusal drawing under Done, and the owner asked for the dialogs to be read together instead
+of patched one at a time. Booked the same day as four S rows:
+[WO-3.63](../../plans/work-orders/phase-3-gradebook.md#wo-363--the-assignment-editors-messages-draw-together-just-above-its-buttons)
+(the editor),
+[WO-3.64](../../plans/work-orders/phase-3-gradebook.md#wo-364--the-move-confirms-note-and-the-categories-panels-error-line-draw-above-their-buttons)
+(the move confirm and the categories panel),
+[WO-3.65](../../plans/work-orders/phase-3-gradebook.md#wo-365--the-grade-sheets-warning-and-empty-sentences-draw-above-print-and-csv)
+(the Grade sheet) and
+[WO-3.66](../../plans/work-orders/phase-3-gradebook.md#wo-366--a-nameless-close-from-the-scores-screen-shows-its-warning-on-the-scores-screen)
+(the Scores screen, not a dialog). Every name on the page is invented.
+
+**No `proposed*.css`, and that is a finding.** Every proposal on the page is a shipped element moved
+— the editor's `#assignmentError` and `#assignmentTermNote`, the move confirm's `.class-hint`,
+`#categoryError`, the Grade sheet's `.grade-none` — and the one new surface, the Scores screen's
+warning, wears the assignment list's shipped `.assign-moved.assign-moved-nameless` as it is. So there
+is no section for § 19 to read and no collision to check; the page links `src/shell.css`,
+`src/assignments.css` and `src/scores.css` and nothing else of the app's. What it adds is chrome:
+`.mk-hit`, `.mk-hit-tag` and `.mk-elide` in [`mockup.css`](mockup.css). **The consequence:** § 19's
+back-pointer check reads only proposed sheets, so nothing mechanical ties the four rows to this page.
+Each row names it in a **Surface** deliverable by hand, which is rule 9 kept rather than checked.
+
+## What the drawing proposes
+
+- **1 · The editor** — the red refusal and the amber term note move into one place, directly above
+  Done, after the two hints; the refusal last, nearest the button. *(WO-3.63.)*
+- **2 · The move confirm** — its one note, *To change the date instead…*, moves from under the
+  buttons to above them. *(WO-3.64.)*
+- **6 · Categories & weights** — the error line nothing has ever written moves up to sit with the
+  weights total, above *Add a category*. *(WO-3.64.)*
+- **10 · The Grade sheet** — the no-grade banner, and the three empty-state sentences, move above
+  Print and CSV; the head, the table, the key and the printed note stay where they are. *(WO-3.65.)*
+- **3, 4, 5, 7, 8, 9** — Hold, Duplicate, Delete, Grading mode, Remove category and Letter grades
+  already draw their messages above their buttons, together. Drawn once each, marked "now, and
+  proposed: nothing moves."
+- **S1 / S2 · the Scores screen** — the list's nameless warning drawn on Scores too, either in the
+  notice band at the top of the body (S1, the drawing's lean) or under the summary row beside
+  *+ New assignment* (S2). *(WO-3.66, the owner's at its dispatch.)*
+
+## Decided, the owner, 2026-10-12, at dispatch
+
+- **The scope is exactly the ten dialogs** the work order lists. Nothing added; the Scores Keys
+  dialog and the past-due banner stay out.
+- **The rule is option A:** *a dialog's messages — refusals, warnings, notes — draw ABOVE its
+  buttons, in one place, for every dialog in scope.* The editor's refusal moves from under the
+  buttons to just above them, **not** beside the Name field.
+
+## Decided, the owner, 2026-10-12, after the verdict
+
+- **"In one place" means above the buttons and together, not one fixed spot.** The editor's messages
+  sit directly above Done because they answer the tap just made; a confirm's warning that frames the
+  question stays its headline. Grading mode's `#gradingModeWarn` stays where it ships, and its own
+  *Every letter below goes* stays true. *(Open question 5, answered as drawn.)*
+- **The Scores screen takes S1** — the nameless warning in the notice band at the top of the body,
+  after the past-due prompt and before the summary row. *(Open question 7's first part.)*
+- **The indigo moved-work note comes to Scores too** — the S1 host draws the whole note, never a
+  filtered half. **A scrolled list's note off screen is accepted and recorded**, not built; WO-3.57's
+  ruling 3 is discharged on WO-3.66. *(Open question 7's other two parts.)*
+- **A line's own flag stays on its line.** Duplicate's `.assign-copy-flag` sentences are about one
+  ticked class each and stay under it; the foot note is the place for messages about the whole
+  dialog. *(Open question 3, answered as drawn.)* Neither ruling books a row.
+
+## The open questions, collected
+
+1. **Order inside the editor's one place** — the drawing puts the refusal last, touching Done. The
+   other order is equally "one place." *(Open on WO-3.63.)*
+2. **The accommodation prompt** — the drawing reads it as not a message (a panel about the category
+   above it, with its own button) and leaves it under the fields. *(Open on WO-3.63.)*
+3. **A copy line's amber flag** — the drawing leaves each on its own line rather than gathering them
+   into the foot note. *(**Answered 2026-10-12, the owner: as drawn** — see above.)*
+4. **`#categoryError`** — move it (drawn) or delete it. *(Open on WO-3.64.)*
+5. **"In one place" as "directly above"** — read strictly, the grading-mode warning would move under
+   the letters, and its own *Every letter below goes* would have to change. The drawing reads the rule
+   as written and leaves it. *(**Answered 2026-10-12, the owner: as drawn** — see above.)*
+6. **The Grade sheet's key and printed note** — read as the sheet, not messages; they stay under the
+   table. *(Noted on WO-3.65.)*
+7. **Scores: S1, S2 or neither** — **S1, the owner, 2026-10-12**, with the indigo note coming too
+   and the scrolled-list case accepted (see above). *(**Answered 2026-10-12, the owner**; recorded
+   on WO-3.66.)*

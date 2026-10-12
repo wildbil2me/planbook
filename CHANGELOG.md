@@ -13,6 +13,22 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The dialogs behind Assignments and Scores are read together, and a layout is ruled — 2026-10-12
+
+WO-3.58, owner-directed, out of WO-3.56's iPad reading. A design review; nothing in the app changed
+and no cache bump.
+
+- **One drawing, `design/mockups/dialog-messages.html`, shows all ten dialogs** reached from the
+  Assignments and Scores screens, each with its messages outlined as it ships and as proposed.
+- **The rule: a dialog's messages draw above its buttons, together.** The editor's *needs a name*
+  refusal moves from under Done to just above it. Six of the ten already comply and do not move.
+  "Together" means above the buttons, not one fixed spot, and a copy line's own flag stays on its line.
+- **The Scores screen gets the nameless warning in its notice band at the top** (S1), drawing the
+  whole note the assignment list keeps, including the indigo *moved* line. A note scrolled off screen
+  on a long list is accepted as it is.
+- **The build is booked as four small rows**: WO-3.63 (the editor), WO-3.64 (the move confirm and
+  the categories panel), WO-3.65 (the Grade sheet) and WO-3.66 (the Scores screen).
+
 ### Nothing lets a file count creep back into the harness's prose — 2026-10-12
 
 WO-1.80, out of WO-1.79. Tooling only; nothing in the app changed and no cache bump.

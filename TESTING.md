@@ -13952,6 +13952,80 @@ reverted by copying the pre-mutation files back:
 - `grep -rn MUTATION src/ tools/` afterwards: every hit is prose already at HEAD (`git diff` adds no
   line containing it); no plant. The section-only copy was deleted.
 
+### WO-3.58 — the dialogs behind the Assignments and Scores screens are read together, and a layout is ruled
+
+**A review, not a build: nothing in `src/`, `index.html` or `sw.js` moved, so there is no harness
+check to add and nothing on a device to read.** What was made is a drawing,
+[`design/mockups/dialog-messages.html`](design/mockups/dialog-messages.html), the owner's two
+dispatch rulings written into the work order, and four S rows booked. The evidence below is what the
+drawing was checked against and what the two tools printed.
+
+**How the "now" frames were drawn.** From the code, not from the markup alone, because four of the
+messages are injected at runtime. Each frame's message positions were read off these lines at v191
+(`planbook-shell-v191`, HEAD `06fc5c1`):
+`#assignmentTermNote` index.html:3531, under `#assignmentFields`, painted by `paintTermNote()`;
+`#assignmentError` index.html:3564, **after** the editor's `.modal-actions` at :3543, painted by
+`showAssignmentError()` from `refuseBlankName()`; the move confirm's `.class-hint` at :3594, after its
+`.modal-actions` at :3587; `#assignmentCopyNote` :3670, directly before `.modal-actions` :3671, and
+the per-line `.assign-copy-flag`s built in `paintLineFlags()`/`paintSourceFlags()`; `holdModal` and
+`assignmentDeleteModal` and `categoryRemoveModal` carry no conditional sentence (`src/held-column.js`,
+`removeAssignment()`'s confirm, `src/categories.js`'s remove confirm write only the lead, the facts
+and the button labels); `#categoryTotal` :2956 above `.category-actions`, `#categoryError` :2983 at
+the foot; `#gradingModeWarn` :3004 under the lead, above the facts; `#scaleNote` :3104 above
+`#bandAddRow`; and the Grade sheet's `.grades-report-actions` :4964 **before** `#gradesRecordBody`
+:4974, into which `openGrades()` writes the `.grade-none` banner (src/grades-report.js:526) and the
+three `.grades-report-empty` sentences (:498, :532, :540). Widths are WO-1.77's kinds as `index.html`
+assigns them (`modal-confirm` 480, `modal-form` 640, `modal-report` 900, `.grades-report-panel` 980).
+
+**One finding on the way, booked rather than fixed:** `#categoryError` has never been written —
+`showCategoryError()` is called five times in `src/categories.js`, every call with `''`, and
+`git log -S "showCategoryError('"` finds only `2b0a0ec` (WO-3.1). It is WO-3.64's Open line.
+
+- [x] Every dialog in the confirmed scope has a frame as it is now, showing where its messages draw.
+      — `design/mockups/dialog-messages.html` frames 1–10, one per dialog in the owner's confirmed
+      list, each labelled with its id and kind: 1 `assignmentModal`, 2 `assignmentMoveModal`,
+      3 `holdModal`, 4 `assignmentCopyModal`, 5 `assignmentDeleteModal`, 6 `categoriesModal`,
+      7 `gradingModeModal`, 8 `categoryRemoveModal`, 9 `letterScaleModal`, 10 `gradesRecordModal`.
+      Each "now" frame draws its messages in the order the lines above put them, outlined in
+      `.mk-hit` and numbered; the four that change (1, 2, 6, 10) are drawn beside a "proposed"
+      frame, and the six that already comply are drawn once, labelled *now, and proposed: nothing
+      moves*. **Checked by reading the page source against the lines above, not by eye on a
+      device** — whether the drawing reads well on the iPad is the owner's, at the next sitting.
+- [x] The rule for where messages go is written here as the owner's ruling, with the editor's
+      refusal as its first case.
+      — `plans/work-orders/phase-3-gradebook.md` § WO-3.58, *Rulings, the owner's, 2026-10-12, at
+      dispatch*, ruling 2, in the dispatch's words: *A dialog's messages — refusals, warnings, notes
+      — draw ABOVE its buttons, in one place, for every dialog in scope. First case: the editor's
+      needs a name refusal moves from under the buttons to just above Cancel/Save. Not "beside the
+      field."* One reading is added and labelled as one: the editor has no Save, so "Cancel/Save" is
+      read as its buttons row. Ruling 1 records the scope. The Scores screen's warning is written
+      there as **a proposal awaiting the owner**, not as ruled.
+- [x] The build is booked as rows below L, and the drawing passes `wo-sweep.mjs` § 19.
+      — Four rows at the foot of `phase-3-gradebook.md` and rows 168–171 of the running order, each
+      **Size S**, each `⬜ NOT STARTED`, each `Depends on WO-3.58`, each naming its dialogs and the
+      drawing in a **Surface** line: WO-3.63 (`assignmentModal`), WO-3.64 (`assignmentMoveModal`,
+      `categoriesModal`), WO-3.65 (`gradesRecordModal`), WO-3.66 (the Scores screen, not a dialog).
+      `node tools/wo-sweep.mjs`, 2026-10-12: `51 checks · 48 passed · 0 failed · 3 to review`, exit 0;
+      § 19's lines all PASS — *22 drawing(s) … dialog-messages.html … all linked from
+      design/mockups/index.html*; *23 page(s) with no <script>, no <style>, no inline handler and no
+      javascript: href*; *23 page(s), each linking ../../src/shell.css and each carrying the band*;
+      *every class in design/mockups/mockup.css is mk- prefixed or sits under an mk- ancestor*; *no
+      design/ path … anywhere in sw.js*; the collision and back-pointer checks unchanged. The three
+      reviews are the standing ones, none about this drawing. **What § 19 cannot see here:** the page
+      has no `proposed*.css`, so the back-pointer check has no section naming WO-3.63–3.66 — the
+      Surface lines were written by hand (PROTOCOL rule 9). `node tools/wo-gate.mjs --audit`: PASS.
+
+**The verify-shell run the brief owes**, 2026-10-12, real clock, on the finished tree:
+`2044 checks · 2044 passed · 0 failed · 0 skipped`, 65,118 lines, 1079s, exit 0. It measures the
+app, which this work order did not touch, so it shows nothing moved rather than anything built.
+
+**After the verdict, the owner, 2026-10-12** — four rulings recorded in the drawing, its README and
+WO-3.66, none re-opening an Acceptance line: "in one place" means above the buttons and together
+(grading mode's warning stays); a copy line's flag stays on its line; Scores takes **S1**, drawing
+the whole note, indigo included; a scrolled list's note off screen is accepted and recorded, which
+discharges WO-3.57's ruling 3. Re-run on that tree: `wo-sweep.mjs` 48 · 0 · 3 (the standing three),
+`wo-gate.mjs --audit` PASS.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

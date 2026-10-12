@@ -4681,7 +4681,7 @@ Where the note sits on a scrolled list (ruling 3).
 
 ## WO-3.58 — the dialogs behind the Assignments and Scores screens are read together, and a layout is ruled
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.54, WO-3.55, WO-3.57, WO-1.77
+**Ship** — · **Status** ✅ DONE — 2026-10-12 · **Size** M · **Depends on** WO-3.54, WO-3.55, WO-3.57, WO-1.77
 **Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
 
 **Booked 2026-10-11**, out of WO-3.56's iPad reading. The editor's *needs a name* message draws
@@ -4717,11 +4717,57 @@ that are missing and drop any that are out.
   dialogs it touches.
 - **`TESTING.md` § WO-3.58**, the `CHANGELOG.md` entry.
 
+**Surface.** [`design/mockups/dialog-messages.html`](../../design/mockups/dialog-messages.html),
+drawn 2026-10-12 against v191: frames 1–10, one per dialog, each at its WO-1.77 width, every message
+outlined; frame 11 (S0, S1, S2) for the Scores screen. **No `proposed*.css`**: every proposal is a
+shipped element moved, so the page adds only chrome to `mockup.css`. The record is
+`design/mockups/README.md` § *Where a dialog's messages go*.
+
+**Rulings, the owner's, 2026-10-12, at dispatch**
+1. **The scope is exactly the ten dialogs listed above** — `assignmentModal`, `assignmentMoveModal`,
+   `holdModal`, `assignmentCopyModal`, `assignmentDeleteModal`, `categoriesModal`,
+   `gradingModeModal`, `categoryRemoveModal`, `letterScaleModal` and `gradesRecordModal`. Nothing
+   added. `scoresKeysModal` and the past-due banner stay out.
+2. **Option A.** *A dialog's messages — refusals, warnings, notes — draw ABOVE its buttons, in one
+   place, for every dialog in scope.* **First case:** the editor's *needs a name* refusal moves from
+   under the buttons to just above Cancel/Save. **Not "beside the field."**
+
+*(The editor has no Save: its buttons are Done, Copy into other classes… and Cancel, and "just above
+Cancel/Save" is read as just above that row. Nothing else in the ruling is read.)*
+
+**What the review found, dialog by dialog** — where each message draws at v191. A *message* is a
+sentence drawn only when something is the case; standing prose that is on every open (the lead, the
+grey hints, a field's caption) is the dialog's own text. Where that line is not obvious the drawing
+says so in amber.
+
+| Dialog | Kind | Its messages today | Under the rule |
+|---|---|---|---|
+| `assignmentModal` | form 640 | `#assignmentTermNote` (amber) under the fields; `#assignmentError` (red) **after `.modal-actions`** | **Moves** — both into one place directly above the buttons → WO-3.63 |
+| `assignmentMoveModal` | confirm 480 | a `.class-hint`, *To change the date instead…*, **after `.modal-actions`** | **Moves** above the buttons → WO-3.64 |
+| `holdModal` | confirm 480 | none | complies |
+| `assignmentCopyModal` | report 900 | `#assignmentCopyNote` directly above the buttons; per-line amber `.assign-copy-flag`s in the list | complies; the per-line flags stay on their lines (the drawing's reading) |
+| `assignmentDeleteModal` | confirm 480 | none | complies |
+| `categoriesModal` | form 640, no Done | `#categoryTotal` above *Add a category*; `#categoryError` **at the foot, under Add** — and **written by nothing** since WO-3.1 | **Moves** up beside the total → WO-3.64 |
+| `gradingModeModal` | confirm 480 | `#gradingModeWarn` (amber) under the lead | complies as written |
+| `categoryRemoveModal` | confirm 480 | none | complies |
+| `letterScaleModal` | form 640, no Done | `#scaleNote` above *Add a band* | complies |
+| `gradesRecordModal` | report 980 | Print and CSV **first**, by design; the `.grade-none` banner and the three `.grades-report-empty` sentences **under** them | **Move** above Print and CSV → WO-3.65 |
+
+**A proposal awaiting the owner — not ruled.** WO-3.57's ruling 4 handed this review the Scores
+screen's nameless warning: a blank close from Scores' `+ New assignment` sets the amber line on the
+assignment list's note, which the grid does not draw. That is a screen, so rule 2 does not settle it.
+The drawing proposes the same shipped line on Scores, reading the same note — **S1** after the
+past-due prompt and before the summary row (the drawing's lean: one notice band, in the list's own
+order), or **S2** under the summary row beside `+ New assignment`. Booked as WO-3.66 with the
+placement an Open line, the owner's at its dispatch. **WO-3.57's ruling 3 also handed this review a
+case** — a scrolled list's note sitting off screen — which is not one of the ten dialogs and is not
+ruled here; it rides on WO-3.66 as a second Open line rather than being dropped.
+
 **Acceptance**
-- [ ] Every dialog in the confirmed scope has a frame as it is now, showing where its messages draw.
-- [ ] The rule for where messages go is written here as the owner's ruling, with the editor's
+- [x] Every dialog in the confirmed scope has a frame as it is now, showing where its messages draw.
+- [x] The rule for where messages go is written here as the owner's ruling, with the editor's
       refusal as its first case.
-- [ ] The build is booked as rows below L, and the drawing passes `wo-sweep.mjs` § 19.
+- [x] The build is booked as rows below L, and the drawing passes `wo-sweep.mjs` § 19.
 
 **Not in scope** — building any of it, and the dialogs outside this scope (attendance, roster,
 settings), which have their own work orders. **Nor the Scores Keys dialog** that
@@ -5041,3 +5087,222 @@ the meta line keeps that class as a span of its own. **The head is `position: st
 height is what the top `scroll-padding` covers; measure it after the change, do not compute it.
 
 **Not in scope** — the top of the screen (WO-3.60) and the keys (WO-3.61).
+
+## WO-3.63 — the assignment editor's messages draw together, just above its buttons
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.58
+**Closes roadmap** *(no box. Owner-directed, 2026-10-12.)*
+
+**Booked 2026-10-12** out of [WO-3.58](#wo-358--the-dialogs-behind-the-assignments-and-scores-screens-are-read-together-and-a-layout-is-ruled),
+the first case of its rule. The editor's *needs a name* refusal (`#assignmentError`, WO-3.56 ruling
+4) draws **after** `.modal-actions`, under Done, where the owner missed it on the iPad. Its other
+message, the amber *no term holds these dates* line (`#assignmentTermNote`, WO-3.50), draws in a
+second place, under the fields and above the two hints.
+
+**Surface.** [`design/mockups/dialog-messages.html`](../../design/mockups/dialog-messages.html),
+frame 1. No stylesheet change is drawn: both elements keep their classes and their margins.
+
+**Rulings, the owner's, 2026-10-12** (WO-3.58's ruling 2, carried)
+1. A dialog's messages — refusals, warnings, notes — draw **above its buttons, in one place**.
+2. The refusal moves to **just above** the buttons. **Not beside the Name field.**
+
+**Deliverables**
+- **`index.html`**: `#assignmentTermNote` and `#assignmentError` move to sit together directly before
+  the editor's `.modal-actions`, after the two `.class-hint` paragraphs — the term note first and the
+  refusal last, nearest Done (the drawing's order; see the Open line). The markup comments at both
+  move with them and say why they are there.
+- **`src/assignments.js`**: nothing should need to change — both are found by id. If a comment there
+  says where either one sits, it is corrected.
+- **The harness**: beside WO-3.56's refusal check in `tools/verify/copy-class.mjs`, and beside the
+  term-note checks in `tools/verify/assignments.mjs` — with the refusal showing, its bottom is above
+  the actions row's top, and nothing but the term note sits between them; with the term note
+  showing, the same. Measured from `getBoundingClientRect()`, not from DOM order alone.
+- **`TESTING.md` § WO-3.63**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped** —
+  `index.html` is `SHELL` entry one.
+
+**Acceptance**
+- [ ] With the name blank, Done shows the refusal **above** the editor's buttons, the last thing
+      before them, and still focuses the Name field. The same from *Copy into other classes…*.
+- [ ] The amber term note, when it shows, sits in the same place, directly above the refusal (or
+      directly above the buttons when the refusal is not showing). Nothing draws after
+      `.modal-actions` in the editor.
+- [ ] Both messages keep their wording and their colours; the refusal is still spoken by the live
+      region.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] 👤 On the iPad, after a force-quit, upright: + New assignment, then Done with no name — the
+      refusal is seen without looking for it.
+
+**Open — the owner, at dispatch.** (a) **The order inside the place**: the drawing puts the refusal
+last, touching Done, because it is about the tap just made; the other order is equally "one place."
+(b) **The accommodation prompt** (`[data-accommodation-prompt]`, WO-3.8): the drawing reads it as
+not a message — a panel about the category above it, with its own button — and leaves it under the
+fields. If the rule takes it too, it joins the place and this row grows a line.
+
+**Traps** — **The refusal is focus-bearing**: `refuseBlankName()` puts the caret in the Name field,
+and on an iPad that raises the keyboard, which may cover the bottom of the dialog. Read the 👤 line
+with that in mind; if the keyboard hides the refusal, say so, and do not move it beside the field —
+the owner ruled that out. **Do not move the accommodation prompt** in this row unless the Open line
+is answered that way.
+
+**Not in scope** — every other dialog (WO-3.64, WO-3.65), and the wording of either message.
+
+## WO-3.64 — the move confirm's note and the categories panel's error line draw above their buttons
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.58
+**Closes roadmap** *(no box. Owner-directed, 2026-10-12.)*
+
+**Booked 2026-10-12** out of [WO-3.58](#wo-358--the-dialogs-behind-the-assignments-and-scores-screens-are-read-together-and-a-layout-is-ruled).
+Two dialogs whose one stray element sits under their buttons. **`assignmentMoveModal`**: the note
+*To change the date instead, close this and you are back in the assignment.* is a `.class-hint` after
+`.modal-actions`. **`categoriesModal`**: `#categoryError`, a `.class-error` line, sits at the very
+foot of the panel, under *Add a category* and under both hints — and **no code path has ever written
+a sentence into it**: `showCategoryError()` is called five times in `src/categories.js`, each with
+`''`, since WO-3.1, and `tools/verify/categories-weights.mjs` reads it only to assert it is empty.
+
+**Surface.** [`design/mockups/dialog-messages.html`](../../design/mockups/dialog-messages.html),
+frames 2 and 6.
+
+**Rulings, the owner's, 2026-10-12** (WO-3.58's ruling 2, carried) — a dialog's messages draw above
+its buttons, in one place. In `categoriesModal`, which has no Done, the button the rule is read
+against is *Add a category*.
+
+**Deliverables**
+- **`index.html`**: in `#assignmentMoveModal`, the `.class-hint` moves to directly before
+  `.modal-actions`. In `#categoriesModal`, `#categoryError` moves to directly after `#categoryTotal`,
+  before `.category-actions` (or is deleted — the Open line).
+- **The harness**: in `tools/verify/assignments.mjs`, the move confirm's note is above its buttons;
+  in `tools/verify/categories-weights.mjs`, `#categoryError` is between the total and the Add row (or,
+  if deleted, its two reads go with it and the *nothing is blocked* check keeps its other halves).
+- **`TESTING.md` § WO-3.64**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] In the move confirm, the note is above *Move it to …* and *Keep it in …*, and nothing draws
+      after `.modal-actions`. Its wording is unchanged.
+- [ ] In Categories & weights, nothing draws after the two hints, and `#categoryError` is either
+      directly under `#categoryTotal` or gone, as the owner ruled.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+
+**Open — the owner, at dispatch: move `#categoryError`, or delete it.** The drawing moves it: the
+harness's two reads stay meaningful and a future refusal has the place the rule names. Deleting it is
+the other honest answer — a slot for a message nothing says is a slot nobody tests.
+
+**Traps** — **`.modal-body p + .modal-section-label`** spaces a label after a paragraph; the move
+confirm's note becomes the paragraph before `.modal-actions`, not before a label, so check nothing
+else's margin changes with it. **Do not give `#categoryError` a message** in this row: what it says,
+if anything, is a different work order.
+
+**Not in scope** — the editor (WO-3.63), the Grade sheet (WO-3.65), and the weights total's own
+wording.
+
+## WO-3.65 — the grade sheet's warning and empty sentences draw above Print and CSV
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.58
+**Closes roadmap** *(no box. Owner-directed, 2026-10-12.)*
+
+**Booked 2026-10-12** out of [WO-3.58](#wo-358--the-dialogs-behind-the-assignments-and-scores-screens-are-read-together-and-a-layout-is-ruled).
+`gradesRecordModal` puts Print and Download CSV **first**, deliberately (its markup comment: the table
+under them is a term long). Its messages are built by `openGrades()` into `#gradesRecordBody`, which
+comes **after** the buttons: the `.grade-none` banner when the weights do not total 100, and one of
+three `.grades-report-empty` sentences when no class is open, the roster is empty, or nothing is
+assigned in the term. Under the rule, each draws above the buttons.
+
+**Surface.** [`design/mockups/dialog-messages.html`](../../design/mockups/dialog-messages.html),
+frame 10.
+
+**Rulings, the owner's, 2026-10-12** (WO-3.58's ruling 2, carried) — a dialog's messages draw above
+its buttons, in one place. Here "its buttons" are Print and CSV, at the top.
+
+**Deliverables**
+- **`index.html`**: an empty host for the sheet's messages before `.grades-report-actions` in
+  `#gradesRecordModal`.
+- **`src/grades-report.js`**: `openGrades()` puts the banner, or the empty sentence, into that host
+  and empties it on every open; the head, the table, the key and the closing note stay in
+  `#gradesRecordBody`, in their order.
+- **The harness**: `tools/verify/grade-sheet.mjs` — with the weights at 95, the banner's bottom is
+  above Print's top; with an empty roster, likewise the empty sentence; with neither, the host is
+  empty and takes no height. And `tools/verify/print-sheets.mjs` — what prints is what printed
+  before (the banner prints today).
+- **`TESTING.md` § WO-3.65**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] With the weights not totalling 100, the no-grade banner draws above Print and Download CSV,
+      and the sheet under them is otherwise unchanged.
+- [ ] Each of the three empty states draws its sentence above the buttons, and nothing under them.
+- [ ] A sheet with no message draws exactly as before: the host is empty and adds no space.
+- [ ] The printed sheet is unchanged — the banner prints where it printed, or the build says why
+      not and the owner rules.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+
+**Traps** — **The print block in `src/scores.css`** hides `body > *` but the gated surface, and inside
+it hides `.grades-report-actions` and `.grades-report-head`; a new host outside `#gradesRecordBody`
+is a new element to that block. Check it prints, or is hidden, **on purpose**. **The key and the
+closing note are the sheet, not messages** (WO-3.58's reading): they print, and they stay under the
+table.
+
+**Not in scope** — the attendance record (`attendanceReportModal`), which has the same shape and is
+not in WO-3.58's scope; and the order of the head relative to the buttons.
+
+## WO-3.66 — a nameless close from the Scores screen shows its warning on the Scores screen
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.58
+**Closes roadmap** *(no box. Owner-directed, 2026-10-12.)*
+
+**Booked 2026-10-12** out of [WO-3.58](#wo-358--the-dialogs-behind-the-assignments-and-scores-screens-are-read-together-and-a-layout-is-ruled),
+the case [WO-3.57](#wo-357--the-nameless-warning-reaches-the-teacher-wherever-the-editor-closed)'s
+ruling 4 handed it. A blank close of the editor opened from the Scores screen's `+ New assignment`
+names the work *Untitled assignment* and sets WO-3.56's amber warning on the assignment list's note
+(`#assignmentsMoved`, keyed by class and term). The Scores screen does not draw that note, so the
+teacher there sees nothing; a screen reader hears it, and the list shows it on its next visit.
+**This is a screen, not a dialog, so WO-3.58's rule does not settle it**; the placement is the
+owner's ruling below.
+
+**Surface.** [`design/mockups/dialog-messages.html`](../../design/mockups/dialog-messages.html),
+frames S0, S1 and S2. The line is the shipped `.assign-moved.assign-moved-nameless`, worn as it is.
+
+**Ruled, the owner, 2026-10-12: S1** — the same line drawn on Scores, read from the one note the
+list keeps, so the two screens can never disagree and opening the editor clears it on both, placed
+after the past-due prompt and before the summary row: one notice band at the top of the body, in the
+list's own order (past-due, then the note). *(S2, under the summary row beside `+ New assignment`,
+was the alternative drawn and not taken.)*
+
+**Deliverables**
+- **`index.html`**: a host for the note in `#scoresView`, after the past-due prompt and before the
+  summary row (S1).
+- **`src/assignments.js`**: `paintListNote()` paints both hosts from the one `listNote`, the way
+  `src/past-due.js` paints its two; **`src/scores.js`** calls it on render for the class and term on
+  screen.
+- **The harness**: beside WO-3.57's door checks — a blank close from Scores' `+ New assignment`
+  draws the owner's sentence in amber on the Scores screen, checked in the DOM and computed style,
+  not the live region; and opening the editor again takes it down on both screens.
+- **`TESTING.md` § WO-3.66** (and an amendment to § WO-3.57's door table, which records this door as
+  not drawn), the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
+
+**Acceptance**
+- [ ] A blank close from the Scores screen's `+ New assignment` leaves the owner's sentence, in
+      amber, on the Scores screen, between the past-due prompt and the summary row (S1). The list shows the same note for the same
+      class and term.
+- [ ] A create from Scores filed under another term draws the indigo moved note on Scores too, from
+      the same `listNote` — the whole note, amber ahead of indigo on one line when both apply.
+- [ ] Opening the editor again clears it from both screens; another class or term does not draw it.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] 👤 On the iPad, after a force-quit, upright: + New assignment from Scores, then ✕ with no name
+      — the warning is noticed on Scores.
+
+**Ruled — the owner, 2026-10-12, after WO-3.58's verdict.** Nothing is left open at dispatch.
+- **(a) S1** — as under *Ruled* above.
+- **(b) The indigo moved-work note comes too: the Scores host draws the whole note.** A create from
+  Scores filed under another term moves the class's open term, so the grid changes term under the
+  teacher — the confusion WO-3.57's ruling 2 put the indigo sentence there to answer. Taking the
+  amber case only would mean filtering `listNote`, a second reading of the one note.
+- **(c) A scrolled list's note off screen is accepted and recorded, not built.** Scrolling to the
+  note on close yanks the teacher away from the row she was working on; pinning it covers rows on a
+  portrait iPad for every note. The live region announces it, it is there on scrolling up, and both
+  screens' `+ New assignment` sit near the top where it draws. If an iPad reading ever shows it
+  missed, that is a row of its own with an observed case. This discharges WO-3.57's ruling 3.
+
+**Traps** — **A second note is a second truth**: the Scores host reads `listNote`, never a copy of
+it, or the two screens drift. **The Scores screen hides its top row in "nothing to grade" states**
+(`#scoresTop`); check where the host sits in those.
+
+**Not in scope** — the warning's wording and colour (WO-3.56's rulings), and the ten dialogs
+(WO-3.63, WO-3.64, WO-3.65).
