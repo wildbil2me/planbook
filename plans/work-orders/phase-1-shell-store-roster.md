@@ -6545,3 +6545,55 @@ maintains** — the rule `CLAUDE.md` applies to its own status line.
 **Traps** — **This changes `tools/verify-shell.mjs`, a pipeline file**: read
 `plans/work-orders/README.md` § "The pipeline's own files" first. **Nothing in `src/` moves**, so no
 `CACHE` bump is owed.
+
+## WO-1.80 — nothing stops a file count creeping back into the harness's prose
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-1.79 · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.79 made.)*
+
+**Booked 2026-10-11**, owner-directed, out of WO-1.79's result file. A ride-along on
+`tools/wo-sweep.mjs`: fold it into the next sitting that has that file open.
+
+**Why it exists.** WO-1.79 took the file count out of two places: the header comment above the
+section imports in `tools/verify-shell.mjs` (*"Seventy-five files …"*, now *"These files …"*) and the
+sentence in `tools/README.md` that says the count spans the files under `tools/verify/` that the entry
+file names (*"ninety-one"*, now no number). Both counts had gone stale, the README one within a day
+of WO-1.77 updating it, because nothing checked either. Taking them out fixed today, and **nothing
+stops the next sitting that adds a harness file from writing a count back in**. The sweep already
+knows the true figure: § 11 derives `harnessFiles` from `STATIC_SECTIONS` and `BROWSER_SECTIONS` and
+prints it on every run.
+
+**Deliverables**
+- **A sweep check that fails when a file count comes back in either place.** It reads the header
+  comment in `tools/verify-shell.mjs` and the live sentence in `tools/README.md`, and refuses a number
+  of files in them, whether written in digits or in words. WO-1.79 ruled that no number is better than
+  a checked one, so the check holds that ruling. It does not allow a count that happens to match.
+- **It must not stop matching without saying so.** If either anchor can no longer be found (the
+  comment reworded, or the README sentence moved), the check fails and names the anchor. It must not
+  read green over an empty match, which is the failure § 11 already guards against.
+- **One plant per place**: write a count back into each one and show the sweep go red at that line.
+  Then revert both plants before writing anything else.
+- **`tools/README.md`** describes the new check where the sweep's other checks are described, and the
+  sweep's own check count (§ 22's *"The verifier's N-check standing sweep"*) moves with it.
+- **`TESTING.md` § WO-1.80** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] `node tools/wo-sweep.mjs` has a check that passes on today's tree and names both places it read.
+- [ ] A file count written back into the header comment of `tools/verify-shell.mjs`, in digits and
+      in words, turns that check red at the line; so does one written back into the live sentence in
+      `tools/README.md`. Both plants are reverted, and `TESTING.md` § WO-1.80 shows the red output.
+- [ ] Rewording either anchor so that the check can no longer find it fails the check and names the
+      anchor, and does not pass.
+- [ ] The dated ledger entries further down `tools/README.md` (*"moves to seventy-five"*, *"the
+      eighty-first file"* and the rest) do not trip it, and nothing was rewritten to make them pass.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-1.80 carries these lines verbatim with the evidence for each.
+
+**Traps** — **The README's ledger is history, not a live count.** Each dated entry there was true on
+the day it records, and WO-1.79 left them alone on purpose. A check that scans the whole README for
+number words will fire on all of them. The fix for that is a narrower anchor, not edits to the
+ledger. **A fence, not a reading**: it catches a count written as a number near "files", and a
+sentence that states the size of the harness some other way will get past it. Say so in the check's
+own banner. **This changes `tools/wo-sweep.mjs`, a pipeline file**: read
+`plans/work-orders/README.md` § "The pipeline's own files" first. **Nothing in `src/` moves**, so no
+`CACHE` bump is owed.

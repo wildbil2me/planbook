@@ -383,7 +383,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.79 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.80 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.61 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.62 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.6 | Phase 4 |
@@ -459,7 +459,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 79 | 79 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 80 | 79 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 59 | 58 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 61 | 56 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 6 | 6 | — | ✅ DONE — 2026-09-30 |
@@ -468,7 +468,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 17 | 16 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.4 ✅ DONE 2026-09-26, the sign-in opened on the deployed domain and read on the laptop and the iPad; WO-7.5 ✅ DONE 2026-09-26, the header's sync button; WO-7.6 ✅ DONE 2026-09-26, the privacy documents say when Google's library loads, read off the deployed /privacy; WO-7.7 ✅ DONE 2026-09-26, a download repaints the open screen, read both ways on laptop and iPad; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 18 | 13 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 3 | — | WO-G2 ✅ **2026-09-30**: worked 2026-09-29 with six of eight boxes closed, and the letter-scale setting and the backup drill closed the next day on the owner's reading; WO-G3 ✅ **2026-09-30** on the owner's ruling, watched across four weeks of the term with nothing recorded |
-| | **269** | **255** | **3** | `[█████████░] 95%` |
+| | **270** | **255** | **3** | `[█████████░] 94%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)
@@ -2053,6 +2053,7 @@ it, never from a reading taken earlier in the same session.)*
 | 164 | [WO-3.60](phase-3-gradebook.md#wo-360--the-scores-screens-top-matches-the-other-class-screens) The Scores screen's top matches the other class screens | M | — | **At the foot, booked 2026-10-11**, owner-directed, drawn the same day in `design/mockups/scores-tidy.html` from a photograph of the iPad upright. **First of three, cut at booking to stay below L.** The owner's rule for the run: similar controls sit in the same place on every class screen. The actions row goes; + New assignment takes the summary row's right end; Sort: Last, ⌨ and 🖨 sit at the search row's right end, the doors as icons, as on Attendance; the search box shrinks so the pills start beside it (reverses WO-2.58 ruling 8); the flag bar moves directly over the grid as *The cell you are in*. The sort is a view and never reaches the grade sheet. `src/`, harness, one 👤 on the iPad; bumps `CACHE` |
 | 165 | [WO-3.61](phase-3-gradebook.md#wo-361--the-scores-keys-open-a-dialog-and-clear-and-note-get-a-key) The Scores keys open a dialog, and Clear and Note get a key | M | WO-3.60 | **After row 164**, booked 2026-10-11 with it, same drawing, frame D. ⌨ opens a `modal-form` dialog in Attendance's own key rows and the strip goes; `?` opens it from a score cell; C clears a cell and N opens its note, neither a key the grid already uses; the flag bar carries both letters; the first hint paragraph shrinks. Outside WO-3.58's review, by the owner's ruling. `src/`, harness, one 👤 with a keyboard on the iPad; bumps `CACHE` |
 | 166 | [WO-3.62](phase-3-gradebook.md#wo-362--the-scores-column-head-gets-lighter-and-the-name-column-narrower) The Scores column head gets lighter, and the name column narrower | M | — | **At the foot**, booked 2026-10-11 with row 164, same drawing, frame C. The head goes from five lines to four: points and due share a line, the name wraps to two and opens the assignment editor, and Hold stays under the category chip. The frozen name column narrows, with every number tied to it. **Open at dispatch**: the width under a coarse pointer, which is 168 today, not the 190 the ruling was given against. `src/`, harness, one 👤 on the iPad; bumps `CACHE` |
+| 167 | [WO-1.80](phase-1-shell-store-roster.md#wo-180--nothing-stops-a-file-count-creeping-back-into-the-harnesss-prose) Nothing stops a file count creeping back into the harness's prose | XS | WO-1.79 | 🎒 `tools/wo-sweep.mjs` — **Nothing blocks it.** An hour, whenever the sweep is open for something else. Booked **2026-10-11**, owner-directed, out of WO-1.79's result file: WO-1.79 took the file count out of `verify-shell.mjs`'s header comment and `tools/README.md`, and nothing stops one coming back. A check that refuses a count in either place, in digits or words, fails loudly if it loses its anchor, and leaves the README's dated ledger alone. One plant per place. Nothing in `src/` moves |
 
 ***Rows 17 through 32 were added 2026-08-28, and the reason is the third occurrence of the failure
 this section exists to prevent.*** *Before that sitting,* **sixteen open work orders had no row in
