@@ -4745,10 +4745,10 @@ says so in amber.
 | `assignmentModal` | form 640 | `#assignmentTermNote` (amber) under the fields; `#assignmentError` (red) **after `.modal-actions`** | **Moves** — both into one place directly above the buttons → WO-3.63 |
 | `assignmentMoveModal` | confirm 480 | a `.class-hint`, *To change the date instead…*, **after `.modal-actions`** | **Moves** above the buttons → WO-3.64 |
 | `holdModal` | confirm 480 | none | complies |
-| `assignmentCopyModal` | report 900 | `#assignmentCopyNote` directly above the buttons; per-line amber `.assign-copy-flag`s in the list | complies; the per-line flags stay on their lines (the drawing's reading) |
+| `assignmentCopyModal` | report 900 | `#assignmentCopyNote` directly above the buttons; per-line amber `.assign-copy-flag`s in the list | complies; the per-line flags stay on their lines (the drawing's reading, **ruled by the owner 2026-10-12**) |
 | `assignmentDeleteModal` | confirm 480 | none | complies |
 | `categoriesModal` | form 640, no Done | `#categoryTotal` above *Add a category*; `#categoryError` **at the foot, under Add** — and **written by nothing** since WO-3.1 | **Moves** up beside the total → WO-3.64 |
-| `gradingModeModal` | confirm 480 | `#gradingModeWarn` (amber) under the lead | complies as written |
+| `gradingModeModal` | confirm 480 | `#gradingModeWarn` (amber) under the lead | complies — "in one place" is above the buttons and together, not one fixed spot (**the owner, 2026-10-12**) |
 | `categoryRemoveModal` | confirm 480 | none | complies |
 | `letterScaleModal` | form 640, no Done | `#scaleNote` above *Add a band* | complies |
 | `gradesRecordModal` | report 980 | Print and CSV **first**, by design; the `.grade-none` banner and the three `.grades-report-empty` sentences **under** them | **Move** above Print and CSV → WO-3.65 |
@@ -4762,6 +4762,15 @@ order), or **S2** under the summary row beside `+ New assignment`. Booked as WO-
 placement an Open line, the owner's at its dispatch. **WO-3.57's ruling 3 also handed this review a
 case** — a scrolled list's note sitting off screen — which is not one of the ten dialogs and is not
 ruled here; it rides on WO-3.66 as a second Open line rather than being dropped.
+
+*(**All of it was ruled the same day, after the verdict, and none of it reopened a box.** The review
+predicted the Scores placement and the scrolled-list case would wait for WO-3.66's dispatch; the
+owner took both on reading the verdict. **S1**, the Scores host drawing the **whole** note, indigo
+included, and the off-screen case **accepted and recorded**, which discharges WO-3.57's ruling 3 —
+all in WO-3.66's own *Ruled* block, which now has nothing open at dispatch. The same sitting closed
+the drawing's two unbooked questions as drawn: "in one place" means above the buttons and together,
+so grading mode's warning stays its headline; and a copy line's flag stays on its line. Recorded in
+`design/mockups/README.md` § "Decided, the owner, 2026-10-12, after the verdict".)*
 
 **Acceptance**
 - [x] Every dialog in the confirmed scope has a frame as it is now, showing where its messages draw.
