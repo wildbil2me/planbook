@@ -78,7 +78,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 /* ── the sections, in run order ─────────────────────────────────────────────────────────────
- * Seventy-five files, named after the surface they drive rather than after the work order that added
+ * These files are named after the surface they drive rather than after the work order that added
  * them, so that a reader looking for "where do I put a check about the score grid" answers it
  * from the list. Two of them are not sections: lib-dates.mjs is a pure helper library, and
  * attendance-passes.mjs is the second half of the attendance section, called by the first half

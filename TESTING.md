@@ -4297,6 +4297,49 @@ file, carried the probe.
 - [x] `TESTING.md` § WO-1.78 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-1.79 — the browser harness's header comment counts its files, and the count is wrong
+
+No 👤 and no 📆 line. Two prose edits and nothing in `src/` moved, so no `CACHE` bump is owed. The
+count was wrong in **both** places, not only the comment: the comment said seventy-five, the README
+said ninety-one, and there are **ninety-three** `.mjs` files under `tools/verify/`
+(`ls tools/verify/*.mjs | wc -l` → 93; the sweep's own § 11 line reads *"2000 `check()` call site(s)
+across 94 harness file(s)"*, which is those 93 plus `verify-shell.mjs`). That is the work order's
+point made a second time: WO-1.77 updated the README figure and it had drifted again within the day.
+
+- [x] The header comment in `tools/verify-shell.mjs` states no number of files.
+      — The comment above the section imports opened *"Seventy-five files, named after the surface they
+      drive …"*; it now opens *"These files are named after the surface they drive …"*. Nothing else in
+      the comment moved: the naming sentence and *"Two of them are not sections: lib-dates.mjs … and
+      attendance-passes.mjs …"* are byte-identical. `grep -n -iE "(seventy|eighty|ninety)|[0-9]+ files"
+      tools/verify-shell.mjs` finds one line, 714 — *"audit counted 21 files with a touch window"*, a
+      historical figure in an unrelated section's comment, not a count of the harness's files — and
+      nothing in the header (lines 80–85).
+- [x] `TESTING.md` § WO-1.79 says whether `tools/README.md`'s count is checked by anything, with the
+      line that checks it or the grep that found none, and what was done with it.
+      — **Nothing checks it, so it went the same way.** `tools/wo-sweep.mjs` reads `tools/README.md` in
+      exactly two places, and both are other numbers: § 11 (`const RECORDED = /holds (\d+) \`check\(\)\`
+      call sites/g;`, line 802) holds the **call-site** count, and § 22 (`const RECORDED = /The
+      verifier's (\d+)-check standing sweep/g;`, line 4346) holds the **sweep** count. Neither regex can
+      match *"the ninety-one files under `tools/verify/`"*. The greps that found nothing else:
+      `grep -n "readmePath\|README_PATH\|readmeText" tools/wo-sweep.mjs` → only lines 768, 778, 786, 803
+      (§ 11) and 4311, 4347, 4351 (§ 22); `grep -n -i "ninety\|seventy\|eighty\|files under" tools/wo-sweep.mjs
+      tools/wo-gate.mjs` → nothing; and `wo-gate.mjs` mentions `tools/README.md` only in comments and
+      one `console.log` (lines 2746, 2775, 2801, 2919), none of which reads the file. **What was done:**
+      line 1370 now reads *"the files under `tools/verify/` that it names"* — no number — and the rest of
+      the sentence, that the sweep takes the set from `STATIC_SECTIONS` and `BROWSER_SECTIONS` rather
+      than a directory scan, is unchanged; it is what makes the count unnecessary. **Left alone on
+      purpose:** the dated ledger entries further down the README (*"the file count this ledger's head
+      names moves to seventy-five"*, *"which is the eighty-first file"*, …) are history, each true on
+      the day it records, and are not a live count. No sweep check was added (out of scope; proposed in
+      the result file).
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/wo-sweep.mjs`: `EXIT=0`, *50 checks · 47 passed · 0 failed · 3 to review*; the three
+      are the standing ones (sensitive field names, due-date/late, mockup banners). § 11 still passes
+      at 2000 call sites — the edit added none. `node tools/verify-shell.mjs`: `EXIT=0`,
+      *2012 checks · 2012 passed · 0 failed · 0 skipped* — run after both edits had landed.
+- [x] `TESTING.md` § WO-1.79 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ---
 
 ## Phase 2 — Attendance

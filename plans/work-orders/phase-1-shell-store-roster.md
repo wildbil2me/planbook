@@ -6516,7 +6516,7 @@ anything added is written the way a sibling app would copy it. **It is not in `S
 
 ## WO-1.79 — the browser harness's header comment counts its files, and the count is wrong
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-11 · **Size** XS · **Depends on** — · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.75 made.)*
 
 **Booked 2026-10-11**, owner-directed, out of WO-1.77's verdict. A ride-along on
@@ -6536,11 +6536,11 @@ maintains** — the rule `CLAUDE.md` applies to its own status line.
 - **`TESTING.md` § WO-1.79** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] The header comment in `tools/verify-shell.mjs` states no number of files.
-- [ ] `TESTING.md` § WO-1.79 says whether `tools/README.md`'s count is checked by anything, with the
+- [x] The header comment in `tools/verify-shell.mjs` states no number of files.
+- [x] `TESTING.md` § WO-1.79 says whether `tools/README.md`'s count is checked by anything, with the
       line that checks it or the grep that found none, and what was done with it.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-1.79 carries these lines verbatim with the evidence for each.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-1.79 carries these lines verbatim with the evidence for each.
 
 **Traps** — **This changes `tools/verify-shell.mjs`, a pipeline file**: read
 `plans/work-orders/README.md` § "The pipeline's own files" first. **Nothing in `src/` moves**, so no

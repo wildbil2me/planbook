@@ -13,6 +13,16 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The harness no longer says how many files it has — 2026-10-11
+
+WO-1.79, owner-directed, out of WO-1.77's verdict. Tooling only; nothing in the app changed and no
+cache bump.
+
+- **`tools/verify-shell.mjs`'s header comment and `tools/README.md` no longer state how many check
+  files there are.** Both figures were wrong — 75 and 91, against 93 on disk — and nothing in the
+  repository checked either one. The sweep already counts the files from the harness's own section
+  lists, so the prose now names none.
+
 ### The style guide's page draws the three dialog sizes — 2026-10-11
 
 WO-1.78, owner-directed. Design files only; nothing in the app changed and no cache bump.

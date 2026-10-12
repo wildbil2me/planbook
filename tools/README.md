@@ -1367,7 +1367,7 @@ sweep red rather than turning the check off. **Recompute it with the sweep, neve
 the paragraph below it comes from a `node tools/verify-shell.mjs` run and from nothing else. (Both
 numbers went stale together once — WO-3.26's dead dispatch left the call-site line behind and turned
 the sweep red for a run that had never happened.) **Since WO-1.26 the count spans `tools/verify-shell.mjs`
-and the ninety-one files under `tools/verify/` that it names**, and the sweep reads the entry file's own
+and the files under `tools/verify/` that it names**, and the sweep reads the entry file's own
 `STATIC_SECTIONS` and `BROWSER_SECTIONS` rows to know which those are rather than scanning the
 directory — the set counted is the set run. The split moved 1141 to 1141: the modules'
 `const { check, … } = h;` lines are not call sites, because the pattern wants a `(` after the name.
