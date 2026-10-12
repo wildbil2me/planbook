@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2037 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2045 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2980,6 +2980,21 @@ WO-3.63 shape, with the three margins the Trap names. One is in `verify/categori
 beside the *a wrong total blocks nothing* check: `#categoryError` between `#categoryTotal` and the
 Add row, read from the markup because the line is hidden and has no box. None is a failure arm. Full
 run: `2049 checks · 2049 passed · 0 failed · 0 skipped`, 65,336 lines, 31.9 lines per check, 1099s,
+exit 0, 2026-10-12 on the real clock.
+
+**WO-3.65 moved it from 2037 to 2045, and the executed count from 2049 to 2057 — eight sites, eight
+results, no new file.** Seven are in `verify/grade-sheet.mjs`, between acceptance line 4's two-mode
+pass and the coarse pass: the Grade sheet opened seven times through the seam — balanced, weights at
+95, 95 with nothing assigned, nothing assigned, an empty roster, no class open, and balanced again —
+each read off the boxes in the WO-3.63 shape (the host's place, what is in it, the lowest message's
+bottom against Print's and Download CSV's tops, and what is left in `#gradesRecordBody`). The order is
+chosen so that each open would inherit a stale message from the one before if the host were not
+emptied. One is in `verify/print-sheets.mjs`, before the belt: the banner on paper at 95 — first
+thing the dialog draws, under `#printHeader`, in the print block's dress — and the empty host with no
+box at 100. **Its first run went red on two harness errors, not app ones, both worth knowing:** an
+expected sentence copied short of its last clause, and **`innerText` applies `text-transform`**, so
+the sheet's label reads `GRADES BY STUDENT` on paper and a mixed-case `indexOf` finds nothing. Full
+run: `2057 checks · 2057 passed · 0 failed · 0 skipped`, 65,595 lines, 31.9 lines per check, 1088s,
 exit 0, 2026-10-12 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a

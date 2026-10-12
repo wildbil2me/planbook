@@ -1279,6 +1279,17 @@ Each row names it in a **Surface** deliverable by hand, which is rule 9 kept rat
   category*. The harness's two reads stay meaningful and a future refusal has the place the rule
   names; what it would say is another row's. *(Open question 4, answered as drawn.)*
 
+## Decided, the owner, 2026-10-12, before WO-3.65's dispatch
+
+- **The banner and an empty sentence can both show, and the host takes both, the banner first.** The
+  drawing showed the banner alone; the build found the pair. *(In the build it only ever draws over a
+  roster with nothing assigned in the term: the balance question is asked of a student, so an empty
+  roster draws its sentence and no banner, as it always did.)*
+- **"Nothing under them" means the sentence, not the head.** The sheet's head stays under the
+  buttons in every state that has one, which is what frame 10's caption already says.
+- **What prints is closed by the build, not by a ruling** — the banner prints first under
+  `#printHeader`, where it printed, and `tools/verify/print-sheets.mjs` reads it there.
+
 ## The open questions, collected
 
 1. **Order inside the editor's one place** — the drawing puts the refusal last, touching Done. The

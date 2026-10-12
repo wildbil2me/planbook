@@ -4991,6 +4991,19 @@
       <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
     </div>
     <div class="modal-body">
+      <!-- THE SHEET'S MESSAGES, ABOVE PRINT AND CSV (WO-3.65, the owner's rule at WO-3.58: a dialog's
+           messages draw above its buttons, in one place — and here the buttons are first). Empty at
+           rest and on every open; src/grades-report.js's openGrades() puts the no-grade banner, an
+           empty-state sentence, or both — the banner first — in here and nowhere else. An empty
+           <div> with no class and no rule of its own, so a sheet with nothing to say draws exactly
+           as it did: no box, no margin.
+
+           IT PRINTS, ON PURPOSE. src/scores.css's print block hides the dialog's header and the
+           actions row and nothing else in the body, so this host stays on paper and the banner
+           prints where it printed before it moved — first under the shared #printHeader, since the
+           actions row and the sheet's own head (the two things it now sits beside) are both off
+           the page. tools/verify/print-sheets.mjs reads it there. -->
+      <div id="gradesRecordMessages"></div>
       <div class="grades-report-actions">
         <button type="button" class="class-action-btn primary" data-grades-record-print
                 title="Print this sheet, or save it as a PDF from the print dialog">

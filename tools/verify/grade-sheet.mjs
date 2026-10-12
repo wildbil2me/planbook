@@ -936,6 +936,189 @@ console.log('\n--- the class\'s grade sheet, printed and exported (WO-3.9) ---')
       + (plant.mode ? 'true' : 'false') + '); 1');
 
     /*
+      ── WO-3.65: THE SHEET'S MESSAGES DRAW ABOVE PRINT AND CSV ──
+
+      The owner's rule at WO-3.58 — a dialog's messages draw above its buttons, in one place — on the
+      one dialog whose buttons come first. Every state is read off the drawn boxes, in the shape
+      WO-3.63 and WO-3.64 measured their own dialogs: the host's place in the markup, what is in it,
+      the lowest message's bottom against Print's and Download CSV's tops, and what is left in
+      #gradesRecordBody under them. Seven opens, in an order chosen so that each one would inherit a
+      stale message from the one before if the host were not emptied on every open:
+
+        balanced    the fixture as built — the baseline: the host empty, no box, no margin, and the
+                    actions row exactly where it was when it was the body's first child
+        95          Participation 15 -> 10: the banner alone in the host, the body's children
+                    the baseline's, class for class
+        95 + none   and a second term with nothing in it: banner, then sentence (ruling 1); the
+                    head still in the body (ruling 2)
+        none        that empty term at 100: the sentence alone
+        roster      the roster emptied, at 95: the sentence alone — the banner CANNOT stand here,
+                    because gradesRecord() asks the balance question of a student and there is none
+        no class    every class archived for one open: the no-class sentence, and an empty body
+        balanced    the fixture put back: the host empty again, after the no-class open put a
+                    sentence in it
+
+      Opened through the seam rather than the door, as acceptance line 4's pass above does: every
+      state is a document edit, and the door's own path is asserted at the top of this section.
+      NO BACKTICKS INSIDE THE TEMPLATE STRINGS.
+    */
+    {
+      const MSG_READ = `(function(){
+        var m = document.getElementById('gradesRecordModal');
+        var host = document.getElementById('gradesRecordMessages');
+        var body = document.getElementById('gradesRecordBody');
+        if (!m || !host || !body) return { up:false, why:'no host or no body' };
+        var mb = m.querySelector('.modal-body');
+        var actions = m.querySelector('.grades-report-actions');
+        var pr = m.querySelector('[data-grades-record-print]');
+        var cv = m.querySelector('[data-grades-record-csv]');
+        var cls = function(e){ return String(e.className || e.tagName.toLowerCase()).split(' ')[0]; };
+        var rect = function(e){ return e.getBoundingClientRect(); };
+        var hs = getComputedStyle(host), bs = getComputedStyle(mb);
+        var kids = Array.prototype.map.call(host.children, function(e){ var r = rect(e);
+          return { c: cls(e), top: r.top, bottom: r.bottom, h: Math.round(r.height),
+            text: (e.textContent || '').replace(/\\s+/g, ' ').trim() }; });
+        var msgsInModal = m.querySelectorAll('.grade-none, .grades-report-empty').length;
+        var a = rect(actions), p = rect(pr), c = rect(cv);
+        var lowest = kids.reduce(function(x, k){ return Math.max(x, k.bottom); }, -Infinity);
+        return { up: !m.classList.contains('hidden'),
+          scrollTop: mb.scrollTop,
+          hostPlace: host.parentElement === mb && host.nextElementSibling === actions
+            && mb.firstElementChild === host,
+          hostKids: kids.map(function(k){ return k.c; }), hostTexts: kids.map(function(k){ return k.text; }),
+          hostH: rect(host).height,
+          hostSpace: [hs.marginTop, hs.marginBottom, hs.paddingTop, hs.paddingBottom,
+            hs.borderTopWidth, hs.borderBottomWidth],
+          actionsOffset: Math.round((a.top - (rect(mb).top + parseFloat(bs.borderTopWidth)
+            + parseFloat(bs.paddingTop))) * 100) / 100,
+          aboveButtons: kids.length ? lowest <= Math.min(p.top, c.top) + 0.5 : null,
+          bannerOverSentence: kids.length === 2 ? kids[0].bottom <= kids[1].top + 0.5 : null,
+          printTop: Math.round(p.top), csvTop: Math.round(c.top), lowest: Math.round(lowest),
+          bodyKids: Array.prototype.map.call(body.children, cls),
+          bodyMsgs: body.querySelectorAll('.grade-none, .grades-report-empty').length,
+          outsideHost: msgsInModal - host.querySelectorAll('.grade-none, .grades-report-empty').length };
+      })()`;
+      const openRead = async () => {
+        await evalJs(`(function(){ var m = document.getElementById('gradesRecordModal');
+          if (m && !m.classList.contains('hidden')) window.planbook.closeModal('gradesRecordModal');
+          return 1; })()`);
+        await new Promise(r => setTimeout(r, 150));
+        await evalJs('window.planbook.gradesReport.openGrades(); 1');
+        await new Promise(r => setTimeout(r, 250));
+        return evalJs(MSG_READ);
+      };
+      const edit = (body) => evalJs(`(function(){ var s = window.planbook.store;
+        s.update(function(doc){ var cls = doc.classes.filter(function(x){ return x.id === '${CLS}'; })[0];
+          ${body} });
+        return 1; })()`);
+      const X_TERM = 'tm_wo39x';
+      const EMPTY_SENTENCE_START = { roster: 'There is nobody on this class’s roster yet',
+        none: 'Nothing has been assigned in WO-3.9 Sheet for WO-3.9 Empty term yet',
+        noClass: 'No class is open, so there is no grade sheet to print. Open a class first.' };
+      const BANNER = 'The category weights total 95%, so there is no grade yet.';
+      const noSpace = (r) => r.hostH === 0 && r.hostSpace.every((v) => parseFloat(v) === 0)
+        && r.actionsOffset === 0 && r.hostKids.length === 0 && r.outsideHost === 0;
+
+      const base = await openRead();
+      check('WO-3.65: a sheet with no message draws exactly as before — the host is the body\'s first '
+        + 'child, directly before Print and CSV, empty, with no height, margin, padding or border, and '
+        + 'the actions row starts where it did when it was the body\'s first child',
+        base.up && base.hostPlace && base.scrollTop === 0 && noSpace(base) && base.bodyMsgs === 0
+          && base.bodyKids[0] === 'grades-report-head' && base.bodyKids.indexOf('grades-report-key') !== -1
+          && base.bodyKids[base.bodyKids.length - 1] === 'grades-report-note',
+        JSON.stringify(base));
+
+      await edit("cls.categories.forEach(function(c){ if (c.id === 'cat39p') c.weight = 10; });");
+      const off = await openRead();
+      check('WO-3.65: with the weights at 95 the no-grade banner draws in the host, above Print and '
+        + 'Download CSV — its bottom above both buttons\' tops — and nowhere else, and the sheet under '
+        + 'them is the balanced sheet\'s, child for child: head, label, slices, key, note',
+        off.up && off.hostPlace && JSON.stringify(off.hostKids) === '["grade-none"]'
+          && off.hostTexts[0] === BANNER && off.aboveButtons === true && off.outsideHost === 0
+          && off.bodyMsgs === 0 && JSON.stringify(off.bodyKids) === JSON.stringify(base.bodyKids),
+        JSON.stringify(off) + ' · balanced body ' + JSON.stringify(base.bodyKids));
+
+      await edit("cls.terms.push({ id:'" + X_TERM + "', label:'WO-3.9 Empty term', start:'2027-01-04', "
+        + "end:'2027-03-26' });");
+      await evalJs("window.planbook.classes.selectTerm('" + X_TERM + "'); 1");
+      const offNone = await openRead();
+      check('WO-3.65 ruling 1: with the weights at 95 AND nothing assigned in the term, the host holds '
+        + 'both — the banner first, then the sentence, the banner\'s bottom above the sentence\'s top — '
+        + 'both above Print and CSV, and the sheet\'s head stays in the body under them with no message '
+        + 'of its own (ruling 2)',
+        offNone.up && offNone.hostPlace
+          && JSON.stringify(offNone.hostKids) === '["grade-none","grades-report-empty"]'
+          && offNone.hostTexts[0] === BANNER && offNone.hostTexts[1].indexOf(EMPTY_SENTENCE_START.none) === 0
+          && offNone.bannerOverSentence === true && offNone.aboveButtons === true
+          && offNone.outsideHost === 0 && offNone.bodyMsgs === 0
+          && JSON.stringify(offNone.bodyKids) === '["grades-report-head"]',
+        JSON.stringify(offNone));
+
+      await edit("cls.categories.forEach(function(c){ if (c.id === 'cat39p') c.weight = 15; });");
+      const none = await openRead();
+      check('WO-3.65: nothing assigned in the term — the sentence draws above Print and CSV, alone in '
+        + 'the host, and not under them; the head stays in the body',
+        none.up && none.hostPlace && JSON.stringify(none.hostKids) === '["grades-report-empty"]'
+          && none.hostTexts[0].indexOf(EMPTY_SENTENCE_START.none) === 0 && none.aboveButtons === true
+          && none.outsideHost === 0 && none.bodyMsgs === 0
+          && JSON.stringify(none.bodyKids) === '["grades-report-head"]',
+        JSON.stringify(none));
+
+      await evalJs("window.planbook.classes.selectTerm('" + TERM + "'); 1");
+      await edit("cls.terms = cls.terms.filter(function(t){ return t.id !== '" + X_TERM + "'; }); "
+        + "cls.roster = []; cls.categories.forEach(function(c){ if (c.id === 'cat39p') c.weight = 10; });");
+      const roster = await openRead();
+      check('WO-3.65: an empty roster — the sentence draws above Print and CSV, alone in the host, and '
+        + 'not under them; the head stays in the body. At 95 as well, and still no banner: the balance '
+        + 'question is asked of a student and there is none, which is what the sheet drew before too',
+        roster.up && roster.hostPlace && JSON.stringify(roster.hostKids) === '["grades-report-empty"]'
+          && roster.hostTexts[0].indexOf(EMPTY_SENTENCE_START.roster) === 0 && roster.aboveButtons === true
+          && roster.outsideHost === 0 && roster.bodyMsgs === 0
+          && JSON.stringify(roster.bodyKids) === '["grades-report-head"]',
+        JSON.stringify(roster));
+
+      await edit("cls.roster = " + JSON.stringify(ROSTER) + "; "
+        + "cls.categories.forEach(function(c){ if (c.id === 'cat39p') c.weight = 15; });");
+      /* Every class archived for one open, and each one's own `archived` put back exactly — absent
+         where it was absent — in the same breath as the read. */
+      const noClass = await evalJs(`(async function(){
+        var s = window.planbook.store, was = {};
+        s.update(function(doc){ doc.classes.forEach(function(c){
+          was[c.id] = Object.prototype.hasOwnProperty.call(c, 'archived') ? { v: c.archived } : null;
+          c.archived = true; }); });
+        var m = document.getElementById('gradesRecordModal');
+        if (m && !m.classList.contains('hidden')) window.planbook.closeModal('gradesRecordModal');
+        window.planbook.gradesReport.openGrades();
+        await new Promise(function(r){ setTimeout(r, 250); });
+        var out = ${MSG_READ};
+        window.planbook.closeModal('gradesRecordModal');
+        s.update(function(doc){ doc.classes.forEach(function(c){
+          if (!(c.id in was)) return;
+          if (was[c.id]) c.archived = was[c.id].v; else delete c.archived; }); });
+        await s.flush();
+        out.restored = s.getDoc().classes.every(function(c){ var w = was[c.id];
+          return w ? c.archived === w.v : !Object.prototype.hasOwnProperty.call(c, 'archived'); });
+        return out; })()`);
+      check('WO-3.65: no class open — the sentence draws above Print and CSV, alone in the host, and the '
+        + 'body under them is empty',
+        noClass.up && noClass.hostPlace && JSON.stringify(noClass.hostKids) === '["grades-report-empty"]'
+          && noClass.hostTexts[0] === EMPTY_SENTENCE_START.noClass && noClass.aboveButtons === true
+          && noClass.outsideHost === 0 && noClass.bodyKids.length === 0 && noClass.restored === true,
+        JSON.stringify(noClass));
+
+      await evalJs("window.planbook.classes.selectClass('" + CLS + "'); "
+        + "window.planbook.classes.selectTerm('" + TERM + "'); 1");
+      const again = await openRead();
+      check('WO-3.65: and the host is emptied on every open — the balanced sheet opened straight after '
+        + 'the no-class one draws an empty host, no space, and the baseline\'s body',
+        again.up && again.hostPlace && noSpace(again) && again.bodyMsgs === 0
+          && JSON.stringify(again.bodyKids) === JSON.stringify(base.bodyKids),
+        JSON.stringify(again));
+      await evalJs("window.planbook.closeModal('gradesRecordModal'); 1");
+      await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+    }
+
+    /*
       ── THE COARSE PASS ──
 
       The door and the dialog it opens, at 1024px under a coarse pointer, reached the way a teacher

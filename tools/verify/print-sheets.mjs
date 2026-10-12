@@ -569,6 +569,82 @@ for (const key of Object.keys(EXPECT)) {
   }
 }
 
+/* ── WO-3.65: the banner prints where it printed, now that it draws above Print and CSV ──
+   The no-grade banner moved out of #gradesRecordBody into #gradesRecordMessages, a host BEFORE the
+   actions row, so it is a new element to the gated print block in src/scores.css — which hides the
+   dialog's header and the actions row and nothing else in the body. Read on paper with the weights at
+   95: the banner has a box, it is the first thing the dialog draws, its top is under #printHeader's
+   bottom, it is printed in the print block's own dress (no wash, the 1mm black rule), and the sheet's
+   label, slices, key and note follow it in that order. And with the weights back at 100 the empty
+   host has no box on paper and the label is the first thing drawn — the sheet every other check in
+   this section read. NO BACKTICKS INSIDE THE TEMPLATE STRING. */
+{
+  const PAPER = `(function(){
+    var m = document.getElementById('gradesRecordModal');
+    var mb = m.querySelector('.modal-body');
+    var host = document.getElementById('gradesRecordMessages');
+    var hdr = document.getElementById('printHeader');
+    var banner = host ? host.querySelector('.grade-none') : null;
+    var h = function(e){ return e ? Math.round(e.getBoundingClientRect().height * 100) / 100 : -1; };
+    var first = null;
+    Array.prototype.some.call(mb.querySelectorAll('*'), function(e){
+      if (e === host || e === document.getElementById('gradesRecordBody')) return false;
+      if (e.getBoundingClientRect().height > 0) { first = e; return true; } return false; });
+    /* Lower-cased, because innerText applies text-transform and the label prints in capitals. */
+    var text = (mb.innerText || '').toLowerCase();
+    var bs = banner ? getComputedStyle(banner) : null;
+    return {
+      gate: document.body.hasAttribute('data-grades-print'),
+      headerH: h(hdr), headerBottom: hdr ? hdr.getBoundingClientRect().bottom : -1,
+      hostH: h(host), bannerH: h(banner),
+      bannerTop: banner ? banner.getBoundingClientRect().top : -1,
+      first: first ? String(first.className || first.tagName).split(' ')[0] : null,
+      actionsH: h(m.querySelector('.grades-report-actions')),
+      headH: h(m.querySelector('.grades-report-head')),
+      bannerDress: bs ? [bs.backgroundImage, bs.backgroundColor, bs.borderLeftColor,
+        Math.round(parseFloat(bs.borderLeftWidth) * 100) / 100] : null,
+      order: ['The category weights total 95%', 'Grades by student', 'not graded yet',
+        'This is grades and nothing else'].map(function(t){ return text.indexOf(t.toLowerCase()); }) }; })()`;
+  const onPaper = async () => {
+    await evalJs("window.dispatchEvent(new Event('beforeprint')); 1");
+    await send('Emulation.setEmulatedMedia', { media: 'print' });
+    await new Promise(r => setTimeout(r, 150));
+    const out = await evalJs(PAPER);
+    await send('Emulation.setEmulatedMedia', { media: '' });
+    await evalJs("window.dispatchEvent(new Event('afterprint')); 1");
+    await new Promise(r => setTimeout(r, 80));
+    return out;
+  };
+  const weight = (w) => evalJs(`(function(){ window.planbook.store.update(function(doc){
+    doc.classes.forEach(function(c){ if (c.id === '${CLS}') c.categories[0].weight = ${w}; }); });
+    return 1; })()`);
+  await closeAll();
+  await toClass();
+  await weight(95);
+  await openGrades();
+  const off = await onPaper();
+  await closeAll();
+  await weight(100);
+  await openGrades();
+  const even = await onPaper();
+  await closeAll();
+  const dressed = !!off.bannerDress && off.bannerDress[0] === 'none'
+    && /rgba\(0, 0, 0, 0\)|transparent/.test(off.bannerDress[1])
+    && off.bannerDress[2] === 'rgb(0, 0, 0)' && off.bannerDress[3] >= 3 && off.bannerDress[3] < 4.5;
+  check('WO-3.65 · with the weights at 95 the no-grade banner still prints first under #printHeader — '
+    + 'it is the first thing the dialog draws on paper, below the header band, in the print block\'s '
+    + 'own dress, with the label, the grid\'s key and the closing note after it in that order, and '
+    + 'Print, CSV and the sheet\'s own head off the page — and with the weights at 100 the empty host '
+    + 'has no box on paper and the label leads, as it did',
+    off.gate && off.headerH > 0 && off.bannerH > 0 && off.first === 'grade-none'
+      && off.bannerTop >= off.headerBottom - 0.5 && dressed
+      && off.actionsH === 0 && off.headH === 0
+      && off.order[0] >= 0 && off.order.every((n, i) => i === 0 || n > off.order[i - 1])
+      && even.gate && even.hostH === 0 && even.bannerH === -1 && even.first === 'grades-report-label'
+      && even.order[0] === -1 && even.order[1] >= 0,
+    'weights 95: ' + JSON.stringify(off) + ' · weights 100: ' + JSON.stringify(even));
+}
+
 /* ── ruling 6: the belt — a Ctrl+P from a screen that is not a print surface, no gate at all ── */
 {
   await closeAll();

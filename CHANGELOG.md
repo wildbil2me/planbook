@@ -13,6 +13,16 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The grade sheet says what is wrong before you print it — 2026-10-12
+
+WO-3.65, the third case of WO-3.58's rule. `CACHE` v194.
+
+- **When the category weights do not add up to 100, the warning that there is no grade now sits
+  above Print and Download CSV** instead of under them.
+- **So do the sentences for a sheet with nothing on it** — no class open, nobody on the roster,
+  nothing assigned this term.
+- **The sheet itself, and what comes out of the printer, are unchanged.**
+
 ### The move confirm's note and the categories panel's error line draw above their buttons — 2026-10-12
 
 WO-3.64, the second case of WO-3.58's rule. `CACHE` v193.

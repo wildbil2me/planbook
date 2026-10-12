@@ -5210,7 +5210,7 @@ wording.
 
 ## WO-3.65 — the grade sheet's warning and empty sentences draw above Print and CSV
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.58
+**Ship** — · **Status** ✅ DONE — 2026-10-12 · **Size** S · **Depends on** WO-3.58
 **Closes roadmap** *(no box. Owner-directed, 2026-10-12.)*
 
 **Booked 2026-10-12** out of [WO-3.58](#wo-358--the-dialogs-behind-the-assignments-and-scores-screens-are-read-together-and-a-layout-is-ruled).
@@ -5239,14 +5239,14 @@ its buttons, in one place. Here "its buttons" are Print and CSV, at the top.
 - **`TESTING.md` § WO-3.65**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] With the weights not totalling 100, the no-grade banner draws above Print and Download CSV,
+- [x] With the weights not totalling 100, the no-grade banner draws above Print and Download CSV,
       and the sheet under them is otherwise unchanged.
-- [ ] Each of the three empty states draws its sentence above the buttons, and the sentence does not
+- [x] Each of the three empty states draws its sentence above the buttons, and the sentence does not
       also draw under them. With the weights off 100 as well, the banner sits above the sentence.
-- [ ] A sheet with no message draws exactly as before: the host is empty and adds no space.
-- [ ] The printed sheet is unchanged — the banner prints where it printed, first under the shared
+- [x] A sheet with no message draws exactly as before: the host is empty and adds no space.
+- [x] The printed sheet is unchanged — the banner prints where it printed, first under the shared
       `#printHeader`.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
 
 **Ruled — the owner, 2026-10-12, before dispatch** *(two questions found reading this row against
 the code; the proposals taken as written)*:
@@ -5265,6 +5265,16 @@ the code; the proposals taken as written)*:
    Acceptance line 4's *"or the build says why not and the owner rules"* is dropped;
    `tools/verify/print-sheets.mjs` is what shows it. If it does not, that is a finding to bring back,
    not a line to re-widen.
+
+**Found at build, 2026-10-12 — ruling 1's premise, half of it.** With the weights off 100 and an
+**empty roster**, `openGrades()` does not draw the banner, and did not before the move:
+`gradesRecord()` asks the balance question of a student (`probe = students[0]`), so with nobody on the
+roster `unbalanced` is false and only the sentence draws. The pair draws over a roster with **nothing
+assigned in the term**, and the host takes it banner first, as ruled. The build changes neither half;
+`TESTING.md` § WO-3.65 carries the readings.
+
+**Ruled — the owner, 2026-10-12, after the verdict:** an empty roster needs no banner. The sentence
+alone is what it should draw, so the finding above books nothing.
 
 **Traps** — **The print block in `src/scores.css`** hides `body > *` but the gated surface, and inside
 it hides `.grades-report-actions` and `.grades-report-head`; a new host outside `#gradesRecordBody`

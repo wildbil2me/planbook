@@ -14141,6 +14141,88 @@ which is fine for a single-column 480px confirm.
 
 No 👤 line on this row. The deployed dialogs have not been looked at on an iPad.
 
+### WO-3.65 — the grade sheet's warning and empty sentences draw above Print and CSV
+
+**What was built.** `index.html`: an empty `<div id="gradesRecordMessages">` is the first child of
+`#gradesRecordModal`'s body, directly before `.grades-report-actions`, with a markup comment saying
+why it is there and why it prints. No class and no rule of its own, so an empty host has no box.
+`src/grades-report.js`: `openGrades()` empties the host and the body on every open — before any
+branch can return, the no-class one included — and puts the `.grade-none` banner and the three
+`.grades-report-empty` sentences into the host instead of the body; the head, the label, the slices,
+the key and the closing note stay in `#gradesRecordBody`, in their order. No wording, class or margin
+changed, and `src/scores.css` is untouched. `CACHE` v193 → v194.
+
+**The print Trap, checked on purpose.** The host is a new element to the gated print block, and it is
+left to **print**: the block hides the modal's header and the actions row and nothing else in the
+body, and `body[data-grades-print] .grade-none` is not scoped to `#gradesRecordBody`, so the banner
+keeps its print dress in its new place and is still the first thing the dialog draws on paper.
+
+**A finding against ruling 1, which the build does not change.** The ruling says the banner and an
+empty sentence both draw today *"with the weights off 100 **and** an empty roster (or nothing
+assigned)"*. With an empty roster they do not, and never did: `gradesRecord()` asks the balance
+question of a student (`probe = students[0]`), so with nobody on the roster `unbalanced` is false and
+only the sentence draws. The pair draws over a roster with **nothing assigned**, and that is where it
+is measured. The empty-roster check asserts the sentence alone at 95, which is what the sheet drew
+before the move. **Ruled — the owner, 2026-10-12, after the verdict: no banner is needed over an
+empty roster.** The sentence alone stands; no follow-up is booked.
+
+**Mutation-proved by the implementer, 2026-10-12, in a scratch copy of the tree** (the real tree was
+not touched). Three mutations in one run: M1 the banner appended to the body rather than the host, M2
+the host not emptied on open, M3 `#gradesRecordMessages` hidden under the print gate. Result:
+`2057 checks · 2050 passed · 7 failed`, exit 1 — the seven failures are exactly seven of the eight new
+checks, and nothing else went red. The eighth, the balanced baseline, stayed green as it should: it is
+the first open, so nothing is in the host to be stale and the banner is not drawn. **One reading from
+that run is evidence for the print line in its own right:** under M1 the banner sits where it sat
+before the move — in the body, after the hidden head — and the printed text read
+`"first":"grade-none"` with the order `[0,58,856,923]`, the same four indices the real build prints.
+The first green run was preceded by a red one on two harness errors (a sentence copied short of its
+last clause, and `innerText` applying `text-transform` to the label); both fixed in the harness, no
+app change.
+
+- [x] With the weights not totalling 100, the no-grade banner draws above Print and Download CSV,
+      and the sheet under them is otherwise unchanged.
+      — `verify/grade-sheet.mjs`, Participation 15 → 10 (total 95): `{"hostKids":["grade-none"],
+      "hostTexts":["The category weights total 95%, so there is no grade yet."],"aboveButtons":true,
+      "lowest":142,"printTop":154,"csvTop":154,"outsideHost":0,"bodyMsgs":0,"bodyKids":
+      ["grades-report-head","grades-report-label","grades-report-slice","grades-report-slice",
+      "grades-report-key","grades-report-note"]}` — the body's children identical to the balanced
+      sheet's, class for class — PASS.
+- [x] Each of the three empty states draws its sentence above the buttons, and the sentence does not
+      also draw under them. With the weights off 100 as well, the banner sits above the sentence.
+      — `verify/grade-sheet.mjs`, four checks, each asserting the sentence alone in the host, its
+      bottom above both buttons' tops, no `.grade-none` or `.grades-report-empty` anywhere else in the
+      dialog and none in the body: **nothing assigned** (a second, empty term selected) — body
+      `["grades-report-head"]`, the head staying under the buttons per ruling 2; **empty roster** —
+      body `["grades-report-head"]`, at 95 and still no banner (see the finding above); **no class
+      open** (every class archived for one open, each `archived` put back exactly, `restored: true`) —
+      body `[]`. And **95 with nothing assigned**: `hostKids ["grade-none","grades-report-empty"]`,
+      `bannerOverSentence: true`, `lowest 453 < printTop 461`. All PASS.
+- [x] A sheet with no message draws exactly as before: the host is empty and adds no space.
+      — `verify/grade-sheet.mjs`, the balanced fixture: `"hostPlace":true,"hostKids":[],"hostH":0,
+      "hostSpace":["0px","0px","0px","0px","0px","0px"],"actionsOffset":0` — the actions row's top
+      is the body's content top, which is where it stood when it was the body's first child — PASS.
+      And again **after** the no-class open had put a sentence in the host: the same reading, so the
+      host is emptied on every open — PASS.
+- [x] The printed sheet is unchanged — the banner prints where it printed, first under the shared
+      `#printHeader`.
+      — `verify/print-sheets.mjs`, the WO-8.4 fixture at 95, read on an emulated print medium after
+      `beforeprint`: `"gate":true,"headerBottom":92.23,"bannerTop":111.13,"first":"grade-none",
+      "actionsH":0,"headH":0,"bannerDress":["none","rgba(0, 0, 0, 0)","rgb(0, 0, 0)",3]`, and the
+      printed text in order (banner 0 · label 58 · key 856 · note 923) — the banner is the first
+      thing the dialog draws, under the header band, in the print block's own dress. At 100 the
+      empty host has no box on paper (`hostH 0`) and the label leads — PASS. *What this does not
+      show:* a reading of the build **before** the move — the check reads the moved build against the
+      print block's rules, and ruling 3's argument (nothing in the block reaches the host) is what
+      connects that to "where it printed". Paper from a real printer stays a human's.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      — `node tools/verify-shell.mjs`: `2057 checks · 2057 passed · 0 failed · 0 skipped`, 65,595
+      lines, 1088s, exit 0, 2026-10-12, real clock. `node tools/wo-sweep.mjs`: `51 checks · 48 passed
+      · 0 failed · 3 to review`, exit 0; the 3 are the standing ones. The call-site count in
+      `tools/README.md` went 2037 → 2045 from the sweep's own count. `sw.js`:
+      `planbook-shell-v193` → `planbook-shell-v194`.
+
+No 👤 line on this row. The moved messages have not been looked at on an iPad or on paper.
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

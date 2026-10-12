@@ -145,6 +145,10 @@ import { registerPrintGate } from './print-gate.js';
 
 const RECORD_MODAL = 'gradesRecordModal';
 const RECORD_BODY = 'gradesRecordBody';
+/* The sheet's messages — the no-grade banner and the three empty-state sentences — draw here, ABOVE
+   Print and CSV, and the sheet itself in RECORD_BODY under them (WO-3.65, the owner's rule at
+   WO-3.58: a dialog's messages draw above its buttons, in one place). index.html says why it prints. */
+const RECORD_MESSAGES = 'gradesRecordMessages';
 
 /* The attribute the @media print block keys on. One string, named once, because src/scores.css and
    this file have to agree about it and a typo would print a blank page rather than throw.
@@ -480,8 +484,12 @@ function slice(record, from) {
 
 export function openGrades(opener) {
   const body = document.getElementById(RECORD_BODY);
-  if (!body) return;
+  const messages = document.getElementById(RECORD_MESSAGES);
+  if (!body || !messages) return;
+  /* BOTH EMPTIED ON EVERY OPEN, before any branch below can return: a banner left in the host from
+     the last class opened would stand above Print over a sheet it is not about. */
   body.textContent = '';
+  messages.textContent = '';
 
   const record = gradesRecord();
   /* Taken now, from the record this dialog is drawn from, so the band and the grid under it are one
@@ -495,7 +503,7 @@ export function openGrades(opener) {
     brief: record.termLabel,
   } : null;
   if (!record) {
-    body.append(el('p', 'grades-report-empty',
+    messages.append(el('p', 'grades-report-empty',
       'No class is open, so there is no grade sheet to print. Open a class first.'));
     openModal(RECORD_MODAL, opener);
     return;
@@ -525,11 +533,16 @@ export function openGrades(opener) {
        a place the teacher is already standing next to. */
     const banner = el('div', 'grade-none');
     banner.append(el('span', 'grade-none-text', record.noGradeMessage));
-    body.append(banner);
+    messages.append(banner);
   }
 
+  /* THE EMPTY SENTENCES GO TO THE SAME HOST, after the banner when both are drawn (WO-3.65, the
+     owner's ruling 1) — and the head above stays in the body, under the buttons: it is the sheet's
+     title, not a message (ruling 2). With an empty roster the banner cannot stand here at all,
+     because the balance question is asked of a student (gradesRecord()'s probe) and there is none;
+     the pair only ever draws over a roster with nothing assigned. */
   if (!record.students.length) {
-    body.append(el('p', 'grades-report-empty',
+    messages.append(el('p', 'grades-report-empty',
       'There is nobody on this class’s roster yet, so the sheet has no rows. Paste the roster in '
         + 'and every student gets a line here.'));
     openModal(RECORD_MODAL, opener);
@@ -537,7 +550,7 @@ export function openGrades(opener) {
   }
 
   if (!record.assignments.length) {
-    body.append(el('p', 'grades-report-empty',
+    messages.append(el('p', 'grades-report-empty',
       'Nothing has been assigned in ' + record.className
         + (record.termLabel ? ' for ' + record.termLabel : '') + ' yet, so there are no columns to '
         + 'print. Add work on the Assignments screen and each assignment gets one here, in due-date '

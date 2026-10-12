@@ -1,0 +1,9 @@
+- 2026-10-12T20:03:52Z gates PASS (WO-3.58 ✅); tree has only untracked plans/first-run.md (not ours, leave it).
+- 2026-10-12T20:03:52Z route Claude Opus — print-block judgment Trap (new host outside #gradesRecordBody must print or hide on purpose) and teacher-facing prose (TESTING.md, CHANGELOG); ROUTING § Route to Claude. Runner-up Codex (markup move, mechanical checks) set aside; matches siblings WO-3.63/3.64. No Codex probe needed.
+- 2026-10-12T20:03:53Z claimed: --start ran.
+- 2026-10-12T20:04:28Z brief written: .claude/dispatch/WO-3.65-brief.md (markers filled).
+- 2026-10-12T20:04:28Z implementer spawned at Opus with .claude/dispatch/WO-3.65-brief.md, awaiting return (expect 20–40 min; a flat trail for the first 20 is reading, not death).
+- 2026-10-12T21:05:38Z implementer returned: claims all 5 Acceptance PASS (verify-shell 2057/2057, sweep 51·48·0·3, CACHE v194), boxes ticked by it; finding — ruling 1's empty-roster+unbalanced pair never draws (probe=students[0]); no CHANGELOG written (draft in result). Claims unverified.
+- 2026-10-12T21:05:38Z handoff written: 🔍 AWAITING VERDICT. Verifier owed in a fresh session; this session stops.
+- 2026-10-12T21:10:17Z fresh session: row reads 🔍 AWAITING VERDICT; grep MUTATION run. Verifier spawned at Opus as FIRST pass, awaiting verdict.
+- 2026-10-12T21:29:58Z verifier returned: PASS, 5/5 ✅, no 👤; verify-shell 2057/2057 and sweep 51·48·0·3 re-taken; CHANGELOG entry owed before --tick. Awaiting user go for maintenance.
