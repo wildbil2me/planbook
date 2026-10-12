@@ -5229,8 +5229,8 @@ its buttons, in one place. Here "its buttons" are Print and CSV, at the top.
 **Deliverables**
 - **`index.html`**: an empty host for the sheet's messages before `.grades-report-actions` in
   `#gradesRecordModal`.
-- **`src/grades-report.js`**: `openGrades()` puts the banner, or the empty sentence, into that host
-  and empties it on every open; the head, the table, the key and the closing note stay in
+- **`src/grades-report.js`**: `openGrades()` puts the banner, the empty sentence, or both (banner
+  first — ruling 1 below) into that host and empties it on every open; the head, the table, the key and the closing note stay in
   `#gradesRecordBody`, in their order.
 - **The harness**: `tools/verify/grade-sheet.mjs` — with the weights at 95, the banner's bottom is
   above Print's top; with an empty roster, likewise the empty sentence; with neither, the host is
@@ -5241,11 +5241,30 @@ its buttons, in one place. Here "its buttons" are Print and CSV, at the top.
 **Acceptance**
 - [ ] With the weights not totalling 100, the no-grade banner draws above Print and Download CSV,
       and the sheet under them is otherwise unchanged.
-- [ ] Each of the three empty states draws its sentence above the buttons, and nothing under them.
+- [ ] Each of the three empty states draws its sentence above the buttons, and the sentence does not
+      also draw under them. With the weights off 100 as well, the banner sits above the sentence.
 - [ ] A sheet with no message draws exactly as before: the host is empty and adds no space.
-- [ ] The printed sheet is unchanged — the banner prints where it printed, or the build says why
-      not and the owner rules.
+- [ ] The printed sheet is unchanged — the banner prints where it printed, first under the shared
+      `#printHeader`.
 - [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+
+**Ruled — the owner, 2026-10-12, before dispatch** *(two questions found reading this row against
+the code; the proposals taken as written)*:
+1. **The banner and an empty sentence can both show, and the host takes both, the banner first.**
+   With the weights off 100 **and** an empty roster (or nothing assigned), `openGrades()` draws both
+   today, in that order (`src/grades-report.js`, the `record.unbalanced` branch, then the roster
+   check). The Deliverables read "the banner, or the empty sentence" until this ruling.
+2. **"Nothing under them" meant the sentence, not the head.** In the empty-roster and
+   nothing-assigned states `openGrades()` draws the sheet's head (`.grades-report-head`) into
+   `#gradesRecordBody` before the sentence, and the head stays there. Acceptance line 2 is reworded
+   to say so; read literally, the old wording failed a correct build.
+3. **The print line closes on the build, not on a ruling.** The print block hides only the modal's
+   header and `.grades-report-actions`, `body[data-grades-print] .grade-none` is not scoped to
+   `#gradesRecordBody`, and the sheet's own head is already hidden on paper — so a host before the
+   buttons prints exactly where the banner prints now, first under the shared `#printHeader`.
+   Acceptance line 4's *"or the build says why not and the owner rules"* is dropped;
+   `tools/verify/print-sheets.mjs` is what shows it. If it does not, that is a finding to bring back,
+   not a line to re-widen.
 
 **Traps** — **The print block in `src/scores.css`** hides `body > *` but the gated surface, and inside
 it hides `.grades-report-actions` and `.grades-report-head`; a new host outside `#gradesRecordBody`
@@ -5282,9 +5301,10 @@ was the alternative drawn and not taken.)*
 **Deliverables**
 - **`index.html`**: a host for the note in `#scoresView`, after the past-due prompt and before the
   summary row (S1).
-- **`src/assignments.js`**: `paintListNote()` paints both hosts from the one `listNote`, the way
-  `src/past-due.js` paints its two; **`src/scores.js`** calls it on render for the class and term on
-  screen.
+- **A module of its own for the note** (ruling (d) below): `listNote`, the setters
+  `src/assignments.js` uses today, and one paint that fills both hosts from it, the way
+  `src/past-due.js` paints its two. **`src/assignments.js`** and **`src/scores.js`** each import it and
+  call the paint on render for the class and term on screen; neither imports the other.
 - **The harness**: beside WO-3.57's door checks — a blank close from Scores' `+ New assignment`
   draws the owner's sentence in amber on the Scores screen, checked in the DOM and computed style,
   not the live region; and opening the editor again takes it down on both screens.
@@ -5298,11 +5318,17 @@ was the alternative drawn and not taken.)*
 - [ ] A create from Scores filed under another term draws the indigo moved note on Scores too, from
       the same `listNote` — the whole note, amber ahead of indigo on one line when both apply.
 - [ ] Opening the editor again clears it from both screens; another class or term does not draw it.
+- [ ] On a class with no roster, the note still draws on Scores, with `#scoresTop` hidden under it —
+      checked, not assumed.
+- [ ] No import loop: the note's module imports neither `src/assignments.js` nor `src/scores.js`, and
+      `src/scores.js` does not import `src/assignments.js`.
 - [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
 - [ ] 👤 On the iPad, after a force-quit, upright: + New assignment from Scores, then ✕ with no name
       — the warning is noticed on Scores.
 
-**Ruled — the owner, 2026-10-12, after WO-3.58's verdict.** Nothing is left open at dispatch.
+**Ruled — the owner, 2026-10-12, after WO-3.58's verdict.** Nothing is left open at dispatch. *(It
+said so before (d) and (e) existed, and was wrong for an afternoon: a reading of the row against the
+code found both, and the owner took the proposals the same day.)*
 - **(a) S1** — as under *Ruled* above.
 - **(b) The indigo moved-work note comes too: the Scores host draws the whole note.** A create from
   Scores filed under another term moves the class's open term, so the grid changes term under the
@@ -5313,6 +5339,19 @@ was the alternative drawn and not taken.)*
   portrait iPad for every note. The live region announces it, it is there on scrolling up, and both
   screens' `+ New assignment` sit near the top where it draws. If an iPad reading ever shows it
   missed, that is a row of its own with an observed case. This discharges WO-3.57's ruling 3.
+
+- **(d) The note moves to a module of its own**, which both screens import. The Deliverables first
+  had `src/scores.js` call `paintListNote()` out of `src/assignments.js`, and that closes an import
+  loop — `src/assignments.js` imports `src/held-column.js`, which imports `src/scores.js` (for
+  `formatPercent` and `gridOrder`) — which this repo has refused by hand and `wo-sweep.mjs` would not
+  catch. Of the three answers — a module of its own, `src/shell.js` painting the note after it
+  repaints Scores, or accepting the loop — the first was taken: it is the shape `src/past-due.js`
+  already has with `[data-past-due]`, and the plainest form of the Trap's "one note, never a copy".
+- **(e) A class with no roster draws the note on Scores.** The host sits **outside** `#scoresTop`, so
+  hiding that row does not hide it, and the one "nothing to grade" state the note can coexist with is
+  an empty roster — the note exists only while its term holds an assignment. That is correct: the
+  sentence is still true, and the list draws it too. The harness checks it draws rather than leaving
+  it unexamined.
 
 **Traps** — **A second note is a second truth**: the Scores host reads `listNote`, never a copy of
 it, or the two screens drift. **The Scores screen hides its top row in "nothing to grade" states**
