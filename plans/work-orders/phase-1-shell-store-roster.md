@@ -6548,7 +6548,7 @@ maintains** — the rule `CLAUDE.md` applies to its own status line.
 
 ## WO-1.80 — nothing stops a file count creeping back into the harness's prose
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-1.79 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-12 · **Size** XS · **Depends on** WO-1.79 · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.79 made.)*
 
 **Booked 2026-10-11**, owner-directed, out of WO-1.79's result file. A ride-along on
@@ -6578,16 +6578,16 @@ prints it on every run.
 - **`TESTING.md` § WO-1.80** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] `node tools/wo-sweep.mjs` has a check that passes on today's tree and names both places it read.
-- [ ] A file count written back into the header comment of `tools/verify-shell.mjs`, in digits and
+- [x] `node tools/wo-sweep.mjs` has a check that passes on today's tree and names both places it read.
+- [x] A file count written back into the header comment of `tools/verify-shell.mjs`, in digits and
       in words, turns that check red at the line; so does one written back into the live sentence in
       `tools/README.md`. Both plants are reverted, and `TESTING.md` § WO-1.80 shows the red output.
-- [ ] Rewording either anchor so that the check can no longer find it fails the check and names the
+- [x] Rewording either anchor so that the check can no longer find it fails the check and names the
       anchor, and does not pass.
-- [ ] The dated ledger entries further down `tools/README.md` (*"moves to seventy-five"*, *"the
+- [x] The dated ledger entries further down `tools/README.md` (*"moves to seventy-five"*, *"the
       eighty-first file"* and the rest) do not trip it, and nothing was rewritten to make them pass.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-1.80 carries these lines verbatim with the evidence for each.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-1.80 carries these lines verbatim with the evidence for each.
 
 **Traps** — **The README's ledger is history, not a live count.** Each dated entry there was true on
 the day it records, and WO-1.79 left them alone on purpose. A check that scans the whole README for

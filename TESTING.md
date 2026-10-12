@@ -4340,6 +4340,76 @@ point made a second time: WO-1.77 updated the README figure and it had drifted a
 - [x] `TESTING.md` § WO-1.79 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-1.80 — nothing stops a file count creeping back into the harness's prose
+
+No 👤 and no 📆 line. `tools/wo-sweep.mjs` gained § 32 (above § 22, which stays last) and
+`tools/README.md`'s `wo-sweep.mjs` row gained one clause and moved 50 → 51; nothing in `src/` moved,
+so no `CACHE` bump is owed. Every plant below was written with `sed -i`, the sweep run, and the file
+put back with `git checkout --` before the next plant and before anything else was written; after
+the last one `git diff --stat` listed only `plans/work-orders/phase-1-shell-store-roster.md` (the
+orchestrator's claim line) and `tools/wo-sweep.mjs`, and
+`grep -rn "ninety-three\|These 93\|93 files\|section files, in run\|From WO-1.26" tools/verify-shell.mjs tools/README.md`
+found nothing. The README row was edited only after the plants were reverted.
+
+- [x] `node tools/wo-sweep.mjs` has a check that passes on today's tree and names both places it read.
+      — `PASS | the harness's prose names no count of its own files — the header comment in
+      tools/verify-shell.mjs and the live sentence in tools/README.md :: read tools/verify-shell.mjs:80-85
+      (the comment opening `the sections, in run order`) and tools/README.md:1369-1372 (the sentence
+      beginning `Since WO-1.26 the count spans`); no number of files, modules or sections in either. A
+      fence, not a reading: …`
+- [x] A file count written back into the header comment of `tools/verify-shell.mjs`, in digits and
+      in words, turns that check red at the line; so does one written back into the live sentence in
+      `tools/README.md`. Both plants are reverted, and `TESTING.md` § WO-1.80 shows the red output.
+      — Five count plants, each its own run (the long failure tail, identical in all five, is shown
+      once):
+      - Header, digits — line 81 → ` * These 93 files are named after …`:
+        `FAIL | the harness's prose names no count of its own files — … :: tools/verify-shell.mjs:81 "93 files" — a count of the harness's files in its own prose. WO-1.79 ruled that no number is better than a checked one: § 11 prints the true figure on every run (`node tools/wo-sweep.mjs | grep call-site`), and a number written here goes stale the next time a section file is added, with nothing reading it. Take the number out — a count that happens to match today is refused too`
+      - Header, words — line 81 → ` * Ninety-three files, named after …`:
+        `FAIL | … :: tools/verify-shell.mjs:81 "Ninety-three files" — a count of the harness's files in its own prose. …`
+      - Header, words broken across a line — line 83 → ` * from the list. All ninety-three` / ` * files; two of them …`:
+        `FAIL | … :: tools/verify-shell.mjs:83 "ninety-three files" — …`
+      - README sentence, words — line 1370 → `and the ninety-three files under `tools/verify/` that it names**`:
+        `FAIL | … :: tools/README.md:1370 "ninety-three files" — …`
+      - README sentence, digits — line 1370 → `and the 93 files under …`:
+        `FAIL | … :: tools/README.md:1370 "93 files" — …`
+
+      Ninety-three was the true count when WO-1.79 ran; today `ls tools/verify/*.mjs | wc -l` prints 94
+      and § 11 reads *"2032 `check()` call site(s) across 95 harness file(s)"* — so these plants are
+      counts one off the truth, which is exactly how a stale one looks, and a correct one would be
+      refused the same way per WO-1.79's ruling. All five reverted as described above.
+- [x] Rewording either anchor so that the check can no longer find it fails the check and names the
+      anchor, and does not pass.
+      — Header opener, line 80 → `/* ── the section files, in run order ──…`:
+      `FAIL | … :: ANCHOR LOST: tools/verify-shell.mjs no longer has the comment that opens `── the sections, in run order` — § 32 reads the header above the section imports by that line, and a reworded opener must not read as a header with no count in it. Restore the wording or re-point § 32`.
+      README sentence, line 1369 → `**From WO-1.26 the count spans …`:
+      `FAIL | … :: ANCHOR LOST: tools/README.md no longer holds the sentence beginning `Since WO-1.26 the count spans` — § 32 reads that one sentence and nothing else in the file, and a reworded or moved sentence must not read as a sentence with no count in it. Restore the wording or re-point § 32`.
+      Both reverted. A third arm was exercised by accident and is worth recording: the first draft of
+      the README row quoted the anchor's opening words, and the next run went red with
+      `tools/README.md holds the sentence `Since WO-1.26 the count spans` 2 times (lines 10, 1369) — § 32 reads one and cannot say which`;
+      the row now paraphrases instead.
+- [x] The dated ledger entries further down `tools/README.md` (*"moves to seventy-five"*, *"the
+      eighty-first file"* and the rest) do not trip it, and nothing was rewritten to make them pass.
+      — The check passes on a tree where they stand (line 1 above), and `git diff tools/README.md`
+      touches line 10 only — the `wo-sweep.mjs` row, which the work order's fourth deliverable owes. What
+      spares the ledger is the bound: the README read stops at the first full stop followed by
+      whitespace after *Since WO-1.26* (lines 1369–1372, ending *"the set counted is the set run."*).
+      A scratch script running § 32's own pattern over the **whole** README finds **92** hits —
+      among them line 4185's *"sixty files"*, the brief's named ledger entry — so the narrow anchor is
+      doing the work, not luck. (*"moves to **seventy-five**"* at line 2318 and *"the eighty-first
+      file"* at 2564 would not match the pattern in any case: the first has no noun after it and the
+      second is an ordinal.) The header comment's *"Two of them are not sections"* also passes,
+      unreworded, by the rule that the word between a number and the noun may not be *of*.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/wo-sweep.mjs`, after every edit including this section: `EXIT=0`, *51 checks · 48
+      passed · 0 failed · 3 to review* — the three standing reviews (sensitive field names, due-date
+      and late/missing, mockup banners); § 22 reads *"51 results emitted this run, matching
+      tools/README.md:10"* and its ordering check still finds the census last. `node tools/verify-shell.mjs`,
+      started after the `wo-sweep.mjs` and `tools/README.md` edits had landed and waited out to its exit:
+      *2044 checks · 2044 passed · 0 failed · 0 skipped*, `EXIT=0`. (It reads neither edited file's
+      changed lines; the run is the work order's line, not evidence about § 32.)
+- [x] `TESTING.md` § WO-1.80 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ---
 
 ## Phase 2 — Attendance

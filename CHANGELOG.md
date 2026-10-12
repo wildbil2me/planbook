@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Nothing lets a file count creep back into the harness's prose — 2026-10-12
+
+WO-1.80, out of WO-1.79. Tooling only; nothing in the app changed and no cache bump.
+
+- **`wo-sweep.mjs` § 32 reads the two passages WO-1.79 cleared** — the header comment in
+  `tools/verify-shell.mjs` and the sentence in `tools/README.md` saying what the call-site count
+  spans — and fails if a count of files comes back, in digits or in words, even one that is right
+  today. If either passage is reworded so the check can no longer find it, it fails and names it.
+- **The README's dated ledger, which records the harness's size on the days it changed, is left
+  alone** — the check's anchors are narrow enough to miss it, and nothing was rewritten to pass.
+  It is a fence, not a reading: a count two words from its noun, or anywhere else in either file,
+  goes unseen.
+
 ### The Scores column head gets lighter, and the name column narrower — 2026-10-12
 
 WO-3.62, owner-directed. The last of three passes that tidy Scores. Shell cache v190 → v191.

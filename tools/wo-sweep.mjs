@@ -4233,6 +4233,149 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
   }
 }
 
+/* ══════ 32. the harness's prose names no count of its own files ══════
+   WO-1.80, and it sits ABOVE § 22 for § 23's and § 30's reason: § 22's census has to be the last
+   thing that pushes a result. The number is the order this section was written in.
+
+   WO-1.79 took a file count out of two places — the header comment above the section imports in
+   `tools/verify-shell.mjs` ("Seventy-five files, named after the surface …") and the sentence in
+   `tools/README.md` that says what § 11's call-site count spans ("… and the ninety-one files under
+   `tools/verify/` that it names") — because both had gone stale, the README one within a day of
+   WO-1.77 writing it, and nothing read either. § 11 already derives the true figure from
+   `STATIC_SECTIONS` and `BROWSER_SECTIONS` and prints it on every run, so a number in the prose is a
+   second copy of something the sweep knows. WO-1.79 RULED THAT NO NUMBER IS BETTER THAN A CHECKED
+   ONE, and this section holds that ruling: it refuses a count outright, and does NOT pass one that
+   happens to match § 11's figure today, because a matching count is the stale count of tomorrow.
+
+   WHAT IS READ — TWO BOUNDED PLACES, AND NOTHING ELSE IN EITHER FILE:
+     · `tools/verify-shell.mjs`: the one block comment that opens `the sections, in run order`,
+       from that line to its own `*` `/`. The leading ` * ` of each line is taken off and the lines
+       are read as one text, so a count broken across a line ("Seventy-five\n * files") is still a
+       count; a hit is reported at the line it starts on.
+     · `tools/README.md`: the ONE SENTENCE that begins `Since WO-1.26 the count spans`, from those
+       words to the first full stop followed by whitespace — "… the set counted is the set run." —
+       across however many lines it wraps. A full stop inside `verify-shell.mjs` or `tools/verify/`
+       is not followed by whitespace and does not end it.
+   THE BOUND IS THE WHOLE DEFENCE OF THE README'S LEDGER. That file holds dozens of dated entries
+   that state the harness's size on the day they record ("moves to **seventy-five**", "the
+   eighty-first file", "plus sixty files under `tools/verify/`") and each was true when written;
+   WO-1.79 left them alone on purpose. A scan of the whole file would fire on all of them, and the
+   fix for that is this narrow anchor, never an edit to the ledger. The sentence after the anchor
+   ("The split moved 1141 to 1141 …") is outside the bound for the same reason: its numbers are
+   call-site counts on a dated occasion, which is ledger.
+
+   WHAT IS REFUSED: a NUMBER followed by `file(s)`, `module(s)` or `section(s)`, directly or with
+   ONE word between ("93 harness files", "ninety-one section files"). A number is digits, or English
+   number words up to the thousands, hyphenated, spaced or joined by "and" ("Seventy-five",
+   "a hundred and four"), any case. The one word between may not be `of`, nor a number.
+   WHAT IS LET THROUGH, ON PURPOSE: "Two of them are not sections" in the header comment, which
+   counts two NAMED files (`lib-dates.mjs` and `attendance-passes.mjs`) and says nothing about the
+   size of the harness — the `of` rule and the one-word limit are what pass it, and that sentence was
+   NOT reworded to make this green. A rewording into "Two of the files are not sections" still passes
+   by the `of` rule; "Two files are not sections" would go red, and the honest answer then is to name
+   the two files rather than count them.
+
+   IT MUST NOT STOP MATCHING WITHOUT SAYING SO. Either anchor missing — the comment's opener
+   reworded or gone, the README sentence reworded or moved, either present more than once, or the
+   comment never closed — FAILs and names the anchor it lost. A section that silently read nothing
+   would read exactly like one that read two clean passages, which is the empty-match failure § 11
+   guards against one file over.
+
+   A FENCE, NOT A READING — WHAT THIS CANNOT SEE, stated so nobody reads a green § 32 as "the
+   harness's prose states no size":
+     · a size stated some other way: "the harness is ninety-odd modules strong" (an approximate
+       word is not a number word), "a hundred-file harness", "dozens of files", a count of CHECKS or
+       of LINES rather than files, a table, a figure in a footnote;
+     · a count written anywhere outside the two bounded places — the rest of the header block of
+       `verify-shell.mjs`, the rest of `tools/README.md`, `TESTING.md`, `CLAUDE.md`, a section file's
+       own header;
+     · a count with two words or more between it and the noun ("91 of the harness's files").
+   What answers those is a person reading the passage, and § 11's printed figure, which is the
+   number to quote when one is genuinely wanted.
+
+   PROVED 2026-10-12 against seven plants, one at a time, each reverted with `git checkout --` before
+   anything else was written: a digit count, a word count and a word count broken across a line in
+   the header comment; a word count and a digit count in the README sentence; and each anchor
+   reworded so it cannot be found. While the README row describing this section was being written,
+   it quoted the anchor sentence's opening words and the doubled-anchor arm went red on it — which is
+   why that row paraphrases rather than quotes. The red output is in `TESTING.md`
+   § WO-1.80. */
+
+{
+  const NAME = "the harness's prose names no count of its own files — the header comment in tools/verify-shell.mjs and the live sentence in tools/README.md";
+  const harnessPath = path.join(REPO, 'tools', 'verify-shell.mjs');
+  const readmePath = path.join(REPO, 'tools', 'README.md');
+
+  // A number: digits, or English number words up to the thousands, joined by hyphens, spaces or "and".
+  const W = '(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|a(?=[\\s-]+(?:hundred|thousand)\\b))';
+  const NUM = `(?:\\d[\\d,]*|${W}(?:(?:[\\s-]+|\\s+and\\s+)${W})*)`;
+  // …followed by the noun, directly or past one word that is neither `of` nor a number.
+  const COUNT = new RegExp(`\\b${NUM}\\b(?:\\s+(?!of\\b)(?!${NUM}\\b)[^\\s]+)?\\s+(?:files?|modules?|sections?)\\b`, 'gi');
+
+  const faults = [];
+  const places = [];
+  // Scan `text` (lines joined by '\n', each line starting at file line `firstLine`) and refuse every count.
+  const refuse = (file, text, firstLine) => {
+    for (const m of text.matchAll(COUNT)) {
+      const line = firstLine + text.slice(0, m.index).split('\n').length - 1;
+      faults.push(`${file}:${line} "${m[0].replace(/\s+/g, ' ')}"`);
+    }
+  };
+
+  // Place 1: the block comment in tools/verify-shell.mjs that opens `the sections, in run order`.
+  const HEADER = /\/\*\s*──\s*the sections, in run order/;
+  if (!fs.existsSync(harnessPath)) {
+    faults.push('tools/verify-shell.mjs is not where § 32 expects it — the header comment this check reads has gone with it');
+  } else {
+    const lines = fs.readFileSync(harnessPath, 'utf8').split('\n');
+    const openers = lines.map((l, i) => (HEADER.test(l) ? i : -1)).filter(i => i >= 0);
+    const close = openers.length === 1 ? lines.findIndex((l, i) => i >= openers[0] && /\*\//.test(l)) : -1;
+    if (openers.length !== 1) {
+      faults.push(openers.length
+        ? `tools/verify-shell.mjs opens the comment \`── the sections, in run order\` ${openers.length} times (lines ${openers.map(i => i + 1).join(', ')}) — § 32 reads one header and cannot say which`
+        : 'ANCHOR LOST: tools/verify-shell.mjs no longer has the comment that opens `── the sections, in run order` — § 32 reads the header above the section imports by that line, and a reworded opener must not read as a header with no count in it. Restore the wording or re-point § 32');
+    } else if (close < 0 || close - openers[0] > 40) {
+      faults.push(`ANCHOR LOST: the comment opening at tools/verify-shell.mjs:${openers[0] + 1} does not close within 40 lines — § 32 cannot bound what it reads`);
+    } else {
+      const text = lines.slice(openers[0], close + 1).map(l => l.replace(/^\s*\*(?!\/)\s?/, '')).join('\n');
+      refuse('tools/verify-shell.mjs', text, openers[0] + 1);
+      places.push(`tools/verify-shell.mjs:${openers[0] + 1}-${close + 1} (the comment opening \`the sections, in run order\`)`);
+    }
+  }
+
+  // Place 2: the one sentence in tools/README.md that begins `Since WO-1.26 the count spans`.
+  const SENTENCE = 'Since WO-1.26 the count spans';
+  if (!fs.existsSync(readmePath)) {
+    faults.push('tools/README.md is not where § 32 expects it — the sentence this check reads has gone with it');
+  } else {
+    const text = fs.readFileSync(readmePath, 'utf8');
+    const at = [];
+    for (let i = text.indexOf(SENTENCE); i >= 0; i = text.indexOf(SENTENCE, i + 1)) at.push(i);
+    const lineAt = (i) => text.slice(0, i).split('\n').length;
+    if (at.length !== 1) {
+      faults.push(at.length
+        ? `tools/README.md holds the sentence \`${SENTENCE}\` ${at.length} times (lines ${at.map(lineAt).join(', ')}) — § 32 reads one and cannot say which`
+        : `ANCHOR LOST: tools/README.md no longer holds the sentence beginning \`${SENTENCE}\` — § 32 reads that one sentence and nothing else in the file, and a reworded or moved sentence must not read as a sentence with no count in it. Restore the wording or re-point § 32`);
+    } else {
+      const rest = text.slice(at[0]);
+      const end = rest.search(/\.(?=\s|$)/);
+      if (end < 0 || end > 1200) {
+        faults.push(`ANCHOR LOST: the sentence at tools/README.md:${lineAt(at[0])} has no full stop within 1200 characters — § 32 cannot bound what it reads`);
+      } else {
+        const sentence = rest.slice(0, end + 1).replace(/\r/g, '');
+        refuse('tools/README.md', sentence, lineAt(at[0]));
+        places.push(`tools/README.md:${lineAt(at[0])}-${lineAt(at[0] + end)} (the sentence beginning \`${SENTENCE}\`)`);
+      }
+    }
+  }
+
+  const counts = faults.filter(f => !/^(ANCHOR LOST|tools\/\S+ (is not|opens|holds))/.test(f));
+  const lost = faults.filter(f => !counts.includes(f));
+  check(NAME, !faults.length, faults.length
+    ? [counts.length ? `${counts.join(', ')} — a count of the harness's files in its own prose. WO-1.79 ruled that no number is better than a checked one: § 11 prints the true figure on every run (\`node tools/wo-sweep.mjs | grep call-site\`), and a number written here goes stale the next time a section file is added, with nothing reading it. Take the number out — a count that happens to match today is refused too` : '', ...lost].filter(Boolean).join(' · ')
+    : `read ${places.join(' and ')}; no number of files, modules or sections in either. A fence, not a reading: a size stated without a number word next to the noun, or a count written anywhere else in either file, passes`);
+}
+
 /* ══════ 22. the count of checks in tools/README.md is the number this run emits ══════
    WO-1.42. § 11 holds `tools/README.md`'s figures for `verify-shell.mjs` against what the tree
    actually contains. This is that census turned on the sweep itself. The same file records how many
