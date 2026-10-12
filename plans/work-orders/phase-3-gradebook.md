@@ -5274,7 +5274,10 @@ assigned in the term**, and the host takes it banner first, as ruled. The build 
 `TESTING.md` § WO-3.65 carries the readings.
 
 **Ruled — the owner, 2026-10-12, after the verdict:** an empty roster needs no banner. The sentence
-alone is what it should draw, so the finding above books nothing.
+alone is what it should draw, so the finding above books nothing. *(One difference stands beside
+it, as built and unruled: over a roster with **nothing assigned**, the grade sheet draws the banner
+above its sentence, while the Scores screen hides `#scoresNoGrade` on every empty state before it
+returns (`src/scores.js`, `renderScores()`). It is the row to book if the two are ever meant to match.)*
 
 **Traps** — **The print block in `src/scores.css`** hides `body > *` but the gated surface, and inside
 it hides `.grades-report-actions` and `.grades-report-head`; a new host outside `#gradesRecordBody`
