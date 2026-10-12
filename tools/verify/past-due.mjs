@@ -239,6 +239,20 @@ console.log('\n--- the past-due prompt (WO-3.6) ---');
             return t ? getComputedStyle(t).color : ''; })(),
           altTintInk: (function(){ var t = document.querySelector('#assignmentsView .assign-date.overdue');
             return t ? getComputedStyle(t).color : ''; })(),
+          /* WO-3.62: the due date is the second half of the head's one meta line now, so the tint is
+             asked WHERE it sits — inside .scores-col-meta, as a span of its own beside the points —
+             and that the points half beside it keeps the line's grey rather than going amber too. */
+          tintInMeta: heads.filter(function(h){ return !!h.querySelector('.scores-col-due.overdue'); })
+            .map(function(h){
+              var due = h.querySelector('.scores-col-due.overdue');
+              var meta = due.parentElement;
+              var pts = meta ? meta.querySelector('.scores-col-pts') : null;
+              return { id: h.getAttribute('data-score-col'),
+                inMeta: !!meta && meta.classList.contains('scores-col-meta') && meta.parentElement === h,
+                dueInk: getComputedStyle(due).color,
+                ptsInk: pts ? getComputedStyle(pts).color : '',
+                sameLine: !!pts && Math.abs(pts.getBoundingClientRect().top
+                  - due.getBoundingClientRect().top) < 1 }; }),
           students: rows.map(function(r){ return r.getAttribute('data-score-row'); }),
           grades: rows.map(function(r){
             var n = r.querySelector('.scores-grade-num');
@@ -453,6 +467,18 @@ console.log('\n--- the past-due prompt (WO-3.6) ---');
       const beforeAnything = await evalJs(READ);
       const cellsBefore = await readCells();
       const engineA = await engineGrades(A, 'tm_wo36', 'wo36');
+
+      /* WO-3.62 Acceptance line 6: the tint survives the move into the meta line — on the due half
+         only, in a span of its own inside .scores-col-meta, on the same line as the points, which
+         keep the line's grey. Read on the two heads the prompt is asking about, on the grid, before
+         anything is marked. */
+      check('WO-3.62: a past-due column\'s due date still draws in its overdue colour inside the head\'s '
+        + 'one meta line — its own span in .scores-col-meta, rgb(138, 109, 26), on the same line as the '
+        + 'points, which are not amber',
+        !!beforeAnything && beforeAnything.tintInMeta.length === 2
+          && beforeAnything.tintInMeta.every((t) => t.inMeta && t.dueInk === 'rgb(138, 109, 26)'
+            && t.ptsInk !== '' && t.ptsInk !== t.dueInk && t.sameLine),
+        JSON.stringify(beforeAnything && beforeAnything.tintInMeta));
 
       /* WO-3.19's acceptance line 2 — the tint is a COLOUR AND NOT A MARK. The document is compared
          entire against the read taken when the fixture was planted, across every render the tint has

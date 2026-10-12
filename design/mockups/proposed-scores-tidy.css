@@ -20,7 +20,13 @@
    neither does — measured, and making Escape do it was not ruled. Frame A's flag
    bar now reads Clear (C) and Note (N), and its first hint paragraph is in.
 
-   IT PROPOSES what this sheet can say, each a name src/ does not use yet: a
+   FRAME C LANDED 2026-10-12, WO-3.62: `.scores-col-meta`, `.scores-col-name.wraps`
+   and `.scores-col-edit` are in src/scores.css under these names, in the score
+   grid's column-head subsection, and § SCORES TIDY's banner below says which
+   values moved. The frozen name column is 168px on both pointers, the owner's
+   ruling at dispatch, not the 156 frame C's caption proposes.
+
+   IT PROPOSED what this sheet can say, each a name src/ did not use yet: a
    search box that gives up width, pills that flow beside it, the group Sort and
    the two icon doors sit in at the toolbar's end, the row the summary
    shares with + New assignment, the summary folded into the title (frame B),
@@ -39,7 +45,7 @@
 .scores-col-edit { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SCORES TIDY   →  src/scores.css   (WO-3.60 — frame A's half lifted 2026-10-11 · WO-3.62's half to come)
+   § SCORES TIDY   →  src/scores.css   (WO-3.60 — frame A's half lifted 2026-10-11 · WO-3.62 — frame C's half lifted 2026-10-12)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* FRAME A'S HALF LIFTED 2026-10-11 by WO-3.60, under its own names — `.scores-tools`, `.scores-top`
@@ -56,11 +62,21 @@
    button's name there (the drawing's button wears no class of its own), with
    `.attendance-sort-toggle`'s indigo order word; `.scores-found:not(.hidden) + .scores-tools`, because
    frame A draws no search count and two auto margins on one line split the space between them; and
-   the coarse 44s on Sort and on ⌨, which lost its words. The rest of this section is NOT in src/ and
-   stays drawn: `.scores-col-meta`, `.scores-col-name.wraps` and `.scores-col-edit` are WO-3.62's
-   (frame C), and `.scores-headline-figs` is frame B, which the owner did not choose. Frame 0 on
-   scores-tidy.html is the screen as it shipped before WO-3.60 and is a record now; its
-   `.scores-actions` row draws unstyled, because that rule left src/scores.css with the row. */
+   the coarse 44s on Sort and on ⌨, which lost its words. `.scores-headline-figs` is frame B, which
+   the owner did not choose, and is NOT in src/. Frame 0 on scores-tidy.html is the screen as it
+   shipped before WO-3.60 and is a record now; its `.scores-actions` row draws unstyled, because that
+   rule left src/scores.css with the row.
+
+   FRAME C'S HALF LIFTED 2026-10-12 by WO-3.62, under its own names — `.scores-col-meta`,
+   `.scores-col-name.wraps` and `.scores-col-edit` — into src/scores.css's column-head subsection
+   (§ SCORE GRID), beside the rules they modify, with the 44px in that sheet's coarse block. Every
+   value as drawn except two, each argued there: the hover's indigo and underline go on the NAME
+   inside the button (`.scores-col-edit:hover .scores-col-name`), because the name sets its own ink
+   and the drawn rule below never turned it indigo; and the coarse button takes `min-width: 44px` as
+   well, for a column whose name is shorter than a thumb. The meta line's two halves stay
+   `.scores-col-pts` and `.scores-col-due` spans, so the overdue tint lands on the date alone; their
+   old one-line rules are gone, so frames 0, A and B now draw the points and the date inline. The rules
+   below are left as drawn, as the record of what was proposed. */
 
 /* THE TWO DOORS, AT THE TOOLBAR'S END. `.attendance-tools`, value for value: the
    group takes the far end of the search row and does not wrap inside itself, so

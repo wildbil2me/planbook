@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2021 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2032 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2950,6 +2950,18 @@ twenty and twenty. `verify/score-sort.mjs` and `verify/dialog-kinds.mjs` changed
 site. None is a failure arm. Full run: `2033 checks · 2033 passed · 0 failed · 0 skipped`, 64,908
 lines, 31.9 lines per check, 1083s, exit 0, 2026-10-12 on the real clock. The planted faults are in
 `TESTING.md` § WO-3.61.
+
+**WO-3.62 moved it from 2021 to 2032, and the executed count from 2033 to 2044 — eleven sites,
+eleven results, no new file.** Nine are in `verify/score-grid.mjs`'s WO-3.5 block: the column name
+tapped open (fine) and again under the coarse pointer, the head's four lines in order on each pointer,
+the wrap on each pointer, the stuck head's measured height against its top padding on each pointer,
+and the name buttons' 44px. One is in `verify/past-due.mjs` (the overdue tint inside the meta line)
+and one in `verify/held-readers.mjs` (the hold line under the chip on every column). The three
+frozen-width declaration checks were rewritten in place for one set of numbers on both pointers —
+they had asserted the coarse block DIFFERED — and the coarse pin check now asserts the same measured
+width rather than a narrower one; none of those moved a site. None is a failure arm. Full run:
+`2044 checks · 2044 passed · 0 failed · 0 skipped`, 65,118 lines, 31.9 lines per check, 1077s, exit
+0, 2026-10-12 on the real clock. The planted faults are in `TESTING.md` § WO-3.62.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

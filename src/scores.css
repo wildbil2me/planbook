@@ -58,7 +58,7 @@
    has one: a control covered only by some other selector's rule is a control the next reader has
    to go and prove is covered. */
 .scores-input, .scores-keys-btn, .scores-sort-toggle, .scores-flag-btn, .scores-name-btn, .scores-note-input,
-.scores-note-action, .scores-col-hold, .hold-confirm-btn {
+.scores-note-action, .scores-col-hold, .hold-confirm-btn, .scores-col-edit {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -121,8 +121,9 @@
 /* ══════════════════════════════════════════════════════════════════════════════
    § SCORES TIDY — the top (WO-3.60), lifted from design/mockups/proposed-scores-tidy.css,
    frame A of design/mockups/scores-tidy.html. The section's column-head half
-   (`.scores-col-meta`, `.scores-col-name.wraps`, `.scores-col-edit`) is WO-3.62's and stays in
-   the drawing until then. `.scores-actions` went with the row it laid out.
+   (`.scores-col-meta`, `.scores-col-name.wraps`, `.scores-col-edit`) is frame C's and landed
+   2026-10-12 with WO-3.62 — not here but under § SCORE GRID's THE COLUMN HEAD, beside the rule
+   each one modifies; the note there says why. `.scores-actions` went with the row it laid out.
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* THE SUMMARY AND + NEW ASSIGNMENT SHARE THE BODY'S FIRST ROW (frame A). The
@@ -291,8 +292,8 @@
    "as tall as the screen", so it is written down here rather than designed away.
 
    `scroll-padding` IS THE FOCUS FIX, AND IT IS A DECLARATION ON PURPOSE. A browser scrolls a focused
-   field into view against the edge of its scroll box, and it does not know the left 274px of this
-   one (190 name + 84 grade; 252 under a coarse pointer) is covered by two sticky columns, or that
+   field into view against the edge of its scroll box, and it does not know the left 252px of this
+   one (168 name + 84 grade, on both pointers since WO-3.62) is covered by two sticky columns, or that
    the top of it is covered by the stuck head. So a cell under either counted as visible and nothing
    moved. Saying so here covers every way focus arrives — Shift+Tab, the arrows and Enter in
    src/scores.js, a click, a screen reader's own focus move — where a `scrollIntoView` in the key
@@ -306,6 +307,12 @@
    120px fine and 146px coarse in headless Edge, written as 126 and 152, the same few pixels of
    slack. WO-3.27's driven Enter checks in tools/verify/score-grid.mjs are what found it — all four
    went red on the first run with the old figures, which is the job they were written for.
+   WO-3.62 TOOK THE HEAD FROM FIVE LINES TO FOUR, and the two numbers moved again, measured with a
+   two-line name in the head because the name may now take two: 115.59px fine and 152px coarse in
+   headless Edge, written as 122 and 158. THE COARSE HEAD GOT TALLER, not shorter, though it lost a
+   line — the name became a 44px button (ruling 3), which is more than the name and the points line
+   it replaced — so read "the head is shorter now" as true of the laptop only. Read off the page every
+   run, beside the padding, by a check that also goes red if the slack passes 10px.
 
    `scroll-snap-type: x proximity` lets a trackpad swipe settle with a column's left edge on the
    frozen edge rather than half under it — `scroll-snap-align` is on the head cells below. Never
@@ -320,7 +327,7 @@
   overflow: auto; -webkit-overflow-scrolling: touch;
   max-height: calc(100dvh - 160px);
   overscroll-behavior: contain;
-  scroll-padding: 126px 0 0 274px;
+  scroll-padding: 122px 0 0 252px;
   scroll-snap-type: x proximity;
   /* The drawing's 1px `border`, drawn as a ring OUTSIDE the box instead, and that is a departure
      rather than a restyle: a border moves the scrollport 1px in from the box's edge, so the frozen
@@ -331,11 +338,11 @@
 }
 /* WITH A CATEGORY PICKED (WO-3.28) THE FROZEN EDGE IS A COLUMN FURTHER RIGHT — the category average
    sits beside the grade — so the padding that keeps a focused cell clear of it moves with it: the
-   frozen pair's 274 plus the third column's 84. `.filtered` is put on and taken off by
+   frozen pair's 252 plus the third column's 84. `.filtered` is put on and taken off by
    src/scores.js's renderScores() in the same pass that draws or removes that column. It is one of
    the two numbers WO-3.28 added to the ones tied to the frozen widths; see THE TWO FROZEN COLUMNS
    below. */
-.scores-grid-wrap.filtered { scroll-padding-left: 358px; }
+.scores-grid-wrap.filtered { scroll-padding-left: 336px; }
 .scores-grid { width: 100%; border-collapse: separate; border-spacing: 0; }
 
 /* `separate` rather than `collapse`, which is the ONE place this sheet departs from
@@ -398,21 +405,31 @@
    FOUR NUMBERS ARE TIED HERE SINCE WO-3.27, not two: the name column's width, the grade column's
    width, the grade column's `left` offset, and `.scores-grid-wrap`'s `scroll-padding-left`, which is
    the first two added together — where the frozen pair ends, said to the browser so a focused cell
-   is scrolled clear of it. Change one and change the others in the same edit, in BOTH blocks: the
-   coarse block narrows the name column, moves the offset and moves the padding with it.
+   is scrolled clear of it. Change one and change the others in the same edit.
 
    SIX SINCE WO-3.28, which adds a third frozen column while a category pill is on: `.scores-cat-avg`'s
    `left` is the pair's width (name + grade), and `.scores-grid-wrap.filtered`'s `scroll-padding-left`
-   is that plus the third column's own 84. Both have coarse twins. tools/verify/score-grid.mjs reads
-   the two new declarations against the four old ones, base and coarse, beside the check that reads
-   the padding — and then re-runs WO-3.27's driven Shift+Tab, ← and Enter with a pill on.
+   is that plus the third column's own 84. tools/verify/score-grid.mjs reads the two new declarations
+   against the four old ones beside the check that reads the padding — and then re-runs WO-3.27's
+   driven Shift+Tab, ← and Enter with a pill on.
+
+   ONE SET OF NUMBERS ON BOTH POINTERS SINCE WO-3.62 — name 168, grade `left` 168, the third column's
+   `left` 252, `scroll-padding-left` 252, `.filtered`'s 336 — the owner's ruling at dispatch on
+   2026-10-12, which revised the work order's ruling 5 (190 → 156 on the drawing's figure) to 168
+   everywhere. The laptop went 190 → 168 and the iPad kept the 168 it already had, so the coarse block
+   restates NONE of the six any more: until then it narrowed the name column, moved both offsets and
+   both paddings, and a set of twins is exactly how two numbers that are meant to be one drift apart.
+   A coarse override of any of them is now a defect, and the check below says so. The scroll padding's
+   TOP still differs per pointer, because it is the stuck head's height and the head is taller under a
+   thumb — that one the coarse block keeps.
 
    THE PAIR IS ASSERTED FOUR WAYS in tools/verify/score-grid.mjs (moved there out of
    tools/verify-shell.mjs by WO-1.26), so none of the four can drift in a later edit. Two checks read
-   the DECLARATIONS out of this sheet, base against base and coarse against coarse: one that the
-   name's width is the grade's offset (and the two blocks differ, so a coarse block that quietly
-   stopped overriding either would not pass), and one that the scroll padding is the name's width
-   plus the grade's. Two more MEASURE the pair, once per pointer, with the grid scrolled sideways:
+   the DECLARATIONS out of this sheet: one that the name's width is the ruled 168 and is the grade's
+   offset, with the coarse block restating none of the six (WO-3.62 — until then it asserted the two
+   blocks DIFFERED, so that a coarse block that quietly stopped overriding would not pass; the ruling
+   inverted that), and one that the scroll padding is the name's width plus the grade's. Two more
+   MEASURE the pair, once per pointer, with the grid scrolled sideways:
    columns whose numbers have drifted do not stop being sticky, they overlap, and the student's name
    goes under her own grade. A padding that has drifted SMALLER is also caught by the WO-3.27 checks
    that drive a real Shift+Tab, ← and Enter into a covered cell; one that drifted larger parks cells
@@ -422,13 +439,13 @@
    one check" from the day the file shipped and there was no such check until 2026-08-10. */
 .scores-name {
   position: sticky; left: 0; z-index: 2;
-  width: 190px; min-width: 190px;
+  width: 168px; min-width: 168px;
   text-align: left !important; background: #fff;
   font-size: 13px; font-weight: 600; color: #1a1a2e; white-space: nowrap;
   border-right: 1px solid #f3f4f6;
 }
 .scores-grade {
-  position: sticky; left: 190px; z-index: 2;
+  position: sticky; left: 168px; z-index: 2;
   width: 84px; min-width: 84px;
   background: #fff;
   /* A real edge where the frozen pair ends and the scrolling half begins. Without it the first
@@ -479,11 +496,11 @@
 
    THE WASH IS WHAT KEEPS IT FROM READING AS A SECOND OVERALL GRADE at a glance, and its right edge
    is the frozen edge now — the 1.5px line `.scores-grade` draws for the same reason. Its `left` is
-   the frozen pair's width, 190 + 84, and it moves with the name column under the coarse pointer —
-   one of the six tied numbers THE TWO FROZEN COLUMNS above lists. It stays in every orientation,
+   the frozen pair's width, 168 + 84, on both pointers since WO-3.62 — one of the six tied numbers
+   THE TWO FROZEN COLUMNS above lists. It stays in every orientation,
    iPad portrait included (Open 8, the owner). */
 .scores-cat-avg {
-  position: sticky; left: 274px; z-index: 2;
+  position: sticky; left: 252px; z-index: 2;
   width: 84px; min-width: 84px;
   background: #f5f7fb;
   border-right: 1.5px solid #e0e4ea;
@@ -555,21 +572,62 @@
 }
 
 /* ── THE COLUMN HEAD ── */
-/* Three lines: what it is, what it is out of, and which category it counts in. The points are on
-   the head rather than in every cell, which is what makes a bare `18` in the cell readable — and
-   what stops the grid printing "/20" twenty-five times down a column. The category chip is
-   `.cat-chip` from src/assignments.css § SHARED, worn as-is. */
+/* Four lines since WO-3.62, which took it down from five: the name, what it is out of and when it
+   was due, which category it counts in, and the hold line. The points are on the head rather than
+   in every cell, which is what makes a bare `18` in the cell readable — and what stops the grid
+   printing "/20" twenty-five times down a column. The category chip is `.cat-chip` from
+   src/assignments.css § SHARED, worn as-is. */
 .scores-col { min-width: 96px; }
 .scores-col-name {
   display: block; font-size: 11px; font-weight: 700; color: #1a1a2e;
   text-transform: none; letter-spacing: 0; max-width: 130px;
   overflow: hidden; text-overflow: ellipsis; margin: 0 auto 3px;
 }
-.scores-col-pts {
-  display: block; font-size: 10px; font-weight: 700; color: #8a9bb0;
+
+/* FRAME C OF design/mockups/scores-tidy.html (WO-3.62), lifted from
+   design/mockups/proposed-scores-tidy.css § SCORES TIDY under the drawing's own three names and
+   placed here, beside the rule each one modifies, rather than up in § SCORES TIDY with frame A's
+   half: a reader working on the column head reads this subsection and should not have to know the
+   head was tidied by a drawing to find two of its rules. Every value is the drawing's except the
+   hover, said at the hover.
+
+   THE NAME MAY TAKE TWO LINES BEFORE IT TRAILS OFF (ruling 2). `.scores-col-name`'s 130px cap and
+   its ellipsis stay; this lets the text wrap inside the cap and clamps it at two lines, so "Summer
+   Reading Essay" reads whole where it read "Summer Reading E…" and a name too long for two still
+   ends in an ellipsis rather than growing the head a third line. `white-space: normal` is needed
+   because the head cell sets `nowrap` for every line in it. */
+.scores-col-name.wraps {
+  white-space: normal; display: -webkit-box; -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; line-clamp: 2; line-height: 1.3;
+}
+/* THE COLUMN NAME OPENS THE ASSIGNMENT EDITOR (ruling 3) — WO-3.54 ruling 2 carried across: a real
+   <button> in the name's own type, which src/assignments.css's `.assign-name-btn` is one screen
+   over. No ink of its own at rest — the name inside keeps `.scores-col-name`'s — and the focus ring
+   is the browser's, never taken away to finish the look. */
+.scores-col-edit {
+  background: none; border: 0; padding: 0; margin: 0 auto;
+  font: inherit; color: inherit; text-align: center; cursor: pointer; display: block;
+}
+/* Indigo with a dotted underline under a pointer, as the ruling says — and A DEPARTURE FROM THE
+   DRAWING'S SELECTOR, not its values. The drawing puts the colour on the button, and the name inside
+   sets its own #1a1a2e, so on the drawing the name never turns indigo at all: only the underline
+   showed. Put on the name, the hover is what the ruling describes. */
+.scores-col-edit:hover .scores-col-name {
+  color: #5b6fcc; text-decoration: underline dotted; text-underline-offset: 3px;
+}
+
+/* POINTS AND DUE DATE SHARE ONE LINE (ruling 1). The drawing's values, which are the old due line's
+   size and the old points line's ink: one quiet line under the name rather than two either side of
+   the chip. Its two halves are inline spans of their own — `.scores-col-pts` and `.scores-col-due`
+   — and carry no rule here but the due half's overdue tint below: the line sets the type for both.
+   (The two lines they were until WO-3.62 had a rule each; design/mockups/score-tools.html and
+   scores-tidy.html's frames 0, A and B still draw them as separate spans against this sheet, so those
+   records now show the points and the date inline beside the name — the same posture frame 0's
+   unstyled `.scores-actions` row already records.) */
+.scores-col-meta {
+  display: block; font-size: 9px; font-weight: 700; color: #8a9bb0;
   font-variant-numeric: tabular-nums; margin-bottom: 4px;
 }
-.scores-col-due { display: block; font-size: 9px; font-weight: 700; color: #a0aab8; margin-top: 4px; }
 /* THE HEAD OF A COLUMN THE PROMPT IS ASKING ABOUT (WO-3.19). The banner above the grid says "6 blanks
    are past due" and cannot say WHICH columns without the teacher opening the review; this says it at
    a glance, and it is the idiom already running on the assignment list one screen over.
@@ -577,8 +635,10 @@
    #8a6d1a IS LIFTED, NOT CHOSEN. It is `.assign-date.overdue`'s ink in src/assignments.css and the
    `.past-due` banner's own text colour in the same sheet — one signal at three volumes rather than
    three ambers a teacher has to tell apart. COLOUR ONLY: the size, the weight and the margin stay the
-   base rule's, because a column head that grew when a date went by would move a grid somebody has a
-   thumb in.
+   meta line's, because a column head that grew when a date went by would move a grid somebody has a
+   thumb in. SINCE WO-3.62 THE DUE DATE IS THE SECOND HALF OF THAT LINE rather than a line of its own,
+   and it keeps this class as a span of its own for exactly this rule: the tint lands on *due Sep 7*
+   and leaves *out of 10* beside it in the line's grey.
 
    IT IS A TINT AND NOTHING ELSE — no cell written, no student marked, no grade moved; nothing in this
    app ever infers `missing` from a date. WHICH heads wear it is decided in neither this sheet nor
@@ -592,7 +652,8 @@
 .scores-col-due.overdue { color: #8a6d1a; }
 
 /* THE HOLD LINE (WO-3.46) — the head's last line: whether the column counts, and the control that
-   changes it. src/scores.js's holdLine() says why a live column carries only *Hold* and a held one
+   changes it. Under the category chip on every column, live or held — WO-3.62's ruling 4 kept it
+   there when the head lost its fifth line. src/scores.js's holdLine() says why a live column carries only *Hold* and a held one
    the mark and *Commit*.
 
    NOT DRAWN, because no drawing has a held column: built from what this sheet and src/shell.css
@@ -924,21 +985,20 @@
   .scores-history-mark { width: 9px; height: 9px; }
   .scores-grid tbody td, .scores-grid tbody th { padding: 7px 8px; }
   .scores-col { min-width: 104px; }
-  /* The frozen pair gets narrower on touch, not wider: the tablet has less width to spend and the
-     name still has to fit. Kept in step with `left` — the same pair the check named above asserts. */
-  .scores-name { width: 168px; min-width: 168px; }
-  .scores-grade { left: 168px; }
-  /* And the scroll padding moves with them (WO-3.27): 168 + 84, where the frozen pair now ends.
-     Left at the base 274 it would park every cell a focus move reaches 22px clear of an edge that
-     is not there — harmless to look at and wrong to keep, because it is the fourth number in the
-     pair and the check counts it. The top grows with the head's coarse type sizes. */
-  .scores-grid-wrap { scroll-padding: 152px 0 0 252px; }
-  /* And the third column with them (WO-3.28): it starts where the coarse pair ends, 168 + 84, and
-     the filtered padding is that plus its own 84. */
-  .scores-grid-wrap.filtered { scroll-padding-left: 336px; }
-  .scores-cat-avg { left: 252px; font-size: 15px; }
+  /* THE FROZEN WIDTHS ARE NOT HERE, ON PURPOSE (WO-3.62). Until then this block narrowed the name
+     column to 168, moved the grade's `left`, the third column's `left` and both scroll paddings with
+     it — the frozen pair got narrower on touch because the tablet has less width to spend. The
+     owner's ruling at dispatch made 168 the width on BOTH pointers, so the base rules carry the
+     numbers this block used to, and restating them here would be a second copy of one number: see
+     THE TWO FROZEN COLUMNS. tools/verify/score-grid.mjs fails if any of the six comes back.
+
+     The scroll padding's TOP stays here, because it is the stuck head's height and the head is
+     taller under a thumb — the name's button and Hold are 44px each. Measured, not added up; the
+     figures are in the note on `.scores-grid-wrap`. */
+  .scores-grid-wrap { scroll-padding-top: 158px; }
+  .scores-cat-avg { font-size: 15px; }
   /* Its head's two lines are labels, not targets, and take the step up the assignment heads beside
-     them take (`.scores-col-name` and `.scores-col-pts` below), so the third head does not read a
+     them take (`.scores-col-name` and `.scores-col-meta` below), so the third head does not read a
      size smaller than its neighbours on the iPad. Not in the drawing, whose coarse block steps only
      the figure; named here for the reason this block names every label it re-states. */
   .scores-cat-avg-name { font-size: 12px; }
@@ -991,8 +1051,15 @@
   .scores-filter-pills { gap: 6px; }
   .scores-summary { font-size: 13px; }
   .scores-col-name { font-size: 12px; }
-  .scores-col-pts { font-size: 11px; }
-  .scores-col-due { font-size: 10px; }
+  /* THE COLUMN NAME'S BUTTON AT 44px (WO-3.62, ruling 3), in the pass that added it. Tall from the
+     button rather than from the head, for the reason the name door in the frozen column gives: a head
+     whose other lines got shorter would take the target down with it. A width floor too, because a
+     column called "Q1" draws a name narrower than a thumb. The name is centred inside it by the
+     button's own layout, one line or two. */
+  .scores-col-edit { min-height: 44px; min-width: 44px; }
+  /* One meta line, a step up from 9px as the due line it replaced stepped (WO-3.62); the points
+     half, which stepped to 11 as a line of its own, now reads at the line's size. */
+  .scores-col-meta { font-size: 10px; }
   /* THE HOLD LINE AT THE FLOOR (WO-3.46), in the same pass that added it. `.class-action-btn` is
      already 44 in src/shell.css's coarse block; named here anyway for the reason `.past-due-btn` is
      in src/assignments.css — one of these takes a whole column out of every grade in the class. The
@@ -1001,7 +1068,8 @@
   .scores-col-hold { min-height: 44px; min-width: 44px; }
   .scores-col-held { font-size: 10px; }
   .hold-confirm-btn { min-height: 44px; min-width: 44px; }
-  /* `.scores-col-due.overdue` takes that step up with it and gets no line of its own: the tint is a
+  /* `.scores-col-due.overdue` takes the meta line's step up with it (it is a span inside that line
+     since WO-3.62) and gets no line of its own here: the tint is a
      colour and nothing else, on a label rather than on a control, so there is no target here to hold
      at 44px. Named rather than left out, for the reason this block names everything it only
      re-states — a rule missing from here is a rule the next reader has to go and prove was

@@ -589,7 +589,10 @@ function el(tag, className, text) {
 }
 
 /*
-  ONE COLUMN HEAD: what it is, what it is out of, which category it counts in, and when it was due.
+  ONE COLUMN HEAD: what it is, what it is out of and when it was due, which category it counts in,
+  and whether it counts. Four lines, in that order, since WO-3.62 — the name (a button into the
+  editor), one meta line holding the points and the due date, the chip, and the hold line. Until then
+  it was five, with the points and the due date a line each either side of the chip.
 
   The points are here rather than in every cell, which is what makes a bare `18` in a cell readable
   and what stops the grid printing "/20" twenty-five times down a column. The weight is in the chip
@@ -610,8 +613,25 @@ function columnHead(assignment, cls) {
      nobody can read back. A check that mapped head position to cell position would go quietly wrong
      the day a column is inserted, which is the shape of wrong this repo is worst at noticing. */
   th.setAttribute('data-score-col', assignment.id);
-  th.append(el('span', 'scores-col-name', assignment.name || 'Untitled assignment'));
-  th.append(el('span', 'scores-col-pts', 'out of ' + pointsOf(assignment)));
+  /* THE NAME IS THE WAY INTO THE EDITOR (WO-3.62, the owner's ruling 3) — WO-3.54 ruling 2 carried
+     across from the assignment list, where the name is the door. A real <button> holding the name,
+     with the same `data-assignment-edit` hook that row's button carries, so src/shell.js routes both
+     through ONE handler and there is no second way into the editor to keep in step. The editor was
+     already drawn over this grid by + New assignment (WO-3.15): its writes chain
+     afterAssignmentChange(), which repaints the grid behind it, and editorFollows() counts this view
+     as a term-filtered one, so nothing new was needed to make it safe here.
+
+     The name may take two lines before it trails off (`.wraps`, ruling 2) — the span, not the button,
+     carries the clamp, because a line clamp is a property of the box the text is laid out in. */
+  const name = assignment.name || 'Untitled assignment';
+  const open = el('button', 'scores-col-edit');
+  open.type = 'button';
+  open.setAttribute('data-assignment-edit', assignment.id);
+  open.setAttribute('aria-haspopup', 'dialog');
+  open.title = 'Edit ' + name;
+  open.append(el('span', 'scores-col-name wraps', name));
+  th.append(open);
+  th.append(metaLine(assignment));
 
   const cat = categoriesOf(cls).filter((c) => c.id === assignment.categoryId)[0] || null;
   /* A CLASS GRADED ON TOTAL POINTS GETS THE CATEGORY'S NAME AND NOTHING ELSE (WO-3.36). Its grade
@@ -638,12 +658,26 @@ function columnHead(assignment, cls) {
     chip.append(document.createTextNode('no category'));
   }
   th.append(chip);
+  th.append(holdLine(assignment));
+  if (isHeld(assignment)) th.classList.add('held');
+  return th;
+}
 
+/*
+  THE HEAD'S ONE META LINE (WO-3.62, the owner's ruling 1): what the column is out of, and when it was
+  due, on one line — *out of 10 · due Sep 7* — where until then each had a line of its own. The two
+  halves stay spans of their own inside it, `.scores-col-pts` and `.scores-col-due`, because the
+  overdue tint below is a class on the due half and nothing else (the work order's Traps): a tint on
+  the whole line would colour the points amber too, and they are not late.
+*/
+function metaLine(assignment) {
+  const line = el('span', 'scores-col-meta');
+  line.append(el('span', 'scores-col-pts', 'out of ' + pointsOf(assignment)));
   const due = shortDate(assignment.due);
   /* No comparison here — decision 1. An empty due date is valid and stays empty (src/assignments.js
-     decision 1), so the line is simply absent rather than printing a dash that would read as a date
-     somebody deleted; that is also what makes an undated column impossible to tint, since there is
-     no element for the class to go on.
+     decision 1), so the due half is simply absent — the line reads *out of 10* and nothing else —
+     rather than printing a dash that would read as a date somebody deleted; that is also what makes
+     an undated column impossible to tint, since there is no element for the class to go on.
 
      THE TINT (WO-3.19), AND IT IS A COLOUR AND NOTHING ELSE: it writes no cell, marks no student and
      moves no grade. WHICH columns wear it is src/past-due.js's answer rather than this file's, so
@@ -653,17 +687,16 @@ function columnHead(assignment, cls) {
      (src/assignments.js's renderRow), and the prompt's second line is the same sentence again: three
      surfaces saying one thing, kept identical on purpose. */
   if (due) {
-    const dueLine = el('span', 'scores-col-due', 'due ' + due);
+    line.append(document.createTextNode(' · '));
+    const dueHalf = el('span', 'scores-col-due', 'due ' + due);
     if (pastDueAsksAbout(assignment.id)) {
-      dueLine.classList.add('overdue');
-      dueLine.title = 'This date has gone by and not everyone has a score yet. Nothing has been '
+      dueHalf.classList.add('overdue');
+      dueHalf.title = 'This date has gone by and not everyone has a score yet. Nothing has been '
         + 'marked and no grade has changed — Planbook never decides anything from a date.';
     }
-    th.append(dueLine);
+    line.append(dueHalf);
   }
-  th.append(holdLine(assignment));
-  if (isHeld(assignment)) th.classList.add('held');
-  return th;
+  return line;
 }
 
 /*
@@ -1455,7 +1488,7 @@ export function resetScoreSort() {
   the switcher — so the names this screen already draws are what have to become the way in.
 
   IT IS THE NAME AND NOT A COLUMN OF ITS OWN. This grid's width is budgeted to the pixel and the
-  frozen pair is 190 + 84 of it; a control beside the name would be paid for with an assignment
+  frozen pair is 168 + 84 of it; a control beside the name would be paid for with an assignment
   column, on the screen where a column is a piece of work. The name is already there, it already
   means "this student", and there is nothing else it could do.
 

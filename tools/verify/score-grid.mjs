@@ -154,9 +154,21 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
       /* Seven with nothing in them. An assignment with no cell for a student contributes 0/0, so
          these change no grade below — what they change is the WIDTH of the grid, which is what the
          two frozen columns exist for and what a three-column fixture could not have tested. */
+      /* TWO OF THEM CARRY LONG NAMES (WO-3.62), and that is the point of them rather than decoration:
+         the head may take two lines of name before it truncates, so a fixture of short names draws a
+         one-line head and every driven Enter below would be proving the stuck head's padding against
+         the SHORTEST head the screen can draw. p6 is a name that takes two lines and p7 one that is
+         too long for two, so the head every check below scrolls under is the tallest one there is —
+         and the wrap check reads the three lengths off the drawn spans. p6 is TWO WORDS on purpose:
+         a grid wider than its box sizes each column to its narrowest content, so a name wraps at the
+         column's width rather than at the name's 130px cap, and a three-word name measured three
+         lines on the first run. Two words, together wider than any column here, take exactly two
+         lines whatever width the column settles at — a word wider than the column widens it. */
+      var LONG = { 6: 'Argumentative research',
+        7: 'Rhetorical analysis of the Gettysburg Address, second draft with peer review' };
       for (var j = 1; j <= 7; j++) {
         work.push({ id:'wo35-p' + j, classId:'c_wo35', termId:'tm_wo35', categoryId:'wo35-tests',
-          name:'Filler ' + j, points:10, assigned:'', due:'' });
+          name: LONG[j] || ('Filler ' + j), points:10, assigned:'', due:'' });
       }
       var was = c.getSelectedClassId();
       s.update(function(doc){
@@ -585,18 +597,38 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           an engine and a screen that agree with each other and disagree with the arithmetic is exactly
           what this file exists to catch.
 
-          THE EDITOR IS OPENED THROUGH THE SEAM, and that is the one exception in this block. WO-3.15
-          did put a + New assignment button on this grid, but that control CREATES: nothing here opens
-          the editor on an assignment that already exists, because data-assignment-edit is drawn on the
-          assignment list's rows and nowhere else, and index.html says why there is no second door to
-          that list. So no tap can get THIS assignment's dialog on screen over this view. What is
-          DRIVEN is the part the acceptance line is about: the real <select>, the real `change` event,
-          and src/shell.js's real hook.
+          THE EDITOR IS OPENED BY A REAL TAP ON THE COLUMN'S NAME since WO-3.62. Until then it was
+          opened through the seam, the one exception in this block, because data-assignment-edit was
+          drawn on the assignment list's rows and nowhere else, so no tap could get an existing
+          assignment's dialog on screen over this view. The column name is that door now (the owner's
+          ruling 3), carrying the same hook, so the exception is gone — and the first check below is
+          WO-3.62's own: the tap opened the editor on THIS assignment, over this grid.
         */
         const beforeMove = await evalJs(READ);
         const beforeDoc = await readDoc();
-        await evalJs("window.planbook.assignments.openAssignmentEditor('wo35-a1'); 1");
+        await evalJs("window.planbook.scores.revealScoreColumn('wo35-a1') ? 1 : 0");
+        await new Promise(r => setTimeout(r, 100));
+        await clickSel('#scoresHead [data-assignment-edit="wo35-a1"]');
         await new Promise(r => setTimeout(r, 250));
+        /* WO-3.62 Acceptance line 2, the fine half: the tap on the name, not the seam, put the
+           editor up — on wo35-a1, read back off the editor's own name field — with the grid still the
+           view behind it, and the button that was tapped is a real <button> wearing the hook. */
+        const editDoor = await evalJs(`(function(){
+          var overlay = document.getElementById('assignmentModal');
+          var field = document.querySelector('#assignmentFields [data-assignment-field="name"]');
+          var btn = document.querySelector('#scoresHead [data-score-col="wo35-a1"] .scores-col-edit');
+          return { open: !!overlay && !overlay.classList.contains('hidden'),
+            name: field ? field.value : null,
+            gridUnder: !document.getElementById('scoresView').classList.contains('hidden'),
+            tag: btn ? btn.tagName : '', type: btn ? btn.type : '',
+            hook: btn ? btn.getAttribute('data-assignment-edit') : '',
+            popup: btn ? btn.getAttribute('aria-haspopup') : '',
+            label: btn ? (btn.textContent || '').trim() : '' }; })()`);
+        check('WO-3.62: tapping a column\'s name on the score grid opens the assignment editor on that assignment — the editor up, its name field reading "Unit test", the grid still the view under it — and the name is a real <button type="button"> carrying data-assignment-edit with the column\'s id and aria-haspopup="dialog"',
+          editDoor.open && editDoor.name === 'Unit test' && editDoor.gridUnder
+            && editDoor.tag === 'BUTTON' && editDoor.type === 'button' && editDoor.hook === 'wo35-a1'
+            && editDoor.popup === 'dialog' && editDoor.label === 'Unit test',
+          JSON.stringify(editDoor));
         const pickCategory = async (id) => {
           await evalJs(`(function(){
             var s = document.querySelector('#assignmentFields [data-assignment-category]');
@@ -635,6 +667,72 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
             && JSON.stringify(backAgain.grades) === JSON.stringify(beforeMove.grades),
           'case 1\'s row is ' + backAgain.grades[row20] + ' again, and all 25 match = '
             + (JSON.stringify(backAgain.grades) === JSON.stringify(beforeMove.grades)));
+
+        /*
+          ── WO-3.62: THE COLUMN HEAD ON FOUR LINES, READ OFF EVERY HEAD ──
+
+          Acceptance line 1 is an ORDER and an absence, so both are read structurally rather than off
+          the text: each head's element children, by class, in document order — the name's button, the
+          one meta line, the chip, the hold line, and nothing else — and no `.scores-col-pts` or
+          `.scores-col-due` left standing as a child of the head, which is what a separate line was.
+          The two halves inside the meta line are asked for by class too, and asked to share a top
+          edge, because "one line" is a claim about layout that a textContent cannot make.
+
+          Acceptance line 3 is the wrap, measured on the three lengths the fixture plants: "Unit test"
+          (one line), p6 (two), p7 (too long for two). A line count is the name's own box height over
+          its computed line height; truncation is its content running past its box, which is what a
+          two-line clamp with more than two lines of text does. Run here on the fine pointer and again
+          in the coarse pass, where the name is a step larger and the button 44px tall.
+        */
+        const HEADS = `(function(){
+          var KINDS = ['scores-col-edit', 'scores-col-meta', 'cat-chip', 'scores-col-hold-line'];
+          return Array.prototype.slice.call(document.querySelectorAll('#scoresHead th[data-score-col]'))
+            .map(function(th){
+              var btn = th.querySelector('.scores-col-edit');
+              var name = th.querySelector('.scores-col-name');
+              var meta = th.querySelector('.scores-col-meta');
+              var pts = meta ? meta.querySelector('.scores-col-pts') : null;
+              var due = meta ? meta.querySelector('.scores-col-due') : null;
+              var lh = name ? parseFloat(getComputedStyle(name).lineHeight) : NaN;
+              return { id: th.getAttribute('data-score-col'),
+                order: Array.prototype.map.call(th.children, function(k){
+                  return KINDS.filter(function(c){ return k.classList.contains(c); })[0]
+                    || (k.tagName.toLowerCase() + '.' + k.className); }),
+                loose: Array.prototype.filter.call(th.children, function(k){
+                  return k.classList.contains('scores-col-pts') || k.classList.contains('scores-col-due'); }).length,
+                nameInButton: !!btn && !!name && btn.contains(name) && btn.tagName === 'BUTTON',
+                hook: btn ? btn.getAttribute('data-assignment-edit') : '',
+                meta: meta ? meta.textContent : '',
+                pts: !!pts, due: !!due,
+                oneLine: !!pts && (!due || Math.abs(pts.getBoundingClientRect().top
+                  - due.getBoundingClientRect().top) < 1),
+                lines: name ? Math.round(name.clientHeight / lh) : 0,
+                truncated: !!name && name.scrollHeight > name.clientHeight + 1,
+                clamp: name ? getComputedStyle(name).webkitLineClamp : '',
+                btnH: btn ? Math.round(btn.getBoundingClientRect().height * 100) / 100 : 0 }; }); })()`;
+        const LENGTHS = { short: 'wo35-a1', two: 'wo35-p6', long: 'wo35-p7' };
+        const headsAreFour = (heads) => heads.length === 10 && heads.every((h) =>
+          JSON.stringify(h.order) === JSON.stringify(['scores-col-edit', 'scores-col-meta', 'cat-chip',
+            'scores-col-hold-line'])
+          && h.loose === 0 && h.nameInButton && h.hook === h.id && h.pts && h.oneLine
+          && /^out of \d+( · due \S+ \d+)?$/.test(h.meta) && h.due === / · due /.test(h.meta))
+          && heads.filter((h) => h.id === 'wo35-a1').every((h) => h.due && /^out of 100 · due /.test(h.meta));
+        const namesWrap = (heads) => {
+          const at = (id) => heads.filter((h) => h.id === id)[0] || {};
+          const s = at(LENGTHS.short), t = at(LENGTHS.two), l = at(LENGTHS.long);
+          return s.lines === 1 && !s.truncated && t.lines === 2 && !t.truncated
+            && l.lines === 2 && l.truncated && String(l.clamp) === '2';
+        };
+        const heads1 = await evalJs(HEADS);
+        check('WO-3.62: every assignment head draws, in order, the name button, one meta line holding the points and the due date, the category chip and the hold line — four element children and no separate points or due line; the dated column reads "out of 100 · due …" on one line',
+          headsAreFour(heads1),
+          JSON.stringify(heads1.map((h) => ({ id: h.id, order: h.order, loose: h.loose, meta: h.meta,
+            oneLine: h.oneLine, hook: h.hook }))));
+        check('WO-3.62: a name too long for one line takes two, and one too long for two is cut at two — "Unit test" on one line, a two-line name whole, and a longer one clamped at two with its text running past the box — fine pointer',
+          namesWrap(heads1),
+          JSON.stringify(Object.keys(LENGTHS).map((k) => {
+            const h = heads1.filter((x) => x.id === LENGTHS[k])[0] || {};
+            return { k, id: h.id, lines: h.lines, truncated: h.truncated, clamp: h.clamp }; })));
 
         /*
           ACCEPTANCE LINES 9 AND 10, INHERITED FROM WO-3.1 — the weights taken off 100 and put back,
@@ -1523,9 +1621,16 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           hand-computed layout src/attendance.css warns against, accepted for two columns because sticky
           arithmetic leaves no alternative. That comment claimed a check that did not exist until this
           one; the width and the offset could have drifted apart in any later edit and nothing would have
-          said so. Both blocks, because the coarse block narrows the name column and has to move the
-          offset with it — which is also why the two numbers are asserted to DIFFER between the blocks:
-          a coarse block that had quietly stopped overriding either would otherwise pass.
+          said so.
+
+          ONE SET OF NUMBERS ON BOTH POINTERS SINCE WO-3.62 — the owner's ruling at dispatch,
+          2026-10-12: the name column is 168px on the laptop and on the iPad alike. Until then this
+          read both blocks and asserted the two DIFFERED, because the coarse block narrowed the name
+          column and a coarse block that had quietly stopped overriding would otherwise have passed.
+          The ruling inverted that: the base rules carry the ruled numbers, and the coarse block must
+          restate NONE of the six — a coarse twin is the second copy of one number, which is how the
+          two drift apart. The width is asserted against the literal 168 as well as against the
+          offset, because it is a number the owner ruled rather than one derived from the others.
         */
         const frozen = await evalJs(`(function(){
           var out = { base: {}, coarse: {}, sheet: false };
@@ -1554,7 +1659,12 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
                is '.scores-grid-wrap :where(thead th)', which must not be read as the box. The
                longhand is read whether the sheet wrote it as the scroll-padding shorthand or not. */
             if (parts.indexOf('.scores-grid-wrap') >= 0 && r.style.scrollPaddingLeft) {
-              bag.padLeft = r.style.scrollPaddingLeft; bag.padTop = r.style.scrollPaddingTop;
+              bag.padLeft = r.style.scrollPaddingLeft;
+            }
+            /* The TOP is read on its own since WO-3.62: the coarse block keeps a top (the head is
+               taller under a thumb) and no longer restates the left. */
+            if (parts.indexOf('.scores-grid-wrap') >= 0 && r.style.scrollPaddingTop) {
+              bag.padTop = r.style.scrollPaddingTop;
             }
             /* WO-3.28's two: the third frozen column's offset and width, and the box's padding while
                it is drawn. Exact matches again — '.scores-cat-avg-name' must not read as the column,
@@ -1568,60 +1678,50 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
             }
           });
           return out; })()`);
-        check('the frozen name column\'s width and the frozen grade column\'s offset are the same number in the base rules and the same number again in the coarse block',
-          frozen.sheet && !!frozen.base.nameWidth && !!frozen.coarse.nameWidth
+        const TIED = ['nameWidth', 'nameMin', 'gradeWidth', 'gradeMin', 'gradeLeft', 'catLeft', 'padLeft',
+          'filteredPad'];
+        const restated = TIED.filter((k) => frozen.coarse[k] !== undefined);
+        check('the frozen name column is the ruled 168px and the frozen grade column\'s offset is the same number, in the base rules — and the coarse block restates none of the six tied numbers, so both pointers read one set (WO-3.62)',
+          frozen.sheet && frozen.base.nameWidth === '168px'
             && frozen.base.nameWidth === frozen.base.gradeLeft
             && frozen.base.nameWidth === frozen.base.nameMin
-            && frozen.coarse.nameWidth === frozen.coarse.gradeLeft
-            && frozen.coarse.nameWidth === frozen.coarse.nameMin
-            && frozen.coarse.nameWidth !== frozen.base.nameWidth,
-          'base ' + JSON.stringify(frozen.base) + ' :: coarse ' + JSON.stringify(frozen.coarse));
+            && restated.length === 0,
+          'base ' + JSON.stringify(frozen.base) + ' :: coarse ' + JSON.stringify(frozen.coarse)
+            + ' :: coarse restates ' + JSON.stringify(restated));
 
         /*
           AND THE FOURTH NUMBER (WO-3.27): the box's `scroll-padding-left`, which is what tells the
           browser where the frozen pair ends, so a focused cell is scrolled clear of it rather than
-          left underneath. It is the name column's width plus the grade column's width, base against
-          base and coarse against coarse — the coarse block narrows the name and does not restate the
-          grade's width, so the coarse sum takes the base grade width unless the block says
-          otherwise. Asserted as a SUM of the declared numbers rather than against a literal 274, so
-          a drift in any one of the four (name width, grade width, grade offset, padding) goes red
-          here or in the check above, and a coherent change to all of them does not.
+          left underneath. It is the name column's width plus the grade column's width. Asserted as a
+          SUM of the declared numbers rather than against a literal 252, so a drift in any one of the
+          four (name width, grade width, grade offset, padding) goes red here or in the check above,
+          and a coherent change to all of them does not. One set since WO-3.62, so the base rules are
+          the whole of it and the check above has already refused a coarse restatement.
         */
         const px = (v) => (/^-?\d+(\.\d+)?px$/.test(String(v || '')) ? parseFloat(v) : NaN);
-        const cGradeW = frozen.coarse.gradeWidth || frozen.base.gradeWidth;
-        const cGradeMin = frozen.coarse.gradeMin || frozen.base.gradeMin;
         const baseEdge = px(frozen.base.nameWidth) + px(frozen.base.gradeWidth);
-        const coarseEdge = px(frozen.coarse.nameWidth) + px(cGradeW);
-        check('and the box\'s scroll-padding-left is where the frozen pair ends — the name column\'s width plus the grade column\'s — in the base rules and again in the coarse block, so a focused cell is scrolled clear of the pair on both pointers (WO-3.27)',
-          frozen.sheet && !!frozen.base.padLeft && !!frozen.coarse.padLeft
-            && frozen.base.gradeWidth === frozen.base.gradeMin && cGradeW === cGradeMin
-            && px(frozen.base.padLeft) === baseEdge && px(frozen.coarse.padLeft) === coarseEdge
-            && px(frozen.base.padLeft) !== px(frozen.coarse.padLeft),
-          'base: padding ' + frozen.base.padLeft + ' against ' + frozen.base.nameWidth + ' + '
-            + frozen.base.gradeWidth + ' = ' + baseEdge + 'px :: coarse: padding '
-            + frozen.coarse.padLeft + ' against ' + frozen.coarse.nameWidth + ' + ' + cGradeW
-            + ' = ' + coarseEdge + 'px');
+        check('and the box\'s scroll-padding-left is where the frozen pair ends — the name column\'s width plus the grade column\'s — on both pointers, so a focused cell is scrolled clear of the pair (WO-3.27; one set since WO-3.62)',
+          frozen.sheet && !!frozen.base.padLeft
+            && frozen.base.gradeWidth === frozen.base.gradeMin
+            && px(frozen.base.padLeft) === baseEdge && baseEdge === 252,
+          'padding ' + frozen.base.padLeft + ' against ' + frozen.base.nameWidth + ' + '
+            + frozen.base.gradeWidth + ' = ' + baseEdge + 'px');
 
         /*
           AND THE TWO NUMBERS WO-3.28 TIED TO THEM: the category average's `left` is where the frozen
           pair ends (name + grade), and the box's padding while that column is drawn (`.filtered`) is
-          that plus the column's own width — base against base and coarse against coarse, the coarse
-          width taken from the base rule unless the block restates it. Read as sums of the declared
-          numbers, like the check above, so a drift in any one goes red and a coherent change does not.
-          The driven half — a real Shift+Tab, ← and Enter with a pill on — is further down.
+          that plus the column's own width. Read as sums of the declared numbers, like the check above,
+          so a drift in any one goes red and a coherent change does not. The driven half — a real
+          Shift+Tab, ← and Enter with a pill on — is further down, on both pointers.
         */
-        const cCatW = frozen.coarse.catWidth || frozen.base.catWidth;
-        const cCatMin = frozen.coarse.catMin || frozen.base.catMin;
-        check('and the third frozen column a category pill adds starts where the frozen pair ends, and the box\'s filtered scroll-padding-left is where it ends — name + grade, and name + grade + its own width — in the base rules and again in the coarse block (WO-3.28)',
-          frozen.sheet && !!frozen.base.catLeft && !!frozen.coarse.catLeft
-            && !!frozen.base.filteredPad && !!frozen.coarse.filteredPad
-            && frozen.base.catWidth === frozen.base.catMin && cCatW === cCatMin
-            && px(frozen.base.catLeft) === baseEdge && px(frozen.coarse.catLeft) === coarseEdge
+        check('and the third frozen column a category pill adds starts where the frozen pair ends, and the box\'s filtered scroll-padding-left is where it ends — name + grade, and name + grade + its own width — on both pointers (WO-3.28; one set since WO-3.62)',
+          frozen.sheet && !!frozen.base.catLeft && !!frozen.base.filteredPad
+            && frozen.base.catWidth === frozen.base.catMin
+            && px(frozen.base.catLeft) === baseEdge
             && px(frozen.base.filteredPad) === baseEdge + px(frozen.base.catWidth)
-            && px(frozen.coarse.filteredPad) === coarseEdge + px(cCatW),
-          'base: left ' + frozen.base.catLeft + ', padding ' + frozen.base.filteredPad + ' against '
-            + baseEdge + ' + ' + frozen.base.catWidth + ' :: coarse: left ' + frozen.coarse.catLeft
-            + ', padding ' + frozen.coarse.filteredPad + ' against ' + coarseEdge + ' + ' + cCatW);
+            && px(frozen.base.filteredPad) === 336,
+          'left ' + frozen.base.catLeft + ', padding ' + frozen.base.filteredPad + ' against '
+            + baseEdge + ' + ' + frozen.base.catWidth);
 
         /*
           AND THE SAME PAIR AS A MEASUREMENT, with the grid scrolled sideways — which is the defect
@@ -1826,6 +1926,27 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           !!fd1.ok && fd1.ok.enter, JSON.stringify(fd1.enter));
 
         /*
+          THE STUCK HEAD AGAINST ITS OWN TOP PADDING (WO-3.62). The top `scroll-padding` is the head's
+          height, measured and written with a few pixels of slack (src/scores.css says the figures), and
+          the head is a different height after this work order — four lines, a name that may take two,
+          and a 44px button under a thumb. The driven Enter above proves the padding is not too SMALL
+          for the head as drawn; this reads the two numbers side by side so the figure is on the record
+          every run, and so a padding left far too LARGE — a cell parked well below the head for no
+          reason, which no driven key notices — goes red too. The fixture's p6 and p7 carry two-line
+          names, so the head measured is the tallest this screen draws.
+        */
+        const HEAD_FIT = `(function(){
+          var w = document.getElementById('scoresGridWrap');
+          var hs = Array.prototype.slice.call(document.querySelectorAll('#scoresHead th'));
+          var tallest = Math.max.apply(null, hs.map(function(t){ return t.getBoundingClientRect().height; }));
+          return { head: Math.round(tallest * 100) / 100,
+            padTop: parseFloat(getComputedStyle(w).scrollPaddingTop) }; })()`;
+        const headFits = (f) => f.head > 0 && f.head <= f.padTop && f.padTop - f.head <= 10;
+        const fit1 = await evalJs(HEAD_FIT);
+        check('WO-3.62: the stuck head\'s measured height is inside the box\'s top scroll-padding, with no more than 10px to spare — fine pointer',
+          headFits(fit1), JSON.stringify(fit1));
+
+        /*
           ── WO-3.28: THE SAME THREE MOVES WITH A CATEGORY PILL ON — THREE FROZEN COLUMNS ──
 
           WO-3.28's third Acceptance line is this check re-run, not a new geometry: a category pill
@@ -1836,7 +1957,8 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
 
           Tests is the pill, because it holds eight of the ten columns and so still overflows the box
           sideways. The fine half is measured at 1024 wide rather than this block's 1200: eight
-          columns plus 358px of frozen edge is within a few pixels of the box at 1200, and a box that
+          columns plus 358px of frozen edge (336 since WO-3.62) was within a few pixels of the box at
+          1200, and a box that
           does not scroll sideways has no cell under the frozen columns to move into — a check that
           cannot fail. The pill is tapped through the real control and put back to All afterwards.
         */
@@ -2042,17 +2164,54 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           'head controls ' + JSON.stringify(hold44.slice(0, 3)) + ' (' + hold44.length + ') · confirm open '
             + holdOpen + ', ' + JSON.stringify(confirm44));
 
+        /* WO-3.62 under the thumb: the column name's button on every head at 44px or more both ways,
+           named here rather than left inside the sweep above for hold44's reason — a build that drew
+           no button would pass a sweep over what it did draw. Then the head's order and the wrap read
+           again at the coarse type sizes, and the name tapped once more, through the real button. */
+        const edit44 = grid44.filter((m) => /scores-col-edit/.test(m.t));
+        check('WO-3.62: the column name\'s button on every one of the ten heads measures >=44px tall (and wide) on a coarse pointer',
+          coarseNow === true && edit44.length === 10 && edit44.every((m) => m.h >= 44 && m.w >= 44),
+          JSON.stringify(edit44.slice(0, 4)) + ' (' + edit44.length + ')');
+        const heads2 = await evalJs(HEADS);
+        check('WO-3.62: and on the coarse pointer every head still draws the name button, the one meta line, the chip and the hold line in that order, with no separate points or due line',
+          headsAreFour(heads2),
+          JSON.stringify(heads2.map((h) => ({ id: h.id, order: h.order, loose: h.loose, meta: h.meta,
+            oneLine: h.oneLine }))));
+        check('WO-3.62: and the wrap holds at the coarse type size — one line, two lines whole, and two lines cut',
+          namesWrap(heads2),
+          JSON.stringify(Object.keys(LENGTHS).map((k) => {
+            const h = heads2.filter((x) => x.id === LENGTHS[k])[0] || {};
+            return { k, id: h.id, lines: h.lines, truncated: h.truncated, btnH: h.btnH }; })));
+        await evalJs("window.planbook.scores.revealScoreColumn('wo35-a2') ? 1 : 0");
+        await new Promise((r) => setTimeout(r, 100));
+        await clickSel('#scoresHead [data-assignment-edit="wo35-a2"]');
+        await new Promise((r) => setTimeout(r, 250));
+        const editDoor2 = await evalJs(`(function(){
+          var overlay = document.getElementById('assignmentModal');
+          var field = document.querySelector('#assignmentFields [data-assignment-field="name"]');
+          return { open: !!overlay && !overlay.classList.contains('hidden'), name: field ? field.value : null,
+            gridUnder: !document.getElementById('scoresView').classList.contains('hidden') }; })()`);
+        await evalJs("window.planbook.closeModal('assignmentModal'); 1");
+        await new Promise((r) => setTimeout(r, 200));
+        check('WO-3.62: and tapping a column\'s name under the coarse pointer opens the editor on that assignment — "Quiz one", over the grid',
+          editDoor2.open && editDoor2.name === 'Quiz one' && editDoor2.gridUnder, JSON.stringify(editDoor2));
+
         const pinnedCoarse = await evalJs(PIN);
-        check('and the frozen pair holds on the coarse pointer too, where the name column is narrower and the offset had to move with it',
+        /* Until WO-3.62 this asserted the coarse name column was NARROWER than the fine one, because
+           the coarse block narrowed it. One set of numbers since the owner's ruling at dispatch, so
+           the measured column is now the SAME width on both pointers — the drawn half of the
+           declaration check's "the coarse block restates none of the six". */
+        check('and the frozen pair holds on the coarse pointer too, with the name column drawn at the same width it has on the fine pointer — one ruled 168px on both (WO-3.62)',
           !!pinnedCoarse && pinnedCoarse.scrollable > 0 && pinnedCoarse.scrolled > 0
             && pinnedCoarse.overlap <= 0.5 && Math.abs(pinnedCoarse.nameOff) <= 0.5
-            && !!pinned && pinnedCoarse.nameW < pinned.nameW,
+            && !!pinned && Math.abs(pinnedCoarse.nameW - pinned.nameW) <= 0.5,
           JSON.stringify(pinnedCoarse) + ' against a fine-pointer name column of '
             + (pinned ? pinned.nameW : '?') + 'px');
 
-        /* WO-3.27 again on the coarse pointer, where the name column is 168px, the frozen edge is
-           at 252 and the head's type is a step larger — every number the fine pass leaned on has
-           moved, which is the reason for asking twice. The keys are still a keyboard's: an iPad
+        /* WO-3.27 again on the coarse pointer, where the head's type is a step larger and its two
+           buttons are 44px — the head is taller, so the top padding the fine pass leaned on has moved,
+           which is the reason for asking twice. (The frozen edge is the same 252 on both pointers
+           since WO-3.62; until then it moved here too.) The keys are still a keyboard's: an iPad
            with a keyboard attached is this pointer and these keys. */
         const head2 = await stuckHead();
         check('the box scrolled down and sideways at once leaves every column head\'s top on the box\'s top edge, and the name and grade heads on its left edge, end to end — on a coarse pointer (WO-3.27)',
@@ -2067,7 +2226,11 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           !!fd2.ok && fd2.ok.arrowLeft, JSON.stringify({ parked: fd2.parked, arrowLeft: fd2.arrowLeft }));
         check('and a real Enter down into a row under the stuck head leaves that cell\'s top at or below the head\'s bottom — coarse pointer (WO-3.27)',
           !!fd2.ok && fd2.ok.enter, JSON.stringify(fd2.enter));
-        /* WO-3.28 again on the coarse pointer: 168 + 84 + 84, the filtered padding at 336. The
+        const fit2 = await evalJs(HEAD_FIT);
+        check('WO-3.62: the stuck head\'s measured height is inside the box\'s top scroll-padding, with no more than 10px to spare — coarse pointer',
+          headFits(fit2), JSON.stringify(fit2));
+        /* WO-3.28 again on the coarse pointer: 168 + 84 + 84, the filtered padding at 336 — the
+           same numbers as the fine pass since WO-3.62, asked again under the coarse head. The
            viewport is already 1024 here, where eight coarse columns overflow by a wide margin. */
         const pc = await withPill();
         const pcOn = pc.on.filtered && pc.on.cat && pc.on.cols === 8 && pc.on.overflow > 0;

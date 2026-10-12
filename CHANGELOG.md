@@ -13,6 +13,22 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The Scores column head gets lighter, and the name column narrower — 2026-10-12
+
+WO-3.62, owner-directed. The last of three passes that tidy Scores. Shell cache v190 → v191.
+
+- **Each assignment head is four lines, not five**: the name, *out of 10 · due Sep 7* on one
+  line, the category chip, and Hold. A past-due date is still amber.
+- **The assignment name wraps to two lines** before it is cut off with "…". Most columns are
+  narrower than the name's limit, so names of a few words often take two lines.
+- **Tapping the name opens the assignment editor** for that assignment, as the name does on
+  Assignments.
+- **Hold stays under the category chip on every column**, and a held column shows *Held* and
+  *Commit* in the same place.
+- **The student name column is 168px on the laptop as well as the iPad**, down from 190 on the
+  laptop. The grade and category-average columns, and the scroll padding that keeps the cell you
+  are in from hiding behind them, moved with it.
+
 ### The Scores keys open a dialog, and Clear and Note get a key — 2026-10-12
 
 WO-3.61, owner-directed. The second of three passes that tidy Scores. Shell cache v189 → v190.

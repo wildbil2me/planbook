@@ -13777,6 +13777,111 @@ proves the same boundary from the other side.
 - `grep -rn MUTATION src/ index.html tools/ sw.js` afterwards: eighteen hits, every one prose that
   was already in the tree at HEAD (the same count per file or fewer); no plant.
 
+### WO-3.62 — the Scores column head gets lighter, and the name column narrower
+
+**What was built.** `src/scores.js`: `columnHead()` draws four element children — a
+`<button class="scores-col-edit" type="button" data-assignment-edit="<id>" aria-haspopup="dialog">`
+holding the name in `.scores-col-name.wraps`, then `metaLine()`'s one `.scores-col-meta` line
+(*out of 10 · due Sep 7* — `.scores-col-pts` and `.scores-col-due` kept as spans of their own, so the
+overdue tint stays on the date), the chip, and the unchanged `holdLine()`. The tap is routed by
+src/shell.js's existing `data-assignment-edit` branch — the assignment list's own handler, no second
+one. `src/scores.css`: the three drawn classes lifted into the column-head subsection, with a coarse
+`min-height: 44px` (and `min-width: 44px`) on the button; the old `.scores-col-pts` and
+`.scores-col-due` line rules gone; **the owner's ruling at dispatch — 168px on both pointers** — so
+the base rules carry name 168, grade `left` 168, `.scores-cat-avg` `left` 252,
+`scroll-padding-left` 252 and `.filtered`'s 336, and the coarse block restates none of them; the
+top `scroll-padding` re-measured to 122 fine and 158 coarse. `CACHE` v190 → v191. The work order's
+ruling 5 and Open line are amended to say so, the struck text kept.
+
+**The head heights, measured.** With a two-line name in the head: **115.59px fine** (it was ~120
+with five lines) and **152px coarse** (it was ~146). **The coarse head got taller, not shorter**,
+although it lost a line: the name is a 44px button now (ruling 3), which is more than the name line
+and the points line it replaced. So "the head is shorter now" is true of the laptop only. The 👤 line
+below is where the four lines are read on glass.
+
+**One behaviour the drawing did not show, measured on the first run.** A grid wider than its box
+sizes each column to its narrowest content, so a name wraps at the column's width — ~96–110px — not at
+the name's 130px cap: on the first run a three-word fixture name needed three lines and was cut off at two. That is
+the drawing's own CSS doing what it says; the columns are narrower for it. Recorded because a teacher
+will see more two-line names than "too long for one line" at 130px suggests.
+
+- [x] Every assignment head draws, in order, the name button, one meta line holding points and due
+      date, the category chip, and the hold line. No head carries a separate points or due line.
+      — `verify/score-grid.mjs`, every one of the ten heads read by element children: `"order":
+      ["scores-col-edit","scores-col-meta","cat-chip","scores-col-hold-line"],"loose":0` on all ten,
+      fine pointer and again coarse; the dated column reads `"out of 100 · due Sep 18"` with the two
+      halves on one line (`"oneLine":true`, their tops within 1px), the undated ones `"out of 20"`.
+- [x] Tapping a column's name opens the assignment editor on that assignment; the button carries
+      `data-assignment-edit` and is at least 44px tall under a coarse pointer.
+      — `verify/score-grid.mjs`: a real click on `#scoresHead [data-assignment-edit="wo35-a1"]` →
+      `{"open":true,"name":"Unit test","gridUnder":true,"tag":"BUTTON","type":"button",
+      "hook":"wo35-a1","popup":"dialog","label":"Unit test"}`; under the coarse pointer a tap on
+      wo35-a2's name → `{"open":true,"name":"Quiz one","gridUnder":true}`. All ten buttons ≥44px both
+      ways coarse (`h` 44, `w` 44–49.92). This replaces WO-3.3's category-move check's seam opener:
+      that check now opens the editor through the column name.
+- [x] A name too long for one line takes two, and one too long for two truncates.
+      — `verify/score-grid.mjs`, the fixture's three lengths, lines = the name's box height over its
+      computed line height, truncated = content past the box: *Unit test* `lines 1, truncated false`;
+      *Argumentative research* `lines 2, truncated false`; *Rhetorical analysis of the Gettysburg
+      Address, second draft with peer review* `lines 2, truncated true, clamp "2"` — on the fine
+      pointer and again on the coarse one (button 44px tall in all three).
+- [x] Every unheld column shows Hold under its chip; a held one shows *Held* and *Commit* there.
+      — `verify/held-readers.mjs`, the weighted class's ten heads: the hold line directly after the
+      chip and last in the head on all ten (`"underChip":true`), *Hold* and no mark on the eight live
+      columns, *Held* and *Commit* on wo346-Q1 and wo346-P3.
+- [x] The name column is the ruled width at both pointer sizes, and the grade column, the category
+      average column and both `scroll-padding-left`s sit where the frozen pair now ends. A focus
+      move by ↵ and by ⇥ leaves the cell fully clear of the frozen columns and the stuck head.
+      — Declarations (`verify/score-grid.mjs`): base `nameWidth 168px = nameMin = gradeLeft`,
+      `padLeft 252px` = 168 + 84, `catLeft 252px`, `filteredPad 336px` = 252 + 84; coarse block
+      `{"padTop":"158px"}` and nothing else — `coarse restates []`. Drawn: the name column measures
+      `nameW 168` on both pointers with the grid scrolled sideways, no overlap. Driven: a real
+      Shift+Tab (⇥ backwards, the direction that reaches a covered cell) and ← at full right scroll,
+      and a real Enter into a row under the stuck head, on both pointers, with and without the Tests
+      pill — twelve checks, all green; e.g. fine Shift+Tab `"left":333.06` against `"frozenRight":292`,
+      coarse with the pill `"left":547` against `376`, coarse Enter `"top":690.45` against
+      `"headBottom":481.45`. And the head against its padding: `{"head":115.59,"padTop":122}` fine,
+      `{"head":152,"padTop":158}` coarse, inside a ≤10px slack check.
+- [x] A past-due column's due date still draws in its overdue colour inside the meta line.
+      — `verify/past-due.mjs`, the two heads the prompt asks about: `"inMeta":true,
+      "dueInk":"rgb(138, 109, 26)","ptsInk":"rgb(138, 155, 176)","sameLine":true` on both — the date
+      amber in its own span inside `.scores-col-meta`, the points beside it grey.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      — Full run `2044 checks · 2044 passed · 0 failed · 0 skipped`, 65,118 lines, 1077s, exit 0,
+      2026-10-12 on the real clock (the first run of the build, before the top padding was re-set and
+      the two-line fixture name corrected, was `2041 passed · 3 failed` — those three WO-3.62 checks,
+      which is how the 122/158 figures were measured). `node tools/wo-sweep.mjs`: `50 checks · 47
+      passed · 0 failed · 3 to review`, exit 0 — the three reviews are the standing ones (sensitive
+      field names outside src/backup.js, due-date beside late/missing, the mockup banners), none about
+      this work order; its call-site check reads 2032, the number `tools/README.md` now records.
+      `CACHE` `planbook-shell-v190` → `planbook-shell-v191`.
+- [x] 👤 On the iPad, after a force-quit, upright: the head reads as four lines, a long name wraps,
+      the name opens the editor, and Hold sits under the chip.
+      — Read by the owner on the iPad, 2026-10-12, at v191 after a force-quit, served from the dev
+      server: four-line heads, long real names wrapping and cut at two, the name opening the
+      editor over the grid, Hold under the chip and Held · Commit in its place on a held column,
+      and a past-due date amber beside a grey *out of N*. All green.
+
+**Planted faults**, each marked `MUTATION` in `src/`, run on a section-only copy of the harness
+(`localstorage-prefs`, `score-grid`, `past-due`, `held-readers` — 128 checks green unmutated), and
+reverted by copying the pre-mutation files back:
+- Run A, four at once: **M1** a coarse `.scores-name { width: 150px; min-width: 150px }`; **M2** the
+  name's `wraps` class dropped; **M3** the due span moved out of the meta line to a child of the head;
+  **M4** the base top padding 122 → 100. `119 passed · 9 failed`: the head-order check on both
+  pointers (M3 — `"order":[…,"span.scores-col-due overdue",…],"loose":1`), the wrap check on both
+  (M2 — `"clamp":"none"`), the declaration check (M1 — the coarse block restating the width), the
+  coarse pin (M1 — `"nameW":150,"overlap":-18`), the coarse stuck-head check (M1), the fine head-fit
+  check (M4 — `{"head":102,"padTop":100}`), and the past-due tint check (M3 — `"inMeta":false`).
+  M4 did **not** turn the fine driven Enter red, because M2 shortened the head to 102 in the same run;
+  the head-fit check is what caught it.
+- Run B: **M5** the hold line drawn above the chip; **M6** `data-assignment-edit` removed from the
+  button. `53 passed · 2 failed`: held-readers' hold-place check (M5 — `"underChip":false`), and
+  `verify/score-grid.mjs` stopped at the name tap (M6 — *nothing to click for #scoresHead
+  [data-assignment-edit="wo35-a1"]*, contained and reported by `runSection()` as a FAIL), which is red
+  but is a throw rather than the editor check's own verdict.
+- `grep -rn MUTATION src/ tools/` afterwards: every hit is prose already at HEAD (`git diff` adds no
+  line containing it); no plant. The section-only copy was deleted.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

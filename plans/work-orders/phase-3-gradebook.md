@@ -4966,7 +4966,7 @@ Shift held, and refusing a modified letter refuses the capital (`handleScoreKey(
 
 ## WO-3.62 — the Scores column head gets lighter, and the name column narrower
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-10-12 · **Size** M · **Depends on** —
 **Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
 
 **Booked 2026-10-11** with WO-3.60, same drawing, frame C. In the photograph the column heads are
@@ -4988,12 +4988,20 @@ styled in [`design/mockups/proposed-scores-tidy.css`](../../design/mockups/propo
    shipped *Held* mark and *Commit* in the same place. The head goes from five lines to four.
 5. **The frozen name column narrows, 190px → 156px.** The pair's `left` offsets and the
    `scroll-padding` values move with it.
+   **Revised by the owner at dispatch, 2026-10-12: 168px on both pointers**, not 156 — the laptop
+   goes 190 → 168 and the iPad keeps the 168 it already had. Laptop and coarse become **one set of
+   numbers**: name `168`, grade column `left: 168`, third column (`.scores-cat-avg`) `left: 252`,
+   `scroll-padding-left: 252`, `.filtered`'s `scroll-padding-left: 336`. The figure above is kept as
+   the ruling given on the drawing; this line is the one built.
 
-**Open — the owner, at dispatch: the width under a coarse pointer.** Ruling 5 was given on the
+**Open — the owner, at dispatch: the width under a coarse pointer.** ~~Ruling 5 was given on the
 drawing's figure, 190 → 156, and **190 is the laptop width**: under a coarse pointer
 `src/scores.css` already narrows the name column to 168px, so on the iPad 156 buys 12px. Either
 156 everywhere, or the coarse width narrows by the same 34px to 134 — measured against the longest
-name on a real roster at the coarse type size before it is chosen.
+name on a real roster at the coarse type size before it is chosen.~~
+**Settled 2026-10-12, the owner at dispatch: neither — 168 on both pointers** (ruling 5's revision
+above). The struck paragraph is the question as it was booked. The Acceptance line *"the ruled width
+at both pointer sizes"* means 168 at both.
 
 **Deliverables**
 - **`src/scores.js`**: `columnHead()` builds the name as a button carrying `data-assignment-edit`
@@ -5011,18 +5019,18 @@ name on a real roster at the coarse type size before it is chosen.
 - **`TESTING.md` § WO-3.62**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] Every assignment head draws, in order, the name button, one meta line holding points and due
+- [x] Every assignment head draws, in order, the name button, one meta line holding points and due
       date, the category chip, and the hold line. No head carries a separate points or due line.
-- [ ] Tapping a column's name opens the assignment editor on that assignment; the button carries
+- [x] Tapping a column's name opens the assignment editor on that assignment; the button carries
       `data-assignment-edit` and is at least 44px tall under a coarse pointer.
-- [ ] A name too long for one line takes two, and one too long for two truncates.
-- [ ] Every unheld column shows Hold under its chip; a held one shows *Held* and *Commit* there.
-- [ ] The name column is the ruled width at both pointer sizes, and the grade column, the category
+- [x] A name too long for one line takes two, and one too long for two truncates.
+- [x] Every unheld column shows Hold under its chip; a held one shows *Held* and *Commit* there.
+- [x] The name column is the ruled width at both pointer sizes, and the grade column, the category
       average column and both `scroll-padding-left`s sit where the frozen pair now ends. A focus
       move by ↵ and by ⇥ leaves the cell fully clear of the frozen columns and the stuck head.
-- [ ] A past-due column's due date still draws in its overdue colour inside the meta line.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] 👤 On the iPad, after a force-quit, upright: the head reads as four lines, a long name wraps,
+- [x] A past-due column's due date still draws in its overdue colour inside the meta line.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the iPad, after a force-quit, upright: the head reads as four lines, a long name wraps,
       the name opens the editor, and Hold sits under the chip.
 
 **Traps** — **The frozen widths are tied numbers.** `src/scores.css` names four that move together

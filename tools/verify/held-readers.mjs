@@ -459,6 +459,27 @@ check('WO-3.46: the score grid shows a held column as held — a Held mark and t
     && /, held out of the grade$/.test(gridUp.qCell) && gridUp.e1Button === 'Hold' && !gridUp.e1Mark,
   JSON.stringify(gridUp));
 
+/* WO-3.62 Acceptance line 4 — WHERE the hold line sits now that the head is four lines: directly
+   under the category chip and last, on every column, the live ones carrying Hold and no mark and the
+   held one its Held mark and Commit, in the same place. Read as each head's element children, so a
+   build that moved the line above the chip, or drew it only on some columns, goes red. */
+const holdPlace = await evalJs(`(function(){
+  return Array.prototype.map.call(document.querySelectorAll('#scoresHead th[data-score-col]'), function(th){
+    var kids = Array.prototype.slice.call(th.children);
+    var line = th.querySelector('.scores-col-hold-line');
+    var at = kids.indexOf(line);
+    var btn = line ? line.querySelector('[data-score-hold]') : null;
+    return { id: th.getAttribute('data-score-col'), held: th.classList.contains('held'),
+      underChip: at > 0 && kids[at - 1].classList.contains('cat-chip') && at === kids.length - 1,
+      button: btn ? btn.textContent : '', mark: !!(line && line.querySelector('.scores-col-held')) };
+  }); })()`);
+check('WO-3.62: every column\'s hold line sits directly under its category chip, last in the head — Hold and '
+  + 'no mark on every live column, the Held mark and Commit on the two held ones',
+  holdPlace.length === 10 && holdPlace.every((h) => h.underChip
+    && (h.held ? (h.button === 'Commit' && h.mark) : (h.button === 'Hold' && !h.mark)))
+    && holdPlace.filter((h) => h.held).length === 2,
+  JSON.stringify(holdPlace));
+
 /* ── Acceptance 1 and 2, weighted: E2 held from the grid, then committed from the grid ── */
 const e2Start = await read('wo346-E2');
 const wBeforeHold = await grades(W, WT);

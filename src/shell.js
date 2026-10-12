@@ -198,7 +198,9 @@
       data-assignment-new             adds an assignment to the open class and term, and opens the
                                       editor on it
       data-assignment-create-cancel   removes the assignment written by that still-open create flow
-      data-assignment-edit="<id>"     opens the editor for that assignment
+      data-assignment-edit="<id>"     opens the editor for that assignment — worn by the name on the
+                                      assignment list (WO-3.54) and on a score-grid column head
+                                      (WO-3.62), one handler for both
       data-assignment-move-up="<id>"  moves it one place earlier inside its own category group
       data-assignment-move-down="<id>"  one place later
       data-assignment-sort="name|points|assigned|due|entered"  a column heading of the list (WO-3.55):

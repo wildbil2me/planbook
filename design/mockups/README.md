@@ -1114,8 +1114,8 @@ same values as `.attendance-find`, with the pills' basis doing what the ruling a
 indigo order word; a sibling rule that hands the tools' auto margin to the search count while it is
 drawn, because frame A draws no count and two auto margins on one line split the space; and coarse
 44s on Sort and on the wordless ⌨. **Still drawn and not lifted:** `.scores-col-meta`,
-`.scores-col-name.wraps` and `.scores-col-edit` (frame C, WO-3.62) and `.scores-headline-figs`
-(frame B, not chosen). Frame 0 is the screen as it shipped before
+`.scores-col-name.wraps` and `.scores-col-edit` (frame C, WO-3.62 — *lifted since, 2026-10-12; see
+below*) and `.scores-headline-figs` (frame B, not chosen). Frame 0 is the screen as it shipped before
 WO-3.60 and is a record now — its `.scores-actions` row draws unstyled, because that rule left
 `src/scores.css` with the row.
 
@@ -1127,6 +1127,21 @@ the frame:** N's says *Done* puts you back in the cell, where the frame says *En
 neither does, measured on the build, and making Escape close the note panel was not ruled, so the
 row says what is true. Frame A's two flag-bar labels, *Clear (C)* and *Note (N)*, and its first hint
 paragraph landed in the same work order.
+
+**Frame C landed 2026-10-12, WO-3.62.** `.scores-col-meta`, `.scores-col-name.wraps` and
+`.scores-col-edit` are in `src/scores.css` under their drawn names, beside the rules they modify in
+the score grid's column-head subsection rather than in § SCORES TIDY with frame A's half, and the
+coarse `min-height: 44px` with them. The column name is a real button carrying
+`data-assignment-edit`, the assignment list's own hook, so one handler opens the editor from both
+screens. **Two departures, each argued in `src/scores.css`:** the hover's indigo and dotted underline
+are put on the name inside the button, because the drawn rule coloured the button and the name sets
+its own ink, so on the drawing the name never turned indigo; and the button takes a coarse
+`min-width: 44px` too, because a column called "Q1" draws a name narrower than a thumb. The meta line's
+two halves stay spans of their own, `.scores-col-pts` and `.scores-col-due`, so the overdue tint lands
+on the due date alone. Those two lost their line rules, so **frames 0, A and B, and
+[`score-tools.html`](score-tools.html), now draw the points and the date inline** — records of a
+head that has gone, in the posture frame 0's `.scores-actions` row already takes. **The frozen name
+column is 168px on both pointers, not the drawing's 156** — the owner's ruling at dispatch, below.
 
 ## What the drawing proposes
 
@@ -1166,7 +1181,10 @@ Styled in [`proposed-scores-tidy.css`](proposed-scores-tidy.css): § SCORES TIDY
   the assignment editor. The head goes from five lines to four.
 - **The frozen name column narrows, 190px → 156px.** *190 is the laptop width; under a coarse
   pointer the column is already 168, so on the iPad 156 buys 12px. Corrected at booking, and the
-  coarse width is an Open line in WO-3.62.*
+  coarse width is an Open line in WO-3.62.* **Revised by the owner at dispatch, 2026-10-12: 168px on
+  both pointers** — the laptop 190 → 168, the iPad unchanged, one set of numbers (name 168, grade
+  `left` 168, third column `left` 252, `scroll-padding-left` 252, filtered 336). That settles the
+  Open line.
 - **The summary's `·` separators stay as they ship.**
 
 ## The open questions, collected
