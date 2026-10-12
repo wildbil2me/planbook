@@ -14087,6 +14087,60 @@ red and nothing else did. The real tree was not touched.
       — **Read by the owner 2026-10-12 on the iPad against v192, reported good.** Served locally by
       `serve-https.mjs`; the refusal shows above Done with the keyboard up, without scrolling.
 
+### WO-3.64 — the move confirm's note and the categories panel's error line draw above their buttons
+
+**What was built.** `index.html`: in `#assignmentMoveModal` the `.class-hint` *To change the date
+instead…* moved from after `.modal-actions` to directly before it; in `#categoriesModal`
+`#categoryError` moved from the foot of the body (after the four hints) to directly after
+`#categoryTotal`, before `.category-actions` — **moved, not deleted, the owner's ruling at dispatch**,
+recorded as the work order's *Answered* paragraph, in `design/mockups/README.md` (a *Decided … at
+WO-3.64's dispatch* section, open question 4 marked answered) and in frame 6's caption in
+`design/mockups/dialog-messages.html`. Both moves carry a markup comment. No class, margin or wording
+changed, and `#categoryError` was given no message. `src/` is untouched: `showCategoryError()` finds
+the line by id and `src/assignments.js` names the note by no selector. `CACHE` v192 → v193.
+
+**The Trap's margins, reasoned and then measured.** The note now follows `#assignmentMoveFacts`, a
+`<div>`, so neither `.modal-body p + p` nor `.modal-body p + .modal-section-label` touches it, and the
+label still follows the lead `<p>`. Read from `getComputedStyle` with the confirm open: label 16px,
+note 10px, actions row 18px — the same three values the old order produced. `#categoryError` now
+follows a `<p>` (the total), where `p + p` gives 10px, the same as `.class-error`'s own 10px; it is
+`hidden`, so it draws nothing either way.
+
+**Mutation-proved by the verifier, 2026-10-12.** The implementer reasoned the round and did not run
+it; the verifier ran it. `HEAD`'s `index.html` was put into a scratch copy of the tree and the
+harness run there: `2047 of 2049 passed`, exit 1, and the two failures were exactly the two WO-3.64
+checks, so each catches a revert of its own move. The implementer's guess that the categories check's
+`prev` would read `null` was wrong in its detail: the run printed `""`, the empty id of the hint
+before it. The real tree was not touched.
+
+**Two limits the verifier named, neither hiding a defect.** The categories check asserts that *the
+body's last child is a hint*, which is narrower than *everything after the Add row is a hint*; it
+holds for today's markup in both grading modes. The move-confirm check reads one viewport only,
+which is fine for a single-column 480px confirm.
+
+- [x] In the move confirm, the note is above *Move it to …* and *Keep it in …*, and nothing draws
+      after `.modal-actions`. Its wording is unchanged.
+      — `verify/assignments.mjs`, beside WO-3.50's "Done … opens the confirm BEFORE writing" check, on
+      that same open confirm (buttons *Move it to Q2* / *Keep it in Q1*): `{"shown":true,"text":"To
+      change the date instead, close this and you are back in the assignment.","above":true,
+      "between":[],"below":[],"after":[],"noteMargin":"10px","labelMargin":"16px",
+      "actionsMargin":"18px"}` — PASS. The wording is matched as a whole string.
+- [x] In Categories & weights, nothing draws after the two hints, and `#categoryError` is either
+      directly under `#categoryTotal` or gone, as the owner ruled.
+      — The owner ruled *move*. `verify/categories-weights.mjs`, beside "a wrong total blocks nothing":
+      `{"prev":"categoryTotal","next":"category-actions","inBody":true,"last":"class-hint hidden"}` —
+      PASS. Read from the markup, not the boxes, because the line is hidden and has none; the body's
+      last child is a `.class-hint` (the points-mode one, hidden in a weighted class), so nothing but
+      hints follows the Add row. The two existing reads of `#categoryError` (empty) still pass.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      — `node tools/verify-shell.mjs`: `2049 checks · 2049 passed · 0 failed · 0 skipped`, 65,336
+      lines, 1099s, exit 0, 2026-10-12, real clock. `node tools/wo-sweep.mjs`: `51 checks · 48 passed
+      · 0 failed · 3 to review`, exit 0; the 3 are the standing ones (sensitive field names, due-date
+      beside late/missing, the mockup banners). The call-site count in `tools/README.md` went
+      2035 → 2037 from the sweep's own count. `sw.js`: `planbook-shell-v192` → `planbook-shell-v193`.
+
+No 👤 line on this row. The deployed dialogs have not been looked at on an iPad.
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

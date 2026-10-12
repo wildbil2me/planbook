@@ -5160,7 +5160,7 @@ message (*Answered*, above).
 
 ## WO-3.64 — the move confirm's note and the categories panel's error line draw above their buttons
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.58
+**Ship** — · **Status** ✅ DONE — 2026-10-12 · **Size** S · **Depends on** WO-3.58
 **Closes roadmap** *(no box. Owner-directed, 2026-10-12.)*
 
 **Booked 2026-10-12** out of [WO-3.58](#wo-358--the-dialogs-behind-the-assignments-and-scores-screens-are-read-together-and-a-layout-is-ruled).
@@ -5188,15 +5188,17 @@ against is *Add a category*.
 - **`TESTING.md` § WO-3.64**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] In the move confirm, the note is above *Move it to …* and *Keep it in …*, and nothing draws
+- [x] In the move confirm, the note is above *Move it to …* and *Keep it in …*, and nothing draws
       after `.modal-actions`. Its wording is unchanged.
-- [ ] In Categories & weights, nothing draws after the two hints, and `#categoryError` is either
+- [x] In Categories & weights, nothing draws after the two hints, and `#categoryError` is either
       directly under `#categoryTotal` or gone, as the owner ruled.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
 
-**Open — the owner, at dispatch: move `#categoryError`, or delete it.** The drawing moves it: the
-harness's two reads stay meaningful and a future refusal has the place the rule names. Deleting it is
-the other honest answer — a slot for a message nothing says is a slot nobody tests.
+**Answered 2026-10-12, the owner, at dispatch: move.** `#categoryError` moves to directly after
+`#categoryTotal`, before `.category-actions`, as the drawing has it, and is not deleted: the harness's
+two reads stay meaningful and a future refusal has the place the rule names. Deleting it was the other
+honest answer — a slot for a message nothing says is a slot nobody tests — and was not taken. The
+Acceptance line's "or gone" is left as written; this paragraph is the ruling it defers to.
 
 **Traps** — **`.modal-body p + .modal-section-label`** spaces a label after a paragraph; the move
 confirm's note becomes the paragraph before `.modal-actions`, not before a label, so check nothing

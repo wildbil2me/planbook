@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The move confirm's note and the categories panel's error line draw above their buttons — 2026-10-12
+
+WO-3.64, the second case of WO-3.58's rule. `CACHE` v193.
+
+- **The move confirm's *To change the date instead…* note now sits above *Move it* and *Keep it*,**
+  not under them. Its wording did not change.
+- **Categories & weights' error line moved up to sit under the weights total, above *Add a
+  category*,** instead of at the very foot under both hints. It still says nothing, because nothing
+  in the app has ever written to it. The owner chose to keep it rather than delete it, so a future
+  refusal has the right place to appear.
+
 ### The assignment editor's messages draw together, just above its buttons — 2026-10-12
 
 WO-3.63, the first case of WO-3.58's rule. `CACHE` v192.

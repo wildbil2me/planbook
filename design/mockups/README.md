@@ -1273,6 +1273,12 @@ Each row names it in a **Surface** deliverable by hand, which is rule 9 kept rat
   students' accommodations directly on top of Done. WO-3.63 grows no line for it. *(Open question 2,
   answered as drawn.)*
 
+## Decided, the owner, 2026-10-12, at WO-3.64's dispatch
+
+- **`#categoryError` is moved, not deleted** — to directly under `#categoryTotal`, above *Add a
+  category*. The harness's two reads stay meaningful and a future refusal has the place the rule
+  names; what it would say is another row's. *(Open question 4, answered as drawn.)*
+
 ## The open questions, collected
 
 1. **Order inside the editor's one place** — the drawing puts the refusal last, touching Done. The
@@ -1282,7 +1288,8 @@ Each row names it in a **Surface** deliverable by hand, which is rule 9 kept rat
    as drawn** — see above.)*
 3. **A copy line's amber flag** — the drawing leaves each on its own line rather than gathering them
    into the foot note. *(**Answered 2026-10-12, the owner: as drawn** — see above.)*
-4. **`#categoryError`** — move it (drawn) or delete it. *(Open on WO-3.64.)*
+4. **`#categoryError`** — move it (drawn) or delete it. *(**Answered 2026-10-12, the owner: move,
+   as drawn** — see above.)*
 5. **"In one place" as "directly above"** — read strictly, the grading-mode warning would move under
    the letters, and its own *Every letter below goes* would have to change. The drawing reads the rule
    as written and leaves it. *(**Answered 2026-10-12, the owner: as drawn** — see above.)*

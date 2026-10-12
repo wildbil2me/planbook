@@ -1614,6 +1614,44 @@ console.log('\n--- the due date picks an assignment\'s term in the editor (WO-3.
       && wholeAsked === wholeBefore && asked.rev === preAsk.rev && asked.a[SCORED].termId === T1,
     JSON.stringify({ title: asked.moveTitle, lead: asked.moveLead.slice(0, 120), facts: asked.moveFacts.slice(0, 90),
       same: wholeAsked === wholeBefore }));
+  /*
+    ── WO-3.64: THE MOVE CONFIRM'S NOTE DRAWS ABOVE ITS BUTTONS ──
+
+    Read off the boxes, as WO-3.63's reader above reads the editor: the note's bottom above the actions
+    row's top, nothing visible drawn between them, nothing drawing lower than the row and nothing after
+    it in the markup. Its wording is asserted whole. And the Trap's margins: the note now follows the
+    facts <div> rather than the actions row, so its own 10px and the label's 16px (`.modal-body p +
+    .modal-section-label`, which the lead still feeds) are read to say the move spaced nothing anew.
+  */
+  const moveGeo = await evalJs(`(function(){
+    var body = document.querySelector('#assignmentMoveModal .modal-body');
+    var actions = body.querySelector(':scope > .modal-actions');
+    var note = body.querySelector(':scope > .class-hint');
+    var label = body.querySelector(':scope > .modal-section-label');
+    function shown(el){ if (!el || el.classList.contains('hidden')) return false;
+      var r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; }
+    function tag(el){ return el.id ? '#' + el.id : el.tagName.toLowerCase() + '.' + String(el.className).trim().split(/\\s+/).join('.'); }
+    var kids = Array.prototype.filter.call(body.children, shown);
+    var a = actions.getBoundingClientRect(), n = note ? note.getBoundingClientRect() : null;
+    var after = []; for (var x = actions.nextElementSibling; x; x = x.nextElementSibling) after.push(tag(x));
+    return { shown: shown(note), text: note ? note.textContent.replace(/\\s+/g, ' ').trim() : '',
+      above: !!n && n.bottom <= a.top + 0.5,
+      between: n ? kids.filter(function(k){ if (k === note || k === actions) return false;
+        var r = k.getBoundingClientRect(); return r.top < a.top - 0.5 && r.bottom > n.bottom + 0.5; }).map(tag) : null,
+      below: kids.filter(function(k){ return k !== actions && k.getBoundingClientRect().bottom > a.bottom + 0.5; }).map(tag),
+      after: after,
+      noteMargin: note ? getComputedStyle(note).marginTop : '',
+      labelMargin: label ? getComputedStyle(label).marginTop : '',
+      actionsMargin: getComputedStyle(actions).marginTop }; })()`);
+  check('WO-3.64: the move confirm\'s note draws above "Move it to Q2" and "Keep it in Q1" — its bottom above '
+    + 'the actions row\'s top, nothing drawn between them, nothing drawn lower than the row and nothing after it '
+    + 'in the markup — its wording unchanged, and the label, note and row spaced as they were (16px · 10px · 18px)',
+    asked.moveOpen && moveGeo.shown && moveGeo.above
+      && Array.isArray(moveGeo.between) && moveGeo.between.length === 0
+      && moveGeo.below.length === 0 && moveGeo.after.length === 0
+      && moveGeo.text === 'To change the date instead, close this and you are back in the assignment.'
+      && moveGeo.labelMargin === '16px' && moveGeo.noteMargin === '10px' && moveGeo.actionsMargin === '18px',
+    JSON.stringify(moveGeo));
   await escape();
   const backInEditor = await read();
   const wholeEsc = await evalJs(WHOLE);

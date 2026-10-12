@@ -2954,6 +2954,12 @@
            exactly one of those (src/live-region.js), and a second one updating per keystroke would
            read a half-typed number aloud. src/categories.js announces the crossing instead. -->
       <p class="category-total" id="categoryTotal"></p>
+      <!-- The panel's error line sits with the total, above Add (WO-3.64, the owner, 2026-10-12): a
+           dialog's messages draw above its buttons, and this panel's button is Add. It was at the foot,
+           under both hints. Nothing in src/ has written a sentence into it since WO-3.1 — every call
+           clears it — and it is kept rather than deleted so a future refusal has the place the rule
+           names. What it would say is another work order's. -->
+      <p class="class-error hidden" id="categoryError"></p>
       <div class="category-actions">
         <button class="class-action-btn" type="button" data-category-add>Add a category</button>
       </div>
@@ -2980,7 +2986,6 @@
         under no category, and they go on counting toward the grade — you can file them under
         another category whenever you like.
       </p>
-      <p class="class-error hidden" id="categoryError"></p>
     </div>
   </div>
 </div>
@@ -3606,15 +3611,18 @@
       <p id="assignmentMoveLead"></p>
       <div class="modal-section-label">What goes with it</div>
       <div class="class-delete-facts" id="assignmentMoveFacts"></div>
+      <!-- Above the buttons, not under them (WO-3.64, the owner's rule of 2026-10-12: a dialog's
+           messages draw above its buttons). It follows the facts <div>, not a <p>, so no adjacency
+           rule in src/shell.css spaces it differently from where it was. -->
+      <p class="class-hint">
+        To change the date instead, close this and you are back in the assignment.
+      </p>
       <div class="modal-actions">
         <button class="class-action-btn primary assign-move-btn" type="button" id="assignmentMoveBtn"
                 data-assignment-move-confirm>Move it</button>
         <button class="class-action-btn assign-move-btn" type="button" id="assignmentMoveKeep"
                 data-assignment-move-keep>Keep it where it is</button>
       </div>
-      <p class="class-hint">
-        To change the date instead, close this and you are back in the assignment.
-      </p>
     </div>
   </div>
 </div>

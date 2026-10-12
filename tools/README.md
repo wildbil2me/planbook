@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2035 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2037 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2971,6 +2971,15 @@ WO-3.56 block, beside its refusal check: the refusal alone above the buttons, fr
 *Copy into other classes…*. All three read one exported reader, `READ_EDITOR_MESSAGES` in
 `verify/assignments.mjs`, which measures from `getBoundingClientRect()`. None is a failure arm. Full
 run: `2047 checks · 2047 passed · 0 failed · 0 skipped`, 65,281 lines, 31.9 lines per check, 1108s,
+exit 0, 2026-10-12 on the real clock.
+
+**WO-3.64 moved it from 2035 to 2037, and the executed count from 2047 to 2049 — two sites, two
+results, no new file.** One is in `verify/assignments.mjs`'s WO-3.50 block, beside the check that
+opens the move confirm: its note above the buttons, read from `getBoundingClientRect()` in the
+WO-3.63 shape, with the three margins the Trap names. One is in `verify/categories-weights.mjs`,
+beside the *a wrong total blocks nothing* check: `#categoryError` between `#categoryTotal` and the
+Add row, read from the markup because the line is hidden and has no box. None is a failure arm. Full
+run: `2049 checks · 2049 passed · 0 failed · 0 skipped`, 65,336 lines, 31.9 lines per check, 1099s,
 exit 0, 2026-10-12 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a

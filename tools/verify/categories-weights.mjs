@@ -189,6 +189,23 @@ if (!classesBooted || !classSeam || !catSeam) {
   check('a wrong total blocks nothing: no error line, and every field still live',
     notBlocked.error === '' && notBlocked.enabledFields === 6,
     JSON.stringify(notBlocked) + ' (the disabled pair are the reorder arrows at the ends of the list)');
+  /* WO-3.64, the owner's ruling of 2026-10-12: the error line is MOVED, not deleted — it sits
+     between the total and the Add row, the place a dialog's messages take above its button. It is
+     hidden and empty (nothing writes it), so it has no box to measure; its place is read off the
+     markup instead, which is where a hidden line's place lives. And nothing follows the hints: the
+     body's last child is a `.class-hint`, so no line can draw under them in either mode. */
+  const errPlace = await evalJs(`(function(){ var e = document.getElementById('categoryError');
+    var body = document.querySelector('#categoriesModal .modal-body');
+    var last = body.lastElementChild;
+    return { prev: e && e.previousElementSibling ? e.previousElementSibling.id : null,
+             next: e && e.nextElementSibling ? e.nextElementSibling.className : null,
+             inBody: !!e && e.parentElement === body,
+             last: last ? last.className : null }; })()`);
+  check('WO-3.64: #categoryError sits directly under #categoryTotal and directly above the Add row, and '
+    + 'nothing follows the two hints — the panel ends on a .class-hint',
+    errPlace.inBody && errPlace.prev === 'categoryTotal' && errPlace.next === 'category-actions'
+      && /(^|\s)class-hint(\s|$)/.test(errPlace.last || ''),
+    JSON.stringify(errPlace));
 
   /*
     ACCEPTANCE LINE 3, and the fixture is the state the two checks above just produced: this class
