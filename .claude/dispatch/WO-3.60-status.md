@@ -1,0 +1,10 @@
+- 2026-10-12T00:37:38Z gates PASS (no deps, tree clean)
+- 2026-10-12T00:37:38Z route Claude Opus — design lift of a drawn mockup section (scores-tidy frame A), UI layout + ten harness files; and ~3+ verify-shell runs (clean + gridOrder mutation) exceed the Codex cap anyway. Runner-up: Codex for the sort-toggle state, set aside — the work is mostly visual placement. No Codex probe run (not on Codex route).
+- 2026-10-12T00:37:38Z claimed: --start ran
+- 2026-10-12T00:38:03Z brief written: .claude/dispatch/WO-3.60-brief.md (markers filled, ~16 KB)
+- 2026-10-12T00:38:03Z implementer spawned at Opus (no override) with that brief, awaiting return — expect 20–40 min, flat trail for the first stretch is normal
+- 2026-10-12T01:24:10Z implementer returned: claims Acceptance 1–6 pass (verify-shell 2023/2023, sweep 46/0/4), 👤 open; departs from ruling 4's drawn flex values (lifted ones failed line 4 at 820px) — owner must see. No commit.
+- 2026-10-12T01:24:10Z handoff written: 🔍 AWAITING VERDICT; verifier owed in a fresh session
+- 2026-10-12T08:50:41Z fresh session: row reads AWAITING VERDICT, trail coherent (implementer returned, handoff written) — verifier half; grep MUTATION run before spawn
+- 2026-10-12T08:50:56Z verifier spawned at Opus (no override), first pass, awaiting verdict — expect 25–40 min (verify-shell alone ran 1078s)
+- 2026-10-12T09:29:36Z verdict in: PASS WITH MANUAL CHECKS — lines 1–6 verified (verify-shell 2023/2023 EXIT=0, sweep 46/0/4, planted gridOrder fault re-proved: 2022/1 failed on sheet check, restored cmp-identical); line 7 👤 open; owner ruling owed on ruling-4 flex values departure. No tick, no commit.

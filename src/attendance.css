@@ -244,7 +244,8 @@
 .attendance-strip > * { margin-bottom: 0; }
 
 /* THE SEARCH BOX'S WIDTH ON THIS SCREEN. Worn beside `.search-box`, which
-   stays 360px everywhere else. Here it gives up width before the toolbar wraps:
+   stays 360px everywhere but here and Scores (`.scores-find`, WO-3.60, the same
+   values in src/scores.css). Here it gives up width before the toolbar wraps:
    down to 200px, which still holds "Search students…" and the clear button.
    It beats src/shell.css's `(max-width: 1024px)` rule for `.search-box` on load
    order, at equal specificity — the same posture every rule in this sheet takes

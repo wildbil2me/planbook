@@ -190,7 +190,7 @@ const HEADLINE_ID = 'scoresHeadline';
 const SUMMARY_ID = 'scoresSummary';
 const NO_GRADE_ID = 'scoresNoGrade';
 const NO_GRADE_TEXT_ID = 'scoresNoGradeText';
-const ACTIONS_ID = 'scoresActions';
+const TOP_ID = 'scoresTop';
 const FLAGS_ID = 'scoresFlags';
 const KEYS_ID = 'scoresKeys';
 const KEYS_BTN_SEL = '#scoresView [data-scores-keys]';
@@ -203,6 +203,7 @@ const HINT_TERM_ID = 'scoresHintTerm';
 const TOOLBAR_ID = 'scoresToolbar';
 const SEARCH_ID = 'scoresSearch';
 const SEARCH_CLEAR_ID = 'scoresSearchClear';
+const SORT_ID = 'scoresSort';
 const FOUND_ID = 'scoresFound';
 const CATS_ID = 'scoresCategories';
 const NOTE_ID = 'scoresNote';
@@ -234,6 +235,21 @@ let searchText = '';
   because a pill that is not drawn cannot be the one that is on.
 */
 let categoryId = '';
+
+/*
+  WHICH NAME THE ROWS ARE SORTED BY ON SCREEN (WO-3.60, the owner's ruling 3), 'last' or 'first' —
+  src/attendance.js's `sortBy`, lifted with its toggle. A module variable and NOT a preference, for
+  that file's reason and the calendar's ruling that a view is a door: a grid that reopened in
+  first-name order would be a class in an order the SIS is not typed in with nothing to say why.
+  Back to 'last' on every arrival (resetScoreSort(), beside resetScoreSearch() in src/shell.js's
+  showClassScreen()), which is every class switch.
+
+  IT NEVER REACHES gridOrder(). That function is shared with src/grades-report.js so the printed
+  sheet matches the SIS's order, and the screen's order is a COPY sorted by screenOrder() below —
+  tools/verify/score-sort.mjs prints the sheet under both sorts and plants this variable into
+  gridOrder() to prove the check can fail.
+*/
+let sortBy = 'last';
 
 /*
   WHICH CELL THE FLAG BAR ACTS ON, held as two ids rather than as an element, for the reason
@@ -294,17 +310,16 @@ function rosterOf(cls) {
   friction that gets an app abandoned. src/attendance.js's markingOrder() states the reasoning for
   the sort itself.
 
-  THERE IS NO SORT CONTROL, and the drawing has one ("Sort: roster order"). It is deliberately not
-  built: nothing in this work order's deliverables asks for a second order, and the question the
-  control is really about — whether a pasted column of marks lines up against the roster's own order
-  or an alphabetical one — belonged to WO-3.13, which owned pasting a column and its alignment rules.
+  THERE WAS NO SORT CONTROL until WO-3.60, and the reason it was kept out still holds for THIS
+  function: the question a "Sort: roster order" control was really about — whether a pasted column
+  of marks lines up against the roster's own order or an alphabetical one — belonged to WO-3.13,
+  which was struck on 2026-08-15 because the owner's scores arrive on paper. If pasting is ever
+  wanted the work order is still written in plans/work-orders/phase-3-gradebook.md, kept for its
+  positional-paste risk analysis, and this paragraph is where its alignment question comes back.
 
-  WO-3.13 WAS STRUCK ON 2026-08-15: the owner's scores arrive on paper, so there is no column to
-  paste and the alignment question has nobody to answer it. The control stays unbuilt, and the
-  reason is now simpler than a seam being held open — nothing needs a second order. Do not read
-  this as a feature waiting its turn. If pasting is ever wanted the work order is still written in
-  plans/work-orders/phase-3-gradebook.md, kept for its positional-paste risk analysis, and this
-  paragraph is where its alignment question comes back.
+  WO-3.60 BROUGHT ATTENDANCE'S *Sort: Last / First* TOGGLE ACROSS, and it does not touch this
+  function. It is a view of the screen — screenOrder() below sorts a COPY of what this returns —
+  because this is also the printed sheet's order, and the sheet must keep the SIS's.
 
   EXPORTED AT WO-3.9, which asked for exactly this order under its own name: the printed grade sheet
   lists students alphabetically by last name, which is what this already is. The import runs one
@@ -312,13 +327,27 @@ function rosterOf(cls) {
   two copies of a sort for the reason src/attendance-report.js gives about its own readers: a second
   comparator could be right about a hyphen or an empty surname in a way this one is not, and a sheet
   that listed a class in a different order from the screen it was printed off is a sheet a teacher
-  re-keying from it loses her place in.
+  re-keying from it loses her place in. Under *Sort: First* (WO-3.60) the two differ on purpose, at
+  the owner's ruling, and the toggle's own label is what says so; at rest they are the same order.
 */
 export function gridOrder(cls) {
   return rosterOf(cls).slice().sort((a, b) => {
     const lead = String(a.last || '').localeCompare(String(b.last || ''));
     if (lead !== 0) return lead;
     return String(a.first || '').localeCompare(String(b.first || ''));
+  });
+}
+
+/* THE ORDER THE ROWS ARE DRAWN IN ON SCREEN (WO-3.60): gridOrder()'s list as it is, or a sorted
+   COPY of it by first name then surname — src/attendance.js's markingOrder() comparator, the same
+   two keys in the same two orders. The copy is the point: gridOrder() is the grade sheet's order
+   too, and the sort is a view of this screen only. */
+function screenOrder(students) {
+  if (sortBy !== 'first') return students;
+  return students.slice().sort((a, b) => {
+    const lead = String(a.first || '').localeCompare(String(b.first || ''));
+    if (lead !== 0) return lead;
+    return String(a.last || '').localeCompare(String(b.last || ''));
   });
 }
 
@@ -1049,7 +1078,7 @@ export function renderScores() {
   const wrap = document.getElementById(GRID_WRAP_ID);
   const head = document.getElementById(HEAD_ID);
   const body = document.getElementById(BODY_ID);
-  const actions = document.getElementById(ACTIONS_ID);
+  const top = document.getElementById(TOP_ID);
   const flags = document.getElementById(FLAGS_ID);
   const hintTerm = document.getElementById(HINT_TERM_ID);
 
@@ -1122,13 +1151,14 @@ export function renderScores() {
      would land nowhere are two dead controls, and a dead control is a feature a teacher goes
      looking for. */
   if (wrap) wrap.classList.toggle('hidden', !!emptyText);
-  if (actions) actions.classList.toggle('hidden', !!emptyText);
+  if (top) top.classList.toggle('hidden', !!emptyText);
   if (flags) flags.classList.toggle('hidden', !!emptyText);
   /* The search box goes with them for the same reason — a box that narrows no rows is a dead
      control — but it is only ever HIDDEN, never rebuilt: see paintFound(). */
   const toolbar = document.getElementById(TOOLBAR_ID);
   if (toolbar) toolbar.classList.toggle('hidden', !!emptyText);
   paintCategories(emptyText ? [] : withWork);
+  paintSort();
   /* THE BOX'S LEFT SCROLL PADDING WIDENS WITH THE THIRD FROZEN COLUMN — src/scores.css
      `.scores-grid-wrap.filtered`, the WO-3.27 focus fix carried one column further. */
   if (wrap) wrap.classList.toggle('filtered', !emptyText && !!picked);
@@ -1163,7 +1193,10 @@ export function renderScores() {
      average and the blank count in the summary are the class's figures whatever the box says — a
      search narrows what is on screen and changes no number. The headline above counts the whole
      class for the same reason; the count beside the box is where the narrowing is said. */
-  const shown = students.filter((s) => nameMatches(s, searchText));
+  /* DRAWN IN THE SCREEN'S ORDER (WO-3.60), and DRAWN rather than reordered in place:
+     moveWithinColumn() walks the rows the DOM holds, so the order the rows are built in here is
+     the order Enter and ↓ walk — under either sort. `students` itself stays gridOrder()'s. */
+  const shown = screenOrder(students).filter((s) => nameMatches(s, searchText));
   paintFound(shown.length, students.length);
   if (!shown.length) {
     /* No head over nothing: the grid and the flag bar go, and the empty line says what emptied the
@@ -1380,6 +1413,40 @@ export function setScoreCategory(id) {
    resetScoreSearch() above, before the view swaps and paints. */
 export function resetScoreCategory() {
   categoryId = '';
+}
+
+/*
+  THE SORT TOGGLE (WO-3.60), src/attendance.js's paintToolbar() sort half lifted: one button that
+  READS the order on screen — "Sort: Last" — and whose `data-scores-sort` carries the order a tap
+  CHANGES TO, so the route in src/shell.js is setScoreSort(value) and nothing more. The label is
+  rebuilt out of a text node and a <b>, so no markup string is parsed here. No `aria-pressed`: this
+  is a choice between two orders, not an on and an off, and the label says which is in force.
+*/
+function paintSort() {
+  const sort = document.getElementById(SORT_ID);
+  if (!sort) return;
+  const first = sortBy === 'first';
+  sort.setAttribute('data-scores-sort', first ? 'last' : 'first');
+  sort.title = first ? 'Sorted by first name — tap for last' : 'Sorted by last name — tap for first';
+  sort.textContent = '';
+  sort.append(document.createTextNode('Sort: '), el('b', '', first ? 'First' : 'Last'));
+}
+
+/* Called from src/shell.js's click listener. A full render, because the rows are what moves — and
+   the grid has to be REDRAWN in the new order rather than reordered in the data alone, or ↵ would
+   walk the old order (moveWithinColumn() reads the DOM). Focus stays on the toggle, which is markup
+   and is never rebuilt. */
+export function setScoreSort(which) {
+  sortBy = which === 'first' ? 'first' : 'last';
+  renderScores();
+  announce(sortBy === 'first' ? 'Sorted by first name.' : 'Sorted by last name.');
+}
+
+/* EVERY ARRIVAL SORTS BY LAST NAME, and this is the arrival half — the same shape and the same call
+   site as resetScoreSearch() above, before the view swaps and paints. */
+export function resetScoreSort() {
+  sortBy = 'last';
+  paintSort();
 }
 
 /*

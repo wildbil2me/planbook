@@ -46,7 +46,9 @@
   the reading the grid itself draws from. A third copy of "a cell is always an object, and a bare
   number is no cell" — src/grade-engine.js has one, src/scores.js has the other — would be the copy
   that eventually disagrees about a `late` blank. The ROW ORDER is asked of that module too
-  (gridOrder), so the sheet lists students in the same order as the screen it was printed from.
+  (gridOrder), so the sheet lists students in the same order as the screen it was printed from —
+  at rest. The screen's *Sort: First* (WO-3.60) is a view sorted from a copy and never reaches this:
+  the sheet keeps the SIS's last-name order under either sort.
 
   ── `late` AND `missing` ARE THE TEACHER'S MARKS, AND A BLANK STAYS BLANK ──
 

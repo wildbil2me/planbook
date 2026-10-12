@@ -294,6 +294,9 @@
       data-score-note-remove          takes the note off the cell and shuts the panel
       data-scores-keys                shows or hides the key legend on the score grid. Remembered
                                       nowhere — it is a disclosure, not a preference
+      data-scores-sort="first|last"   the score grid's sort toggle (WO-3.60): redraws the rows in
+                                      that order. A view — never remembered, back to last on every
+                                      arrival, and never the grade sheet's order
       data-scores-search              on an <input>: narrows the score grid's rows as it is typed,
                                       by the registry's own rule (WO-3.29); Escape in it empties
                                       it. Remembered nowhere, and emptied on every arrival
@@ -1249,6 +1252,11 @@ function showClassScreen(name) {
   /* AND ITS CATEGORY PILL GOES BACK TO *ALL* (WO-3.28), here and for the same two reasons — the
      calendar's ruling that a filter is a door and not a preference. */
   if (want === 'scores') scores.resetScoreCategory();
+  /* AND ITS SORT GOES BACK TO LAST NAME (WO-3.60, ruling 3), here and for the same two reasons —
+     Attendance's sort is reset on its own arrival the same way, and a sort is a view she asked for
+     on one visit. A class tab tapped while the grid is up comes through here, so this is the class
+     switch's reset too. */
+  if (want === 'scores') scores.resetScoreSort();
   /* AND THE ASSIGNMENT LIST'S SORT GOES BACK TO THE TEACHER'S ORDER (WO-3.55, ruling 6), here and
      for the same two reasons: a sort is a view she asked for on one visit, and every way onto the
      list comes through this function — the switcher's pill, openClassOn(), and a class tab tapped
@@ -3251,6 +3259,10 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-score-note-done]')) { scores.closeScoreNote(); return; }
   if (e.target.closest('[data-score-note-remove]')) { scores.removeScoreNote(); return; }
   if (e.target.closest('[data-scores-keys]')) { scores.toggleScoreKeys(); return; }
+  /* WO-3.60's sort toggle — a view of the rows, writing nothing and chaining nothing. The hook holds
+     the order a tap changes to, as `data-attendance-sort` does. */
+  const scoreSort = e.target.closest('[data-scores-sort]');
+  if (scoreSort) { scores.setScoreSort(scoreSort.getAttribute('data-scores-sort')); return; }
   /* The ✕ in the score grid's search box (WO-2.58). Writes nothing and chains nothing, like the box
      it empties; `true` is the blur, which is the ✕'s and not Escape's — src/scores.js says why. */
   if (e.target.closest('[data-scores-search-clear]')) { scores.clearScoreSearch(true); return; }

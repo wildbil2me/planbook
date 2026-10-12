@@ -328,16 +328,17 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
           return byte-for-byte to their starting point.
 
           FOCUS RETURNS TO THE NEW-ASSIGNMENT BUTTON. renderScores() rebuilds the rows and columns but
-          deliberately leaves #scoresActions standing, so modal.js's ordinary return-to-opener rule
-          has a stable target. That is a useful landing place after both outcomes: the teacher can
-          make the next column, reach Keys beside it, or Tab into the grid; body is not an answer.
+          deliberately leaves #scoresTop standing (since WO-3.60; it was #scoresActions before), so
+          modal.js's ordinary return-to-opener rule has a stable target. That is a useful landing
+          place after both outcomes: the teacher can make the next column, or Tab on through the
+          search row and into the grid; body is not an answer.
         */
         const createDoors = await evalJs(`(function(){
           function read(sel){ var b = document.querySelector(sel); return b ? {
             hook: b.hasAttribute('data-assignment-new'), cls: b.className,
             label: (b.textContent || '').trim(), popup: b.getAttribute('aria-haspopup') } : null; }
           return { list: read('#assignmentsView [data-assignment-new]'),
-                   grid: read('#scoresActions [data-assignment-new]') }; })()`);
+                   grid: read('#scoresTop [data-assignment-new]') }; })()`);
         const gridCreateDoorOk = !!createDoors.list && !!createDoors.grid
           && JSON.stringify(createDoors.list) === JSON.stringify(createDoors.grid);
         let wo315Result = { pass:false, doors:createDoors };
@@ -351,7 +352,7 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
             return { ids:d.assignments.filter(function(a){ return a.classId === 'c_wo35'
                 && a.termId === 'tm_wo35'; }).map(function(a){ return a.id; }),
               heads:live.heads, grades:live.grades }; })()`);
-          await clickSel('#scoresActions [data-assignment-new]');
+          await clickSel('#scoresTop [data-assignment-new]');
           await new Promise(r => setTimeout(r, 250));
           const createdFromGrid = await evalJs(`(function(){
             var d = window.planbook.store.getDoc();
@@ -386,7 +387,7 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
               scoreLeft:!!(d.scores && d.scores[${JSON.stringify(createdFromGrid.id)}]),
               heads:live.heads, grades:live.grades,
               modalUp:!document.getElementById('assignmentModal').classList.contains('hidden'),
-              focusBack:!!active && active.matches('#scoresActions [data-assignment-new]') }; })()`);
+              focusBack:!!active && active.matches('#scoresTop [data-assignment-new]') }; })()`);
           const cancelPass = createdFromGrid.cancelUp
               && JSON.stringify(afterCreateCancel.ids) === JSON.stringify(createBaseline.ids)
               && afterCreateCancel.scoreLeft === false
@@ -394,7 +395,7 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
               && JSON.stringify(afterCreateCancel.grades) === JSON.stringify(createBaseline.grades)
               && !afterCreateCancel.modalUp && afterCreateCancel.focusBack;
 
-          await clickSel('#scoresActions [data-assignment-new]');
+          await clickSel('#scoresTop [data-assignment-new]');
           await new Promise(r => setTimeout(r, 200));
           await evalJs(`(function(){
             var f = document.querySelector('#assignmentFields [data-assignment-field="name"]');
@@ -416,7 +417,7 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
               gradeSecond:cells.length > 1 && cells[1].classList.contains('scores-grade')
                 && cells[1].textContent.trim() === 'Grade',
               modalUp:!document.getElementById('assignmentModal').classList.contains('hidden'),
-              focusBack:!!active && active.matches('#scoresActions [data-assignment-new]') }; })()`);
+              focusBack:!!active && active.matches('#scoresTop [data-assignment-new]') }; })()`);
           const commitPass = !!afterCreateCommit.assignment
               && afterCreateCommit.assignment.classId === 'c_wo35'
               && afterCreateCommit.assignment.termId === 'tm_wo35'
@@ -2009,7 +2010,7 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
         const grid44 = await evalJs(measureIn('#scoresView'));
         const under44 = grid44.filter((m) => m.h < 44 || m.w < 44);
         const create44 = await evalJs(`(function(){
-          var b = document.querySelector('#scoresActions [data-assignment-new]');
+          var b = document.querySelector('#scoresTop [data-assignment-new]');
           if (!b) return null; var r = b.getBoundingClientRect();
           return { w:Math.round(r.width * 100) / 100, h:Math.round(r.height * 100) / 100,
             label:(b.textContent || '').trim(), shown:getComputedStyle(b).display !== 'none' }; })()`);

@@ -899,7 +899,8 @@
 
       <div class="attendance-toolbar">
         <!-- `.attendance-find` beside `.search-box` (WO-2.58): on this screen the box gives up width,
-             360px down to 200, before the toolbar wraps. The Scores box keeps its 360.
+             360px down to 200, before the toolbar wraps. The Scores box does too since WO-3.60, which
+             reversed this ruling's "the Scores box keeps its 360".
 
              THE ✕ IS A SIBLING OF THE FIELD, NEVER A RE-RENDER OF IT. The box is markup for the
              reason given above the Scores box's twin — a field rebuilt under the caret loses focus
@@ -1312,54 +1313,115 @@
            six-line banner rebuilding itself would talk over the one that says what was written. -->
       <div class="past-due hidden" id="scoresPastDue" data-past-due></div>
 
-      <!-- The class average, what is still blank, and what the weights come to. Drawn by
-           src/scores.js on every keystroke, which is the whole of "live". -->
-      <div class="scores-summary" id="scoresSummary"></div>
+      <!-- THE BODY'S FIRST ROW (WO-3.60, the owner's ruling 1): the summary on the left and
+           + New assignment at its right end — the edge WO-3.54 gave the same button on Assignments,
+           one level below ← All classes. Frame A of design/mockups/scores-tidy.html, not frame B: the
+           summary keeps a row of its own rather than folding into the title.
 
-      <div class="scores-actions" id="scoresActions">
-        <!-- This is not the navigation door ruled out below: it performs the same create action as
-             the assignment list's button, through the same data-assignment-new hook and editor. -->
+           The row has an id because it goes with the grid: src/scores.js hides it in every
+           "nothing to grade" state, as it hid the actions row that held the button before. The
+           summary is emptied in those states anyway, so hiding the row loses nothing. -->
+      <div class="scores-top" id="scoresTop">
+        <!-- The class average, what is still blank, and what the weights come to. Drawn by
+             src/scores.js on every keystroke, which is the whole of "live". -->
+        <div class="scores-summary" id="scoresSummary"></div>
+        <!-- This is not a navigation door: it performs the same create action as the assignment
+             list's button, through the same data-assignment-new hook and editor. -->
         <button class="class-action-btn primary" type="button" data-assignment-new
                 aria-haspopup="dialog">+ New assignment</button>
-
-        <!-- The key legend, behind a button, exactly as the registry's is (WO-2.5) — and for the same
-             two halves of one reason: it has to be reachable by someone who does not already know the
-             keys, and it must not take a line of the screen from someone who does. It is a disclosure
-             rather than a preference, so nothing remembers it; src/scores.js says why.
-
-             There is deliberately no "Assignments →" door beside it, though the drawing has one: the
-             switcher two inches above already goes there, and a second control to the same screen on
-             the same panel is the same route twice. -->
-        <button class="class-action-btn scores-keys-btn" type="button" data-scores-keys
-                aria-expanded="false" aria-controls="scoresKeys"
-                title="The keys for entering scores without the mouse">
-          <span aria-hidden="true">⌨</span> Keys
-        </button>
-
-        <!-- THE WAY OUT OF THE APP AND ONTO PAPER (WO-3.9), and the pair to the registry's
-             🖨 Record one screen over. It is in this toolbar rather than in the flag bar below for
-             the reason the ⌨ beside it is: that bar acts on the cell a teacher is typing in, and
-             this writes nothing, touches no score and opens a dialog.
-
-             It opens through its own hook rather than `data-modal-open`, the call
-             src/attendance-report.js, src/year-picker.js and the days-off panel all make: the
-             dialog is built from the open document at open time, and a modal that appears and then
-             fills in is a modal that flickers. -->
-        <button class="class-action-btn scores-sheet-btn" type="button" data-grades-record
-                aria-haspopup="dialog"
-                aria-label="Print or export this class’s grade sheet for this term"
-                title="The term as one sheet, in the order the SIS is typed in — print it or save it as a spreadsheet">
-          <span aria-hidden="true">🖨</span> Grade sheet
-        </button>
       </div>
 
-      <!-- THE FLAG BAR. Four buttons, the four letters, acting on the cell the teacher is in — and
-           the whole touch path for a flag, because the decimal keypad a score cell asks for has no
-           letters on it. They carry the letters as well as the words so that a teacher who learns
-           them here can stop tapping them. -->
+      <!-- THE SEARCH ROW (WO-3.29, re-laid by WO-3.60), and the first of Attendance's order: find,
+           then write, then the grid. The box is the registry's own `.search-box`, in a toolbar that is
+           `.attendance-toolbar` value for value. It is STATIC MARKUP for the reason the registry's
+           is — src/scores.js's renderScores() rebuilds every cell on each keystroke typed here, and a
+           box inside what it rebuilds would be destroyed under the caret after the first letter.
+           Escape in it empties it; nothing remembers what was typed, and the printed grade sheet
+           never sees it.
+
+           THE BOX GIVES UP WIDTH (`.scores-find`, WO-3.60 ruling 4), 360px down to 200, so the
+           category pills (`.scores-pills-flow`) start beside it, and go to a line of their own only
+           when there are more of them than fit beside a 200px box. This reverses WO-2.58's ruling 8, "the Scores box keeps its 360": upright
+           under a thumb a fixed 360 sent the whole pill group to a line of its own. The values are NOT
+           the drawing's, which measured as never shrinking the box in a wrapping row; they come out
+           the same as `.attendance-find`'s, and src/scores.css says why that still gives the pills
+           the room first.
+
+           THE COUNT SITS AFTER THE PILLS AND BEFORE THE TOOLS, and the pills never move because of
+           it. It is drawn only while the box holds something; while it is drawn it takes the auto
+           margin, so it sits against the tools at the right rather than jumping the pills along, and
+           src/scores.css hands the margin back to the tools when it is hidden. The pills host is empty
+           markup; src/scores.js draws one pill per category with work in the open term and rebuilds
+           them on every render, so it is NOT a `data-pill-group` — that would be a second thing
+           moving the `.active` class (src/signals-view.js's rule-filter strip makes the same call). -->
+      <div class="scores-toolbar" id="scoresToolbar">
+        <div class="search-box scores-find">
+          <span aria-hidden="true">🔍</span>
+          <input type="text" id="scoresSearch" data-scores-search
+                 placeholder="Search students…" aria-label="Search students by name">
+          <!-- The clear button (WO-2.58), the registry's own ✕ with the same three behaviours: drawn
+               while the field holds text, a tap empties it, shows every row and takes the cursor out
+               of the box. A sibling of the field and never a re-render of it — src/scores.js only
+               toggles `hidden` on it. -->
+          <button type="button" class="search-clear hidden" id="scoresSearchClear"
+                  data-scores-search-clear aria-label="Clear the search"
+                  title="Clear the search">✕</button>
+        </div>
+        <div class="scores-filter-pills scores-pills-flow" id="scoresCategories" role="group"
+             aria-label="Show only one category's assignments"></div>
+        <span class="scores-found hidden" id="scoresFound"></span>
+        <!-- SORT AND THE TWO DOORS, AS ONE GROUP (WO-3.60, rulings 2 and 3) — `.attendance-tools`
+             value for value, at the search row's right end, so they wrap together or not at all.
+
+             SORT IS ATTENDANCE'S TOGGLE: it reads the order on screen — "Sort: Last" — and its
+             `data-scores-sort` holds the order a tap CHANGES TO. It is a VIEW: a module variable in
+             src/scores.js, never a preference, back to Last on every arrival, and it never reaches the
+             printed grade sheet, which keeps the SIS's last-name order whatever the screen shows.
+
+             THE TWO DOORS ARE ICONS ONLY, as Attendance's are (WO-2.58 ruling 7), and each keeps its
+             words: the accessible name is the one each had when it carried them, and the title leads
+             with the word so a pointer that hovers still reads it. -->
+        <div class="scores-tools">
+          <button type="button" class="class-action-btn scores-sort-toggle" id="scoresSort"
+                  data-scores-sort="first" title="Sorted by last name — tap for first">Sort: <b>Last</b></button>
+          <!-- The key legend, behind a button, exactly as the registry's is (WO-2.5) — and for the same
+               two halves of one reason: it has to be reachable by someone who does not already know
+               the keys, and it must not take a line of the screen from someone who does. It is a
+               disclosure rather than a preference, so nothing remembers it; src/scores.js says why.
+               It still opens the strip under the flag bar; the dialog is WO-3.61's. -->
+          <button class="class-action-btn scores-keys-btn" type="button" data-scores-keys
+                  aria-expanded="false" aria-controls="scoresKeys" aria-label="Keys"
+                  title="Keys — enter scores without the mouse">
+            <span aria-hidden="true">⌨</span>
+          </button>
+          <!-- THE WAY OUT OF THE APP AND ONTO PAPER (WO-3.9), and the pair to the registry's
+               🖨 Record one screen over. It is with the search row rather than in the flag bar below
+               for the reason the ⌨ beside it is: that bar acts on the cell a teacher is typing in,
+               and this writes nothing, touches no score and opens a dialog.
+
+               It opens through its own hook rather than `data-modal-open`, the call
+               src/attendance-report.js, src/year-picker.js and the days-off panel all make: the
+               dialog is built from the open document at open time, and a modal that appears and then
+               fills in is a modal that flickers. -->
+          <button class="class-action-btn scores-sheet-btn" type="button" data-grades-record
+                  aria-haspopup="dialog"
+                  aria-label="Print or export this class’s grade sheet for this term"
+                  title="Grade sheet — the term as one sheet, in the order the SIS is typed in: print it or save it as a spreadsheet">
+            <span aria-hidden="true">🖨</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- THE FLAG BAR, directly over the grid it writes into (WO-3.60 ruling 5) — Attendance's
+           order: find, then write, then the grid. Four flags and a note, acting on the cell the
+           teacher is in — and the whole touch path for a flag, because the decimal keypad a score
+           cell asks for has no letters on it. They carry the letters as well as the words so that a
+           teacher who learns them here can stop tapping them. Its label names the cell rather than
+           the act, because Clear and Note are not flags. The note panel and the key strip stay
+           directly under it, so whichever is open is the last thing above the grid. -->
       <div class="scores-flags" id="scoresFlags" role="group"
            aria-label="Mark the score cell you are in">
-        <span class="scores-flags-label">Flag the cell you are in</span>
+        <span class="scores-flags-label">The cell you are in</span>
         <button class="class-action-btn scores-flag-btn" type="button" data-score-flag="late"
                 title="Turned it in late. The score still counts in full — late is a record, not a penalty.">Late (L)</button>
         <button class="class-action-btn scores-flag-btn" type="button" data-score-flag="missing"
@@ -1442,42 +1504,6 @@
         <span class="scores-key"><kbd>⌫</kbd> clear an empty cell to blank</span>
         <!-- No key row for the note (WO-3.32): no key opens it, and a legend row naming the Note
              button would be the one row here that is not a key. -->
-      </div>
-
-      <!-- THE SEARCH BOX (WO-3.29), directly over the grid it narrows, and it is the registry's own:
-           `.search-box` worn as shipped, in a toolbar that is `.attendance-toolbar` value for value
-           (design/mockups/score-tools.html). It is STATIC MARKUP for the reason the registry's is —
-           src/scores.js's renderScores() rebuilds every cell on each keystroke typed here, and a box
-           inside what it rebuilds would be destroyed under the caret after the first letter.
-           Escape in it empties it; nothing remembers what was typed, and the printed grade sheet
-           never sees it.
-
-           THE CATEGORY PILLS (WO-3.28) sit BETWEEN THE BOX AND THE COUNT, which is the drawing's
-           laptop frames and `.attendance-toolbar`'s own order (search, pills, then the thing with
-           `margin-left: auto`) — and is a departure from WO-3.28's text, which put them after the
-           count. The count is drawn only while the box holds something and carries
-           `margin-left: auto`, so pills after it would sit beside the box with the box empty and
-           jump to the far end of the row at the first letter typed: a control moving under a thumb
-           because of a keystroke somewhere else. Here they never move. The host is empty markup;
-           src/scores.js draws one pill per category with work in the open term and rebuilds them on
-           every render, so it is NOT a `data-pill-group` — that would be a second thing moving the
-           `.active` class (src/signals-view.js's rule-filter strip makes the same call). -->
-      <div class="scores-toolbar" id="scoresToolbar">
-        <div class="search-box">
-          <span aria-hidden="true">🔍</span>
-          <input type="text" id="scoresSearch" data-scores-search
-                 placeholder="Find a student…" aria-label="Search students by name">
-          <!-- The clear button (WO-2.58), the registry's own ✕ with the same three behaviours: drawn
-               while the field holds text, a tap empties it, shows every row and takes the cursor out
-               of the box. A sibling of the field and never a re-render of it — src/scores.js only
-               toggles `hidden` on it. -->
-          <button type="button" class="search-clear hidden" id="scoresSearchClear"
-                  data-scores-search-clear aria-label="Clear the search"
-                  title="Clear the search">✕</button>
-        </div>
-        <div class="scores-filter-pills" id="scoresCategories" role="group"
-             aria-label="Show only one category's assignments"></div>
-        <span class="scores-found hidden" id="scoresFound"></span>
       </div>
 
       <div class="scores-grid-wrap" id="scoresGridWrap">

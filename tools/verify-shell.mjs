@@ -129,6 +129,7 @@ import { run as recordedMeetingCounts } from './verify/recorded-meeting-counts.m
 import { run as totalsByteIdentical } from './verify/totals-byte-identical.mjs';
 import { run as scoreGrid } from './verify/score-grid.mjs';
 import { run as scoreSearch } from './verify/score-search.mjs';
+import { run as scoreSort } from './verify/score-sort.mjs';
 import { run as classTabKeepsScreen } from './verify/class-tab-keeps-screen.mjs';
 import { run as assignedAndDue } from './verify/assigned-and-due.mjs';
 import { run as dateZeroKey } from './verify/date-zero-key.mjs';
@@ -386,6 +387,10 @@ const BROWSER_SECTIONS = [
      own, reloads at its head and its foot, takes both back out and hands the page back at 1200x900
      with touch off, the state score-search.mjs leaves it in. */
   { file: 'verify/class-tab-keeps-screen.mjs', run: classTabKeepsScreen },
+  /* WO-3.60, after the two sections about the same toolbar and the class tab that resets it. It plants
+     three classes of its own, reloads at its head, for the coarse pointer and at its foot, takes them
+     back out and hands the page back at 1280x900 with touch off. */
+  { file: 'verify/score-sort.mjs', run: scoreSort },
   { file: 'verify/assigned-and-due.mjs', run: assignedAndDue },
   /* Straight after the section about the same two fields, and it depends on that placement in one
      direction only: it puts the viewport back to 1024 for itself rather than trusting the 390 it

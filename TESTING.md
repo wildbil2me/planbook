@@ -13594,6 +13594,87 @@ same-term check went red, `"note":"This list has moved to Q2, …"` on a list th
 because the real October clock's arrival had moved it to Q1 on the way. `2012 checks · 2010 passed ·
 2 failed`, exit 1, those two and no others.
 
+
+### WO-3.60 — the Scores screen's top matches the other class screens
+
+**What was built.** `index.html`: `#scoresActions` is gone; the summary and `data-assignment-new`
+share `#scoresTop` (`.scores-top`); `#scoresToolbar` is box (`.search-box scores-find`, placeholder
+*Search students…*), pills (`.scores-filter-pills scores-pills-flow`), count, then `.scores-tools`
+holding `#scoresSort` (`data-scores-sort`), ⌨ (`data-scores-keys`, `aria-label="Keys"`) and 🖨
+(`data-grades-record`, its `aria-label` unchanged) — both doors glyph-only, titles leading with their
+word; `#scoresFlags` follows the toolbar, labelled *The cell you are in*, with the note panel and key
+strip still under it. `src/scores.js`: `sortBy` (module variable), `screenOrder()` sorting a **copy**
+of `gridOrder()`'s list, `paintSort()`, `setScoreSort()`, `resetScoreSort()`; the empty state hides
+`#scoresTop` where it hid `#scoresActions`. `src/shell.js`: the `data-scores-sort` route, the hook
+documented, `resetScoreSort()` in `showClassScreen()` beside the search and category resets.
+`src/scores.css`: § SCORES TIDY's top half lifted, coarse lines added, `.scores-actions` removed.
+`gridOrder()` is untouched.
+
+**One departure from the drawing, measured.** The drawn `.scores-find { flex: 0 1000 360px }` /
+`.scores-pills-flow { flex: 1 1 auto }` was run first, and at 820px under a coarse pointer it read
+`"boxW":360,"pillsOnBoxLine":0` — a wrapping flex row breaks lines by basis before anything shrinks,
+so the box never gave up width and the pills went beneath it. The build has `.scores-find { flex: 1
+1 200px; min-width: 200px; max-width: 360px }` and `.scores-pills-flow { flex: 0 1 auto; min-width:
+0 }`, which read `"boxW":281.81,"pillsOnBoxLine":6` at 820 and `"boxW":360,"oneLine":true` at 1180.
+Argued in `src/scores.css`; the drawing's banner and README say so.
+
+- [x] On Scores, the body's first row is the summary with + New assignment as its last control,
+      right-aligned. `#scoresActions` does not exist.
+      — `verify/score-sort.mjs`: first drawn child of `.scores-body` is `scoresTop`, its last child the
+      `data-assignment-new` button reading *+ New assignment*, `rightGap` 0 and `leftGap` 0 against the
+      row, on the summary's line; `#scoresActions` absent. `verify/score-grid.mjs`'s create-door, focus
+      return and 44px checks now find the button at `#scoresTop` and pass.
+- [x] The search row ends in a group holding, in order, the sort toggle, ⌨ and 🖨. ⌨ and 🖨 carry
+      no visible words; their accessible names and their `data-scores-keys` and
+      `data-grades-record` hooks are unchanged.
+      — `verify/score-sort.mjs`: `#scoresToolbar`'s last child is `.scores-tools`, children in hook
+      order `data-scores-sort`, `data-scores-keys`, `data-grades-record`; each door's text with its
+      `aria-hidden` glyph removed is empty, `textContent` is `⌨` / `🖨`; names `Keys` (the old visible
+      word, which was the old accessible name) and *Print or export this class’s grade sheet for this
+      term* (unchanged attribute). Every existing check that presses either hook — `grade-sheet`,
+      `points-grade`, `print-sheets`, `score-notes`, `score-grid`'s Keys panel — passes.
+- [x] The sort toggle reads *Sort: Last*, puts the grid in first-name order and reads *Sort: First*
+      on a tap, and is back to *Last* after a class switch. ↵ and ↓ walk the students **in the order
+      drawn** under either sort. The grade sheet prints in last-name order under either, and with
+      the sort's effect on `gridOrder()` planted, that check fails.
+      — `verify/score-sort.mjs`, five students whose first-name order differs from surname order and
+      a roster in neither: rows `s1…s5` under *Sort: Last*, `s2,s4,s5,s3,s1` under *Sort: First*;
+      ↵ then ↓ from row one land on `s1→s2→s3` and `s2→s4→s5`; the sheet lists *Adams, Brooks, Carter,
+      Dalton, Ellis* under both; a class-tab switch to a second class and back reads *Sort: Last*
+      both times; no `planbook_` key changed. **Planted fault**: `gridOrder()` made to sort by first
+      name while `sortBy === 'first'` (marked `MUTATION WO-3.60`, `src/scores.js` copied aside first):
+      the sheet check alone went red — `"sheetFirst":["Brooks, Ada","Dalton, Ben","Ellis, Lee","Carter,
+      Mia","Adams, Zoe"]` — `11 checks · 10 passed · 1 failed` on a section-only run; the file copied
+      back, `cmp` identical, and `grep -rn MUTATION` over every touched file found no plant.
+- [x] At 1180px under a coarse pointer the search row is one line. At 820px the box is narrower
+      than 360px and at least one pill sits on the box's line.
+      — `verify/score-sort.mjs`, five categories (six pills), touch emulation on: at 1180 every pill,
+      the box and the three tools overlap one band (`"oneLine":true`, box 360); at 820 `"boxW":281.81`
+      with all six pills on its line and the tools on the second. The 44px of Sort (84×44), ⌨ (44×44)
+      and 🖨 (44×44) measured at both widths.
+- [x] The flag bar is the last thing above the grid — or the key strip or note panel when either is
+      open — and its label reads *The cell you are in*. The search placeholder reads *Search
+      students…*.
+      — `verify/score-sort.mjs`: the nearest drawn element before `#scoresGridWrap` is `scoresFlags`;
+      `scoresKeys` with ⌨ pressed, `scoresNote` with Note open, `scoresFlags` again after Done; the
+      toolbar precedes the flag bar in the document; label and placeholder read as required.
+      `score-history.mjs` and `score-notes.mjs` reach the Note button as `#scoresFlags [...]` and pass.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      — Full run `2023 checks · 2023 passed · 0 failed · 0 skipped`, 64,621 lines, 1078s, exit
+      0, 2026-10-11 on the real clock; the eleven WO-3.60 results among them. `node tools/wo-sweep.mjs`: `50 checks · 46 passed ·
+      0 failed · 4 to review` — the one new review is `.scores-pills-flow` with no coarse rule, which is
+      the pills' container and not a target (each `.pill` takes its 44px in src/shell.css's coarse
+      block, measured by `score-search.mjs`); the other three are standing reviews. `CACHE` `planbook-shell-v188` → `planbook-shell-v189`.
+- [x] 👤 On the iPad, after a force-quit, upright and lying down: the top reads in the order the
+      drawing gives, the search row's wrap looks right with five categories, and the sort toggle
+      flips the grid.
+      — The owner, 2026-10-12, on the teaching iPad against the local server
+      (`serve-https.mjs`, shell v189): the verifier's five-item checklist read through — the top's
+      order, the wrap with the real category names upright, one line lying down, Sort flipping to
+      First and back to Last on a class switch, ⌨ and 🖨 still opening their panels with the sheet in
+      surname order. "Everything looks good." The same reading ratified ruling 4's departure to
+      `.attendance-find`'s flex values; see the work order's note under that ruling.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise

@@ -13,6 +13,21 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The top of the Scores screen matches the other class screens — 2026-10-12
+
+WO-3.60, owner-directed. The first of three passes that tidy Scores. Shell cache v188 → v189.
+
+- **+ New assignment is at the right end of the summary row**, the place it has on Assignments. The
+  row of action buttons that held it is gone.
+- **The search row ends in Sort, ⌨ and 🖨**, as on Attendance. The keys and grade-sheet buttons are
+  icons now and keep their words as labels.
+- **Sort: Last / First reorders the grid only.** The printed grade sheet keeps surname order, the
+  SIS's, and the sort goes back to Last whenever you change class.
+- **The search box shrinks so the category pills start beside it.** It uses Attendance's widths,
+  200 to 360px, rather than the drawing's, which left no pill on the box's line at iPad width.
+- **The flag bar is now headed *The cell you are in* and sits directly over the grid.** The search
+  box reads *Search students…*.
+
 ### The harness no longer says how many files it has — 2026-10-11
 
 WO-1.79, owner-directed, out of WO-1.77's verdict. Tooling only; nothing in the app changed and no

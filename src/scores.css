@@ -57,7 +57,7 @@
 /* One grouped selector for this sheet's tappable classes, the way every other sheet in this app
    has one: a control covered only by some other selector's rule is a control the next reader has
    to go and prove is covered. */
-.scores-input, .scores-keys-btn, .scores-flag-btn, .scores-name-btn, .scores-note-input,
+.scores-input, .scores-keys-btn, .scores-sort-toggle, .scores-flag-btn, .scores-name-btn, .scores-note-input,
 .scores-note-action, .scores-col-hold, .hold-confirm-btn {
   touch-action: manipulation;
   user-select: none;
@@ -118,7 +118,75 @@
 .scores-summary b { color: #1a1a2e; font-size: 14px; font-variant-numeric: tabular-nums; }
 .scores-summary .sep { color: #d0d8e4; }
 
-.scores-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+/* ══════════════════════════════════════════════════════════════════════════════
+   § SCORES TIDY — the top (WO-3.60), lifted from design/mockups/proposed-scores-tidy.css,
+   frame A of design/mockups/scores-tidy.html. The section's column-head half
+   (`.scores-col-meta`, `.scores-col-name.wraps`, `.scores-col-edit`) is WO-3.62's and stays in
+   the drawing until then. `.scores-actions` went with the row it laid out.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* THE SUMMARY AND + NEW ASSIGNMENT SHARE THE BODY'S FIRST ROW (frame A). The
+   figures on the left, the button at the right end — the edge WO-3.54 gave it on
+   Assignments, one level down from ← All classes. The shipped `.scores-summary`
+   keeps its own type; this only lays the row out and takes over its bottom margin. */
+.scores-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap; margin-bottom: 10px;
+}
+.scores-top > .scores-summary { margin-bottom: 0; }
+
+/* THE TWO DOORS, AT THE TOOLBAR'S END, with Sort first. `.attendance-tools`, value
+   for value: the group takes the far end of the search row and does not wrap inside
+   itself, so Sort, ⌨ and 🖨 move together or not at all. The doors are
+   `.class-action-btn`s with no words, each keeping its words as `aria-label` and
+   `title` (WO-2.58 ruling 7). */
+.scores-tools {
+  display: flex; align-items: center; gap: 6px; margin-left: auto; flex-wrap: nowrap;
+}
+/* WHILE THE COUNT IS DRAWN IT TAKES THE AUTO MARGIN, AND THE TOOLS GIVE THEIRS UP. A
+   departure from the drawing, which has no count in frame A: two auto margins on one
+   line split the free space between them, so the count would float half-way along the
+   row. With this, the count sits against the tools at the right end and the pills on
+   the left never move because a letter was typed in the box. */
+.scores-found:not(.hidden) + .scores-tools { margin-left: 0; }
+
+/* ONE SORT CONTROL, src/attendance.css's `.attendance-sort-toggle` in this sheet's
+   name: a `.class-action-btn` that reads its current state — "Sort: Last" — and
+   flips to First on a tap. The order word in the indigo the registry's toggle uses. */
+.scores-sort-toggle b { color: #5b6fcc; font-weight: 800; }
+
+/* THE BOX GIVES UP WIDTH BEFORE THE PILLS WRAP (WO-3.60, the owner's ruling 4) — and these are NOT
+   the drawing's values, which is a departure measured rather than chosen. The drawing has
+   `.scores-find { flex: 0 1000 360px }` and `.scores-pills-flow { flex: 1 1 auto }`: a large shrink
+   factor so the box gives up width first. In a WRAPPING row that never happens. A browser breaks a
+   wrapping flex row into lines by each item's flex BASIS, before any item shrinks, so a 360px basis
+   beside a pill group's one-line width that does not fit sends the whole group to the next line and
+   the box keeps its 360 — measured at 820px under a coarse pointer by tools/verify/score-sort.mjs on
+   the drawing's values: box 360, no pill on its line, which is the frame-0 defect the ruling exists
+   to undo. Shrinking only ever happens inside a line.
+
+   SO THE PRIORITY IS BUILT FROM BASES INSTEAD. The pills keep their one-line width as their basis
+   and do not grow; the box starts at its 200px floor and is the only thing on the line that grows,
+   up to 360. So the box and the pills claim a line at 200 + the pills, and the box takes back only
+   what room is left over: at 1180px everything shares one line with the box at 360, and at 820px the
+   box and the pills hold the first line with the box under 360 while Sort and the doors take the
+   right end of the second — which is what scores-tidy.html's 820 caption says frame A does. With
+   more pills than fit beside a 200px box, the group goes to a line of its own and wraps inside it.
+
+   The values come out the same as `.attendance-find`'s, and the reason the ruling gave against those
+   — "that box grows into spare room, and here the pills want it" — is met by the pills' basis: they
+   are on the line at full width before the box is offered a pixel. It beats src/shell.css's
+   `.search-box { flex: 0 0 360px }` on load order, at equal specificity. This reverses WO-2.58 ruling
+   8's "the Scores box keeps its 360", at the owner's word on 2026-10-11: upright under a thumb, a
+   fixed 360 sent the whole pill group to a line of its own. */
+.scores-find { flex: 1 1 200px; min-width: 200px; max-width: 360px; }
+
+/* THE PILLS FLOW BESIDE THE BOX. Worn beside the shipped `.scores-filter-pills`,
+   which already wraps inside itself. Its basis is the pills' one-line width and it does
+   not grow — see above for why that, and not the drawing's `flex: 1 1 auto`, is what
+   lets the group sit on the box's line; it may shrink, and wraps inside itself, only
+   once it is on a line of its own. */
+.scores-pills-flow { flex: 0 1 auto; min-width: 0; }
 
 /* THE SEARCH TOOLBAR (WO-3.29), lifted from design/mockups/proposed-scores.css § SCORE TOOLBAR. It is
    `.attendance-toolbar` value for value, because it is the same question — narrow a class list by
@@ -130,10 +198,12 @@
 /* THE CATEGORY PILLS (WO-3.28), the other half of the drawn section: `.attendance-pills` value for
    value, holding `.pill`s worn as shipped from src/shell.css and restyled from nowhere — their 44px
    is that sheet's coarse block, measured on this screen by tools/verify/score-search.mjs. They sit
-   between the box and the count; index.html says why that is not the work order's order. */
+   between the box and the count; index.html says why. Since WO-3.60 they wear `.scores-pills-flow`
+   too, above, so they start on the box's line. */
 .scores-filter-pills { display: flex; flex-wrap: wrap; gap: 5px; }
 /* How many rows the search left, said in words, because a grid of three students reads as a class
-   of three. `.attendance-sort-label`'s voice. Drawn only while the box holds something. */
+   of three. `.attendance-sort-label`'s voice. Drawn only while the box holds something, and while
+   it is drawn its auto margin parks it against `.scores-tools` (WO-3.60, above). */
 .scores-found {
   margin-left: auto; white-space: nowrap;
   font-size: 11px; font-weight: 700; color: #8a9bb0;
@@ -892,6 +962,18 @@
   .scores-cat-avg-sub { font-size: 11px; }
 
   .scores-keys-btn, .scores-flag-btn, .scores-note-btn { min-height: 44px; }
+  /* § SCORES TIDY's touch half (WO-3.60), in the pass that added it, as § ATTENDANCE HEADER's is
+     in src/attendance.css. The sort toggle and ⌨ take their 44 from `.class-action-btn` as 🖨's does
+     and are named here so each was considered rather than proved covered — and now that ⌨ is a
+     glyph alone, a width floor and `flex-shrink: 0` as 🖨 carries further down. `.scores-find` is
+     the box AROUND the field, not a target: the 44px is the <input>'s, from src/shell.css's coarse
+     `.search-box input` rule; its 200px floor is restated so the box was considered here. The top
+     row's gap grows with the 44px button at its end. */
+  .scores-top { gap: 10px; }
+  .scores-tools { gap: 10px; }
+  .scores-sort-toggle { min-height: 44px; min-width: 44px; flex-shrink: 0; }
+  .scores-keys-btn { min-width: 44px; flex-shrink: 0; }
+  .scores-find { min-width: 200px; }
   /* The note panel (WO-3.32), at the write block's own coarse sizes (src/attendance.css). The Note
      button is a `.scores-flag-btn` and is held by the line above. */
   .scores-note { gap: 10px; padding: 12px 14px; }

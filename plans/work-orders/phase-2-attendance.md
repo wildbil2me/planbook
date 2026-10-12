@@ -6183,6 +6183,8 @@ amend its banner in the same sitting.
    one group (`.attendance-tools`) that wraps together.
 8. **The attendance search box gives up width before the toolbar wraps**, 360px down to 200
    (`.attendance-find`, worn beside `.search-box`). The Scores box keeps its 360.
+   *(Reversed 2026-10-11 by WO-3.60 ruling 4, and since 2026-10-12 the Scores box wears these same
+   flex values — the drawing's did not put a pill beside the box at 820px.)*
 9. **On an off-term day, the term-dates door sits with the actions on the left** rather than pushing
    to the far edge, where the pager now is.
 

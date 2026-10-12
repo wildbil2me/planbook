@@ -8,6 +8,10 @@
    rows: WO-3.60 (frame A, the top), WO-3.61 (frame D, the keys) and WO-3.62
    (frame C, the column head).
 
+   FRAME A'S HALF LANDED 2026-10-11, WO-3.60: the four names of the top are in
+   src/scores.css now, and § SCORES TIDY's banner below says which and what moved.
+   The paragraph under this one is the sheet as drawn, before that lift.
+
    IT PROPOSES what this sheet can say, each a name src/ does not use yet: a
    search box that gives up width, pills that flow beside it, the group Sort and
    the two icon doors sit in at the toolbar's end, the row the summary
@@ -27,8 +31,28 @@
 .scores-col-edit { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § SCORES TIDY   →  src/scores.css   (WO-3.60 · WO-3.61 · WO-3.62 — not yet lifted)
+   § SCORES TIDY   →  src/scores.css   (WO-3.60 — frame A's half lifted 2026-10-11 · WO-3.62's half to come)
    ══════════════════════════════════════════════════════════════════════════════ */
+
+/* FRAME A'S HALF LIFTED 2026-10-11 by WO-3.60, under its own names — `.scores-tools`, `.scores-top`
+   (with its `> .scores-summary` rule), `.scores-find` and `.scores-pills-flow` — with the touch lines
+   in src/scores.css's coarse block. Every value as drawn EXCEPT the two flex rules below, which
+   measured wrong: in a wrapping row a browser breaks lines by flex basis before anything shrinks, so
+   `.scores-find { flex: 0 1000 360px }` never gave up a pixel and at 820px under a coarse pointer the
+   pills went to a line of their own beneath a 360px box (tools/verify/score-sort.mjs, run on these
+   values). The build has `.scores-find { flex: 1 1 200px; min-width: 200px; max-width: 360px }` and
+   `.scores-pills-flow { flex: 0 1 auto; min-width: 0 }` — the pills on the line at full width, the
+   box growing into what is left — and src/scores.css argues it. The rules below are left as drawn,
+   as the record of what was proposed. Three things the build added at the point of lifting, each
+   argued in src/scores.css: `.scores-sort-toggle`, the sort
+   button's name there (the drawing's button wears no class of its own), with
+   `.attendance-sort-toggle`'s indigo order word; `.scores-found:not(.hidden) + .scores-tools`, because
+   frame A draws no search count and two auto margins on one line split the space between them; and
+   the coarse 44s on Sort and on ⌨, which lost its words. The rest of this section is NOT in src/ and
+   stays drawn: `.scores-col-meta`, `.scores-col-name.wraps` and `.scores-col-edit` are WO-3.62's
+   (frame C), and `.scores-headline-figs` is frame B, which the owner did not choose. Frame 0 on
+   scores-tidy.html is the screen as it shipped before WO-3.60 and is a record now; its
+   `.scores-actions` row draws unstyled, because that rule left src/scores.css with the row. */
 
 /* THE TWO DOORS, AT THE TOOLBAR'S END. `.attendance-tools`, value for value: the
    group takes the far end of the search row and does not wrap inside itself, so

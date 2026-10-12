@@ -4770,7 +4770,7 @@ the one span.
 
 ## WO-3.60 — the Scores screen's top matches the other class screens
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** —
+**Ship** — · **Status** ✅ DONE — 2026-10-12 · **Size** M · **Depends on** —
 **Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
 
 **Booked 2026-10-11**, owner-directed, out of a sitting that drew the screen first from a photograph
@@ -4809,6 +4809,12 @@ lands), and amend its banner in the same sitting. `.scores-col-meta`, `.scores-c
    (`.scores-pills-flow`, worn beside `.scores-filter-pills`) and wrap below only when there are too
    many. **This reverses WO-2.58 ruling 8**, "the Scores box keeps its 360". The values are the
    drawing's, not `.attendance-find`'s: that box grows into spare room, and here the pills want it.
+   *(**Built the other way, and ratified 2026-10-12.** The drawing's values measured `boxW:360,
+   pillsOnBoxLine:0` at 820px in the app — a wrapping flex row picks its lines from each item's base
+   size before anything shrinks — so the build wears `.attendance-find`'s: `flex: 1 1 200px`,
+   200–360, with the pills `flex: 0 1 auto`. The owner read it on the iPad with the real category
+   names and accepted it, together with its one known edge: when the pills cannot fit beside a 200px
+   box the whole group drops below and the box grows back to 360, as the drawing's values would.)*
 5. **The flag bar moves directly over the grid**, under the search row — Attendance's order: find,
    then write, then the grid. Its label becomes **The cell you are in**, because Clear and Note are
    not flags. The key strip and the note panel stay directly under it.
@@ -4837,22 +4843,22 @@ lands), and amend its banner in the same sitting. `.scores-col-meta`, `.scores-c
 - **`TESTING.md` § WO-3.60**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] On Scores, the body's first row is the summary with + New assignment as its last control,
+- [x] On Scores, the body's first row is the summary with + New assignment as its last control,
       right-aligned. `#scoresActions` does not exist.
-- [ ] The search row ends in a group holding, in order, the sort toggle, ⌨ and 🖨. ⌨ and 🖨 carry
+- [x] The search row ends in a group holding, in order, the sort toggle, ⌨ and 🖨. ⌨ and 🖨 carry
       no visible words; their accessible names and their `data-scores-keys` and
       `data-grades-record` hooks are unchanged.
-- [ ] The sort toggle reads *Sort: Last*, puts the grid in first-name order and reads *Sort: First*
+- [x] The sort toggle reads *Sort: Last*, puts the grid in first-name order and reads *Sort: First*
       on a tap, and is back to *Last* after a class switch. ↵ and ↓ walk the students **in the order
       drawn** under either sort. The grade sheet prints in last-name order under either, and with
       the sort's effect on `gridOrder()` planted, that check fails.
-- [ ] At 1180px under a coarse pointer the search row is one line. At 820px the box is narrower
+- [x] At 1180px under a coarse pointer the search row is one line. At 820px the box is narrower
       than 360px and at least one pill sits on the box's line.
-- [ ] The flag bar is the last thing above the grid — or the key strip or note panel when either is
+- [x] The flag bar is the last thing above the grid — or the key strip or note panel when either is
       open — and its label reads *The cell you are in*. The search placeholder reads *Search
       students…*.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] 👤 On the iPad, after a force-quit, upright and lying down: the top reads in the order the
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the iPad, after a force-quit, upright and lying down: the top reads in the order the
       drawing gives, the search row's wrap looks right with five categories, and the sort toggle
       flips the grid.
 
