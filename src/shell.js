@@ -276,8 +276,9 @@
                                       a beforeinput target that refuses any character a score cannot
                                       contain (`1e3` and `0x1f` are numbers to Number() and not to a
                                       gradebook), an input that saves as it is typed, a keydown
-                                      target (Enter down the column, L M X for the flags, ⌫ on an
-                                      empty cell to clear it), and a focusin target so the flag bar
+                                      target (Enter down the column, L M X for the flags, C to clear
+                                      and N for the note since WO-3.61, ⌫ on an empty cell to clear
+                                      it, `?` for the keys dialog), and a focusin target so the flag bar
                                       knows which cell it is pointed at. An empty field with no flag
                                       DELETES the key rather than storing a null — blank means
                                       ungraded (docs/data-model.md)
@@ -286,14 +287,13 @@
                                       no letters on it, so the keyboard path above is unreachable on
                                       an iPad
       data-score-note-open            the flag bar's Note button (WO-3.32): opens the note panel on
-                                      the cell the teacher is in. No key opens it. Hidden while
-                                      presentation mode is on
+                                      the cell the teacher is in, as N in a score cell does since
+                                      WO-3.61. Hidden while presentation mode is on, when N does
+                                      nothing
       data-score-note                 on the note panel's <input>: saves the note as it is typed; an
                                       empty field deletes the key rather than storing ""
       data-score-note-done            shuts the note panel and hands focus back to its cell
       data-score-note-remove          takes the note off the cell and shuts the panel
-      data-scores-keys                shows or hides the key legend on the score grid. Remembered
-                                      nowhere — it is a disclosure, not a preference
       data-scores-sort="first|last"   the score grid's sort toggle (WO-3.60): redraws the rows in
                                       that order. A view — never remembered, back to last on every
                                       arrival, and never the grade sheet's order
@@ -3258,7 +3258,6 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-score-note-open]')) { scores.openScoreNote(); return; }
   if (e.target.closest('[data-score-note-done]')) { scores.closeScoreNote(); return; }
   if (e.target.closest('[data-score-note-remove]')) { scores.removeScoreNote(); return; }
-  if (e.target.closest('[data-scores-keys]')) { scores.toggleScoreKeys(); return; }
   /* WO-3.60's sort toggle — a view of the rows, writing nothing and chaining nothing. The hook holds
      the order a tap changes to, as `data-attendance-sort` does. */
   const scoreSort = e.target.closest('[data-scores-sort]');
@@ -3728,7 +3727,8 @@ document.addEventListener('click', (e) => {
     return;
   }
   /* The card's one control. It changes what is on screen and nothing in the document, so it redraws
-     the screen it is on and chains nothing — the same shape `data-scores-keys` has. */
+     the screen it is on and chains nothing — the same shape the score grid's key strip had until
+     WO-3.61 made it a dialog. */
   if (e.target.closest('[data-log-more]')) {
     logSheet.toggleLogEntries();
     if (views.currentView() === 'detail') detail.renderDetail();
@@ -3972,6 +3972,9 @@ document.addEventListener('submit', (e) => {
 */
 const MARK_KEYS = ['P', 'T', 'A', 'E', 'D'];
 const KEYS_MODAL = 'attendanceKeysModal';
+/* The score grid's twin of the dialog above (WO-3.61), opened by `?` from the two branches marked
+   WO-3.61 below and by the ⌨ button's own `data-modal-open`. */
+const SCORE_KEYS_MODAL = 'scoresKeysModal';
 
 /*
   THE FOUR MODIFIER FLAGS, AS A RECORD RATHER THAN THE EVENT THEY CAME OFF (WO-3.23).
@@ -4024,6 +4027,18 @@ document.addEventListener('keydown', (e) => {
   */
   const scoreCell = e.target.closest ? e.target.closest('[data-score-cell]') : null;
   if (scoreCell) {
+    /* `?` FROM INSIDE A SCORE CELL OPENS THE KEYS DIALOG (WO-3.61, the owner's ruling 2), as it does
+       on Attendance. A score cell asks for a decimal keypad and `?` is not a score, so the key is
+       free; it is caught HERE, before src/scores.js is asked, because opening a dialog is this file's
+       business and not that module's. preventDefault on the keydown is what keeps the character out
+       of the field — WO-3.25's `beforeinput` filter would refuse it too, but that is a second line
+       and not this one. The cell is the opener, so closing puts the caret back in it (src/modal.js).
+       Shift is how `?` is typed, which is why it is not in the modifier guard above. */
+    if (e.key === '?') {
+      openModal(SCORE_KEYS_MODAL, scoreCell);
+      e.preventDefault();
+      return;
+    }
     if (scores.handleScoreKey(e.key, scoreCell, modifiersOf(e))) e.preventDefault();
     return;
   }
@@ -4048,9 +4063,23 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
-  if (views.currentView() !== 'class') return;
   const active = document.activeElement;
   const tag = active ? active.tagName : '';
+  /* `?` ANYWHERE ELSE ON THE SCORES SCREEN (WO-3.61, ruling 2's "from the Scores screen") — on a
+     button, a column head, or nowhere in particular — except in a field, where `?` is a character:
+     the note panel's field takes free text, and the search box has already returned above. Above
+     the class-view guard because Scores is not the `class` view, and so outside the slice
+     tools/verify/keys-legend-marking.mjs reads, which is Attendance's. The opener is what had focus,
+     as on Attendance. */
+  if (e.key === '?' && views.currentView() === 'scores'
+      && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT'
+      && !(active && active.isContentEditable)) {
+    openModal(SCORE_KEYS_MODAL, active && active !== document.body ? active : null);
+    e.preventDefault();
+    return;
+  }
+
+  if (views.currentView() !== 'class') return;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
   if (active && active.isContentEditable) return;
 
@@ -4106,10 +4135,12 @@ document.addEventListener('keydown', (e) => {
   called. It is handed the field and the text and never the event — WO-3.23's reasoning, one
   listener up, and the same reason modifiersOf() exists.
 
-  `L`, `M` AND `X` NEVER REACH HERE. The keydown listener above swallows them for the flag bar
-  before the browser gets as far as an insertion, so there is no second refusal for them here and
-  there must not be: a branch no keystroke can drive is worth less than this sentence (WO-3.23's
-  own scar, at handleScoreKey()).
+  `L`, `M`, `X`, `C`, `N` AND `?` NEVER REACH HERE. The keydown listener above swallows the five
+  letters for the flag bar and the note (C and N since WO-3.61), and `?` for the keys dialog, before
+  the browser gets as far as an insertion, so there is no second refusal for them here and there
+  must not be: a branch no keystroke can drive is worth less than this sentence (WO-3.23's own scar,
+  at handleScoreKey()). They would be refused anyway, as any letter is — which is a second line of
+  defence, not the reason they stay out of the field.
 */
 /* THE TEXT AN EDIT WOULD INSERT, from both of the places a `beforeinput` can carry it, and handed
    over as a plain string — the shape modifiersOf() sets above. Blink puts a pasted string in `data`

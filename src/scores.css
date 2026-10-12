@@ -259,28 +259,11 @@
 /* `.class-action-btn` worn as-is; named so the coarse block can hold them at 44. */
 .scores-note-action { }
 
-/* THE KEYBOARD STRIP. Attendance put its key legend behind a "⌨ Keys" button and this screen needs
-   the same thing more: entry here IS the keyboard, and the legend is what a teacher reads once in
-   September and never again. Shown open in the drawing so the keys could be argued with; here it
-   starts closed behind the button, and the state is not remembered anywhere — see src/scores.js,
-   which says why a disclosure like this is not a stored preference. */
-.scores-keys {
-  display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center;
-  margin: 0 0 10px; padding: 9px 12px; border-radius: 8px;
-  background: #f8f9fb; border: 1.5px solid #eef0f4;
-  font-size: 12px; color: #6b7a8d; line-height: 1.5;
-}
-.scores-key {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-weight: 700; white-space: nowrap;
-}
-.scores-key kbd {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 22px; height: 22px; padding: 0 6px;
-  border: 1.5px solid #d0d8e4; border-bottom-width: 2.5px; border-radius: 5px;
-  background: #fff; color: #1a1a2e;
-  font-family: inherit; font-size: 11px; font-weight: 800;
-}
+/* THE KEYBOARD STRIP WENT AT WO-3.61. `.scores-keys` and `.scores-key` stood here — a strip of
+   `nowrap` chips under the flag bar, each measured for spilling through its border at 390px. The keys
+   are a dialog now (index.html, #scoresKeysModal), worn in src/attendance.css's `.attendance-keys`
+   rows as shipped, so this sheet styles nothing about them. The ⌨ button keeps `.scores-keys-btn`,
+   which carries its coarse width floor below. */
 
 /* Horizontal scroll belongs to the grid, never to the page — a page that scrolls sideways on an
    iPad is a teacher swiping the app instead of the list. `.attendance-grid-wrap`'s rule was the
@@ -908,8 +891,8 @@
 
 /* ── THE KEY, AND THE TWO NOTES ── */
 /* What L, M, Ex and an empty cell mean, for the teacher re-keying off this six weeks from now. The
-   legend strip's own grammar from the score grid's `.scores-keys`, at reading size rather than at
-   keyboard size. */
+   grammar of the score grid's old key strip (`.scores-keys`, gone at WO-3.61 when the keys became a
+   dialog), at reading size rather than at keyboard size. */
 .grades-report-key {
   display: flex; flex-wrap: wrap; gap: 6px 16px;
   margin: 12px 0 0; padding: 9px 12px; border-radius: 8px;
@@ -1007,8 +990,6 @@
      the gap between them, as `.attendance-pills` grows one screen over. */
   .scores-filter-pills { gap: 6px; }
   .scores-summary { font-size: 13px; }
-  .scores-keys { font-size: 13px; }
-  .scores-key kbd { min-width: 26px; height: 26px; font-size: 12px; }
   .scores-col-name { font-size: 12px; }
   .scores-col-pts { font-size: 11px; }
   .scores-col-due { font-size: 10px; }

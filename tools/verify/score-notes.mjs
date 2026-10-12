@@ -421,7 +421,8 @@ check('WO-3.32: Enter, the arrows, Tab and Escape move exactly as they did befor
 /* The flags on a noted cell: Ben's quiz is given a note, then L, L, a typed score, ⌫ to empty, ⌫ on the
    empty cell, and the score typed back. Each flag key does what it did; the note rides through every
    one of them; ⌫ on an empty cell holding only a note is handed back to the browser exactly as it was
-   on a cell with no key; and no key — L, M, X, N — opens the panel. */
+   on a cell with no key; and none of those keys opens the panel. N did nothing here until WO-3.61
+   made it the note's key, and it is checked in that work order's block further down. */
 await addNote(A2, S2, N4 + 'Quiz');
 await focusSelected(A2, S2);
 const flagWalk = [];
@@ -432,7 +433,6 @@ await evalJs(`(function(){ var i = document.querySelector('${cellSel(A2, S2)}');
 await KEY.digit('8'); flagWalk.push('8 ' + await cellNow());
 await KEY.back(); flagWalk.push('⌫ ' + await cellNow());
 await KEY.back(); flagWalk.push('⌫(empty) ' + await cellNow());
-await KEY.letter('n'); await KEY.letter('N');
 const afterN = await at();
 await KEY.digit('7'); flagWalk.push('7 ' + await cellNow());
 const nq = N4 + 'Quiz';
@@ -440,7 +440,7 @@ const expectFlags = ['L ' + JSON.stringify({ v: 7, flag: 'late', note: nq }), 'L
   '8 ' + JSON.stringify({ v: 8, note: nq }), '⌫ ' + JSON.stringify({ v: null, note: nq }),
   '⌫(empty) ' + JSON.stringify({ v: null, note: nq }), '7 ' + JSON.stringify({ v: 7, note: nq })];
 check('WO-3.32: on a noted cell L sets and takes off late, a typed score and ⌫ edit the value, ⌫ on '
-  + 'the emptied cell does nothing, and the note survives every one; N opens nothing',
+  + 'the emptied cell does nothing, and the note survives every one; none of them opens the panel',
   JSON.stringify(flagWalk) === JSON.stringify(expectFlags) && !afterN.panelOpen
     && afterN.cell === A2 + '/' + S2,
   JSON.stringify({ walk: flagWalk, afterN: afterN }));
@@ -467,6 +467,232 @@ check('WO-3.32: Clear on the flag bar empties the score and keeps the note — {
 /* And the 90 back, typed, so the fixture's grades are what they were. */
 await evalJs(`(function(){ var i = document.querySelector('${cellSel(A1, S2)}'); i.focus(); i.select(); return 1; })()`);
 await KEY.digit('9'); await KEY.digit('0');
+
+/* ── WO-3.61: `?`, C and N from a score cell, and the flag bar's words ──
+   On this section's fixture because it is the one with notes on its cells, a Note button to compare N
+   against, and presentation mode already driven through the header. Every key is dispatched at the
+   page; the document is read only to say what a key wrote. The fixture is left as it was found — the
+   one cell these checks fill, Cy's quiz, is blank again at the end, by the same Clear they test. */
+const SHIFT = 8, CTRL = 2;
+const skm = async (k, code, vk, text, mods) => {
+  const ev = { key: k, code: code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk, modifiers: mods };
+  if (text) ev.text = text;
+  await send('Input.dispatchKeyEvent', Object.assign({ type: text ? 'keyDown' : 'rawKeyDown' }, ev));
+  await send('Input.dispatchKeyEvent', Object.assign({ type: 'keyUp' }, ev));
+  await sleep(60);
+};
+const KEYS_OPEN = `(function(){ var o = document.getElementById('scoresKeysModal');
+  var p = o ? o.querySelector('.modal-panel') : null, a = document.activeElement;
+  return { open: !!o && !o.classList.contains('hidden'), focusIn: !!p && p.contains(a),
+    on: a ? (a.getAttribute('data-score-cell') ? a.getAttribute('data-score-cell') + '/'
+      + a.getAttribute('data-score-student') : (a.id || a.tagName)) : '' }; })()`;
+const fieldOf = (a, s) => evalJs('(function(){ var i = document.querySelector(' + JSON.stringify(cellSel(a, s))
+  + '); return i ? i.value : null; })()');
+
+/* Acceptance 5: the flag bar's five labels, and the first hint paragraph as frame A words it, with the
+   Escape sentence ruling 5 keeps and narrows to the grid. The term is whatever the grid names. */
+const words = await evalJs(`(function(){
+  var flags = Array.prototype.map.call(document.querySelectorAll('#scoresFlags button'), function(b){
+    return b.textContent.replace(/\\s+/g, ' ').trim(); });
+  var p = document.querySelector('#scoresView .scores-hint');
+  return { flags: flags, hint: p ? p.textContent.replace(/\\s+/g, ' ').trim() : '',
+    term: (document.getElementById('scoresHintTerm') || {}).textContent || '' }; })()`);
+const HINT = 'Type a score and press Enter — the caret drops to the next student in the same assignment, so a '
+  + 'class of twenty-five is twenty-five numbers and no mouse. Every key is behind ⌨. Everything on this '
+  + 'grid is ' + words.term + ', and every keystroke saves as you make it. Escape does nothing on the grid.';
+check('WO-3.61: the flag bar reads Late (L), Missing (M), Excused (X), Clear (C) and Note (N), and the '
+  + 'first hint paragraph is frame A\'s — Enter down the column, every key behind ⌨, the term, saved as '
+  + 'typed — with Escape doing nothing on the grid',
+  JSON.stringify(words.flags) === JSON.stringify(['Late (L)', 'Missing (M)', 'Excused (X)', 'Clear (C)',
+    'Note (N)']) && words.term.length > 0 && words.hint === HINT,
+  JSON.stringify(words));
+
+/* Acceptance 2: `?` in a score cell. Ada's essay holds 80, selected, so a `?` that reached the field
+   would replace it. It is typed the way a hand types it — Shift held, `?` the key and the text. */
+await focusSelected(A1, S1);
+const qBefore = await evalJs(DOC);
+await skm('?', 'Slash', 191, '?', SHIFT);
+const qOpen = await evalJs(KEYS_OPEN);
+const qField = await fieldOf(A1, S1);
+await KEY.esc();
+await sleep(120);
+const qShut = await evalJs(KEYS_OPEN);
+const qAfter = await evalJs(DOC);
+check('WO-3.61: ? pressed inside a score cell opens the keys dialog with focus in it, writes nothing into '
+  + 'the cell — the field still reads 80 and the document is unchanged — and Escape closes it with the '
+  + 'caret back in that cell',
+  qOpen.open && qOpen.focusIn && qField === '80' && !qShut.open && qShut.on === A1 + '/' + S1
+    && JSON.stringify(qBefore) === JSON.stringify(qAfter),
+  JSON.stringify({ open: qOpen, field: qField, shut: qShut, same: JSON.stringify(qBefore) === JSON.stringify(qAfter) }));
+
+/* "From the Scores screen", not only from a cell: on the sort toggle, which is a button, `?` opens the
+   same dialog and closing it hands focus back to the button. */
+await evalJs("(function(){ document.getElementById('scoresSort').focus(); return 1; })()");
+await skm('?', 'Slash', 191, '?', SHIFT);
+const qBtnOpen = await evalJs(KEYS_OPEN);
+await KEY.esc();
+await sleep(120);
+const qBtnShut = await evalJs(KEYS_OPEN);
+check('WO-3.61: ? on the Scores screen outside a field — the sort toggle focused — opens the same dialog, '
+  + 'and Escape gives focus back to the toggle',
+  qBtnOpen.open && qBtnOpen.focusIn && !qBtnShut.open && qBtnShut.on === 'scoresSort',
+  JSON.stringify({ open: qBtnOpen, shut: qBtnShut }));
+
+/* Acceptance 3, the modifier half, measured rather than read: a listener on `window` runs after
+   src/shell.js's on `document`, so it sees whether the app swallowed the key. Cy's quiz is given a
+   score and a flag first, by keys, so there is something for a stray Clear to destroy. Ctrl+C goes
+   through Input.dispatchKeyEvent with the browser's own `copy` command attached — the command runs
+   only if the keydown was not cancelled, and a `copy` event on the field is the evidence it ran.
+   Ctrl+N is dispatched as a synthetic KeyboardEvent instead: a real one is the browser's new window,
+   which a harness must not open, and the question is only whether the app's listener lets it pass. */
+await focusSelected(A2, S3);
+await KEY.digit('6');
+await KEY.letter('l');
+const scoredFlagged = (await evalJs(DOC)).A2[S3];
+await evalJs(`(function(){
+  window.__wo361 = { keys: [], copies: 0 };
+  window.addEventListener('keydown', function(e){
+    window.__wo361.keys.push(e.key + (e.ctrlKey ? '+ctrl' : '') + ':' + e.defaultPrevented); });
+  document.addEventListener('copy', function(){ window.__wo361.copies++; });
+  var i = document.querySelector(${JSON.stringify(cellSel(A2, S3))}); i.focus(); i.select(); return 1; })()`);
+await send('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'c', code: 'KeyC', windowsVirtualKeyCode: 67,
+  nativeVirtualKeyCode: 67, modifiers: CTRL, commands: ['copy'] });
+await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'c', code: 'KeyC', windowsVirtualKeyCode: 67,
+  nativeVirtualKeyCode: 67, modifiers: CTRL });
+await sleep(80);
+await evalJs(`(function(){ var i = document.querySelector(${JSON.stringify(cellSel(A2, S3))});
+  i.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', code: 'KeyN', ctrlKey: true, bubbles: true,
+    cancelable: true })); return 1; })()`);
+await sleep(80);
+const ctrlRead = await evalJs(`(function(){ return { keys: window.__wo361.keys, copies: window.__wo361.copies,
+  panel: !document.getElementById('scoresNote').classList.contains('hidden') }; })()`);
+const ctrlField = await fieldOf(A2, S3);
+const afterCtrl = (await evalJs(DOC)).A2[S3];
+check('WO-3.61: Ctrl+C in a cell holding a score and a flag still copies — the keydown reaches the page '
+  + 'uncancelled and the browser\'s copy runs — and clears nothing; Ctrl+N passes uncancelled and opens no '
+  + 'note: src/shell.js\'s modifier guard, measured',
+  JSON.stringify(scoredFlagged) === JSON.stringify({ v: 6, flag: 'late' })
+    && JSON.stringify(ctrlRead.keys) === JSON.stringify(['c+ctrl:false', 'n+ctrl:false'])
+    && ctrlRead.copies === 1 && !ctrlRead.panel && ctrlField === '6'
+    && JSON.stringify(afterCtrl) === JSON.stringify(scoredFlagged),
+  JSON.stringify({ planted: scoredFlagged, read: ctrlRead, field: ctrlField, after: afterCtrl }));
+
+/* Acceptance 3: C, c, and the Clear button, each on Cy's quiz holding 6 and Late, compared with each
+   other. The button goes first, so the two keys are held to what it actually does rather than to what
+   this file expects it to do. */
+const clearOnce = async (how) => {
+  await focusSelected(A2, S3);
+  if ((await fieldOf(A2, S3)) === '') { await KEY.digit('6'); await KEY.letter('l'); }
+  const held = (await evalJs(DOC)).A2[S3];
+  if (how === 'button') {
+    await clickSel(cellSel(A2, S3));
+    await clickSel('#scoresFlags [data-score-flag="clear"]');
+  } else if (how === 'C') {
+    await skm('C', 'KeyC', 67, 'C', SHIFT);
+  } else {
+    await KEY.letter('c');
+  }
+  const after = await evalJs(`(async function(){ await window.planbook.store.flush();
+    var c = window.planbook.store.getDoc().scores['${A2}'] || {};
+    var i = document.querySelector(${JSON.stringify(cellSel(A2, S3))});
+    return { has: Object.prototype.hasOwnProperty.call(c, '${S3}'),
+      cell: c['${S3}'] ? { v: c['${S3}'].v, flag: c['${S3}'].flag || '' } : null,
+      field: i ? i.value : null,
+      flagged: !!i && /\\b(late|missing|excused)\\b/.test(i.className) }; })()`);
+  return { how: how, held: held, after: after };
+};
+const byButton = await clearOnce('button');
+const byC = await clearOnce('C');
+const byc = await clearOnce('c');
+const blankNoFlag = (r) => JSON.stringify(r.held) === JSON.stringify({ v: 6, flag: 'late' })
+  && r.after.field === '' && !r.after.flagged && (!r.after.has || (r.after.cell.v == null && !r.after.cell.flag));
+check('WO-3.61: C in a cell holding a score and a flag leaves it blank with no flag, as the Clear button '
+  + 'does — and c does the same: all three end in the same stored cell and an empty field',
+  [byButton, byC, byc].every(blankNoFlag)
+    && JSON.stringify(byC.after) === JSON.stringify(byButton.after)
+    && JSON.stringify(byc.after) === JSON.stringify(byButton.after),
+  JSON.stringify([byButton, byC, byc]));
+
+/* Acceptance 4: N, n, and the Note button, on Ben's essay — 90 and a note. The button first, so the
+   keys are compared with what it opens. */
+const NOTE_OPEN = `(function(){ var p = document.getElementById('scoresNote'), a = document.activeElement;
+  return { open: !p.classList.contains('hidden'), focusField: !!a && a.id === 'scoresNoteText',
+    field: document.getElementById('scoresNoteText').value,
+    label: document.getElementById('scoresNoteLabel').textContent }; })()`;
+const noteBy = async (how) => {
+  await focusSelected(A1, S2);
+  if (how === 'button') await clickSel('#scoresFlags [data-score-note-open]');
+  else if (how === 'N') await skm('N', 'KeyN', 78, 'N', SHIFT);
+  else await KEY.letter('n');
+  const read = await evalJs(NOTE_OPEN);
+  const cell = (await evalJs(DOC)).A1[S2];
+  const field = await fieldOf(A1, S2);
+  await clickSel('#scoresNote [data-score-note-done]');
+  await sleep(100);
+  return { how: how, read: read, cell: cell, field: field };
+};
+const nBtn = await noteBy('button');
+const nN = await noteBy('N');
+const nn = await noteBy('n');
+const noteOk = (r) => r.read.open && r.read.focusField && r.read.field === N4
+  && /WO-3\.32 Essay/.test(r.read.label) && /Ben Birch/.test(r.read.label)
+  && JSON.stringify(r.cell) === JSON.stringify({ v: 90, note: N4 }) && r.field === '90';
+check('WO-3.61: N in a cell opens that cell\'s note panel with focus in its field, as the Note button does '
+  + '— and n does the same: the same label, the same note in the field, and the score untouched',
+  [nBtn, nN, nn].every(noteOk) && JSON.stringify(nN.read) === JSON.stringify(nBtn.read)
+    && JSON.stringify(nn.read) === JSON.stringify(nBtn.read),
+  JSON.stringify([nBtn, nN, nn]));
+
+/* THE TRAPS' QUESTION, ANSWERED BY PRESSING IT: does Escape — or Enter — in the note field shut the
+   panel and hand focus back? It is not ruled, so this does not decide it; it holds the keys dialog's N
+   row to the answer. The row names Done and not Escape because Escape does not do it — and if a later
+   work order makes it, this goes red beside the row it has to reword. */
+await focusSelected(A1, S2);
+await KEY.letter('n');
+await KEY.esc();
+const escRead = await evalJs(NOTE_OPEN);
+await KEY.enter();
+const enterRead = await evalJs(NOTE_OPEN);
+await clickSel('#scoresNote [data-score-note-done]');
+await sleep(100);
+const nRow = await evalJs(`(function(){
+  var rows = document.querySelectorAll('#scoresKeysModal .attendance-key-row');
+  for (var i = 0; i < rows.length; i++) { var dt = rows[i].querySelector('dt');
+    if (dt && dt.textContent.trim() === 'N') return rows[i].querySelector('dd').textContent.replace(/\\s+/g, ' ').trim(); }
+  return null; })()`);
+check('WO-3.61 (a finding, not a ruling): Escape and Enter in the note field leave the panel open with '
+  + 'focus in the field — only Done hands back to the cell — and the keys dialog\'s N row names Done and '
+  + 'promises neither',
+  escRead.open && escRead.focusField && enterRead.open && enterRead.focusField && !!nRow
+    && /\bDone\b/.test(nRow) && !/\bEsc/.test(nRow) && !/\bEnter\b/.test(nRow),
+  JSON.stringify({ esc: escRead, enter: enterRead, row: nRow }));
+
+/* Acceptance 4, the presentation half: through the header's own control, N and n in a cell open nothing,
+   write nothing, and say nothing — the live region is read either side, because ruling 3 is that N
+   does nothing, not that it explains itself. */
+await clickSel('#presentationBtn');
+await sleep(250);
+await focusSelected(A1, S2);
+/* A sentinel in the live region, so "said nothing" is a reading: any announcement replaces it. */
+await evalJs("(function(){ document.getElementById('srLive').textContent = 'Wo361Sentinel'; return 1; })()");
+const projBefore = { doc: await evalJs(DOC), said: (await evalJs(STATE)).said };
+await skm('N', 'KeyN', 78, 'N', SHIFT);
+await KEY.letter('n');
+const projRead = await evalJs(STATE);
+const projField = await fieldOf(A1, S2);
+const projDoc = await evalJs(DOC);
+const projOn = await evalJs('window.planbook.supports.presentationMode()');
+await clickSel('#presentationBtn');
+await sleep(250);
+check('WO-3.61: under presentation mode N and n in a cell open nothing and write nothing into it — the '
+  + 'panel shut and empty, the caret still in the cell, the field still 90, the document and the live '
+  + 'region unchanged',
+  projOn === true && !projRead.panelOpen && projRead.field === '' && projRead.cell === A1 + '/' + S2
+    && projField === '90' && JSON.stringify(projDoc) === JSON.stringify(projBefore.doc)
+    && projBefore.said === 'Wo361Sentinel' && projRead.said === 'Wo361Sentinel',
+  JSON.stringify({ on: projOn, read: projRead, field: projField,
+    docSame: JSON.stringify(projDoc) === JSON.stringify(projBefore.doc), saidBefore: projBefore.said }));
+await openGrid();
 
 /* ── ACCEPTANCE LINE 5: the resolver and the printed sheet ── */
 const drafts = await evalJs(`(function(){

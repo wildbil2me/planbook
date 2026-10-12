@@ -12,6 +12,14 @@
    src/scores.css now, and § SCORES TIDY's banner below says which and what moved.
    The paragraph under this one is the sheet as drawn, before that lift.
 
+   FRAME D LANDED 2026-10-12, WO-3.61: ⌨ opens `#scoresKeysModal` in index.html,
+   a `modal-form` worn in src/attendance.css's `.attendance-keys` rows exactly as
+   the frame draws it, and the strip `.scores-keys` is gone from src/scores.css.
+   This sheet styled nothing for it, so nothing here moved. One row departs from
+   the frame: N's says Done hands back to the cell, not Enter or Esc, because
+   neither does — measured, and making Escape do it was not ruled. Frame A's flag
+   bar now reads Clear (C) and Note (N), and its first hint paragraph is in.
+
    IT PROPOSES what this sheet can say, each a name src/ does not use yet: a
    search box that gives up width, pills that flow beside it, the group Sort and
    the two icon doors sit in at the toolbar's end, the row the summary

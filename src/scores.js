@@ -99,10 +99,13 @@
      computed from is worse than no live number. So editScore() writes, repaints the grade column and
      the summary, and touches no input at all.
 
-  4. THE KEYS STRIP IS NOT A STORED PREFERENCE. It opens on a tap and closes on the next one, and
-     nothing remembers. src/roster.js's supportsShown makes the same call for a stronger reason;
-     here it is simply that a legend read once in September is not a fact about this browser worth
-     keeping, and src/prefs.js's list is the shorter for not carrying it.
+  4. WHAT A TEACHER IS LOOKING AT IS NOT A STORED PREFERENCE. This was first said of the key strip,
+     which opened on a tap, closed on the next, and was remembered nowhere: a legend read once in
+     September is not a fact about this browser worth keeping, and src/prefs.js's list is the
+     shorter for not carrying it. The strip went at WO-3.61 — the keys are a dialog now, which holds
+     no state at all — and the decision stays, because the search box, the category pill and the
+     sort below are held to it. src/roster.js's supportsShown makes the same call for a stronger
+     reason.
 
   5. NO SUPPORT DATA APPEARS ON THIS SCREEN AT ALL — no indicator dot, no plan, nothing. This is a
      screen teachers project, and the safest form of CLAUDE.md § Accommodations rule 1 on a grid of
@@ -122,10 +125,13 @@
      false while projecting. This file asks the mode for neither.
 
      THE NOTE PANEL IS NOT A DIALOG, so the first rule above still stands. It is a strip of static
-     markup under the flag bar (index.html, #scoresNote), opened by its own button and by no key —
-     WO-3.32's Traps: score entry is the fast path, and a note on a keystroke the grid already uses
-     would be a note opened by accident two thirds of the way down a column. `Esc` is still bound to
-     nothing on this screen but the search box.
+     markup under the flag bar (index.html, #scoresNote), opened by its own button and, since
+     WO-3.61, by N. WO-3.32's Trap was that a note on a keystroke the grid already uses would be a
+     note opened by accident two thirds of the way down a column; N is not such a key — a score cell
+     takes no letters — so N keeps that Trap rather than reversing it. N asks scoreNotesVisible(),
+     the question that hides the button, and does nothing under presentation mode. `Esc` is still
+     bound to nothing on this screen but the search box — and, since WO-3.61, the keys dialog behind
+     ⌨, which src/modal.js closes as it closes every dialog.
 */
 
 import { getDoc, update } from './store.js';
@@ -192,8 +198,6 @@ const NO_GRADE_ID = 'scoresNoGrade';
 const NO_GRADE_TEXT_ID = 'scoresNoGradeText';
 const TOP_ID = 'scoresTop';
 const FLAGS_ID = 'scoresFlags';
-const KEYS_ID = 'scoresKeys';
-const KEYS_BTN_SEL = '#scoresView [data-scores-keys]';
 const GRID_WRAP_ID = 'scoresGridWrap';
 const HEAD_ID = 'scoresHead';
 const BODY_ID = 'scoresBody';
@@ -210,10 +214,6 @@ const NOTE_ID = 'scoresNote';
 const NOTE_LABEL_ID = 'scoresNoteLabel';
 const NOTE_TEXT_ID = 'scoresNoteText';
 const NOTE_BTN_SEL = '#scoresView [data-score-note-open]';
-
-/* Whether the key legend is open. A module variable rather than a preference — decision 4 in the
-   header. */
-let keysOpen = false;
 
 /*
   WHAT THE SEARCH BOX HOLDS (WO-3.29), already trimmed and lower-cased by src/roster.js's
@@ -1147,7 +1147,7 @@ export function renderScores() {
     empty.textContent = emptyText;
     empty.classList.toggle('hidden', !emptyText);
   }
-  /* The toolbar goes with the grid. A flag bar with no cell to act on and a legend for keys that
+  /* The toolbar goes with the grid. A flag bar with no cell to act on and a key list for keys that
      would land nowhere are two dead controls, and a dead control is a feature a teacher goes
      looking for. */
   if (wrap) wrap.classList.toggle('hidden', !!emptyText);
@@ -1162,7 +1162,6 @@ export function renderScores() {
   /* THE BOX'S LEFT SCROLL PADDING WIDENS WITH THE THIRD FROZEN COLUMN — src/scores.css
      `.scores-grid-wrap.filtered`, the WO-3.27 focus fix carried one column further. */
   if (wrap) wrap.classList.toggle('filtered', !emptyText && !!picked);
-  paintKeys();
   /* THE PAST-DUE PROMPT (WO-3.6), painted on both sides of the empty-state return below: with no
      term, no roster or no work there is nothing past due, and a banner left standing from the class
      before would be asking about work this screen is not showing.
@@ -1481,15 +1480,6 @@ function detailDoor(student) {
   return btn;
 }
 
-/* The key legend, and the button's own state. Drawn from `keysOpen` rather than by toggling a class
-   at the tap, so the two cannot disagree after a re-render. */
-function paintKeys() {
-  const strip = document.getElementById(KEYS_ID);
-  const btn = document.querySelector(KEYS_BTN_SEL);
-  if (strip) strip.classList.toggle('hidden', !keysOpen);
-  if (btn) btn.setAttribute('aria-expanded', keysOpen ? 'true' : 'false');
-}
-
 /*
   ONE ASSIGNMENT'S COLUMN, BROUGHT INTO VIEW WITH THE CARET IN ITS FIRST CELL (WO-6.8) — the landing
   for a row under the glance page's *Waiting to be graded*, called by src/shell.js after it has made
@@ -1531,12 +1521,6 @@ export function revealScoreColumn(assignmentId) {
   const first = Array.prototype.filter.call(cells, (input) => input.getAttribute('data-score-cell') === id)[0];
   if (first && typeof first.focus === 'function') first.focus({ preventScroll: true });
   return true;
-}
-
-export function toggleScoreKeys() {
-  keysOpen = !keysOpen;
-  paintKeys();
-  announce(keysOpen ? 'Keyboard shortcuts shown.' : 'Keyboard shortcuts hidden.');
 }
 
 /* ────────────────────────────── typing a score ────────────────────────────── */
@@ -1771,7 +1755,9 @@ function inputFor(assignmentId, studentId) {
   ONE FLAG, SET OR TAKEN OFF, AND SAID OUT LOUD.
 
   `which` is `late`, `missing`, `excused` or `clear`, and the same value arrives from two places:
-  the L / M / X / ⌫ keys, and the four buttons of the flag bar. One writer for both, because they
+  the L / M / X / C / ⌫ keys, and the four buttons of the flag bar. C and the Clear button are one
+  act in two shapes (WO-3.61) — this function, with `clear` — which is what "exactly what the
+  button does" means at the level of the code. One writer for both, because they
   are one act — the shape src/attendance.js's cycleMark() has with the registry's keyboard.
 
   THE SAME FLAG TWICE TAKES IT OFF, which is what makes every state reachable without a mouse:
@@ -1861,10 +1847,16 @@ export function flagFocusedCell(which) {
   cell: the one the teacher was in when she tapped *Note*. Static rather than built by renderScores()
   for the search box's reason: a field inside what a render rebuilds is destroyed under the caret.
 
-  IT IS OPENED BY ITS BUTTON AND BY NOTHING ELSE. No key on the grid opens it — WO-3.32's Traps, and
-  acceptance line 7: Tab, the arrows, Enter, ⌫ and L / M / X all do exactly what they did. The button
-  sits in the flag bar because it acts on the cell you are in, the way the four flags do, and is
-  reached the same way under a thumb; it carries no letter, because no letter opens it.
+  IT IS OPENED BY ITS BUTTON AND BY N (WO-3.61). Until then no key opened it — WO-3.32's Traps, and
+  acceptance line 7: Tab, the arrows, Enter, ⌫ and L / M / X all do exactly what they did, and they
+  still do. N is not a key the grid already used — a score cell takes no letters — so it keeps that
+  Trap rather than reversing it, the owner's ruling 3. The button sits in the flag bar because it
+  acts on the cell you are in, the way the four flags do, and is reached the same way under a thumb;
+  it carries its letter now that a letter opens it.
+
+  ENTER AND ESCAPE IN THE FIELD DO NOTHING, and that is a finding rather than a decision: WO-3.61's
+  Traps asked whether Escape already closed the panel, and it does not — only Done hands focus back.
+  Building it was not ruled, so the keys dialog's N row names Done and not Escape.
 
   EVERY KEYSTROKE IN THE FIELD WRITES, the way a mark note does in the attendance history dialog and
   the pass card's note does on the registry — there is no Save, so there is nothing to forget to
@@ -1914,15 +1906,20 @@ function paintNotePanel() {
   if (!visible || !noteTarget()) shutNotePanel();
 }
 
-/* The *Note* button. Opens the panel on the cell the teacher is in, with the note it carries, and
-   puts the caret at the end of it — a note is added to more often than it is retyped. */
-export function openScoreNote() {
+/* The *Note* button, and N (WO-3.61). Opens the panel on the cell the teacher is in, with the note it
+   carries, and puts the caret at the end of it — a note is added to more often than it is retyped.
+
+   N hands in the cell the key was pressed in; the button hands in nothing and the remembered cell is
+   used, for the reason given at focusedAssignmentId. They are the same cell whenever N is pressed —
+   src/shell.js's `focusin` has already pointed the flag bar at it — so the argument is a statement of
+   which cell is meant rather than a second answer to it. */
+export function openScoreNote(cell) {
   if (!scoreNotesVisible()) {
     announce('Notes are hidden while presentation mode is on.');
     return;
   }
-  const input = focusedAssignmentId && focusedStudentId
-    ? inputFor(focusedAssignmentId, focusedStudentId) : null;
+  const input = cell || (focusedAssignmentId && focusedStudentId
+    ? inputFor(focusedAssignmentId, focusedStudentId) : null);
   const at = input ? resolveCell(input) : null;
   if (!at) {
     announce('Tap a score first — the note goes on the cell you are in.');
@@ -2141,10 +2138,15 @@ function caretCanLeave(input, step) {
     Every digit, `.` and `-` — they are text in a text field, and the `input` listener reads the
     field afterwards. Nothing here intercepts a number.
 
-  `L`, `M` and `X` ARE SWALLOWED WHETHER OR NOT THEY WROTE, which is the one departure from the
-  contract above and it is not optional: a letter that fell through to a decimal field would be
-  typed into the score. They always write something, so the question is theoretical — but the guard
-  is where a later edit would break it.
+  `L`, `M`, `X`, `C` AND `N` ARE SWALLOWED WHETHER OR NOT THEY ACTED, which is the one departure from
+  the contract above and it is not optional: a letter that fell through to a decimal field would be
+  typed into the score. WO-3.25's `beforeinput` filter would refuse it on the way in, but that is a
+  second line of defence and not this one — WO-3.61's Traps. And one of them genuinely acts on
+  nothing: `N` under presentation mode, which opens nothing and says nothing, because the Note button
+  is not on screen either (the owner's ruling 3) — and is still swallowed.
+
+  `?` IS NOT HERE. It opens the keys dialog, and opening a dialog is src/shell.js's business — that
+  listener catches `?` in a score cell before it calls this function, passing the cell as the opener.
 
   THE THIRD ARGUMENT IS THE FOUR MODIFIER FLAGS (WO-3.23), a plain record rather than the event they
   were read off — src/shell.js says why it is not the event. `mods` may be absent, and an absent
@@ -2158,17 +2160,21 @@ function caretCanLeave(input, step) {
     · `Shift`+`↑` and `↓` select to the start and end of the value in a one-line field, which is a
       real gesture this screen was spending on changing student at EVERY caret position, since the
       vertical pair has no caretCanLeave() gate.
-    · `L`, `M` and `X` DO NOT get the same treatment, and must not: `e.key` is `'L'` exactly when
-      Shift is held, so refusing a modified letter would refuse the capital every teacher types.
+    · `L`, `M`, `X`, `C` and `N` DO NOT get the same treatment, and must not: `e.key` is `'L'`
+      exactly when Shift is held, so refusing a modified letter would refuse the capital every
+      teacher types.
     · `Enter` and `⌫` keep theirs. Nothing native happens on `Shift`+`Enter` in a one-line input,
       and `⌫` only acts on an EMPTY cell, where there is nothing for any modifier to have meant.
 
   WHAT THAT LEAVES EXPOSED, named rather than coded around: `Ctrl`+`X` on a score cell would apply
-  Excused and swallow the browser's Cut. It cannot happen today — src/shell.js's listener returns on
-  Ctrl, Alt and Meta before the score branch is reached, which was measured rather than read — so
-  the branch that would refuse it is one no keystroke can drive red, and an unreachable guard with
-  no check behind it is worth less than this sentence. The day that guard moves, this is the line to
-  come back to.
+  Excused and swallow the browser's Cut; since WO-3.61 `Ctrl`+`C` would clear the cell and swallow
+  Copy, and `Ctrl`+`N` would open the note rather than a new window. None of them can happen today —
+  src/shell.js's listener returns on Ctrl, Alt and Meta before the score branch is reached — and
+  that is measured rather than read: tools/verify/score-notes.mjs presses a real `Ctrl`+`C` in a
+  scored, flagged cell and dispatches `Ctrl`+`N`, and asserts the cell, the note panel and the
+  event's `defaultPrevented` are all untouched. So the branch that would refuse them here is one no
+  keystroke can drive red, and an unreachable guard is worth less than this sentence. The day that
+  guard moves, those checks go red and this is the line to come back to.
 */
 export function handleScoreKey(key, input, mods) {
   const held = !!(mods && (mods.shift || mods.ctrl || mods.alt || mods.meta));
@@ -2202,7 +2208,18 @@ export function handleScoreKey(key, input, mods) {
   }
 
   const letter = String(key).length === 1 ? String(key).toUpperCase() : '';
-  const which = letter === 'L' ? 'late' : letter === 'M' ? 'missing' : letter === 'X' ? 'excused' : '';
+  /* N, THE NOTE (WO-3.61) — exactly what the Note button does, on the cell the key was pressed in.
+     Under presentation mode it does nothing and says nothing, the owner's ruling 3: the button is not
+     there either, and scoreNotesVisible() is the question that hides it, asked here rather than a
+     second opinion about the mode. Swallowed either way — see above. */
+  if (letter === 'N') {
+    if (scoreNotesVisible()) openScoreNote(input);
+    return true;
+  }
+  /* C, CLEAR (WO-3.61) — the Clear button's own `clear`, through applyFlag(), so score and mark go
+     together in one press. On a cell with nothing to clear it says so, as the button does. */
+  const which = letter === 'L' ? 'late' : letter === 'M' ? 'missing' : letter === 'X' ? 'excused'
+    : letter === 'C' ? 'clear' : '';
   if (!which) return false;
   const at = resolveCell(input);
   if (!at) return true;

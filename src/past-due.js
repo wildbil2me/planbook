@@ -153,7 +153,8 @@ const DISMISS_PREF = 'pastDueDismissed';
 const HOST_SEL = '[data-past-due]';
 
 /* Whether the review list is open. A module variable rather than a preference, for the reason
-   src/scores.js's keysOpen is one: a list of which cells are blank this minute is not a fact about
+   src/scores.js's decision 4 gives (it was first given for that screen's key strip, gone since
+   WO-3.61): a list of which cells are blank this minute is not a fact about
    this browser worth keeping, and src/prefs.js's list is the shorter for not carrying it. */
 let reviewOpen = false;
 

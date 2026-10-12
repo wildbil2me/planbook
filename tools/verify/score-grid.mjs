@@ -2082,106 +2082,116 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
         await scrollBox(0, 0);
 
         /*
-          ── WO-3.24: THE ⌨ KEYS PANEL, MEASURED FOR SPILL RATHER THAN ARGUED FROM CHARACTER COUNTS ──
+          ── WO-3.61: THE ⌨ KEYS DIALOG, OPENED THROUGH ITS BUTTON AND MEASURED AT TWO WIDTHS ──
 
-          `.scores-key` is `white-space: nowrap` (src/scores.css:154-157), so a row wider than the
-          panel pushes through its own border instead of wrapping. Nothing in this file had ever
-          opened `#scoresKeys` before this work order — WO-3.22 could defend its own row only by
-          counting characters against the `← →` row, and its own Acceptance said so.
+          THIS BLOCK WAS WO-3.24'S, and it measured a different thing for a reason that has gone. The
+          keys were a strip, `#scoresKeys`, of `white-space: nowrap` chips under the flag bar, so a row
+          wider than the strip pushed through the strip's border instead of wrapping; every row was
+          measured against the strip's content width at 1024px and 390px, and the `← →` row had been
+          reworded twice to pass. WO-3.61 made the strip a dialog in Attendance's own rows, which
+          WRAP — so the spill that block existed for cannot happen as it did, and measuring for it
+          would be a check on nothing.
 
-          OPENED THROUGH THE REAL BUTTON, not by clearing `.hidden` by hand — WO-2.21's scar is a
-          sweep that measured a screen that was not the one on screen, and `aria-expanded` on the
-          button is the independent evidence the click actually landed rather than the panel being
-          open for some other reason. The grid is already open and coarse from the block above, so
-          this reuses that state instead of planting a second fixture.
-
-          A ROW'S OWN scrollWidth AGAINST ITS OWN clientWidth IS ALWAYS EQUAL, AND THAT IS NOT A
-          SHORTCUT — IT WAS THE FIRST DRAFT HERE AND THE MUTATION PROVED IT VACUOUS. `.scores-key` is
-          an unconstrained `inline-flex` chip: nothing sets it a width or a max-width, so it always
-          sizes itself to whatever its own content needs, `white-space: nowrap` or not. A row cannot
-          overflow a box that grows to fit it. The first pass at this check compared each row's
-          scrollWidth to its own clientWidth and reddened NOTHING against a row stretched to 1678px
-          in a 942px panel — both numbers came back 1678, because the row simply grew. What actually
-          happens when a row is too long is the WO's own words: it "pushes through its own border",
-          meaning the PANEL'S border, not a border `.scores-key` does not have — the row keeps its
-          natural width and overflows the panel around it. So the real per-row claim compares each
-          row's own width to the panel's available CONTENT width (`clientWidth` less its own
-          padding, since flex children lay out inside the padding edge, not the border edge) — that
-          is the number a row can actually fail to fit inside, and it is what the mutation below is
-          run against.
-
-          `#scoresKeys` ITSELF IS `flex-wrap: wrap` (src/scores.css:148). Its own scrollWidth against
-          its own clientWidth is kept below as CONTEXT — in this one failure mode (a single row wider
-          than the whole panel) it happens to move too, because flex-wrap cannot shrink an item that
-          does not fit even alone on its own line, so the widest row still drives the container's
-          scrollWidth up. It is not asserted as its own check regardless: it cannot NAME the row, and
-          a defect built from several moderately-long rows that only crowd each other on the same
-          line (rather than any one of them individually exceeding the panel) would move the container
-          number without any single row failing the real per-row comparison — the container is
-          corroborating context, never the claim.
+          WHAT CAN STILL GO WRONG, AND IS WHAT THIS MEASURES: the button no longer opening it, or
+          opening it as the wrong kind; a row the dialog does not draw; and a row wider than the
+          dialog's body anyway — the glyph column is a fixed 76px (86 under a thumb) and a sentence
+          with an unbreakable run in it does not wrap. So each row's right edge is read against the
+          body's content edge, and the body's own scrollWidth against its clientWidth, at the two
+          widths WO-3.24 chose. 390 is the narrowest this app is measured at; 1024 is the iPad on its
+          side. Opened ONCE, through the real button — `aria-haspopup` and the overlay coming off
+          `.hidden` are the evidence the click landed — and resized under the open dialog rather than
+          reopened, for WO-3.24's reason: one open through the control is more honest than two.
         */
-        await clickSel('#scoresView [data-scores-keys]');
-        await new Promise((r) => setTimeout(r, 200));
-        const KEYS_SPILL = `(function(){
-          var btn = document.querySelector('#scoresView [data-scores-keys]');
-          var panel = document.getElementById('scoresKeys');
-          var rows = panel ? Array.prototype.slice.call(panel.querySelectorAll('.scores-key')) : [];
-          var cs = panel ? getComputedStyle(panel) : null;
-          var innerW = panel
-            ? panel.clientWidth - parseFloat(cs.paddingLeft || '0') - parseFloat(cs.paddingRight || '0')
-            : 0;
+        const KEYS_DOOR = '#scoresView [data-modal-open="scoresKeysModal"]';
+        await clickSel(KEYS_DOOR);
+        await new Promise((r) => setTimeout(r, 250));
+        const KEYS_FIT = `(function(){
+          var btn = document.querySelector(${JSON.stringify(KEYS_DOOR)});
+          var overlay = document.getElementById('scoresKeysModal');
+          var panel = overlay ? overlay.querySelector('.modal-panel') : null;
+          var body = overlay ? overlay.querySelector('.modal-body') : null;
+          var rows = body ? Array.prototype.slice.call(body.querySelectorAll('.attendance-key-row')) : [];
+          var cs = body ? getComputedStyle(body) : null;
+          var br = body ? body.getBoundingClientRect() : null;
+          var contentRight = br ? br.left + body.clientLeft + body.clientWidth
+            - parseFloat(cs.paddingRight || '0') : 0;
+          var pr = panel ? panel.getBoundingClientRect() : null;
           return {
-            expanded: btn ? btn.getAttribute('aria-expanded') : null,
-            hidden: panel ? panel.classList.contains('hidden') : null,
-            panelScrollW: panel ? panel.scrollWidth : 0,
-            panelClientW: panel ? panel.clientWidth : 0,
-            panelInnerW: innerW,
-            rowCount: rows.length,
+            open: !!overlay && !overlay.classList.contains('hidden'),
+            kinds: panel ? ['modal-confirm', 'modal-form', 'modal-report'].filter(function(k){
+              return panel.classList.contains(k); }) : [],
+            haspopup: btn ? btn.getAttribute('aria-haspopup') : null,
+            expanded: btn ? btn.getAttribute('aria-expanded') : 'no button',
+            focusIn: !!panel && panel.contains(document.activeElement),
+            stripGone: !document.getElementById('scoresKeys'),
+            glyphs: rows.map(function(row){ var dt = row.querySelector('dt');
+              return dt ? Array.prototype.map.call(dt.querySelectorAll('kbd'), function(k){
+                return k.textContent.trim(); }).join('') : ''; }),
+            bodyScrollW: body ? body.scrollWidth : 0, bodyClientW: body ? body.clientWidth : 0,
+            panelLeft: pr ? Math.round(pr.left) : null, panelRight: pr ? Math.round(pr.right) : null,
+            viewW: innerWidth,
             rows: rows.map(function(row){
-              var t = (row.textContent || '').replace(/\\s+/g, ' ').trim();
-              return { text: t, scrollW: row.scrollWidth, innerW: innerW,
-                spill: row.scrollWidth > innerW + 1 };
+              var r = row.getBoundingClientRect();
+              var t = (row.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 24);
+              return { text: t, right: Math.round(r.right * 10) / 10,
+                limit: Math.round(contentRight * 10) / 10,
+                spill: r.right > contentRight + 1 || row.scrollWidth > row.clientWidth + 1 };
             })
           }; })()`;
+        const ROWS_WANTED = ['↵', '⇥', '↑↓', '←→', 'L', 'M', 'X', 'C', '⌫', 'N', 'Esc'];
 
-        const keys1024 = await evalJs(KEYS_SPILL);
-        check('the ⌨ Keys panel opens through its own button rather than by unhiding it — aria-expanded flips true, #scoresKeys comes off .hidden, and a plausible number of rows are there to measure',
-          keys1024.expanded === 'true' && keys1024.hidden === false && keys1024.rowCount >= 7,
-          'aria-expanded = ' + keys1024.expanded + ', hidden = ' + keys1024.hidden
-            + ', rows = ' + keys1024.rowCount);
+        const keys1024 = await evalJs(KEYS_FIT);
+        check('WO-3.61: ⌨ opens #scoresKeysModal through its own button — a modal-form and no other kind, '
+          + 'aria-haspopup="dialog" with no aria-expanded, focus inside the dialog, its rows ↵ ⇥ ↑↓ ←→ L M X '
+          + 'C ⌫ N Esc in that order, and no #scoresKeys strip anywhere in the page',
+          keys1024.open && keys1024.kinds.length === 1 && keys1024.kinds[0] === 'modal-form'
+            && keys1024.haspopup === 'dialog' && keys1024.expanded === null && keys1024.focusIn
+            && keys1024.stripGone && JSON.stringify(keys1024.glyphs) === JSON.stringify(ROWS_WANTED),
+          JSON.stringify({ open: keys1024.open, kinds: keys1024.kinds, haspopup: keys1024.haspopup,
+            expanded: keys1024.expanded, focusIn: keys1024.focusIn, stripGone: keys1024.stripGone,
+            glyphs: keys1024.glyphs }));
 
         const spill1024 = keys1024.rows.filter((row) => row.spill);
-        check('every .scores-key row fits inside the panel at 1024px on a coarse pointer — each row\'s own scrollWidth measured against the panel\'s available content width, not against the row\'s own (always-equal) clientWidth',
-          coarseNow === true && keys1024.rowCount >= 7 && spill1024.length === 0,
-          keys1024.rowCount + ' row(s), panel content width ' + keys1024.panelInnerW
-            + 'px (container scrollWidth/clientWidth ' + keys1024.panelScrollW + '/'
-            + keys1024.panelClientW + 'px, context only) :: '
-            + JSON.stringify(keys1024.rows.map((row) => row.text + ' ' + row.scrollW + '/' + row.innerW))
-            + (spill1024.length
-              ? '; SPILLING: ' + JSON.stringify(spill1024.map((row) => row.text)) : ''));
+        check('WO-3.61: every row of the keys dialog fits inside its body at 1024px on a coarse pointer — '
+          + 'each row\'s right edge against the body\'s content edge, and the body never wider than itself',
+          coarseNow === true && keys1024.rows.length === ROWS_WANTED.length && spill1024.length === 0
+            && keys1024.bodyScrollW <= keys1024.bodyClientW + 1,
+          keys1024.rows.length + ' row(s), body scrollWidth/clientWidth ' + keys1024.bodyScrollW + '/'
+            + keys1024.bodyClientW + 'px :: '
+            + JSON.stringify(keys1024.rows.map((row) => row.text + ' ' + row.right + '/' + row.limit))
+            + (spill1024.length ? '; SPILLING: ' + JSON.stringify(spill1024.map((row) => row.text)) : ''));
 
-        /* Resized rather than reloaded, so the panel stays open the way the teacher left it and this
-           is one open through the button rather than two — a reload would drop `keysOpen` back to
-           false (src/scores.js's module variable, not a stored preference) and a second click would
-           be needed anyway, which is no more honest than resizing under the one that already landed. */
         await send('Emulation.setDeviceMetricsOverride',
           { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
         await new Promise((r) => setTimeout(r, 400));
         const coarse390 = await evalJs("matchMedia('(pointer: coarse)').matches");
-        check('the emulated pointer is still coarse at 390px, else the row-width sweep below measures the desktop pass',
+        check('the emulated pointer is still coarse at 390px, else the row-width read below measures the desktop pass',
           coarse390 === true, 'matchMedia = ' + coarse390);
 
-        const keys390 = await evalJs(KEYS_SPILL);
+        const keys390 = await evalJs(KEYS_FIT);
         const spill390 = keys390.rows.filter((row) => row.spill);
-        check('and every .scores-key row still fits inside the panel at 390px, the narrowest width this app supports, with the panel never re-opened for the narrower read',
-          coarse390 === true && keys390.expanded === 'true' && keys390.hidden === false
-            && keys390.rowCount >= 7 && spill390.length === 0,
-          keys390.rowCount + ' row(s), panel content width ' + keys390.panelInnerW
-            + 'px (container scrollWidth/clientWidth ' + keys390.panelScrollW + '/'
-            + keys390.panelClientW + 'px, context only) :: '
-            + JSON.stringify(keys390.rows.map((row) => row.text + ' ' + row.scrollW + '/' + row.innerW))
-            + (spill390.length
-              ? '; SPILLING: ' + JSON.stringify(spill390.map((row) => row.text)) : ''));
+        check('WO-3.61: and at 390px, the narrowest width this app is measured at, the dialog is still the '
+          + 'one opened above, it sits inside the viewport, and every row still fits inside its body',
+          coarse390 === true && keys390.open && keys390.rows.length === ROWS_WANTED.length
+            && spill390.length === 0 && keys390.bodyScrollW <= keys390.bodyClientW + 1
+            && keys390.panelLeft >= 0 && keys390.panelRight <= keys390.viewW,
+          keys390.rows.length + ' row(s), panel ' + keys390.panelLeft + '–' + keys390.panelRight + ' in '
+            + keys390.viewW + 'px, body scrollWidth/clientWidth ' + keys390.bodyScrollW + '/'
+            + keys390.bodyClientW + 'px :: '
+            + JSON.stringify(keys390.rows.map((row) => row.text + ' ' + row.right + '/' + row.limit))
+            + (spill390.length ? '; SPILLING: ' + JSON.stringify(spill390.map((row) => row.text)) : ''));
+
+        /* Escape closes it — the dialog's own last row — and src/modal.js hands focus back to the ⌨
+           button that opened it, which is the opener the click listener passed in. */
+        await skEsc();
+        await new Promise((r) => setTimeout(r, 150));
+        const keysShut = await evalJs(`(function(){
+          var o = document.getElementById('scoresKeysModal');
+          var a = document.activeElement;
+          return { open: !!o && !o.classList.contains('hidden'),
+            onDoor: !!a && a.getAttribute('data-modal-open') === 'scoresKeysModal' }; })()`);
+        check('WO-3.61: Escape closes the keys dialog and focus goes back to the ⌨ button that opened it',
+          !keysShut.open && keysShut.onDoor, JSON.stringify(keysShut));
 
         /* Back to 1024x768: tidiness rather than a dependency, since the WO-3.17 section right after
            this one sets its own device metrics and reloads before its first click. */

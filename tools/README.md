@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2012 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2021 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2936,6 +2936,20 @@ coarse pointer, and the three tools' 44px. `verify/score-grid.mjs` changed six s
 `#scoresActions` to `#scoresTop` and no site. Full run: `2023 checks · 2023 passed · 0 failed · 0 skipped`, 64,621
 lines, 31.9 lines per check, 1078s, exit 0, 2026-10-11 on the real clock. The planted fault is in
 `TESTING.md` § WO-3.60.
+
+**WO-3.61 moved it from 2012 to 2021, and the executed count from 2023 to 2033 — nine sites, ten
+results, no new file.** Eight are literal call sites in a new block in `verify/score-notes.mjs`, on its
+noted fixture straight after the WO-3.32 Clear check: the flag bar's words and the first hint
+paragraph, `?` in a cell, `?` on the sort toggle, Ctrl+C and Ctrl+N measured, C/c against Clear, N/n
+against Note, the Escape-and-Enter finding held against the dialog's N row, and N under presentation
+mode. One is in `verify/score-grid.mjs`, whose WO-3.24 strip block became the dialog block — four
+sites kept (opens through ⌨, fits at 1024, coarse at 390, fits at 390) and one added (Escape hands
+back to ⌨). The tenth result is a loop iteration, not a site: `verify/keys-legend-guards.mjs`'s
+`ARMS` gained a case for the score read's new `<dl>` arm, so the arms-against-cases count reads
+twenty and twenty. `verify/score-sort.mjs` and `verify/dialog-kinds.mjs` changed in place and no
+site. None is a failure arm. Full run: `2033 checks · 2033 passed · 0 failed · 0 skipped`, 64,908
+lines, 31.9 lines per check, 1083s, exit 0, 2026-10-12 on the real clock. The planted faults are in
+`TESTING.md` § WO-3.61.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

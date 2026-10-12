@@ -1088,7 +1088,7 @@ All five are the owner's, 2026-10-10.
 2. **A view-only Due sort on the Scores grid** was raised and waits for the Scores conversation,
    which the owner has put next. It is WO-3.55's *Not in scope*, so it is not lost.
 
-# Scores, tidied — WO-3.60, WO-3.61 and WO-3.62, drawn, ruled and booked 2026-10-11 · frame A lifted 2026-10-11
+# Scores, tidied — WO-3.60, WO-3.61 and WO-3.62, drawn, ruled and booked 2026-10-11 · frame A lifted 2026-10-11 · frame D landed 2026-10-12
 
 **The fourteenth room, and the sixth drawn of a screen that already ships.** One page, drawn from a
 photograph of the teaching iPad upright, as the third screen in the run that tidied Attendance
@@ -1115,9 +1115,18 @@ indigo order word; a sibling rule that hands the tools' auto margin to the searc
 drawn, because frame A draws no count and two auto margins on one line split the space; and coarse
 44s on Sort and on the wordless ⌨. **Still drawn and not lifted:** `.scores-col-meta`,
 `.scores-col-name.wraps` and `.scores-col-edit` (frame C, WO-3.62) and `.scores-headline-figs`
-(frame B, not chosen). Frame D's dialog is WO-3.61's. Frame 0 is the screen as it shipped before
+(frame B, not chosen). Frame 0 is the screen as it shipped before
 WO-3.60 and is a record now — its `.scores-actions` row draws unstyled, because that rule left
 `src/scores.css` with the row.
+
+**Frame D landed 2026-10-12, WO-3.61.** ⌨ opens `#scoresKeysModal` in `index.html`, a `modal-form`
+in `src/attendance.css`'s shipped `.attendance-keys` rows, row for row as drawn, and `?` opens it
+from a score cell. The strip it replaced, `.scores-keys`, is gone from `src/scores.css` (no frame on
+this page draws the strip, so nothing here changed with it). **One row departs from
+the frame:** N's says *Done* puts you back in the cell, where the frame says *Enter or Esc* —
+neither does, measured on the build, and making Escape close the note panel was not ruled, so the
+row says what is true. Frame A's two flag-bar labels, *Clear (C)* and *Note (N)*, and its first hint
+paragraph landed in the same work order.
 
 ## What the drawing proposes
 

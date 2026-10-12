@@ -1384,14 +1384,20 @@
         <div class="scores-tools">
           <button type="button" class="class-action-btn scores-sort-toggle" id="scoresSort"
                   data-scores-sort="first" title="Sorted by last name — tap for first">Sort: <b>Last</b></button>
-          <!-- The key legend, behind a button, exactly as the registry's is (WO-2.5) — and for the same
+          <!-- The key list, behind a button, exactly as the registry's is (WO-2.5) — and for the same
                two halves of one reason: it has to be reachable by someone who does not already know
-               the keys, and it must not take a line of the screen from someone who does. It is a
-               disclosure rather than a preference, so nothing remembers it; src/scores.js says why.
-               It still opens the strip under the flag bar; the dialog is WO-3.61's. -->
-          <button class="class-action-btn scores-keys-btn" type="button" data-scores-keys
-                  aria-expanded="false" aria-controls="scoresKeys" aria-label="Keys"
-                  title="Keys — enter scores without the mouse">
+               the keys, and it must not take a line of the screen from someone who does.
+
+               IT OPENS A DIALOG SINCE WO-3.61, `#scoresKeysModal` at the foot of this file, through
+               the plain `data-modal-open` hook Attendance's ⌨ wears — so `aria-haspopup="dialog"` and
+               no `aria-expanded`, because nothing on this screen unfolds any more. Until then it
+               unfolded a strip of `nowrap` rows under the flag bar, each of which had to be measured
+               for spilling through the strip's border at 390px. `?` is the second door, from a score
+               cell or anywhere else on this screen; src/shell.js owns it. The accessible name stays
+               "Keys", the one WO-3.60 kept when the word left the face. -->
+          <button class="class-action-btn scores-keys-btn" type="button"
+                  data-modal-open="scoresKeysModal" aria-haspopup="dialog" aria-label="Keys"
+                  title="Keys — enter scores from the keyboard; press ? for the list">
             <span aria-hidden="true">⌨</span>
           </button>
           <!-- THE WAY OUT OF THE APP AND ONTO PAPER (WO-3.9), and the pair to the registry's
@@ -1416,9 +1422,10 @@
            order: find, then write, then the grid. Four flags and a note, acting on the cell the
            teacher is in — and the whole touch path for a flag, because the decimal keypad a score
            cell asks for has no letters on it. They carry the letters as well as the words so that a
-           teacher who learns them here can stop tapping them. Its label names the cell rather than
-           the act, because Clear and Note are not flags. The note panel and the key strip stay
-           directly under it, so whichever is open is the last thing above the grid. -->
+           teacher who learns them here can stop tapping them — Clear and Note too since WO-3.61,
+           when C and N became keys. Its label names the cell rather than the act, because Clear and
+           Note are not flags. The note panel stays directly under it, so when it is open it is the
+           last thing above the grid. -->
       <div class="scores-flags" id="scoresFlags" role="group"
            aria-label="Mark the score cell you are in">
         <span class="scores-flags-label">The cell you are in</span>
@@ -1429,18 +1436,21 @@
         <button class="class-action-btn scores-flag-btn" type="button" data-score-flag="excused"
                 title="Excused. Drops out of the grade entirely — neither earned nor possible.">Excused (X)</button>
         <button class="class-action-btn scores-flag-btn" type="button" data-score-flag="clear"
-                title="Clear the cell back to blank. Blank means ungraded and changes no grade.">Clear</button>
+                title="Clear the cell back to blank. Blank means ungraded and changes no grade.">Clear (C)</button>
         <!-- WO-3.32. A note on the cell you are in — the reason behind a mark. In this bar because it
-             acts on the same cell the four flags do, and it is the only way the note opens: no key
-             on the grid is spent on it, so it carries no letter. src/scores.js hides it while
-             presentation mode is on, when a note may not be on screen at all. -->
+             acts on the same cell the four flags do. N opens it too since WO-3.61, which keeps
+             WO-3.32's Trap rather than reversing it: that Trap refused a key the grid already uses,
+             and N is not one — a score cell takes no letters. So it carries its letter as the four
+             beside it do. src/scores.js hides it while presentation mode is on, when a note may not
+             be on screen at all, and N asks the same question and does nothing then. -->
         <button class="class-action-btn scores-flag-btn scores-note-btn" type="button" data-score-note-open
                 aria-controls="scoresNote"
-                title="Add or read a note on this cell — a revised essay, a conference. It changes no grade.">Note</button>
+                title="Add or read a note on this cell — a revised essay, a conference. It changes no grade.">Note (N)</button>
       </div>
 
-      <!-- THE NOTE PANEL (WO-3.32), about one cell, opened by the Note button above and by nothing
-           else. STATIC MARKUP for the search box's reason: src/scores.js's renderScores() rebuilds
+      <!-- THE NOTE PANEL (WO-3.32), about one cell, opened by the Note button above and, since
+           WO-3.61, by N in a score cell. Only Done hands focus back to the cell: Enter and Escape in
+           its field do nothing (measured at WO-3.61, and not ruled). STATIC MARKUP for the search box's reason: src/scores.js's renderScores() rebuilds
            every cell, and a field inside what it rebuilds would be destroyed under the caret. Every
            keystroke in the field saves; an empty field is no note. The label and the field are
            filled by src/scores.js on open and EMPTIED on close, so a shut panel holds no student's
@@ -1456,56 +1466,6 @@
                 title="Close the note and go back to the cell. It is already saved.">Done</button>
       </div>
 
-      <!-- Closed to begin with, opened by the button above. Three kinds of key: `↵` and `⇥` are
-           documented here but belong to src/shell.js and to the browser's tab order; the two arrow
-           pairs are this module's own — the vertical one always moves, the horizontal one gives the
-           key back to the browser inside a number (caretCanLeave() in src/scores.js); the four below
-           are the same four the bar carries.
-           WO-3.22 added the vertical pair, which had lived only in the hint under the grid since
-           WO-3.5. This panel is what a teacher opens TO LEARN THE KEYS, so a working key documented
-           everywhere but here is the omission that matters — and the `← →` row above made it read as
-           a legend enumerating three arrow directions out of four. -->
-      <div class="scores-keys hidden" id="scoresKeys">
-        <span class="scores-key"><kbd>↵</kbd> next student, down the column</span>
-        <span class="scores-key"><kbd>⇥</kbd> next assignment, across the row</span>
-        <!-- Kept short on purpose: `.scores-key` is `white-space: nowrap`, so a row longer than the
-             panel is wide spills through its own border rather than wrapping inside it. Which row
-             reads longest has already changed once — the `← →` row two below held that title until
-             WO-3.24 shortened it — so this is measured per row at 390px and 1024px by
-             tools/verify-shell.mjs rather than argued from whichever row currently looks longest. -->
-        <span class="scores-key"><kbd>↑</kbd> <kbd>↓</kbd> within the column, up as well as down</span>
-        <!-- WO-3.16. The pair is listed with its condition attached, because the condition is the
-             whole of the key: inside a number it is still the caret's, and it steps to the next
-             assignment only once the caret has run out of number to cross IN THE DIRECTION PRESSED
-             — the end of the score for `→`, the start of it for `←`. The first wording here said
-             "from the end of the number", which is true of one key and backwards for the other: a
-             teacher who reads that, presses `←` at the end of `100` and watches the caret move
-             concludes the key was not received, which is the exact failure the sentence at the edge
-             was built to prevent. Measured rather than assumed, this row was the one
-             `tools/verify-shell.mjs` (WO-3.24) found spilling through the panel's own border at
-             390px, the narrowest width this app is measured at, and it had to be shortened.
-
-             WO-3.16 asked that any rewording keep the asymmetry visible — name `→` with the end and
-             `←` with the start. THE WORDING BELOW DEPARTS FROM THAT, deliberately, and the rule it
-             answers to instead is the scar above rather than the summary of it. WO-3.24's first
-             attempt kept the letter, `across the row — → end, ← start`, and bought the ambiguity the
-             asymmetry was meant to prevent: it sits one line under `⇥ next assignment, across the
-             row`, so a naked `→ end` reads as a DESTINATION — jump to the last assignment — when the
-             key clamps one step and only once the number is exhausted. Naming a direction is not the
-             point; not lying about direction is. Run the wording below against WO-3.16's own failure
-             case, `←` pressed at the end of `100`: it predicts the caret moving, which is what
-             happens, because leftward the caret has not run out. Silent on direction, wrong about
-             neither. A future rewording may restore the asymmetry if it can do so in the width — but
-             it inherits the test, not the phrasing. -->
-        <span class="scores-key"><kbd>←</kbd> <kbd>→</kbd> across the row when the caret runs out</span>
-        <span class="scores-key"><kbd>L</kbd> late</span>
-        <span class="scores-key"><kbd>M</kbd> missing</span>
-        <span class="scores-key"><kbd>X</kbd> excused</span>
-        <span class="scores-key"><kbd>⌫</kbd> clear an empty cell to blank</span>
-        <!-- No key row for the note (WO-3.32): no key opens it, and a legend row naming the Note
-             button would be the one row here that is not a key. -->
-      </div>
-
       <div class="scores-grid-wrap" id="scoresGridWrap">
         <table class="scores-grid">
           <caption class="sr-only" id="scoresCaption"></caption>
@@ -1515,19 +1475,16 @@
       </div>
       <p class="scores-empty hidden" id="scoresEmpty"></p>
 
+      <!-- THE FIRST HINT PARAGRAPH, SHRUNK TO FRAME A'S (WO-3.61, the owner's ruling 5). It restated
+           nearly every key until the keys had a dialog to live in; now it says the one pattern the
+           screen is built round, points at ⌨, and leaves the list to `#scoresKeysModal`. The Escape
+           sentence stays and says where it is true — ON THE GRID, since a dialog now sits behind
+           ⌨ and Escape closes that. -->
       <p class="scores-hint">
-        One column at a time is the way this screen is meant to be used: type a score, press
-        <strong>Enter</strong>, and the caret drops to the next student in the same assignment — so a
-        class of twenty-five is twenty-five numbers and no mouse. It stops at the last name rather
-        than wrapping round to the first. <strong>Tab</strong> steps sideways to the next assignment,
-        and <strong>↑ ↓</strong> move within the column as well. <strong>← →</strong> step sideways
-        too, once the caret has run out of number to cross in the direction you press — the end of
-        the score for <strong>→</strong>, the start of it for <strong>←</strong>. Inside a number
-        they still move the caret, so a score can be corrected without the mouse. Everything on this
-        grid is
-        <strong id="scoresHintTerm"></strong>, and nothing else. Every keystroke saves as you make it;
-        there is nothing to submit, and <strong>Escape</strong> does nothing here because there is no
-        dialog to close.
+        <strong>Type a score and press Enter</strong> — the caret drops to the next student in the
+        same assignment, so a class of twenty-five is twenty-five numbers and no mouse. Every key is
+        behind <strong>⌨</strong>. Everything on this grid is <strong id="scoresHintTerm"></strong>,
+        and every keystroke saves as you make it. <strong>Escape</strong> does nothing on the grid.
       </p>
       <p class="scores-hint">
         <strong>A blank cell is ungraded and changes no grade at all</strong> — it is not a zero.
@@ -4795,6 +4752,97 @@
         day the class didn’t meet. And they only ever write on the day the screen says it is editing, which is
         today unless you have unlocked something else.
       </p>
+    </div>
+  </div>
+</div>
+
+<!--
+  THE SCORE GRID'S KEYS (WO-3.61) — frame D of design/mockups/scores-tidy.html, and the twin of the
+  dialog above. Until WO-3.61 these lived in a strip that unfolded under the flag bar, in `nowrap`
+  rows: each had to be measured for spilling through the strip's border at 390px, and the `← →` row
+  was reworded twice to fit (WO-3.16, WO-3.24). In a dialog the rows wrap, so each one says the whole
+  thing — the `← →` row names the condition in both directions again, which is what WO-3.16 asked for
+  and the strip's width took away.
+
+  NO NEW CSS: Attendance's own rows as shipped (`.attendance-keys`, `.attendance-key-row`,
+  `.attendance-key`, src/attendance.css) and the `modal-form` kind (WO-1.77), at 640 for the reason
+  given over the dialog above. Outside WO-3.58's review, the owner's ruling 6: a read-only list and a
+  ✕, with no message, note or warning to place.
+
+  Two doors, as on Attendance: the ⌨ button in the search row's tools, and `?` — from a score cell,
+  where a decimal field has no use for it, or from anywhere else on the screen that is not a field.
+  src/shell.js owns `?` and passes the cell as the opener, so closing puts the caret back where it
+  was. There is no `?` row, because frame D draws none: the ⌨ button's title says it.
+
+  The rows are read against src/scores.js's handleScoreKey() by tools/verify/keys-legend-scores.mjs
+  on every run: a key bound there and missing here, or a row here for a key nobody binds, goes red.
+  `⇥` and `Esc` are rows for keys that function does not bind — Tab is the browser's tab order, and
+  Escape is src/modal.js's — and that file names both.
+
+  THE N ROW DEPARTS FROM FRAME D, which says Enter or Esc puts you back in the cell. Neither does:
+  measured at WO-3.61, only Done hands focus back from the note panel, and making Escape do it was not
+  ruled. So the row says what is true.
+-->
+<div class="modal-overlay hidden" id="scoresKeysModal">
+  <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="scoresKeysTitle">
+    <div class="modal-header">
+      <h2 id="scoresKeysTitle">Entering scores from the keyboard</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="attendance-keys-lead">
+        One column at a time, and your hand never leaves the keyboard. Type a score, press
+        <strong>Enter</strong>, and the caret drops to the next student in the same assignment.
+      </p>
+      <dl class="attendance-keys">
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">↵</kbd></dt>
+          <dd>Next student, down the column. It stops at the last name.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">⇥</kbd></dt>
+          <dd>Next assignment, across the row.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">↑</kbd><kbd class="attendance-key">↓</kbd></dt>
+          <dd>Up or down the column.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">←</kbd><kbd class="attendance-key">→</kbd></dt>
+          <dd>Across the row once the caret has run out of number — the end of the score for →, the
+              start of it for ←. Inside a number they still move the caret.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">L</kbd></dt>
+          <dd>Late. The score still counts in full.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">M</kbd></dt>
+          <dd>Missing. Counts as zero.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">X</kbd></dt>
+          <dd>Excused. Drops out of the grade.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">C</kbd></dt>
+          <dd>Clear. The cell goes back to blank — score and mark together, in one press. Blank is
+              ungraded, not zero.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">⌫</kbd></dt>
+          <dd>Inside a number, one character. On an empty cell, takes its mark off.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">N</kbd></dt>
+          <dd>Note on this cell, in a panel above the grid. <strong>Done</strong> puts you back in
+              the cell; the note is already saved.</dd>
+        </div>
+        <div class="attendance-key-row">
+          <dt><kbd class="attendance-key">Esc</kbd></dt>
+          <dd>Closes this list. On the grid it does nothing.</dd>
+        </div>
+      </dl>
     </div>
   </div>
 </div>

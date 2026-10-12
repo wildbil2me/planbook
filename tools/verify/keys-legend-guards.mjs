@@ -111,25 +111,38 @@ const { ROOT, check, has } = h;
      has to blame. `arm` is a slice of that text rather than the whole of it, because the whole of it is
      a sentence that will be reworded and the anchor is what may not change silently. Several of the
      mutations are the ones WO-2.36's verification drove by hand in a scratchpad that no longer exists —
-     a renamed `handleScoreKey`, a renamed `MARK_KEYS`, a renamed modal id, requoted `scores-key` spans,
+     a renamed `handleScoreKey`, a renamed `MARK_KEYS`, a renamed modal id, requoted `scores-key` spans
+     (the strip WO-3.61 replaced with a dialog, whose cases now mirror the marking block's),
      the glyph regex broken, a truncated slice — plus one per arm those eight never reached. Several are
      VALID HTML that renders identically (a second class on a span, a `<kbd>` given an attribute), which
      is the realistic shape of this rot: nobody breaks the markup, they tidy it. */
   const ARMS = [
-    { what: 'the score panel\'s id renamed in index.html',
-      arm: 'index.html has no `id="scoresKeys"`',
-      read: () => readScoresKeys(edit(html, 'id="scoresKeys"', 'id="scoresKeyRing"'), scoresSrc) },
-    { what: 'index.html truncated inside the score panel, so it never closes',
-      arm: 'the #scoresKeys panel never closes',
-      read: () => readScoresKeys(cut(html, realScores.panelAt + 30), scoresSrc) },
-    { what: 'a second class added to every `scores-key` span — valid HTML, identical rendering, and '
-        + 'the row regex reads nothing',
-      arm: 'no `<span class="scores-key">` inside the panel',
-      read: () => readScoresKeys(
-        editAll(html, '<span class="scores-key">', '<span class="scores-key legend">'), scoresSrc) },
-    { what: 'every bare `<kbd>` in index.html given an attribute, so the glyph regex reads nothing',
-      arm: 'no `<kbd>` inside those rows',
-      read: () => readScoresKeys(editAll(html, '<kbd>', '<kbd class="key">'), scoresSrc) },
+    /* WO-3.61 moved the score legend from a strip of `<span class="scores-key">` chips into a dialog
+       wearing Attendance's own rows, so its five arms are the sibling block's five, read inside
+       `#scoresKeysModal` — and the two that edit Attendance-shaped markup everywhere (every row, every
+       kbd) are asked of the score read here and of the marking read below, each naming its own arm. */
+    { what: 'the score dialog\'s id renamed in index.html',
+      arm: 'index.html has no `id="scoresKeysModal"`',
+      read: () => readScoresKeys(edit(html, 'id="scoresKeysModal"', 'id="scoresKeysModalLegend"'),
+        scoresSrc) },
+    { what: 'a second class on the score dialog\'s `attendance-keys` list alone — Attendance\'s list '
+        + 'above it untouched, so this also proves the read does not borrow another dialog\'s list',
+      arm: 'no `<dl class="attendance-keys">` inside the #scoresKeysModal dialog',
+      read: () => readScoresKeys(html.slice(0, realScores.dlAt) + edit(html.slice(realScores.dlAt),
+        '<dl class="attendance-keys">', '<dl class="attendance-keys legend">'), scoresSrc) },
+    { what: 'index.html truncated inside the score dialog\'s list, so it never closes',
+      arm: 'the #scoresKeysModal list never closes',
+      read: () => readScoresKeys(cut(html, realScores.dlAt + 40), scoresSrc) },
+    { what: 'a second class on every `attendance-key-row` — valid HTML, identical rendering, and the '
+        + 'score read\'s row regex reads nothing',
+      arm: 'no `.attendance-key-row` inside the #scoresKeysModal list',
+      read: () => readScoresKeys(editAll(html, '<div class="attendance-key-row">',
+        '<div class="attendance-key-row wide">'), scoresSrc) },
+    { what: 'a second class on every `attendance-key` kbd, so the score read\'s glyph regex reads '
+        + 'nothing',
+      arm: 'no `<kbd class="attendance-key">` in the #scoresKeysModal',
+      read: () => readScoresKeys(editAll(html, '<kbd class="attendance-key">',
+        '<kbd class="attendance-key big">'), scoresSrc) },
     { what: 'handleScoreKey() renamed in src/scores.js',
       arm: 'src/scores.js has no `export function handleScoreKey(`',
       read: () => readScoresKeys(html,
@@ -224,11 +237,11 @@ const { ROOT, check, has } = h;
      convincing. */
   const RETIREMENTS = [
     { what: '`X` retired from the score grid — the `letter === \'X\'` comparison out of '
-        + 'handleScoreKey() and the `X excused` row off the legend',
+        + 'handleScoreKey() and the Excused row out of the keys dialog',
       key: 'X', glyph: 'X', was: realScores,
       read: () => readScoresKeys(
-        edit(html, /\s*<span class="scores-key"><kbd>X<\/kbd>[^<]*<\/span>/, ''),
-        edit(scoresSrc, 'letter === \'X\' ? \'excused\' : ', '')) },
+        edit(html, /\s*<div class="attendance-key-row">\s*<dt><kbd class="attendance-key">X<\/kbd><\/dt>[\s\S]*?<\/div>/, ''),
+        edit(scoresSrc, /letter === 'X' \? 'excused'\s*: /, '')) },
     { what: '`D` retired from the marking screen — the letter out of `MARK_KEYS` and the Dismissed '
         + 'row off the card, which is the case the retired floor went red on',
       key: 'D', glyph: 'D', was: realMarking,
@@ -277,7 +290,8 @@ const { ROOT, check, has } = h;
      arms against eighteen cases and go red for a reason that has nothing to do with the guard —
      or, worse, count zero against zero if the cases ever went with them. The two are named by
      relative URL rather than assembled off `ROOT`, so a rename breaks the read loudly. Nineteen
-     before the split and nineteen after. */
+     before the split and nineteen after; twenty since WO-3.61, when the score legend became a
+     dialog and its read gained the sibling block's `<dl>` arm. */
   const own = (await fs.readFile(new URL('./keys-legend-scores.mjs', import.meta.url), 'utf8'))
     + (await fs.readFile(new URL('./keys-legend-marking.mjs', import.meta.url), 'utf8'));
   const armSites = (own.match(/vacuity\s*\.\s*push\s*\(/g) || []).length;

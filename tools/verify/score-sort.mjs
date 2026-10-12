@@ -141,13 +141,13 @@ const tools = await evalJs(`(function(){
   var bar = document.getElementById('scoresToolbar');
   var group = bar ? bar.querySelector('.scores-tools') : null;
   var kids = group ? Array.prototype.slice.call(group.children) : [];
-  var hook = function(b){ return ['data-scores-sort','data-scores-keys','data-grades-record']
+  var hook = function(b){ return ['data-scores-sort','data-modal-open','data-grades-record']
     .filter(function(a){ return b.hasAttribute(a); })[0] || '(none)'; };
   /* Visible words: the button's rendered text with every aria-hidden glyph taken out. */
   var words = function(b){ var c = b.cloneNode(true);
     Array.prototype.forEach.call(c.querySelectorAll('[aria-hidden="true"]'), function(x){ x.remove(); });
     return c.textContent.replace(/\\s+/g, ''); };
-  var keys = group ? group.querySelector('[data-scores-keys]') : null;
+  var keys = group ? group.querySelector('[data-modal-open="scoresKeysModal"]') : null;
   var sheet = group ? group.querySelector('[data-grades-record]') : null;
   return { last: !!bar && bar.lastElementChild === group, order: kids.map(hook),
     keysWords: keys ? words(keys) : null, sheetWords: sheet ? words(sheet) : null,
@@ -155,16 +155,18 @@ const tools = await evalJs(`(function(){
     keysName: keys ? keys.getAttribute('aria-label') : null,
     sheetName: sheet ? sheet.getAttribute('aria-label') : null,
     keysTitle: keys ? keys.title : null, sheetTitle: sheet ? sheet.title : null,
-    keysControls: keys ? keys.getAttribute('aria-controls') : null }; })()`);
+    keysPopup: keys ? keys.getAttribute('aria-haspopup') : null,
+    keysExpanded: keys ? keys.getAttribute('aria-expanded') : 'no button' }; })()`);
 check('WO-3.60: #scoresToolbar ends in .scores-tools holding, in order, the sort toggle, ⌨ and 🖨 — the '
   + 'two doors drawing their glyph and no word, named "Keys" and "Print or export this class’s grade '
-  + 'sheet for this term" as before, each title leading with its word, hooks unchanged',
-  tools.last && JSON.stringify(tools.order) === JSON.stringify(['data-scores-sort', 'data-scores-keys',
+  + 'sheet for this term" as before, each title leading with its word — ⌨ opening its dialog through '
+  + '`data-modal-open` with aria-haspopup="dialog" and no aria-expanded since WO-3.61',
+  tools.last && JSON.stringify(tools.order) === JSON.stringify(['data-scores-sort', 'data-modal-open',
     'data-grades-record'])
     && tools.keysWords === '' && tools.sheetWords === '' && tools.keysGlyph === '⌨' && tools.sheetGlyph === '🖨'
     && tools.keysName === 'Keys' && tools.sheetName === 'Print or export this class’s grade sheet for this term'
     && /^Keys — /.test(tools.keysTitle || '') && /^Grade sheet — /.test(tools.sheetTitle || '')
-    && tools.keysControls === 'scoresKeys',
+    && tools.keysPopup === 'dialog' && tools.keysExpanded === null,
   JSON.stringify(tools));
 
 /* ── ACCEPTANCE LINE 5: the flag bar over the grid, its label and the placeholder ── */
@@ -181,10 +183,13 @@ const flagsAt = await evalJs(`(function(){
   return { above: ${ABOVE_GRID}, label: label ? label.textContent : null,
     placeholder: box ? box.placeholder : null,
     toolbarFirst: !!bar && !!flags && !!(bar.compareDocumentPosition(flags) & 4) }; })()`);
-await clickSel('#scoresView [data-scores-keys]');
+/* ⌨ opens a dialog since WO-3.61, not a strip over the grid, so with it open the flag bar is still the
+   last thing above the grid — read with the dialog up, then closed through src/modal.js. */
+await clickSel('#scoresView [data-modal-open="scoresKeysModal"]');
 await sleep(150);
-const aboveKeys = await evalJs(ABOVE_GRID);
-await clickSel('#scoresView [data-scores-keys]');
+const aboveKeys = await evalJs(`(function(){ var o = document.getElementById('scoresKeysModal');
+  return (o && !o.classList.contains('hidden') ? 'dialog open, ' : 'dialog SHUT, ') + ${ABOVE_GRID}; })()`);
+await evalJs("window.planbook.closeModal('scoresKeysModal'); 1");
 await sleep(150);
 await evalJs(`(function(){ var i = document.querySelector('#scoresBody [data-score-cell]'); i.focus(); return 1; })()`);
 await clickSel('#scoresFlags [data-score-note-open]');
@@ -193,10 +198,10 @@ const aboveNote = await evalJs(ABOVE_GRID);
 await clickSel('#scoresNote [data-score-note-done]');
 await sleep(150);
 const aboveAfter = await evalJs(ABOVE_GRID);
-check('WO-3.60: the flag bar is the last thing above the grid — the key strip when it is open, the note '
-  + 'panel when that is — under the search row; its label reads "The cell you are in" and the search '
-  + 'box\'s placeholder "Search students…"',
-  flagsAt.above === 'scoresFlags' && aboveKeys === 'scoresKeys' && aboveNote === 'scoresNote'
+check('WO-3.60: the flag bar is the last thing above the grid — the note panel when that is open, and '
+  + 'still the flag bar with ⌨\'s keys dialog open (a dialog since WO-3.61, not a strip) — under the '
+  + 'search row; its label reads "The cell you are in" and the search box\'s placeholder "Search students…"',
+  flagsAt.above === 'scoresFlags' && aboveKeys === 'dialog open, scoresFlags' && aboveNote === 'scoresNote'
     && aboveAfter === 'scoresFlags' && flagsAt.toolbarFirst && flagsAt.label === 'The cell you are in'
     && flagsAt.placeholder === 'Search students…',
   JSON.stringify({ flagsAt, aboveKeys, aboveNote, aboveAfter }));
@@ -316,7 +321,7 @@ const ROW_GEOM = `(function(){
     oneLine: top < bottom,
     pillsOnBoxLine: pills.filter(function(p){ var r = p.getBoundingClientRect();
       return r.top < br.bottom && br.top < r.bottom; }).length,
-    sort: r44('[data-scores-sort]'), keys: r44('[data-scores-keys]'), sheet: r44('[data-grades-record]') }; })()`;
+    sort: r44('[data-scores-sort]'), keys: r44('[data-modal-open="scoresKeysModal"]'), sheet: r44('[data-grades-record]') }; })()`;
 await send('Emulation.setDeviceMetricsOverride', { width: 1180, height: 820, deviceScaleFactor: 2, mobile: true });
 await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
 await reboot();

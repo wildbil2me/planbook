@@ -18,8 +18,17 @@ import path from 'node:path';
  * and watch which ones were swallowed, and the defect it exists for is a key nobody thought of — the
  * one that gets bound next and not written down. A list of keys to try is the same list the legend
  * already is, so pressing them would compare the panel with itself. Reading the two documents is what
- * can actually go red: `handleScoreKey()` is the authority on what the grid answers to, and the panel
- * at `#scoresKeys` is what a teacher opens to learn it.
+ * can actually go red: `handleScoreKey()` is the authority on what the grid answers to, and the dialog
+ * at `#scoresKeysModal` is what a teacher opens to learn it.
+ *
+ * THE LEGEND IS A DIALOG SINCE WO-3.61, and this read moved with it rather than being written again.
+ * Until then it was a strip, `#scoresKeys`, of `<span class="scores-key">` chips each holding bare
+ * `<kbd>`s, sliced to the panel's first `</div>`. The dialog wears Attendance's own rows, so the slice
+ * is now the sibling block's: from the modal's id to its `<dl class="attendance-keys">`, through that
+ * list's own `</dl>` — nested `<div>` rows make "the first `</div>`" the end of row one — and the
+ * glyphs come out of each row's `<dt>` alone, so a `<kbd>` written into a sentence in a `<dd>` cannot
+ * answer for a row. What did not change is everything after the glyphs: the map, the two directions,
+ * the refusals and the anchors.
  *
  * WO-3.22's defect was `↑ ↓`: bound since WO-3.5, promised by the hint under the grid, and absent
  * from the legend until this check was written beside the row that fixes it.
@@ -63,12 +72,19 @@ export function readScoresKeys(html, scoresSrc) {
      guard further down can say which one came back empty. It also stops a real trap: `html.slice(-1)`
      on a missing id is a one-character panel with no `</div>` in it, which reaches the right answer
      (an empty legend) by an accident nobody would want to rely on twice. */
-  const panelAt = html.indexOf('id="scoresKeys"');
-  const panel = panelAt < 0 ? '' : html.slice(panelAt);
-  const panelEnd = panel.indexOf('</div>');
-  const legendHtml = panelEnd < 0 ? '' : panel.slice(0, panelEnd);
-  const rows = [...legendHtml.matchAll(/<span class="scores-key">([\s\S]*?)<\/span>/g)].map(m => m[1]);
-  const glyphs = rows.flatMap(r => [...r.matchAll(/<kbd>([^<]*)<\/kbd>/g)].map(k => k[1].trim()));
+  const panelAt = html.indexOf('id="scoresKeysModal"');
+  const dlAt = panelAt < 0 ? -1 : html.indexOf('<dl class="attendance-keys">', panelAt);
+  /* A `<dl>` found past the NEXT dialog is not this one's: a list missing here must not be borrowed
+     from whichever dialog follows it in index.html. */
+  const nextModal = panelAt < 0 ? -1 : html.indexOf('class="modal-overlay', panelAt + 1);
+  const ownDl = dlAt >= 0 && (nextModal < 0 || dlAt < nextModal) ? dlAt : -1;
+  const panelEnd = ownDl < 0 ? -1 : html.indexOf('</dl>', ownDl);
+  const legendHtml = panelEnd < 0 ? '' : html.slice(ownDl, panelEnd);
+  const rows = [...legendHtml.matchAll(
+    /<div class="attendance-key-row">\s*<dt>([\s\S]*?)<\/dt>\s*<dd>[\s\S]*?<\/dd>\s*<\/div>/g
+  )].map(m => m[1]);
+  const glyphs = rows.flatMap(dt => [...dt.matchAll(/<kbd class="attendance-key">([^<]*)<\/kbd>/g)]
+    .map(k => k[1].trim()));
 
   /* The function's own body, and only its own: from its `export function` line to the first `}` in
      the first column after it. Everything below is read out of that slice, so a key bound in a
@@ -160,9 +176,13 @@ export function readScoresKeys(html, scoresSrc) {
   /* Two bindings, one row: a teacher has one "clear this" key in mind whichever her keyboard calls
      it, and src/scores.js treats them as one. */
   const GLYPH_OF = { Enter: '↵', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→',
-    Backspace: '⌫', Delete: '⌫', L: 'L', M: 'M', X: 'X' };
-  /* In the legend and not in the function, on purpose. The value is the key it documents. */
-  const LISTED_UNBOUND = { '⇥': 'Tab (the browser\'s own tab order, not this module\'s)' };
+    Backspace: '⌫', Delete: '⌫', L: 'L', M: 'M', X: 'X', C: 'C', N: 'N' };
+  /* In the legend and not in the function, on purpose. The value is the key it documents. `Esc` since
+     WO-3.61: the dialog's last row says Escape closes it and does nothing on the grid, and both halves
+     are kept by there being no code here — src/modal.js closes the dialog, and handleScoreKey()'s
+     WHAT IS DELIBERATELY NOT BOUND block names Escape. */
+  const LISTED_UNBOUND = { '⇥': 'Tab (the browser\'s own tab order, not this module\'s)',
+    'Esc': 'Escape (src/modal.js closes the dialog; on the grid it is bound to nothing)' };
 
   const unmapped = bound.filter(k => !(k in GLYPH_OF));
   const missing = bound.filter(k => k in GLYPH_OF && !glyphs.includes(GLYPH_OF[k]));
@@ -229,12 +249,14 @@ export function readScoresKeys(html, scoresSrc) {
   const vacuity = [];
   /* At most one reason per side, most upstream first: a lost id makes the rows empty too, and three
      lines of consequence would bury the one line of cause. */
-  if (panelAt < 0) vacuity.push('index.html has no `id="scoresKeys"` — the legend side was never found');
-  else if (panelEnd < 0) vacuity.push('the #scoresKeys panel never closes — no `</div>` after it');
-  else if (!rows.length) vacuity.push('no `<span class="scores-key">` inside the panel — the row regex '
-    + 'here has stopped reading the markup it was written for');
-  else if (!glyphs.length) vacuity.push('no `<kbd>` inside those rows — the glyph regex here has '
-    + 'stopped reading the markup it was written for');
+  if (panelAt < 0) vacuity.push('index.html has no `id="scoresKeysModal"` — the legend side was never '
+    + 'found');
+  else if (ownDl < 0) vacuity.push('no `<dl class="attendance-keys">` inside the #scoresKeysModal dialog');
+  else if (panelEnd < 0) vacuity.push('the #scoresKeysModal list never closes — no `</dl>` after it');
+  else if (!rows.length) vacuity.push('no `.attendance-key-row` inside the #scoresKeysModal list — the '
+    + 'row regex here has stopped reading the markup it was written for');
+  else if (!glyphs.length) vacuity.push('no `<kbd class="attendance-key">` in the #scoresKeysModal '
+    + 'rows\' `<dt>`s — the glyph regex here has stopped reading the markup it was written for');
   if (at < 0) vacuity.push('src/scores.js has no `export function handleScoreKey(` — the binding side '
     + 'was never found');
   else if (bodyEnd < 0) vacuity.push('handleScoreKey() has no `}` in the first column after it — the '
@@ -263,7 +285,7 @@ export function readScoresKeys(html, scoresSrc) {
   /* The indices come back with the lists (WO-2.38) so that a fixture can cut a document short at an
      anchor this read found, rather than searching for the anchor a second time with a second copy of
      the pattern. Nothing in the ordinary run below uses them. */
-  return { panelAt, panelEnd, rows, glyphs, at, bodyEnd, body, literalKeys, testedLists, listKeys,
+  return { panelAt, dlAt: ownDl, panelEnd, rows, glyphs, at, bodyEnd, body, literalKeys, testedLists, listKeys,
     unresolvedLists, bound, GLYPH_OF, unmapped, missing, stray, vacuity, refused };
 }
 
@@ -277,9 +299,10 @@ const { ROOT, check, has } = h;
   const { rows, glyphs, body, literalKeys, testedLists, listKeys, unresolvedLists, bound, GLYPH_OF,
     unmapped, missing, stray, vacuity, refused } = readScoresKeys(html, scoresSrc);
 
-  check('every key the score grid binds is on the ⌨ Keys legend, and every entry on that legend is a '
-    + 'key it binds — `⇥` excepted by name, because Tab is the browser\'s tab order and src/scores.js '
-    + 'says so (WO-3.22: `↑ ↓` were bound, promised by the hint, and not on the card)',
+  check('every key the score grid binds is on the ⌨ Keys dialog, and every row in that dialog is a '
+    + 'key it binds — `⇥` and `Esc` excepted by name, because Tab is the browser\'s tab order and '
+    + 'Escape is src/modal.js\'s (WO-3.22: `↑ ↓` were bound, promised by the hint, and not on the '
+    + 'card; WO-3.61: the card is a dialog, and C and N are rows on it)',
     !vacuity.length && !unmapped.length && !missing.length && !stray.length,
     bound.length + ' key(s) bound by handleScoreKey() [' + bound.join(' ') + '] against '
       + rows.length + ' legend row(s) carrying [' + glyphs.join(' ') + ']'

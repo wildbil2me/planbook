@@ -136,7 +136,14 @@ export function readMarkingKeys(html, shellSrc) {
   const modalIdMatch = shellSrc.match(/const KEYS_MODAL = '([^']+)'/);
   const modalId = modalIdMatch ? modalIdMatch[1] : '';
   const modalAt = modalId ? html.indexOf('id="' + modalId + '"') : -1;
-  const dlAt = modalAt < 0 ? -1 : html.indexOf('<dl class="attendance-keys">', modalAt);
+  /* BOUNDED BY THE NEXT DIALOG SINCE WO-3.61. The score grid's keys dialog wears this same
+     `<dl class="attendance-keys">` and sits further down index.html, so an unbounded search from this
+     modal's id would BORROW that list the day this one's class was changed — and the guards' own
+     "a second class on the list" case proved it, going from green to "no arm fired" the moment the
+     second dialog landed. A list past the next `modal-overlay` is not this modal's. */
+  const nextAt = modalAt < 0 ? -1 : html.indexOf('class="modal-overlay', modalAt + 1);
+  const anyDl = modalAt < 0 ? -1 : html.indexOf('<dl class="attendance-keys">', modalAt);
+  const dlAt = anyDl >= 0 && (nextAt < 0 || anyDl < nextAt) ? anyDl : -1;
   const dlEnd = dlAt < 0 ? -1 : html.indexOf('</dl>', dlAt);
   const legendHtml = dlAt < 0 || dlEnd < 0 ? '' : html.slice(dlAt, dlEnd);
 

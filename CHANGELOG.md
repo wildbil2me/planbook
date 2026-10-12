@@ -13,6 +13,23 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The Scores keys open a dialog, and Clear and Note get a key — 2026-10-12
+
+WO-3.61, owner-directed. The second of three passes that tidy Scores. Shell cache v189 → v190.
+
+- **⌨ opens a dialog, *Entering scores from the keyboard*,** in the same rows Attendance's keys
+  dialog uses. The strip that unfolded inside the panel is gone.
+- **`?` opens it from the Scores screen, including from inside a score cell**, and closing it puts
+  you back in that cell. Nothing is typed into the cell.
+- **C clears the cell**, score and mark together, exactly as the Clear button does. **N opens the
+  cell's note**, exactly as the Note button does, and does nothing under presentation mode, where
+  the Note button is hidden. Ctrl+C still copies.
+- **The flag bar reads *Clear (C)* and *Note (N)***, beside L, M and X.
+- **The first hint under the grid is two sentences and points at ⌨.** It now says Escape does
+  nothing *on the grid*; the dialog's last row says Escape closes it.
+- **Escape does not close the note panel** — only *Done* does. That was measured, not changed, and
+  the dialog's N row says *Done* rather than the drawing's *Enter or Esc*.
+
 ### The top of the Scores screen matches the other class screens — 2026-10-12
 
 WO-3.60, owner-directed. The first of three passes that tidy Scores. Shell cache v188 → v189.

@@ -4875,7 +4875,7 @@ WO-3.61's.
 
 ## WO-3.61 — the Scores keys open a dialog, and Clear and Note get a key
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.60
+**Ship** — · **Status** ✅ DONE — 2026-10-12 · **Size** M · **Depends on** WO-3.60
 **Closes roadmap** *(no box. Owner-directed, 2026-10-11.)*
 
 **Booked 2026-10-11** with WO-3.60, same drawing, frame D. On Attendance ⌨ opens a dialog and `?`
@@ -4926,17 +4926,17 @@ and the `modal-form` kind (WO-1.77).
 - **`TESTING.md` § WO-3.61**, the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] ⌨ opens a `modal-form` dialog holding a row for ↵, ⇥, ↑ ↓, ← →, L, M, X, C, ⌫, N and Esc.
+- [x] ⌨ opens a `modal-form` dialog holding a row for ↵, ⇥, ↑ ↓, ← →, L, M, X, C, ⌫, N and Esc.
       `#scoresKeys` does not exist, and every dialog in `index.html` still wears exactly one kind.
-- [ ] `?` pressed inside a score cell opens the dialog, writes nothing into the cell, and closing
+- [x] `?` pressed inside a score cell opens the dialog, writes nothing into the cell, and closing
       the dialog puts focus back in that cell.
-- [ ] C in a cell holding a score and a flag leaves it blank with no flag, as the Clear button does;
+- [x] C in a cell holding a score and a flag leaves it blank with no flag, as the Clear button does;
       `c` does the same. Ctrl+C in a cell still copies.
-- [ ] N in a cell opens that cell's note panel with focus in its field, as the Note button does; `n`
+- [x] N in a cell opens that cell's note panel with focus in its field, as the Note button does; `n`
       does the same. Under presentation mode N opens nothing and writes nothing into the cell.
-- [ ] The flag bar reads *Clear (C)* and *Note (N)*, and the first hint paragraph is frame A's.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] 👤 On the iPad with a keyboard attached, after a force-quit: `?`, C and N from a score cell,
+- [x] The flag bar reads *Clear (C)* and *Note (N)*, and the first hint paragraph is frame A's.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the iPad with a keyboard attached, after a force-quit: `?`, C and N from a score cell,
       and the dialog reads whole upright.
 
 **Traps** — **The character filter.** WO-3.25 refuses characters on their way into a score cell, so
@@ -4949,6 +4949,20 @@ Shift held, and refusing a modified letter refuses the capital (`handleScoreKey(
 `TESTING.md` rather than building it — it is not ruled.
 
 **Not in scope** — the column head (WO-3.62), and Attendance's own keys dialog.
+
+**Built 2026-10-12** — the record is `.claude/dispatch/WO-3.61-result.md` and `TESTING.md` § WO-3.61.
+- **The Traps' question has an answer: Escape does not close the note panel**, and neither does
+  Enter — only *Done* hands back to the cell. Not built, as the Traps said. It moved one row: frame
+  D's N row promised *Enter or Esc*, so the shipped row names *Done*, and a check in
+  `verify/score-notes.mjs` holds the row to the behaviour.
+- **`?` opens the dialog from anywhere on the Scores view that is not a field**, not only from a
+  score cell — ruling 2's "from the Scores screen". The note panel's field and the search box keep
+  `?` as a character.
+- **N under presentation mode is silent** — no announcement — because ruling 3 says it does nothing.
+  `openScoreNote()` keeps its own spoken refusal, which no tap can reach while the button is hidden.
+- **The new dialog exposed a hole in Attendance's legend read**: `readMarkingKeys()` searched for its
+  `<dl>` to the end of the document and borrowed the score dialog's the moment one of the guards
+  renamed Attendance's. Both reads now stop at the next dialog.
 
 ## WO-3.62 — the Scores column head gets lighter, and the name column narrower
 

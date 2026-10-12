@@ -57,7 +57,9 @@ const RULED = {
     'classesModal', 'termsModal', 'categoriesModal', 'letterScaleModal', 'signalsModal',
     'rosterPasteModal', 'rosterImportModal', 'studentModal', 'daysOffModal', 'eventsModal',
     'signalCardModal', 'attendanceHistoryModal', 'logSheetModal', 'backupModal',
-    'rosterModal', 'attendanceKeysModal'],
+    'rosterModal', 'attendanceKeysModal',
+    /* WO-3.61, the owner's ruling 1 of 2026-10-11: the score grid's keys, Attendance's twin. */
+    'scoresKeysModal'],
   'modal-confirm': ['classDeleteModal', 'categoryRemoveModal', 'outreachConfirmModal',
     'assignmentMoveModal', 'holdModal', 'assignmentDeleteModal', 'studentDeleteModal',
     'restoreConfirmModal', 'daysOffConfirmModal', 'teacherModal', 'drivePullModal',

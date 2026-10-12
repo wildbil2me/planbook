@@ -13675,6 +13675,108 @@ Argued in `src/scores.css`; the drawing's banner and README say so.
       surname order. "Everything looks good." The same reading ratified ruling 4's departure to
       `.attendance-find`'s flex values; see the work order's note under that ruling.
 
+### WO-3.61 — the Scores keys open a dialog, and Clear and Note get a key
+
+**What was built.** `index.html`: `#scoresKeys` and its eleven `nowrap` rows are gone; ⌨ opens
+`#scoresKeysModal` through the plain `data-modal-open` hook (`aria-haspopup="dialog"`, no
+`aria-expanded`, `aria-label="Keys"` kept, title *Keys — enter scores from the keyboard; press ? for
+the list*); the dialog is a `modal-form` in Attendance's own `.attendance-keys` rows with frame D's
+lead and eleven rows; the flag bar reads *Clear (C)* and *Note (N)*; the first hint paragraph is
+frame A's three sentences plus *Escape does nothing on the grid*. `src/shell.js`: `?` in a score cell
+opens the dialog with the cell as opener, caught before `handleScoreKey()` with `preventDefault`;
+`?` anywhere else on the Scores view that is not a field opens it with the focused element as
+opener; `data-scores-keys` and its route are gone. `src/scores.js`: C maps to the Clear button's own
+`applyFlag(at, 'clear')`; N calls `openScoreNote(input)` only when `scoreNotesVisible()` — the
+question that hides the Note button — and is swallowed either way; `keysOpen`, `paintKeys()`,
+`toggleScoreKeys()` and the strip's constants are gone; decision 4 is restated as the general rule
+it had become (search, pill and sort still lean on it). `src/scores.css`: `.scores-keys`,
+`.scores-key` and their coarse lines are gone; `.scores-keys-btn` stays on ⌨. `CACHE` v189 → v190.
+
+**The finding the Traps asked for.** *Does Escape already close the note panel and hand focus back?*
+**No.** Measured on the build (`verify/score-notes.mjs`): with the panel opened by `n`, Escape leaves
+it open with focus in the field, and so does Enter — only *Done* hands back to the cell. Not built,
+because it is not ruled. **It changed one dialog row**: frame D's N row says *Enter or Esc puts you
+back in the cell*, which is false on this build, so the shipped row says *Done puts you back in the
+cell; the note is already saved*, and a check holds the row to the measured behaviour — if a later
+work order makes Escape close the panel, that check goes red beside the row it has to reword.
+
+**A harness hole the new dialog exposed.** `verify/keys-legend-marking.mjs`'s `readMarkingKeys()`
+searched for `<dl class="attendance-keys">` from Attendance's modal to the end of the document. With
+a second dialog wearing that list further down, the guards' *"a second class on the `attendance-keys`
+list"* case stopped firing — the read borrowed the score dialog's list — and went from green to
+*"NO ARM FIRED"* the moment the dialog landed. Both reads now stop at the next `modal-overlay`, and
+the score read's new `<dl>` arm has its own case, which edits only the score dialog's list so it
+proves the same boundary from the other side.
+
+- [x] ⌨ opens a `modal-form` dialog holding a row for ↵, ⇥, ↑ ↓, ← →, L, M, X, C, ⌫, N and Esc.
+      `#scoresKeys` does not exist, and every dialog in `index.html` still wears exactly one kind.
+      — `verify/score-grid.mjs`, clicked through the real ⌨ at 1024px coarse: `"open":true,
+      "kinds":["modal-form"],"haspopup":"dialog","expanded":null,"focusIn":true,"stripGone":true`,
+      `<dt>` glyphs `↵ ⇥ ↑↓ ←→ L M X C ⌫ N Esc` in that order; every row inside the body at 1024 (body
+      640/640) and at 390 (panel 20–370 in 390, body 350/350); Escape closes it with focus back on ⌨.
+      `verify/keys-legend-scores.mjs` (static): 12 keys bound by `handleScoreKey()` against 11 rows,
+      no missing, no stray, `⇥` and `Esc` excepted by name. `verify/dialog-kinds.mjs`:
+      `scoresKeysModal` added to the `modal-form` row of the ruled table, and both the source check
+      (every `.modal-panel` exactly one kind) and the live check (no dialog in the page the table does
+      not rule) pass.
+- [x] `?` pressed inside a score cell opens the dialog, writes nothing into the cell, and closing
+      the dialog puts focus back in that cell.
+      — `verify/score-notes.mjs`: Shift+`?` (key `?`, text `?`) in Ada's essay holding 80, selected:
+      dialog open with focus inside, the field still `80`, the document byte-identical; Escape →
+      `"open":false,"on":"a332-essay/wo332-s1"`. And from a button: `?` with the sort toggle focused
+      opens the same dialog and Escape hands back to `scoresSort`.
+- [x] C in a cell holding a score and a flag leaves it blank with no flag, as the Clear button does;
+      `c` does the same. Ctrl+C in a cell still copies.
+      — `verify/score-notes.mjs`, Cy's quiz typed to `6` and marked late by keys, then cleared three
+      ways, the button first: every one ends `{"has":false,"cell":null,"field":"","flagged":false}`
+      from `{"v":6,"flag":"late"}`, and C and c are byte-identical to the button. **Ctrl+C**, a real
+      `Input.dispatchKeyEvent` with Ctrl held and the browser's own `copy` command attached: a
+      `window` listener (which runs after src/shell.js's `document` one) read `c+ctrl:false` — not
+      cancelled — one `copy` event fired, and the cell stayed `{"v":6,"flag":"late"}`, field `6`.
+      Ctrl+N dispatched as a synthetic event (a real one would open a window) read `n+ctrl:false` and
+      opened no note. The clipboard's contents were not read; the copy event is the evidence.
+- [x] N in a cell opens that cell's note panel with focus in its field, as the Note button does; `n`
+      does the same. Under presentation mode N opens nothing and writes nothing into the cell.
+      — `verify/score-notes.mjs`, Ben's essay (90, noted), button first: all three read
+      `{"open":true,"focusField":true,"field":"Wo332NoteOnTheLate","label":"Note on WO-3.32 Essay for
+      Ben Birch"}`, score untouched, and N and n byte-identical to the button. Presentation mode on
+      through `#presentationBtn`, a sentinel written into the live region, then N and n: panel shut
+      and empty, caret still in the cell, field `90`, document unchanged, and the live region still the
+      sentinel — N said nothing, as ruled.
+- [x] The flag bar reads *Clear (C)* and *Note (N)*, and the first hint paragraph is frame A's.
+      — `verify/score-notes.mjs`: the five buttons read `Late (L)`, `Missing (M)`, `Excused (X)`,
+      `Clear (C)`, `Note (N)`; the first `.scores-hint` reads, whitespace collapsed, *Type a score and
+      press Enter — the caret drops to the next student in the same assignment, so a class of
+      twenty-five is twenty-five numbers and no mouse. Every key is behind ⌨. Everything on this grid
+      is Q1, and every keystroke saves as you make it. Escape does nothing on the grid.* — frame A's
+      words, with ruling 5's reworded Escape sentence after them.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      — Full run `2033 checks · 2033 passed · 0 failed · 0 skipped`, 64,908 lines, 1083s, exit 0,
+      2026-10-12 on the real clock. `node tools/wo-sweep.mjs`: `50 checks · 47 passed · 0 failed · 3 to
+      review`, exit 0 — the three reviews are standing ones (sensitive field names outside
+      src/backup.js, due-date beside late/missing, the mockup banners), none about this work order;
+      its call-site check reads 2021, the number `tools/README.md` now records. `CACHE` `planbook-shell-v189` → `planbook-shell-v190`.
+- [x] 👤 On the iPad with a keyboard attached, after a force-quit: `?`, C and N from a score cell,
+      and the dialog reads whole upright.
+      — Read by the owner 2026-10-12 on the iPad with a hardware keyboard, after a force-quit at
+      v190, served locally: `?` in a scored cell opened the dialog with nothing typed and Esc handed
+      back to the cell; C blanked a scored, marked cell; N opened the note with the caret in its
+      field; N under presentation mode did nothing; the dialog read whole in portrait.
+
+**Planted faults**, each marked `MUTATION` in `src/`, run on a section-only copy of the harness
+(`localstorage-prefs` and `score-notes`), and reverted by copying the pre-mutation files back:
+- N's `scoreNotesVisible()` guard deleted, and Ctrl dropped from src/shell.js's modifier guard, in
+  one run: the presentation check went red with `"said":"Notes are hidden while presentation mode is
+  on."` (the sentinel replaced), and the Ctrl check went red with `"keys":["c+ctrl:true","n+ctrl:true"],
+  "copies":0,"panel":true,"field":""` — Ctrl+C cleared the cell and Ctrl+N opened the note.
+- C unmapped from `clear`, and the `?` cell branch disabled, in a second run: the static legend check
+  went red (`C` on the dialog and no longer bound), the C check went red (`{"has":true,"cell":{"v":6,
+  "flag":"late"},"field":"6","flagged":true}` for both keys), and the `?` check went red
+  (`"open":false`). The field still read `80` with the branch disabled — the `?` fell through to
+  WO-3.25's `beforeinput` filter, which refused it: the second line of defence the Traps name, holding.
+- `grep -rn MUTATION src/ index.html tools/ sw.js` afterwards: eighteen hits, every one prose that
+  was already in the tree at HEAD (the same count per file or fewer); no plant.
+
 ---
 
 ## Phase 4 — Signals: concern **and** praise
