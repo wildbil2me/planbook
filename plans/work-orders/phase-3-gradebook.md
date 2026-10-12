@@ -5099,7 +5099,7 @@ height is what the top `scroll-padding` covers; measure it after the change, do 
 
 ## WO-3.63 — the assignment editor's messages draw together, just above its buttons
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.58
+**Ship** — · **Status** ✅ DONE — 2026-10-12 · **Size** S · **Depends on** WO-3.58
 **Closes roadmap** *(no box. Owner-directed, 2026-10-12.)*
 
 **Booked 2026-10-12** out of [WO-3.58](#wo-358--the-dialogs-behind-the-assignments-and-scores-screens-are-read-together-and-a-layout-is-ruled),
@@ -5118,7 +5118,8 @@ frame 1. No stylesheet change is drawn: both elements keep their classes and the
 **Deliverables**
 - **`index.html`**: `#assignmentTermNote` and `#assignmentError` move to sit together directly before
   the editor's `.modal-actions`, after the two `.class-hint` paragraphs — the term note first and the
-  refusal last, nearest Done (the drawing's order; see the Open line). The markup comments at both
+  refusal last, nearest Done (the drawing's order, ruled by the owner at dispatch; see *Answered*
+  below). The markup comments at both
   move with them and say why they are there.
 - **`src/assignments.js`**: nothing should need to change — both are found by id. If a comment there
   says where either one sits, it is corrected.
@@ -5130,28 +5131,30 @@ frame 1. No stylesheet change is drawn: both elements keep their classes and the
   `index.html` is `SHELL` entry one.
 
 **Acceptance**
-- [ ] With the name blank, Done shows the refusal **above** the editor's buttons, the last thing
+- [x] With the name blank, Done shows the refusal **above** the editor's buttons, the last thing
       before them, and still focuses the Name field. The same from *Copy into other classes…*.
-- [ ] The amber term note, when it shows, sits in the same place, directly above the refusal (or
+- [x] The amber term note, when it shows, sits in the same place, directly above the refusal (or
       directly above the buttons when the refusal is not showing). Nothing draws after
       `.modal-actions` in the editor.
-- [ ] Both messages keep their wording and their colours; the refusal is still spoken by the live
+- [x] Both messages keep their wording and their colours; the refusal is still spoken by the live
       region.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] 👤 On the iPad, after a force-quit, upright: + New assignment, then Done with no name — the
-      refusal is seen without looking for it.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the iPad, after a force-quit, upright: + New assignment, then Done with no name — the
+      refusal is seen without looking for it. *(Read by the owner 2026-10-12 against v192: good.)*
 
-**Open — the owner, at dispatch.** (a) **The order inside the place**: the drawing puts the refusal
-last, touching Done, because it is about the tap just made; the other order is equally "one place."
-(b) **The accommodation prompt** (`[data-accommodation-prompt]`, WO-3.8): the drawing reads it as
-not a message — a panel about the category above it, with its own button — and leaves it under the
-fields. If the rule takes it too, it joins the place and this row grows a line.
+**Answered 2026-10-12, the owner, at dispatch: as drawn, both.** (a) **The order inside the place**:
+the term note first and the refusal last, touching Done, because the refusal is about the tap just
+made and is the one thing that can stop it. The other order would have been just as much "one
+place"; the drawing's was taken. (b) **The accommodation prompt** (`[data-accommodation-prompt]`,
+WO-3.8) **is not a message**: it is a panel about the category above it, with its own button, and in
+the message place it would put a sentence about students' accommodations directly on top of Done. It
+stays under the fields, and this row grows no line for it.
 
 **Traps** — **The refusal is focus-bearing**: `refuseBlankName()` puts the caret in the Name field,
 and on an iPad that raises the keyboard, which may cover the bottom of the dialog. Read the 👤 line
 with that in mind; if the keyboard hides the refusal, say so, and do not move it beside the field —
-the owner ruled that out. **Do not move the accommodation prompt** in this row unless the Open line
-is answered that way.
+the owner ruled that out. **Do not move the accommodation prompt** — the owner ruled it is not a
+message (*Answered*, above).
 
 **Not in scope** — every other dialog (WO-3.64, WO-3.65), and the wording of either message.
 

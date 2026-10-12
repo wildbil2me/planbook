@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2032 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2035 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2962,6 +2962,16 @@ they had asserted the coarse block DIFFERED — and the coarse pin check now ass
 width rather than a narrower one; none of those moved a site. None is a failure arm. Full run:
 `2044 checks · 2044 passed · 0 failed · 0 skipped`, 65,118 lines, 31.9 lines per check, 1077s, exit
 0, 2026-10-12 on the real clock. The planted faults are in `TESTING.md` § WO-3.62.
+
+**WO-3.63 moved it from 2032 to 2035, and the executed count from 2044 to 2047 — three sites, three
+results, no new file.** Two are in `verify/assignments.mjs`'s WO-3.50 block, beside its term-note
+checks: the note alone above the editor's buttons (on a close that stops and on an undated class's
+open), and the note and the refusal together, in that order. One is in `verify/copy-class.mjs`'s
+WO-3.56 block, beside its refusal check: the refusal alone above the buttons, from Done and from
+*Copy into other classes…*. All three read one exported reader, `READ_EDITOR_MESSAGES` in
+`verify/assignments.mjs`, which measures from `getBoundingClientRect()`. None is a failure arm. Full
+run: `2047 checks · 2047 passed · 0 failed · 0 skipped`, 65,281 lines, 31.9 lines per check, 1108s,
+exit 0, 2026-10-12 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

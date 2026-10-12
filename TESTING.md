@@ -14028,6 +14028,65 @@ discharges WO-3.57's ruling 3. Re-run on that tree: `wo-sweep.mjs` 48 · 0 · 3 
 
 ---
 
+### WO-3.63 — the assignment editor's messages draw together, just above its buttons
+
+**What was built.** `index.html`: in `#assignmentModal`, `#assignmentTermNote` (amber) and
+`#assignmentError` (red) now sit together directly before `.modal-actions`, after the two
+`.class-hint` paragraphs — the term note first, the refusal last and nearest Done, the owner's order
+at dispatch. Each carries its markup comment; the refusal had none and gained one. Nothing follows
+`.modal-actions` in the dialog body. The accommodation prompt (`[data-accommodation-prompt]`) did not
+move, and its comment now says why (the owner: it is not a message). No class, margin or wording
+changed. `src/assignments.js` needed nothing and no comment there names either element's place.
+`CACHE` v191 → v192. The harness reads one new exported reader, `READ_EDITOR_MESSAGES` in
+`tools/verify/assignments.mjs`, measured from `getBoundingClientRect()`. Both Open questions are
+recorded as answered in the work order, in `design/mockups/README.md`, and in frame 1's two captions
+in `design/mockups/dialog-messages.html`.
+
+**Measured at 1280×900, fine pointer** (the harness's viewport for both blocks): refusal alone,
+bottom 731.9 against the actions row's top 749.9; term note alone, 741.9 against 759.9; both,
+note 665.9–719.9, refusal 729.9–763.9, actions from 781.9. The 18px gap is `.modal-actions`' own top
+margin, and in every reading nothing else draws in it.
+
+**Mutation-proved by the verifier.** The implementer planted no fault (a second full run costs
+~18 minutes) and reasoned what the checks would see on the old layout. The verifier then ran it: in a
+scratch copy of the tree with `HEAD`'s `index.html` put back, exactly the three WO-3.63 checks went
+red and nothing else did. The real tree was not touched.
+
+- [x] With the name blank, Done shows the refusal **above** the editor's buttons, the last thing
+      before them, and still focuses the Name field. The same from *Copy into other classes…*.
+      — `verify/copy-class.mjs`, beside WO-3.56's refusal check: on a + New create with the name blank,
+      Done → refusal box `{"top":697.9,"bottom":731.9}`, actions `{"top":749.9,...}`, nothing drawn
+      between (`[]`), nothing below the row, nothing after it in the markup, `focused: true`. The same
+      create's *Copy into other classes…* → the same boxes, the copy wording, `focused: true`, and the
+      copy dialog not opened (`false`); that create's Cancel still removes the row.
+- [x] The amber term note, when it shows, sits in the same place, directly above the refusal (or
+      directly above the buttons when the refusal is not showing). Nothing draws after
+      `.modal-actions` in the editor.
+      — `verify/assignments.mjs`, beside WO-3.50's term-note checks: alone, both when a close stops
+      on dates no term holds and when the editor opens in a class with undated terms, the note's bottom
+      at 741.9 above the actions row at 759.9 with nothing between. With the name then cleared and Done
+      pressed, the note sits at 665.9–719.9, the refusal at 729.9–763.9, the actions at 781.9, and both
+      gaps are empty. `below` and `domAfter` are `[]` in every reading. Typing the name back takes the
+      refusal down and leaves the note directly above the buttons again.
+- [x] Both messages keep their wording and their colours; the refusal is still spoken by the live
+      region.
+      — Same two blocks, read from `getComputedStyle`: the refusal `rgb(192, 57, 43)` on
+      `rgb(253, 234, 234)`; the note `rgb(138, 109, 26)` on `rgb(255, 248, 230)`, border
+      `rgb(240, 223, 168)`. The refusal's text is matched exactly from both doors, and `#srLive` reads
+      the same text. The note is matched against WO-3.50's own wording. Neither string is written by
+      anything this row changed.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      — `node tools/verify-shell.mjs`: `2047 checks · 2047 passed · 0 failed · 0 skipped`, 65,281
+      lines, 1108s, exit 0, 2026-10-12, real clock. `node tools/wo-sweep.mjs`: `51 checks · 48 passed
+      · 0 failed · 3 to review`, exit 0. The 3 to review are the standing ones (sensitive field names,
+      due-date beside late/missing, and the three mockup banners); none is new. The call-site count in
+      `tools/README.md` went 2032 → 2035 from the sweep's own count. `sw.js`:
+      `planbook-shell-v191` → `planbook-shell-v192`.
+- [x] 👤 On the iPad, after a force-quit, upright: + New assignment, then Done with no name — the
+      refusal is seen without looking for it.
+      — **Read by the owner 2026-10-12 on the iPad against v192, reported good.** Served locally by
+      `serve-https.mjs`; the refusal shows above Done with the keyboard up, without scrolling.
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

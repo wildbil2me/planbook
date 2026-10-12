@@ -1263,12 +1263,23 @@ Each row names it in a **Surface** deliverable by hand, which is rule 9 kept rat
   ticked class each and stay under it; the foot note is the place for messages about the whole
   dialog. *(Open question 3, answered as drawn.)* Neither ruling books a row.
 
+## Decided, the owner, 2026-10-12, at WO-3.63's dispatch
+
+- **The editor's one place holds the term note first and the refusal last**, touching Done: the
+  refusal is about the tap just made and is the one thing that can stop it. *(Open question 1,
+  answered as drawn.)*
+- **The accommodation prompt is not a message.** It is a panel about the category picked above it,
+  with its own button, and stays under the fields; in the message place it would put a sentence about
+  students' accommodations directly on top of Done. WO-3.63 grows no line for it. *(Open question 2,
+  answered as drawn.)*
+
 ## The open questions, collected
 
 1. **Order inside the editor's one place** — the drawing puts the refusal last, touching Done. The
-   other order is equally "one place." *(Open on WO-3.63.)*
+   other order is equally "one place." *(**Answered 2026-10-12, the owner: as drawn** — see above.)*
 2. **The accommodation prompt** — the drawing reads it as not a message (a panel about the category
-   above it, with its own button) and leaves it under the fields. *(Open on WO-3.63.)*
+   above it, with its own button) and leaves it under the fields. *(**Answered 2026-10-12, the owner:
+   as drawn** — see above.)*
 3. **A copy line's amber flag** — the drawing leaves each on its own line rather than gathering them
    into the foot note. *(**Answered 2026-10-12, the owner: as drawn** — see above.)*
 4. **`#categoryError`** — move it (drawn) or delete it. *(Open on WO-3.64.)*

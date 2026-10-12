@@ -18,6 +18,9 @@ import { measureIn } from './touch-targets.mjs';
 /* Node's today — moved by `--today` with the page's — for the create door's copy, which is dated today
    and so goes into whichever of the fixture's quarters holds it (WO-3.49). */
 import { nodeToday } from './lib-dates.mjs';
+/* WO-3.63's reader of where the editor's messages draw, and the refusal's shipped red — defined once,
+   beside the term-note checks, so the refusal here and the note there are measured the same way. */
+import { READ_EDITOR_MESSAGES, EDITOR_RED } from './assignments.mjs';
 
 export async function run(h) {
 const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, waitForBoot, seam, openSettingsDoor } = h;
@@ -1414,6 +1417,7 @@ console.log('\n--- one assignment into several classes, one line per class (WO-3
   const fieldBefore = await read356();
   await doneBtn();
   const refused356 = await read356();
+  const refusedGeo = await evalJs(READ_EDITOR_MESSAGES);
   await typeName(EDITOR_NAME, '   ');
   await doneBtn();
   const refusedSpaces = await read356();
@@ -1443,6 +1447,47 @@ console.log('\n--- one assignment into several classes, one line per class (WO-3
     JSON.stringify({ refused: [refused356.editorOpen, refused356.error, refused356.fieldFocused],
       spaces: [refusedSpaces.editorOpen, refusedSpaces.fieldFocused], afterType: typedErr.error,
       done: doneOk.editorOpen, fresh: [preCancel5.fresh.length, cancel5.fresh.length] }));
+
+  /*
+    ── WO-3.63: THE REFUSAL DRAWS DIRECTLY ABOVE THE EDITOR'S BUTTONS, FROM EITHER DOOR ──
+
+    Beside WO-3.56's refusal check because it is the same refusal, now in its new place. Measured from
+    the drawn boxes (READ_EDITOR_MESSAGES, tools/verify/assignments.mjs), not from DOM order: its bottom
+    above the actions row's top, nothing drawn between them, nothing drawn below the row and nothing
+    after it in the markup. This fixture's quarters are dated, so the term note is not showing and the
+    refusal is the only message — the case with both is read beside WO-3.50's checks. Done's reading is
+    the one taken above; the copy door's is taken here, on a create of its own, then Cancelled.
+  */
+  await backToQ2();
+  await clickSel('#assignmentsView [data-assignment-new]');
+  await sleep(150);
+  const preDoor363 = await read356();
+  await clickSel('#assignmentCopyDoor');
+  await sleep(200);
+  const doorGeo = await evalJs(READ_EDITOR_MESSAGES);
+  const doorCopyOpen = await evalJs("!document.getElementById('assignmentCopyModal').classList.contains('hidden')");
+  await clickSel('#assignmentModal [data-assignment-create-cancel]');
+  await sleep(150);
+  const postDoor363 = await read356();
+  const refusalPlaced = (g) => g.open && !!g.err && !g.note && g.errAbove
+    && Array.isArray(g.toActions) && g.toActions.length === 0
+    && g.below.length === 0 && g.domAfter.length === 0 && g.focused && g.said === g.errText
+    && !!g.errLook && g.errLook.color === EDITOR_RED.color && g.errLook.bg === EDITOR_RED.bg;
+  check('WO-3.63: with the name blank, Done shows the refusal directly above the editor\'s buttons — its bottom '
+    + 'above the actions row\'s top, nothing drawn between, nothing drawn after .modal-actions — in its red, '
+    + 'spoken by the live region, the caret in the Name field; the same from Copy into other classes…, which '
+    + 'opens no copy dialog, and that create\'s Cancel still removes it',
+    refusalPlaced(refusedGeo)
+      && refusedGeo.errText === 'This assignment needs a name. Type one in the Name field, then press Done.'
+      && refusalPlaced(doorGeo) && !doorCopyOpen
+      && doorGeo.errText === 'This assignment needs a name before it is copied. Type one in the Name field, '
+        + 'and every copy starts from it.'
+      && preDoor363.editorOpen && !postDoor363.editorOpen
+      && postDoor363.fresh.length === preDoor363.fresh.length - 1,
+    JSON.stringify({ done: [refusedGeo.err, refusedGeo.actions, refusedGeo.toActions, refusedGeo.below,
+      refusedGeo.domAfter, refusedGeo.focused, refusedGeo.said.slice(0, 40), refusedGeo.errLook],
+      door: [doorGeo.err, doorGeo.actions, doorGeo.toActions, doorGeo.below, doorGeo.domAfter, doorGeo.focused,
+        doorGeo.said.slice(0, 40), doorCopyOpen] }));
 
   /* ── Acceptance 6: the ✕, Escape and the backdrop each close a blank name, and it takes one ── */
   const AMBER = { color: 'rgb(138, 109, 26)', bg: 'rgb(255, 248, 230)', left: 'rgb(224, 168, 0)',

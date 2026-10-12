@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The assignment editor's messages draw together, just above its buttons — 2026-10-12
+
+WO-3.63, the first case of WO-3.58's rule. `CACHE` v192.
+
+- **The *needs a name* refusal now sits directly above Done**, not under it where it was easy to
+  miss — from Done and from *Copy into other classes…* alike. It is not beside the Name field, by
+  the owner's ruling, and on the iPad it stays in view with the keyboard up.
+- **The amber *no term holds these dates* note sits just above it**, so the editor's two messages
+  are in one place. Neither message's wording or colour changed.
+- **The accommodation prompt did not move**: it is a panel about its category, not a message.
+
 ### The dialogs behind Assignments and Scores are read together, and a layout is ruled — 2026-10-12
 
 WO-3.58, owner-directed, out of WO-3.56's iPad reading. A design review; nothing in the app changed

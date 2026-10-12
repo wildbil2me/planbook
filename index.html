@@ -3495,8 +3495,8 @@
      AND SINCE WO-3.50 CLOSING IT CAN WRITE: the due date picks the term when the editor closes, and a
      blank due date takes the assigned one. So the paragraph says that too, and "Done" now closes a
      dialog that may have one thing left to settle — src/modal.js's close guard, set by src/shell.js,
-     is how all four ways out reach it. The amber line under the fields is the editor saying that no
-     term holds the dates; the confirm after this dialog is the scored move. -->
+     is how all four ways out reach it. The amber line above the buttons (WO-3.63) is the editor saying
+     that no term holds the dates; the confirm after this dialog is the scored move. -->
 <div class="modal-overlay hidden" id="assignmentModal">
   <div class="modal-panel modal-form" role="dialog" aria-modal="true" aria-labelledby="assignmentModalTitle">
     <div class="modal-header">
@@ -3523,12 +3523,13 @@
            narrows to individuals. docs/data-model.md § Accommodations rule 1.
 
            It sits under the fields and above the two hints because it is about the category picked
-           in them, and before the actions because it is something to read before tapping Done. -->
+           in them, and before the actions because it is something to read before tapping Done.
+
+           AND IT STAYS HERE WHEN THE EDITOR'S MESSAGES MOVE (WO-3.63, the owner, 2026-10-12): it is
+           not a message but a panel about the category above it, with its own button, and in the
+           message place it would put a sentence about students' accommodations directly on top of
+           Done. -->
       <div class="supports-panel accommodation-prompt hidden" data-accommodation-prompt></div>
-      <!-- WHY NO TERM HOLDS THESE DATES (WO-3.50), amber, empty and hidden at rest. Painted by
-           src/assignments.js at a close the dates cannot place — and from the moment the dialog
-           opens in a class whose terms carry no dates. Never painted from a keystroke. -->
-      <p class="assign-term-note hidden" id="assignmentTermNote"></p>
       <p class="class-hint">
         <strong>Both dates are plain dates, and a new assignment starts them on today.</strong>
         Type over either one, or clear it. <strong>The due date picks the term</strong> when you
@@ -3540,6 +3541,28 @@
         <strong>0 points is extra credit.</strong> Type it and it stays 0: a 0-point assignment
         scored 5 adds 5 to the category’s earned points and nothing to its possible ones.
       </p>
+      <!-- THE EDITOR'S MESSAGES, IN ONE PLACE, DIRECTLY ABOVE ITS BUTTONS (WO-3.63, the first case
+           of the owner's rule at WO-3.58: a dialog's messages — refusals, warnings, notes — draw above
+           its buttons, together). Until then the amber line sat under the fields and the red one
+           under Done, where the owner missed it on the iPad. Both keep their classes and margins;
+           .modal-actions' own top margin is what separates them from the buttons.
+
+           THE ORDER IS THE OWNER'S, 2026-10-12: the term note first and the refusal last, touching
+           Done, because the refusal is about the tap just made and is the one thing that can stop
+           it. NOT BESIDE THE NAME FIELD — that was ruled out, even though the refusal puts the
+           caret there and an iPad keyboard may then cover this corner of the dialog.
+           tools/verify/assignments.mjs and copy-class.mjs measure the place from the drawn boxes;
+           nothing may sit after .modal-actions.
+
+           WHY NO TERM HOLDS THESE DATES (WO-3.50), amber, empty and hidden at rest. Painted by
+           src/assignments.js at a close the dates cannot place — and from the moment the dialog
+           opens in a class whose terms carry no dates. Never painted from a keystroke. -->
+      <p class="assign-term-note hidden" id="assignmentTermNote"></p>
+      <!-- DONE'S REFUSAL OF A BLANK NAME (WO-3.56, ruling 4), red, empty and hidden at rest. Written
+           by src/assignments.js's refuseBlankName() — from Done or from Copy into other classes… —
+           which also speaks it through the one live region and puts the caret in the Name field;
+           typing a name takes it down. -->
+      <p class="class-error hidden" id="assignmentError"></p>
       <div class="modal-actions">
         <!-- DONE REFUSES A BLANK NAME (WO-3.56, the owner's ruling 4), so src/shell.js answers it by
              data-assignment-done ahead of the generic close; data-modal-close stays for every reader
@@ -3561,7 +3584,6 @@
         <button class="class-action-btn delete" id="assignmentDeleteDoor" type="button" data-assignment-delete
                 aria-haspopup="dialog">Delete…</button>
       </div>
-      <p class="class-error hidden" id="assignmentError"></p>
     </div>
   </div>
 </div>

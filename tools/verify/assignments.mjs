@@ -11,6 +11,64 @@
 import { nodeToday } from './lib-dates.mjs';
 import { INSTALL_CLASS_READER } from './classes-terms.mjs';
 
+/*
+  WHERE THE ASSIGNMENT EDITOR'S MESSAGES DRAW (WO-3.63) — one reader, used here beside WO-3.50's
+  term-note checks and imported by tools/verify/copy-class.mjs beside WO-3.56's refusal checks, so the
+  two places measure the one rule the same way.
+
+  Read off getBoundingClientRect(), not off DOM order: a message can sit first in the markup and still
+  draw somewhere else, and "above the buttons" is a claim about the glass. `between` lists every
+  visible child of the dialog body whose box overlaps a gap, other than the elements bounding it — so
+  an empty list is "nothing but the messages sits there". `below` is every visible child that draws
+  lower than the actions row, and `domAfter` every element after it in the markup, hidden or not.
+  `said` is the live region's text; announce() writes it 30ms late, so read this after a pause.
+*/
+export const READ_EDITOR_MESSAGES = `(function(){
+  var modal = document.getElementById('assignmentModal');
+  var body = modal ? modal.querySelector('.modal-body') : null;
+  var actions = body ? body.querySelector(':scope > .modal-actions') : null;
+  var err = document.getElementById('assignmentError');
+  var note = document.getElementById('assignmentTermNote');
+  function shown(el){ if (!el || el.classList.contains('hidden')) return false;
+    var r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; }
+  function box(el){ var r = el.getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; }
+  function label(el){ return el.id ? '#' + el.id : el.tagName.toLowerCase()
+    + (el.className ? '.' + String(el.className).trim().split(/\\s+/).join('.') : ''); }
+  var kids = body ? Array.prototype.filter.call(body.children, shown) : [];
+  function between(top, bottom, bounds){ return kids.filter(function(k){ if (bounds.indexOf(k) >= 0) return false;
+    var r = k.getBoundingClientRect(); return r.top < bottom - 0.5 && r.bottom > top + 0.5; }).map(label); }
+  function look(el){ var s = getComputedStyle(el);
+    return { color: s.color, bg: s.backgroundColor, border: s.borderTopColor }; }
+  var a = shown(actions) ? box(actions) : null;
+  var e = shown(err) ? box(err) : null;
+  var n = shown(note) ? box(note) : null;
+  var nearest = e || n;
+  var domAfter = [];
+  for (var x = actions ? actions.nextElementSibling : null; x; x = x.nextElementSibling) domAfter.push(label(x));
+  var field = document.querySelector('#assignmentFields [data-assignment-field="name"]');
+  return {
+    open: !!modal && !modal.classList.contains('hidden'),
+    actions: a, err: e, note: n,
+    errText: e ? err.textContent : '',
+    noteText: n ? note.textContent.replace(/\\s+/g, ' ').trim() : '',
+    errLook: e ? look(err) : null, noteLook: n ? look(note) : null,
+    errAbove: !!(e && a) && e.bottom <= a.top + 0.5,
+    noteAbove: !!(n && a) && n.bottom <= (e ? e.top : a.top) + 0.5,
+    toActions: nearest && a ? between(nearest.bottom, a.top, [err, note, actions]) : null,
+    noteToErr: n && e ? between(n.bottom, e.top, [err, note]) : null,
+    below: a ? kids.filter(function(k){ return k !== actions
+      && k.getBoundingClientRect().bottom > a.bottom + 0.5; }).map(label) : null,
+    domAfter: domAfter,
+    focused: !!field && document.activeElement === field,
+    said: (document.getElementById('srLive') || {}).textContent || ''
+  }; })()`;
+
+/* The two messages' shipped colours, as getComputedStyle reports them: `.modal-body .class-error`
+   in src/shell.css and `.modal-body .assign-term-note` in src/assignments.css. WO-3.63 moves both and
+   restyles neither. */
+export const EDITOR_RED = { color: 'rgb(192, 57, 43)', bg: 'rgb(253, 234, 234)' };
+export const EDITOR_AMBER = { color: 'rgb(138, 109, 26)', bg: 'rgb(255, 248, 230)', border: 'rgb(240, 223, 168)' };
+
 export async function run(h) {
 const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, seam,
   classesBooted, classSeam, openSettingsDoor } = h;
@@ -1437,6 +1495,7 @@ console.log('\n--- the due date picks an assignment\'s term in the editor (WO-3.
   const bareOpen = await read();
   await done();
   const bareStopped = await read();
+  const bareGeo = await evalJs(READ_EDITOR_MESSAGES);
   await done();
   const bareClosed = await read();
   check('WO-3.50: with both dates Cleared, the first Done stops and the editor says no term holds it and it '
@@ -1475,6 +1534,65 @@ console.log('\n--- the due date picks an assignment\'s term in the editor (WO-3.
       && /stays in Q1/.test(undOpen.termNote)
       && !undClosed.editorOpen && undClosed.a[UND].termId === U1 && undClosed.a[UND].due === '2026-11-12',
     JSON.stringify({ note: undOpen.termNote, a: undClosed.a[UND] }));
+
+  /*
+    ── WO-3.63: THE TERM NOTE DRAWS IN THE EDITOR'S ONE MESSAGE PLACE, DIRECTLY ABOVE ITS BUTTONS ──
+
+    Beside WO-3.50's term-note checks because these are the two ways it is painted: at a close the dates
+    cannot place (the both-dates-Cleared stop above, read as it stood), and from the moment the editor
+    opens in a class whose terms carry no dates (P3, below). Then, on that same open, the name is
+    cleared and Done pressed, so both messages show at once: the note first, the refusal under it,
+    touching the buttons — the owner's order of 2026-10-12. The name is typed back and the editor
+    closed the way a teacher would, so nothing after this section sees a change.
+  */
+  const typeEditorName = async (value) => {
+    await evalJs(`(function(){ var f = document.querySelector('#assignmentFields [data-assignment-field="name"]');
+      if (!f) return 0; f.value = ${JSON.stringify(value)}; f.dispatchEvent(new Event('input', { bubbles: true }));
+      return 1; })()`);
+    await sleep(120);
+  };
+  await toList(P3, U1);
+  await edit(UND);
+  const undGeo = await evalJs(READ_EDITOR_MESSAGES);
+  await typeEditorName('');
+  await done();
+  await sleep(100);
+  const bothGeo = await evalJs(READ_EDITOR_MESSAGES);
+  await typeEditorName('WO-3.50 Undated');
+  const retypedGeo = await evalJs(READ_EDITOR_MESSAGES);
+  await done();
+  const undAgain = await read();
+  if (undAgain.editorOpen) await closeAll350();
+  const noteAlone = (g) => g.open && !!g.note && !g.err && g.noteAbove
+    && Array.isArray(g.toActions) && g.toActions.length === 0
+    && g.below.length === 0 && g.domAfter.length === 0;
+  const amberKept = (g) => !!g.noteLook && g.noteLook.color === EDITOR_AMBER.color
+    && g.noteLook.bg === EDITOR_AMBER.bg && g.noteLook.border === EDITOR_AMBER.border;
+  check('WO-3.63: the amber term note, when it shows alone, draws directly above the editor\'s buttons — its '
+    + 'bottom above the actions row\'s top and nothing drawn between them, measured from the boxes — both when '
+    + 'a close stops on dates no term holds and when the editor opens in a class with undated terms; nothing '
+    + 'draws after .modal-actions, and the note keeps its amber',
+    noteAlone(bareGeo) && noteAlone(undGeo) && amberKept(bareGeo) && amberKept(undGeo)
+      && /no term holds it, and it stays in Q1/.test(bareGeo.noteText)
+      && /terms has its dates typed in, so no due date can pick a term/.test(undGeo.noteText),
+    JSON.stringify({ bare: [bareGeo.note, bareGeo.actions, bareGeo.toActions, bareGeo.below, bareGeo.domAfter,
+      bareGeo.noteLook], und: [undGeo.note, undGeo.actions, undGeo.toActions, undGeo.below, undGeo.domAfter] }));
+  check('WO-3.63: with the term note showing, Done on a blank name adds the refusal UNDER it — the note, then '
+    + 'the refusal, then the buttons, nothing drawn between any two — the refusal in its red and spoken by '
+    + 'the live region, the caret in the Name field; typing the name back takes the refusal down and leaves '
+    + 'the note where it was, and Done then closes',
+    bothGeo.open && !!bothGeo.note && !!bothGeo.err && bothGeo.errAbove && bothGeo.noteAbove
+      && bothGeo.noteToErr.length === 0 && bothGeo.toActions.length === 0
+      && bothGeo.below.length === 0 && bothGeo.domAfter.length === 0
+      && bothGeo.errText === 'This assignment needs a name. Type one in the Name field, then press Done.'
+      && bothGeo.said === bothGeo.errText && bothGeo.focused
+      && bothGeo.errLook.color === EDITOR_RED.color && bothGeo.errLook.bg === EDITOR_RED.bg
+      && amberKept(bothGeo)
+      && !retypedGeo.err && noteAlone(retypedGeo) && !undAgain.editorOpen,
+    JSON.stringify({ note: bothGeo.note, err: bothGeo.err, actions: bothGeo.actions, gaps: [bothGeo.noteToErr,
+      bothGeo.toActions], below: bothGeo.below, after: bothGeo.domAfter, said: bothGeo.said,
+      focused: bothGeo.focused, look: bothGeo.errLook, retyped: [retypedGeo.err, retypedGeo.note],
+      closed: !undAgain.editorOpen }));
 
   /* ── ACCEPTANCE 4: A MOVE THAT CARRIES SCORES ASKS FIRST, AND NO IS BYTE-IDENTICAL ── */
   await toList(P1, T1);
