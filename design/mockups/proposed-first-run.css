@@ -1,0 +1,118 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   PROPOSED STYLES — the first run, as one path: a landing page, then two ways in.
+
+   Drawn 2026-10-13 from plans/first-run.md, the owner's direction of 2026-10-12
+   and the three rulings of 2026-10-13 recorded there: the A/B question is a
+   rework of the home screen's empty state rather than a new screen, about.html is
+   shortened rather than the door getting words of its own, and the install
+   banner shortens on a laptop rather than disappearing. Every screen it draws is
+   in first-run-flow.html.
+
+   IT PROPOSES LITTLE, ON PURPOSE. The landing page is WO-8.16's door with fewer
+   words in it, so it wears src/front-door.css as shipped and adds one control:
+   the white button on the band, which is about.html's `.open-app`, value for
+   value. The import walkthrough is a stock `.modal-confirm`, and its last step is
+   the restore confirm's `.restore-side` card as it ships. The roster step is the
+   shipped Paste a roster dialog. What is genuinely new is three things: the two
+   choices in the empty state, the step strip that carries a teacher through
+   either path, and the option rows in the walkthrough's first step.
+
+   THE RULE THIS FILE OBEYS, from design/mockups/PROTOCOL.md rule 5: a pending
+   section styles no class src/*.css already styles. `front-door-start`,
+   `home-welcome`, `setup-steps` and `bring-option` are unclaimed today.
+
+   WHERE IT SPLITS ON LIFT:
+
+     § LANDING       →  src/front-door.css   (WO-8.6 — not yet lifted)
+     § WELCOME       →  src/home.css         (WO-8.6 — not yet lifted)
+     § SETUP STEPS   →  src/shell.css        (WO-8.6 — not yet lifted)
+     § BRING OPTION  →  src/shell.css        (WO-8.6 — not yet lifted)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.front-door-start, .bring-option {
+  touch-action: manipulation; user-select: none; -webkit-user-select: none;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § LANDING   →  src/front-door.css   (WO-8.6 — not yet lifted)
+
+   The one primary control on the landing page, on the band. about.html's
+   `.open-app`, value for value — white on the navy gradient, because an indigo
+   fill reads as a hole there (that page's own comment). It is a <button> here
+   rather than a link: on the door it takes the visitor into the app, or on an
+   iPad in Safari to the install step, and neither is a URL.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.front-door-start {
+  display: inline-flex; align-items: center;
+  margin-top: 18px; padding: 10px 20px; min-height: 44px;
+  background: #fff; color: #0d2137; border: none; border-radius: 10px;
+  font-family: inherit; font-weight: 700; font-size: 15px; cursor: pointer;
+}
+.front-door-start:hover { background: #eef2ff; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § WELCOME   →  src/home.css   (WO-8.6 — not yet lifted)
+
+   The empty state's one question, as two cards of equal weight. It replaces the
+   single primary (*Add your first class*) and the hairline doors under it
+   (WO-7.9's `.home-empty-or`), which this drawing moves into path B. The lead
+   and the line under it are the shipped `.home-empty-lead` / `.home-empty-text`.
+   Side by side at a laptop or a landscape iPad; stacked, A first, below 560px.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.home-welcome {
+  display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+  max-width: 620px; margin: 22px auto 0; text-align: left;
+}
+.home-welcome-choice {
+  flex: 1 1 260px; min-width: 0;
+  background: #f8f9fb; border: 1.5px solid #e0e4ea; border-radius: 12px;
+  padding: 16px 18px; display: flex; flex-direction: column;
+}
+.home-welcome-choice h3 { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+.home-welcome-choice p { font-size: 13px; line-height: 1.55; color: #6b7a8d; margin-top: 4px; flex: 1; }
+.home-welcome-choice > button { margin-top: 14px; align-self: flex-start; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § SETUP STEPS   →  src/shell.css   (WO-8.6 — not yet lifted)
+
+   Where a teacher is in a path of three dialogs. One strip, under the modal
+   header, the same in both paths — so A's three dialogs and B's three steps read
+   as one errand each rather than as unrelated windows. Text, not a control: a
+   step is reached by finishing the one before it, never by tapping the strip.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.setup-steps {
+  display: flex; gap: 6px; padding: 10px 20px;
+  background: #f8f9fb; border-bottom: 1px solid #eef0f4;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.4px; color: #a0aab8;
+}
+.setup-step { flex: 1 1 0; min-width: 0; border-top: 3px solid #e0e4ea; padding-top: 6px; }
+.setup-step.done { color: #27ae60; border-top-color: #27ae60; }
+.setup-step.now  { color: #5b6fcc; border-top-color: #5b6fcc; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § BRING OPTION   →  src/shell.css   (WO-8.6 — not yet lifted)
+
+   Path B's first question — where is your year? — as two full-width rows a
+   thumb can hit anywhere. A row is a <button>; its second line says what the
+   teacher will need, so she can tell the two apart without knowing the words
+   "sync" or "backup". A row that cannot be used here (Drive, while Google's
+   review is pending) is `:disabled` and carries its reason under it, rather than
+   vanishing — a missing door is a door a teacher goes looking for.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.bring-option {
+  display: block; width: 100%; text-align: left;
+  background: #fff; border: 1.5px solid #e0e4ea; border-radius: 10px;
+  padding: 12px 14px; margin-top: 8px; cursor: pointer; font-family: inherit;
+}
+.bring-option:hover:not(:disabled) { border-color: #5b6fcc; }
+.bring-option b { display: block; font-size: 14px; color: #1a1a2e; }
+.bring-option span { display: block; font-size: 12px; color: #6b7a8d; margin-top: 2px; line-height: 1.5; }
+.bring-option:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § TOUCH
+   ══════════════════════════════════════════════════════════════════════════════ */
+@media (pointer: coarse) {
+  .front-door-start { min-height: 44px; }
+  .bring-option { min-height: 44px; padding: 14px 16px; }
+}

@@ -1759,6 +1759,11 @@ then typed by hand, from a spreadsheet, one student at a time. That is roughly n
 students × five sections before the first class of the term, and the data is already in a file the SIS
 exports per class. The owner has that file. This work order reads it.
 
+*(**The SIS is Blackbaud** — recorded 2026-10-13, the owner; this row never named it. The eight-column
+layout below, with guardians on continuation rows, is Blackbaud's per-class contact export, and it is
+the only layout the importer reads. Another school's system will not match it; a column-mapping step
+for those files is a suggestion for later in [`plans/first-run.md`](../first-run.md), not booked.)*
+
 **The paste box is not extended and this is deliberate.** `openPaste()` takes a textarea of one name
 per line and its whole preview is *which half is the surname*. This file is eight columns, quoted,
 with a student's guardians on **continuation rows underneath them** — the same dialog cannot ask both

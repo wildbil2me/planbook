@@ -288,6 +288,13 @@ with acceptance criteria is the only defense.
   documentation and no warning screen.
 - A first-run flow that gets a teacher to their first attendance mark, following Roll Call!'s
   setup-flow skeleton.
+- **Surface — read [`design/mockups/first-run-flow.html`](../../design/mockups/first-run-flow.html)
+  first** (drawn 2026-10-13 from [`plans/first-run.md`](../first-run.md)). It draws the whole path:
+  a shorter landing page, the iPad-only install step, the empty state reworked into one question,
+  path A (class → students by CSV import or paste → attendance) and path B (bring a year from a backup file or Drive), and the
+  install banner shortened per device. Styled in `design/mockups/proposed-first-run.css`. **Not yet
+  ruled on** — the drawing's ten questions are the owner's, and this row is likely to be re-cut
+  into M/S rows along the drawing's frames once they are answered.
 
 **Acceptance**
 - [ ] A teacher who has never seen the app installs it and marks attendance for a real class without

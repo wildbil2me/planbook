@@ -42,7 +42,9 @@ dependencies.
   copied, no JavaScript, the black band on every page, never in `sw.js`'s precache, and a section whose
   target stylesheet does not exist yet may style no class `src/` already styles. `wo-sweep.mjs` § 19
   asserts all of that. **A drawing is not a work order:** what it raises is answered in the phase file
-  or it is not answered, and an amber note on a picture is not a tracker.
+  or it is not answered — or, while its design thread is open, in the thread's design note under
+  [`plans/design-threads.md`](plans/design-threads.md), until booking carries the answers into the work
+  orders — and an amber note on a picture is not a tracker.
 
 ## Data invariants
 

@@ -592,6 +592,16 @@ defined in [`.claude/agents/`](.claude/agents/); the scars behind its rules are 
 [`plans/verification-tooling.md`](plans/verification-tooling.md). Start a dispatch by checking the
 gates — `node tools/wo-gate.mjs next` — never by opening an editor.
 
+**Design is talked through and drawn before it is booked, and that is a design thread, not a work
+order** (the owner, 2026-10-13). A part of the app worth arguing as a picture gets one design note,
+`plans/<topic>.md`, with a status line — *talking → drawn → ruled → booked → built*, or *set aside* —
+and a row in [`plans/design-threads.md`](plans/design-threads.md), which is where to look for what is
+open and what it is waiting on. It stays outside the pipeline — no `wo-gate`, no dispatch, no
+`TESTING.md` section — because its risk is deciding the wrong thing, not building badly. The note is
+the one home of the thread's rulings and open questions until it is **cut into M/S work orders**,
+which link back to it; from then on the pipeline owns it. The first thread is
+[`plans/first-run.md`](plans/first-run.md).
+
 If you were dispatched *with* a work order, [`AGENTS.md`](AGENTS.md) has your rules. The two files
 must never drift apart: **a rule changed here is changed there in the same sitting.**
 
@@ -768,7 +778,9 @@ read by `wo-sweep.mjs` § 9 since WO-1.60, and never valid for `sw.js` or `index
   [`design/mockups/PROTOCOL.md`](design/mockups/PROTOCOL.md) — two stylesheets, `src/shell.css` linked
   and never copied, no JavaScript, the black band, and a pending section that styles nothing `src/`
   already styles. `wo-sweep.mjs` § 19 is the half of it a grep settles. **A drawing is not a work
-  order** (WO-1.25): the questions it raises are answered in the phase file or they are not answered.
+  order** (WO-1.25): the questions it raises are answered in the phase file or they are not answered
+  — or, while its design thread is open, in the thread's design note, until booking carries them
+  into the work orders (2026-10-13).
 - **`localStorage` prefix:** `planbook_`, and **UI preferences only** — never student data.
 - **License:** Apache 2.0, in [`LICENSE.md`](LICENSE.md) since 2026-08-21, owner-added. It is a
   **permissive** licence and that is a decision with a consequence rather than a formality: anyone
@@ -808,8 +820,12 @@ read by `wo-sweep.mjs` § 9 since WO-1.60, and never valid for `sw.js` or `index
 
 ## Working agreements with the teacher
 
-- The school's SIS remains the official record. It has **no usable export**, so rosters are pasted
-  and grades are re-keyed there by hand. Don't design around a sync that cannot exist.
+- The school's SIS — **Blackbaud** — remains the official record. It has **no usable grade export**,
+  so grades are re-keyed there by hand. Don't design around a sync that cannot exist. What it does
+  export is a per-class **contact list as CSV**, and that is the one file `src/roster-import.js`
+  (WO-1.23) reads: Blackbaud's layout, at fixed positions, and no other system's. *(This line said
+  "no usable export, so rosters are pasted" until 2026-10-13 — true of grades, and out of date for
+  rosters since WO-1.23 landed on 2026-08-18.)*
 - Grades are entered once or twice a week; attendance is marked at the start of every class. The
   attendance flow is on the critical path — it has to be fast enough to do while students arrive.
 - Five classes, reachable at a touch. The roster turns over every year; nothing may assume a fixed

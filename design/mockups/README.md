@@ -1309,3 +1309,51 @@ Each row names it in a **Surface** deliverable by hand, which is rule 9 kept rat
 7. **Scores: S1, S2 or neither** — **S1, the owner, 2026-10-12**, with the indigo note coming too
    and the scrolled-list case accepted (see above). *(**Answered 2026-10-12, the owner**; recorded
    on WO-3.66.)*
+
+---
+
+# First run, start to finish — WO-8.6, drawn 2026-10-13
+
+**The whole path, on one page.** [`first-run-flow.html`](first-run-flow.html) draws what a stranger
+walks from the landing page to either a first attendance mark or their own year opened on a new
+device. It is the drawing [`plans/first-run.md`](../../plans/first-run.md) asked for, after the
+owner found the deployed first run "wordy and uninviting" on 2026-10-12. It replaces nothing yet:
+[`front-door.html`](front-door.html) and [`first-run.html`](first-run.html) still draw what shipped.
+
+## What the drawing proposes
+
+Styled in [`proposed-first-run.css`](proposed-first-run.css): § LANDING → `src/front-door.css`,
+§ WELCOME → `src/home.css`, § SETUP STEPS and § BRING OPTION → `src/shell.css`, all WO-8.6 and not
+yet lifted. Everything else is worn as shipped — the door, the Paste a roster dialog, the restore
+confirm's `.restore-side` card, `.install-banner`.
+
+1. **① Landing** — the band, four one-line bullets, the privacy promise in one sentence, one
+   *Get started* button. No install steps. `about.html` shortens to match, so the door still lifts it.
+2. **② Install** — iPad or iPhone in Safari only, after *Get started*: three steps, one sentence of
+   why, *Use it in Safari for now* last and secondary. WO-8.16's ruling 4 kept.
+3. **③ The one question** — the empty state reworked: *Nothing is stored on this iPad yet*, then two
+   equal cards, *I'm new to Planbook* and *I already use Planbook*. WO-7.9's hairline doors move behind
+   the second. No install banner on this launch.
+4. **A** — three guided steps under a step strip: the class name only; then the students, by a
+   choice of the school system's contact-list `.csv` (WO-1.23's importer, drawn first because it
+   brings guardians and emails too) or the shipped roster paste; then the class's real attendance
+   screen with one dismissible line of how.
+5. **B** — three steps: *where is it?* (backup file first; Drive disabled with its reason while
+   Google reviews; the Safari-trap line), *get it*, then *Open this year here?* on one `.restore-side`
+   card with an indigo *Open it here* — nothing to destroy, so no red and no comparison.
+6. **⑥ The install banner** — two sentences per device; the iPad keeps ⚠ and the data-safety reason,
+   the laptop drops both. Not shown on the first launch after the door (an in-memory flag).
+
+## Decided before drawing — the owner, 2026-10-13
+
+- **The question is a rework of the empty state**, not a new screen between the door and the app.
+- **`about.html` is shortened** rather than the door getting words of its own.
+- **On a laptop the install banner is shortened**, not removed.
+
+## The open questions
+
+**Collected in the thread's design note, not here** —
+[`plans/first-run.md`](../../plans/first-run.md) § *Open questions*, which is where they are answered.
+This drawing is the first under [`plans/design-threads.md`](../../plans/design-threads.md), and that
+file's rule is one list per thread: the amber notes in the drawing, the collected list and answers in
+the note.

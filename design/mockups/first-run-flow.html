@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — First run, start to finish: a landing page, then two ways in</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="../../src/glance.css">
+<link rel="stylesheet" href="../../src/home.css">
+<link rel="stylesheet" href="../../src/front-door.css">
+<link rel="stylesheet" href="proposed-first-run.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWING, NOT THE APP.</strong>
+  <span>Static HTML. Nothing here detects a device, installs, signs in, reads a file or stores anything. Every name, count and time is typed in and invented.</span>
+  <span>First run, start to finish · Phase 8 · drawn 2026-10-13 · <a href="../../plans/first-run.md">plans/first-run.md</a> · <a href="../../plans/work-orders/phase-8-packaging.md">WO-8.6</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="front-door.html">Front door (as built)</a>
+  <a href="first-run.html">Drive / backup doors (as built)</a>
+  <a href="first-run-flow.html" class="here">First run, start to finish</a>
+</nav>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <symbol id="ic-backup" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+  <symbol id="ic-screen" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></symbol>
+  <symbol id="ic-sound" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></symbol>
+  <symbol id="ic-about" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+</defs></svg>
+
+<p class="mk-section">The whole path, on one line</p>
+<p class="mk-caption"><strong>① Landing</strong> (every device, not installed, nothing stored) → <strong>② Install</strong> (iPad in Safari only, and skippable) → <strong>③ The one question</strong> (the home screen's empty state, reworked) → either <strong>A</strong>: name a class → paste the roster → take attendance, or <strong>B</strong>: where is your year? → get it → open it here. <strong>Today</strong> a stranger meets the door's install manual, then the amber install banner, then <em>No classes yet</em> with the two ways in under a hairline — drawn in <a href="front-door.html">front-door.html</a> and <a href="first-run.html">first-run.html</a> and not repeated here.</p>
+<p class="mk-caption decided"><strong>Ruled 2026-10-13, before drawing.</strong> The question lives in the empty state, not on a new screen (so path B stays behind <code>untouchedYear()</code>, the only safe condition for replacing a year). <code>about.html</code> is shortened so the door can keep lifting its words. On a laptop the install banner is shortened, not removed.</p>
+
+<!-- ═══════════════════════════ ① LANDING ═══════════════════════════ -->
+
+<p class="mk-section">① Landing · every device, shown only to a visitor who is not installed and has nothing stored</p>
+<div style="max-width:900px;margin:12px auto 0;border:1px solid #c5ccd6;background:#f0f2f5">
+  <div class="front-door-band">
+    <div class="front-door-band-inner">
+      <h1>Planbook</h1>
+      <p>A gradebook and classroom assistant for teachers. Attendance, grades, the students who need you, and the messages that follow — all kept on your own device.</p>
+      <button class="front-door-start" type="button">Get started →</button>
+    </div>
+  </div>
+  <div class="front-door-main">
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title-row"><div class="panel-title"><h2>What it does</h2></div></div></div>
+      <div class="front-door-body">
+        <ul>
+          <li><strong>Attendance</strong> in seconds, while students are still walking in.</li>
+          <li><strong>Grades</strong> by weighted category, set up for each class.</li>
+          <li><strong>Who needs you</strong> — the students slipping, and the ones turning a corner.</li>
+          <li><strong>The note home</strong>, drafted for you and sent from your own email.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="front-door-body" style="padding-top:20px">
+        <p><strong>Your students’ information stays on your device.</strong> No account, and no server of ours ever sees it. <a href="#">Privacy policy</a> · <a href="#">Guide for administrators</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="mk-caption"><strong>One button, and no install steps.</strong> The band and the two panels are the whole page — about a screen on an iPad held upright. The pitch is four lines where <code>about.html</code> has five paragraph-bullets, and the privacy promise is one sentence where it has three bullets. The install steps, the iPad caution, the Firefox paragraph and the backup line are gone from this page; the iPad gets them on the next screen, and everyone else meets install as the banner’s one line later on.</p>
+<p class="mk-caption"><strong>Same words in <code>about.html</code>, per the ruling.</strong> Its <em>What it does</em> and <em>Where your students’ information goes</em> sections are cut to what is drawn here, so the door keeps lifting them and nothing is retyped. The pointers into <code>privacy.html</code> and <code>docs/FERPA.md</code> still carry the full argument.</p>
+<p class="mk-caption ask"><strong>Ask 1 — does <code>about.html</code> keep its <em>Installing it</em> section?</strong> It is the public page Google reviews and the page a principal is sent, and the door would no longer lift it. Proposed: keep it there, shortened to the two device step lists, because a reader who is not in the app still wants to know how. The door simply stops showing it.</p>
+<p class="mk-caption ask"><strong>Ask 2 — the button’s word.</strong> <em>Get started</em> is drawn. <em>Open Planbook</em> is <code>about.html</code>’s own word for the same white button, and using it here would make the two pages one sentence apart rather than two.</p>
+
+<!-- ═══════════════════════════ ② INSTALL (iPad Safari) ═══════════════════════════ -->
+
+<p class="mk-section">② Install · iPad or iPhone in Safari only — after <em>Get started</em></p>
+<div style="max-width:820px;margin:12px auto 0;border:1px solid #c5ccd6;background:#f0f2f5">
+  <div class="front-door-band">
+    <div class="front-door-band-inner">
+      <h1>Planbook</h1>
+      <p>One step before you start.</p>
+    </div>
+  </div>
+  <div class="front-door-main">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-row">
+          <div class="panel-title">
+            <h2>Add Planbook to your home screen</h2>
+            <p>Safari can clear a website’s data after a week unused. The home-screen app keeps it.</p>
+          </div>
+        </div>
+      </div>
+      <div class="front-door-body">
+        <ol>
+          <li>Tap <strong>Share</strong> in Safari’s toolbar — the square with the arrow.</li>
+          <li>Choose <strong>Add to Home Screen</strong>, then <strong>Add</strong>.</li>
+          <li>Open Planbook from the new icon.</li>
+        </ol>
+        <div class="front-door-actions">
+          <button class="class-action-btn" type="button">Use it in Safari for now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="mk-caption"><strong>WO-8.16’s ruling 4 stands: a door, not a gate.</strong> The steps come first and the way past is last and secondary. What changes is the amount: one sentence of why in the panel’s subtitle instead of an amber caution, and no <em>What it does</em> under it — the visitor has just read that. A laptop, a Chromebook and Firefox never see this screen; <em>Get started</em> takes them straight to ③.</p>
+<p class="mk-caption"><strong>Why install comes before the question, on this one device.</strong> Safari and the home-screen app keep separate storage. A teacher who sets up in Safari and installs afterwards opens the icon to an empty app with her year left behind in Safari. Installing first means no year is ever made in the wrong place.</p>
+<p class="mk-caption ask"><strong>Ask 3 — does the installed app’s first launch skip ① and ②?</strong> It does today and the drawing keeps it: an installed launch never sees the door, so opening the new icon goes straight to ③. Drawn that way because the visitor read the pitch a minute ago in Safari.</p>
+
+<!-- ═══════════════════════════ ③ THE ONE QUESTION ═══════════════════════════ -->
+
+<p class="mk-section">③ The one question · the home screen’s empty state, reworked — iPad, installed</p>
+<div style="max-width:1100px;margin:12px auto 0;border:1px solid #c5ccd6;background:#f0f2f5">
+<header class="header">
+  <div class="header-top">
+    <div class="header-left"><div class="header-logo" aria-hidden="true">📓</div><div class="header-title"><h1>Planbook</h1><p>Set up your year</p></div></div>
+    <div class="header-actions">
+      <button class="hdr-year-btn"><span>2026-2027</span><span aria-hidden="true">▾</span></button>
+      <button class="hdr-icon-btn" aria-label="Backup and restore"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-backup"/></svg></button>
+      <button class="hdr-icon-btn hdr-mode-btn" aria-label="Presentation mode is off"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-screen"/></svg></button>
+      <button class="hdr-icon-btn hdr-mode-btn" aria-label="Alert sounds are on"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-sound"/></svg></button>
+      <button class="hdr-icon-btn" aria-label="About Planbook"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#ic-about"/></svg></button>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <nav class="hdr-class-tabs" aria-label="Classes"><span class="hdr-empty">No classes yet.</span></nav>
+  </div>
+</header>
+<main class="main">
+  <div class="gl-stack">
+    <div class="panel">
+      <div class="empty-state">
+        <p class="home-empty-lead">Nothing is stored on this iPad yet.</p>
+        <p class="home-empty-text">Planbook keeps everything on the device you use it on.</p>
+        <div class="home-welcome">
+          <div class="home-welcome-choice">
+            <h3>I’m new to Planbook</h3>
+            <p>Add your first class and its students, then take attendance. About five minutes.</p>
+            <button class="class-action-btn primary" type="button">Set up a class</button>
+          </div>
+          <div class="home-welcome-choice">
+            <h3>I already use Planbook</h3>
+            <p>Bring your year here from your other device or from a backup file.</p>
+            <button class="class-action-btn primary" type="button">Bring my year here</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+<p class="mk-caption"><strong>Two equal choices, where today there is a primary and a footnote.</strong> <em>Add your first class</em> and the two hairline doors (<em>Open from Google Drive</em>, <em>Restore a backup file</em>) are gone from this screen; the doors move behind <em>Bring my year here</em>, path B below. The cards appear exactly when WO-7.9’s doors do — on an untouched year — so nothing about <em>when</em> changes, only what is drawn.</p>
+<p class="mk-caption"><strong>No install banner on this launch.</strong> In Safari, a visitor who just tapped <em>Use it in Safari for now</em> has read why a minute ago; on a laptop, a visitor who came through ① has nothing to be warned about yet. The banner waits for a later launch — see ⑥.</p>
+<p class="mk-caption"><strong>The lead names the device.</strong> <em>on this iPad</em> in the installed app, <em>in this browser</em> in a tab, <em>on this computer</em> in an installed laptop window — the same rule the door already follows when it says <em>in Safari</em>.</p>
+<p class="mk-caption ask"><strong>Ask 4 — both buttons primary?</strong> Drawn as two indigo buttons, because the point of the rework is that neither answer is the default. The alternative is A primary and B outlined, which is today’s weighting with a card around it.</p>
+<p class="mk-caption ask"><strong>Ask 5 — the header while it is empty.</strong> Drawn as it ships: year button, four icons, <em>No classes yet.</em> A stranger’s eye goes to five controls before the question. Hiding them until the first class exists is possible but is a second empty-state rule in the header; drawn unchanged so that it is a choice, not a drift.</p>
+
+<!-- ═══════════════════════════ A · NEW ═══════════════════════════ -->
+
+<p class="mk-section">A · I’m new — step 1 of 3: the class</p>
+<div class="mk-device">
+<div class="modal-panel modal-confirm" style="margin:0 auto;animation:none">
+  <div class="modal-header"><h2>Set up your first class</h2><button class="modal-close" aria-label="Close">✕</button></div>
+  <div class="setup-steps"><div class="setup-step now">1 · Class</div><div class="setup-step">2 · Students</div><div class="setup-step">3 · Attendance</div></div>
+  <div class="modal-body">
+    <p>What do you call this class out loud? That is the right name.</p>
+    <div class="class-form" style="margin-top:12px"><input class="class-input" type="text" value="English III — Period 2" aria-label="Class name"></div>
+    <div class="modal-actions">
+      <button class="class-action-btn primary" type="button">Next: add students</button>
+      <button class="class-action-btn" type="button">Cancel</button>
+    </div>
+    <p class="class-hint">You can add your other classes, terms and grading categories later from ⚙.</p>
+  </div>
+</div>
+</div>
+<p class="mk-caption"><strong>Only the name.</strong> The class manager asks for terms and categories too; here they take their defaults, and the hint says where they live. A teacher’s first five minutes are about getting one class to its first attendance mark — WO-8.6’s acceptance line — not about weighting.</p>
+<p class="mk-caption ask"><strong>Ask 6 — no “name the year” step.</strong> <code>plans/first-run.md</code> lists it. The drawing drops it: <code>boot()</code> has already named the year 2026-2027, and the year button changes it. A step that asks a question with a right answer already filled in is a step to tap through.</p>
+
+<p class="mk-section">A · step 2 of 3: the students — first, how they come in</p>
+<div class="mk-device">
+<div class="modal-panel modal-confirm" style="margin:0 auto;animation:none">
+  <div class="modal-header"><h2>Set up your first class</h2><button class="modal-close" aria-label="Close">✕</button></div>
+  <div class="setup-steps"><div class="setup-step done">1 · Class ✓</div><div class="setup-step now">2 · Students</div><div class="setup-step">3 · Attendance</div></div>
+  <div class="modal-body">
+    <p>How would you like to add the students in <strong>English III — Period 2</strong>?</p>
+    <button class="bring-option" type="button"><b>Import a Blackbaud contact list</b><span>The class’s contact export, as a <code>.csv</code> file. Brings names, emails, phone numbers and parents in one go.</span></button>
+    <button class="bring-option" type="button"><b>Paste the names</b><span>One student per line, copied from anywhere. You can add contacts later.</span></button>
+    <div class="modal-actions">
+      <button class="class-action-btn" type="button">Skip for now</button>
+    </div>
+  </div>
+</div>
+</div>
+<p class="mk-caption"><strong>The file leads, because it brings more.</strong> Both are shipped: the import is WO-1.23’s <em>Import contacts from a file</em>, the paste is <em>Paste a roster</em>. A teacher who imports the file has guardians and emails on day one, which is what Phase 5’s outreach needs; one who pastes has names only and fills contacts in later. <strong>The importer reads Blackbaud’s per-class contact export and no other layout</strong> — fine for this school, and a file from any other system is refused. A column-mapping step for other systems is a suggestion for later in <code>plans/first-run.md</code>, not drawn here. The rows are the same <code>.bring-option</code> as path B’s first step, so the two paths ask their one question the same way.</p>
+
+<p class="mk-section">A · step 2, by file — the shipped importer, with the strip on top</p>
+<div class="mk-device">
+<div class="modal-panel modal-form" style="margin:0 auto;animation:none">
+  <div class="modal-header"><h2>Set up your first class</h2><button class="modal-close" aria-label="Close">✕</button></div>
+  <div class="setup-steps"><div class="setup-step done">1 · Class ✓</div><div class="setup-step now">2 · Students</div><div class="setup-step">3 · Attendance</div></div>
+  <div class="modal-body">
+    <p>The contact list your school system exports for <strong>English III — Period 2</strong>, as a “.csv” file: student name, email and phone, the advisor, and one or two parents with their phone numbers and email addresses. Planbook shows you every student it read before it writes anything.</p>
+    <div class="modal-actions">
+      <button class="class-action-btn primary" type="button">Choose the file</button>
+      <button class="class-action-btn" type="button">Back</button>
+    </div>
+    <p class="roster-hint">Then the shipped review: every row split into surname and first name, the contacts under it, amber where Planbook was least sure — and <em>Import these students</em>.</p>
+  </div>
+</div>
+</div>
+<p class="mk-caption"><strong>The shipped dialog’s words, unchanged.</strong> What differs is the strip, the title, a <em>Back</em> to the choice, and a real button where the shipped dialog shows the browser’s bare file input.</p>
+
+<p class="mk-section">A · step 2, by paste — the shipped <em>Paste a roster</em>, with the strip on top</p>
+<div class="mk-device">
+<div class="modal-panel modal-form" style="margin:0 auto;animation:none">
+  <div class="modal-header"><h2>Set up your first class</h2><button class="modal-close" aria-label="Close">✕</button></div>
+  <div class="setup-steps"><div class="setup-step done">1 · Class ✓</div><div class="setup-step now">2 · Students</div><div class="setup-step">3 · Attendance</div></div>
+  <div class="modal-body">
+    <p>One student per line, into <strong>English III — Period 2</strong>. Paste straight out of your school system — “Van Dyke, Mary” or “Mary Van Dyke”, tabs between columns, a heading row, and a blank line at the end are all fine.</p>
+    <textarea class="paste-box" rows="6" spellcheck="false" aria-label="Paste your roster">Abernathy, Cole
+Delacroix, Imani
+Fenwick, Tobias
+Halloran, June
+Okafor, Nnamdi</textarea>
+    <div class="roster-actions">
+      <button class="class-action-btn primary" type="button">Check the names</button>
+      <button class="class-action-btn" type="button">Back</button>
+    </div>
+  </div>
+</div>
+</div>
+<p class="mk-caption"><strong>Nothing new but the strip, the title and <em>Back</em>.</strong> The paste, the name check and <em>Add these students</em> are the shipped dialog, unchanged. <em>Skip for now</em> lives on the choice above, because the class already exists and leaving should not read as undoing it.</p>
+<p class="mk-caption ask"><strong>Ask 10 — which comes first, file or paste?</strong> Drawn file first, because it brings contacts too. But the importer reads one layout — the Blackbaud contact export this school uses — so a teacher anywhere else meets a refusal on her first day if the file leads. Paste first is the safer order for a stranger; file first suits this school. <strong>Drawn around what ships:</strong> a names-from-any-file step and a contacts import later from the roster were discussed and set aside as future work in <code>plans/first-run.md</code>.</p>
+
+<p class="mk-section">A · step 3 of 3: attendance — the class’s own screen, with one line on top</p>
+<div style="max-width:900px;margin:12px auto 0;border:1px solid #c5ccd6;background:#fff;padding:14px 18px">
+  <div class="setup-steps" style="border:none;padding:0 0 12px"><div class="setup-step done">1 · Class ✓</div><div class="setup-step done">2 · Students ✓</div><div class="setup-step now">3 · Attendance</div></div>
+  <p style="font-size:13px;color:#5b6fcc;background:#eef2ff;border-radius:8px;padding:8px 11px">Tap each student as they arrive. Everyone you don’t tap stays <strong>not taken</strong> until you mark them. <span style="color:#8a9bb0">· Got it</span></p>
+  <p class="mk-caption" style="margin:12px 0 0">…the attendance screen exactly as it ships, for English III — Period 2, five students.</p>
+</div>
+<p class="mk-caption"><strong>The path ends on the real screen, not in a dialog.</strong> WO-8.6’s acceptance line is “marks attendance for a real class”, so the last step is the screen she will use every morning, with one dismissible line of how. The strip goes when the first mark is made.</p>
+<p class="mk-caption ask"><strong>Ask 7 — guided, or just doors?</strong> Drawn as a guided sequence: each step hands to the next, and the strip says where you are. The lighter alternative is no strip and no hand-offs — <em>Set up a class</em> opens the class manager as today, and the empty class card says <em>Paste a roster</em>. Guided costs a dialog mode the class manager does not have; doors cost nothing and leave the teacher to find step 2.</p>
+
+<!-- ═══════════════════════════ B · BRING YOUR YEAR ═══════════════════════════ -->
+
+<p class="mk-section">B · I already use Planbook — step 1 of 3: where is it?</p>
+<div class="mk-device">
+<div class="modal-panel modal-confirm" style="margin:0 auto;animation:none">
+  <div class="modal-header"><h2>Bring your year here</h2><button class="modal-close" aria-label="Close">✕</button></div>
+  <div class="setup-steps"><div class="setup-step now">1 · Where</div><div class="setup-step">2 · Get it</div><div class="setup-step">3 · Open it</div></div>
+  <div class="modal-body">
+    <p>Where is your school year now?</p>
+    <button class="bring-option" type="button"><b>In a backup file</b><span>The <code>.json</code> file from Planbook’s ⤓ button, on this device or in your Drive or email.</span></button>
+    <button class="bring-option" type="button" disabled><b>On my other device, synced to Google Drive</b><span>Not open to everyone yet — Google is still reviewing Planbook’s sign-in. Use a backup file for now.</span></button>
+    <p class="class-hint"><strong>Is it in Safari on this iPad?</strong> Safari and the home-screen app keep separate copies. Open Planbook in Safari, tap ⤓ and download a backup, then come back here and choose <em>In a backup file</em>.</p>
+  </div>
+</div>
+</div>
+<p class="mk-caption"><strong>The backup file leads, because it is the door that works for a stranger today.</strong> While the OAuth client is in Testing, only listed accounts can sign in, so Drive is drawn present and disabled with its reason — the wording is <code>TESTING_MODE_NOTE</code>’s, shortened. When Google approves, it becomes an ordinary row; on an account that is already a test user it is live now.</p>
+<p class="mk-caption"><strong>The Safari-trap line is the most likely real case</strong> — a teacher who tried it in Safari, then installed, and opened the icon to this screen. It is said once, here, in the step where it is the answer.</p>
+<p class="mk-caption ask"><strong>Ask 8 — the Drive row while Google is reviewing:</strong> disabled with a reason (drawn), or absent until approval, as the iPad’s LAN address does today. Disabled tells a stranger sync exists; absent avoids a door she cannot open.</p>
+
+<p class="mk-section">B · step 2 of 3: get it — the backup-file branch</p>
+<div class="mk-device">
+<div class="modal-panel modal-confirm" style="margin:0 auto;animation:none">
+  <div class="modal-header"><h2>Bring your year here</h2><button class="modal-close" aria-label="Close">✕</button></div>
+  <div class="setup-steps"><div class="setup-step done">1 · Where ✓</div><div class="setup-step now">2 · Get it</div><div class="setup-step">3 · Open it</div></div>
+  <div class="modal-body">
+    <p>Choose the backup file. It is named like <code>planbook-2026-2027-…json</code>.</p>
+    <div class="modal-actions">
+      <button class="class-action-btn primary" type="button">Choose the file</button>
+      <button class="class-action-btn" type="button">Back</button>
+    </div>
+    <p class="class-hint">On an iPad, look in <strong>Files → Downloads</strong>. On a computer, your Downloads folder.</p>
+  </div>
+</div>
+</div>
+<p class="mk-caption"><strong>The Drive branch is not drawn</strong> — it is WO-7.9’s, as built: Google’s own sign-in window, then the year it finds. Step 2 for Drive is that tap; step 3 is the same confirm below.</p>
+
+<p class="mk-section">B · step 3 of 3: open it here — the restore confirm’s card, as it ships</p>
+<div class="mk-device">
+<div class="modal-panel modal-confirm" style="margin:0 auto;animation:none">
+  <div class="modal-header"><h2>Open this year here?</h2><button class="modal-close" aria-label="Close">✕</button></div>
+  <div class="setup-steps"><div class="setup-step done">1 · Where ✓</div><div class="setup-step done">2 · Get it ✓</div><div class="setup-step now">3 · Open it</div></div>
+  <div class="modal-body">
+    <p>This is what is in the file you chose.</p>
+    <div class="restore-compare">
+      <div class="restore-side">
+        <div class="restore-side-label">In the file</div>
+        <div class="restore-side-year">2026-2027</div>
+        <div class="restore-side-line">5 classes · 128 students</div>
+        <div class="restore-side-line">164 recorded meetings · 3,412 marks</div>
+        <div class="restore-side-line">41 assignments · 2,077 scores</div>
+        <div class="restore-side-line">Last saved Mon 12 Oct, 3:41 pm</div>
+      </div>
+    </div>
+    <p class="restore-note">Nothing on this iPad is replaced — it has nothing in it yet.</p>
+    <div class="modal-actions">
+      <button class="class-action-btn primary" type="button">Open it here</button>
+      <button class="class-action-btn" type="button">Choose a different file</button>
+    </div>
+  </div>
+</div>
+</div>
+<p class="mk-caption"><strong>One card, not two, and an indigo button, not a red one.</strong> The shipped restore confirm compares <em>On this device</em> with <em>In the file</em> and asks <em>Replace</em> in red, because there it can destroy something. Here there is nothing to destroy — this path only exists on an untouched year — so the empty side is dropped, the verb is <em>Open</em>, and the button is primary. The facts are the shipped <code>.restore-side</code> lines, read from the file as today.</p>
+<p class="mk-caption"><strong>Then the home screen with her own classes,</strong> and the existing post-restore message. Not drawn.</p>
+
+<!-- ═══════════════════════════ ⑥ THE BANNER, LATER ═══════════════════════════ -->
+
+<p class="mk-section">⑥ The install banner, shortened — on a later launch, not the first</p>
+<div style="max-width:1100px;margin:12px auto 0;border:1px solid #c5ccd6;background:#f0f2f5;padding:10px">
+  <aside class="install-banner" style="margin:0">
+    <div class="install-banner-text">
+      <p><strong><span aria-hidden="true">⚠</span> Planbook isn’t installed on this iPad.</strong> Safari can erase its data after a week unused. Tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>, and open it from the icon.</p>
+    </div>
+    <button class="install-banner-dismiss">Not now</button>
+  </aside>
+  <p class="mk-caption" style="margin:10px 0 0">iPad or iPhone in Safari ↑ · laptop in Chrome or Edge ↓</p>
+  <aside class="install-banner" style="margin:10px 0 0">
+    <div class="install-banner-text">
+      <p><strong>Planbook isn’t installed on this computer.</strong> Installing gives it its own window and lets it open offline — use the install icon at the right-hand end of the address bar.</p>
+    </div>
+    <button class="install-banner-dismiss">Not now</button>
+  </aside>
+</div>
+<p class="mk-caption"><strong>Two sentences each, and each names the device it is on.</strong> Today one banner carries the iPad paragraph and both sets of steps on every device. The iPad keeps the ⚠ and the data-safety reason, because there it is true; the laptop drops both, because Chrome and Edge do not clear storage that way, and installing there is a better window, not a rescue. Both are the shipped <code>.install-banner</code>, worn as it is — this is a copy change in <code>index.html</code> and a device test, no new style.</p>
+<p class="mk-caption"><strong>Not on the first launch after the door.</strong> <em>Use it in Safari for now</em> hands off without a page load, so the build can hold the banner back for that launch with an in-memory flag — not a stored preference, which WO-8.16’s ruling 2 refused.</p>
+<p class="mk-caption ask"><strong>Ask 9 — the laptop banner’s colour.</strong> Drawn in the shipped amber. Amber in this app means “act on this”, and on a laptop nothing is at risk; the restore note’s quiet indigo would say “worth knowing” instead. That would be a second banner style, which the drawing does not propose without a ruling.</p>
+
+<!-- ═══════════════════════════ NOT IN THIS DRAWING ═══════════════════════════ -->
+
+<p class="mk-section">Not drawn</p>
+<p class="mk-caption"><strong>The stale-sync launch prompt.</strong> It is for a teacher who already has data, so first run never reaches it; <code>plans/first-run.md</code> moves it to Phase 7.</p>
+<p class="mk-caption"><strong>A returning teacher on a device that holds her year.</strong> She never sees any of this — the app opens on her classes, as today.</p>
+
+<!-- ═══════════════════════════ QUESTIONS ═══════════════════════════ -->
+
+<p class="mk-section">Questions this drawing asks</p>
+<p class="mk-caption ask"><strong>1 · <code>about.html</code>’s install section</strong> — kept there, unlifted by the door? Proposed: yes.</p>
+<p class="mk-caption ask"><strong>2 · The landing button’s word</strong> — <em>Get started</em> or <em>Open Planbook</em>.</p>
+<p class="mk-caption ask"><strong>3 · Installed first launch skips ① and ②</strong> — as today. Proposed: yes.</p>
+<p class="mk-caption ask"><strong>4 · Both choices primary</strong>, or A primary and B outlined.</p>
+<p class="mk-caption ask"><strong>5 · The header on an empty year</strong> — unchanged, or quieter until the first class.</p>
+<p class="mk-caption ask"><strong>6 · No “name the year” step.</strong> Proposed: dropped.</p>
+<p class="mk-caption ask"><strong>7 · Path A guided or just doors.</strong> Drawn guided.</p>
+<p class="mk-caption ask"><strong>8 · Drive while Google reviews</strong> — disabled with a reason, or absent.</p>
+<p class="mk-caption ask"><strong>9 · The laptop banner</strong> — amber, or a quieter colour.</p>
+<p class="mk-caption ask"><strong>10 · Students by file or paste first.</strong> Drawn file first; paste first is safer for a stranger, since the file must be Blackbaud’s.</p>
+
+</body>
+</html>

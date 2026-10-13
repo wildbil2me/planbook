@@ -147,6 +147,10 @@ file or they are not answered. So a room is not finished until, in
   settles — the shape Phase 3 used (`phase-3-gradebook.md`, WO-3.3 · 3.5 · 3.7) and Phase 4 copied.
 - **Every question that is the owner's gains an `Open` line in the work order it belongs to**, so it
   is answered by whoever cuts that row rather than by an implementer reading an amber note alone.
+  *(**A drawing inside a design thread defers this to booking** — 2026-10-13, the owner. While the
+  thread is open its questions live in its design note, `plans/<topic>.md`, and the work order gets
+  only the `Surface` pointer; each answered question reaches the work orders when the thread is cut
+  into them. See [`../../plans/design-threads.md`](../../plans/design-threads.md).)*
 
 That last one is what makes the pointer worth having, and `tools/wo-brief.mjs` then does the rest for
 free: it scans a work order for the files it references, so a drawing named in a `Surface` deliverable
@@ -161,7 +165,8 @@ follow** — Phase 3's drawings got their `Surface` lines and Phase 6's got noth
 and the guess was not the drawing's to make; green **DECIDED** when it has been answered, *in place* —
 "a drawing that quietly absorbs a decision loses the record of there having been a choice." Every
 question is also collected in [`README.md`](README.md), so it survives a reader who only looks at the
-pictures.
+pictures — **or, for a drawing inside a design thread, in the thread's design note**, which README's
+section then points at rather than copies (2026-10-13).
 
 ---
 
@@ -223,10 +228,13 @@ Two things it cannot check, and they are the two that matter most:
 
 ## What this protocol does not decide
 
-**Whether a drawing needs a work order.** Both rounds landed outside the pipeline and the practice
-survived it; `CLAUDE.md` says every change goes through a work order. The two have not been
-reconciled, and this file is not the place to do it — it is the owner's call, and it should be made
-against a real proposal rather than predicted here.
+~~**Whether a drawing needs a work order.**~~ **Decided 2026-10-13, the owner: it does not.** Design
+work — talking a part of the app through and drawing it before building — is a **design thread**,
+tracked in [`../../plans/design-threads.md`](../../plans/design-threads.md): one design note per
+thread with a status line, outside the pipeline, until it is ruled and cut into work orders. The
+first was `plans/first-run.md`, drawn as [`first-run-flow.html`](first-run-flow.html). *(This
+paragraph said the question was unreconciled and the owner's to make "against a real proposal"; that
+proposal was the first-run thread.)*
 
 **What gets drawn next.** The answer is derived, not maintained: read the `⬜ NOT STARTED` rows in
 [`../../plans/work-orders/README.md`](../../plans/work-orders/README.md) and ask which of them
