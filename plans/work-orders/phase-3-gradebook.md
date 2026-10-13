@@ -5389,20 +5389,31 @@ then taps the Scores pill, and the list's paint already fills **both** hosts fro
 so the Scores host is full before Scores renders at all. The check proves where the line sits on a
 no-roster screen and that `#scoresTop` is hidden around it; it does not prove that **Scores' own
 render** draws it. That render is the one that runs when a teacher reaches a no-roster class's Scores
-any other way — from home, from another class — and the one that must clear a note left by another
-class.
+any other way, such as from home. *(Clearing a note left by another class is WO-3.66's third
+Acceptance line and is already checked; it is not this work order's.)*
+
+**Re-cut 2026-10-12, owner-directed, after the first dispatch stopped.** As first booked, the route
+went through **another class's Scores** to empty the host. Built that way, it went red with no
+mutation in place: 2062 checks, 1 failed, WO-3.66 line 4, with the note missing from **both** hosts.
+That is not a defect. `src/list-note.js` § "When it is dropped" rules that a Scores render on another
+class or term **drops the note**, so any detour through another class deletes the note it was meant
+to test. An empty host and a live note cannot both be produced by a route through the app. **Do not
+try the detour again.** The record is `.claude/dispatch/WO-3.67-result.md`.
 
 **Deliverables**
-- **The line-4 check reaches Scores by a route that empties the host first**: after the blank close on
-  the list, visit another class's Scores screen (whose render empties the host), then come back to the
-  no-roster class's Scores from home. The existing assertions stay as they are.
+- **The line-4 check empties the Scores host by hand before Scores renders**: after the blank close
+  on the list, the fixture blanks `#scoresMoved` over `evalJs` and asserts that it is empty. Then it
+  reaches the no-roster class's Scores from home by a route that renders no assignment list on the
+  way. That leaves the note alive in `src/list-note.js` and the host empty, so only Scores' own
+  `paintListNote()` call can refill it. This is a test-only write to a view element and adds no
+  door to `src/`. The existing assertions stay as they are.
 - **A mutation**: delete Scores' paint call, show the reworked check go red, and revert it before
   writing anything else.
 - **`TESTING.md` § WO-3.67** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] WO-3.66's no-roster check reaches the no-roster class's Scores screen after another class's
-      Scores has painted the host, and still passes.
+- [ ] WO-3.66's no-roster check reaches the no-roster class's Scores screen with the Scores host
+      emptied by the fixture and no list rendered after it, and still passes.
 - [ ] With Scores' call to the note's paint deleted, that check goes red. The mutation is reverted, and
       `TESTING.md` § WO-3.67 shows the red output.
 - [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
@@ -5410,6 +5421,10 @@ class.
 
 **Traps** — **There is no `+ New assignment` on a no-roster Scores screen**: it lives in `#scoresTop`,
 which that state hides, so the note can only arrive from the list. Do not build a door to make the
-fixture easier. **If the reworked route goes red before the mutation**, that is a defect in
-`src/scores.js` and not in the fixture — stop and report it rather than adjusting the check. **Nothing in
+fixture easier. Blanking the host from the harness is not a door. **No route through another class
+or term can stand in for the hand-emptied host**, because that render drops the note (see the
+re-cut above). **If the reworked check goes red before the mutation**, read both hosts first. If the
+list host still holds the note and the Scores host does not, that is a defect in `src/scores.js`:
+stop and report it rather than adjusting the check. If both are empty, something dropped the note on
+the way. That is the route, so stop and report it as well. **Nothing in
 `src/` moves** if it passes, so no `CACHE` bump is owed.
