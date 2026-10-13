@@ -5375,7 +5375,7 @@ it, or the two screens drift. **The Scores screen hides its top row in "nothing 
 
 ## WO-3.67 — WO-3.66's no-roster check passes with the Scores screen's own paint deleted
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-3.66 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-13 · **Size** XS · **Depends on** WO-3.66 · **Blocks** nothing
 **Closes roadmap** *(no box. Owner-directed, 2026-10-12.)*
 
 **Booked 2026-10-12**, owner-directed, out of [WO-3.66](#wo-366--a-nameless-close-from-the-scores-screen-shows-its-warning-on-the-scores-screen)'s
@@ -5412,12 +5412,12 @@ try the detour again.** The record is `.claude/dispatch/WO-3.67-result.md`.
 - **`TESTING.md` § WO-3.67** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] WO-3.66's no-roster check reaches the no-roster class's Scores screen with the Scores host
+- [x] WO-3.66's no-roster check reaches the no-roster class's Scores screen with the Scores host
       emptied by the fixture and no list rendered after it, and still passes.
-- [ ] With Scores' call to the note's paint deleted, that check goes red. The mutation is reverted, and
+- [x] With Scores' call to the note's paint deleted, that check goes red. The mutation is reverted, and
       `TESTING.md` § WO-3.67 shows the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-3.67 carries these lines verbatim with the evidence for each.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-3.67 carries these lines verbatim with the evidence for each.
 
 **Traps** — **There is no `+ New assignment` on a no-roster Scores screen**: it lives in `#scoresTop`,
 which that state hides, so the note can only arrive from the list. Do not build a door to make the

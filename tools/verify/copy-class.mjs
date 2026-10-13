@@ -1877,16 +1877,47 @@ console.log('\n--- one assignment into several classes, one line per class (WO-3
   await sleep(200);
   await xClose();
   const s4list = await read366();
-  await scoresPill();
+  /* THE SCORES HOST EMPTIED BY HAND, AND SCORES REACHED WITHOUT A LIST (WO-3.67). The list's render
+     above has already filled BOTH hosts from src/list-note.js, so a Scores pill from here would find
+     the line drawn before Scores rendered at all — WO-3.66's verifier deleted Scores' paintListNote()
+     and this check stayed green. So the fixture blanks #scoresMoved itself, a test-only write to a
+     view element that adds no door to src/, and then walks home → P2's card → Attendance → the Scores
+     pill, a route that renders no assignment list on the way. The note is still alive in the module
+     and the host is empty, so only Scores' own paint can refill it.
+     NOT A DETOUR THROUGH ANOTHER CLASS OR TERM, and that is ruled rather than overlooked: a Scores
+     or list render on another class or term DROPS the note (src/list-note.js § "When it is
+     dropped"), so that route empties the host by deleting what it was meant to test — the first
+     dispatch of WO-3.67 went red that way with nothing mutated. And there is no + New assignment to
+     use instead: it lives in #scoresTop, which a no-roster class hides. */
+  const s4blank = await evalJs(`(function(){ var e = document.getElementById('scoresMoved');
+    e.textContent = ''; e.classList.add('hidden'); e.classList.remove('assign-moved-nameless'); return 1; })()`);
+  const s4emptied = await read366();
+  const nth367 = await evalJs(`(function(){ var all = document.querySelectorAll('[data-view-home]');
+    for (var i = 0; i < all.length; i++) { var r = all[i].getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) return i; } return -1; })()`);
+  if (nth367 >= 0) { await clickSel('[data-view-home]', nth367); await sleep(250); }
+  const s4home = await read366();
+  await clickSel('#homeGrid [data-class-tab="' + P2 + '"]');
+  await sleep(250);
+  const s4card = await read366();
+  await clickSel('#classView [data-class-screen="scores"]');
+  await sleep(250);
   const s4 = await read366();
   check('WO-3.66: on a class with no roster, the note still draws on Scores — #scoresTop hidden (its class and '
     + 'no height), the empty line saying there are no students, and the amber line drawn above where that '
-    + 'row sits, outside it',
+    + 'row sits, outside it — reached from home with the Scores host emptied by the fixture and no list '
+    + 'rendered after it (WO-3.67), so the line on Scores is Scores\' own paint',
     s4list.view === 'assignmentsView' && s4list.cls === P2 && s4list.list.note === NAMELESS
+      && s4blank === 1 && s4emptied.scores.note === '' && s4emptied.scores.h === 0
+      && s4emptied.list.note === NAMELESS
+      && s4home.view === 'homeView' && s4home.scores.note === ''
+      && s4card.view === 'classView' && s4card.cls === P2 && s4card.scores.note === ''
       && s4.view === 'scoresView' && s4.cls === P2 && s4.open === P2_START366
       && s4.topRow.hidden && s4.topRow.h === 0 && /has no students yet/.test(s4.empty)
       && s4.scores.note === NAMELESS && isAmber(s4.scores) && s4.scores.h > 0 && s4.order,
-    JSON.stringify(Object.assign(said366(s4), { empty: s4.empty.slice(0, 60) })));
+    JSON.stringify(Object.assign(said366(s4), { empty: s4.empty.slice(0, 60),
+      emptied: [s4blank, s4emptied.view, s4emptied.scores.note, s4emptied.scores.h, s4emptied.list.note.slice(0, 40)],
+      route: [s4home.view, s4home.scores.note, s4card.view, s4card.cls, s4card.scores.note] })));
   await closeIfOpen349();
   await toSourceList();
 

@@ -14435,6 +14435,66 @@ before anything else was written.**
       past-due prompt and above the summary row. *(The dispatch could not take this reading; the
       harness shows the line drawn, amber and placed, and the owner's eye is what closes it.)*
 
+### WO-3.67 — WO-3.66's no-roster check passes with the Scores screen's own paint deleted
+
+**What was built.** One fixture change, in `tools/verify/copy-class.mjs` § "Acceptance 4: a class with
+no roster". The blank close from P2's list is unchanged, and so is its reading (`s4list`). After it the
+fixture blanks `#scoresMoved` over `evalJs` (empty `textContent`, `hidden` added, the amber class
+taken off) and reads both hosts. Then it goes home, taps P2's card (which lands on Attendance,
+`classView`), and taps `#classView [data-class-screen="scores"]`. The note is still alive in
+`src/list-note.js` and the Scores host is empty, so only Scores' own `paintListNote()` can refill it.
+The existing assertions stay in the same check, unchanged. The new ones are added beside them: the
+blank applied, the Scores host reading `""` at height 0 straight after it, the list host still holding
+the note (so the note was not dropped), and on the way the views `homeView` and then `classView` for P2
+with the Scores host still empty. Neither of those is `assignmentsView`. The check's label gained a
+closing clause naming the route. It is still one check, so the count in `tools/README.md` does not
+move. **Nothing in `src/` changed**, so no `CACHE` bump is owed. Not built: any route through another
+class or term. That render drops the note (`src/list-note.js` § "When it is dropped"), and the first
+dispatch's red was exactly that.
+
+- [x] WO-3.66's no-roster check reaches the no-roster class's Scores screen with the Scores host
+      emptied by the fixture and no list rendered after it, and still passes.
+      — `node tools/verify-shell.mjs`, 2026-10-12, real clock, on the delivered tree:
+      `PASS | WO-3.66: on a class with no roster, the note still draws on Scores — … reached from home
+      with the Scores host emptied by the fixture and no list rendered after it (WO-3.67), so the line on
+      Scores is Scores' own paint :: {"view":"scoresView","open":"tm349_p2a","scores":["“Untitled
+      assignment” was saved without a name. Edit it to give it a name.",true,"rgb(138, 109,
+      26)","rgb(255, 248, 230)","rgb(224, 168, 0)",36],…,"top":{"hidden":true,"h":0,"t":0},"empty":"WO-3.49
+      English I P2 has no students yet, so there are no ro","emptied":[1,"assignmentsView","",0,"“Untitled
+      assignment” was saved without "],"route":["homeView","","classView","c_wo349_p2",""]}`.
+      In that output, `emptied` is the blank applied: the Scores host reads `""` at height 0, and the
+      list host still holds the note. `route` shows home, then P2's Attendance, with the Scores host
+      empty at both stops. The final reading shows the amber line drawn at 36px with `#scoresTop`
+      hidden.
+- [x] With Scores' call to the note's paint deleted, that check goes red. The mutation is reverted, and
+      `TESTING.md` § WO-3.67 shows the red output.
+      — `src/scores.js` ~1220: `paintListNote();` replaced with `/* MUTATION WO-3.67: paintListNote()
+      deleted */`, then `node tools/verify-shell.mjs` was run: `2061 checks · 2057 passed · 4 failed`,
+      1103s, `EXIT=1`. The reworked check:
+      `FAIL | WO-3.66: on a class with no roster, the note still draws on Scores — … (WO-3.67), so the
+      line on Scores is Scores' own paint :: {"view":"scoresView","open":"tm349_p2a","scores":["",false,
+      "rgb(61, 79, 158)","rgb(238, 242, 255)","rgb(91, 111, 204)",0],"list":["“Untitled assignment” was
+      saved without a name. Edit it to give it a name.",true],"order":true,"pastDue":{"shown":false,"b":0},
+      "top":{"hidden":true,"h":0,"t":0},"empty":"WO-3.49 English I P2 has no students yet, so there are no
+      ro","emptied":[1,"assignmentsView","",0,"“Untitled assignment” was saved without "],
+      "route":["homeView","","classView","c_wo349_p2",""]}`.
+      The Scores host is empty and the list host still holds the note, so the note was alive and only
+      Scores' paint was missing. That is the reading WO-3.66's verifier could not get. The other three
+      reds are WO-3.66's lines 1–3, the same ones its own mutation turned red. Reverted with
+      `git checkout -- src/scores.js`. `cmp` against a copy saved before the plant reads identical.
+      `grep -rn MUTATION src tools` afterwards finds only pre-existing prose (`src/shell.js:1070`,
+      `tools/README.md`, `keys-legend-guards.mjs`, `outreach.mjs`, `score-grid.mjs`,
+      `score-search.mjs`, `wo-gate.mjs:2800`). None of it was planted here.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs`: `2061 checks · 2061 passed · 0 failed · 0 skipped`, 65,828
+      lines, 1107s, `EXIT=0`, 2026-10-12, real clock. That run came before the mutation. The reverted
+      tree is byte-identical to the one it ran on (`cmp` on `src/scores.js`, and no other file was
+      touched in between). `node tools/wo-sweep.mjs`: `52 checks · 49 passed · 0 failed · 3 to
+      review`, exit 0. The three are the standing reviews. The sweep was run before the mutation and
+      again after the revert, with the same result both times.
+- [x] `TESTING.md` § WO-3.67 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

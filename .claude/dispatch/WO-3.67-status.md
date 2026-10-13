@@ -1,8 +1,11 @@
-# WO-3.67 dispatch status
-- 2026-10-12 21:08 gates PASS (dep WO-3.66 DONE, tree clean)
-- 2026-10-12 21:08 route Claude Opus — TESTING/CHANGELOG prose + stop-and-report trap (ROUTING § Route to Claude); Codex runner-up set aside, no probe run
-- 2026-10-12 21:08 --start ran: 🤖 CLAIMED — 2026-10-12 (window at 19.2M proxy units — near p25 death threshold)
-- 2026-10-12 21:08 brief written: .claude/dispatch/WO-3.67-brief.md
-- 2026-10-12 21:08 implementer spawned at Opus with .claude/dispatch/WO-3.67-brief.md, awaiting return (expect 20–40 min, flat trail normal)
-- 2026-10-12 21:31 implementer returned: STOPPED per Traps — reworked route red before any mutation (2061/2062); cause is list-note.js's decided drop-on-other-class rule, not a scores.js defect. Nothing delivered, copy-class.mjs reverted byte-identical. Proposed re-cut in result file.
-- 2026-10-12 21:31 --release ran: no build to verify, so no --handoff; WO needs owner re-cut before redispatch
+# WO-3.67 dispatch status — second dispatch (first record at 3b2c269)
+- 2026-10-12 gates PASS (dep WO-3.66 DONE, tree clean; prior brief/result/status from dispatch 1 are committed, overwritten here)
+- 2026-10-12 route Claude Opus — TESTING/CHANGELOG prose + stop-and-report trap (ROUTING § Route to Claude); Codex set aside without probe: harness 1110s/run x2 runs ~37 min > 20 min cap
+- 2026-10-12 --start ran: 🤖 CLAIMED — 2026-10-12 (window 19.1M proxy units, above p25 death threshold 16.4M — a death here is likely; a replacement resumes from this file)
+- 2026-10-12 brief written: .claude/dispatch/WO-3.67-brief.md (re-cut route: blank #scoresMoved by hand, reach P2 Scores from home with no list render)
+- 2026-10-12 21:37 removed dispatch-1 result file from tree (committed at 3b2c269) so a result file now means this dispatch returned
+- 2026-10-12 21:37 implementer spawned at Opus with .claude/dispatch/WO-3.67-brief.md, awaiting return (expect 40-60 min: two ~18.5 min harness runs; flat trail normal)
+- 2026-10-12 22:17 implementer returned: claims all 4 Acceptance lines met — clean 2061/2061 EXIT=0, mutated 4 failed EXIT=1 (reworked check red, Scores host empty, list host holds note), reverted, sweep green; changed copy-class.mjs + TESTING.md; CHANGELOG left as draft in result (claims, unverified)
+- 2026-10-12 22:17 --handoff ran: 🔍 AWAITING VERDICT; verifier owed in a fresh session
+- 2026-10-13 fresh session: gate PASS, row 🔍 AWAITING VERDICT; tree holds the 6 changed paths the return named; verifier spawning at Opus as a FIRST pass, awaiting verdict
+- 2026-10-13 verifier returned: PASS, 4/4 Acceptance ✅, no 👤; re-ran verify-shell 2061/2061 EXIT=0, sweep 52·49·0·3 EXIT=0, own mutation of src/scores.js paintListNote() -> 4 failed EXIT=1, reverted (cmp identical); CHANGELOG entry owed (draft in result lines 67-70). Awaiting owner go for --tick

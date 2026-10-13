@@ -13,6 +13,18 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### WO-3.66's no-roster check now tests the Scores screen's own paint — 2026-10-13
+
+WO-3.67, out of WO-3.66's verdict. Test-only: nothing in `src/` moved, no `CACHE` bump.
+
+- **The check that the "saved without a name" line draws on a no-roster class's Scores screen now
+  empties that screen's line itself and arrives from home**, through the class card, with no
+  assignment list drawn on the way. So it fails if Scores ever stops drawing the line on its own.
+  Before, it could pass because the list had drawn the line first.
+- **Mutation-proved**: with Scores' `paintListNote()` call deleted, the check goes red.
+- **No route through another class or term was used**, because that render drops the note. The first
+  dispatch failed on exactly that. Nothing a teacher sees changed.
+
 ### The sweep refuses an import loop in `src/` — 2026-10-12
 
 WO-1.81, out of WO-3.66's verdict. Tooling only: nothing in `src/` moved, no `CACHE` bump.
