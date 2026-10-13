@@ -185,6 +185,12 @@ import { paintPastDue } from './past-due.js';
    behind it. The import runs one way: nothing in src/accommodation-prompt.js knows this file
    exists. */
 import { paintAccommodationPrompt } from './accommodation-prompt.js';
+/* THE LIST'S NOTE (WO-3.50, WO-3.56), which since WO-3.66 lives in a module of its own because the
+   Scores screen draws it too, from the same note. This file sets it and paints it; it holds no copy.
+   The import runs one way — src/list-note.js imports neither this file nor src/scores.js, which is
+   the whole reason it exists (WO-3.66's ruling (d): src/scores.js importing a paint from here would
+   close a loop through src/held-column.js). */
+import { paintListNote, noteMovedWork, noteNameless, clearListNote } from './list-note.js';
 
 const EDITOR_MODAL_ID = 'assignmentModal';
 const COPY_MODAL_ID = 'assignmentCopyModal';
@@ -222,7 +228,6 @@ const MOVE_FACTS_ID = 'assignmentMoveFacts';
 const MOVE_BTN_ID = 'assignmentMoveBtn';
 const MOVE_KEEP_ID = 'assignmentMoveKeep';
 const EDITOR_TERM_NOTE_ID = 'assignmentTermNote';
-const LIST_NOTE_ID = 'assignmentsMoved';
 
 /*
   WHAT AN ASSIGNMENT WITH NO NAME IS CALLED (WO-3.56) — a fact, not a fallback string. Every reader in
@@ -336,14 +341,14 @@ let pendingMove = null;
 /* The term the list was showing when a create moved it onto today's term (ruling 1), so that the
    editor's Cancel — "Nothing was added" — can put the list back where the teacher had it. */
 let createdFromTermId = '';
-/* THE LIST'S NOTE (WO-3.50, ruling 1 and Acceptance 2): `{ classId, termId, text }` — what moved onto
-   the term on screen, and why. Since WO-3.56 it can also carry `nameless: true`, which is the warning
-   that an assignment was closed with no name and took one (ruling 5), drawn in amber. A VIEW STATE: drawn only while that class and that term are the ones
-   up, dropped the first time they are not, and never stored anywhere. */
-let listNote = null;
+/* THE LIST'S NOTE (WO-3.50, ruling 1 and Acceptance 2) — what moved onto the term on screen, and why,
+   and since WO-3.56 the amber warning that an assignment closed with no name took one (ruling 5). It
+   is NOT held here any more: since WO-3.66 it is src/list-note.js's, because the Scores screen draws
+   the same note and a copy here would be the second truth that work order's Trap names. This file
+   sets it through that module's setters and paints it through its paint. */
 /* THE SORT (WO-3.55): `{ classId, termId, column, reversed }`, or null for the teacher's order. A VIEW
    STATE held here and nowhere else — never in the document, never in `localStorage` (ruling 6). Keyed
-   by class and term the way `listNote` is, so the first render of any other class or term drops it;
+   by class and term the way the list's note is, so the first render of any other class or term drops it;
    src/shell.js's showClassScreen() clears it on every arrival, which is what makes leaving the list
    and coming back a return to the teacher's order. See "the sort" below. */
 let listSort = null;
@@ -743,19 +748,9 @@ function paintHintEmpty(byPoints) {
   up on a list the teacher did not choose: the list switched under her, and the note is the sentence
   that says so and why. Drawn only while the class and term it is about are the ones up; the first
   render on any other drops it, so going back to that term later does not bring back a note about a
-  move she has long since read.
+  move she has long since read. The paint and the amber modifier are src/list-note.js's since WO-3.66,
+  which draws the same note on the Scores screen; renderAssignments() calls it below.
 */
-function paintListNote(cls, termId) {
-  const el = document.getElementById(LIST_NOTE_ID);
-  if (listNote && !(cls && listNote.classId === cls.id && listNote.termId === termId)) listNote = null;
-  if (!el) return;
-  el.textContent = listNote ? listNote.text : '';
-  el.classList.toggle('hidden', !listNote);
-  /* THE AMBER MODIFIER (WO-3.56, ruling 5) is set for the nameless warning and for nothing else, and
-     taken off on every paint that is not one — the element is reused, so a moved-work note drawn
-     after a warning would otherwise inherit its amber. */
-  el.classList.toggle('assign-moved-nameless', !!listNote && !!listNote.nameless);
-}
 
 /* ────────────────────────────── the sort (WO-3.55) ──────────────────────────────
 
@@ -958,7 +953,7 @@ export function renderAssignments() {
 
   if (hintTerm) hintTerm.textContent = termLabel || 'this class';
   paintHintEmpty(!!cls && gradingModeOf(cls) === 'points');
-  paintListNote(cls, termId);
+  paintListNote();
   /* A sort set on another class or term is dropped here, as the note above is (WO-3.55, ruling 6):
      changing class or term returns the teacher's order, and coming back does not bring the sort. */
   const sort = activeSort(cls, termId);
@@ -1529,7 +1524,7 @@ export function openAssignmentEditor(id, opener) {
 
   ONE FUNCTION, HERE, RATHER THAN A selectTerm() IN src/shell.js AND A NOTE ASKED FOR AFTER — the
   choice the work order left to be argued. The reason is an ordering this file owns:
-  openAssignmentEditor() clears `listNote` on every open (beginSession(): "a note about an earlier move
+  openAssignmentEditor() clears the list's note on every open (beginSession(): "a note about an earlier move
   is not about the row now being edited"), which is right for the list's own doors and would wipe an
   arrival note set before it. The note has to be set AFTER the open, the term selected BEFORE it, and
   the list repainted once both have happened — three steps whose order is the whole of the feature,
@@ -1554,7 +1549,7 @@ export function openAssignmentFromCalendar(id, wasOnTermId, opener) {
     const placed = termContaining(cls.id, dateOf(assignment.due));
     const text = 'This list has moved to ' + termName(term) + ', the term ' + name
       + (placed && placed.id === term.id ? ' is due in.' : ' is filed in.');
-    listNote = { classId: cls.id, termId: term.id, text };
+    noteMovedWork(cls.id, term.id, text);
     announce(text);
   }
   /* Once, after both: the list behind the dialog is the assignment's term, with its note. Neither
@@ -1633,10 +1628,10 @@ export function createAssignment(opener) {
   if (assignment.termId !== term.id) {
     createdFromTermId = term.id;
     selectTerm(assignment.termId);
-    listNote = { classId: cls.id, termId: assignment.termId,
-      text: 'The new assignment is in ' + termName(placed) + ', not ' + termName(term) + ': a new '
+    noteMovedWork(cls.id, assignment.termId,
+      'The new assignment is in ' + termName(placed) + ', not ' + termName(term) + ': a new '
         + 'assignment is due today, today is in ' + termName(placed) + ', and the due date picks '
-        + 'the term. This list has moved to ' + termName(placed) + ' with it.' };
+        + 'the term. This list has moved to ' + termName(placed) + ' with it.');
   }
   showAssignmentError('');
   renderAssignments();
@@ -1674,7 +1669,7 @@ export function cancelCreatedAssignment() {
      there to follow (WO-3.50). Before endSession(), which forgets the term. */
   const back = createdFromTermId;
   endSession();
-  listNote = null;
+  clearListNote();
   if (back && getTerms(assignment.classId).some((t) => t.id === back)) selectTerm(back);
   editingId = '';
   creatingId = '';
@@ -1723,8 +1718,10 @@ function beginSession(assignment) {
   /* The order the list holds while this editor is open (WO-3.55, ruling 9), taken before anything
      below repaints it. */
   freezeOrder();
-  /* A note about an earlier move is not about the row now being edited. */
-  if (listNote) { listNote = null; renderAssignments(); }
+  /* A note about an earlier move is not about the row now being edited. clearListNote() takes it down
+     on every screen that draws it — the list and, since WO-3.66, Scores — so an editor opened over the
+     grid clears the grid's copy without rebuilding the grid. */
+  if (clearListNote()) renderAssignments();
 }
 
 function endSession() {
@@ -1877,7 +1874,7 @@ function applyPlan(assignment, cls, plan, follow) {
     selectTerm(plan.term.id);
     const moved = named + ' moved here from ' + termName(from) + ': ' + why
       + ', and the due date picks the term.' + carried;
-    listNote = { classId: cls.id, termId: plan.term.id, text: moved };
+    noteMovedWork(cls.id, plan.term.id, moved);
     if (naming) setNamelessNote(cls.id, plan.term.id, moved);
     announce(warn + 'Moved ' + named + ' to ' + termName(plan.term) + ', because ' + why + '. The list '
       + 'has moved to ' + termName(plan.term) + ' with it.' + carried);
@@ -1893,8 +1890,9 @@ function applyPlan(assignment, cls, plan, follow) {
   RULING 5'S VISIBLE WARNING (WO-3.56): on the list's note, the line under the list's head the
   moved-work note already uses, in amber. announce() is beside it at the call and is NOT the warning —
   it writes to an .sr-only region and draws nothing. Set for the class and the term the assignment is
-  now in, so it is drawn on that list and dropped by the first render of any other (paintListNote()),
-  the same view-state life the moved-work note has. When the same close also moved the work, both
+  now in, so it is drawn on that list — and on Scores for the same class and term, since WO-3.66 — and
+  dropped by the first render of any other (src/list-note.js's paintListNote()), the same view-state
+  life the moved-work note has. When the same close also moved the work, both
   sentences share the one line, the warning first, and the line is amber: the move is something to
   read and the warning is something to act on.
 
@@ -1904,12 +1902,9 @@ function applyPlan(assignment, cls, plan, follow) {
 function setNamelessNote(classId, termId, moved) {
   /* A note already up for this same list — a create that took the list onto today's term — is kept
      behind the warning rather than replaced by it: it is still true, and it is the only sentence
-     saying why the list is on a term the teacher did not pick. */
-  const standing = !moved && listNote && !listNote.nameless && listNote.classId === classId
-    && listNote.termId === termId ? listNote.text : '';
-  const after = moved || standing;
-  listNote = { classId, termId, nameless: true,
-    text: NAMELESS_WARNING + (after ? ' ' + after : '') };
+     saying why the list is on a term the teacher did not pick. That composition is src/list-note.js's
+     since WO-3.66, because it reads the note standing; the warning's words stay here. */
+  noteNameless(classId, termId, NAMELESS_WARNING, moved);
 }
 
 /*
@@ -3156,10 +3151,10 @@ export function confirmCopy(follow) {
   const selected = getSelectedClass();
   if (moved && follow && selected && selected.id === sourceClass.id) {
     selectTerm(moved.id);
-    listNote = { classId: sourceClass.id, termId: moved.id,
-      text: '“' + (source.name || UNTITLED_ASSIGNMENT) + '” moved here from ' + termName(fromTerm)
+    noteMovedWork(sourceClass.id, moved.id,
+      '“' + (source.name || UNTITLED_ASSIGNMENT) + '” moved here from ' + termName(fromTerm)
         + ' when it was saved with its copies: its due date, ' + shortDate(edits.due || source.due)
-        + ', is in ' + termName(moved) + ', and the due date picks the term.' };
+        + ', is in ' + termName(moved) + ', and the due date picks the term.');
   }
   renderAssignments();
   /* THE ANNOUNCEMENT NAMES THE SOURCE WHEN IT WAS SAVED (WO-3.49's Deliverables): a teacher who

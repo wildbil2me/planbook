@@ -173,6 +173,13 @@ import { gradedPieces, noGradeMessage } from './graded-pieces.js';
    owned somewhere, and a local copy of the comparison would be a second reader of the date that
    AGENTS.md forbids by name. */
 import { paintPastDue, pastDueAsksAbout } from './past-due.js';
+/* THE LIST'S NOTE (WO-3.66, the owner's ruling S1): the assignment list's line — work that arrived
+   from another term, and the amber warning that an assignment closed with no name took one — drawn
+   here too, between the past-due prompt and the summary row, from the ONE note src/list-note.js
+   keeps. Read, never copied: a second note here is a second truth. From that module and not from
+   src/assignments.js, which this file must not import — src/held-column.js imports this file, and
+   src/assignments.js imports src/held-column.js, so the import would close a loop (ruling (d)). */
+import { paintListNote } from './list-note.js';
 /* How a due date reads on a column head — `Sep 18`. THIS IS STILL THE ONLY DATE CODE ON THIS SCREEN
    AND IT STILL READS NO CLOCK (decision 1): src/date-text.js formats the string it is handed and
    asks nothing about today, so importing it spends none of that decision. It replaces the local copy
@@ -1205,6 +1212,12 @@ export function renderScores() {
      below the loop and every head answers about the class the teacher was on before — a wrong colour
      on a right date, which is the kind of stale nothing throws about. */
   paintPastDue();
+  /* THE LIST'S NOTE (WO-3.66), on the same side of the return as the prompt and for the reason ruling
+     (e) gives: a class with no roster is a "nothing to grade" state that hides #scoresTop, and the
+     note — about an assignment that is in this term — is still true there. Its host sits outside that
+     row in index.html, so the hide does not take it. A render on another class or term drops it, as
+     the list's own render does; src/list-note.js says why that is decided rather than inherited. */
+  paintListNote();
   if (emptyText) {
     const banner = document.getElementById(NO_GRADE_ID);
     if (banner) banner.classList.add('hidden');

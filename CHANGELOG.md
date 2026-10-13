@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A nameless assignment closed from Scores says so on Scores — 2026-10-12
+
+WO-3.66, the Scores screen's case of WO-3.58's rule. `CACHE` v195.
+
+- **Close a new assignment from Scores' + New assignment without naming it, and the amber "saved
+  without a name" line now appears on Scores**, under the past-due prompt and above the summary row.
+  Before, it was drawn only on the assignment list, so a teacher on Scores saw nothing.
+- **A new assignment that lands in another term says so in indigo on Scores too**, as the list does.
+- **It is one note, drawn on both screens.** Opening the editor again clears it from both, and another
+  class or term never shows it.
+
 ### The grade sheet says what is wrong before you print it — 2026-10-12
 
 WO-3.65, the third case of WO-3.58's rule. `CACHE` v194.

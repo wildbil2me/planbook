@@ -1688,6 +1688,208 @@ console.log('\n--- one assignment into several classes, one line per class (WO-3
   await closeIfOpen349();
   await backToQ2();
 
+  /*
+    ── THE SCORES SCREEN DRAWS THE LIST'S NOTE TOO (WO-3.66) ──
+
+    Beside WO-3.57's doors because it is the fourth: + New assignment on the Scores screen, which until
+    WO-3.66 set the amber warning on a list the teacher was not looking at. The owner's ruling S1 puts
+    the same line on Scores, between the past-due prompt and #scoresTop, read from the one note
+    src/list-note.js keeps. Every reading below is the Scores host's DOM and computed style — never
+    the live region, which draws nothing — and its place is read twice: in the markup (after
+    #scoresPastDue, before #scoresTop, and not inside it) and in the drawn boxes.
+
+    THE CLOCK. A create files under the term holding today (WO-3.50): Q1 on a real October clock, Q2
+    under --today in November. HERE is that term, worked out from the fixture's dates and nodeToday
+    and never asked of the app; a Scores screen opened on HERE draws the amber line alone, and one
+    opened on the other term draws the warning ahead of the indigo create note (Acceptance 2). With
+    no term holding today a create moves nothing, and that check says so rather than pretending.
+
+    Two past-due assignments of its own, one in each quarter with Odette's cell blank, so the prompt
+    is up for the ordering reading whenever its date has gone by; the reading says whether it was.
+
+    WHAT IS NOT HERE AND IS OWED TO A HUMAN: Acceptance 7 — whether the line is NOTICED on Scores,
+    upright on the teaching iPad after a force-quit. TESTING.md § WO-3.66 carries it.
+  */
+  const HERE366 = nodeToday >= Q1[0] && nodeToday <= Q1[1] ? 'tm349_src1'
+    : nodeToday >= Q2[0] && nodeToday <= Q2[1] ? 'tm349_src2' : '';
+  const START366 = HERE366 || 'tm349_src2';
+  const THERE366 = START366 === 'tm349_src1' ? 'tm349_src2' : 'tm349_src1';
+  const P2_START366 = START366 === 'tm349_src1' ? 'tm349_p2a' : 'tm349_p2b';
+  const LABEL366 = { tm349_src1: 'Q1', tm349_src2: 'Q2' };
+  await evalJs(`(async function(){ var s = window.planbook.store;
+    s.update(function(doc){
+      function a(id, termId, due){ doc.assignments.push({ id:id, classId:'${SRC}', termId:termId,
+        categoryId:'${SRC_ESSAYS}', name:'WO-3.66 Past due', points:10, assigned:due, due:due }); }
+      a('a366_pd1', 'tm349_src1', '2026-09-01'); a('a366_pd2', 'tm349_src2', '2026-11-02');
+    });
+    await s.flush(); return 1; })()`);
+  const READ366 = `(function(){
+    function look(id){ var e = document.getElementById(id); if (!e) return null;
+      var cs = getComputedStyle(e), r = e.getBoundingClientRect();
+      return { note: e.classList.contains('hidden') ? '' : e.textContent.replace(/\\s+/g, ' ').trim(),
+        amber: e.classList.contains('assign-moved-nameless'), color: cs.color, bg: cs.backgroundColor,
+        left: cs.borderLeftColor, top: cs.borderTopColor, h: r.height, t: r.top, b: r.bottom }; }
+    var host = document.getElementById('scoresMoved'), pd = document.getElementById('scoresPastDue'),
+      top = document.getElementById('scoresTop'), empty = document.getElementById('scoresEmpty');
+    var pr = pd.getBoundingClientRect(), tr = top.getBoundingClientRect();
+    var d = window.planbook.store.getDoc();
+    return { view: (function(){ var e = document.querySelector('main > :not(.hidden)'); return e ? e.id : ''; })(),
+      cls: window.planbook.classes.getSelectedClassId(), open: window.planbook.classes.getSelectedTermId(),
+      editorOpen: !document.getElementById('assignmentModal').classList.contains('hidden'),
+      scores: look('scoresMoved'), list: look('assignmentsMoved'),
+      order: !!(pd.compareDocumentPosition(host) & 4) && !!(host.compareDocumentPosition(top) & 4)
+        && !top.contains(host) && host.parentNode === top.parentNode,
+      pastDue: { shown: !pd.classList.contains('hidden') && pr.height > 0, b: pr.bottom },
+      topRow: { hidden: top.classList.contains('hidden'), h: tr.height, t: tr.top },
+      empty: empty && !empty.classList.contains('hidden') ? empty.textContent : '',
+      untitled: d.assignments.filter(function(a){ return a.name === 'Untitled assignment'; })
+        .map(function(a){ return a.id + '|' + a.classId + '|' + a.termId; }) }; })()`;
+  const read366 = async () => { await flush(); return evalJs(READ366); };
+  const scoresPill = async () => {
+    await clickSel('#assignmentsView [data-screen-nav] [data-class-screen="scores"]'); await sleep(250); };
+  const listPill = async () => {
+    await clickSel('#scoresView [data-screen-nav] [data-class-screen="assignments"]'); await sleep(250); };
+  const toScores366 = async (termId) => {
+    await closeIfOpen349();
+    await toSourceList();
+    await clickSel('#termNav [data-term-select="' + termId + '"]');
+    await sleep(200);
+    await scoresPill();
+  };
+  /* + New assignment on the Scores screen, then the ✕ with the name left blank. */
+  const blankFromScores = async () => {
+    const before = await read366();
+    await clickSel('#scoresView [data-assignment-new]');
+    await sleep(200);
+    const opened = await read366();
+    await xClose();
+    const after = await read366();
+    const made = after.untitled.filter((u) => before.untitled.indexOf(u) === -1);
+    return { before, opened, after, made, id: made.length === 1 ? made[0].split('|')[0] : '' };
+  };
+  /* The S1 place: in the markup, and in the drawn boxes — under the prompt when it is up, above the
+     summary row when that is up. */
+  const placed366 = (r) => r.order && r.scores.h > 0
+    && (!r.pastDue.shown || r.pastDue.b <= r.scores.t + 0.5)
+    && (r.topRow.hidden || r.scores.b <= r.topRow.t + 0.5);
+  const said366 = (r) => ({ view: r.view, open: r.open, scores: [r.scores.note.slice(0, 120), r.scores.amber,
+    r.scores.color, r.scores.bg, r.scores.left, r.scores.h], list: [r.list.note.slice(0, 120), r.list.amber],
+    order: r.order, pastDue: r.pastDue, top: r.topRow });
+
+  /* ── Acceptance 1: the amber line on Scores, in its place, and the same note on the list ── */
+  await toScores366(START366);
+  const s1 = await blankFromScores();
+  await listPill();
+  const s1list = await read366();
+  await scoresPill();
+  const s1back = await read366();
+  check('WO-3.66: a blank close from the Scores screen\'s + New assignment leaves the owner\'s sentence, in '
+    + 'amber, on the Scores screen (the DOM and computed style, not the live region) — between the past-due '
+    + 'prompt and the summary row, in the markup and drawn — and the list shows the same note for the same '
+    + 'class and term',
+    s1.before.view === 'scoresView' && s1.before.open === START366 && s1.opened.editorOpen
+      && s1.made.length === 1 && s1.made[0].split('|')[2] === START366
+      && !s1.after.editorOpen && s1.after.view === 'scoresView' && s1.after.open === START366
+      && s1.after.scores.note === NAMELESS && isAmber(s1.after.scores) && placed366(s1.after)
+      && s1.after.pastDue.shown === (nodeToday > (START366 === 'tm349_src1' ? '2026-09-01' : '2026-11-02'))
+      && s1list.view === 'assignmentsView' && s1list.open === START366
+      && s1list.list.note === s1.after.scores.note && isAmber(s1list.list)
+      && s1back.view === 'scoresView' && s1back.scores.note === NAMELESS && isAmber(s1back.scores),
+    JSON.stringify({ today: nodeToday, made: s1.made, after: said366(s1.after), list: s1list.list.note,
+      back: s1back.scores.note }));
+
+  /* ── Acceptance 3: opening the editor again takes it down on both screens ── */
+  await clickSel('#scoresView [data-assignment-edit="' + s1.id + '"]');
+  await sleep(200);
+  const s3open = await read366();
+  await xClose();
+  const s3closed = await read366();
+  /* ── and another term, or another class, does not draw it ── */
+  const s3t = await blankFromScores();
+  await clickSel('#termNav [data-term-select="' + THERE366 + '"]');
+  await sleep(250);
+  const s3there = await read366();
+  await clickSel('#termNav [data-term-select="' + START366 + '"]');
+  await sleep(250);
+  const s3backTerm = await read366();
+  const s3c = await blankFromScores();
+  await clickSel('#classTabBar [data-class-tab="' + P4 + '"]');
+  await sleep(300);
+  const s3other = await read366();
+  check('WO-3.66: opening the editor again clears the note from both screens — on the Scores host and the '
+    + 'list\'s, with the editor still up and after it closes — and another term or another class does not '
+    + 'draw it: the Scores screen on the other term, back on the first, and on another class are all bare',
+    !!s1.id && s3open.editorOpen && s3open.view === 'scoresView'
+      && s3open.scores.note === '' && s3open.scores.h === 0 && s3open.list.note === ''
+      && !s3closed.editorOpen && s3closed.scores.note === '' && s3closed.list.note === ''
+      && s3t.after.scores.note === NAMELESS && isAmber(s3t.after.scores)
+      && s3there.view === 'scoresView' && s3there.open === THERE366 && s3there.scores.note === ''
+      && s3there.list.note === ''
+      && s3backTerm.open === START366 && s3backTerm.scores.note === '' && s3backTerm.list.note === ''
+      && s3c.after.scores.note === NAMELESS && isAmber(s3c.after.scores)
+      && s3other.view === 'scoresView' && s3other.cls === P4 && s3other.scores.note === ''
+      && s3other.list.note === '',
+    JSON.stringify({ open: [s3open.editorOpen, s3open.scores.note, s3open.list.note],
+      closed: [s3closed.scores.note, s3closed.list.note], term: [s3t.after.scores.note.slice(0, 40),
+        s3there.open, s3there.scores.note, s3backTerm.open, s3backTerm.scores.note],
+      cls: [s3c.after.scores.note.slice(0, 40), s3other.view, s3other.cls, s3other.scores.note] }));
+
+  /* ── Acceptance 2: a create from Scores filed under another term — indigo, then amber ahead of it ── */
+  await toScores366(THERE366);
+  const s2pre = await read366();
+  await clickSel('#scoresView [data-assignment-new]');
+  await sleep(200);
+  const s2open = await read366();
+  await xClose();
+  const s2out = await read366();
+  const createNote = HERE366 ? 'The new assignment is in ' + LABEL366[HERE366] + ', not ' + LABEL366[THERE366]
+    + ': a new assignment is due today, today is in ' + LABEL366[HERE366] + ', and the due date picks the '
+    + 'term. This list has moved to ' + LABEL366[HERE366] + ' with it.' : '';
+  await listPill();
+  const s2list = await read366();
+  check('WO-3.66: a create from Scores filed under another term draws the indigo moved note on Scores, from the '
+    + 'same note — and a blank close then draws the whole note, the amber warning ahead of the indigo '
+    + 'sentence on one line, on Scores and on the list alike'
+    + (HERE366 ? '' : ' (NOT EXERCISED: no fixture term holds ' + nodeToday + ', so a create moves nothing — '
+      + 'read here as no move and no indigo)'),
+    HERE366
+      ? s2pre.open === THERE366 && s2open.editorOpen && s2open.view === 'scoresView' && s2open.open === HERE366
+        && s2open.scores.note === createNote && isIndigo(s2open.scores) && s2open.list.note === createNote
+        && !s2out.editorOpen && s2out.view === 'scoresView' && s2out.open === HERE366
+        && s2out.scores.note === NAMELESS + ' ' + createNote && isAmber(s2out.scores) && placed366(s2out)
+        && s2list.view === 'assignmentsView' && s2list.list.note === s2out.scores.note && isAmber(s2list.list)
+      : s2open.open === THERE366 && s2open.scores.note === '' && s2out.scores.note === NAMELESS,
+    JSON.stringify({ here: HERE366, open: said366(s2open), out: said366(s2out), list: s2list.list.note }));
+
+  /* ── Acceptance 4: a class with no roster — #scoresTop hidden, and the note drawn all the same ── */
+  await closeIfOpen349();
+  const nth366 = await evalJs(`(function(){ var all = document.querySelectorAll('[data-view-home]');
+    for (var i = 0; i < all.length; i++) { var r = all[i].getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) return i; } return -1; })()`);
+  if (nth366 >= 0) { await clickSel('[data-view-home]', nth366); await sleep(250); }
+  await clickSel('#homeGrid [data-class-tab="' + P2 + '"]');
+  await sleep(250);
+  await clickSel('#classView [data-class-screen="assignments"]');
+  await sleep(250);
+  await clickSel('#termNav [data-term-select="' + P2_START366 + '"]');
+  await sleep(200);
+  await clickSel('#assignmentsView [data-assignment-new]');
+  await sleep(200);
+  await xClose();
+  const s4list = await read366();
+  await scoresPill();
+  const s4 = await read366();
+  check('WO-3.66: on a class with no roster, the note still draws on Scores — #scoresTop hidden (its class and '
+    + 'no height), the empty line saying there are no students, and the amber line drawn above where that '
+    + 'row sits, outside it',
+    s4list.view === 'assignmentsView' && s4list.cls === P2 && s4list.list.note === NAMELESS
+      && s4.view === 'scoresView' && s4.cls === P2 && s4.open === P2_START366
+      && s4.topRow.hidden && s4.topRow.h === 0 && /has no students yet/.test(s4.empty)
+      && s4.scores.note === NAMELESS && isAmber(s4.scores) && s4.scores.h > 0 && s4.order,
+    JSON.stringify(Object.assign(said366(s4), { empty: s4.empty.slice(0, 60) })));
+  await closeIfOpen349();
+  await toSourceList();
+
   /* ── THE WIDE LIST (Acceptance 8) ── at 1280px under a fine pointer, and either side of the measured
      919/920 breakpoint src/assignments.css records. Read with the source and three classes on. */
   const LAYOUT349 = `(function(){

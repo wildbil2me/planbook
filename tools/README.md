@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2045 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2049 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -2996,6 +2996,20 @@ expected sentence copied short of its last clause, and **`innerText` applies `te
 the sheet's label reads `GRADES BY STUDENT` on paper and a mixed-case `indexOf` finds nothing. Full
 run: `2057 checks · 2057 passed · 0 failed · 0 skipped`, 65,595 lines, 31.9 lines per check, 1088s,
 exit 0, 2026-10-12 on the real clock.
+
+**WO-3.66 moved it from 2045 to 2049, and the executed count from 2057 to 2061 — four sites, four
+results, no new file.** All four are in `verify/copy-class.mjs`, after WO-3.57's door checks: the
+Scores screen's `+ New assignment` closed blank, read off `#scoresMoved`'s DOM and computed colours
+and its place (after `#scoresPastDue`, before and outside `#scoresTop`, in the markup and in the drawn
+boxes); the editor reopened from the grid's column head and the note gone from both hosts, then
+another term and another class bare; a create from the other term, indigo and then amber ahead of
+it; and a class with no roster, `#scoresTop` hidden with the note still drawn. The create-term case
+reads the clock through `nodeToday` and says so in its name when no fixture term holds today. None is
+a failure arm. **Its first run went red on the precache check, an app error the harness caught:** a
+comment added inside `sw.js`'s `SHELL` array carried an apostrophe (*list's*), and
+`verify/precache.mjs` reads that array's quoted strings, so every entry after it read as missing.
+Full run: `2061 checks · 2061 passed · 0 failed · 0 skipped`, 65,797 lines, 31.9 lines per check,
+1101s, exit 0, 2026-10-12 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

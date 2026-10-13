@@ -13563,7 +13563,7 @@ the warning.
 | The name on a list row (`data-assignment-edit`, `src/shell.js`) | **Yes.** The row is on the list that is up, so the note is set for the term on screen. Unchanged by this work order. |
 | `+ New assignment` (`data-assignment-new`) | **Yes.** A create filed under another term moves the list there first (WO-3.50, ruling 1), so the note is set for the term on screen. Unchanged by this work order. |
 | A due date on the calendar (`ASSIGNMENT_DUE`, `src/shell.js`) | **Yes, since this work order.** Before it, only when the class's open term was the assignment's own; the list now moves to the assignment's `termId` first, so the warning is set for the term on screen, with the arrival note behind it on the same line. |
-| `+ New assignment` **on the Scores screen** (`data-assignment-new`, `index.html` `#scoresActions`) | **Not on screen.** The work order's premise says the Scores screen has no door, and it has this one: the same create through the same hook (the markup's own comment: *"it performs the same create action as the assignment list's button, through the same data-assignment-new hook and editor"*). A blank close names the row and sets the warning on the **list's** note, `#assignmentsMoved`, which exists only in `#assignmentsView`; the grid behind the editor draws no note, so the warning is said in the live region and nowhere visible. It is drawn later, the next time that class's list is opened on that term (`paintListNote()` keeps a note whose class and term match). **Accepted as it is**, the owner's ruling 4 at the verdict: where a warning goes on the grid is WO-3.58's to rule. |
+| `+ New assignment` **on the Scores screen** (`data-assignment-new`, `index.html` `#scoresActions`) | **Not on screen.** The work order's premise says the Scores screen has no door, and it has this one: the same create through the same hook (the markup's own comment: *"it performs the same create action as the assignment list's button, through the same data-assignment-new hook and editor"*). A blank close names the row and sets the warning on the **list's** note, `#assignmentsMoved`, which exists only in `#assignmentsView`; the grid behind the editor draws no note, so the warning is said in the live region and nowhere visible. It is drawn later, the next time that class's list is opened on that term (`paintListNote()` keeps a note whose class and term match). **Accepted as it is**, the owner's ruling 4 at the verdict: where a warning goes on the grid is WO-3.58's to rule. ***Amended 2026-10-12, WO-3.66: drawn, on the Scores screen.*** The owner ruled S1 (WO-3.58 handed it on as a screen, not a dialog): the same line, `#scoresMoved`, between the past-due prompt and `#scoresTop`, filled from the one note — now `src/list-note.js`'s — that `#assignmentsMoved` reads. See § WO-3.66. |
 | The Scores screen, any other control | **No door.** `editorFollows()` in `src/shell.js` names Scores as a screen the editor can be open over; nothing on the grid opens an *existing* assignment's editor (`grep -n "openAssignmentEditor" src/*.js` finds callers only in `src/shell.js`'s `data-assignment-edit` route and `src/assignments.js`). |
 
 **Three decisions the work order left open, and which way they went.**
@@ -14222,6 +14222,124 @@ app change.
       `planbook-shell-v193` → `planbook-shell-v194`.
 
 No 👤 line on this row. The moved messages have not been looked at on an iPad or on paper.
+
+### WO-3.66 — a nameless close from the Scores screen shows its warning on the Scores screen
+
+**What was built.** The list's note moved out of `src/assignments.js` into a module of its own,
+`src/list-note.js` (ruling (d)): the one `listNote`, its setters (`noteMovedWork()`, `noteNameless()`,
+`clearListNote()`) and one paint, `paintListNote()`, which fills every `[data-list-note]` host from it
+the way `src/past-due.js` fills `[data-past-due]`. `index.html`: `#assignmentsMoved` gained the hook,
+and a second host, `<p class="assign-moved hidden" id="scoresMoved" data-list-note>`, sits in
+`#scoresView` after `#scoresPastDue` and before — and outside — `#scoresTop` (S1, ruling (e)). The
+line is the shipped `.assign-moved` / `.assign-moved-nameless`, worn as it is; no CSS changed.
+`src/assignments.js` and `src/scores.js` each import the module and call the paint on render;
+`src/scores.js` calls it beside `paintPastDue()`, above the "nothing to grade" return. Every write
+that was `listNote = …` in `src/assignments.js` goes through a setter; `grep -n "listNote" src/assignments.js`
+finds nothing. `sw.js`: `src/list-note.js` added to `SHELL`, `CACHE` v194 → v195.
+
+**One decision the brief asked to be made consciously: the drop.** `paintListNote()` keeps the list's
+rule — the note is dropped by the first paint on any other class or term — and since both screens now
+paint, a Scores render on another class or term drops it too. The paint reads the selection from
+`src/classes.js` at paint time rather than being handed it, so neither screen can paint against a
+class or term older than the other's; the editor's close selects its term before anything repaints.
+What changes, on purpose and written at the top of `src/list-note.js`: a note set from a screen that
+draws neither host (the calendar or a student's page, editor not following) used to survive a Scores
+visit on another term, and now does not. The setters do not paint (painting at set time would drop a
+note set for a term that is not up); `clearListNote()` does, because a clear cannot drop anything
+that should stay.
+
+**Mutation, two runs, every plant marked `MUTATION WO-3.66`, the files copied aside first and copied
+back after with `cmp` reporting them identical, and `grep -rn MUTATION` finding no `WO-3.66` plant
+before anything else was written.**
+- *Run 1 — M2, `clearListNote()` stops drawing the hosts; M3, `#scoresMoved` moved inside
+  `#scoresTop`*: `2061 checks · 2057 passed · 4 failed`, exit 1. M3 turned the Acceptance 1, 2 and 4
+  checks red (`"order":false`; on the empty roster `"h":0` — hidden with the row, which is the Trap
+  this work order names) and WO-3.60's *first drawn row is `#scoresTop`* check with them. **M2 stayed
+  green, and is an equivalent mutant on today's paths:** both callers of `clearListNote()` re-render
+  the list straight after, and `renderAssignments()` → `paintListNote()` paints every host, the Scores
+  one included. The draw in `clearListNote()` is kept so the clear is true of itself, and its comment
+  says this mutation stayed green.
+- *Run 2 — M5, `paintListNote()` never drops; M6, opening the editor does not clear*: `2061 checks ·
+  2059 passed · 2 failed`, exit 1 — the Acceptance 3 check (`"open":[true,"“Untitled assignment” was
+  saved…","“Untitled assignment” was saved…"]` from M6; `"term":[…,"tm349_src2","“Untitled assignment”
+  was saved…",…]` and the other class the same, from M5) and WO-3.57's same-term calendar check, which
+  M6 also breaks.
+
+**Acceptance**
+
+- [x] A blank close from the Scores screen's `+ New assignment` leaves the owner's sentence, in
+      amber, on the Scores screen, between the past-due prompt and the summary row (S1). The list shows the same note for the same
+      class and term.
+      — `tools/verify/copy-class.mjs`, after WO-3.57's door checks, driven through the real controls
+      (the class's home card, its Assignments pill, the term tab, the Scores pill, `#scoresView
+      [data-assignment-new]`, the editor's ✕). `PASS | WO-3.66: a blank close from the Scores screen's
+      + New assignment leaves the owner's sentence, in amber, on the Scores screen … ::
+      {"today":"2026-10-12","made":["…|c_wo349_src|tm349_src1"],"after":{"view":"scoresView","open":
+      "tm349_src1","scores":["“Untitled assignment” was saved without a name. Edit it to give it a
+      name.",true,"rgb(138, 109, 26)","rgb(255, 248, 230)","rgb(224, 168, 0)",36],…,"order":true,
+      "pastDue":{"shown":true,"b":422.375},"top":{"hidden":false,"h":25,"t":482.375}},"list":"“Untitled
+      assignment” was saved without a name. …","back":"…"}`. Read off `#scoresMoved`'s DOM and
+      `getComputedStyle` (text, the amber modifier, colour, background, both border colours), never
+      the live region. Its place twice: in the markup (`#scoresPastDue` precedes it, it precedes
+      `#scoresTop`, is not inside it and shares its parent) and drawn (its top below the prompt's
+      bottom at 422, its bottom above the summary row's top at 482). The past-due prompt was up for the
+      reading — the fixture plants a past-due blank — and the check asserts it was. Then the
+      Assignments pill: the list on the same term reads the same text, amber; and back to Scores, still
+      drawn.
+- [x] A create from Scores filed under another term draws the indigo moved note on Scores too, from
+      the same `listNote` — the whole note, amber ahead of indigo on one line when both apply.
+      — Same file. Scores opened on Q2 on a real October clock, `+ New assignment` files the work in Q1
+      and the grid follows: `"open":{"view":"scoresView","open":"tm349_src1","scores":["The new
+      assignment is in Q1, not Q2: …",false,"rgb(61, 79, 158)","rgb(238, 242, 255)","rgb(91, 111,
+      204)",36],"list":["The new assignment is in Q1, not Q2: …",false]…}` — indigo, and the list's
+      host the same text; then the ✕ with the name blank: `"out":{…"scores":["“Untitled assignment”
+      was saved without a name. Edit it to give it a name. The new assignment is in Q1, not Q2: …",true,
+      "rgb(138, 109, 26)",…,54],"order":true…}` — one element, warning first, amber — and on the list
+      `"“Untitled assignment” was saved … This list has moved to Q1 with it."`, the same string. Both
+      hosts read the one note; there is no second variable for them to disagree through. *(Under a
+      `--today` that no fixture term holds, a create moves nothing and the check's name says it was
+      not exercised; on this run the clock was real and it was.)*
+- [x] Opening the editor again clears it from both screens; another class or term does not draw it.
+      — Same file: the editor reopened from the new column's head on the grid (`data-assignment-edit`)
+      — `"open":[true,"",""]`: editor up, `#scoresMoved` and `#assignmentsMoved` both bare, before any
+      close — and `"closed":["",""]` after it. Then a fresh blank close, the term tab to Q2: Scores bare
+      (`"tm349_src2",""`), and back on Q1 still bare (dropped, `"tm349_src1",""`); a fresh blank close
+      again, then another class's tab (`c_wo349_p4`) with Scores still up: bare. Mutation-proved both
+      ways (M5, M6 above).
+- [x] On a class with no roster, the note still draws on Scores, with `#scoresTop` hidden under it —
+      checked, not assumed.
+      — Same file: P2 has no roster. A blank close from its list's `+ New assignment` (the Scores
+      button is inside the hidden row there, so the list is the only door), then the Scores pill:
+      `{"view":"scoresView","open":"tm349_p2a","scores":["“Untitled assignment” was saved without a
+      name. Edit it to give it a name.",true,"rgb(138, 109, 26)","rgb(255, 248, 230)","rgb(224, 168,
+      0)",36],…,"order":true,…,"top":{"hidden":true,"h":0,"t":0},"empty":"WO-3.49 English I P2 has no
+      students yet, …"}` — `#scoresTop` carrying `.hidden` with no height, the empty line saying why,
+      and the note drawn at 36px, outside the row. M3 above shows the same reading going to `"h":0`
+      when the host is inside it.
+- [x] No import loop: the note's module imports neither `src/assignments.js` nor `src/scores.js`, and
+      `src/scores.js` does not import `src/assignments.js`.
+      — `src/list-note.js` has one import, `./classes.js`. A throwaway walker over the `import … from
+      './…'` lines (scratch, not added to the tree): *list-note.js direct: src/classes.js · reaches 11
+      modules; assignments.js? false, scores.js? false, itself? false · scores.js imports
+      assignments.js directly? false · scores.js reaches assignments.js? false.* Nothing in the
+      repository checks this afterwards — `wo-sweep.mjs` does not look for loops (ruling (d)'s own
+      point); proposed as a follow-up, not built.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      — `node tools/verify-shell.mjs`: `2061 checks · 2061 passed · 0 failed · 0 skipped`, 65,797 lines,
+      31.9 lines per check, 1101s, exit 0, 2026-10-12, real clock, on the delivered tree after both
+      mutation runs were reverted. `node tools/wo-sweep.mjs`: `51 checks · 48 passed · 0 failed · 3 to
+      review`, exit 0 — the standing three — after `tools/README.md`'s call-site line went 2045 → 2049
+      from the sweep's own count. `sw.js`: `planbook-shell-v194` → `planbook-shell-v195`, with
+      `./src/list-note.js` in `SHELL` (`PASS | every module reachable from index.html is precached by
+      sw.js :: 61 modules walked`). *The first run was red on exactly that check: a comment inside the
+      `SHELL` array carried an apostrophe, and the precache reader takes the array's quoted strings, so
+      nine entries after it read as missing. Reworded; no app logic involved.*
+- [x] 👤 On the iPad, after a force-quit, upright: + New assignment from Scores, then ✕ with no name
+      — the warning is noticed on Scores.
+      — **Read by the owner on the teaching iPad, 2026-10-12**, served from the local server at v195
+      after a force-quit: About read v195, and the amber line was noticed on Scores, below the
+      past-due prompt and above the summary row. *(The dispatch could not take this reading; the
+      harness shows the line drawn, amber and placed, and the owner's eye is what closes it.)*
 
 ## Phase 4 — Signals: concern **and** praise
 

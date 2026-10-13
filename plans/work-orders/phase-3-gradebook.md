@@ -5290,7 +5290,7 @@ not in WO-3.58's scope; and the order of the head relative to the buttons.
 
 ## WO-3.66 — a nameless close from the Scores screen shows its warning on the Scores screen
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.58
+**Ship** — · **Status** ✅ DONE — 2026-10-12 · **Size** S · **Depends on** WO-3.58
 **Closes roadmap** *(no box. Owner-directed, 2026-10-12.)*
 
 **Booked 2026-10-12** out of [WO-3.58](#wo-358--the-dialogs-behind-the-assignments-and-scores-screens-are-read-together-and-a-layout-is-ruled),
@@ -5325,18 +5325,18 @@ was the alternative drawn and not taken.)*
   not drawn), the `CHANGELOG.md` entry, and **`CACHE` in `sw.js` bumped.**
 
 **Acceptance**
-- [ ] A blank close from the Scores screen's `+ New assignment` leaves the owner's sentence, in
+- [x] A blank close from the Scores screen's `+ New assignment` leaves the owner's sentence, in
       amber, on the Scores screen, between the past-due prompt and the summary row (S1). The list shows the same note for the same
       class and term.
-- [ ] A create from Scores filed under another term draws the indigo moved note on Scores too, from
+- [x] A create from Scores filed under another term draws the indigo moved note on Scores too, from
       the same `listNote` — the whole note, amber ahead of indigo on one line when both apply.
-- [ ] Opening the editor again clears it from both screens; another class or term does not draw it.
-- [ ] On a class with no roster, the note still draws on Scores, with `#scoresTop` hidden under it —
+- [x] Opening the editor again clears it from both screens; another class or term does not draw it.
+- [x] On a class with no roster, the note still draws on Scores, with `#scoresTop` hidden under it —
       checked, not assumed.
-- [ ] No import loop: the note's module imports neither `src/assignments.js` nor `src/scores.js`, and
+- [x] No import loop: the note's module imports neither `src/assignments.js` nor `src/scores.js`, and
       `src/scores.js` does not import `src/assignments.js`.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] 👤 On the iPad, after a force-quit, upright: + New assignment from Scores, then ✕ with no name
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the iPad, after a force-quit, upright: + New assignment from Scores, then ✕ with no name
       — the warning is noticed on Scores.
 
 **Ruled — the owner, 2026-10-12, after WO-3.58's verdict.** Nothing is left open at dispatch. *(It

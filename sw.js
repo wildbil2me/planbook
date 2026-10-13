@@ -35,7 +35,7 @@
    below reads this cache and no other, and every older copy under SHELL_PREFIX is deleted — in
    `activate`, and again on each launch (clearOldShells) — which is what makes a deploy replace
    the shell rather than layer on top of it. */
-const CACHE = 'planbook-shell-v194';
+const CACHE = 'planbook-shell-v195';
 
 /* Every cache this worker has ever made is SHELL_PREFIX plus a version. Nothing outside the prefix
    is ever deleted: another cache at this origin is not ours to judge, and IndexedDB, where the
@@ -174,6 +174,10 @@ const SHELL = [
   './src/assignments.js',
   './src/scores.js',
   './src/past-due.js',
+  /* WO-3.66. The note over the assignment list — the moved-work line and the nameless warning — and
+     the one paint that draws it there and on the score grid. Imported by src/assignments.js and
+     src/scores.js and reached no other way (tools/verify/precache.mjs). */
+  './src/list-note.js',
   './src/accommodation-prompt.js',
   './src/detail.js',
   './src/grades-report.js',
