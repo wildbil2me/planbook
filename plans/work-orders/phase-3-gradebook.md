@@ -5372,3 +5372,44 @@ it, or the two screens drift. **The Scores screen hides its top row in "nothing 
 
 **Not in scope** — the warning's wording and colour (WO-3.56's rulings), and the ten dialogs
 (WO-3.63, WO-3.64, WO-3.65).
+
+## WO-3.67 — WO-3.66's no-roster check passes with the Scores screen's own paint deleted
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-3.66 · **Blocks** nothing
+**Closes roadmap** *(no box. Owner-directed, 2026-10-12.)*
+
+**Booked 2026-10-12**, owner-directed, out of [WO-3.66](#wo-366--a-nameless-close-from-the-scores-screen-shows-its-warning-on-the-scores-screen)'s
+verdict. A ride-along on `tools/verify/copy-class.mjs`: fold it into the next sitting that has that
+file open.
+
+**Why it exists.** WO-3.66's verifier deleted the Scores screen's call that paints the list's note
+and re-ran the harness. Acceptance lines 1–3 went red; **line 4 — a class with no roster still draws
+the note on Scores — stayed green.** Its fixture closes a blank editor from the *assignment list*,
+then taps the Scores pill, and the list's paint already fills **both** hosts from `src/list-note.js`,
+so the Scores host is full before Scores renders at all. The check proves where the line sits on a
+no-roster screen and that `#scoresTop` is hidden around it; it does not prove that **Scores' own
+render** draws it. That render is the one that runs when a teacher reaches a no-roster class's Scores
+any other way — from home, from another class — and the one that must clear a note left by another
+class.
+
+**Deliverables**
+- **The line-4 check reaches Scores by a route that empties the host first**: after the blank close on
+  the list, visit another class's Scores screen (whose render empties the host), then come back to the
+  no-roster class's Scores from home. The existing assertions stay as they are.
+- **A mutation**: delete Scores' paint call, show the reworked check go red, and revert it before
+  writing anything else.
+- **`TESTING.md` § WO-3.67** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] WO-3.66's no-roster check reaches the no-roster class's Scores screen after another class's
+      Scores has painted the host, and still passes.
+- [ ] With Scores' call to the note's paint deleted, that check goes red. The mutation is reverted, and
+      `TESTING.md` § WO-3.67 shows the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-3.67 carries these lines verbatim with the evidence for each.
+
+**Traps** — **There is no `+ New assignment` on a no-roster Scores screen**: it lives in `#scoresTop`,
+which that state hides, so the note can only arrive from the list. Do not build a door to make the
+fixture easier. **If the reworked route goes red before the mutation**, that is a defect in
+`src/scores.js` and not in the fixture — stop and report it rather than adjusting the check. **Nothing in
+`src/` moves** if it passes, so no `CACHE` bump is owed.

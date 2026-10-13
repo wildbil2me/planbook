@@ -6597,3 +6597,51 @@ sentence that states the size of the harness some other way will get past it. Sa
 own banner. **This changes `tools/wo-sweep.mjs`, a pipeline file**: read
 `plans/work-orders/README.md` § "The pipeline's own files" first. **Nothing in `src/` moves**, so no
 `CACHE` bump is owed.
+
+## WO-1.81 — the no-import-loop rule is checked by hand, one work order at a time
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.80 made.)*
+
+**Booked 2026-10-12**, owner-directed, out of WO-3.66's verdict. A ride-along on
+`tools/wo-sweep.mjs`: fold it into the next sitting that has that file open.
+
+**Why it exists.** "No import loop" is a rule this repo has refused to break at least six times
+(`CLAUDE.md`'s *refused six times*, under WO-6.2; WO-3.20's `src/date-text.js`; WO-1.22's term
+helpers; WO-3.66 ruling (d)), and **every time it was held by an Acceptance line written into that one
+work order and checked by a verifier's throwaway script**. Nothing in the repository checks it
+between work orders. WO-3.66 nearly closed one through a path nobody would guess —
+`src/assignments.js` → `src/held-column.js` → `src/scores.js` — and the brief's own author found it
+only by reading the code. A browser loads a cycle without complaint unless evaluation order bites, so
+`verify-shell.mjs` sees nothing until it does. **A read of the tree on 2026-10-12 found 64 modules
+in `src/` and zero cycles**, so the check starts green and needs no allowlist.
+
+**Deliverables**
+- **A sweep check that fails on any import cycle among `src/*.js`.** It reads every static
+  `import … from './x.js'` and `export … from './x.js'` (and a dynamic `import('./x.js')`, of which there
+  are none today), builds the graph, and on a cycle **names the whole loop as a path** —
+  `a.js → b.js → c.js → a.js` — so the reader sees where to cut it, not just that one exists.
+- **It must not go green over an empty read.** If it finds no modules or no edges, it fails and says
+  so, the way § 31 and § 32 refuse an anchor they cannot find.
+- **A plant**: a cycle of length one or two and one of three or more planted in turn, each red with
+  its path named, then reverted before anything else is written.
+- **`tools/README.md`** describes the check beside the sweep's others, and the sweep's own check count
+  (§ 22's *"The verifier's N-check standing sweep"*) moves with it.
+- **`TESTING.md` § WO-1.81** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] `node tools/wo-sweep.mjs` has a check that passes on today's tree and prints how many modules and
+      edges it read.
+- [ ] A planted two-module cycle and a planted cycle of three or more each turn it red, naming every
+      module in the loop in order. Both plants are reverted, and `TESTING.md` § WO-1.81 shows the red
+      output.
+- [ ] A check that reads zero modules or zero edges fails rather than passing.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-1.81 carries these lines verbatim with the evidence for each.
+
+**Traps** — **A fence, not a reading**: it parses import statements as text, so a specifier built at
+runtime escapes it. Say so in its banner. **Strip comments before matching** — this repo's headers
+quote import lines in prose to explain them, and a quoted import is not an edge. **Do not widen it to
+`tools/`**: the harness files import each other for reasons of their own, and nobody has ruled on them.
+**This changes `tools/wo-sweep.mjs`, a pipeline file**: read `plans/work-orders/README.md` § "The
+pipeline's own files" first. **Nothing in `src/` moves**, so no `CACHE` bump is owed.
