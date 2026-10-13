@@ -4410,6 +4410,100 @@ found nothing. The README row was edited only after the plants were reverted.
 - [x] `TESTING.md` § WO-1.80 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-1.81 — the no-import-loop rule is checked by hand, one work order at a time
+
+No 👤 and no 📆 line. `tools/wo-sweep.mjs` gained § 33 (above § 22, which stays last), and § 31's
+character scanner moved out of § 31 into a shared `scanScript()` with a `keepText` option rather than
+a third comment-blanker being written; § 31's output was diffed before and after the move and is
+identical but for line numbers. `tools/README.md`'s `wo-sweep.mjs` row gained one clause and moved
+51 → 52. Nothing in `src/` moved, so no `CACHE` bump is owed. Every plant below was made with the
+Edit tool, the sweep run, and the plant taken out with the Edit tool — never `git checkout` — before
+the next plant; each plant line carried a `MUTATION WO-1.81` comment. After the last one
+`git diff --stat -- src/` printed nothing and `grep -rn "MUTATION WO-1.81" src/ tools/` found
+nothing. The README row and this section were first written after the seven plants for lines 2 and
+3 were out; the derailment plant (line 3, last bullet) was made and reverted afterwards, while no
+other file was being edited, and both documents were amended to record it. In every
+`src/` plant run § 9 (*a SHELL file changed without a CACHE bump*) also went red, as it must for an
+uncommitted `src/` edit, and § 22 went red on the then-unmoved README count; neither is evidence
+about § 33 and both are omitted below.
+
+- [x] `node tools/wo-sweep.mjs` has a check that passes on today's tree and prints how many modules and
+      edges it read.
+      — `PASS | no import loop among the modules in src/ — every static import, re-export and literal
+      dynamic import read with comments stripped :: 64 module(s) in src/ read with comments stripped and
+      string text kept; 359 distinct import edge(s) from 363 import/export statement(s) (0 a literal
+      dynamic import()), and no loop. A fence, not a reading: a specifier built at runtime is not
+      followed, and a module outside src/'s top level is not a node`. The 363 was cross-checked by a
+      scratch script that matched column-0 `import`/`export … from './x.js'` statements in the raw text
+      of each file: the same specifiers, file by file, in all 64.
+- [x] A planted two-module cycle and a planted cycle of three or more each turn it red, naming every
+      module in the loop in order. Both plants are reverted, and `TESTING.md` § WO-1.81 shows the red
+      output.
+      — The long tail of the message (*"— an import loop among the modules in src/. A browser loads one
+      without complaint until evaluation order bites, … do not add an allowance here without arguing it
+      in § 33's banner"*) is identical in every red run and shown once.
+      - **Two modules** — `src/date-text.js:86` ← `import { REVISION_WINDOW_MS } from './score-history.js';`
+        (`src/score-history.js` already imports `./date-text.js`):
+        `FAIL | no import loop among the modules in src/ — … :: date-text.js → score-history.js → date-text.js (src/date-text.js:86, src/score-history.js:70) — an import loop among the modules in src/. …`
+        One finding, not two one-hop ones. *(The first draft of this plant imported `reviseCell`, and
+        § 28 went red too — `reviseCell` may be imported only by the two score writers — so the plant
+        was re-made with a name § 28 does not fence, to keep the evidence about § 33 alone.)*
+      - **Three or more, along WO-3.66's path** — `src/scores.js:200` ← `import { paintAssignments } from './assignments.js';`:
+        `FAIL | no import loop among the modules in src/ — … :: accommodation-prompt.js → signals.js → scores.js → assignments.js → accommodation-prompt.js (src/accommodation-prompt.js:97, src/signals.js:168, src/scores.js:200, src/assignments.js:187); assignments.js → held-column.js → scores.js → assignments.js (src/assignments.js:151, src/held-column.js:66, src/scores.js:200) — an import loop among the modules in src/. …`
+        The second loop is WO-3.66's. **The first is one nobody had named**: `src/assignments.js`
+        reaches `src/scores.js` a second way, through the accommodation prompt and the signal engine,
+        so a `scores.js → assignments.js` import closes two loops at once. A scratch script enumerating
+        every simple path from `assignments.js` to `scores.js` on the unplanted graph found exactly
+        these two, so the section reported every loop and no extra. Each is printed closed, starting at
+        its alphabetically first module, with every module in between.
+      - **One module (a self-import)** — `src/live-region.js:18` ← `import { announce as again } from './live-region.js';`:
+        `FAIL | … :: live-region.js → live-region.js (src/live-region.js:18) — an import loop among the modules in src/. …`
+      - **A loop written only in comments stays green, and a `//` inside a string is not a comment** —
+        `src/date-text.js` lines 86–88 ←
+        `// import { REVISION_WINDOW_MS } from './score-history.js';`,
+        `/* import { REVISION_WINDOW_MS } from './score-history.js'; */`, and
+        `const PLANT_URL = 'https://example.invalid/'; import { REVISION_WINDOW_MS } from './score-history.js';`.
+        Red, and the edge is cited at **line 88**, the real import after the URL — not 86 or 87, though
+        the section records the first line of each edge:
+        `FAIL | … :: date-text.js → score-history.js → date-text.js (src/date-text.js:88, src/score-history.js:70) — …`.
+        Then line 88 alone taken out, the two commented lines left in:
+        `PASS | no import loop among the modules in src/ — … :: 64 module(s) in src/ read with comments stripped and string text kept; 359 distinct import edge(s) from 363 import/export statement(s) …, and no loop. …`
+        — so a quoted import is not an edge, which is the Traps line's *strip comments before matching*.
+
+      All four reverted with the Edit tool; `git diff --stat -- src/` empty after each.
+- [x] A check that reads zero modules or zero edges fails rather than passing.
+      — Three plants in § 33 itself, one at a time, each reverted with the Edit tool:
+      - **Zero modules** — the file filter `/\.js$/` → `/\.jsx$/`:
+        `FAIL | no import loop among the modules in src/ — … :: EMPTY READ: no `.js` file directly in src/ — § 33 has no module to read, and a loop check over zero modules passes over anything. Re-point tools/wo-sweep.mjs § 33 if the modules moved`
+      - **Zero edges, the pattern** — `\bfrom` → `\bfrum` in the statement pattern (and its optional
+        group made required, so the side-effect shape cannot match either):
+        `FAIL | … :: EMPTY READ: 64 module(s) in src/ and not one import edge between them — the app has never been a tree like that, so the statement pattern in § 33 has stopped matching (or the scanner has stopped keeping strings) and a green here would be a check reading nothing`
+      - **Zero edges, the scanner** — `scanScript(…, { keepText: true })` → `{ keepText: false }`, the
+        § 31 mode, which empties every specifier — the exact mistake the brief warned of: the same
+        `EMPTY READ: 64 module(s) in src/ and not one import edge between them — …` FAIL.
+
+      - **A derailed scan, the arm beside these** — `src/live-region.js`, a last line
+        ``const PLANT_RE = /`/;`` (a regex literal holding a backtick, which `scanScript()` reads as a
+        template opening and never closing):
+        `FAIL | … :: src/live-region.js (the scan ended inside a template) — the scanner derailed, so every import after that point in the file is unread. A regular-expression literal holding a quote or a backtick is the known way; scanScript() does not model them`.
+        Reverted with the Edit tool after `verify-shell.mjs` had finished, so that run never saw it.
+
+      All three arms are FAIL branches of the one `check()`, not checks of their own, so § 22's count
+      moved by exactly one (51 → 52), read off § 22's own line rather than added by hand.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs`, started after every `src/` plant was out and the `wo-sweep.mjs`
+      and `tools/README.md` edits had landed, and waited out to its exit: *2061 checks · 2061 passed ·
+      0 failed · 0 skipped*, *1129s*, `EXIT=0`. (It reads none of the edited files' changed lines; the
+      run is the work order's line, not evidence about § 33.) `node tools/wo-sweep.mjs`, after every
+      edit including this section: `EXIT=0`, *52 checks · 49 passed · 0 failed · 3 to
+      review* — the three standing reviews (sensitive field names, due-date and late/missing, mockup
+      banners); § 22 reads *"52 results emitted this run, matching tools/README.md:10"* and its
+      ordering check still finds the census last. (`tools/wo-sweep.mjs` took one comment-only edit —
+      § 33's *PROVED* paragraph, naming the derailment plant — after the `verify-shell.mjs` run began;
+      that run does not read the file.)
+- [x] `TESTING.md` § WO-1.81 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ---
 
 ## Phase 2 — Attendance

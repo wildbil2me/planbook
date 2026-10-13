@@ -6600,7 +6600,7 @@ own banner. **This changes `tools/wo-sweep.mjs`, a pipeline file**: read
 
 ## WO-1.81 — the no-import-loop rule is checked by hand, one work order at a time
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-12 · **Size** S · **Depends on** — · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.80 made.)*
 
 **Booked 2026-10-12**, owner-directed, out of WO-3.66's verdict. A ride-along on
@@ -6630,14 +6630,14 @@ in `src/` and zero cycles**, so the check starts green and needs no allowlist.
 - **`TESTING.md` § WO-1.81** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] `node tools/wo-sweep.mjs` has a check that passes on today's tree and prints how many modules and
+- [x] `node tools/wo-sweep.mjs` has a check that passes on today's tree and prints how many modules and
       edges it read.
-- [ ] A planted two-module cycle and a planted cycle of three or more each turn it red, naming every
+- [x] A planted two-module cycle and a planted cycle of three or more each turn it red, naming every
       module in the loop in order. Both plants are reverted, and `TESTING.md` § WO-1.81 shows the red
       output.
-- [ ] A check that reads zero modules or zero edges fails rather than passing.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-1.81 carries these lines verbatim with the evidence for each.
+- [x] A check that reads zero modules or zero edges fails rather than passing.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-1.81 carries these lines verbatim with the evidence for each.
 
 **Traps** — **A fence, not a reading**: it parses import statements as text, so a specifier built at
 runtime escapes it. Say so in its banner. **Strip comments before matching** — this repo's headers

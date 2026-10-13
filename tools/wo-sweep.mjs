@@ -3986,6 +3986,56 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
   }
 }
 
+/* ────────────────────────────── the script scanner, § 31 and § 33 ──────────────────────────────
+   A small character scanner over a JavaScript file, written for § 31 (WO-1.65) and lifted out here
+   by WO-1.81 so § 33 could read the same way rather than grow a third comment-blanker beside § 28's.
+   Comments go — a `/* … *\/` block becomes spaces and a `//` line becomes nothing, every newline kept,
+   so an offset in the output maps to a line of the file — and a `//` or `/*` INSIDE a string or a
+   template is text, never a comment start, which is what the regex blankers above cannot promise.
+   The body of every `${ … }` is scanned as code, nested templates included.
+
+   TWO MODES, AND THE DIFFERENCE IS THE WHOLE REASON FOR THE OPTION:
+     · default — the TEXT of every string and template is blanked to its delimiters. § 31 needs this:
+       src/glance.js builds markup, and `</div>` left in a string would read as an operator.
+     · `keepText: true` — string and template text is KEPT. § 33 needs this: an import specifier IS a
+       string, and a scan that emptied strings would read every `from './x.js'` as `from ''` and find
+       no edges at all.
+   It does NOT model regular-expression literals: a regex literal holding a quote, a backtick or a
+   `//` would derail it. `end` reports the mode the scan finished in, so a caller can tell a derailed
+   scan (ended inside a string, template, comment or `${`) from a clean one. */
+
+function scanScript(text, { keepText = false } = {}) {
+  let out = '';
+  let mode = 'code';
+  let quote = '';
+  const depth = [];                         // one brace counter per open `${`
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    const d = text[i + 1];
+    if (mode === 'code') {
+      if (c === '/' && d === '*') { mode = 'block'; i++; continue; }
+      if (c === '/' && d === '/') { mode = 'line'; i++; continue; }
+      if (c === "'" || c === '"') { mode = 'str'; quote = c; out += c; continue; }
+      if (c === '`') { mode = 'tpl'; out += c; continue; }
+      if (depth.length && c === '{') depth[depth.length - 1] += 1;
+      if (depth.length && c === '}') {
+        if (depth[depth.length - 1] === 0) { depth.pop(); mode = 'tpl'; out += c; continue; }
+        depth[depth.length - 1] -= 1;
+      }
+      out += c;
+    } else if (mode === 'block') {
+      if (c === '*' && d === '/') { mode = 'code'; out += ' '; i++; } else if (c === '\n') out += '\n';
+    } else if (mode === 'line') {
+      if (c === '\n') { mode = 'code'; out += '\n'; }
+    } else if (mode === 'str') {
+      if (c === '\\') { if (keepText) out += c + (d ?? ''); else if (d === '\n') out += '\n'; i++; } else if (c === quote) { mode = 'code'; out += c; } else if (c === '\n') { mode = 'code'; out += '\n'; } else if (keepText) out += c;
+    } else {                                // template text
+      if (c === '\\') { if (keepText) out += c + (d ?? ''); else if (d === '\n') out += '\n'; i++; } else if (c === '`') { mode = 'code'; out += c; } else if (c === '$' && d === '{') { out += '${'; depth.push(0); mode = 'code'; i++; } else if (c === '\n') out += '\n'; else if (keepText) out += c;
+    }
+  }
+  return { code: out, end: mode === 'line' ? 'code' : mode, openInterpolations: depth.length };
+}
+
 /* ══════ 31. the glance reader holds no arithmetic of its own ══════
    WO-1.65, and it sits ABOVE § 22 for § 23's and § 30's reason: § 22's census has to be the last
    thing that pushes a result. The number is the order this section was written in.
@@ -4103,38 +4153,10 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
 
     /* Code only: comments gone, the TEXT of every string and template blanked to its delimiters,
        the body of every `${ … }` kept and scanned as code (nested templates included). Every
-       newline survives, so offsets map to the file's own lines. */
-    const codeOnly = (text) => {
-      let out = '';
-      let mode = 'code';
-      let quote = '';
-      const depth = [];                     // one brace counter per open `${`
-      for (let i = 0; i < text.length; i++) {
-        const c = text[i];
-        const d = text[i + 1];
-        if (mode === 'code') {
-          if (c === '/' && d === '*') { mode = 'block'; i++; continue; }
-          if (c === '/' && d === '/') { mode = 'line'; i++; continue; }
-          if (c === "'" || c === '"') { mode = 'str'; quote = c; out += c; continue; }
-          if (c === '`') { mode = 'tpl'; out += c; continue; }
-          if (depth.length && c === '{') depth[depth.length - 1] += 1;
-          if (depth.length && c === '}') {
-            if (depth[depth.length - 1] === 0) { depth.pop(); mode = 'tpl'; out += c; continue; }
-            depth[depth.length - 1] -= 1;
-          }
-          out += c;
-        } else if (mode === 'block') {
-          if (c === '*' && d === '/') { mode = 'code'; out += ' '; i++; } else if (c === '\n') out += '\n';
-        } else if (mode === 'line') {
-          if (c === '\n') { mode = 'code'; out += '\n'; }
-        } else if (mode === 'str') {
-          if (c === '\\') { if (d === '\n') out += '\n'; i++; } else if (c === quote) { mode = 'code'; out += c; } else if (c === '\n') { mode = 'code'; out += '\n'; }
-        } else {                            // template text
-          if (c === '\\') { if (d === '\n') out += '\n'; i++; } else if (c === '`') { mode = 'code'; out += c; } else if (c === '$' && d === '{') { out += '${'; depth.push(0); mode = 'code'; i++; } else if (c === '\n') out += '\n';
-        }
-      }
-      return out;
-    };
+       newline survives, so offsets map to the file's own lines. The scanner itself is
+       `scanScript()`, above this banner, shared with § 33 since WO-1.81; this is its default
+       (text-blanking) mode, byte for byte the function that used to sit here. */
+    const codeOnly = (text) => scanScript(text).code;
     const code = codeOnly(src);
     const lines = code.split('\n');
     const lineOf = (index) => code.slice(0, index).split('\n').length;
@@ -4374,6 +4396,166 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
   check(NAME, !faults.length, faults.length
     ? [counts.length ? `${counts.join(', ')} — a count of the harness's files in its own prose. WO-1.79 ruled that no number is better than a checked one: § 11 prints the true figure on every run (\`node tools/wo-sweep.mjs | grep call-site\`), and a number written here goes stale the next time a section file is added, with nothing reading it. Take the number out — a count that happens to match today is refused too` : '', ...lost].filter(Boolean).join(' · ')
     : `read ${places.join(' and ')}; no number of files, modules or sections in either. A fence, not a reading: a size stated without a number word next to the noun, or a count written anywhere else in either file, passes`);
+}
+
+/* ══════ 33. no import loop among the modules in src/ ══════
+   WO-1.81, and it sits ABOVE § 22 for § 23's and § 30's reason: § 22's census has to be the last
+   thing that pushes a result. The number is the order this section was written in.
+
+   "No import loop" is a rule this repo has refused to break at least six times — CLAUDE.md's
+   "refused six times" under WO-6.2, WO-3.20's src/date-text.js, WO-1.22's term helpers, WO-3.66's
+   ruling (d) — and EVERY TIME it was held by an Acceptance line written into that one work order and
+   checked by a verifier's throwaway script. Between work orders nothing checked it. WO-3.66 nearly
+   closed one through a path nobody would guess, src/assignments.js → src/held-column.js →
+   src/scores.js, and the brief's own author found it only by reading the code. A browser loads a
+   cycle without complaint until evaluation order bites — an import read before the module that
+   exports it has run — so `verify-shell.mjs` sees nothing until the day it does, and that day is a
+   blank screen in front of a class. The tree was read on 2026-10-12 and held no cycle, so this
+   starts green and carries NO ALLOWLIST: a cycle found here is cut, or argued in this banner before
+   anything is added to let it through.
+
+   WHAT IS READ. Every `.js` file directly in src/ — the modules the app ships; src/ has no
+   subdirectory today, and a file in one would not be read — each through `scanScript()` with
+   `keepText: true`: comments blanked, string text KEPT, because the specifier is a string. That is
+   what the Traps line "strip comments before matching" asks for — this repo's file headers quote
+   import lines in prose to explain them, and a quoted import is not an edge — and it is why this
+   does not reuse § 28's line-regex blanker, which cannot tell a `//` in a string from a comment.
+   An EDGE is a `./` or `../` specifier in one of four shapes, read across lines:
+     · `import … from './x.js'`, any binding list, default, namespace or mixture;
+     · `import './x.js'`, the side-effect import;
+     · `export … from './x.js'`, the re-export;
+     · `import('./x.js')` with a plain string literal for its whole argument — none exist today.
+   A specifier is resolved against src/, and one that lands anywhere but a module in the set read is
+   not an edge — it is counted and printed, never silently dropped. Two statements from one file to
+   another are one edge.
+
+   WHAT IS REFUSED. A cycle of any length, one included (a module importing itself). Strongly
+   connected components are found first, and then every elementary cycle inside each, so a
+   two-module loop is ONE finding and not two one-hop ones, and a component holding several loops
+   names each. Each loop is printed CLOSED and IN ORDER — `a.js → b.js → c.js → a.js`, started at
+   its alphabetically first module so the same loop always prints the same way and is reported once
+   — followed by the file:line of every import that makes it, which is where the cut goes. Past
+   twenty loops the list stops and says how many more there are.
+
+   IT MUST NOT GO GREEN OVER AN EMPTY READ, which is § 31's anchor rule and § 32's ANCHOR LOST. No
+   src/ directory, zero modules, or zero edges each FAIL and say which: a src/ full of modules with no
+   import between them is not a tree this app has ever been, and a scan that found none has stopped
+   reading. (No count of today's modules or edges is written here or in tools/README.md — the check
+   prints both on every run, and a number written beside it is one nothing maintains; WO-1.79 and
+   WO-1.80 are the scars.) So does a scan that ENDS a file inside a string, template, comment or `${` —
+   the scanner has derailed on that file (a regular-expression literal holding a quote is the known
+   way) and every edge after the derailment is unread. All of these are FAIL branches of the one
+   check, not checks of their own, so § 22's count moves by one.
+
+   NOT tools/. The harness files import each other for reasons of their own and nobody has ruled on
+   whether a loop among them matters; widening this to them would be a ruling made by a grep.
+
+   A FENCE, NOT A READING — WHAT THIS CANNOT SEE, stated so nobody reads a green § 33 as "the app
+   has no import loop":
+     · A SPECIFIER BUILT AT RUNTIME. It parses import statements as text, so `import(name)`,
+       `import('./' + x)` or a template with an interpolation escapes it entirely — as would any
+       loading that is not an import statement at all (a `<script>` added to the page, a worker).
+     · A module outside the set: a file in a subdirectory of src/, or `index.html`'s own inline
+       script, is not a node, so a loop through one is not seen.
+     · A string or template in CODE that happens to contain an import statement's text would be read
+       as an edge — the loud failure, a red over a loop that is not there, never a quiet pass. None
+       exists today.
+     · Whether a loop would actually break. Some loops are harmless at runtime and this refuses them
+       all; that is the rule as the repo has held it, not a judgment about evaluation order.
+   What answers those is a person reading a new import, and `verify-shell.mjs` loading the page.
+
+   PROVED 2026-10-12 against plants made in src/ with an edit and reverted the same way before
+   anything else was written — a two-module loop, a three-module loop along WO-3.66's path, a module
+   importing itself, a cycle written only inside a comment (which must stay green), and a regex
+   literal holding a backtick (the derailment arm) — and against three plants in this section, the
+   file filter, the statement pattern and `keepText`, for the empty-read arms. Not one used
+   `git checkout`: other sessions may hold unstaged work in this tree. The red output is in
+   `TESTING.md` § WO-1.81. */
+
+{
+  const NAME = 'no import loop among the modules in src/ — every static import, re-export and literal dynamic import read with comments stripped';
+  const SRC_DIR = path.join(REPO, 'src');
+  const CAP = 20;
+  const faults = [];
+  if (!fs.existsSync(SRC_DIR)) {
+    check(NAME, false, 'src/ is not where § 33 expects it — there are no modules to read, and a loop check over nothing passes over anything. Re-point tools/wo-sweep.mjs § 33');
+  } else {
+    const modules = fs.readdirSync(SRC_DIR, { withFileTypes: true })
+      .filter(e => e.isFile() && /\.js$/.test(e.name)).map(e => e.name).sort();
+    const known = new Set(modules);
+    // Read across lines: `[\w$*{}\s,]` is everything a binding list can hold, and a newline is `\s`.
+    const STATIC = /\b(import|export)\s+(?:[\w$*{}\s,]*?\s*\bfrom\s*)?(['"])(\.{1,2}\/[^'"\n]*)\2/g;
+    const DYNAMIC = /\bimport\s*\(\s*(['"`])(\.{1,2}\/[^'"`\n]*)\1\s*\)/g;
+    const edges = new Map(modules.map(m => [m, new Map()]));   // from → (to → first line)
+    let statements = 0;
+    let dynamic = 0;
+    const outside = [];
+    const derailed = [];
+    modules.forEach((m) => {
+      const { code, end, openInterpolations } = scanScript(fs.readFileSync(path.join(SRC_DIR, m), 'utf8'), { keepText: true });
+      if (end !== 'code' || openInterpolations) derailed.push(`src/${m} (the scan ended inside ${openInterpolations ? 'a `${…}`' : end === 'block' ? 'a block comment' : end === 'str' ? 'a string' : 'a template'})`);
+      const lineOf = (index) => code.slice(0, index).split('\n').length;
+      const take = (spec, index) => {
+        statements += 1;
+        const to = path.posix.normalize(path.posix.join('src', spec));
+        const name = to.startsWith('src/') ? to.slice(4) : null;
+        if (!name || !known.has(name)) { outside.push(`src/${m}:${lineOf(index)} '${spec}'`); return; }
+        if (!edges.get(m).has(name)) edges.get(m).set(name, lineOf(index));
+      };
+      for (const x of code.matchAll(STATIC)) take(x[3], x.index);
+      for (const x of code.matchAll(DYNAMIC)) { dynamic += 1; take(x[2], x.index); }
+    });
+    const edgeCount = [...edges.values()].reduce((n, t) => n + t.size, 0);
+
+    if (!modules.length) faults.push('EMPTY READ: no `.js` file directly in src/ — § 33 has no module to read, and a loop check over zero modules passes over anything. Re-point tools/wo-sweep.mjs § 33 if the modules moved');
+    else if (!edgeCount) faults.push(`EMPTY READ: ${modules.length} module(s) in src/ and not one import edge between them — the app has never been a tree like that, so the statement pattern in § 33 has stopped matching (or the scanner has stopped keeping strings) and a green here would be a check reading nothing`);
+    if (derailed.length) faults.push(`${derailed.join(', ')} — the scanner derailed, so every import after that point in the file is unread. A regular-expression literal holding a quote or a backtick is the known way; scanScript() does not model them`);
+
+    // Strongly connected components (Tarjan), then every elementary cycle inside each.
+    const index = new Map();
+    const low = new Map();
+    const stack = [];
+    const onStack = new Set();
+    const comps = [];
+    let counter = 0;
+    const strong = (v) => {
+      index.set(v, counter); low.set(v, counter); counter += 1;
+      stack.push(v); onStack.add(v);
+      for (const w of [...edges.get(v).keys()].sort()) {
+        if (!index.has(w)) { strong(w); low.set(v, Math.min(low.get(v), low.get(w))); }
+        else if (onStack.has(w)) low.set(v, Math.min(low.get(v), index.get(w)));
+      }
+      if (low.get(v) === index.get(v)) {
+        const comp = [];
+        let w;
+        do { w = stack.pop(); onStack.delete(w); comp.push(w); } while (w !== v);
+        comps.push(comp.sort());
+      }
+    };
+    modules.forEach(m => { if (!index.has(m)) strong(m); });
+    const loops = [];
+    let more = 0;
+    comps.filter(c => c.length > 1 || edges.get(c[0]).has(c[0])).forEach((comp) => {
+      // Each elementary cycle once: rooted at its first member in sort order, through later ones only.
+      comp.forEach((root, k) => {
+        const allowed = new Set(comp.slice(k));
+        const walk = (v, trail) => {
+          for (const w of [...edges.get(v).keys()].sort()) {
+            if (w === root) { if (loops.length < CAP) loops.push([...trail, root]); else more += 1; }
+            else if (allowed.has(w) && !trail.includes(w)) walk(w, [...trail, w]);
+          }
+        };
+        walk(root, [root]);
+      });
+    });
+    if (loops.length) {
+      const shownLoop = (loop) => `${loop.join(' → ')} (${loop.slice(0, -1).map((m, i) => `src/${m}:${edges.get(m).get(loop[i + 1])}`).join(', ')})`;
+      faults.push(`${loops.map(shownLoop).join('; ')}${more ? `; and ${more} more` : ''} — an import loop among the modules in src/. A browser loads one without complaint until evaluation order bites, and then a binding is read before the module exporting it has run; this repo has refused every loop it was offered (CLAUDE.md, "refused six times"). Cut the loop at one of the imports named — usually by moving the shared helper into a module that imports neither, the way src/date-text.js was made — and do not add an allowance here without arguing it in § 33's banner`);
+    }
+
+    check(NAME, !faults.length, faults.length ? faults.join(' · ')
+      : `${modules.length} module(s) in src/ read with comments stripped and string text kept; ${edgeCount} distinct import edge(s) from ${statements} import/export statement(s) (${dynamic} a literal dynamic import()), ${outside.length ? `${outside.length} specifier(s) resolving outside the set and not counted as edges (${outside.slice(0, 4).join(', ')}${outside.length > 4 ? ', …' : ''}), ` : ''}and no loop. A fence, not a reading: a specifier built at runtime is not followed, and a module outside src/'s top level is not a node`);
+  }
 }
 
 /* ══════ 22. the count of checks in tools/README.md is the number this run emits ══════

@@ -13,6 +13,20 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The sweep refuses an import loop in `src/` — 2026-10-12
+
+WO-1.81, out of WO-3.66's verdict. Tooling only: nothing in `src/` moved, no `CACHE` bump.
+
+- **`wo-sweep.mjs` § 33 fails on an import loop among the modules in `src/`.** Six work orders had
+  each held that rule with their own Acceptance line and a throwaway script. Now every sweep reads
+  the static imports, the re-exports and the literal dynamic imports, with comments stripped.
+- **A loop is named in full**: every module in order, back to the first, with the line of each
+  import, so you can see where to cut it.
+- **It refuses to pass on an empty read**, and prints how many modules and imports it read. Today
+  that is 64 modules and 359 imports.
+- **It reads text, so a module path built at run time gets past it**, and the check's banner says
+  so. § 31's comment-stripping scanner is now shared with it, and the sweep has 52 checks.
+
 ### A nameless assignment closed from Scores says so on Scores — 2026-10-12
 
 WO-3.66, the Scores screen's case of WO-3.58's rule. `CACHE` v195.
