@@ -5428,3 +5428,128 @@ list host still holds the note and the Scores host does not, that is a defect in
 stop and report it rather than adjusting the check. If both are empty, something dropped the note on
 the way. That is the route, so stop and report it as well. **Nothing in
 `src/` moves** if it passes, so no `CACHE` bump is owed.
+
+## WO-3.68 — an excused cell keeps the score it had
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** WO-3.69
+**Closes roadmap** *(no box. Owner-directed, 2026-10-21.)*
+
+**Booked 2026-10-21**, owner-directed. **Why it exists.** Marking a scored cell excused erases the
+score. The owner wants excused to mean *this counts toward nothing*, not *this is gone*: "I might
+want to drop the lowest grade in a category, but I still want a record of that grade."
+
+**The grade math does not change.** `src/grade-engine.js` already returns before reading `v` on an
+excused cell, both in the category sum and in `workRows()`. The erasing is done by the Scores
+screen alone. `cellFor()` in `src/scores.js` forces `{ v: null, flag: 'excused' }`, `applyFlag()`
+clears the typed value and says so, and typing a number into an excused cell takes the flag off.
+Each of those three has a comment arguing for it. The argument was that a number shown in a cell the
+grade is not using is a silent wrong number. The owner's answer is to draw the number **struck
+through**, so it is shown and plainly not counted.
+
+**The owner's rulings (2026-10-21)**
+1. On the grid, an excused cell that holds a score draws the number **struck through**, in the
+   excused colours.
+2. **Typing a number into an excused cell changes the kept score, and the cell stays excused.**
+   Emptying the field clears the score and keeps the flag. Pressing X (or the Ex button) again takes
+   the flag off, and the kept score counts.
+3. `missing` is unchanged: it still holds no number.
+
+**Deliverables**
+- **`docs/data-model.md`.** An excused cell may carry a value: `{ v: 62, flag: "excused" }`. It still
+  counts toward neither earned nor possible. Change the cell table and the prose that says excused
+  holds no number. Old `{ v: null, flag: "excused" }` cells stay valid and draw as today, so there is
+  no `SCHEMA_VERSION` bump. A score erased by an earlier build is not recovered.
+- **`src/scores.js`.** `cellFor()` keeps the value on `excused`. `applyFlag()` keeps the score when it
+  sets excused, and its sentence says the score is kept and no longer counts. The typing path follows
+  ruling 2. The cell draw (the input build and `paintCell()`) shows a kept score struck through, and
+  the aria label says it is excused, kept and not counted. Rewrite the three comments that argue the
+  old behaviour in the same sitting.
+- **`src/scores.css`.** The strike, on `.scores-input.excused` when the cell holds a value.
+- **Readers that print a cell.** `markText()` in `src/grades-report.js` prints `Ex (62)`, and its legend
+  line says the score is kept and not counted. The `Excused` words in `src/score-history.js` gain the
+  kept score. Student detail shows the kept score wherever it lists an excused piece.
+- **An audit of every reader of a cell's value in `src/`**: each must test the flag before it reads
+  the value. Known to do so: the engine, `src/signals.js` (`countedWork()` and the percentage walk),
+  `src/graded-pieces.js`, `src/past-due.js`. A reader that reads the value first is fixed here and
+  named in `TESTING.md`.
+- **A mutation**: make the engine read `v` on an excused cell, show the grade checks go red, and
+  revert it before writing anything else.
+- **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.68** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] Excusing a scored cell keeps `v` in the document. The class grade is the same as for an excused
+      blank, in both grading modes.
+- [ ] Pressing X again on that cell takes the flag off, and the kept score counts in the grade.
+- [ ] Typing a number into an excused cell writes `v` and keeps `flag: 'excused'`. Emptying it
+      clears `v` and keeps the flag.
+- [ ] The grade sheet, both CSVs, the score history and student detail show the kept score with the
+      excused mark.
+- [ ] A backup holding `{ v: null, flag: 'excused' }` cells restores and draws them as before.
+- [ ] The past-due prompt never sweeps an excused cell, with or without a kept score.
+- [ ] With the engine reading `v` on excused, the grade checks go red. The mutation is reverted, and
+      `TESTING.md` § WO-3.68 shows the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] 👤 On the iPad, a kept score reads as struck through and not counted, in normal mode and in
+      presentation mode.
+- [ ] `TESTING.md` § WO-3.68 carries these lines verbatim with the evidence for each.
+
+**Traps** — **The struck-through number is the whole of the safety.** A number on screen that the grade
+is not using must never look like one that it is. Do not drop the strike for any state, size or
+mode. **Harness checks assert the old behaviour on purpose** (`tools/verify/score-grid.mjs` and others
+expect the value cleared and the flag taken off by typing). Change them to the new rulings and
+name each in `TESTING.md`. Do not delete them. **Do not touch `missing`.** **The engine is not
+edited**, apart from the mutation that is reverted.
+
+## WO-3.69 — a category can drop each student's lowest N scores
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.68 · **Blocks** nothing
+**Closes roadmap** *(no box. Owner-directed, 2026-10-21.)*
+
+**Booked 2026-10-21**, owner-directed, beside [WO-3.68](#wo-368--an-excused-cell-keeps-the-score-it-had).
+WO-3.68 lets a teacher drop a score by hand and keep it. This lets a category drop each student's
+lowest N for itself, a common grading rule ("drop the lowest quiz").
+
+**A dropped score is worked out, not written.** Nothing is written to a cell. If the drop were an
+`excused` flag, a later, lower score could not take the drop over, and the teacher would have to
+re-pick by hand. So the engine decides at read time, and the decision moves when a score changes.
+
+**Deliverables**
+- **`docs/data-model.md`.** An optional `dropLowest` whole number on a category. An absent key means
+  nothing is dropped, the same rule as an absent threshold key. There is no `SCHEMA_VERSION` bump, and
+  every earlier backup restores unchanged.
+- **`src/grade-engine.js`.** The category walk leaves out each student's N lowest **scored** cells by
+  percentage of the assignment's points, from earned and possible both. One exported asker, such as
+  `isDropped(doc, cls, termId, studentId, assignmentId)`, is the only way any screen learns which
+  cells are dropped, the same pattern as `isHeld()`. `openWork()` and `projectedClassGrade()` take
+  the drop into account.
+- **`src/categories.js`.** A *Drop lowest* field per category in the categories editor. Blank or 0
+  removes the key.
+- **Readers.** The Scores grid draws a dropped cell with WO-3.68's strike and the word *dropped*. The
+  grade sheet, both CSVs and student detail mark it. Each asks `isDropped()`.
+- **A mutation**: make `isDropped()` drop nothing, show the drop checks go red, and revert it.
+- **`CACHE` bump**, **`TESTING.md` § WO-3.69** and the `CHANGELOG.md` entry.
+
+**Open questions — the owner rules before `--start`**
+1. Can a `missing` zero be dropped? *Recommended: no.* A marked zero is the teacher's decision.
+2. Which of two equal low scores is dropped? *Recommended: the earlier by due date.*
+3. Does the setting apply to a points-mode class? *Recommended: yes, the same way.*
+4. If N is at least the number of scored cells, does the category keep the best one or drop them all?
+   *Recommended: keep the best one*, so a drop never empties a category.
+
+**Acceptance**
+- [ ] The category and class grades match a hand-worked fixture with `dropLowest` 1 and 2, in both
+      grading modes.
+- [ ] A new score lower than the dropped one takes the drop over, and the old one counts again.
+- [ ] Excused, ungraded and held cells are never counted toward N. `missing` follows ruling 1.
+- [ ] The grid, grade sheet, both CSVs and student detail mark the same cells as dropped.
+- [ ] Signals and merge fields read the same grade that the screens show.
+- [ ] A backup with no `dropLowest` key anywhere restores and grades as before.
+- [ ] With `isDropped()` dropping nothing, the drop checks go red. The mutation is reverted, and
+      `TESTING.md` § WO-3.69 shows the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] 👤 On the iPad, the *Drop lowest* field and a dropped cell read clearly.
+- [ ] `TESTING.md` § WO-3.69 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Never write the drop into a cell.** **No screen works out which cell is dropped**; every
+one asks `isDropped()`. A second opinion is how the grid and the grade come to disagree. **The drop is
+per student**: each student's lowest N are different assignments.
