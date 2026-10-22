@@ -56,7 +56,9 @@
   table and the CSV carry identical text in every cell, which is what makes "the printout and the
   file must not disagree" a fact rather than a promise. A score marked late prints as `18 L` — the
   number counts in full, the mark is a record and not a penalty — `missing` prints as `M` because it
-  holds no number, `excused` as `Ex`, and an ungraded cell prints as NOTHING.
+  holds no number, `excused` as `Ex` — or `Ex (62)` when it kept its score (WO-3.68), bracketed
+  because it counts toward nothing and a bare 62 beside `Ex` would read as a score that does — and
+  an ungraded cell prints as NOTHING.
 
   THE EMPTY CELL IS THE ONE PLACE THIS DEPARTS FROM src/attendance-report.js, deliberately and at
   the point it happens. That file draws a dash into a blank because an empty attendance cell would
@@ -259,12 +261,13 @@ function categoryNameOf(cls, assignment) {
 
 /*
   ONE CELL, AS THE STRING BOTH SURFACES PRINT. The single place a mark becomes text — see this
-  file's header for why `M`, `Ex`, `18 L` and an empty string are the four answers, and why the
-  empty one is empty.
+  file's header for why `M`, `Ex`, `Ex (62)`, `18 L` and an empty string are the answers, and why
+  the empty one is empty. The flag is asked BEFORE the value, which every reader of a cell has to
+  do since WO-3.68: an excused cell may carry a number, and that number counts toward nothing.
 */
 function markText(mark) {
   if (mark.flag === 'missing') return 'M';
-  if (mark.flag === 'excused') return 'Ex';
+  if (mark.flag === 'excused') return mark.value === null ? 'Ex' : 'Ex (' + mark.value + ')';
   if (mark.value === null) return mark.flag === 'late' ? 'L' : '';
   return mark.flag === 'late' ? mark.value + ' L' : String(mark.value);
 }
@@ -570,7 +573,10 @@ export function openGrades(opener) {
   const key = el('div', 'grades-report-key');
   [['18 L', 'a score you marked late — it counts in full; late is a record, not a penalty'],
     ['M', 'marked missing by you, and counted as zero out of the full points'],
-    ['Ex', 'excused — out of the grade entirely, neither earned nor possible'],
+    /* WO-3.68 widened this entry rather than adding one: held-readers.mjs counts the key, and an
+       excused cell is one state whether or not it kept its score. */
+    ['Ex', 'excused — out of the grade entirely, neither earned nor possible. A score in brackets, '
+      + 'Ex (62), is the one it had, kept for your record and not counted'],
     ['(empty)', 'not graded yet. A blank counts toward nothing and is never a zero']]
     /* The fifth entry only when a column on this sheet IS held (WO-3.47), so a sheet with none
        reads as it always did. */

@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2049 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2069 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -3010,6 +3010,16 @@ comment added inside `sw.js`'s `SHELL` array carried an apostrophe (*list's*), a
 `verify/precache.mjs` reads that array's quoted strings, so every entry after it read as missing.
 Full run: `2061 checks · 2061 passed · 0 failed · 0 skipped`, 65,797 lines, 31.9 lines per check,
 1101s, exit 0, 2026-10-12 on the real clock.
+
+**WO-3.68 moved it from 2049 to 2069, and the executed count from 2061 to 2080 — twenty sites,
+nineteen results, one new file.** All twenty are `verify/excused-kept.mjs`, run directly after
+`verify/past-due.mjs`. Three sites do not map one to one: the engine check sits in a two-mode loop
+(one site, two results), and two are failure arms that a green run never reaches — the fixture
+guard at the head, and the coarse-pointer `if (!coarse)` arm beside the measurement it stands in
+for. So twenty sites give twenty-one, minus two, nineteen results. WO-3.67 added no site (it widened
+one check), which is why this entry follows WO-3.66's figures directly. Full run:
+`2080 checks · 2080 passed · 0 failed · 0 skipped`, 66,396 lines, 31.9 lines per check, 1148s,
+exit 0, 2026-10-22 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

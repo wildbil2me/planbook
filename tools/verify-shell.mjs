@@ -143,6 +143,7 @@ import { run as categoryRemoval } from './verify/category-removal.mjs';
 import { run as scoreNotes } from './verify/score-notes.mjs';
 import { run as scoreHistory } from './verify/score-history.mjs';
 import { run as pastDue } from './verify/past-due.mjs';
+import { run as excusedKept } from './verify/excused-kept.mjs';
 import { run as heldReaders } from './verify/held-readers.mjs';
 import { run as accommodationPrompts } from './verify/accommodation-prompts.mjs';
 import { run as printGate } from './verify/print-gate.mjs';
@@ -434,6 +435,11 @@ const BROWSER_SECTIONS = [
      leaves. */
   { file: 'verify/score-history.mjs', run: scoreHistory },
   { file: 'verify/past-due.mjs', run: pastDue },
+  /* WO-3.68, directly after the prompt whose sweep it re-proves against an excused cell that kept its
+     score. It plants one class of its own, reloads at its head, under a coarse pointer and at its foot,
+     restores this run's own year over itself once (the content is unchanged), takes the class back
+     out, and hands the page back at 1280x900 with touch off and presentation mode where it found it. */
+  { file: 'verify/excused-kept.mjs', run: excusedKept },
   /* WO-3.53, directly after the prompt it reads: four readers that hide a held column. It plants one
      points class of its own through the store, selects it, filters the concern list to it, reads
      each reader held and then live, and puts the class, the selection and both filters back. No

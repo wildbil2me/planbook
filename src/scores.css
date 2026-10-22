@@ -729,6 +729,25 @@
 .scores-input.late    { background: #fef5ea; border-color: #e67e22; color: #b35f0f; }
 .scores-input.missing { background: #fdeaea; border-color: #e74c3c; color: #c0392b; }
 .scores-input.excused { background: #f3eaff; border-color: #7c3aed; color: #7c3aed; }
+/* AN EXCUSED CELL THAT KEPT ITS SCORE (WO-3.68) draws the number STRUCK THROUGH, in the excused
+   colours above — the owner's ruling 1 of 2026-10-21. THE STRIKE IS THE WHOLE OF THE SAFETY: the
+   engine ignores `v` on an excused cell, and a number on screen the grade is not using must never
+   look like one it is. So three things about this rule are deliberate.
+   - It keys off `:not(:placeholder-shown)` — the field's OWN contents — rather than off a class the
+     script would have to remember to add: every excused field carries the "Ex" placeholder
+     (src/scores.js sets it on both paths), so any number in one is struck, typed, painted or
+     restored, from the first keystroke. An excused cell with no kept score shows the placeholder
+     and is not struck, which is how it drew before WO-3.68.
+   - It is stated ONCE, here, outside every @media block, and no other rule in this file names
+     `text-decoration` on `.scores-input` — so the coarse-pointer block, the focus wash and
+     presentation mode have nothing to override it with. tools/verify/excused-kept.mjs reads it
+     back as computed style under each of them. Do not restate it in a block "for safety": a second
+     copy is the one that later gets edited alone.
+   - 2px, because a 1px line through 13px bold digits in purple on a lilac wash is a line you can
+     miss from the back of a room, and missing it is reading a number as counted. */
+.scores-input.excused:not(:placeholder-shown) {
+  text-decoration-line: line-through; text-decoration-thickness: 2px;
+}
 /* Blank means ungraded and affects nothing — the data model's rule. It gets no wash at all, because
    a blank that is styled is a blank that looks like a state somebody chose. */
 

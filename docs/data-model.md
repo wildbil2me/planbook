@@ -139,6 +139,7 @@ nag, and nothing noticed until a verifier read the line for another reason.
       "s_…": { "v": 78, "flag": "late" },     // scored, turned in late
       "s_…": { "v": null, "flag": "missing" },// not turned in → counts as zero
       "s_…": { "v": null, "flag": "excused" },// leaves the denominator
+      "s_…": { "v": 62, "flag": "excused" },  // excused, the score it had kept — still in neither total
       "s_…": { "v": 92, "note": "revised essay" }, // any cell may carry a note; the math never reads it
       "s_…": { "v": 88, "at": "2026-10-01T14:02:11-04:00", // every write stamps `at`
                "was": [{ "v": null, "flag": "missing", "at": "2026-09-14T09:10:00-04:00" },
@@ -459,7 +460,21 @@ What each cell does to the math:
 | `{ v: 78, flag: "late" }` | 78 | full points — **`late` is a record, not a penalty** |
 | `{ v: null, flag: "missing" }` | 0 | full points |
 | `{ v: null, flag: "excused" }` | — | — (drops out entirely) |
+| `{ v: 62, flag: "excused" }` | — | — (drops out entirely; the 62 is kept, not counted) |
 | no key | — | — (ungraded; invisible to the math) |
+
+**Excused keeps the score it had, and it still counts toward nothing** *(WO-3.68, the owner's ruling of
+2026-10-21)*. Excused means *this counts toward nothing*, not *this is gone*: marking a scored cell
+excused keeps its `v`, and the engine, which returns on the flag before it reads `v`, puts it in neither
+earned nor possible exactly as it does an excused blank, in both grading modes. Until then the score grid
+erased the number when a cell was excused, on the argument that a number shown in a cell the grade is not
+using is a silent wrong number; the grid now draws that number **struck through** instead, so it is shown
+and plainly not counted. Typing into an excused cell changes the kept score and leaves it excused;
+emptying the field clears the score and keeps the flag; taking the flag off lets the kept score count.
+**Every reader of a cell asks the flag before the value** — an excused cell's number is a record, never a
+score. `missing` is unchanged and still holds no number. An old `{ v: null, flag: "excused" }` cell is still
+valid and draws as it always did, so there is no `SCHEMA_VERSION` bump — and a score erased by an earlier
+build is not recovered, because nothing kept it.
 
 **Missing is marked, never inferred.** An earlier draft computed it from the due date — blank plus
 past-due equalled zero. Explicit marking is better and it's what the owner asked for: the grade

@@ -14495,6 +14495,173 @@ dispatch's red was exactly that.
 - [x] `TESTING.md` § WO-3.67 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-3.68 — an excused cell keeps the score it had
+
+**What was built.** Marking a scored cell excused now keeps its score. `src/scores.js`: `cellFor()`
+keeps the value on `excused` (it still clears it on `missing`). `applyFlag()` keeps the score when it
+sets excused and says *"The 80 is kept, struck through, and no longer counts."*; X again takes the
+flag off, keeps the score, and says *"The 80 it kept counts in the grade again."* Typing into an
+excused cell changes the kept score and leaves the flag on; emptying the field clears the score and
+keeps the flag; typing into a `missing` cell still takes the flag off. The accessible name of a kept
+score reads *"— excused, 80 kept and not counted"*. The three comments that argued the old behaviour
+(`cellFor()`, `editScore()`'s exception, `applyFlag()`'s header) are rewritten in place, and the
+cell-draw comments say where the strike comes from. `src/scores.css`: one rule,
+`.scores-input.excused:not(:placeholder-shown) { text-decoration-line: line-through;
+text-decoration-thickness: 2px; }`, outside every `@media` block and the only rule in the file naming
+`text-decoration` on `.scores-input`. It keys off the field's own contents rather than a class the
+script adds, so any number in an excused field is struck, whichever path put it there. An excused
+cell with no score shows the `Ex` placeholder and is not struck, which is how it drew before. Readers:
+`markText()` in `src/grades-report.js` prints `Ex (62)`, and the legend's existing `Ex` entry gained a
+sentence (*"A score in brackets, Ex (62), is the one it had, kept for your record and not counted"*).
+It was widened rather than given a new entry, because `held-readers.mjs` counts the key's entries.
+`src/score-history.js`'s trail reads *"Excused, 18 kept"*. `docs/data-model.md`: a
+`{ v: 62, flag: "excused" }` example and table row, and a paragraph after the table (no
+`SCHEMA_VERSION` bump; a score erased by an earlier build is not recovered). `src/past-due.js`: its
+decision-1 comment no longer says excused holds no number. **The engine is not edited**:
+`git diff --stat src/grade-engine.js` is empty on the delivered tree. `sw.js`: `planbook-shell-v195`
+→ `planbook-shell-v196`. Harness: a new section, `tools/verify/excused-kept.mjs` (20 call sites, 19
+results), run directly after `past-due.mjs`.
+
+**The audit of every reader of a cell's value in `src/`.** Each reader was read for whether it asks the
+flag before the value. **None reads the value first, so no reader needed a fix.**
+- Already known to ask the flag first, and confirmed: `src/grade-engine.js` (`tally()` :120 and
+  `workRows()` :258), `src/signals.js` (`countedRows()` :1836, the percentage walk :1920),
+  `src/graded-pieces.js` :125, and `src/past-due.js` (`isUntouched()`, flag first).
+- `src/scores.js`: `isUngraded()` asks the flag first. `scoreMark()` hands over the pair, and its
+  callers (`src/grades-report.js`'s `markText()`, now flag first, and `src/signals.js`) test the
+  flag. `editScore()`, `applyFlag()` and the cell draw are this work order's. The ⌫ guard asks "no
+  value and no flag", a presence test that is right for a kept score. `writeNote()` copies `v` and
+  the flag through, so a note on a kept score keeps it.
+- `src/score-history.js`: `valueIn()` and `sameContent()` compare versions and do no arithmetic.
+  `versionWords()` is this work order's. `src/assignments.js`'s `noteOnly()` asks "no value and no
+  flag": a presence test.
+- **These count keys and never read `v`**: `src/backup.js` `countScores()`, `src/categories.js` :558,
+  `src/classes.js` :1375, `src/roster.js` :1454, and `src/score-notes.js`'s `cellIn()`, which reads
+  the note.
+- **`excused` that is not a score cell** (attendance's absence code `E`, or prose): `src/attendance.js`,
+  `src/supports.js` (the IEP attendance clause), `src/shell.js` (a comment naming the flag bar's
+  values), and the comment-only mentions in `src/glance.js`, `src/home.js` and `src/score-notes.js`.
+  `src/glance.js` and `src/home.js` read cells only through the engine.
+
+**Harness checks that asserted the old behaviour, changed and not deleted.**
+- `tools/verify/score-grid.mjs`, the three-flags check (*"late, missing and excused are three distinct
+  fills…"*). It asserted the excused field EMPTY with a name ending `— excused`. s03's cell held 63
+  when X was pressed, so it now asserts the field reads `63`, struck through (computed
+  `text-decoration-line`), and that the name carries `— excused, 63 kept and not counted`. `missing`
+  is still asserted empty. The check's label gained a closing clause. Run 1 showed it red on the old
+  assertion; run 2 shows it green: `"value":"63","line":"line-through"`.
+- `tools/verify/score-grid.mjs`, the `0x1f` walk: only its comment asserted the old ruling (*"the digit
+  after it takes the flag off again"*), and it is rewritten. The check's invariants did not change and
+  it passes, now ending on an excused cell holding 1:
+  `{"typed":"1","field":"01","v":1,"flag":"excused","agrees":true}`.
+- The rest of the brief's list was read and needed no change. `grade-sheet.mjs`, `grade-detail.mjs`,
+  `past-due.mjs`, `grade-engine.mjs`, `points-grade.mjs` and `ungraded-count.mjs` plant only
+  `{ v: null, flag: 'excused' }`, which draws and grades as before. `score-history.mjs`'s held edges
+  and `score-notes.mjs`'s X on a *missing* cell carry no score to keep.
+
+- [x] Excusing a scored cell keeps `v` in the document. The class grade is the same as for an excused
+      blank, in both grading modes.
+      — `node tools/verify-shell.mjs`, 2026-10-22, real clock, `tools/verify/excused-kept.mjs`:
+      `PASS | WO-3.68: in a weighted class the engine grades Ada's essay excused-with-80-kept exactly as
+      excused-with-nothing … :: {"mode":"weighted","scored":{"pct":78,…},"kept":{"pct":75,"cats":"[[\"k368w\",0,0],[\"k368p\",15,20]]",…},"blank":{"pct":75,…}}`
+      and the same in a points class (`"scored":{"pct":79.16666666666666}`, `"kept":{"pct":75}`,
+      `"blank":{"pct":75}`). Driven at the grid: `PASS | … pressing X on Ada's essay (80) keeps `v` in
+      the document … :: cell {"v":80,"flag":"excused"} :: said "… The 80 is kept, struck through, and no
+      longer counts."`. `PASS | … the class grade on the grid with the 80 kept is the engine's grade for
+      the same cell excused with no score, in a weighted class … :: {"grid":"75.00%","mode":"weighted","live":75,"as":{"blank":75,"counted":78}}`.
+      `PASS | WO-3.68: in a points class too, … :: {"cell":"{\"v\":80,\"flag\":\"excused\"}","grades":{"grid":"75.00%","mode":"points","live":75,"as":{"blank":75,"counted":79.16666666666666}}}`.
+      Each equality has a different figure beside it (the 80 counted: 78, and 79.17), so the cell
+      could have moved the grade.
+- [x] Pressing X again on that cell takes the flag off, and the kept score counts in the grade.
+      — `PASS | WO-3.68: pressing X again on that cell takes the flag off and the kept 80 counts … ::
+      {"off":"{\"v\":80}","drawn":{"value":"80","excused":false,"line":"none","glyph":"",…},"said":"WO-3.68
+      Essay for Ada Apple: excused taken off. The 80 it kept counts in the grade again.",…}`. The grid's
+      grade equals the engine's figure for `{ v: 80 }` (78) and is not the excused-blank 75.
+- [x] Typing a number into an excused cell writes `v` and keeps `flag: 'excused'`. Emptying it
+      clears `v` and keeps the flag.
+      — `PASS | WO-3.68: typing 65 into the excused essay writes `v` and keeps the flag … ::
+      {"typed":"{\"v\":65,\"flag\":\"excused\"}","drawn":{"value":"65","excused":true,"line":"line-through",
+      "thick":"2px",…,"label":"WO-3.68 Essay, out of 100, for Ada Apple — excused, 65 kept and not counted,
+      has earlier versions"}}`. `PASS | WO-3.68: and emptying the field clears `v` and keeps the flag … ::
+      {"emptied":"{\"v\":null,\"flag\":\"excused\"}","drawn":{"value":"","placeholder":"Ex","excused":true,
+      "line":"none","glyph":"X",…}}`. Ruling 3: `PASS | WO-3.68, ruling 3: `missing` is untouched … ::
+      {"missing":"{\"v\":null,\"flag\":\"missing\"}","typedOver":"{\"v\":9}"}`.
+- [x] The grade sheet, its CSV and the score history on student detail show the kept score with the
+      excused mark. *(Re-homed 2026-10-22, the owner's ruling: this line read "both CSVs … and student
+      detail", and the student report lists no excused piece to show one on. That half is
+      [WO-3.70](plans/work-orders/phase-3-gradebook.md#wo-370--the-student-report-lists-excused-work-with-any-score-it-kept)'s first line.)*
+      — **Closed on the narrowed wording; the verifier passed it on the evidence below, 2026-10-22.**
+      The implementer's account as it stood before the ruling: **three of the four surfaces are shown,
+      and the student report's CSV is not.**
+      `PASS | WO-3.68: the grade sheet prints a kept score with the excused mark — `Ex (80)`, `Ex (18)`,
+      `Ex (7)` — … :: {"ada":{"a368-hw":"","a368-essay":"Ex (80)","a368-quiz":"15"},
+      "ben":{"a368-hw":"Ex","a368-essay":"90","a368-quiz":"Ex (18)"},"cy":{"a368-hw":"Ex (7)","a368-essay":"Ex","a368-quiz":"10"},
+      "rows":["\"Apple, Ada\",,Ex (80),15,75.00%,C","\"Birch, Ben\",Ex,90,Ex (18),90.00%,A","\"Cole, Cy\",Ex (7),Ex,10,50.00%,F"],
+      "printed":["Ex (80)","Ex","Ex (18)","Ex (7)","Ex"],"key":[…,"Ex excused — out of the grade
+      entirely, neither earned nor possible. A score in brackets, Ex (62), is the one it had, kept for
+      your record and not counted",…]}`. That covers the printed sheet, the grade sheet's CSV
+      (`gradesCsv()` in `src/grades-report.js`) and the legend. Score history, which is student
+      detail's only list of an excused piece: `PASS | … :: {"up":true,"steps":["18 (Sep 20)","Excused,
+      18 kept (Oct 1)"]}`. **The second CSV is `studentCsv()` in `src/detail.js`, and it lists no
+      excused piece in either shape.** Its Work section is `openWork()`'s outstanding and missing rows,
+      and the engine leaves excused work out of those, so there is no row a kept score could appear on.
+      What the run proves instead: `PASS | WO-3.68: the student report's CSV is byte-identical whether
+      Cy's excused homework kept its 7 or not … :: {"same":true,"len":452,"ex":false,"homework":false,…}`.
+      Adding excused rows to that file would be a new kind of row on the student report, screen and
+      file, and the work order does not ask for it. Whether "both CSVs" meant that file is the owner's
+      call (see the result file).
+- [x] A backup holding `{ v: null, flag: 'excused' }` cells restores and draws them as before.
+      — `PASS | WO-3.68: a backup holding `{ v: null, flag: 'excused' }` cells restores and draws them as
+      before … :: {"inFile":["{\"v\":null,\"flag\":\"excused\"}","{\"v\":null,\"flag\":\"excused\"}"],
+      "parsed":[same],"onDisk":[same],"drawn":{"essay":{"value":"","placeholder":"Ex","excused":true,
+      "line":"none",…}`. The file is this run's own year, written by `buildBackup()`, parsed by
+      `parseBackup()` and restored through `restoreFromText()` and the real confirm. Both old-shape
+      cells draw empty, with the Ex placeholder, the X glyph, no strike and `— excused`.
+- [x] The past-due prompt never sweeps an excused cell, with or without a kept score.
+      — `PASS | WO-3.68: the past-due prompt never sweeps an excused cell, with or without a kept score
+      … :: {"before":{"up":true,"lead":"1 blank is past due — mark it missing?"},"chips":["a368-hw/wo368-s1"],
+      "after":{"ada":"{\"v\":null,\"flag\":\"missing\"}","ben":"{\"v\":null,\"flag\":\"excused\"}",
+      "cy":"{\"v\":7,\"flag\":\"excused\"}"}}`. Homework was due 2020-01-06. The banner counted one
+      blank, the review listed only Ada's cell, and Accept wrote only hers.
+- [x] With the engine reading `v` on excused, the grade checks go red. The mutation is reverted, and
+      `TESTING.md` § WO-3.68 shows the red output.
+      — `src/grade-engine.js` `tally()`, line 120: `if (!cell || cell.flag === 'excused') return;`
+      became `/* MUTATION WO-3.68: the engine reads v on an excused cell — REVERT */ if (!cell ||
+      (cell.flag === 'excused' && (cell.v === null || cell.v === undefined))) return;`. With that change
+      a kept score falls through and is summed. `node tools/verify-shell.mjs`: `2080 checks · 2075
+      passed · 5 failed · 0 skipped`, 1153s, `EXIT=1`. All five reds are this section's:
+      `FAIL | WO-3.68: in a weighted class the engine grades … :: {…"kept":{"pct":78,"cats":"[[\"k368w\",80,100],[\"k368p\",15,20]]",…},"blank":{"pct":75,…}}`;
+      `FAIL | WO-3.68: in a points class … :: {…"kept":{"pct":79.16666666666666,…},"blank":{"pct":75,…}}`;
+      `FAIL | WO-3.68: the class grade on the grid with the 80 kept … :: {"grid":"78.00%","mode":"weighted","live":78,"as":{"blank":75,"counted":78}}`;
+      `FAIL | WO-3.68: in a points class too, … :: {…"grid":"79.17%","mode":"points","live":79.16666666666666,"as":{"blank":75,…}}`;
+      `FAIL | WO-3.68: the student report's CSV is byte-identical whether Cy's excused homework kept its 7
+      or not … :: {"same":false,…}`. No existing grade check went red, because every older fixture
+      plants `{ v: null, flag: 'excused' }`, which the mutation still skips. Reverted with
+      `git checkout -- src/grade-engine.js` before anything else was written. `cmp` against a copy
+      saved before the plant reads identical, `git diff --stat src/grade-engine.js` prints nothing, and
+      `grep -rn "MUTATION WO-3.68" src tools` finds nothing.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs`: `2080 checks · 2080 passed · 0 failed · 0 skipped`, 66,396
+      lines, 31.9 lines per check, 1148s, `EXIT=0`, 2026-10-22, real clock. That run (run 2) came before
+      the mutation, and the reverted tree is byte-identical to it in `src/` (`cmp` above; no other
+      file under `src/` was touched in between). Run 1, on the same `src/`, was `2080 · 2075 · 5
+      failed`. All five reds were harness assertions, fixed before run 2: the score-grid check above
+      on the old ruling, three of this section's label regexes, which had not allowed for
+      `, has earlier versions` after the clause, and its CSV regexes, which assumed a column order the
+      sheet does not use. `node tools/wo-sweep.mjs`: `52 checks · 49 passed · 0 failed · 3 to
+      review`, exit 0. The three are the standing reviews. This followed `tools/README.md`'s call-site
+      line going 2049 → 2069, from the sweep's own count.
+- [x] 👤 On the iPad, a kept score reads as struck through and not counted, in normal mode and in
+      presentation mode.
+      — **Read green by the owner on the iPad, 2026-10-22**, at v196 off the local server, all five
+      checklist readings (strike on excuse, grade matches a blank, type and clear, X again, and
+      presentation mode). What the harness had already shown: The harness reads `text-decoration-line: line-through` (2px, ink
+      `rgb(124, 58, 237)`) on a kept score: at rest, with the caret in it, under presentation mode and
+      under an emulated coarse pointer at 44px. Whether it *reads* as not counted needs eyes, on the
+      iPad, after a force-quit at v196.
+- [x] `TESTING.md` § WO-3.68 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

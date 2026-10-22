@@ -576,12 +576,18 @@ function writeNote(assignmentId, studentId, text) {
 }
 
 /* A value and a flag folded into the one shape the data model allows, with the no-value-no-flag
-   case answered by the caller getting `null` back and writeCell() deleting the key. `missing` and
-   `excused` never carry a value: the engine ignores `v` on both (docs/data-model.md § Grade math),
-   and a number displayed in a cell that the arithmetic is not using is the exact failure this work
-   order's own deliverable names — "a score that silently isn't what you typed". */
+   case answered by the caller getting `null` back and writeCell() deleting the key. `missing` never
+   carries a value: it is a marked zero, and a number in it would be a number the grade is not using.
+
+   `excused` KEEPS ITS VALUE, SINCE WO-3.68 (the owner's ruling of 2026-10-21): excused means *this
+   counts toward nothing*, not *this is gone* — "I still want a record of that grade". Until then
+   this function forced `{ v: null }` here, on the argument that a number shown in a cell the
+   arithmetic is not using is a silent wrong number. That argument still stands and it is answered
+   on screen rather than by erasing: the engine ignores `v` on an excused cell (docs/data-model.md
+   § Grade math), and src/scores.css strikes the number through so it is shown and plainly not
+   counted. The strike is the whole of the safety — see `.scores-input.excused` there. */
 function cellFor(value, flag) {
-  if (flag === 'missing' || flag === 'excused') return { v: null, flag: flag };
+  if (flag === 'missing') return { v: null, flag: flag };
   if (value === null) return flag ? { v: null, flag: flag } : null;
   return flag ? { v: value, flag: flag } : { v: value };
 }
@@ -791,8 +797,11 @@ function scoreCell(assignment, student, cell) {
   input.setAttribute('autocomplete', 'off');
   input.setAttribute('autocapitalize', 'off');
   input.spellcheck = false;
-  /* `missing` and `excused` show no number because they hold none — the placeholder says which
-     state it is instead, so a cell is never blank-looking while carrying a decision. */
+  /* `missing` shows no number because it holds none, and neither does an `excused` cell with no kept
+     score — the placeholder says which state it is instead, so a cell is never blank-looking while
+     carrying a decision. An `excused` cell that KEPT its score (WO-3.68) shows it, and
+     src/scores.css draws it struck through: the rule keys off the placeholder NOT being shown, so
+     any number in an excused field is struck, whichever path put it there. */
   input.value = value === null ? '' : String(value);
   input.placeholder = flag === 'missing' ? '0' : flag === 'excused' ? 'Ex' : '—';
   input.setAttribute('data-score-cell', assignment.id);
@@ -813,6 +822,16 @@ function scoreCell(assignment, student, cell) {
 /* The two optional halves of a cell's accessible name and of its tooltip, read through the two
    modules that answer whether each may be on screen — so under presentation mode both are ''. */
 function noteClause(cell) { return visibleNoteOf(cell) ? ', has a note' : ''; }
+
+/* The flag, as the accessible name says it. An excused cell holding a kept score (WO-3.68) says the
+   number AND that it does not count, because a screen reader hears no strike-through: "excused" on
+   its own beside a field reading 62 is the silent wrong number in audio. */
+function flagClause(cell) {
+  const flag = flagOf(cell);
+  if (!flag) return '';
+  const kept = flag === 'excused' ? valueOf(cell) : null;
+  return kept === null ? ' — ' + flag : ' — excused, ' + kept + ' kept and not counted';
+}
 function historyClause(cell) { return hasVisibleHistory(cell) ? ', has earlier versions' : ''; }
 
 /* A cell's accessible name: what it is, out of what, for whom, its flag, and — since WO-3.32 —
@@ -821,10 +840,9 @@ function historyClause(cell) { return hasVisibleHistory(cell) ? ', has earlier v
    presentation mode visibleNoteOf() answers '' and the clause is not there. WO-3.33 adds "has
    earlier versions" on the same terms — said, never listed, and absent under the projector. */
 function cellLabel(assignment, student, cell) {
-  const flag = flagOf(cell);
   return (assignment.name || 'Untitled assignment')
     + ', out of ' + pointsOf(assignment) + ', for ' + fullName(student)
-    + (flag ? ' — ' + flag : '')
+    + flagClause(cell)
     + noteClause(cell) + historyClause(cell)
     /* WO-3.46: a held column is said in every cell's name, because a screen-reader user typing down
        a column hears the cells and not the head. Asked of the engine, never of the key. */
@@ -1591,7 +1609,9 @@ function resolveCell(element) {
 /* Repaint one cell's flag — the wash, the corner glyph, the placeholder and the accessible name —
    without replacing the input the teacher is typing into. The input's VALUE is deliberately left
    alone on the typing path: what is in the field is what she typed, and the document holds the
-   number that was read out of it. */
+   number that was read out of it. The strike on an excused cell's kept score (WO-3.68) is not
+   painted here at all: `.excused` is the class this adds, and src/scores.css strikes whatever the
+   field then holds, so the strike follows the field's contents and not this function's timing. */
 function paintCell(input, at, cell) {
   const flag = flagOf(cell);
   input.classList.remove('late', 'missing', 'excused');
@@ -1705,11 +1725,19 @@ export function allowScoreInput(input, data, inputType) {
   refusal under a comment promising none will resolve the contradiction in one of two directions,
   and one of them undoes the work order.
 
-  THE EXCEPTION: TYPING A NUMBER INTO A `missing` OR `excused` CELL TAKES THAT FLAG OFF. The engine
-  ignores `v` on both of them, so a cell showing 8 and counting 0 would be the silent-wrong-number
+  THE EXCEPTION: TYPING A NUMBER INTO A `missing` CELL TAKES THAT FLAG OFF. `missing` is a marked
+  zero and holds no number, so a cell showing 8 and counting 0 would be the silent-wrong-number
   failure in its purest form. `late` is kept, because a late score is a score — the flag is a record
   and not a penalty. The change is visible in the cell the instant it happens, which is what the
   deliverable asks of a flag.
+
+  `excused` IS KEPT TOO, SINCE WO-3.68 (the owner's ruling 2 of 2026-10-21) — and until then it was
+  on the missing side of that line, for the same silent-wrong-number reason. Typing into an excused
+  cell now changes the KEPT score and leaves the cell excused; emptying the field clears the score
+  and keeps the flag; X (or the Ex button) is what takes the flag off and lets the kept score count.
+  What answers the old argument is the strike: src/scores.css draws any number in an excused field
+  struck through, keyed off the field's own contents, so the 8 typed here is struck from the first
+  keystroke without this function repainting anything.
 */
 export function editScore(input) {
   const at = resolveCell(input);
@@ -1720,9 +1748,10 @@ export function editScore(input) {
   let flag = flagOf(before);
 
   if (raw === '') {
-    /* An emptied field is not automatically a cleared cell: a `missing` or `excused` cell shows no
-       number either, and deleting the key here would silently undo a decision. What it does mean is
-       that any VALUE is gone, and cellFor() turns "no value, no flag" into a deleted key. */
+    /* An emptied field is not automatically a cleared cell: a `missing` cell shows no number either,
+       and an `excused` one may have been showing its kept score (WO-3.68) — deleting the key here
+       would silently undo a decision. What it does mean is that any VALUE is gone, the flag stays,
+       and cellFor() turns "no value, no flag" into a deleted key. */
     writeCell(at.assignment.id, at.student.id, cellFor(null, flag));
   } else {
     const stored = valueOf(before);
@@ -1762,16 +1791,18 @@ export function editScore(input) {
        illegal value. src/classes.js and src/categories.js both refuse the same way, one field
        over. */
     if (!Number.isFinite(n)) return;
-    if (flag === 'missing' || flag === 'excused') flag = '';
+    if (flag === 'missing') flag = '';
     writeCell(at.assignment.id, at.student.id, cellFor(n, flag));
   }
 
   const after = cellOf(getDoc(), at.assignment.id, at.student.id);
   /* The cell's furniture is repainted when the flag moved and, since WO-3.33, when the cell gained
      or lost a past — the first keystroke of a revision pushes, and a burst typed back to where it
-     started takes the push back. paintCell() never touches the field's value, so this is still safe
-     under the caret (decision 3). */
-  if (flagOf(before) !== flagOf(after) || hasVisibleHistory(before) !== hasVisibleHistory(after)) {
+     started takes the push back. Since WO-3.68 also when an excused cell's kept score moved, because
+     the accessible name says the number. paintCell() never touches the field's value, so this is
+     still safe under the caret (decision 3). */
+  if (flagOf(before) !== flagOf(after) || hasVisibleHistory(before) !== hasVisibleHistory(after)
+      || (flagOf(after) === 'excused' && valueOf(before) !== valueOf(after))) {
     paintCell(input, at, after);
   }
   paintGrades(at.cls, at.termId, at.students);
@@ -1807,12 +1838,19 @@ function inputFor(assignmentId, studentId) {
   are one act — the shape src/attendance.js's cycleMark() has with the registry's keyboard.
 
   THE SAME FLAG TWICE TAKES IT OFF, which is what makes every state reachable without a mouse:
-  `late` off leaves the score, and `missing` or `excused` off leaves the cell blank, because those
-  two hold no score to leave. `clear` empties the cell whatever is in it.
+  `late` off leaves the score, `excused` off leaves the score it kept (WO-3.68) — which then counts,
+  and the sentence says so — and `missing` off leaves the cell blank, because it holds no score to
+  leave. `clear` empties the cell whatever is in it.
 
-  SETTING `missing` OR `excused` CLEARS A TYPED SCORE, and says so out loud when there was one. The
-  engine ignores `v` on both; keeping the number would leave the cell showing something the grade is
-  not using. There is no undo in this app, so the sentence is the record of it.
+  SETTING `missing` CLEARS A TYPED SCORE, and says so out loud when there was one. `missing` is a
+  marked zero; keeping the number would leave the cell showing something the grade is not using.
+  There is no undo in this app, so the sentence is the record of it.
+
+  SETTING `excused` KEEPS IT, SINCE WO-3.68 (the owner's ruling of 2026-10-21) — "I might want to
+  drop the lowest grade in a category, but I still want a record of that grade." Until then excused
+  cleared the score exactly as missing does, for the reason above. The reason is answered rather
+  than ignored: the engine ignores `v` on an excused cell, src/scores.css draws the kept number
+  struck through, and the sentence says it is kept and no longer counts.
 */
 function applyFlag(at, which) {
   const input = inputFor(at.assignment.id, at.student.id);
@@ -1836,9 +1874,11 @@ function applyFlag(at, which) {
     said = what + ' for ' + who + ' is cleared to blank. Blank is ungraded and changes no grade.'
       + (visibleNoteOf(before) ? ' Its note is kept.' : '');
   } else if (had === which) {
-    writeCell(at.assignment.id, at.student.id, cellFor(which === 'late' ? value : null, ''));
+    writeCell(at.assignment.id, at.student.id, cellFor(which === 'missing' ? null : value, ''));
     said = what + ' for ' + who + ': ' + which + ' taken off.'
-      + (which === 'late' && value !== null ? ' The score is unchanged.' : '');
+      + (which === 'late' && value !== null ? ' The score is unchanged.' : '')
+      + (which === 'excused' && value !== null
+        ? ' The ' + value + ' it kept counts in the grade again.' : '');
   } else if (which === 'late') {
     writeCell(at.assignment.id, at.student.id, cellFor(value, 'late'));
     said = what + ' for ' + who + ': late. Late is a record and not a penalty — the score counts in '
@@ -1848,17 +1888,18 @@ function applyFlag(at, which) {
     said = what + ' for ' + who + ': missing. It counts 0 out of ' + pointsOf(at.assignment) + '.'
       + (value !== null ? ' The ' + value + ' that was there has been cleared.' : '');
   } else {
-    writeCell(at.assignment.id, at.student.id, cellFor(null, 'excused'));
+    writeCell(at.assignment.id, at.student.id, cellFor(value, 'excused'));
     said = what + ' for ' + who + ': excused. It leaves the grade entirely — neither earned nor '
       + 'possible points.'
-      + (value !== null ? ' The ' + value + ' that was there has been cleared.' : '');
+      + (value !== null ? ' The ' + value + ' is kept, struck through, and no longer counts.' : '');
   }
 
   const after = cellOf(getDoc(), at.assignment.id, at.student.id);
   if (input) {
     /* The field's value is written here — unlike on the typing path — because the flag is what
        changed it: a cell that has just been marked missing must not go on showing the 8 the
-       arithmetic has stopped using. */
+       arithmetic has stopped using. An excused cell goes on showing it (WO-3.68), and it is
+       src/scores.css's strike, not this line, that says the 8 no longer counts. */
     const now = valueOf(after);
     input.value = now === null ? '' : String(now);
     paintCell(input, at, after);

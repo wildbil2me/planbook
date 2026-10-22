@@ -238,14 +238,17 @@ function el(tag, className, text) {
   return node;
 }
 
-/* One version as it reads in the trail: *Missing*, *Excused*, *Late, 70*, *88*, or *Blank* for a cell
-   that was cleared. The note is said only where it changed from the version before, so a note that
-   rode through three revisions is read once rather than three times. */
+/* One version as it reads in the trail: *Missing*, *Excused*, *Excused, 62 kept*, *Late, 70*, *88*, or
+   *Blank* for a cell that was cleared. An excused cell may carry the score it had (WO-3.68), and the
+   trail says it with the word `kept` — the grid strikes that number through, and a line of text
+   cannot, so the word is what keeps *Excused, 62* from reading like *Late, 70*: one counted and one
+   did not. The note is said only where it changed from the version before, so a note that rode
+   through three revisions is read once rather than three times. */
 function versionWords(version, before) {
   const flag = flagWord(version);
   const value = valueIn(version);
   let words = flag === 'missing' ? 'Missing'
-    : flag === 'excused' ? 'Excused'
+    : flag === 'excused' ? 'Excused' + (value === null ? '' : ', ' + value + ' kept')
       : flag === 'late' ? 'Late' + (value === null ? '' : ', ' + value)
         : value === null ? 'Blank' : String(value);
   const note = noteOf(version);

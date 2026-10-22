@@ -5431,7 +5431,7 @@ the way. That is the route, so stop and report it as well. **Nothing in
 
 ## WO-3.68 — an excused cell keeps the score it had
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** WO-3.69
+**Ship** — · **Status** ✅ DONE — 2026-10-22 · **Size** M · **Depends on** — · **Blocks** WO-3.69, WO-3.70
 **Closes roadmap** *(no box. Owner-directed, 2026-10-21.)*
 
 **Booked 2026-10-21**, owner-directed. **Why it exists.** Marking a scored cell excused erases the
@@ -5477,21 +5477,23 @@ through**, so it is shown and plainly not counted.
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.68** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] Excusing a scored cell keeps `v` in the document. The class grade is the same as for an excused
+- [x] Excusing a scored cell keeps `v` in the document. The class grade is the same as for an excused
       blank, in both grading modes.
-- [ ] Pressing X again on that cell takes the flag off, and the kept score counts in the grade.
-- [ ] Typing a number into an excused cell writes `v` and keeps `flag: 'excused'`. Emptying it
+- [x] Pressing X again on that cell takes the flag off, and the kept score counts in the grade.
+- [x] Typing a number into an excused cell writes `v` and keeps `flag: 'excused'`. Emptying it
       clears `v` and keeps the flag.
-- [ ] The grade sheet, both CSVs, the score history and student detail show the kept score with the
-      excused mark.
-- [ ] A backup holding `{ v: null, flag: 'excused' }` cells restores and draws them as before.
-- [ ] The past-due prompt never sweeps an excused cell, with or without a kept score.
-- [ ] With the engine reading `v` on excused, the grade checks go red. The mutation is reverted, and
+- [x] The grade sheet, its CSV and the score history on student detail show the kept score with the
+      excused mark. *(Re-homed 2026-10-22, the owner's ruling: this line read "both CSVs … and student
+      detail", and the student report lists no excused piece to show one on. That half is
+      [WO-3.70](#wo-370--the-student-report-lists-excused-work-with-any-score-it-kept)'s first line.)*
+- [x] A backup holding `{ v: null, flag: 'excused' }` cells restores and draws them as before.
+- [x] The past-due prompt never sweeps an excused cell, with or without a kept score.
+- [x] With the engine reading `v` on excused, the grade checks go red. The mutation is reverted, and
       `TESTING.md` § WO-3.68 shows the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] 👤 On the iPad, a kept score reads as struck through and not counted, in normal mode and in
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] 👤 On the iPad, a kept score reads as struck through and not counted, in normal mode and in
       presentation mode.
-- [ ] `TESTING.md` § WO-3.68 carries these lines verbatim with the evidence for each.
+- [x] `TESTING.md` § WO-3.68 carries these lines verbatim with the evidence for each.
 
 **Traps** — **The struck-through number is the whole of the safety.** A number on screen that the grade
 is not using must never look like one that it is. Do not drop the strike for any state, size or
@@ -5553,3 +5555,49 @@ re-pick by hand. So the engine decides at read time, and the decision moves when
 **Traps** — **Never write the drop into a cell.** **No screen works out which cell is dropped**; every
 one asks `isDropped()`. A second opinion is how the grid and the grade come to disagree. **The drop is
 per student**: each student's lowest N are different assignments.
+
+## WO-3.70 — the student report lists excused work, with any score it kept
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.68 · **Blocks** nothing
+**Closes roadmap** *(no box. Owner-directed, 2026-10-22.)*
+
+**Booked 2026-10-22**, owner-directed, out of [WO-3.68](#wo-368--an-excused-cell-keeps-the-score-it-had)'s
+verdict. **Why it exists.** WO-3.68's fourth Acceptance line asked for the kept score on "both CSVs"
+and on student detail. The grade sheet, its CSV and the score history show it. The student report
+cannot: neither its screen nor `studentCsv()` in `src/detail.js` lists an excused piece at all.
+Their work rows are `openWork()`'s outstanding and missing rows, and excused work is in neither, so
+there is no row for a kept score to sit on. The owner's ruling was to give the report excused rows
+rather than to narrow the line, so that half of WO-3.68's line 4 is re-homed here, not waived.
+
+**Deliverables**
+- **`src/grade-engine.js`.** A reader for the student's excused pieces in the term, a sibling of
+  `openWork()` and `heldWork()`: name, category, points, and the kept score or none. **Never fold
+  excused rows into `openWork()`** — it feeds every *what it would take to move* projection, and an
+  excused piece moves nothing. A held column's excused cell is the held reader's, not this one's.
+- **Student detail (`src/detail.js`, `src/detail.css`).** The report lists excused work under its
+  own word, after the live and held rows, each with its kept score when there is one, in the same
+  mark the grade sheet uses (`Ex (62)`), or `Ex` alone. What prints is what is on screen.
+- **`studentCsv()`.** The same rows in the Work section, State cell `excused` or `excused — 62 kept`
+  (wording the implementer's to propose, the grade sheet's legend the model). `detailModel()` carries
+  them in their own key, the way `onHold` is kept apart from `work`.
+- **A mutation**: make the reader leave the kept score off, show the report checks go red, and
+  revert it before writing anything else.
+- **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.70** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] The student report's screen and its CSV list each excused piece in the term, with its kept
+      score when it has one and `Ex` alone when it does not.
+- [ ] The grade, the to-move card and every `openWork()` reader are unchanged by the new rows.
+- [ ] An excused cell in a held column is listed once, as held work, and not again as excused.
+- [ ] A student with no excused work gets a report and a CSV byte-identical to today's.
+- [ ] With the reader leaving the kept score off, the report checks go red. The mutation is reverted,
+      and `TESTING.md` § WO-3.70 shows the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] 👤 On the iPad, the excused rows read clearly on the report, in normal mode and in presentation
+      mode.
+- [ ] `TESTING.md` § WO-3.70 carries these lines verbatim with the evidence for each.
+
+**Traps** — **The excused rows are a third kind, not a widened `openWork()`**: CLAUDE.md's held-column
+rule applies word for word. **The engine's grade math is not edited.** **If WO-3.69 lands first**, a
+dropped score is not an excused one: it is worked out, never flagged, and stays off these rows unless
+the owner rules otherwise.

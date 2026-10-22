@@ -26,9 +26,11 @@
      a flag.
 
      THREE KINDS OF EMPTY-LOOKING CELL ARE DELIBERATELY OUT OF IT, and each one is a teacher
-     decision this prompt must not overwrite. `excused` holds no number and LEAVES THE DENOMINATOR
-     (docs/data-model.md); sweeping it into `missing` would turn a decision into a zero, which is
-     the single most expensive mistake available to this file. `missing` is already the answer this
+     decision this prompt must not overwrite. `excused` LEAVES THE DENOMINATOR (docs/data-model.md);
+     sweeping it into `missing` would turn a decision into a zero, which is the single most
+     expensive mistake available to this file. Since WO-3.68 an excused cell may also carry the
+     score it had, kept and not counted — and it is excluded by its FLAG, not by being empty, so
+     it is out of the set with or without that number (isUntouched() below asks the flag first). `missing` is already the answer this
      prompt proposes. And a `late` with no score yet says the work arrived and has not been graded —
      marking it missing would record that it never arrived at all, and the flag is the record.
 

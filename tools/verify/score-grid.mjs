@@ -812,24 +812,31 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
             var glyph = e.parentElement ? e.parentElement.querySelector('.scores-flag') : null;
             return { bg: st.backgroundColor, border: st.borderTopColor, ink: st.color,
                      glyph: glyph ? glyph.textContent : '', label: e.getAttribute('aria-label') || '',
-                     placeholder: e.placeholder, value: e.value }; };
+                     placeholder: e.placeholder, value: e.value, line: st.textDecorationLine }; };
           return { late: pick('wo35-a1','wo35-s01'), missing: pick('wo35-a1','wo35-s02'),
                    excused: pick('wo35-a1','wo35-s03'), blank: pick('wo35-p2','wo35-s01') }; })()`);
         const four = [flags.late, flags.missing, flags.excused, flags.blank];
-        check('late, missing and excused are three distinct fills, three distinct borders, three distinct glyphs and three distinct accessible names — and blank wears none of them',
+        /* CHANGED AT WO-3.68, the owner's ruling of 2026-10-21. s03's cell held 63 from the column
+           typed above when X was pressed, and until then this check asserted the excused field EMPTY
+           with a name ending in " — excused" — the score erased. Excused now keeps it: the field
+           shows the 63, struck through (computed, not a class name), and the name says it is kept
+           and not counted. `missing` is unchanged and still asserted empty. */
+        check('late, missing and excused are three distinct fills, three distinct borders, three distinct glyphs and three distinct accessible names — and blank wears none of them; the excused cell keeps the 63 it held, struck through (WO-3.68)',
           four.every((f) => !!f)
             && new Set(four.map((f) => f.bg)).size === 4
             && new Set(four.map((f) => f.border)).size === 4
             && flags.late.glyph === 'L' && flags.missing.glyph === 'M' && flags.excused.glyph === 'X'
             && flags.blank.glyph === ''
             && / — late$/.test(flags.late.label) && / — missing$/.test(flags.missing.label)
-            && / — excused$/.test(flags.excused.label) && !/ — /.test(flags.blank.label)
-            && flags.missing.value === '' && flags.excused.value === ''
+            && / — excused, 63 kept and not counted(,|$)/.test(flags.excused.label) && !/ — /.test(flags.blank.label)
+            && flags.missing.value === '' && flags.excused.value === '63'
+            && /line-through/.test(flags.excused.line) && !/line-through/.test(flags.late.line)
             && flags.missing.placeholder === '0' && flags.excused.placeholder === 'Ex'
             && flags.blank.placeholder === '—',
           'fills ' + JSON.stringify(four.map((f) => f && f.bg)) + ' :: borders '
             + JSON.stringify(four.map((f) => f && f.border)) + ' :: glyphs '
-            + JSON.stringify(four.map((f) => f && f.glyph)));
+            + JSON.stringify(four.map((f) => f && f.glyph)) + ' :: excused '
+            + JSON.stringify(flags.excused));
 
         /*
           ACCEPTANCE LINE 4, and it is the one no screenshot can answer: a cleared cell and a cell
@@ -1371,7 +1378,9 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
 
           `x` NEVER REACHES THE GUARD AT ALL, and the walk shows it: src/shell.js's keydown swallows
           `L`, `M` and `X` for the flag bar first, so typing `0x1f` marks the cell excused half way
-          through and the digit after it takes the flag off again. That is the Trap in the work order
+          through. Until WO-3.68 the digit after it took the flag off again; since then typing into an
+          excused cell changes its kept score and the cell stays excused (the owner's ruling 2 of
+          2026-10-21), so the walk ends on an excused cell holding 1. That is the Trap in the work order
           — no second refusal for those three letters — and the invariants asserted here are true
           through it: the character never lands in the field, and the poison number never lands in
           the store.

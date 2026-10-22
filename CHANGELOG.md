@@ -13,6 +13,23 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### An excused cell keeps the score it had — 2026-10-22
+
+WO-3.68, owner-directed. `CACHE` v196.
+
+- **Excusing a scored cell no longer erases the number.** It stays in the cell, struck through, and
+  counts toward nothing, in both grading modes. Press X again and it counts.
+- **Typing into an excused cell changes the kept score and leaves it excused**; emptying the field
+  clears the score and keeps the flag. `missing` is unchanged.
+- **The grade sheet and its CSV print it as `Ex (62)`**, the legend says the score is kept and not
+  counted, and the score history reads "Excused, 62 kept".
+- **The engine was not edited**: it already ignored a score on excused work, and a mutation that
+  made it count one turned the grade checks red. Old backups restore and draw as before; scores
+  erased by earlier builds are not recovered.
+- **The student report does not list excused work yet**, so it shows no kept score. That is
+  [WO-3.70](plans/work-orders/phase-3-gradebook.md#wo-370--the-student-report-lists-excused-work-with-any-score-it-kept),
+  booked the same day.
+
 ### WO-3.66's no-roster check now tests the Scores screen's own paint — 2026-10-13
 
 WO-3.67, out of WO-3.66's verdict. Test-only: nothing in `src/` moved, no `CACHE` bump.
