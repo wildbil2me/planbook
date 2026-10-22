@@ -5531,20 +5531,30 @@ re-pick by hand. So the engine decides at read time, and the decision moves when
 - **A mutation**: make `isDropped()` drop nothing, show the drop checks go red, and revert it.
 - **`CACHE` bump**, **`TESTING.md` § WO-3.69** and the `CHANGELOG.md` entry.
 
-**Open questions — the owner rules before `--start`**
-1. Can a `missing` zero be dropped? *Recommended: no.* A marked zero is the teacher's decision.
-2. Which of two equal low scores is dropped? *Recommended: the earlier by due date.*
-3. Does the setting apply to a points-mode class? *Recommended: yes, the same way.*
-4. If N is at least the number of scored cells, does the category keep the best one or drop them all?
-   *Recommended: keep the best one*, so a drop never empties a category.
+**The owner's rulings (2026-10-22)**
+1. **A `missing` zero is never dropped.** A marked zero is the teacher's decision. It always counts,
+   and the drop chooses from the scored cells only.
+2. **Of two equal low scores, the one with the earlier due date is dropped.** If the due dates are
+   also equal, the column order decides, so the same document always drops the same cell.
+3. **The setting applies to a points-mode class in the same way.** Work filed under no category has
+   no setting, so none of it is dropped.
+4. **If N is at least the number of scored cells, the best one is kept.** A drop never empties a
+   category, so it never redistributes that category's weight.
+5. **A dropped score still counts toward the *A run of low scores* rule.** Dropping is a grading
+   policy, and a string of low scores is still worth noticing. The rules that read the grade see the
+   drop through the engine. That rule reads scores, so it does not ask `isDropped()`.
+6. **Extra credit (zero-point work) is never dropped and does not count toward N.** It has no
+   percentage to rank by. Its points still add to earned as they do today.
 
 **Acceptance**
 - [ ] The category and class grades match a hand-worked fixture with `dropLowest` 1 and 2, in both
       grading modes.
 - [ ] A new score lower than the dropped one takes the drop over, and the old one counts again.
-- [ ] Excused, ungraded and held cells are never counted toward N. `missing` follows ruling 1.
+- [ ] Excused, ungraded and held cells are never counted toward N. `missing` follows ruling 1, ties
+      follow ruling 2, and zero-point work follows ruling 6.
 - [ ] The grid, grade sheet, both CSVs and student detail mark the same cells as dropped.
-- [ ] Signals and merge fields read the same grade that the screens show.
+- [ ] Signals and merge fields read the same grade that the screens show. *A run of low scores*
+      still counts a dropped score (ruling 5).
 - [ ] A backup with no `dropLowest` key anywhere restores and grades as before.
 - [ ] With `isDropped()` dropping nothing, the drop checks go red. The mutation is reverted, and
       `TESTING.md` § WO-3.69 shows the red output.
