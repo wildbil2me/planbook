@@ -1,7 +1,7 @@
 # Closing a quarter: record what went to the SIS, and say when it stops matching
 
 **Design thread — [`design-threads.md`](design-threads.md). Status: talking** (started 2026-10-23)
-— **eleven questions answered by the owner 2026-10-23; two follow-ups open** (§ Still open), then a
+— **all questions answered by the owner 2026-10-23**; the trigger recommendation awaits a nod, then a
 drawing under `design/mockups/` per [`PROTOCOL.md`](../design/mockups/PROTOCOL.md). **A soft clock**
 (the owner, 2026-10-23): useful for Q1 if it lands within about two weeks of 2026-10-31, but not a
 deadline.
@@ -125,14 +125,17 @@ the one who most needs it. So the recommendation is **one condition, shown in tw
 The bar is the one that survives a dismissed notice, which is why it is recommended over a notice
 alone.
 
-## Still open
+## Follow-ups, answered 2026-10-23
 
-1. **What counts as "changed" for the notice and for question 9?** Both a letter and a percentage are
-   recorded. Proposed: **any change to either**, since the dialog would show both — but a percentage
-   that moves inside the same letter needs no change in Blackbaud. Show it, or only letter changes?
-2. **The empty-boxes flag (answer 8) has two edges.** A **dropped** cell always holds a score, so it
-   is already "scored" — was *d* meant as something else? And a **late mark with no score yet**
-   (`L` alone): empty box, or marked?
+1. **What counts as "changed"?** **Answered: a change to the percentage counts, not only a change to
+   the letter.** The notice, the bar and the dialog's list all treat a student whose percentage moved
+   as changed, even inside the same letter. This also settles answer 1's proposal the other way:
+   both figures are compared, not only the letter.
+2. **The empty-boxes flag.** **Answered: *d* meant dropped**, which a cell always reaches holding a
+   score, so it never counts as empty. **A late mark with no score (`L` alone) counts as an empty
+   box.** The owner's practice, for context: work is marked `M` until it is submitted, then scored,
+   and `L` rides on a scored cell as a visual cue that it came in late, which lets him see how often
+   work is late. So *empty* is: no score, and not `X` or `M`, in a column not held awaiting *Commit*.
 
 ## What any build owes
 
