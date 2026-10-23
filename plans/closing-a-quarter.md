@@ -1,9 +1,9 @@
 # Closing a quarter: record what went to the SIS, and say when it stops matching
 
 **Design thread — [`design-threads.md`](design-threads.md). Status: drawn** (2026-10-23, in
-[`design/mockups/closing-a-quarter.html`](../design/mockups/closing-a-quarter.html)) — **five of the
-drawing's seven questions answered 2026-10-23; two recommendations await a nod, and question 6 is
-open.** Started 2026-10-23; the thread's first
+[`design/mockups/closing-a-quarter.html`](../design/mockups/closing-a-quarter.html)) — **six of the
+drawing's seven questions answered 2026-10-23, two of them by taking the recommendation; question 6
+has a recommendation drawn as frame E′ and awaits a nod.** That nod makes the thread **ruled**. Started 2026-10-23; the thread's first
 thirteen questions were answered the same day. **A soft clock**
 (the owner, 2026-10-23): useful for Q1 if it lands within about two weeks of 2026-10-31, but not a
 deadline.
@@ -155,7 +155,7 @@ Each is marked in amber where it is drawn. Answers are recorded here, dated, in 
 4. **When the notice opens by itself.** Drawn: the first time a class screen opens after a recorded
    quarter stops matching, once per change, and whenever that quarter is tapped. Or never by itself,
    leaving it to the bar.
-   **The owner asked for a recommendation. Recommended 2026-10-23, awaiting a nod:** it opens **when
+   **The owner asked for a recommendation, and took it, 2026-10-23:** it opens **when
    the teacher leaves a closed quarter that no longer matches its record** — tapping the next
    quarter, another class, or All classes. Never while working in the quarter, so three corrections
    are not three interruptions. A change made without visiting the quarter (a weight changed from
@@ -163,13 +163,18 @@ Each is marked in amber where it is drawn. Answers are recorded here, dated, in 
    the bar stays.
 5. **Does the notice say what caused a change** (*Act 2 quiz 4 → 9*)? Drawn: figures only. A score
    has a history (WO-3.33); a weight, scale or drop change has no per-student cause.
-   **The owner asked for a recommendation. Recommended 2026-10-23, awaiting a nod:** show the cause
+   **The owner asked for a recommendation, and took it, 2026-10-23:** show the cause
    when it is a score — every cell written since the recording's `at`, from the cell's own `at` and
    `was` — because that is what a grade-change form asks for. When no score changed, one line says a
    class setting did (weights, letter scale, drop lowest), since those keep no history. **Booked as its
    own S work order after the rest**, so the notice does not wait on it.
 6. **The home screen** — one bar naming the classes (drawn), a line on each class card, or nothing.
-   **Still open** — not answered 2026-10-23.
+   **The owner asked for a recommendation. Recommended 2026-10-23, drawn as frame E′, awaiting a
+   nod:** keep the bar on home, with **one button per class** that opens that class on the recorded
+   quarter's Scores with the Record dialog open. The card has no room (`src/home.js` measures two
+   chips in a slot sized for two; a third is a second row on every card); *Closing in* lists
+   deadlines ahead and this is a quarter already over; and nothing on home leaves a teacher who opens
+   only home unaware until they open each class. It names classes and counts, never a student.
 7. **The record history** — every recording is kept; shown anywhere (student detail), later, or
    never?
    **Answered: kept, not shown.** Every recording stays in the document so a reversal loses

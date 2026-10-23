@@ -43,6 +43,8 @@
   padding: 10px 20px; font-size: 12.5px; line-height: 1.55;
 }
 .term-record-nag-text { flex: 1 1 320px; min-width: 0; }
+/* On the home screen, one button per class that needs recording (frame E′). */
+.term-record-nag-classes { display: flex; flex-wrap: wrap; gap: 6px; }
 .term-record-nag-btn {
   border: 1.5px solid #c9a83f; background: #c9a83f; color: #fff;
   border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 700;
