@@ -1,8 +1,10 @@
 # Closing a quarter: record what went to the SIS, and say when it stops matching
 
 **Design thread — [`design-threads.md`](design-threads.md). Status: talking** (started 2026-10-23)
-— **waiting on the owner's answers to the open questions below**, then a drawing under
-`design/mockups/` per [`PROTOCOL.md`](../design/mockups/PROTOCOL.md).
+— **eleven questions answered by the owner 2026-10-23; two follow-ups open** (§ Still open), then a
+drawing under `design/mockups/` per [`PROTOCOL.md`](../design/mockups/PROTOCOL.md). **A soft clock**
+(the owner, 2026-10-23): useful for Q1 if it lands within about two weeks of 2026-10-31, but not a
+deadline.
 
 **Why now.** Quarter 1 ends 2026-10-31 and Quarter 2 starts 2026-11-01. Grades are re-keyed into
 Blackbaud by hand, and the **letter** is the figure that leaves Planbook (`future-features.md` § 3).
@@ -48,40 +50,89 @@ Quarter ends ─▶ Close Q1 for English III (dialog)
              2 students. Update Blackbaud, then record again."
 ```
 
-## Open questions
+## The eleven questions, answered 2026-10-23
 
-Answers are recorded here, dated, in place.
+Each keeps its proposal; the owner's answer follows it.
 
 1. **What is recorded: the letter, or the letter and the percentage?** Proposed: both, but the
    **letter is what is compared**, because the letter is what the SIS holds. A percentage that moves
    inside the same letter raises no reminder.
+   **Answered: both, the letter and the percentage.** Blackbaud also holds a GPA, reached through a
+   conversion loop to be talked about later (`future-features.md` § 3); the percentage and the letter
+   are the starting point.
 2. **One class at a time, or all five in one dialog?** Proposed: one class at a time, since
    Blackbaud is keyed one class at a time, with a door from each class.
+   **Answered: one at a time.**
 3. **A second recording overwrites, or appends?** Proposed: **appends, and the newest wins** — the
    log's rule. It keeps the history of grade changes (what was sent on 11/3, and what on 11/10) at
    no cost, and nothing in the app deletes it.
+   **Answered: appends, like the contact log.**
 4. **Where the reminder shows.** Proposed: a line on that class's card on the home screen and on
    Scores while the quarter disagrees with its record, naming the count of students. Possibly a
    one-time note at the moment of the edit. Which of these, or all?
+   **Answered: a notice when the app moves to the next quarter** — *This quarter's grades have
+   changed* — naming exactly who changed and how, in the manner of the grading-mode confirmation
+   (WO-3.31, `previewModeChange()`), whose figures are the engine's. See § The trigger below.
 5. **What *these match Blackbaud* means.** Proposed: the record button **is** the confirmation —
    one tap that says "I have keyed these" — rather than a separate checkbox step. Or should recording
    come first, with a separate "matches the SIS" tick afterwards?
+   **Answered: one tap.** The record button is the confirmation.
 6. **Is the two-week window modelled?** Proposed: no date limit and no lock (ruling 1). The reminder
    could word itself differently after two weeks ("this may need a grade change form") — or not at
    all.
+   **Answered: no.** The two weeks were context, not a rule. No lock, no date limit, no change of
+   wording.
 7. **When the dialog is offered.** Proposed: from the term's end date (derived, as *Closing in*
    already derives term edges), and from a door on Scores for that term. Should the grades-due event
    be the trigger instead?
+   **Answered: when the quarter changes after the quarter has closed, and the owner is open to a
+   recommendation — perhaps a nag bar like the backup's.** Recommendation in § The trigger below.
 8. **Unfinished work at closing.** A held column counts toward nothing, and ungraded or past-due
    blanks change nothing. Proposed: the dialog names them (*2 held columns, 5 blank past-due cells*)
    with a way to deal with them first, but does not block recording.
+   **Answered: one flag, *there are empty boxes*,** for any cell that is not scored and not marked —
+   not `X`, not `M`, not dropped, and not in a held column awaiting *Commit*. It does not block
+   recording. (Two edges are in § Still open.)
 9. **Roster changes.** A student added after the quarter, or one who left during it: in the dialog
    or not? Proposed: everyone with a Q1 grade.
+   **Answered: the dialog lists the students being recorded or changed.** The first recording lists
+   everyone with a grade. After that, a student whose grade matches their last record does not
+   appear.
 10. **The word.** *Commit* is taken — a held column's *Commit* (WO-3.52) is a different act, and two
     *Commit* buttons meaning two things is a trap. Proposed: *Record Q1 grades*, and *recorded* on
     screen.
+    **Answered: *Record Q1 grades*.**
 11. **Under a projector.** The dialog is a list of names and grades. Proposed: refused in
     presentation mode, as the concern list is.
+    **Answered: refused.**
+
+## The trigger — recommended 2026-10-23, for the owner's ruling
+
+**The app moves to the next quarter by itself.** Since WO-2.52 a class screen opens on the term
+holding today's date, so on 2026-11-01 every class opens on Q2 and nobody taps a quarter change.
+A notice tied only to a tap would therefore never fire for the teacher who does nothing, who is
+the one who most needs it. So the recommendation is **one condition, shown in two places**:
+
+- **The condition:** an ended quarter of this class is **unrecorded**, or **its live letters or
+  percentages no longer match its newest record**. Derived at read time, never stored.
+- **A bar, like the backup nag**, on that class's screens while the condition holds: *Q1 grades
+  for English III have changed since you recorded them — 2 students* (or *Q1 has ended and is not
+  recorded*). Tapping it opens *Record Q1 grades*. It goes away when a recording matches.
+- **The notice when you move between quarters** — the automatic move on the first open after the
+  quarter ends, and any tap from Q1 to Q2 while the condition holds — is the bar's first appearance,
+  carrying the who-and-how list (*Maya Ortiz: B+ 88.4% → A− 90.1%*).
+
+The bar is the one that survives a dismissed notice, which is why it is recommended over a notice
+alone.
+
+## Still open
+
+1. **What counts as "changed" for the notice and for question 9?** Both a letter and a percentage are
+   recorded. Proposed: **any change to either**, since the dialog would show both — but a percentage
+   that moves inside the same letter needs no change in Blackbaud. Show it, or only letter changes?
+2. **The empty-boxes flag (answer 8) has two edges.** A **dropped** cell always holds a score, so it
+   is already "scored" — was *d* meant as something else? And a **late mark with no score yet**
+   (`L` alone): empty box, or marked?
 
 ## What any build owes
 
