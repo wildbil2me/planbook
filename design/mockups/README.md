@@ -1360,7 +1360,7 @@ the note.
 
 ---
 
-# Closing a quarter — drawn 2026-10-23
+# Closing a quarter — drawn, ruled and booked 2026-10-23 as WO-3.72 to WO-3.75
 
 [`closing-a-quarter.html`](closing-a-quarter.html), styled in
 [`proposed-quarter.css`](proposed-quarter.css). The second drawing under

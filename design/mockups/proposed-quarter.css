@@ -19,8 +19,8 @@
 
    WHERE IT SPLITS ON LIFT:
 
-     § RECORD NAG    →  src/shell.css   (not yet booked — not yet lifted)
-     § RECORD LIST   →  src/shell.css   (not yet booked — not yet lifted)
+     § RECORD NAG    →  src/shell.css   (WO-3.73, WO-3.74 — not yet lifted)
+     § RECORD LIST   →  src/shell.css   (WO-3.73, WO-3.75 — not yet lifted)
    ══════════════════════════════════════════════════════════════════════════════ */
 
 .term-record-nag-btn {
@@ -28,7 +28,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § RECORD NAG   →  src/shell.css   (not yet booked — not yet lifted)
+   § RECORD NAG   →  src/shell.css   (WO-3.73, WO-3.74 — not yet lifted)
 
    The strip under the header while an ended quarter of the open class is not
    recorded, or no longer matches its newest record. `.backup-nag`'s values,
@@ -53,7 +53,7 @@
 .term-record-nag-btn:hover { background: #8a6d1a; border-color: #8a6d1a; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   § RECORD LIST   →  src/shell.css   (not yet booked — not yet lifted)
+   § RECORD LIST   →  src/shell.css   (WO-3.73, WO-3.75 — not yet lifted)
 
    The students in the Record dialog, inside a `.mode-change-facts` box. A first
    recording is name · percentage · letter; a later one is name · what was

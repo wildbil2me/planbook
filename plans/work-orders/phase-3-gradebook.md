@@ -5652,3 +5652,238 @@ is the seeded-default mistake CLAUDE.md's settings-block rule refuses. **`letter
 copy is a separate, existing decision** and is not this work order's to change. **If the owner's
 closing-a-quarter thread makes the drop per term**, the shape this copies changes; re-read that
 thread's note before `--start`.
+
+## WO-3.72 — a quarter's grades can be recorded, and the engine says when they stop matching
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** WO-3.73
+**Closes roadmap** *(no box. Owner-directed, 2026-10-23, from the closing-a-quarter thread.)*
+
+**The first of four, WO-3.72 to WO-3.75.** **Read before building any of these four:** the design thread
+[`plans/closing-a-quarter.md`](../closing-a-quarter.md), which holds every ruling with its date, and
+its drawing [`design/mockups/closing-a-quarter.html`](../../design/mockups/closing-a-quarter.html),
+styled in [`design/mockups/proposed-quarter.css`](../../design/mockups/proposed-quarter.css). Booked
+2026-10-23, owner-directed, the day the thread was ruled. **Why it exists:** grades are re-keyed into
+Blackbaud by hand, and once a quarter is keyed, any later change in Planbook — a score, an excuse, a
+weight, the letter scale, a drop count — leaves two grades for one student with nothing on screen to
+say so. Grade changes after a quarter ends are allowed and normal for about two weeks, so the answer
+is a record and a reminder, **never a lock**.
+
+**Rulings that bind all four** (the owner, 2026-10-23; the note has the full list):
+- **No lock.** A recorded quarter stays editable, always.
+- **A recording appends**, like the contact log, and the newest wins. Nothing in the app deletes one.
+  The history is kept and **no screen shows it** — revisit at year end
+  ([`future-features.md`](../future-features.md) § 6).
+- **Whether a quarter still matches is derived at read time, never stored.** No edit path sets a
+  "changed" bit, so no edit path can forget to.
+- **Both the percentage and the letter are compared.** A percentage that moves inside the same
+  letter is a change.
+- **Grading settings stay per class**, not per term; per-term settings are not part of this.
+- **The word is *Record Q1 grades*.** *Commit* belongs to a held column (WO-3.52), a different act.
+- **Names and grades never show under a projector.** The bars name classes and counts only.
+
+**What it is.** The data and the engine half, with no screen: a writer that records a class's
+quarter, and readers that say whether the quarter has ended, whether it is recorded, who no longer
+matches, and how many boxes are empty. WO-3.73 and WO-3.74 draw from these and compute nothing.
+
+**Deliverables**
+- **A `termRecords` array in the year document, created by its first write and never seeded**
+  (CLAUDE.md, WO-6.1's rule: `newYearDocument()` gains nothing, `SCHEMA_VERSION` does not move, and
+  every earlier backup restores). One entry per recording: `{ id, classId, termId, at, grades:
+  [{ studentId, percentage, letter }] }`, `at` from the log's `localStamp()` (`src/log.js`).
+- **A new module, `src/term-record.js`**, holding:
+  - **one writer**, `recordTerm()`, which pushes one entry inside one `update()` and does nothing
+    else — the log's shape (WO-4.4): no updater, no delete, no id lookup in the file. Each grade is
+    `classGrade()`'s own `percentage` and `letter`, never a second computation.
+  - **the readers**: whether a term has ended or ends today (its `end` against `todayISO()`); the
+    newest record for a class and term; the students who no longer match it, each with what was
+    recorded and what it is now; and the empty boxes.
+- **Who is in a recording**: every student on the class's roster whose `classGrade()` has a
+  percentage. **Who no longer matches**: a student whose live percentage or letter differs from the
+  newest record, or who has a grade now and was not in it. **Percentages are compared at the two
+  decimals the screens print**, so a float that prints the same is never a change.
+- **Empty boxes**: a cell in a live column of the term with no score and not flagged `excused` or
+  `missing`. **A late mark with no score is empty; a dropped cell never is**, because it always holds
+  a score. A held column's cells are not counted here; uncommitted held columns are a reader of their
+  own, by name. The reader returns the count and the category names, for the line *There are 7 empty
+  boxes in Q1, across Exams and Projects.*
+- **`sw.js`**: the new module in `SHELL`, and a `CACHE` bump.
+- **`docs/data-model.md`** gains the block and the rulings above. **`docs/FERPA.md` and
+  `privacy.html` are read** for whether grade data in a new place changes a sentence; they move
+  together if it does (CLAUDE.md § Accommodations).
+- **`tools/verify/term-record.mjs`**, registered in `tools/verify-shell.mjs`.
+- **A mutation**: make the comparison ignore the percentage, show the percentage-only checks go red,
+  and revert it before writing anything else.
+- **`TESTING.md` § WO-3.72** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] Recording a class's quarter appends one entry holding every graded student's percentage and
+      letter, equal to `classGrade()`'s; recording again appends a second and changes neither.
+- [ ] With nothing changed since a recording, no student is reported as changed.
+- [ ] A score edit that moves a percentage inside the same letter reports that student as changed,
+      with the recorded and the live figures.
+- [ ] A weight, letter-scale or drop-lowest change that moves grades reports exactly the students
+      whose figures moved.
+- [ ] The ended and ends-today readers answer for the term's end date, the day before and the day
+      after.
+- [ ] The empty-boxes reader counts a scoreless late mark, never a dropped, excused or missing cell,
+      and nothing in a held column, and names the categories the empty boxes are in.
+- [ ] A backup with no `termRecords` key restores and reads as unrecorded.
+- [ ] `src/term-record.js` holds one writer, and it only pushes.
+- [ ] With the comparison ignoring the percentage, the percentage-only checks go red. The mutation is
+      reverted, and `TESTING.md` § WO-3.72 shows the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-3.72 carries these lines verbatim with the evidence for each.
+
+**Open — the owner's, at `--start`:** a student who was recorded and has since **left the roster** —
+reported as changed, or left out? Proposed: left out; a withdrawal is Blackbaud's business, and a
+reminder that cannot be cleared is worse than none.
+
+**Traps** — **The comparison asks the engine and stores nothing**: a cached "changed" flag is the
+second truth CLAUDE.md refuses everywhere. **Never fold this into `src/grade-engine.js`** — that
+module reads no clock, and this one does. **Check the import graph**: `src/term-record.js` imports the
+engine and the attendance date helper; nothing in the engine may import it back.
+
+## WO-3.73 — Record Q1 grades: the dialog, and the bar on the class's screens
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.72 · **Blocks** WO-3.74
+**Closes roadmap** *(no box. Owner-directed, 2026-10-23, from the closing-a-quarter thread.)*
+
+**Read [WO-3.72](#wo-372--a-quarters-grades-can-be-recorded-and-the-engine-says-when-they-stop-matching) first**: the thread, the drawing and the rulings that bind all four are there.
+
+**Surface.** [`design/mockups/closing-a-quarter.html`](../../design/mockups/closing-a-quarter.html),
+frames **A0, A, B, C (without *What changed*), D and F**, and
+[`proposed-quarter.css`](../../design/mockups/proposed-quarter.css) § RECORD NAG and § RECORD LIST.
+**Lift them rather than re-deriving them** (`PROTOCOL.md` § When the drawing lands), and amend both
+banners in the same sitting.
+
+**Deliverables**
+- **The bar**, under the header where the backup nag sits and after it, on every screen of a class
+  while one of its ended terms is unrecorded or no longer matches. Three wordings, each drawn:
+  *Quarter 1 ends today…* on the end date (A0), *…has ended, and its grades… are not recorded* after
+  it (A), and *…have changed since you recorded them on 2 Nov — 2 students* (D). No dismiss; it goes
+  when a recording matches. **A count, never a name**, so it stays under a projector. Its button
+  opens the dialog.
+- **The dialog**, a stock 480px `.modal-confirm` (the owner, 2026-10-23), in two forms:
+  - **first recording (B)**: every graded student in `gridOrder()`'s order, percentage and letter,
+    scrolling inside the box; the empty-boxes line in the owner's words; a line naming any
+    uncommitted held column; *Record Q1 grades* and *Not now*.
+  - **after a change (C)**: only the students who changed, recorded beside now, a letter change bold
+    and a percentage-only change quiet; *Record Q1 grades* records the whole class again; *Not yet*,
+    the ✕ and Escape write nothing.
+- **Refused in presentation mode (F)**: the dialog says it lists students and grades and names the
+  control that turns presentation mode off, as the concern list does.
+- **Every figure comes from WO-3.72's readers.** The screen computes nothing.
+- **A mutation**: make the dialog list unchanged students in the changed form, show the check goes
+  red, and revert it before writing anything else.
+- **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.73** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] On a term's end date the bar reads *ends today*; from the next day *has ended* until it is
+      recorded; after a recorded change, *have changed* with the count. Before the end date there is
+      no bar.
+- [ ] The bar shows on all five of the class's screens and on no other class's.
+- [ ] The first-recording dialog lists every graded student in grade-sheet order with the engine's
+      figures, the empty-boxes line, and any uncommitted held column by name.
+- [ ] *Record Q1 grades* writes one entry and the bar goes; *Not now*, *Not yet*, the ✕ and Escape
+      write nothing.
+- [ ] The changed form lists only the students who changed, recorded beside now.
+- [ ] In presentation mode the bar names no student and the dialog refuses, naming the control.
+- [ ] With unchanged students listed in the changed form, the check goes red. The mutation is
+      reverted, and `TESTING.md` § WO-3.73 shows the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] 👤 On the iPad, the bar and both forms of the dialog read clearly, and twenty-five rows scroll
+      inside the dialog with its buttons in reach, in portrait and landscape.
+- [ ] `TESTING.md` § WO-3.73 carries these lines verbatim with the evidence for each.
+
+**Traps** — **The bar is copied from `.backup-nag`, not shared with it** (the reason `src/shell.css`
+gives). **No screen re-runs the comparison**; a second opinion is how the bar and the dialog come to
+disagree about who changed.
+
+## WO-3.74 — the notice opens when you leave a quarter that changed, and home carries the bar
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.73 · **Blocks** WO-3.75
+**Closes roadmap** *(no box. Owner-directed, 2026-10-23, from the closing-a-quarter thread.)*
+
+**Read [WO-3.72](#wo-372--a-quarters-grades-can-be-recorded-and-the-engine-says-when-they-stop-matching) first**: the thread, the drawing and the rulings that bind all four are there.
+
+**Surface.** [`design/mockups/closing-a-quarter.html`](../../design/mockups/closing-a-quarter.html),
+frames **C** (the notice is WO-3.73's changed-form dialog, opening by itself) and **E′**, and
+[`proposed-quarter.css`](../../design/mockups/proposed-quarter.css) § RECORD NAG.
+
+**Deliverables**
+- **The notice opens by itself when the teacher leaves a recorded quarter that no longer matches**
+  — tapping another term, another class, or All classes (the owner took the recommendation,
+  2026-10-23). It never opens while the teacher is still in that quarter, so three corrections are
+  not three interruptions.
+- **A change made without visiting the quarter** — a weight changed from Q2, a sync from the other
+  device — **opens it once**, the next time the class is opened.
+- **Never under a projector**: it waits for the next opening with presentation mode off. Dismissed,
+  the class bar stays.
+- **The home bar (E′)**: one bar on All classes naming every class with an ended quarter unrecorded
+  or changed, and a button per class that opens that class on the quarter's Scores with the dialog
+  open. It names classes and counts, never a student. Not a glance panel: it sits with the backup
+  nag, so `src/glance.js` and its fence are untouched.
+- **A mutation**: make the notice open on every tap of the changed quarter, show the check goes red,
+  and revert it before writing anything else.
+- **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.74** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] Changing a recorded quarter's score and then tapping another term, another class or All
+      classes opens the notice once, listing who changed.
+- [ ] Working in the quarter — several edits, moving between its screens — opens nothing.
+- [ ] A change made from another quarter opens the notice once, the next time the class is opened,
+      and not again for the same change.
+- [ ] In presentation mode the notice does not open, and opens on the next opening with it off.
+- [ ] The home bar names each class that needs recording, and its button lands on that class's
+      Scores for the quarter with the dialog open.
+- [ ] With the notice opening on every tap of the quarter, the check goes red. The mutation is
+      reverted, and `TESTING.md` § WO-3.74 shows the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] 👤 On the iPad, the notice opens when leaving a changed quarter and not while working in it,
+      and the home bar's buttons are in reach.
+- [ ] `TESTING.md` § WO-3.74 carries these lines verbatim with the evidence for each.
+
+**Open — the implementer's to propose, the owner's to confirm:** how *once* is remembered. Proposed:
+in memory, keyed by the set of changed figures, so nothing reaches the document or `localStorage`; a
+relaunch may show the same notice one more time, which is cheaper than a stored flag nothing else
+reads.
+
+**Traps** — **Nothing about the notice is stored in the year document.** **Do not make the home bar
+a glance panel**: `src/glance.js` holds no arithmetic and no clock, and this condition reads both.
+
+## WO-3.75 — the notice says which score changed
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.74 · **Blocks** nothing
+**Closes roadmap** *(no box. Owner-directed, 2026-10-23, from the closing-a-quarter thread.)*
+
+**Read [WO-3.72](#wo-372--a-quarters-grades-can-be-recorded-and-the-engine-says-when-they-stop-matching) first**: the thread, the drawing and the rulings that bind all four are there.
+
+**Surface.** [`design/mockups/closing-a-quarter.html`](../../design/mockups/closing-a-quarter.html),
+frame **C**'s *What changed* box, and [`proposed-quarter.css`](../../design/mockups/proposed-quarter.css)
+§ RECORD LIST's `.term-record-cause`.
+
+**Deliverables**
+- **Under the changed form's list, *What changed***: for each changed student, every score cell in
+  the quarter written since the recording's `at`, as *Act 2 quiz (Exams): 4 → 9 of 10*. The value
+  at recording time is the cell's latest version at or before that `at`, from its own `at` and `was`
+  (WO-3.33). If `src/score-history.js` has no reader for a cell's value at a moment, add it there rather than walking the history a second way in this module.
+- **When no score of the student's changed**, one line: *No score changed; a class setting did —
+  weights, the letter scale or drop lowest.* Those settings keep no history, so it cannot say which.
+- **A reader in `src/term-record.js`**, not arithmetic in the dialog.
+- **A mutation**: make the reader drop the `was` value, show the check goes red, and revert it
+  before writing anything else.
+- **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.75** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] A score changed after a recording appears under *What changed* with the assignment, its
+      category, and the value at recording beside the value now.
+- [ ] Two edits to one cell after a recording show one line, from the recorded value to the latest.
+- [ ] A student whose grade moved only through a class setting gets the setting line.
+- [ ] With the reader dropping the `was` value, the check goes red. The mutation is reverted, and
+      `TESTING.md` § WO-3.75 shows the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-3.75 carries these lines verbatim with the evidence for each.
+
+**Traps** — **A score's history is merged in five-minute windows** (WO-3.33), so the recorded value
+is the latest version at or before the recording, not the version before the newest. **Under a
+projector the dialog is refused already**; this adds nothing that needs its own check.

@@ -269,3 +269,18 @@ that it compares only dated facts, and *a score is not dated*.
 changed in the last fortnight, and a praise rule like *turned in three missing pieces* or *revised up
 14 points* becomes possible. That changes what a rise means, which is why WO-3.33 forbids any signal
 reading `was` until this is ruled on.
+
+### 6. Showing a quarter's record history
+
+*Raised 2026-10-23, out of the [closing-a-quarter](closing-a-quarter.md) thread's question 7. Deferred
+by the owner: revisit at the end of the year.*
+
+**What exists once WO-3.72 lands.** Every *Record Q1 grades* appends an entry and nothing deletes one,
+so the year document holds each quarter's grades as they were sent to Blackbaud on each date — B on
+2 November, B+ on 9 November. **No screen reads it.** The owner's words: *we don't need to save it,
+but I don't want to lose it if I reverse my decision.* Kept, so reversing costs a screen and not the
+data.
+
+**Where it would go.** Student detail is the likely home (a quarter's recordings, newest first), and
+it is the evidence behind a grade-change form. Under a projector it is names and grades, so it is
+refused like the record dialog.

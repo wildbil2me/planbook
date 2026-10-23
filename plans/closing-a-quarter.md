@@ -1,9 +1,12 @@
 # Closing a quarter: record what went to the SIS, and say when it stops matching
 
-**Design thread — [`design-threads.md`](design-threads.md). Status: ruled** (2026-10-23; drawn the same day, in
+**Design thread — [`design-threads.md`](design-threads.md). Status: booked** (2026-10-23, as
+[WO-3.72](work-orders/phase-3-gradebook.md#wo-372--a-quarters-grades-can-be-recorded-and-the-engine-says-when-they-stop-matching)
+to [WO-3.75](work-orders/phase-3-gradebook.md#wo-375--the-notice-says-which-score-changed); ruled and drawn the same day, in
 [`design/mockups/closing-a-quarter.html`](../design/mockups/closing-a-quarter.html)) — **all seven of
-the drawing's questions answered 2026-10-23, three of them by taking the recommendation.** Waiting
-on booking. Started 2026-10-23; the thread's first
+the drawing's questions answered 2026-10-23, three of them by taking the recommendation.** **From
+booking on, the pipeline owns it**: this note stays as the record of why, and a new question goes to
+the work order it belongs to. Started 2026-10-23; the thread's first
 thirteen questions were answered the same day. **A soft clock**
 (the owner, 2026-10-23): useful for Q1 if it lands within about two weeks of 2026-10-31, but not a
 deadline.
@@ -188,8 +191,10 @@ Each is marked in amber where it is drawn. Answers are recorded here, dated, in 
   re-computes a grade beside it.
 - **`docs/data-model.md`** gains the block, and **`docs/FERPA.md` / `privacy.html`** are checked:
   this is grade data already in the backup, but in a new place.
-- **Cut M/S** at booking. Roughly: the record and its writer; the dialog; the disagreement reader and
-  its reminder.
+- **Cut M/S** at booking — done 2026-10-23: WO-3.72 the record and the engine's readers (M), WO-3.73
+  the dialog and the class bar (M), WO-3.74 the notice's trigger and the home bar (M), WO-3.75 the
+  *What changed* list (S). The record history (question 7) went to
+  [`future-features.md`](future-features.md) § 6.
 
 ## Timing
 
