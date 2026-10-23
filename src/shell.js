@@ -978,6 +978,11 @@ import * as scores from './scores.js';
    dialog and answers whether it wrote, so the repaint of whatever stands behind it is chained here,
    as every other "what has to be redrawn now" answer in this file is. */
 import * as heldColumn from './held-column.js';
+/* WO-3.72. A quarter's recorded grades: the one writer and the readers that say whether the
+   quarter has ended, whether it still matches its newest record, and how many boxes are empty. No
+   screen imports it yet — the bar and the dialog are WO-3.73 — so it is here for the read seam below
+   alone, and that is what puts it in the module graph sw.js has to precache (WO-5.1's precedent). */
+import * as termRecord from './term-record.js';
 /* WO-3.6's past-due prompt — the banner both of those two screens wear, and the one module in this
    app that reads a due date and offers to act on it. It is imported here for one hook only: accept
    writes score cells, and the screen standing under the banner has to be redrawn afterwards. That
@@ -5082,6 +5087,14 @@ window.planbook = {
      data, read beside classGrade() asked directly after the write. Nothing in the app reads
      window.planbook — see the block above for why the seam outlived the shelf. */
   heldColumn,
+  /* `termRecord` joined at WO-3.72, and its reason is `gradeEngine`'s and `mergeFields`': the module
+     is a writer and six readers with NO SCREEN AT ALL in that work order — the bar and the dialog are
+     WO-3.73 — so there is no control a harness could tap to make it answer. What has to be asked is
+     what a recording actually wrote and whom the comparison reports after a score, a weight, a scale
+     or a drop count moves, and a harness that compared grades for itself would be checking its own
+     arithmetic. Nothing in the app reads window.planbook — see the block above for why the seam
+     outlived the shelf. */
+  termRecord,
   /* `detail` joined at WO-3.7, and its reason is src/backup.js's and src/attendance-report.js's
      rather than the reading reason `classes` gives: a page cannot be handed a real file by a script
      and no harness can open a print dialog or read what came out of a spreadsheet. detailModel() and

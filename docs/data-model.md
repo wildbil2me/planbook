@@ -197,6 +197,14 @@ nag, and nothing noticed until a verifier read the line for another reason.
   "templates": [{ "id": "t_…", "name": "", "audience": "guardian",
                   "tone": "concern|praise", "subject": "", "body": "" }],
 
+  /* Recorded quarters (WO-3.72) — the grades the teacher keyed into the SIS, one entry per
+     recording, appended and never edited; the newest for a class and term wins. The key is ABSENT
+     until the first recording — never seeded. See § Recording a quarter's grades. */
+  "termRecords": [{ "id": "tr_…", "classId": "c_…", "termId": "tm_…",
+                    "at": "2026-11-02T15:10:00-05:00",
+                    "grades": [{ "studentId": "s_…", "percentage": 88.41666666666667,
+                                 "letter": "B+" }] }],
+
   "signals": { /* thresholds, both directions — see below */ },
 
   /* The calendar's own settings. The BLOCK and the key are both absent until a teacher tunes the
@@ -738,6 +746,67 @@ Three consequences:
   extra credit in it.
 - **No separate extra-credit flag, field, or category type exists**, and none should be added. The
   feature is the absence of a special case.
+
+### Recording a quarter's grades *(WO-3.72, the owner's rulings of 2026-10-23)*
+
+**Grades are re-keyed into Blackbaud by hand, and once a quarter is keyed, a later change here leaves
+two grades for one student.** So a class's term can be *recorded*: one entry appended to
+`termRecords[]` holding every graded student's percentage and letter, stamped. The design thread is
+[`plans/closing-a-quarter.md`](../plans/closing-a-quarter.md); the module is `src/term-record.js`.
+
+```jsonc
+{ "id": "tr_…", "classId": "c_…", "termId": "tm_…",
+  "at": "2026-11-02T15:10:00-05:00",           // localStamp() — local, with its offset, never a Z
+  "grades": [{ "studentId": "s_…",
+               "percentage": 88.41666666666667,  // classGrade()'s own float, unrounded
+               "letter": "B+" }] }               // classGrade()'s own letter
+```
+
+- **No lock.** A recorded quarter stays editable, always. Grade changes after a quarter ends are
+  normal for about two weeks; the answer is a record and a reminder.
+- **Created by its first write, never seeded** (WO-6.1's rule). `newYearDocument()` has no
+  `termRecords` key and `SCHEMA_VERSION` did not move, so every earlier backup restores — and an
+  absent key reads as *unrecorded* through every reader.
+- **A recording appends, like the log, and the newest wins.** `recordTerm()` is the one writer and
+  does one thing — a `push` inside one `update()`. Nothing in the app edits or deletes a record. A
+  second recording is a second entry; the newest by `at` wins, and a tie goes to the later write
+  (`at` is second-granular — the log's rule). **The history is kept and no screen reads it**:
+  `newestRecord()` is the only reader of a record, and it hands back the newest and nothing older.
+  Revisit at year end ([`future-features.md`](../plans/future-features.md) § 6).
+- **Who is in a recording**: every student on the class's roster whose `classGrade()` has a
+  percentage, in roster order. Each figure is the engine's own, never a second computation. A class
+  with nothing graded records an empty `grades` — the truth about what was keyed.
+- **Whether a quarter still matches is derived at read time, never stored.** No edit path writes a
+  "changed" bit, so none can forget to. `noLongerMatching()` walks the class's **current roster**,
+  asks `classGrade()` for each student, and compares against the newest record. A student is
+  reported — `{ studentId, recorded, live }` — when she has a grade now and was not in the record
+  (`recorded: null`), or was in it and her live percentage or letter differs, **including a grade that
+  has gone** (`live` with a null percentage — Blackbaud still holds what was keyed). With no record it
+  answers `null`, which is not the same answer as `[]`.
+- **Both the percentage and the letter are compared**, and a percentage that moves inside one letter
+  is a change. **Percentages are compared at the two decimals the screens print**, through
+  `formatPercent()`, so a float that prints the same is never a change.
+- **A student who has left the class's roster is left out** *(the owner, 2026-10-23, at WO-3.72's
+  start)* — not reported as changed, not counted, not listed, even if she is in the newest record and
+  her grade has since moved. A withdrawal is Blackbaud's business, and a reminder that cannot be
+  cleared is worse than none. That is why the comparison walks the roster and never walks a record's
+  own `grades[]` looking for people.
+- **The term's end is read against the clock** — `termEnded()` (strictly after the end date) and
+  `termEndsToday()` — which is why this module is not part of `src/grade-engine.js`, which reads no
+  clock. The import runs one way: the module imports the engine, and nothing in the engine imports it.
+- **Empty boxes**: `emptyBoxes()` counts the cells in a live column of the term, across the roster,
+  with no score and not flagged `excused` or `missing` — so a `late` mark with no score **is** empty
+  and a dropped cell never is (it always holds a score). It asks the engine's `openWork()` for them
+  rather than testing a cell itself, so the line and the queue cannot disagree; that also means work
+  filed under no category is not counted. It returns the count and the categories they are in, for
+  *There are 7 empty boxes in Q1, across Exams and Projects.* **A held column's cells are not empty
+  boxes**; `heldColumns()` names the held columns of the term on a line of their own.
+- **Grading settings stay per class**, not per term. A weight, letter-scale or drop-count change made
+  after a quarter is keyed moves its grades, and the comparison reports exactly the students whose
+  figures moved.
+- **Names and grades never show under a projector.** The readers hand back ids and figures; the
+  screens that draw them (WO-3.73, WO-3.74) name classes and counts only on their bars, and refuse the
+  list in presentation mode.
 
 ## Accommodations — the most sensitive data in the app
 

@@ -14820,6 +14820,135 @@ bonus 2, Quiz 5 missing, a held quiz 1/10, Test 80/100, and 1/10 on work filed u
 - [x] `TESTING.md` § WO-3.69 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-3.72 — a quarter's grades can be recorded, and the engine says when they stop matching
+
+**What was built.** The data and the engine half, with no screen. A new module, `src/term-record.js`:
+one writer, `recordTerm(cls, termId)`, which works out every graded roster student's
+`classGrade()` percentage and letter and pushes one `{ id, classId, termId, at, grades }` entry onto
+`termRecords[]` inside one `update()` — the block created by that first write and never seeded, `at`
+from `localStamp()`. Six readers: `termEnded()` / `termEndsToday()` (the term's `end` against
+`todayISO()`, or a date passed in); `newestRecord()` (newest by `at`, a tie to the later write, handed
+back as a copy); `noLongerMatching()` (null when unrecorded, else the roster students who differ from
+the newest record, each `{ studentId, recorded, live }`, percentages compared through
+`formatPercent()`); `emptyBoxes()` (the count and the categories, from the engine's `openWork()`
+`open`/`bonus` rows); and `heldColumns()` (the term's held columns by name, via `isHeld()`).
+**The owner's ruling at `--start`**: a student recorded and since removed from the roster is left out
+— the comparison walks the current roster and never a record's `grades[]`. `src/shell.js`: the module
+imported and on the `window.planbook` seam. `src/backup.js`: `termRecords` counted as content for the
+backup nag (`wo-sweep.mjs` § 14 requires every documented key to be classified). `sw.js`: the module
+in `SHELL`, `planbook-shell-v197` → `v198`. `docs/data-model.md`: the key in the sketch and a section,
+*Recording a quarter's grades*, with the rulings. `docs/FERPA.md` and `privacy.html`: one item each in
+their lists of what is stored — the recorded quarter grades — and both *Last updated* lines to 23
+October 2026, in the same sitting. The ruling is recorded in the work order's Open line, beside
+question 9 in `plans/closing-a-quarter.md`, and in `docs/data-model.md`. Harness:
+`tools/verify/term-record.mjs` (17 call sites, 16 results), run directly after `held-readers.mjs`.
+
+**The hand-worked fixture** is at the head of `tools/verify/term-record.mjs`, and every expected figure
+in its checks is a literal copied from it: one weighted class on its own scale (A 90, B 80, C 70, D 60,
+F 0), Exams 50 / Projects 30 / Homework 20, six students. Ada 89.50 B, Ben 76.50 C, Cy 65.00 D, Dee
+88.00 B (one category, the rest redistributed), Eve no grade, Fay 57.14 F.
+
+- [x] Recording a class's quarter appends one entry holding every graded student's percentage and
+      letter, equal to `classGrade()`'s; recording again appends a second and changes neither.
+      — `node tools/verify-shell.mjs`, run 3 (below), `tools/verify/term-record.mjs`:
+      `PASS | WO-3.72: recording Q1 appends ONE entry — id, classId, termId, a local `at` with its offset,
+      and grades — holding every graded student in roster order (ada, ben, cy, dee, fay; not eve, who has
+      no grade, and not the dangling id) with classGrade()'s own percentage and letter, compared with ===;
+      recording again appends a second with the same grades and leaves the first byte for byte, and
+      neither touches the classes, students, assignments or scores :: {"before":[null,null],"sameOthers":true,"count":2,"keys":["id","classId","termId","at","grades"],"gradeKeys":["studentId","percentage","letter"],"at":"2026-10-23T…-04:00",…,"firstKept":true,"sameGrades":true,"grades":[["wo372-ada","89.50","B"],["wo372-ben","76.50","C"],["wo372-cy","65.00","D"],["wo372-dee","88.00","B"],["wo372-fay","57.14","F"]],"engine":[true,true,true,true,true],…}`.
+      `engine` is each recorded figure compared to `classGrade()` with `===`, percentage and letter both.
+- [x] With nothing changed since a recording, no student is reported as changed.
+      — `PASS | WO-3.72: with nothing changed since the recording, no student is reported as changed — an
+      empty list, where the same question before any recording answered null :: {"after":[],"before":null}`.
+      Each of the three setting checks below also puts its change back and asserts `[]` again.
+- [x] A score edit that moves a percentage inside the same letter reports that student as changed,
+      with the recorded and the live figures.
+      — `PASS | WO-3.72: a score edit that moves a percentage inside the same letter — ben's Exam 1 70 → 72
+      — reports ben and nobody else, recorded 76.50 C beside live 77.50 C :: [{"id":"wo372-ben","rec":["76.50","C"],"live":["77.50","C"]}]`.
+      And the rounding: `PASS | WO-3.72: percentages are compared at the two decimals the screens print —
+      against a record holding ben at 76.501 (prints 76.50, as his live grade does) and cy at 65.006
+      (prints 65.01), only cy is reported, with her letter unchanged; and that record, written last with
+      the same `at` as the one before it, is the newest :: {"newest":"tr_wo372near","changed":[{"id":"wo372-cy","rec":["65.01","D"],"live":["65.00","D"]}]}`
+      — which also proves the tie on `at` goes to the later write.
+- [x] A weight, letter-scale or drop-lowest change that moves grades reports exactly the students
+      whose figures moved.
+      — Three checks, each against a fresh recording and each put back to `[]`:
+      `PASS | WO-3.72: a weight change that moves grades — Exams 50 → 40, Projects 30 → 40 — reports exactly
+      the students whose figures moved … not dee, whose only graded category is Exams … :: {"weights":[{"id":"wo372-ada","rec":["89.50","B"],"live":["90.00","A"]},{"id":"wo372-ben","rec":["77.50","C"],"live":["78.80","C"]},{"id":"wo372-cy","rec":["65.00","D"],"live":["56.00","F"]},{"id":"wo372-fay","rec":["57.14","F"],"live":["56.67","F"]}],"back":[]}`;
+      `PASS | WO-3.72: a letter-scale change that moves letters — B from 80 to 88.5, C from 70 to 78 —
+      reports exactly ben (77.50 C → D) and dee (88.00 B → C), their percentages unmoved; not ada at
+      89.50, still a B … :: {"scale":[{"id":"wo372-ben","rec":["77.50","C"],"live":["77.50","D"]},{"id":"wo372-dee","rec":["88.00","B"],"live":["88.00","C"]}],"back":[]}`;
+      `PASS | WO-3.72: a drop-lowest change that moves grades — Exams drops its lowest 1 — reports exactly
+      ada (89.50 B → 92.00 A) and cy (65.00 → 67.50 D, the same letter); not ben, whose late blank is no
+      candidate, nor dee and fay with one score each … :: {"drop":[{"id":"wo372-ada","rec":["89.50","B"],"live":["92.00","A"]},{"id":"wo372-cy","rec":["65.00","D"],"live":["67.50","D"]}],"back":[]}`.
+      Two more on who is asked: a newcomer is reported (`PASS | … gus joins with 75 on Exam 1, recorded
+      null, live 75.00 C :: [{"id":"wo372-gus","rec":null,"live":["75.00","C"]}]`) and so is a roster
+      student whose grade has gone (`PASS | … dee's only score excused, recorded 88.00 B beside live none
+      … :: {"gone":[{"id":"wo372-dee","rec":["88.00","B"],"live":[null,null]}],"back":[]}`) — the second
+      is a decision this work order made, named in its result file.
+- [x] The ended and ends-today readers answer for the term's end date, the day before and the day
+      after.
+      — `PASS | WO-3.72: the ended and ends-today readers answer for Q1's end date (2026-10-31), the day
+      before and the day after — the day before neither, the end date ends-today and not yet ended, the
+      day after ended and not ends-today — and an undated term or one the class does not have is
+      neither; with no date passed they read the clock (2026-10-23) :: {"before":[false,false],"on":[false,true],"after":[true,false],"undated":[[false,false],[false,false],[false,false]],"unknown":[false,false],"clock":[false,false]} · clock wanted [false,false]`.
+      Pairs are `[ended, endsToday]`; the clock half is compared to Node's own date, not to the page's.
+- [x] The empty-boxes reader counts a scoreless late mark, never a dropped, excused or missing cell,
+      and nothing in a held column, and names the categories the empty boxes are in.
+      — `PASS | WO-3.72: the empty-boxes reader counts 12 in Q1 — a scoreless late mark among them (ben's
+      Exam 2), never cy's excused or missing cell (14 if it did) — and names Exams and Projects, never
+      Homework, in the class's order; with Exams dropping its lowest 1 the two dropped cells are not
+      empty and the count stays 12 :: {"plain":{"count":12,"categories":[{"id":"k372e","name":"Exams"},{"id":"k372p","name":"Projects"}]},"dropped":[true,true],"withDrop":{"count":12,…}}`;
+      `PASS | WO-3.72: nothing in a held column is an empty box — Q1 reads 12 with the held quiz held and
+      17 with its hold taken off (its five blanks), 12 again once it is held back — and heldColumns()
+      names it on a line of its own; another term's blanks are that term's :: {"held":[{"id":"a372-h1","name":"WO-3.72 Held quiz"}],"live":17,"back":12,"q2":6}`.
+      The 12 is hand-counted in the fixture table; 11 would mean the late mark was skipped.
+- [x] A backup with no `termRecords` key restores and reads as unrecorded.
+      — `PASS | WO-3.72: a backup with no termRecords key — the word nowhere in the file, and none in a new
+      year document — parses, restores through the real confirm, and reads as unrecorded: no key on the
+      restored document, no newest record and no comparison (null) for the class, its empty boxes the 13
+      they were before the restore …; the next recording creates the block with one entry :: {"inFile":false,"parsed":true,"freshHasKey":false,"boxesBefore":13,"restored":{"key":false,"cls":true,"newest":null,"changed":null,"boxes":13,"afterWrite":1,"newestAfter":true}}`.
+      The file is this run's own year from `buildBackup()` with the key deleted, through `parseBackup()`,
+      `restoreFromText()` and the real `[data-backup-confirm]`. Every other section of the run restores
+      or reads documents with no such key, and stays green.
+- [x] `src/term-record.js` holds one writer, and it only pushes.
+      — Read off the file, comments stripped: `PASS | WO-3.72: src/term-record.js holds one writer, and it
+      only pushes — recordTerm() holds the file's only update() and only push(), the create-on-first-write
+      guard is its only other line touching the block, and nowhere in the code is there a splice, pop,
+      shift, sort, delete, assignment into the array or lookup of a record by its id; it imports the
+      engine and the attendance date helper, and src/grade-engine.js does not import it back :: {"pushes":1,"updates":1,"writerLines":9,"found":[],"exported":["recordTerm","termEnded","termEndsToday","newestRecord","noLongerMatching","emptyBoxes","heldColumns"],"imports":["store","grade-engine","categories","classes","attendance","scores","log"],"engineImportsBack":false}`.
+      `wo-sweep.mjs` § 33 (no import loop) and § 30 (`held` read only in the engine) are green over it.
+- [x] With the comparison ignoring the percentage, the percentage-only checks go red. The mutation is
+      reverted, and `TESTING.md` § WO-3.72 shows the red output.
+      — `src/term-record.js`, `sameFigures()`'s return became `return /* MUTATION WO-3.72: the comparison
+      ignores the percentage — REVERT */ (pa === pa || pb === pb) && <the letter comparison>`. `node
+      tools/verify-shell.mjs` (run 2): `2117 checks · 2112 passed · 5 failed · 0 skipped`, 1140s, `EXIT=1`.
+      Four reds are the percentage-only checks, each losing exactly its same-letter rows:
+      `FAIL | WO-3.72: percentages are compared at the two decimals the screens print … :: {"newest":"tr_wo372near","changed":[]}`;
+      `FAIL | WO-3.72: a score edit that moves a percentage inside the same letter … :: []`;
+      `FAIL | WO-3.72: a weight change that moves grades … :: {"weights":[{"id":"wo372-ada",…"live":["90.00","A"]},{"id":"wo372-cy",…"live":["56.00","F"]}],"back":[]}` (ben and fay, the same-letter moves, gone);
+      `FAIL | WO-3.72: a drop-lowest change that moves grades … :: {"drop":[{"id":"wo372-ada","rec":["89.50","B"],"live":["92.00","A"]}],"back":[]}` (cy's same-letter move gone).
+      The letter-scale check stayed green, as it should: every row there is a letter change. **The fifth
+      red was the harness, not the mutation**: `FAIL | WO-3.72: src/term-record.js holds one writer …
+      :: {"pushes":1,"updates":1,"writerLines":1,…}` — the planted copy was written back with Windows
+      line endings, and the check cuts the writer out at `\n}\n`, so it found none. The check now
+      normalises `\r\n` first (a CRLF copy of the clean file reads a 9-line writer); run 3 is on that
+      harness. Reverted by copying back a copy of the file saved before the plant (not `git checkout`);
+      `cmp` reads identical and `git diff --quiet src/term-record.js` against the staged clean file is
+      silent; `grep -rn "MUTATION WO-3.72" src tools docs` finds nothing.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs` (run 3, after the revert and the harness's line-ending fix):
+      `2117 checks · 2117 passed · 0 failed · 0 skipped`, 67,485 lines, 31.9 lines per check, 1142s,
+      `EXIT=0`, 2026-10-23, real clock. Run 1, before the mutation and on the same `src/`, was the same:
+      `2117 checks · 2117 passed · 0 failed · 0 skipped`, 1155s, `EXIT=0`; `src/term-record.js` after the
+      revert is byte-identical to run 1's (`cmp`), and only the harness's own check changed between run
+      1 and run 3. `node tools/wo-sweep.mjs`: `52 checks · 49 passed · 0 failed · 3 to review` — the three
+      standing reviews — after `tools/README.md`'s call-site line went 2089 → 2106 from the sweep's own
+      count (`PASS | the recorded `check()` call-site count matches the harness :: 2106 `check()` call
+      site(s) across 98 harness file(s), matching tools/README.md:1363`).
+- [x] `TESTING.md` § WO-3.72 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

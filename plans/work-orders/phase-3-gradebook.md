@@ -5655,7 +5655,7 @@ thread's note before `--start`.
 
 ## WO-3.72 — a quarter's grades can be recorded, and the engine says when they stop matching
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** — · **Blocks** WO-3.73
+**Ship** — · **Status** ✅ DONE — 2026-10-23 · **Size** M · **Depends on** — · **Blocks** WO-3.73
 **Closes roadmap** *(no box. Owner-directed, 2026-10-23, from the closing-a-quarter thread.)*
 
 **The first of four, WO-3.72 to WO-3.75.** **Read before building any of these four:** the design thread
@@ -5716,27 +5716,33 @@ matches, and how many boxes are empty. WO-3.73 and WO-3.74 draw from these and c
 - **`TESTING.md` § WO-3.72** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] Recording a class's quarter appends one entry holding every graded student's percentage and
+- [x] Recording a class's quarter appends one entry holding every graded student's percentage and
       letter, equal to `classGrade()`'s; recording again appends a second and changes neither.
-- [ ] With nothing changed since a recording, no student is reported as changed.
-- [ ] A score edit that moves a percentage inside the same letter reports that student as changed,
+- [x] With nothing changed since a recording, no student is reported as changed.
+- [x] A score edit that moves a percentage inside the same letter reports that student as changed,
       with the recorded and the live figures.
-- [ ] A weight, letter-scale or drop-lowest change that moves grades reports exactly the students
+- [x] A weight, letter-scale or drop-lowest change that moves grades reports exactly the students
       whose figures moved.
-- [ ] The ended and ends-today readers answer for the term's end date, the day before and the day
+- [x] The ended and ends-today readers answer for the term's end date, the day before and the day
       after.
-- [ ] The empty-boxes reader counts a scoreless late mark, never a dropped, excused or missing cell,
+- [x] The empty-boxes reader counts a scoreless late mark, never a dropped, excused or missing cell,
       and nothing in a held column, and names the categories the empty boxes are in.
-- [ ] A backup with no `termRecords` key restores and reads as unrecorded.
-- [ ] `src/term-record.js` holds one writer, and it only pushes.
-- [ ] With the comparison ignoring the percentage, the percentage-only checks go red. The mutation is
+- [x] A backup with no `termRecords` key restores and reads as unrecorded.
+- [x] `src/term-record.js` holds one writer, and it only pushes.
+- [x] With the comparison ignoring the percentage, the percentage-only checks go red. The mutation is
       reverted, and `TESTING.md` § WO-3.72 shows the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-3.72 carries these lines verbatim with the evidence for each.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-3.72 carries these lines verbatim with the evidence for each.
 
-**Open — the owner's, at `--start`:** a student who was recorded and has since **left the roster** —
-reported as changed, or left out? Proposed: left out; a withdrawal is Blackbaud's business, and a
-reminder that cannot be cleared is worse than none.
+**Answered, the owner, 2026-10-23 (relayed at `--start`): left out.** A student who was recorded and
+has since **left the roster** is not reported as changed, not counted in any "changed" figure, and not
+listed — the proposal, taken as written: a withdrawal is Blackbaud's business, and a reminder that
+cannot be cleared is worse than none. So the comparison walks the class's **current roster** and never
+a record's own `grades[]` looking for people, and the harness asserts it on a student who is in the
+record, has left the roster, and whose grade has since moved — the case that tells a "left out"
+implementation from one that happens to be. Recorded beside question 9 in
+[`plans/closing-a-quarter.md`](../closing-a-quarter.md) and in `docs/data-model.md` § Recording a
+quarter's grades.
 
 **Traps** — **The comparison asks the engine and stores nothing**: a cached "changed" flag is the
 second truth CLAUDE.md refuses everywhere. **Never fold this into `src/grade-engine.js`** — that
@@ -5766,13 +5772,21 @@ banners in the same sitting.
 - **The dialog**, a stock 480px `.modal-confirm` (the owner, 2026-10-23), in two forms:
   - **first recording (B)**: every graded student in `gridOrder()`'s order, percentage and letter,
     scrolling inside the box; the empty-boxes line in the owner's words; a line naming any
-    uncommitted held column; *Record Q1 grades* and *Not now*.
+    uncommitted held column; in a weighted class, a line counting scored work filed under no
+    category, which is not in these grades; *Record Q1 grades* and *Not now*.
   - **after a change (C)**: only the students who changed, recorded beside now, a letter change bold
     and a percentage-only change quiet; *Record Q1 grades* records the whole class again; *Not yet*,
     the ✕ and Escape write nothing.
 - **Refused in presentation mode (F)**: the dialog says it lists students and grades and names the
   control that turns presentation mode off, as the concern list does.
 - **Every figure comes from WO-3.72's readers.** The screen computes nothing.
+- **Uncategorized work in the empty-boxes count** (the owner, 2026-10-23, after WO-3.72's verifier
+  found `emptyBoxes()` skips it — `plans/closing-a-quarter.md`, the drawing's answer 2). An empty box
+  filed under no category counts **in either grading mode** and is named under *no category*, after
+  the class's own categories. **The engine answers it, not `src/term-record.js`**: add a sibling
+  reader beside `openWork()` for uncategorized work rather than widening `openWork()`, which feeds
+  every projection, and the points projection already walks that pile on its own. The weighted
+  dialog's *not in these grades* line comes from the engine in the same way.
 - **A mutation**: make the dialog list unchanged students in the changed form, show the check goes
   red, and revert it before writing anything else.
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.73** and the `CHANGELOG.md` entry.
@@ -5784,6 +5798,9 @@ banners in the same sitting.
 - [ ] The bar shows on all five of the class's screens and on no other class's.
 - [ ] The first-recording dialog lists every graded student in grade-sheet order with the engine's
       figures, the empty-boxes line, and any uncommitted held column by name.
+- [ ] An empty uncategorized box is counted and named under *no category* in a weighted class and
+      in a points class; in a weighted class, scored uncategorized work gets its own *not in these
+      grades* line; and no projection's figures move.
 - [ ] *Record Q1 grades* writes one entry and the bar goes; *Not now*, *Not yet*, the ✕ and Escape
       write nothing.
 - [ ] The changed form lists only the students who changed, recorded beside now.

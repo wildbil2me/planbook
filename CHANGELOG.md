@@ -13,6 +13,23 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A quarter's grades can be recorded, and the app can tell when they stop matching — 2026-10-23
+
+WO-3.72, owner-directed, from the closing-a-quarter thread. `CACHE` v198. No screen yet — the bar and
+the *Record Q1 grades* dialog are WO-3.73.
+
+- **A class's quarter can be recorded**: every graded student's percentage and letter, as the grade
+  engine has them, and when. Recording again keeps the old one and the newest wins; nothing deletes
+  a recording, and a recorded quarter stays fully editable.
+- **Whether a quarter still matches is worked out every time and never stored.** A changed score,
+  weight, letter scale or drop count shows up as the exact students whose percentage or letter moved —
+  a move inside one letter counts. A student who has left the class is left out (the owner's ruling).
+- **The empty boxes in a quarter are counted** — no score and not X or M, a late mark alone included,
+  a dropped cell and a held column never — with the categories they are in. Work filed under no
+  category is not counted yet; the owner ruled it in, and it lands with WO-3.73.
+- **Old backups restore as unrecorded**: the record is written only when used, and the schema did not
+  change. The privacy policy and the FERPA document now list the recorded grades among what is stored.
+
 ### A category can drop each student's lowest scores — 2026-10-23
 
 WO-3.69, owner-directed. `CACHE` v197.

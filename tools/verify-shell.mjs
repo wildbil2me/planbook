@@ -146,6 +146,7 @@ import { run as pastDue } from './verify/past-due.mjs';
 import { run as excusedKept } from './verify/excused-kept.mjs';
 import { run as dropLowest } from './verify/drop-lowest.mjs';
 import { run as heldReaders } from './verify/held-readers.mjs';
+import { run as termRecord } from './verify/term-record.mjs';
 import { run as accommodationPrompts } from './verify/accommodation-prompts.mjs';
 import { run as printGate } from './verify/print-gate.mjs';
 import { run as printSheets } from './verify/print-sheets.mjs';
@@ -452,6 +453,12 @@ const BROWSER_SECTIONS = [
      each reader held and then live, and puts the class, the selection and both filters back. No
      reload, no viewport change, no presentation-mode change. */
   { file: 'verify/held-readers.mjs', run: heldReaders },
+  /* WO-3.72, after the drop and the held column it reads through the engine: a quarter's grades are
+     recorded and compared. It plants one class of its own through the store, restores this run's own
+     year over itself once (with the recordings taken off — the content is otherwise unchanged),
+     takes the class back out, deletes the `termRecords` key it created and hands the page back
+     reloaded. No viewport change, no presentation-mode change. */
+  { file: 'verify/term-record.mjs', run: termRecord },
   { file: 'verify/accommodation-prompts.mjs', run: accommodationPrompts },
   { file: 'verify/print-gate.mjs', run: printGate },
   /* WO-8.4, directly after the gate it prints through: the four sheets under one #printHeader, in

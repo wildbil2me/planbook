@@ -1103,6 +1103,10 @@ const CONTENT_COLLECTIONS = [
   { key: 'passes', counter: count },
   { key: 'events', counter: count },
   { key: 'templates', counter: count },
+  /* WO-3.72. A recorded quarter is something the teacher DID — the grades she keyed into the SIS, and
+     when — and the record is the only thing that says so: losing it turns every class's bar back to
+     "not recorded". Absent until the first recording (never seeded), which count() reads as 0. */
+  { key: 'termRecords', counter: count },
 ];
 
 /* The other half of the same list: every top-level key docs/data-model.md names that is NOT content,

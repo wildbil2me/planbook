@@ -103,6 +103,10 @@ Each keeps its proposal; the owner's answer follows it.
    **Answered: the dialog lists the students being recorded or changed.** The first recording lists
    everyone with a grade. After that, a student whose grade matches their last record does not
    appear.
+   **And a student who has left the roster since the recording is left out** *(the owner,
+   2026-10-23, WO-3.72's open question, answered at its start)* — not reported as changed, not
+   counted, not listed. A withdrawal is Blackbaud's business, and a reminder that cannot be cleared
+   is worse than none. The comparison walks the class's current roster, never the record's list.
 10. **The word.** *Commit* is taken — a held column's *Commit* (WO-3.52) is a different act, and two
     *Commit* buttons meaning two things is a trap. Proposed: *Record Q1 grades*, and *recorded* on
     screen.
@@ -154,6 +158,12 @@ Each is marked in amber where it is drawn. Answers are recorded here, dated, in 
    past-due sweep (WO-3.6)?
    **Answered: the count and the categories** — *There are 7 empty boxes in Q1, across Exams and
    Projects.* No assignment names, no door.
+   **And work filed under no category is counted** *(the owner, 2026-10-23, after WO-3.72's
+   verifier found it was not)*: an empty box is an empty box in either grading mode, named under
+   *no category*. **A scored cell in a weighted class's uncategorized work stays out of the grade**
+   — it has no weight to sit under — and the dialog says so in a line of its own, as it names a held
+   column, rather than the engine giving it one. Carried into
+   [WO-3.73](work-orders/phase-3-gradebook.md#wo-373--record-q1-grades-the-dialog-and-the-bar-on-the-classs-screens).
 3. **The dialog's width** — a stock 480px confirm (drawn), or wider. **Answered: 480px.**
 4. **When the notice opens by itself.** Drawn: the first time a class screen opens after a recorded
    quarter stops matching, once per change, and whenever that quarter is tapped. Or never by itself,
