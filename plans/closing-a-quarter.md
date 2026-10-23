@@ -1,9 +1,9 @@
 # Closing a quarter: record what went to the SIS, and say when it stops matching
 
-**Design thread — [`design-threads.md`](design-threads.md). Status: drawn** (2026-10-23, in
-[`design/mockups/closing-a-quarter.html`](../design/mockups/closing-a-quarter.html)) — **six of the
-drawing's seven questions answered 2026-10-23, two of them by taking the recommendation; question 6
-has a recommendation drawn as frame E′ and awaits a nod.** That nod makes the thread **ruled**. Started 2026-10-23; the thread's first
+**Design thread — [`design-threads.md`](design-threads.md). Status: ruled** (2026-10-23; drawn the same day, in
+[`design/mockups/closing-a-quarter.html`](../design/mockups/closing-a-quarter.html)) — **all seven of
+the drawing's questions answered 2026-10-23, three of them by taking the recommendation.** Waiting
+on booking. Started 2026-10-23; the thread's first
 thirteen questions were answered the same day. **A soft clock**
 (the owner, 2026-10-23): useful for Q1 if it lands within about two weeks of 2026-10-31, but not a
 deadline.
@@ -169,8 +169,7 @@ Each is marked in amber where it is drawn. Answers are recorded here, dated, in 
    class setting did (weights, letter scale, drop lowest), since those keep no history. **Booked as its
    own S work order after the rest**, so the notice does not wait on it.
 6. **The home screen** — one bar naming the classes (drawn), a line on each class card, or nothing.
-   **The owner asked for a recommendation. Recommended 2026-10-23, drawn as frame E′, awaiting a
-   nod:** keep the bar on home, with **one button per class** that opens that class on the recorded
+   **The owner asked for a recommendation, and took it, 2026-10-23 (frame E′):** keep the bar on home, with **one button per class** that opens that class on the recorded
    quarter's Scores with the Record dialog open. The card has no room (`src/home.js` measures two
    chips in a slot sized for two; a third is a second row on every card); *Closing in* lists
    deadlines ahead and this is a quarter already over; and nothing on home leaves a teacher who opens
