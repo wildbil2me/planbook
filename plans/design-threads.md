@@ -42,7 +42,7 @@ with a pointer back.
 | Thread | Status | Waiting on | Drawing | Became |
 |---|---|---|---|---|
 | [First run — a landing page, then two ways in](first-run.md) | **drawn** 2026-10-13 | The owner's answers to the drawing's ten questions | [`first-run-flow.html`](../design/mockups/first-run-flow.html) | — (WO-8.6 points at it; likely re-cut into M/S rows) |
-| [Closing a quarter — record what went to the SIS](closing-a-quarter.md) | **talking** 2026-10-23 | Every question answered 2026-10-23; a nod on the trigger recommendation, then a drawing. A soft clock: ~two weeks after Q1 ends, 2026-10-31 | — | — |
+| [Closing a quarter — record what went to the SIS](closing-a-quarter.md) | **drawn** 2026-10-23 | The owner's reading, and the drawing's seven questions. A soft clock: ~two weeks after Q1 ends, 2026-10-31 | [`closing-a-quarter.html`](../design/mockups/closing-a-quarter.html) | — |
 
 ## Before this file — design notes that were already settled
 

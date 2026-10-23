@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Closing a quarter</title>
+<link rel="stylesheet" href="../../src/shell.css">
+<link rel="stylesheet" href="../../src/home.css">
+<link rel="stylesheet" href="proposed-quarter.css">
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mk-notice">
+  <strong>DRAWINGS, NOT THE APP.</strong>
+  <span>Static HTML. Nothing here records, compares or reads a document; every figure is typed in.</span>
+  <span>Closing a quarter · drawn 2026-10-23 · design thread <a href="../../plans/closing-a-quarter.md">plans/closing-a-quarter.md</a> · <a href="index.html">contents</a></span>
+</div>
+<nav class="mk-nav">
+  <a href="index.html">← contents</a>
+  <a href="closing-a-quarter.html" class="here">Closing a quarter</a>
+</nav>
+
+<div class="mk-frame">
+<div class="mk-caption"><strong>The same class in every frame:</strong> English III (B), 25 students. Quarter 1 ended Saturday 31 October and Quarter 2 began Sunday 1 November, so since WO-2.52 every class screen opens on Quarter 2 by itself. Frames A and B are Monday 2 November, the first time the class is opened after Q1 ends. Frames C and D are a week later, after two Q1 grades were changed. Every name is invented. The app's header is drawn plainly, as in the earlier rounds; the Scores grid under each bar is left out, because nothing about it changes.</div>
+<div class="mk-caption"><strong>What is stored, and what is not.</strong> <em>Record Q1 grades</em> appends one entry: the class, the term, when, and each student's percentage and letter. A re-recording is a new entry, and the newest wins, like the contact log. Nothing in the app deletes one. <strong>Whether Q1 still matches is never stored.</strong> It is worked out each time a screen is drawn, by asking the grade engine for the live figures and comparing them with the newest entry, so no edit can forget to flag itself.</div>
+</div>
+
+<!-- ═══════════════════════════ A · THE BAR, NOT YET RECORDED ═══════════════════════════ -->
+
+<p class="mk-section">A · Monday 2 Nov: Q1 has ended and is not recorded — the bar, on every screen of this class</p>
+
+<div class="mk-device"><span class="mk-device-label">iPad landscape · 1180 · proposed</span>
+<div class="mk-device-screen" style="width:1180px">
+<div class="header">
+  <div class="header-top">
+    <div class="header-left">
+      <div class="header-logo">📘</div>
+      <div class="header-title"><h1>Planbook</h1><p>English III (B) · Quarter 2</p></div>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <nav class="hdr-class-tabs" aria-label="Classes">
+      <button class="cls-tab cls-tab-home" type="button">All classes</button>
+      <button class="cls-tab" type="button">English I (A)</button>
+      <button class="cls-tab active" type="button">English III (B)</button>
+      <button class="cls-tab" type="button">English IV (C)</button>
+      <button class="cls-tab" type="button">English I (D)</button>
+      <button class="cls-tab" type="button">AP Lit (E)</button>
+    </nav>
+    <div class="hdr-divider" aria-hidden="true"></div>
+    <nav class="hdr-term-nav" aria-label="Terms">
+      <button class="q-btn" type="button">Quarter 1</button>
+      <button class="q-btn active" type="button">Quarter 2</button>
+      <button class="q-btn" type="button">Quarter 3</button>
+      <button class="q-btn" type="button">Quarter 4</button>
+    </nav>
+  </div>
+</div>
+<aside class="term-record-nag">
+  <div class="term-record-nag-text"><strong><span aria-hidden="true">⚠</span> Quarter 1 has ended, and its grades for English III (B) are not recorded.</strong> Record them once they are keyed into Blackbaud, and Planbook will tell you if any of them changes afterwards.</div>
+  <button class="term-record-nag-btn" type="button" aria-haspopup="dialog">Record Q1 grades</button>
+</aside>
+<main class="main"><div class="panel"><div class="panel-header"><div class="panel-title-row"><div class="panel-title"><h2>English III (B)</h2><p>Scores · Q2 · 25 students · 2 assignments</p></div><button class="class-action-btn" type="button"><span aria-hidden="true">←</span> All classes</button></div></div><div class="panel-body"><p class="class-hint">…the Scores screen as it ships, on Quarter 2…</p></div></div></main>
+</div></div>
+<div class="mk-frame">
+<div class="mk-caption"><strong>Why a bar and not only a notice.</strong> Nobody taps from Q1 to Q2: the app moves itself on 1 November. A notice tied to a tap would never reach the teacher who does nothing, who is the one it is for. So the bar is the standing reminder, and it shows on all five of this class's screens while Q1 is unrecorded. It stays until a recording matches, as the backup nag stays until a backup is taken. It has no ✕.</div>
+<div class="mk-caption"><strong>It sits where the backup nag sits</strong>, under the header, with the backup nag's amber and button, copied rather than shared. If both are showing, this one goes second.</div>
+<div class="mk-caption ask"><strong>Question 1 — when does the bar first appear?</strong> Drawn: the day after the quarter's end date. Earlier is possible (from the grades-due date, if one is on the calendar), but a bar during the last week of a quarter asks for a recording of grades that are still being entered.</div>
+</div>
+
+<!-- ═══════════════════════════ B · THE DIALOG, FIRST TIME ═══════════════════════════ -->
+
+<p class="mk-section">B · Record Q1 grades, the first time — everyone, with the empty boxes named</p>
+
+<div style="max-width:480px;margin:12px auto 0">
+  <div class="modal-panel modal-confirm" style="width:100%;animation:none">
+    <div class="modal-header">
+      <h2>Record Quarter 1 grades for English III (B)?</h2>
+      <button class="modal-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>Recording says these are the grades you have keyed into Blackbaud. Planbook keeps them, and if any of them changes later it tells you who and by how much. Grades stay editable either way.</p>
+      <div class="modal-section-label">25 students</div>
+      <div class="mode-change-facts">
+        <div class="term-record-list">
+          <span class="term-record-head">Student</span><span class="term-record-head term-record-fig">Grade</span><span class="term-record-head term-record-fig">Letter</span>
+          <span class="term-record-name">Abernathy, Cole</span><span class="term-record-fig">84.62%</span><span class="term-record-fig">B</span>
+          <span class="term-record-name">Bautista, Lena</span><span class="term-record-fig">88.10%</span><span class="term-record-fig">B+</span>
+          <span class="term-record-name">Chen, Marcus</span><span class="term-record-fig">68.40%</span><span class="term-record-fig">D+</span>
+          <span class="term-record-name">Dlamini, Thandi</span><span class="term-record-fig">95.20%</span><span class="term-record-fig">A</span>
+          <span class="term-record-name">Fairweather, Owen</span><span class="term-record-fig">79.05%</span><span class="term-record-fig">C+</span>
+          <span class="term-record-name">Gallo, Priya</span><span class="term-record-fig">91.33%</span><span class="term-record-fig">A−</span>
+          <span class="term-record-name">Halloran, Jude</span><span class="term-record-fig">73.88%</span><span class="term-record-fig">C</span>
+          <span class="term-record-name" style="color:#6b7a8d">…18 more, scrolling in the box</span><span></span><span></span>
+        </div>
+      </div>
+      <div class="term-record-empty"><strong>7 empty boxes</strong> in Quarter 1, across 3 assignments: not scored, and not marked X or M. A late mark with no score counts as empty. They change no grade, and recording does not wait for them.</div>
+      <div class="term-record-empty"><strong>1 held column</strong>, <em>Vocabulary Quiz 4</em>, is not committed, so it counts toward none of these grades.</div>
+      <div class="modal-actions">
+        <button class="class-action-btn primary" type="button">Record Q1 grades</button>
+        <button class="class-action-btn" type="button">Not now</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="mk-frame">
+<div class="mk-caption"><strong>One tap is the confirmation</strong> (the owner, 2026-10-23). The lead sentence says what the tap means: these are in Blackbaud. There is no second checkbox.</div>
+<div class="mk-caption"><strong>Last name order, as the grade sheet prints</strong>, because that is the order Blackbaud is keyed in. The box scrolls inside a 480px confirm, so twenty-five rows never push the buttons off a landscape iPad.</div>
+<div class="mk-caption"><strong>Empty boxes and held columns are named, not blocking.</strong> Empty means no score, and not X or M, in a column that is not held; a late mark alone is empty and a dropped cell never is (the owner, 2026-10-23). A held column is its own line, because it is the one case where work with scores in it is still not in the grade.</div>
+<div class="mk-caption ask"><strong>Question 2 — should the empty-boxes line say which assignments</strong>, or offer a way to see them (the past-due sweep, WO-3.6, which can mark them missing)? Drawn: a count only.</div>
+<div class="mk-caption ask"><strong>Question 3 — 480 or wider?</strong> Drawn as a stock 480px confirm, the width every confirm here is ruled at (WO-1.77). Three short columns fit; a long name truncates.</div>
+</div>
+
+<!-- ═══════════════════════════ C · THE NOTICE, AFTER A CHANGE ═══════════════════════════ -->
+
+<p class="mk-section">C · A week later: two Q1 grades changed — the notice, when Q1 is opened or the app moves past it</p>
+
+<div style="max-width:480px;margin:12px auto 0">
+  <div class="modal-panel modal-confirm" style="width:100%;animation:none">
+    <div class="modal-header">
+      <h2>Quarter 1's grades have changed</h2>
+      <button class="modal-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>Since you recorded English III (B)'s Quarter 1 grades on Monday 2 November, 2 students' grades have moved. Change them in Blackbaud, then record again.</p>
+      <div class="modal-section-label">2 students changed</div>
+      <div class="mode-change-facts">
+        <div class="term-record-list">
+          <span class="term-record-head">Student</span><span class="term-record-head term-record-fig">Recorded</span><span class="term-record-head term-record-fig">Now</span>
+          <span class="term-record-name">Chen, Marcus</span><span class="term-record-fig term-record-was">68.40% D+</span><span class="term-record-fig term-record-moved">71.25% C−</span>
+          <span class="term-record-name">Bautista, Lena</span><span class="term-record-fig term-record-was">88.10% B+</span><span class="term-record-fig">88.75% <span class="term-record-same">B+</span></span>
+        </div>
+      </div>
+      <p class="class-hint">Chen's letter changed. Bautista's percentage moved inside the same letter.</p>
+      <div class="modal-actions">
+        <button class="class-action-btn primary" type="button">Record Q1 grades</button>
+        <button class="class-action-btn" type="button">Not yet</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="mk-frame">
+<div class="mk-caption"><strong>Only the students who changed</strong> (the owner, 2026-10-23): a student whose grade matches their last record does not appear. <strong>A percentage change counts</strong>, even inside the same letter (the owner, 2026-10-23). The row whose letter moved is bold, and the quiet one is the one Blackbaud's letter does not have to change on.</div>
+<div class="mk-caption"><strong>The notice and the re-recording are one dialog.</strong> <em>Record Q1 grades</em> here records the whole class again, as one new entry, and the bar goes. <em>Not yet</em>, the ✕ and Escape write nothing, and the bar stays.</div>
+<div class="mk-caption ask"><strong>Question 4 — when does this notice open by itself?</strong> Drawn: the first time a class screen opens after a recorded quarter has stopped matching, once per change, and whenever the teacher taps that quarter in the term strip. The bar (frame D) is always there besides. Or should the notice never open by itself, leaving the bar to do it?</div>
+<div class="mk-caption ask"><strong>Question 5 — does the dialog say what changed it?</strong> For example "Chen: <em>Act 2 quiz</em> 4 → 9". It is the most useful line for a Blackbaud grade-change form, and the most work: a score's history exists (WO-3.33), but a weight, scale or drop change has no per-student cause to show. Drawn: figures only.</div>
+</div>
+
+<!-- ═══════════════════════════ D · THE BAR, AFTER A CHANGE ═══════════════════════════ -->
+
+<p class="mk-section">D · The bar while Q1 no longer matches its record</p>
+
+<div class="mk-device"><span class="mk-device-label">iPad portrait · 820 · proposed</span>
+<div class="mk-device-screen" style="width:820px">
+<aside class="term-record-nag">
+  <div class="term-record-nag-text"><strong><span aria-hidden="true">⚠</span> Quarter 1 grades for English III (B) have changed since you recorded them on 2 Nov — 2 students.</strong></div>
+  <button class="term-record-nag-btn" type="button" aria-haspopup="dialog">Record Q1 grades</button>
+</aside>
+<main class="main"><div class="panel"><div class="panel-header"><div class="panel-title-row"><div class="panel-title"><h2>English III (B)</h2><p>Attendance · Q2 · 25 students</p></div></div></div><div class="panel-body"><p class="class-hint">…any of the class's five screens…</p></div></div></main>
+</div></div>
+<div class="mk-frame">
+<div class="mk-caption"><strong>A count, never a name.</strong> The bar can stay up under a projector because it says how many and not who. Tapping it opens frame C.</div>
+</div>
+
+<!-- ═══════════════════════════ E · HOME ═══════════════════════════ -->
+
+<p class="mk-section">E · All classes — one line for every class that needs recording</p>
+
+<div class="mk-device"><span class="mk-device-label">iPad portrait · 820 · proposed</span>
+<div class="mk-device-screen" style="width:820px">
+<aside class="term-record-nag">
+  <div class="term-record-nag-text"><strong><span aria-hidden="true">⚠</span> Quarter 1 needs recording in 3 classes:</strong> English I (A) and AP Lit (E) are not recorded, and English III (B) has changed since it was. Each class's own screens carry the button.</div>
+</aside>
+<main class="main"><div class="panel"><div class="panel-body"><p class="class-hint">…the home screen's class cards as they ship…</p></div></div></main>
+</div></div>
+<div class="mk-frame">
+<div class="mk-caption ask"><strong>Question 6 — does the home screen carry it at all?</strong> Drawn: one bar naming the classes, with no button, because recording is one class at a time (the owner, 2026-10-23). The alternative is a line on each class card instead, beside its <em>N to grade</em>. Or nothing on home, leaving it to the class screens.</div>
+</div>
+
+<!-- ═══════════════════════════ F · PRESENTATION MODE ═══════════════════════════ -->
+
+<p class="mk-section">F · Under a projector — the bar stays, the dialog refuses</p>
+
+<div style="max-width:480px;margin:12px auto 0">
+  <div class="modal-panel modal-confirm" style="width:100%;animation:none">
+    <div class="modal-header">
+      <h2>Record Quarter 1 grades</h2>
+      <button class="modal-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>This lists students and their grades, so it does not open while presentation mode is on. Turn it off with the screen button in the header, then tap <em>Record Q1 grades</em> again.</p>
+      <div class="modal-actions">
+        <button class="class-action-btn" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="mk-frame">
+<div class="mk-caption"><strong>Refused, as the concern list is</strong> (the owner, 2026-10-23): it closes and names the control that undoes it. The bar itself stays, since it names no one. The notice in frame C does not open by itself while presentation mode is on, and waits for the next time a screen opens with it off.</div>
+</div>
+
+<div class="mk-frame">
+<div class="mk-caption ask"><strong>Question 7 — is the record history shown anywhere?</strong> Every recording is kept (B on 2 Nov, B+ on 9 Nov), so the app could show a student's Q1 history on student detail, for example. Nothing draws it here, and the thread did not ask for it. Wanted now, later, or never?</div>
+</div>
+
+</body>
+</html>

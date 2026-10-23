@@ -1,0 +1,87 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   PROPOSED STYLES — closing a quarter: record what went to the SIS, and say when
+   it stops matching.
+
+   Drawn 2026-10-23 from plans/closing-a-quarter.md, after the owner answered all
+   thirteen of its questions the same day. Every screen it draws is in
+   closing-a-quarter.html.
+
+   IT PROPOSES LITTLE, ON PURPOSE. The dialog is a stock `.modal-confirm`, its
+   facts box is the grading-mode confirmation's `.mode-change-facts` as it ships,
+   and the bar is the backup nag's values copied rather than shared — the reason
+   src/shell.css gives for keeping `.backup-nag` apart from the install banner
+   applies again: two components that happen to look alike. What is new is the
+   bar's own class and the dialog's three-column list.
+
+   THE RULE THIS FILE OBEYS, from design/mockups/PROTOCOL.md rule 5: a pending
+   section styles no class src/*.css already styles. `term-record-nag` and
+   `term-record-*` are unclaimed today.
+
+   WHERE IT SPLITS ON LIFT:
+
+     § RECORD NAG    →  src/shell.css   (not yet booked — not yet lifted)
+     § RECORD LIST   →  src/shell.css   (not yet booked — not yet lifted)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.term-record-nag-btn {
+  touch-action: manipulation; user-select: none; -webkit-user-select: none;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § RECORD NAG   →  src/shell.css   (not yet booked — not yet lifted)
+
+   The strip under the header while an ended quarter of the open class is not
+   recorded, or no longer matches its newest record. `.backup-nag`'s values,
+   copied: amber caution, in normal flow, no dismiss — it goes away when a
+   recording matches, the way the backup nag goes away when a backup is taken.
+   It names a count and never a student, so it can stay up under a projector.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.term-record-nag {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
+  background: #fff8e6; color: #8a6d1a; border-bottom: 1px solid #f0dfa8;
+  padding: 10px 20px; font-size: 12.5px; line-height: 1.55;
+}
+.term-record-nag-text { flex: 1 1 320px; min-width: 0; }
+.term-record-nag-btn {
+  border: 1.5px solid #c9a83f; background: #c9a83f; color: #fff;
+  border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 700;
+  cursor: pointer; flex-shrink: 0; white-space: nowrap; font-family: inherit;
+}
+.term-record-nag-btn:hover { background: #8a6d1a; border-color: #8a6d1a; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   § RECORD LIST   →  src/shell.css   (not yet booked — not yet lifted)
+
+   The students in the Record dialog, inside a `.mode-change-facts` box. A first
+   recording is name · percentage · letter; a later one is name · what was
+   recorded · what it is now. Figures are tabular so the columns line up down a
+   class of twenty-five. A row whose letter did not move — the percentage alone
+   changed — is still listed (the owner, 2026-10-23), and its letter is drawn
+   quieter so the eye finds the rows Blackbaud's letter has to change on.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.term-record-list {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 2px 14px;
+  font-size: 12.5px; line-height: 1.6; color: #1a1a2e;
+  max-height: 300px; overflow-y: auto;
+}
+.term-record-head {
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+  color: #6b7a8d; padding-bottom: 2px; border-bottom: 1px solid #eef0f4;
+}
+.term-record-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.term-record-fig { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.term-record-was { color: #6b7a8d; }
+.term-record-same { color: #6b7a8d; font-weight: 400; }
+.term-record-moved { font-weight: 700; }
+/* The empty-boxes line: amber, because it is worth a look and not a refusal —
+   recording is never blocked by it (the owner, 2026-10-23). */
+.term-record-empty {
+  margin-top: 10px; padding: 8px 12px; border-radius: 8px;
+  background: #fff8e6; border: 1px solid #f0dfa8; color: #8a6d1a;
+  font-size: 12px; line-height: 1.5;
+}
+
+@media (pointer: coarse) {
+  .term-record-nag-btn { min-height: 44px; padding: 8px 16px; font-size: 13px; }
+}

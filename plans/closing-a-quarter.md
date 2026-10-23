@@ -1,8 +1,9 @@
 # Closing a quarter: record what went to the SIS, and say when it stops matching
 
-**Design thread — [`design-threads.md`](design-threads.md). Status: talking** (started 2026-10-23)
-— **all questions answered by the owner 2026-10-23**; the trigger recommendation awaits a nod, then a
-drawing under `design/mockups/` per [`PROTOCOL.md`](../design/mockups/PROTOCOL.md). **A soft clock**
+**Design thread — [`design-threads.md`](design-threads.md). Status: drawn** (2026-10-23, in
+[`design/mockups/closing-a-quarter.html`](../design/mockups/closing-a-quarter.html)) — **waiting on
+the owner's reading and the drawing's seven questions below.** Started 2026-10-23; the thread's first
+thirteen questions were answered the same day. **A soft clock**
 (the owner, 2026-10-23): useful for Q1 if it lands within about two weeks of 2026-10-31, but not a
 deadline.
 
@@ -136,6 +137,24 @@ alone.
    box.** The owner's practice, for context: work is marked `M` until it is submitted, then scored,
    and `L` rides on a scored cell as a visual cue that it came in late, which lets him see how often
    work is late. So *empty* is: no score, and not `X` or `M`, in a column not held awaiting *Commit*.
+
+## The drawing's questions — drawn 2026-10-23
+
+Each is marked in amber where it is drawn. Answers are recorded here, dated, in place.
+
+1. **When the bar first appears.** Drawn: the day after the quarter's end date. Earlier, from a
+   grades-due date, would ask for a recording while grades are still going in.
+2. **The empty-boxes line** — a count only (drawn), or the assignments named, or a door to the
+   past-due sweep (WO-3.6)?
+3. **The dialog's width** — a stock 480px confirm (drawn), or wider.
+4. **When the notice opens by itself.** Drawn: the first time a class screen opens after a recorded
+   quarter stops matching, once per change, and whenever that quarter is tapped. Or never by itself,
+   leaving it to the bar.
+5. **Does the notice say what caused a change** (*Act 2 quiz 4 → 9*)? Drawn: figures only. A score
+   has a history (WO-3.33); a weight, scale or drop change has no per-student cause.
+6. **The home screen** — one bar naming the classes (drawn), a line on each class card, or nothing.
+7. **The record history** — every recording is kept; shown anywhere (student detail), later, or
+   never?
 
 ## What any build owes
 

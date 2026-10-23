@@ -1357,3 +1357,31 @@ confirm's `.restore-side` card, `.install-banner`.
 This drawing is the first under [`plans/design-threads.md`](../../plans/design-threads.md), and that
 file's rule is one list per thread: the amber notes in the drawing, the collected list and answers in
 the note.
+
+---
+
+# Closing a quarter — drawn 2026-10-23
+
+[`closing-a-quarter.html`](closing-a-quarter.html), styled in
+[`proposed-quarter.css`](proposed-quarter.css). The second drawing under
+[`plans/design-threads.md`](../../plans/design-threads.md), from
+[`plans/closing-a-quarter.md`](../../plans/closing-a-quarter.md), after the owner answered that
+thread's thirteen questions.
+
+## What the drawing proposes
+
+1. **A** — the day after a quarter ends, an amber bar under the header on every screen of the class
+   while the quarter is not recorded. The backup nag's values, copied; no dismiss.
+2. **B** — *Record Q1 grades*, a stock 480px confirm: every student's percentage and letter in last
+   name order, a line counting empty boxes, a line naming any uncommitted held column, and one tap.
+3. **C** — after a change, the same dialog as a notice: only the students who changed, recorded
+   figures beside the live ones, a letter change bold and a percentage-only change quiet.
+4. **D** — the bar while a recorded quarter no longer matches: a count, never a name.
+5. **E** — the home screen: one bar naming the classes that need recording, with no button.
+6. **F** — presentation mode: the bar stays, the dialog refuses and names the control.
+
+## The open questions
+
+**Collected in the thread's design note, not here** —
+[`plans/closing-a-quarter.md`](../../plans/closing-a-quarter.md) § *The drawing's questions*. The
+drawing marks each in amber where it is drawn.
