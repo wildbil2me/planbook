@@ -5611,3 +5611,44 @@ rather than to narrow the line, so that half of WO-3.68's line 4 is re-homed her
 rule applies word for word. **The engine's grade math is not edited.** **If WO-3.69 lands first**, a
 dropped score is not an excused one: it is worked out, never flagged, and stays off these rows unless
 the owner rules otherwise.
+
+## WO-3.71 — a copied class keeps each category's drop lowest
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.69 · **Blocks** nothing
+**Closes roadmap** *(no box. Owner-directed, 2026-10-23.)*
+
+**Booked 2026-10-23**, owner-directed, out of [WO-3.69](#wo-369--a-category-can-drop-each-students-lowest-n-scores)'s
+verdict. **Why it exists.** `copyClass()` in `src/classes.js` builds each category through
+`copyCategories()` in `src/categories.js`, which calls `newCategory(c.name, c.weight)` and nothing
+else. So a class copied from one whose *Quizzes* drop their lowest score arrives with *Quizzes*
+dropping nothing, and nothing on screen says so. The setting is a grading decision about the
+category, like its weight, which the copy already keeps — the argument WO-3.30 made for
+`gradingMode`.
+
+**Deliverables**
+- **`copyCategories()` carries `dropLowest`** when the source category has one that `dropCountOf()`
+  would honour, and writes no key when it does not. The key stays absent-means-default: a copy of a
+  category with no drop gets no `dropLowest` key, not a `0`.
+- **The copy's grade is the source's rule.** Nothing in `src/grade-engine.js` moves.
+- **`tools/verify/copy-class.mjs`** gains a check that a copied category keeps its drop, and that a
+  category with none gets no key.
+- **A mutation**: make `copyCategories()` drop the key again, show the new check goes red, and revert
+  it before writing anything else.
+- **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.71** and the `CHANGELOG.md` entry, which also
+  retires WO-3.69's entry's sentence that copying does not carry the setting yet.
+
+**Acceptance**
+- [ ] Copying a class whose category drops its lowest N gives a class whose matching category drops
+      its lowest N.
+- [ ] Copying a category with no drop writes no `dropLowest` key.
+- [ ] Every other field a copy carries or refuses is unchanged.
+- [ ] With `copyCategories()` leaving the key off, the new check goes red. The mutation is reverted,
+      and `TESTING.md` § WO-3.71 shows the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-3.71 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Copy the key, not a number for every category**: writing `dropLowest: 0` into a copy
+is the seeded-default mistake CLAUDE.md's settings-block rule refuses. **`letterScale: null` in the
+copy is a separate, existing decision** and is not this work order's to change. **If the owner's
+closing-a-quarter thread makes the drop per term**, the shape this copies changes; re-read that
+thread's note before `--start`.
