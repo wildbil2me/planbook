@@ -5904,3 +5904,43 @@ frame **C**'s *What changed* box, and [`proposed-quarter.css`](../../design/mock
 **Traps** — **A score's history is merged in five-minute windows** (WO-3.33), so the recorded value
 is the latest version at or before the recording, not the version before the newest. **Under a
 projector the dialog is refused already**; this adds nothing that needs its own check.
+
+## WO-3.76 — "N to grade" skips work filed under no category
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.73 · **Blocks** nothing
+**Closes roadmap** *(no box. Owner-directed, 2026-10-23, from WO-3.72's verdict.)*
+
+**Booked 2026-10-23**, owner-directed. WO-3.72's verifier found that `emptyBoxes()` never counts an
+empty box in work filed under no category, because it asks `openWork()`, which walks categories
+only. The owner ruled it in: **an empty box is an empty box in either grading mode**
+(`plans/closing-a-quarter.md`, the drawing's answer 2), and WO-3.73 adds the engine reader that
+answers it. **The home card's *N to grade* and the *Waiting to be graded* queue ask `openWork()` the
+same way**, so once WO-3.73 lands the quarter dialog counts a box the card and the queue do not —
+one screen disagreeing with another about one cell, which is what `src/glance.js` exists to prevent.
+
+**Deliverables**
+- **The card's *N to grade* and `queueRows()` take in uncategorized open work**, in either grading
+  mode, through **the engine reader WO-3.73 adds** beside `openWork()`. Neither screen tests a cell,
+  and `openWork()` itself is not widened — every projection is built on it.
+- **Where a reader groups by category**, uncategorized work is grouped under *no category*, after the
+  class's own categories, in the words the quarter dialog uses.
+- **A mutation**: drop the uncategorized reader from the queue, show the check go red, and revert it
+  before writing anything else.
+- **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.76** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] A class with one empty uncategorized assignment shows it in the card's *N to grade* and in the
+      queue, in a weighted class and in a points class, and the card's figure equals the queue's
+      row count for that class.
+- [ ] The quarter dialog's empty-boxes count, the card and the queue agree on the same fixture.
+- [ ] No projection's figures move, and a held uncategorized column still counts as held, not open.
+- [ ] With the uncategorized reader dropped from the queue, the check goes red. The mutation is
+      reverted, and `TESTING.md` § WO-3.76 shows the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-3.76 carries these lines verbatim with the evidence for each.
+
+**Traps** — **`src/glance.js` forwards, it does not compute** (CLAUDE.md, WO-6.7; `wo-sweep.mjs`
+§ 31): the union is the engine's to answer, never a concat with arithmetic in the reader. **Student
+detail, the grade sheet and the CSVs also list unfinished work** — check each and say in the
+`TESTING.md` section which already shows uncategorized work and which does not; widening them is a
+booking, not a fold-in.

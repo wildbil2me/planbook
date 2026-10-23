@@ -6650,3 +6650,52 @@ quote import lines in prose to explain them, and a quoted import is not an edge.
 `tools/`**: the harness files import each other for reasons of their own, and nobody has ruled on them.
 **This changes `tools/wo-sweep.mjs`, a pipeline file**: read `plans/work-orders/README.md` § "The
 pipeline's own files" first. **Nothing in `src/` moves**, so no `CACHE` bump is owed.
+
+## WO-1.82 — the log's append-only check has three regexes with no backslashes
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** — · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.81 made.)*
+
+**Booked 2026-10-23**, owner-directed, from an observation in WO-3.72's result file, confirmed the
+same day by reading the file. In `tools/verify/log-entries.mjs`, the check headed *append-only is
+structural rather than promised* builds three regexes that lost their backslashes **when they were
+written** — `0447d51`, WO-4.4, 2026-08-24 — and were carried unchanged through the harness split
+(`5aa97ec`):
+
+- `initGuard = /if (!Array.isArray(d.log))s*d.log = [];/` — the parentheses are groups and `s*` is
+  the letter s, so it never matches the guard in `src/log.js`. The check prints *the create-on-first-
+  write guard is present = false* on every run, and nothing reads that.
+- `/.logs*=[^=]/` and `/.logs*[[^]]*]s*=[^=]/` — meant to find a reassignment of `.log` and an
+  assignment into `.log[...]`, the two removers the comment above them asks for by name. As written
+  they look for the letters `logs`, so **neither can fire on the code it was written to catch**.
+
+The check passes today on its push count and its token list, so **the half of it that guards
+CLAUDE.md's append-only rule against reassignment has never worked**. Nothing is known to be wrong in
+`src/log.js`; the fence is down, not the field.
+
+**Deliverables**
+- **The three regexes restored** to what their comments describe, with the backslashes they need.
+- **The guard is asserted, not printed**: the check fails if `initGuard` does not match, so a guard
+  regex that stops matching cannot go quiet again.
+- **Two plants**, each red and then reverted before anything else is written: `d.log = d.log.filter(…)`
+  and `d.log[0] = …` added to a writer in `src/log.js`.
+- **A look across `tools/`** for the same shape — a regex literal with `s*`, `d+` or `w+` and no
+  backslash — named in `TESTING.md` § WO-1.82 whatever it finds. A second instance is a booking, not a
+  fold-in.
+- **`TESTING.md` § WO-1.82** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] `node tools/verify-shell.mjs` passes, and the append-only check reports the guard as present.
+- [ ] A planted reassignment of `d.log` and a planted assignment into `d.log[...]` each turn the check
+      red, naming the remover. Both plants are reverted, and `TESTING.md` § WO-1.82 shows the red
+      output.
+- [ ] Removing the guard regex's match (a plant that renames `d.log` in the guard) turns the check red.
+      The plant is reverted.
+- [ ] `TESTING.md` § WO-1.82 names every other regex in `tools/` of the same shape, or says it found none.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-1.82 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Plants go in `src/log.js` and come out before anything else is written** — this is the
+file whose append-only rule the check protects, and a plant left in is a remover in production
+(AGENTS.md, the WO-5.1 scar). **Stage before planting**: a `git checkout` to revert a plant reverts
+unstaged work in that file too. **Nothing in `src/` moves in the end**, so no `CACHE` bump is owed.
