@@ -1,8 +1,9 @@
 # Closing a quarter: record what went to the SIS, and say when it stops matching
 
 **Design thread — [`design-threads.md`](design-threads.md). Status: drawn** (2026-10-23, in
-[`design/mockups/closing-a-quarter.html`](../design/mockups/closing-a-quarter.html)) — **waiting on
-the owner's reading and the drawing's seven questions below.** Started 2026-10-23; the thread's first
+[`design/mockups/closing-a-quarter.html`](../design/mockups/closing-a-quarter.html)) — **five of the
+drawing's seven questions answered 2026-10-23; two recommendations await a nod, and question 6 is
+open.** Started 2026-10-23; the thread's first
 thirteen questions were answered the same day. **A soft clock**
 (the owner, 2026-10-23): useful for Q1 if it lands within about two weeks of 2026-10-31, but not a
 deadline.
@@ -144,17 +145,36 @@ Each is marked in amber where it is drawn. Answers are recorded here, dated, in 
 
 1. **When the bar first appears.** Drawn: the day after the quarter's end date. Earlier, from a
    grades-due date, would ask for a recording while grades are still going in.
+   **Answered: from the end date itself**, worded for the day — *Quarter 1 ends today. Record its
+   grades for English III (B) once they are keyed into Blackbaud.* From the next day, as drawn.
 2. **The empty-boxes line** — a count only (drawn), or the assignments named, or a door to the
    past-due sweep (WO-3.6)?
-3. **The dialog's width** — a stock 480px confirm (drawn), or wider.
+   **Answered: the count and the categories** — *There are 7 empty boxes in Q1, across Exams and
+   Projects.* No assignment names, no door.
+3. **The dialog's width** — a stock 480px confirm (drawn), or wider. **Answered: 480px.**
 4. **When the notice opens by itself.** Drawn: the first time a class screen opens after a recorded
    quarter stops matching, once per change, and whenever that quarter is tapped. Or never by itself,
    leaving it to the bar.
+   **The owner asked for a recommendation. Recommended 2026-10-23, awaiting a nod:** it opens **when
+   the teacher leaves a closed quarter that no longer matches its record** — tapping the next
+   quarter, another class, or All classes. Never while working in the quarter, so three corrections
+   are not three interruptions. A change made without visiting the quarter (a weight changed from
+   Q2, a sync) opens it once, the next time the class is opened. Never under a projector; dismissed,
+   the bar stays.
 5. **Does the notice say what caused a change** (*Act 2 quiz 4 → 9*)? Drawn: figures only. A score
    has a history (WO-3.33); a weight, scale or drop change has no per-student cause.
+   **The owner asked for a recommendation. Recommended 2026-10-23, awaiting a nod:** show the cause
+   when it is a score — every cell written since the recording's `at`, from the cell's own `at` and
+   `was` — because that is what a grade-change form asks for. When no score changed, one line says a
+   class setting did (weights, letter scale, drop lowest), since those keep no history. **Booked as its
+   own S work order after the rest**, so the notice does not wait on it.
 6. **The home screen** — one bar naming the classes (drawn), a line on each class card, or nothing.
+   **Still open** — not answered 2026-10-23.
 7. **The record history** — every recording is kept; shown anywhere (student detail), later, or
    never?
+   **Answered: kept, not shown.** Every recording stays in the document so a reversal loses
+   nothing; no screen reads the history. **Revisit at the end of the year** — at booking this moves
+   to [`future-features.md`](future-features.md) with a pointer back, per the thread rule.
 
 ## What any build owes
 
