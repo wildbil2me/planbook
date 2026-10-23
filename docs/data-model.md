@@ -66,6 +66,12 @@ nag, and nothing noticed until a verifier read the line for another reason.
     // documents. A sketch that disagrees with the code undoes the rule in good faith.
     "terms": [{ "id": "tm_…", "label": "Quarter 1", "start": "…", "end": "…" }],
     "categories": [{ "id": "k_…", "name": "Tests", "weight": 40 }],
+    // { …, "dropLowest": 1 }  // WO-3.69. A whole number: each student's lowest N scored cells in
+    //                         // this category leave the grade. ABSENT = nothing dropped, and absent
+    //                         // is the only other state: blank or 0 in the editor DELETES the key.
+    //                         // Never seeded, no SCHEMA_VERSION bump, every earlier backup restores.
+    //                         // Which cells it drops is worked out at read time and never written
+    //                         // — see § Dropping each student's lowest N.
     // "gradingMode": "points",  // WO-3.30. ABSENT = weighted, and absent is the only other state:
     //                           // "points" is the one value ever stored, and going back to
     //                           // weighted DELETES the key rather than writing "weighted" — the
@@ -664,6 +670,53 @@ test of its own, because a second filter over a list already filtered is a secon
 | `src/grades-report.js` — the grade sheet and CSV | **Includes it, marked held** — a *held* line in the printed column head (and a fifth key entry when any column is held), and `(held)` after the name in the CSV's header cell and its column key, both asked of `isHeld()`. The class grade beside it is `classGrade()`'s and does not count it | WO-3.47 |
 | `src/calendar-derived.js` — due dates | **Unchanged.** A due date is a date whether or not the column counts | Nobody |
 | `src/score-history.js` `scoreHistoryCard()`, `src/score-notes.js` `scoreNotesCard()` | **Unchanged.** Both cards are about the cell, not the grade | Nobody |
+
+### Dropping each student's lowest N *(WO-3.69, the owner's rulings of 2026-10-22)*
+
+**A category may carry `dropLowest`, a whole number, and the grade engine leaves each student's lowest
+N scores in it out of that category's earned and possible.** An absent key drops nothing — the rule an
+absent threshold key follows — and only a whole number above zero drops anything; a malformed value
+reads as absent. The categories editor's *Drop lowest* field writes it, and blank or `0` there
+**deletes** the key. `newYearDocument()` gains nothing and there is no `SCHEMA_VERSION` bump, so every
+backup written before this build restores and grades exactly as it did.
+
+**A dropped score is worked out, not written.** Nothing is stored on a cell. The engine decides at read
+time, inside `categoryResult()`, so a later and lower score takes the drop over by itself and the one it
+displaced counts again — an `excused` flag written in its place could do neither. `isDropped(doc, cls,
+termId, studentId, assignmentId)` in `src/grade-engine.js` is the **only** way a screen learns which
+cells are dropped, and it answers from the same walk the grade is summed from, so a tie cannot be
+broken one way by the grade and the other by the mark.
+
+The rulings, each of which is a line in the engine:
+
+1. **A `missing` zero is never dropped.** It is the teacher's decision and always counts. The drop
+   chooses from **scored** cells only — never `missing`, never `excused`, never blank, and never a cell in
+   a held column, which the engine has already left out before the drop is chosen.
+2. **Lowest by percentage of the assignment's points**, so 10/20 (50%) is lower than 6/10 (60%). **A tie
+   drops the earlier due date**, and equal due dates drop the column further left (the document's
+   order, which is the score grid's). A piece with no due date sorts after one with.
+3. **Points mode works the same way.** Work filed under no category has no setting, so none of it is
+   dropped.
+4. **A drop never empties a category.** At most every scored cell but one is dropped, and the one kept
+   is the best — so a drop never redistributes a category's weight.
+5. **A dropped score still counts toward *A run of low scores*.** That rule reads raw scores and does
+   not ask `isDropped()`; every rule that reads the grade sees the drop through `classGrade()`.
+6. **Zero-point work is never dropped and does not count toward N.** It has no percentage to rank by;
+   its points still add to earned as they always have.
+
+`openWork()` is unchanged by construction — a dropped cell is scored, and scored work is never open.
+`projectedClassGrade()` takes the drop as it stands: the outstanding work it adds is never a candidate,
+so the set dropped does not move with the rate and the projection stays a straight line. The cost is
+stated at the function: where a low projected score would in fact take the drop over, the projection
+errs low.
+
+| Reader | With a dropped score |
+|---|---|
+| The score grid (`src/scores.js`) | **Struck through** by WO-3.68's rule and tagged `dropped` at the cell's bottom-left corner; the accessible name says it. Repainted with the grade on every keystroke, so the mark moves when the drop does |
+| The grade sheet and its CSV (`src/grades-report.js`) | **`Dr (62)`** — or `Dr (18 L)` — from the one `markText()` both surfaces print, and a key entry when any cell on the sheet is dropped |
+| Student detail and its CSV (`src/detail.js`) | **A card of its own**, *Dropped from the grade*, under the held work, and the same rows in the CSV's Work section, its State cell reading *dropped — scored 6 of 10, not counted* |
+| `src/signals.js` | Grade rules **follow the engine** through `classGrade()`; *A run of low scores* **counts it** (ruling 5) |
+| `src/merge-fields.js` — `{{grade.percent}}`, `{{grade.letter}}` | **Follows the engine** through `classGrade()`, with no test of its own |
 
 ### Extra credit
 

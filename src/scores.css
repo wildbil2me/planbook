@@ -744,9 +744,29 @@
      back as computed style under each of them. Do not restate it in a block "for safety": a second
      copy is the one that later gets edited alone.
    - 2px, because a 1px line through 13px bold digits in purple on a lilac wash is a line you can
-     miss from the back of a room, and missing it is reading a number as counted. */
-.scores-input.excused:not(:placeholder-shown) {
+     miss from the back of a room, and missing it is reading a number as counted.
+   A DROPPED SCORE (WO-3.69) wears the same strike from the same rule, as a second selector rather
+   than a second rule, for the reason the second bullet gives: it is a number on screen the grade is
+   not using, and the one statement of the strike stays one. What tells the two apart is the fill
+   and the tag below, not the line.
+*/
+.scores-input.excused:not(:placeholder-shown),
+.scores-input.dropped {
   text-decoration-line: line-through; text-decoration-thickness: 2px;
+}
+/* THE WORD (WO-3.69): a small `dropped` tag pinned across the cell's bottom-left corner — the one
+   corner nothing else uses (the flag glyph is top right, the note mark top left, the history ring
+   bottom right) — so a struck number on an unflagged cell is never mistaken for an excused one. Slate
+   on white, the secondary grey this sheet already prints quiet facts in: a drop is the category's
+   rule rather than a state the teacher chose for this cell, so it takes none of the four flag and
+   mark colours. No pointer: a tap on it is a tap on the score. src/scores.js draws it from
+   isDropped() and nothing else. */
+.scores-dropped {
+  position: absolute; bottom: -6px; left: -4px;
+  padding: 0 3px; border-radius: 999px; border: 1.5px solid #fff;
+  background: #6b7a8d; color: #fff;
+  font-size: 8px; font-weight: 800; line-height: 11px; letter-spacing: 0.02em;
+  pointer-events: none;
 }
 /* Blank means ungraded and affects nothing — the data model's rule. It gets no wash at all, because
    a blank that is styled is a blank that looks like a state somebody chose. */
@@ -1002,6 +1022,8 @@
   .scores-note-mark { border-top-width: 10px; border-right-width: 10px; }
   /* And the history ring a step larger for the same reason. Not a target either. */
   .scores-history-mark { width: 9px; height: 9px; }
+  /* The dropped tag a step larger for the same reason (WO-3.69). Not a target either. */
+  .scores-dropped { font-size: 9px; line-height: 12px; }
   .scores-grid tbody td, .scores-grid tbody th { padding: 7px 8px; }
   .scores-col { min-width: 104px; }
   /* THE FROZEN WIDTHS ARE NOT HERE, ON PURPOSE (WO-3.62). Until then this block narrowed the name

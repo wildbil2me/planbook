@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2069 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2089 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -3020,6 +3020,16 @@ for. So twenty sites give twenty-one, minus two, nineteen results. WO-3.67 added
 one check), which is why this entry follows WO-3.66's figures directly. Full run:
 `2080 checks · 2080 passed · 0 failed · 0 skipped`, 66,396 lines, 31.9 lines per check, 1148s,
 exit 0, 2026-10-22 on the real clock.
+
+**WO-3.69 moved it from 2069 to 2089, and the executed count from 2080 to 2101 — twenty sites,
+twenty-one results, one new file.** All twenty are `verify/drop-lowest.mjs`, run directly after
+`verify/excused-kept.mjs`. Three sites do not map one to one: the engine check sits in a two-mode,
+two-drop loop (one site, four results), and two are failure arms a green run never reaches — the
+fixture guard at the head, and the coarse-pointer `if (!coarse)` arm. So twenty sites give
+twenty-three, minus two, twenty-one results. `verify/categories-weights.mjs` gained no site: its
+*every field still live* check now counts nine fields on three rows rather than six, because each
+category row has a *Drop lowest* field. Full run: `2101 checks · 2101 passed · 0 failed · 0 skipped`,
+66,998 lines, 31.9 lines per check, 1161s, exit 0, 2026-10-22 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

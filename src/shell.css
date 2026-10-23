@@ -1144,6 +1144,19 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   font-size: 13px; color: #1a1a2e; background: #fff;
 }
 .category-weight-unit { font-size: 13px; font-weight: 700; color: #6b7a8d; }
+/* DROP LOWEST (WO-3.69): the weight field's measurements for the number, with the connective in
+   front in `.signal-before`'s quiet grey — "drop lowest [1]" is a sentence with a number in it, which
+   is that panel's grammar, and "across the last" is the same kind of word. Narrower than the weight
+   because the number is one digit in practice. Its own classes rather than `.category-weight`'s,
+   because src/grading-mode.js disables every `.category-weight` in a points class and this field
+   stays live in both modes (the owner's ruling 3). */
+.category-drop-field { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.category-drop-before { font-size: 11px; color: #8a9bb0; }
+.category-drop {
+  width: 48px; text-align: center; padding: 4px 6px;
+  border: 1.5px solid #e0e4ea; border-radius: 6px;
+  font-size: 13px; color: #1a1a2e; background: #fff;
+}
 .category-row-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-left: auto; }
 .category-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 
@@ -2307,6 +2320,11 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
   .category-name-input { min-height: 44px; font-size: 14px; padding: 0 10px; }
   .category-weight { min-height: 44px; min-width: 58px; font-size: 14px; padding: 0 6px; }
   .category-weight-unit { font-size: 14px; }
+  /* The drop-lowest field (WO-3.69), in the same pass that adds it: a 44px floor on the field, its
+     vertical padding zeroed for the `.search-box` reason above, and the connective a step larger. */
+  .category-drop-field { gap: 6px; }
+  .category-drop { min-height: 44px; min-width: 52px; font-size: 14px; padding: 0 6px; }
+  .category-drop-before { font-size: 12px; }
   .category-row-actions { gap: 8px; }
   .category-actions { gap: 10px; }
   /* Text, not targets — a badge and a standing line. Named here for the size bump only, exactly as

@@ -136,10 +136,108 @@ function tally(doc, assignments, studentId) {
   };
 }
 
+/*
+  DROP EACH STUDENT'S LOWEST N (WO-3.69, the owner's rulings of 2026-10-22). A category may carry
+  `dropLowest`, a whole number; ABSENT MEANS NOTHING IS DROPPED, the rule an absent threshold key
+  follows, so every category written by every earlier build drops nothing and no backup migrates.
+  Only a whole number above zero drops anything: a malformed value is not a teacher's request, and
+  the safe reading of one nobody wrote on purpose is the grade as it was before the key existed —
+  isHeld()'s posture, for the same reason.
+
+  WORKED OUT, NEVER WRITTEN. Nothing is stored on a cell. The drop is decided here, at read time,
+  from the cells as they stand, so a later and lower score takes the drop over by itself and the one
+  it displaces counts again; an `excused` flag written in its place could do neither.
+
+  THE CANDIDATES ARE NARROW, AND EVERY EXCLUSION IS A RULING. Only a SCORED cell can be dropped: not
+  `missing` (ruling 1 — a marked zero is the teacher's decision and always counts), not `excused`
+  (already out), not blank (ungraded), and never zero-point work (ruling 6 — extra credit has no
+  percentage to rank by; its points still add to earned exactly as before). A held column is not in
+  `assignments` at all — assignmentsFor() has already taken it out — so it can neither be dropped
+  nor count toward N. Work under no category has no setting, so none of it is dropped (ruling 3);
+  this is only ever called for a category the class has.
+
+  RANKED BY PERCENTAGE OF THE ASSIGNMENT'S POINTS, lowest first. A tie goes to the EARLIER DUE DATE
+  (ruling 2), then to the column further left — the document's order, which is the order the score
+  grid draws its columns in — so the same document always drops the same cell. A due date is an ISO
+  string and compares as one; a piece with no due date sorts after one with, rather than before
+  every dated piece as an empty string would.
+
+  NEVER EMPTIES A CATEGORY (ruling 4): at most every candidate but one is dropped, and the one kept
+  is the best. So a drop can never turn a category with a percentage into one without, and never
+  redistributes that category's weight.
+
+  ONE ANSWER, READ TWICE. categoryResult() leaves these ids out of the walk it grades with, and
+  isDropped() below answers from the very same call, so the grid's mark and the grade beside it
+  cannot disagree about a tie. Ids only, never a name.
+*/
+function dropCountOf(category) {
+  const n = category && category.dropLowest;
+  return typeof n === 'number' && Number.isInteger(n) && n > 0 ? n : 0;
+}
+
+function categoryOf(cls, categoryId) {
+  return categoriesOf(cls).filter((category) => category && category.id === categoryId)[0] || null;
+}
+
+function dueOrder(a, b) {
+  if (a === b) return 0;
+  if (!a) return 1;
+  if (!b) return -1;
+  return a < b ? -1 : 1;
+}
+
+function droppedIds(doc, assignments, studentId, n) {
+  if (!n) return [];
+  const candidates = [];
+  assignments.forEach((assignment, column) => {
+    const points = numberOrZero(assignment.points);
+    if (!(points > 0)) return;
+    const cell = scoreCell(doc, assignment.id, studentId);
+    if (!cell || cell.flag === 'excused' || cell.flag === 'missing') return;
+    if (cell.v === null || cell.v === undefined) return;
+    candidates.push({ id: assignment.id, share: numberOrZero(cell.v) / points,
+      due: String(assignment.due || ''), column: column });
+  });
+  const count = Math.min(n, candidates.length - 1);
+  if (count <= 0) return [];
+  candidates.sort((a, b) => (a.share - b.share) || dueOrder(a.due, b.due) || (a.column - b.column));
+  return candidates.slice(0, count).map((candidate) => candidate.id);
+}
+
+/* The live work of one category, and which of it this student has dropped — the pair both readers
+   below are cut from. */
+function categoryWalk(doc, cls, termId, categoryId, studentId) {
+  const assignments = assignmentsFor(doc, cls, termId, categoryId);
+  const dropped = droppedIds(doc, assignments, studentId, dropCountOf(categoryOf(cls, categoryId)));
+  return { assignments: assignments, dropped: dropped };
+}
+
+/*
+  IS THIS CELL DROPPED (WO-3.69) — the only way any screen learns it, the arrangement isHeld() has
+  for a held column. A screen that picked the lowest N for itself would be the second opinion that
+  lets the grid and the grade disagree. False for anything that is not a live column of this class
+  and term filed under one of its categories.
+
+  RULING 5 CUTS THE OTHER WAY: the *A run of low scores* rule in src/signals.js reads raw scores and
+  does NOT ask this — a string of low scores is worth noticing whatever the grading policy does with
+  one of them. The rules that read the grade see the drop through classGrade(), and ask nothing.
+*/
+export function isDropped(doc, cls, termId, studentId, assignmentId) {
+  const classId = cls && cls.id;
+  const assignment = arrayOf(doc && doc.assignments).filter((a) => a && a.id === assignmentId
+    && a.classId === classId && a.termId === termId)[0];
+  if (!assignment || isHeld(assignment) || !categoryOf(cls, assignment.categoryId)) return false;
+  return categoryWalk(doc, cls, termId, assignment.categoryId, studentId).dropped
+    .indexOf(assignmentId) !== -1;
+}
+
 /* The full fraction is exported because later detail screens need to show arithmetic, while
-   categoryPercentage() remains the small numeric answer most consumers want. */
+   categoryPercentage() remains the small numeric answer most consumers want. Since WO-3.69 it is
+   the fraction after this student's dropped scores are left out; with nothing dropped the filter
+   keeps every column in order, so the sum is the same float to the last digit it always was. */
 export function categoryResult(doc, cls, termId, categoryId, studentId) {
-  return tally(doc, assignmentsFor(doc, cls, termId, categoryId), studentId);
+  const walk = categoryWalk(doc, cls, termId, categoryId, studentId);
+  return tally(doc, walk.assignments.filter((a) => walk.dropped.indexOf(a.id) === -1), studentId);
 }
 
 export function categoryPercentage(doc, cls, termId, categoryId, studentId) {
@@ -199,6 +297,10 @@ export function nextBandFor(doc, cls, percentage) {
 
    `excused` work is in none of them: it is out of the grade entirely, in both directions, so it is
    neither owed nor outstanding.
+
+   A DROPPED SCORE IS IN NONE OF THEM EITHER, and that is the whole of how this function takes the
+   drop into account (WO-3.69): only a scored cell can be dropped, and a scored cell is never open
+   work. `missing` rows stay `missing` because ruling 1 never drops a marked zero.
 
    Ids and points, never names — a name is the screen's business, and this module has no strings in
    it that a teacher typed. */
@@ -539,6 +641,16 @@ export function pointsShare(doc, cls, termId) {
   One honest limit: openWork() lists categorized work only, so a screen listing the open pieces
   does not name an uncategorized one the projection has counted — src/assignments.js's red
   "Not in a category" group is where that work is asked to be re-filed.
+
+  THE DROP IS TAKEN AS IT STANDS (WO-3.69). Each category's earned and possible come out of
+  categoryResult(), so the scores dropped today are out of the projection exactly as they are out of
+  the grade. The outstanding work is added on top and is never a drop candidate — it has no score
+  yet — so the set dropped does not move with the rate, and the line stays straight and solved. The
+  limit that buys: a projection at a low rate does not show that piece of work, once scored, taking
+  the drop over from today's lowest. Where that would happen, the projection counts the new low
+  score and leaves out today's dropped one, which is higher — so the figure errs LOW, and a "score
+  X% to reach the next band" solved against it asks for a little more than the policy would, never
+  less. That is the direction the to-move card already rounds in (src/detail.js).
 */
 export function projectedClassGrade(doc, cls, termId, studentId, plan) {
   return formulaFor(cls)(doc, cls, termId, studentId, plan || {});

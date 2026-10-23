@@ -366,6 +366,8 @@ function categoryRow(cls, cat, index, siblings) {
   wrap.append(unit);
   row.append(wrap);
 
+  row.append(dropField(cls, cat));
+
   const actions = document.createElement('div');
   actions.className = 'category-row-actions';
   /* Explicit up/down rather than drag, for the reason src/classes.js gives about class rows:
@@ -392,6 +394,62 @@ function categoryRow(cls, cat, index, siblings) {
 
   row.append(actions);
   return row;
+}
+
+/*
+  DROP LOWEST (WO-3.69) — how many of each student's lowest scores this category leaves out of the
+  grade. The arithmetic is src/grade-engine.js's and none of it is here: this field writes one whole
+  number on the category, and what is dropped is decided there, per student, every time a grade is
+  read.
+
+  THE SAME SHAPE AS THE WEIGHT BESIDE IT, with the connective in front rather than a unit behind —
+  `.signal-before`'s "across the last" grammar, because "drop lowest [1]" reads as a sentence and
+  "[1] dropped" reads as a count of something already gone. A real number input for the reason the
+  weight is one: the iPad offers the numeric keypad.
+
+  BLANK IS NOTHING DROPPED, AND SO IS 0, and both DELETE the key rather than store a zero — the
+  absent-key rule (docs/data-model.md), so a category nobody set holds no key and every backup
+  written before this field restores exactly as it was. The field therefore shows blank, never 0,
+  with a "0" placeholder saying what blank means.
+
+  NOT DISABLED IN A POINTS CLASS. src/grading-mode.js greys `.category-weight` there, and this field
+  carries a different class on purpose: the drop applies to a class graded on total points in the
+  same way (the owner's ruling 3), so it is a live control in both modes.
+*/
+function dropField(cls, cat) {
+  const wrap = document.createElement('div');
+  wrap.className = 'category-drop-field';
+
+  const before = document.createElement('span');
+  before.className = 'category-drop-before';
+  before.textContent = 'drop lowest';
+  /* The field's accessible name says the whole sentence; this is its printed half. */
+  before.setAttribute('aria-hidden', 'true');
+  wrap.append(before);
+
+  const drop = document.createElement('input');
+  drop.className = 'category-drop';
+  drop.type = 'number';
+  drop.min = '0';
+  drop.step = '1';
+  drop.setAttribute('inputmode', 'numeric');
+  drop.placeholder = '0';
+  drop.value = dropShown(cat);
+  drop.setAttribute('data-category-field', 'dropLowest');
+  drop.setAttribute('data-category-id', cat.id);
+  drop.setAttribute('aria-label', 'How many of each student’s lowest scores in '
+    + (cat.name || 'this category') + ' to leave out of the grade in ' + cls.name
+    + ' — blank drops none');
+  wrap.append(drop);
+  return wrap;
+}
+
+/* What the field shows: the number the grade engine honours, or blank. A value the engine would not
+   read as a drop — a hand-edited 1.5, a string — shows blank rather than a number the grade is not
+   using, which is the silent-wrong-number failure in a settings field. */
+function dropShown(cat) {
+  const n = cat && cat.dropLowest;
+  return typeof n === 'number' && Number.isInteger(n) && n > 0 ? String(n) : '';
 }
 
 function renderCategoryList() {
@@ -470,7 +528,8 @@ export function addCategory() {
 }
 
 /*
-  A name or a weight being typed. Called from src/shell.js's `input` listener, so it fires per
+  A name, a weight or — since WO-3.69 — a drop-lowest count being typed. Called from src/shell.js's
+  `input` listener, so it fires per
   keystroke and the store's debounce is what turns that into one save (src/store.js).
 
   THE ROW IS NOT RE-RENDERED — replacing the input the teacher is typing into would take the caret
@@ -485,12 +544,30 @@ export function editCategoryField(input) {
   const id = input.getAttribute('data-category-id');
   const field = input.getAttribute('data-category-field');
   if (!cls || !id) return;
-  if (field !== 'name' && field !== 'weight') return;
+  if (field !== 'name' && field !== 'weight' && field !== 'dropLowest') return;
   const cat = findCategory(cls, id);
   if (!cat) return;
 
   if (field === 'name') {
     update(() => { cat.name = input.value; });
+  } else if (field === 'dropLowest') {
+    /* WO-3.69. Blank and 0 DELETE the key (see dropField()); a whole number above 0 is written as a
+       number. Anything else — a fraction, a negative — writes nothing and says why in the panel's
+       error line, the place WO-3.64 kept for a future refusal: a field showing 1.5 over a document
+       that drops something else would be a number on screen the grade is not using. A number
+       input half-way through a value reports '' (the weight branch below says so too), so the
+       keystroke that starts a number never reaches the refusal. */
+    const raw = String(input.value).trim();
+    const n = Number(raw);
+    if (raw === '' || n === 0) {
+      if (Object.prototype.hasOwnProperty.call(cat, 'dropLowest')) update(() => { delete cat.dropLowest; });
+    } else if (Number.isInteger(n) && n > 0) {
+      if (cat.dropLowest !== n) update(() => { cat.dropLowest = n; });
+    } else {
+      showCategoryError('Drop lowest takes a whole number: 1 leaves out each student’s lowest score '
+        + 'in ' + (cat.name || 'this category') + ', 2 the lowest two. Leave it blank to drop nothing.');
+      return;
+    }
   } else {
     /* An empty field reads as 0 — Number('') is 0 — which is what a teacher who has cleared a box
        to retype it means for the second she is between numbers, and it keeps the total honest

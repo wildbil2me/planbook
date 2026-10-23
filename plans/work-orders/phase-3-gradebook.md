@@ -5504,7 +5504,7 @@ edited**, apart from the mutation that is reverted.
 
 ## WO-3.69 — a category can drop each student's lowest N scores
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.68 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-23 · **Size** M · **Depends on** WO-3.68 · **Blocks** nothing
 **Closes roadmap** *(no box. Owner-directed, 2026-10-21.)*
 
 **Booked 2026-10-21**, owner-directed, beside [WO-3.68](#wo-368--an-excused-cell-keeps-the-score-it-had).
@@ -5547,20 +5547,20 @@ re-pick by hand. So the engine decides at read time, and the decision moves when
    percentage to rank by. Its points still add to earned as they do today.
 
 **Acceptance**
-- [ ] The category and class grades match a hand-worked fixture with `dropLowest` 1 and 2, in both
+- [x] The category and class grades match a hand-worked fixture with `dropLowest` 1 and 2, in both
       grading modes.
-- [ ] A new score lower than the dropped one takes the drop over, and the old one counts again.
-- [ ] Excused, ungraded and held cells are never counted toward N. `missing` follows ruling 1, ties
+- [x] A new score lower than the dropped one takes the drop over, and the old one counts again.
+- [x] Excused, ungraded and held cells are never counted toward N. `missing` follows ruling 1, ties
       follow ruling 2, and zero-point work follows ruling 6.
-- [ ] The grid, grade sheet, both CSVs and student detail mark the same cells as dropped.
-- [ ] Signals and merge fields read the same grade that the screens show. *A run of low scores*
+- [x] The grid, grade sheet, both CSVs and student detail mark the same cells as dropped.
+- [x] Signals and merge fields read the same grade that the screens show. *A run of low scores*
       still counts a dropped score (ruling 5).
-- [ ] A backup with no `dropLowest` key anywhere restores and grades as before.
-- [ ] With `isDropped()` dropping nothing, the drop checks go red. The mutation is reverted, and
+- [x] A backup with no `dropLowest` key anywhere restores and grades as before.
+- [x] With `isDropped()` dropping nothing, the drop checks go red. The mutation is reverted, and
       `TESTING.md` § WO-3.69 shows the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] 👤 On the iPad, the *Drop lowest* field and a dropped cell read clearly.
-- [ ] `TESTING.md` § WO-3.69 carries these lines verbatim with the evidence for each.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] 👤 On the iPad, the *Drop lowest* field and a dropped cell read clearly.
+- [x] `TESTING.md` § WO-3.69 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Never write the drop into a cell.** **No screen works out which cell is dropped**; every
 one asks `isDropped()`. A second opinion is how the grid and the grade come to disagree. **The drop is

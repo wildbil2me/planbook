@@ -1910,7 +1910,10 @@ function makeContext(doc, cls, termId, through, historical) {
     },
 
     /* One student's scored percentages, in the document's order — the sequence a run of low scores
-       is read off. Zero-point work is not in it: extra credit has no percentage (see the rule). */
+       is read off. Zero-point work is not in it: extra credit has no percentage (see the rule).
+       A SCORE ITS CATEGORY DROPS IS IN IT (WO-3.69, the owner's ruling 5): dropping is a grading
+       policy, and a string of low scores is still worth noticing. So this does not ask isDropped(),
+       on purpose — the rules that read the grade see the drop through classGrade() instead. */
     scorePercents(studentId) {
       if (!percents.has(studentId)) {
         percents.set(studentId, sequence.map((a) => {

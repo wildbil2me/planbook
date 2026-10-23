@@ -14662,6 +14662,164 @@ flag before the value. **None reads the value first, so no reader needed a fix.*
 - [x] `TESTING.md` § WO-3.68 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-3.69 — a category can drop each student's lowest N scores
+
+**What was built.** A category may carry `dropLowest`, a whole number, and the grade engine leaves each
+student's lowest N scored cells in it out of that category's earned and possible. Nothing is written to
+a cell. `src/grade-engine.js`: `categoryResult()` now sums the walk less the dropped ids; the set comes
+from one private helper (`droppedIds()`, through `categoryWalk()`) that `isDropped(doc, cls, termId,
+studentId, assignmentId)` — the new export, and the only way a screen learns which cells are dropped —
+answers from too, so the mark and the grade cannot break a tie two ways. Candidates are scored cells
+worth points only (no `missing`, `excused`, blank, held column or zero-point work); ranked by percentage
+of points, ties to the earlier due date, then the column further left; at most every candidate but one
+is dropped. An absent or malformed key drops nothing. `openWork()` is unchanged by construction (a
+dropped cell is scored), and `projectedClassGrade()` takes the drop as it stands; both are argued in
+comments at the functions, including the projection's honest limit (it errs low). `src/categories.js`:
+a *drop lowest* number field on every category row; blank and `0` **delete** the key, a whole number
+above 0 is written, and anything else writes nothing and says why in the panel's error line. It carries
+its own class, so `src/grading-mode.js` does not grey it in a points class. Readers, each asking
+`isDropped()`: the score grid (`src/scores.js` `paintDropped()`, run from `paintGrades()` so the mark
+moves on the keystroke that moves the drop) strikes the field with WO-3.68's rule — a second selector
+on the same rule in `src/scores.css`, not a second rule — and pins a slate `dropped` tag to the cell's
+bottom-left corner, with the accessible name saying it; the grade sheet and its CSV print `Dr (62)` /
+`Dr (18 L)` from the one `markText()`, plus a `Dr` key entry only when a cell is dropped; student
+detail gains a *Dropped from the grade* card under the held work and the student CSV the same rows in
+its Work section. `src/signals.js` gained a comment only (ruling 5: the low-run sequence does not ask
+`isDropped()`). `index.html`: one shared hint in the categories panel. `docs/data-model.md`: the key in
+the sketch and a section with the six rulings and a reader table. `sw.js`: `planbook-shell-v196` →
+`v197`. Harness: `tools/verify/drop-lowest.mjs` (20 call sites, 21 results), run directly after
+`excused-kept.mjs`; `tools/verify/categories-weights.mjs`'s *every field still live* count 6 → 9.
+
+**The hand-worked fixture** is written out at the head of `tools/verify/drop-lowest.mjs`, and every
+expected value in the checks is a literal copied from it. Quizzes 50% (`dropLowest` 1, then 2), Tests
+50%, six students. Ada: Quiz 1 6/10 (60%), Quiz 2 10/20 (50%), Quiz 3 9/10, Quiz 4 8/10, a zero-point
+bonus 2, Quiz 5 missing, a held quiz 1/10, Test 80/100, and 1/10 on work filed under no category.
+- No drop: Quizzes 6+10+9+8+2 = 35 over 10+20+10+10+0+10 = 60 → 58.333…%; weighted class (58.333… + 80)
+  / 2 = **69.1666…%**; points (35+80+1)/(60+100+10) = 116/170 = **68.2352…%**.
+- Drop 1 (Quiz 2, the lowest *percentage*, though Quiz 1 earned fewer points): Quizzes 25/40 = 62.5%;
+  weighted **71.25%**; points 106/150 = **70.6666…%**.
+- Drop 2 (Quiz 2 and Quiz 1): Quizzes 19/30 = 63.333…%; weighted **71.6666…%**; points 100/140 =
+  **71.4285…%**. In points mode the loose 1/10 is counted and never dropped (ruling 3), though at 10% it
+  is her lowest score.
+
+- [x] The category and class grades match a hand-worked fixture with `dropLowest` 1 and 2, in both
+      grading modes.
+      — `node tools/verify-shell.mjs`, run 2, 2026-10-22, real clock, `tools/verify/drop-lowest.mjs`:
+      `PASS | WO-3.69: in a weighted class with dropLowest 1, Ada's Quizzes category and class grade match
+      the hand-worked fixture — Quizzes 25/40, class 71.25% :: {"mode":"weighted","pct":71.25,"quiz":[25,40],"loose":null,…}`;
+      `PASS | … weighted class with dropLowest 2 … :: {"mode":"weighted","pct":71.66666666666666,"quiz":[19,30],…}`;
+      `PASS | … points class with dropLowest 1 … the loose 1/10 still counted (ruling 3) :: {"mode":"points","pct":70.66666666666667,"quiz":[25,40],"loose":[1,10],…}`;
+      `PASS | … points class with dropLowest 2 … :: {"mode":"points","pct":71.42857142857143,"quiz":[19,30],"loose":[1,10],…}`.
+      Beside them, the no-key baseline the drop has to move: `PASS | WO-3.69: with no dropLowest key the
+      engine drops nothing … :: {"weighted":{…"pct":69.16666666666667,"quiz":[35,60],…"dropped":"[]"…},"points":{…"pct":68.23529411764706,…}}`.
+      Each of the four also asserts `openWork()` is the no-drop list (only the missing Quiz 5). On the
+      grid at drop 1: `PASS | WO-3.69: the grid marks exactly the hand table's cells … :: {…"grades":{"ada":"71.25%","ben":"85.00%","cy":"76.67%","dee":"82.50%","eve":"57.50%","fred":"56.00%"},"tags":6}`.
+- [x] A new score lower than the dropped one takes the drop over, and the old one counts again.
+      — Typed at the grid through the real key path: `PASS | WO-3.69: typing 3 into Ada's Quiz 4 (80% →
+      30%) moves the drop onto it as she types — Quiz 4 struck and tagged, Quiz 2 unstruck and counted
+      again, Quizzes 27/50 and her grade 67.00% … :: {"q4":{"value":"3","dropped":true,"line":"line-through",…},"q2":{"value":"10","dropped":false,"line":"none",…},"grid":{…"ada":"67.00%"…}}`
+      (hand: 6+10+9+2 = 27 over 10+20+10+0+10 = 50, 54%; (54+80)/2 = 67). And back: `PASS | WO-3.69:
+      typed back to 8, the drop returns to Quiz 2 and the grade to 71.25% — and neither cell holds anything
+      but its score … :: {…"cells":["{\"v\":10}","{\"v\":8}"]}` — nothing about the drop is in the
+      document.
+- [x] Excused, ungraded and held cells are never counted toward N. `missing` follows ruling 1, ties
+      follow ruling 2, and zero-point work follows ruling 6.
+      — `PASS | WO-3.69: isDropped() names exactly the hand table's cells at dropLowest 1 — Ada q2 by
+      percentage not points, Ben q5 (his excused 1, blank and held 2 never counted toward N), Cy q2 (the
+      earlier due date of a 70% tie), Dee q3 (the left column of a same-due tie, her 0 on the bonus not a
+      candidate), Eve q1 (her missing zero never dropped), Fred's late q5 — and the same in a points class
+      … :: {"weighted":"[\"a369-q1/wo369-eve\",\"a369-q2/wo369-ada\",\"a369-q2/wo369-cy\",\"a369-q3/wo369-dee\",\"a369-q5/wo369-ben\",\"a369-q5/wo369-fred\"]","points":[same],"want":[same]}`.
+      Each exclusion is placed to change the answer if it were broken: Ben's excused 1/10 and held 2/10
+      are lower than his dropped 5/10; Cy's tied Quiz 1 is the left column, so only the due date picks
+      Quiz 2; Dee's two 5/10s share a due date, so only the column picks Quiz 3, and her 0 on the
+      zero-point bonus would rank first if it were a candidate; Eve's missing zero is lower than her
+      dropped 6/10. The fractions: `PASS | … each student's Quizzes fraction at dropLowest 1 … ::
+      {"ada":[25,40],"ben":[16,20],"cy":[25,30],"dee":[32,40],"eve":[8,20],"fred":[36,50]}` (Ada's 2-point
+      bonus is in her 25; Eve's missing 10 is in her 20). Ruling 4: `PASS | WO-3.69: at dropLowest 2 the
+      hand table's eleven cells are dropped, and Eve — two scored quizzes — keeps her best …; at
+      dropLowest 5 she still keeps it and her Quizzes stay 8/20, never emptied :: {…"eveAt5":[8,20]}`.
+- [x] The grid, grade sheet, both CSVs and student detail mark the same cells as dropped.
+      — Each reader is read for the cells it marks and compared to the same literal set.
+      Grid: `PASS | … the grid marks exactly the hand table's cells as dropped at dropLowest 1, one tag
+      each … :: {"dropped":"[…six…]",…,"tags":6}`, and the drawn mark: `PASS | WO-3.69: a dropped cell
+      draws its score struck through (WO-3.68's 2px strike, read as computed style) with a visible
+      `dropped` tag and an accessible name that says so … :: {"adaQ2":{"value":"10","dropped":true,"line":"line-through","thick":"2px","tag":"dropped","tagShown":true,"label":"WO-3.69 Quiz 2, out of 20, for Ada Apple, dropped as one of this student’s lowest in its category and not counted",…},…}`.
+      Grade sheet and its CSV: `PASS | WO-3.69: the grade sheet and its CSV mark the hand table's cells
+      and no others — `Dr (10)` for Ada's Quiz 2, `Dr (3 L)` for Fred's late Quiz 5 — six marks on the
+      printed sheet, and a `Dr` entry in its key :: {"record":"[…six…]","csv":"[…six…]",…,"printed":["Dr (10)","Dr (14)","Dr (3 L)","Dr (5)","Dr (5)","Dr (6)"],…}`.
+      Student detail and the student CSV, opened for each of the six students in turn: `PASS | WO-3.69:
+      student detail lists the hand table's cells on each student's *Dropped from the grade* card and in
+      the Work section of each student's CSV, and no others … :: {"rows":"[…six…]","csv":"[…six…]","ada":{…"scores":["10 of 20"],…"lines":["WO-3.69 Quiz 2,Quizzes,20,\"dropped — scored 10 of 20, not counted\""]},"fred":{…"scores":["3 of 10, late"],…}}`.
+- [x] Signals and merge fields read the same grade that the screens show. *A run of low scores*
+      still counts a dropped score (ruling 5).
+      — `PASS | WO-3.69: signals and merge fields read the grade the screen shows — *grade below* fires for
+      Fred on 56.00% and `{{grade.percent}}` resolves to the grid's own figures, Fred 56.00% and Ada 71.25%
+      :: {"said":{"t":[65,3,60],"below":"56.00%",…,"mergeFred":"56.00%","mergeAda":"71.25%"},"grid":{"ada":"71.25%",…,"fred":"56.00%"}}`
+      — `signals.evaluate()` and `mergeFields.resolveText()` asked over the live document, beside the
+      grid's text (Fred without the drop would be 52.50%). Ruling 5: `PASS | WO-3.69, ruling 5: *A run of
+      low scores* still counts Fred's dropped Quiz 5 — the run is 3, 50, 40 and 30 … :: {"run":3,"scores":[50,40,30]}`.
+      Fred's sequence is 40 (the test, first in the document), 90, 90, 50, 40, 30; a rule that asked
+      `isDropped()` would read 40, 90, 90, 50, 40 — a run of two, under the default three, and silent.
+- [x] A backup with no `dropLowest` key anywhere restores and grades as before.
+      — `PASS | WO-3.69: a backup with no dropLowest key anywhere — the word is nowhere in the file —
+      parses, restores through the real confirm, and grades every student as before: the hand table's
+      no-drop figures, 69.17% to 52.50%, with no cell marked dropped :: {"inFile":false,"parsed":true,"freshHasKey":false,"grid":{"dropped":"[]","grades":{"ada":"69.17%","ben":"80.00%","cy":"74.00%","dee":"79.50%","eve":"60.83%","fred":"52.50%"},"tags":0}}`.
+      The file is this run's own year written by `buildBackup()` with the key taken off the class, parsed
+      by `parseBackup()`, restored through `restoreFromText()` and the real confirm; `newYearDocument()`
+      carries no such key. Every other grade check in the run is a fixture with no `dropLowest`, and all
+      of them stay green (run 2, below). The editor's half of the absent-key rule: `PASS | WO-3.69: the
+      categories editor's *Drop lowest* field shows 1 on Quizzes and blank on Tests; typing 2 writes 2 and
+      the grid behind it moves to the dropLowest-2 cells; blank and 0 DELETE the key; 1.5 writes nothing
+      and says why; 1 writes 1 :: {…"atBlank":"{\"has\":false,\"n\":null}","atZero":"{\"has\":false,\"n\":null}",…}`.
+- [x] With `isDropped()` dropping nothing, the drop checks go red. The mutation is reverted, and
+      `TESTING.md` § WO-3.69 shows the red output.
+      — `src/grade-engine.js`, the first line of `isDropped()` became `/* MUTATION WO-3.69: isDropped()
+      drops nothing — REVERT */ return false;`. The engine's own walk was left alone, so the grades still
+      drop and only the asker lies. `node tools/verify-shell.mjs` (run 3): `2101 checks · 2091 passed · 10
+      failed · 0 skipped`, 1145s, `EXIT=1`. All ten reds are this section's drop checks:
+      `FAIL | WO-3.69: isDropped() names exactly the hand table's cells at dropLowest 1 …`;
+      `FAIL | WO-3.69: at dropLowest 2 the hand table's eleven cells are dropped … :: {"drop2":"[]",…}`;
+      `FAIL | WO-3.69: the grid marks exactly the hand table's cells as dropped … :: {"dropped":"[]","grades":{"ada":"71.25%",…,"fred":"56.00%"},"tags":0}`;
+      `FAIL | WO-3.69: a dropped cell draws its score struck through … :: {"adaQ2":{"value":"10","dropped":false,"line":"none",…}`;
+      `FAIL | WO-3.69: typing 3 into Ada's Quiz 4 … :: {"q4":{"value":"3","dropped":false,"line":"none",…}`;
+      `FAIL | WO-3.69: typed back to 8, the drop returns to Quiz 2 … :: {…"q2":{"value":"10","dropped":false,…}`;
+      `FAIL | WO-3.69: the grade sheet and its CSV mark the hand table's cells and no others … :: {"record":"[]","csv":"[]","texts":{},"printed":[],"key":[],…}`;
+      `FAIL | WO-3.69: student detail lists the hand table's cells … :: {"rows":"[]","csv":"[]",…}`;
+      `FAIL | WO-3.69: the categories editor's *Drop lowest* field …` (its grid-at-drop-2 half);
+      `FAIL | WO-3.69: under an emulated coarse pointer … :: {"field":{"h":44,"w":52},"cell":{"value":"10","dropped":false,"line":"none",…}}`.
+      The grade figures inside those reds are still the dropped ones (71.25%, 56.00%), which is the Trap
+      made visible: with a second opinion, the grid and the grade disagree. Reverted by copying back a
+      copy of `src/grade-engine.js` saved immediately before the plant (not `git checkout`, which would
+      have taken this work order's unstaged engine changes with it); `cmp` reads identical and
+      `grep -rn "MUTATION WO-3.69" src tools` finds nothing.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs` (run 2, before the mutation): `2101 checks · 2101 passed · 0 failed
+      · 0 skipped`, 66,998 lines, 31.9 lines per check, 1161s, `EXIT=0`, 2026-10-22, real clock. The
+      reverted `src/grade-engine.js` is byte-identical to that run's (`cmp` above), and no other file under
+      `src/` changed after it. And re-run after the revert (run 4): `2101 checks · 2101 passed · 0 failed
+      · 0 skipped`, 66,998 lines, 1147s, `EXIT=0`, 2026-10-22, real clock. Run 1 on the same `src/` was `2101 · 2098 · 3 failed`, all
+      three this section's own assertions, fixed before run 2: the student CSV's State cell is quoted (it
+      holds a comma), the low-run check had not allowed for the test score after the quizzes (the test now
+      leads the document), and the points-mode editor check opened the panel without the mode paint that
+      `src/shell.js`'s door chains (the check now chains it too). `node tools/wo-sweep.mjs`: `52 checks · 49
+      passed · 0 failed · 3 to review` — the three standing reviews — after `tools/README.md`'s call-site
+      line went 2069 → 2089 from the sweep's own count.
+- [x] 👤 On the iPad, the *Drop lowest* field and a dropped cell read clearly.
+      — **Read by the owner on the iPad, 2026-10-23, at v197, served from `tools/serve-https.mjs`: all six
+      readings green** (cold launch onto v197; the field in both grading modes; the strike and tag; the drop
+      moving to a lower score; presentation mode; the *Dropped from the grade* card). The verifier's
+      checklist is what was read. Before the reading, force-quit from the app switcher, then open v197.
+      What the harness has shown: under an emulated coarse pointer the field is 44×52px and a dropped
+      score in its 44px cell is struck (2px, computed style) with its `dropped` tag drawn — `PASS | WO-3.69:
+      under an emulated coarse pointer … :: {"field":{"h":44,"w":52},"cell":{…"line":"line-through","thick":"2px","tag":"dropped","tagShown":true,…,"h":44}}`.
+      To read: open a class's Categories, find *drop lowest* beside each weight, type 1 on a category
+      with scores in it; on the Scores screen each student's lowest score in that category is struck
+      with a small grey `dropped` tag at the cell's bottom-left; type a lower score elsewhere in the
+      category and watch the drop move. Whether the tag is legible at arm's length, and tells itself
+      apart from an excused cell's strike, is the reading.
+- [x] `TESTING.md` § WO-3.69 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

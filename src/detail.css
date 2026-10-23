@@ -200,6 +200,19 @@
   font-size: 9px; font-weight: 800; color: #5b6fcc;
   text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
 }
+/* A SCORE ITS CATEGORY DROPS (WO-3.69), in the held card's row shape. The score is struck through
+   — the grid's 2px strike on the same number — and the mark is the grid's `dropped` tag's slate
+   #6b7a8d, set the way the held mark beside it is set, so the card and the cell it came from wear
+   one word in one colour. */
+.detail-dropped-score {
+  font-size: 11px; font-weight: 700; color: #6b7a8d; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  text-decoration-line: line-through; text-decoration-thickness: 2px;
+}
+.detail-dropped-mark {
+  font-size: 9px; font-weight: 800; color: #6b7a8d;
+  text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+}
 /* A NOTE ON A SCORE (WO-3.32), beside its assignment in the row shape above. Italic and grey, which
    is the hall-pass note's own register (src/attendance.css `.pass-history-note`, after Roll Call!'s
    `.sr-pass-note`): a teacher's aside under a record, not a finding. It takes the rest of the row
@@ -444,7 +457,9 @@
   }
   body[data-detail-print] .detail-missing-none { font-size: 8pt; color: #000; }
   body[data-detail-print] .detail-held-state,
-  body[data-detail-print] .detail-held-mark { font-size: 7pt; color: #000; }
+  body[data-detail-print] .detail-held-mark,
+  body[data-detail-print] .detail-dropped-score,
+  body[data-detail-print] .detail-dropped-mark { font-size: 7pt; color: #000; }
 
   body[data-detail-print] .detail-att-stat {
     background: none !important; border: 0.2mm solid #999 !important;
@@ -571,6 +586,8 @@
   .detail-missing-pts, .detail-missing-bonus, .detail-missing-when { font-size: 12px; }
   .detail-held-state { font-size: 12px; }
   .detail-held-mark { font-size: 10px; }
+  .detail-dropped-score { font-size: 12px; }
+  .detail-dropped-mark { font-size: 10px; }
   .detail-score-note { font-size: 13px; }
   .detail-history-trail { font-size: 13px; }
   .detail-missing-none { font-size: 13px; }

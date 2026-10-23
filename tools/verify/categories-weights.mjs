@@ -185,9 +185,10 @@ if (!classesBooted || !classSeam || !catSeam) {
              enabledFields: m.querySelectorAll('input:not([disabled])').length }; })()`);
   /* `disabled` is reported rather than asserted at zero: the two disabled controls in that panel
      are the first row's ↑ and the last row's ↓, which are the ENDS OF THE LIST and have nothing to
-     do with the total. Every field is asserted live, which is the claim. */
+     do with the total. Every field is asserted live, which is the claim. Nine fields on three rows
+     since WO-3.69: a name, a weight and a drop-lowest count each. */
   check('a wrong total blocks nothing: no error line, and every field still live',
-    notBlocked.error === '' && notBlocked.enabledFields === 6,
+    notBlocked.error === '' && notBlocked.enabledFields === 9,
     JSON.stringify(notBlocked) + ' (the disabled pair are the reorder arrows at the ends of the list)');
   /* WO-3.64, the owner's ruling of 2026-10-12: the error line is MOVED, not deleted — it sits
      between the total and the Add row, the place a dialog's messages take above its button. It is

@@ -13,6 +13,21 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A category can drop each student's lowest scores — 2026-10-23
+
+WO-3.69, owner-directed. `CACHE` v197.
+
+- **Set *drop lowest* beside a category's weight**, in either grading mode, and each student's lowest
+  N scores in it stop counting. The drop is worked out every time and never written into a cell, so a
+  later, lower score takes it over by itself.
+- **Dropped scores stay on the Scores screen**, struck through and tagged *dropped*. The grade sheet
+  and its CSV print them as `Dr (62)`, and student detail lists them on a *Dropped from the grade*
+  card. Every screen asks the engine's `isDropped()`, so none of them can disagree with the grade.
+- **A score marked missing is never dropped, extra credit is never dropped, and each student's best
+  score is always kept.** *A run of low scores* still notices a dropped score.
+- **Old backups restore and grade as before**: the setting is a key written only when used, and the
+  schema did not change. Copying a class's categories does not carry the setting yet.
+
 ### An excused cell keeps the score it had — 2026-10-22
 
 WO-3.68, owner-directed. `CACHE` v196.

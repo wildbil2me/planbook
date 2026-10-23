@@ -111,8 +111,10 @@
                                       something is
       data-category-remove-confirm    carries out that removal
       data-category-remove-cancel     abandons it, having written nothing
-      data-category-field="name|weight" + data-category-id: an input; edits that field as it is
-                                      typed, and redraws the running weights total beside it
+      data-category-field="name|weight|dropLowest" + data-category-id: an input; edits that field
+                                      as it is typed, and redraws the running weights total beside
+                                      it. dropLowest (WO-3.69) is how many of each student's lowest
+                                      scores the category leaves out; blank or 0 deletes the key
       data-grading-mode="weighted|points" the categories editor's mode control (WO-3.31). The pill
                                       that is the class's current mode does nothing; the other one
                                       opens the confirmation, which writes nothing until its button

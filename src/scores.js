@@ -154,8 +154,11 @@ import { categoriesOf, formatWeight, weightTotal } from './categories.js';
 import { rosterName, fullName, searchNeedle, nameMatches } from './roster.js';
 /* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4). See this file's header. gradingModeOf() is the one
    test of how a class is graded (WO-3.36), asked here rather than reading `cls.gradingMode` so that a
-   stray value reads as weighted on this screen exactly as it does in the engine. */
-import { categoryPercentage, letterFromPercentage, classGrade, gradingModeOf, isHeld } from './grade-engine.js';
+   stray value reads as weighted on this screen exactly as it does in the engine. isDropped() joined at
+   WO-3.69: it is the one asker of whether a cell is one of a student's lowest N, and paintDropped()
+   below draws its answer and decides nothing. */
+import { categoryPercentage, letterFromPercentage, classGrade, gradingModeOf, isHeld, isDropped }
+  from './grade-engine.js';
 /* What the grade cell's em dash says when there is no grade (WO-3.42): the sentence student detail
    says, from the same function, so a bonus graded at 0 is never read out as nothing graded here
    while the detail screen one tap away says otherwise. No grade arithmetic — see that file's header;
@@ -833,16 +836,21 @@ function flagClause(cell) {
   return kept === null ? ' — ' + flag : ' — excused, ' + kept + ' kept and not counted';
 }
 function historyClause(cell) { return hasVisibleHistory(cell) ? ', has earlier versions' : ''; }
+/* WO-3.69: a dropped score is said in its name for the reason a kept excused score is — a screen
+   reader hears no strike-through, and "62" alone reads as a score that counts. */
+function droppedClause(dropped) {
+  return dropped ? ', dropped as one of this student’s lowest in its category and not counted' : '';
+}
 
 /* A cell's accessible name: what it is, out of what, for whom, its flag, and — since WO-3.32 —
    whether it carries a note. Said as "has a note" and never as the note itself: a screen reader
    walking a column would otherwise read twenty-five sentences aloud between the numbers. Under
    presentation mode visibleNoteOf() answers '' and the clause is not there. WO-3.33 adds "has
    earlier versions" on the same terms — said, never listed, and absent under the projector. */
-function cellLabel(assignment, student, cell) {
+function cellLabel(assignment, student, cell, dropped) {
   return (assignment.name || 'Untitled assignment')
     + ', out of ' + pointsOf(assignment) + ', for ' + fullName(student)
-    + flagClause(cell)
+    + flagClause(cell) + droppedClause(dropped)
     + noteClause(cell) + historyClause(cell)
     /* WO-3.46: a held column is said in every cell's name, because a screen-reader user typing down
        a column hears the cells and not the head. Asked of the engine, never of the key. */
@@ -947,6 +955,7 @@ function paintGrades(cls, termId, students) {
     if (!cell) return;
     cell.textContent = '';
     cell.append(gradeContent(classGrade(doc, cls, termId, student.id), doc, cls, termId, student.id));
+    paintDropped(doc, cls, termId, student, cell.parentElement);
     /* THE THIRD FROZEN COLUMN (WO-3.28), repainted on the same keystroke as the grade beside it and
        for the same reason: a score typed into a quiz moves the Quizzes average, and a figure that
        lagged the field it is made of would be worse than none. The cell exists only while a
@@ -960,6 +969,45 @@ function paintGrades(cls, termId, students) {
   });
 
   paintSummary(cls, termId, students);
+}
+
+/*
+  WHICH OF ONE STUDENT'S SCORES ARE DROPPED (WO-3.69), asked of the engine cell by cell and drawn —
+  never worked out here. It runs from paintGrades(), so on every keystroke and every flag, beside the
+  grade it explains: a new, lower score takes the drop over from another column, and the mark moves
+  in the same paint the grade does. Like the grade, it touches no field's value, so it is safe under
+  the caret.
+
+  THE MARK IS WO-3.68's STRIKE AND A WORD. `.dropped` on the field, which src/scores.css strikes in
+  the one rule that also strikes an excused cell's kept score, and a small `dropped` tag pinned to the
+  cell's bottom-left corner — the one corner no other mark uses — because a strike alone is the
+  excused cell's look, and the two mean different things: an excused cell was the teacher's decision
+  about one piece, a dropped one is the category's rule and moves when the scores do. The tag is
+  `aria-hidden`; the accessible name says it.
+*/
+function paintDropped(doc, cls, termId, student, row) {
+  if (!row) return;
+  row.querySelectorAll('[data-score-cell]').forEach((input) => {
+    const assignmentId = input.getAttribute('data-score-cell');
+    const dropped = isDropped(doc, cls, termId, student.id, assignmentId);
+    const was = input.classList.contains('dropped');
+    if (!dropped && !was) return;
+    input.classList.toggle('dropped', dropped);
+    const wrap = input.parentElement;
+    const tag = wrap ? wrap.querySelector('.scores-dropped') : null;
+    if (dropped && !tag && wrap) {
+      const mark = el('span', 'scores-dropped', 'dropped');
+      mark.setAttribute('aria-hidden', 'true');
+      wrap.append(mark);
+    } else if (!dropped && tag) {
+      tag.remove();
+    }
+    const assignment = findAssignment(cls.id, termId, assignmentId);
+    if (assignment) {
+      input.setAttribute('aria-label', cellLabel(assignment, student,
+        cellOf(doc, assignmentId, student.id), dropped));
+    }
+  });
 }
 
 /* One student's category average, from the engine's answer and nothing else, and drawn the way the
@@ -1617,7 +1665,10 @@ function paintCell(input, at, cell) {
   input.classList.remove('late', 'missing', 'excused');
   if (flag) input.classList.add(flag);
   input.placeholder = flag === 'missing' ? '0' : flag === 'excused' ? 'Ex' : '—';
-  input.setAttribute('aria-label', cellLabel(at.assignment, at.student, cell));
+  /* The dropped clause as the field last drew it; paintGrades() runs straight after every caller of
+     this and paintDropped() puts the engine's current answer on it. */
+  input.setAttribute('aria-label', cellLabel(at.assignment, at.student, cell,
+    input.classList.contains('dropped')));
 
   const wrap = input.parentElement;
   if (!wrap) return;

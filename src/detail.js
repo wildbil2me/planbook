@@ -151,6 +151,10 @@ import { nextBandFor, openWork, projectedClassGrade,
    and every figure on it, and nothing out of this call is handed to projectedClassGrade() — which
    could not count it anyway, because the engine's projection walks live columns only. */
 import { heldWork } from './grade-engine.js';
+/* WHICH SCORES A CATEGORY DROPS FOR THIS STUDENT (WO-3.69), asked cell by cell and never worked out
+   here — droppedPieces() below walks this class's term in column order and keeps what isDropped()
+   says yes to. The grade above has already left them out; this file only lists them. */
+import { isDropped } from './grade-engine.js';
 /* What is graded, asked of the cells, and what to say when there is no grade (WO-3.38, lifted at
    WO-3.42). One copy, shared with the score grid and the grade sheet, so the three screens cannot
    disagree about a bonus graded at 0. None of it is grade arithmetic — see that file's header. */
@@ -162,7 +166,7 @@ import { gradedPieces, noGradeMessage, rowIsEmpty, rowIsGraded } from './graded-
   it lands. Two formatters that have to agree is exactly the second answer this repo keeps refusing,
   and the import runs one way: nothing in src/scores.js knows this file exists.
 */
-import { formatPercent } from './scores.js';
+import { formatPercent, scoreMark } from './scores.js';
 /* The attendance summary, from WO-2.4's readers and WO-2.6's formatters — the same walk the
    registry's own percentage comes out of, so the line a guardian reads here and the line above the
    grid it was taken from cannot come apart. Read-only: there is no writer in src/attendance.js
@@ -659,6 +663,58 @@ function heldCard(grade, held, person) {
   return card;
 }
 
+/*
+  SCORES A CATEGORY DROPS (WO-3.69) — each of this student's scores that a category's *Drop lowest*
+  leaves out of the grade, in the score grid's column order. Asked of isDropped() and nothing else, so
+  this card, the grid's struck cells and the grade sheet's `Dr (…)` name the same pieces.
+
+  ITS OWN CARD, on the held card's argument: the missing card promises its work is in the grade, and
+  the to-move card projects what it names, and a dropped score is in neither figure. The score is
+  printed beside its points, because unlike held or missing work a dropped piece HAS a score, and the
+  score is the reason it was picked. The mark is the grid's `dropped` tag in its slate grey.
+*/
+function droppedPieces(doc, cls, termId, studentId) {
+  const list = doc && Array.isArray(doc.assignments) ? doc.assignments : [];
+  return list.filter((a) => a && a.classId === cls.id && a.termId === termId
+    && isDropped(doc, cls, termId, studentId, a.id))
+    .map((a) => {
+      const mark = scoreMark(doc, a.id, studentId);
+      return { id: a.id, categoryId: a.categoryId, points: Number(a.points) || 0,
+        value: mark.value, late: mark.flag === 'late' };
+    });
+}
+
+function droppedScore(row) {
+  return row.value + ' of ' + row.points + (row.late ? ', late' : '');
+}
+
+function droppedCard(grade, dropped, person) {
+  if (!dropped.length) return null;
+  const card = el('div', 'detail-card');
+  card.setAttribute('data-detail-dropped', '');
+  card.append(el('div', 'detail-card-title',
+    'Dropped from the grade · ' + plural(dropped.length, 'score', 'scores')));
+  dropped.forEach((row) => {
+    const line = el('div', 'detail-missing-row');
+    line.setAttribute('data-detail-dropped-row', row.id);
+    line.append(el('span', 'detail-missing-name', assignmentName(row.id)));
+    const where = categoryName(grade, row.categoryId);
+    if (where) line.append(el('span', 'detail-missing-when', where));
+    line.append(el('span', 'detail-dropped-score', droppedScore(row)));
+    const mark = el('span', 'detail-dropped-mark', 'Dropped');
+    mark.title = 'One of this student’s lowest scores in a category set to drop them — kept, and not '
+      + 'counted.';
+    line.append(mark);
+    card.append(line);
+  });
+  card.append(el('p', 'detail-card-note',
+    'These categories leave each student’s lowest scores out of the grade, and these are '
+      + person + '’s — the scores the Scores screen strikes through and marks dropped. They are kept '
+      + 'and count toward nothing in the grade above. A later, lower score takes the drop over by '
+      + 'itself. A score marked missing is never dropped.'));
+  return card;
+}
+
 /* ────────────────────────────── what it would take to move ────────────────────────────── */
 
 /*
@@ -1076,6 +1132,10 @@ export function renderDetail() {
      nothing is held. */
   const holding = heldCard(grade, held, person);
   if (holding) right.append(holding);
+  /* Under the held work, and for its reason (WO-3.69): neither card's pieces are in the grade above.
+     Absent when nothing is dropped. */
+  const dropping = droppedCard(grade, droppedPieces(doc, cls, termId, student.id), person);
+  if (dropping) right.append(dropping);
   /* Under the missing work, because both are about particular assignments and this is where a
      teacher reads "why is that one blank" beside "which ones are missing". Absent when empty. */
   const notes = scoreNotesCard(doc, cls, termId, student.id);
@@ -1202,6 +1262,9 @@ export function detailModel() {
        nothing reading `work` — the file's live rows — has to tell the two kinds apart. */
     onHold: held.map((row) => ({ name: assignmentName(row.id),
       category: categoryName(grade, row.categoryId), points: row.points, state: row.state })),
+    /* The dropped card's rows (WO-3.69), apart from `work` for `onHold`'s reason. */
+    dropped: droppedPieces(doc, cls, termId, student.id).map((row) => ({ name: assignmentName(row.id),
+      category: categoryName(grade, row.categoryId), points: row.points, score: droppedScore(row) })),
     attendance: termTotals(cls.id, student.id, term),
   };
 }
@@ -1269,6 +1332,11 @@ export function studentCsv(model) {
   /* Under the live rows and marked held in the State cell (WO-3.47), in the held card's words. */
   (model.onHold || []).forEach((row) => {
     rows.push([row.name, row.category, row.points, 'held — ' + (HELD_STATE_SAY[row.state] || '')]);
+  });
+  /* And the dropped scores under them (WO-3.69), in the card's words: what was scored, and that it
+     does not count. Absent when nothing is dropped, so the file is the bytes it always was. */
+  (model.dropped || []).forEach((row) => {
+    rows.push([row.name, row.category, row.points, 'dropped — scored ' + row.score + ', not counted']);
   });
   rows.push([]);
 

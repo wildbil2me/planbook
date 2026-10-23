@@ -57,8 +57,9 @@
   file must not disagree" a fact rather than a promise. A score marked late prints as `18 L` — the
   number counts in full, the mark is a record and not a penalty — `missing` prints as `M` because it
   holds no number, `excused` as `Ex` — or `Ex (62)` when it kept its score (WO-3.68), bracketed
-  because it counts toward nothing and a bare 62 beside `Ex` would read as a score that does — and
-  an ungraded cell prints as NOTHING.
+  because it counts toward nothing and a bare 62 beside `Ex` would read as a score that does — a
+  score its category drops as `Dr (62)` (WO-3.69), bracketed for the same reason, or `Dr (18 L)` when
+  it was also marked late — and an ungraded cell prints as NOTHING.
 
   THE EMPTY CELL IS THE ONE PLACE THIS DEPARTS FROM src/attendance-report.js, deliberately and at
   the point it happens. That file draws a dash into a blank because an empty attendance cell would
@@ -105,8 +106,10 @@ import { rosterName } from './roster.js';
 import { categoriesOf } from './categories.js';
 /* THE ONLY GRADE ARITHMETIC IN THE APP (WO-3.4). See this file's header. isHeld() joined at WO-3.47:
    it is the one asker of whether a column is held, and this file marks a held column's head from its
-   answer — see gradesRecord(). */
-import { classGrade, isHeld } from './grade-engine.js';
+   answer — see gradesRecord(). isDropped() joined at WO-3.69 on the same terms: it says which scores
+   a category drops for a student, this file prints the mark, and the grade beside it is classGrade()'s,
+   which has already left them out. */
+import { classGrade, isHeld, isDropped } from './grade-engine.js';
 /* What the grade column's em dash says when there is no grade (WO-3.42): the sentence student detail
    and the score grid say, from the same function, so the sheet never calls a bonus graded at 0
    nothing graded. No grade arithmetic — see that file's header; in a weighted class it reads no cell
@@ -264,12 +267,17 @@ function categoryNameOf(cls, assignment) {
   file's header for why `M`, `Ex`, `Ex (62)`, `18 L` and an empty string are the answers, and why
   the empty one is empty. The flag is asked BEFORE the value, which every reader of a cell has to
   do since WO-3.68: an excused cell may carry a number, and that number counts toward nothing.
+
+  `dropped` is isDropped()'s answer for the cell (WO-3.69), handed in rather than worked out: only a
+  scored cell is ever dropped, so the flag tests above never meet it, and the score it brackets is
+  the one the cell would otherwise print — `18 L` stays `18 L` inside the brackets.
 */
-function markText(mark) {
+function markText(mark, dropped) {
   if (mark.flag === 'missing') return 'M';
   if (mark.flag === 'excused') return mark.value === null ? 'Ex' : 'Ex (' + mark.value + ')';
   if (mark.value === null) return mark.flag === 'late' ? 'L' : '';
-  return mark.flag === 'late' ? mark.value + ' L' : String(mark.value);
+  const shown = mark.flag === 'late' ? mark.value + ' L' : String(mark.value);
+  return dropped ? 'Dr (' + shown + ')' : shown;
 }
 
 /* The bands in force, as `A 93 · A− 90 · …`, and whose they are. String() and no formatter, for the
@@ -321,7 +329,8 @@ export function gradesRecord() {
       name: rosterName(student),
       cells: assignments.map((a) => {
         const mark = scoreMark(doc, a.id, student.id);
-        return { id: a.id, text: markText(mark), flag: mark.flag };
+        const dropped = isDropped(doc, cls, termId, student.id, a.id);
+        return { id: a.id, text: markText(mark, dropped), flag: mark.flag, dropped: dropped };
       }),
       /* The percentage as the STRING both surfaces print, taken from the screen's own formatter
          (WO-3.14: two fixed places, because the SIS carries two and this number is re-keyed into it
@@ -459,7 +468,8 @@ function slice(record, from) {
       const td = el('td', 'grades-report-cell');
       /* A blank cell holds nothing at all — see this file's header. The <span> is drawn either way
          so that a row's height does not depend on how much of it is graded. */
-      td.append(el('span', 'grades-report-mark' + (mark.flag ? ' ' + mark.flag : ''), mark.text));
+      td.append(el('span', 'grades-report-mark' + (mark.flag ? ' ' + mark.flag : '')
+        + (mark.dropped ? ' dropped' : ''), mark.text));
       tr.append(td);
     });
     const total = el('td', 'grades-report-total');
@@ -583,6 +593,11 @@ export function openGrades(opener) {
     .concat(record.assignments.some((a) => a.onHold)
       ? [['held', 'a column you are holding out of the grade while you reconcile it. Its marks are '
         + 'printed and counted toward no grade on this sheet until you commit it']]
+      : [])
+    /* And `Dr` only when a cell on this sheet IS dropped (WO-3.69), on the held entry's terms. */
+    .concat(record.students.some((st) => st.cells.some((c) => c.dropped))
+      ? [['Dr', 'dropped — one of this student’s lowest scores in a category you set to drop them. '
+        + 'The score in brackets, Dr (62), is kept and shown and not counted']]
       : [])
     .forEach(([glyph, meaning]) => {
       const item = el('span', 'grades-report-key-item');
