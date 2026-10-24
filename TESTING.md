@@ -4504,6 +4504,86 @@ about § 33 and both are omitted below.
 - [x] `TESTING.md` § WO-1.81 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-1.82 — the log's append-only check has three regexes with no backslashes
+
+No 👤 and no 📆 line. One file moved: `tools/verify/log-entries.mjs`, the check under
+`/* ══ append-only ══ */`. Its three regexes now carry their backslashes; the guard regex is global
+and **counted**, and must be found exactly **2** times, one per writer, matching the pinned push
+count. `>= 1` was the alternative and was refused, because `src/log.js` carries the guard twice and a
+`>= 1` would go quiet the day one writer lost its guard. The strip is global too: a non-global strip
+leaves the second guard in the searched text, where a working reassignment regex fires on correct
+code. The failure detail ends `FAILED ON: …` and names the half that failed. No `check()` was added, so
+`tools/README.md`'s count did not move, and nothing in `src/` moved, so no `CACHE` bump is owed.
+
+The harness edit was `git add`ed before the first plant. Each plant was made with the Edit tool, carried a
+`// MUTATION WO-1.82 plant X` line, ran a full `verify-shell.mjs`, and came out with the Edit tool
+before anything else was written. After each revert `git diff --stat -- src/` printed nothing. After
+the last one `grep -rn "MUTATION WO-1.82" src/ tools/` found nothing. **The plants were written to change no
+behaviour**, so the app ran exactly as it does unplanted and the append-only check is the only red
+line in each run. Plant B used `d.log[d.log.length - 1] = entry` rather than the work order's
+`d.log[0] = …` for that reason: an index assignment that rewrites the entry just pushed with itself.
+Before the first harness run, a scratch script (outside the repo) ran the new regexes over `src/log.js`
+as it stands and with `d.log[0] = entry` planted in, and the index regex fired on both forms the same
+way.
+
+- [x] `node tools/verify-shell.mjs` passes, and the append-only check reports the guard as present.
+      — Run on the final `tools/` and `src/` (the staged harness edit, `src/` at HEAD), waited out to
+      its exit: *2117 checks · 2117 passed · 0 failed · 0 skipped*, *1166s*, `EXIT=0`. The check:
+      `PASS | append-only is structural rather than promised: … :: 2 push(s) — writeEntry() and writeContact() — in 245 line(s) of code; the create-on-first-write guard is present 2 time(s), one per writer; removers found: none`
+      — where every earlier run printed `present = false`.
+- [x] A planted reassignment of `d.log` and a planted assignment into `d.log[...]` each turn the check
+      red, naming the remover. Both plants are reverted, and `TESTING.md` § WO-1.82 shows the red
+      output.
+      — Both in `writeEntry()`, on the line after `d.log.push(entry);`. Each run: *2117 checks · 2116
+      passed · 1 failed*, `EXIT=1`, and that one failure is this check.
+      - **Reassignment** — `d.log = d.log.filter((e) => !!e);`:
+        `FAIL | append-only is structural rather than promised: … :: 2 push(s) — writeEntry() and writeContact() — in 247 line(s) of code; the create-on-first-write guard is present 2 time(s), one per writer; removers found: ["reassignment of .log"]; FAILED ON: remover(s) ["reassignment of .log"]`
+      - **Assignment into `d.log[...]`** — `d.log[d.log.length - 1] = entry;`:
+        `FAIL | append-only is structural rather than promised: … :: 2 push(s) — writeEntry() and writeContact() — in 247 line(s) of code; the create-on-first-write guard is present 2 time(s), one per writer; removers found: ["assignment into .log[...]"]; FAILED ON: remover(s) ["assignment into .log[...]"]`
+
+      Both were reverted with the Edit tool. Under the old regexes neither could have fired, because both look
+      for the letters `logs`.
+- [x] Removing the guard regex's match (a plant that renames `d.log` in the guard) turns the check red.
+      The plant is reverted.
+      — `writeEntry()`'s guard became `if (!Array.isArray(d['log'])) d['log'] = [];`, which renames
+      `d.log` in the guard and keeps its behaviour. This one plant tests the count: one writer losing its
+      guard is enough to go red, which a `>= 1` would have missed. The bracket form also matches neither remover regex, so the
+      guard half is the only thing that fires. *2117 checks · 2116 passed · 1 failed*, `EXIT=1`:
+      `FAIL | append-only is structural rather than promised: … :: 2 push(s) — writeEntry() and writeContact() — in 246 line(s) of code; the create-on-first-write guard is present 1 time(s), one per writer; removers found: none; FAILED ON: create-on-first-write guard found 1 time(s), not 2`
+      Reverted with the Edit tool. *(The detail's fixed phrase "one per writer" reads oddly beside a
+      1. The `FAILED ON` clause is the part that states the failure.)*
+- [x] `TESTING.md` § WO-1.82 names every other regex in `tools/` of the same shape, or says it found none.
+      — **None found.** A scratch scanner (outside the repo) pulled every regex literal out of the 107
+      `.js`/`.mjs` files under `tools/` (2,745 literals) and flagged any body holding `s`, `d`, `w`,
+      `S`, `D` or `W` before a quantifier (`*`, `+`, `?`, `{n`) with no backslash in front of it, plus
+      any letter run such as `logs*`. On today's tree it flagged nothing. To show it was not vacuous,
+      the scanner was run on `git show HEAD:tools/verify/log-entries.mjs`, and it flagged exactly the three
+      regexes this work order repairs (lines 380, 385, 386 of that file) and nothing else. Separately,
+      every `new RegExp(…)` in `tools/` was read for the same failure in string form, where a
+      single `'\s'` silently becomes `s`. Every one doubles its backslashes or uses `String.raw`, so none
+      has the shape. *(Worth recording: while writing the scanner, a quoted bash heredoc collapsed its
+      `\\` to `\`, which is a likely way three regexes lose their backslashes together.)*
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `verify-shell.mjs` is the run cited under line 1, on the same `src/` and `tools/` bytes, because
+      nothing in either changed after it. `verify-shell.mjs` reads neither `TESTING.md` nor `plans/`.
+      `node tools/wo-sweep.mjs`, run after every plant was out and before this section was written: `EXIT=0`,
+      *52 checks · 49 passed · 0 failed · 3 to review*, the three standing reviews (sensitive field names,
+      due-date and late/missing, mockup banners). It was re-run after this section was written and the
+      six boxes in the phase file were ticked, with the same result: `EXIT=0`, *52 checks · 49 passed · 0 failed · 3 to review*.
+- [x] `TESTING.md` § WO-1.82 carries these lines verbatim with the evidence for each.
+      — This section.
+
+*(**Reworded after the verdict, 2026-10-24, owner-directed — and line 5's "nothing in either changed
+after it" is history from here.** The verifier planted `d.log.length = 0` and `d['log'] = []` past the
+repaired check, so its pass line no longer claimed nothing* could ever *remove an entry: the title now
+names the five shapes it searches for, its detail line ends* a fence, not a reading *and names both
+holes, and the comment block above records them. **Text only — no assertion moved.** Re-run on those
+bytes: `node tools/verify-shell.mjs` `EXIT=0`, *2117 checks · 2117 passed · 0 failed · 0 skipped*, the
+append-only line reading *2 push(s) … guard is present 2 time(s) … removers found: none. A fence, not
+a reading: d.log.length = 0 and a bracketed d['log'] = [] both pass it*; `node tools/wo-sweep.mjs`
+`EXIT=0`, *52 checks · 49 passed · 0 failed · 3 to review*. Closing the two holes is
+[WO-1.83](plans/work-orders/phase-1-shell-store-roster.md#wo-183--the-logs-append-only-check-passes-two-ways-of-emptying-the-log).)*
+
 ---
 
 ## Phase 2 — Attendance

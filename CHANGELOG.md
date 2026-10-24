@@ -13,6 +13,20 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The log's append-only check actually checks — 2026-10-24
+
+WO-1.82, owner-directed, out of WO-3.72's result file. Harness only; nothing in the app changed and
+no `CACHE` bump.
+
+- **Three regexes in the check had lost their backslashes since WO-4.4**, so the part meant to catch
+  a reassignment of the log, or a write into it by index, could never fire, and the guard it reported
+  read "not present" on every run with nobody reading it. All three are repaired.
+- **The create-on-first-write guard is counted, not printed** — exactly two, one per writer — so a
+  writer that loses its guard turns the check red. Planted removers now turn it red by name.
+- **The check says what it does not catch.** Two ways of emptying the log still pass it —
+  `d.log.length = 0` and a bracketed `d['log'] = []` — and its line now says *a fence, not a
+  reading* and names both. Closing them is booked as WO-1.83.
+
 ### A quarter's grades can be recorded, and the app can tell when they stop matching — 2026-10-23
 
 WO-3.72, owner-directed, from the closing-a-quarter thread. `CACHE` v198. No screen yet — the bar and

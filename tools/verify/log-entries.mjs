@@ -376,21 +376,49 @@ if (!seam) {
       actually written for — an assignment INTO d.log[...], which the comment above asks for in as
       many words — had no token at all. So the guard is lifted out by name before the search, any
       other reassignment still counts, and index assignment is now genuinely looked for.
+
+      **THE THREE REGEXES BELOW HAD NO BACKSLASHES FROM 0447d51 (WO-4.4) UNTIL WO-1.82.** The guard
+      regex read `(` and `[` as a group and a class and `s*` as the letter s, so it never matched and
+      the detail line printed `present = false` on every run with nobody reading it; the two remover
+      regexes looked for the letters `logs`, so neither could fire on the code they name. The half of
+      this check that guards against reassignment had never worked. Three repairs, each a ruling:
+
+      - THE GUARD IS ASSERTED, NOT PRINTED, and asserted as a COUNT: exactly one guard per writer,
+        so 2, the same number the push count pins. `>= 1` was the alternative and was refused —
+        src/log.js carries the guard twice (writeEntry() and writeContact()), and a `>= 1` would go
+        quiet the day one writer lost its guard, which is exactly the "stops matching and nobody
+        notices" this repair exists to end. The guard regex names `d.log` literally rather than
+        `\w+\.log`, so a guard renamed away from `d.log` stops counting.
+      - THE STRIP IS GLOBAL. A non-global replace lifted the first guard and left the second in
+        `searchable`, where a working reassignment regex fires on correct code — the very false
+        positive the paragraph above records. The count is taken with match(), never .test() on the
+        /g literal, because a /g regex carries lastIndex from one .test() into the next.
+      - THE PASS CONDITION NAMES WHICH HALF FAILED, so a red line says guard, push count or remover.
+
+      A FENCE, NOT A READING. It knows the tokens above and nothing else: `d.log.length = 0` and a
+      bracketed `d['log'] = []` both empty the log and both pass it, found by WO-1.82's verifier
+      with the repair already green. The line says so rather than claiming "could ever"; closing
+      them is a booking of its own, not a widening of this one.
     */
-    const initGuard = /if (!Array.isArray(d.log))s*d.log = [];/;
-    const guarded = initGuard.test(bodyOnly);
+    const initGuard = /if \(!Array\.isArray\(d\.log\)\)\s*d\.log = \[\];/g;
+    const guards = (bodyOnly.match(initGuard) || []).length;
     const searchable = bodyOnly.replace(initGuard, '');
     const removers = ['.splice(', '.pop(', '.shift(', 'delete d.log', 'delete doc.log'];
     const found = removers.filter((token) => searchable.indexOf(token) >= 0)
-      .concat(/.logs*=[^=]/.test(searchable) ? ['reassignment of .log'] : [])
-      .concat(/.logs*[[^]]*]s*=[^=]/.test(searchable) ? ['assignment into .log[...]'] : []);
+      .concat(/\.log\s*=[^=]/.test(searchable) ? ['reassignment of .log'] : [])
+      .concat(/\.log\s*\[[^\]]*\]\s*=[^=]/.test(searchable) ? ['assignment into .log[...]'] : []);
+    const failed = [].concat(pushes === 2 ? [] : ['push count ' + pushes + ', not 2'])
+      .concat(guards === 2 ? [] : ['create-on-first-write guard found ' + guards + ' time(s), not 2'])
+      .concat(found.length ? ['remover(s) ' + JSON.stringify(found)] : []);
     check('append-only is structural rather than promised: both writers in src/log.js do exactly one '
       + 'thing to the document — two appends, one per writer, and no third — and there is no '
-      + 'splice, pop, shift, delete or reassignment anywhere in its code that could ever remove an '
-      + 'entry',
-      pushes === 2 && found.length === 0,
-      pushes + ' push(s) — writeEntry() and writeContact() — in ' + bodyOnly.split('\n').length + ' line(s) of code; the create-on-first-write guard is present = ' + guarded + '; removers found: '
-        + (found.length ? JSON.stringify(found) : 'none'));
+      + 'splice, pop, shift, delete, reassignment of .log or assignment into .log[...] anywhere in '
+      + 'its code',
+      failed.length === 0,
+      pushes + ' push(s) — writeEntry() and writeContact() — in ' + bodyOnly.split('\n').length + ' line(s) of code; the create-on-first-write guard is present ' + guards + ' time(s), one per writer; removers found: '
+        + (found.length ? JSON.stringify(found) : 'none')
+        + (failed.length ? '; FAILED ON: ' + failed.join('; ') : '')
+        + '. A fence, not a reading: d.log.length = 0 and a bracketed d[\'log\'] = [] both pass it');
 
     /* ══ the card on the student record ══ */
 

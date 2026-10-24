@@ -6653,7 +6653,7 @@ pipeline's own files" first. **Nothing in `src/` moves**, so no `CACHE` bump is 
 
 ## WO-1.82 — the log's append-only check has three regexes with no backslashes
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-24 · **Size** XS · **Depends on** — · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.81 made.)*
 
 **Booked 2026-10-23**, owner-directed, from an observation in WO-3.72's result file, confirmed the
@@ -6685,17 +6685,64 @@ CLAUDE.md's append-only rule against reassignment has never worked**. Nothing is
 - **`TESTING.md` § WO-1.82** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] `node tools/verify-shell.mjs` passes, and the append-only check reports the guard as present.
-- [ ] A planted reassignment of `d.log` and a planted assignment into `d.log[...]` each turn the check
+- [x] `node tools/verify-shell.mjs` passes, and the append-only check reports the guard as present.
+- [x] A planted reassignment of `d.log` and a planted assignment into `d.log[...]` each turn the check
       red, naming the remover. Both plants are reverted, and `TESTING.md` § WO-1.82 shows the red
       output.
-- [ ] Removing the guard regex's match (a plant that renames `d.log` in the guard) turns the check red.
+- [x] Removing the guard regex's match (a plant that renames `d.log` in the guard) turns the check red.
       The plant is reverted.
-- [ ] `TESTING.md` § WO-1.82 names every other regex in `tools/` of the same shape, or says it found none.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-1.82 carries these lines verbatim with the evidence for each.
+- [x] `TESTING.md` § WO-1.82 names every other regex in `tools/` of the same shape, or says it found none.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-1.82 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Plants go in `src/log.js` and come out before anything else is written** — this is the
 file whose append-only rule the check protects, and a plant left in is a remover in production
 (AGENTS.md, the WO-5.1 scar). **Stage before planting**: a `git checkout` to revert a plant reverts
 unstaged work in that file too. **Nothing in `src/` moves in the end**, so no `CACHE` bump is owed.
+
+## WO-1.83 — the log's append-only check passes two ways of emptying the log
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-1.82 · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.82 made.)*
+
+**Booked 2026-10-24**, owner-directed, out of WO-1.82's verdict. With WO-1.82's three regexes
+restored and green, its verifier planted two more removers into a copy of `src/log.js` and **both
+passed** the check headed *append-only is structural rather than promised* in
+`tools/verify/log-entries.mjs`:
+
+- `d.log.length = 0` — empties the array in place. It is not a reassignment of `.log`, not an
+  assignment into `.log[...]`, and none of the five tokens.
+- `d['log'] = []` — a reassignment written with brackets, which `/\.log\s*=[^=]/` cannot see because
+  there is no `.log` in it. `d["log"]` and a template-literal key are the same hole.
+
+The check says so since WO-1.82's commit — its detail line ends *a fence, not a reading* and names
+both — rather than claiming nothing *could ever* remove an entry. Nothing is known to be wrong in
+`src/log.js`, which carries neither shape today; **the fence has two known gaps, not the field**.
+
+**Deliverables**
+- **Both shapes refused**: an assignment to `.length` of anything in `src/log.js`, and a bracketed
+  `log` key (any quote) followed by an assignment, each named in the check's `found` list. Add
+  `.fill(` and `.copyWithin(` to the token list in the same edit — both overwrite entries in place —
+  and nothing wider: **a widened list is argued per token, not by symmetry**.
+- **The detail line's *a fence, not a reading* clause rewritten** to name what still passes after
+  this, or removed only if the verifier can name nothing — never left naming two holes that are
+  closed.
+- **Four plants**, each red and then reverted before anything else is written: `d.log.length = 0`,
+  `d['log'] = []`, `d["log"] = []` and `d.log.fill(null)`, each added to a writer in `src/log.js`.
+- **`TESTING.md` § WO-1.83** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] `node tools/verify-shell.mjs` passes, the append-only check still reports 2 pushes and the
+      guard present 2 times, and its removers read none.
+- [ ] Each of the four plants turns the check red, naming the remover. All four are reverted, and
+      `TESTING.md` § WO-1.83 shows the red output.
+- [ ] The check's detail line names what still passes it, or `TESTING.md` § WO-1.83 records that the
+      verifier could name nothing.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-1.83 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Plants go in `src/log.js` and come out before anything else is written** (AGENTS.md,
+the WO-5.1 scar), and **stage before planting**: a `git checkout` to revert a plant reverts unstaged
+work in that file too. **A `.length =` token must not fire on a read** — `x.length === 0` and
+`x.length == 0` are reads, so the search refuses `=` only when no `=` follows it, as the reassignment
+regex does. **Nothing in `src/` moves in the end**, so no `CACHE` bump is owed.

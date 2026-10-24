@@ -383,7 +383,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.82 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.83 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.61 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.76 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.6 | Phase 4 |
@@ -459,7 +459,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 82 | 81 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 83 | 82 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 59 | 58 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 75 | 68 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 6 | 6 | — | ✅ DONE — 2026-09-30 |
@@ -468,7 +468,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 17 | 16 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.4 ✅ DONE 2026-09-26, the sign-in opened on the deployed domain and read on the laptop and the iPad; WO-7.5 ✅ DONE 2026-09-26, the header's sync button; WO-7.6 ✅ DONE 2026-09-26, the privacy documents say when Google's library loads, read off the deployed /privacy; WO-7.7 ✅ DONE 2026-09-26, a download repaints the open screen, read both ways on laptop and iPad; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 18 | 13 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 3 | — | WO-G2 ✅ **2026-09-30**: worked 2026-09-29 with six of eight boxes closed, and the letter-scale setting and the backup drill closed the next day on the owner's reading; WO-G3 ✅ **2026-09-30** on the owner's ruling, watched across four weeks of the term with nothing recorded |
-| | **286** | **269** | **3** | `[█████████░] 94%` |
+| | **287** | **270** | **3** | `[█████████░] 94%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)
@@ -593,6 +593,8 @@ addressed to the primary.)*
 ***And Phase 3's by hand again on 2026-10-23, from `70 | 67` to `74 | 67`, the total from `280 | 268` to `284 | 268`.*** *Four rows booked from the ruled* [closing-a-quarter](../closing-a-quarter.md) *design thread, its first to be booked:* [WO-3.72](phase-3-gradebook.md#wo-372--a-quarters-grades-can-be-recorded-and-the-engine-says-when-they-stop-matching) *to* [WO-3.75](phase-3-gradebook.md#wo-375--the-notice-says-which-score-changed)*. 268 of 284 is 94%. The next* `--tick` *is still the authority.*
 
 ***And Phase 1's and Phase 3's by hand on 2026-10-23, after WO-3.72's tick, Phase 1 from `81 | 81` to `82 | 81` and Phase 3 from `74 | 68` to `75 | 68`, the total from `284 | 269` to `286 | 269`.*** *Two rows booked out of WO-3.72's verdict, owner-directed:* [WO-3.76](phase-3-gradebook.md#wo-376--n-to-grade-skips-work-filed-under-no-category) *makes the home card's* N to grade *and the queue count uncategorized work, as the quarter dialog will, and* [WO-1.82](phase-1-shell-store-roster.md#wo-182--the-logs-append-only-check-has-three-regexes-with-no-backslashes) *restores the three regexes in the log's append-only check that have never matched. 269 of 286 is 94%, down from 95%; the bar stays at nine. The next* `--tick` *is still the authority.*
+
+***And Phase 1's by hand on 2026-10-24, before WO-1.82's tick, from `82 | 81` to `83 | 81`, the total from `286 | 269` to `287 | 269`.*** *One row booked out of WO-1.82's verdict, owner-directed:* [WO-1.83](phase-1-shell-store-roster.md#wo-183--the-logs-append-only-check-passes-two-ways-of-emptying-the-log) *refuses* `d.log.length = 0` *and a bracketed* `d['log'] = []`*, the two removers WO-1.82's verifier planted past the repaired check. 269 of 287 is 94%; the bar stays at nine. The next* `--tick` *is still the authority.*
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -2084,6 +2086,7 @@ it, never from a reading taken earlier in the same session.)*
 | 181 | [WO-3.75](phase-3-gradebook.md#wo-375--the-notice-says-which-score-changed) The notice says which score changed | S | WO-3.74 | **After row 180**, booked 2026-10-23 with it. *What changed* under the notice, from each cell's own history since the recording; a setting line when no score moved. `src/`, harness; `CACHE` bump |
 | 182 | [WO-1.82](phase-1-shell-store-roster.md#wo-182--the-logs-append-only-check-has-three-regexes-with-no-backslashes) The log's append-only check has three regexes with no backslashes | XS | — | **After row 181**, booked 2026-10-23, owner-directed, out of WO-3.72's result file. The reassignment and index-assignment searches in `tools/verify/log-entries.mjs` have never matched, since `0447d51`, so the half of the check guarding CLAUDE.md's append-only rule against reassignment is down. Scheduled rather than 🎒: it guards a rule CLAUDE.md calls structural. Harness only; no `CACHE` bump |
 | 183 | [WO-3.76](phase-3-gradebook.md#wo-376--n-to-grade-skips-work-filed-under-no-category) "N to grade" skips work filed under no category | S | WO-3.73 | **After row 182**, booked 2026-10-23, owner-directed, out of WO-3.72's verdict. The card's *N to grade* and the queue ask `openWork()`, which walks categories only; once WO-3.73 counts uncategorized empty boxes, they would disagree with the quarter dialog. Through WO-3.73's engine reader, never a widened `openWork()`. `src/`, harness; `CACHE` bump |
+| 184 | [WO-1.83](phase-1-shell-store-roster.md#wo-183--the-logs-append-only-check-passes-two-ways-of-emptying-the-log) The log's append-only check passes two ways of emptying the log | XS | WO-1.82 | **After row 183**, booked 2026-10-24, owner-directed, out of WO-1.82's verdict. `d.log.length = 0` and `d['log'] = []` both pass the repaired check in `tools/verify/log-entries.mjs`; its detail line names them as *a fence, not a reading* until this lands. Scheduled rather than 🎒, on WO-1.82's reasoning: it guards a rule CLAUDE.md calls structural. Harness only; no `CACHE` bump |
 
 ***Rows 17 through 32 were added 2026-08-28, and the reason is the third occurrence of the failure
 this section exists to prevent.*** *Before that sitting,* **sixteen open work orders had no row in
