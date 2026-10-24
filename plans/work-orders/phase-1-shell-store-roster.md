@@ -6702,7 +6702,7 @@ unstaged work in that file too. **Nothing in `src/` moves in the end**, so no `C
 
 ## WO-1.83 — the log's append-only check passes two ways of emptying the log
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-1.82 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-24 · **Size** XS · **Depends on** WO-1.82 · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.82 made.)*
 
 **Booked 2026-10-24**, owner-directed, out of WO-1.82's verdict. With WO-1.82's three regexes
@@ -6732,17 +6732,93 @@ both — rather than claiming nothing *could ever* remove an entry. Nothing is k
 - **`TESTING.md` § WO-1.83** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] `node tools/verify-shell.mjs` passes, the append-only check still reports 2 pushes and the
+- [x] `node tools/verify-shell.mjs` passes, the append-only check still reports 2 pushes and the
       guard present 2 times, and its removers read none.
-- [ ] Each of the four plants turns the check red, naming the remover. All four are reverted, and
+- [x] Each of the four plants turns the check red, naming the remover. All four are reverted, and
       `TESTING.md` § WO-1.83 shows the red output.
-- [ ] The check's detail line names what still passes it, or `TESTING.md` § WO-1.83 records that the
+- [x] The check's detail line names what still passes it, or `TESTING.md` § WO-1.83 records that the
       verifier could name nothing.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-1.83 carries these lines verbatim with the evidence for each.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-1.83 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Plants go in `src/log.js` and come out before anything else is written** (AGENTS.md,
 the WO-5.1 scar), and **stage before planting**: a `git checkout` to revert a plant reverts unstaged
 work in that file too. **A `.length =` token must not fire on a read** — `x.length === 0` and
 `x.length == 0` are reads, so the search refuses `=` only when no `=` follows it, as the reassignment
 regex does. **Nothing in `src/` moves in the end**, so no `CACHE` bump is owed.
+
+## WO-1.84 — the harness's no-remover checks have never been read against one list of removers
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.83 · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.83 made.)*
+
+**Booked 2026-10-24**, owner-directed, out of WO-1.83's verdict. **An inventory, not a repair**:
+the owner's ruling is that the gaps get found in one go *before* a correction is booked, rather
+than one verdict at a time. WO-1.82 restored the log's append-only check, its verifier found two
+removers past it, and WO-1.83 closed those two. Then WO-1.83's verifier found three more:
+
+- `d['log'] += ''` and `d.log += ""` — a compound assignment that turns the array into a string.
+  WO-1.83's `.length` pattern counts compound assignment as assignment, but the `.log` and
+  bracketed-key patterns do not, so **the file's patterns disagree with the file's own argument**.
+- `[d.log] = [[]]` — a destructuring assignment.
+
+None of the three is in the check's *a fence, not a reading* line, which since WO-1.83 names five
+shapes as everything that passes. The pattern is three verdicts running, each finding shapes the
+last one did not list. **And the log's check is not the only one built this way.** At least five
+more checks in the harness refuse a remover or a writer by searching source text, and none has
+been read against a common list:
+
+- `tools/verify/log-entries.mjs` — *append-only is structural rather than promised*, `src/log.js`
+- `tools/verify/contact-log.mjs` — the `splice` search over `src/log.js`
+- `tools/verify/term-record.mjs` — `REMOVERS`, over `src/term-record.js` (WO-3.72's append-only writer)
+- `tools/wo-sweep.mjs` § 17 — `src/calendar-derived.js` has no writer
+- `tools/wo-sweep.mjs` § 20, claim 4 — `src/merge-fields.js` has no writer
+- `tools/wo-sweep.mjs` § 24 — `src/outreach.js` writes nothing
+
+Nothing is known to be wrong in any of the files those checks guard. **The fences have unread
+edges; the fields do not have known holes.**
+
+**Deliverables**
+- **The full list of fences**, starting from the six above and grown by a search of `tools/` for
+  any other check that refuses a writer, remover or mutation by matching source text. A check found
+  this way is added to the inventory, not left out because it was not on the list.
+- **One catalogue of removal and mutation shapes**, written once and used for every fence. At least:
+  plain, compound (`+=`, `-=`, `||=`, `??=`, …) and destructuring assignment to the collection;
+  dotted, bracketed (any quote, template literal) and computed (`d[k]`) keys; writes through an
+  alias; `length` writes, including `length--` and `length -= n`; each mutating `Array.prototype`
+  method by name; `delete` in each key form; `Object.assign`, `Reflect.set`,
+  `Reflect.deleteProperty`, `Object.defineProperty`; and replacement of the containing document.
+  Each shape is argued as *removes or overwrites an entry*, *reorders only* or *adds only*, the
+  test WO-1.83 applied to `.reverse(` and `.sort(`.
+- **Every shape run against every fence** through an in-memory probe of the check's own matching
+  code, the method WO-1.83's verifier used (`plant.mjs`). **No plant goes into `src/`.** The probe
+  is a throwaway in the scratchpad. It is not committed, and its source is quoted in `TESTING.md`.
+- **A table in `TESTING.md` § WO-1.84**: fence by shape, each cell *refused*, *passes* or *n/a*
+  with a one-line reason. Under it, for each fence, whether its own prose (detail line, header
+  comment, `tools/README.md` entry) claims more than the table supports.
+- **A recommendation for the correction**, ending the section: which passing shapes are worth
+  refusing and which belong in a *fence, not a reading* line, grouped into one or more M/S work
+  orders. **Nothing is booked from it in this work order**; booking is the owner's.
+- **`TESTING.md` § WO-1.84** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] `TESTING.md` § WO-1.84 lists every fence the search found, each with its file, line and the
+      source file it guards, and states the search that found them.
+- [ ] The catalogue is in `TESTING.md` § WO-1.84, and every shape carries its *removes*, *reorders*
+      or *adds* reading.
+- [ ] Every cell of the fence-by-shape table is filled, and each *passes* cell has been produced by
+      the probe, not by reading the regex.
+- [ ] Each fence's own prose is marked as matching the table or overclaiming, quoting the words.
+- [ ] No file under `src/` or `tools/` differs from `HEAD` when the work order closes, apart from
+      `TESTING.md`, `CHANGELOG.md` and this phase file. `node tools/verify-shell.mjs` and
+      `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-1.84 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Do not fix as you go.** The ruling is to inventory first, so a check tightened in
+this work order is a correction landed before it was asked for, and it changes the table under
+the rows already read. **The probe must run the check's code, not a copy of its regexes**: a
+copied regex is the WO-1.82 defect (three patterns that never matched what their comments
+described), arriving in the tool that is meant to find it. **A shape no fence's own claim covers
+is n/a, not *passes*.** § 17's *no writer* does not promise to catch reordering, and marking it red
+for that would book a widening by symmetry, which WO-1.83 refused. **Nothing in `src/` moves**, so
+no `CACHE` bump is owed.

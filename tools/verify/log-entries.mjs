@@ -395,30 +395,54 @@ if (!seam) {
         /g literal, because a /g regex carries lastIndex from one .test() into the next.
       - THE PASS CONDITION NAMES WHICH HALF FAILED, so a red line says guard, push count or remover.
 
-      A FENCE, NOT A READING. It knows the tokens above and nothing else: `d.log.length = 0` and a
-      bracketed `d['log'] = []` both empty the log and both pass it, found by WO-1.82's verifier
-      with the repair already green. The line says so rather than claiming "could ever"; closing
-      them is a booking of its own, not a widening of this one.
+      **WO-1.83 CLOSED THE TWO HOLES WO-1.82'S VERIFIER FOUND, AND ADDED TWO TOKENS — EACH ARGUED,
+      NONE BY SYMMETRY.** `d.log.length = 0` and a bracketed `d['log'] = []` both emptied the log
+      and both passed with that repair green. Four additions, and no fifth:
+
+      - AN ASSIGNMENT TO `.length` OF ANYTHING in the file — not only `d.log`, because an alias
+        (`const l = d.log; l.length = 0`) truncates the same array, and src/log.js has no
+        legitimate length write to protect. Compound assignment counts (`-=` drops the tail exactly
+        as pop() does, and the grammar calls it an assignment); an `=` followed by `=` does not, so
+        `.length === 0`, `.length == 0`, `.length >= 1` and `.length - 1` are reads and stay green —
+        the `=[^=]` discipline the reassignment regex already keeps.
+      - A BRACKETED `log` KEY, ANY QUOTE, FOLLOWED BY AN ASSIGNMENT — `d['log']`, `d["log"]` and a
+        template-literal key are the reassignment above with no `.log` in it for that regex to see.
+      - `.fill(` and `.copyWithin(` — both overwrite entries in place, which is removal by another
+        name. `.reverse(` and `.sort(` were weighed and left out: they reorder and take nothing
+        away, so they are outside what this check asks (a reorder would move the same-second
+        tie-break, which is an ordering question, not an append-only one). `.unshift(` adds.
+
+      A FENCE, NOT A READING, still. It knows those shapes and nothing else, and these pass it:
+      `d.log.length--` (an update expression, not an assignment), an index write through an alias
+      (`const l = d.log; l[0] = null`), a bracketed key used as an index (`d['log'][0] = x`), a key
+      held in a variable (`d[k] = []`), and `Object.assign(d, { log: [] })` or `Reflect.set`. The
+      detail line names them rather than claiming "could ever".
     */
     const initGuard = /if \(!Array\.isArray\(d\.log\)\)\s*d\.log = \[\];/g;
     const guards = (bodyOnly.match(initGuard) || []).length;
     const searchable = bodyOnly.replace(initGuard, '');
-    const removers = ['.splice(', '.pop(', '.shift(', 'delete d.log', 'delete doc.log'];
+    const removers = ['.splice(', '.pop(', '.shift(', '.fill(', '.copyWithin(', 'delete d.log',
+      'delete doc.log'];
     const found = removers.filter((token) => searchable.indexOf(token) >= 0)
       .concat(/\.log\s*=[^=]/.test(searchable) ? ['reassignment of .log'] : [])
-      .concat(/\.log\s*\[[^\]]*\]\s*=[^=]/.test(searchable) ? ['assignment into .log[...]'] : []);
+      .concat(/\.log\s*\[[^\]]*\]\s*=[^=]/.test(searchable) ? ['assignment into .log[...]'] : [])
+      .concat(/\.length\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=[^=]/.test(searchable)
+        ? ['assignment to .length'] : [])
+      .concat(/\[\s*(['"`])log\1\s*\]\s*=[^=]/.test(searchable) ? ['bracketed log key assigned'] : []);
     const failed = [].concat(pushes === 2 ? [] : ['push count ' + pushes + ', not 2'])
       .concat(guards === 2 ? [] : ['create-on-first-write guard found ' + guards + ' time(s), not 2'])
       .concat(found.length ? ['remover(s) ' + JSON.stringify(found)] : []);
     check('append-only is structural rather than promised: both writers in src/log.js do exactly one '
       + 'thing to the document — two appends, one per writer, and no third — and there is no '
-      + 'splice, pop, shift, delete, reassignment of .log or assignment into .log[...] anywhere in '
-      + 'its code',
+      + 'splice, pop, shift, fill, copyWithin, delete, reassignment of .log, assignment into '
+      + '.log[...], assignment to .length or bracketed log key assigned anywhere in its code',
       failed.length === 0,
       pushes + ' push(s) — writeEntry() and writeContact() — in ' + bodyOnly.split('\n').length + ' line(s) of code; the create-on-first-write guard is present ' + guards + ' time(s), one per writer; removers found: '
         + (found.length ? JSON.stringify(found) : 'none')
         + (failed.length ? '; FAILED ON: ' + failed.join('; ') : '')
-        + '. A fence, not a reading: d.log.length = 0 and a bracketed d[\'log\'] = [] both pass it');
+        + '. A fence, not a reading: d.log.length--, an index write through an alias '
+        + '(l = d.log; l[0] = x), d[\'log\'][0] = x, a key held in a variable (d[k] = []) and '
+        + 'Object.assign(d, { log: [] }) all pass it');
 
     /* ══ the card on the student record ══ */
 

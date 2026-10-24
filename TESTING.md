@@ -4584,6 +4584,89 @@ a reading: d.log.length = 0 and a bracketed d['log'] = [] both pass it*; `node t
 `EXIT=0`, *52 checks · 49 passed · 0 failed · 3 to review*. Closing the two holes is
 [WO-1.83](plans/work-orders/phase-1-shell-store-roster.md#wo-183--the-logs-append-only-check-passes-two-ways-of-emptying-the-log).)*
 
+### WO-1.83 — the log's append-only check passes two ways of emptying the log
+
+No 👤 and no 📆 line. One file moved: `tools/verify/log-entries.mjs`, the check headed *append-only is
+structural rather than promised*. Four additions, each argued in the comment above the check:
+
+- **`assignment to .length`** — `/\.length\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=[^=]/` over the
+  whole searched text, so an alias (`const l = d.log; l.length = 0`) is caught too. Compound
+  assignment counts, because `-=` drops the tail just as `pop()` does. An `=` followed by `=` does not
+  count, so `.length === 0`, `.length == 0`, `.length >= 1`, `.length <= 1`, `.length !== 0` and
+  `.length - 1` stay green.
+- **`bracketed log key assigned`** — `/\[\s*(['"`])log\1\s*\]\s*=[^=]/`: single, double or backtick
+  quote, followed by an assignment that is not `==`.
+- **`.fill(` and `.copyWithin(`** added to the token list. Both overwrite entries in place. `.sort(`,
+  `.reverse(` and `.unshift(` were weighed and left out: they reorder or add, and take nothing away.
+
+The check's title now names all nine shapes. No `check()` was added, so `tools/README.md`'s count
+did not move. Nothing in `src/` moved in the end, so no `CACHE` bump is owed.
+
+Before any harness run, a scratch script (outside the repo) ran both new regexes over fourteen
+strings. `.length` fired on `d.log.length = 0`, `d.log.length=0` and `l.length -= 1`, and on none of
+`===`, `==`, `>=`, `<=`, `!==` or `- 1`. The bracket regex fired on `'log'`, `"log"` and `` `log` ``
+assigned, and not on `d['log'] == x` or `d['log'][0] = x`. Neither regex fired on `src/log.js` as it
+stands with its guards stripped, and neither `.fill(` nor `.copyWithin(` appears in its code (line 460
+says "fills", in a comment, which is stripped).
+
+**Plant protocol.** `git add tools/verify/log-entries.mjs` came before the first plant. Each plant was
+made with the Edit tool in `writeEntry()`, on the line after `d.log.push(entry);`, below a
+`// MUTATION WO-1.83 plant X` line. Each ran a full `verify-shell.mjs` and was reverted with
+`git checkout -- src/log.js` before anything else was written. After every revert,
+`git diff --stat src/` printed nothing and `grep -rn "MUTATION WO-1.83" src/ tools/` found nothing.
+**Each plant is written as `if (entry === null) <shape>;`**. `entry` cannot be `null` there, because
+`newLogEntry()` returned an object and the function has already returned on an empty subject. So the
+shape is present in the source and never runs, the app behaves exactly as it does unplanted, and the
+append-only check is the only red line in each run. This is the same reason WO-1.82 chose a plant
+that changes no behaviour.
+
+*(On `grep -rn MUTATION src/`: it is not empty and never was on this tree. It finds
+`src/shell.js:1077`, `A CLASS MUTATION ADDED LATER ADDS ITS LINE HERE`, which is prose present at HEAD
+(`git show HEAD:src/shell.js`, introduced at `7f6b33b`) and not a plant. The plant-specific grep
+above is the one that is empty.)*
+
+- [x] `node tools/verify-shell.mjs` passes, the append-only check still reports 2 pushes and the
+      guard present 2 times, and its removers read none.
+      — Run after the harness edit with `src/` at HEAD, waited out to its exit: *2117 checks · 2117
+      passed · 0 failed · 0 skipped*, *1168s*, `EXIT=0`. Run again after all four plants were reverted,
+      on the same bytes: *2117 checks · 2117 passed · 0 failed · 0 skipped*, *1152s*, `EXIT=0`. The
+      check, from the second run:
+      `PASS | append-only is structural rather than promised: … :: 2 push(s) — writeEntry() and writeContact() — in 245 line(s) of code; the create-on-first-write guard is present 2 time(s), one per writer; removers found: none. A fence, not a reading: d.log.length--, an index write through an alias (l = d.log; l[0] = x), d['log'][0] = x, a key held in a variable (d[k] = []) and Object.assign(d, { log: [] }) all pass it`
+- [x] Each of the four plants turns the check red, naming the remover. All four are reverted, and
+      `TESTING.md` § WO-1.83 shows the red output.
+      — Each run: *2117 checks · 2116 passed · 1 failed · 0 skipped*, `EXIT=1`, and that one failure is
+      this check (line 2160 of each log). The detail after `::`:
+      - **A** — `if (entry === null) d.log.length = 0;` (1166s):
+        `2 push(s) — writeEntry() and writeContact() — in 247 line(s) of code; the create-on-first-write guard is present 2 time(s), one per writer; removers found: ["assignment to .length"]; FAILED ON: remover(s) ["assignment to .length"]`
+      - **B** — `if (entry === null) d['log'] = [];` (1163s):
+        `… removers found: ["bracketed log key assigned"]; FAILED ON: remover(s) ["bracketed log key assigned"]`
+      - **C** — `if (entry === null) d["log"] = [];` (1167s):
+        `… removers found: ["bracketed log key assigned"]; FAILED ON: remover(s) ["bracketed log key assigned"]`
+      - **D** — `if (entry === null) d.log.fill(null);` (1166s):
+        `… removers found: [".fill("]; FAILED ON: remover(s) [".fill("]`
+
+      In B, C and D the elided text is the same push, line and guard figures as in A. Each plant
+      fired one remover and only its own: A fired no reassignment (there is no `.log =` in
+      `.log.length`), and B and C fired no `.log` regex (there is no `.log` in them). All four reverted
+      as described above. Under WO-1.82's check, A, B and C would have passed. D would have passed
+      too, because `.fill(` was not a token.
+- [x] The check's detail line names what still passes it, or `TESTING.md` § WO-1.83 records that the
+      verifier could name nothing.
+      — The detail line names five shapes that still pass, quoted under line 1. None of them is a
+      shape this work order closed. `d.log.length--` is an update expression, not an assignment.
+      `l = d.log; l[0] = x` is an index write through an alias. `d['log'][0] = x` is a bracketed key
+      used as an index, which the bracket regex leaves alone because it wants `]` then `=`. `d[k] = []`
+      is a key held in a variable. `Object.assign(d, { log: [] })` is a write made by a call. The
+      comment above the check names the same five and adds `Reflect.set`. The two holes WO-1.82's
+      line named are closed, and the line no longer names them.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `verify-shell.mjs`: the post-revert run under line 1, `EXIT=0`, 2117/2117. `node tools/wo-sweep.mjs`
+      was run after the harness edit: `EXIT=0`, *52 checks · 49 passed · 0 failed · 3 to review*, the
+      three standing reviews. It was re-run after this section and the changelog were written, with
+      the same result (see the result file).
+- [x] `TESTING.md` § WO-1.83 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ---
 
 ## Phase 2 — Attendance

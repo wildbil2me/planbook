@@ -13,6 +13,26 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The log's append-only check closes the two holes it named — 2026-10-24
+
+WO-1.83, owner-directed, out of WO-1.82's verdict. Harness only; nothing in the app changed and no
+`CACHE` bump.
+
+- **Emptying the log in place now turns the check red.** Setting `.length` on anything in
+  `src/log.js` (`d.log.length = 0`, or `-=`) is refused by name, and a read such as `.length === 0`
+  is not.
+- **So does a reassignment written with brackets** — `d['log'] = []`, with any kind of quote — which
+  the dotted-name search could not see.
+- **Two in-place overwrites joined the list**, `.fill(` and `.copyWithin(`, and nothing else did:
+  `.sort(` and `.reverse(` reorder without removing, and were left out on purpose.
+- **The check still says what it does not catch**, and the list is new: `d.log.length--`, an index
+  write through an alias, `d['log'][0] = x`, a key held in a variable, and `Object.assign`.
+- **That list is not yet complete, and WO-1.84 is booked to find out how far it falls short.** The
+  verifier got `d.log += ''` and `[d.log] = [[]]` past the check as well. On the owner's ruling, the
+  next step is an inventory rather than a third patch: every check in the harness that refuses a
+  writer or remover by searching source text gets read against one list of shapes, and the
+  correction is booked from the results.
+
 ### The log's append-only check actually checks — 2026-10-24
 
 WO-1.82, owner-directed, out of WO-3.72's result file. Harness only; nothing in the app changed and
