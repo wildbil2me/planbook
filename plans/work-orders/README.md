@@ -383,7 +383,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.87 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.88 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.61 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.76 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.6 | Phase 4 |
@@ -459,7 +459,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 87 | 86 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 88 | 86 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 59 | 58 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 75 | 68 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 6 | 6 | — | ✅ DONE — 2026-09-30 |
@@ -468,7 +468,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 17 | 16 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.4 ✅ DONE 2026-09-26, the sign-in opened on the deployed domain and read on the laptop and the iPad; WO-7.5 ✅ DONE 2026-09-26, the header's sync button; WO-7.6 ✅ DONE 2026-09-26, the privacy documents say when Google's library loads, read off the deployed /privacy; WO-7.7 ✅ DONE 2026-09-26, a download repaints the open screen, read both ways on laptop and iPad; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 18 | 13 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 3 | — | WO-G2 ✅ **2026-09-30**: worked 2026-09-29 with six of eight boxes closed, and the letter-scale setting and the backup drill closed the next day on the owner's reading; WO-G3 ✅ **2026-09-30** on the owner's ruling, watched across four weeks of the term with nothing recorded |
-| | **291** | **274** | **3** | `[█████████░] 94%` |
+| | **292** | **274** | **3** | `[█████████░] 94%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)
@@ -599,6 +599,8 @@ addressed to the primary.)*
 ***And Phase 1's by hand on 2026-10-24, after WO-1.83's tick, from `83 | 83` to `84 | 83`, the total from `287 | 271` to `288 | 271`.*** *One row booked out of WO-1.83's verdict, owner-directed:* [WO-1.84](phase-1-shell-store-roster.md#wo-184--the-harnesss-no-remover-checks-have-never-been-read-against-one-list-of-removers) *reads every check that refuses a writer or remover by searching source text against one catalogue of shapes, and books nothing: the correction comes after it, in one go. 271 of 288 is 94%; the bar stays at nine. The next* `--tick` *is still the authority.*
 
 ***And Phase 1's by hand on 2026-10-25, after WO-1.84's tick, from `84 | 84` to `87 | 84`, the total from `288 | 272` to `291 | 272`.*** *Three rows booked out of WO-1.84's recommendation, owner-directed:* [WO-1.85](phase-1-shell-store-roster.md#wo-185--the-no-remover-checks-say-they-catch-more-than-they-do) *makes every fence's prose say what passes it,* [WO-1.86](phase-1-shell-store-roster.md#wo-186--the-two-append-only-checks-close-what-one-token-settles) *widens the two append-only fences, and* [WO-1.87](phase-1-shell-store-roster.md#wo-187--the-four-whole-file-no-writer-checks-share-one-pattern-that-sees-only-dotted-writes) *widens or narrows the four whole-file ones. 272 of 291 is 93%; the bar stays at nine. The next* `--tick` *is still the authority.*
+
+***And Phase 1's by hand on 2026-10-25, after WO-1.86's tick, from `87 | 86` to `88 | 86`, the total from `291 | 274` to `292 | 274`.*** *One row booked out of WO-1.86's verdict, owner-directed:* [WO-1.88](phase-1-shell-store-roster.md#wo-188--the-two-append-only-checks-still-miss-three-spellings-their-own-words-cover) *closes three spellings F1 and F3 let past while their printed words claim them; the probe repair and a whitespace trap went into WO-1.87 instead. 274 of 292 is 94%; the bar stays at nine. The next* `--tick` *is still the authority.*
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being

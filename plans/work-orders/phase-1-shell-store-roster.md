@@ -6967,7 +6967,10 @@ F2 searches for three words, and 47 of the 50 shapes inside its claim get past i
   - reflective calls, if the per-file argument finds a legitimate use of them in these files.
     WO-1.84 did not check this.
 - **Re-run WO-1.84's probe** against F2, F4, F5 and F6, and put the new columns in
-  `TESTING.md` § WO-1.87.
+  `TESTING.md` § WO-1.87. **Print it so it runs as printed**: the copy in `TESTING.md` § WO-1.84
+  no longer does, because WO-1.85 reworded F8 and the probe's F8 anchor went missing (WO-1.86's
+  verifier, 2026-10-25). Fix the anchor in the copy printed here; leave § WO-1.84 as the record of
+  what was run then.
 - **`TESTING.md` § WO-1.87** and the `CHANGELOG.md` entry.
 
 **Acceptance**
@@ -6989,7 +6992,54 @@ and recommended against it: each fence reads a different file with different leg
 and WO-1.83 ruled per token. § 17 and § 24 sharing one pattern *in text* is the exception, because
 they were already identical. **A widened pattern can fire on legitimate code**: `src/calendar-derived.js`
 builds new arrays and may index them, so an index write on a *local* is not a document write. Argue
-before landing. **Plants come out before anything else is written, and stage before planting.**
+before landing. **Check whitespace around the dot**: WO-1.86's verifier found `d . log = []` passing
+F1, and a pattern that wants `doc.` or `d.` followed directly by a name probably misses
+`doc . events = []` the same way. Unverified for `MUTATES` — plant it and see before ruling either
+way. **Plants come out before anything else is written, and stage before planting.**
 **Nothing in `src/` moves in the end but the one comment at `src/contact-history.js:52`**, so no
 `CACHE` bump is owed — the commit carrying it ends with the `Shell-Cache: not needed — comments only`
 trailer, or `wo-sweep.mjs` § 9 goes red.
+
+## WO-1.88 — the two append-only checks still miss three spellings their own words cover
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.86 · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.87 made.)*
+
+**Booked 2026-10-25**, owner-directed, out of WO-1.86's verdict. The verifier's own plants found
+three spellings that get past F1 (`tools/verify/log-entries.mjs`, over `src/log.js`) or F3
+(`tools/verify/term-record.mjs`, over `src/term-record.js`) **while the check's printed words say it
+refuses them** — the gap WO-1.85 existed to close, reopened one spelling at a time. It is not folded
+into WO-1.87, which owns F2, F4, F5 and F6 and is already M; these are WO-1.86's two files.
+
+**Deliverables**
+- **F1: `d.log[0] += 1` passes**, while F1's printed title says it refuses *assignment into
+  .log[...]*. F3 already refuses the same spelling. Give F1's index regex the compound-operator
+  group F1's reassignment regex took in WO-1.86, argued against `src/log.js` first.
+- **F3: `delete` followed by a tab, and `delete(d.termRecords)`, pass**, because F3's `'delete '`
+  token wants a space. Replace it with the any-form `delete` regex F1 took in WO-1.86, argued
+  against `src/term-record.js` first.
+- **F1: `d . log = []` passes**, with whitespace around the dot. Plant the same spelling against F3
+  and close it in whichever fence it passes, rather than assuming either way.
+- **B2, by the owner's call at dispatch:** an index write through a quoted key (`d['log'][0] = x`,
+  `d['termRecords'][0] = x`) passes both. The WO-1.86 implementer judged a
+  quoted-key-then-subscript pattern cheap. Close it if the per-file argument finds no legitimate
+  match; otherwise name it as passing. **B3** (the same write through an alias) stays named as
+  passing, as WO-1.87 leaves the alias family.
+- **Each fence's *fence, not a reading* line** names exactly what still passes afterwards.
+- **`TESTING.md` § WO-1.88** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] Before any pattern changes, `TESTING.md` § WO-1.88 records whether `src/log.js` or
+      `src/term-record.js` holds legitimate code the widened pattern would match.
+- [ ] Each of the spellings above is planted in its guarded file and turns its check red, or is
+      named as passing in that fence's *fence, not a reading* line. Every plant is reverted, and the
+      red output is in `TESTING.md` § WO-1.88.
+- [ ] No check's printed title or detail claims a spelling that its patterns let pass.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-1.88 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Plants go in `src/` and come out before anything else is written, and stage before
+planting** (AGENTS.md, the WO-5.1 scar). **A whitespace-tolerant pattern must still not fire on a
+read**: keep WO-1.83's no-following-`=` rule on `.length`, and do not let `\s*` turn a `==` comparison
+into an assignment. **Rule per token, not by symmetry** — WO-1.86's rule. **Nothing in `src/` moves
+in the end**, so no `CACHE` bump is owed.
