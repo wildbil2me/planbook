@@ -6749,7 +6749,7 @@ regex does. **Nothing in `src/` moves in the end**, so no `CACHE` bump is owed.
 
 ## WO-1.84 — the harness's no-remover checks have never been read against one list of removers
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.83 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-25 · **Size** M · **Depends on** WO-1.83 · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.83 made.)*
 
 **Booked 2026-10-24**, owner-directed, out of WO-1.83's verdict. **An inventory, not a repair**:
@@ -6802,17 +6802,17 @@ edges; the fields do not have known holes.**
 - **`TESTING.md` § WO-1.84** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] `TESTING.md` § WO-1.84 lists every fence the search found, each with its file, line and the
+- [x] `TESTING.md` § WO-1.84 lists every fence the search found, each with its file, line and the
       source file it guards, and states the search that found them.
-- [ ] The catalogue is in `TESTING.md` § WO-1.84, and every shape carries its *removes*, *reorders*
+- [x] The catalogue is in `TESTING.md` § WO-1.84, and every shape carries its *removes*, *reorders*
       or *adds* reading.
-- [ ] Every cell of the fence-by-shape table is filled, and each *passes* cell has been produced by
+- [x] Every cell of the fence-by-shape table is filled, and each *passes* cell has been produced by
       the probe, not by reading the regex.
-- [ ] Each fence's own prose is marked as matching the table or overclaiming, quoting the words.
-- [ ] No file under `src/` or `tools/` differs from `HEAD` when the work order closes, apart from
+- [x] Each fence's own prose is marked as matching the table or overclaiming, quoting the words.
+- [x] No file under `src/` or `tools/` differs from `HEAD` when the work order closes, apart from
       `TESTING.md`, `CHANGELOG.md` and this phase file. `node tools/verify-shell.mjs` and
       `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-1.84 carries these lines verbatim with the evidence for each.
+- [x] `TESTING.md` § WO-1.84 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Do not fix as you go.** The ruling is to inventory first, so a check tightened in
 this work order is a correction landed before it was asked for, and it changes the table under
@@ -6822,3 +6822,149 @@ described), arriving in the tool that is meant to find it. **A shape no fence's 
 is n/a, not *passes*.** § 17's *no writer* does not promise to catch reordering, and marking it red
 for that would book a widening by symmetry, which WO-1.83 refused. **Nothing in `src/` moves**, so
 no `CACHE` bump is owed.
+
+## WO-1.85 — the no-remover checks say they catch more than they do
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.84 · **Blocks** WO-1.86, WO-1.87
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.84 made.)*
+
+**Booked 2026-10-25**, owner-directed, the first of the three work orders `TESTING.md` § WO-1.84
+recommends. **Prose only; no assertion moves.** WO-1.84 ran 52 removal shapes against the eight
+fences F1–F8, and every one of them claims more than its code checks. The words that most need
+to go are *"on any input"*, *"could not write"* and *"nothing … could do otherwise"*. This work
+order makes each fence's words match the table, and it does that before anything is widened, because
+**prose that runs ahead of its code is the defect this chain started from** (WO-1.82). It ends the
+overclaim even if WO-1.86 and WO-1.87 are never built.
+
+**Deliverables**
+- **F1–F6**: strike the overclaiming phrases from each fence's header comment and detail line, and
+  from the § 17 paragraph in `tools/README.md`. In their place, give each fence a *fence, not a
+  reading* clause that names the families of shapes `TESTING.md` § WO-1.84's table shows passing it.
+  Name families, not 52 cells.
+- **F7**: name the four reflective writes (`Object.assign`, `Reflect.set`,
+  `Reflect.deleteProperty`, `Object.defineProperty`) in § 30's *WHAT IT DOES NOT SEE* list.
+- **F8**: name "a store function imported by name" as what the front-door check does not see.
+- **F2's guarded file**: wherever prose says the contact-log check searches `src/log.js`, correct it
+  to `src/contact-history.js`.
+- **The count**: the § 17 paragraph in `tools/README.md` (about line 4067) says "eleven writer
+  names", and the `WRITERS` list at `tools/wo-sweep.mjs:1470` has twelve. Correct the count to
+  twelve, or drop the number from the paragraph.
+- **`TESTING.md` § WO-1.85** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] For each of F1–F8, `TESTING.md` § WO-1.85 quotes the claim before and after the change, and
+      every family of shapes that passes the fence in § WO-1.84's table is named in the new words.
+- [ ] None of *"on any input"*, *"could not write"* or *"nothing … could do otherwise"* remains in
+      the prose of F1–F6 or in the § 17 paragraph of `tools/README.md`. The grep that shows this is
+      quoted in `TESTING.md` § WO-1.85.
+- [ ] `git diff` shows changes to comments, detail strings and `tools/README.md` only. No regex, no
+      token list and no `check(` condition moves.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass, and their check counts are
+      unchanged from before the work order.
+- [ ] `TESTING.md` § WO-1.85 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Do not widen as you go.** The temptation will be to add a pattern rather than write
+down that a shape passes, but a pattern added here is WO-1.86's or WO-1.87's, landing without its
+argument against the guarded file's own legitimate code. **A detail string is output**, so changing
+one changes what `verify-shell.mjs` prints. The counts must not move; the wording may. **Nothing in
+`src/` moves**, so no `CACHE` bump is owed.
+
+## WO-1.86 — the two append-only checks close what one token settles
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.85 · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.85 made.)*
+
+**Booked 2026-10-25**, owner-directed, the second of `TESTING.md` § WO-1.84's three
+recommendations. It covers **F1** (`tools/verify/log-entries.mjs`, over `src/log.js`) and **F3**
+(`tools/verify/term-record.mjs`, over `src/term-record.js`). Both make the same claim about the same
+kind of writer, and WO-3.72's header says the second was copied from the first. So here symmetry is
+argued rather than assumed. The worst gap is F3: it **never got WO-1.83's fixes**, so
+`d.termRecords.length = 0` and `d['termRecords'] = []` both pass it.
+
+**Deliverables**
+- **Refuse, in both fences**, after arguing each token against the guarded file's legitimate code:
+  - the compound-assignment family on the dotted and bracketed key (A6–A9). This is the item where
+    F1's patterns disagree with F1's own argument;
+  - `delete` in every key form (E2, E3). F3 already refuses a bare `delete `;
+  - `.length` update expressions (C2, C4);
+  - for F3 only, WO-1.83's `.length` and bracketed-key patterns (C1, C3, C5, A2–A4);
+  - `Reflect.set`, `Reflect.deleteProperty` and `Object.defineProperty` by name (F3–F6);
+  - `restoreDocument(` and `adoptRemoteDocument(` by name (G1–G3).
+- **Name, in each fence's *fence, not a reading* line**, what is left passing:
+  - computed keys (A5);
+  - destructuring (A12, A13);
+  - entry edits (B4–B6, E5);
+  - `['splice'](` and `Array.prototype.….call` (D11, D12);
+  - `Object.assign` in F1, unless the per-file argument finds no legitimate use of it in
+    `src/log.js`. F3 refuses it outright today.
+- **Re-run WO-1.84's probe** (its source is quoted in `TESTING.md` § WO-1.84) against both fences,
+  and put the new F1 and F3 columns in `TESTING.md` § WO-1.86.
+- **`TESTING.md` § WO-1.86** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] Before any token lands, `TESTING.md` § WO-1.86 records whether `src/log.js` or
+      `src/term-record.js` holds a legitimate use of it. WO-1.84 did not check this.
+- [ ] Each newly refused shape is planted in its guarded file and turns its check red, naming the
+      remover. Every plant is reverted, and the red output is in `TESTING.md` § WO-1.86.
+- [ ] WO-1.84's probe, re-run, shows every shape listed above under *Refuse* as *refused* in both
+      F1 and F3. Every shape still *passes* is named in that fence's *fence, not a reading* line.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-1.86 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Plants go in `src/` and come out before anything else is written** (AGENTS.md, the
+WO-5.1 scar), and **stage before planting**, because `git checkout` reverts unstaged work in that
+file too. **A `.length` token must not fire on a read**: WO-1.83's pattern already refuses `=` only
+when no `=` follows it, so reuse that rather than re-deriving it. **Rule per token, not by
+symmetry**: a token both files are argued for lands in both, and one only one file is argued for
+lands in that one. **Nothing in `src/` moves in the end**, so no `CACHE` bump is owed.
+
+## WO-1.87 — the four whole-file no-writer checks share one pattern that sees only dotted writes
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.85 · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.85 made.)*
+
+**Booked 2026-10-25**, owner-directed, the third of `TESTING.md` § WO-1.84's three
+recommendations. It covers **F2** (`tools/verify/contact-log.mjs`, over `src/contact-history.js`),
+**F4** (`wo-sweep.mjs` § 17, `src/calendar-derived.js`), **F5** (§ 20 claim 4,
+`src/merge-fields.js`) and **F6** (§ 24, `src/outreach.js` and `copyDraft()`). § 17 and § 24 share
+a `MUTATES` pattern that sees only `doc.`/`d.` followed by a name, so `delete doc.events`,
+`doc.events.length = 0`, `doc.events[0] = null`, `doc['events'] = []` and `.copyWithin(` all pass.
+F2 searches for three words, and 47 of the 50 shapes inside its claim get past it.
+
+**Deliverables**
+- **One widened `MUTATES`**, used in identical text by § 17 and § 24. It adds bracketed root keys,
+  index writes, `.length` writes, `delete`, the compound-assignment family and `.copyWithin(`.
+  `restoreDocument` and `adoptRemoteDocument` go into both `WRITERS` lists.
+- **F2 and F5, ruled by the owner.** Each either adopts the widened shape or narrows its words to
+  what it actually searches: `update`/`push`/`splice` for F2, and named store calls plus no store
+  import for F5. The orchestrator asks; the implementer does not pick.
+- **Name, in each fence's *fence, not a reading* line**, what is left passing:
+  - writes through an alias of the root (A14, B3, B5, C5, D10), the WO-1.83 alias family;
+  - computed keys;
+  - borrowed prototype methods;
+  - reflective calls, if the per-file argument finds a legitimate use of them in these files.
+    WO-1.84 did not check this.
+- **Re-run WO-1.84's probe** against F2, F4, F5 and F6, and put the new columns in
+  `TESTING.md` § WO-1.87.
+- **`TESTING.md` § WO-1.87** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] The owner's ruling on F2 and on F5, widen or narrow, is recorded in `TESTING.md` § WO-1.87
+      before either fence's code or prose changes.
+- [ ] § 17's and § 24's `MUTATES` are byte-identical, and each guarded file was argued against the
+      widened pattern for legitimate code before it landed. The argument is in `TESTING.md`
+      § WO-1.87.
+- [ ] Each newly refused shape is planted in its guarded file and turns its check red. Every plant
+      is reverted, and the red output is in `TESTING.md` § WO-1.87.
+- [ ] WO-1.84's probe, re-run, shows every shape the widened pattern covers as *refused*, and every
+      shape still *passes* is named in that fence's *fence, not a reading* line.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-1.87 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Do not make the shape list a shared module under `tools/`.** WO-1.84 named that option
+and recommended against it: each fence reads a different file with different legitimate operations,
+and WO-1.83 ruled per token. § 17 and § 24 sharing one pattern *in text* is the exception, because
+they were already identical. **A widened pattern can fire on legitimate code**: `src/calendar-derived.js`
+builds new arrays and may index them, so an index write on a *local* is not a document write. Argue
+before landing. **Plants come out before anything else is written, and stage before planting.**
+**Nothing in `src/` moves in the end**, so no `CACHE` bump is owed.

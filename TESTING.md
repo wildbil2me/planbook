@@ -4667,6 +4667,818 @@ above is the one that is empty.)*
 - [x] `TESTING.md` § WO-1.83 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-1.84 — the harness's no-remover checks have never been read against one list of removers
+
+No 👤 and no 📆 line. **An inventory, not a repair**: nothing under `src/` or `tools/` moved, so no
+`CACHE` bump is owed. Every *passes* cell below came from running a fence's own code, sliced out of
+its harness file when the probe runs, against an in-memory copy of the file it guards with one shape
+added. The probe lived in the session scratchpad and is not committed. Its source is quoted at the
+end of this section.
+
+**What the inventory found.** There are eight fences (nine columns in the table, because § 24 is
+probed in two halves). Every one has shapes that get past it, and every one says more than its code
+checks, F7 and F8 only narrowly. The worst three are these:
+
+- **The two append-only fences differ.** `term-record.mjs` refuses `.sort(`, `.reverse(`,
+  `.unshift(`, `Object.assign(` and every `delete `. But it has **no `.length` pattern and no
+  bracketed-key pattern**, so `d.termRecords.length = 0` and `d['termRecords'] = []` both pass it.
+  Those are the two holes WO-1.83 closed in the log's check, and they are still open here.
+- **§ 17 and § 24 share one `MUTATES` pattern, and it sees only `doc.`/`d.` followed by a name and
+  then `=` or one of eight methods.** So `delete doc.events`, `doc.events.length = 0`,
+  `doc.events[0] = null`, `doc['events'] = []` and `.copyWithin(` all pass. Meanwhile the § 17
+  comment and its `tools/README.md` paragraph both say *"nothing in the file that could write on any
+  input"*.
+- **`contact-log.mjs` searches `src/contact-history.js` for exactly three things**: `update(`,
+  `.push(` and `.splice(`. Its title says *"could not write on any input … and no store mutation"*.
+  But that file imports `getDoc` (`src/contact-history.js:62`), and 47 of the 50 shapes inside
+  its claim pass.
+
+#### The fences, and the search that found them
+
+Each fence below is a check that refuses a writer, a remover or a mutation **by matching source
+text**. The guarded file is the one the code actually reads, not the one the work order names.
+
+| # | Fence | Where (file:line) | Guards (read by the code) | Its claim, in its own words |
+|---|---|---|---|---|
+| F1 | log-entries: *append-only is structural rather than promised* | `tools/verify/log-entries.mjs:368–447`, `check(` at `:435` | `src/log.js` | "there is no splice, pop, shift, fill, copyWithin, delete, reassignment of .log, assignment into .log[...], assignment to .length or bracketed log key assigned anywhere in its code" |
+| F2 | contact-log: *the history surface is a READER* | `tools/verify/contact-log.mjs:672–690`, `check(` at `:681`. The search runs inside a `page.evaluate` string | **`src/contact-history.js`** for `update(`/`.push(`/`.splice(`. `src/log.js` is read **only** for `export function contactsFor` | "could not write on any input: no update(), no push, no splice and no store mutation anywhere in src/contact-history.js" |
+| F3 | term-record: *holds one writer, and it only pushes* | `tools/verify/term-record.mjs:372–406`, `check(` at `:391` | `src/term-record.js`. `src/grade-engine.js` is read only for the import-back clause | "the create-on-first-write guard is its only other line touching the block, and nowhere in the code is there a splice, pop, shift, sort, delete, assignment into the array or lookup of a record by its id" |
+| F4 | wo-sweep § 17: *reads and never writes* | `tools/wo-sweep.mjs:1430` (banner), block `:1454–1530`, `WRITERS` `:1470`, `MUTATES` `:1473` | `src/calendar-derived.js` | "no store call, no doc mutation and none of update/addEvent/…/supportsOf" |
+| F5 | wo-sweep § 20, claim 4: *the resolver has no writer* | `tools/wo-sweep.mjs:2131` (banner), claim 4 stated at `:2170`, `WRITER` `:2391`, its fault at `:2420` | `src/merge-fields.js` | "The resolver has no writer, the same clause § 17 makes … must never be a second way to change one" |
+| F6 | wo-sweep § 24: *the clipboard copy writes nothing* | `tools/wo-sweep.mjs:2973` (banner), block `:3004–3077`, `WRITERS` `:3020`, `MUTATES` `:3022` | `src/outreach.js` (whole file; probed as **F6a**) and `copyDraft()` in `src/outreach-view.js` (probed as **F6b**) | "no store call, no doc mutation … and copyDraft() … reaches no writer" |
+| F7 | wo-sweep § 30: *`held` is read in one place*, plus its writer exception | `tools/wo-sweep.mjs:3828` (banner), block `:3897–3985` | every `src/**.js` except `src/grade-engine.js`. The writer is allowed only in `src/held-column.js`. Probed by planting in `src/signals.js` | "The one file that may WRITE the key is src/held-column.js (WO-3.46), and only as `.held = true` or `delete ….held`" |
+| F8 | front-door: *the probe opens nothing and writes nothing* | `tools/verify/front-door.mjs:106–122`, `check(` at `:115` | `src/front-door.js` (probed). Also `yearDatabaseListed()` in `src/store.js` and the call order in `src/shell.js` | "src/front-door.js calls no open(), no setPref() and no store function but that one" |
+
+**Where the code disagrees with the work order's list.** The work order describes F2 as "the
+`splice` search over `src/log.js`". The code searches **`src/contact-history.js`**: the `.splice(`
+search runs over `code`, which is that file with its comments stripped. `src/log.js` is fetched
+for one regex only, `/export function contactsFor/`. Nothing in F2 searches `src/log.js` for a
+remover. F1 is the only fence that does.
+
+**The search.** It was run over `tools/` and read hit by hit:
+
+1. Every place a check reads app source:
+   `grep -rnE "readFile(Sync)?\([^)]*src|fetch\('/src/|'src/[a-z-]+\.js'\)|'src', '[a-z-]+\.js'|readdir\(path\.join\(ROOT, 'src'\)\)|readIf\('src/" tools/verify tools/verify-shell.mjs`
+   gave 30 hits. Against `tools/wo-sweep.mjs`, the same question was asked with
+   `grep -nE "path\.join\(REPO, 'src'|ALL\.filter\(p => /\^src" tools/wo-sweep.mjs`, plus its 33
+   section banners (`grep -n "^/\* ══════" tools/wo-sweep.mjs`).
+2. Keyword greps, `grep -rln -- "<word>" tools/`, for each of: `indexOf('\.`, `REMOVERS`,
+   `splice`, `no writer`, `writes nothing`, `append-only`, `WRITERS`, `MUTATES`, `\.pop(`,
+   `never writes`, `could not write` and `holds no writer`.
+
+**Triage. Kept:** the six the work order named (F1–F6), plus two more found by the search.
+
+- **F7** (§ 30) is mainly a reader fence. But it confines the writer of `held` to one file by
+  matching source text, and its own comment says so ("AND ONE WRITER … In that file, and nowhere
+  else").
+- **F8** (front-door) refuses store writers by source text: every `store.*(` call other than
+  `yearDatabaseListed`, and `setPref`.
+
+**Excluded, each with its reason:**
+
+- **The hits that read source but refuse no writer.**
+  - `attendance-passes.mjs:772`: one AudioContext.
+  - `classes-terms.mjs:683`: term literals.
+  - `contact-log.mjs:373`: a handoff hook calls no `preventDefault`.
+  - `drive-sync.mjs:105/166/206`: the SHELL list, the save-chip states, and repaint wiring.
+  - `keys-legend-*.mjs`: key bindings.
+  - `score-search.mjs:34`: one matcher.
+  - `worker-takeover.mjs:171`: an interval constant.
+  - `build-line.mjs:64`, `date-format.mjs:38`: a file list and date formatting.
+- **The checks about where a value is stored.** `drive-sign-in.mjs:131` (*src/auth.js reaches no
+  storage that outlives the page*), `drive-sync.mjs:264` (*the sync bookmark is … in neither of the
+  two places it was refused*) and wo-sweep § 4 (localStorage keys) all refuse a **storage API by
+  name**. None of them claims a file cannot change a collection in the year, so the catalogue has
+  nothing in them to act on.
+- **The wo-sweep sections that read `src/` for a different rule.**
+  - § 5 and § 5b: sensitive names, and one asker.
+  - § 7: due date and late/missing on one line. This is a REVIEW about where a flag comes from, not
+    a writer fence.
+  - § 12: the hook inventory.
+  - § 14: backup collections.
+  - § 16: the event record.
+  - § 18: print gates.
+  - § 19: drawings.
+  - § 23: no rebuild of a date field. It refuses a `focusout` listener and a name, which are DOM
+    behaviour, not a write to the document.
+  - § 27: a removed function.
+  - § 28: `was` is **read** in one place. Its clause about `reviseCell` names the writer's rule but
+    refuses no writer.
+  - § 31: no arithmetic.
+  - § 33: no import loop.
+- **The keyword hits that are runtime checks** (a document compared before and after a press),
+  not text matches:
+  - `merge-fields.mjs:756`
+  - `cooldown-quiet.mjs:382`
+  - every *writes nothing* in `accommodation-prompts`, `assignment-sort`, `assignments`,
+    `attendance(-passes)`, `classes-terms`, `contacts-import`, `copy-class`, `first-run`,
+    `grading-mode`, `history-dialog-write`, `keyboard-marking`, `outreach`, `pass-card`,
+    `portrait-landscape`, `register-opens-on-term`, `roster-contacts`, `score-grid`, `score-notes`,
+    `term-edges-marking` and `term-nav`
+  - `glance-quiet.mjs:198`: a fixture's own `splice`.
+- **The keyword hits in the pipeline's own tools:** `wo-gate.mjs` (its own `splice`/`pop`) and
+  `codex-invoke.mjs`. Also the two tool pages `data-viewer.html` and `inspector-mockup.html`.
+  None of these checks app source.
+
+#### The catalogue
+
+Each shape is written once, over a root `R` and a key `K`, and planted as one line. The probe used
+these roots and keys:
+
+| Fence | `R` | `K` |
+|---|---|---|
+| F1 | `d` | `log` |
+| F2 | `doc` | `log` |
+| F3 | `d` | `termRecords` |
+| F4 | `doc` | `events` |
+| F5 | `doc` | `students` |
+| F6a, F6b | `doc` | `log` |
+| F7 | `a` | `held` |
+| F8 | `doc` | `log` |
+
+Each shape's reading applies WO-1.83's test to `.reverse(` and `.sort(`: does it **remove or
+overwrite** an entry, does it **reorder** entries only, or does it **add** only?
+
+| ID | Shape as planted | Reading | Why |
+|---|---|---|---|
+| A1 | `R.K = [];` | removes | every entry is replaced |
+| A2 | `R['K'] = [];` | removes | A1 with a single-quoted bracketed key |
+| A3 | `R["K"] = [];` | removes | A1 with a double-quoted key |
+| A4 | ``R[`K`] = [];`` | removes | A1 with a template-literal key |
+| A5 | `R[k] = [];` | removes | A1 with the key held in a variable |
+| A6 | `R.K += '';` | removes | the array becomes a string, so no entry is left as an entry |
+| A7 | `R['K'] += "";` | removes | A6 through a bracketed key |
+| A8 | `R.K -= 1;` | removes | the array becomes `NaN` |
+| A9 | `R.K &&= [];` | removes | a truthy array is replaced |
+| A10 | `R.K \|\|= [];` | adds | does nothing to an existing array and creates one when it is absent, which is the create-on-first-write guard's own shape |
+| A11 | `R.K ??= [];` | adds | as A10 |
+| A12 | `[R.K] = [[]];` | removes | destructuring assignment to the collection |
+| A13 | `({ K: R.K } = { K: [] });` | removes | object-destructuring assignment |
+| A14 | `const x = R; x.K = [];` | removes | the root written through an alias |
+| B1 | `R.K[0] = null;` | removes / overwrites | an entry is replaced |
+| B2 | `R['K'][0] = null;` | overwrites | B1 through a bracketed key |
+| B3 | `const l = R.K; l[0] = null;` | overwrites | B1 through an alias of the collection |
+| B4 | `R.K[0].subject = 'x';` | overwrites | a stored entry is edited in place |
+| B5 | `const e = R.K[0]; e.subject = 'x';` | overwrites | B4 through an alias of the entry |
+| B6 | `R.K.find((e) => e).subject = 'x';` | overwrites | an entry is looked up, then edited |
+| C1 | `R.K.length = 0;` | removes | truncation |
+| C2 | `R.K.length--;` | removes | drops the last entry |
+| C3 | `R.K.length -= 1;` | removes | as C2 |
+| C4 | `--R.K.length;` | removes | as C2 |
+| C5 | `const l = R.K; l.length = 0;` | removes | C1 through an alias |
+| C6 | `R.K.length++;` | adds | adds one empty slot and takes nothing |
+| D1 | `R.K.splice(0, 1);` | removes | |
+| D2 | `R.K.pop();` | removes | |
+| D3 | `R.K.shift();` | removes | |
+| D4 | `R.K.fill(null);` | overwrites | in place |
+| D5 | `R.K.copyWithin(0, 1);` | overwrites | in place |
+| D6 | `R.K.sort();` | reorders | |
+| D7 | `R.K.reverse();` | reorders | |
+| D8 | `R.K.unshift(e);` | adds | shifts the indices and takes nothing away |
+| D9 | `R.K.push(e);` | adds | |
+| D10 | `const l = R.K; l.splice(0, 1);` | removes | a mutating method through an alias |
+| D11 | `R.K['splice'](0, 1);` | removes | a mutating method named by a bracketed string |
+| D12 | `Array.prototype.splice.call(R.K, 0, 1);` | removes | a mutating method borrowed from the prototype |
+| E1 | `delete R.K;` | removes | |
+| E2 | `delete R['K'];` | removes | |
+| E3 | `delete R[k];` | removes | |
+| E4 | `delete R.K[0];` | removes | leaves a hole |
+| E5 | `delete R.K[0].subject;` | overwrites | an entry is edited |
+| F1 | `Object.assign(R, { K: [] });` | removes | |
+| F2 | `Object.assign(R.K, [null]);` | overwrites | index 0 |
+| F3 | `Reflect.set(R, 'K', []);` | removes | |
+| F4 | `Reflect.deleteProperty(R, 'K');` | removes | |
+| F5 | `Object.defineProperty(R, 'K', { value: [] });` | removes | |
+| F6 | `Reflect.set(R.K, 'length', 0);` | removes | |
+| G1 | `restoreDocument(doc0);` | removes | the whole year is replaced, and every entry of every collection goes with it |
+| G2 | `store.restoreDocument(doc0);` | removes | G1 through the namespace |
+| G3 | `store.adoptRemoteDocument(doc0);` | removes | the other whole-year swap (WO-7.9) |
+
+**Left out of the catalogue on purpose.** `toSorted`, `toSpliced`, `with`, `slice`, `filter` and
+`concat` return a new array and write nothing unless the result is assigned back, and that
+assignment is A1. The full set of `Array.prototype` mutators is the nine D1–D9. `.find(` appears
+only inside B6, as the lookup half of an edit, because F3 refuses it by name.
+
+#### How a cell was produced
+
+The probe reads each harness file and **slices out the check's own code** by anchors. Each anchor
+is a string the slice must find, or the probe throws. Then it executes that code:
+
+- F1, F3, F8: the code is run as an `AsyncFunction` over `(fs, path, ROOT, check)`.
+- F4–F7: each section's `{ … }` block is run with wo-sweep's own `report()`, `commentLines()`,
+  `walk()`, `IGNORE_DIRS`, `ALL` and `rel`, sliced from the same file.
+- F2: the page-side code is a template literal in the harness. It is evaluated as one to get the
+  exact string the browser receives, run in Node with `fetch` answering from disk, and its `check(`
+  call is sliced and run over the result.
+
+`fs` (or `fetch`) answers reads of the guarded file with the planted text and every other read from
+disk. **No pattern or token list is retyped in the probe.** Each planted shape is one line:
+
+- appended in a non-exported `function wo184Probe(d, doc, a, k, x, l, e, doc0, store) { … }` at the
+  end of the guarded file;
+- for F6b, inserted inside `copyDraft()` just before its closing brace.
+
+The probe checks that every plant landed.
+
+**Controls, for every fence.** The clean file must pass, and one shape the fence is known to refuse
+must be refused. All nine held:
+
+| Fence | Clean file | Known-refused shape | Result |
+|---|---|---|---|
+| F1 | PASS | `d.log.splice(0, 1);` | refused (`.splice(`) |
+| F2 | PASS | `doc.log.splice(0, 1);` | refused |
+| F3 | PASS | `d.termRecords.splice(0, 1);` | refused (`.splice(`) |
+| F4 | PASS | `doc.events.splice(0, 1);` | refused (line 399 can write) |
+| F5 | PASS | `update((d) => d);` | refused (claim 4, "writes at :659") |
+| F6a | PASS | `doc.log.splice(0, 1);` | refused |
+| F6b | PASS | `doc.log.splice(0, 1);` | refused |
+| F7 | PASS | `a.held = false;` | refused (member read on `a`) |
+| F8 | PASS | `setPref("openYear", 1);` | refused |
+
+The runs were `node probe.mjs` and `node probe.mjs --json > probe.json`, both `EXIT=0`, with
+"control problems: 0" printed. The baseline details match what the harness prints on a green run:
+
+- F1: *2 push(s) … guard is present 2 time(s) … removers found: none*.
+- F3: `{"pushes":1,"updates":1,…,"found":[]}`.
+- F4: *no store call, no doc mutation … in 140 line(s) of code*.
+- F7: *64 file(s) under src/ outside src/grade-engine.js … none reads an assignment's `held`*.
+
+#### The table
+
+How to read a cell:
+
+- **refused**: the fence went red with the shape planted. The reason given is the finding it named.
+- **passes**: the fence stayed green, the shape is inside the fence's own claim, and the reason
+  names the shape's feature that nothing in the fence searches for.
+- **n/a**: the fence's own claim does not cover the shape.
+  - **F1, reorders and adds.** WO-1.83 ruled `.sort(`, `.reverse(` and `.unshift(` outside
+    append-only, and an add takes nothing away. D9 `.push(` is still **refused**, because F1 pins
+    the push count at exactly two.
+  - **F2, F4, F5, F6, reorders.** The work order's Traps rule that § 17's *no writer* "does not
+    promise to catch reordering". The same applies to the other whole-file no-writer fences, none
+    of which names ordering. F3 does name it ("sort"), so its reorder cells are judged.
+  - **F7, collection shapes.** `held` is a boolean, so a shape that treats it as a collection has
+    nothing to act on. A document replacement is not a write of the key.
+  - **F8, A–F.** Its claim names opens, `setPref` and store calls. The door holds no document, so it
+    can reach one only through a store function, which is G.
+  - "(probe: red)" on an n/a cell records that the fence turned red anyway.
+
+Every fence ran every shape, n/a cells included.
+
+| Shape | F1 log-entries | F2 contact-log | F3 term-record | F4 § 17 | F5 § 20 | F6a § 24 model | F6b § 24 copyDraft | F7 § 30 | F8 front-door |
+|---|---|---|---|---|---|---|---|---|---|
+| A1 | **refused** — reassignment of .log | passes — only update/push/splice searched | **refused** — an assignment to termRecords | **refused** — line scan | passes — plain `=` not searched | **refused** — line scan | **refused** — line scan | **refused** — a member read | n/a — outside its claim |
+| A2 | **refused** — bracketed log key assigned | passes — only update/push/splice searched | passes — `['K']` key not searched | passes — `['K']` key not searched | **refused** — claim 5, not 4 | passes — `['K']` key not searched | passes — `['K']` key not searched | **refused** — a bracket read | n/a — outside its claim |
+| A3 | **refused** — bracketed log key assigned | passes — only update/push/splice searched | passes — `["K"]` key not searched | passes — `["K"]` key not searched | **refused** — claim 5, not 4 | passes — `["K"]` key not searched | passes — `["K"]` key not searched | **refused** — a bracket read | n/a — outside its claim |
+| A4 | **refused** — bracketed log key assigned | passes — only update/push/splice searched | passes — template-literal key not searched | passes — template-literal key not searched | **refused** — claim 5, not 4 | passes — template-literal key not searched | passes — template-literal key not searched | **refused** — a bracket read | n/a — outside its claim |
+| A5 | passes — computed key `[k]` not searched | passes — only update/push/splice searched | passes — computed key `[k]` not searched | passes — computed key `[k]` not searched | **refused** — claim 5, not 4 | passes — computed key `[k]` not searched | passes — computed key `[k]` not searched | passes — computed key `[k]` not searched | n/a — outside its claim |
+| A6 | passes — `+=` not searched | passes — only update/push/splice searched | passes — `+=` not searched | passes — `+=` not searched | passes — `+=` not searched | passes — `+=` not searched | passes — `+=` not searched | **refused** — a member read | n/a — outside its claim |
+| A7 | passes — `['K'] +=` not searched | passes — only update/push/splice searched | passes — `['K'] +=` not searched | passes — `['K'] +=` not searched | **refused** — claim 5, not 4 | passes — `['K'] +=` not searched | passes — `['K'] +=` not searched | **refused** — a bracket read | n/a — outside its claim |
+| A8 | passes — `-=` not searched | passes — only update/push/splice searched | passes — `-=` not searched | passes — `-=` not searched | passes — `-=` not searched | passes — `-=` not searched | passes — `-=` not searched | **refused** — a member read | n/a — outside its claim |
+| A9 | passes — `&&=` not searched | passes — only update/push/splice searched | passes — `&&=` not searched | passes — `&&=` not searched | passes — `&&=` not searched | passes — `&&=` not searched | passes — `&&=` not searched | **refused** — a member read | n/a — outside its claim |
+| A10 | n/a — adds only | passes — only update/push/splice searched | passes — `||=` not searched | passes — `||=` not searched | passes — `||=` not searched | passes — `||=` not searched | passes — `||=` not searched | **refused** — a member read | n/a — outside its claim |
+| A11 | n/a — adds only | passes — only update/push/splice searched | passes — `??=` not searched | passes — `??=` not searched | passes — `??=` not searched | passes — `??=` not searched | passes — `??=` not searched | **refused** — a member read | n/a — outside its claim |
+| A12 | passes — array destructuring not searched | passes — only update/push/splice searched | passes — array destructuring not searched | passes — array destructuring not searched | passes — array destructuring not searched | passes — array destructuring not searched | passes — array destructuring not searched | **refused** — a member read | n/a — outside its claim |
+| A13 | passes — object destructuring not searched | passes — only update/push/splice searched | passes — object destructuring not searched | passes — object destructuring not searched | passes — object destructuring not searched | passes — object destructuring not searched | passes — object destructuring not searched | **refused** — a member read | n/a — outside its claim |
+| A14 | **refused** — reassignment of .log | passes — only update/push/splice searched | **refused** — an assignment to termRecords | passes — root through an alias not searched | passes — root through an alias not searched | passes — root through an alias not searched | passes — root through an alias not searched | **refused** — a member read | n/a — outside its claim |
+| B1 | **refused** — assignment into .log[...] | passes — only update/push/splice searched | **refused** — an assignment to termRecords | passes — index write not searched | passes — index write not searched | passes — index write not searched | passes — index write not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| B2 | passes — `['K'][0] =` not searched | passes — only update/push/splice searched | passes — `['K'][0] =` not searched | passes — `['K'][0] =` not searched | **refused** — claim 5, not 4 | passes — `['K'][0] =` not searched | passes — `['K'][0] =` not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| B3 | passes — index write via alias not searched | passes — only update/push/splice searched | passes — index write via alias not searched | passes — index write via alias not searched | passes — index write via alias not searched | passes — index write via alias not searched | passes — index write via alias not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| B4 | passes — entry field write not searched | passes — only update/push/splice searched | passes — entry field write not searched | passes — entry field write not searched | passes — entry field write not searched | passes — entry field write not searched | passes — entry field write not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| B5 | passes — entry field via alias not searched | passes — only update/push/splice searched | passes — entry field via alias not searched | passes — entry field via alias not searched | passes — entry field via alias not searched | passes — entry field via alias not searched | passes — entry field via alias not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| B6 | passes — entry found by `.find(` not searched | passes — only update/push/splice searched | **refused** — .find( | passes — entry found by `.find(` not searched | passes — entry found by `.find(` not searched | passes — entry found by `.find(` not searched | passes — entry found by `.find(` not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| C1 | **refused** — assignment to .length | passes — only update/push/splice searched | passes — `.length =` not searched | passes — `.length =` not searched | passes — `.length =` not searched | passes — `.length =` not searched | passes — `.length =` not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| C2 | passes — `length--` not searched | passes — only update/push/splice searched | passes — `length--` not searched | passes — `length--` not searched | passes — `length--` not searched | passes — `length--` not searched | passes — `length--` not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| C3 | **refused** — assignment to .length | passes — only update/push/splice searched | passes — `.length -=` not searched | passes — `.length -=` not searched | passes — `.length -=` not searched | passes — `.length -=` not searched | passes — `.length -=` not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| C4 | passes — prefix `--length` not searched | passes — only update/push/splice searched | passes — prefix `--length` not searched | passes — prefix `--length` not searched | passes — prefix `--length` not searched | passes — prefix `--length` not searched | passes — prefix `--length` not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| C5 | **refused** — assignment to .length | passes — only update/push/splice searched | passes — `.length =` via alias not searched | passes — `.length =` via alias not searched | passes — `.length =` via alias not searched | passes — `.length =` via alias not searched | passes — `.length =` via alias not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| C6 | n/a — adds only | passes — only update/push/splice searched | passes — `length++` not searched | passes — `length++` not searched | passes — `length++` not searched | passes — `length++` not searched | passes — `length++` not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| D1 | **refused** — .splice( | **refused** — push/splice search | **refused** — .splice( | **refused** — line scan | passes — `.splice(` not searched | **refused** — line scan | **refused** — line scan | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| D2 | **refused** — .pop( | passes — only update/push/splice searched | **refused** — .pop( | **refused** — line scan | passes — `.pop(` not searched | **refused** — line scan | **refused** — line scan | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| D3 | **refused** — .shift( | passes — only update/push/splice searched | **refused** — .shift( | **refused** — line scan | passes — `.shift(` not searched | **refused** — line scan | **refused** — line scan | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| D4 | **refused** — .fill( | passes — only update/push/splice searched | **refused** — .fill( | **refused** — line scan | passes — `.fill(` not searched | **refused** — line scan | **refused** — line scan | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| D5 | **refused** — .copyWithin( | passes — only update/push/splice searched | **refused** — .copyWithin( | passes — `.copyWithin(` not searched | passes — `.copyWithin(` not searched | passes — `.copyWithin(` not searched | passes — `.copyWithin(` not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| D6 | n/a — reorders (WO-1.83) | n/a — reorders (WO-1.84 Traps) | **refused** — .sort( | n/a — reorders (WO-1.84 Traps) (probe: red) | n/a — reorders (WO-1.84 Traps) | n/a — reorders (WO-1.84 Traps) (probe: red) | n/a — reorders (WO-1.84 Traps) (probe: red) | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| D7 | n/a — reorders (WO-1.83) | n/a — reorders (WO-1.84 Traps) | **refused** — .reverse( | n/a — reorders (WO-1.84 Traps) (probe: red) | n/a — reorders (WO-1.84 Traps) | n/a — reorders (WO-1.84 Traps) (probe: red) | n/a — reorders (WO-1.84 Traps) (probe: red) | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| D8 | n/a — adds only | passes — only update/push/splice searched | **refused** — .unshift( | **refused** — line scan | passes — `.unshift(` not searched | **refused** — line scan | **refused** — line scan | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| D9 | **refused** — push count 3 | **refused** — push/splice search | **refused** — push count 2 | **refused** — line scan | passes — `.push(` not searched | **refused** — line scan | **refused** — line scan | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| D10 | **refused** — .splice( | **refused** — push/splice search | **refused** — .splice( | passes — method via alias not searched | passes — method via alias not searched | passes — method via alias not searched | passes — method via alias not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| D11 | passes — `['splice'](` not searched | passes — only update/push/splice searched | passes — `['splice'](` not searched | passes — `['splice'](` not searched | **refused** — claim 5, not 4 | passes — `['splice'](` not searched | passes — `['splice'](` not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| D12 | passes — `Array.prototype.splice.call` not searched | passes — only update/push/splice searched | passes — `Array.prototype.splice.call` not searched | passes — `Array.prototype.splice.call` not searched | passes — `Array.prototype.splice.call` not searched | passes — `Array.prototype.splice.call` not searched | passes — `Array.prototype.splice.call` not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| E1 | **refused** — delete d.log | passes — only update/push/splice searched | **refused** — delete | passes — `delete R.K` not searched | passes — `delete R.K` not searched | passes — `delete R.K` not searched | passes — `delete R.K` not searched | **refused** — a member read | n/a — outside its claim |
+| E2 | passes — `delete R['K']` not searched | passes — only update/push/splice searched | **refused** — delete | passes — `delete R['K']` not searched | **refused** — claim 5, not 4 | passes — `delete R['K']` not searched | passes — `delete R['K']` not searched | **refused** — a bracket read | n/a — outside its claim |
+| E3 | passes — `delete R[k]` not searched | passes — only update/push/splice searched | **refused** — delete | passes — `delete R[k]` not searched | **refused** — claim 5, not 4 | passes — `delete R[k]` not searched | passes — `delete R[k]` not searched | passes — `delete R[k]` not searched | n/a — outside its claim |
+| E4 | **refused** — delete d.log | passes — only update/push/splice searched | **refused** — delete | passes — `delete C[0]` not searched | passes — `delete C[0]` not searched | passes — `delete C[0]` not searched | passes — `delete C[0]` not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| E5 | **refused** — delete d.log | passes — only update/push/splice searched | **refused** — delete | passes — `delete` entry field not searched | passes — `delete` entry field not searched | passes — `delete` entry field not searched | passes — `delete` entry field not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| F1 | passes — `Object.assign(R, …)` not searched | passes — only update/push/splice searched | **refused** — Object.assign( | passes — `Object.assign(R, …)` not searched | passes — `Object.assign(R, …)` not searched | passes — `Object.assign(R, …)` not searched | passes — `Object.assign(R, …)` not searched | passes — `Object.assign(R, …)` not searched | n/a — outside its claim |
+| F2 | passes — `Object.assign(C, …)` not searched | passes — only update/push/splice searched | **refused** — Object.assign( | passes — `Object.assign(C, …)` not searched | passes — `Object.assign(C, …)` not searched | passes — `Object.assign(C, …)` not searched | passes — `Object.assign(C, …)` not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| F3 | passes — `Reflect.set` not searched | passes — only update/push/splice searched | passes — `Reflect.set` not searched | passes — `Reflect.set` not searched | passes — `Reflect.set` not searched | passes — `Reflect.set` not searched | passes — `Reflect.set` not searched | passes — `Reflect.set` not searched | n/a — outside its claim |
+| F4 | passes — `Reflect.deleteProperty` not searched | passes — only update/push/splice searched | passes — `Reflect.deleteProperty` not searched | passes — `Reflect.deleteProperty` not searched | passes — `Reflect.deleteProperty` not searched | passes — `Reflect.deleteProperty` not searched | passes — `Reflect.deleteProperty` not searched | passes — `Reflect.deleteProperty` not searched | n/a — outside its claim |
+| F5 | passes — `Object.defineProperty` not searched | passes — only update/push/splice searched | passes — `Object.defineProperty` not searched | passes — `Object.defineProperty` not searched | passes — `Object.defineProperty` not searched | passes — `Object.defineProperty` not searched | passes — `Object.defineProperty` not searched | passes — `Object.defineProperty` not searched | n/a — outside its claim |
+| F6 | passes — `Reflect.set(C, 'length')` not searched | passes — only update/push/splice searched | passes — `Reflect.set(C, 'length')` not searched | passes — `Reflect.set(C, 'length')` not searched | passes — `Reflect.set(C, 'length')` not searched | passes — `Reflect.set(C, 'length')` not searched | passes — `Reflect.set(C, 'length')` not searched | n/a — `held` is a boolean (probe: red) | n/a — outside its claim |
+| G1 | passes — bare `restoreDocument(` not searched | passes — only update/push/splice searched | passes — bare `restoreDocument(` not searched | passes — bare `restoreDocument(` not searched | **refused** — claim 4 | passes — bare `restoreDocument(` not searched | passes — bare `restoreDocument(` not searched | n/a — not a write of the key | passes — bare `restoreDocument(` not searched |
+| G2 | passes — `store.restoreDocument(` not searched | passes — only update/push/splice searched | passes — `store.restoreDocument(` not searched | passes — `store.restoreDocument(` not searched | **refused** — claim 4 | passes — `store.restoreDocument(` not searched | passes — `store.restoreDocument(` not searched | n/a — not a write of the key | **refused** — store.* call |
+| G3 | passes — `store.adoptRemoteDocument(` not searched | passes — only update/push/splice searched | passes — `store.adoptRemoteDocument(` not searched | passes — `store.adoptRemoteDocument(` not searched | passes — `store.adoptRemoteDocument(` not searched | passes — `store.adoptRemoteDocument(` not searched | passes — `store.adoptRemoteDocument(` not searched | n/a — not a write of the key | **refused** — store.* call |
+
+**Tallies** (refused · passes · n/a, out of 52):
+
+- F1: 19 refused · 27 passes · 6 n/a
+- F2: 3 refused · 47 passes · 2 n/a
+- F3: 21 refused · 31 passes · 0 n/a
+- F4: 7 refused · 43 passes · 2 n/a
+- F5: 11 refused · 39 passes · 2 n/a
+- F6a: 7 refused · 43 passes · 2 n/a
+- F6b: 7 refused · 43 passes · 2 n/a
+- F7: 15 refused · 6 passes · 31 n/a
+- F8: 2 refused · 1 passes · 49 n/a
+
+#### Does each fence's own prose claim more than the table supports?
+
+The prose read for each fence is its detail line (the check's title and detail), the comment above
+it, and its `tools/README.md` entry where it has one.
+
+- **F1, log-entries: overclaims.**
+  - The title says "there is no … delete, reassignment of .log, … or bracketed log key assigned
+    anywhere in its code". But `delete d['log']` (E2) and `delete d[k]` (E3) pass, so there can be
+    a `delete` that it misses. `d.log += ''` (A6), `-=` (A8), `&&=` (A9), `[d.log] = [[]]` (A12)
+    and `({ log: d.log } = …)` (A13) pass, so there can be a reassignment of `.log` that it misses.
+    `d['log'] += ""` (A7) is a bracketed key being assigned, and it passes.
+  - The comment says "a grep proves there is nothing in the file that could do otherwise on any
+    input".
+  - The detail line's *"A fence, not a reading: d.log.length--, … (l = d.log; l[0] = x),
+    d['log'][0] = x, … (d[k] = []) and Object.assign(d, { log: [] }) all pass it"* is **true for
+    every shape it names**: C2, B3, B2, A5 and F1 all pass. But the table has **22 more**
+    removing or overwriting shapes passing that it does not name: A6–A9, A12, A13, B4–B6, C4,
+    D11, D12, E2, E3, F2, F4–F6 and G1–G3.
+  - The comment's *"It knows those shapes and nothing else"* is accurate, and it also names
+    `Reflect.set` (F3), which does pass.
+  - It has no `tools/README.md` entry beyond the check-count ledger.
+- **F2, contact-log: overclaims, and by the widest margin.** Its title says "could not write on any
+  input: no update(), no push, no splice and no store mutation anywhere in
+  src/contact-history.js", and its comment says "a grep proves there is nothing in the file that
+  could do otherwise on any input". It searches for three tokens, so **47 of the 50** shapes inside
+  its claim pass,
+  including `doc.log.length = 0`, `delete doc.log` and `store.restoreDocument(…)`. The file it
+  guards imports `getDoc`, so a store mutation is a single line away. It has no `tools/README.md`
+  entry for the claim.
+- **F3, term-record: overclaims.**
+  - The title says "the create-on-first-write guard is its only other line touching the block, and
+    nowhere in the code is there a splice, pop, shift, sort, delete, assignment into the array or
+    lookup of a record by its id". The comment says "reading proves there is nothing in the file
+    that could do otherwise".
+  - **31 pass**, including all six `.length` shapes (C1–C6), every bracketed or compound
+    reassignment (A2–A13), an index write through a bracketed key (B2) or an alias (B3), and
+    entry edits (B4, B5). "Only other line touching the block" and "assignment into the array" are
+    not what the code establishes.
+  - It says nothing about what passes: there is no *fence, not a reading* line.
+  - It has no `tools/README.md` entry for the claim. Its ledger paragraph is about the CRLF scar.
+- **F4, § 17: overclaims.**
+  - The name says "reads and never writes". The detail says "no store call, no doc mutation". The
+    comment says "this proves there is nothing in the file that COULD write, on any input,
+    including the ones nobody thought to seed".
+  - `tools/README.md` (the paragraph beginning *"The other half of WO-6.2's evidence"*) says it
+    "contains no store call, no document mutation" and that "the grep proves there is nothing in
+    the file that could write on any input".
+  - **43 pass**: every bracketed key, every compound operator, every `.length` write, every
+    `delete`, index and entry writes, `.copyWithin(`, writes through an alias, reflective calls
+    and both document swaps. Its `.sort(` and `.reverse(` refusals are n/a under the work order's
+    Traps.
+  - Aside: that README paragraph says "eleven writer names", and the `WRITERS` alternation at
+    `tools/wo-sweep.mjs:1470` lists twelve. This is a count, not a cell, and is noted for whoever
+    edits the paragraph.
+- **F5, § 20 claim 4: overclaims.**
+  - Claim 4 says "The resolver has no writer". The detail says "no writer … and no store import".
+  - Claim 4's own code (`WRITER`, plus the store import) refuses only G1 and G2 (and `update(`, the
+    control). Nine more shapes are refused, all **by claim 5** (a dynamic property read), because
+    each puts a bracket after a name: A2–A5, A7, B2, D11, E2, E3. That refusal is real, but it is
+    not claim 4's.
+  - **39 pass**, including `doc.students = []`, `.push(`, `.splice(`, `.length = 0` and
+    `delete doc.students`.
+  - One thing narrows it: `getDoc(` is in `WRITER` and the store import is refused, so the only
+    document the resolver can reach is one handed to it. A write to that document is still a
+    write.
+- **F6, § 24: overclaims, in both halves.**
+  - The name says "writes nothing". The detail says "no store call, no doc mutation … copyDraft() …
+    reaches no writer". The comment says "nothing in `src/outreach.js` that COULD write on any
+    input, and nothing inside `copyDraft()` that reaches a writer".
+  - The `tools/README.md` row for `wo-sweep.mjs` says "`src/outreach.js` has no writer in it at all
+    and `copyDraft()` in its neighbour reaches none".
+  - It uses § 17's `MUTATES`, so the result is the same: **43 pass in each half**. Inside
+    `copyDraft()`, a store call written as `store.restoreDocument(` (G2) passes `WRITERS`, so the
+    claim that the function reaches no writer is not established.
+- **F7, § 30: overclaims, narrowly.**
+  - The comment says "AND ONE WRITER … In that file, and nowhere else, a member match is let
+    through". The fault text says "The one file that may WRITE the key is src/held-column.js".
+    `tools/README.md` says "**the writer**, `src/held-column.js`, let through by file and by
+    **shape**".
+  - **6 pass** in a file outside the writer's: `a[k] = …` (A5), `delete a[k]` (E3),
+    `Object.assign(a, { held })` (F1), `Reflect.set` (F3), `Reflect.deleteProperty` (F4) and
+    `Object.defineProperty` (F5).
+  - Its *WHAT IT DOES NOT SEE* list names "a key named by a value (`a[key]` …)", which covers A5
+    and E3. Those two cells **match**. The four reflective writes are not named anywhere, and they
+    **overclaim**. Every member, bracketed and destructuring write of `held` is refused.
+- **F8, front-door: overclaims, narrowly.** The title says "src/front-door.js calls no open(), no
+  setPref() and no store function but that one". G1, a store function called by bare name after a
+  named import, **passes**, because only `store.`-prefixed calls are read. G2 and G3 are refused.
+  Today the file imports `* as store` (`src/front-door.js:76`), so the claim holds for the import
+  form now in use, though not for every form. The `yearDatabaseListed()` half in `src/store.js` was
+  not planted, because no shape in the catalogue is an IndexedDB open.
+
+#### Recommendation for the correction
+
+Nothing is booked from this. Booking is the owner's call. The recommendation is three work orders,
+and the first one stands on its own even if the other two are never booked.
+
+*Booked 2026-10-25, owner-directed, after the verdict and as recommended: 1 as WO-1.85, 2 as
+WO-1.86 and 3 as WO-1.87, each depending on WO-1.85.*
+
+**1. S: say what passes, everywhere.** This is prose only, and no assertion moves.
+
+- Strike *"on any input"*, *"could not write"* and *"nothing … could do otherwise"* from the
+  comments and detail lines of F1–F6, and from the § 17 paragraph in `tools/README.md`. In their
+  place, give each fence a *fence, not a reading* clause that names the families the table shows
+  passing.
+- F7 names the four reflective writes. F8 names "a store function imported by name".
+- It is safe to land first, because each later work order rewrites the passing list for the fences
+  it narrows. And it ends the overclaim even if nothing is ever widened: prose that runs ahead of
+  its code is the defect this chain of work orders started from (WO-1.82).
+
+**2. M: the two append-only fences, F1 and F3, close what a token or one regex settles.** Here
+symmetry is argued rather than assumed: both fences make the same claim about the same kind of
+writer, which WO-3.72's header says it copied from `src/log.js`.
+
+- **Worth refusing**, every one of them removes or overwrites, and each is a grep with no ambiguity
+  about what it means:
+  - the compound family on the dotted and bracketed key (A6–A9). This is the item where the log
+    check's patterns disagree with its own argument;
+  - `delete` in every key form (E2, E3). F3 already refuses a bare `delete `;
+  - `.length` update expressions (C2, C4);
+  - F3 gains WO-1.83's `.length` and bracketed-key patterns (C1, C3, C5, A2–A4);
+  - `Reflect.set`, `Reflect.deleteProperty` and `Object.defineProperty` by name (F3–F6);
+  - `restoreDocument(` and `adoptRemoteDocument(` by name (G1–G3).
+- **Belongs in the *fence, not a reading* line:**
+  - computed keys (A5), because what a variable holds is a reading;
+  - destructuring (A12, A13), because the pattern is general enough that a grep would cry wolf;
+  - entry edits (B4–B6, E5), because a grep cannot tell building a new entry before the push from
+    editing a stored one;
+  - `['splice'](` and `Array.prototype.….call` (D11, D12);
+  - `Object.assign` in F1, unless the correction finds no legitimate use of it in `src/log.js`.
+    F3 refuses it outright today.
+- Before any of these lands, each token is argued per file against the file's legitimate code, as
+  WO-1.83 did. **This inventory has not checked whether `src/log.js` or `src/term-record.js` holds
+  a legitimate `delete` or `Reflect.` call.** It only ran shapes against the fences.
+
+**3. M: the whole-file no-writer fences, F2, F4, F5 and F6.**
+
+- **One widened `MUTATES`**, shared in text by § 17 and § 24, which are already identical:
+  bracketed root keys, index writes, `.length` writes, `delete`, the compound family and
+  `.copyWithin(`. Add the two document-swap names to both `WRITERS` lists.
+- **Then the owner rules on F2 and F5.** Each either adopts that shape or narrows its words to what
+  it searches (`update`/`push`/`splice`, and named store calls plus no store import).
+- **Belongs in the fence line:** writes through an alias of the root (A14, B3, B5, C5, D10), which
+  are the WO-1.83 alias family; computed keys; borrowed prototype methods; and reflective calls if a
+  legitimate use exists in these files. That last point is unchecked here.
+
+**Not recommended:** one shape list as a shared module under `tools/` imported by both
+`verify-shell.mjs` sections and `wo-sweep.mjs`. It is tempting, because this inventory needed one
+catalogue. But each fence reads a different file with a different set of legitimate operations, and
+WO-1.83 ruled per token, not by symmetry. A shared list would apply every token to every file. Name
+it as the option it is, rather than book it.
+
+#### Acceptance
+
+- [x] `TESTING.md` § WO-1.84 lists every fence the search found, each with its file, line and the
+      source file it guards, and states the search that found them.
+      — The table under *The fences, and the search that found them* lists eight fences (F1–F8,
+      F6 probed in two halves), each with its `file:line` and the file the code actually reads.
+      The commands are given there, and every hit is triaged, kept or excluded with a reason. One
+      discrepancy is recorded: F2 searches `src/contact-history.js`, not `src/log.js`.
+- [x] The catalogue is in `TESTING.md` § WO-1.84, and every shape carries its *removes*, *reorders*
+      or *adds* reading.
+      — 52 shapes, A1–G3, each with a reading and a one-line reason: 45 remove or overwrite, two
+      reorder (D6, D7) and five add (A10, A11, C6, D8, D9).
+- [x] Every cell of the fence-by-shape table is filled, and each *passes* cell has been produced by
+      the probe, not by reading the regex.
+      — 52 × 9 = 468 cells, all filled. The table is rendered from `probe.json` by `table.mjs`,
+      whose only input besides the probe's results is the n/a map quoted below. The probe executes
+      each fence's own code, sliced by anchors, and every fence's controls held (clean file PASS,
+      known-refused shape refused).
+- [x] Each fence's own prose is marked as matching the table or overclaiming, quoting the words.
+      — Under *Does each fence's own prose claim more than the table supports?*: all eight are
+      marked, with quotes. F7 is split: the two shapes its prose names match, and the four it does
+      not name overclaim.
+- [x] No file under `src/` or `tools/` differs from `HEAD` when the work order closes, apart from
+      `TESTING.md`, `CHANGELOG.md` and this phase file. `node tools/verify-shell.mjs` and
+      `node tools/wo-sweep.mjs` pass.
+      — `git diff --stat -- src/ tools/` and `git diff --cached --stat -- src/ tools/` print
+      nothing, and `git status --porcelain -- src tools` is empty. The probe and its outputs live only
+      in the scratchpad. `grep -rln "MUTATION WO-1.84\|wo184" src/ tools/` finds nothing. The bare
+      `grep -rn MUTATION src/` finds only `src/shell.js:1077`, the prose line already at HEAD that
+      § WO-1.83 records. `node tools/verify-shell.mjs`, run on this tree with `src/` and `tools/`
+      at HEAD and waited out to its exit, printed *2117 checks · 2117 passed · 0 failed · 0 skipped*,
+      *67,537 lines · 31.9 lines per check · 1146s*, `EXIT=0`. The harness reads no
+      `TESTING.md`, `CHANGELOG.md` or `plans/` file (`grep -rnE "readFile(Sync)?([^)]*(TESTING|CHANGELOG|plans)" tools/verify tools/verify-shell.mjs`
+      is empty), so writing this section after that run does not change what it measured.
+      `node tools/wo-sweep.mjs` was run after this section, the changelog and the ticks were
+      written: `EXIT=0`, *52 checks · 49 passed · 0 failed · 3 to review*, the three standing reviews.
+- [x] `TESTING.md` § WO-1.84 carries these lines verbatim with the evidence for each.
+      — This section.
+
+#### The probe's source
+
+The probe is `probe.mjs`, run from the session scratchpad and not committed. Its source as run:
+
+```js
+// WO-1.84 probe — runs each fence's OWN code, sliced out of the harness file at probe time, against
+// an in-memory copy of the guarded source with one shape appended. Nothing is written to disk.
+// No regex or token list from any fence is retyped here: every pattern a fence uses arrives inside
+// the slice. Usage: node probe.mjs [--json]
+import realFs from 'node:fs';
+import realFsP from 'node:fs/promises';
+import path from 'node:path';
+
+const ROOT = 'c:\\dev\\planbook';
+const read = (rel) => realFs.readFileSync(path.join(ROOT, rel), 'utf8');
+
+// ── slicing: by stable anchors, and loud when an anchor is not found ──
+function slice(text, start, end, { includeEnd = true, from = 0 } = {}) {
+  const a = text.indexOf(start, from);
+  if (a < 0) throw new Error('start anchor not found: ' + start.slice(0, 60));
+  const b = text.indexOf(end, a + start.length);
+  if (b < 0) throw new Error('end anchor not found: ' + end.slice(0, 60));
+  return text.slice(a, includeEnd ? b + end.length : b);
+}
+
+// ── an fs whose reads of the planted file(s) return the planted text ──
+const key = (p) => path.resolve(p).toLowerCase();
+function fakeFs(over) {
+  const has = (p) => over.has(key(p));
+  const sync = Object.assign(Object.create(realFs), {
+    readFileSync: (p, enc) => (has(p) ? over.get(key(p)) : realFs.readFileSync(p, enc)),
+    existsSync: (p) => has(p) || realFs.existsSync(p),
+  });
+  const prom = Object.assign(Object.create(realFsP), {
+    readFile: async (p, enc) => (has(p) ? over.get(key(p)) : realFsP.readFile(p, enc)),
+  });
+  return { sync, prom };
+}
+const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+
+// ── the harness texts, read once ──
+const LOGE = read('tools/verify/log-entries.mjs');
+const CONT = read('tools/verify/contact-log.mjs');
+const TERM = read('tools/verify/term-record.mjs');
+const DOOR = read('tools/verify/front-door.mjs');
+const SWEEP = read('tools/wo-sweep.mjs');
+
+const SWEEP_HELPERS = [
+  slice(SWEEP, 'function report(hits) {', '\n}\n'),
+  slice(SWEEP, 'function commentLines(file) {', '\n}\n'),
+  slice(SWEEP, 'function walk(dir, out = []) {', '\n}\n'),
+  slice(SWEEP, "const IGNORE_DIRS = new Set(", ';\n'),
+  slice(SWEEP, 'const ALL = walk(REPO);', '\n'),
+  slice(SWEEP, 'const rel = p => ', '\n'),
+].join('\n');
+const sweepBlock = (startName, nextBanner) =>
+  slice(SWEEP, "{\n  const NAME = " + startName, '\n}\n\n' + nextBanner, { includeEnd: false }) + '\n}\n';
+
+const CODE = {
+  log: slice(LOGE, "const logSource = await fs.readFile(path.join(ROOT, 'src/log.js'), 'utf8');",
+    "all pass it');"),
+  contactEval: slice(CONT, 'const readOnly = await evalJs(`', '})()`);'),
+  contactCheck: slice(CONT, "check('the history surface is a READER", "JSON.stringify(readOnly.imports.slice(0, 200)));"),
+  term: slice(TERM, "const source = await fs.readFile(path.join(ROOT, 'src/term-record.js'), 'utf8');",
+    "engineImportsBack: engineSource.indexOf('term-record') !== -1 }));"),
+  door: slice(DOOR, 'const strip = (t) => t.replace(', "+ ', boot at ' + bootCallAt);"),
+  s17: sweepBlock("'src/calendar-derived.js reads and never writes", '/* ══════ 18.'),
+  s20: sweepBlock("'the merge-field resolver whitelists", '/* ────────────────────────────── prose helpers'),
+  s24: sweepBlock("'the clipboard copy writes nothing", '/* ══════ 25.'),
+  s30: sweepBlock("'an assignment\\'s `held` is read only", '/* ────────────────────────────── the script scanner'),
+};
+
+// ── running one fence's code ──
+async function runVerify(code, over) {
+  const out = [];
+  const check = (name, ok, detail) => out.push({ name, ok: !!ok, detail: String(detail || '') });
+  const { prom } = fakeFs(over);
+  await new AsyncFunction('fs', 'path', 'ROOT', 'check', code)(prom, path, ROOT, check);
+  return out;
+}
+function runSweep(code, over) {
+  const out = [];
+  const check = (name, ok, detail) => out.push({ name, ok: !!ok, detail: String(detail || '') });
+  const { sync } = fakeFs(over);
+  new Function('fs', 'path', 'REPO', 'check', 'VERBOSE', SWEEP_HELPERS + '\n' + code)(sync, path, ROOT, check, false);
+  return out;
+}
+async function runContact(over) {
+  // The page-side code is a template literal in the harness; evaluate it as one to get the exact
+  // string the browser receives, then run that string with fetch answering from disk / the plant.
+  const body = CODE.contactEval.slice('const readOnly = await evalJs(`'.length, -'`);'.length);
+  const pageCode = new Function('return `' + body + '`')();
+  const fetch = async (url) => {
+    const p = path.join(ROOT, url.replace(/^\//, ''));
+    const text = over.has(key(p)) ? over.get(key(p)) : realFs.readFileSync(p, 'utf8');
+    return { text: async () => text };
+  };
+  const readOnly = await new Function('fetch', 'return ' + pageCode)(fetch);
+  const out = [];
+  const check = (name, ok, detail) => out.push({ name, ok: !!ok, detail: String(detail || '') });
+  new Function('readOnly', 'check', CODE.contactCheck)(readOnly, check);
+  out[0].readOnly = readOnly;
+  return out;
+}
+
+// ── the fences: guarded file, where a plant goes, and the names the shapes use ──
+const appendAtEnd = (src, line) => src.replace(/\n*$/, '\n') + 'function wo184Probe(d, doc, a, k, x, l, e, doc0, store) {\n  ' + line + '\n}\n';
+const insertInCopyDraft = (src, line) => {
+  const at = src.indexOf('export function copyDraft(');
+  if (at < 0) throw new Error('copyDraft not found');
+  const close = src.indexOf('\n}\n', at);
+  return src.slice(0, close) + '\n  ' + line + src.slice(close);
+};
+const FENCES = [
+  { id: 'log', file: 'src/log.js', R: 'd', K: 'log', run: (o) => runVerify(CODE.log, o), plant: appendAtEnd, control: 'd.log.splice(0, 1);' },
+  { id: 'contact', file: 'src/contact-history.js', R: 'doc', K: 'log', run: runContact, plant: appendAtEnd, control: 'doc.log.splice(0, 1);' },
+  { id: 'term', file: 'src/term-record.js', R: 'd', K: 'termRecords', run: (o) => runVerify(CODE.term, o), plant: appendAtEnd, control: 'd.termRecords.splice(0, 1);' },
+  { id: 's17', file: 'src/calendar-derived.js', R: 'doc', K: 'events', run: (o) => runSweep(CODE.s17, o), plant: appendAtEnd, control: 'doc.events.splice(0, 1);' },
+  { id: 's20', file: 'src/merge-fields.js', R: 'doc', K: 'students', run: (o) => runSweep(CODE.s20, o), plant: appendAtEnd, control: 'update((d) => d);' },
+  { id: 's24m', file: 'src/outreach.js', R: 'doc', K: 'log', run: (o) => runSweep(CODE.s24, o), plant: appendAtEnd, control: 'doc.log.splice(0, 1);' },
+  { id: 's24v', file: 'src/outreach-view.js', R: 'doc', K: 'log', run: (o) => runSweep(CODE.s24, o), plant: insertInCopyDraft, control: 'doc.log.splice(0, 1);' },
+  { id: 's30', file: 'src/signals.js', R: 'a', K: 'held', run: (o) => runSweep(CODE.s30, o), plant: appendAtEnd, control: 'a.held = false;' },
+  { id: 'door', file: 'src/front-door.js', R: 'doc', K: 'log', run: (o) => runVerify(CODE.door, o), plant: appendAtEnd, control: 'setPref("openYear", 1);' },
+];
+
+// ── the catalogue: one template per shape, over root R and key K ──
+const SHAPES = [
+  ['A1', (R, K) => `${R}.${K} = [];`],
+  ['A2', (R, K) => `${R}['${K}'] = [];`],
+  ['A3', (R, K) => `${R}["${K}"] = [];`],
+  ['A4', (R, K) => `${R}[\`${K}\`] = [];`],
+  ['A5', (R, K) => `${R}[k] = [];`],
+  ['A6', (R, K) => `${R}.${K} += '';`],
+  ['A7', (R, K) => `${R}['${K}'] += "";`],
+  ['A8', (R, K) => `${R}.${K} -= 1;`],
+  ['A9', (R, K) => `${R}.${K} &&= [];`],
+  ['A10', (R, K) => `${R}.${K} ||= [];`],
+  ['A11', (R, K) => `${R}.${K} ??= [];`],
+  ['A12', (R, K) => `[${R}.${K}] = [[]];`],
+  ['A13', (R, K) => `({ ${K}: ${R}.${K} } = { ${K}: [] });`],
+  ['A14', (R, K) => `const x = ${R}; x.${K} = [];`],
+  ['B1', (R, K) => `${R}.${K}[0] = null;`],
+  ['B2', (R, K) => `${R}['${K}'][0] = null;`],
+  ['B3', (R, K) => `const l = ${R}.${K}; l[0] = null;`],
+  ['B4', (R, K) => `${R}.${K}[0].subject = 'x';`],
+  ['B5', (R, K) => `const e = ${R}.${K}[0]; e.subject = 'x';`],
+  ['B6', (R, K) => `${R}.${K}.find((e) => e).subject = 'x';`],
+  ['C1', (R, K) => `${R}.${K}.length = 0;`],
+  ['C2', (R, K) => `${R}.${K}.length--;`],
+  ['C3', (R, K) => `${R}.${K}.length -= 1;`],
+  ['C4', (R, K) => `--${R}.${K}.length;`],
+  ['C5', (R, K) => `const l = ${R}.${K}; l.length = 0;`],
+  ['C6', (R, K) => `${R}.${K}.length++;`],
+  ['D1', (R, K) => `${R}.${K}.splice(0, 1);`],
+  ['D2', (R, K) => `${R}.${K}.pop();`],
+  ['D3', (R, K) => `${R}.${K}.shift();`],
+  ['D4', (R, K) => `${R}.${K}.fill(null);`],
+  ['D5', (R, K) => `${R}.${K}.copyWithin(0, 1);`],
+  ['D6', (R, K) => `${R}.${K}.sort();`],
+  ['D7', (R, K) => `${R}.${K}.reverse();`],
+  ['D8', (R, K) => `${R}.${K}.unshift(e);`],
+  ['D9', (R, K) => `${R}.${K}.push(e);`],
+  ['D10', (R, K) => `const l = ${R}.${K}; l.splice(0, 1);`],
+  ['D11', (R, K) => `${R}.${K}['splice'](0, 1);`],
+  ['D12', (R, K) => `Array.prototype.splice.call(${R}.${K}, 0, 1);`],
+  ['E1', (R, K) => `delete ${R}.${K};`],
+  ['E2', (R, K) => `delete ${R}['${K}'];`],
+  ['E3', (R, K) => `delete ${R}[k];`],
+  ['E4', (R, K) => `delete ${R}.${K}[0];`],
+  ['E5', (R, K) => `delete ${R}.${K}[0].subject;`],
+  ['F1', (R, K) => `Object.assign(${R}, { ${K}: [] });`],
+  ['F2', (R, K) => `Object.assign(${R}.${K}, [null]);`],
+  ['F3', (R, K) => `Reflect.set(${R}, '${K}', []);`],
+  ['F4', (R, K) => `Reflect.deleteProperty(${R}, '${K}');`],
+  ['F5', (R, K) => `Object.defineProperty(${R}, '${K}', { value: [] });`],
+  ['F6', (R, K) => `Reflect.set(${R}.${K}, 'length', 0);`],
+  ['G1', () => `restoreDocument(doc0);`],
+  ['G2', () => `store.restoreDocument(doc0);`],
+  ['G3', () => `store.adoptRemoteDocument(doc0);`],
+];
+
+function summary(res) {
+  const r = res[0];
+  return { ok: r.ok, detail: r.detail };
+}
+
+const results = {};
+let problems = 0;
+for (const f of FENCES) {
+  const abs = path.join(ROOT, f.file);
+  const clean = realFs.readFileSync(abs, 'utf8');
+  const runWith = async (text) => summary(await f.run(new Map([[key(abs), text]])));
+  const base = await runWith(clean);
+  const ctl = await runWith(f.plant(clean, f.control));
+  const okControls = base.ok === true && ctl.ok === false;
+  if (!okControls) problems++;
+  results[f.id] = { file: f.file, R: f.R, K: f.K, baseline: base, control: { shape: f.control, ...ctl }, okControls, cells: {} };
+  for (const [id, tpl] of SHAPES) {
+    const line = tpl(f.R, f.K);
+    const planted = f.plant(clean, line);
+    if (planted === clean || planted.indexOf(line) < 0) throw new Error('plant did not land: ' + f.id + ' ' + id);
+    const r = await runWith(planted);
+    results[f.id].cells[id] = { line, refused: !r.ok, detail: r.detail };
+  }
+}
+
+if (process.argv.includes('--json')) {
+  console.log(JSON.stringify(results, null, 1));
+} else {
+  for (const [fid, r] of Object.entries(results)) {
+    console.log(`\n== ${fid} (${r.file}) baseline=${r.baseline.ok ? 'PASS' : 'FAIL'} control[${r.control.shape}]=${r.control.ok ? 'PASS(!)' : 'REFUSED'} controls ${r.okControls ? 'OK' : 'BROKEN'}`);
+    if (!r.baseline.ok) console.log('   baseline detail: ' + r.baseline.detail.slice(0, 300));
+    for (const [sid, c] of Object.entries(r.cells)) {
+      console.log(`   ${sid.padEnd(4)} ${c.refused ? 'REFUSED' : 'passes '}  ${c.line}` + (c.refused ? '   :: ' + c.detail.slice(0, 160).replace(/\s+/g, ' ') : ''));
+    }
+  }
+  console.log('\ncontrol problems: ' + problems);
+}
+```
+
+The renderer is `table.mjs`, which turns `probe.json` into the table above. The n/a map in it is
+the claim reading argued above, and it is the only judgment it adds:
+
+```js
+// Renders probe.json as the fence-by-shape matrix for TESTING.md § WO-1.84. Verdicts come from the
+// probe; the n/a rulings are the claim readings argued in the section and are listed here by name.
+import fs from 'node:fs';
+const r = JSON.parse(fs.readFileSync(new URL('./probe.json', import.meta.url), 'utf8'));
+const FEAT = {
+  A1: 'plain `=`', A2: "`['K']` key", A3: '`["K"]` key', A4: 'template-literal key', A5: 'computed key `[k]`',
+  A6: '`+=`', A7: "`['K'] +=`", A8: '`-=`', A9: '`&&=`', A10: '`||=`', A11: '`??=`', A12: 'array destructuring',
+  A13: 'object destructuring', A14: 'root through an alias', B1: 'index write', B2: "`['K'][0] =`",
+  B3: 'index write via alias', B4: 'entry field write', B5: 'entry field via alias', B6: 'entry found by `.find(`',
+  C1: '`.length =`', C2: '`length--`', C3: '`.length -=`', C4: 'prefix `--length`', C5: '`.length =` via alias',
+  C6: '`length++`', D1: '`.splice(`', D2: '`.pop(`', D3: '`.shift(`', D4: '`.fill(`', D5: '`.copyWithin(`',
+  D6: '`.sort(`', D7: '`.reverse(`', D8: '`.unshift(`', D9: '`.push(`', D10: 'method via alias',
+  D11: "`['splice'](`", D12: '`Array.prototype.splice.call`', E1: '`delete R.K`', E2: "`delete R['K']`",
+  E3: '`delete R[k]`', E4: '`delete C[0]`', E5: '`delete` entry field', F1: '`Object.assign(R, …)`',
+  F2: '`Object.assign(C, …)`', F3: '`Reflect.set`', F4: '`Reflect.deleteProperty`', F5: '`Object.defineProperty`',
+  F6: "`Reflect.set(C, 'length')`", G1: 'bare `restoreDocument(`', G2: '`store.restoreDocument(`',
+  G3: '`store.adoptRemoteDocument(`',
+};
+const NA = {
+  log: { D6: 'reorders (WO-1.83)', D7: 'reorders (WO-1.83)', D8: 'adds only', A10: 'adds only', A11: 'adds only', C6: 'adds only' },
+  s30: Object.fromEntries(['B1','B2','B3','B4','B5','B6','C1','C2','C3','C4','C5','C6','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','E4','E5','F2','F6']
+    .map((s) => [s, '`held` is a boolean']).concat(['G1','G2','G3'].map((s) => [s, 'not a write of the key']))),
+  contact: { D6: 'reorders (WO-1.84 Traps)', D7: 'reorders (WO-1.84 Traps)' },
+  s17: { D6: 'reorders (WO-1.84 Traps)', D7: 'reorders (WO-1.84 Traps)' },
+  s20: { D6: 'reorders (WO-1.84 Traps)', D7: 'reorders (WO-1.84 Traps)' },
+  s24m: { D6: 'reorders (WO-1.84 Traps)', D7: 'reorders (WO-1.84 Traps)' },
+  s24v: { D6: 'reorders (WO-1.84 Traps)', D7: 'reorders (WO-1.84 Traps)' },
+  door: Object.fromEntries(Object.keys(FEAT).filter((s) => !s.startsWith('G')).map((s) => [s, 'outside its claim'])),
+};
+function why(f, c) {
+  const d = c.detail;
+  if (f === 'log') {
+    const m = d.match(/removers found: (\[.*?"\]);/);
+    const p = d.match(/push count (\d+)/);
+    return m ? JSON.parse(m[1]).join(', ') : p ? `push count ${p[1]}` : '?';
+  }
+  if (f === 'term') {
+    const j = JSON.parse(d);
+    return j.found.length ? j.found.map((x) => x.trim()).join(', ') : `push count ${j.pushes}`;
+  }
+  if (f === 'contact') return d.length ? 'push/splice search' : '?';
+  if (f === 's17' || f === 's24m' || f === 's24v') return 'line scan';
+  if (f === 's20') return /DYNAMIC PROPERTY READ/.test(d) ? 'claim 5, not 4' : /writes at/.test(d) ? 'claim 4' : '?';
+  if (f === 's30') {
+    const m = d.match(/\((a member read|a bracket read|`held` destructured)[^)]*\)/);
+    return m ? m[1].replace('`held` ', '') : '?';
+  }
+  if (f === 'door') return 'store.* call';
+  return '?';
+}
+const fences = Object.keys(r);
+const LABEL = { log: 'F1 log-entries', contact: 'F2 contact-log', term: 'F3 term-record', s17: 'F4 § 17', s20: 'F5 § 20', s24m: 'F6a § 24 model', s24v: 'F6b § 24 copyDraft', s30: 'F7 § 30', door: 'F8 front-door' };
+const head = '| Shape | ' + fences.map((f) => LABEL[f]).join(' | ') + ' |';
+const rule = '|---|' + fences.map(() => '---').join('|') + '|';
+const rows = Object.keys(FEAT).map((s) => '| ' + s + ' | ' + fences.map((f) => {
+  const c = r[f].cells[s];
+  const na = NA[f] && NA[f][s];
+  if (na) return `n/a — ${na}${c.refused ? ' (probe: red)' : ''}`;
+  if (c.refused) return `**refused** — ${why(f, c)}`;
+  if (f === 'contact') return 'passes — only update/push/splice searched';
+  return `passes — ${FEAT[s]} not searched`;
+}).join(' | ') + ' |');
+const tally = fences.map((f) => {
+  let R = 0, P = 0, N = 0;
+  for (const s of Object.keys(FEAT)) { const c = r[f].cells[s]; if (NA[f] && NA[f][s]) N++; else if (c.refused) R++; else P++; }
+  return `${f}: ${R} refused · ${P} passes · ${N} n/a`;
+});
+console.log([head, rule, ...rows].join('\n'));
+console.log('\n' + tally.join('\n'));
+```
+
 ---
 
 ## Phase 2 — Attendance

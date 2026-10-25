@@ -13,6 +13,30 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Every check that refuses a remover has been read against one list of removers — 2026-10-24
+
+WO-1.84, owner-directed, out of WO-1.83's verdict. This is an inventory, not a repair: nothing in
+the app or the harness changed, and there is no `CACHE` bump.
+
+- **Eight checks were found that guard a file by searching its text** for a writer, a remover or a
+  mutation. Six were already known. The search added § 30's writer exception and the front door's
+  "writes nothing". The contact-history check turned out to search `src/contact-history.js`, not
+  `src/log.js` as the booking said.
+- **Each was run against the same 52 ways of removing, overwriting, reordering or adding to a
+  collection**, using the check's own code with one shape planted in memory. Nothing was planted
+  in `src/`.
+- **Every one of them has shapes that get past it, and every one claims more than it checks**,
+  two of them only narrowly. The harshest gaps:
+  - The quarter-record check still passes `d.termRecords.length = 0` and a bracketed key, the two
+    holes WO-1.83 closed in the log's check.
+  - The calendar and outreach "no writer" checks pass `delete`, `.length = 0` and index writes.
+  - The contact-history check, which says "could not write on any input", searches for three
+    words.
+- **Fixing them is a separate decision.** `TESTING.md` § WO-1.84 ends with a recommendation for
+  three work orders: one prose-only, one for the two append-only checks, and one for the four
+  whole-file ones. **The owner booked all three on 2026-10-25** as WO-1.85, WO-1.86 and WO-1.87.
+  The prose-only one lands first.
+
 ### The log's append-only check closes the two holes it named — 2026-10-24
 
 WO-1.83, owner-directed, out of WO-1.82's verdict. Harness only; nothing in the app changed and no
