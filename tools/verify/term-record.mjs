@@ -368,27 +368,45 @@ check('WO-3.72: a student on the roster whose grade has GONE since the recording
 /* ── ACCEPTANCE LINE 8: one writer, and it only pushes ──
    Read off the file rather than driven — the posture tools/verify/log-entries.mjs takes about
    src/log.js: driving proves what today's paths did, and reading refuses the spellings in REMOVERS
-   and one assignment regex wherever they sit. Comments come out first, because the header names the
+   and four regexes wherever they sit. Comments come out first, because the header names the
    very words.
 
+   WO-1.86 CLOSED WHAT ONE TOKEN SETTLES — THE TWO HOLES WO-1.83 SHUT IN THE LOG'S CHECK AND NEVER
+   SHUT HERE, AND FOUR MORE — AFTER ASKING OF EACH WHETHER src/term-record.js USES IT. It uses none
+   of them, in any form (TESTING.md § WO-1.86 has the search). Ruled for this file, and not copied
+   from tools/verify/log-entries.mjs: that check claims APPEND-ONLY and leaves what only adds alone,
+   while this one claims ONLY PUSHES, so here an add that touches the block is refused too.
+   - AN ASSIGNMENT TO `.length` OF ANYTHING in the file — WO-1.83's regex copied verbatim, so an
+     alias is caught and a read is not: an `=` followed by `=` does not count, which keeps
+     `rows.length`, `.length === 0` and `.length >= 1` green.
+   - A `.length` UPDATE EXPRESSION, `--` and `++`, postfix or prefix. `length++` adds an empty
+     slot, which the log's check lets through as an add; this claim does not.
+   - A QUOTED `termRecords` KEY, ANY QUOTE, FOLLOWED BY AN ASSIGNMENT — WO-1.83's bracketed-key
+     pattern — and here, as in the dotted regex below, the assignment may be COMPOUND OR LOGICAL,
+     with WO-1.83's operator group verbatim: `+=`, `-=`, `&&=` replace the array, and `||=` /
+     `??=` are a second create-on-first-write spelling beside the guard, which "only pushes" rules
+     out as well.
+   - THE REFLECTIVE WRITES BY NAME — `Reflect.set(` (on the document or on `length`),
+     `Reflect.deleteProperty(`, `Object.defineProperty(` — beside the `Object.assign(` already
+     refused; and the WHOLE-DOCUMENT SWAPS by bare name, `restoreDocument(` and
+     `adoptRemoteDocument(`, which catches the `store.` form too. The file imports getDoc, update
+     and newId from the store, and nothing else.
+   `delete ` was already a token here, so a `delete` in any key form was already refused; it is
+   left as it was. A red line names what matched: each regex reports every match's text.
+
    A FENCE, NOT A READING. WO-1.84 planted 52 removal shapes against this check's own code
-   (TESTING.md § WO-1.84) and 31 passed. The families that pass it:
-   - a BRACKETED OR COMPUTED ROOT KEY (`d['termRecords'] = []`, `d["…"]`, a template key, `d[k]`) —
-     the regex wants `termRecords` followed by `=` or by one subscript, never a quote and a `]`;
-   - a COMPOUND OR LOGICAL ASSIGNMENT (`+=`, `-=`, `&&=`, `||=`, `??=`, dotted or bracketed);
-   - DESTRUCTURING ASSIGNMENT (`[d.termRecords] = [[]]`, `({ termRecords: d.termRecords } = …)`);
+   (TESTING.md § WO-1.84) and 31 passed; after WO-1.86 these families still pass it (TESTING.md
+   § WO-1.86 has the re-run):
+   - a COMPUTED ROOT KEY (`d[k] = []`) — what `k` holds is a reading;
+   - DESTRUCTURING ASSIGNMENT (`[d.termRecords] = [[]]`, `({ termRecords: d.termRecords } = …)`) —
+     a pattern general enough to catch it would cry wolf on every destructured read;
    - an INDEX WRITE through a bracketed key or an alias (`d['termRecords'][0] = x`,
      `const l = d.termRecords; l[0] = x`);
    - an EDIT TO A STORED RECORD, directly or through an alias (`d.termRecords[0].x = y`) — the
-     lookup half is refused (`.find(`, `findIndex(`), the edit itself is not;
-   - EVERY `.length` WRITE — `= 0`, `-=`, `--`, `++`, through an alias — there is no `.length`
-     pattern here at all;
+     lookup half is refused (`.find(`, `findIndex(`), the edit itself is not, because a grep cannot
+     tell building the new record before the push from editing a stored one;
    - a MUTATOR NAMED BY A STRING OR BORROWED (`d.termRecords['splice'](0, 1)`,
-     `Array.prototype.splice.call(…)`);
-   - `Reflect.set` (including on `length`), `Reflect.deleteProperty` and `Object.defineProperty`
-     (`Object.assign(` and every `delete ` ARE refused);
-   - and the WHOLE-DOCUMENT SWAPS, `restoreDocument(` and `adoptRemoteDocument(`, bare or through
-     `store.`.
+     `Array.prototype.splice.call(…)`).
    The title below said "the create-on-first-write guard is its only other line touching the block"
    until WO-1.85; every family above touches the block, so it now says the guard is present and
    names the spellings searched. */
@@ -405,20 +423,32 @@ const writer = writerAt < 0 || writerEnd < 0 ? '' : code.slice(writerAt, writerE
 const outside = writerAt < 0 ? code : code.slice(0, writerAt) + code.slice(writerEnd);
 const count = (text, re) => (text.match(re) || []).length;
 const REMOVERS = ['.splice(', '.pop(', '.shift(', '.unshift(', '.sort(', '.reverse(', '.fill(',
-  '.copyWithin(', 'delete ', 'Object.assign(', 'findIndex(', '.find('];
+  '.copyWithin(', 'delete ', 'Object.assign(', 'findIndex(', '.find(', 'Reflect.set(',
+  'Reflect.deleteProperty(', 'Object.defineProperty(', 'restoreDocument(', 'adoptRemoteDocument('];
 const withoutGuard = code.split(guard).join('');
-const found = REMOVERS.filter((token) => withoutGuard.indexOf(token) !== -1)
-  .concat(/termRecords\s*(\[[^\]]*\])?\s*=[^=]/.test(withoutGuard) ? ['an assignment to termRecords'] : []);
+const times = (token) => withoutGuard.split(token).length - 1;
+const matched = (re, label) => Array.from(withoutGuard.matchAll(new RegExp(re.source, 'g')),
+  (m) => label + ' ' + JSON.stringify(m[0].trim()));
+const found = REMOVERS.filter((token) => times(token) > 0)
+  .map((token) => (times(token) > 1 ? token + ' x' + times(token) : token))
+  .concat(matched(/termRecords\s*(\[[^\]]*\])?\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=[^=]/,
+    'an assignment to termRecords'))
+  .concat(matched(/\[\s*(['"`])termRecords\1\s*\]\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=[^=]/,
+    'a quoted termRecords key assigned'))
+  .concat(matched(/\.length\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=[^=]/, 'an assignment to .length'))
+  .concat(matched(/\.length[ \t]*(?:\+\+|--)|(?:\+\+|--)[ \t]*[\w$.\[\]'"`]*\.length\b/,
+    'a .length update expression'));
 const exported = [...code.matchAll(/export function (\w+)\(/g)].map((m) => m[1]);
 const imports = [...code.matchAll(/from '\.\/([\w-]+)\.js'/g)].map((m) => m[1]);
 check('WO-3.72: src/term-record.js holds one writer, and it only pushes — recordTerm() holds the file\'s '
   + 'only update() and only push(), the create-on-first-write guard is present, and nowhere in the '
   + 'code is there one of the spellings it searches for — splice, pop, shift, unshift, sort, reverse, '
-  + 'fill, copyWithin, delete, Object.assign, termRecords followed by = or by one subscript and =, or '
-  + 'a lookup of a record by find/findIndex (a fence, '
-  + 'not a reading: bracketed and computed keys, compound and logical assignment, destructuring, '
-  + 'index writes through an alias, record edits, every .length write, borrowed mutators, '
-  + 'Reflect.set/deleteProperty, Object.defineProperty and whole-document swaps pass it); it '
+  + 'fill, copyWithin, delete, Object.assign, Reflect.set, Reflect.deleteProperty, '
+  + 'Object.defineProperty, restoreDocument, adoptRemoteDocument, termRecords followed by = or by '
+  + 'one subscript and = (plain, compound or logical), a quoted termRecords key assigned the same '
+  + 'ways, an assignment to or update of .length, or a lookup of a record by find/findIndex (a '
+  + 'fence, not a reading: a computed key, destructuring, index writes through a bracketed key or '
+  + 'an alias, record edits and mutators named by a string or borrowed pass it); it '
   + 'imports the engine and the attendance date helper, and src/grade-engine.js does not import it '
   + 'back',
   writer.length > 0 && count(code, /\.push\(/g) === 1 && count(writer, /\.push\(/g) === 1

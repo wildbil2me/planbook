@@ -5758,6 +5758,508 @@ reader can check the grouping against the table without re-deriving it.
 - [x] `TESTING.md` § WO-1.85 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-1.86 — the two append-only checks close what one token settles
+
+No 👤 and no 📆 line. Two harness files move: `tools/verify/log-entries.mjs` (F1, over `src/log.js`)
+and `tools/verify/term-record.mjs` (F3, over `src/term-record.js`). Nothing in `src/` moves in the
+end, so no `CACHE` bump is owed. The shape IDs are § WO-1.84's, unrenumbered.
+
+**This section is written in the order the work was done.** The first subsection was written, and
+its search run, before either harness file was opened for editing. Everything after it was written
+later.
+
+#### 1. Before any token lands: does either guarded file hold a legitimate use of it?
+
+WO-1.84 ran shapes against fences and never asked this. The question here is the other one: if a
+token is refused, would it go red on code that is in the guarded file today, for a reason that is
+not a removal? The search is `legit.mjs` (session scratchpad, not committed). It strips comments
+exactly as both checks do, then searches the **code** of each file, string literals included, line
+by line, for each proposed token. Its output, run on the clean tree before the first harness edit:
+
+```
+== src/log.js (157 non-blank code lines)
+   compound assignment after the key, dotted or one subscript (A6-A11): none
+   bracketed key, any quote, then = or a compound = (A2-A4, A7): none
+   the word delete, any form (E1-E5): none
+   .length assignment, WO-1.83 regex verbatim (C1, C3, C5): none
+   .length update expression, ++ or -- (C2, C4, C6): none
+   any ++ or -- at all: none
+   Reflect.set( (F3, F6): none
+   Reflect.deleteProperty( (F4): none
+   Object.defineProperty( (F5): none
+   Object.assign( (F1, F2): none
+   restoreDocument( (G1, G2): none
+   adoptRemoteDocument( (G3): none
+   wider, for the record: Reflect. anywhere: none
+   wider, for the record: defineProperties / setPrototypeOf / Object.: none
+   names imported from ./store.js: getDoc, update, newId
+   every .length in the code (a read; must stay green): ["}).length;"]
+== src/term-record.js (106 non-blank code lines)
+   compound assignment after the key, dotted or one subscript (A6-A11): none
+   bracketed key, any quote, then = or a compound = (A2-A4, A7): none
+   the word delete, any form (E1-E5): none
+   .length assignment, WO-1.83 regex verbatim (C1, C3, C5): none
+   .length update expression, ++ or -- (C2, C4, C6): none
+   any ++ or -- at all: none
+   Reflect.set( (F3, F6): none
+   Reflect.deleteProperty( (F4): none
+   Object.defineProperty( (F5): none
+   Object.assign( (F1, F2): none
+   restoreDocument( (G1, G2): none
+   adoptRemoteDocument( (G3): none
+   wider, for the record: Reflect. anywhere: none
+   wider, for the record: defineProperties / setPrototypeOf / Object.: none
+   names imported from ./store.js: getDoc, update, newId
+   every .length in the code (a read; must stay green): ["return { count: rows.length, categories: categories };"]
+```
+
+So **neither file holds a use of any token this work order adds**, in any form, legitimate or not.
+Neither file imports a store function that can replace the document. Each holds exactly one
+`.length`, and both are reads. The rulings below still differ by file, because the two checks do not
+make the same claim.
+
+- **F1 claims *append-only***: nothing removes or overwrites an entry. § WO-1.84 ruled shapes that
+  only add (A10, A11, C6, D8) and shapes that only reorder (D6, D7) outside that claim.
+- **F3 claims *one writer, and it only pushes***. That is wider: it already refuses `.sort(`,
+  `.reverse(` and `.unshift(`, and § WO-1.84 judged every one of its 52 cells, adds included.
+
+| Token | Shapes | `src/log.js` | `src/term-record.js` | F1 ruling | F3 ruling |
+|---|---|---|---|---|---|
+| compound assignment after the key, dotted or one subscript | A6, A8, A9 (and A10, A11) | none | none | **Refuse** `+=`, `-=`, `&&=` and the other arithmetic, shift and bitwise forms. **Not** `\|\|=` or `??=`: they add only (A10, A11 are n/a here), and they are the create-on-first-write guard's own shape, which the guard count already pins | **Refuse**, with WO-1.83's operator group verbatim, `\|\|=` and `??=` included: A10 and A11 touch the block, which F3's claim covers |
+| bracketed key, any quote, then `=` or a compound `=` | A2–A4 (F3), A7 (both) | none | none | **Refuse** the compound half (A7). The plain half is WO-1.83's | **Refuse** both halves: WO-1.83's pattern, which F3 never got, widened to the compound form as above |
+| `delete`, any key form | E2, E3 | none | none | **Refuse every `delete`**. The file holds none, and in a file whose only writes to the document are two pushes, any `delete` is a removal or an entry edit | **Already refused** by its `'delete '` token. Not touched |
+| `.length` assignment, WO-1.83's regex | C1, C3, C5 | none (one read) | none (one read) | Already refused (WO-1.83) | **Refuse**, the regex copied verbatim, `=[^=]` discrimination and all |
+| `.length` update expression | C2, C4 (and C6) | none | none | **Refuse `--` only**, postfix and prefix. `length++` adds an empty slot and takes nothing (C6 is n/a here) | **Refuse `--` and `++`**: C6 touches the block |
+| `Reflect.set(` | F3, F6 | none | none | **Refuse** | **Refuse** |
+| `Reflect.deleteProperty(` | F4 | none | none | **Refuse** | **Refuse** |
+| `Object.defineProperty(` | F5 | none | none | **Refuse** | **Refuse** |
+| `Object.assign(` | F1, F2 | none | none | **Refuse**: the per-file argument found no use of it in `src/log.js`, which is the condition the work order set | **Already refused**. Not touched |
+| `restoreDocument(`, `adoptRemoteDocument(` | G1, G2, G3 | none; imports only `getDoc`, `update`, `newId` | none; the same three | **Refuse**, as bare names, so the `store.` form is caught too | **Refuse**, the same |
+
+What stays passing is ruled by the work order rather than found here: computed keys (A5),
+destructuring (A12, A13), entry edits (B4–B6), `['splice'](` and `Array.prototype.….call` (D11, D12).
+Two more shapes the work order lists under neither heading still pass both fences: an index write
+through a bracketed key (B2) and through an alias (B3). They are named in both fence lines, as they
+were after WO-1.85. E5 (`delete` of an entry field) is in the work order's *name* list, but both
+fences refuse it already, F1 by its old `delete d.log` token and now by the wider `delete`, so it
+is not a passing shape and is not named.
+
+#### 2. What landed
+
+Everything below was written after the search in § 1. Both checks keep their single `check(`, so
+`tools/README.md`'s count does not move. The two checks' code, title and comment changed. Nothing else
+in either file did.
+
+**F1, `tools/verify/log-entries.mjs`.** The work order says F1's compound patterns disagree with
+F1's own argument. They did. The comment has said since WO-1.82 that *"any other reassignment still
+counts"*, but the reassignment regex wanted the `=` straight after `.log`, so `d.log += ''` passed.
+**The code was corrected toward the comment**, not the other way round:
+
+- the reassignment regex and the quoted-key regex both take an optional compound operator before
+  the `=`. The operator group is WO-1.83's `.length` group with `||` and `??` taken out, for the
+  reason given in § 1's table;
+- the `delete d.log` and `delete doc.log` tokens are replaced by one regex for the word `delete` in
+  any form: `/(?:^|[^\w$.])delete\b[^;\n]*/`. It skips a `.delete(` method call, and it carries the
+  rest of the statement into the report;
+- a `.length` decrement, postfix or prefix: `/\.length[ \t]*--|--[ \t]*[\w$.\[\]'"`]*\.length\b/`.
+  It uses `[ \t]`, not `\s`, so that a line break cannot join a `--` to a `.length` read on the
+  next line;
+- six tokens: `Object.assign(`, `Reflect.set(`, `Reflect.deleteProperty(`, `Object.defineProperty(`,
+  `restoreDocument(` and `adoptRemoteDocument(`.
+
+**F3, `tools/verify/term-record.mjs`.**
+
+- WO-1.83's `.length` assignment regex, **copied character for character** from F1, including the
+  `=[^=]` ending that keeps a read green;
+- WO-1.83's quoted-key pattern for `termRecords`, with the full operator group;
+- the existing `termRecords … =` regex, with the full operator group (`||=` and `??=` included);
+- a `.length` update expression, `--` or `++`, postfix or prefix;
+- five tokens: `Reflect.set(`, `Reflect.deleteProperty(`, `Object.defineProperty(`,
+  `restoreDocument(`, `adoptRemoteDocument(`. `Object.assign(` and `delete ` were already tokens and
+  are untouched.
+
+**One change to both, and it is a choice of convention.** A red line used to give a label only. It
+now names **what matched**: each regex reports every match, with the matched text after the label,
+and a token found more than once reports its count (`Reflect.set( x2`). Without that, a red line
+saying *"reassignment of .log"* cannot tell the reader which line to look at. It is also what lets
+§ 3 below show each planted shape by name in a single run. A green run prints exactly what it
+printed before: `removers found: none` in F1, and `"found":[]` in F3.
+
+**The fence lines.** Both checks' *fence, not a reading* text, in the comment and in the printed
+title or detail, now names only what still passes (§ 4). The families each check stopped passing were
+taken out of its list, so the line does not claim a hole that is closed.
+
+#### 3. The plants
+
+**Protocol.** Before the first plant, `git add tools/verify/log-entries.mjs tools/verify/term-record.mjs TESTING.md`
+staged every edit this work order had made, and `git diff --stat src/` was empty. The plants were
+made with the Edit tool. In `src/log.js` the plant went inside `writeEntry()`'s `update()` callback,
+on the line after `d.log.push(entry);`. In `src/term-record.js` it went inside `recordTerm()`'s
+callback, after `d.termRecords.push(entry);`. Each plant was a block headed
+`// MUTATION WO-1.86 plant: …` and guarded by `if (entry === null) { … }`, which is WO-1.83's device.
+`entry` cannot be `null` there, so every shape is in the source and none ever runs. Both planted files
+parsed (`node --input-type=module --check`).
+
+**One block per file, not one run per shape.** That is a departure from WO-1.83, which ran one full
+harness pass (~19 minutes) per plant. This work order refuses 39 newly-refused cells (17 in F1, 22 in
+F3), and one run per cell would have been about twelve hours. So every newly refused shape went into
+its file at once, one shape per line, and both files were planted for the same run. Two things make
+that evidence per shape rather than per block:
+
+- the check fails **if and only if** its `found` list is non-empty, and each shape now appears in that
+  list **by its own matched text**, or as a token counted once per occurrence. A shape that the
+  check names would turn it red on its own;
+- § 4's probe ran each shape **alone**, against the same check code, and every one of the 39 is
+  refused there by itself.
+
+**The run.** `node tools/verify-shell.mjs` with both plants in, waited out to its exit:
+*2117 checks · 2115 passed · 2 failed · 0 skipped*, `EXIT=1`. The two failures are exactly these two
+checks: `FAIL | WO-3.72: src/term-record.js holds one writer…` at line 1516 of the log, and
+`FAIL | append-only is structural rather than promised…` at line 2160. Their detail lines, verbatim:
+
+F1 (17 planted, one per line: A6, A7, A8, A9, C2, C4, E2, E3, F1, F2, F3, F4, F5, F6, G1, G2, G3):
+
+```
+2 push(s) — writeEntry() and writeContact() — in 265 line(s) of code; the create-on-first-write guard is present 2 time(s), one per writer; removers found: ["Object.assign( x2","Reflect.set( x2","Reflect.deleteProperty(","Object.defineProperty(","restoreDocument( x2","adoptRemoteDocument(","reassignment of .log \".log +=\"","reassignment of .log \".log -=\"","reassignment of .log \".log &&=\"",".length decremented \".length--\"",".length decremented \"--d.log.length\"","bracketed log key assigned \"['log'] +=\"","delete \"delete d['log']\"","delete \"delete d[k]\""]; FAILED ON: remover(s) [same list]. A fence, not a reading: a key held in a variable and assigned (d[k] = []), destructuring assignment, an index write through a bracketed key or an alias, an edit to a stored entry, and a mutator named by a string or borrowed from Array.prototype all pass it
+```
+
+(`[same list]` stands in for the second copy of the array, which the check prints twice. Nothing else
+is elided.) Each of the 17 is accounted for:
+
+- `Object.assign( x2` is F1 and F2. `Reflect.set( x2` is F3 and F6. `restoreDocument( x2` is G1 and
+  G2, because the token is the bare name and also matches `store.restoreDocument(`.
+- `Reflect.deleteProperty(` is F4, `Object.defineProperty(` is F5 and `adoptRemoteDocument(` is G3.
+- `.log +=` is A6, `.log -=` is A8 and `.log &&=` is A9. `['log'] +=` is A7.
+- `.length--` is C2 and `--d.log.length` is C4.
+- `delete d['log']` is E2 and `delete d[k]` is E3.
+
+F3 (22 planted: A2, A3, A4, A6, A7, A8, A9, A10, A11, C1, C2, C3, C4, C5, C6, F3, F4, F5, F6, G1, G2, G3):
+
+```
+{"pushes":1,"updates":1,"writerLines":34,"found":["Reflect.set( x2","Reflect.deleteProperty(","Object.defineProperty(","restoreDocument( x2","adoptRemoteDocument(","an assignment to termRecords \"termRecords +=\"","an assignment to termRecords \"termRecords -=\"","an assignment to termRecords \"termRecords &&=\"","an assignment to termRecords \"termRecords ||=\"","an assignment to termRecords \"termRecords ??=\"","a quoted termRecords key assigned \"['termRecords'] =\"","a quoted termRecords key assigned \"[\\\"termRecords\\\"] =\"","a quoted termRecords key assigned \"[`termRecords`] =\"","a quoted termRecords key assigned \"['termRecords'] +=\"","an assignment to .length \".length =\"","an assignment to .length \".length -=\"","an assignment to .length \".length =\"","a .length update expression \".length--\"","a .length update expression \"--d.termRecords.length\"","a .length update expression \".length++\""],"exported":["recordTerm","termEnded","termEndsToday","newestRecord","noLongerMatching","emptyBoxes","heldColumns"],"imports":["store","grade-engine","categories","classes","attendance","scores","log"],"engineImportsBack":false}
+```
+
+Each of the 22 is accounted for:
+
+- `Reflect.set( x2` is F3 and F6. `restoreDocument( x2` is G1 and G2.
+- `Reflect.deleteProperty(` is F4, `Object.defineProperty(` is F5 and `adoptRemoteDocument(` is G3.
+- `termRecords +=`, `-=`, `&&=`, `||=` and `??=` are A6, A8, A9, A10 and A11.
+- The three quoted `=` are A2, A3 and A4. `['termRecords'] +=` is A7.
+- `.length =` twice is C1 and C5 (the alias, `l.length = 0`), and `.length -=` is C3.
+- `.length--` is C2, `--d.termRecords.length` is C4 and `.length++` is C6.
+
+The push, update and export figures are those of a green run. The plant added none of them, which is
+why `found` is the only thing that failed.
+
+**The revert.** `git checkout -- src/log.js src/term-record.js`, which reverts both files to HEAD.
+They carried nothing else, and every edit of this work order was already staged. After it:
+
+- `git diff --stat src/` and `git diff --cached --stat src/` printed nothing;
+- `grep -rn "MUTATION WO-1.86" src/ tools/` found nothing (exit 1);
+- the bare `grep -rn MUTATION src/ tools/` found 18 lines, and `git grep -n MUTATION HEAD -- src tools`
+  finds the same 18 at `HEAD`. They are prose already there before this work order (`src/shell.js:1077`,
+  which § WO-1.83 records, plus `tools/README.md` and four harness comments describing earlier
+  mutation rounds). None is a plant. The bare grep cannot come back empty on this tree.
+
+#### 4. WO-1.84's probe, re-run against F1 and F3
+
+**What was run.** WO-1.84's `probe.mjs`, extracted from § WO-1.84 *The probe's source* exactly as
+printed. It no longer runs as printed, and the reason is not this work order: WO-1.85 reworded
+`tools/verify/front-door.mjs`'s detail line, and the probe's F8 slice anchor
+(`+ ', boot at ' + bootCallAt);`) is no longer in that file. So the copy run here, `probe186.mjs`,
+differs from it in three places and in nothing else. This is the whole of `diff probe.mjs probe186.mjs`:
+
+```
+57,58d56
+<   contactEval: slice(CONT, 'const readOnly = await evalJs(`', '})()`);'),
+<   contactCheck: slice(CONT, "check('the history surface is a READER", "JSON.stringify(readOnly.imports.slice(0, 200)));"),
+61,65d58
+<   door: slice(DOOR, 'const strip = (t) => t.replace(', "+ ', boot at ' + bootCallAt);"),
+<   s17: sweepBlock("'src/calendar-derived.js reads and never writes", '/* ══════ 18.'),
+<   s20: sweepBlock("'the merge-field resolver whitelists", '/* ────────────────────────────── prose helpers'),
+<   s24: sweepBlock("'the clipboard copy writes nothing", '/* ══════ 25.'),
+<   s30: sweepBlock("'an assignment\\'s `held` is read only", '/* ────────────────────────────── the script scanner'),
+181a175,176
+> // WO-1.86: only the two append-only fences are re-run; the other seven are WO-1.87's.
+> const ONLY = new Set(['log', 'term']);
+184c179
+< for (const f of FENCES) {
+---
+> for (const f of FENCES.filter((f) => ONLY.has(f.id))) {
+```
+
+The slices for F1 and F3 are untouched. Both of their end anchors are still in the edited files
+(`all pass it');` and `engineImportsBack: engineSource.indexOf('term-record') !== -1 }));`), and the
+probe throws if one is missing. So the cells below come from the edited checks' own code, with no
+pattern retyped.
+
+**When it was run.** `node probe186.mjs --json > probe-before.json` ran on the clean tree **before
+the first harness edit**. Its F1 and F3 tallies reproduce § WO-1.84's exactly: F1 19 refused,
+27 passes, 6 n/a; F3 21 refused, 31 passes. `probe-after.json` ran on the edited harness with
+`src/` back at `HEAD`, after the revert. Both runs printed `controls OK` for both fences, which means
+the clean file PASSed and the `.splice(` control was REFUSED, and both printed `control problems: 0`.
+`table186.mjs` renders the two files side by side. It reuses WO-1.84's `table.mjs` for `FEAT`, for
+F1's n/a map and for `why()`, and it adds only the columns and the arrow. **→** marks a cell whose
+verdict moved.
+
+The *F1 plant* column shows the line as planted for F1. F3's plant is the same line with
+`termRecords` for `log`.
+
+| Shape | F1 plant | F1 before | F1 after | F3 before | F3 after |
+|---|---|---|---|---|---|
+| A1 | `d.log = [];` | **refused** — reassignment of .log | **refused** — reassignment of .log ".log =" | **refused** — an assignment to termRecords | **refused** — an assignment to termRecords "termRecords =" |
+| A2 | `d['log'] = [];` | **refused** — bracketed log key assigned | **refused** — bracketed log key assigned "['log'] =" | passes — `['K']` key not searched | → **refused** — a quoted termRecords key assigned "['termRecords'] =" |
+| A3 | `d["log"] = [];` | **refused** — bracketed log key assigned | **refused** — bracketed log key assigned "[\"log\"] =" | passes — `["K"]` key not searched | → **refused** — a quoted termRecords key assigned "[\"termRecords\"] =" |
+| A4 | `` d[`log`] = []; `` | **refused** — bracketed log key assigned | **refused** — bracketed log key assigned "[`log`] =" | passes — template-literal key not searched | → **refused** — a quoted termRecords key assigned "[`termRecords`] =" |
+| A5 | `d[k] = [];` | passes — computed key `[k]` not searched | passes — computed key `[k]` not searched | passes — computed key `[k]` not searched | passes — computed key `[k]` not searched |
+| A6 | `d.log += '';` | passes — `+=` not searched | → **refused** — reassignment of .log ".log +=" | passes — `+=` not searched | → **refused** — an assignment to termRecords "termRecords +=" |
+| A7 | `d['log'] += "";` | passes — `['K'] +=` not searched | → **refused** — bracketed log key assigned "['log'] +=" | passes — `['K'] +=` not searched | → **refused** — a quoted termRecords key assigned "['termRecords'] +=" |
+| A8 | `d.log -= 1;` | passes — `-=` not searched | → **refused** — reassignment of .log ".log -=" | passes — `-=` not searched | → **refused** — an assignment to termRecords "termRecords -=" |
+| A9 | `d.log &&= [];` | passes — `&&=` not searched | → **refused** — reassignment of .log ".log &&=" | passes — `&&=` not searched | → **refused** — an assignment to termRecords "termRecords &&=" |
+| A10 | `d.log \|\|= [];` | n/a — adds only | n/a — adds only | passes — `\|\|=` not searched | → **refused** — an assignment to termRecords "termRecords \|\|=" |
+| A11 | `d.log ??= [];` | n/a — adds only | n/a — adds only | passes — `??=` not searched | → **refused** — an assignment to termRecords "termRecords ??=" |
+| A12 | `[d.log] = [[]];` | passes — array destructuring not searched | passes — array destructuring not searched | passes — array destructuring not searched | passes — array destructuring not searched |
+| A13 | `({ log: d.log } = { log: [] });` | passes — object destructuring not searched | passes — object destructuring not searched | passes — object destructuring not searched | passes — object destructuring not searched |
+| A14 | `const x = d; x.log = [];` | **refused** — reassignment of .log | **refused** — reassignment of .log ".log =" | **refused** — an assignment to termRecords | **refused** — an assignment to termRecords "termRecords =" |
+| B1 | `d.log[0] = null;` | **refused** — assignment into .log[...] | **refused** — assignment into .log[...] ".log[0] =" | **refused** — an assignment to termRecords | **refused** — an assignment to termRecords "termRecords[0] =" |
+| B2 | `d['log'][0] = null;` | passes — `['K'][0] =` not searched | passes — `['K'][0] =` not searched | passes — `['K'][0] =` not searched | passes — `['K'][0] =` not searched |
+| B3 | `const l = d.log; l[0] = null;` | passes — index write via alias not searched | passes — index write via alias not searched | passes — index write via alias not searched | passes — index write via alias not searched |
+| B4 | `d.log[0].subject = 'x';` | passes — entry field write not searched | passes — entry field write not searched | passes — entry field write not searched | passes — entry field write not searched |
+| B5 | `const e = d.log[0]; e.subject = 'x';` | passes — entry field via alias not searched | passes — entry field via alias not searched | passes — entry field via alias not searched | passes — entry field via alias not searched |
+| B6 | `d.log.find((e) => e).subject = 'x';` | passes — entry found by `.find(` not searched | passes — entry found by `.find(` not searched | **refused** — .find( | **refused** — .find( |
+| C1 | `d.log.length = 0;` | **refused** — assignment to .length | **refused** — assignment to .length ".length =" | passes — `.length =` not searched | → **refused** — an assignment to .length ".length =" |
+| C2 | `d.log.length--;` | passes — `length--` not searched | → **refused** — .length decremented ".length--" | passes — `length--` not searched | → **refused** — a .length update expression ".length--" |
+| C3 | `d.log.length -= 1;` | **refused** — assignment to .length | **refused** — assignment to .length ".length -=" | passes — `.length -=` not searched | → **refused** — an assignment to .length ".length -=" |
+| C4 | `--d.log.length;` | passes — prefix `--length` not searched | → **refused** — .length decremented "--d.log.length" | passes — prefix `--length` not searched | → **refused** — a .length update expression "--d.termRecords.length" |
+| C5 | `const l = d.log; l.length = 0;` | **refused** — assignment to .length | **refused** — assignment to .length ".length =" | passes — `.length =` via alias not searched | → **refused** — an assignment to .length ".length =" |
+| C6 | `d.log.length++;` | n/a — adds only | n/a — adds only | passes — `length++` not searched | → **refused** — a .length update expression ".length++" |
+| D1 | `d.log.splice(0, 1);` | **refused** — .splice( | **refused** — .splice( | **refused** — .splice( | **refused** — .splice( |
+| D2 | `d.log.pop();` | **refused** — .pop( | **refused** — .pop( | **refused** — .pop( | **refused** — .pop( |
+| D3 | `d.log.shift();` | **refused** — .shift( | **refused** — .shift( | **refused** — .shift( | **refused** — .shift( |
+| D4 | `d.log.fill(null);` | **refused** — .fill( | **refused** — .fill( | **refused** — .fill( | **refused** — .fill( |
+| D5 | `d.log.copyWithin(0, 1);` | **refused** — .copyWithin( | **refused** — .copyWithin( | **refused** — .copyWithin( | **refused** — .copyWithin( |
+| D6 | `d.log.sort();` | n/a — reorders (WO-1.83) | n/a — reorders (WO-1.83) | **refused** — .sort( | **refused** — .sort( |
+| D7 | `d.log.reverse();` | n/a — reorders (WO-1.83) | n/a — reorders (WO-1.83) | **refused** — .reverse( | **refused** — .reverse( |
+| D8 | `d.log.unshift(e);` | n/a — adds only | n/a — adds only | **refused** — .unshift( | **refused** — .unshift( |
+| D9 | `d.log.push(e);` | **refused** — push count 3 | **refused** — push count 3 | **refused** — push count 2 | **refused** — push count 2 |
+| D10 | `const l = d.log; l.splice(0, 1);` | **refused** — .splice( | **refused** — .splice( | **refused** — .splice( | **refused** — .splice( |
+| D11 | `d.log['splice'](0, 1);` | passes — `['splice'](` not searched | passes — `['splice'](` not searched | passes — `['splice'](` not searched | passes — `['splice'](` not searched |
+| D12 | `Array.prototype.splice.call(d.log, 0, 1);` | passes — `Array.prototype.splice.call` not searched | passes — `Array.prototype.splice.call` not searched | passes — `Array.prototype.splice.call` not searched | passes — `Array.prototype.splice.call` not searched |
+| E1 | `delete d.log;` | **refused** — delete d.log | **refused** — delete "delete d.log" | **refused** — delete | **refused** — delete |
+| E2 | `delete d['log'];` | passes — `delete R['K']` not searched | → **refused** — delete "delete d['log']" | **refused** — delete | **refused** — delete |
+| E3 | `delete d[k];` | passes — `delete R[k]` not searched | → **refused** — delete "delete d[k]" | **refused** — delete | **refused** — delete |
+| E4 | `delete d.log[0];` | **refused** — delete d.log | **refused** — delete "delete d.log[0]" | **refused** — delete | **refused** — delete |
+| E5 | `delete d.log[0].subject;` | **refused** — delete d.log | **refused** — delete "delete d.log[0].subject" | **refused** — delete | **refused** — delete |
+| F1 | `Object.assign(d, { log: [] });` | passes — `Object.assign(R, …)` not searched | → **refused** — Object.assign( | **refused** — Object.assign( | **refused** — Object.assign( |
+| F2 | `Object.assign(d.log, [null]);` | passes — `Object.assign(C, …)` not searched | → **refused** — Object.assign( | **refused** — Object.assign( | **refused** — Object.assign( |
+| F3 | `Reflect.set(d, 'log', []);` | passes — `Reflect.set` not searched | → **refused** — Reflect.set( | passes — `Reflect.set` not searched | → **refused** — Reflect.set( |
+| F4 | `Reflect.deleteProperty(d, 'log');` | passes — `Reflect.deleteProperty` not searched | → **refused** — Reflect.deleteProperty( | passes — `Reflect.deleteProperty` not searched | → **refused** — Reflect.deleteProperty( |
+| F5 | `Object.defineProperty(d, 'log', { value: [] });` | passes — `Object.defineProperty` not searched | → **refused** — Object.defineProperty( | passes — `Object.defineProperty` not searched | → **refused** — Object.defineProperty( |
+| F6 | `Reflect.set(d.log, 'length', 0);` | passes — `Reflect.set(C, 'length')` not searched | → **refused** — Reflect.set( | passes — `Reflect.set(C, 'length')` not searched | → **refused** — Reflect.set( |
+| G1 | `restoreDocument(doc0);` | passes — bare `restoreDocument(` not searched | → **refused** — restoreDocument( | passes — bare `restoreDocument(` not searched | → **refused** — restoreDocument( |
+| G2 | `store.restoreDocument(doc0);` | passes — `store.restoreDocument(` not searched | → **refused** — restoreDocument( | passes — `store.restoreDocument(` not searched | → **refused** — restoreDocument( |
+| G3 | `store.adoptRemoteDocument(doc0);` | passes — `store.adoptRemoteDocument(` not searched | → **refused** — adoptRemoteDocument( | passes — `store.adoptRemoteDocument(` not searched | → **refused** — adoptRemoteDocument( |
+
+**Tallies** (refused · passes · n/a, out of 52):
+
+- F1: 19 · 27 · 6 before, and **36 · 10 · 6** after.
+- F3: 21 · 31 · 0 before, and **43 · 9 · 0** after.
+
+**Every shape under *Refuse* is refused in both fences.** Taking the work order's list item by item:
+
+- A6–A9: refused in F1 and F3.
+- E2, E3: refused in F1 (newly) and F3 (already).
+- C2, C4: refused in both.
+- F3's WO-1.83 patterns (C1, C3, C5, A2–A4): refused in F3. They were already refused in F1.
+- F3–F6: refused in both.
+- G1–G3: refused in both.
+
+`Object.assign` (F1, F2) is refused in F1, because § 1 found no use of it in `src/log.js`. F3
+already refused it.
+
+**Every shape still passing is named in that fence's *fence, not a reading* line**, in the check's
+printed text and in the comment above it.
+
+- **F1, 10 pass.** Named as: *"a key held in a variable and assigned (d[k] = [])"* for A5;
+  *"destructuring assignment"* for A12 and A13; *"an index write through a bracketed key or an
+  alias"* for B2 and B3; *"an edit to a stored entry"* for B4, B5 and B6; and *"a mutator named by a
+  string or borrowed from Array.prototype"* for D11 and D12. That is all 10. The 6 n/a cells (A10,
+  A11, C6, D6, D7, D8) only add or only reorder. They still pass and are outside F1's claim. The
+  comment says so in a sentence of its own, so that nobody reads them as holes.
+- **F3, 9 pass.** Named as: *"a computed key"* for A5; *"destructuring"* for A12 and A13; *"index
+  writes through a bracketed key or an alias"* for B2 and B3; *"record edits"* for B4 and B5; and
+  *"mutators named by a string or borrowed"* for D11 and D12. That is all 9. B6 was already refused
+  by `.find(`.
+
+**What moved beyond the work order's list, and why.** Three F3 cells moved that the work order did
+not list: A10 (`||=`), A11 (`??=`) and C6 (`length++`). A10 and A11 moved because F3 reuses
+WO-1.83's operator group verbatim, as the Traps ask, and that group contains `||` and `??`. C6 moved
+because F3's update-expression regex takes `++` as well as `--`. Both were choices, ruled in § 1's
+table: F3's claim is *only pushes*, and § WO-1.84 judged all three cells inside that claim, not n/a.
+Ruled per file, they are refusals F3 is owed. F1's verdict on the same three is unchanged, n/a,
+because its claim is append-only. Its operator group drops `||` and `??`, and its update regex
+takes `--` only.
+
+**What did not move, and why.** A5, A12, A13, B4–B6, D11 and D12 still pass in both fences, as the
+work order ruled. B2 and B3 are in neither of its lists, and they still pass and are named. E5 is in
+the work order's *name* list, but both fences refuse it, by the word `delete`, so there is no passing
+shape to name.
+
+#### What was declined
+
+- **The `CHANGELOG.md` entry is not written here.** The work order lists it as a deliverable, but the
+  implementer's standing rules leave that entry to the teacher. A draft is in
+  `.claude/dispatch/WO-1.86-result.md`.
+- **No index-write widening.** F1's `assignment into .log[...]` regex was not given the compound
+  operator, and neither fence was taught to see B2 (`d['K'][0] = x`). Neither is on the work order's
+  list. Both stay named in the fence lines.
+- **Nothing for F2 or F4–F7, and no shared shape module under `tools/`.** That is WO-1.87, or a
+  thing § WO-1.84 recommends against.
+
+#### Acceptance
+
+- [x] Before any token lands, `TESTING.md` § WO-1.86 records whether `src/log.js` or
+      `src/term-record.js` holds a legitimate use of it. WO-1.84 did not check this.
+      — § 1 above. It was written, and its search run, before either harness file was edited.
+      Nothing in the tree records that order, so it rests on this report; what the tree can show is
+      that § 1's search output matches the clean `src/` files today (re-run `legit.mjs`). The finding is that neither file holds any use of any added token, in code or in
+      a string literal. Each holds exactly one `.length`, and both are reads. Each imports only
+      `getDoc`, `update` and `newId` from the store. Each token is ruled per file in § 1's table, and
+      the rulings differ where the two checks' claims differ: compound `||=`/`??=`, and `length++`.
+- [x] Each newly refused shape is planted in its guarded file and turns its check red, naming the
+      remover. Every plant is reverted, and the red output is in `TESTING.md` § WO-1.86.
+      — § 3 above. All 17 F1 shapes went into `src/log.js` and all 22 F3 shapes into
+      `src/term-record.js`, as dead code behind `if (entry === null)`, staged first. One full run of
+      `node tools/verify-shell.mjs` gave *2117 checks · 2115 passed · 2 failed*, `EXIT=1`, and the
+      two failures are these two checks. Their verbatim detail names every planted shape by its
+      matched text or by a counted token, and each is mapped back to its ID. Each shape was also
+      refused **alone** by the same check code in § 4's probe. Both plants were reverted with
+      `git checkout --`. Afterwards `git diff --stat src/` was empty, `grep -rn "MUTATION WO-1.86" src/ tools/`
+      was empty, and the bare `grep -rn MUTATION src/ tools/` finds the same 18 prose lines that
+      `git grep -n MUTATION HEAD -- src tools` finds at `HEAD`. **Departure, stated:** this used one
+      run per file-block rather than one run per shape, for the reason given in § 3.
+- [x] WO-1.84's probe, re-run, shows every shape listed above under *Refuse* as *refused* in both
+      F1 and F3. Every shape still *passes* is named in that fence's *fence, not a reading* line.
+      — § 4 above: the table, the tallies (F1 36 · 10 · 6, F3 43 · 9 · 0) and the item-by-item
+      reading. Every *Refuse* shape is **refused** in both columns. F1's 10 passing cells and F3's
+      9 are each mapped to a phrase in that check's printed fence line and in its comment. The probe
+      was re-run on the final bytes after the last edit, and every verdict matched the earlier
+      after-run (0 differences), with `control problems: 0`.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs` ran three times in this work order, each waited out to its
+      exit, and the two runs on unplanted `src/` passed:
+      - after the plants were reverted: *2117 checks · 2117 passed · 0 failed · 0 skipped*,
+        *67,669 lines · 32.0 lines per check · 1166s*, `EXIT=0`;
+      - after one more edit, a comment in `term-record.mjs` (*"one assignment regex"* became *"four
+        regexes"*), on the final bytes of `src/` and `tools/`: *2117 checks · 2117 passed · 0 failed
+        · 0 skipped*, *67,669 lines · 32.0 lines per check · 1171s*, `EXIT=0`. The two checks read,
+        F1: `2 push(s) — writeEntry() and writeContact() — in 245 line(s) of code; the create-on-first-write guard is present 2 time(s), one per writer; removers found: none. A fence, not a reading: …`,
+        and F3: `{"pushes":1,"updates":1,"writerLines":9,"found":[],…,"engineImportsBack":false}`;
+      - the plant run in § 3 is the third, `EXIT=1`, and it is red by design.
+
+      The check count is 2117, the same as § WO-1.85's. No `check(` was added, so `tools/README.md`'s
+      ledger does not move. `node tools/wo-sweep.mjs`, run after the final harness edit and again
+      after this section was written: `EXIT=0`, *52 checks · 49 passed · 0 failed · 3 to review*,
+      the three standing reviews.
+- [x] `TESTING.md` § WO-1.86 carries these lines verbatim with the evidence for each.
+      — This section.
+
+#### The two scratch scripts this section quotes
+
+`probe186.mjs` is § WO-1.84's probe with the three changes shown in § 4. `table186.mjs` renders
+the table. Both lived in the session scratchpad and are not committed. `legit.mjs`, the § 1
+search, as run:
+
+```js
+// WO-1.86 — before any token lands: does src/log.js or src/term-record.js hold a use of it?
+// Strips comments exactly as each check does, then searches the code for each proposed token.
+import fs from 'node:fs';
+const ROOT = 'c:/dev/planbook/';
+const strip = (s) => s.replace(/\r\n/g, '\n').replace(/\/\*[\s\S]*?\*\//g, '\n').replace(/^\s*\/\/.*$/gm, '');
+const PROBES = {
+  'compound assignment after the key, dotted or one subscript (A6-A11)': {
+    log: /\.log\s*(\[[^\]]*\])?\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])=[^=]/,
+    termRecords: /termRecords\s*(\[[^\]]*\])?\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])=[^=]/ },
+  'bracketed key, any quote, then = or a compound = (A2-A4, A7)': {
+    log: /\[\s*(['"`])log\1\s*\]\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=[^=]/,
+    termRecords: /\[\s*(['"`])termRecords\1\s*\]\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=[^=]/ },
+  'the word delete, any form (E1-E5)': /(?:^|[^\w$.])delete\b/,
+  '.length assignment, WO-1.83 regex verbatim (C1, C3, C5)': /\.length\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=[^=]/,
+  '.length update expression, ++ or -- (C2, C4, C6)': /\.length[ \t]*(?:\+\+|--)|(?:\+\+|--)[ \t]*[\w$.\[\]'"`]*\.length\b/,
+  'any ++ or -- at all': /\+\+|--/,
+  'Reflect.set( (F3, F6)': 'Reflect.set(',
+  'Reflect.deleteProperty( (F4)': 'Reflect.deleteProperty(',
+  'Object.defineProperty( (F5)': 'Object.defineProperty(',
+  'Object.assign( (F1, F2)': 'Object.assign(',
+  'restoreDocument( (G1, G2)': 'restoreDocument(',
+  'adoptRemoteDocument( (G3)': 'adoptRemoteDocument(',
+  'wider, for the record: Reflect. anywhere': 'Reflect.',
+  'wider, for the record: defineProperties / setPrototypeOf / Object.': /defineProperties|setPrototypeOf|\bObject\./,
+};
+for (const [file, k] of [['src/log.js', 'log'], ['src/term-record.js', 'termRecords']]) {
+  const code = strip(fs.readFileSync(ROOT + file, 'utf8'));
+  const lines = code.split('\n');
+  console.log('== ' + file + ' (' + lines.filter((l) => l.trim()).length + ' non-blank code lines)');
+  for (const [name, spec] of Object.entries(PROBES)) {
+    const p = spec && spec[k] ? spec[k] : spec;
+    const hits = lines.filter((l) => (typeof p === 'string' ? l.indexOf(p) >= 0 : p.test(l)));
+    console.log('   ' + name + ': ' + (hits.length ? hits.length + ' line(s) ' + JSON.stringify(hits.map((h) => h.trim())) : 'none'));
+  }
+  const imp = code.match(/import\s*\{([^}]*)\}\s*from '\.\/store\.js'/);
+  console.log('   names imported from ./store.js: ' + (imp ? imp[1].trim() : 'none'));
+  console.log('   every .length in the code (a read; must stay green): ' + JSON.stringify(lines.filter((l) => /\.length\b/.test(l)).map((l) => l.trim())));
+}
+```
+
+`table186.mjs`, as run:
+
+```js
+// WO-1.86 — renders probe-before.json and probe-after.json as F1/F3 before-and-after columns.
+// FEAT, the NA map for F1 and why() are WO-1.84's table.mjs, unchanged; WO-1.86 adds the columns.
+import fs from 'node:fs';
+const here = (f) => new URL('./' + f, import.meta.url);
+const before = JSON.parse(fs.readFileSync(here('probe-before.json'), 'utf8'));
+const after = JSON.parse(fs.readFileSync(here('probe-after.json'), 'utf8'));
+const src = fs.readFileSync(here('table.mjs'), 'utf8');
+const FEAT = new Function(src.slice(src.indexOf('const FEAT'), src.indexOf('};', src.indexOf('const FEAT')) + 2) + '\nreturn FEAT;')();
+const NA = { log: { D6: 'reorders (WO-1.83)', D7: 'reorders (WO-1.83)', D8: 'adds only', A10: 'adds only', A11: 'adds only', C6: 'adds only' } };
+function why(f, c) {
+  const d = c.detail;
+  if (f === 'log') {
+    const m = d.match(/removers found: (\[.*?"\]);/);
+    const p = d.match(/push count (\d+)/);
+    return m ? JSON.parse(m[1]).join(', ') : p ? `push count ${p[1]}` : '?';
+  }
+  const j = JSON.parse(d);
+  return j.found.length ? j.found.map((x) => x.trim()).join(', ') : `push count ${j.pushes}`;
+}
+const cell = (r, f, s) => {
+  const c = r[f].cells[s];
+  const na = NA[f] && NA[f][s];
+  if (na) return `n/a — ${na}${c.refused ? ' (probe: red)' : ''}`;
+  if (c.refused) return `**refused** — ${why(f, c)}`;
+  return `passes — ${FEAT[s]} not searched`;
+};
+// A pipe inside a table cell must be escaped even inside a code span; a backtick needs `` spans.
+const esc = (t) => t.split('|').join('\\|');
+const code = (t) => (t.indexOf('`') >= 0 ? '`` ' + t + ' ``' : '`' + t + '`');
+const rows = Object.keys(FEAT).map((s) => {
+  const moved = ['log', 'term'].map((f) => before[f].cells[s].refused !== after[f].cells[s].refused);
+  const cells = [s, code(after.log.cells[s].line), cell(before, 'log', s),
+    (moved[0] ? '→ ' : '') + cell(after, 'log', s), cell(before, 'term', s),
+    (moved[1] ? '→ ' : '') + cell(after, 'term', s)];
+  return '| ' + cells.map(esc).join(' | ') + ' |';
+});
+console.log('| Shape | F1 plant | F1 before | F1 after | F3 before | F3 after |\n|---|---|---|---|---|---|\n' + rows.join('\n'));
+for (const [label, r] of [['before', before], ['after', after]]) {
+  for (const f of ['log', 'term']) {
+    let R = 0, P = 0, N = 0;
+    for (const s of Object.keys(FEAT)) { const c = r[f].cells[s]; if (NA[f] && NA[f][s]) N++; else if (c.refused) R++; else P++; }
+    console.log(`${label} ${f}: ${R} refused · ${P} passes · ${N} n/a · controls ${r[f].okControls ? 'OK' : 'BROKEN'}`);
+  }
+}
+```
+
 ---
 
 ## Phase 2 — Attendance

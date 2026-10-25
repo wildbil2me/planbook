@@ -6873,7 +6873,7 @@ one changes what `verify-shell.mjs` prints. The counts must not move; the wordin
 
 ## WO-1.86 — the two append-only checks close what one token settles
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.85 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-25 · **Size** M · **Depends on** WO-1.85 · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.85 made.)*
 
 **Booked 2026-10-25**, owner-directed, the second of `TESTING.md` § WO-1.84's three
@@ -6904,14 +6904,14 @@ argued rather than assumed. The worst gap is F3: it **never got WO-1.83's fixes*
 - **`TESTING.md` § WO-1.86** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] Before any token lands, `TESTING.md` § WO-1.86 records whether `src/log.js` or
+- [x] Before any token lands, `TESTING.md` § WO-1.86 records whether `src/log.js` or
       `src/term-record.js` holds a legitimate use of it. WO-1.84 did not check this.
-- [ ] Each newly refused shape is planted in its guarded file and turns its check red, naming the
+- [x] Each newly refused shape is planted in its guarded file and turns its check red, naming the
       remover. Every plant is reverted, and the red output is in `TESTING.md` § WO-1.86.
-- [ ] WO-1.84's probe, re-run, shows every shape listed above under *Refuse* as *refused* in both
+- [x] WO-1.84's probe, re-run, shows every shape listed above under *Refuse* as *refused* in both
       F1 and F3. Every shape still *passes* is named in that fence's *fence, not a reading* line.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-1.86 carries these lines verbatim with the evidence for each.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-1.86 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Plants go in `src/` and come out before anything else is written** (AGENTS.md, the
 WO-5.1 scar), and **stage before planting**, because `git checkout` reverts unstaged work in that

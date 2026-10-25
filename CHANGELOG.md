@@ -13,6 +13,25 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The two append-only checks now refuse what one token settles — 2026-10-25
+
+WO-1.86, the second of WO-1.84's three recommendations. Harness only: nothing in the app changed,
+and there is no `CACHE` bump.
+
+- **The checks that `src/log.js` and `src/term-record.js` only append were each blind to shapes
+  that empty or replace the collection.** The term-record check had never received the `.length`
+  and quoted-key patterns the log's check gained in WO-1.83, so `d.termRecords.length = 0` passed
+  it.
+- **Both now refuse** compound assignment, every `delete`, `.length` decrements,
+  `Reflect.set`/`deleteProperty`, `Object.defineProperty`, `Object.assign` and the two
+  whole-document swaps by name. Each token was first checked against the file it guards, and
+  neither file uses any of them. A red line now quotes what it matched.
+- **What still passes is named in each check's own words**: computed keys, destructuring, index
+  writes through a quoted key or an alias, edits to a stored entry, and mutators named by a string
+  or borrowed.
+- Every newly refused shape was planted in `src/` and turned its check red, then reverted. Both
+  tools are green at unchanged counts: 2117/2117 and 52 · 49 · 0 · 3.
+
 ### The no-remover checks now say what they actually search for — 2026-10-25
 
 WO-1.85, owner-directed, the first of WO-1.84's three recommendations. Prose only: no check
