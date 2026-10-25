@@ -6940,6 +6940,21 @@ F2 searches for three words, and 47 of the 50 shapes inside its claim get past i
 - **F2 and F5, ruled by the owner.** Each either adopts the widened shape or narrows its words to
   what it actually searches: `update`/`push`/`splice` for F2, and named store calls plus no store
   import for F5. The orchestrator asks; the implementer does not pick.
+  **Ruled 2026-10-25, the owner, before dispatch — the orchestrator does not ask again:**
+  - **F2 takes neither option.** `src/contact-history.js` never binds the document to a name: all
+    three uses (lines 215, 241, 270) hand `getDoc()` straight to `visibleContactsFor(`, so a
+    `doc`/`d`-rooted `MUTATES` would match nothing there and look stronger without being stronger.
+    F2 instead asserts that **every `getDoc()` in the file is the direct first argument of
+    `visibleContactsFor(`** — the year never gets a name, which rules out nearly every shape in
+    WO-1.84's table — and keeps its writer-call search. Its *fence, not a reading* line names
+    what is left: a write inside `log.js`'s reader, which is F1's file, and an alias of the
+    returned entries.
+  - **F5 narrows its words** to the named store calls plus no store import. `src/merge-fields.js`
+    reads the year as `ctx.doc.…` and `doc.…`, and the file's danger is disclosure, which claims
+    1–3 and 5 already fence; claim 4 is a backstop and says exactly what it is.
+- **Correct `src/contact-history.js:52`**, which says *nothing here imports the store* above a
+  line-62 import of `getDoc` from it. Comment-only, so the commit may carry
+  `Shell-Cache: not needed — comments only` rather than bump `CACHE`.
 - **Re-word, against the widened pattern, the overclaims WO-1.85 left outside its scope** (its
   verifier, 2026-10-25): the § 17 banner's *has no writer*, the § 24 banner's *writes nothing* and
   § 24's comment above `MUTATES`, the `wo-sweep.mjs` row in `tools/README.md`, and the
@@ -6956,8 +6971,9 @@ F2 searches for three words, and 47 of the 50 shapes inside its claim get past i
 - **`TESTING.md` § WO-1.87** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] The owner's ruling on F2 and on F5, widen or narrow, is recorded in `TESTING.md` § WO-1.87
-      before either fence's code or prose changes.
+- [ ] The owner's ruling on F2 and on F5, as recorded under Deliverables on 2026-10-25, is quoted in
+      `TESTING.md` § WO-1.87 before either fence's code or prose changes, and F2's new assertion
+      turns red on a planted `const year = getDoc();`.
 - [ ] § 17's and § 24's `MUTATES` are byte-identical, and each guarded file was argued against the
       widened pattern for legitimate code before it landed. The argument is in `TESTING.md`
       § WO-1.87.
@@ -6974,4 +6990,6 @@ and WO-1.83 ruled per token. § 17 and § 24 sharing one pattern *in text* is th
 they were already identical. **A widened pattern can fire on legitimate code**: `src/calendar-derived.js`
 builds new arrays and may index them, so an index write on a *local* is not a document write. Argue
 before landing. **Plants come out before anything else is written, and stage before planting.**
-**Nothing in `src/` moves in the end**, so no `CACHE` bump is owed.
+**Nothing in `src/` moves in the end but the one comment at `src/contact-history.js:52`**, so no
+`CACHE` bump is owed — the commit carrying it ends with the `Shell-Cache: not needed — comments only`
+trailer, or `wo-sweep.mjs` § 9 goes red.
