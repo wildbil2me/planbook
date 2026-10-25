@@ -472,7 +472,8 @@ Things that will bite:
   is drawn — copying any of them into `events[]` creates the second truth that then has to be kept
   in step by hand. `src/calendar-derived.js` is the read side and holds **no writer**, which
   `wo-sweep.mjs` § 17 asserts structurally rather than by fixture: the harness proves what today's
-  paths wrote, the grep proves there is nothing in the file that could write on any input. It is a
+  paths wrote, and the grep refuses the writer calls and mutation shapes it names — **a fence, not a
+  reading**: WO-1.84 found shapes that pass it, and WO-1.87 is booked to widen it. It is a
   third calendar module because it reads the ledger through `src/attendance.js`, which imports
   `src/calendar.js` — the derived half living in the model would close an import loop this repo has
   refused six times.

@@ -367,8 +367,31 @@ check('WO-3.72: a student on the roster whose grade has GONE since the recording
 
 /* ── ACCEPTANCE LINE 8: one writer, and it only pushes ──
    Read off the file rather than driven — the posture tools/verify/log-entries.mjs takes about
-   src/log.js: driving proves what today's paths did, and reading proves there is nothing in the file
-   that could do otherwise. Comments come out first, because the header names the very words. */
+   src/log.js: driving proves what today's paths did, and reading refuses the spellings in REMOVERS
+   and one assignment regex wherever they sit. Comments come out first, because the header names the
+   very words.
+
+   A FENCE, NOT A READING. WO-1.84 planted 52 removal shapes against this check's own code
+   (TESTING.md § WO-1.84) and 31 passed. The families that pass it:
+   - a BRACKETED OR COMPUTED ROOT KEY (`d['termRecords'] = []`, `d["…"]`, a template key, `d[k]`) —
+     the regex wants `termRecords` followed by `=` or by one subscript, never a quote and a `]`;
+   - a COMPOUND OR LOGICAL ASSIGNMENT (`+=`, `-=`, `&&=`, `||=`, `??=`, dotted or bracketed);
+   - DESTRUCTURING ASSIGNMENT (`[d.termRecords] = [[]]`, `({ termRecords: d.termRecords } = …)`);
+   - an INDEX WRITE through a bracketed key or an alias (`d['termRecords'][0] = x`,
+     `const l = d.termRecords; l[0] = x`);
+   - an EDIT TO A STORED RECORD, directly or through an alias (`d.termRecords[0].x = y`) — the
+     lookup half is refused (`.find(`, `findIndex(`), the edit itself is not;
+   - EVERY `.length` WRITE — `= 0`, `-=`, `--`, `++`, through an alias — there is no `.length`
+     pattern here at all;
+   - a MUTATOR NAMED BY A STRING OR BORROWED (`d.termRecords['splice'](0, 1)`,
+     `Array.prototype.splice.call(…)`);
+   - `Reflect.set` (including on `length`), `Reflect.deleteProperty` and `Object.defineProperty`
+     (`Object.assign(` and every `delete ` ARE refused);
+   - and the WHOLE-DOCUMENT SWAPS, `restoreDocument(` and `adoptRemoteDocument(`, bare or through
+     `store.`.
+   The title below said "the create-on-first-write guard is its only other line touching the block"
+   until WO-1.85; every family above touches the block, so it now says the guard is present and
+   names the spellings searched. */
 const source = await fs.readFile(path.join(ROOT, 'src/term-record.js'), 'utf8');
 const engineSource = await fs.readFile(path.join(ROOT, 'src/grade-engine.js'), 'utf8');
 /* Line endings first: the writer is cut out at its closing `\n}\n`, and a file saved with CRLF endings
@@ -389,10 +412,15 @@ const found = REMOVERS.filter((token) => withoutGuard.indexOf(token) !== -1)
 const exported = [...code.matchAll(/export function (\w+)\(/g)].map((m) => m[1]);
 const imports = [...code.matchAll(/from '\.\/([\w-]+)\.js'/g)].map((m) => m[1]);
 check('WO-3.72: src/term-record.js holds one writer, and it only pushes — recordTerm() holds the file\'s '
-  + 'only update() and only push(), the create-on-first-write guard is its only other line touching '
-  + 'the block, and nowhere in the code is there a splice, pop, shift, sort, delete, assignment into the '
-  + 'array or lookup of a record by its id; it imports the engine and the attendance date helper, and '
-  + 'src/grade-engine.js does not import it back',
+  + 'only update() and only push(), the create-on-first-write guard is present, and nowhere in the '
+  + 'code is there one of the spellings it searches for — splice, pop, shift, unshift, sort, reverse, '
+  + 'fill, copyWithin, delete, Object.assign, termRecords followed by = or by one subscript and =, or '
+  + 'a lookup of a record by find/findIndex (a fence, '
+  + 'not a reading: bracketed and computed keys, compound and logical assignment, destructuring, '
+  + 'index writes through an alias, record edits, every .length write, borrowed mutators, '
+  + 'Reflect.set/deleteProperty, Object.defineProperty and whole-document swaps pass it); it '
+  + 'imports the engine and the attendance date helper, and src/grade-engine.js does not import it '
+  + 'back',
   writer.length > 0 && count(code, /\.push\(/g) === 1 && count(writer, /\.push\(/g) === 1
     && count(code, /\bupdate\(/g) === 1 && count(writer, /\bupdate\(/g) === 1
     && count(outside, /\.push\(|\bupdate\(/g) === 0 && code.indexOf(guard) !== -1

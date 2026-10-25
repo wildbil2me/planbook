@@ -544,7 +544,8 @@ if (!seam) {
         subjects: mine.map(function(e){ return e.subject; }) }; })()`);
     check('a second handoff APPENDS: the first entry is still in the document byte for byte, the '
       + 'second sits beside it, and nothing was edited or removed (Acceptance line 3). Two messages '
-      + 'handed over are two facts, and there is no writer in src/log.js that could do otherwise',
+      + 'handed over are two facts, and src/log.js\'s two writers each only append — as far as '
+      + 'tools/verify/log-entries.mjs\'s remover fence can see, which is a fence and not a reading',
       second.entries === 2 && !!second.first
         && JSON.stringify(second.first) === JSON.stringify(first)
         && second.subjects.filter((s) => s === SECOND_SUBJECT).length === 1,
@@ -663,11 +664,27 @@ if (!seam) {
         + JSON.stringify(projected.benOff.slice(0, 120)));
 
     /*
-      AND THE READ SURFACE CANNOT WRITE, ASKED OF THE FILE RATHER THAN DRIVEN — tools/wo-sweep.mjs
-      § 17's posture over src/calendar-derived.js, for its reason: driving proves what today's paths
-      did, and a grep proves there is nothing in the file that could do otherwise on any input.
+      AND THE READ SURFACE HOLDS NONE OF THREE WRITE TOKENS, ASKED OF THE FILE RATHER THAN DRIVEN —
+      tools/wo-sweep.mjs § 17's posture over src/calendar-derived.js, for its reason: driving proves
+      what today's paths did, and a grep refuses the spellings it searches for wherever they sit.
       Two claims, and the second is the one this repo keeps having to re-make: there is exactly one
       asker of the presentation-mode rule and this file is not it.
+
+      THE FILE SEARCHED IS src/contact-history.js, and the search is three tokens: `update(`,
+      `.push(` and `.splice(`. src/log.js is fetched for one regex only — that it exports no
+      unfiltered `contactsFor` — and is not searched for a writer here; tools/verify/log-entries.mjs
+      is the check that does that.
+
+      A FENCE, NOT A READING, and the narrowest of the eight WO-1.84 read: src/contact-history.js
+      imports `getDoc` from the store, so the document is one line away, and WO-1.84 planted 52
+      removal shapes against this check's own code (TESTING.md § WO-1.84) and 47 of the 50 inside
+      the claim passed. Every family except those three tokens passes it: any reassignment of a
+      collection (plain, bracketed, computed, compound, logical, destructured, through an alias),
+      index writes and edits to a stored entry, every `.length` write, the other mutators
+      (`.pop(`, `.shift(`, `.unshift(`, `.fill(`, `.copyWithin(`), a mutator named by a string or
+      borrowed from Array.prototype, every `delete`, the reflective writes (`Object.assign`,
+      `Reflect.set`, `Reflect.deleteProperty`, `Object.defineProperty`) and both whole-document
+      swaps, `restoreDocument(` and `adoptRemoteDocument(`, bare or through `store.` (WO-1.85).
     */
     const readOnly = await evalJs(`(async function(){
       var text = await (await fetch('/src/contact-history.js')).text();
@@ -678,8 +695,9 @@ if (!seam) {
         presentation: code.indexOf('presentationMode') >= 0,
         imports: (code.match(/^import[\\s\\S]*?;/gm) || []).join(' ').replace(/\\s+/g, ' '),
         unfilteredTwin: /export function contactsFor/.test(log) }; })()`);
-    check('the history surface is a READER and could not write on any input: no update(), no push, '
-      + 'no splice and no store mutation anywhere in src/contact-history.js — and no '
+    check('the history surface is a READER as far as three tokens can say: no update(), no .push( '
+      + 'and no .splice( anywhere in src/contact-history.js (a fence, not a reading — every other '
+      + 'write shape, from a reassignment to a delete to a document swap, passes it) — and no '
       + 'presentationMode() test either, because suppression arrives as a shorter list from '
       + 'src/log.js and two askers is two answers eventually. Nor is there an unfiltered '
       + '`contactsFor()` exported for a later screen to reach past the rule with',

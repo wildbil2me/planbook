@@ -354,9 +354,10 @@ if (!seam) {
     /*
       AND THERE IS NOTHING IN THE MODULE TO DELETE WITH — read off the file rather than driven,
       which is the posture tools/wo-sweep.mjs § 17 takes about src/calendar-derived.js and for the
-      same reason: driving proves what today's paths did, and a grep proves there is nothing in the
-      file that could do otherwise on any input. No `splice`, `pop`, `shift`, `delete` or assignment
-      into `d.log[...]`.
+      same reason: driving proves what today's paths did, and a grep refuses the remover shapes it
+      names, wherever they sit in the file. No `splice`, `pop`, `shift`, `delete` or assignment
+      into `d.log[...]` in those spellings — and the shapes it does not name are listed under A
+      FENCE, NOT A READING below, out of TESTING.md § WO-1.84's table (WO-1.85).
 
       **THE PUSH COUNT WENT FROM ONE TO TWO AT WO-5.4, AND THAT IS THE ASSERTION UPDATED RATHER
       THAN RELAXED.** That work order gave src/log.js a second writer — writeContact(), for the kind
@@ -412,11 +413,28 @@ if (!seam) {
         away, so they are outside what this check asks (a reorder would move the same-second
         tie-break, which is an ordering question, not an append-only one). `.unshift(` adds.
 
-      A FENCE, NOT A READING, still. It knows those shapes and nothing else, and these pass it:
-      `d.log.length--` (an update expression, not an assignment), an index write through an alias
-      (`const l = d.log; l[0] = null`), a bracketed key used as an index (`d['log'][0] = x`), a key
-      held in a variable (`d[k] = []`), and `Object.assign(d, { log: [] })` or `Reflect.set`. The
-      detail line names them rather than claiming "could ever".
+      A FENCE, NOT A READING, still. It knows those shapes and nothing else. WO-1.84 planted 52
+      removal shapes against this check's own code (TESTING.md § WO-1.84), and these families
+      passed it — every one of them removes or overwrites an entry:
+      - a KEY HELD IN A VARIABLE, assigned or deleted (`d[k] = []`, `delete d[k]`);
+      - a COMPOUND OR LOGICAL ASSIGNMENT to the log, dotted or bracketed (`d.log += ''`,
+        `d['log'] += ""`, `-=`, `&&=`) — the reassignment regex wants the `=` straight after `.log`;
+      - DESTRUCTURING ASSIGNMENT (`[d.log] = [[]]`, `({ log: d.log } = …)`);
+      - an INDEX WRITE through a bracketed key or an alias (`d['log'][0] = x`,
+        `const l = d.log; l[0] = x`);
+      - an EDIT TO A STORED ENTRY, directly, through an alias or after a lookup
+        (`d.log[0].subject = x`, `e.subject = x`, `d.log.find(…).subject = x`);
+      - a `.length` UPDATE EXPRESSION (`d.log.length--`, `--d.log.length`), which is not an
+        assignment to the grammar this regex reads;
+      - a MUTATOR NAMED BY A STRING OR BORROWED (`d.log['splice'](0, 1)`,
+        `Array.prototype.splice.call(d.log, 0, 1)`);
+      - `delete` THROUGH A BRACKETED KEY (`delete d['log']`) — only `delete d.log` and
+        `delete doc.log` are tokens;
+      - the REFLECTIVE WRITES — `Object.assign` (on the document or on the log), `Reflect.set`
+        (including on `length`), `Reflect.deleteProperty`, `Object.defineProperty`;
+      - and the WHOLE-DOCUMENT SWAPS, `restoreDocument(` and `adoptRemoteDocument(`, bare or
+        through `store.`.
+      The detail line names the families rather than claiming "could ever" (WO-1.85).
     */
     const initGuard = /if \(!Array\.isArray\(d\.log\)\)\s*d\.log = \[\];/g;
     const guards = (bodyOnly.match(initGuard) || []).length;
@@ -433,16 +451,20 @@ if (!seam) {
       .concat(guards === 2 ? [] : ['create-on-first-write guard found ' + guards + ' time(s), not 2'])
       .concat(found.length ? ['remover(s) ' + JSON.stringify(found)] : []);
     check('append-only is structural rather than promised: both writers in src/log.js do exactly one '
-      + 'thing to the document — two appends, one per writer, and no third — and there is no '
-      + 'splice, pop, shift, fill, copyWithin, delete, reassignment of .log, assignment into '
-      + '.log[...], assignment to .length or bracketed log key assigned anywhere in its code',
+      + 'thing to the document — two appends, one per writer, and no third — and none of the remover '
+      + 'spellings it searches for anywhere in its code: splice, pop, shift, fill, copyWithin, '
+      + 'delete d.log, a plain reassignment of .log, assignment into .log[...], assignment to '
+      + '.length or a quoted log key assigned',
       failed.length === 0,
       pushes + ' push(s) — writeEntry() and writeContact() — in ' + bodyOnly.split('\n').length + ' line(s) of code; the create-on-first-write guard is present ' + guards + ' time(s), one per writer; removers found: '
         + (found.length ? JSON.stringify(found) : 'none')
         + (failed.length ? '; FAILED ON: ' + failed.join('; ') : '')
-        + '. A fence, not a reading: d.log.length--, an index write through an alias '
-        + '(l = d.log; l[0] = x), d[\'log\'][0] = x, a key held in a variable (d[k] = []) and '
-        + 'Object.assign(d, { log: [] }) all pass it');
+        + '. A fence, not a reading: a key held in a variable, compound and logical assignment '
+        + '(+=, -=, &&=), destructuring assignment, an index write through a bracketed key or an '
+        + 'alias, an edit to a stored entry, a .length update expression (length--), a mutator '
+        + 'named by a string or borrowed from Array.prototype, delete through a bracketed key, '
+        + 'Object.assign, Reflect.set, Reflect.deleteProperty, Object.defineProperty and a '
+        + 'whole-document swap (restoreDocument, adoptRemoteDocument) all pass it');
 
     /* ══ the card on the student record ══ */
 

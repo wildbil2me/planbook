@@ -4063,11 +4063,19 @@ trap 1 met a second way. And `clickVisible()` is now a module-level helper, beca
 is not one element"* had been rediscovered twice.
 
 The other half of WO-6.2's evidence is not here at all: `tools/wo-sweep.mjs` § 17 asserts
-structurally that `src/calendar-derived.js` contains no store call, no document mutation and none of
-eleven writer names, and reconciles the review record's object literal against the six names the
-acceptance line allows. The harness proves what today's code paths wrote on today's fixture; the
-grep proves there is nothing in the file that could write on any input, which is the difference that
-matters for a cache somebody adds later "just for the month being drawn".
+structurally that `src/calendar-derived.js` calls none of the writer names on its `WRITERS` list and
+holds no `doc.`/`d.` name assigned or with one of eight array mutators called on it, and reconciles
+the review record's object literal against the six names the acceptance line allows. The harness
+proves what today's code paths wrote on today's fixture; the grep refuses those spellings wherever
+they sit in the file, reached by a fixture or not, which is the difference that matters for a cache
+somebody adds later "just for the month being drawn". **It is a fence, not a reading** (WO-1.85;
+until then this paragraph claimed the grep proved the file unable to write at all): `TESTING.md`
+§ WO-1.84 planted 52 removal shapes against the section's own code and 43 passed — a bracketed or computed
+key, compound and logical assignment, destructuring, a write through an alias of the document or a
+collection, index writes and edits to a stored entry, every `.length` write, `.copyWithin(` and any
+mutator named by a string or borrowed from `Array.prototype`, every `delete`, the reflective writes
+(`Object.assign`, `Reflect.set`, `Reflect.deleteProperty`, `Object.defineProperty`) and both
+whole-document swaps, `restoreDocument(` and `adoptRemoteDocument(`.
 
 **WO-2.54 moved it from 1034 to 1051**: seventeen call sites in one new section directly under the
 WO-2.52 one, none of them inside a loop, of which **one is a fixture-guard failure arm** that never

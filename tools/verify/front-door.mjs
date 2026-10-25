@@ -112,6 +112,11 @@ const probeBody = probeAt >= 0 && probeEnd > probeAt ? strip(storeJs.slice(probe
 const shellJs = await fs.readFile(path.join(ROOT, 'src', 'shell.js'), 'utf8');
 const doorCallAt = shellJs.indexOf('frontDoor.mightBeAStranger()');
 const bootCallAt = shellJs.indexOf('await store.boot()');
+/* A FENCE, NOT A READING (WO-1.85, from TESTING.md § WO-1.84's table). "No store function but that
+   one" is read as every `store.<name>(` call in src/front-door.js, so it holds for the namespace
+   import the file uses today (`import * as store`). A STORE FUNCTION IMPORTED BY NAME —
+   `import { restoreDocument } from './store.js'` and a bare `restoreDocument(…)` — has no `store.`
+   in front of it and passes. */
 check('the probe opens nothing and writes nothing (trap 2): yearDatabaseListed() in src/store.js calls '
   + 'indexedDB.databases() and no open() or connect(); src/front-door.js calls no open(), no setPref() '
   + 'and no store function but that one; and src/shell.js asks the door before it calls store.boot()',
@@ -121,7 +126,9 @@ check('the probe opens nothing and writes nothing (trap 2): yearDatabaseListed()
     && doorCallAt > 0 && bootCallAt > doorCallAt,
   'probe body ' + probeBody.length + ' chars; store calls in the door = '
     + JSON.stringify([...new Set(doorJs.match(/\bstore\.[A-Za-z]+(?=\s*\()/g) || [])])
-    + '; door asked at shell.js offset ' + doorCallAt + ', boot at ' + bootCallAt);
+    + '; door asked at shell.js offset ' + doorCallAt + ', boot at ' + bootCallAt
+    + '. A fence, not a reading: only store.-prefixed calls are read, so a store function imported '
+    + 'by name and called bare passes it');
 
 /* ══════════ the driven halves ══════════ */
 

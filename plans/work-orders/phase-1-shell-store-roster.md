@@ -6769,7 +6769,9 @@ more checks in the harness refuse a remover or a writer by searching source text
 been read against a common list:
 
 - `tools/verify/log-entries.mjs` — *append-only is structural rather than promised*, `src/log.js`
-- `tools/verify/contact-log.mjs` — the `splice` search over `src/log.js`
+- `tools/verify/contact-log.mjs` — the `splice` search over `src/log.js` *(it searches
+  `src/contact-history.js`, which § WO-1.84's own inventory found; the line is left as booked.
+  Corrected 2026-10-25, WO-1.85's verifier.)*
 - `tools/verify/term-record.mjs` — `REMOVERS`, over `src/term-record.js` (WO-3.72's append-only writer)
 - `tools/wo-sweep.mjs` § 17 — `src/calendar-derived.js` has no writer
 - `tools/wo-sweep.mjs` § 20, claim 4 — `src/merge-fields.js` has no writer
@@ -6825,7 +6827,7 @@ no `CACHE` bump is owed.
 
 ## WO-1.85 — the no-remover checks say they catch more than they do
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.84 · **Blocks** WO-1.86, WO-1.87
+**Ship** — · **Status** ✅ DONE — 2026-10-25 · **Size** S · **Depends on** WO-1.84 · **Blocks** WO-1.86, WO-1.87
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.84 made.)*
 
 **Booked 2026-10-25**, owner-directed, the first of the three work orders `TESTING.md` § WO-1.84
@@ -6852,16 +6854,16 @@ overclaim even if WO-1.86 and WO-1.87 are never built.
 - **`TESTING.md` § WO-1.85** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] For each of F1–F8, `TESTING.md` § WO-1.85 quotes the claim before and after the change, and
+- [x] For each of F1–F8, `TESTING.md` § WO-1.85 quotes the claim before and after the change, and
       every family of shapes that passes the fence in § WO-1.84's table is named in the new words.
-- [ ] None of *"on any input"*, *"could not write"* or *"nothing … could do otherwise"* remains in
+- [x] None of *"on any input"*, *"could not write"* or *"nothing … could do otherwise"* remains in
       the prose of F1–F6 or in the § 17 paragraph of `tools/README.md`. The grep that shows this is
       quoted in `TESTING.md` § WO-1.85.
-- [ ] `git diff` shows changes to comments, detail strings and `tools/README.md` only. No regex, no
+- [x] `git diff` shows changes to comments, detail strings and `tools/README.md` only. No regex, no
       token list and no `check(` condition moves.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass, and their check counts are
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass, and their check counts are
       unchanged from before the work order.
-- [ ] `TESTING.md` § WO-1.85 carries these lines verbatim with the evidence for each.
+- [x] `TESTING.md` § WO-1.85 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Do not widen as you go.** The temptation will be to add a pattern rather than write
 down that a shape passes, but a pattern added here is WO-1.86's or WO-1.87's, landing without its
@@ -6938,6 +6940,11 @@ F2 searches for three words, and 47 of the 50 shapes inside its claim get past i
 - **F2 and F5, ruled by the owner.** Each either adopts the widened shape or narrows its words to
   what it actually searches: `update`/`push`/`splice` for F2, and named store calls plus no store
   import for F5. The orchestrator asks; the implementer does not pick.
+- **Re-word, against the widened pattern, the overclaims WO-1.85 left outside its scope** (its
+  verifier, 2026-10-25): the § 17 banner's *has no writer*, the § 24 banner's *writes nothing* and
+  § 24's comment above `MUTATES`, the `wo-sweep.mjs` row in `tools/README.md`, and the
+  `CLAUDE.md` § Data bullet on `src/calendar-derived.js`, which WO-1.85's tick narrowed to a
+  holding sentence until this one lands.
 - **Name, in each fence's *fence, not a reading* line**, what is left passing:
   - writes through an alias of the root (A14, B3, B5, C5, D10), the WO-1.83 alias family;
   - computed keys;

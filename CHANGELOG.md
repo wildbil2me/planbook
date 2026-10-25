@@ -13,6 +13,29 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The no-remover checks now say what they actually search for — 2026-10-25
+
+WO-1.85, owner-directed, the first of WO-1.84's three recommendations. Prose only: no check
+catches anything it did not catch before, nothing in the app changed, and there is no `CACHE`
+bump.
+
+- **"On any input" is gone from all six whole-file and append-only checks.** So are "could not
+  write" and "nothing in the file could do otherwise". Each check now names what it searches for,
+  and then, under *a fence, not a reading*, the families of shapes WO-1.84's table showed getting
+  past it: bracketed and computed keys, compound assignment, destructuring, writes through an
+  alias, `.length` writes, `delete`, the reflective writes, and the two whole-year swaps.
+- **The contact-history check says plainly that it searches three words**, in
+  `src/contact-history.js`, a file that imports the store. It also says that `src/log.js` is
+  searched by a different check.
+- **§ 30 names the four reflective writes it cannot see**, and the front-door check names the
+  store function imported by name.
+- **The § 17 paragraph in `tools/README.md` no longer counts the writer names.** It said
+  "eleven", and the list holds twelve.
+- **`CLAUDE.md` § Data no longer says the § 17 grep proves nothing could write "on any input".**
+  The broader overclaims outside this work order — the § 17 and § 24 banners, the README row — are
+  added to WO-1.87, which widens the pattern they describe.
+- Both tools are green at unchanged counts: 2117/2117 and 52 · 49 · 0 · 3.
+
 ### Every check that refuses a remover has been read against one list of removers — 2026-10-24
 
 WO-1.84, owner-directed, out of WO-1.83's verdict. This is an inventory, not a repair: nothing in

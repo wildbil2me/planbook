@@ -1436,9 +1436,30 @@ function commentLines(file) {
    `verify-shell.mjs` makes the RUNTIME half of that claim — it seeds a month, pages a month each
    way and re-reads `doc.events` by id. This makes the STRUCTURAL half, and the two are not
    redundant: the harness proves that today's code paths wrote nothing on today's fixture, and this
-   proves there is nothing in the file that COULD write, on any input, including the ones nobody
-   thought to seed. A cache added later "just for the month being drawn" is exactly the change that
-   passes a fixture and fails the premise.
+   refuses, wherever it sits in the file, every writer named in WRITERS and every mutation in the
+   one shape MUTATES reads — whether or not a fixture would ever reach that line. A cache added
+   later "just for the month being drawn" is exactly the change that passes a fixture and fails the
+   premise, and in its plainest spelling (`doc.cache = …`, `d.events.push(…)`) this goes red on it.
+
+   A FENCE, NOT A READING (WO-1.85; until then this paragraph claimed the grep proved the file
+   unable to write at all, on every input). MUTATES sees `doc.` or `d.` followed by one name and
+   then `=` or one of eight methods, and nothing else. WO-1.84 planted 52 removal shapes against this section's own
+   code (TESTING.md § WO-1.84) and 43 passed, in these families:
+     · a BRACKETED OR COMPUTED ROOT KEY (`doc['events'] = []`, `doc[k] = []`);
+     · a COMPOUND OR LOGICAL ASSIGNMENT (`+=`, `-=`, `&&=`, `||=`, `??=`);
+     · DESTRUCTURING ASSIGNMENT (`[doc.events] = [[]]`);
+     · a write THROUGH AN ALIAS of the document, the collection or an entry (`const x = doc;
+       x.events = []`, `const l = doc.events; l.splice(0, 1)`) — any root but `doc` and `d`;
+     · an INDEX WRITE or an EDIT TO A STORED ENTRY (`doc.events[0] = null`, `doc.events[0].x = y`);
+     · EVERY `.length` WRITE (`= 0`, `-=`, `--`, `++`);
+     · `.copyWithin(`, and any mutator named by a string or borrowed from Array.prototype;
+     · EVERY `delete`, of a key, an index or an entry's field;
+     · the REFLECTIVE WRITES — `Object.assign`, `Reflect.set`, `Reflect.deleteProperty`,
+       `Object.defineProperty`;
+     · and the WHOLE-DOCUMENT SWAPS, `restoreDocument(` and `adoptRemoteDocument(`, bare or through
+       `store.` — neither is in WRITERS.
+   `.sort(` and `.reverse(` are refused but are not what this section promises: it does not claim
+   to catch reordering.
 
    THE SECOND CLAIM IS THE ONE THAT MATTERS MOST. `reviewDate` shares a student record with
    `medical`, `behaviorPlan`, `plan`, `caseManager` and the accommodations list (src/roster.js's
@@ -1453,7 +1474,7 @@ function commentLines(file) {
    does: the file is found by path and the record by `export function reviewDatesIn(`. */
 
 {
-  const NAME = 'src/calendar-derived.js reads and never writes, and a review carries no neighbour';
+  const NAME = 'src/calendar-derived.js holds no writer or mutation in the spellings this grep reads, and a review carries no neighbour';
   const derivedPath = path.join(REPO, 'src', 'calendar-derived.js');
   if (!fs.existsSync(derivedPath)) {
     check(NAME, false,
@@ -1525,7 +1546,7 @@ function commentLines(file) {
 
     check(NAME, !faults.length,
       faults.length ? faults.join(' · ')
-        : `no store call, no doc mutation and none of ${'update/addEvent/updateEvent/removeEvent/removeSeries/newEvent/newSeries/setLeadDays/setMark/setPref/setPresentationMode/supportsOf'} in ${code.filter(Boolean).length} line(s) of code; the five answers are exported over five read-only imports, and reviewDatesIn() at src/calendar-derived.js:${fnAt + 1} builds exactly [${built.join(', ')}] with no other support field inside it`);
+        : `none of ${'update/addEvent/updateEvent/removeEvent/removeSeries/newEvent/newSeries/setLeadDays/setMark/setPref/setPresentationMode/supportsOf'} called, and no \`doc.\`/\`d.\` name assigned or with one of eight mutators called on it, in ${code.filter(Boolean).length} line(s) of code; the five answers are exported over five read-only imports, and reviewDatesIn() at src/calendar-derived.js:${fnAt + 1} builds exactly [${built.join(', ')}] with no other support field inside it. A fence, not a reading: a bracketed or computed key, compound and logical assignment, destructuring, a write through an alias, index and entry writes, every .length write, .copyWithin( and borrowed mutators, every delete, Object.assign/Reflect.set/Reflect.deleteProperty/Object.defineProperty and the restoreDocument/adoptRemoteDocument swaps all pass it`);
   }
 }
 
@@ -2167,8 +2188,20 @@ function commentLines(file) {
    3. The whitelist and the refusal words are DISJOINT, and every root WO-5.1 names is in the
       refusal list. The first half is the one that matters: a resolvable name that also reads as a
       refusal would be a field the resolver answers and the error path describes as forbidden.
-   4. The resolver has no writer, the same clause § 17 makes and for the same reason — this module
-      answers a question about a document and must never be a second way to change one.
+   4. The resolver calls no writer by name and does not import the store, the same clause § 17
+      makes and for the same reason — this module answers a question about a document and must
+      never be a second way to change one. `getDoc(` is on the WRITER list, so the only document it
+      can reach is the one handed to it. A FENCE, NOT A READING (WO-1.85; this said "The resolver
+      has no writer" until then): claim 4 reads seven names and an import line and no mutation
+      shape at all, so a write to that handed-in document passes it. WO-1.84 planted 52 removal
+      shapes against this section's own code (TESTING.md § WO-1.84) and 39 passed — a plain,
+      compound, logical or destructuring assignment on a dotted key; a write through an alias;
+      index writes and edits to a stored entry; every `.length` write; every array mutator called
+      by name (`.push(`, `.pop(`, `.shift(`, `.unshift(`, `.splice(`, `.fill(`, `.copyWithin(`),
+      through an alias or borrowed from Array.prototype; `delete` on a dotted key, an index or an
+      entry's field; `Object.assign`, `Reflect.set`, `Reflect.deleteProperty`,
+      `Object.defineProperty`; and `adoptRemoteDocument(`. Nine more were refused, but by CLAIM 5
+      rather than this one, because each put a bracket after a name.
    5. NO DYNAMIC PROPERTY READ IN THE CODE, IN ANY OF THESE SPELLINGS — the shape, where claim 2
       is the name. A bracket subscript in member position whose key is not an integer literal,
       optionally chained through `?.` and free to have a newline either side of the `[`; a COMPUTED
@@ -2421,7 +2454,7 @@ function commentLines(file) {
     if (stripped.length > src.length * 0.9) faults.push(`the comment and string stripper removed only ${src.length - stripped.length} of ${src.length} characters, which is implausible for a file in this repository — it has stopped working, and the two absence claims above are being made over an unstripped file`);
 
     check(NAME, !faults.length, faults.length ? faults.join(' · ')
-      : `${resolvable.length} resolvable field(s), matching docs/data-model.md § Outreach templates name for name and in order; no support identifier, no writer and no dynamic property read in ${codeLines.filter(l => l.text).length} line(s) of stripped code, and no store import; all ${subscripts.length} bracket subscript(s) in member position are integer literals, ${computedKeys.length} computed key(s) name a property with a value, and there is no split, fold, eval, Function or Reflect.get among them; ${refusedWords.length} refusal word(s) covering all ${ROOTS.length} of WO-5.1's roots, none of them overlapping the whitelist`);
+      : `${resolvable.length} resolvable field(s), matching docs/data-model.md § Outreach templates name for name and in order; no support identifier, none of the seven named writers (update/getDoc/setPref/setPresentationMode/writeEntry/restoreDocument/newYearDocument) and no dynamic property read in ${codeLines.filter(l => l.text).length} line(s) of stripped code, and no store import — claim 4 is a fence, not a reading: an assignment, delete, array mutator, .length write or reflective write on a document handed in, and adoptRemoteDocument(, pass it; all ${subscripts.length} bracket subscript(s) in member position are integer literals, ${computedKeys.length} computed key(s) name a property with a value, and there is no split, fold, eval, Function or Reflect.get among them; ${refusedWords.length} refusal word(s) covering all ${ROOTS.length} of WO-5.1's roots, none of them overlapping the whitelist`);
   }
 }
 
@@ -2973,9 +3006,24 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
 /* ══════ 24. the second door out of a draft writes nothing, and its call is inside the tap ══════
    WO-5.7, and it is § 17's shape over a different file for § 17's reason. `tools/verify/outreach.mjs`
    proves that two real copies, a blocked one, a refusal and a projector cycle left `rev` where they
-   found it — which is a claim about the paths that run today. This proves there is nothing in
-   `src/outreach.js` that COULD write on any input, and nothing inside `copyDraft()` that reaches a
-   writer. Neither one alone is the acceptance line.
+   found it — which is a claim about the paths that run today. This refuses, wherever it
+   sits in `src/outreach.js` and anywhere inside `copyDraft()`, every writer named in WRITERS and
+   every mutation in the one shape MUTATES reads — § 17's two patterns, with this section's own
+   writer names. Neither one alone is the acceptance line.
+
+   A FENCE, NOT A READING (WO-1.85; until then this paragraph claimed `src/outreach.js` was proved
+   unable to write at all, on every input). MUTATES is § 17's, so it sees `doc.` or `d.` followed
+   by one name and then `=` or one of eight methods, and nothing else. WO-1.84 planted 52 removal shapes against this
+   section's own code, once in the model file and once inside `copyDraft()` (TESTING.md § WO-1.84),
+   and 43 passed in each half, in § 17's families: a bracketed or computed root key; compound and
+   logical assignment; destructuring; a write through an alias of the document, a collection or an
+   entry; index writes and edits to a stored entry; every `.length` write; `.copyWithin(` and any
+   mutator named by a string or borrowed from Array.prototype; every `delete`; `Object.assign`,
+   `Reflect.set`, `Reflect.deleteProperty` and `Object.defineProperty`; and the whole-document
+   swaps `restoreDocument(` and `adoptRemoteDocument(`, bare or through `store.` — neither is in
+   WRITERS. That matters most inside `copyDraft()`, whose file imports `getDoc` from the store, so
+   "reaches no writer" there means "calls none of the names in WRITERS and mutates `doc`/`d` in
+   none of MUTATES' spellings". Reordering is not what this section promises.
 
    **THE BOUNDARY IS ASSERTED IN TWO PLACES BECAUSE IT RUNS THROUGH TWO FILES, AND ONLY ONE OF THEM
    IS CLEAN.** `src/outreach.js` has no writer at all — no store import, nothing that mutates a
@@ -3002,7 +3050,7 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
    that matched nothing would read exactly like a flow with no clipboard in it. */
 
 {
-  const NAME = 'the clipboard copy writes nothing, and its call has nothing async in front of it';
+  const NAME = 'the clipboard copy calls no writer and holds no mutation in the spellings this grep reads, and its call has nothing async in front of it';
   const modelPath = path.join(REPO, 'src', 'outreach.js');
   const viewPath = path.join(REPO, 'src', 'outreach-view.js');
   if (!fs.existsSync(modelPath) || !fs.existsSync(viewPath)) {
@@ -3073,7 +3121,7 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
 
     check(NAME, !faults.length,
       faults.length ? faults.join(' · ')
-        : `no store call, no doc mutation and none of ${'update/writeContact/writeEntry/setPref/setPresentationMode/addTemplate/updateTemplate/removeTemplate/supportsOf'} in ${modelCode.filter(Boolean).length} line(s) of src/outreach.js code, which imports neither ./store.js nor ./log.js and still exports all seven answers; and copyDraft() at src/outreach-view.js:${fnAt + 1} reaches no writer, with nothing asynchronous between its top and the \`writeText(\` it hands the draft to`);
+        : `none of ${'update/writeContact/writeEntry/setPref/setPresentationMode/addTemplate/updateTemplate/removeTemplate/supportsOf'} called, and no \`doc.\`/\`d.\` name assigned or with one of eight mutators called on it, in ${modelCode.filter(Boolean).length} line(s) of src/outreach.js code, which imports neither ./store.js nor ./log.js and still exports all seven answers; and copyDraft() at src/outreach-view.js:${fnAt + 1} calls none of those names and holds none of those mutations, with nothing asynchronous between its top and the \`writeText(\` it hands the draft to. A fence, not a reading, in both halves: a bracketed or computed key, compound and logical assignment, destructuring, a write through an alias, index and entry writes, every .length write, .copyWithin( and borrowed mutators, every delete, Object.assign/Reflect.set/Reflect.deleteProperty/Object.defineProperty and the restoreDocument/adoptRemoteDocument swaps all pass it`);
   }
 }
 
@@ -3892,7 +3940,14 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
    TESTING.md § WO-3.53 has the table. WHAT IT DOES NOT SEE: a key named by a value
    (`a[key]` where key is 'held'), `Reflect.get`, `Object.entries(a).find(…)`, a `for…in` that
    compares — § 20's open-ended family, and the same answer: a grep over a crude strip cannot close
-   it, so read a new reader of an assignment by eye. */
+   it, so read a new reader of an assignment by eye. NOR DOES IT SEE A REFLECTIVE WRITE of the key,
+   in any file (WO-1.85, from TESTING.md § WO-1.84's table): `Object.assign(a, { held: true })`,
+   `Reflect.set(a, 'held', true)`, `Reflect.deleteProperty(a, 'held')` and
+   `Object.defineProperty(a, 'held', { value: true })` each name the key as a string argument or an
+   object-literal key, never as a member, so all four pass — which is to say THE ONE-WRITER CLAUSE
+   ABOVE CONFINES MEMBER AND `delete` WRITES TO src/held-column.js, and not these four. Nor a key
+   named by a value on the write side, `a[key] = …` or `delete a[key]`, for the reason the read
+   side cannot see `a[key]`. */
 
 {
   const NAME = 'an assignment\'s `held` is read only by isHeld() in src/grade-engine.js, and the readers that hide a held column import it';

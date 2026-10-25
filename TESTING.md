@@ -5479,6 +5479,285 @@ console.log([head, rule, ...rows].join('\n'));
 console.log('\n' + tally.join('\n'));
 ```
 
+### WO-1.85 — the no-remover checks say they catch more than they do
+
+No 👤 and no 📆 line. **Prose only**: every edit is a comment, a check title, a check's detail
+string, a sweep check's `NAME` constant (which is its printed title) or the § 17 paragraph of
+`tools/README.md`. No regex, token list or `check(` condition moved, and nothing under `src/` moved,
+so no `CACHE` bump is owed. No mutation was planted, so none is owed a revert.
+
+**The spec is § WO-1.84's table.** Each fence's new words below were written from its *passes*
+cells, grouped into families. The families are named in the code; the cell IDs are given here so a
+reader can check the grouping against the table without re-deriving it.
+
+#### The fences, before and after
+
+**F1 — `tools/verify/log-entries.mjs`, *append-only is structural rather than promised*.** 27 pass.
+
+- Before, comment: *"a grep proves there is nothing in the file that could do otherwise on any
+  input"*. Title: *"there is no splice, pop, shift, fill, copyWithin, delete, reassignment of .log,
+  assignment into .log[...], assignment to .length or bracketed log key assigned anywhere in its
+  code"*. Detail: *"A fence, not a reading: d.log.length--, an index write through an alias (l =
+  d.log; l[0] = x), d['log'][0] = x, a key held in a variable (d[k] = []) and Object.assign(d, {
+  log: [] }) all pass it"*.
+- After, comment: *"a grep refuses the remover shapes it names, wherever they sit in the file"*,
+  and the *A FENCE, NOT A READING* paragraph now lists ten families. Title: *"none of the remover
+  spellings it searches for anywhere in its code: splice, pop, shift, fill, copyWithin, delete
+  d.log, a plain reassignment of .log, assignment into .log[...], assignment to .length or a quoted
+  log key assigned"*. Detail: *"A fence, not a reading: a key held in a variable, compound and
+  logical assignment (+=, -=, &&=), destructuring assignment, an index write through a bracketed key
+  or an alias, an edit to a stored entry, a .length update expression (length--), a mutator named by
+  a string or borrowed from Array.prototype, delete through a bracketed key, Object.assign,
+  Reflect.set, Reflect.deleteProperty, Object.defineProperty and a whole-document swap
+  (restoreDocument, adoptRemoteDocument) all pass it"*.
+- Families → cells: key held in a variable (A5, E3) · compound/logical (A6–A9) · destructuring
+  (A12, A13) · index write through a bracketed key or alias (B2, B3) · entry edit (B4–B6) ·
+  `.length` update expression (C2, C4) · mutator by string or borrowed (D11, D12) · `delete`
+  through a bracketed key (E2) · reflective writes (F1–F6) · whole-document swaps (G1–G3). All 27.
+
+**F2 — `tools/verify/contact-log.mjs`, *the history surface is a READER*.** 47 pass.
+
+- Before, comment: *"a grep proves there is nothing in the file that could do otherwise on any
+  input"*. Title: *"the history surface is a READER and could not write on any input: no update(),
+  no push, no splice and no store mutation anywhere in src/contact-history.js"*.
+- After, comment: *"a grep refuses the spellings it searches for wherever they sit"*, a paragraph
+  naming the searched file, and a *A FENCE, NOT A READING* paragraph. Title: *"the history surface
+  is a READER as far as three tokens can say: no update(), no .push( and no .splice( anywhere in
+  src/contact-history.js (a fence, not a reading — every other write shape, from a reassignment to a
+  delete to a document swap, passes it)"*. The comment names the families: every reassignment
+  (plain, bracketed, computed, compound, logical, destructured, through an alias), index writes and
+  entry edits, every `.length` write, `.pop(`/`.shift(`/`.unshift(`/`.fill(`/`.copyWithin(`, a
+  mutator by string or borrowed, every `delete`, the four reflective writes and both swaps. It also
+  records that the file imports `getDoc`.
+- Families → cells: all of A1–A14, B1–B6, C1–C6, D2–D5, D8, D11, D12, E1–E5, F1–F6, G1–G3. That is
+  47. The three refused cells are D1, D9 and D10, which are the three tokens. D6 and D7 are n/a.
+- **The guarded file.** The comment now says, in words: *"THE FILE SEARCHED IS
+  src/contact-history.js, and the search is three tokens … src/log.js is fetched for one regex only
+  … and is not searched for a writer here; tools/verify/log-entries.mjs is the check that does
+  that."* `grep -rn "splice.*src/log.js\|src/log.js.*splice"` over `tools/` finds no prose that says
+  otherwise. The only text in the tree that names `src/log.js` as F2's file is WO-1.84's own
+  Deliverables, in `plans/work-orders/phase-1-shell-store-roster.md` and
+  `.claude/dispatch/WO-1.84-brief.md`. Those are a closed work order's record, already corrected by
+  § WO-1.84's *Where the code disagrees* paragraph, and they were left as written.
+- **One neighbour, also in this file.** The runtime check *"a second handoff APPENDS"* (Acceptance
+  line 3 of WO-5.4) ended *"there is no writer in src/log.js that could do otherwise"*. It is not F2,
+  but it is in F2's file and it carried a banned phrase about F1's file. It now reads *"src/log.js's
+  two writers each only append — as far as tools/verify/log-entries.mjs's remover fence can see,
+  which is a fence and not a reading"*.
+
+**F3 — `tools/verify/term-record.mjs`, *holds one writer, and it only pushes*.** 31 pass.
+
+- Before, comment: *"reading proves there is nothing in the file that could do otherwise"*. Title:
+  *"the create-on-first-write guard is its only other line touching the block, and nowhere in the
+  code is there a splice, pop, shift, sort, delete, assignment into the array or lookup of a record
+  by its id"*.
+- After, comment: *"reading refuses the spellings in REMOVERS and one assignment regex wherever they
+  sit"*, then a new *A FENCE, NOT A READING* list of nine families. Title: *"the create-on-first-write
+  guard is present, and nowhere in the code is there one of the spellings it searches for — splice,
+  pop, shift, unshift, sort, reverse, fill, copyWithin, delete, Object.assign, termRecords followed
+  by = or by one subscript and =, or a lookup of a record by find/findIndex (a fence, not a reading:
+  bracketed and computed keys, compound and logical assignment, destructuring, index writes through
+  an alias, record edits, every .length write, borrowed mutators, Reflect.set/deleteProperty,
+  Object.defineProperty and whole-document swaps pass it)"*.
+- Families → cells: bracketed or computed root key (A2–A5) · compound/logical, including `||=` and
+  `??=` (A6–A11) · destructuring (A12, A13) · index write through a bracketed key or alias (B2, B3) ·
+  record edit (B4, B5) · every `.length` write (C1–C6) · mutator by string or borrowed (D11, D12) ·
+  `Reflect.set` / `Reflect.deleteProperty` / `Object.defineProperty` (F3–F6) · whole-document swaps
+  (G1–G3). All 31.
+
+**F4 — `tools/wo-sweep.mjs` § 17, *reads and never writes*.** 43 pass.
+
+- Before, comment: *"this proves there is nothing in the file that COULD write, on any input,
+  including the ones nobody thought to seed"*. Name: *"src/calendar-derived.js reads and never
+  writes, and a review carries no neighbour"*. Detail: *"no store call, no doc mutation and none of
+  update/…/supportsOf"*.
+- After, comment: *"this refuses, wherever it sits in the file, every writer named in WRITERS and
+  every mutation in the one shape MUTATES reads — whether or not a fixture would ever reach that
+  line"*, then *A FENCE, NOT A READING*, which says what MUTATES sees and lists ten families. Name:
+  *"src/calendar-derived.js holds no writer or mutation in the spellings this grep reads, and a
+  review carries no neighbour"*. Detail: *"none of update/…/supportsOf called, and no `doc.`/`d.`
+  name assigned or with one of eight mutators called on it, in 140 line(s) of code; … A fence, not a
+  reading: a bracketed or computed key, compound and logical assignment, destructuring, a write
+  through an alias, index and entry writes, every .length write, .copyWithin( and borrowed mutators,
+  every delete, Object.assign/Reflect.set/Reflect.deleteProperty/Object.defineProperty and the
+  restoreDocument/adoptRemoteDocument swaps all pass it"*.
+- `tools/README.md`, the § 17 paragraph. Before: *"contains no store call, no document mutation and
+  none of eleven writer names … the grep proves there is nothing in the file that could write on any
+  input"*. After: *"calls none of the writer names on its `WRITERS` list and holds no `doc.`/`d.`
+  name assigned or with one of eight array mutators called on it … the grep refuses those spellings
+  wherever they sit in the file, reached by a fixture or not … **It is a fence, not a reading**"*,
+  followed by the same families.
+- **The count.** `WRITERS` at `tools/wo-sweep.mjs` § 17 reads `update`, `addEvent`, `updateEvent`,
+  `removeEvent`, `removeSeries`, `newEvent`, `newSeries`, `setLeadDays`, `setMark`, `setPref`,
+  `setPresentationMode`, `supportsOf`. That is **twelve**, counted by hand from the alternation. The
+  paragraph now carries **no number**, which the work order allows and which cannot rot.
+- Families → cells: bracketed or computed root key (A2–A5) · compound/logical (A6–A11) ·
+  destructuring (A12, A13) · write through an alias (A14, B3, B5, C5, D10) · index write or entry
+  edit (B1, B2, B4, B6) · every `.length` write (C1–C6) · `.copyWithin(` and mutator by string or
+  borrowed (D5, D11, D12) · every `delete` (E1–E5) · reflective writes (F1–F6) · whole-document swaps
+  (G1–G3). All 43. D6 and D7 are n/a, and the comment says reordering is not promised.
+
+**F5 — `tools/wo-sweep.mjs` § 20, claim 4, *the resolver has no writer*.** 39 pass.
+
+- Before, claim 4: *"The resolver has no writer, the same clause § 17 makes"*. Detail: *"no support
+  identifier, no writer and no dynamic property read … and no store import"*.
+- After, claim 4: *"The resolver calls no writer by name and does not import the store … A FENCE,
+  NOT A READING … claim 4 reads seven names and an import line and no mutation shape at all, so a
+  write to that handed-in document passes it"*, followed by the families and a note that the nine
+  bracketed shapes are refused by claim 5, not claim 4. Detail: *"none of the seven named writers
+  (update/getDoc/setPref/setPresentationMode/writeEntry/restoreDocument/newYearDocument) … and no
+  store import — claim 4 is a fence, not a reading: an assignment, delete, array mutator, .length
+  write or reflective write on a document handed in, and adoptRemoteDocument(, pass it"*.
+- Families → cells: plain, compound, logical or destructuring assignment on a dotted key (A1, A6,
+  A8–A13) · write through an alias (A14, B3, B5, C5, D10) · index write or entry edit (B1, B4, B6) ·
+  every `.length` write (C1–C6) · every array mutator by name, through an alias or borrowed (D1–D5,
+  D8, D9, D12; D10 above) · `delete` on a dotted key, an index or an entry field (E1, E4, E5) ·
+  reflective writes (F1–F6) · `adoptRemoteDocument(` (G3). All 39.
+- **What F5's prose is.** WO-1.84's fence table defines F5 as claim 4, *"claim 4 stated at :2170"*.
+  § 20's header also has three paragraphs about **claim 5** that use the words *"on any input"*. One
+  says the header *claimed "on any input" until WO-1.34*. One quotes `src/merge-fields.js`'s retired
+  header. The third is the argument that made WO-1.34 narrow that header. They are WO-1.34's record
+  of retiring that overclaim. They were **left as written**, because rewording a quotation of
+  retired text would falsify it, and swapping in a synonym to get past this grep is the kind of
+  thing the chain exists to stop. The grep below shows them, inside the whole-section range and
+  outside claim 4's.
+
+**F6 — `tools/wo-sweep.mjs` § 24, *the clipboard copy writes nothing*.** 43 pass in each half.
+
+- Before, comment: *"This proves there is nothing in `src/outreach.js` that COULD write on any
+  input, and nothing inside `copyDraft()` that reaches a writer"*. Name: *"the clipboard copy writes
+  nothing, and its call has nothing async in front of it"*. Detail: *"no store call, no doc mutation
+  and none of update/…/supportsOf … and copyDraft() … reaches no writer"*.
+- After, comment: *"This refuses, wherever it sits in `src/outreach.js` and anywhere inside
+  `copyDraft()`, every writer named in WRITERS and every mutation in the one shape MUTATES reads"*,
+  then *A FENCE, NOT A READING* with § 17's families, and the note that `copyDraft()`'s file imports
+  `getDoc`, so *"reaches no writer"* there means *"calls none of the names in WRITERS and mutates
+  `doc`/`d` in none of MUTATES' spellings"*. Name: *"the clipboard copy calls no writer and holds no
+  mutation in the spellings this grep reads, and its call has nothing async in front of it"*.
+  Detail: *"… copyDraft() … calls none of those names and holds none of those mutations … A fence,
+  not a reading, in both halves: …"*, with the same family list as F4.
+- Families → cells: F6a and F6b have the same passes as F4, cell for cell (A2–A14, B1–B6, C1–C6,
+  D5, D10–D12, E1–E5, F1–F6, G1–G3), and the same ten families are named.
+
+**F7 — `tools/wo-sweep.mjs` § 30, the writer exception.** 6 pass.
+
+- Before, *WHAT IT DOES NOT SEE*: *"a key named by a value (`a[key]` where key is 'held'),
+  `Reflect.get`, `Object.entries(a).find(…)`, a `for…in` that compares"*. The four reflective writes
+  were not named.
+- After, appended to that list: *"NOR DOES IT SEE A REFLECTIVE WRITE of the key, in any file …
+  `Object.assign(a, { held: true })`, `Reflect.set(a, 'held', true)`,
+  `Reflect.deleteProperty(a, 'held')` and `Object.defineProperty(a, 'held', { value: true })` … all
+  four pass — which is to say THE ONE-WRITER CLAUSE ABOVE CONFINES MEMBER AND `delete` WRITES TO
+  src/held-column.js, and not these four. Nor a key named by a value on the write side, `a[key] = …`
+  or `delete a[key]`"*.
+- Families → cells: key named by a value (A5, E3, which were already covered and are now said for
+  the write side too) · the four reflective writes (F1, F3, F4, F5). All 6.
+
+**F8 — `tools/verify/front-door.mjs`, *the probe opens nothing and writes nothing*.** 1 passes.
+
+- Before: the title, *"src/front-door.js calls no open(), no setPref() and no store function but
+  that one"*, with no comment over the check and no fence clause.
+- After: a new comment, *"A STORE FUNCTION IMPORTED BY NAME — `import { restoreDocument } from
+  './store.js'` and a bare `restoreDocument(…)` — has no `store.` in front of it and passes"*, and
+  the detail now ends *"A fence, not a reading: only store.-prefixed calls are read, so a store
+  function imported by name and called bare passes it"*. The title is unchanged. The new words
+  qualify it.
+- Families → cells: a store function imported by name (G1). All 1.
+
+#### What was declined
+
+- **No pattern was added.** That is WO-1.86's and WO-1.87's work.
+- **The `tools/README.md` row for `wo-sweep.mjs`** still says *"`src/outreach.js` has no writer in
+  it at all and `copyDraft()` in its neighbour reaches none"* (§ 24) and *"**the writer**,
+  `src/held-column.js`, let through by file and by **shape**"* (§ 30). § WO-1.84 counts both as part
+  of F6's and F7's claims. The work order's Deliverables name only the § 17 README paragraph, so
+  both were left for the owner to rule on, or for WO-1.87, which rewrites these fences' lists.
+- **`CLAUDE.md` § Data, the `src/calendar-derived.js` bullet**, says *"the grep proves there is
+  nothing in the file that could write on any input"*. That is the same overclaim, and it is outside
+  this work order, so it was not edited. CLAUDE.md is the owner's file.
+- **The section banners** for § 17 (*"has no writer"*) and § 24 (*"writes nothing"*) are unchanged.
+  Each banner now sits directly over a *fence, not a reading* paragraph.
+
+#### Acceptance
+
+- [x] For each of F1–F8, `TESTING.md` § WO-1.85 quotes the claim before and after the change, and
+      every family of shapes that passes the fence in § WO-1.84's table is named in the new words.
+      — Above, under *The fences, before and after*. For each fence, the before and after quotes
+      are followed by a *Families → cells* line that maps every *passes* cell in § WO-1.84's table
+      to a family named in the new words. The cells add up to each fence's tally: 27, 47, 31, 43,
+      39, 43 and 43, 6, 1.
+- [x] None of *"on any input"*, *"could not write"* or *"nothing … could do otherwise"* remains in
+      the prose of F1–F6 or in the § 17 paragraph of `tools/README.md`. The grep that shows this is
+      quoted in `TESTING.md` § WO-1.85.
+      — The grep runs over each fence's region, found by anchor rather than by line number, with
+      `on any input|could not write|could do otherwise`, case-insensitive. The third pattern is
+      wider than *"nothing … could do otherwise"* on purpose. The script is
+      `banned.sh` in the session scratchpad, and its output was:
+      ```
+      F1 tools/verify/log-entries.mjs:355-468 hits=0
+      F2 tools/verify/contact-log.mjs:667-708 hits=0
+      F3 tools/verify/term-record.mjs:368-435 hits=0
+      F4 (§ 17) tools/wo-sweep.mjs:1430-1552 hits=0
+         HIT tools/wo-sweep.mjs:2160:    claimed "on any input" until WO-1.34 (2026-08-28) retired that wording from src/merge-fields.js
+         HIT tools/wo-sweep.mjs:2222:    header said these greps "prove there is nothing here that could resolve one on any input", and
+         HIT tools/wo-sweep.mjs:2224:    fixture is that the structural one holds on any input, so either the check gets wide enough for
+      F5 (§ 20, whole section) tools/wo-sweep.mjs:2152-2460 hits=3
+      F5 (claim 4, header item) tools/wo-sweep.mjs:2191-2204 hits=0
+      F5 (claim 4, WRITER to check) tools/wo-sweep.mjs:2424-2460 hits=0
+      F6 (§ 24) tools/wo-sweep.mjs:3006-3127 hits=0
+      README § 17 paragraph tools/README.md:4065-4078 hits=0
+      ```
+      The three hits are in § 20's paragraphs about claim 5, which record WO-1.34's retirement of
+      the same phrase. They are not F5's prose, which § WO-1.84 defines as claim 4 (see F5 above).
+      Claim 4's header item and its code, from `WRITER` to the `check(`, have none. A whole-file
+      `grep -n "on any input\|could not write\|could do otherwise\|COULD write"` over the five
+      harness files and `tools/README.md` also finds those three lines, plus § 23 (`:2854`) and
+      § 28 (`:3694`), which are not among the eight fences.
+- [x] `git diff` shows changes to comments, detail strings and `tools/README.md` only. No regex, no
+      token list and no `check(` condition moves.
+      — Read hunk by hunk. Then a mechanical check: `codeonly.mjs` (scratchpad) reduces a file to
+      its code skeleton, with comments removed, string and template text replaced by a placeholder
+      (`${…}` bodies and regex literals kept), adjacent string concatenations collapsed and
+      whitespace squeezed. For `HEAD` and the working copy it gave identical skeletons for
+      `tools/wo-sweep.mjs` (91328 bytes, `22cf4e17a67a` both sides), `log-entries.mjs`,
+      `contact-log.mjs` and `term-record.mjs`. `front-door.mjs` differs by exactly one ` + S` at
+      the end of the check's detail argument, which is the appended string literal. Its condition
+      is byte-identical. `node --check` passes on all five. `git diff --stat` for `tools/`:
+      ```
+      tools/README.md              | 18 ++++--
+      tools/verify/contact-log.mjs | 30 +++++++--
+      tools/verify/front-door.mjs  |  9 ++-
+      tools/verify/log-entries.mjs | 50 ++++++++++-----
+      tools/verify/term-record.mjs | 40 ++++++++++--
+      tools/wo-sweep.mjs           | 83 ++++++++++++++++++++-----
+      ```
+      Outside `tools/`, the tree also differs in this section and in the phase file's status line,
+      the 🤖 CLAIMED written by `--start`. No file had CR line endings before or after.
+      "Detail strings" here includes check titles and § 17's and § 24's `NAME` constants. These are
+      printed strings that WO-1.84 read as part of each fence's claim.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass, and their check counts are
+      unchanged from before the work order.
+      — **Before**, both run on the clean tree before the first edit:
+      - `wo-sweep.mjs`: `EXIT=0`, *52 checks · 49 passed · 0 failed · 3 to review*.
+      - `verify-shell.mjs`: started before any edit and waited out to its exit, `EXIT=0`,
+        *2117 checks · 2117 passed · 0 failed · 0 skipped*.
+
+      **After**, on the edited tree:
+      - `wo-sweep.mjs`: `EXIT=0`, *52 checks · 49 passed · 0 failed · 3 to review*. These are the
+        three standing reviews. It was re-run after this section was written, with the same result.
+      - `verify-shell.mjs`: `EXIT=0`, *2117 checks · 2117 passed · 0 failed · 0 skipped*,
+        *67,612 lines · 31.9 lines per check · 1170s*.
+
+      Counts unchanged on both. **One figure is not a before/after pair.** The before run also
+      printed *67,612 lines*. The harness's lines figure is read from disk at the end of the run
+      (`tools/verify-shell.mjs`, `ownLines`), and by then the edits had landed. The modules it
+      executes were loaded at process start, before them. `verify-shell.mjs` plus
+      `tools/verify/*.mjs` count 67,439 lines at `HEAD` and 67,514 now. That is +75, all of it
+      prose from this work order, so the clean-tree figure is 67,612 − 75 = **67,537**, the figure
+      § WO-1.84 recorded. The figure is health, not a gate, and it is not a check count.
+- [x] `TESTING.md` § WO-1.85 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ---
 
 ## Phase 2 — Attendance
