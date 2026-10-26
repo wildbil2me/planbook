@@ -6971,7 +6971,24 @@ F2 searches for three words, and 47 of the 50 shapes inside its claim get past i
   no longer does, because WO-1.85 reworded F8 and the probe's F8 anchor went missing (WO-1.86's
   verifier, 2026-10-25). Fix the anchor in the copy printed here; leave § WO-1.84 as the record of
   what was run then.
+- **Three under-claims in F1 and F3, folded in from WO-1.88's third verifier pass** (2026-10-26,
+  the owner). These are comments and printed strings only, in `tools/verify/log-entries.mjs` and
+  `tools/verify/term-record.mjs`. Those two files are outside the four fences above, and this
+  bullet is the only reason this work order touches them.
+  - Comments that say the checks catch less than they do: `d.log[(0)] = x` is in fact refused.
+  - A title that names only the postfix `--`, where the regex also refuses `--d.log.length`.
+  - *"One per writer"*, which is really a count over the whole file. That wording predates WO-1.88.
+
+  Each is re-worded to what the pattern does. **No regex moves**, so no plant is owed.
 - **`TESTING.md` § WO-1.87** and the `CHANGELOG.md` entry.
+
+**A ruling that exists, and does not bind here.** On WO-1.88 the owner ruled *option 3*: after a
+second verifier FAIL on "no title claims a spelling its patterns let pass", **name the passing class
+and stop chasing it**, because each round closed exactly the spellings it was shown and a regex
+cannot follow JavaScript's parentheses or comments (`TESTING.md` § WO-1.88, CR2.2). That ruling was
+made for WO-1.88 only. If this work order's fourth Acceptance line fails twice the same way, the
+pipeline stops and asks. It does not apply option 3 on its own authority, and it does not assume
+the answer will be different.
 
 **Acceptance**
 - [ ] The owner's ruling on F2 and on F5, as recorded under Deliverables on 2026-10-25, is quoted in
@@ -6984,6 +7001,8 @@ F2 searches for three words, and 47 of the 50 shapes inside its claim get past i
       is reverted, and the red output is in `TESTING.md` § WO-1.87.
 - [ ] WO-1.84's probe, re-run, shows every shape the widened pattern covers as *refused*, and every
       shape still *passes* is named in that fence's *fence, not a reading* line.
+- [ ] F1's and F3's three under-claims folded in from WO-1.88 are re-worded to what their patterns
+      do, and `git diff` on the two files touches no regex, token list or `check(` condition.
 - [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
 - [ ] `TESTING.md` § WO-1.87 carries these lines verbatim with the evidence for each.
 
@@ -7002,7 +7021,7 @@ trailer, or `wo-sweep.mjs` § 9 goes red.
 
 ## WO-1.88 — the two append-only checks still miss three spellings their own words cover
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.86 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-26 · **Size** S · **Depends on** WO-1.86 · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.87 made.)*
 
 **Booked 2026-10-25**, owner-directed, out of WO-1.86's verdict. The verifier's own plants found
@@ -7029,14 +7048,14 @@ into WO-1.87, which owns F2, F4, F5 and F6 and is already M; these are WO-1.86's
 - **`TESTING.md` § WO-1.88** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] Before any pattern changes, `TESTING.md` § WO-1.88 records whether `src/log.js` or
+- [x] Before any pattern changes, `TESTING.md` § WO-1.88 records whether `src/log.js` or
       `src/term-record.js` holds legitimate code the widened pattern would match.
-- [ ] Each of the spellings above is planted in its guarded file and turns its check red, or is
+- [x] Each of the spellings above is planted in its guarded file and turns its check red, or is
       named as passing in that fence's *fence, not a reading* line. Every plant is reverted, and the
       red output is in `TESTING.md` § WO-1.88.
-- [ ] No check's printed title or detail claims a spelling that its patterns let pass.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-1.88 carries these lines verbatim with the evidence for each.
+- [x] No check's printed title or detail claims a spelling that its patterns let pass.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-1.88 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Plants go in `src/` and come out before anything else is written, and stage before
 planting** (AGENTS.md, the WO-5.1 scar). **A whitespace-tolerant pattern must still not fire on a

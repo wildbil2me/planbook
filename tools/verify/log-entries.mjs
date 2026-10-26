@@ -437,22 +437,82 @@ if (!seam) {
       A red line names what matched as well as which spelling: each regex reports every match's
       text, and a token found more than once says how many times.
 
+      **WO-1.88 CLOSED THREE SPELLINGS THIS CHECK'S OWN TITLE ALREADY CLAIMED, AND B2.** WO-1.86's
+      verifier planted them and they passed. Each was argued against src/log.js before it landed,
+      and none matches anything there but the two guards, which are lifted out above by their exact
+      spelling (TESTING.md § WO-1.88 has the search):
+      - THE INDEX REGEX TAKES THE SAME OPERATOR GROUP AS THE REASSIGNMENT REGEX, so
+        `d.log[0] += 1`, `-=` and `&&=` are refused like `d.log[0] = x`. `||=` and `??=` stay out,
+        for the reason they stay out above: they write only into a falsy or nullish slot, every
+        stored entry is an object, so they can fill a hole and never overwrite an entry — an add.
+      - BOTH DOTTED REGEXES ALLOW WHITESPACE AT THE DOT, `\.\s*log`, so `d . log = []` and
+        `d . log[0] = x` are refused. The `=[^=]` ending is untouched, so `d . log == x` is a read
+        and stays green. That is the dot before `log` and no other dot: see the list below.
+      - THE QUOTED-KEY REGEX TAKES ONE OPTIONAL SUBSCRIPT after the `]`, the same
+        `(\[[^\]]*\])?` tools/verify/term-record.mjs's dotted regex carries, so `d['log'][0] = x`
+        (WO-1.84's B2) is refused.
+
+      **WO-1.88'S CORRECTION ROUND WIDENED ALL THREE AGAIN, after its verifier planted
+      `(d.log) = []` and the run stayed green.** Argued against src/log.js first (TESTING.md
+      § WO-1.88, Correction round 1); nothing there matches but the two guards:
+      - A PARENTHESISED TARGET: `[\s)]*` where `\s*` stood, after `log`, after the quoted key's `]`
+        and after a subscript, so `(d.log) = []`, `(d.log)[0] = x` and `(d['log']) = []` are
+        refused. An `=` followed by `=` still does not count, so `(d.log) == x` stays a read.
+        That is a CLOSE parenthesis, IN THOSE THREE PLACES and no other, in these three regexes
+        and no others: an open parenthesis inside the text a pattern reads, a close one anywhere
+        else, and any parenthesis inside a `.length` write or a remover token are named below as
+        passing.
+      - A SUBSCRIPT HOLDING ONE BRACKETED SUBSCRIPT: `\[(?:[^\[\]]|\[[^\[\]]*\])*\]` where
+        `\[[^\]]*\]` stood, so `d.log[a[0]] = x` and `d['log'][a[0]] = x` are refused. ONE level
+        and no deeper: a regex cannot count brackets to any depth, each further level only
+        lengthens the pattern, so `d.log[a[b[0]]] = x` is named below as passing.
+
+      **WO-1.88'S SECOND CORRECTION ROUND CHANGED NO PATTERN, ON THE OWNER'S RULING (option 3).**
+      Its verifier planted `(d.log.length) = 0`, `(d.log.length)--`, `(d.log.splice)(0, 1)`,
+      `d[('log')] = []`, a trailing `//` comment before the `=`, `d.log++` and `d.log[0]++`, and
+      all of them passed. Each earlier round closed exactly the spellings it was shown and left the
+      same hole one pattern over, because a regex cannot follow JavaScript's parentheses or
+      comments. So the hole is NAMED BELOW AS A CLASS and the title promises no more than the
+      patterns keep (TESTING.md § WO-1.88, Correction round 2).
+
       A FENCE, NOT A READING, still. It knows those shapes and nothing else. WO-1.84 planted 52
-      removal shapes against this check's own code (TESTING.md § WO-1.84); after WO-1.86 these
-      families still pass it (TESTING.md § WO-1.86 has the re-run), and every one of them removes
-      or overwrites an entry:
+      removal shapes against this check's own code (TESTING.md § WO-1.84); after WO-1.88 these
+      families still pass it (TESTING.md § WO-1.86 and § WO-1.88 have the runs), and every one of
+      them removes or overwrites an entry, or adds one past the count of two:
       - a KEY HELD IN A VARIABLE, assigned (`d[k] = []`) — what `k` holds is a reading;
+      - a SUBSCRIPT NESTED MORE THAN ONE BRACKET DEEP (`d.log[a[b[0]]] = x`) — see above;
       - DESTRUCTURING ASSIGNMENT (`[d.log] = [[]]`, `({ log: d.log } = …)`) — a pattern general
         enough to catch it would cry wolf on every destructured read;
-      - an INDEX WRITE through a bracketed key or an alias (`d['log'][0] = x`,
-        `const l = d.log; l[0] = x`);
+      - an INDEX WRITE through an alias (`const l = d.log; l[0] = x`), with the alias family
+        WO-1.87 leaves;
       - an EDIT TO A STORED ENTRY, directly, through an alias or after a lookup
         (`d.log[0].subject = x`, `e.subject = x`, `d.log.find(…).subject = x`) — a grep cannot
         tell building a new entry before the push from editing a stored one;
       - a MUTATOR NAMED BY A STRING OR BORROWED (`d.log['splice'](0, 1)`,
-        `Array.prototype.splice.call(d.log, 0, 1)`).
-      What only adds (`||=`, `??=`, `length++`, `.unshift(`) or only reorders (`.sort(`,
-      `.reverse(`) passes too, and is outside the claim rather than a hole in it.
+        `Array.prototype.splice.call(d.log, 0, 1)`);
+      - an UPDATE EXPRESSION ON THE ARRAY OR AN ENTRY — `d.log++`, `d.log[0]++`, `--d.log`,
+        `d.log[0]--` — which replaces the array or the entry with a number. No pattern here looks
+        for `++` or `--` except on `.length`, so these are outside every spelling the title names;
+      - ANYTHING BETWEEN THE PARTS OF A SPELLING THAT ITS PATTERN DOES NOT ALLOW THERE. A token is
+        matched letter for letter; a regex allows whitespace only where it says `\s`, and a close
+        parenthesis only where it says `[\s)]*` — after `log`, after the quoted key's `]`, after a
+        subscript. Whatever else sits between two parts breaks the spelling, and the write passes:
+        · A PARENTHESIS ANYWHERE ELSE IN THE CHAIN — around a `.length` target
+          (`(d.log.length) = 0`, `(d.log.length)--`), around a member before its call
+          (`(d.log.splice)(0, 1)`), or inside the brackets around a quoted key (`d[('log')] = []`);
+        · A `//` COMMENT AT A LINE END inside a write (`d.log // c` ⏎ `= []`). Only a whole-line
+          `//` comment is stripped from `bodyOnly`, so a trailing one stays in the code and breaks
+          the pattern it sits inside. A block comment is stripped to a newline, which is
+          whitespace, so it passes exactly where whitespace passes;
+        · WHITESPACE AT A DOT OTHER THAN THE ONE BEFORE `log`, OR BEFORE A CALL'S `(`, and `?.`
+          before a call's `(` — `d.log.splice (0, 1)`, `d.log . length = 0`, a third
+          `d.log.push (e)`.
+        Every one of those has a twin for each of the other spellings. Closing the class is one
+        normalisation of `searchable` rather than a pattern at a time — each round that tried a
+        pattern at a time closed what it was shown and left its neighbour open — and it was left
+        for its own work order rather than grown into this one.
+      What only adds (`||=`, `??=` on `.log` or on an index, `length++`, `.unshift(`) or only
+      reorders (`.sort(`, `.reverse(`) passes too, and is outside the claim rather than a hole in it.
       The detail line names the families rather than claiming "could ever" (WO-1.85).
     */
     const initGuard = /if \(!Array\.isArray\(d\.log\)\)\s*d\.log = \[\];/g;
@@ -466,12 +526,13 @@ if (!seam) {
       (m) => label + ' ' + JSON.stringify(m[0].trim()));
     const found = removers.filter((token) => times(token) > 0)
       .map((token) => (times(token) > 1 ? token + ' x' + times(token) : token))
-      .concat(matched(/\.log\s*(?:\*\*|<<|>>>?|&&|[-+*\/%&|^])?=[^=]/, 'reassignment of .log'))
-      .concat(matched(/\.log\s*\[[^\]]*\]\s*=[^=]/, 'assignment into .log[...]'))
+      .concat(matched(/\.\s*log[\s)]*(?:\*\*|<<|>>>?|&&|[-+*\/%&|^])?=[^=]/, 'reassignment of .log'))
+      .concat(matched(/\.\s*log[\s)]*\[(?:[^\[\]]|\[[^\[\]]*\])*\][\s)]*(?:\*\*|<<|>>>?|&&|[-+*\/%&|^])?=[^=]/,
+        'assignment into .log[...]'))
       .concat(matched(/\.length\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=[^=]/,
         'assignment to .length'))
       .concat(matched(/\.length[ \t]*--|--[ \t]*[\w$.\[\]'"`]*\.length\b/, '.length decremented'))
-      .concat(matched(/\[\s*(['"`])log\1\s*\]\s*(?:\*\*|<<|>>>?|&&|[-+*\/%&|^])?=[^=]/,
+      .concat(matched(/\[\s*(['"`])log\1\s*\][\s)]*(?:\[(?:[^\[\]]|\[[^\[\]]*\])*\][\s)]*)?(?:\*\*|<<|>>>?|&&|[-+*\/%&|^])?=[^=]/,
         'bracketed log key assigned'))
       .concat(matched(/(?:^|[^\w$.])delete\b[^;\n]*/, 'delete'));
     const failed = [].concat(pushes === 2 ? [] : ['push count ' + pushes + ', not 2'])
@@ -479,19 +540,34 @@ if (!seam) {
       .concat(found.length ? ['remover(s) ' + JSON.stringify(found)] : []);
     check('append-only is structural rather than promised: both writers in src/log.js do exactly one '
       + 'thing to the document — two appends, one per writer, and no third — and none of the remover '
-      + 'spellings it searches for anywhere in its code: splice, pop, shift, fill, copyWithin, '
-      + 'delete in any form, a plain or compound reassignment of .log, assignment into .log[...], '
-      + 'assignment to .length, .length decremented, a quoted log key assigned plainly or '
-      + 'compoundly, Object.assign, Reflect.set, Reflect.deleteProperty, Object.defineProperty, '
-      + 'restoreDocument or adoptRemoteDocument',
+      + 'spellings it searches for anywhere in its code: splice, pop, shift, fill and copyWithin '
+      + 'each written .name( with nothing between the name and its (, '
+      + 'delete in any form, a plain or compound reassignment of .log, a plain or compound '
+      + 'assignment into .log[...], with or without whitespace at the dot before log, with close '
+      + 'parentheses allowed after log and after a subscript, and with a subscript that may itself '
+      + 'hold one bracketed subscript, assignment to .length with nothing but whitespace between '
+      + 'length and the operator, .length decremented with nothing but spaces or tabs between '
+      + 'length and the --, a quoted log key written directly inside '
+      + 'its brackets or one subscript under it assigned plainly or compoundly, the same close '
+      + 'parentheses and subscripts allowed, Object.assign, Reflect.set, Reflect.deleteProperty, '
+      + 'Object.defineProperty, restoreDocument or adoptRemoteDocument',
       failed.length === 0,
       pushes + ' push(s) — writeEntry() and writeContact() — in ' + bodyOnly.split('\n').length + ' line(s) of code; the create-on-first-write guard is present ' + guards + ' time(s), one per writer; removers found: '
         + (found.length ? JSON.stringify(found) : 'none')
         + (failed.length ? '; FAILED ON: ' + failed.join('; ') : '')
         + '. A fence, not a reading: a key held in a variable and assigned (d[k] = []), '
-        + 'destructuring assignment, an index write through a bracketed key or an alias, an edit '
-        + 'to a stored entry, and a mutator named by a string or borrowed from Array.prototype '
-        + 'all pass it');
+        + 'a subscript nested more than one bracket deep (d.log[a[b[0]]] = x), '
+        + 'destructuring assignment, an index write through an alias, an edit to a stored entry, '
+        + 'a mutator named by a string or borrowed from Array.prototype, an update expression on '
+        + 'the array or an entry (d.log++, d.log[0]++, and -- likewise), and anything between the '
+        + 'parts of a spelling that its pattern does not allow there all pass it: a parenthesis '
+        + 'other than a close one after log, the quoted key or a subscript ((d.log.length) = 0, '
+        + '(d.log.length)--, (d.log.splice)(0, 1), d[("log")] = []), a // comment at a line end '
+        + '(d.log // c, then = [] on the next line), and whitespace at another dot or before a '
+        + 'call\'s ( or a ?. there (d.log.splice (0, 1), d.log . length = 0, a third push spelled '
+        + 'push (…)); what only adds '
+        + '(||= and ??= on .log or on an index, length++, unshift) or only reorders passes too, '
+        + 'outside the claim');
 
     /* ══ the card on the student record ══ */
 

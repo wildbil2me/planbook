@@ -368,7 +368,7 @@ check('WO-3.72: a student on the roster whose grade has GONE since the recording
 /* ── ACCEPTANCE LINE 8: one writer, and it only pushes ──
    Read off the file rather than driven — the posture tools/verify/log-entries.mjs takes about
    src/log.js: driving proves what today's paths did, and reading refuses the spellings in REMOVERS
-   and four regexes wherever they sit. Comments come out first, because the header names the
+   and five regexes wherever they sit. Comments come out first, because the header names the
    very words.
 
    WO-1.86 CLOSED WHAT ONE TOKEN SETTLES — THE TWO HOLES WO-1.83 SHUT IN THE LOG'S CHECK AND NEVER
@@ -391,22 +391,85 @@ check('WO-3.72: a student on the roster whose grade has GONE since the recording
      refused; and the WHOLE-DOCUMENT SWAPS by bare name, `restoreDocument(` and
      `adoptRemoteDocument(`, which catches the `store.` form too. The file imports getDoc, update
      and newId from the store, and nothing else.
-   `delete ` was already a token here, so a `delete` in any key form was already refused; it is
-   left as it was. A red line names what matched: each regex reports every match's text.
+   A red line names what matched: each regex reports every match's text.
+
+   WO-1.88 CLOSED TWO MORE, AFTER ASKING THE SAME QUESTION OF src/term-record.js — neither pattern
+   matches anything in its code (TESTING.md § WO-1.88 has the search):
+   - EVERY `delete`, IN ANY FORM. The `'delete '` token this replaces wanted a space, and this
+     comment said until WO-1.88 that it already refused a `delete` in any key form. It did not:
+     `delete` followed by a tab, and `delete(d.termRecords)`, both passed. The regex is the one
+     tools/verify/log-entries.mjs took in WO-1.86, `(?:^|[^\w$.])delete\b`, which skips a
+     `.delete(` method call and carries the rest of the statement into the report. The file holds
+     no `delete` at all, not even the letters.
+   - THE QUOTED-KEY REGEX TAKES ONE OPTIONAL SUBSCRIPT after the `]`, the same `(\[[^\]]*\])?` the
+     dotted regex carries, so `d['termRecords'][0] = x` (WO-1.84's B2) is refused.
+   WHITESPACE AT THE DOT BEFORE `termRecords` NEEDED NOTHING: the dotted regex has no dot in it,
+   so `d . termRecords = []` was already refused — planted to make sure rather than assumed.
+
+   WO-1.88'S CORRECTION ROUND WIDENED BOTH ASSIGNMENT REGEXES AGAIN, after its verifier planted
+   `(d.termRecords)[0] = null` and the run stayed green. Argued against src/term-record.js first
+   (TESTING.md § WO-1.88, Correction round 1); nothing there matches but the guard:
+   - A PARENTHESISED TARGET: `[\s)]*` where `\s*` stood, after the name, after the quoted key's `]`
+     and after a subscript, so `(d.termRecords) = []`, `(d.termRecords)[0] = x` and
+     `(d['termRecords']) = []` are refused. `(d.termRecords) == x` stays a read. That is a CLOSE
+     parenthesis, IN THOSE THREE PLACES and no other, in these two regexes and no others: an open
+     parenthesis inside the text a pattern reads, a close one anywhere else, and any parenthesis
+     inside a `.length` write or a remover token are named below as passing.
+   - A SUBSCRIPT HOLDING ONE BRACKETED SUBSCRIPT: `\[(?:[^\[\]]|\[[^\[\]]*\])*\]` where
+     `\[[^\]]*\]` stood, so `d.termRecords[a[0]] = x` and `d['termRecords'][a[0]] = x` are refused.
+     ONE level and no deeper — a regex cannot count brackets to any depth — so
+     `d.termRecords[a[b[0]]] = x` is named below as passing.
+   ONE FALSE RED IS ADMITTED ON PURPOSE: an arrow function whose parameter is named `termRecords`,
+   `(termRecords) => …`, now matches, because `=>` is an `=` not followed by `=`. The file has
+   none; a false red fails safe, and renaming the parameter is the repair.
+
+   WO-1.88'S SECOND CORRECTION ROUND CHANGED NO PATTERN, ON THE OWNER'S RULING (option 3). Its
+   verifier planted the `termRecords` twins of `(d.log.length) = 0`, `(d.log.length)--`,
+   `(d.log.splice)(0, 1)`, `d[('log')] = []` and a trailing `//` comment before the `=`, and all
+   of them passed, as `d.termRecords++` and `d.termRecords[0]++` do. Each earlier round closed
+   exactly the spellings it was shown and left the same hole one pattern over, because a regex
+   cannot follow JavaScript's parentheses or comments. So the hole is NAMED BELOW AS A CLASS and
+   the title promises no more than the patterns keep (TESTING.md § WO-1.88, Correction round 2).
 
    A FENCE, NOT A READING. WO-1.84 planted 52 removal shapes against this check's own code
-   (TESTING.md § WO-1.84) and 31 passed; after WO-1.86 these families still pass it (TESTING.md
-   § WO-1.86 has the re-run):
+   (TESTING.md § WO-1.84) and 31 passed; after WO-1.88 these families still pass it (TESTING.md
+   § WO-1.86 and § WO-1.88 have the runs):
    - a COMPUTED ROOT KEY (`d[k] = []`) — what `k` holds is a reading;
+   - a SUBSCRIPT NESTED MORE THAN ONE BRACKET DEEP (`d.termRecords[a[b[0]]] = x`) — see above;
    - DESTRUCTURING ASSIGNMENT (`[d.termRecords] = [[]]`, `({ termRecords: d.termRecords } = …)`) —
      a pattern general enough to catch it would cry wolf on every destructured read;
-   - an INDEX WRITE through a bracketed key or an alias (`d['termRecords'][0] = x`,
-     `const l = d.termRecords; l[0] = x`);
+   - an INDEX WRITE through an alias (`const l = d.termRecords; l[0] = x`), with the alias family
+     WO-1.87 leaves;
    - an EDIT TO A STORED RECORD, directly or through an alias (`d.termRecords[0].x = y`) — the
      lookup half is refused (`.find(`, `findIndex(`), the edit itself is not, because a grep cannot
      tell building the new record before the push from editing a stored one;
    - a MUTATOR NAMED BY A STRING OR BORROWED (`d.termRecords['splice'](0, 1)`,
-     `Array.prototype.splice.call(…)`).
+     `Array.prototype.splice.call(…)`);
+   - an UPDATE EXPRESSION ON THE ARRAY OR A RECORD — `d.termRecords++`, `d.termRecords[0]++`,
+     `--d.termRecords`, `d.termRecords[0]--` — which replaces the array or the record with a
+     number. No pattern here looks for `++` or `--` except on `.length`, so these are outside
+     every spelling the title names;
+   - ANYTHING BETWEEN THE PARTS OF A SPELLING THAT ITS PATTERN DOES NOT ALLOW THERE. A token is
+     matched letter for letter; a regex allows whitespace only where it says `\s` (or `[ \t]`), and
+     a close parenthesis only where it says `[\s)]*` — after `termRecords`, after the quoted key's
+     `]`, after a subscript. Whatever else sits between two parts breaks the spelling, and the
+     write passes:
+     · A PARENTHESIS ANYWHERE ELSE IN THE CHAIN — around a `.length` target
+       (`(d.termRecords.length) = 0`, `(d.termRecords.length)--`), around a member before its call
+       (`(d.termRecords.splice)(0, 1)`), or inside the brackets around a quoted key
+       (`d[('termRecords')] = []`);
+     · A `//` COMMENT AT A LINE END inside a write (`d.termRecords // c` ⏎ `= []`). Only a
+       whole-line `//` comment is stripped from `code`, so a trailing one stays and breaks the
+       pattern it sits inside. A block comment is stripped to a newline, which is whitespace, so
+       it passes exactly where whitespace passes;
+     · WHITESPACE AT A DOT INSIDE ANY OTHER SPELLING (the dotted regex has no dot, so
+       `d . termRecords = []` is refused) OR BEFORE A CALL'S `(`, and `?.` before a call's `(` —
+       `d.termRecords.splice (0, 1)`, `d.termRecords . length = 0`, and a second `push (…)` or
+       `update (…)` that the two counts do not see.
+     Every one of those has a twin for each of the other spellings. Closing the class is one
+     normalisation of the code rather than a pattern at a time — each round that tried a pattern
+     at a time closed what it was shown and left its neighbour open — and it was left for its own
+     work order rather than grown into this one.
    The title below said "the create-on-first-write guard is its only other line touching the block"
    until WO-1.85; every family above touches the block, so it now says the guard is present and
    names the spellings searched. */
@@ -423,7 +486,7 @@ const writer = writerAt < 0 || writerEnd < 0 ? '' : code.slice(writerAt, writerE
 const outside = writerAt < 0 ? code : code.slice(0, writerAt) + code.slice(writerEnd);
 const count = (text, re) => (text.match(re) || []).length;
 const REMOVERS = ['.splice(', '.pop(', '.shift(', '.unshift(', '.sort(', '.reverse(', '.fill(',
-  '.copyWithin(', 'delete ', 'Object.assign(', 'findIndex(', '.find(', 'Reflect.set(',
+  '.copyWithin(', 'Object.assign(', 'findIndex(', '.find(', 'Reflect.set(',
   'Reflect.deleteProperty(', 'Object.defineProperty(', 'restoreDocument(', 'adoptRemoteDocument('];
 const withoutGuard = code.split(guard).join('');
 const times = (token) => withoutGuard.split(token).length - 1;
@@ -431,24 +494,39 @@ const matched = (re, label) => Array.from(withoutGuard.matchAll(new RegExp(re.so
   (m) => label + ' ' + JSON.stringify(m[0].trim()));
 const found = REMOVERS.filter((token) => times(token) > 0)
   .map((token) => (times(token) > 1 ? token + ' x' + times(token) : token))
-  .concat(matched(/termRecords\s*(\[[^\]]*\])?\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=[^=]/,
+  .concat(matched(/termRecords[\s)]*(\[(?:[^\[\]]|\[[^\[\]]*\])*\][\s)]*)?(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=[^=]/,
     'an assignment to termRecords'))
-  .concat(matched(/\[\s*(['"`])termRecords\1\s*\]\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=[^=]/,
+  .concat(matched(/\[\s*(['"`])termRecords\1\s*\][\s)]*(?:\[(?:[^\[\]]|\[[^\[\]]*\])*\][\s)]*)?(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=[^=]/,
     'a quoted termRecords key assigned'))
   .concat(matched(/\.length\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=[^=]/, 'an assignment to .length'))
   .concat(matched(/\.length[ \t]*(?:\+\+|--)|(?:\+\+|--)[ \t]*[\w$.\[\]'"`]*\.length\b/,
-    'a .length update expression'));
+    'a .length update expression'))
+  .concat(matched(/(?:^|[^\w$.])delete\b[^;\n]*/, 'delete'));
 const exported = [...code.matchAll(/export function (\w+)\(/g)].map((m) => m[1]);
 const imports = [...code.matchAll(/from '\.\/([\w-]+)\.js'/g)].map((m) => m[1]);
 check('WO-3.72: src/term-record.js holds one writer, and it only pushes — recordTerm() holds the file\'s '
   + 'only update() and only push(), the create-on-first-write guard is present, and nowhere in the '
   + 'code is there one of the spellings it searches for — splice, pop, shift, unshift, sort, reverse, '
-  + 'fill, copyWithin, delete, Object.assign, Reflect.set, Reflect.deleteProperty, '
+  + 'fill and copyWithin each written .name( with nothing between the name and its (, delete in '
+  + 'any form, Object.assign, Reflect.set, Reflect.deleteProperty, '
   + 'Object.defineProperty, restoreDocument, adoptRemoteDocument, termRecords followed by = or by '
-  + 'one subscript and = (plain, compound or logical), a quoted termRecords key assigned the same '
-  + 'ways, an assignment to or update of .length, or a lookup of a record by find/findIndex (a '
-  + 'fence, not a reading: a computed key, destructuring, index writes through a bracketed key or '
-  + 'an alias, record edits and mutators named by a string or borrowed pass it); it '
+  + 'one subscript and = (plain, compound or logical), with close parentheses allowed after '
+  + 'termRecords and after a subscript and with a subscript that may itself hold one bracketed '
+  + 'subscript, a quoted termRecords key written directly inside its brackets or one subscript '
+  + 'under it assigned the same ways, an assignment to .length with nothing but whitespace between '
+  + 'length and the operator or an update of .length with nothing but spaces or tabs between '
+  + 'length and the ++ or --, or a lookup of a record by find/findIndex (a fence, not a reading: a '
+  + 'computed key, a subscript nested more than one bracket deep (d.termRecords[a[b[0]]] = x), '
+  + 'destructuring, an index write through an alias, record edits, mutators named by a string or '
+  + 'borrowed, an update expression on the array or a record (d.termRecords++, '
+  + 'd.termRecords[0]++, and -- likewise), and anything between the parts of a spelling that its '
+  + 'pattern does not allow there — a parenthesis other than a close one after termRecords, the '
+  + 'quoted key or a subscript ((d.termRecords.length) = 0, (d.termRecords.length)--, '
+  + '(d.termRecords.splice)(0, 1), d[("termRecords")] = []), a // comment at a line end '
+  + '(d.termRecords // c, then = [] on the next line), and whitespace at a dot inside another '
+  + 'spelling or before a call\'s ( '
+  + 'or a ?. there (d.termRecords.splice (0, 1), d.termRecords . length = 0, a second push (…) or '
+  + 'update (…)) — pass it); it '
   + 'imports the engine and the attendance date helper, and src/grade-engine.js does not import it '
   + 'back',
   writer.length > 0 && count(code, /\.push\(/g) === 1 && count(writer, /\.push\(/g) === 1

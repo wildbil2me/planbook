@@ -6260,6 +6260,916 @@ for (const [label, r] of [['before', before], ['after', after]]) {
 }
 ```
 
+### WO-1.88 — the two append-only checks still miss three spellings their own words cover
+
+No 👤 and no 📆 line. Two harness files move: `tools/verify/log-entries.mjs` (F1, over `src/log.js`)
+and `tools/verify/term-record.mjs` (F3, over `src/term-record.js`). Nothing in `src/` moves in the
+end, so no `CACHE` bump is owed. Shape IDs (B2, B3) are § WO-1.84's.
+
+**This section is written in the order the work was done.** § 1 was written, and its search run,
+before either harness file was opened for editing.
+
+#### 1. Before any pattern changes: what would each widened pattern match in the file it guards?
+
+The widenings proposed, each reused from WO-1.86 or WO-1.83 rather than invented:
+
+- **F1, index regex** `\.log\s*\[[^\]]*\]\s*=[^=]` gains F1's own WO-1.86 operator group — WO-1.83's
+  `.length` group with `||` and `??` taken out — before the `=`.
+- **F1, the dot before `log`**, in both dotted regexes (reassignment and index): `\.log` becomes
+  `\.\s*log`, so whitespace on either side of the dot counts.
+- **F1, B2**: the quoted-key regex takes an optional single subscript between the `]` and the
+  operator — the same `(\[[^\]]*\])?` F3's dotted regex already carries.
+- **F3, `delete`**: the `'delete '` token is replaced by F1's WO-1.86 regex,
+  `/(?:^|[^\w$.])delete\b[^;\n]*/`.
+- **F3, B2**: its quoted-key regex takes the same optional single subscript, with WO-1.83's full
+  operator group as it already has.
+- **F3, the dot**: F3's dotted regex is `termRecords\s*(\[[^\]]*\])?\s*…=` and has no dot in it, so
+  whitespace around a dot should not matter to it. Nothing is proposed until the plant says so.
+
+The search is `legit188.mjs` (session scratchpad, not committed; its source is at the foot of this
+section). It strips comments the way both checks do and searches each file's **code**, string
+literals included, line by line. Run on the clean tree before the first harness edit:
+
+```
+== src/log.js (157 non-blank code lines)
+   F1 index regex with the compound group: .log[...] then op?=: none
+   F1 .log with whitespace around the dot, then op?= (reassignment): 2 line(s) ["if (!Array.isArray(d.log)) d.log = [];","if (!Array.isArray(d.log)) d.log = [];"]
+   F1 .log with whitespace around the dot, then [...] op?= (index): none
+   F1 quoted log key, optional one subscript, then op?=: none
+   wider, for the record: whitespace on either side of a dot before log: none
+   wider, for the record: any quoted log key at all: none
+   wider, for the record: every .log in the code: 5 line(s) ["if (!Array.isArray(d.log)) d.log = [];","d.log.push(entry);","if (!Array.isArray(d.log)) d.log = [];","d.log.push(entry);","return doc && Array.isArray(doc.log) ? doc.log.filter((e) => !!e && typeof e === 'object') : [];"]
+== src/term-record.js (106 non-blank code lines)
+   F3 any-form delete (F1's WO-1.86 regex): none
+   F3 quoted termRecords key, optional one subscript, then op?=: none
+   F3 dotted regex as it stands (it has no dot in it): termRecords [..]? op?=: 1 line(s) ["if (!Array.isArray(d.termRecords)) d.termRecords = [];"]
+   wider, for the record: the letters delete anywhere, .delete( included: none
+   wider, for the record: any quoted termRecords key at all: none
+   wider, for the record: every termRecords in the code: 3 line(s) ["if (!Array.isArray(d.termRecords)) d.termRecords = [];","d.termRecords.push(entry);","arrayOf(doc && doc.termRecords).forEach((entry) => {"]
+```
+
+**Finding: neither file holds legitimate code any widened pattern would match**, with one known
+exception that is not new. The only lines matched are the **create-on-first-write guards** — twice in
+`src/log.js`, once in `src/term-record.js` — and both checks already lift the guard out by its exact
+spelling before searching (F1's `initGuard` regex, F3's `guard` string), because the unwidened
+patterns match it too. The guards are spelled `d.log = []` / `d.termRecords = []` with no whitespace
+at the dot, so the widening changes nothing about them. Every other `.log` and `termRecords` in the
+code is a read or a push. Neither file holds a quoted `log`/`termRecords` key in any form, and
+`src/term-record.js` holds no `delete` — not even the letters, so a `.delete(` method call is not a
+question here. Per token:
+
+| Widening | `src/log.js` | `src/term-record.js` | Ruling |
+|---|---|---|---|
+| F1 index regex, compound group | none | — | **Widen.** `d.log[0] += 1`, `-=`, `&&=` overwrite an entry. `\|\|=` and `??=` stay out, as on the reassignment regex in WO-1.86: they write only into a falsy or nullish slot, and every stored entry is an object, so they can fill a hole but never overwrite an entry — an add, outside F1's append-only claim. Named as such in the comment |
+| F1 `\.\s*log`, both dotted regexes | the two guards only, lifted out before searching | — | **Widen.** The whitespace is inside the `\.`…`log` token; the `=[^=]` ending is untouched, so `d . log == x` stays a read |
+| F1 quoted key + one subscript (B2) | none | — | **Widen.** The WO-1.86 implementer judged it cheap and the search finds nothing it would cry wolf on |
+| F3 any-form `delete` | — | none | **Widen** (replace the token). F3 claims *only pushes*; a `delete` in any form is not a push |
+| F3 quoted key + one subscript (B2) | — | none | **Widen**, with F3's existing full operator group |
+| F3 dot | — | guard only | **Nothing proposed**: the regex has no dot. To be confirmed by the plant in § 3 |
+
+**B3** (an index write through an alias) is not touched, by the work order: it stays named as passing
+in both fence lines, with the alias family WO-1.87 leaves.
+
+#### 2. What landed
+
+Everything below was written after § 1's search. Each check keeps its single `check(`, so no count
+moves anywhere.
+
+**F1, `tools/verify/log-entries.mjs`.** Three regexes change and no token:
+
+- reassignment: `/\.log\s*(?:OP1)?=[^=]/` → `/\.\s*log\s*(?:OP1)?=[^=]/`;
+- index: `/\.log\s*\[[^\]]*\]\s*=[^=]/` → `/\.\s*log\s*\[[^\]]*\]\s*(?:OP1)?=[^=]/`;
+- quoted key: `/\[\s*(['"`])log\1\s*\]\s*(?:OP1)?=[^=]/` →
+  `/\[\s*(['"`])log\1\s*\](?:\s*\[[^\]]*\])?\s*(?:OP1)?=[^=]/`.
+
+`OP1` stands for F1's WO-1.86 group, `\*\*|<<|>>>?|&&|[-+*\/%&|^]`, written out in full in the file.
+The printed title now says *"a plain or compound assignment into .log[...], with or without
+whitespace at the dot before log"* and *"a quoted log key or one subscript under it assigned plainly
+or compoundly"*. The detail's fence line drops *"through a bracketed key"* and names the families
+listed in § 4.
+
+**F3, `tools/verify/term-record.mjs`.** The `'delete '` token comes out of `REMOVERS`. The F1 regex
+`/(?:^|[^\w$.])delete\b[^;\n]*/` joins the `found` list under the label `delete`. The quoted-key regex
+takes the same optional subscript, with F3's existing full operator group. The title now says
+*"delete in any form"* and *"a quoted termRecords key or one subscript under it"*, and its fence
+parenthesis drops *"through a bracketed key"* and names § 4's families. The comment above the check
+said *"`delete ` was already a token here, so a `delete` in any key form was already refused"*. That
+was false for a tab and for `delete(`, and it is replaced by a WO-1.88 paragraph. The header's
+*"four regexes"* is now *"five"*.
+
+**F3 and the dot: no change**, because the plant in § 3 (run 3) was refused by the unchanged dotted
+regex, as § 1 predicted.
+
+#### 3. The plants — one spelling per check per run
+
+**Protocol.** Before the first plant, every edit this work order had made was staged
+(`git add TESTING.md tools/verify/log-entries.mjs tools/verify/term-record.mjs`), and
+`git diff --stat src/` was empty. The plants were written by `plant188.mjs` (scratchpad; source at
+the foot of this section). It inserts two lines after the writer's push — `writeEntry()`'s in
+`src/log.js` and `recordTerm()`'s in `src/term-record.js`: a `// MUTATION WO-1.88 plant N: …` comment,
+and `if (entry === null) { <spelling> }`. That is WO-1.83's device: `entry` is never `null` there, so
+the spelling is in the source and never runs. Each planted file passed `node --input-type=module --check`
+before its run.
+
+**One spelling per check per run.** WO-1.86's verifier called one block per file contestable, so this
+work order did not use one. Each run planted **one** spelling in `src/log.js` and **one** in
+`src/term-record.js`. The two checks read different files, and each check's detail prints what it
+found, so a red line can come from only its own file's single spelling. Four full runs of
+`node tools/verify-shell.mjs`, each waited out to its exit. Between runs,
+`git checkout -- src/log.js src/term-record.js` reverted both files and `git status --short src/` printed
+nothing.
+
+Every run: *2117 checks · 2115 passed · 2 failed · 0 skipped*, `EXIT=1`. The two failures are these two
+checks, at log lines 1516 (F3) and 2160 (F1) every time. The `found` part of each detail line,
+verbatim:
+
+| Run | F1 plant in `src/log.js` | F1 detail (removers found) | F3 plant in `src/term-record.js` | F3 detail (`found`) |
+|---|---|---|---|---|
+| 1 | `d.log[0] += 1;` (item 1) | `["assignment into .log[...] \".log[0] +=\""]` | `delete⇥d.termRecords;` (item 2, a tab) | `["delete \"delete\\td.termRecords\""]` |
+| 2 | `d . log = [];` (item 3) | `["reassignment of .log \". log =\""]` | `delete(d.termRecords);` (item 2) | `["delete \"delete(d.termRecords)\""]` |
+| 3 | `d['log'][0] = null;` (B2) | `["bracketed log key assigned \"['log'][0] =\""]` | `d . termRecords = [];` (item 3) | `["an assignment to termRecords \"termRecords =\""]` |
+| 4 | `d . log[0] = null;` (the dot, index) | `["assignment into .log[...] \". log[0] =\""]` | `d['termRecords'][0] = null;` (B2) | `["a quoted termRecords key assigned \"['termRecords'][0] =\""]` |
+
+Each run's summary also read *67,714 lines · 32.0 lines per check*, at 1175s, 1172s, 1173s and 1180s.
+F1's full detail in run 1, verbatim:
+
+```
+2 push(s) — writeEntry() and writeContact() — in 247 line(s) of code; the create-on-first-write guard is present 2 time(s), one per writer; removers found: ["assignment into .log[...] \".log[0] +=\""]; FAILED ON: remover(s) ["assignment into .log[...] \".log[0] +=\""]. A fence, not a reading: a key held in a variable and assigned (d[k] = []), destructuring assignment, an index write through an alias, an edit to a stored entry, a mutator named by a string or borrowed from Array.prototype, and whitespace or a comment inside any other spelling it searches for (d.log.splice (0, 1), d.log . length = 0, a third push spelled push (…)) all pass it; what only adds (||= and ??= on .log or on an index, length++, unshift) or only reorders passes too, outside the claim
+```
+
+F3's full detail in run 1, verbatim:
+
+```
+{"pushes":1,"updates":1,"writerLines":11,"found":["delete \"delete\\td.termRecords\""],"exported":["recordTerm","termEnded","termEndsToday","newestRecord","noLongerMatching","emptyBoxes","heldColumns"],"imports":["store","grade-engine","categories","classes","attendance","scores","log"],"engineImportsBack":false}
+```
+
+The other three runs differ from these only in the `found` text shown in the table. Push, update,
+guard and line figures are the same, so the planted spelling is the only thing that failed.
+(`writerLines` is 11, not the 9 of a clean run, because the plant adds two lines inside the writer.)
+
+**Run 3's F3 plant was red at `HEAD` as well.** F3's dotted regex has no dot in it, so
+`d . termRecords = []` was already refused before this work order. It closes nothing in F3. That
+is the work order's *"close it in whichever fence it passes, rather than assuming either way"*: it
+passed F1 and only F1, and only F1 changed for it. The `HEAD` verdicts come from § 4's probe, not
+from a full run.
+
+**The revert.** After run 4, `git checkout -- src/log.js src/term-record.js`. After it:
+
+- `git status --short src/`, `git diff --stat src/` and `git diff --cached --stat src/` printed nothing;
+- `grep -rn "MUTATION WO-1.88" src/ tools/` found nothing (exit 1);
+- the bare `grep -rn MUTATION src/ tools/` finds 18 lines, and `git grep -n MUTATION HEAD -- src tools`
+  finds 18. They are the prose lines § WO-1.86 lists, already at `HEAD`. None is a plant.
+
+#### 4. Each spelling alone, at `HEAD` and now, from the checks' own code
+
+A full run per spelling settles that a check goes red. It does not settle that a spelling *passed*
+before, or that a read stays green. `probe188.mjs` (scratchpad; source below) does both without a
+browser. It slices each check's code out of the harness file — from `const bodyOnly = logSource` to
+F1's `check(`, and from `const code = source.replace` to F3's `check(` plus F3's pass condition — at
+`HEAD` (`git show`) and in the working tree. Nothing is retyped. It runs each slice over the **clean**
+guarded file, with one line inserted in memory after the writer's push. It is not a third harness:
+it reaches no page, and it never touches `src/`. Run on the final bytes, after the revert:
+
+```
+== F1 tools/verify/log-entries.mjs over src/log.js
+   clean file: HEAD passes | tree passes
+   S1 (WO item 1)            "d.log[0] += 1;"                             HEAD passes | tree REFUSED ["assignment into .log[...] \".log[0] +=\""]
+   S2 (WO item 3)            "d . log = [];"                              HEAD passes | tree REFUSED ["reassignment of .log \". log =\""]
+   S3 (B2)                   "d['log'][0] = null;"                        HEAD passes | tree REFUSED ["bracketed log key assigned \"['log'][0] =\""]
+   S4 (dot, index)           "d . log[0] = null;"                         HEAD passes | tree REFUSED ["assignment into .log[...] \". log[0] =\""]
+   also                      "d.log[0] -= 1;"                             HEAD passes | tree REFUSED ["assignment into .log[...] \".log[0] -=\""]
+   also                      "d.log[0] &&= null;"                         HEAD passes | tree REFUSED ["assignment into .log[...] \".log[0] &&=\""]
+   also                      "d.\n      log = [];"                        HEAD passes | tree REFUSED ["reassignment of .log \".\\n      log =\""]
+   also                      "d./**/log = [];"                            HEAD passes | tree REFUSED ["reassignment of .log \".\\nlog =\""]
+   also                      "d[\"log\"] [0] += 1;"                       HEAD passes | tree REFUSED ["bracketed log key assigned \"[\\\"log\\\"] [0] +=\""]
+   also                      "d . log += \"\";"                           HEAD passes | tree REFUSED ["reassignment of .log \". log +=\""]
+   add only (outside claim)  "d.log[0] ||= e;"                            HEAD passes | tree passes
+   add only (outside claim)  "d.log[0] ??= e;"                            HEAD passes | tree passes
+   read, must pass           "if (d . log == null) {}"                    HEAD passes | tree passes
+   read, must pass           "if (d.log[0] == e) {}"                      HEAD passes | tree passes
+   read, must pass           "if (d['log'][0] === e) {}"                  HEAD passes | tree passes
+   read, must pass           "if (d.log[0] <= e) {}"                      HEAD passes | tree passes
+   read, must pass           "if (d.log[0] >= e) {}"                      HEAD passes | tree passes
+   read, must pass           "if (d.log[0] != e) {}"                      HEAD passes | tree passes
+   named as passing          "const l = d.log; l[0] = null;"              HEAD passes | tree passes
+   named as passing          "d.log.splice (0, 1);"                       HEAD passes | tree passes
+   named as passing          "d.log . length = 0;"                        HEAD passes | tree passes
+   named as passing          "d.log.push (entry);"                        HEAD passes | tree passes
+   named as passing          "d.log./**/splice(0, 1);"                    HEAD passes | tree passes
+   control (refused at HEAD) "d.log.splice(0, 1);"                        HEAD REFUSED [".splice("] | tree REFUSED [".splice("]
+== F3 tools/verify/term-record.mjs over src/term-record.js
+   clean file: HEAD passes | tree passes
+   T1 (WO item 2)            "delete\td.termRecords;"                     HEAD passes | tree REFUSED ["delete \"delete\\td.termRecords\""]
+   T2 (WO item 2)            "delete(d.termRecords);"                     HEAD passes | tree REFUSED ["delete \"delete(d.termRecords)\""]
+   T3 (WO item 3)            "d . termRecords = [];"                      HEAD REFUSED ["an assignment to termRecords \"termRecords =\""] | tree REFUSED ["an assignment to termRecords \"termRecords =\""]
+   T4 (B2)                   "d['termRecords'][0] = null;"                HEAD passes | tree REFUSED ["a quoted termRecords key assigned \"['termRecords'][0] =\""]
+   also                      "delete d['termRecords'];"                   HEAD REFUSED ["delete "] | tree REFUSED ["delete \"delete d['termRecords']\""]
+   also                      "d[\"termRecords\"] [0] ||= null;"           HEAD passes | tree REFUSED ["a quoted termRecords key assigned \"[\\\"termRecords\\\"] [0] ||=\""]
+   read, must pass           "if (d['termRecords'][0] === entry) {}"      HEAD passes | tree passes
+   read, must pass           "if (d . termRecords == null) {}"            HEAD passes | tree passes
+   named as passing          "const l = d.termRecords; l[0] = null;"      HEAD passes | tree passes
+   named as passing          "d.termRecords.splice (0, 1);"               HEAD passes | tree passes
+   named as passing          "d.termRecords . length = 0;"                HEAD passes | tree passes
+   named as passing          "d.termRecords.push (entry);"                HEAD passes | tree passes
+   control (refused at HEAD) "d.termRecords.splice(0, 1);"                HEAD REFUSED [".splice("] | tree REFUSED [".splice("]
+```
+
+Read against the work order:
+
+- **Every spelling it names passed at `HEAD` and is refused now**, except `d . termRecords = []`. That
+  one was refused at `HEAD` too (§ 3, run 3).
+- **The whitespace did not turn a comparison into an assignment.** `==`, `===`, `!=`, `<=` and `>=`
+  after `d . log`, `d.log[0]` and `d['log'][0]` / `d['termRecords'][0]` all stay green, because every
+  widened regex keeps the `=[^=]` ending and its operator group holds no `<`, `>` or `!` alone.
+  WO-1.83's `.length` regexes are untouched in both files.
+- **`||=` and `??=` on an index pass F1**, ruled an add in § 1, and the detail line says so. F3's
+  quoted-key regex refuses `d["termRecords"] [0] ||= null` with its full group, as its claim asks.
+- **The whitespace family is named, not closed.** A space or comment at any other dot, or before a
+  call's `(`, still passes both checks. Examples: `.splice (`, `. length =`, and an extra `push (`
+  that the push count cannot see. Each fence line names it with these examples, and the probe shows
+  each passing.
+
+**Each check's *fence, not a reading* line, against what still passes.** WO-1.86's § 4 tallies left
+F1 with 10 passing shapes and F3 with 9. B2 is refused now in both, which leaves 9 and 8, and the
+fence lines name them:
+
+- **F1** (9 cells: A5, A12, A13, B3, B4, B5, B6, D11, D12). They are named as *"a key held in a variable
+  and assigned"*, *"destructuring assignment"*, *"an index write through an alias"*, *"an edit to a
+  stored entry"* and *"a mutator named by a string or borrowed from Array.prototype"*. Beside them is
+  the new whitespace family, and the add-only and reorder shapes outside the claim, now naming
+  `||=`/`??=` on an index.
+- **F3** (8 cells: A5, A12, A13, B3, B4, B5, D11, D12). They are named as *"a computed key"*,
+  *"destructuring"*, *"an index write through an alias"*, *"record edits"* and *"mutators named by a
+  string or borrowed"*. Beside them is the whitespace family.
+
+Neither title still names *"an index write through a bracketed key"* as passing, and neither says a
+`delete` with no space is refused unless it is.
+
+#### What was declined
+
+- **The whitespace family is not closed.** One normalisation of the searched text — no whitespace
+  around a dot or before a `(` — would close it for every token at once. But it changes how every
+  token in both checks matches, including the push and update counts and F3's guard and writer
+  anchors, and that is a work order with its own per-token argument and its own plants. It is named
+  in both fence lines and offered as a follow-up in `.claude/dispatch/WO-1.88-result.md`.
+- **B3 and the rest of the alias family**, per the work order: WO-1.87's.
+- **Nothing in F2 or F4–F7**, and no shared regex module under `tools/`.
+
+#### Acceptance
+
+- [x] Before any pattern changes, `TESTING.md` § WO-1.88 records whether `src/log.js` or
+      `src/term-record.js` holds legitimate code the widened pattern would match.
+      — § 1 above, written and run before either harness file was edited. Nothing in the tree
+      records that order, so it rests on this report; what the tree can show is that § 1's search
+      output matches the clean `src/` files today (re-run `legit188.mjs`). Neither file holds legitimate code any widened pattern matches. The only lines matched are
+      the create-on-first-write guards, which both checks lift out by exact spelling before
+      searching. `src/term-record.js` holds no `delete`, not even the letters. Neither file holds a
+      quoted key in any form.
+- [x] Each of the spellings above is planted in its guarded file and turns its check red, or is
+      named as passing in that fence's *fence, not a reading* line. Every plant is reverted, and the
+      red output is in `TESTING.md` § WO-1.88.
+      — § 3 above. Four full `verify-shell.mjs` runs, one spelling per check per run: F1's
+      `d.log[0] += 1`, `d . log = []`, `d['log'][0] = x` and `d . log[0] = x`, and F3's
+      `delete⇥…`, `delete(…)`, `d . termRecords = []` and `d['termRecords'][0] = x`. Every run
+      was *2117 · 2115 · 2 failed*, `EXIT=1`, and the two failures each time are these two checks,
+      each naming its one spelling. `d . termRecords = []` was already refused at `HEAD` (§ 4). B3
+      and the whitespace family are named as passing in both fence lines. Reverted with
+      `git checkout --`. `git status --short src/` is empty, and
+      `grep -rn "MUTATION WO-1.88" src/ tools/` is empty.
+- [x] No check's printed title or detail claims a spelling that its patterns let pass.
+      — § 4 above. Every spelling the work order names passes at `HEAD` and is refused now, except
+      `d . termRecords = []`, refused at both. The examples each fence line names still pass, and
+      each one is in the probe. Both titles now say what the widened patterns refuse. F1's
+      *"assignment into .log[...]"* became *"a plain or compound assignment into .log[...], with or
+      without whitespace at the dot before log"*, and `||=`/`??=` on an index are named as adds
+      outside the claim. F3's *"delete"* became *"delete in any form"*. Both name the whitespace
+      family that still passes. **Limit, stated:** this is a reading of two titles against a probe
+      of 37 spellings. It is not a proof over every spelling, which is the point of a *fence, not a
+      reading* line.
+      *The verifier returned FAIL on this line. The fix and its evidence are in Correction round 1
+      below, § CR.4 and § CR.5. This tick stands on that evidence, not on the round-1 note above.*
+      *The verifier returned FAIL on this line a second time, the owner unticked it, and that
+      evidence is superseded: see Correction round 2 below, § CR2.4. The box is open until the
+      third verifier pass reads it.*
+      *The third verifier pass read it on 2026-10-26 and passed it, against § CR2.1's list and the
+      unstaged diff on the two tool files (comments and printed strings only). This tick stands on
+      § CR2.4 and that reading.*
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — Both were run on the final bytes of `src/` and `tools/`, after the revert, and each was
+      waited out to its exit. `node tools/verify-shell.mjs` gave *2117 checks · 2117 passed · 0 failed
+      · 0 skipped*, *67,714 lines · 32.0 lines per check · 1151s*, `EXIT=0`. On that run the two
+      checks read, F1: `2 push(s) — writeEntry() and writeContact() — in 245 line(s) of code; the create-on-first-write guard is present 2 time(s), one per writer; removers found: none. A fence, not a reading: …`,
+      and F3: `{"pushes":1,"updates":1,"writerLines":9,"found":[],…,"engineImportsBack":false}`.
+      The count is 2117, unchanged from § WO-1.86, because no `check(` was added.
+      `node tools/wo-sweep.mjs` gave `EXIT=0`, *52 checks · 49 passed · 0 failed · 3 to review*, the
+      three standing reviews. **One run before the green one is not evidence, and is recorded
+      here for that reason.** It was started on the same bytes and stalled at log line 180 for over
+      ten minutes with no headless Edge process alive. It was killed by hand (`EXIT=1`, no summary
+      line), and its output was set aside unread as a result.
+- [x] `TESTING.md` § WO-1.88 carries these lines verbatim with the evidence for each.
+      — This section.
+
+#### The three scratch scripts this section quotes
+
+All lived in the session scratchpad and are not committed. `legit188.mjs`, § 1's search:
+
+```js
+// WO-1.88 — before any pattern changes: does src/log.js or src/term-record.js hold code a widened
+// pattern would match? Strips comments exactly as each check does, then searches the code.
+// F1's operator group is WO-1.86's (no || or ??); F3's is WO-1.83's full group.
+import fs from 'node:fs';
+const ROOT = 'c:/dev/planbook/';
+const strip = (s) => s.replace(/\r\n/g, '\n').replace(/\/\*[\s\S]*?\*\//g, '\n').replace(/^\s*\/\/.*$/gm, '');
+const PROBES = [
+  ['src/log.js', 'F1 index regex with the compound group: .log[...] then op?=',
+    /\.log\s*\[[^\]]*\]\s*(?:\*\*|<<|>>>?|&&|[-+*\/%&|^])?=[^=]/],
+  ['src/log.js', 'F1 .log with whitespace around the dot, then op?= (reassignment)',
+    /\.\s*log\s*(?:\*\*|<<|>>>?|&&|[-+*\/%&|^])?=[^=]/],
+  ['src/log.js', 'F1 .log with whitespace around the dot, then [...] op?= (index)',
+    /\.\s*log\s*\[[^\]]*\]\s*(?:\*\*|<<|>>>?|&&|[-+*\/%&|^])?=[^=]/],
+  ['src/log.js', 'F1 quoted log key, optional one subscript, then op?=',
+    /\[\s*(['"`])log\1\s*\](?:\s*\[[^\]]*\])?\s*(?:\*\*|<<|>>>?|&&|[-+*\/%&|^])?=[^=]/],
+  ['src/log.js', 'wider, for the record: whitespace on either side of a dot before log', /\.\s+log\b|\s\.\s*log\b/],
+  ['src/log.js', 'wider, for the record: any quoted log key at all', /\[\s*(['"`])log\1\s*\]/],
+  ['src/log.js', 'wider, for the record: every .log in the code', /\.\s*log\b/],
+  ['src/term-record.js', "F3 any-form delete (F1's WO-1.86 regex)", /(?:^|[^\w$.])delete\b/],
+  ['src/term-record.js', 'F3 quoted termRecords key, optional one subscript, then op?=',
+    /\[\s*(['"`])termRecords\1\s*\](?:\s*\[[^\]]*\])?\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=[^=]/],
+  ['src/term-record.js', 'F3 dotted regex as it stands (it has no dot in it): termRecords [..]? op?=',
+    /termRecords\s*(\[[^\]]*\])?\s*(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=[^=]/],
+  ['src/term-record.js', 'wider, for the record: the letters delete anywhere, .delete( included', /delete/],
+  ['src/term-record.js', 'wider, for the record: any quoted termRecords key at all', /\[\s*(['"`])termRecords\1\s*\]/],
+  ['src/term-record.js', 'wider, for the record: every termRecords in the code', /termRecords/],
+];
+for (const file of ['src/log.js', 'src/term-record.js']) {
+  const lines = strip(fs.readFileSync(ROOT + file, 'utf8')).split('\n');
+  console.log('== ' + file + ' (' + lines.filter((l) => l.trim()).length + ' non-blank code lines)');
+  for (const [f, name, re] of PROBES) {
+    if (f !== file) continue;
+    const hits = lines.filter((l) => re.test(l));
+    console.log('   ' + name + ': ' + (hits.length ? hits.length + ' line(s) ' + JSON.stringify(hits.map((h) => h.trim())) : 'none'));
+  }
+}
+```
+
+`plant188.mjs`, § 3's plants:
+
+```js
+// WO-1.88 — plant one spelling in each guarded file, as dead code after the writer's push
+// (the first push in src/log.js is writeEntry()'s; the only one in src/term-record.js is recordTerm()'s).
+// usage: node plant188.mjs <n>   (1..4). Revert with: git -C c:/dev/planbook checkout -- src/log.js src/term-record.js
+import fs from 'node:fs';
+const ROOT = 'c:/dev/planbook/';
+const RUNS = {
+  1: ['d.log[0] += 1;', 'delete\td.termRecords;'],
+  2: ['d . log = [];', 'delete(d.termRecords);'],
+  3: ["d['log'][0] = null;", 'd . termRecords = [];'],
+  4: ['d . log[0] = null;', "d['termRecords'][0] = null;"],
+};
+const [logLine, termLine] = RUNS[process.argv[2]];
+const put = (file, anchor, line) => {
+  const src = fs.readFileSync(ROOT + file, 'utf8');
+  if (src.indexOf(anchor) < 0) throw new Error('anchor missing in ' + file);
+  const block = anchor + '    // MUTATION WO-1.88 plant ' + process.argv[2] + ': ' + JSON.stringify(line) + '\n'
+    + '    if (entry === null) { ' + line + ' }\n';
+  fs.writeFileSync(ROOT + file, src.replace(anchor, block)); // String.replace: first occurrence only
+  console.log(file + ': planted ' + JSON.stringify(line));
+};
+put('src/log.js', '    d.log.push(entry);\n', logLine);
+put('src/term-record.js', '    d.termRecords.push(entry);\n', termLine);
+```
+
+`probe188.mjs`, § 4's probe:
+
+```js
+// WO-1.88 — each spelling ALONE against F1's and F3's own check code, at HEAD and in the working tree.
+// The check code is sliced out of the harness files, never retyped; the guarded file is read from the
+// working tree (clean src/) and the spelling is inserted after the writer's push, in memory only.
+import fs from 'node:fs';
+import { execSync } from 'node:child_process';
+const ROOT = 'c:/dev/planbook/';
+const at = (rev, p) => rev === 'tree' ? fs.readFileSync(ROOT + p, 'utf8')
+  : execSync(`git -C ${ROOT} show ${rev}:${p}`, { encoding: 'utf8' });
+const slice = (t, a, b) => { const i = t.indexOf(a); const j = t.indexOf(b, i);
+  if (i < 0 || j < 0) throw new Error('anchor missing: ' + (i < 0 ? a : b)); return t.slice(i, j); };
+
+function f1(rev) {
+  const t = at(rev, 'tools/verify/log-entries.mjs');
+  const body = slice(t, 'const bodyOnly = logSource', "check('append-only");
+  return new Function('logSource', body + '\nreturn { failed, found };');
+}
+function f3(rev) {
+  const t = at(rev, 'tools/verify/term-record.mjs');
+  const body = slice(t, 'const code = source.replace', "check('WO-3.72: src/term-record.js holds one writer");
+  const tail = t.slice(t.indexOf("check('WO-3.72: src/term-record.js holds one writer"));
+  const cond = slice(tail, 'writer.length > 0 &&', ",\n  JSON.stringify({ pushes");
+  return new Function('source', 'engineSource', body + '\nreturn { pass: (' + cond + '), found };');
+}
+const LOG = fs.readFileSync(ROOT + 'src/log.js', 'utf8');
+const TERM = fs.readFileSync(ROOT + 'src/term-record.js', 'utf8');
+const ENGINE = fs.readFileSync(ROOT + 'src/grade-engine.js', 'utf8');
+const plantLog = (line) => LOG.replace('    d.log.push(entry);\n', '    d.log.push(entry);\n    ' + line + '\n');
+const plantTerm = (line) => TERM.replace('    d.termRecords.push(entry);\n', '    d.termRecords.push(entry);\n    ' + line + '\n');
+
+const F1 = [
+  ['S1 (WO item 1)', 'd.log[0] += 1;'],
+  ['S2 (WO item 3)', 'd . log = [];'],
+  ['S3 (B2)', "d['log'][0] = null;"],
+  ['S4 (dot, index)', 'd . log[0] = null;'],
+  ['also', 'd.log[0] -= 1;'], ['also', 'd.log[0] &&= null;'], ['also', 'd.\n      log = [];'], ['also', 'd./**/log = [];'],
+  ['also', 'd["log"] [0] += 1;'], ['also', 'd . log += "";'],
+  ['add only (outside claim)', 'd.log[0] ||= e;'], ['add only (outside claim)', 'd.log[0] ??= e;'],
+  ['read, must pass', 'if (d . log == null) {}'], ['read, must pass', 'if (d.log[0] == e) {}'],
+  ['read, must pass', "if (d['log'][0] === e) {}"], ['read, must pass', 'if (d.log[0] <= e) {}'],
+  ['read, must pass', 'if (d.log[0] >= e) {}'], ['read, must pass', 'if (d.log[0] != e) {}'],
+  ['named as passing', 'const l = d.log; l[0] = null;'],
+  ['named as passing', 'd.log.splice (0, 1);'], ['named as passing', 'd.log . length = 0;'],
+  ['named as passing', 'd.log.push (entry);'], ['named as passing', 'd.log./**/splice(0, 1);'],
+  ['control (refused at HEAD)', 'd.log.splice(0, 1);'],
+];
+const F3 = [
+  ['T1 (WO item 2)', 'delete\td.termRecords;'],
+  ['T2 (WO item 2)', 'delete(d.termRecords);'],
+  ['T3 (WO item 3)', 'd . termRecords = [];'],
+  ['T4 (B2)', "d['termRecords'][0] = null;"],
+  ['also', "delete d['termRecords'];"], ['also', 'd["termRecords"] [0] ||= null;'],
+  ['read, must pass', "if (d['termRecords'][0] === entry) {}"], ['read, must pass', 'if (d . termRecords == null) {}'],
+  ['named as passing', 'const l = d.termRecords; l[0] = null;'],
+  ['named as passing', 'd.termRecords.splice (0, 1);'], ['named as passing', 'd.termRecords . length = 0;'],
+  ['named as passing', 'd.termRecords.push (entry);'],
+  ['control (refused at HEAD)', 'd.termRecords.splice(0, 1);'],
+];
+const fmt = (r) => r.refused ? 'REFUSED ' + JSON.stringify(r.why) : 'passes';
+for (const [name, checks, cases, plant, run] of [
+  ['F1 tools/verify/log-entries.mjs over src/log.js', [f1('HEAD'), f1('tree')], F1, plantLog,
+    (fn, src) => { const r = fn(src); return { refused: r.failed.length > 0, why: r.failed.length ? r.found : [] }; }],
+  ['F3 tools/verify/term-record.mjs over src/term-record.js', [f3('HEAD'), f3('tree')], F3, plantTerm,
+    (fn, src) => { const r = fn(src, ENGINE); return { refused: !r.pass, why: r.found }; }],
+]) {
+  console.log('== ' + name);
+  const clean = checks.map((fn) => run(fn, name.startsWith('F1') ? LOG : TERM));
+  console.log('   clean file: HEAD ' + fmt(clean[0]) + ' | tree ' + fmt(clean[1]));
+  for (const [tag, line] of cases) {
+    const src = plant(line);
+    if (src === (name.startsWith('F1') ? LOG : TERM)) throw new Error('plant point missing');
+    const [b, a] = checks.map((fn) => run(fn, src));
+    console.log('   ' + tag.padEnd(26) + JSON.stringify(line).padEnd(44) + ' HEAD ' + fmt(b) + ' | tree ' + fmt(a));
+  }
+}
+```
+
+#### Correction round 1 (2026-10-25)
+
+The verifier returned FAIL on Acceptance line 3 (*No check's printed title or detail claims a
+spelling that its patterns let pass*). The subsections above are left as they were written; this one
+records what changed after them. The finding, in short: both titles claim to refuse an assignment to
+the array and an assignment into one subscript of it, and the patterns let these through, unnamed in
+either fence line:
+
+- F1: `(d.log) = [];`, `(d.log)[0] = x;`, `d.log[a[0]] = x;`, `d['log'][a[0]] = x;`
+- F3: `(d.termRecords) = [];`, `(d.termRecords)[0] = x;`, `d.termRecords[a[0]] = x;`
+
+Its plant run put `(d.log) = [];` and `(d.termRecords)[0] = null;` in the two files and the harness
+read *2117 · 2117 passed · 0 failed*, `EXIT=0`.
+
+##### CR.1. Name or widen — widen, and name what is still left
+
+**Widened**, for three reasons. First, a parenthesised target is not an exotic spelling: it is a
+plain assignment with brackets around the left side, and naming it as passing would leave a fence
+whose title says *"a plain or compound reassignment of .log"* and whose fence line then lists a plain
+reassignment as getting through. Second, the closure costs one character class: `[\s)]*` where
+`\s*` stood, after the name and after the subscript. Third, § CR.2 shows neither guarded file holds
+code that the wider patterns match, so the widening costs no false red today.
+
+**What is still named rather than closed:** a subscript nested **more than one** bracket deep
+(`d.log[a[b[0]]] = x`). The subscript pattern now admits one bracketed subscript inside it,
+`\[(?:[^\[\]]|\[[^\[\]]*\])*\]`, and no deeper. A regex cannot match brackets nested to any depth.
+Each extra level makes the pattern longer, and no level is final, so the line is drawn at one level
+and the deeper case is named in both fence lines.
+
+**One false red this admits on purpose:** in F3, an arrow function with a parameter named
+`termRecords` (`(termRecords) => …`) would match, because `=>` is an `=` followed by something that
+is not `=`. In F1 the same spelling cannot arise, because `.log` has a dot and an arrow parameter
+cannot. src/term-record.js has no such parameter (§ CR.2), and a false red fails safe, so it is
+noted in the F3 comment rather than designed around.
+
+##### CR.2. Before any pattern changes: what would each widened pattern match in the file it guards?
+
+The patterns proposed (`OP` is each check's existing operator group, unchanged: F1's WO-1.86 group
+without `||`/`??`, F3's WO-1.83 group in full; `SUB` is `\[(?:[^\[\]]|\[[^\[\]]*\])*\]`):
+
+- F1 reassignment: `\.\s*log[\s)]*OP=[^=]`
+- F1 index: `\.\s*log[\s)]*SUB[\s)]*OP=[^=]`
+- F1 quoted key: `\[\s*(['"\x60])log\1\s*\][\s)]*(?:SUB[\s)]*)?OP=[^=]`
+- F3 dotted: `termRecords[\s)]*(SUB[\s)]*)?OP=[^=]`
+- F3 quoted key: `\[\s*(['"\x60])termRecords\1\s*\][\s)]*(?:SUB[\s)]*)?OP=[^=]`
+
+The search is `legit188b.mjs` (session scratchpad, not committed; its source is at the foot of this
+subsection). It strips comments the way both checks do. It does **not** lift the guards, so any guard
+line a pattern touches is printed. Run on the clean tree before either harness file was edited in
+this round:
+
+```
+== src/log.js (157 non-blank code lines)
+   F1 reassignment, widened: 2 line(s) ["if (!Array.isArray(d.log)) d.log = [];","if (!Array.isArray(d.log)) d.log = [];"]
+   F1 index, widened: none
+   F1 quoted key, widened: none
+   wider, for the record: .log then a close paren: 3 line(s) ["if (!Array.isArray(d.log)) d.log = [];","if (!Array.isArray(d.log)) d.log = [];","return doc && Array.isArray(doc.log) ? doc.log.filter((e) => !!e && typeof e === 'object') : [];"]
+   wider, for the record: .log then a subscript holding a bracket: none
+== src/term-record.js (106 non-blank code lines)
+   F3 dotted, widened: 1 line(s) ["if (!Array.isArray(d.termRecords)) d.termRecords = [];"]
+   F3 quoted key, widened: none
+   wider, for the record: termRecords then a close paren: 2 line(s) ["if (!Array.isArray(d.termRecords)) d.termRecords = [];","arrayOf(doc && doc.termRecords).forEach((entry) => {"]
+   wider, for the record: an arrow parameter named termRecords: none
+```
+
+**Reading.** The only lines any widened pattern matches are the create-on-first-write guards, which
+both checks lift out by exact spelling before searching, as in § 1. The three code lines with a close
+paren after the name are the two guards' `Array.isArray(d.log))` and
+`Array.isArray(doc.log) ? doc.log.filter(…)` in F1, and the guard plus
+`arrayOf(doc && doc.termRecords).forEach(…)` in F3. In each, the `)` is followed by `)`, a space and
+then a letter, `?`, or `.`, never by an operator and `=`, so none is matched. Neither file holds a
+subscript that contains a bracket.
+
+##### CR.3. What landed
+
+Five regexes, the five above, written as § CR.2 proposed and changed in no other way. Every operator
+group and every `=[^=]` ending is as it was. No token changed and no `check(` was added, so the
+`check()` count in `tools/README.md` does not move. Text:
+
+- **F1 title**: after *"with or without whitespace at the dot before log"* it now reads *"with or
+  without parentheses around the target, and with a subscript that may itself hold one bracketed
+  subscript"*, and the quoted-key clause gains *"the same parentheses and subscripts allowed"*.
+- **F1 detail, fence line**: names *"a subscript nested more than one bracket deep
+  (d.log[a[b[0]]] = x)"* as passing.
+- **F3 title**: after *"termRecords followed by = or by one subscript and = (plain, compound or
+  logical)"* it now reads *"with or without parentheses around the target and with a subscript that
+  may itself hold one bracketed subscript"*. Its fence parenthesis names *"a subscript nested more
+  than one bracket deep (d.termRecords[a[b[0]]] = x)"*. F3's detail is a JSON object with no fence
+  line, so the title carries it, as it did in round 1.
+- **Both comments** gain a *"WO-1.88's correction round"* paragraph giving the two widenings and
+  the reason for the one-level limit. Each fence list gains the nested-subscript entry. F3's comment
+  also names the arrow-parameter false red.
+
+##### CR.4. The plants — one spelling per check per run, as in § 3
+
+The protocol was § 3's. Both harness files were staged before the first plant
+(`git add tools/verify/log-entries.mjs tools/verify/term-record.mjs`), and `git status --short src/`
+was empty. `plant188b.mjs` (source below) inserted `// MUTATION WO-1.88 CR plant N: …` and
+`if (entry === null) { <spelling> }` after the writer's push in each file. Each planted file passed
+`node --input-type=module --check`. One shell loop, `runall.sh`, did all five runs: plant, check,
+`node tools/verify-shell.mjs`, then `git checkout -- src/log.js src/term-record.js` straight after
+the harness exited and before anything else ran, then print `git status --short src/`. Every run was
+waited out to its exit.
+
+| Run | F1 spelling (`src/log.js`) | F3 spelling (`src/term-record.js`) |
+|---|---|---|
+| 1 | `(d.log) = [];` | `(d.termRecords) = [];` |
+| 2 | `(d.log)[0] = null;` | `(d.termRecords)[0] = null;` |
+| 3 | `d.log[a[0]] = null;` | `d.termRecords[a[0]] = null;` |
+| 4 | `d['log'][a[0]] = null;` | `d['termRecords'][a[0]] = null;` |
+| 5 | `(d['log']) = [];` | `(d['termRecords'])[0] = null;` |
+
+Runs 1–4 cover every spelling in the verifier's finding. Run 5 covers the parenthesised quoted key,
+which the new titles also claim. Every run printed `2117 checks · 2115 passed · 2 failed · 0 skipped`
+and `EXIT=1`. The two `FAIL` lines each time were these two checks and no other. Each detail named its
+one planted spelling, quoted verbatim from the logs:
+
+| Run | F1 detail: `removers found:` | F3 detail: `"found":` |
+|---|---|---|
+| 1 | `["reassignment of .log \".log) =\""]` | `["an assignment to termRecords \"termRecords) =\""]` |
+| 2 | `["assignment into .log[...] \".log)[0] =\""]` | `["an assignment to termRecords \"termRecords)[0] =\""]` |
+| 3 | `["assignment into .log[...] \".log[a[0]] =\""]` | `["an assignment to termRecords \"termRecords[a[0]] =\""]` |
+| 4 | `["bracketed log key assigned \"['log'][a[0]] =\""]` | `["a quoted termRecords key assigned \"['termRecords'][a[0]] =\""]` |
+| 5 | `["bracketed log key assigned \"['log']) =\""]` | `["a quoted termRecords key assigned \"['termRecords'])[0] =\""]` |
+
+The loop's own record after each revert read `status src: []`. After run 5,
+`git diff HEAD -- src/` printed nothing, and `grep -rn MUTATION src/` printed only the standing
+prose at `src/shell.js:1077`.
+
+The verifier's run B is the reverse of runs 1 and 2: the same `(d.log) = [];` and
+`(d.termRecords)[0] = null;`, read green by round 1's patterns. Read red by these, with F3's
+`"writerLines":11` matching the verifier's figure, because the plant adds two lines to `recordTerm()`.
+
+##### CR.5. Each spelling alone, from the checks' own code: round 1 against now
+
+`probe188b.mjs` is § 4's `probe188.mjs` with two changes. It reads the check code from the **index**
+(`git show :path`) instead of `HEAD`, labelled `RND1`; it was run while the index still held round 1's
+staged harness files, before this round's edits were staged. And it has new spelling lists (source
+below). Like § 4, it slices each check's code out of the harness and does not retype it. It runs
+each spelling alone, in memory, over the clean guarded file. Output:
+
+```
+== F1 tools/verify/log-entries.mjs over src/log.js
+   clean file: RND1 passes | tree passes
+   V1 (verifier)             "(d.log) = [];"                              RND1 passes | tree REFUSED ["reassignment of .log \".log) =\""]
+   V2 (verifier)             "(d.log)[0] = null;"                         RND1 passes | tree REFUSED ["assignment into .log[...] \".log)[0] =\""]
+   V3 (verifier)             "d.log[a[0]] = null;"                        RND1 passes | tree REFUSED ["assignment into .log[...] \".log[a[0]] =\""]
+   V4 (verifier)             "d['log'][a[0]] = null;"                     RND1 passes | tree REFUSED ["bracketed log key assigned \"['log'][a[0]] =\""]
+   also                      "(d['log']) = [];"                           RND1 passes | tree REFUSED ["bracketed log key assigned \"['log']) =\""]
+   also                      "((d.log)) += \"\";"                         RND1 passes | tree REFUSED ["reassignment of .log \".log)) +=\""]
+   also                      "(d . log)[0] &&= null;"                     RND1 passes | tree REFUSED ["assignment into .log[...] \". log)[0] &&=\""]
+   also                      "d.log[f(x)[0]] -= 1;"                       RND1 passes | tree REFUSED ["assignment into .log[...] \".log[f(x)[0]] -=\""]
+   also                      "(d['log'])[a[0]] = null;"                   RND1 passes | tree REFUSED ["bracketed log key assigned \"['log'])[a[0]] =\""]
+   round 1, still refused    "d.log[0] += 1;"                             RND1 REFUSED ["assignment into .log[...] \".log[0] +=\""] | tree REFUSED ["assignment into .log[...] \".log[0] +=\""]
+   round 1, still refused    "d['log'][0] = null;"                        RND1 REFUSED ["bracketed log key assigned \"['log'][0] =\""] | tree REFUSED ["bracketed log key assigned \"['log'][0] =\""]
+   add only (outside claim)  "(d.log)[0] ||= e;"                          RND1 passes | tree passes
+   read, must pass           "if ((d.log) == null) {}"                    RND1 passes | tree passes
+   read, must pass           "if (d.log[a[0]] === e) {}"                  RND1 passes | tree passes
+   read, must pass           "if ((d.log)[0] != e) {}"                    RND1 passes | tree passes
+   read, must pass           "if ((d.log).length >= 1) {}"                RND1 passes | tree passes
+   read, must pass           "if (Array.isArray(d.log)) {}"               RND1 passes | tree passes
+   named as passing          "d.log[a[b[0]]] = null;"                     RND1 passes | tree passes
+   named as passing          "d.log.splice (0, 1);"                       RND1 passes | tree passes
+   control                   "d.log.splice(0, 1);"                        RND1 REFUSED [".splice("] | tree REFUSED [".splice("]
+== F3 tools/verify/term-record.mjs over src/term-record.js
+   clean file: RND1 passes | tree passes
+   W1 (verifier)             "(d.termRecords) = [];"                      RND1 passes | tree REFUSED ["an assignment to termRecords \"termRecords) =\""]
+   W2 (verifier)             "(d.termRecords)[0] = null;"                 RND1 passes | tree REFUSED ["an assignment to termRecords \"termRecords)[0] =\""]
+   W3 (verifier)             "d.termRecords[a[0]] = null;"                RND1 passes | tree REFUSED ["an assignment to termRecords \"termRecords[a[0]] =\""]
+   also                      "(d['termRecords'])[0] = null;"              RND1 passes | tree REFUSED ["a quoted termRecords key assigned \"['termRecords'])[0] =\""]
+   also                      "d['termRecords'][a[0]] = null;"             RND1 passes | tree REFUSED ["a quoted termRecords key assigned \"['termRecords'][a[0]] =\""]
+   also                      "(d['termRecords']) = [];"                   RND1 passes | tree REFUSED ["a quoted termRecords key assigned \"['termRecords']) =\""]
+   also                      "((d.termRecords)) ??= [];"                  RND1 passes | tree REFUSED ["an assignment to termRecords \"termRecords)) ??=\""]
+   round 1, still refused    "d['termRecords'][0] = null;"                RND1 REFUSED ["a quoted termRecords key assigned \"['termRecords'][0] =\""] | tree REFUSED ["a quoted termRecords key assigned \"['termRecords'][0] =\""]
+   round 1, still refused    "delete(d.termRecords);"                     RND1 REFUSED ["delete \"delete(d.termRecords)\""] | tree REFUSED ["delete \"delete(d.termRecords)\""]
+   read, must pass           "if ((d.termRecords) == null) {}"            RND1 passes | tree passes
+   read, must pass           "if (d.termRecords[a[0]] === entry) {}"      RND1 passes | tree passes
+   read, must pass           "if (Array.isArray(d.termRecords)) {}"       RND1 passes | tree passes
+   named as passing          "d.termRecords[a[b[0]]] = null;"             RND1 passes | tree passes
+   false red, noted          "const f = (termRecords) => termRecords;"    RND1 passes | tree REFUSED ["an assignment to termRecords \"termRecords) =>\""]
+   control                   "d.termRecords.splice(0, 1);"                RND1 REFUSED [".splice("] | tree REFUSED [".splice("]
+```
+
+**Reading.** Every spelling in the verifier's finding (V1–V4, W1–W3) passed round 1 and is refused
+now. So is every other parenthesised or one-level-nested spelling tried. Reads stay green: `==`,
+`===`, `!=` and `>=` after a parenthesised name or a nested subscript, and `Array.isArray(…)`. What the
+fence lines name as passing still passes. `(d.log)[0] ||= e` passes in F1 because it is an add,
+which F1's title already puts outside the claim. The noted false red is shown so that it is visible
+here rather than discovered. **Limit, as in § 4:** this reads two titles against a list of spellings.
+It is not a proof over all spellings.
+
+##### CR.6. Both tools, on the final tree
+
+Run after the last revert, on the final bytes of `src/` and `tools/`, and each waited out to its exit:
+
+- `node tools/verify-shell.mjs`: `2117 checks · 2117 passed · 0 failed · 0 skipped`,
+  `67,747 lines · 32.0 lines per check · 1164s`, `EXIT=0`. F1's detail read
+  `2 push(s) — writeEntry() and writeContact() — in 245 line(s) of code; the create-on-first-write guard is present 2 time(s), one per writer; removers found: none`,
+  then the fence line. F3's read
+  `{"pushes":1,"updates":1,"writerLines":9,"found":[],…,"engineImportsBack":false}`. The count is
+  2117, unchanged, because no `check(` was added. `tools/README.md`'s 2106 `check()` call sites are
+  likewise unchanged.
+- `node tools/wo-sweep.mjs`: `EXIT=0`, `52 checks · 49 passed · 0 failed · 3 to review`. These are
+  the three standing reviews.
+
+##### CR.7. Acceptance, re-read after this round
+
+- Line 1 (*the per-file argument before any pattern change*): § CR.2 was written, and
+  `legit188b.mjs` run, before either harness file was edited in this round. As in round 1, the order
+  rests on this report, and the output can be re-run against the clean `src/`.
+- Line 2 (*each spelling planted and red, or named; plants reverted; red output here*): § CR.4. The
+  deeper-nesting case is named in both fence lines, not planted.
+- Line 3 (*no title or detail claims a spelling its patterns let pass*): this round's fix. Each
+  spelling the verifier found is refused (§ CR.4, § CR.5), and each title's new words are matched by
+  plants. What still passes, nesting deeper than one level, is named in both fence lines. The same
+  limit as § 4 applies.
+  *Superseded by Correction round 2 below. This evidence was false: the second verifier pass found
+  spellings that pass and that no fence line named. The line is left as written.*
+- Line 4 (*both tools pass*): § CR.6.
+- Line 5 (*this section carries the lines verbatim with evidence*): this section and the subsection
+  above it.
+
+##### The correction round's scratch scripts
+
+All lived in this session's scratchpad and are not committed. `legit188b.mjs` (§ CR.2):
+
+```js
+// WO-1.88 correction round — before any pattern changes: what would each widened pattern match in
+// the file it guards? Comments are stripped the way both checks strip them; the guards are NOT lifted
+// here, so every guard line a pattern touches is printed (both checks lift them before searching).
+import fs from 'node:fs';
+const ROOT = 'c:/dev/planbook/';
+const strip = (s) => s.replace(/\r\n/g, '\n').replace(/\/\*[\s\S]*?\*\//g, '\n').replace(/^\s*\/\/.*$/gm, '');
+const F1OP = String.raw`(?:\*\*|<<|>>>?|&&|[-+*\/%&|^])?`;
+const F3OP = String.raw`(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?`;
+const SUB = String.raw`\[(?:[^\[\]]|\[[^\[\]]*\])*\]`;
+const R = (s) => new RegExp(s, 'g');
+const PROBES = [
+  ['src/log.js', 'F1 reassignment, widened', R(String.raw`\.\s*log[\s)]*` + F1OP + '=[^=]')],
+  ['src/log.js', 'F1 index, widened', R(String.raw`\.\s*log[\s)]*` + SUB + String.raw`[\s)]*` + F1OP + '=[^=]')],
+  ['src/log.js', 'F1 quoted key, widened', R(String.raw`\[\s*(['"\x60])log\1\s*\][\s)]*(?:` + SUB + String.raw`[\s)]*)?` + F1OP + '=[^=]')],
+  ['src/log.js', 'wider, for the record: .log then a close paren', /\.\s*log\s*\)/g],
+  ['src/log.js', 'wider, for the record: .log then a subscript holding a bracket', /\.\s*log\s*\[[^\]]*\[/g],
+  ['src/term-record.js', 'F3 dotted, widened', R(String.raw`termRecords[\s)]*(` + SUB + String.raw`[\s)]*)?` + F3OP + '=[^=]')],
+  ['src/term-record.js', 'F3 quoted key, widened', R(String.raw`\[\s*(['"\x60])termRecords\1\s*\][\s)]*(?:` + SUB + String.raw`[\s)]*)?` + F3OP + '=[^=]')],
+  ['src/term-record.js', 'wider, for the record: termRecords then a close paren', /termRecords\s*\)/g],
+  ['src/term-record.js', 'wider, for the record: an arrow parameter named termRecords', /termRecords\s*\)?\s*=>/g],
+];
+for (const file of ['src/log.js', 'src/term-record.js']) {
+  const lines = strip(fs.readFileSync(ROOT + file, 'utf8')).split('\n');
+  console.log('== ' + file + ' (' + lines.filter((l) => l.trim()).length + ' non-blank code lines)');
+  for (const [f, name, re] of PROBES) {
+    if (f !== file) continue;
+    const hits = lines.filter((l) => { re.lastIndex = 0; return re.test(l); });
+    console.log('   ' + name + ': ' + (hits.length ? hits.length + ' line(s) ' + JSON.stringify(hits.map((h) => h.trim())) : 'none'));
+  }
+}
+```
+
+`plant188b.mjs` is § 3's `plant188.mjs` with this `RUNS` table, the comment reading
+`MUTATION WO-1.88 CR plant N`, and the replacement passed as a function so that a `$` in a spelling
+cannot be read as a pattern:
+
+```js
+const RUNS = {
+  1: ['(d.log) = [];', '(d.termRecords) = [];'],
+  2: ['(d.log)[0] = null;', '(d.termRecords)[0] = null;'],
+  3: ['d.log[a[0]] = null;', 'd.termRecords[a[0]] = null;'],
+  4: ["d['log'][a[0]] = null;", "d['termRecords'][a[0]] = null;"],
+  5: ["(d['log']) = [];", "(d['termRecords'])[0] = null;"],
+};
+```
+
+`runall.sh`:
+
+```sh
+#!/bin/sh
+S="<session scratchpad>"
+cd /c/dev/planbook || exit 9
+for n in 1 2 3 4 5; do
+  echo "=== run $n $(date -Iseconds)" >> "$S/progress.txt"
+  node "$S/plant188b.mjs" $n >> "$S/progress.txt" 2>&1 || { git checkout -- src/log.js src/term-record.js; echo "plant failed" >> "$S/progress.txt"; exit 8; }
+  node --input-type=module --check < src/log.js >> "$S/progress.txt" 2>&1 && node --input-type=module --check < src/term-record.js >> "$S/progress.txt" 2>&1 || { git checkout -- src/log.js src/term-record.js; echo "syntax failed" >> "$S/progress.txt"; exit 7; }
+  node tools/verify-shell.mjs > "$S/cr$n.log" 2>&1; echo "EXIT=$?" >> "$S/cr$n.log"
+  git checkout -- src/log.js src/term-record.js
+  echo "reverted; status src: [$(git status --short src/)] $(tail -1 "$S/cr$n.log") $(date -Iseconds)" >> "$S/progress.txt"
+done
+echo DONE >> "$S/progress.txt"
+```
+
+`probe188b.mjs` is § 4's `probe188.mjs` with three changes. `at()` reads `git show ${rev}${p}` with
+`rev` set to `':'`, which is the index, and labels it `RND1`. The two old case lists are renamed
+`F1_OLD` and `F3_OLD` and are not used. These lists are used instead:
+
+```js
+const F1 = [
+  ['V1 (verifier)', '(d.log) = [];'], ['V2 (verifier)', '(d.log)[0] = null;'],
+  ['V3 (verifier)', 'd.log[a[0]] = null;'], ['V4 (verifier)', "d['log'][a[0]] = null;"],
+  ['also', "(d['log']) = [];"], ['also', '((d.log)) += "";'], ['also', '(d . log)[0] &&= null;'],
+  ['also', 'd.log[f(x)[0]] -= 1;'], ['also', "(d['log'])[a[0]] = null;"],
+  ['round 1, still refused', 'd.log[0] += 1;'], ['round 1, still refused', "d['log'][0] = null;"],
+  ['add only (outside claim)', '(d.log)[0] ||= e;'],
+  ['read, must pass', 'if ((d.log) == null) {}'], ['read, must pass', 'if (d.log[a[0]] === e) {}'],
+  ['read, must pass', 'if ((d.log)[0] != e) {}'], ['read, must pass', 'if ((d.log).length >= 1) {}'],
+  ['read, must pass', 'if (Array.isArray(d.log)) {}'],
+  ['named as passing', 'd.log[a[b[0]]] = null;'], ['named as passing', 'd.log.splice (0, 1);'],
+  ['control', 'd.log.splice(0, 1);'],
+];
+const F3 = [
+  ['W1 (verifier)', '(d.termRecords) = [];'], ['W2 (verifier)', '(d.termRecords)[0] = null;'],
+  ['W3 (verifier)', 'd.termRecords[a[0]] = null;'],
+  ['also', "(d['termRecords'])[0] = null;"], ['also', "d['termRecords'][a[0]] = null;"],
+  ['also', "(d['termRecords']) = [];"], ['also', '((d.termRecords)) ??= [];'],
+  ['round 1, still refused', "d['termRecords'][0] = null;"], ['round 1, still refused', 'delete(d.termRecords);'],
+  ['read, must pass', 'if ((d.termRecords) == null) {}'], ['read, must pass', 'if (d.termRecords[a[0]] === entry) {}'],
+  ['read, must pass', 'if (Array.isArray(d.termRecords)) {}'],
+  ['named as passing', 'd.termRecords[a[b[0]]] = null;'],
+  ['false red, noted', 'const f = (termRecords) => termRecords;'],
+  ['control', 'd.termRecords.splice(0, 1);'],
+];
+```
+
+Re-running `probe188b.mjs` today reads this round's patterns from the index on **both** sides,
+because they are staged now. No commit holds round 1's patterns, so the `RND1` column is this
+record and the scratchpad's `probe.log`, not something `git` can replay.
+
+#### Correction round 2 (2026-10-26) — wording only, on the owner's ruling
+
+The second verifier pass returned FAIL on Acceptance line 3 again. The subsections above are left as
+they were written. § CR.7's line-3 evidence is false and this subsection supersedes it.
+
+##### CR2.1. The second verdict
+
+Quoted from `.claude/dispatch/WO-1.88-status.md`: *"line 3 ❌ again — the 7 spellings now refused
+(plant run A red), but parenthesis breaks the unwidened .length regexes, remover-token literals and
+quoted-key opening: (d.log.length)=0, (d.log.length)--, (d.log.splice)(0,1), d[('log')]=[], trailing
+// comment before =, and termRecords twins all pass (plant run B green 2117/2117). Also unnamed:
+d.log++/d.termRecords[0]++."* Lines 1, 2, 4 and 5 passed. The spellings this line is read against,
+from `.claude/dispatch/WO-1.88-pickup.md`:
+
+- `(d.log.length) = 0;` · `(d.log.length)--;` · `(d.log.splice)(0, 1);` · `d[('log')] = [];` ·
+  `d.log // c` ⏎ `= [];`, and the `termRecords` twin of each;
+- not named anywhere: `d.log++`, `d.log[0]++`, `d.termRecords++`, `d.termRecords[0]++`;
+- already named: a subscript nested more than one bracket deep.
+
+##### CR2.2. The ruling
+
+This was the second failure, so the pipeline stopped and the owner was asked. **The owner chose
+option 3: name the class, and stop chasing it.** Each round closed exactly the spellings it was
+shown and left the same hole in the next pattern, because a regex cannot follow JavaScript's
+parentheses or comments. So line 3 is made true by wording. **No pattern was added, no regex
+changed, and no plant was owed**, because nothing that decides red or green moved.
+
+##### CR2.3. What changed
+
+Comments and printed strings only, in `tools/verify/log-entries.mjs` and
+`tools/verify/term-record.mjs`. `git diff` on the two files (the working tree against the staged
+round-1 baseline) removes only comment lines and `+ '…'` string lines. No `.concat(matched(…))`
+line, regex literal, token list or `check(` condition is touched. Both files pass `node --check`.
+
+**Both titles promise less.** Where a title promised a spelling that one of the passing spellings
+defeats, it now says the narrower thing. F1 (log) title, the changed clauses:
+
+> *splice, pop, shift, fill and copyWithin each written .name( with nothing between the name and
+> its (, … with close parentheses allowed after log and after a subscript, … assignment to .length
+> with nothing but whitespace between length and the operator, .length decremented with nothing but
+> spaces or tabs between length and the --, a quoted log key written directly inside its brackets or
+> one subscript under it assigned plainly or compoundly, the same close parentheses and subscripts
+> allowed*
+
+Before, it read *"with or without parentheses around the target"*, *"assignment to .length,
+.length decremented"*, *"a quoted log key or one subscript under it"* and *"the same parentheses
+and subscripts allowed"*. Every one of those was defeated by a spelling in § CR2.1.
+
+F3 (term-record) title, the same changes: *"… fill and copyWithin each written .name( with nothing
+between the name and its (, … with close parentheses allowed after termRecords and after a
+subscript …, a quoted termRecords key written directly inside its brackets …, an assignment to
+.length with nothing but whitespace between length and the operator or an update of .length with
+nothing but spaces or tabs between length and the ++ or --"*.
+
+**Both fence lines name the passing class.** F1's detail line, the added words:
+
+> *an update expression on the array or an entry (d.log++, d.log[0]++, and -- likewise), and
+> anything between the parts of a spelling that its pattern does not allow there all pass it: a
+> parenthesis other than a close one after log, the quoted key or a subscript ((d.log.length) = 0,
+> (d.log.length)--, (d.log.splice)(0, 1), d[("log")] = []), a // comment at a line end (d.log // c,
+> then = [] on the next line), and whitespace at another dot or before a call's ( or a ?. there
+> (d.log.splice (0, 1), d.log . length = 0, a third push spelled push (…))*
+
+F3's fence parenthesis inside its title carries the same three families with the `termRecords`
+spellings: *"an update expression on the array or a record (d.termRecords++, d.termRecords[0]++, and
+-- likewise), and anything between the parts of a spelling that its pattern does not allow there — a
+parenthesis other than a close one after termRecords, the quoted key or a subscript
+((d.termRecords.length) = 0, (d.termRecords.length)--, (d.termRecords.splice)(0, 1),
+d[("termRecords")] = []), a // comment at a line end (d.termRecords // c, then = [] on the next
+line), and whitespace at a dot inside another spelling or before a call's ( or a ?. there …"*.
+
+**Both comments** gain a *"WO-1.88's second correction round changed no pattern"* paragraph, and
+their round-1 *parenthesised target* bullet now says the close parenthesis is allowed in those three
+places only. Each *A FENCE, NOT A READING* list replaces its *whitespace or a comment* entry with two
+entries. One is the update-expression family. The other is the class: a token is matched letter for
+letter, a regex allows whitespace only where it says `\s` and a close parenthesis only where it says
+`[\s)]*`, and anything else between two parts of a spelling lets the write through. It then gives
+the three kinds with examples. **One claim in the old comment was wrong and is corrected:** it said
+*"a comment is stripped to a newline, so it is the same hole"*. Only a block comment is stripped to
+a newline. A trailing `//` comment is not stripped at all, because both checks strip only
+whole-line `//` comments (`/^\s*\/\/.*$/gm`). That is why `d.log // c` ⏎ `= []` passes where
+`d.log /* c */ = []` is refused.
+
+The verdict's `d[('log')]` is written `d[("log")]` in the printed strings, to avoid escaping a quote
+inside a single-quoted literal. It is the same spelling to every pattern, since the quoted-key
+patterns accept any of the three quotes.
+
+**One spelling is named that the verdict did not list:** `?.` before a call's `(`
+(`d.log.splice?.(0, 1)`) defeats the remover words the same way, because `.splice?.(` does not
+contain `.splice(`. It is named in the class wording. It was reasoned from the token, not planted.
+
+##### CR2.4. Acceptance line 3, re-read against § CR2.1
+
+- `(d.log.length) = 0`, `(d.log.length)--` and their twins: the titles now promise `.length` writes
+  only with whitespace (or spaces and tabs) before the operator. Named in both fence lines by
+  spelling, under *a parenthesis other than a close one after the name, the quoted key or a
+  subscript*.
+- `(d.log.splice)(0, 1)` and its twin: the titles now promise the mutators only as `.name(` with
+  nothing between. Named by spelling.
+- `d[('log')] = []` and its twin: the titles now promise a quoted key only when written directly
+  inside its brackets. Named by spelling.
+- `d.log // c` ⏎ `= []` and its twin: named by spelling, under *a // comment at a line end*.
+- `d.log++`, `d.log[0]++`, `d.termRecords++`, `d.termRecords[0]++`: no title promised them. Now named
+  by spelling, under *an update expression on the array or an entry/record*.
+- A subscript nested more than one bracket deep: still named, unchanged.
+
+**Ticked on the third verifier pass**, 2026-10-26, by reading: every spelling above is named in the
+printed text and no title promises more than its regex. **Limit, as in § 4 and § CR.5:**
+this is a reading of two titles against a list of spellings, not a proof over every spelling, and
+the class wording is what covers the spellings nobody has listed.
+
+##### CR2.5. Both tools, on the final tree
+
+Each was run once, after the last tool-file edit, and waited out to its exit. `git status --short
+src/` was empty.
+
+- `node tools/verify-shell.mjs`: `2117 checks · 2117 passed · 0 failed · 0 skipped`,
+  `67,823 lines · 32.0 lines per check · 1169s`, `EXIT=0`. No `Cannot read properties of undefined
+  (reading 'store')` flake on this run. F1's line reads `PASS | append-only is structural rather
+  than promised: …` with `removers found: none`, and F3's reads `PASS | WO-3.72: src/term-record.js
+  holds one writer, and it only pushes — …` with `"found":[]`. The count is unchanged, because no
+  `check(` was added. The line count went up from § CR.6's 67,747 because the two files' comments and titles are longer.
+- `node tools/wo-sweep.mjs`: `52 checks · 49 passed · 0 failed · 3 to review`, `EXIT=0`. These are
+  the three standing reviews. It was run before this subsection's results were typed in, so the
+  only bytes it did not read are these lines.
+
 ---
 
 ## Phase 2 — Attendance

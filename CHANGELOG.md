@@ -13,6 +13,48 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The two append-only checks now refuse the three spellings their own words claimed — 2026-10-25
+
+WO-1.88, out of WO-1.86's verdict. Harness only: nothing in the app changed, and there is no
+`CACHE` bump.
+
+- **WO-1.86's verifier found three spellings that got past the log and term-record checks while each
+  check's title said it refused them.** In the log's check, `d.log[0] += 1` and `d . log = []` passed.
+  In the term-record check, `delete` followed by a tab and `delete(d.termRecords)` passed, because
+  its token wanted a space. Its comment said a `delete` "in any key form was already refused".
+- **All three are refused now**, and so is an index write through a quoted key (`d['log'][0] = x`),
+  in both checks. Each pattern reuses one WO-1.86 or WO-1.83 already argued. Each was first checked
+  against the file it guards, and nothing there matches it but the create-on-first-write guards,
+  which the checks lift out first.
+- **`d . termRecords = []` was already refused**, and it was planted to make sure rather than
+  assumed.
+- **What still passes is named, including one family nobody had listed**: whitespace or a comment
+  at any other dot or before a call's parenthesis (`d.log.splice (0, 1)`). It is left for its own
+  work order rather than grown into this one.
+- **This work order's own verifier then found more spellings that both titles already covered**, and
+  planted two of them with the harness staying green: a parenthesised target (`(d.log) = []`,
+  `(d.termRecords)[0] = x`) and a subscript that itself holds a bracket (`d.log[a[0]] = x`). Both
+  checks now refuse them, in the dotted and the quoted-key form. The fix allows a close parenthesis
+  in three places only: after the array's name, after a quoted key's closing bracket, and after a
+  subscript. It also allows one bracketed subscript inside a subscript. Nothing else was widened:
+  the `.length` patterns, the remover words such as `.splice(`, and the opening of a quoted key
+  take no parenthesis. A subscript nested deeper than one level still passes, because a regex
+  cannot count brackets to any depth, and both fence lines now name it. One false red is accepted
+  in the term-record check: an arrow function whose parameter is named `termRecords` would now
+  trip it. The file has no such parameter.
+- **A second verifier pass then found the same hole one pattern over**, and the owner ruled to name
+  it rather than chase it. `(d.log.length) = 0`, `(d.log.splice)(0, 1)`, `d[('log')] = []`, a `//`
+  comment at the end of a line inside a write, and `d.log++` all got past, along with their
+  `termRecords` twins. Each round had closed exactly the spellings it was shown, because a regex
+  cannot follow JavaScript's parentheses or comments. So no pattern changed in this round. Both
+  titles now promise only what the patterns hold, and both fence lines name what passes as a class:
+  a parenthesis or a comment anywhere a pattern does not allow one, and `++` or `--` on the array
+  or an entry. Closing that class means normalising the code before it is searched, which is left
+  for its own work order.
+- Every spelling was planted in `src/`, one per check per run, and each turned its own check red:
+  four full harness runs in the first round and five in the correction round. All were reverted.
+  Both tools are green at unchanged counts: 2117/2117 and 52 · 49 · 0 · 3.
+
 ### The two append-only checks now refuse what one token settles — 2026-10-25
 
 WO-1.86, the second of WO-1.84's three recommendations. Harness only: nothing in the app changed,
