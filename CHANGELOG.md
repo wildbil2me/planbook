@@ -13,6 +13,32 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The four whole-file no-writer checks see more than dotted writes — 2026-10-26
+
+WO-1.87, out of WO-1.84's probe. Harness and comments only: the one `src/` change is a comment in
+`src/contact-history.js`, committed under the comments-only trailer, so there is no `CACHE` bump.
+
+- **The calendar-derived and outreach checks (§ 17 and § 24) shared a pattern that saw only
+  `doc.name` and `d.name` followed by a write.** `delete doc.events`, `doc.events.length = 0`,
+  `doc.events[0] = null`, `doc['events'] = []` and `.copyWithin(` all got past it. One widened
+  pattern, in identical text in both, now refuses bracketed keys, index and `.length` writes,
+  `delete`, compound assignment, `.copyWithin(`, and a reflective writer handed the document first.
+  Both now also refuse `restoreDocument` and `adoptRemoteDocument`.
+- **Before it landed, each guarded file was read against the widened pattern** for legitimate code
+  it would wrongly refuse. Nothing matched: every write-shaped line in those files is on a local.
+- **The contact-history check now asks a question the file can answer**, on the owner's ruling.
+  The file never names the year, so it now refuses any `getDoc()` that is not handed straight to
+  `visibleContactsFor(`. Before, it searched for three words and 47 of 50 shapes got past them.
+- **The merge-field resolver's fourth claim says only what it searches**, on the owner's ruling:
+  the named store calls, and no store import. Claims 1–3 and 5 are what guard that file.
+- **What still passes is named in each fence**: a write through an alias, destructuring, a borrowed
+  mutator, and a write split by a parenthesis, a comment or a line break. WO-1.84's probe was re-run
+  and printed so it runs as printed. Every passing shape is filed under a family a fence names.
+- **The log and term-record checks' words now match their patterns.** They no longer under-claim
+  what they catch, and no regex moved.
+- **`CLAUDE.md` and `AGENTS.md` now say what § 17 can see**, not that the derived module "holds no
+  writer at all".
+
 ### The two append-only checks now refuse the three spellings their own words claimed — 2026-10-25
 
 WO-1.88, out of WO-1.86's verdict. Harness only: nothing in the app changed, and there is no

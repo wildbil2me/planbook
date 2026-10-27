@@ -7217,8 +7217,11 @@ result file, printed only `src/shell.js:1077`. But the rule is literal and I did
       over `git show HEAD:<file>` and over the working file, hash the same both sides:
       `e661270ca181` for `log-entries.mjs` and `6573d6b3ff68` for `term-record.mjs`.
       (3) `node --check` passes on both.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-      — **Half met on this tree; not ticked.** `verify-shell.mjs`: `2117 checks · 2117 passed · 0
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — **Closed 2026-10-26 after commit `5be567c`**, which carries the trailer: `node tools/wo-sweep.mjs`
+      on the real tree printed `52 checks · 49 passed · 0 failed · 3 to review`, `EXIT=0` (the three are
+      the standing reviews). The implementer's record of the line before that commit follows.
+      **Half met on this tree; not ticked.** `verify-shell.mjs`: `2117 checks · 2117 passed · 0
       failed · 0 skipped`, `EXIT=0` (subsection 10). `wo-sweep.mjs`: `52 checks · 48 passed · 1
       failed`. The one failure is § 9 on the uncommitted comment edit to `src/contact-history.js`, and
       only a commit carrying `Shell-Cache: not needed — comments only` clears it. In a scratch clone

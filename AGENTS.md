@@ -115,7 +115,8 @@ dependencies.
 - **Everything the teacher did not type is computed at render, never stored** (WO-6.2). Due dates,
   term edges, meeting states and IEP/504 review dates are read out of the document on every draw;
   copying any of them into `events[]` is the second truth the phase forbids. `src/calendar-derived.js`
-  holds no writer at all — `wo-sweep.mjs` § 17 asserts that structurally, and a new derived answer
+  holds no writer or document mutation that `wo-sweep.mjs` § 17 can see — a fence, not a reading,
+  whose passing shapes its header names — and a new derived answer
   goes in that file rather than in `src/calendar.js`, which it must not import backwards into.
 
 - **The calendar's class filter is a door, not a preference** (WO-6.6). The calendar is the fourth pill
