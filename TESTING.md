@@ -6260,6 +6260,974 @@ for (const [label, r] of [['before', before], ['after', after]]) {
 }
 ```
 
+### WO-1.87 — the four whole-file no-writer checks share one pattern that sees only dotted writes
+
+No 👤 and no 📆 line. **This section is written in the order the work was done**, and its first
+subsection was written before any fence's code or prose moved.
+
+#### 1. The owner's rulings on F2 and F5, quoted before either fence changed
+
+From `plans/work-orders/phase-1-shell-store-roster.md` § WO-1.87, Deliverables, as recorded there:
+
+> **Ruled 2026-10-25, the owner, before dispatch — the orchestrator does not ask again:**
+> - **F2 takes neither option.** `src/contact-history.js` never binds the document to a name: all
+>   three uses (lines 215, 241, 270) hand `getDoc()` straight to `visibleContactsFor(`, so a
+>   `doc`/`d`-rooted `MUTATES` would match nothing there and look stronger without being stronger.
+>   F2 instead asserts that **every `getDoc()` in the file is the direct first argument of
+>   `visibleContactsFor(`** — the year never gets a name, which rules out nearly every shape in
+>   WO-1.84's table — and keeps its writer-call search. Its *fence, not a reading* line names
+>   what is left: a write inside `log.js`'s reader, which is F1's file, and an alias of the
+>   returned entries.
+> - **F5 narrows its words** to the named store calls plus no store import. `src/merge-fields.js`
+>   reads the year as `ctx.doc.…` and `doc.…`, and the file's danger is disclosure, which claims
+>   1–3 and 5 already fence; claim 4 is a backstop and says exactly what it is.
+
+At the moment this subsection was written, `git diff --stat` showed only the phase file's status
+line (the `--start` claim); `tools/verify/contact-log.mjs` and `tools/wo-sweep.mjs` were at `HEAD`.
+`grep -n "getDoc" src/contact-history.js` printed lines 62 (the import), 215, 241 and 270, which
+are the three uses the ruling names.
+
+#### 2. The Traps' whitespace question, planted before ruling
+
+The Traps asked whether the old `MUTATES` misses `doc . events = []` the way F1 missed `d . log = []`,
+and said to plant it and see. With `tools/wo-sweep.mjs` at `HEAD`, `doc . events = [];` was appended to
+`src/calendar-derived.js` inside a marked function and the sweep run:
+
+```
+PASS | src/calendar-derived.js holds no writer or mutation in the spellings this grep reads, and a review carries no neighbour  :: none of update/…
+```
+
+So it passed. The file was restored with `git checkout -- src/calendar-derived.js` (it had no
+unstaged edit of mine) and `git diff --quiet -- src/` was clean after. The widened pattern allows
+whitespace either side of every dot in the chain; X1 in the tables below is this shape.
+
+#### 3. The widened `MUTATES`, and each guarded file argued against it before it landed
+
+The pattern, identical in § 17 and § 24:
+
+```js
+const MUTATES = /\b(?:doc|d)(?:\s*\??\.\s*[A-Za-z_$][\w$]*|\s*(?:\?\.\s*)?\[(?:[^\[\]]|\[[^\[\]]*\])*\])+\s*(?:(?:\*\*|<<|>>>?|&&|\|\||\?\?|[-+*\/%&|^])?=(?![=>])|\+\+|--)|(?:\+\+|--|(?<![\w$.])delete\b[\s(]*)\s*\b(?:doc|d)(?:\s*\??\.\s*[A-Za-z_$][\w$]*|\s*(?:\?\.\s*)?\[(?:[^\[\]]|\[[^\[\]]*\])*\])+|\b(?:doc|d)(?:\s*\??\.\s*[A-Za-z_$][\w$]*|\s*(?:\?\.\s*)?\[(?:[^\[\]]|\[[^\[\]]*\])*\])*\s*\??\.\s*(?:push|pop|shift|unshift|splice|sort|reverse|fill|copyWithin)\s*\(|\b(?:Object\s*\.\s*(?:assign|definePropert(?:y|ies))|Reflect\s*\.\s*(?:set|deleteProperty|defineProperty))\s*\(\s*(?:doc|d)\b/;
+```
+
+Read in four alternatives. A **root chain** is `doc` or `d` then members, each a `.name` (whitespace
+either side of the dot, `?.` allowed) or a bracketed key holding anything but a bracket, or one
+bracketed subscript. (1) A chain of one or more members followed by `=` or a compound or logical
+assignment, never `==`, `===` or `=>`, or by `++`/`--`. (2) `++`, `--` or `delete` (a parenthesis
+allowed) in front of such a chain. (3) A chain of zero or more members ending in one of nine mutators
+called by name: the old eight plus `.copyWithin(`. (4) `Object.assign`, `Object.defineProperty`,
+`Object.defineProperties`, `Reflect.set`, `Reflect.deleteProperty` or `Reflect.defineProperty` with
+`doc` or `d` as the first argument. Both `WRITERS` lists gained `restoreDocument` and
+`adoptRemoteDocument`.
+
+**Why the reflective calls are refused rather than named.** The work order says to name them in the
+fence line *"if the per-file argument finds a legitimate use of them in these files"*. It found none
+(below), so they are refused, and only when the document is the first argument: `Object.assign({},
+doc)`, a copy, stays green. This is the one place I went past the Deliverables' list of shapes, and
+it is the reading of that sentence I took.
+
+**Before landing, the regex was run on 62 strings** in a scratch script: 47 that must match (the WO-1.84
+shapes on `doc`/`events` the widening is meant to cover, plus the whitespace, nested-subscript, `?.`, `delete(…)`, end-of-line
+`=`, `>>>=` and `++` spellings) and 15 that must not (`d.id === id`, `d.id == id`, `d.x !== y`,
+`d.x <= y`, `d.x >= y`, `(d) => d.id`, `addressList(d.to, 'to')`, `doc && doc.teacher`,
+`Object.assign({}, doc)`, `map.delete(d.id)`, `x.d`, `doc ?? y`, `d.x ? a : b`, `const d = 1`, and
+`outreach.js`'s own `text(d.body).replace(…)` line). It printed `problems 0 of 62`.
+
+**Then against each guarded file, every line, comments included** (`mut-files.mjs`, scratchpad):
+
+```
+src/calendar-derived.js: 0 line(s) matched, all lines including comments
+src/outreach.js: 0 line(s) matched, all lines including comments
+copydraft.txt: 0 line(s) matched, all lines including comments
+```
+
+`copydraft.txt` is `copyDraft()` cut out of `src/outreach-view.js` (lines 1851–1884) by `awk`.
+
+**The argument, file by file.** A widened pattern can fire on legitimate code, so I listed what each
+file does that *looks* like a write, with
+`grep -nE "<index write>|\.(push|pop|shift|unshift|splice|sort|reverse|fill|copyWithin)\s*\(|\+\+|--|\bdelete\b|Object\.assign|Reflect\." <file>`
+with comment lines dropped:
+
+- **`src/calendar-derived.js`.** `ids[c.id] = true` (:134), `seen[key] = true` (:261),
+  `out.push(…)` (:213, :214, :267, :344), `i++` (:294) and `all.sort(…)` (:380). Every one is on an
+  array, map or counter the function **built**, which is the Traps' case: *"an index write on a local
+  is not a document write"*. None is rooted at `doc` or `d`, so the root is what keeps them green.
+  The file reads the year only through `classesIn(doc)`, `assignmentsIn(doc)`, `attendanceIn(doc)`
+  and `studentsIn(doc)` (:116–119), each `doc && Array.isArray(doc.x) ? doc.x : []`, which the
+  pattern does not match (no assignment). There is no `delete`, no `Object.assign` and no `Reflect.`.
+- **`src/outreach.js`.** Pushes onto `out`, `seen`, `parts` and `lines`, all built locally. It names
+  its **draft** `d` (`d.to`, `d.cc`, `d.subject`, `d.body`, :385–388, :542–545, :634–647) and its
+  mail-door callback parameter `d` (`d.id === id`, :519, :525), and only ever reads them. A write
+  to the draft through `d.` would now go red. That is a false red, it fails safe, and none exists.
+  `doc && doc.teacher` (:185) is a read. No `delete`, no `Object.assign`, no `Reflect.`.
+- **`copyDraft()`.** Its one assignment is `status = COPIED_NOTE;`, a module variable, not rooted at
+  `doc` or `d`. Nothing else in it looks like a write.
+
+So every legitimate operation in the three is on a local, and the widened pattern matches none of
+them. It landed after this, and the sweep on the edited tree printed `52 checks · 49 passed · 0
+failed · 3 to review`, `EXIT=0`. The two `MUTATES` lines are byte-identical:
+`grep -n "const MUTATES" tools/wo-sweep.mjs | sed 's/^[0-9]*://' | sort | uniq -c` prints one
+distinct line with a count of 2.
+
+#### 4. F2: the year never gets a name
+
+Per the ruling, F2 does not take `MUTATES`. `tools/verify/contact-log.mjs`'s page-side code now
+returns three more fields, and the check's condition gains three clauses:
+
+- `getDocNamed`: every `\bgetDoc\b` in the comment-stripped code, after the `import` statements
+  are cut out.
+- `getDocHanded`: every `visibleContactsFor(getDoc(),` in the same text. The condition is
+  `getDocHanded > 0 && getDocNamed === getDocHanded`, so every `getDoc` is that shape and there is
+  at least one. The `> 0` is the vacuity guard: an emptied file has no unhanded `getDoc` either.
+- `storeImports`: every `import … from './store.js';`. The condition is exactly one, and it reads
+  `import { getDoc } from './store.js';`.
+
+**The import pin is a decision the ruling did not spell out**, and I took it because without it the
+count means nothing. `import { getDoc as year }` hides the year behind a name the count never sees.
+`import * as store` brings in every store function. A named `restoreDocument` import is a
+whole-document swap the token search does not spell. All three go red now (subsection 9, *F2's own plants*).
+It adds no new token to the write search, which stays `update(` / `.push(` / `.splice(` as the
+ruling says. It only says which door to the store the file may hold.
+
+The match is exact on purpose: `getDoc ( )` with spaces counts as *named* and not as *handed*, which
+is a false red and fails safe. The fence line names it.
+
+**The fence line**, comment and title, names what passes:
+
+- a write inside `src/log.js`'s reader, which is F1's file;
+- a write through the entries `visibleContactsFor()` returns. The array is new but each entry is
+  the stored object;
+- a document reached any other way than `getDoc` (handed in as a parameter, or returned by another
+  module) and written in any spelling but the three tokens;
+- a writer reached any other way than a store import (imported from another module, or a `store`
+  handed in) and called by any name but `update`;
+- whitespace inside `. push (` or `. splice (`.
+
+The first two are the ruling's own pair. I added the other three because the probe (subsection 9) shows them
+passing, and Acceptance line 4 wants every passing shape named.
+
+**`src/contact-history.js:52`** said *"Nothing here imports the store"* above `import { getDoc } from
+'./store.js';`. It now says the one import from the store is `getDoc`, every `getDoc()` is handed
+straight to `visibleContactsFor()`, and the year never gets a name in the file. It records the old
+wording. The change is comment-only, so no `CACHE` bump: the commit carrying it owes the trailer
+`Shell-Cache: not needed — comments only`. **Until that commit exists, `wo-sweep.mjs` § 9 is red on
+this tree**, because § 9 counts an uncommitted SHELL change as a miss whatever its commits say
+(`tools/wo-sweep.mjs` § 9, *"The working tree has no commit and so no trailer"*). Subsection 10 shows
+how that was handled.
+
+#### 5. F5: claim 4 says what it is
+
+Per the ruling, no code moved in § 20. Claim 4's header item and the check's detail string were
+re-worded:
+
+- **Before** (WO-1.85's): *"The resolver calls no writer by name and does not import the store, the
+  same clause § 17 makes and for the same reason … `getDoc(` is on the WRITER list … A FENCE, NOT A
+  READING"*. Detail: *"none of the seven named writers (update/getDoc/…)"*.
+- **After**: *"The resolver calls none of seven named store and document calls — `update(`,
+  `getDoc(`, `setPref(`, `setPresentationMode(`, `writeEntry(`, `restoreDocument(`,
+  `newYearDocument(` — and does not import the store. THAT IS THE WHOLE OF CLAIM 4, and it is a
+  BACKSTOP rather than a no-writer claim (WO-1.87, on the owner's ruling of 2026-10-25 …): the file's
+  danger is disclosure, which claims 1–3 and 5 fence, and this module reads the year as `ctx.doc.…`
+  and `doc.…`, a document handed to it."* Its passing list was re-checked against the re-run probe,
+  which added three spellings it had not named: an update expression (`++`/`--`), a parenthesised
+  target, and `Reflect.defineProperty` / `Object.defineProperties`. All three are named now.
+  Detail: *"none of the seven named store and document calls … claim 4 is a backstop that reads
+  those seven names and the import line and no mutation shape, so an assignment, update expression,
+  delete, array mutator, .length write or reflective write on a document handed in, and
+  adoptRemoteDocument(, pass it"*.
+
+The word *"writers"* is gone from claim 4 because `getDoc` and `newYearDocument` are not writers.
+"Store and document calls" is what the seven are.
+
+#### 6. F1 and F3: the three under-claims, re-worded to what the patterns do
+
+No regex, token list or `check(` condition moved in either file. The `git diff -U0` of the two files
+is quoted in full under Acceptance line 5. Each re-wording is checked against the pattern it
+describes:
+
+- **`d.log[(0)] = x` is refused.** Both comments said *"an open parenthesis inside the text a
+  pattern reads … named below as passing"*, and both titles named *"a parenthesis other than a close
+  one after log (termRecords), the quoted key or a subscript"* as passing. But the subscript class
+  `\[(?:[^\[\]]|\[[^\[\]]*\])*\]` lets anything but a bracket inside the brackets, parentheses
+  included. Run on the regexes copied from the two files (`paren.mjs`, scratchpad):
+  ```
+  REFUSED d.log[(0)] = x;
+  REFUSED d.log[a[(0)]] = x;
+  REFUSED d['log'][(0)] = x;
+  REFUSED d.termRecords[(0)] = x;
+  REFUSED d['termRecords'][(0)] = x;
+  REFUSED (d.log[(0)]) = x;
+  ```
+  Both comments now say a parenthesis inside a subscript's own brackets is allowed and name
+  `d.log[(0)] = x` / `d.termRecords[(0)] = x` as refused. Both titles say the same in their
+  parenthesis clause.
+- **The prefix `--`.** F1's title said *".length decremented with nothing but spaces or tabs between
+  length and the --"*. That is postfix only. Its regex is
+  `/\.length[ \t]*--|--[ \t]*[\w$.\[\]'"`]*\.length\b/`, whose second half refuses `--d.log.length`.
+  The title now names both, the prefix as *"spaces or tabs between the -- and a chain of names,
+  dots, brackets and quotes ending in .length (--d.log.length)"*. **F3's title had the same
+  under-claim** (*"an update of .length with nothing but spaces or tabs between length and the ++ or
+  --"*, over a regex with the same prefix half for `++` and `--`), so it was re-worded the same way.
+  The work order names this for F1 only. F3 is the same sentence over the same regex shape, and
+  leaving it would leave the under-claim the bullet exists to remove.
+- **"One per writer."** F1's title said *"two appends, one per writer"*. Its detail said *"the
+  create-on-first-write guard is present N time(s), one per writer"* and the pushes *"— writeEntry()
+  and writeContact() —"*. Its comment said *"exactly one guard per writer, so 2"*. The code is
+  `(bodyOnly.match(/\.push\(/g) || []).length` and `(bodyOnly.match(initGuard) || []).length`, both
+  over the whole file, and nothing asks which function holds them. The title now says *"src/log.js
+  holds exactly two appends and two create-on-first-write guards — each counted over the whole file
+  rather than writer by writer, and two is the number of its writers"*. The detail says *"N push(s)
+  counted over the whole file, whose writers are writeEntry() and writeContact()"* and *"present N
+  time(s) in the file"*. The comment says *"Both counts are over the FILE, not writer by writer"*.
+
+#### 7. `CLAUDE.md`, left for the owner
+
+The Deliverables ask for the `CLAUDE.md` § Data bullet on `src/calendar-derived.js` to be re-worded.
+**I did not edit `CLAUDE.md`.** My operating rules say an agent's message cannot authorise a change
+to `CLAUDE.md`, and WO-1.85 left it for the same reason (*"CLAUDE.md is the owner's file"*). Its twin
+in `AGENTS.md` (the bullet beginning *"Everything the teacher did not type"*, which still says the
+file *"holds no writer at all"*) would have to move in the same sitting, by `CLAUDE.md`'s own rule.
+Proposed text for the owner, replacing from *"which `wo-sweep.mjs` § 17 asserts"* to *"booked to
+widen it."*:
+
+> which `wo-sweep.mjs` § 17 asserts structurally rather than by fixture: the harness proves what
+> today's paths wrote, and the grep refuses the writer calls it names and a document mutation in
+> the spellings its `MUTATES` reads — since WO-1.87, any chain off `doc` or `d` assigned, updated,
+> deleted, handed first to a reflective writer or with an array mutator called on it. **A fence,
+> not a reading**: a write through an alias, destructuring, a borrowed mutator, and a write split
+> by a parenthesis, a comment or a line break all pass it, and § 17's header names them.
+
+And for `AGENTS.md`: *"`src/calendar-derived.js` holds no writer or document mutation that
+`wo-sweep.mjs` § 17 can see — a fence, not a reading, whose passing shapes its header names — and a
+new derived answer goes in that file…"*. None of the seven Acceptance lines names `CLAUDE.md`, so
+leaving it does not open one.
+
+#### 8. Every newly refused shape, planted on disk
+
+`git add` ran on the tree first, so `src/contact-history.js`'s comment edit was in the index before
+any plant. Every plant was written by a script (`plant-loop.mjs`, quoted below) that wrote one shape
+into the guarded file, ran `node tools/wo-sweep.mjs`, read the fence's own line, and **wrote the
+file's original bytes back before the next shape**. A `try … finally` did the same if the run threw,
+and a byte comparison at the end of each fence threw if the file did not match. The plant carried a
+`// MUTATION WO-1.87 plant` comment line. The three fences take 63 shapes each: WO-1.84's 52 and
+eleven of the WO-1.87 adds (X1–X12, without X13 and X14, which were added to the probe later and
+both pass). The run took about nine minutes.
+
+```
+F4  FAIL src/calendar-derived.js:400 can write   <= A1 A2 A3 A4 A5 A6 A7 A8 A9 A10 A11 B1 B2 B4 C1 C2 C3 C4 C6 D1 D2 D3 D4 D5 D6 D7 D8 D9 E1 E2 E3 E4 E5 F1 F2 F3 F4 F5 F6 G1 G2 G3 X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X12
+F4  PASS                                          <= A12 A13 A14 B3 B5 B6 C5 D10 D11 D12 X11
+F6a FAIL src/outreach.js:651 can write            <= (the same 53)
+F6a PASS                                          <= (the same 11)
+F6b FAIL src/outreach-view.js:1885 — copyDraft() reaches a writer   <= (the same 53)
+F6b PASS                                          <= (the same 11)
+```
+
+Each red line cites **the plant's own line and no other** (one distinct `file:line` per fence across
+all 53 reds), so no red came from legitimate code. Two red lines in full, as the sweep printed them:
+
+```
+FAIL | src/calendar-derived.js holds no writer or mutation in the spellings this grep reads, and a review carries no neighbour  :: src/calendar-derived.js:400 can write — the read side of the calendar reaches a document mutation or a store call, which is the second truth this work order exists not to create
+FAIL | the clipboard copy calls no writer and holds no mutation in the spellings this grep reads, and its call has nothing async in front of it  :: src/outreach-view.js:1885 — copyDraft() reaches a writer. The handoff logs a `contact` because a `mailto:` is the moment a message leaves the building; …
+```
+
+**The newly refused shapes.** WO-1.84's table has F4, F6a and F6b refusing A1, D1–D4, D8 and D9 and
+treating D6 and D7 as n/a. Everything else red above is new: A2–A11, B1, B2, B4, C1–C4, C6, D5,
+E1–E5, F1–F6 and G1–G3 (33 of WO-1.84's shapes), plus X1–X10 and X12. That is 44 per fence, and
+every one of them went red in its own run in each of the three places.
+
+The sweep exited 1 on every run, plants and clean alike, because § 9 was already red on the staged
+comment edit (subsection 4). The verdict was read off each fence's own line, never off the exit
+code. After the loop, `git status --short src/` printed only `M  src/contact-history.js`, which is
+the staged comment. `grep -rn MUTATION src/` printed only `src/shell.js:1077`, the prose line at
+`HEAD` that § WO-1.83 records.
+
+**F2's control, on disk, through the real harness.** With everything staged, this was appended to
+`src/contact-history.js`:
+
+```js
+// MUTATION WO-1.87 plant: F2 control
+function wo187Plant() {
+  const year = getDoc();
+}
+```
+
+Then `node tools/verify-shell.mjs` ran to its exit:
+
+```
+FAIL | the history surface is a READER as far as this check can say: no update(), no .push( and no .splice( anywhere in src/contact-history.js, and the year never gets a name — … :: getDoc named 4 time(s) in code, handed straight to visibleContactsFor( 3 time(s); store import(s) ["import { getDoc } from './store.js';"]; its imports are …
+2117 checks · 2116 passed · 1 failed · 0 skipped
+EXIT=1
+```
+
+That was the only failure. The plant was reverted with `git checkout -- src/contact-history.js`,
+which restored the staged version because the comment edit was in the index. After it,
+`git diff --quiet -- src/` held and `grep -rn MUTATION src/` printed only `src/shell.js:1077`.
+
+#### 9. WO-1.84's probe, re-run
+
+**Re-pointed so it runs as printed.** § WO-1.84's copy no longer runs, because four of its anchors
+went missing when WO-1.85 and WO-1.88 re-worded the fences: F1's end (`"all pass it');"`), F4's and
+F6's names (`'… reads and never writes'`, `'… writes nothing'`), and F8's end (`"+ ', boot at ' +
+bootCallAt);"`). The work order named only F8's. The copy below anchors F1 on `"+ 'outside the
+claim');"`, F4 on `'src/calendar-derived.js holds no writer`, F6 on `'the clipboard copy calls no
+writer` and F8 on `"by name and called bare passes it');"`. Nothing else in the slicing moved.
+§ WO-1.84's copy is left as the record of what ran then. F2's control is now `const year =
+getDoc();`, because that is the assertion this work order adds. Fourteen shapes were added, X1–X14.
+The probe runs every fence, but only the four this work order owns are tabled.
+
+Run on the final tool text with every plant reverted (`node probe.mjs`, then `node probe.mjs --json
+> probe.json`, both `EXIT=0`):
+
+```
+== log (src/log.js) baseline=PASS control[d.log.splice(0, 1);]=REFUSED controls OK
+== contact (src/contact-history.js) baseline=PASS control[const year = getDoc();]=REFUSED controls OK
+== term (src/term-record.js) baseline=PASS control[d.termRecords.splice(0, 1);]=REFUSED controls OK
+== s17 (src/calendar-derived.js) baseline=PASS control[doc.events.splice(0, 1);]=REFUSED controls OK
+== s20 (src/merge-fields.js) baseline=PASS control[update((d) => d);]=REFUSED controls OK
+== s24m (src/outreach.js) baseline=PASS control[doc.log.splice(0, 1);]=REFUSED controls OK
+== s24v (src/outreach-view.js) baseline=PASS control[doc.log.splice(0, 1);]=REFUSED controls OK
+== s30 (src/signals.js) baseline=PASS control[a.held = false;]=REFUSED controls OK
+== door (src/front-door.js) baseline=PASS control[setPref("openYear", 1);]=REFUSED controls OK
+
+control problems: 0
+```
+
+The in-memory probe and the on-disk loop of subsection 8 agree cell for cell on F4, F6a and F6b,
+for every shape both ran.
+
+**How to read a cell.** *refused* names what refused it: `MUTATES` or `WRITERS` in § 17 and § 24,
+the token in F2, claim 4 or claim 5 in § 20. *passes* names the family **as the fence's own fence
+line words it**: § 17's and § 24's headers and detail lines, F2's comment and title, § 20's claim 4.
+*n/a* is reordering (D6, D7), which none of these four promises, as in § WO-1.84. The renderer
+(`table.mjs`, quoted below) prints `unfiled cells: 0`: no *passes* cell is missing a family and no
+*refused* cell is missing a reason.
+
+The F2 column needs one reading. The probe plants on a **parameter** named `doc`, as WO-1.84's did,
+so the year is never reached through `getDoc` there. That is why 58 of F2's cells pass, all under
+*"a document reached any other way than `getDoc`"*. The shapes that reach the year the way the file
+actually can are run separately, under *F2's own plants*.
+
+##### The table
+
+| Shape | As planted in F4 | F2 contact-log | F4 § 17 | F5 § 20 | F6a § 24 model | F6b § 24 copyDraft |
+|---|---|---|---|---|---|---|
+| A1 | `doc.events = [];` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — assignment | **refused** — MUTATES | **refused** — MUTATES |
+| A2 | `doc['events'] = [];` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | **refused** — claim 5, not 4 | **refused** — MUTATES | **refused** — MUTATES |
+| A3 | `doc["events"] = [];` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | **refused** — claim 5, not 4 | **refused** — MUTATES | **refused** — MUTATES |
+| A4 | `` doc[`events`] = []; `` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | **refused** — claim 5, not 4 | **refused** — MUTATES | **refused** — MUTATES |
+| A5 | `doc[k] = [];` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | **refused** — claim 5, not 4 | **refused** — MUTATES | **refused** — MUTATES |
+| A6 | `doc.events += '';` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — compound assignment | **refused** — MUTATES | **refused** — MUTATES |
+| A7 | `doc['events'] += "";` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | **refused** — claim 5, not 4 | **refused** — MUTATES | **refused** — MUTATES |
+| A8 | `doc.events -= 1;` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — compound assignment | **refused** — MUTATES | **refused** — MUTATES |
+| A9 | `doc.events &&= [];` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — logical assignment | **refused** — MUTATES | **refused** — MUTATES |
+| A10 | `doc.events \|\|= [];` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — logical assignment | **refused** — MUTATES | **refused** — MUTATES |
+| A11 | `doc.events ??= [];` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — logical assignment | **refused** — MUTATES | **refused** — MUTATES |
+| A12 | `[doc.events] = [[]];` | passes — a document reached other than by getDoc — here a parameter | passes — destructuring | passes — destructuring | passes — destructuring | passes — destructuring |
+| A13 | `({ events: doc.events } = { events: [] });` | passes — a document reached other than by getDoc — here a parameter | passes — destructuring | passes — destructuring | passes — destructuring | passes — destructuring |
+| A14 | `const x = doc; x.events = [];` | passes — a document reached other than by getDoc — here a parameter | passes — alias | passes — alias | passes — alias | passes — alias |
+| B1 | `doc.events[0] = null;` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — index write | **refused** — MUTATES | **refused** — MUTATES |
+| B2 | `doc['events'][0] = null;` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | **refused** — claim 5, not 4 | **refused** — MUTATES | **refused** — MUTATES |
+| B3 | `const l = doc.events; l[0] = null;` | passes — a document reached other than by getDoc — here a parameter | passes — alias | passes — alias | passes — alias | passes — alias |
+| B4 | `doc.events[0].subject = 'x';` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — entry edit | **refused** — MUTATES | **refused** — MUTATES |
+| B5 | `const e = doc.events[0]; e.subject = 'x';` | passes — a document reached other than by getDoc — here a parameter | passes — alias | passes — alias | passes — alias | passes — alias |
+| B6 | `doc.events.find((e) => e).subject = 'x';` | passes — a document reached other than by getDoc — here a parameter | passes — a write after a call in the chain | passes — entry edit | passes — a write after a call in the chain | passes — a write after a call in the chain |
+| C1 | `doc.events.length = 0;` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — .length write | **refused** — MUTATES | **refused** — MUTATES |
+| C2 | `doc.events.length--;` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — .length write | **refused** — MUTATES | **refused** — MUTATES |
+| C3 | `doc.events.length -= 1;` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — .length write | **refused** — MUTATES | **refused** — MUTATES |
+| C4 | `--doc.events.length;` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — .length write | **refused** — MUTATES | **refused** — MUTATES |
+| C5 | `const l = doc.events; l.length = 0;` | passes — a document reached other than by getDoc — here a parameter | passes — alias | passes — alias | passes — alias | passes — alias |
+| C6 | `doc.events.length++;` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — .length write | **refused** — MUTATES | **refused** — MUTATES |
+| D1 | `doc.events.splice(0, 1);` | **refused** — a token (.push( / .splice( / update() | **refused** — MUTATES | passes — mutator by name | **refused** — MUTATES | **refused** — MUTATES |
+| D2 | `doc.events.pop();` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — mutator by name | **refused** — MUTATES | **refused** — MUTATES |
+| D3 | `doc.events.shift();` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — mutator by name | **refused** — MUTATES | **refused** — MUTATES |
+| D4 | `doc.events.fill(null);` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — mutator by name | **refused** — MUTATES | **refused** — MUTATES |
+| D5 | `doc.events.copyWithin(0, 1);` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — mutator by name | **refused** — MUTATES | **refused** — MUTATES |
+| D6 | `doc.events.sort();` | n/a — reorders (WO-1.84 Traps) | n/a — reorders (WO-1.84 Traps) (probe: red) | n/a — reorders (WO-1.84 Traps) | n/a — reorders (WO-1.84 Traps) (probe: red) | n/a — reorders (WO-1.84 Traps) (probe: red) |
+| D7 | `doc.events.reverse();` | n/a — reorders (WO-1.84 Traps) | n/a — reorders (WO-1.84 Traps) (probe: red) | n/a — reorders (WO-1.84 Traps) | n/a — reorders (WO-1.84 Traps) (probe: red) | n/a — reorders (WO-1.84 Traps) (probe: red) |
+| D8 | `doc.events.unshift(e);` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — mutator by name | **refused** — MUTATES | **refused** — MUTATES |
+| D9 | `doc.events.push(e);` | **refused** — a token (.push( / .splice( / update() | **refused** — MUTATES | passes — mutator by name | **refused** — MUTATES | **refused** — MUTATES |
+| D10 | `const l = doc.events; l.splice(0, 1);` | **refused** — a token (.push( / .splice( / update() | passes — alias | passes — alias | passes — alias | passes — alias |
+| D11 | `doc.events['splice'](0, 1);` | passes — a document reached other than by getDoc — here a parameter | passes — mutator named by a string | **refused** — claim 5, not 4 | passes — mutator named by a string | passes — mutator named by a string |
+| D12 | `Array.prototype.splice.call(doc.events, 0, 1);` | passes — a document reached other than by getDoc — here a parameter | passes — borrowed mutator | passes — borrowed mutator | passes — borrowed mutator | passes — borrowed mutator |
+| E1 | `delete doc.events;` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — delete | **refused** — MUTATES | **refused** — MUTATES |
+| E2 | `delete doc['events'];` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | **refused** — claim 5, not 4 | **refused** — MUTATES | **refused** — MUTATES |
+| E3 | `delete doc[k];` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | **refused** — claim 5, not 4 | **refused** — MUTATES | **refused** — MUTATES |
+| E4 | `delete doc.events[0];` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — delete | **refused** — MUTATES | **refused** — MUTATES |
+| E5 | `delete doc.events[0].subject;` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — delete | **refused** — MUTATES | **refused** — MUTATES |
+| F1 | `Object.assign(doc, { events: [] });` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — reflective write | **refused** — MUTATES | **refused** — MUTATES |
+| F2 | `Object.assign(doc.events, [null]);` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — reflective write | **refused** — MUTATES | **refused** — MUTATES |
+| F3 | `Reflect.set(doc, 'events', []);` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — reflective write | **refused** — MUTATES | **refused** — MUTATES |
+| F4 | `Reflect.deleteProperty(doc, 'events');` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — reflective write | **refused** — MUTATES | **refused** — MUTATES |
+| F5 | `Object.defineProperty(doc, 'events', { value: [] });` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — reflective write | **refused** — MUTATES | **refused** — MUTATES |
+| F6 | `Reflect.set(doc.events, 'length', 0);` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — reflective write | **refused** — MUTATES | **refused** — MUTATES |
+| G1 | `restoreDocument(doc0);` | passes — a writer reached other than by a store import (with its import it is refused, see below) | **refused** — WRITERS | **refused** — claim 4 | **refused** — WRITERS | **refused** — WRITERS |
+| G2 | `store.restoreDocument(doc0);` | passes — a writer reached other than by a store import (with its import it is refused, see below) | **refused** — WRITERS | **refused** — claim 4 | **refused** — WRITERS | **refused** — WRITERS |
+| G3 | `store.adoptRemoteDocument(doc0);` | passes — a writer reached other than by a store import (with its import it is refused, see below) | **refused** — WRITERS | passes — `adoptRemoteDocument(` | **refused** — WRITERS | **refused** — WRITERS |
+| X1 | `doc . events = [];` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — assignment, whitespace at the dot | **refused** — MUTATES | **refused** — MUTATES |
+| X2 | `doc.events[a[0]] = null;` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | **refused** — claim 5, not 4 | **refused** — MUTATES | **refused** — MUTATES |
+| X3 | `doc.events?.push(e);` | **refused** — a token (.push( / .splice( / update() | **refused** — MUTATES | passes — mutator through `?.` | **refused** — MUTATES | **refused** — MUTATES |
+| X4 | `delete(doc.events);` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — delete with a parenthesis | **refused** — MUTATES | **refused** — MUTATES |
+| X5 | `doc.events++;` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — update expression | **refused** — MUTATES | **refused** — MUTATES |
+| X6 | `--doc.events;` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — update expression | **refused** — MUTATES | **refused** — MUTATES |
+| X7 | `doc.events **= 2;` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — compound assignment | **refused** — MUTATES | **refused** — MUTATES |
+| X8 | `doc.events [0] = null;` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — index write | **refused** — MUTATES | **refused** — MUTATES |
+| X9 | `Reflect.defineProperty(doc, 'events', { value: [] });` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — reflective write | **refused** — MUTATES | **refused** — MUTATES |
+| X10 | `Object.defineProperties(doc, { events: { value: [] } });` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — reflective write | **refused** — MUTATES | **refused** — MUTATES |
+| X11 | `(doc.events) = [];` | passes — a document reached other than by getDoc — here a parameter | passes — a parenthesis around the target | passes — parenthesised target | passes — a parenthesis around the target | passes — a parenthesis around the target |
+| X12 | `d.events = [];` | passes — a document reached other than by getDoc — here a parameter | **refused** — MUTATES | passes — assignment | **refused** — MUTATES | **refused** — MUTATES |
+| X13 | `doc.events /* c */ = [];` | passes — a document reached other than by getDoc — here a parameter | passes — a block comment inside the write | passes — assignment | passes — a block comment inside the write | passes — a block comment inside the write |
+| X14 | `doc.events ⏎ = [];` | passes — a document reached other than by getDoc — here a parameter | passes — a line break inside the write | passes — assignment | passes — a line break inside the write | passes — a line break inside the write |
+
+- F2 contact-log: 4 refused · 60 passes · 2 n/a
+- F4 § 17: 51 refused · 13 passes · 2 n/a
+- F5 § 20: 12 refused · 52 passes · 2 n/a
+- F6a § 24 model: 51 refused · 13 passes · 2 n/a
+- F6b § 24 copyDraft: 51 refused · 13 passes · 2 n/a
+
+`unfiled cells: 0`
+
+**Before and after**, refused · passes · n/a. Before is § WO-1.84 over its 52 shapes. After is over the same 52, with the X shapes counted separately:
+
+| Fence | WO-1.84 (52) | WO-1.87, the same 52 | WO-1.87, X1–X14 |
+|---|---|---|---|
+| F2 | 3 · 47 · 2 | 3 · 47 · 2 | 1 refused · 13 pass |
+| F4 § 17 | 7 · 43 · 2 | 40 · 10 · 2 | 11 refused · 3 pass |
+| F5 § 20 | 11 · 39 · 2 | 11 · 39 · 2 | 1 refused · 13 pass |
+| F6a | 7 · 43 · 2 | 40 · 10 · 2 | 11 refused · 3 pass |
+| F6b | 7 · 43 · 2 | 40 · 10 · 2 | 11 refused · 3 pass |
+
+##### F2's own plants
+
+`f2-extra.mjs` (quoted below) runs F2's own sliced code the way `probe.mjs` does, on plants that reach the year the ways `src/contact-history.js` can: by `getDoc`, by an import, or through what `visibleContactsFor()` returns. `EXIT=0`:
+
+```
+baseline PASS :: getDoc named 3 time(s) in code, handed straight to visibleContactsFor( 3 time(s); store import(s) ["import { getDoc } from './store.js';"]; its imports are "imp
+N-A1                 REFUSED :: getDoc named 4 time(s) in code, handed straight to visibleContactsFor( 3 time(s); store import(s) ["import { getDoc } from './store.js';"]; its import
+N-C1                 REFUSED :: getDoc named 4 time(s) in code, handed straight to visibleContactsFor( 3 time(s); store import(s) ["import { getDoc } from './store.js';"]; its import
+N-E1                 REFUSED :: getDoc named 4 time(s) in code, handed straight to visibleContactsFor( 3 time(s); store import(s) ["import { getDoc } from './store.js';"]; its import
+N-F1                 REFUSED :: getDoc named 4 time(s) in code, handed straight to visibleContactsFor( 3 time(s); store import(s) ["import { getDoc } from './store.js';"]; its import
+N-inline             REFUSED :: getDoc named 4 time(s) in code, handed straight to visibleContactsFor( 3 time(s); store import(s) ["import { getDoc } from './store.js';"]; its import
+N-alias-fn           REFUSED :: getDoc named 4 time(s) in code, handed straight to visibleContactsFor( 3 time(s); store import(s) ["import { getDoc } from './store.js';"]; its import
+G1+import            REFUSED :: getDoc named 3 time(s) in code, handed straight to visibleContactsFor( 3 time(s); store import(s) ["import { getDoc, restoreDocument } from './store.j
+G2+import            REFUSED :: getDoc named 3 time(s) in code, handed straight to visibleContactsFor( 3 time(s); store import(s) ["import { getDoc } from './store.js';","import * as
+G3+import            REFUSED :: getDoc named 3 time(s) in code, handed straight to visibleContactsFor( 3 time(s); store import(s) ["import * as store from './store.js';"]; its import
+getDoc as            REFUSED :: getDoc named 3 time(s) in code, handed straight to visibleContactsFor( 3 time(s); store import(s) ["import { getDoc as year } from './store.js';"]; it
+returned entry       passes  :: getDoc named 4 time(s) in code, handed straight to visibleContactsFor( 4 time(s); store import(s) ["import { getDoc } from './store.js';"]; its import
+returned alias       passes  :: getDoc named 4 time(s) in code, handed straight to visibleContactsFor( 4 time(s); store import(s) ["import { getDoc } from './store.js';"]; its import
+other writer         passes  :: getDoc named 3 time(s) in code, handed straight to visibleContactsFor( 3 time(s); store import(s) ["import { getDoc } from './store.js';"]; its import
+space in getDoc ( )  REFUSED :: getDoc named 4 time(s) in code, handed straight to visibleContactsFor( 3 time(s); store import(s) ["import { getDoc } from './store.js';"]; its import
+```
+
+Every shape that names the year (`N-*`, including `getDoc().log = []` inline and `const g = getDoc; g().log = []`) is refused, and so is every store import but `{ getDoc }` (G1–G3 with their imports, `getDoc as year`). What passes is what the fence line names: the returned entries edited directly or through an alias, and a writer imported from another module. `getDoc ( )` with spaces is the false red the fence line names.
+
+##### The scripts, as run
+
+All four live in the session scratchpad and are not committed. `probe.mjs` reads every pattern from the harness files at run time, as WO-1.84's did. `ROOT` is `c:/dev/planbook`. `probe.mjs`:
+
+```js
+// WO-1.87 probe — WO-1.84's probe (TESTING.md § WO-1.84) with its anchors re-pointed at today's
+// harness text, run against an in-memory copy of each guarded file with one shape added. Nothing is
+// written to disk, and no regex or token list from any fence is retyped here: every pattern a fence
+// uses arrives inside the slice. Usage: node probe.mjs [--json] [--fences=contact,s17,...]
+import realFs from 'node:fs';
+import realFsP from 'node:fs/promises';
+import path from 'node:path';
+
+const ROOT = 'c:/dev/planbook';
+const read = (rel) => realFs.readFileSync(path.join(ROOT, rel), 'utf8');
+
+function slice(text, start, end, { includeEnd = true, from = 0 } = {}) {
+  const a = text.indexOf(start, from);
+  if (a < 0) throw new Error('start anchor not found: ' + start.slice(0, 60));
+  const b = text.indexOf(end, a + start.length);
+  if (b < 0) throw new Error('end anchor not found: ' + end.slice(0, 60));
+  return text.slice(a, includeEnd ? b + end.length : b);
+}
+
+const key = (p) => path.resolve(p).toLowerCase();
+function fakeFs(over) {
+  const has = (p) => over.has(key(p));
+  const sync = Object.assign(Object.create(realFs), {
+    readFileSync: (p, enc) => (has(p) ? over.get(key(p)) : realFs.readFileSync(p, enc)),
+    existsSync: (p) => has(p) || realFs.existsSync(p),
+  });
+  const prom = Object.assign(Object.create(realFsP), {
+    readFile: async (p, enc) => (has(p) ? over.get(key(p)) : realFsP.readFile(p, enc)),
+  });
+  return { sync, prom };
+}
+const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+
+const LOGE = read('tools/verify/log-entries.mjs');
+const CONT = read('tools/verify/contact-log.mjs');
+const TERM = read('tools/verify/term-record.mjs');
+const DOOR = read('tools/verify/front-door.mjs');
+const SWEEP = read('tools/wo-sweep.mjs');
+
+const SWEEP_HELPERS = [
+  slice(SWEEP, 'function report(hits) {', '\n}\n'),
+  slice(SWEEP, 'function commentLines(file) {', '\n}\n'),
+  slice(SWEEP, 'function walk(dir, out = []) {', '\n}\n'),
+  slice(SWEEP, "const IGNORE_DIRS = new Set(", ';\n'),
+  slice(SWEEP, 'const ALL = walk(REPO);', '\n'),
+  slice(SWEEP, 'const rel = p => ', '\n'),
+].join('\n');
+const sweepBlock = (startName, nextBanner) =>
+  slice(SWEEP, "{\n  const NAME = " + startName, '\n}\n\n' + nextBanner, { includeEnd: false }) + '\n}\n';
+
+// The anchors WO-1.87 re-pointed: F1's end and F8's end (both reworded by WO-1.85 and after), and
+// F4's and F6's names (WO-1.85). F2's, F3's, F5's and F7's are as WO-1.84 printed them.
+const CODE = {
+  log: slice(LOGE, "const logSource = await fs.readFile(path.join(ROOT, 'src/log.js'), 'utf8');",
+    "+ 'outside the claim');"),
+  contactEval: slice(CONT, 'const readOnly = await evalJs(`', '})()`);'),
+  contactCheck: slice(CONT, "check('the history surface is a READER", "JSON.stringify(readOnly.imports.slice(0, 200)));"),
+  term: slice(TERM, "const source = await fs.readFile(path.join(ROOT, 'src/term-record.js'), 'utf8');",
+    "engineImportsBack: engineSource.indexOf('term-record') !== -1 }));"),
+  door: slice(DOOR, 'const strip = (t) => t.replace(', "by name and called bare passes it');"),
+  s17: sweepBlock("'src/calendar-derived.js holds no writer", '/* ══════ 18.'),
+  s20: sweepBlock("'the merge-field resolver whitelists", '/* ────────────────────────────── prose helpers'),
+  s24: sweepBlock("'the clipboard copy calls no writer", '/* ══════ 25.'),
+  s30: sweepBlock("'an assignment\\'s `held` is read only", '/* ────────────────────────────── the script scanner'),
+};
+
+async function runVerify(code, over) {
+  const out = [];
+  const check = (name, ok, detail) => out.push({ name, ok: !!ok, detail: String(detail || '') });
+  const { prom } = fakeFs(over);
+  await new AsyncFunction('fs', 'path', 'ROOT', 'check', code)(prom, path, ROOT, check);
+  return out;
+}
+function runSweep(code, over) {
+  const out = [];
+  const check = (name, ok, detail) => out.push({ name, ok: !!ok, detail: String(detail || '') });
+  const { sync } = fakeFs(over);
+  new Function('fs', 'path', 'REPO', 'check', 'VERBOSE', SWEEP_HELPERS + '\n' + code)(sync, path, ROOT, check, false);
+  return out;
+}
+async function runContact(over) {
+  // The page-side code is a template literal in the harness; evaluate it as one to get the exact
+  // string the browser receives, then run that string with fetch answering from disk / the plant.
+  const body = CODE.contactEval.slice('const readOnly = await evalJs(`'.length, -'`);'.length);
+  const pageCode = new Function('return `' + body + '`')();
+  const fetch = async (url) => {
+    const p = path.join(ROOT, url.replace(/^\//, ''));
+    const text = over.has(key(p)) ? over.get(key(p)) : realFs.readFileSync(p, 'utf8');
+    return { text: async () => text };
+  };
+  const readOnly = await new Function('fetch', 'return ' + pageCode)(fetch);
+  const out = [];
+  const check = (name, ok, detail) => out.push({ name, ok: !!ok, detail: String(detail || '') });
+  new Function('readOnly', 'check', CODE.contactCheck)(readOnly, check);
+  return out;
+}
+
+const appendAtEnd = (src, line) => src.replace(/\n*$/, '\n') + 'function wo187Probe(d, doc, a, k, x, l, e, doc0, store) {\n  ' + line + '\n}\n';
+const insertInCopyDraft = (src, line) => {
+  const at = src.indexOf('export function copyDraft(');
+  if (at < 0) throw new Error('copyDraft not found');
+  const close = src.indexOf('\n}\n', at);
+  return src.slice(0, close) + '\n  ' + line + src.slice(close);
+};
+const FENCES = [
+  { id: 'log', file: 'src/log.js', R: 'd', K: 'log', run: (o) => runVerify(CODE.log, o), plant: appendAtEnd, control: 'd.log.splice(0, 1);' },
+  { id: 'contact', file: 'src/contact-history.js', R: 'doc', K: 'log', run: runContact, plant: appendAtEnd, control: 'const year = getDoc();' },
+  { id: 'term', file: 'src/term-record.js', R: 'd', K: 'termRecords', run: (o) => runVerify(CODE.term, o), plant: appendAtEnd, control: 'd.termRecords.splice(0, 1);' },
+  { id: 's17', file: 'src/calendar-derived.js', R: 'doc', K: 'events', run: (o) => runSweep(CODE.s17, o), plant: appendAtEnd, control: 'doc.events.splice(0, 1);' },
+  { id: 's20', file: 'src/merge-fields.js', R: 'doc', K: 'students', run: (o) => runSweep(CODE.s20, o), plant: appendAtEnd, control: 'update((d) => d);' },
+  { id: 's24m', file: 'src/outreach.js', R: 'doc', K: 'log', run: (o) => runSweep(CODE.s24, o), plant: appendAtEnd, control: 'doc.log.splice(0, 1);' },
+  { id: 's24v', file: 'src/outreach-view.js', R: 'doc', K: 'log', run: (o) => runSweep(CODE.s24, o), plant: insertInCopyDraft, control: 'doc.log.splice(0, 1);' },
+  { id: 's30', file: 'src/signals.js', R: 'a', K: 'held', run: (o) => runSweep(CODE.s30, o), plant: appendAtEnd, control: 'a.held = false;' },
+  { id: 'door', file: 'src/front-door.js', R: 'doc', K: 'log', run: (o) => runVerify(CODE.door, o), plant: appendAtEnd, control: 'setPref("openYear", 1);' },
+];
+
+// WO-1.84's 52, unchanged, then fourteen WO-1.87 adds (X1–X14): the Traps' whitespace question, the
+// spellings the widened MUTATES names, and three it does not (X11, X13, X14).
+const SHAPES = [
+  ['A1', (R, K) => `${R}.${K} = [];`], ['A2', (R, K) => `${R}['${K}'] = [];`], ['A3', (R, K) => `${R}["${K}"] = [];`],
+  ['A4', (R, K) => `${R}[\`${K}\`] = [];`], ['A5', (R, K) => `${R}[k] = [];`], ['A6', (R, K) => `${R}.${K} += '';`],
+  ['A7', (R, K) => `${R}['${K}'] += "";`], ['A8', (R, K) => `${R}.${K} -= 1;`], ['A9', (R, K) => `${R}.${K} &&= [];`],
+  ['A10', (R, K) => `${R}.${K} ||= [];`], ['A11', (R, K) => `${R}.${K} ??= [];`], ['A12', (R, K) => `[${R}.${K}] = [[]];`],
+  ['A13', (R, K) => `({ ${K}: ${R}.${K} } = { ${K}: [] });`], ['A14', (R, K) => `const x = ${R}; x.${K} = [];`],
+  ['B1', (R, K) => `${R}.${K}[0] = null;`], ['B2', (R, K) => `${R}['${K}'][0] = null;`], ['B3', (R, K) => `const l = ${R}.${K}; l[0] = null;`],
+  ['B4', (R, K) => `${R}.${K}[0].subject = 'x';`], ['B5', (R, K) => `const e = ${R}.${K}[0]; e.subject = 'x';`],
+  ['B6', (R, K) => `${R}.${K}.find((e) => e).subject = 'x';`], ['C1', (R, K) => `${R}.${K}.length = 0;`],
+  ['C2', (R, K) => `${R}.${K}.length--;`], ['C3', (R, K) => `${R}.${K}.length -= 1;`], ['C4', (R, K) => `--${R}.${K}.length;`],
+  ['C5', (R, K) => `const l = ${R}.${K}; l.length = 0;`], ['C6', (R, K) => `${R}.${K}.length++;`],
+  ['D1', (R, K) => `${R}.${K}.splice(0, 1);`], ['D2', (R, K) => `${R}.${K}.pop();`], ['D3', (R, K) => `${R}.${K}.shift();`],
+  ['D4', (R, K) => `${R}.${K}.fill(null);`], ['D5', (R, K) => `${R}.${K}.copyWithin(0, 1);`], ['D6', (R, K) => `${R}.${K}.sort();`],
+  ['D7', (R, K) => `${R}.${K}.reverse();`], ['D8', (R, K) => `${R}.${K}.unshift(e);`], ['D9', (R, K) => `${R}.${K}.push(e);`],
+  ['D10', (R, K) => `const l = ${R}.${K}; l.splice(0, 1);`], ['D11', (R, K) => `${R}.${K}['splice'](0, 1);`],
+  ['D12', (R, K) => `Array.prototype.splice.call(${R}.${K}, 0, 1);`], ['E1', (R, K) => `delete ${R}.${K};`],
+  ['E2', (R, K) => `delete ${R}['${K}'];`], ['E3', (R, K) => `delete ${R}[k];`], ['E4', (R, K) => `delete ${R}.${K}[0];`],
+  ['E5', (R, K) => `delete ${R}.${K}[0].subject;`], ['F1', (R, K) => `Object.assign(${R}, { ${K}: [] });`],
+  ['F2', (R, K) => `Object.assign(${R}.${K}, [null]);`], ['F3', (R, K) => `Reflect.set(${R}, '${K}', []);`],
+  ['F4', (R, K) => `Reflect.deleteProperty(${R}, '${K}');`], ['F5', (R, K) => `Object.defineProperty(${R}, '${K}', { value: [] });`],
+  ['F6', (R, K) => `Reflect.set(${R}.${K}, 'length', 0);`], ['G1', () => `restoreDocument(doc0);`],
+  ['G2', () => `store.restoreDocument(doc0);`], ['G3', () => `store.adoptRemoteDocument(doc0);`],
+  ['X1', (R, K) => `${R} . ${K} = [];`], ['X2', (R, K) => `${R}.${K}[a[0]] = null;`], ['X3', (R, K) => `${R}.${K}?.push(e);`],
+  ['X4', (R, K) => `delete(${R}.${K});`], ['X5', (R, K) => `${R}.${K}++;`], ['X6', (R, K) => `--${R}.${K};`],
+  ['X7', (R, K) => `${R}.${K} **= 2;`], ['X8', (R, K) => `${R}.${K} [0] = null;`],
+  ['X9', (R, K) => `Reflect.defineProperty(${R}, '${K}', { value: [] });`],
+  ['X10', (R, K) => `Object.defineProperties(${R}, { ${K}: { value: [] } });`],
+  ['X11', (R, K) => `(${R}.${K}) = [];`], ['X12', (R, K) => `d.${K} = [];`],
+  ['X13', (R, K) => `${R}.${K} /* c */ = [];`], ['X14', (R, K) => `${R}.${K}\n    = [];`],
+];
+
+const summary = (res) => ({ ok: res[0].ok, detail: res[0].detail });
+const only = (process.argv.find((a) => a.startsWith('--fences=')) || '').slice('--fences='.length).split(',').filter(Boolean);
+const results = {};
+let problems = 0;
+for (const f of FENCES) {
+  if (only.length && !only.includes(f.id)) continue;
+  const abs = path.join(ROOT, f.file);
+  const clean = realFs.readFileSync(abs, 'utf8');
+  const runWith = async (text) => summary(await f.run(new Map([[key(abs), text]])));
+  const base = await runWith(clean);
+  const ctl = await runWith(f.plant(clean, f.control));
+  const okControls = base.ok === true && ctl.ok === false;
+  if (!okControls) problems++;
+  results[f.id] = { file: f.file, R: f.R, K: f.K, baseline: base, control: { shape: f.control, ...ctl }, okControls, cells: {} };
+  for (const [id, tpl] of SHAPES) {
+    const line = tpl(f.R, f.K);
+    const planted = f.plant(clean, line);
+    if (planted === clean || planted.indexOf(line) < 0) throw new Error('plant did not land: ' + f.id + ' ' + id);
+    const r = await runWith(planted);
+    results[f.id].cells[id] = { line, refused: !r.ok, detail: r.detail };
+  }
+}
+
+if (process.argv.includes('--json')) {
+  console.log(JSON.stringify(results, null, 1));
+} else {
+  for (const [fid, r] of Object.entries(results)) {
+    console.log(`\n== ${fid} (${r.file}) baseline=${r.baseline.ok ? 'PASS' : 'FAIL'} control[${r.control.shape}]=${r.control.ok ? 'PASS(!)' : 'REFUSED'} controls ${r.okControls ? 'OK' : 'BROKEN'}`);
+    if (!r.baseline.ok) console.log('   baseline detail: ' + r.baseline.detail.slice(0, 300));
+    for (const [sid, c] of Object.entries(r.cells)) {
+      console.log(`   ${sid.padEnd(4)} ${c.refused ? 'REFUSED' : 'passes '}  ${c.line}` + (c.refused ? '   :: ' + c.detail.slice(0, 160).replace(/\s+/g, ' ') : ''));
+    }
+  }
+  console.log('\ncontrol problems: ' + problems);
+}
+```
+
+`table.mjs`:
+
+```js
+// Renders probe.json's F2, F4, F5, F6a and F6b columns for TESTING.md § WO-1.87. Verdicts come from
+// the probe. The family each *passes* cell is filed under is the judgment this adds, and it is the
+// list below, by shape, per fence; every family named here is a phrase in that fence's own fence line.
+import fs from 'node:fs';
+const r = JSON.parse(fs.readFileSync(new URL('./probe.json', import.meta.url), 'utf8'));
+const SWEEP = fs.readFileSync('c:/dev/planbook/tools/wo-sweep.mjs', 'utf8');
+const MUTATES = eval(SWEEP.match(/const MUTATES = (\/.*\/);/)[1]);
+const NA = { D6: 'reorders (WO-1.84 Traps)', D7: 'reorders (WO-1.84 Traps)' };
+const PASS = {
+  contact: (s) => (s[0] === 'G' ? 'a writer reached other than by a store import (with its import it is refused, see below)'
+    : 'a document reached other than by getDoc — here a parameter'),
+  s17: (s) => ({ A12: 'destructuring', A13: 'destructuring', A14: 'alias', B3: 'alias', B5: 'alias', C5: 'alias',
+    D10: 'alias', B6: 'a write after a call in the chain', D11: 'mutator named by a string', D12: 'borrowed mutator',
+    X11: 'a parenthesis around the target', X13: 'a block comment inside the write', X14: 'a line break inside the write' })[s],
+  s20: (s) => ({ A1: 'assignment', A6: 'compound assignment', A8: 'compound assignment', A9: 'logical assignment',
+    A10: 'logical assignment', A11: 'logical assignment', A12: 'destructuring', A13: 'destructuring', A14: 'alias',
+    B1: 'index write', B3: 'alias', B4: 'entry edit', B5: 'alias', B6: 'entry edit', C1: '.length write',
+    C2: '.length write', C3: '.length write', C4: '.length write', C5: 'alias', C6: '.length write',
+    D1: 'mutator by name', D2: 'mutator by name', D3: 'mutator by name', D4: 'mutator by name', D5: 'mutator by name',
+    D8: 'mutator by name', D9: 'mutator by name', D10: 'alias', D12: 'borrowed mutator', E1: 'delete', E4: 'delete',
+    E5: 'delete', F1: 'reflective write', F2: 'reflective write', F3: 'reflective write', F4: 'reflective write',
+    F5: 'reflective write', F6: 'reflective write', G3: '`adoptRemoteDocument(`', X1: 'assignment, whitespace at the dot',
+    X3: 'mutator through `?.`', X4: 'delete with a parenthesis', X5: 'update expression', X6: 'update expression',
+    X7: 'compound assignment', X8: 'index write', X9: 'reflective write', X10: 'reflective write',
+    X11: 'parenthesised target', X12: 'assignment', X13: 'assignment', X14: 'assignment' })[s],
+};
+PASS.s24m = PASS.s17; PASS.s24v = PASS.s17;
+function why(f, c) {
+  if (f === 'contact') return /\.push\(|\.splice\(|update/.test(c.line) ? 'a token (.push( / .splice( / update()' : '?';
+  if (f === 's20') return /DYNAMIC PROPERTY READ/.test(c.detail) ? 'claim 5, not 4' : /writes at/.test(c.detail) ? 'claim 4' : '?';
+  return MUTATES.test(c.line) ? 'MUTATES' : 'WRITERS';
+}
+const F = ['contact', 's17', 's20', 's24m', 's24v'];
+const LABEL = { contact: 'F2 contact-log', s17: 'F4 § 17', s20: 'F5 § 20', s24m: 'F6a § 24 model', s24v: 'F6b § 24 copyDraft' };
+const shapes = Object.keys(r.s17.cells);
+const out = ['| Shape | As planted in F4 | ' + F.map((f) => LABEL[f]).join(' | ') + ' |', '|---|---|' + F.map(() => '---').join('|') + '|'];
+const tally = {};
+let unknown = 0;
+for (const s of shapes) {
+  const shown = r.s17.cells[s].line.replace(/\|/g, '\\|').replace(/\n\s*/g, ' ⏎ ');
+  const code = shown.indexOf('`') >= 0 ? '`` ' + shown + ' ``' : '`' + shown + '`';
+  out.push(`| ${s} | ${code} | ` + F.map((f) => {
+    const c = r[f].cells[s];
+    tally[f] = tally[f] || { R: 0, P: 0, N: 0 };
+    if (NA[s]) { tally[f].N++; return `n/a — ${NA[s]}${c.refused ? ' (probe: red)' : ''}`; }
+    if (c.refused) { tally[f].R++; const w = why(f, c); if (w === '?') unknown++; return `**refused** — ${w}`; }
+    tally[f].P++;
+    const fam = PASS[f](s);
+    if (!fam) unknown++;
+    return `passes — ${fam || '?'}`;
+  }).join(' | ') + ' |');
+}
+console.log(out.join('\n'));
+console.log('\n' + F.map((f) => `- ${LABEL[f]}: ${tally[f].R} refused · ${tally[f].P} passes · ${tally[f].N} n/a`).join('\n'));
+console.log('\nunfiled cells: ' + unknown);
+```
+
+`f2-extra.mjs`:
+
+```js
+// WO-1.87, F2 only: the shapes whose F2 cell in probe.mjs depends on HOW the plant reaches the year.
+// probe.mjs plants on a parameter named `doc` and adds no import, as WO-1.84's did. This runs F2's
+// own sliced code (same slicing as probe.mjs) on plants that reach the year the ways the file can.
+import realFs from 'node:fs';
+import path from 'node:path';
+
+const ROOT = 'c:/dev/planbook';
+const CONT = realFs.readFileSync(path.join(ROOT, 'tools/verify/contact-log.mjs'), 'utf8');
+function slice(text, start, end) {
+  const a = text.indexOf(start); if (a < 0) throw new Error('start anchor not found: ' + start);
+  const b = text.indexOf(end, a + start.length); if (b < 0) throw new Error('end anchor not found: ' + end);
+  return text.slice(a, b + end.length);
+}
+const evalSrc = slice(CONT, 'const readOnly = await evalJs(`', '})()`);');
+const checkSrc = slice(CONT, "check('the history surface is a READER", "JSON.stringify(readOnly.imports.slice(0, 200)));");
+const FILE = path.join(ROOT, 'src/contact-history.js');
+const clean = realFs.readFileSync(FILE, 'utf8');
+async function run(text) {
+  const body = evalSrc.slice('const readOnly = await evalJs(`'.length, -'`);'.length);
+  const pageCode = new Function('return `' + body + '`')();
+  const fetch = async (url) => {
+    const p = path.join(ROOT, url.replace(/^\//, ''));
+    return { text: async () => (path.resolve(p).toLowerCase() === path.resolve(FILE).toLowerCase() ? text : realFs.readFileSync(p, 'utf8')) };
+  };
+  const readOnly = await new Function('fetch', 'return ' + pageCode)(fetch);
+  const out = [];
+  new Function('readOnly', 'check', checkSrc)(readOnly, (n, ok, d) => out.push({ ok: !!ok, d: String(d) }));
+  return out[0];
+}
+const fn = (body) => clean.replace(/\n*$/, '\n') + 'function wo187Probe(studentId, x) {\n  ' + body + '\n}\n';
+const IMPORT = "import { getDoc } from './store.js';";
+if (clean.indexOf(IMPORT) < 0) throw new Error('store import not found');
+const withImport = (imp, body) => fn(body).replace(IMPORT, imp);
+
+const SHAPES = [
+  // the year by name, then a catalogue shape on it
+  ['N-A1', fn('const doc = getDoc(); doc.log = [];')],
+  ['N-C1', fn('const doc = getDoc(); doc.log.length = 0;')],
+  ['N-E1', fn('const doc = getDoc(); delete doc.log;')],
+  ['N-F1', fn("const doc = getDoc(); Object.assign(doc, { log: [] });")],
+  ['N-inline', fn('getDoc().log = [];')],
+  ['N-alias-fn', fn('const g = getDoc; g().log = [];')],
+  // the swaps, with the import each needs to run at all
+  ['G1+import', withImport("import { getDoc, restoreDocument } from './store.js';", 'restoreDocument(x);')],
+  ['G2+import', withImport("import { getDoc } from './store.js';\nimport * as store from './store.js';", 'store.restoreDocument(x);')],
+  ['G3+import', withImport("import * as store from './store.js';", 'store.adoptRemoteDocument(x);')],
+  ['getDoc as', withImport("import { getDoc as year } from './store.js';", 'year().log = [];')],
+  // the families the ruling says are left
+  ['returned entry', fn("visibleContactsFor(getDoc(), studentId)[0].subject = 'x';")],
+  ['returned alias', fn("const entries = visibleContactsFor(getDoc(), studentId); entries[0].subject = 'x';")],
+  ['other writer', fn("x.forEach(() => 0);\n  writeContact(x);").replace("import { visibleContactsFor, contactAudiences } from './log.js';", "import { visibleContactsFor, contactAudiences, writeContact } from './log.js';")],
+  ['space in getDoc ( )', fn('const list = visibleContactsFor(getDoc ( ), studentId);')],
+];
+const base = await run(clean);
+console.log('baseline', base.ok ? 'PASS' : 'FAIL', '::', base.d.slice(0, 160));
+for (const [id, text] of SHAPES) {
+  if (text === clean) throw new Error('plant did not land: ' + id);
+  const r = await run(text);
+  console.log(id.padEnd(20), r.ok ? 'passes ' : 'REFUSED', '::', r.d.slice(0, 150).replace(/\s+/g, ' '));
+}
+```
+
+`plant-loop.mjs`:
+
+```js
+// WO-1.87 on-disk plants: each shape written into its guarded file, `node tools/wo-sweep.mjs` run,
+// the fence's own line read, and the file's original bytes written back before the next shape.
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+const ROOT = 'c:/dev/planbook';
+const SHAPES = [
+  ['A1', (R, K) => `${R}.${K} = [];`], ['A2', (R, K) => `${R}['${K}'] = [];`], ['A3', (R, K) => `${R}["${K}"] = [];`],
+  ['A4', (R, K) => `${R}[\`${K}\`] = [];`], ['A5', (R, K) => `${R}[k] = [];`], ['A6', (R, K) => `${R}.${K} += '';`],
+  ['A7', (R, K) => `${R}['${K}'] += "";`], ['A8', (R, K) => `${R}.${K} -= 1;`], ['A9', (R, K) => `${R}.${K} &&= [];`],
+  ['A10', (R, K) => `${R}.${K} ||= [];`], ['A11', (R, K) => `${R}.${K} ??= [];`], ['A12', (R, K) => `[${R}.${K}] = [[]];`],
+  ['A13', (R, K) => `({ ${K}: ${R}.${K} } = { ${K}: [] });`], ['A14', (R, K) => `const x = ${R}; x.${K} = [];`],
+  ['B1', (R, K) => `${R}.${K}[0] = null;`], ['B2', (R, K) => `${R}['${K}'][0] = null;`], ['B3', (R, K) => `const l = ${R}.${K}; l[0] = null;`],
+  ['B4', (R, K) => `${R}.${K}[0].subject = 'x';`], ['B5', (R, K) => `const e = ${R}.${K}[0]; e.subject = 'x';`],
+  ['B6', (R, K) => `${R}.${K}.find((e) => e).subject = 'x';`], ['C1', (R, K) => `${R}.${K}.length = 0;`],
+  ['C2', (R, K) => `${R}.${K}.length--;`], ['C3', (R, K) => `${R}.${K}.length -= 1;`], ['C4', (R, K) => `--${R}.${K}.length;`],
+  ['C5', (R, K) => `const l = ${R}.${K}; l.length = 0;`], ['C6', (R, K) => `${R}.${K}.length++;`],
+  ['D1', (R, K) => `${R}.${K}.splice(0, 1);`], ['D2', (R, K) => `${R}.${K}.pop();`], ['D3', (R, K) => `${R}.${K}.shift();`],
+  ['D4', (R, K) => `${R}.${K}.fill(null);`], ['D5', (R, K) => `${R}.${K}.copyWithin(0, 1);`], ['D6', (R, K) => `${R}.${K}.sort();`],
+  ['D7', (R, K) => `${R}.${K}.reverse();`], ['D8', (R, K) => `${R}.${K}.unshift(e);`], ['D9', (R, K) => `${R}.${K}.push(e);`],
+  ['D10', (R, K) => `const l = ${R}.${K}; l.splice(0, 1);`], ['D11', (R, K) => `${R}.${K}['splice'](0, 1);`],
+  ['D12', (R, K) => `Array.prototype.splice.call(${R}.${K}, 0, 1);`], ['E1', (R, K) => `delete ${R}.${K};`],
+  ['E2', (R, K) => `delete ${R}['${K}'];`], ['E3', (R, K) => `delete ${R}[k];`], ['E4', (R, K) => `delete ${R}.${K}[0];`],
+  ['E5', (R, K) => `delete ${R}.${K}[0].subject;`], ['F1', (R, K) => `Object.assign(${R}, { ${K}: [] });`],
+  ['F2', (R, K) => `Object.assign(${R}.${K}, [null]);`], ['F3', (R, K) => `Reflect.set(${R}, '${K}', []);`],
+  ['F4', (R, K) => `Reflect.deleteProperty(${R}, '${K}');`], ['F5', (R, K) => `Object.defineProperty(${R}, '${K}', { value: [] });`],
+  ['F6', (R, K) => `Reflect.set(${R}.${K}, 'length', 0);`], ['G1', () => `restoreDocument(doc0);`],
+  ['G2', () => `store.restoreDocument(doc0);`], ['G3', () => `store.adoptRemoteDocument(doc0);`],
+  // beyond WO-1.84's catalogue: the Traps' whitespace question and the spellings the widening names
+  ['X1', (R, K) => `${R} . ${K} = [];`], ['X2', (R, K) => `${R}.${K}[a[0]] = null;`], ['X3', (R, K) => `${R}.${K}?.push(e);`],
+  ['X4', (R, K) => `delete(${R}.${K});`], ['X5', (R, K) => `${R}.${K}++;`], ['X6', (R, K) => `--${R}.${K};`],
+  ['X7', (R, K) => `${R}.${K} **= 2;`], ['X8', (R, K) => `${R}.${K} [0] = null;`], ['X9', (R, K) => `Reflect.defineProperty(${R}, '${K}', { value: [] });`],
+  ['X10', (R, K) => `Object.defineProperties(${R}, { ${K}: { value: [] } });`], ['X11', (R, K) => `(${R}.${K}) = [];`], ['X12', (R, K) => `d.${K} = [];`],
+];
+const appendAtEnd = (src, line) => src.replace(/\n*$/, '\n') + '// MUTATION WO-1.87 plant\nfunction wo187Plant(d, doc, a, k, x, l, e, doc0, store) {\n  ' + line + '\n}\n';
+const insertInCopyDraft = (src, line) => {
+  const at = src.indexOf('export function copyDraft(');
+  const close = src.indexOf('\n}\n', at);
+  return src.slice(0, close) + '\n  // MUTATION WO-1.87 plant\n  ' + line + src.slice(close);
+};
+const FENCES = [
+  { id: 'F4', file: 'src/calendar-derived.js', K: 'events', plant: appendAtEnd, name: 'src/calendar-derived.js holds no writer' },
+  { id: 'F6a', file: 'src/outreach.js', K: 'log', plant: appendAtEnd, name: 'the clipboard copy calls no writer' },
+  { id: 'F6b', file: 'src/outreach-view.js', K: 'log', plant: insertInCopyDraft, name: 'the clipboard copy calls no writer' },
+];
+const only = process.argv.slice(2);
+const out = {};
+for (const f of FENCES) {
+  const abs = path.join(ROOT, f.file);
+  const clean = fs.readFileSync(abs);
+  out[f.id] = {};
+  try {
+    for (const [id, tpl] of SHAPES) {
+      if (only.length && !only.includes(id)) continue;
+      const line = tpl('doc', f.K);
+      fs.writeFileSync(abs, f.plant(clean.toString('utf8'), line));
+      const r = spawnSync(process.execPath, [path.join(ROOT, 'tools', 'wo-sweep.mjs')], { cwd: ROOT, encoding: 'utf8' });
+      const row = r.stdout.split('\n').find((l) => l.indexOf(f.name) >= 0) || '(line not found)';
+      out[f.id][id] = { line, exit: r.status, verdict: row.slice(0, 4), detail: row.slice(0, 600) };
+      fs.writeFileSync(abs, clean);
+    }
+  } finally {
+    fs.writeFileSync(abs, clean);
+  }
+  if (!fs.readFileSync(abs).equals(clean)) throw new Error('revert failed for ' + f.file);
+}
+console.log(JSON.stringify(out, null, 1));
+```
+
+#### 10. Both tools, and the § 9 commit this tree still owes
+
+**`node tools/verify-shell.mjs`**, on the final tree. Every plant had been reverted, and `src/` and
+`tools/` were staged with nothing unstaged under either, before it started and after it ended
+(`git diff --quiet -- src/ tools/` held both times). Waited out to its exit:
+
+```
+PASS | WO-3.72: src/term-record.js holds one writer, and it only pushes — recordTerm() holds the file's only update() and only push(), …
+PASS | append-only is structural rather than promised: src/log.js holds exactly two appends and two create-on-first-write guards — each counted over the whole file rather than writer by writer, …
+PASS | the history surface is a READER as far as this check can say: no update(), no .push( and no .splice( anywhere in src/contact-history.js, and the year never gets a name — …
+2117 checks · 2117 passed · 0 failed · 0 skipped
+67,884 lines · 32.1 lines per check · 1143s
+EXIT=0
+```
+
+The check count matches WO-1.88's 2117. No `check(` was added: F2's three new clauses are in its
+existing condition.
+
+**`node tools/wo-sweep.mjs`, on this working tree: § 9 is red, and that is expected.**
+
+```
+FAIL | every SHELL file change is paired with a CACHE bump  :: src/contact-history.js changed since planbook-shell-v198 was set at 03a4b88 — bump CACHE in sw.js, or an installed app keeps the shell it already has
+52 checks · 48 passed · 1 failed · 3 to review
+EXIT=1
+```
+
+§ 9 counts any uncommitted SHELL change as a miss, because a working tree has no commit to carry
+a trailer (its own header says so). The one `src/` change here is the comment at
+`src/contact-history.js:52`, which the work order makes owe the trailer rather than a bump. **I did
+not commit**, because the brief does not say to. To show the trailer clears it, the staged diff was
+applied in a **scratch clone** (`git clone` of this repository into the session scratchpad, detached
+`HEAD`) and committed there with the trailer:
+
+```
+$ git log -1 --format='%h %(trailers:key=Shell-Cache,valueonly)'
+f39b226 not needed — comments only
+$ node tools/wo-sweep.mjs
+PASS | every SHELL file change is paired with a CACHE bump  :: planbook-shell-v198 was set at 03a4b88; changed since and excused by a Shell-Cache trailer on every commit that touched it: src/contact-history.js (f39b226)
+52 checks · 49 passed · 0 failed · 3 to review
+EXIT=0
+```
+
+The three reviews are the standing three. This repository's history is untouched by that clone. Both sweep runs above are from after the last edit to any tool file, a one-word comment change in § 20 (*"NO MUTATION SHAPE"* became *"NO WRITE SHAPE"*, so a dead-dispatch `grep -rn MUTATION` will not stop on my prose). `verify-shell.mjs` ran before that edit, but it does not load `tools/wo-sweep.mjs`. The
+real commit owes the same trailer, `Shell-Cache: not needed — comments only`, in the block with its
+`Co-Authored-By` line. Then the sweep on this tree reads as the clone did.
+
+**One deviation from the Traps, recorded rather than smoothed over.** *"Plants come out before
+anything else is written."* Twice, a plant sat in `src/` while I wrote elsewhere:
+
+- During the nine-minute on-disk loop of subsection 8, I wrote `tools/README.md` and subsections
+  2–3 of this section.
+- During the twenty-minute harness run that carried F2's control, I wrote `tools/wo-sweep.mjs`
+  claim 4 and the block-comment wording, `tools/verify/contact-log.mjs`'s fence line, and
+  subsections 4–7.
+
+Both plants were reverted the moment their runs exited. Nothing written in those windows describes a
+plant as anything but a plant. The `grep -rn MUTATION src/` after each revert, and again before the
+result file, printed only `src/shell.js:1077`. But the rule is literal and I did not keep it literally.
+
+#### Acceptance
+
+- [x] The owner's ruling on F2 and on F5, as recorded under Deliverables on 2026-10-25, is quoted in
+      `TESTING.md` § WO-1.87 before either fence's code or prose changes, and F2's new assertion
+      turns red on a planted `const year = getDoc();`.
+      — Subsection 1 quotes both rulings verbatim. It was the first file I wrote: it was written and
+      staged before any edit to `tools/verify/contact-log.mjs` or `tools/wo-sweep.mjs`, when `git
+      diff --stat` showed only the phase file's claim. The planted `const year = getDoc();` turned
+      F2 red twice. In the real harness, on disk: *"FAIL | the history surface is a READER … ::
+      getDoc named 4 time(s) in code, handed straight to visibleContactsFor( 3 time(s)"*, `2117 checks
+      · 2116 passed · 1 failed`, `EXIT=1` (subsection 8). As the probe's F2 control: *"control[const
+      year = getDoc();]=REFUSED controls OK"* (subsection 9).
+- [x] § 17's and § 24's `MUTATES` are byte-identical, and each guarded file was argued against the
+      widened pattern for legitimate code before it landed. The argument is in `TESTING.md`
+      § WO-1.87.
+      — `grep -n "const MUTATES" tools/wo-sweep.mjs | sed 's/^[0-9]*://' | sort | uniq -c` prints
+      one distinct line with a count of 2. Subsection 3 has the argument: 62 strings run first, every
+      line of `src/calendar-derived.js`, `src/outreach.js` and `copyDraft()` run with comments
+      included (0 matches each), and each file's write-shaped legitimate code listed by line and
+      shown to be on a local.
+- [x] Each newly refused shape is planted in its guarded file and turns its check red. Every plant
+      is reverted, and the red output is in `TESTING.md` § WO-1.87.
+      — Subsection 8. In each of § 17's file, § 24's model file and `copyDraft()`, all 44 newly
+      refused shapes (33 of WO-1.84's, plus X1–X10 and X12) were planted on disk and run through
+      `node tools/wo-sweep.mjs`. Each turned its fence's line red, citing the plant's own line. Each
+      was reverted by writing the original bytes back, with a byte comparison. F2's control was
+      planted on disk and run through the real harness. **Limit:** F2's other newly refused shapes
+      (the `N-*` and import plants under *F2's own plants*) ran through the check's own sliced code
+      against an in-memory planted file, as WO-1.84's probe does, and not through a twenty-minute
+      harness run each. F5 refuses nothing new, because no code moved there.
+- [x] WO-1.84's probe, re-run, shows every shape the widened pattern covers as *refused*, and every
+      shape still *passes* is named in that fence's *fence, not a reading* line.
+      — Subsection 9. The re-pointed probe ran with all nine controls OK. For F4, F6a and F6b, every
+      shape the widened pattern covers is *refused*. The 13 that pass (A12, A13, A14, B3, B5, B6,
+      C5, D10, D11, D12, X11, X13, X14) are filed under families § 17's and § 24's headers and detail
+      lines name: alias, destructuring, a write after a call, a mutator named by a string or
+      borrowed, a parenthesis, a block comment, a line break. F5's 52 passes are filed under claim
+      4's list, which was widened to name the three families the X shapes added. F2's 60 passes are
+      filed under the fence line's *"a document reached any other way than `getDoc`"* and *"a writer
+      reached any other way than a store import"*. `table.mjs` prints `unfiled cells: 0`.
+- [x] F1's and F3's three under-claims folded in from WO-1.88 are re-worded to what their patterns
+      do, and `git diff` on the two files touches no regex, token list or `check(` condition.
+      — Subsection 6 has each re-wording beside the pattern it describes, and the `d.log[(0)]`
+      claim was run against the regexes. Checked three ways. (1) `git diff -U0 HEAD` on the two files
+      has 58 changed lines, read one by one: each is a comment line or a string-literal line of a
+      check title or detail. A mechanical filter over the same lines found 0 that are neither.
+      (2) The lines holding the regexes, token lists, counts and condition, taken with
+      `grep -E "matched\(/|^\s*'|const removers|const REMOVERS|initGuard|=== 2|=== 0|writer\.length > 0|count\(|indexOf\(guard\)|imports\.indexOf|engineSource\.indexOf|const pushes|const guards|const code =|const bodyOnly|const searchable|withoutGuard|const found|\.concat\(matched" | grep -v "^\s*+ '" | sha256sum`
+      over `git show HEAD:<file>` and over the working file, hash the same both sides:
+      `e661270ca181` for `log-entries.mjs` and `6573d6b3ff68` for `term-record.mjs`.
+      (3) `node --check` passes on both.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — **Half met on this tree; not ticked.** `verify-shell.mjs`: `2117 checks · 2117 passed · 0
+      failed · 0 skipped`, `EXIT=0` (subsection 10). `wo-sweep.mjs`: `52 checks · 48 passed · 1
+      failed`. The one failure is § 9 on the uncommitted comment edit to `src/contact-history.js`, and
+      only a commit carrying `Shell-Cache: not needed — comments only` clears it. In a scratch clone
+      with that commit, the sweep printed `52 checks · 49 passed · 0 failed · 3 to review`, `EXIT=0`.
+      To close this line: commit with the trailer, re-run `node tools/wo-sweep.mjs` on this tree,
+      then tick.
+- [x] `TESTING.md` § WO-1.87 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ### WO-1.88 — the two append-only checks still miss three spellings their own words cover
 
 No 👤 and no 📆 line. Two harness files move: `tools/verify/log-entries.mjs` (F1, over `src/log.js`)

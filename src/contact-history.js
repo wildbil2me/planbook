@@ -49,8 +49,10 @@
 
   ── WHAT THIS FILE IS NOT ──
 
-  IT IS NOT A WRITER. Nothing here imports the store, nothing calls update(), and the document is
-  byte-identical either side of a paint. The one writer of a `contact` is src/log.js's
+  IT IS NOT A WRITER. Its one import from the store is getDoc, and every getDoc() below is handed
+  straight to visibleContactsFor() — the year never gets a name in this file — nothing calls
+  update(), and the document is byte-identical either side of a paint. (This said "nothing here
+  imports the store" until WO-1.87, above an import of getDoc from it.) The one writer of a `contact` is src/log.js's
   writeContact(), called from src/outreach-view.js on the handoff — the same split src/log-sheet.js
   makes with the sheet it draws.
 

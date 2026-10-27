@@ -6922,7 +6922,7 @@ lands in that one. **Nothing in `src/` moves in the end**, so no `CACHE` bump is
 
 ## WO-1.87 — the four whole-file no-writer checks share one pattern that sees only dotted writes
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.85 · **Blocks** nothing
+**Ship** — · **Status** 🔍 AWAITING VERDICT — 2026-10-26 · **Size** M · **Depends on** WO-1.85 · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.85 made.)*
 
 **Booked 2026-10-25**, owner-directed, the third of `TESTING.md` § WO-1.84's three
@@ -6991,20 +6991,20 @@ pipeline stops and asks. It does not apply option 3 on its own authority, and it
 the answer will be different.
 
 **Acceptance**
-- [ ] The owner's ruling on F2 and on F5, as recorded under Deliverables on 2026-10-25, is quoted in
+- [x] The owner's ruling on F2 and on F5, as recorded under Deliverables on 2026-10-25, is quoted in
       `TESTING.md` § WO-1.87 before either fence's code or prose changes, and F2's new assertion
       turns red on a planted `const year = getDoc();`.
-- [ ] § 17's and § 24's `MUTATES` are byte-identical, and each guarded file was argued against the
+- [x] § 17's and § 24's `MUTATES` are byte-identical, and each guarded file was argued against the
       widened pattern for legitimate code before it landed. The argument is in `TESTING.md`
       § WO-1.87.
-- [ ] Each newly refused shape is planted in its guarded file and turns its check red. Every plant
+- [x] Each newly refused shape is planted in its guarded file and turns its check red. Every plant
       is reverted, and the red output is in `TESTING.md` § WO-1.87.
-- [ ] WO-1.84's probe, re-run, shows every shape the widened pattern covers as *refused*, and every
+- [x] WO-1.84's probe, re-run, shows every shape the widened pattern covers as *refused*, and every
       shape still *passes* is named in that fence's *fence, not a reading* line.
-- [ ] F1's and F3's three under-claims folded in from WO-1.88 are re-worded to what their patterns
+- [x] F1's and F3's three under-claims folded in from WO-1.88 are re-worded to what their patterns
       do, and `git diff` on the two files touches no regex, token list or `check(` condition.
 - [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-1.87 carries these lines verbatim with the evidence for each.
+- [x] `TESTING.md` § WO-1.87 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Do not make the shape list a shared module under `tools/`.** WO-1.84 named that option
 and recommended against it: each fence reads a different file with different legitimate operations,

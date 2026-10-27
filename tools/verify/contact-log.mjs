@@ -675,16 +675,45 @@ if (!seam) {
       unfiltered `contactsFor` — and is not searched for a writer here; tools/verify/log-entries.mjs
       is the check that does that.
 
-      A FENCE, NOT A READING, and the narrowest of the eight WO-1.84 read: src/contact-history.js
-      imports `getDoc` from the store, so the document is one line away, and WO-1.84 planted 52
-      removal shapes against this check's own code (TESTING.md § WO-1.84) and 47 of the 50 inside
-      the claim passed. Every family except those three tokens passes it: any reassignment of a
-      collection (plain, bracketed, computed, compound, logical, destructured, through an alias),
-      index writes and edits to a stored entry, every `.length` write, the other mutators
-      (`.pop(`, `.shift(`, `.unshift(`, `.fill(`, `.copyWithin(`), a mutator named by a string or
-      borrowed from Array.prototype, every `delete`, the reflective writes (`Object.assign`,
-      `Reflect.set`, `Reflect.deleteProperty`, `Object.defineProperty`) and both whole-document
-      swaps, `restoreDocument(` and `adoptRemoteDocument(`, bare or through `store.` (WO-1.85).
+      WO-1.84 FOUND THIS THE NARROWEST OF ITS EIGHT FENCES: src/contact-history.js imports `getDoc`
+      from the store, so the document is one line away, and of 52 removal shapes planted against
+      this check's own code (TESTING.md § WO-1.84) 47 of the 50 inside the claim passed — every
+      family but the three tokens.
+
+      SO SINCE WO-1.87 IT ALSO ASKS WHETHER THE YEAR EVER GETS A NAME, on the owner's ruling of
+      2026-10-25 (TESTING.md § WO-1.87 quotes it). Not § 17's MUTATES: that regex is rooted at `doc`
+      and `d`, and this file binds the document to neither, so it would match nothing here and look
+      stronger without being stronger. The file reaches the year in exactly one shape — `getDoc()`
+      handed straight to `visibleContactsFor(` as its first argument, three times — so the check is
+      that EVERY `getDoc` in the code outside its import lines is that shape, at least once, and
+      that the file's one import from ./store.js is `import { getDoc } from './store.js';` and
+      nothing else. The second half is what makes the first mean anything: `import { getDoc as g }`
+      would put the year behind a name this count never sees, `import * as store` would bring every
+      store function in, and a named import of `restoreDocument` or `update` would be a writer
+      called by a name the token search might not spell. A planted `const year = getDoc();` turns it
+      red, and so does any write that needs the year by name — which is nearly every shape in
+      WO-1.84's table.
+
+      A FENCE, NOT A READING, still. What passes it (TESTING.md § WO-1.87 has the re-run probe):
+      - A WRITE INSIDE src/log.js's READER — `visibleContactsFor()` and `entriesOfKind()` are F1's
+        file, and tools/verify/log-entries.mjs is the check that reads it.
+      - A WRITE THROUGH THE RETURNED ENTRIES. The list `visibleContactsFor()` returns is a new
+        array, but each entry in it is the stored object, so `entries[0].subject = x`, or
+        `visibleContactsFor(getDoc(), id)[0].subject = x`, edits the year with the year never
+        named.
+      - A DOCUMENT REACHED ANY OTHER WAY THAN `getDoc` — handed in as a parameter by a caller, or
+        returned by another module's function — and then written by any spelling outside the three
+        tokens. WO-1.84's probe plants its shapes on a parameter named `doc`, so every one of its
+        shapes but the three tokens still passes in that form.
+      - A WRITER REACHED ANY OTHER WAY THAN A STORE IMPORT and called by any name but `update` —
+        imported from another module (`writeContact` from ./log.js, say), or handed in, as a
+        `store` parameter whose `.restoreDocument(` or `.adoptRemoteDocument(` is called — the
+        token search is three spellings, and the import pin covers the store's import alone. A
+        whole-document swap that comes with its own store import is refused by the pin.
+      - And anything between the parts of a spelling that it does not allow there: whitespace or a
+        comment inside `getDoc ( )`, or between it and the comma, counts it as named rather than
+        handed — which is a false red and fails safe — while whitespace inside `. push (` or
+        `. splice (` hides those two tokens.
     */
     const readOnly = await evalJs(`(async function(){
       var text = await (await fetch('/src/contact-history.js')).text();
@@ -694,17 +723,31 @@ if (!seam) {
         splice: code.indexOf('.splice(') >= 0,
         presentation: code.indexOf('presentationMode') >= 0,
         imports: (code.match(/^import[\\s\\S]*?;/gm) || []).join(' ').replace(/\\s+/g, ' '),
+        storeImports: (code.match(/^import[^;]*?from\\s*'\\.\\/store\\.js'\\s*;/gm) || [])
+          .map(function (s) { return s.replace(/\\s+/g, ' '); }),
+        getDocNamed: (code.replace(/^import[\\s\\S]*?;/gm, '').match(/\\bgetDoc\\b/g) || []).length,
+        getDocHanded: (code.replace(/^import[\\s\\S]*?;/gm, '')
+          .match(/\\bvisibleContactsFor\\(getDoc\\(\\),/g) || []).length,
         unfilteredTwin: /export function contactsFor/.test(log) }; })()`);
-    check('the history surface is a READER as far as three tokens can say: no update(), no .push( '
-      + 'and no .splice( anywhere in src/contact-history.js (a fence, not a reading — every other '
-      + 'write shape, from a reassignment to a delete to a document swap, passes it) — and no '
-      + 'presentationMode() test either, because suppression arrives as a shorter list from '
-      + 'src/log.js and two askers is two answers eventually. Nor is there an unfiltered '
-      + '`contactsFor()` exported for a later screen to reach past the rule with',
+    check('the history surface is a READER as far as this check can say: no update(), no .push( '
+      + 'and no .splice( anywhere in src/contact-history.js, and the year never gets a name — every '
+      + 'getDoc in its code is getDoc() handed straight to visibleContactsFor( as its first argument, '
+      + 'and its one store import is { getDoc } alone (a fence, not a reading — a write inside '
+      + 'src/log.js\'s reader, a write through the entries it returns, a document reached any other '
+      + 'way and written by any spelling but those three tokens, and a writer reached any other way '
+      + 'than a store import, pass it) — and no presentationMode() test either, because suppression arrives as a '
+      + 'shorter list from src/log.js and two askers is two answers eventually. Nor is there an '
+      + 'unfiltered `contactsFor()` exported for a later screen to reach past the rule with',
       readOnly.update === false && readOnly.push === false && readOnly.splice === false
+        && readOnly.getDocHanded > 0 && readOnly.getDocNamed === readOnly.getDocHanded
+        && readOnly.storeImports.length === 1
+        && readOnly.storeImports[0] === "import { getDoc } from './store.js';"
         && readOnly.presentation === false && readOnly.unfilteredTwin === false
         && /visibleContactsFor/.test(readOnly.imports),
-      'its imports are ' + JSON.stringify(readOnly.imports.slice(0, 200)));
+      'getDoc named ' + readOnly.getDocNamed + ' time(s) in code, handed straight to '
+        + 'visibleContactsFor( ' + readOnly.getDocHanded + ' time(s); store import(s) '
+        + JSON.stringify(readOnly.storeImports) + '; its imports are '
+        + JSON.stringify(readOnly.imports.slice(0, 200)));
 
     /* ── THE HITLESS DRAFT, DRIVEN (WO-5.9) ──
 

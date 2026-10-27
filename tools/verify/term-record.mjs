@@ -412,9 +412,12 @@ check('WO-3.72: a student on the roster whose grade has GONE since the recording
    - A PARENTHESISED TARGET: `[\s)]*` where `\s*` stood, after the name, after the quoted key's `]`
      and after a subscript, so `(d.termRecords) = []`, `(d.termRecords)[0] = x` and
      `(d['termRecords']) = []` are refused. `(d.termRecords) == x` stays a read. That is a CLOSE
-     parenthesis, IN THOSE THREE PLACES and no other, in these two regexes and no others: an open
-     parenthesis inside the text a pattern reads, a close one anywhere else, and any parenthesis
-     inside a `.length` write or a remover token are named below as passing.
+     parenthesis, IN THOSE THREE PLACES, in these two regexes and no others: an open parenthesis
+     outside a subscript, a close one anywhere else outside a subscript, and any parenthesis inside
+     a `.length` write or a remover token are named below as passing. INSIDE A SUBSCRIPT'S OWN
+     BRACKETS ANY PARENTHESIS IS ALLOWED, because a subscript may hold anything but a bracket, so
+     `d.termRecords[(0)] = x` and `d['termRecords'][(0)] = x` are refused (WO-1.87; until then
+     this sentence said every open parenthesis passed).
    - A SUBSCRIPT HOLDING ONE BRACKETED SUBSCRIPT: `\[(?:[^\[\]]|\[[^\[\]]*\])*\]` where
      `\[[^\]]*\]` stood, so `d.termRecords[a[0]] = x` and `d['termRecords'][a[0]] = x` are refused.
      ONE level and no deeper — a regex cannot count brackets to any depth — so
@@ -457,7 +460,8 @@ check('WO-3.72: a student on the roster whose grade has GONE since the recording
      · A PARENTHESIS ANYWHERE ELSE IN THE CHAIN — around a `.length` target
        (`(d.termRecords.length) = 0`, `(d.termRecords.length)--`), around a member before its call
        (`(d.termRecords.splice)(0, 1)`), or inside the brackets around a quoted key
-       (`d[('termRecords')] = []`);
+       (`d[('termRecords')] = []`). Not inside a subscript's brackets, where any parenthesis is
+       allowed: `d.termRecords[(0)] = x` is refused;
      · A `//` COMMENT AT A LINE END inside a write (`d.termRecords // c` ⏎ `= []`). Only a
        whole-line `//` comment is stripped from `code`, so a trailing one stays and breaks the
        pattern it sits inside. A block comment is stripped to a newline, which is whitespace, so
@@ -514,15 +518,19 @@ check('WO-3.72: src/term-record.js holds one writer, and it only pushes — reco
   + 'termRecords and after a subscript and with a subscript that may itself hold one bracketed '
   + 'subscript, a quoted termRecords key written directly inside its brackets or one subscript '
   + 'under it assigned the same ways, an assignment to .length with nothing but whitespace between '
-  + 'length and the operator or an update of .length with nothing but spaces or tabs between '
-  + 'length and the ++ or --, or a lookup of a record by find/findIndex (a fence, not a reading: a '
+  + 'length and the operator or an update of .length, postfix with nothing but spaces or tabs '
+  + 'between length and the ++ or --, or prefix with nothing but spaces or tabs between the ++ or '
+  + '-- and a chain of names, dots, brackets and quotes ending in .length (--d.termRecords.length), '
+  + 'or a lookup of a record by find/findIndex (a fence, not a reading: a '
   + 'computed key, a subscript nested more than one bracket deep (d.termRecords[a[b[0]]] = x), '
   + 'destructuring, an index write through an alias, record edits, mutators named by a string or '
   + 'borrowed, an update expression on the array or a record (d.termRecords++, '
   + 'd.termRecords[0]++, and -- likewise), and anything between the parts of a spelling that its '
   + 'pattern does not allow there — a parenthesis other than a close one after termRecords, the '
   + 'quoted key or a subscript ((d.termRecords.length) = 0, (d.termRecords.length)--, '
-  + '(d.termRecords.splice)(0, 1), d[("termRecords")] = []), a // comment at a line end '
+  + '(d.termRecords.splice)(0, 1), d[("termRecords")] = []) — though not one inside a '
+  + 'subscript\'s own brackets, where any parenthesis is allowed and d.termRecords[(0)] = x is '
+  + 'refused — a // comment at a line end '
   + '(d.termRecords // c, then = [] on the next line), and whitespace at a dot inside another '
   + 'spelling or before a call\'s ( '
   + 'or a ?. there (d.termRecords.splice (0, 1), d.termRecords . length = 0, a second push (…) or '

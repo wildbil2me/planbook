@@ -384,8 +384,10 @@ if (!seam) {
       regexes looked for the letters `logs`, so neither could fire on the code they name. The half of
       this check that guards against reassignment had never worked. Three repairs, each a ruling:
 
-      - THE GUARD IS ASSERTED, NOT PRINTED, and asserted as a COUNT: exactly one guard per writer,
-        so 2, the same number the push count pins. `>= 1` was the alternative and was refused —
+      - THE GUARD IS ASSERTED, NOT PRINTED, and asserted as a COUNT: exactly 2 in the whole file,
+        the same number the push count pins. Both counts are over the FILE, not writer by writer
+        (WO-1.87): two guards or two pushes in one writer and none in the other would read the
+        same, and nothing here asks which function holds them. `>= 1` was the alternative and was refused —
         src/log.js carries the guard twice (writeEntry() and writeContact()), and a `>= 1` would go
         quiet the day one writer lost its guard, which is exactly the "stops matching and nobody
         notices" this repair exists to end. The guard regex names `d.log` literally rather than
@@ -458,10 +460,12 @@ if (!seam) {
       - A PARENTHESISED TARGET: `[\s)]*` where `\s*` stood, after `log`, after the quoted key's `]`
         and after a subscript, so `(d.log) = []`, `(d.log)[0] = x` and `(d['log']) = []` are
         refused. An `=` followed by `=` still does not count, so `(d.log) == x` stays a read.
-        That is a CLOSE parenthesis, IN THOSE THREE PLACES and no other, in these three regexes
-        and no others: an open parenthesis inside the text a pattern reads, a close one anywhere
-        else, and any parenthesis inside a `.length` write or a remover token are named below as
-        passing.
+        That is a CLOSE parenthesis, IN THOSE THREE PLACES, in these three regexes and no others:
+        an open parenthesis outside a subscript, a close one anywhere else outside a subscript,
+        and any parenthesis inside a `.length` write or a remover token are named below as
+        passing. INSIDE A SUBSCRIPT'S OWN BRACKETS ANY PARENTHESIS IS ALLOWED, because a subscript
+        may hold anything but a bracket, so `d.log[(0)] = x` and `d['log'][(0)] = x` are refused
+        (WO-1.87; until then this sentence said every open parenthesis passed).
       - A SUBSCRIPT HOLDING ONE BRACKETED SUBSCRIPT: `\[(?:[^\[\]]|\[[^\[\]]*\])*\]` where
         `\[[^\]]*\]` stood, so `d.log[a[0]] = x` and `d['log'][a[0]] = x` are refused. ONE level
         and no deeper: a regex cannot count brackets to any depth, each further level only
@@ -499,7 +503,9 @@ if (!seam) {
         subscript. Whatever else sits between two parts breaks the spelling, and the write passes:
         · A PARENTHESIS ANYWHERE ELSE IN THE CHAIN — around a `.length` target
           (`(d.log.length) = 0`, `(d.log.length)--`), around a member before its call
-          (`(d.log.splice)(0, 1)`), or inside the brackets around a quoted key (`d[('log')] = []`);
+          (`(d.log.splice)(0, 1)`), or inside the brackets around a quoted key (`d[('log')] = []`).
+          Not inside a subscript's brackets, where any parenthesis is allowed: `d.log[(0)] = x`
+          is refused;
         · A `//` COMMENT AT A LINE END inside a write (`d.log // c` ⏎ `= []`). Only a whole-line
           `//` comment is stripped from `bodyOnly`, so a trailing one stays in the code and breaks
           the pattern it sits inside. A block comment is stripped to a newline, which is
@@ -538,21 +544,23 @@ if (!seam) {
     const failed = [].concat(pushes === 2 ? [] : ['push count ' + pushes + ', not 2'])
       .concat(guards === 2 ? [] : ['create-on-first-write guard found ' + guards + ' time(s), not 2'])
       .concat(found.length ? ['remover(s) ' + JSON.stringify(found)] : []);
-    check('append-only is structural rather than promised: both writers in src/log.js do exactly one '
-      + 'thing to the document — two appends, one per writer, and no third — and none of the remover '
+    check('append-only is structural rather than promised: src/log.js holds exactly two appends and '
+      + 'two create-on-first-write guards — each counted over the whole file rather than writer by '
+      + 'writer, and two is the number of its writers — and no third, and none of the remover '
       + 'spellings it searches for anywhere in its code: splice, pop, shift, fill and copyWithin '
       + 'each written .name( with nothing between the name and its (, '
       + 'delete in any form, a plain or compound reassignment of .log, a plain or compound '
       + 'assignment into .log[...], with or without whitespace at the dot before log, with close '
       + 'parentheses allowed after log and after a subscript, and with a subscript that may itself '
       + 'hold one bracketed subscript, assignment to .length with nothing but whitespace between '
-      + 'length and the operator, .length decremented with nothing but spaces or tabs between '
-      + 'length and the --, a quoted log key written directly inside '
+      + 'length and the operator, .length decremented postfix with nothing but spaces or tabs between '
+      + 'length and the -- or prefix with nothing but spaces or tabs between the -- and a chain of '
+      + 'names, dots, brackets and quotes ending in .length (--d.log.length), a quoted log key written directly inside '
       + 'its brackets or one subscript under it assigned plainly or compoundly, the same close '
       + 'parentheses and subscripts allowed, Object.assign, Reflect.set, Reflect.deleteProperty, '
       + 'Object.defineProperty, restoreDocument or adoptRemoteDocument',
       failed.length === 0,
-      pushes + ' push(s) — writeEntry() and writeContact() — in ' + bodyOnly.split('\n').length + ' line(s) of code; the create-on-first-write guard is present ' + guards + ' time(s), one per writer; removers found: '
+      pushes + ' push(s) counted over the whole file, whose writers are writeEntry() and writeContact(), in ' + bodyOnly.split('\n').length + ' line(s) of code; the create-on-first-write guard is present ' + guards + ' time(s) in the file; removers found: '
         + (found.length ? JSON.stringify(found) : 'none')
         + (failed.length ? '; FAILED ON: ' + failed.join('; ') : '')
         + '. A fence, not a reading: a key held in a variable and assigned (d[k] = []), '
@@ -562,7 +570,9 @@ if (!seam) {
         + 'the array or an entry (d.log++, d.log[0]++, and -- likewise), and anything between the '
         + 'parts of a spelling that its pattern does not allow there all pass it: a parenthesis '
         + 'other than a close one after log, the quoted key or a subscript ((d.log.length) = 0, '
-        + '(d.log.length)--, (d.log.splice)(0, 1), d[("log")] = []), a // comment at a line end '
+        + '(d.log.length)--, (d.log.splice)(0, 1), d[("log")] = []) — though not one inside a '
+        + 'subscript\'s own brackets, where any parenthesis is allowed and d.log[(0)] = x is '
+        + 'refused — a // comment at a line end '
         + '(d.log // c, then = [] on the next line), and whitespace at another dot or before a '
         + 'call\'s ( or a ?. there (d.log.splice (0, 1), d.log . length = 0, a third push spelled '
         + 'push (…)); what only adds '
