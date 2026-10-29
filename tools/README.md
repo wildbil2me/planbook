@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2106 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2118 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -3040,6 +3040,15 @@ harness rather than the app**, worth knowing for the next structural check: the 
 out at `\n}\n` found none — it normalises `\r\n` first now. Full run: `2117 checks · 2117 passed ·
 0 failed · 0 skipped`, 67,485 lines, 31.9 lines per check, 1142s, exit 0, 2026-10-23 on the real
 clock.
+
+**WO-3.73 moved it from 2106 to 2118, and the executed count from 2117 to 2128 — twelve sites,
+eleven results, one new file.** All twelve are `verify/term-record-bar.mjs`, run directly after
+`verify/term-record.mjs`. One site does not map one to one: the fixture guard at the head is a
+failure arm a green run never reaches. None sits in a loop. `verify/term-record.mjs` gained no site:
+its one-writer check now expects three more exported readers. The twelfth site came in the work
+order's first correction round — an uncategorized column holding only a missing mark — and the
+full run after it read `2128 checks · 2128 passed · 0 failed · 0 skipped`, 68,399 lines, 32.1 lines
+per check, 1183s, exit 0, 2026-10-27 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

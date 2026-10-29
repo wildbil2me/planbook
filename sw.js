@@ -35,7 +35,7 @@
    below reads this cache and no other, and every older copy under SHELL_PREFIX is deleted — in
    `activate`, and again on each launch (clearOldShells) — which is what makes a deploy replace
    the shell rather than layer on top of it. */
-const CACHE = 'planbook-shell-v198';
+const CACHE = 'planbook-shell-v199';
 
 /* Every cache this worker has ever made is SHELL_PREFIX plus a version. Nothing outside the prefix
    is ever deleted: another cache at this origin is not ours to judge, and IndexedDB, where the
@@ -143,10 +143,14 @@ const SHELL = [
      Imported by src/shell.js and src/assignments.js and reached no other way, which is exactly as
      absent offline as a file named in index.html (tools/verify/precache.mjs). */
   './src/held-column.js',
-  /* WO-3.72. The recorded grades of a quarter, and the readers that say when they stop matching. No
-     screen imports it yet, but src/shell.js pulls it in for the read seam, so it is in the module
-     graph and belongs on this list (tools/verify/precache.mjs). */
+  /* WO-3.72. The recorded grades of a quarter, and the readers that say when they stop matching.
+     Imported by src/term-record-view.js (WO-3.73) and by src/shell.js for the read seam, so it is in
+     the module graph and belongs on this list (tools/verify/precache.mjs). */
   './src/term-record.js',
+  /* WO-3.73. The Record bar and the Record dialog over those readers. Reached only through an import
+     from src/shell.js, which is exactly as absent offline as a file named in index.html
+     (tools/verify/precache.mjs). */
+  './src/term-record-view.js',
   /* WO-5.1. The merge-field resolver. No screen imports it yet — the template editor is WO-5.2
      — but src/shell.js pulls it in for the read seam, so it is in the module graph and belongs on
      this list: a module reached only through an import is exactly as absent offline as one named

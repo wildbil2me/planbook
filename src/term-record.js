@@ -45,8 +45,8 @@
   clock, and the two term-end readers here do. The import runs one way: this file imports the engine
   and the attendance date helper, and nothing in the engine imports this file back.
 
-  IT HAS NO DOM AND NO SCREEN. The bar, the dialog and the notice are WO-3.73 and WO-3.74, and they
-  draw from these readers and compute nothing — a screen that re-ran the comparison would be the
+  IT HAS NO DOM AND NO SCREEN. The bar and the dialog are src/term-record-view.js (WO-3.73) and the
+  notice is WO-3.74, and they draw from these readers and compute nothing — a screen that re-ran the comparison would be the
   second opinion that lets the bar and the dialog disagree about who changed.
 
   IT HANDS BACK IDS AND FIGURES, NEVER A NAME. A student is a `studentId`; a category and a held
@@ -56,7 +56,9 @@
 */
 
 import { getDoc, update, newId } from './store.js';
-import { classGrade, openWork, isHeld } from './grade-engine.js';
+import {
+  classGrade, openWork, isHeld, uncategorizedWork, uncategorizedScores, gradingModeOf, LOOSE_NAME,
+} from './grade-engine.js';
 import { categoriesOf } from './categories.js';
 /* What "dated" means for a term, asked rather than re-tested: src/classes.js owns the term shape. */
 import { termIsDated } from './classes.js';
@@ -123,12 +125,25 @@ function newTermRecord(doc, cls, termId, at) {
     classId: String(cls.id),
     termId: String(termId),
     at: at || localStamp(),
-    grades: rosterIds(doc, cls)
-      .map((studentId) => ({ studentId: studentId, grade: classGrade(doc, cls, termId, studentId) }))
-      .filter((row) => row.grade.percentage !== null)
-      .map((row) => ({ studentId: row.studentId, percentage: row.grade.percentage,
-        letter: row.grade.letter })),
+    grades: gradesToRecord(doc, cls, termId),
   };
+}
+
+/*
+  WHAT A RECORDING WOULD HOLD, as the writer will hold it — `[{ studentId, percentage, letter }]` in
+  roster order, every roster student whose classGrade() has a percentage (WO-3.73).
+
+  EXPORTED SO THE DIALOG AND THE WRITER ARE ONE LIST. The Record dialog's first form shows every
+  student this would write, and a dialog that built its own list beside it could show twenty-five
+  rows over a write of twenty-four. newTermRecord() above calls this and nothing else for its grades.
+  A new array of new objects on every call, so nothing a caller does to it reaches a stored record.
+*/
+export function gradesToRecord(doc, cls, termId) {
+  return rosterIds(doc, cls)
+    .map((studentId) => ({ studentId: studentId, grade: classGrade(doc, cls, termId, studentId) }))
+    .filter((row) => row.grade.percentage !== null)
+    .map((row) => ({ studentId: row.studentId, percentage: row.grade.percentage,
+      letter: row.grade.letter }));
 }
 
 /*
@@ -183,6 +198,42 @@ export function termEndsToday(cls, termId, today) {
 }
 
 /*
+  WHICH OF A CLASS'S TERMS WANTS RECORDING NOW, AND HOW (WO-3.73) — the bar's whole question, answered
+  once so the bar and the dialog it opens read one answer:
+
+    { termId, state: 'ends-today' | 'unrecorded' | 'changed', count, at }   or null
+
+  A term qualifies from its end date on (termEndsToday() or termEnded(), so before the end date it
+  never does — plans/closing-a-quarter.md, the drawing's question 1). Then:
+    · never recorded           → 'ends-today' on the end date, 'unrecorded' after it; count 0, at ''.
+    · recorded, and noLongerMatching() names someone → 'changed', `count` that list's length, `at`
+      the newest record's — the date the bar's third wording quotes.
+    · recorded and matching    → not this term.
+  On the end date itself a recorded term that has since changed is 'changed', not 'ends-today': the
+  teacher has recorded it, and the thing to say is that it moved.
+
+  THE FIRST QUALIFYING TERM IN THE CLASS'S OWN ORDER, because a bar has one button. An earlier quarter
+  that still wants recording is answered before a later one, so recording Q1 is what moves the bar on
+  to Q2 rather than Q1 being forgotten behind it. `today` defaults to todayISO(), as the readers above.
+*/
+export function termNeedingRecord(doc, cls, today) {
+  const day = String(today || todayISO());
+  return arrayOf(cls && cls.terms).map((term) => {
+    const termId = term && term.id;
+    if (!termId) return null;
+    const endsToday = termEndsToday(cls, termId, day);
+    if (!endsToday && !termEnded(cls, termId, day)) return null;
+    const record = newestRecord(doc, cls, termId);
+    if (!record) {
+      return { termId: termId, state: endsToday ? 'ends-today' : 'unrecorded', count: 0, at: '' };
+    }
+    const changed = noLongerMatching(doc, cls, termId);
+    if (!changed.length) return null;
+    return { termId: termId, state: 'changed', count: changed.length, at: record.at };
+  }).filter((row) => row !== null)[0] || null;
+}
+
+/*
   THE NEWEST RECORD FOR ONE CLASS AND TERM — a copy of it, or null when it was never recorded (which
   includes every document with no `termRecords` key at all).
 
@@ -222,16 +273,18 @@ export function newestRecord(doc, cls, termId) {
   difference she cannot see on any screen or key into the SIS. A null percentage — a student with no
   grade — matches only another null.
 */
+function letterOf(side) { return String(side.letter == null ? '' : side.letter); }
+
 function sameFigures(a, b) {
   const pa = a.percentage === null || a.percentage === undefined ? '' : formatPercent(a.percentage);
   const pb = b.percentage === null || b.percentage === undefined ? '' : formatPercent(b.percentage);
-  return pa === pb && String(a.letter == null ? '' : a.letter) === String(b.letter == null ? '' : b.letter);
+  return pa === pb && letterOf(a) === letterOf(b);
 }
 
 /*
   THE STUDENTS WHO NO LONGER MATCH THE NEWEST RECORD — one row each, in roster order:
 
-    { studentId, recorded: { percentage, letter } | null, live: { percentage, letter } }
+    { studentId, recorded: { percentage, letter } | null, live: { percentage, letter }, letterChanged }
 
   or NULL when the term was never recorded, which is a different answer from `[]` and must stay one:
   "nobody changed" and "nothing to compare with" are the bar's two different wordings.
@@ -247,6 +300,11 @@ function sameFigures(a, b) {
 
   EVERY FIGURE IS THE ENGINE'S. `live` is classGrade()'s own pair and `recorded` is the record's own
   pair, unrounded; only the comparison rounds, and it rounds both sides through one formatter.
+
+  `letterChanged` (WO-3.73) is whether the LETTER differs — true for a student newly graded or whose
+  grade has gone, since one side has no letter. The Record dialog draws a letter change bold and a
+  percentage-only change quiet, and asks this rather than comparing letters itself: a screen that
+  re-ran half the comparison is the second opinion the work order's Traps refuse.
 */
 export function noLongerMatching(doc, cls, termId) {
   const record = newestRecord(doc, cls, termId);
@@ -257,7 +315,8 @@ export function noLongerMatching(doc, cls, termId) {
     const recorded = kept ? { percentage: kept.percentage, letter: kept.letter } : null;
     if (!recorded && live.percentage === null) return null;
     if (recorded && sameFigures(recorded, live)) return null;
-    return { studentId: studentId, recorded: recorded, live: live };
+    return { studentId: studentId, recorded: recorded, live: live,
+      letterChanged: !recorded || letterOf(recorded) !== letterOf(live) };
   }).filter((row) => row !== null);
 }
 
@@ -276,22 +335,58 @@ export function noLongerMatching(doc, cls, termId) {
   in it at all because the engine took it out (WO-3.52). A second copy of that test here would be how
   the record's line and the queue's *N to grade* come to disagree about one cell.
 
-  TWO LIMITS THAT FOLLOW, stated rather than worked around. Work filed under NO CATEGORY is not
-  counted — openWork() lists categorized work only, which is the queue's limit too, and the line names
-  categories so a loose piece would have none to be named under. And every roster student is asked,
-  graded or not: an ungraded student's empty boxes are still boxes nobody has filled.
+  WORK FILED UNDER NO CATEGORY IS COUNTED TOO, IN EITHER GRADING MODE (WO-3.73, the owner's ruling of
+  2026-10-23, after WO-3.72's verifier found this reader skipped it — plans/closing-a-quarter.md, the
+  drawing's answer 2). An empty box is an empty box whether or not its work counts toward a weighted
+  grade. Asked of the engine's own sibling reader, uncategorizedWork(), rather than by widening
+  openWork() — which feeds every projection — and through the same one branch, so the two piles
+  cannot disagree about what "empty" is. Its boxes are named LAST, under the engine's own name for
+  the pile (LOOSE_NAME, *no category*), with `id: null`, after the class's own categories.
+
+  AND EVERY ROSTER STUDENT IS ASKED, graded or not: an ungraded student's empty boxes are still
+  boxes nobody has filled.
 
   The categories come back in the class's own order, each named once, only where an empty box is.
 */
+function isEmptyBox(row) { return row.state === 'open' || row.state === 'bonus'; }
+
 export function emptyBoxes(doc, cls, termId) {
-  const rows = rosterIds(doc, cls)
-    .map((studentId) => openWork(doc, cls, termId, studentId)
-      .filter((row) => row.state === 'open' || row.state === 'bonus'))
+  const ids = rosterIds(doc, cls);
+  const rows = ids
+    .map((studentId) => openWork(doc, cls, termId, studentId).filter(isEmptyBox))
+    .reduce((all, some) => all.concat(some), []);
+  const loose = ids
+    .map((studentId) => uncategorizedWork(doc, cls, termId, studentId).filter(isEmptyBox))
     .reduce((all, some) => all.concat(some), []);
   const categories = categoriesOf(cls)
     .filter((category) => category && rows.some((row) => row.categoryId === category.id))
-    .map((category) => ({ id: category.id, name: String(category.name == null ? '' : category.name) }));
-  return { count: rows.length, categories: categories };
+    .map((category) => ({ id: category.id, name: String(category.name == null ? '' : category.name) }))
+    .concat(loose.length ? [{ id: null, name: LOOSE_NAME }] : []);
+  return { count: rows.length + loose.length, categories: categories };
+}
+
+/*
+  THE UNCATEGORIZED WORK OUTSIDE A WEIGHTED CLASS'S GRADES — `{ count }`, the number of live columns
+  filed under no category in which some roster student's cell holds a score or a missing mark, for
+  the Record dialog's own line (WO-3.73): *1 assignment filed under no category has scores or
+  missing marks in it, which are not in these grades.*
+
+  A weighted grade gives that work no weight, and the owner ruled (2026-10-23) that it stays out of
+  the grade and the dialog says so rather than the engine giving it one. In a POINTS class the same
+  work IS in the grade (WO-3.30), so the answer there is 0 and no line is drawn — which is why this
+  asks gradingModeOf() and the dialog does not. A missing mark is counted beside a score: it is a
+  graded zero, and in a weighted class it is outside the grade for the same reason. Both readers are
+  the engine's (uncategorizedScores(), uncategorizedWork()), so "holds a score" is tally()'s test and
+  not a second one written here.
+*/
+export function looseWorkOutOfGrade(doc, cls, termId) {
+  if (!cls || gradingModeOf(cls) !== 'weighted') return { count: 0 };
+  const graded = rosterIds(doc, cls)
+    .map((studentId) => uncategorizedScores(doc, cls, termId, studentId)
+      .concat(uncategorizedWork(doc, cls, termId, studentId).filter((row) => row.state === 'missing')))
+    .reduce((all, some) => all.concat(some), [])
+    .map((row) => row.id);
+  return { count: graded.filter((id, at) => graded.indexOf(id) === at).length };
 }
 
 /*

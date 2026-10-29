@@ -316,6 +316,13 @@
       data-hold-confirm               that confirm's Hold it / Commit it: one update() flips the
                                       column and touches no score, and the screens behind it redraw
       data-hold-cancel                its other button: closes it, having written nothing
+      data-term-record-open="<termId>" the Record bar's button (WO-3.73): opens Record Q1 grades for
+                                      the class in its data-term-record-class and that term — the
+                                      first form, the changed form, or the refusal under a projector.
+                                      Opening writes nothing
+      data-term-record-confirm        that dialog's Record Q1 grades: appends one recording of the
+                                      whole class's term, and the bar is repainted
+      data-term-record-cancel         its Not now / Not yet / Close: closes it, having written nothing
       data-past-due                   not a control: the empty host each screen carries for the
                                       past-due prompt, painted by src/past-due.js. Two of them, on
                                       the score grid and on the assignment list
@@ -979,10 +986,17 @@ import * as scores from './scores.js';
    as every other "what has to be redrawn now" answer in this file is. */
 import * as heldColumn from './held-column.js';
 /* WO-3.72. A quarter's recorded grades: the one writer and the readers that say whether the
-   quarter has ended, whether it still matches its newest record, and how many boxes are empty. No
-   screen imports it yet — the bar and the dialog are WO-3.73 — so it is here for the read seam below
-   alone, and that is what puts it in the module graph sw.js has to precache (WO-5.1's precedent). */
+   quarter has ended, whether it still matches its newest record, and how many boxes are empty. Since
+   WO-3.73 src/term-record-view.js imports it for the bar and the dialog; it is still imported here
+   for the read seam below, which is how a check asks the readers directly. */
 import * as termRecord from './term-record.js';
+/* WO-3.73. The bar on a class's screens while one of its ended quarters wants recording, and the
+   Record Q1 grades dialog its button opens. It reads src/term-record.js and computes nothing; it is
+   not subscribed to the store, so this file repaints the bar wherever a screen, a class or the whole
+   document changes — next to every refreshScreenNav() below, after a class tab, and after a
+   recording — which is every moment its answer can change except a save, and a save is left out on
+   purpose (src/term-record-view.js's header: a bar appearing mid-keystroke moves the grid). */
+import * as termRecordView from './term-record-view.js';
 /* WO-3.6's past-due prompt — the banner both of those two screens wear, and the one module in this
    app that reads a due date and offers to act on it. It is imported here for one hook only: accept
    writes score cells, and the screen standing under the banner has to be redrawn afterwards. That
@@ -1127,6 +1141,7 @@ function afterClassChange() {
      changed — it is eight elements — and the cost of leaving it out is a strip that survives a class
      going away, or one that is still empty on the first paint after boot. */
   screenNav.refreshScreenNav();
+  termRecordView.refreshTermRecordBar();
 }
 
 /*
@@ -1202,6 +1217,7 @@ function showStudentDetail(studentId, opener) {
   classes.refreshClassBar();
   detail.renderDetail();
   screenNav.refreshScreenNav();
+  termRecordView.refreshTermRecordBar();
 
   const heading = document.getElementById('detailStudentName');
   if (heading && typeof heading.focus === 'function') heading.focus({ preventScroll: true });
@@ -1276,6 +1292,7 @@ function showClassScreen(name) {
   const view = views.showView(want);
   classes.refreshClassBar();
   screenNav.refreshScreenNav();
+  termRecordView.refreshTermRecordBar();
   paintClassScreen(view);
   const cls = classes.getSelectedClass();
   announce((screenNav.screenLabel(view) || 'That screen')
@@ -1535,6 +1552,7 @@ function showHome() {
      OF a class, so there is nothing for it to switch between — and an empty strip keeps the panel
      header the same height between views, where a hidden one would make it jump. */
   screenNav.refreshScreenNav();
+  termRecordView.refreshTermRecordBar();
   home.refreshHome();
   announce('Your classes.');
 }
@@ -1593,6 +1611,7 @@ function showCalendar(weekOf, throughDate) {
   views.showView('calendar');
   classes.refreshClassBar();
   screenNav.refreshScreenNav();
+  termRecordView.refreshTermRecordBar();
   calendarView.renderCalendar();
   const range = document.getElementById('calendarRange');
   const beyond = document.getElementById('calendarThrough');
@@ -1656,6 +1675,7 @@ function showSignals(landing, column, key) {
   views.showView('signals');
   classes.refreshClassBar();
   screenNav.refreshScreenNav();
+  termRecordView.refreshTermRecordBar();
   signalsView.renderSignals();
 
   const listId = side === 'praise' ? 'signalsPraiseList' : 'signalsList';
@@ -1724,6 +1744,7 @@ function showTemplates() {
   views.showView('templates');
   classes.refreshClassBar();
   screenNav.refreshScreenNav();
+  termRecordView.refreshTermRecordBar();
   templatesView.renderTemplates();
   announce('Message templates.');
 }
@@ -2806,6 +2827,9 @@ document.addEventListener('click', (e) => {
   if (classTab) {
     classes.selectClass(classTab.getAttribute('data-class-tab'));
     attendance.resetRegistry();
+    /* The Record bar is about the class she is IN, so it follows the tab on every branch below —
+       including the calendar's and the concern list's, which return before afterClassChange(). */
+    termRecordView.refreshTermRecordBar();
     if (views.currentView() === 'calendar') {
       calendarView.setCalendarFilter(classes.getSelectedClassId());
       home.refreshHome();
@@ -3287,6 +3311,21 @@ document.addEventListener('click', (e) => {
     return;
   }
   if (e.target.closest('[data-hold-cancel]')) { heldColumn.cancelHold(); return; }
+  /* WO-3.73's Record bar and the dialog its button opens. Opening and declining write nothing and
+     chain nothing — the ✕, Escape and the backdrop are src/modal.js's and the same. Record writes one
+     entry, and the bar is the one thing on screen that reads it, so the bar is what is repainted: no
+     screen shows a recording, and none listens to notify(). */
+  const termRecordOpen = e.target.closest('[data-term-record-open]');
+  if (termRecordOpen) {
+    termRecordView.openTermRecordDialog(termRecordOpen.getAttribute('data-term-record-class'),
+      termRecordOpen.getAttribute('data-term-record-open'), termRecordOpen);
+    return;
+  }
+  if (e.target.closest('[data-term-record-confirm]')) {
+    if (termRecordView.confirmTermRecord()) termRecordView.refreshTermRecordBar();
+    return;
+  }
+  if (e.target.closest('[data-term-record-cancel]')) { termRecordView.cancelTermRecord(); return; }
   /* WO-3.28's category pills — a lens on which COLUMNS are drawn, writing nothing, remembered
      nowhere and chaining nothing, for the reasons the two hooks above chain nothing. */
   const scoreCategory = e.target.closest('[data-scores-category]');
@@ -5095,6 +5134,12 @@ window.planbook = {
      arithmetic. Nothing in the app reads window.planbook — see the block above for why the seam
      outlived the shelf. */
   termRecord,
+  /* `termRecordView` joined at WO-3.73, for `heldColumn`'s reading reason: every control it has is
+     a button a teacher can touch, and tools/verify-shell.mjs touches them. What no click can show is
+     which form the dialog chose and that its rows are the readers' — termRecordModel() and
+     termRecordBarModel() are the dialog and the bar as data. Nothing in the app reads
+     window.planbook — see the block above for why the seam outlived the shelf. */
+  termRecordView,
   /* `detail` joined at WO-3.7, and its reason is src/backup.js's and src/attendance-report.js's
      rather than the reading reason `classes` gives: a page cannot be handed a real file by a script
      and no harness can open a print dialog or read what came out of a spreadsheet. detailModel() and

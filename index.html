@@ -588,6 +588,22 @@
   <button class="backup-nag-btn" data-backup-panel aria-haspopup="dialog">Back up now</button>
 </aside>
 
+<!-- RECORD Q1 GRADES (WO-3.73) — the bar on a class's screens while one of its ended quarters is not
+     recorded, or no longer matches what was recorded. After the backup nag, as the drawing has it
+     (design/mockups/closing-a-quarter.html, frames A0, A and D), and the backup nag's look COPIED
+     rather than shared — src/shell.css says why. `hidden` in the markup and revealed only by
+     src/term-record-view.js, which writes all three wordings: unlike the backup nag's, every line of
+     this one carries the class, the term or a count, so there is no fixed copy to keep here.
+
+     No ✕ and no "Not now", for the backup nag's reason: the way to clear it is the button beside it,
+     and a recording that matches always does. It names a class and a count and NEVER A STUDENT, so it
+     stays up under a projector; the dialog its button opens is the half that is refused there. -->
+<aside class="term-record-nag hidden" id="termRecordNag" aria-labelledby="termRecordNagLead">
+  <div class="term-record-nag-text"><strong><span aria-hidden="true">⚠</span> <span id="termRecordNagLead"></span></strong> <span id="termRecordNagMore"></span></div>
+  <button class="term-record-nag-btn" type="button" id="termRecordNagBtn" data-term-record-open=""
+          data-term-record-class="" aria-haspopup="dialog">Record grades</button>
+</aside>
+
 <!--
   THE MAIN AREA, AND THE ONE THING WO-1.13 CHANGED ABOUT IT.
 
@@ -3676,6 +3692,57 @@
                 data-hold-confirm>Hold it out of the grade</button>
         <button class="class-action-btn hold-confirm-btn" type="button" id="holdKeepBtn"
                 data-hold-cancel>Keep it as it is</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RECORD Q1 GRADES (WO-3.73) — the dialog the bar's button opens. A stock 480px `.modal-confirm`
+     (the owner, 2026-10-23), in the three forms design/mockups/closing-a-quarter.html draws:
+
+       B, the first recording — every graded student in the grade sheet's order, percentage and
+         letter, scrolling inside the box; the empty-boxes line in the owner's words; a line naming
+         any uncommitted held column; in a weighted class, a line counting scored work filed under no
+         category, which is not in these grades. *Record Q1 grades* and *Not now*.
+       C, after a change — only the students who changed, recorded beside now, a letter change bold
+         and a percentage-only change quiet. *Record Q1 grades* records the whole class again; *Not
+         yet*. (C's *What changed* box is WO-3.75 and is not drawn here.)
+       F, under a projector — refused: it says it lists students and grades and names the control that
+         turns presentation mode off, and builds no list at all.
+
+     The ✕, Escape and the backdrop write nothing, and neither do *Not now*, *Not yet* or *Close*:
+     the one write is *Record Q1 grades*, which appends one entry (src/term-record.js's recordTerm()).
+     Every figure and every "who" is a reader in src/term-record.js; this markup and
+     src/term-record-view.js, which fills it, compute none of them. -->
+<div class="modal-overlay hidden" id="termRecordModal">
+  <div class="modal-panel modal-confirm" role="dialog" aria-modal="true" aria-labelledby="termRecordTitle">
+    <div class="modal-header">
+      <h2 id="termRecordTitle">Record grades</h2>
+      <button class="modal-close" data-modal-close title="Close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="termRecordLead"></p>
+      <p class="hidden" id="termRecordRefused">
+        This lists students and their grades, so it does not open while presentation mode is on.
+        Turn it off with the screen button in the header, then tap
+        <em id="termRecordRefusedName">Record grades</em> again.
+      </p>
+      <div class="modal-section-label" id="termRecordLabel"></div>
+      <div class="mode-change-facts" id="termRecordFacts">
+        <div class="term-record-list" id="termRecordList"></div>
+      </div>
+      <p class="class-hint hidden" id="termRecordHint">
+        A bold figure is a letter that changed. Where the letter is drawn quiet, only the percentage
+        moved, inside the same letter.
+      </p>
+      <div class="term-record-empty hidden" id="termRecordEmpty"></div>
+      <div class="term-record-empty hidden" id="termRecordHeld"></div>
+      <div class="term-record-empty hidden" id="termRecordLoose"></div>
+      <div class="modal-actions">
+        <button class="class-action-btn primary" type="button" id="termRecordBtn"
+                data-term-record-confirm>Record grades</button>
+        <button class="class-action-btn" type="button" id="termRecordKeep"
+                data-term-record-cancel>Not now</button>
       </div>
     </div>
   </div>

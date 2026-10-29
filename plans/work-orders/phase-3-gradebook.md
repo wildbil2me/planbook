@@ -5751,7 +5751,7 @@ engine and the attendance date helper; nothing in the engine may import it back.
 
 ## WO-3.73 — Record Q1 grades: the dialog, and the bar on the class's screens
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.72 · **Blocks** WO-3.74
+**Ship** — · **Status** ✅ DONE — 2026-10-29 · **Size** M · **Depends on** WO-3.72 · **Blocks** WO-3.74
 **Closes roadmap** *(no box. Owner-directed, 2026-10-23, from the closing-a-quarter thread.)*
 
 **Read [WO-3.72](#wo-372--a-quarters-grades-can-be-recorded-and-the-engine-says-when-they-stop-matching) first**: the thread, the drawing and the rulings that bind all four are there.
@@ -5792,29 +5792,55 @@ banners in the same sitting.
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.73** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] On a term's end date the bar reads *ends today*; from the next day *has ended* until it is
+- [x] On a term's end date the bar reads *ends today*; from the next day *has ended* until it is
       recorded; after a recorded change, *have changed* with the count. Before the end date there is
       no bar.
-- [ ] The bar shows on all five of the class's screens and on no other class's.
-- [ ] The first-recording dialog lists every graded student in grade-sheet order with the engine's
+- [x] The bar shows on all five of the class's screens and on no other class's.
+- [x] The first-recording dialog lists every graded student in grade-sheet order with the engine's
       figures, the empty-boxes line, and any uncommitted held column by name.
-- [ ] An empty uncategorized box is counted and named under *no category* in a weighted class and
+- [x] An empty uncategorized box is counted and named under *no category* in a weighted class and
       in a points class; in a weighted class, scored uncategorized work gets its own *not in these
       grades* line; and no projection's figures move.
-- [ ] *Record Q1 grades* writes one entry and the bar goes; *Not now*, *Not yet*, the ✕ and Escape
+- [x] *Record Q1 grades* writes one entry and the bar goes; *Not now*, *Not yet*, the ✕ and Escape
       write nothing.
-- [ ] The changed form lists only the students who changed, recorded beside now.
-- [ ] In presentation mode the bar names no student and the dialog refuses, naming the control.
-- [ ] With unchanged students listed in the changed form, the check goes red. The mutation is
+- [x] The changed form lists only the students who changed, recorded beside now.
+- [x] In presentation mode the bar names no student and the dialog refuses, naming the control.
+- [x] With unchanged students listed in the changed form, the check goes red. The mutation is
       reverted, and `TESTING.md` § WO-3.73 shows the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] 👤 On the iPad, the bar and both forms of the dialog read clearly, and twenty-five rows scroll
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] 👤 On the iPad, the bar and both forms of the dialog read clearly, and twenty-five rows scroll
       inside the dialog with its buttons in reach, in portrait and landscape.
-- [ ] `TESTING.md` § WO-3.73 carries these lines verbatim with the evidence for each.
+- [x] `TESTING.md` § WO-3.73 carries these lines verbatim with the evidence for each.
 
 **Traps** — **The bar is copied from `.backup-nag`, not shared with it** (the reason `src/shell.css`
 gives). **No screen re-runs the comparison**; a second opinion is how the bar and the dialog come to
 disagree about who changed.
+
+**Rulings — the owner, 2026-10-27, on the calls the work order left open.** The first implementer's
+draft made them and the second kept them (`.claude/dispatch/WO-3.73-result.md` § Decisions). Five
+stand as built; **one wants a wording change that the build does not yet carry.**
+- **Frame C's hint is a general key, not names.** *A bold figure is a letter that changed…* stays.
+  The drawing's *Chen's letter changed. Bautista's…* describes its two example rows; built from
+  data, it grows a clause per changed student. The drawing's banner records this as a departure,
+  per `PROTOCOL.md`.
+- **A missing mark counts toward *not in these grades*.** This applies to uncategorized work in a
+  weighted class. An `M` there is a zero the grade silently leaves out, which raises the letter that
+  goes to Blackbaud, so the line warns about it as it does about a score. This widens the
+  2026-10-23 ruling's *scored* to *scored or marked missing*. **The sentence must say so:**
+  `src/term-record-view.js` reads *has scores in it* / *have scores in them*, which is false for a
+  column holding only `M`s. It is owed a wording that covers both, such as *has scores or missing
+  marks in it*. Until it changes, Acceptance line 4 is not met as worded here.
+- **One bar, one term, earliest first** (`termNeedingRecord()`), accepted for now. Until Q2 ends,
+  Q1 is the only ended term, so the order cannot matter. **Open, and due before Q2's end date
+  (~mid-January):** when Q2 ends while a Q1 recording no longer matches, earliest-first nags about
+  Q1's grade-change form ahead of Q2's first recording, which carries the deadline. The leaning is
+  *unrecorded before changed, then latest first*. It wants its own row before then.
+- **The bar repaints on navigation and after a recording, never on a save.** No screen subscribes
+  to `notify()` (CLAUDE.md, WO-7.7), and WO-3.74's notice opens on leaving the quarter, never while
+  working in it. A bar that flickered on each correction would be the same interruption.
+- **On the end date, a recorded quarter that has since changed reads *changed*,** not *ends today*:
+  the more specific thing to say.
+- **The bar's date is in the app's own format** (*Oct 27*), not the drawing's *2 Nov*.
 
 ## WO-3.74 — the notice opens when you leave a quarter that changed, and home carries the bar
 

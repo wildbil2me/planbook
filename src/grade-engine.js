@@ -350,6 +350,50 @@ export function heldWork(doc, cls, termId, studentId) {
   return rows;
 }
 
+/*
+  THE UNCATEGORIZED PILE'S UNFINISHED WORK (WO-3.73) — openWork()'s question asked of the work filed
+  under no category this class has, live columns only, for the Record dialog's empty-boxes line.
+
+  A SIBLING, NOT A WIDENING OF openWork(), for heldWork()'s reason above and one of its own.
+  openWork() feeds planned() through categoryRows(), and every "what it would take to move" figure is
+  built on it; in a weighted class uncategorized work counts toward nothing, so a row of it in that
+  array would put work with no weight into a weighted projection. And in points mode the projection
+  already walks this pile on its own (points() above hands looseAssignments() to workRows()), so the
+  same rows folded into openWork() as well would count it twice. So openWork() returns exactly what it
+  always did and this is a third array. The owner's ruling of 2026-10-23 (plans/closing-a-quarter.md,
+  the drawing's answer 2) is that an empty box is an empty box IN EITHER GRADING MODE, which is why
+  this answers whatever the class's mode — whether the work counts is a different question.
+
+  THE SAME BRANCH DECIDES THE STATE (workRows()), over the same pile the points grade and its
+  projection read (looseAssignments(), held columns out), so a blank here and a blank in the points
+  projection cannot disagree about which they are. Each row's `categoryId` is null — the pile has no
+  category, and LOOSE_NAME is what the screens call it. Ids, points and states, never names.
+*/
+export function uncategorizedWork(doc, cls, termId, studentId) {
+  return workRows(doc, looseAssignments(doc, cls, termId), studentId, null, []);
+}
+
+/*
+  THE UNCATEGORIZED PILE'S SCORED WORK (WO-3.73) — one row per live uncategorized column in which
+  this student's cell holds a score, `{ id, categoryId: null, points, state: 'scored' }`. The other
+  half of what the Record dialog says about that pile: in a WEIGHTED class a score filed under no
+  category is in no grade — it has no weight to sit under, and the engine does not give it one (the
+  owner, 2026-10-23) — so the dialog names it in a line of its own, as it names a held column.
+
+  "Holds a score" is tally()'s own test for a scored cell: a cell, not excused, not marked missing,
+  with a value. A missing mark is a graded zero and is uncategorizedWork()'s `missing` row, so the
+  two readers never answer for the same cell. This reads no mode: whether the work is outside the
+  grade is the caller's question, asked of gradingModeOf().
+*/
+export function uncategorizedScores(doc, cls, termId, studentId) {
+  return looseAssignments(doc, cls, termId).filter((assignment) => {
+    const cell = scoreCell(doc, assignment.id, studentId);
+    return !!cell && cell.flag !== 'excused' && cell.flag !== 'missing'
+      && cell.v !== null && cell.v !== undefined;
+  }).map((assignment) => ({ id: assignment.id, categoryId: null,
+    points: numberOrZero(assignment.points), state: 'scored' }));
+}
+
 /* openWork()'s per-assignment branch, shared with the points projection's walk over uncategorized
    work (WO-3.30) so the two cannot disagree about which state a cell is in. openWork() itself still
    walks categories only: what it returns is unchanged, and so is every screen that lists from it. */
@@ -505,7 +549,7 @@ function weighted(doc, cls, termId, studentId, plan) {
   contributions agree with it to the last float digit or so, and src/detail.js's cent allocation
   already reconciles a printed column to the printed total.
 */
-const LOOSE_NAME = 'no category';
+export const LOOSE_NAME = 'no category';
 
 function points(doc, cls, termId, studentId, plan) {
   const total = weightTotal(cls);

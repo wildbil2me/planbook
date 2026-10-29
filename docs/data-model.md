@@ -797,16 +797,30 @@ two grades for one student.** So a class's term can be *recorded*: one entry app
 - **Empty boxes**: `emptyBoxes()` counts the cells in a live column of the term, across the roster,
   with no score and not flagged `excused` or `missing` — so a `late` mark with no score **is** empty
   and a dropped cell never is (it always holds a score). It asks the engine's `openWork()` for them
-  rather than testing a cell itself, so the line and the queue cannot disagree; that also means work
-  filed under no category is not counted. It returns the count and the categories they are in, for
-  *There are 7 empty boxes in Q1, across Exams and Projects.* **A held column's cells are not empty
-  boxes**; `heldColumns()` names the held columns of the term on a line of their own.
+  rather than testing a cell itself, so the line and the queue cannot disagree. It returns the count
+  and the categories they are in, for *There are 7 empty boxes in Q1, across Exams and Projects.*
+  **A held column's cells are not empty boxes**; `heldColumns()` names the held columns of the term
+  on a line of their own.
+- **Work filed under no category is counted as empty boxes too, in either grading mode** *(the
+  owner, 2026-10-23, built at WO-3.73)*, named last, as *no category* (`id: null`), after the class's
+  own categories. The engine answers it with a sibling of `openWork()` — `uncategorizedWork()` —
+  rather than a wider `openWork()`, which feeds every projection; no projection's figures move. **In a
+  weighted class, scored uncategorized work is in no grade** — it has no weight to sit under, and the
+  engine does not give it one — so the Record dialog says so on a line of its own:
+  `looseWorkOutOfGrade()` counts the live uncategorized columns holding a score or a missing mark,
+  from the engine's `uncategorizedScores()` and `uncategorizedWork()`, and answers 0 in a points
+  class, where that work is in the grade.
+- **The bar and the dialog read one answer** *(WO-3.73)*. `termNeedingRecord()` names the first of a
+  class's terms, in the class's order, that wants recording — `ends-today` on its end date,
+  `unrecorded` after it, or `changed` with the count of `noLongerMatching()` — and the dialog lists
+  that same reader's rows, each carrying `letterChanged` so the screen compares nothing.
+  `gradesToRecord()` is the writer's own list, shared with the dialog's first form.
 - **Grading settings stay per class**, not per term. A weight, letter-scale or drop-count change made
   after a quarter is keyed moves its grades, and the comparison reports exactly the students whose
   figures moved.
 - **Names and grades never show under a projector.** The readers hand back ids and figures; the
-  screens that draw them (WO-3.73, WO-3.74) name classes and counts only on their bars, and refuse the
-  list in presentation mode.
+  screens that draw them (WO-3.73's `src/term-record-view.js`, and WO-3.74) name classes and counts
+  only on their bars, and refuse the list in presentation mode.
 
 ## Accommodations — the most sensitive data in the app
 

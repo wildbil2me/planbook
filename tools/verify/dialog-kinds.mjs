@@ -63,7 +63,10 @@ const RULED = {
   'modal-confirm': ['classDeleteModal', 'categoryRemoveModal', 'outreachConfirmModal',
     'assignmentMoveModal', 'holdModal', 'assignmentDeleteModal', 'studentDeleteModal',
     'restoreConfirmModal', 'daysOffConfirmModal', 'teacherModal', 'drivePullModal',
-    'drivePullConfirmModal', 'gradingModeModal'],
+    'drivePullConfirmModal', 'gradingModeModal',
+    /* WO-3.73, the owner's answer to the drawing's question 3 (2026-10-23): Record Q1 grades is a
+       stock 480px confirm, its twenty-five rows scrolling inside the box. */
+    'termRecordModal'],
   'modal-report': ['attendanceRecordModal', 'passHistoryModal', 'assignmentCopyModal', 'gradesRecordModal'],
 };
 const KINDS = Object.keys(RULED);

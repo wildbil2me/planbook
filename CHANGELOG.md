@@ -13,6 +13,26 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Record Q1 grades: a bar on the class's screens, and the dialog it opens — 2026-10-29
+
+WO-3.73, the screen half of WO-3.72's record. `CACHE` v198 → v199. Read on the iPad by the owner the
+same week, in portrait and landscape.
+
+- **When a quarter ends, every screen of that class carries a bar until its grades are recorded.**
+  It reads *ends today* on the last day and *has ended* afterwards. It has no ✕: it goes when a
+  recording matches. It appears on Attendance, Assignments, Scores, Student detail and Signals, and
+  not on the calendar or Home, where WO-3.74 will draw its own.
+- **Its button opens a list of every graded student in grade-sheet order**, the order Blackbaud is
+  keyed in, with the empty boxes, any held column by name, and, in a weighted class, any work filed
+  under no category that holds scores or missing marks, which are not in those grades.
+- **If a recorded grade later moves, the bar says how many students changed**, and the dialog lists
+  only those students, recorded beside now — a letter change bold, a percentage-only change quiet.
+  Recording again clears the bar. Nothing is locked: a recorded quarter can still be edited.
+- **Empty boxes in work filed under no category are now counted**, in either grading mode, and
+  named under *no category*. No projection's figures moved.
+- **The bar names no student, so it stays up under a projector; the dialog refuses there** and
+  names the control that turns presentation mode off.
+
 ### The four whole-file no-writer checks see more than dotted writes — 2026-10-26
 
 WO-1.87, out of WO-1.84's probe. Harness and comments only: the one `src/` change is a comment in

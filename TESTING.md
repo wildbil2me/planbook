@@ -18586,6 +18586,201 @@ F 0), Exams 50 / Projects 30 / Homework 20, six students. Ada 89.50 B, Ben 76.50
 - [x] `TESTING.md` § WO-3.72 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-3.73 — Record Q1 grades: the dialog, and the bar on the class's screens
+
+**What was built.** The screen half over WO-3.72's readers. A new module, `src/term-record-view.js`:
+the bar (`refreshTermRecordBar()`, its words chosen in `termRecordBarModel()`) and the dialog
+(`openTermRecordDialog()`, `confirmTermRecord()`, `cancelTermRecord()`, its content chosen in
+`termRecordModel()`), both on the `window.planbook` seam as `termRecordView`. It computes no figure and
+no "who": four readers were added to `src/term-record.js` for it — `termNeedingRecord()` (which term
+wants recording and in which of three states, the bar's whole question), `gradesToRecord()` (the
+writer's own list, now shared by `newTermRecord()` and the first form), `looseWorkOutOfGrade()` (the
+weighted dialog's *not in these grades* count) and a `letterChanged` field on each
+`noLongerMatching()` row (bold or quiet). The engine gained `uncategorizedWork()` and
+`uncategorizedScores()` beside `openWork()` / `heldWork()`, and exports `LOOSE_NAME`; `openWork()` is
+unchanged. `emptyBoxes()` now counts uncategorized empty boxes in either grading mode, named last as
+*no category*. `index.html`: the bar after the backup nag, the dialog as a stock 480px
+`.modal-confirm`. `src/shell.css`: § RECORD NAG and § RECORD LIST lifted from
+`design/mockups/proposed-quarter.css` under their drawn names (the bar copied from `.backup-nag`, not
+shared), the bar's button at 44px in the coarse block; both drawing banners amended, and
+`.term-record-nag-classes` / `.term-record-cause` left drawn for WO-3.74 / WO-3.75. `src/shell.js`:
+the bar repainted next to every `refreshScreenNav()`, on a class tab, and after *Record Q1 grades* —
+not subscribed to the store. `sw.js`: the module in `SHELL`, `planbook-shell-v198` → `v199`.
+`docs/data-model.md`: the uncategorized ruling and the one-answer rule. Harness:
+`tools/verify/term-record-bar.mjs` (11 call sites, 10 results), registered directly after
+`term-record.mjs`; `dialog-kinds.mjs` rules `termRecordModal` a `modal-confirm`; `term-record.mjs`'s
+one-writer check expects the three new exported readers.
+
+**The hand-worked fixture** is at the head of `tools/verify/term-record-bar.mjs`: one weighted class on
+its own scale (A 90, B 80, C 70, D 60, F 0), Exams 50 / Projects 50, Quarter 1 whose end date the
+checks move around today. Roster zim, abe, mo, nan; grade-sheet order Abbott, Moss, Zimmer. zim 85.00
+B, abe 70.00 C, mo 95.00 A, nan no grade. Six empty boxes (E1 nan · P1 abe nan · L1 abe mo nan, where
+L1 is filed under no category), one held column, one scored uncategorized column (zim's 50 on L1).
+After recording, abe 70 → 72 on E1 (72.00 C, same letter) and mo 95 → 60 on P1 (77.50 C, letter).
+
+- [x] On a term's end date the bar reads *ends today*; from the next day *has ended* until it is
+      recorded; after a recorded change, *have changed* with the count. Before the end date there is
+      no bar.
+      — `node tools/verify-shell.mjs`, runs 1 and 4 (below; quoted from run 1, and every WO-3.73 line
+      reads the same in run 4 and in run 3), `tools/verify/term-record-bar.mjs`, driven by
+      moving Quarter 1's `end` to tomorrow, today and yesterday and arriving at a screen each time:
+      `PASS | WO-3.73: before Quarter 1's end date there is no bar; on the end date it reads *ends
+      today*; from the next day *has ended … are not recorded* — each in the drawing's words, naming the
+      class, with the button *Record Q1 grades*, and the bar sits after the backup nag ::
+      {"before":{"shown":false,…},"onDay":"⚠ Quarter 1 ends today. Record its grades for WO-3.73 Record
+      bar once they are keyed into Blackbaud. Record Q1 grades","after":{"shown":true,"text":"⚠ Quarter 1
+      has ended, and its grades for WO-3.73 Record bar are not recorded. Record them once they are keyed
+      into Blackbaud, …"}}`; and after recording and two score edits:
+      `PASS | WO-3.73: after a recorded change the bar reads *have changed since you recorded them on
+      <date> — 2 students*, the date the record's own in the app's short format, and names nobody ::
+      {"bar":"⚠ Quarter 1 grades for WO-3.73 Record bar have changed since you recorded them on Oct 27 —
+      2 students. Record Q1 grades","date":"Oct 27"}`. The date is `shortDate()` of the record's `at`
+      (the app's `Oct 27`, not the drawing's `2 Nov`), compared to a date the check builds from the
+      stored `at` itself.
+- [x] The bar shows on all five of the class's screens and on no other class's.
+      — `PASS | WO-3.73: the bar shows on all five of the class's screens — Attendance, Assignments,
+      Scores, a student's detail and the concern list — and on no other view (the calendar, All
+      classes) and not on another class's screens, whose own terms have ended nowhere ::
+      {"screens":{"class":true,"assignments":true,"scores":true,"detail":true,"signals":true},"calendar":false,"home":false,"other":["class",false,…]}`.
+      Each screen reached through its real switcher pill (detail through the registry's name door), the
+      other class through its header tab. The five are `src/views.js`'s `CLASS_SCREENS` less the
+      calendar, as the brief rules.
+- [x] The first-recording dialog lists every graded student in grade-sheet order with the engine's
+      figures, the empty-boxes line, and any uncommitted held column by name.
+      — `PASS | WO-3.73: the first-recording dialog lists every graded student in grade-sheet order
+      (Abbott, Moss, Zimmer — not roster order, and never the student with no grade) with the engine's
+      own percentage and letter, the empty-boxes line in the owner's words, and the uncommitted held
+      column by name; its buttons are *Record Q1 grades* and *Not now* :: {"title":"Record Quarter 1
+      grades for WO-3.73 Record bar?","label":"3 students","rows":[{"id":"wo373-abe",…,"a":"70.00%","b":"C"},{"id":"wo373-mo",…,"a":"95.00%","b":"A"},{"id":"wo373-zim",…,"a":"85.00%","b":"B"}],"engine":[["70.00%","C"],["95.00%","A"],["85.00%","B"]],"held":"1
+      held column, WO-3.73 Held quiz, is not committed, so it counts toward none of these
+      grades.","confirm":"Record Q1 grades","keep":"Not now"}`. `engine` is `classGrade()` asked
+      directly; the rows must equal it and the hand table. The empty-boxes line is in the next item's
+      evidence.
+- [x] An empty uncategorized box is counted and named under *no category* in a weighted class and
+      in a points class; in a weighted class, scored uncategorized work gets its own *not in these
+      grades* line; and no projection's figures move.
+      — `PASS | WO-3.73: an empty uncategorized box is counted and named under *no category*, after the
+      class's own categories, in a weighted class (…) and in a points class (the same 6); in the
+      weighted class the scored uncategorized essay gets its own *not in these grades* line, and in
+      points mode, where it IS in the grade, it does not; and no projection moves — openWork() still
+      lists categorized work only, and abe's full-marks projection is the hand figure in each mode
+      (85.00 weighted, 90.00 points) :: {"emptyLine":"There are 6 empty boxes in Q1, across Exams,
+      Projects and no category.","looseLine":"1 assignment filed under no category has scores or
+      missing marks in it, which are not in these grades: a weighted grade counts only work in a
+      category.","read":{"weighted":{"empty":{"count":6,"categories":[{"id":"k373e","name":"Exams"},{"id":"k373p","name":"Projects"},{"id":null,"name":"no category"}]},"loose":1,"openIds":["a373-p1"],"openNull":0,"proj":"85.00",…},"points":{"empty":{"count":6,…},"loose":0,"openIds":["a373-p1"],"openNull":0,"proj":"90.00",…}}}`.
+      90.00 in points mode is 270/300 — the loose essay counted once; folded into `openWork()` as well it
+      would be counted twice. Every other check in the harness, the existing projection checks among
+      them, is green in the same run.
+      **Correction round 1 (2026-10-27).** This box was first ticked while the line still read *has
+      scores in it*, which the owner's ruling of the same day found false for a column holding only
+      `M`s (a missing mark counts toward *not in these grades*). `src/term-record-view.js`'s
+      `paintLoose()` now reads *has scores or missing marks in it* / *have scores or missing marks in
+      them*, the PASS above is that run's own line, and a new check covers the missing-mark half,
+      which nothing had exercised: `PASS | WO-3.73: in a weighted class an uncategorized column holding
+      only a missing mark (zim's L1 50 turned to `M`, no score left in it) is counted —
+      looseWorkOutOfGrade() answers 1 — and the first-recording dialog draws *1 assignment filed under
+      no category has scores or missing marks in it*, never the scores-only wording, which is false
+      for a column of `M`s :: {"read":{"loose":1,"scored":0,"cell":{"v":null,"flag":"missing"}},"looseLine":"1
+      assignment filed under no category has scores or missing marks in it, which are not in these
+      grades: a weighted grade counts only work in a category.","open":true}`. `scored: 0` is
+      `uncategorizedScores()` for zim asked directly — L1 holds no score, so only the missing-mark half
+      can count it. **Mutation:** with the tree staged, the `.concat(uncategorizedWork(…).filter(row =>
+      row.state === 'missing'))` in `looseWorkOutOfGrade()` was deleted, tagged `MUTATION WO-3.73`, and
+      the full harness ran `2128 checks · 2127 passed · 1 failed · 0 skipped`, 1181s, `EXIT=1`, its one
+      red this check: `FAIL | … :: {"read":{"loose":0,"scored":0,"cell":{"v":null,"flag":"missing"}},"looseLine":null,"open":true}`.
+      Reverted with `git checkout -- src/term-record.js` against the staged tree; `grep -rn "MUTATION
+      WO-3.73"` then finds only prose in this file and the result file.
+- [x] *Record Q1 grades* writes one entry and the bar goes; *Not now*, *Not yet*, the ✕ and Escape
+      write nothing.
+      — `PASS | WO-3.73: *Not now*, the ✕ and Escape each close the dialog and write nothing — `rev`
+      unmoved and the document byte-identical after a flush, with no `termRecords` block created by
+      opening it — and *Record Q1 grades* writes exactly one entry, holding the engine's figures, and
+      the bar goes :: {"rev":[436,436,436,436,437],"same":[true,true,true],"records":[null,1],"entry":{"mine":1,"term":"tm373q1","grades":[["wo373-zim","85.00","B"],["wo373-abe","70.00","C"],["wo373-mo","95.00","A"]],"open":false},"barAfter":false}`
+      (run 1's figures; every snapshot is taken after `flush()`, WO-5.3's blind spot). *Not yet* is in
+      the presentation-mode check's `wroteNothing[0]` — the document byte-identical after *Not yet* in
+      the changed form — and the changed form's own record button in `PASS | WO-3.73: *Record Q1
+      grades* in the changed form records the whole class again — a second entry holding all three
+      graded students, not only the two who changed — and the bar goes ::
+      {"again":{"mine":2,"ids":["wo373-zim","wo373-abe","wo373-mo"]},"bar":false}`.
+- [x] The changed form lists only the students who changed, recorded beside now.
+      — `PASS | WO-3.73: the changed form lists only the students who changed — abe and mo, in
+      grade-sheet order, never zim, whose grade matches — each recorded beside now; mo's letter change is
+      bold and abe's percentage-only change is quiet; *Not yet* is its second button :: {"title":"Quarter
+      1’s grades have changed","label":"2 students changed","rows":[{"id":"wo373-abe",…,"a":"70.00% C","b":"72.00% C","now":"percentage","bold":"400"},{"id":"wo373-mo",…,"a":"95.00% A","b":"77.50% C","now":"letter","bold":"700"}],"zimListed":false,"keep":"Not yet"}`.
+- [x] In presentation mode the bar names no student and the dialog refuses, naming the control.
+      — `PASS | WO-3.73: in presentation mode the bar stays and names no student; the dialog refuses —
+      it builds no list and carries no name or figure, says it lists students and grades, and names the
+      header's screen button that turns presentation mode off — and closing it writes nothing ::
+      {"bar":"⚠ Quarter 1 grades for WO-3.73 Record bar have changed since you recorded them on Oct 27 —
+      2 students. Record Q1 grades","refused":"This lists students and their grades, so it does not open
+      while presentation mode is on. Turn it off with the screen button in the header, then tap Record Q1
+      grades again.","title":"Record Quarter 1 grades","listChildren":0,"confirm":null,"wroteNothing":[true,true]}`.
+      The check also asserts no fixture surname and no `NN.NN%` anywhere in the dialog's text. The
+      presentation test is `presentationMode()` imported from `src/supports.js`, not a second
+      definition, and the wording is frame F's.
+- [x] With unchanged students listed in the changed form, the check goes red. The mutation is
+      reverted, and `TESTING.md` § WO-3.73 shows the red output.
+      — `src/term-record-view.js`, `termRecordModel()`'s changed form, its `rows:` built from every
+      student `gradesToRecord()` would record, each taking its `noLongerMatching()` row when there is one
+      and otherwise a row with recorded equal to live, tagged `/* MUTATION WO-3.73: the changed form
+      lists unchanged students too — REVERT */`. `node tools/verify-shell.mjs` (run 2):
+      `2119 checks · 2115 passed · 4 failed · 0 skipped`, 1180s, `EXIT=1`. The red that is the mutation:
+      `FAIL | WO-3.73: the changed form lists only the students who changed — abe and mo, in grade-sheet
+      order, never zim, whose grade matches — … :: {"title":"Quarter 1’s grades have changed","label":"3
+      students changed","rows":[{"id":"wo373-abe",…,"a":"70.00% C","b":"72.00% C","now":"percentage","bold":"400"},{"id":"wo373-mo",…,"a":"95.00% A","b":"77.50% C","now":"letter","bold":"700"},{"id":"wo373-zim","name":"Zimmer373, Zed","a":"85.00% B","b":"85.00% B","now":"percentage","bold":"400"}],"zimListed":true,"keep":"Not yet"}`.
+      Every other WO-3.73 check stayed green, the bar's *2 students* among them — which is the work
+      order's Trap made visible: the bar and the dialog disagreeing about who changed. **The other three
+      reds were not the mutation**: `§ verify/sync-button.mjs` threw after 35 of its own checks
+      (`TypeError: Cannot read properties of undefined (reading 'driveSync')`, 8 checks lost — hence
+      2119 rather than 2127), and two later Drive checks failed on the stand-in it left behind (`"drive":
+      "undefined"`, `google scripts on the page = 1`). Nothing in WO-3.73 touches sync; the same tree
+      without the mutation is green in runs 1 and 3. Reverted by copying back a copy of the file saved
+      before the plant (no `git checkout`); `cmp` reads identical, and `grep -rn "MUTATION WO-3.73" src
+      tools docs index.html sw.js` finds nothing.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs`, run 1 (before the mutation): `2127 checks · 2127 passed · 0 failed
+      · 0 skipped`, 68,368 lines, 32.1 lines per check, 1177s, `EXIT=0`, 2026-10-27, real clock. Run 3
+      (after the revert, on a `src/term-record-view.js` byte-identical to run 1's): `2119 checks · 2116
+      passed · 3 failed · 0 skipped`, 1179s, `EXIT=1` — **not green**: the same three sync reds as run 2
+      (`§ verify/sync-button.mjs` threw after 35 of its own checks, in its same-day pinned-clock case,
+      reading `window.planbook.driveSync` of an undefined `window.planbook`), and every WO-3.73 check
+      green. So the sync throw is not the mutation. It is intermittent: a copy of this tree with only a
+      diagnostic added to that check ran `2127 checks · 2127 passed · 0 failed · 0 skipped`, `EXIT=0`, and
+      HEAD (`9c9ce90`, without this work order) in a scratch worktree ran `2117 · 2117 passed`, `EXIT=0`,
+      at about the same hour. **Run 4**, on the tree as delivered: `2127 checks · 2127 passed · 0 failed
+      · 0 skipped`, 68,368 lines, 32.1 lines per check, 1154s, `EXIT=0`, 2026-10-27, real clock. Two of
+      five runs on this tree threw there and none of HEAD's two did (this one and the first
+      implementer's baseline), which is too few to say whether this work order changes the odds. See
+      the result file.
+      `node tools/wo-sweep.mjs`: `52 checks · 48 passed · 0 failed · 4 to review` — after `tools/README.md`'s call-site line went 2106 → 2117 from
+      the sweep's own count. The fourth review is new and is this work order's: *CSS selectors added in
+      the working tree with no coarse-block rule* names `.term-record-nag-text`, `.term-record-list`,
+      `.term-record-head`, `.term-record-name`, `.term-record-fig`, `.term-record-was`,
+      `.term-record-same`, `.term-record-moved` — read, and none is a control: they are a text block, a
+      grid and spans inside it. The one control, `.term-record-nag-btn`, has its 44px rule; the dialog's
+      buttons are `.class-action-btn`, which already has one. The standing sensitive-field review now lists
+      `src/term-record-view.js`: its only hit is the `presentationMode` import from `src/supports.js` and
+      the comment above it; it reads no support field. (`PASS | the recorded `check()` call-site count
+      matches the harness :: 2117 `check()` call site(s) across 99 harness file(s), matching
+      tools/README.md:1363`.)
+      **Correction round 1 (2026-10-27)**, on the corrected tree, after the mutation's revert:
+      `node tools/verify-shell.mjs` — `2128 checks · 2128 passed · 0 failed · 0 skipped`, 68,399 lines,
+      32.1 lines per check, 1183s, `EXIT=0`, real clock (one check more than run 4: the missing-mark
+      check above). `node tools/wo-sweep.mjs` — `52 checks · 48 passed · 0 failed · 4 to review`, `EXIT=0` — the same four reviews as above, the
+      new missing-mark check adding none — after `tools/README.md`'s
+      call-site line went 2117 → 2118 from the sweep's own count.
+- [x] 👤 On the iPad, the bar and both forms of the dialog read clearly, and twenty-five rows scroll
+      inside the dialog with its buttons in reach, in portrait and landscape.
+      — **Read on the iPad 2026-10-29, owner, green**, after the force-quit, build `v199` served by
+      `node tools/serve-https.mjs`. All four checks passed: the bar reads clearly on a class screen
+      and *Record Q1 grades* is thumb-sized; the first-recording dialog scrolls its rows inside the
+      box with *Record Q1 grades* and *Not now* in reach, in portrait and in landscape; and the
+      changed form's bold letter-change rows and quiet percentage-only rows are both legible with
+      *Not yet* in reach, in both orientations. No harness check measures any of this: the list's
+      `max-height: 300px; overflow-y: auto` is the drawing's, and this reading is the evidence.
+- [x] `TESTING.md` § WO-3.73 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

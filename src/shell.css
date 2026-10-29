@@ -89,7 +89,8 @@ input[type="date"] { -webkit-appearance: none; appearance: none; }
 button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class-action-btn,
 .install-banner-dismiss, .hdr-year-btn, .year-row, .backup-nag-btn, .loading-error-btn,
 .toggle-btn, .support-dot, .hdr-mode-btn, .hdr-sync-btn, .presentation-strip-btn,
-.update-banner-btn, .log-door, .log-quick, .log-kind, .search-clear, .hub-door, .hub-pref, .modal-back {
+.update-banner-btn, .log-door, .log-quick, .log-kind, .search-clear, .hub-door, .hub-pref, .modal-back,
+.term-record-nag-btn {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -480,6 +481,66 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
    this file appears in design/style-guide.md §1, and inventing a shade to darken by one step is
    how that stops being true. */
 .backup-nag-btn:hover { background: #8a6d1a; border-color: #8a6d1a; }
+
+/* ── RECORD NAG (WO-3.73) ── */
+/* The strip under the header while an ended quarter of the open class is not recorded, or no longer
+   matches its newest record — lifted from design/mockups/proposed-quarter.css § RECORD NAG. It is
+   `.backup-nag`'s values COPIED, not that class shared, for the reason the backup nag gives about the
+   install banner above it: two components that happen to look alike, and the day one changes is the
+   day a shared name costs more than it saved. The safe-area padding is the backup nag's too; the
+   drawing has no inset to draw against.
+
+   No dismiss: it goes when a recording matches, as the backup nag goes when a backup is taken. It
+   names a class and a count and never a student, so it stays up under a projector.
+
+   `align-items: center` where the backup nag says `flex-start`, as drawn: this strip is one short
+   paragraph beside its button, the backup nag two, and centring a two-paragraph block against a
+   button would float the button off the line it answers. */
+.term-record-nag {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
+  background: #fff8e6; color: #8a6d1a; border-bottom: 1px solid #f0dfa8;
+  padding: 10px 20px; font-size: 12.5px; line-height: 1.55;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+.term-record-nag-text { flex: 1 1 320px; min-width: 0; }
+.term-record-nag-btn {
+  border: 1.5px solid #c9a83f; background: #c9a83f; color: #fff;
+  border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 700;
+  cursor: pointer; flex-shrink: 0; white-space: nowrap; font-family: inherit;
+}
+.term-record-nag-btn:hover { background: #8a6d1a; border-color: #8a6d1a; }
+
+/* ── RECORD LIST (WO-3.73) ── */
+/* The students in the Record dialog, inside a `.mode-change-facts` box — lifted from
+   design/mockups/proposed-quarter.css § RECORD LIST. A first recording is name · percentage · letter;
+   a later one is name · what was recorded · what it is now. Figures are tabular so the columns line up
+   down a class of twenty-five, and the list scrolls inside the box at 300px so the buttons stay on a
+   landscape iPad. A row whose letter did not move is still listed (the owner, 2026-10-23), its letter
+   drawn quieter so the eye finds the rows Blackbaud's letter has to change on. The drawing's
+   `.term-record-cause` (*What changed*) is WO-3.75's and is not lifted here. */
+.term-record-list {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 2px 14px;
+  font-size: 12.5px; line-height: 1.6; color: #1a1a2e;
+  max-height: 300px; overflow-y: auto;
+}
+.term-record-head {
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+  color: #6b7a8d; padding-bottom: 2px; border-bottom: 1px solid #eef0f4;
+}
+.term-record-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.term-record-fig { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.term-record-was { color: #6b7a8d; }
+.term-record-same { color: #6b7a8d; font-weight: 400; }
+.term-record-moved { font-weight: 700; }
+/* The empty-boxes line, and the held-column and uncategorized lines beside it: amber, because each
+   is worth a look and none is a refusal — recording is never blocked by them (the owner, 2026-10-23). */
+.term-record-empty {
+  margin-top: 10px; padding: 8px 12px; border-radius: 8px;
+  background: #fff8e6; border: 1px solid #f0dfa8; color: #8a6d1a;
+  font-size: 12px; line-height: 1.5;
+}
 
 /* ── MAIN / PANEL ── */
 .main {
@@ -2523,6 +2584,10 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
   .loading-error-btn { min-height: 44px; padding: 12px 20px; font-size: 14px; }
   .backup-nag { font-size: 13.5px; }
   .backup-nag-btn { padding: 8px 16px; font-size: 13px; min-height: 44px; }
+  /* WO-3.73's bar, in the same pass that adds it — the backup nag's two lines above, copied. */
+  .term-record-nag { font-size: 13.5px; }
+  .term-record-nag-btn { padding: 8px 16px; font-size: 13px; min-height: 44px; }
+  .term-record-empty { font-size: 13px; }
   .modal-body .backup-notice p { font-size: 13px; }
   .modal-body .backup-drop-hint { font-size: 13px; }
   /* Both halves: the input carries the height so the whole row is a target, and the native

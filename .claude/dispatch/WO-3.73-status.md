@@ -1,0 +1,16 @@
+# WO-3.73 dispatch status
+
+- 2026-10-26 21:12 gates PASS (depends WO-3.72 DONE). Tree clean at start: WO-1.87 already committed at 9c9ce90, so the caller's warning about its uncommitted files no longer applies.
+- 2026-10-26 21:12 route Claude Opus — on its own merits: presentation-mode refusal (sensitive surface, ROUTING § Claude bullet 1), new teacher-facing bar and dialog prose, mockup lift. Runner-up Codex not considered further: sensitive surface rules it out, so no probe run.
+- 2026-10-26 21:12 claimed: --start ran (CLAIMED).
+- 2026-10-26 21:13 brief written: .claude/dispatch/WO-3.73-brief.md (~14 KB, markers filled). Note: wo-gate --start reported the rolling window at 18.2M proxy units, above the p25 death mark (16.4M); a session-limit death here is plausible, so grep MUTATION first on any resume.
+- 2026-10-26 21:13 implementer spawned at Opus (no override) with .claude/dispatch/WO-3.73-brief.md, awaiting return — expect 20–40 min, and a flat trail for the first 20 is normal.
+- 2026-10-27 04:50 implementer RETURNED DEAD: session limit (429) after 128 tool uses / 62 min, no result file. Tree holds partial work (12 modified, 2 new files). The grep for MUTATION is clean. No TESTING section, no CHANGELOG entry. Per the coordinator, the claim is kept (no release); re-dispatching against the same brief with an audit-the-draft instruction.
+- 2026-10-27 04:50 node --check passes on every changed or new JS file. MUTATION hits are pre-existing comments only. Second implementer spawned at Opus with the same brief plus a resume instruction, awaiting return.
+- 2026-10-27 06:53 implementer RETURNED (2nd spawn). It claims 10 of 11 lines met, with the 👤 line open; it kept the dead draft whole and added the tools/README count, TESTING § WO-3.73 and 10 ticks. It reports sync-button.mjs flaked in 2 of 5 harness runs (its claim, not verified). Result file present; MUTATION tag grep clean.
+- 2026-10-27 06:53 handoff written: AWAITING VERDICT. Verifier owed, from a fresh session.
+- 2026-10-27 16:40 fresh session entered at AWAITING VERDICT; MUTATION grep re-run over changed files. Verifier spawning at Opus as a FIRST pass, awaiting verdict.
+- 2026-10-27 17:01 verifier VERDICT: FAIL on Acceptance line 4 only — paintLoose() still says 'has scores in it' against the owner's 2026-10-27 ruling (M-only column), no M-only fixture; line 4 ticked falsely. Other 9 desk lines ✅, 👤 line 🙋. verify-shell 2127/2127, sweep 48/0/4 review. Correction implementer spawning at Opus, same brief + ❌ lines verbatim. Row stays AWAITING VERDICT.
+- 2026-10-27 17:45 correction implementer RETURNED: claims line 4 wording fixed in paintLoose(), M-only check added (mutation red at 2127/2128), verify-shell 2128/2128, sweep 48/0/4; CSS banner departure recorded; CACHE kept v199. Its claims. Verifier round 2 spawning at Opus, awaiting verdict.
+- 2026-10-27 18:06 verifier round 2 VERDICT: PASS WITH MANUAL CHECKS — 10 desk lines ✅, 👤 iPad line 🙋. verify-shell 2128/2128 EXIT 0, sweep 48/0/4, audit PASS. Nothing ticked; awaiting owner go.
+- 2026-10-29 owner read the 👤 line on the iPad at v199, all four checks green. TESTING and phase-file box ticked, --tick wrote ✅ DONE (Phase 3 69/75, overall 277/292), CHANGELOG entry written. Commit awaits the owner.
