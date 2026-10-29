@@ -5830,11 +5830,18 @@ stand as built; **one wants a wording change that the build does not yet carry.*
   `src/term-record-view.js` reads *has scores in it* / *have scores in them*, which is false for a
   column holding only `M`s. It is owed a wording that covers both, such as *has scores or missing
   marks in it*. Until it changes, Acceptance line 4 is not met as worded here.
+  *(**Discharged 2026-10-27.** WO-3.73's correction round put *has scores or missing marks in it* /
+  *have scores or missing marks in them* in `paintLoose()`, with a check for a column holding only
+  `M`s that went red under a mutation; the second verifier pass marked line 4 ✅.)*
 - **One bar, one term, earliest first** (`termNeedingRecord()`), accepted for now. Until Q2 ends,
   Q1 is the only ended term, so the order cannot matter. **Open, and due before Q2's end date
   (~mid-January):** when Q2 ends while a Q1 recording no longer matches, earliest-first nags about
   Q1's grade-change form ahead of Q2's first recording, which carries the deadline. The leaning is
   *unrecorded before changed, then latest first*. It wants its own row before then.
+  *(**Booked 2026-10-29 as
+  [WO-3.77](#wo-377--the-record-bar-names-every-quarter-that-needs-it-newest-first)**, and the owner
+  ruled past *one bar, one term*: the bar names every term needing attention, a line and a button
+  each, in this leaning's order. WO-3.74 depends on it.)*
 - **The bar repaints on navigation and after a recording, never on a save.** No screen subscribes
   to `notify()` (CLAUDE.md, WO-7.7), and WO-3.74's notice opens on leaving the quarter, never while
   working in it. A bar that flickered on each correction would be the same interruption.
@@ -5996,7 +6003,11 @@ unruled. Three things go wrong once a second quarter ends, around mid-January:
 a button per term** — *Q2 ends today · Q1 has changed — 1 student*. Of the three options put to the
 owner, it is the only one where nothing can be hidden, and on a bar with no ✕ hiding is the risk.
 The others were *the newest term only, older ones after*, and *the earliest, plus "and 1 more
-quarter"*.
+quarter"*. **The order, ruled the same day: unrecorded before changed, then newest first** — the
+leaning WO-3.73's Rulings recorded. An unrecorded quarter is a whole quarter missing from Blackbaud;
+a changed one is a correction to grades already there. So *Q1 has ended, not recorded* leads
+*Q2 has changed — 1 student*. *(The heading says "newest first" and keeps it, because three links
+name its anchor; this paragraph is the order.)*
 
 **Booked ahead of WO-3.74 on purpose.** WO-3.74's home bar gives each class a button that opens *the*
 quarter's dialog, which is this question again. It reads the list this row adds, and is not built
@@ -6009,7 +6020,8 @@ line's wording. Two lines in one bar is not drawn; say how it was laid out in th
 section, and amend the drawing's banner in the same sitting.
 
 **Deliverables**
-- **An engine reader that returns every term needing attention for one class**, newest first,
+- **An engine reader that returns every term needing attention for one class**, unrecorded (and
+  *ends today*) before changed, then newest first within each,
   each with the state and count `termNeedingRecord()` returns today. It lives in `src/term-record.js`.
   `termNeedingRecord()` either becomes that list's head or is retired; the implementer picks and
   says why. **No screen tests a term itself.**
@@ -6026,8 +6038,10 @@ section, and amend the drawing's banner in the same sitting.
 **Acceptance**
 - [ ] With Q1 recorded and since changed, and Q2 ended and unrecorded, the bar shows two lines, Q2's
       first, each in its own wording and with its own button opening that term's dialog.
-- [ ] With Q1 never recorded and Q2 ended, both terms are on the bar; an unrecorded Q1 no longer
-      hides Q2.
+- [ ] With Q1 never recorded and Q2 ended, both terms are on the bar, Q2's first; an unrecorded Q1
+      no longer hides Q2.
+- [ ] With Q1 never recorded and Q2 recorded and since changed, Q1's *has ended* line comes before
+      Q2's *have changed* line: unrecorded leads changed whatever their age.
 - [ ] Recording one term removes its line and leaves the other; recording the last removes the bar.
       With one term needing attention, the bar reads exactly as WO-3.73's does.
 - [ ] Every term, state and count on the bar comes from the engine's list reader, and no screen
@@ -6040,7 +6054,7 @@ section, and amend the drawing's banner in the same sitting.
       landscape.
 - [ ] `TESTING.md` § WO-3.77 carries these lines verbatim with the evidence for each.
 
-**Traps** — **Newest is by the class's term order, not by a name.** `src/term-record-view.js`'s
+**Traps** — **Newest is by the class's term order, not by a name**, and the state outranks it. `src/term-record-view.js`'s
 *Q1* is a display abbreviation, and nothing may sort or find a term by it. **Do not re-run the
 comparison per line**: each line's count is the reader's, so the bar and the dialog it opens cannot
 disagree about who changed.
