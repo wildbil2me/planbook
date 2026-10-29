@@ -5751,7 +5751,7 @@ engine and the attendance date helper; nothing in the engine may import it back.
 
 ## WO-3.73 — Record Q1 grades: the dialog, and the bar on the class's screens
 
-**Ship** — · **Status** ✅ DONE — 2026-10-29 · **Size** M · **Depends on** WO-3.72 · **Blocks** WO-3.74
+**Ship** — · **Status** ✅ DONE — 2026-10-29 · **Size** M · **Depends on** WO-3.72 · **Blocks** WO-3.74, WO-3.77
 **Closes roadmap** *(no box. Owner-directed, 2026-10-23, from the closing-a-quarter thread.)*
 
 **Read [WO-3.72](#wo-372--a-quarters-grades-can-be-recorded-and-the-engine-says-when-they-stop-matching) first**: the thread, the drawing and the rulings that bind all four are there.
@@ -5844,7 +5844,7 @@ stand as built; **one wants a wording change that the build does not yet carry.*
 
 ## WO-3.74 — the notice opens when you leave a quarter that changed, and home carries the bar
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.73 · **Blocks** WO-3.75
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.73, WO-3.77 · **Blocks** WO-3.75
 **Closes roadmap** *(no box. Owner-directed, 2026-10-23, from the closing-a-quarter thread.)*
 
 **Read [WO-3.72](#wo-372--a-quarters-grades-can-be-recorded-and-the-engine-says-when-they-stop-matching) first**: the thread, the drawing and the rulings that bind all four are there.
@@ -5865,7 +5865,10 @@ frames **C** (the notice is WO-3.73's changed-form dialog, opening by itself) an
 - **The home bar (E′)**: one bar on All classes naming every class with an ended quarter unrecorded
   or changed, and a button per class that opens that class on the quarter's Scores with the dialog
   open. It names classes and counts, never a student. Not a glance panel: it sits with the backup
-  nag, so `src/glance.js` and its fence are untouched.
+  nag, so `src/glance.js` and its fence are untouched. **Which quarter a class's button opens is
+  read from [WO-3.77](#wo-377--the-record-bar-names-every-quarter-that-needs-it-newest-first)'s list
+  reader, never from the single-term `termNeedingRecord()`**: a class with two terms waiting opens on
+  the newest, and the class's own bar names the other. Added 2026-10-29 when WO-3.77 was booked.
 - **A mutation**: make the notice open on every tap of the changed quarter, show the check goes red,
   and revert it before writing anything else.
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.74** and the `CHANGELOG.md` entry.
@@ -5970,3 +5973,74 @@ one screen disagreeing with another about one cell, which is what `src/glance.js
 detail, the grade sheet and the CSVs also list unfinished work** — check each and say in the
 `TESTING.md` section which already shows uncategorized work and which does not; widening them is a
 booking, not a fold-in.
+
+## WO-3.77 — the record bar names every quarter that needs it, newest first
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.73 · **Blocks** WO-3.74
+**Closes roadmap** *(no box. Owner-directed, 2026-10-29, out of WO-3.73's verdict.)*
+
+**Booked 2026-10-29**, owner-directed. WO-3.73's bar shows **one term per class**:
+`termNeedingRecord()` in `src/term-record.js` returns the first qualifying term in the class's order,
+so the earliest wins. The implementer made that call and flagged it, and the verifier passed it on
+unruled. Three things go wrong once a second quarter ends, around mid-January:
+- **A stuck term hides every later one.** A Q1 never recorded — skipped once, or a teacher who
+  started mid-year — holds the bar on *Q1 has ended* all year, and Q2, Q3 and Q4 never get one. The
+  bar has no ✕ by design, so nothing clears it.
+- **It points at the wrong quarter when it matters.** A Q1 score fixed in January puts *Q1 has
+  changed — 1 student* on the bar on Q2's last day, instead of *Q2 ends today*, in the week Q2 is
+  being keyed into Blackbaud.
+- **It hides that there are two.** Recording Q1 brings the bar straight back for Q2, which reads as
+  a recording that did not take.
+
+**Ruled by the owner, 2026-10-29: one bar naming every term that needs attention, newest first, with
+a button per term** — *Q2 ends today · Q1 has changed — 1 student*. Of the three options put to the
+owner, it is the only one where nothing can be hidden, and on a bar with no ✕ hiding is the risk.
+The others were *the newest term only, older ones after*, and *the earliest, plus "and 1 more
+quarter"*.
+
+**Booked ahead of WO-3.74 on purpose.** WO-3.74's home bar gives each class a button that opens *the*
+quarter's dialog, which is this question again. It reads the list this row adds, and is not built
+on the single-term reader.
+
+**Surface.** WO-3.73's bar, lifted as it is — `src/term-record-view.js`, `src/shell.css`'s
+`.term-record-*` rules, and frames A0, A and D of
+[`design/mockups/closing-a-quarter.html`](../../design/mockups/closing-a-quarter.html) for each
+line's wording. Two lines in one bar is not drawn; say how it was laid out in the `TESTING.md`
+section, and amend the drawing's banner in the same sitting.
+
+**Deliverables**
+- **An engine reader that returns every term needing attention for one class**, newest first,
+  each with the state and count `termNeedingRecord()` returns today. It lives in `src/term-record.js`.
+  `termNeedingRecord()` either becomes that list's head or is retired; the implementer picks and
+  says why. **No screen tests a term itself.**
+- **The bar draws one line per entry**, in the list's order, each in WO-3.73's wording for its state
+  and with its own *Record Qn grades* button opening that term's dialog. One entry draws exactly
+  what WO-3.73 draws today.
+- **Recording one term removes its line only.** The bar goes when the list is empty.
+- **A count, never a name**, as before, so the bar still stays up under a projector, and the
+  dialogs are still refused there.
+- **A mutation**: make the bar draw only the list's first entry, show the check go red, and revert
+  it before writing anything else.
+- **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.77** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] With Q1 recorded and since changed, and Q2 ended and unrecorded, the bar shows two lines, Q2's
+      first, each in its own wording and with its own button opening that term's dialog.
+- [ ] With Q1 never recorded and Q2 ended, both terms are on the bar; an unrecorded Q1 no longer
+      hides Q2.
+- [ ] Recording one term removes its line and leaves the other; recording the last removes the bar.
+      With one term needing attention, the bar reads exactly as WO-3.73's does.
+- [ ] Every term, state and count on the bar comes from the engine's list reader, and no screen
+      compares records or tests a term's end date.
+- [ ] In presentation mode the bar names no student and both dialogs refuse, naming the control.
+- [ ] With the bar drawing only the first entry, the check goes red. The mutation is reverted, and
+      `TESTING.md` § WO-3.77 shows the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] 👤 On the iPad, a two-line bar reads clearly and both buttons are thumb-sized, in portrait and
+      landscape.
+- [ ] `TESTING.md` § WO-3.77 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Newest is by the class's term order, not by a name.** `src/term-record-view.js`'s
+*Q1* is a display abbreviation, and nothing may sort or find a term by it. **Do not re-run the
+comparison per line**: each line's count is the reader's, so the bar and the dialog it opens cannot
+disagree about who changed.
