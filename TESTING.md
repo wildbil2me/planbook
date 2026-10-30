@@ -18781,6 +18781,197 @@ After recording, abe 70 → 72 on E1 (72.00 C, same letter) and mo 95 → 60 on 
 - [x] `TESTING.md` § WO-3.73 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-3.77 — the record bar names every quarter that needs it, newest first
+
+**What was built.** `src/term-record.js`: `termNeedingRecord()` is **retired**, and
+`termsNeedingRecord(doc, cls, today)` takes its place in the file. It returns every one of a class's
+terms that wants recording, as `{ termId, state, count, at }`. Each entry is worked out exactly as the
+old reader worked out its one, in a private `needOf()`. The order is **unrecorded (`ends-today` and
+`unrecorded`) before `changed`, then newest first by the term's place in `cls.terms`**. There is no
+comparator: `reduceRight` over the class's terms gives newest first, and the two state groups are
+concatenated. So nothing can be ordered by a label or a date, and the file's no-writer fence, which
+refuses `.sort(` and `.reverse(` on sight, stays green.
+
+`src/term-record-view.js`: `termRecordBarModel()` returns `{ classId, lines: [...] }`, one line per
+entry in the list's order, each in WO-3.73's wording for its state (`barLine()`).
+`refreshTermRecordBar()` empties the bar and builds one `.term-record-nag-line` per line, using
+WO-3.73's text-then-button markup. Each button carries its own `data-term-record-open` term and
+`data-term-record-class`, so `src/shell.js`'s existing click handler opens that term's dialog
+without a change. The dialog is unchanged.
+
+Other files:
+- `index.html`: the `<aside>` is now empty in the markup. The first line's lead carries
+  `termRecordNagLead`, which labels the aside.
+- `src/shell.css` § RECORD NAG: the strip's values stay on `.term-record-nag`. The drawn row moved
+  onto `.term-record-nag-line` unchanged, and `.term-record-nag-line + .term-record-nag-line` adds
+  the hairline.
+- `sw.js`: `planbook-shell-v199` → `v200`.
+- `docs/data-model.md`: the one-answer rule, restated for the list.
+- `design/mockups/closing-a-quarter.html`: a new banner span says where the build goes beyond frames
+  A0, A and D.
+- `plans/work-orders/phase-3-gradebook.md`: WO-3.74's deliverable gains a note that
+  `termNeedingRecord()` is retired.
+- Harness: seven sites at the foot of `tools/verify/term-record-bar.mjs`.
+  `tools/verify/term-record.mjs`'s export list now names `termsNeedingRecord`. `tools/README.md`'s
+  call-site line went from 2118 to 2125, taken from the sweep's own count.
+
+**Why retire it rather than keep it as the list's head.** A reader that answers one term has the
+shape of the defect this work order fixes, and WO-3.74's home bar is told in as many words not to
+build on it. If it were kept, it would be one import away from coming back. With it gone, a later
+screen cannot reach for it, and the check under line 5 below fails if any `src/` file names it.
+
+**How two lines are laid out (the drawing never shows two).** The bar is one amber strip, not two
+bars. The strip keeps its background, bottom border, padding and type. Each line inside it is
+WO-3.73's row as drawn: the text and its own *Record Qn grades* button, centred, wrapping,
+`gap: 12px`. The second line sits 8px below the first, with a 1px `#f0dfa8` hairline (the strip's own
+border colour) and 8px of space above it. Each button stays at its own line's right edge, because
+each belongs to the sentence beside it. **One line draws exactly the frame**, because the hairline
+rule only matches a line that follows another.
+
+Two alternatives were set aside:
+- **Two amber strips stacked.** They read as two different warnings and double the band of screen
+  the bar takes up.
+- **One sentence over a row of buttons**, frame E′'s home-bar shape. A class's two quarters have
+  different sentences, and frame E′ names classes, not states.
+
+There is no new control. The buttons are `.term-record-nag-btn`, which already has its 44px coarse
+rule. The sweep's REVIEW for `.term-record-nag-line` is for a container, not a touch target.
+
+**The fixture** extends WO-3.73's at the foot of `tools/verify/term-record-bar.mjs`. It is the same
+class. Quarter 2 gains an end date in the past and one Exams column of its own: Q2X, zim 88 → 88.00 B,
+the only Q2 grade, later 70 → 70.00 C. Quarter 1 ends 20 days ago and Quarter 2 yesterday, or today
+for the *ends today* case. The class's records are off the document when this part starts.
+
+- [x] With Q1 recorded and since changed, and Q2 ended and unrecorded, the bar shows two lines, Q2's
+      first, each in its own wording and with its own button opening that term's dialog.
+      — `node tools/verify-shell.mjs`, the final run (line 8): `PASS | WO-3.77: with Quarter 1
+      recorded and since changed and Quarter 2 ended and unrecorded, the bar shows two lines, Quarter
+      2's first …`. Quarter 1 was recorded through its own line's button, then abe's E1 went 72 → 74
+      (72.00 C → 74.00 C). The bar's lines, read off the DOM: `⚠ Quarter 2 has ended, and its grades
+      for WO-3.73 Record bar are not recorded. … Record Q2 grades`, then `⚠ Quarter 1 grades for
+      WO-3.73 Record bar have changed since you recorded them on Oct 29 — 1 student. Record Q1
+      grades`. Each line has one button, carrying its own term.
+      - Q2's button opened *Record Quarter 2 grades for WO-3.73 Record bar?*, listing zim alone at
+        88.00% B.
+      - Q1's button opened *Quarter 1’s grades have changed*, `1 student changed`, abe 72.00% C →
+        74.00% C. The line's count and the dialog's rows agree.
+- [x] With Q1 never recorded and Q2 ended, both terms are on the bar, Q2's first; an unrecorded Q1
+      no longer hides Q2.
+      — `PASS | WO-3.77: with Quarter 1 never recorded and Quarter 2 ended, both are on the bar,
+      Quarter 2's line first …`. The bar shows two lines, *Quarter 2 has ended …* then *Quarter 1 has
+      ended …*, and the engine list is `[[Q2,"unrecorded",0],[Q1,"unrecorded",0]]`. The same check
+      then moves Quarter 2's end date to today: *Quarter 2 ends today* leads *Quarter 1 has ended*,
+      with the list `[[Q2,"ends-today",0],[Q1,"unrecorded",0]]`. *Ends today* ranks with unrecorded,
+      as the Deliverables say.
+- [x] With Q1 never recorded and Q2 recorded and since changed, Q1's *has ended* line comes before
+      Q2's *have changed* line: unrecorded leads changed whatever their age.
+      — `PASS | WO-3.77: with Quarter 1 never recorded and Quarter 2 recorded and since changed,
+      Quarter 1's *has ended* line comes before Quarter 2's *have changed* line …`. Quarter 1's
+      entries were taken off the document, and zim's Q2X went 88 → 70. The lines read *Quarter 1 has
+      ended …* then *Quarter 2 grades … have changed since you recorded them on Oct 29 — 1 student.*,
+      and the list is `[[Q1,"unrecorded",0],[Q2,"changed",1]]`.
+- [x] Recording one term removes its line and leaves the other; recording the last removes the bar.
+      With one term needing attention, the bar reads exactly as WO-3.73's does.
+      — Two checks:
+      - `PASS | WO-3.77: Quarter 1's own button opens Quarter 1's dialog, and recording it removes
+        Quarter 1's line and leaves Quarter 2's …`. One line is left, its text equal to the *has
+        ended* literal, and one entry was written, for Q1 only.
+      - `PASS | WO-3.77: recording Quarter 2 removes its line and leaves Quarter 1's … and recording
+        Quarter 1 then removes the bar …`. One line is left, equal to the *have changed … — 1
+        student* literal. After the last recording the bar is hidden with no line in it, its text is
+        `''`, and the engine list is `[]`.
+
+      Each single-line text is compared to WO-3.73's words character for character. **That exactness
+      caught a real difference on the first run** (stopped once its section printed). The built lines
+      read `…Blackbaud.Record Q1 grades`, with no whitespace between the text and the button where
+      WO-3.73's markup had some, and WO-3.73's *ends today* / *has ended* and *have changed* checks
+      went red with it. The view now puts a space text node between them (`paintBarLine()`, with a
+      comment). Flex draws nothing for it, and the bar's text reads as before. In the final run all of
+      WO-3.73's checks in the same file pass unchanged over the new markup: *ends today*, *has ended*,
+      *have changed … — 2 students*, the five screens and no other, and presentation mode.
+- [x] Every term, state and count on the bar comes from the engine's list reader, and no screen
+      compares records or tests a term's end date.
+      — **Behaviourally:** every order check above compares the bar model's lines
+      (`termRecordBarModel()`) with `termsNeedingRecord()` asked directly, as `[termId, state, count]`
+      for each, and requires them to be equal.
+
+      **Structurally:** `PASS | WO-3.77: every term, state and count on the bar comes from the
+      engine's list reader …`. It reads `src/term-record-view.js` from `function barLine(` to `export
+      function termRecordModel(`, with comments removed. It requires exactly one
+      `termsNeedingRecord(` and none of `noLongerMatching(`, `newestRecord(`, `termEnded(`,
+      `termEndsToday(`, `gradesToRecord(`, `termRecords`, `.end`, `.sort(`, `.reverse(`, `.filter(`,
+      `.slice(`, `todayISO(` or `classGrade(`. It also requires that no `.js` file in `src/` other
+      than `src/term-record.js` names `termEnded`, `termEndsToday` or `termNeedingRecord`. This is a
+      fence, not a reading: it cannot see a comparison written under another name.
+
+      The dialog still asks `newestRecord()` and `noLongerMatching()` itself, as WO-3.73 built it.
+      That is the engine's reader, not a comparison of the dialog's own, so a line's count and its
+      dialog's rows are one function's answer on one document. Line 1's check shows them agreeing.
+- [x] In presentation mode the bar names no student and both dialogs refuse, naming the control.
+      — `PASS | WO-3.77: in presentation mode the two-line bar stays up and names no student, and both
+      lines' dialogs refuse …`. Q1 is unrecorded and Q2 changed. The bar keeps both lines and none of
+      the four fixture surnames. Each line's button opens the refusal, which names *presentation
+      mode*, the *screen button in the header*, and that term's own *Record Q1 grades* or *Record Q2
+      grades*. Neither refusal has list children, rows, a confirm button, a name or an `nn.nn%`
+      figure, and the document is byte-identical across both. WO-3.73's own presentation-mode check
+      passes beside it.
+- [x] With the bar drawing only the first entry, the check goes red. The mutation is reverted, and
+      `TESTING.md` § WO-3.77 shows the red output.
+      — Planted in `refreshTermRecordBar()`:
+      `model.lines.slice(0, 1).forEach((line, at) => bar.append(paintBarLine(model.classId, line, at === 0))); // MUTATION WO-3.77`.
+      `node tools/verify-shell.mjs`, the term-record-bar section, went red:
+      ```
+      PASS | WO-3.73: … (all ten WO-3.73 checks PASS — each asks about a single-line bar)
+      FAIL | WO-3.77: with Quarter 1 never recorded and Quarter 2 ended, both are on the bar, Quarter 2's line first …
+        :: {"ended":[{"text":"⚠ Quarter 2 has ended, and its grades for WO-3.73 Record bar are not recorded. … Record Q2 grades","term":"tm373q2",…}],
+            "endedList":{"engine":[["tm373q2","unrecorded",0],["tm373q1","unrecorded",0]],…}, …
+      FAIL | WO-3.77: Quarter 1's own button opens Quarter 1's dialog, and recording it removes Quarter 1's line …
+      FAIL | WO-3.77: with Quarter 1 recorded and since changed and Quarter 2 ended and unrecorded, the bar shows two lines …
+      FAIL | WO-3.77: recording Quarter 2 removes its line and leaves Quarter 1's …
+        :: {"left":[{"text":"⚠ Quarter 1 has ended, … Record Q1 grades",…}],"none":{"shown":false,"lines":0,"text":""},
+            "list":{"engine":[],"model":[]},"records":{"q1":1,"q2":1}}
+      FAIL | WO-3.77: with Quarter 1 never recorded and Quarter 2 recorded and since changed, Quarter 1's *has ended* line comes before …
+      FAIL | WO-3.77: in presentation mode the two-line bar stays up and names no student …
+        :: {"bar":[{"text":"⚠ Quarter 1 has ended, … Record Q1 grades",…}],"refusals":{"Q1":true,"Q2":null},"wroteNothing":true}
+      FAIL | WO-3.77: every term, state and count on the bar comes from the engine's list reader …
+        :: {"barCodeFound":true,"hits":[".slice("],"others":[]}
+      PASS | the WO-3.73 fixture came back off the document, …
+      ```
+      The engine list held both terms throughout; only the bar dropped one, which is the defect the
+      mutation stands for. All seven WO-3.77 checks went red: six on behaviour, and the seventh on the
+      `.slice(` token.
+
+      **The run was stopped once this section had printed**, so it has no summary line; its log ends
+      `EXIT=127`, the kill. The mutation was reverted by hand straight after, before anything else was
+      written. `grep -rn MUTATION src tools` was read after the revert and found no hit in any file
+      this work order touched. The remaining hits are pre-existing prose in `src/shell.js`,
+      `tools/README.md`, `tools/wo-gate.mjs` and four harness comments.
+
+      The mutated run used the structural check's first end anchor, a string beginning `/*` that has
+      since been replaced; `tools/README.md`'s WO-3.77 entry says why. The bar's code lies inside both
+      anchors, and the final run below uses the second.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs` (final run, on the tree as delivered): `2135 checks · 2135
+      passed · 0 failed · 0 skipped`, `68,670 lines · 32.2 lines per check · 1163s`, `EXIT=0`, on the
+      real clock, 2026-10-29. That is seven checks more than WO-3.73's last run (2128); all seven
+      WO-3.77 checks PASS.
+
+      `node tools/wo-sweep.mjs`: `52 checks · 48 passed · 0 failed · 4 to review`, `EXIT=0`. Three of
+      the four reviews are the standing ones: sensitive field names, due-date beside late/missing, and
+      mockup banners against the build. The fourth is `CSS selectors added in the working tree with no
+      coarse-block rule :: .term-record-nag-line`. That class is a row container holding text and an
+      existing 44px button, not a touch target, so no rule was added. The call-site check reads
+      `2125`, matching `tools/README.md:1363`.
+- [x] 👤 On the iPad, a two-line bar reads clearly and both buttons are thumb-sized, in portrait and
+      landscape.
+      — **Read on the iPad 2026-10-30, owner, green**, after the force-quit, build `v200` served by
+      `node tools/serve-https.mjs`. All five checks passed: About read `v200`; a class with two ended,
+      unrecorded quarters showed two lines in one amber strip, newest first; both lines read clearly
+      and each *Record Qn grades* button was thumb-sized in portrait and in landscape; and each button
+      opened its own quarter's dialog.
+- [x] `TESTING.md` § WO-3.77 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

@@ -36,11 +36,18 @@
  *   AFTER RECORDING, abe's E1 70 → 72 (72.00 C: a percentage move inside one letter) and mo's P1
  *   95 → 60 (77.50 C: a letter change). zim is unchanged and must not be listed.
  *
+ * WO-3.77 ADDS QUARTER 2 to the same class, at the foot of the section: a column of its own (Q2X,
+ * Exams, zim 88 → 88.00 B, later 70 → 70.00 C) and an end date in the past, so the bar has two terms
+ * to name and every order the owner ruled on 2026-10-29 can be set up — unrecorded before changed,
+ * then newest first by the class's term order.
+ *
  * A second class, with no dated terms, carries no bar. It plants both classes through the store,
  * moves no viewport, turns presentation mode on once and puts it back as it was found, takes both
  * classes back out with the `termRecords` key as it was found, and hands the page back reloaded.
  */
 
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { nodeDaysFromToday } from './lib-dates.mjs';
 
 export async function run(h) {
@@ -77,15 +84,23 @@ const endQ1On = (end) => evalJs(`(async function(){ var s = window.planbook.stor
   });
   await s.flush(); return 1; })()`);
 
-/* What the bar shows right now, read off the DOM. */
+/* What the bar shows right now, read off the DOM. `button`, `cls` and `term` are the FIRST line's
+   (WO-3.73's checks ask about a bar of one line); `lines` is every line in document order, each with
+   its own text and its own button (WO-3.77). */
 const barNow = () => evalJs(`(function(){
   var bar = document.getElementById('termRecordNag');
-  var btn = document.getElementById('termRecordNagBtn');
+  var btn = bar.querySelector('[data-term-record-open]');
   var r = bar.getBoundingClientRect();
+  var norm = function(t){ return (t || '').replace(/\\s+/g, ' ').trim(); };
   return { shown: !bar.classList.contains('hidden') && r.height > 0,
-    text: (bar.textContent || '').replace(/\\s+/g, ' ').trim(),
+    text: norm(bar.textContent),
     button: btn ? btn.textContent : '', cls: btn ? btn.getAttribute('data-term-record-class') : '',
     term: btn ? btn.getAttribute('data-term-record-open') : '',
+    lines: Array.prototype.map.call(bar.querySelectorAll('.term-record-nag-line'), function(line){
+      var b = line.querySelector('[data-term-record-open]');
+      return { text: norm(line.textContent), term: b ? b.getAttribute('data-term-record-open') : '',
+        cls: b ? b.getAttribute('data-term-record-class') : '', button: b ? b.textContent : '',
+        buttons: line.querySelectorAll('button').length }; }),
     afterBackupNag: (function(){ var b = document.getElementById('backupNag');
       return !!(b && (b.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING)); })(),
     view: (function(){ var ids = { home: 'homeView', 'class': 'classView', assignments: 'assignmentsView',
@@ -145,7 +160,12 @@ const go = async (screen) => {
 /* A class opened through its real door — the card on All classes or the tab in the header, both
    `data-class-tab`, whichever is on screen — so src/shell.js's chain runs as it does for a teacher. */
 const openClass = async (id) => { await clickVisible('[data-class-tab="' + id + '"]'); await sleep(200); };
-const openFromBar = async () => { await clickSel('#termRecordNagBtn'); await sleep(200); };
+/* The bar's button — the first line's, or the one on the line for `termId` (WO-3.77). */
+const openFromBar = async (termId) => {
+  await clickSel(termId ? '#termRecordNag [data-term-record-open="' + termId + '"]'
+    : '#termRecordNag [data-term-record-open]');
+  await sleep(200);
+};
 const escape = async () => {
   await evalJs("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); 1");
   await sleep(150);
@@ -461,6 +481,255 @@ check('WO-3.73: in a weighted class an uncategorized column holding only a missi
     && mDialog.loose === '1 assignment filed under no category has scores or missing marks in it, which '
       + 'are not in these grades: a weighted grade counts only work in a category.',
   JSON.stringify({ read: onlyM, looseLine: mDialog.loose, open: mDialog.open }));
+
+/* ══ WO-3.77 — THE BAR NAMES EVERY QUARTER THAT NEEDS IT ══
+   The same class, with Quarter 2 given an end date in the past and one column of its own — Q2X, in
+   Exams, zim 88 — so Quarter 2 has a grade to record (zim 88.00 B, the only Q2 grade). Every line is
+   checked against a literal in WO-3.73's words, and every order against the owner's ruling of
+   2026-10-29: unrecorded (and *ends today*) before changed, then newest first by the class's own term
+   order. This class's records are off the document on arrival (the missing-mark check took them). */
+const CN = 'WO-3.73 Record bar';
+const Q2X = 'a373-q2x';
+const unrecLine = (n) => '⚠ Quarter ' + n + ' has ended, and its grades for ' + CN + ' are not recorded. '
+  + 'Record them once they are keyed into Blackbaud, and Planbook will tell you if any of them changes '
+  + 'afterwards. Record Q' + n + ' grades';
+const todayLine = (n) => '⚠ Quarter ' + n + ' ends today. Record its grades for ' + CN + ' once they '
+  + 'are keyed into Blackbaud. Record Q' + n + ' grades';
+const changedLine = (n, date, k) => '⚠ Quarter ' + n + ' grades for ' + CN + ' have changed since you '
+  + 'recorded them on ' + date + ' — ' + k + (k === 1 ? ' student' : ' students') + '. Record Q' + n
+  + ' grades';
+/* Both edges, flushed: Quarter 1 from 2000 to `q1End`, Quarter 2 from the next day to `q2End`. */
+const setTerms = (q1End, q2End) => evalJs(`(async function(){ var s = window.planbook.store;
+  var e = '${q1End}';
+  var next = new Date(Number(e.slice(0,4)), Number(e.slice(5,7)) - 1, Number(e.slice(8,10)) + 1);
+  var p = function(x){ return (x < 10 ? '0' : '') + x; };
+  s.update(function(doc){
+    var cls = doc.classes.filter(function(c){ return c.id === '${CLS}'; })[0];
+    cls.terms[0].start = '2000-01-01'; cls.terms[0].end = e;
+    cls.terms[1].start = next.getFullYear() + '-' + p(next.getMonth() + 1) + '-' + p(next.getDate());
+    cls.terms[1].end = '${q2End}';
+  });
+  await s.flush(); return 1; })()`);
+/* The engine's list, asked directly, as [termId, state, count]; and the bar's own model beside it. */
+const listNow = () => evalJs(`(function(){ var d = window.planbook.store.getDoc();
+  var cls = d.classes.filter(function(c){ return c.id === '${CLS}'; })[0];
+  var m = window.planbook.termRecordView.termRecordBarModel('scores', '${CLS}');
+  return { engine: window.planbook.termRecord.termsNeedingRecord(d, cls).map(function(n){
+      return [n.termId, n.state, n.count]; }),
+    model: m ? m.lines.map(function(l){ return [l.termId, l.state, l.count]; }) : [] }; })()`);
+/* The record's date as the bar prints it, for one term — the newest of this class's entries for it. */
+const recDate = (termId) => evalJs(`(function(){ var d = window.planbook.store.getDoc();
+  var mine = (d.termRecords || []).filter(function(e){ return e.classId === '${CLS}' && e.termId === '${termId}'; });
+  if (!mine.length) return null;
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var at = String(mine[mine.length - 1].at).slice(0, 10).split('-');
+  return MON[Number(at[1]) - 1] + ' ' + Number(at[2]); })()`);
+/* A line's button, tapped only if the line is there — a missing line must fail the check that asks
+   for it, not throw the section away (the mutation run draws one line, and this is what it meets). */
+const openLine = async (termId) => {
+  const there = await evalJs(`!!document.querySelector('#termRecordNag:not(.hidden) [data-term-record-open="${termId}"]')`);
+  if (there) await openFromBar(termId);
+  return there;
+};
+const recordLine = async (termId) => {
+  if (!(await openLine(termId))) return false;
+  await clickSel('#termRecordBtn');
+  await sleep(200);
+  return true;
+};
+const mineByTerm = () => evalJs(`(async function(){ await window.planbook.store.flush();
+  var d = window.planbook.store.getDoc();
+  var mine = (d.termRecords || []).filter(function(e){ return e.classId === '${CLS}'; });
+  return { q1: mine.filter(function(e){ return e.termId === '${Q1}'; }).length,
+    q2: mine.filter(function(e){ return e.termId === '${Q2}'; }).length }; })()`);
+const lineShape = (b) => b.lines.map((l) => [l.term, l.cls, l.buttons]);
+
+await evalJs(`(async function(){ var s = window.planbook.store;
+  s.update(function(doc){
+    doc.assignments.push({ id: '${Q2X}', classId: '${CLS}', termId: '${Q2}', categoryId: '${KE}',
+      name: 'WO-3.77 Q2 exam', points: 100, assigned: '', due: '' });
+    doc.scores['${Q2X}'] = {}; doc.scores['${Q2X}']['${S.zim}'] = { v: 88 };
+    doc.termRecords = (doc.termRecords || []).filter(function(e){ return e.classId !== '${CLS}'; }); });
+  await s.flush(); return 1; })()`);
+
+/* ── WO-3.77 ACCEPTANCE 2: Q1 never recorded and Q2 ended — both on the bar, Q2 first ── */
+await setTerms(nodeDaysFromToday(-20), nodeDaysFromToday(-1));
+await go('scores');
+const twoUnrec = await barNow();
+const twoUnrecList = await listNow();
+await setTerms(nodeDaysFromToday(-20), TODAY);
+await go('class');
+const q2Today = await barNow();
+const q2TodayList = await listNow();
+check('WO-3.77: with Quarter 1 never recorded and Quarter 2 ended, both are on the bar, Quarter 2\'s line '
+  + 'first — an unrecorded Quarter 1 no longer hides Quarter 2 — each in WO-3.73\'s *has ended* wording '
+  + 'with its own button for its own term; on Quarter 2\'s end date its *ends today* line leads the '
+  + 'same way; the bar\'s lines are the engine list\'s entries, in its order',
+  twoUnrec.shown && twoUnrec.lines.length === 2
+    && twoUnrec.lines[0].text === unrecLine(2) && twoUnrec.lines[1].text === unrecLine(1)
+    && JSON.stringify(lineShape(twoUnrec)) === JSON.stringify([[Q2, CLS, 1], [Q1, CLS, 1]])
+    && JSON.stringify(twoUnrecList.engine) === JSON.stringify([[Q2, 'unrecorded', 0], [Q1, 'unrecorded', 0]])
+    && JSON.stringify(twoUnrecList.model) === JSON.stringify(twoUnrecList.engine)
+    && q2Today.shown && q2Today.lines.length === 2
+    && q2Today.lines[0].text === todayLine(2) && q2Today.lines[1].text === unrecLine(1)
+    && JSON.stringify(q2TodayList.engine) === JSON.stringify([[Q2, 'ends-today', 0], [Q1, 'unrecorded', 0]])
+    && JSON.stringify(q2TodayList.model) === JSON.stringify(q2TodayList.engine),
+  JSON.stringify({ ended: twoUnrec.lines, endedList: twoUnrecList, today: q2Today.lines, todayList: q2TodayList }));
+
+/* ── WO-3.77 ACCEPTANCE 4, first half: recording one term removes its line only ── */
+await setTerms(nodeDaysFromToday(-20), nodeDaysFromToday(-1));
+await go('scores');
+const q1Opened = await openLine(Q1);
+const q1Dialog = q1Opened ? await dialogNow() : null;
+if (q1Opened) { await clickSel('#termRecordBtn'); await sleep(200); }
+const afterQ1 = await barNow();
+const afterQ1Records = await mineByTerm();
+check('WO-3.77: Quarter 1\'s own button opens Quarter 1\'s dialog, and recording it removes Quarter 1\'s line '
+  + 'and leaves Quarter 2\'s — one line, reading exactly as WO-3.73\'s bar reads for one unrecorded term, '
+  + 'with one button for Quarter 2 — and wrote one entry, for Quarter 1 only',
+  q1Opened && q1Dialog.open && q1Dialog.title === 'Record Quarter 1 grades for ' + CN + '?'
+    && q1Dialog.confirm === 'Record Q1 grades'
+    && afterQ1.shown && afterQ1.lines.length === 1 && afterQ1.text === unrecLine(2)
+    && afterQ1.lines[0].text === unrecLine(2)
+    && JSON.stringify(lineShape(afterQ1)) === JSON.stringify([[Q2, CLS, 1]])
+    && afterQ1Records.q1 === 1 && afterQ1Records.q2 === 0,
+  JSON.stringify({ opened: q1Opened, title: q1Dialog && q1Dialog.title, bar: afterQ1.lines,
+    records: afterQ1Records }));
+
+/* ── WO-3.77 ACCEPTANCE 1: Q1 recorded and since changed, Q2 ended and unrecorded ──
+   abe's E1 72 → 74: 74.00 C, a percentage move inside the letter, and the one student changed. */
+await evalJs(`(async function(){ var s = window.planbook.store;
+  s.update(function(doc){ doc.scores['${A.e1}']['${S.abe}'] = { v: 74 }; });
+  await s.flush(); return 1; })()`);
+await go('assignments');
+const mixed = await barNow();
+const mixedList = await listNow();
+const q1Date = await recDate(Q1);
+const q2Opened = await openLine(Q2);
+const q2Dialog = q2Opened ? await dialogNow() : null;
+if (q2Opened) { await clickSel('#termRecordKeep'); await sleep(150); }
+const q1Again = await openLine(Q1);
+const q1Changed = q1Again ? await dialogNow() : null;
+if (q1Again) { await clickSel('#termRecordKeep'); await sleep(150); }
+check('WO-3.77: with Quarter 1 recorded and since changed and Quarter 2 ended and unrecorded, the bar shows '
+  + 'two lines, Quarter 2\'s first — *has ended … not recorded*, then *Quarter 1 grades … have changed … '
+  + '— 1 student* — each with its own button: Quarter 2\'s opens Quarter 2\'s first-recording dialog '
+  + '(zim\'s 88.00 B, the only Q2 grade), and Quarter 1\'s opens Quarter 1\'s changed form listing abe '
+  + 'alone, so the line\'s count and the dialog\'s rows agree',
+  mixed.shown && mixed.lines.length === 2 && !!q1Date
+    && mixed.lines[0].text === unrecLine(2) && mixed.lines[1].text === changedLine(1, q1Date, 1)
+    && JSON.stringify(lineShape(mixed)) === JSON.stringify([[Q2, CLS, 1], [Q1, CLS, 1]])
+    && JSON.stringify(mixedList.engine) === JSON.stringify([[Q2, 'unrecorded', 0], [Q1, 'changed', 1]])
+    && JSON.stringify(mixedList.model) === JSON.stringify(mixedList.engine)
+    && q2Opened && q2Dialog.open && q2Dialog.title === 'Record Quarter 2 grades for ' + CN + '?'
+    && q2Dialog.label === '1 student'
+    && JSON.stringify(q2Dialog.rows.map((r) => [r.id, r.a, r.b])) === JSON.stringify([[S.zim, '88.00%', 'B']])
+    && q2Dialog.confirm === 'Record Q2 grades'
+    && q1Again && q1Changed.open && q1Changed.title === 'Quarter 1’s grades have changed'
+    && q1Changed.label === '1 student changed'
+    && JSON.stringify(q1Changed.rows.map((r) => [r.id, r.a, r.b])) === JSON.stringify([[S.abe, '72.00% C', '74.00% C']])
+    && q1Changed.confirm === 'Record Q1 grades',
+  JSON.stringify({ bar: mixed.lines, list: mixedList, date: q1Date,
+    q2: q2Dialog && { title: q2Dialog.title, label: q2Dialog.label, rows: q2Dialog.rows },
+    q1: q1Changed && { title: q1Changed.title, label: q1Changed.label, rows: q1Changed.rows } }));
+
+/* ── WO-3.77 ACCEPTANCE 4, the rest: the other line stays, then the last one takes the bar ── */
+const q2Recorded = await recordLine(Q2);
+const leftQ1 = await barNow();
+const q1Recorded = await recordLine(Q1);
+const none = await barNow();
+const noneList = await listNow();
+const allRecords = await mineByTerm();
+check('WO-3.77: recording Quarter 2 removes its line and leaves Quarter 1\'s — one line, reading exactly as '
+  + 'WO-3.73\'s bar reads for one changed term — and recording Quarter 1 then removes the bar: hidden, '
+  + 'no line left in it, and the engine\'s list empty',
+  q2Recorded && leftQ1.shown && leftQ1.lines.length === 1 && leftQ1.text === changedLine(1, q1Date, 1)
+    && JSON.stringify(lineShape(leftQ1)) === JSON.stringify([[Q1, CLS, 1]])
+    && q1Recorded && none.shown === false && none.lines.length === 0 && none.text === ''
+    && noneList.engine.length === 0 && noneList.model.length === 0
+    && allRecords.q1 === 2 && allRecords.q2 === 1,
+  JSON.stringify({ left: leftQ1.lines, none: { shown: none.shown, lines: none.lines.length, text: none.text },
+    list: noneList, records: allRecords }));
+
+/* ── WO-3.77 ACCEPTANCE 3: Q1 never recorded, Q2 recorded and since changed ──
+   Quarter 1's entries come off the document (it reads as never recorded) and zim's Q2X 88 → 70:
+   70.00 C, a letter change, the one Q2 student changed. Quarter 1 is the older and still leads. */
+await evalJs(`(async function(){ var s = window.planbook.store;
+  s.update(function(doc){ doc.scores['${Q2X}']['${S.zim}'] = { v: 70 };
+    doc.termRecords = doc.termRecords.filter(function(e){ return !(e.classId === '${CLS}' && e.termId === '${Q1}'); }); });
+  await s.flush(); return 1; })()`);
+await go('scores');
+const unrecFirst = await barNow();
+const unrecFirstList = await listNow();
+const q2Date = await recDate(Q2);
+check('WO-3.77: with Quarter 1 never recorded and Quarter 2 recorded and since changed, Quarter 1\'s *has '
+  + 'ended* line comes before Quarter 2\'s *have changed* line — unrecorded leads changed whatever their '
+  + 'age — and the bar\'s lines are the engine list\'s entries, in its order',
+  unrecFirst.shown && unrecFirst.lines.length === 2 && !!q2Date
+    && unrecFirst.lines[0].text === unrecLine(1) && unrecFirst.lines[1].text === changedLine(2, q2Date, 1)
+    && JSON.stringify(lineShape(unrecFirst)) === JSON.stringify([[Q1, CLS, 1], [Q2, CLS, 1]])
+    && JSON.stringify(unrecFirstList.engine) === JSON.stringify([[Q1, 'unrecorded', 0], [Q2, 'changed', 1]])
+    && JSON.stringify(unrecFirstList.model) === JSON.stringify(unrecFirstList.engine),
+  JSON.stringify({ bar: unrecFirst.lines, list: unrecFirstList, date: q2Date }));
+
+/* ── WO-3.77 ACCEPTANCE 6: under a projector, two lines, no name, both dialogs refuse ── */
+const projBefore = await snap();
+await evalJs(`(function(){ window.planbook.supports.setPresentationMode(true); return 1; })()`);
+await go('class');
+const projTwo = await barNow();
+const refusals = {};
+for (const [termId, short] of [[Q1, 'Q1'], [Q2, 'Q2']]) {
+  const opened = await openLine(termId);
+  const shown = opened ? await dialogNow() : null;
+  if (opened) { await clickSel('#termRecordKeep'); await sleep(150); }
+  refusals[short] = shown && shown.open && shown.refused !== null
+    && /presentation mode/i.test(shown.refused) && /screen button in the header/i.test(shown.refused)
+    && shown.refused.indexOf('Record ' + short + ' grades') !== -1
+    && shown.listChildren === 0 && shown.rows.length === 0 && shown.confirm === null
+    && shown.keep === 'Close' && NAMES.every((n) => shown.all.indexOf(n) === -1)
+    && !/\d+\.\d\d%/.test(shown.all);
+}
+const projAfter = await snap();
+await evalJs(`(function(){ window.planbook.supports.setPresentationMode(false); return 1; })()`);
+check('WO-3.77: in presentation mode the two-line bar stays up and names no student, and both lines\' '
+  + 'dialogs refuse — no list, no name, no figure, the header\'s screen button named and that term\'s '
+  + 'own *Record Qn grades* — and neither writes anything',
+  projTwo.shown && projTwo.lines.length === 2 && NAMES.every((n) => projTwo.text.indexOf(n) === -1)
+    && refusals.Q1 === true && refusals.Q2 === true && projAfter.json === projBefore.json,
+  JSON.stringify({ bar: projTwo.lines, refusals: refusals, wroteNothing: projAfter.json === projBefore.json }));
+
+/* ── WO-3.77 ACCEPTANCE 5, the half a document cannot show: no screen tests a term itself ──
+   The bar's code in src/term-record-view.js — from barLine() to the dialog's model, termRecordModel(),
+   comments out —
+   asks termsNeedingRecord() once and nothing else of the engine: no record read, no comparison, no
+   end date, and no sort, filter or reversal of the reader's order. And nothing in src/ outside the
+   engine calls the two end-date readers or names the retired single-term reader. */
+const viewSource = (await fs.readFile(path.join(h.ROOT, 'src/term-record-view.js'), 'utf8'))
+  .replace(/\r\n/g, '\n');
+const barAt = viewSource.indexOf('function barLine(');
+const barEnd = viewSource.indexOf('export function termRecordModel(');
+const barCode = barAt < 0 || barEnd < barAt ? ''
+  : viewSource.slice(barAt, barEnd).replace(/\/\*[\s\S]*?\*\//g, '\n').replace(/^\s*\/\/.*$/gm, '');
+const BAR_REFUSED = ['noLongerMatching(', 'newestRecord(', 'termEnded(', 'termEndsToday(', 'gradesToRecord(',
+  'termRecords', '.end', '.sort(', '.reverse(', '.filter(', '.slice(', 'todayISO(', 'classGrade('];
+const barHits = BAR_REFUSED.filter((token) => barCode.indexOf(token) !== -1);
+const srcDir = path.join(h.ROOT, 'src');
+const others = [];
+for (const name of (await fs.readdir(srcDir)).filter((f) => f.endsWith('.js') && f !== 'term-record.js')) {
+  const text = (await fs.readFile(path.join(srcDir, name), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '\n')
+    .replace(/^\s*\/\/.*$/gm, '');
+  ['termEnded', 'termEndsToday', 'termNeedingRecord'].forEach((token) => {
+    if (new RegExp('\\b' + token + '\\b').test(text)) others.push(name + ': ' + token);
+  });
+}
+check('WO-3.77: every term, state and count on the bar comes from the engine\'s list reader — the bar\'s '
+  + 'code calls termsNeedingRecord() once and no record reader, comparison, end-date reader, clock or '
+  + 'reordering (noLongerMatching, newestRecord, termEnded, termEndsToday, .end, sort, filter, slice, '
+  + 'reverse), and no file in src/ but the engine names termEnded, termEndsToday or the retired '
+  + 'termNeedingRecord',
+  barCode.length > 0 && (barCode.match(/termsNeedingRecord\(/g) || []).length === 1
+    && barHits.length === 0 && others.length === 0,
+  JSON.stringify({ barCodeFound: barCode.length > 0, hits: barHits, others: others }));
 } finally {
 /* ── THE FIXTURE COMES BACK OUT ── */
 await evalJs(`(async function(){

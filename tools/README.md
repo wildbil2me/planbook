@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2118 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2125 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -3049,6 +3049,20 @@ its one-writer check now expects three more exported readers. The twelfth site c
 order's first correction round — an uncategorized column holding only a missing mark — and the
 full run after it read `2128 checks · 2128 passed · 0 failed · 0 skipped`, 68,399 lines, 32.1 lines
 per check, 1183s, exit 0, 2026-10-27 on the real clock.
+
+**WO-3.77 moved it from 2118 to 2125, and the executed count from 2128 to 2135 — seven sites,
+seven results, no new file.** All seven are at the foot of `verify/term-record-bar.mjs`, inside its
+existing `try`, before the fixture comes back out: four bar orders, the two recordings that take a
+line and then the bar away, presentation mode over two lines, and one check reading the bar's code
+in `src/term-record-view.js`. None sits in a loop and none is a failure arm. `verify/term-record.mjs`
+gained no site: its one-writer check expects `termsNeedingRecord` where `termNeedingRecord` stood.
+**The structural check first counted as six, not seven, and the reason generalises:** it held the
+string `'/* ── the dialog'` as an anchor, the sweep's comment-line reader took that `/*` inside a
+string for the start of a block comment, and the next `check(` line was read as prose. The anchor is
+`'export function termRecordModel('` now. A `/*` in a harness string costs a site from this count
+without a word — though the run still executed it, which is why the executed count moved by seven
+both times. Full run: `2135 checks · 2135 passed · 0 failed · 0 skipped`, 68,670 lines, 32.2 lines
+per check, 1163s, exit 0, 2026-10-29 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

@@ -13,12 +13,13 @@
 
   ── THIS FILE COMPUTES NOTHING ──
 
-  Which term needs recording, in which of three states, how many students changed, who they are, what
+  Which terms need recording, in what order, in which of three states, how many students changed, who they are, what
   was recorded and what it is now, whether a letter moved, how many boxes are empty, which columns are
   held, how much uncategorized work is outside a weighted grade — every one of those is a reader in
-  src/term-record.js, and the bar and the dialog ask THE SAME reader for the same fact. The bar's
-  count is termNeedingRecord()'s, which is noLongerMatching()'s length; the dialog's rows are
-  noLongerMatching()'s rows. A second comparison here is the second opinion that lets the bar say
+  src/term-record.js, and the bar and the dialog ask THE SAME reader for the same fact. Each of the
+  bar's lines is one entry of termsNeedingRecord(), in its order, with its count — which is
+  noLongerMatching()'s length — and the bar asks noLongerMatching() nothing itself; the dialog's rows
+  are noLongerMatching()'s rows. A second comparison here is the second opinion that lets the bar say
   "2 students" over a dialog listing three (the work order's Traps). What this file adds is words,
   the grid's order (gridOrder(), the grade sheet's — the order Blackbaud is keyed in) and the grid's
   two-decimal figure (formatPercent()).
@@ -48,6 +49,18 @@
   her thumb. The backup nag made the same trade for the same reason. So a score corrected in Q1 shows
   in the bar the next time a screen is opened — which is also WO-3.74's moment, leaving the quarter.
 
+  ── ONE LINE PER TERM, IN THE READER'S ORDER (WO-3.77) ──
+
+  The bar names every term the reader lists — unrecorded before changed, newest first, the owner's
+  order of 2026-10-29 — one line each, in WO-3.73's wording for that line's state and with its own
+  *Record Qn grades* button opening that term's dialog. The order is the reader's and is not touched
+  here: nothing below sorts, filters or picks among the entries. One entry draws exactly what WO-3.73
+  drew, because a line IS WO-3.73's bar — the text and the button in one wrapping row — and the
+  `<aside>` around the lines carries the colour, the border and the padding. Two lines stack, a
+  hairline between them (src/shell.css § RECORD NAG says why that and not a second bar). A recording
+  removes its own line because the reader stops listing its term, and the bar goes when the list is
+  empty.
+
   ── THE TERM'S SHORT NAME ──
 
   The owner's word is *Record Q1 grades* (ruling 10). A term's label is the teacher's own text and
@@ -65,7 +78,7 @@ import { presentationMode } from './supports.js';
 import { currentView, isClassScreen } from './views.js';
 import { getSelectedClass } from './classes.js';
 import {
-  recordTerm, termNeedingRecord, newestRecord, noLongerMatching, gradesToRecord, emptyBoxes,
+  recordTerm, termsNeedingRecord, newestRecord, noLongerMatching, gradesToRecord, emptyBoxes,
   heldColumns, looseWorkOutOfGrade,
 } from './term-record.js';
 /* The grid's order and the grid's figure, for src/held-column.js's reason over the same import: a
@@ -77,9 +90,9 @@ import { rosterName } from './roster.js';
 import { shortDate, weekdayShortDate } from './date-text.js';
 
 const BAR_ID = 'termRecordNag';
+/* The first line's lead carries this id, so the bar's aria-labelledby names its first — most urgent —
+   line, as it named the only one before WO-3.77. */
 const BAR_LEAD_ID = 'termRecordNagLead';
-const BAR_MORE_ID = 'termRecordNagMore';
-const BAR_BTN_ID = 'termRecordNagBtn';
 
 const MODAL_ID = 'termRecordModal';
 const TITLE_ID = 'termRecordTitle';
@@ -159,21 +172,19 @@ function el(tag, className, text) {
 /* ────────────────────────────── the bar ────────────────────────────── */
 
 /*
-  WHAT THE BAR SAYS NOW, as data — null when it is not drawn. The seam a check reads it through, and
-  the one place the three wordings are chosen. `view` and `classId` default to what is on screen.
+  WHAT THE BAR SAYS NOW, as data — `{ classId, lines: [{ termId, state, count, lead, more, button }] }`,
+  or null when it is not drawn. The seam a check reads it through, and the one place the three
+  wordings are chosen. `view` and `classId` default to what is on screen.
 
-  THE THREE WORDINGS ARE THE DRAWING'S, A0, A AND D, and termNeedingRecord() picks between them: on
+  ONE LINE PER ENTRY OF termsNeedingRecord(), IN ITS ORDER (WO-3.77). Each line's term, state and count
+  are the entry's, copied and never re-derived — no comparison, no end date, no order is worked out
+  here.
+
+  THE THREE WORDINGS ARE THE DRAWING'S, A0, A AND D, and the entry's state picks between them: on
   the end date *ends today*; after it, unrecorded, *has ended*; recorded and no longer matching,
   *have changed* with the count. The date in D is the newest record's, in the app's short format.
 */
-export function termRecordBarModel(view, classId) {
-  const on = view === undefined ? currentView() : view;
-  if (!isClassScreen(on) || on === 'calendar') return null;
-  const doc = getDoc();
-  const cls = classId === undefined ? getSelectedClass() : classById(doc, classId);
-  if (!doc || !cls) return null;
-  const need = termNeedingRecord(doc, cls);
-  if (!need) return null;
+function barLine(cls, need) {
   const term = termOf(cls, need.termId);
   const name = longName(term);
   let lead = '';
@@ -189,25 +200,55 @@ export function termRecordBarModel(view, classId) {
     lead = name + ' grades for ' + className(cls) + ' have changed since you recorded them on '
       + shortDate(dateOf(need.at)) + ' — ' + plural(need.count, 'student', 'students') + '.';
   }
-  return { classId: cls.id, termId: need.termId, state: need.state, count: need.count,
+  return { termId: need.termId, state: need.state, count: need.count,
     lead: lead, more: more, button: recordLabel(term) };
+}
+
+export function termRecordBarModel(view, classId) {
+  const on = view === undefined ? currentView() : view;
+  if (!isClassScreen(on) || on === 'calendar') return null;
+  const doc = getDoc();
+  const cls = classId === undefined ? getSelectedClass() : classById(doc, classId);
+  if (!doc || !cls) return null;
+  const needs = termsNeedingRecord(doc, cls);
+  if (!needs.length) return null;
+  return { classId: cls.id, lines: needs.map((need) => barLine(cls, need)) };
+}
+
+/* One line of the bar: WO-3.73's markup — the text, then the button — inside a row of its own. The
+   button carries the class and the term in the attributes src/shell.js's click handler reads. */
+function paintBarLine(classId, line, first) {
+  const row = el('div', 'term-record-nag-line');
+  row.setAttribute('data-term-record-line', line.termId);
+  const text = el('div', 'term-record-nag-text');
+  const strong = el('strong');
+  const warn = el('span', '', '⚠');
+  warn.setAttribute('aria-hidden', 'true');
+  const lead = el('span', '', line.lead);
+  if (first) lead.id = BAR_LEAD_ID;
+  strong.append(warn, document.createTextNode(' '), lead);
+  text.append(strong);
+  if (line.more) text.append(document.createTextNode(' '), el('span', '', line.more));
+  const button = el('button', 'term-record-nag-btn', line.button);
+  button.type = 'button';
+  button.setAttribute('data-term-record-open', line.termId);
+  button.setAttribute('data-term-record-class', classId);
+  button.setAttribute('aria-haspopup', 'dialog');
+  /* The space between them is WO-3.73's markup, where whitespace stood between the text and the
+     button: the flex row draws nothing for it, but the bar's text — what a screen reader reads out —
+     is "…Blackbaud. Record Q1 grades", not "…Blackbaud.Record Q1 grades". */
+  row.append(text, document.createTextNode(' '), button);
+  return row;
 }
 
 export function refreshTermRecordBar() {
   const bar = document.getElementById(BAR_ID);
   if (!bar) return;
   const model = termRecordBarModel();
+  bar.textContent = '';
   bar.classList.toggle('hidden', !model);
-  const lead = document.getElementById(BAR_LEAD_ID);
-  const more = document.getElementById(BAR_MORE_ID);
-  const button = document.getElementById(BAR_BTN_ID);
-  if (lead) lead.textContent = model ? model.lead : '';
-  if (more) more.textContent = model ? model.more : '';
-  if (button) {
-    button.textContent = model ? model.button : 'Record grades';
-    button.setAttribute('data-term-record-open', model ? model.termId : '');
-    button.setAttribute('data-term-record-class', model ? model.classId : '');
-  }
+  if (!model) return;
+  model.lines.forEach((line, at) => bar.append(paintBarLine(model.classId, line, at === 0)));
 }
 
 /* ────────────────────────────── the dialog ────────────────────────────── */

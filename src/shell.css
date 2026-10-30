@@ -496,13 +496,27 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
    `align-items: center` where the backup nag says `flex-start`, as drawn: this strip is one short
    paragraph beside its button, the backup nag two, and centring a two-paragraph block against a
    button would float the button off the line it answers. */
+/* ONE LINE PER TERM (WO-3.77). The bar names every quarter that needs recording, and the drawing has
+   only ever drawn one, so this is the build's layout rather than a lifted one. The strip's own
+   values — the amber, the border, the padding, the type — stay on `.term-record-nag`, and the drawn
+   strip's ROW (text beside its button, centred, wrapping) moved down onto `.term-record-nag-line`
+   unchanged, so ONE line draws exactly what WO-3.73 drew. Two lines stack inside the one strip with a
+   hairline in the strip's own border colour between them, each with its button at its own right
+   edge: one bar with two lines, not two bars, because two amber strips one above the other read as
+   two different warnings and double the band the screen gives up; and a button per line rather than
+   a row of buttons under one sentence, because each button belongs to the sentence beside it. */
 .term-record-nag {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  flex-wrap: wrap;
   background: #fff8e6; color: #8a6d1a; border-bottom: 1px solid #f0dfa8;
   padding: 10px 20px; font-size: 12.5px; line-height: 1.55;
   padding-left: max(20px, env(safe-area-inset-left, 0px));
   padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+.term-record-nag-line {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
+}
+.term-record-nag-line + .term-record-nag-line {
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid #f0dfa8;
 }
 .term-record-nag-text { flex: 1 1 320px; min-width: 0; }
 .term-record-nag-btn {

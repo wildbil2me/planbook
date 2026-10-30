@@ -810,10 +810,15 @@ two grades for one student.** So a class's term can be *recorded*: one entry app
   `looseWorkOutOfGrade()` counts the live uncategorized columns holding a score or a missing mark,
   from the engine's `uncategorizedScores()` and `uncategorizedWork()`, and answers 0 in a points
   class, where that work is in the grade.
-- **The bar and the dialog read one answer** *(WO-3.73)*. `termNeedingRecord()` names the first of a
-  class's terms, in the class's order, that wants recording — `ends-today` on its end date,
-  `unrecorded` after it, or `changed` with the count of `noLongerMatching()` — and the dialog lists
-  that same reader's rows, each carrying `letterChanged` so the screen compares nothing.
+- **The bar and the dialog read one answer** *(WO-3.73, made a list at WO-3.77)*.
+  `termsNeedingRecord()` names **every** one of a class's terms that wants recording, as
+  `{ termId, state, count, at }` — `ends-today` on its end date, `unrecorded` after it, or `changed`
+  with the count of `noLongerMatching()` — **unrecorded (and `ends-today`) before `changed`, then
+  newest first by the term's place in `cls.terms`** (the owner, 2026-10-29), never by its label or
+  its dates. The bar draws one line per entry in that order, and the dialog lists
+  `noLongerMatching()`'s rows, each carrying `letterChanged` so the screen compares nothing. The
+  single-term `termNeedingRecord()` it replaced is **retired**, not kept as the list's head: it
+  answered the earliest term only, so an unrecorded Q1 hid every later quarter on a bar with no ✕.
   `gradesToRecord()` is the writer's own list, shared with the dialog's first form.
 - **Grading settings stay per class**, not per term. A weight, letter-scale or drop-count change made
   after a quarter is keyed moves its grades, and the comparison reports exactly the students whose

@@ -198,39 +198,63 @@ export function termEndsToday(cls, termId, today) {
 }
 
 /*
-  WHICH OF A CLASS'S TERMS WANTS RECORDING NOW, AND HOW (WO-3.73) — the bar's whole question, answered
-  once so the bar and the dialog it opens read one answer:
+  EVERY ONE OF A CLASS'S TERMS THAT WANTS RECORDING NOW, AND HOW (WO-3.73, made a list at WO-3.77) —
+  the bar's whole question, answered once so the bar and the dialog it opens read one answer:
 
-    { termId, state: 'ends-today' | 'unrecorded' | 'changed', count, at }   or null
+    [{ termId, state: 'ends-today' | 'unrecorded' | 'changed', count, at }, ...]   ([] for none)
 
   A term qualifies from its end date on (termEndsToday() or termEnded(), so before the end date it
   never does — plans/closing-a-quarter.md, the drawing's question 1). Then:
     · never recorded           → 'ends-today' on the end date, 'unrecorded' after it; count 0, at ''.
     · recorded, and noLongerMatching() names someone → 'changed', `count` that list's length, `at`
       the newest record's — the date the bar's third wording quotes.
-    · recorded and matching    → not this term.
+    · recorded and matching    → not on the list.
   On the end date itself a recorded term that has since changed is 'changed', not 'ends-today': the
   teacher has recorded it, and the thing to say is that it moved.
 
-  THE FIRST QUALIFYING TERM IN THE CLASS'S OWN ORDER, because a bar has one button. An earlier quarter
-  that still wants recording is answered before a later one, so recording Q1 is what moves the bar on
-  to Q2 rather than Q1 being forgotten behind it. `today` defaults to todayISO(), as the readers above.
+  THE ORDER IS TWO KEYS, AND IT IS THE OWNER'S (2026-10-29, WO-3.77). FIRST THE STATE: unrecorded —
+  'ends-today' and 'unrecorded' alike — before 'changed', because an unrecorded quarter is a whole
+  quarter missing from Blackbaud and a changed one is a correction to grades already there. THEN
+  NEWEST FIRST, BY THE CLASS'S OWN TERM ORDER — a term's place in `cls.terms`, never its label (*Q1*
+  is a display abbreviation, src/term-record-view.js's) and never its dates. So an unrecorded Q1
+  leads a changed Q2, and with two of one state the later quarter leads.
+
+  IT IS A LIST BECAUSE THE BAR HAS NO ✕. WO-3.73's reader answered the earliest qualifying term and
+  nothing else, and a Q1 never recorded then held the bar all year with every later quarter hidden
+  behind it. Nothing qualifying is left off, so nothing on a bar that cannot be dismissed is hidden.
+  The single-term reader it replaced, termNeedingRecord(), is RETIRED rather than kept as this
+  list's head: a reader that answers one term is the shape WO-3.73's defect had, and WO-3.74's home
+  bar is told in as many words not to build on it — the safe way to keep a later screen off it is
+  for it not to exist.
+
+  BUILT WITHOUT A SORT: the walk runs over the class's terms from the last (reduceRight), which is
+  newest first, and the two states are then concatenated. No comparator, so nothing can tie or be
+  ordered by anything the class's term list does not say — and this file's no-writer fence refuses
+  `.sort(` and `.reverse(` on sight, which a sort in place would be. `today` defaults to todayISO(),
+  as the readers above. A new array of new objects on every call.
 */
-export function termNeedingRecord(doc, cls, today) {
+function needOf(doc, cls, term, day) {
+  const termId = term && term.id;
+  if (!termId) return null;
+  const endsToday = termEndsToday(cls, termId, day);
+  if (!endsToday && !termEnded(cls, termId, day)) return null;
+  const record = newestRecord(doc, cls, termId);
+  if (!record) {
+    return { termId: termId, state: endsToday ? 'ends-today' : 'unrecorded', count: 0, at: '' };
+  }
+  const changed = noLongerMatching(doc, cls, termId);
+  if (!changed.length) return null;
+  return { termId: termId, state: 'changed', count: changed.length, at: record.at };
+}
+
+export function termsNeedingRecord(doc, cls, today) {
   const day = String(today || todayISO());
-  return arrayOf(cls && cls.terms).map((term) => {
-    const termId = term && term.id;
-    if (!termId) return null;
-    const endsToday = termEndsToday(cls, termId, day);
-    if (!endsToday && !termEnded(cls, termId, day)) return null;
-    const record = newestRecord(doc, cls, termId);
-    if (!record) {
-      return { termId: termId, state: endsToday ? 'ends-today' : 'unrecorded', count: 0, at: '' };
-    }
-    const changed = noLongerMatching(doc, cls, termId);
-    if (!changed.length) return null;
-    return { termId: termId, state: 'changed', count: changed.length, at: record.at };
-  }).filter((row) => row !== null)[0] || null;
+  const newestFirst = arrayOf(cls && cls.terms).reduceRight((list, term) => {
+    const need = needOf(doc, cls, term, day);
+    return need ? list.concat([need]) : list;
+  }, []);
+  return newestFirst.filter((need) => need.state !== 'changed')
+    .concat(newestFirst.filter((need) => need.state === 'changed'));
 }
 
 /*

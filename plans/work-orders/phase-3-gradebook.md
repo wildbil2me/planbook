@@ -5876,6 +5876,12 @@ frames **C** (the notice is WO-3.73's changed-form dialog, opening by itself) an
   read from [WO-3.77](#wo-377--the-record-bar-names-every-quarter-that-needs-it-newest-first)'s list
   reader, never from the single-term `termNeedingRecord()`**: a class with two terms waiting opens on
   the newest, and the class's own bar names the other. Added 2026-10-29 when WO-3.77 was booked.
+  *(WO-3.77 retired `termNeedingRecord()` the same day; the list reader is `termsNeedingRecord()`,
+  ordered unrecorded before changed, then newest — so its head is not always the newest term.
+  **Ruled by the owner, 2026-10-30: "opens on the newest" wins.** The button opens the entry whose
+  term is latest in the class's term order, not the list's head — with Q1 unrecorded and Q2
+  changed, it opens Q2. Which entry is newest is the engine's to answer, by term order and never by
+  label or date; the home bar does not re-order the list itself.)*
 - **A mutation**: make the notice open on every tap of the changed quarter, show the check goes red,
   and revert it before writing anything else.
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.74** and the `CHANGELOG.md` entry.
@@ -5889,6 +5895,8 @@ frames **C** (the notice is WO-3.73's changed-form dialog, opening by itself) an
 - [ ] In presentation mode the notice does not open, and opens on the next opening with it off.
 - [ ] The home bar names each class that needs recording, and its button lands on that class's
       Scores for the quarter with the dialog open.
+- [ ] With a class's Q1 never recorded and its Q2 recorded and since changed, the home bar's button
+      opens Q2, the newest by term order, though the class's own bar lists Q1 first.
 - [ ] With the notice opening on every tap of the quarter, the check goes red. The mutation is
       reverted, and `TESTING.md` § WO-3.74 shows the red output.
 - [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
@@ -5983,7 +5991,7 @@ booking, not a fold-in.
 
 ## WO-3.77 — the record bar names every quarter that needs it, newest first
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.73 · **Blocks** WO-3.74
+**Ship** — · **Status** ✅ DONE — 2026-10-30 · **Size** S · **Depends on** WO-3.73 · **Blocks** WO-3.74
 **Closes roadmap** *(no box. Owner-directed, 2026-10-29, out of WO-3.73's verdict.)*
 
 **Booked 2026-10-29**, owner-directed. WO-3.73's bar shows **one term per class**:
@@ -6036,25 +6044,65 @@ section, and amend the drawing's banner in the same sitting.
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.77** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] With Q1 recorded and since changed, and Q2 ended and unrecorded, the bar shows two lines, Q2's
+- [x] With Q1 recorded and since changed, and Q2 ended and unrecorded, the bar shows two lines, Q2's
       first, each in its own wording and with its own button opening that term's dialog.
-- [ ] With Q1 never recorded and Q2 ended, both terms are on the bar, Q2's first; an unrecorded Q1
+- [x] With Q1 never recorded and Q2 ended, both terms are on the bar, Q2's first; an unrecorded Q1
       no longer hides Q2.
-- [ ] With Q1 never recorded and Q2 recorded and since changed, Q1's *has ended* line comes before
+- [x] With Q1 never recorded and Q2 recorded and since changed, Q1's *has ended* line comes before
       Q2's *have changed* line: unrecorded leads changed whatever their age.
-- [ ] Recording one term removes its line and leaves the other; recording the last removes the bar.
+- [x] Recording one term removes its line and leaves the other; recording the last removes the bar.
       With one term needing attention, the bar reads exactly as WO-3.73's does.
-- [ ] Every term, state and count on the bar comes from the engine's list reader, and no screen
+- [x] Every term, state and count on the bar comes from the engine's list reader, and no screen
       compares records or tests a term's end date.
-- [ ] In presentation mode the bar names no student and both dialogs refuse, naming the control.
-- [ ] With the bar drawing only the first entry, the check goes red. The mutation is reverted, and
+- [x] In presentation mode the bar names no student and both dialogs refuse, naming the control.
+- [x] With the bar drawing only the first entry, the check goes red. The mutation is reverted, and
       `TESTING.md` § WO-3.77 shows the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] 👤 On the iPad, a two-line bar reads clearly and both buttons are thumb-sized, in portrait and
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] 👤 On the iPad, a two-line bar reads clearly and both buttons are thumb-sized, in portrait and
       landscape.
-- [ ] `TESTING.md` § WO-3.77 carries these lines verbatim with the evidence for each.
+- [x] `TESTING.md` § WO-3.77 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Newest is by the class's term order, not by a name**, and the state outranks it. `src/term-record-view.js`'s
 *Q1* is a display abbreviation, and nothing may sort or find a term by it. **Do not re-run the
 comparison per line**: each line's count is the reader's, so the bar and the dialog it opens cannot
 disagree about who changed.
+
+## WO-3.78 — the record bar's order is tested only where every order agrees
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-3.77 · **Blocks** nothing
+**Closes roadmap** *(no box. Owner-directed, 2026-10-30, out of WO-3.77's verdict.)*
+
+**Booked 2026-10-30**, owner-directed, out of [WO-3.77](#wo-377--the-record-bar-names-every-quarter-that-needs-it-newest-first)'s
+verdict. Harness only; nothing in `src/` moves unless it finds a defect.
+
+**Why it exists.** WO-3.77 ruled that *newest* means **latest in the class's term order**, never by
+label or date, and `termsNeedingRecord()` honours it today: it walks `cls.terms` with
+`reduceRight()` and holds no sort. But every WO-3.77 fixture has **two** quarters, and in each the
+list order, the label order (*Quarter 1*, *Quarter 2*) and the date order all agree. So a later
+change that sorted the list by name or by end date would pass every check that exists. The
+`.sort(` / `.reverse(` refusal over `src/term-record.js` catches two spellings of that change, not
+the change. **It matters more since the owner's 2026-10-30 ruling on WO-3.74**: the home bar opens
+the newest entry, so a wrong *newest* sends the teacher to the wrong quarter.
+
+**Deliverables**
+- **A fixture with three ended quarters, none recorded**, asserting all three lines in term order,
+  newest first.
+- **A fixture where the three orders disagree**: the class's terms planted directly in the document
+  so that list order, the order of their names and the order of their end dates are three different
+  orders. The bar must follow list order. Name the planted order in the check's own message.
+- **Two mutations**, each shown red and reverted before writing anything else: order the reader's
+  result by term name, then by end date.
+- **`TESTING.md` § WO-3.78** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] With three ended quarters unrecorded, the bar shows three lines, newest first by term order.
+- [ ] With list, name and end-date order all different, the bar's lines follow list order.
+- [ ] With the reader ordering by term name, the check goes red; with it ordering by end date, the
+      check goes red. Both mutations are reverted, and `TESTING.md` § WO-3.78 shows the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-3.78 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Plant the terms, do not build a door**: if the term editor keeps terms in date order,
+the disagreeing fixture writes the document over `evalJs`, as WO-3.67's fixture blanks a host, and
+adds no way to reorder terms in the app. **A sort mutation will also trip the sweep's `.sort(`
+refusal**; the red that counts is the harness check's, so say which tool went red.

@@ -595,14 +595,14 @@
      src/term-record-view.js, which writes all three wordings: unlike the backup nag's, every line of
      this one carries the class, the term or a count, so there is no fixed copy to keep here.
 
+     ONE LINE PER TERM THAT NEEDS IT (WO-3.77): the view builds a `.term-record-nag-line` — WO-3.73's
+     text and button — for each entry of src/term-record.js's termsNeedingRecord(), in its order, so
+     the aside is EMPTY here. The first line's lead carries the id this aside is labelled by.
+
      No ✕ and no "Not now", for the backup nag's reason: the way to clear it is the button beside it,
      and a recording that matches always does. It names a class and a count and NEVER A STUDENT, so it
      stays up under a projector; the dialog its button opens is the half that is refused there. -->
-<aside class="term-record-nag hidden" id="termRecordNag" aria-labelledby="termRecordNagLead">
-  <div class="term-record-nag-text"><strong><span aria-hidden="true">⚠</span> <span id="termRecordNagLead"></span></strong> <span id="termRecordNagMore"></span></div>
-  <button class="term-record-nag-btn" type="button" id="termRecordNagBtn" data-term-record-open=""
-          data-term-record-class="" aria-haspopup="dialog">Record grades</button>
-</aside>
+<aside class="term-record-nag hidden" id="termRecordNag" aria-labelledby="termRecordNagLead"></aside>
 
 <!--
   THE MAIN AREA, AND THE ONE THING WO-1.13 CHANGED ABOUT IT.

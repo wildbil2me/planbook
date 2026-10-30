@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The record bar names every quarter that needs it — 2026-10-30
+
+WO-3.77. `CACHE` v199 → v200. Read on the iPad by the owner, in portrait and landscape.
+
+- **The bar on a class's screens now has one line per quarter that needs recording**, each with its
+  own *Record Qn grades* button. Until now it named one quarter, always the earliest, so a Q1 never
+  recorded held the bar all year with Q2, Q3 and Q4 hidden behind it, and a Q1 correction in January
+  hid that Q2 had just ended.
+- **Unrecorded quarters come first**, because a whole quarter missing from Blackbaud matters more
+  than a correction to one already there. Within each, the newest quarter comes first.
+- **Recording a quarter removes its line only.** With one quarter waiting, the bar looks exactly as
+  before, and under a projector it still names no student.
+
 ### Record Q1 grades: a bar on the class's screens, and the dialog it opens — 2026-10-29
 
 WO-3.73, the screen half of WO-3.72's record. `CACHE` v198 → v199. Read on the iPad by the owner the
