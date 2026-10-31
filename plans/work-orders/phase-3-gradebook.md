@@ -6116,3 +6116,65 @@ one spelled `['sort'](` passes it; the red that counts is the WO-3.78 check's, s
 red. *(This read "will also trip the sweep's `.sort(` refusal" until the verifier's pass on
 2026-10-30. No sweep check reads `src/term-record.js`; the sweep's `.sort(` refusal is § 17, which is
 about `src/calendar-derived.js`. `TESTING.md` § WO-3.78 records both spellings.)*
+
+## WO-3.79 — *What changed* names the cause honestly, and a recording closes the edit window
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.75 · **Blocks** nothing
+**Closes roadmap** *(no box. Owner-directed, 2026-10-31, out of WO-3.75's verdict.)*
+
+**Booked 2026-10-31**, owner-directed, out of [WO-3.75](#wo-375--the-notice-says-which-score-changed)'s
+verdict. Three gaps in what the Record dialog says about a changed quarter, each found by the
+implementer or the verifier and each ruled on by the owner the same day.
+
+**Why it exists.**
+1. **The setting line names the wrong cause.** A grade can move with no score and no setting changed:
+   an assignment deleted, its points, category or term changed, or a column held since the
+   recording. Each of those gets *No score changed; a class setting did — weights, the letter scale
+   or drop lowest*, which sends the teacher to the wrong place at the moment she is asking why.
+   None of them keeps history, so the line cannot name which one — it can only stop naming too few.
+2. **Recording and then fixing a typo reads as *not known*.** A write within five minutes of a
+   cell's last one replaces it (WO-3.33), so an edit just after a recording can swallow the version
+   the recording saw, and `scoreChangeSince()` honestly answers `then: null`. That is the commonest
+   moment to edit a score, so the line will be common. **The owner's ruling: fix the store, not the
+   wording** — a recording becomes a version boundary, the way a commit already is.
+3. **`newestRecord()` compares `at` as strings.** A local stamp carries its offset, so two
+   recordings either side of a daylight-saving change, or both inside the repeated hour, can sort
+   wrongly. `scoreChangeSince()` and `reviseCell()` already compare parsed instants; this reader
+   was missed.
+
+**Deliverables**
+- **The setting line reads**: *No score changed. Something else did — weights, the letter scale,
+  drop lowest, or an assignment's points, category or term, or one held or deleted.* The check that
+  pins the old wording is updated, not loosened to a substring.
+- **A recording seals the window.** In `reviseCell()`, a cell last written at or before the newest
+  recording of its class and term has its version **pushed** by the first write after that
+  recording, however soon — `sealed`'s rule for `committedAt`, extended. The boundary reaches
+  `reviseCell()` from its callers (`src/scores.js`, `src/past-due.js`) through the `column`
+  argument or one beside it; how is the implementer's call, stated at the point of departure.
+- **`newestRecord()` compares `at` as parsed instants**, the tie still going to the later write.
+- **`docs/data-model.md`** § the term record and § score history say a recording is a version
+  boundary.
+- **Two mutations**, each shown red and reverted before writing anything else: the seal removed, and
+  `newestRecord()` back on string comparison.
+- **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.79** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] A student whose grade moved only because an assignment was deleted gets the new setting line,
+      word for word.
+- [ ] A score recorded at 4, edited to 9 one minute after the recording, reads *4 → 9 of 10*, not
+      *not known*.
+- [ ] Two recordings of one quarter stamped `…T01:30:00-04:00` and then `…T01:10:00-05:00` on
+      2026-11-01: `newestRecord()` returns the second.
+- [ ] With the seal removed, the check goes red; with `newestRecord()` comparing strings, the check
+      goes red. Both mutations are reverted, and `TESTING.md` § WO-3.79 shows the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-3.79 carries these lines verbatim with the evidence for each.
+
+**Traps** — **`src/term-record.js` imports `src/scores.js`**, so the writer cannot import
+`newestRecord()` back without closing an import loop this repo refuses; the boundary is found with no
+new edge, or handed in by a caller that already has the document. **A held column is not touched**:
+a held write replaces however long since (WO-3.52), *What changed* never lists a held column, and
+the seal applies only to the ordinary branch. **Only new writes benefit**: an edit saved by an
+earlier build before this lands still answers *not known*, and that line stays. **The seal pushes a
+spare version for an edit just after recording a cell untouched since September** — that is the
+point, and a spare trail entry is cheaper than a lost score that counted (WO-3.33's rule).
