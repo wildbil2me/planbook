@@ -1,0 +1,11 @@
+# WO-3.78 dispatch status
+- 2026-10-30T23:38Z gates PASS (dep WO-3.77 DONE, tree clean)
+- 2026-10-30T23:38Z route Claude Opus — TESTING.md prose + mutate/run/revert method (>=3 verify-shell runs), judgment Traps; Codex runner-up set aside, no probe run (not Codex route)
+- 2026-10-30T23:38Z --start ran: 🤖 CLAIMED — 2026-10-30
+- 2026-10-30T23:38Z brief written: .claude/dispatch/WO-3.78-brief.md (CHANGELOG drafted in result file, not edited)
+- 2026-10-30T23:38Z implementer spawned at Opus with .claude/dispatch/WO-3.78-brief.md, awaiting return (expect 20–40 min, first write may lag 20 min)
+- 2026-10-31T00:28Z implementer returned: claims 5/5 met, verify-shell 2137/2137, sweep green, src/ untouched, 2 mutations red+reverted; notes Traps misplaced the .sort( fence (it is in verify-shell, not wo-sweep); CHANGELOG drafted in result file
+- 2026-10-31T00:28Z --handoff ran: 🔍 AWAITING VERDICT; verifier owed in a fresh session
+- 2026-10-31T00:31Z fresh session: row 🔍 AWAITING VERDICT; verifier spawned at Opus as FIRST pass, awaiting return
+- 2026-10-31T01:04Z verifier returned: PASS — 5/5 ✅, verify-shell 2137/2137, sweep green, own end-date mutation red+reverted; CHANGELOG entry absent (draft in result file); Traps .sort( sentence stale
+- 2026-10-31T08:51Z caller: fresh clean verify-shell EXIT=0, 0 FAIL; sweep 49/0/3; Traps sentence corrected; --tick applied; CHANGELOG written; committed

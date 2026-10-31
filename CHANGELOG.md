@@ -13,6 +13,16 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The record bar's order is tested where the orders disagree — 2026-10-31
+
+WO-3.78. A test-only change: nothing in the app moved, and no `CACHE` bump.
+
+- **The bar's *newest first* is now checked against quarters whose list, name and end-date orders all
+  differ.** Every earlier check used two quarters on which all three orders agreed, so a change that
+  sorted the bar by quarter name or by end date would have passed unnoticed, and the bar would have
+  sent a teacher to the wrong quarter first. The bar must follow the class's own term list.
+- **Shown red against a sort by name and a sort by end date**, both reverted.
+
 ### The record bar names every quarter that needs it — 2026-10-30
 
 WO-3.77. `CACHE` v199 → v200. Read on the iPad by the owner, in portrait and landscape.

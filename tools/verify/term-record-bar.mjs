@@ -41,6 +41,10 @@
  * to name and every order the owner ruled on 2026-10-29 can be set up — unrecorded before changed,
  * then newest first by the class's term order.
  *
+ * WO-3.78 PLANTS THREE TERMS over the class's own, last of all: three ended quarters in an order
+ * where list, label and end date agree, then the same three where all three orders disagree — the
+ * bar must follow the list. The planted order and the reasoning are at that section.
+ *
  * A second class, with no dated terms, carries no bar. It plants both classes through the store,
  * moves no viewport, turns presentation mode on once and puts it back as it was found, takes both
  * classes back out with the `termRecords` key as it was found, and hands the page back reloaded.
@@ -730,6 +734,79 @@ check('WO-3.77: every term, state and count on the bar comes from the engine\'s 
   barCode.length > 0 && (barCode.match(/termsNeedingRecord\(/g) || []).length === 1
     && barHits.length === 0 && others.length === 0,
   JSON.stringify({ barCodeFound: barCode.length > 0, hits: barHits, others: others }));
+
+/* ══ WO-3.78 — THE ORDER, TESTED WHERE THE ORDERS DISAGREE ══
+   Every WO-3.77 fixture above has two quarters whose list order, label order and date order all
+   agree, so a reader that sorted by label or by end date would pass every check in it. Here the
+   class's terms are PLANTED over the store, replacing `cls.terms` outright — a test-only write, as
+   WO-3.67's fixture blanks a host, and no way to reorder terms is added to the app. Quarter 1 and
+   Quarter 2 keep their ids, so the columns filed under them stay filed; a third term, Q3, is new.
+   Every term is ended and none recorded (this class's records come off first), so every line is
+   WO-3.73's *has ended* wording and the only thing left to differ is the order.
+
+   THE DISAGREEING PLANT, list order first — the bar must read it back to front (newest first):
+     list order        tm373q1 "Quarter 3" (ends −30) · tm373q2 "Quarter 1" (ends −1) · tm378q3 "Quarter 2" (ends −15)
+     bar, by list      Quarter 2 · Quarter 1 · Quarter 3
+     by name ↓ / ↑     Quarter 3 first / Quarter 1 first
+     by end date ↓ / ↑ Quarter 1 first / Quarter 3 first
+   The list's last term is the MIDDLE one by name and by date, so all four wrong orders put a
+   different line at the head — whichever direction a later change sorts in, the first line moves —
+   and the check compares all three lines, not just the head. */
+const Q3 = 'tm378q3';
+const plantTerms = (terms) => evalJs(`(async function(){ var s = window.planbook.store;
+  s.update(function(doc){
+    doc.classes.filter(function(c){ return c.id === '${CLS}'; })[0].terms = ${JSON.stringify(terms)};
+    doc.termRecords = (doc.termRecords || []).filter(function(e){ return e.classId !== '${CLS}'; }); });
+  await s.flush(); return 1; })()`);
+const termLabels = () => evalJs(`(function(){ var d = window.planbook.store.getDoc();
+  return d.classes.filter(function(c){ return c.id === '${CLS}'; })[0].terms.map(function(t){
+    return [t.id, t.label, t.end]; }); })()`);
+const D = (n) => nodeDaysFromToday(n);
+
+/* ── WO-3.78 ACCEPTANCE 1: three ended quarters, none recorded, every order agreeing ── */
+await plantTerms([
+  { id: Q1, label: 'Quarter 1', start: D(-40), end: D(-30) },
+  { id: Q2, label: 'Quarter 2', start: D(-29), end: D(-15) },
+  { id: Q3, label: 'Quarter 3', start: D(-14), end: D(-1) }]);
+await go('scores');
+const three = await barNow();
+const threeList = await listNow();
+check('WO-3.78: with three ended quarters none recorded, the bar shows three lines, newest first by '
+  + 'the class\'s term order — Quarter 3, Quarter 2, Quarter 1 — each in WO-3.73\'s *has ended* '
+  + 'wording with its own button for its own term, and the bar\'s lines are the engine list\'s '
+  + 'entries, in its order',
+  three.shown && three.lines.length === 3
+    && three.lines[0].text === unrecLine(3) && three.lines[1].text === unrecLine(2)
+    && three.lines[2].text === unrecLine(1)
+    && JSON.stringify(lineShape(three)) === JSON.stringify([[Q3, CLS, 1], [Q2, CLS, 1], [Q1, CLS, 1]])
+    && JSON.stringify(threeList.engine)
+      === JSON.stringify([[Q3, 'unrecorded', 0], [Q2, 'unrecorded', 0], [Q1, 'unrecorded', 0]])
+    && JSON.stringify(threeList.model) === JSON.stringify(threeList.engine),
+  JSON.stringify({ terms: await termLabels(), bar: three.lines.map((l) => [l.term, l.text]),
+    list: threeList }));
+
+/* ── WO-3.78 ACCEPTANCE 2: list, name and end-date order all different ── */
+await plantTerms([
+  { id: Q1, label: 'Quarter 3', start: D(-40), end: D(-30) },
+  { id: Q2, label: 'Quarter 1', start: D(-14), end: D(-1) },
+  { id: Q3, label: 'Quarter 2', start: D(-29), end: D(-15) }]);
+await go('class');
+const crossed = await barNow();
+const crossedList = await listNow();
+check('WO-3.78: with the class\'s terms planted in LIST order Quarter 3, Quarter 1, Quarter 2 — whose '
+  + 'NAME order is Quarter 1, Quarter 2, Quarter 3 and END-DATE order Quarter 3, Quarter 2, Quarter 1 '
+  + '— the bar\'s three lines follow list order, newest first: Quarter 2, Quarter 1, Quarter 3, not '
+  + 'any order by name or by end date in either direction; and the bar\'s lines are the engine list\'s '
+  + 'entries, in its order',
+  crossed.shown && crossed.lines.length === 3
+    && crossed.lines[0].text === unrecLine(2) && crossed.lines[1].text === unrecLine(1)
+    && crossed.lines[2].text === unrecLine(3)
+    && JSON.stringify(lineShape(crossed)) === JSON.stringify([[Q3, CLS, 1], [Q2, CLS, 1], [Q1, CLS, 1]])
+    && JSON.stringify(crossedList.engine)
+      === JSON.stringify([[Q3, 'unrecorded', 0], [Q2, 'unrecorded', 0], [Q1, 'unrecorded', 0]])
+    && JSON.stringify(crossedList.model) === JSON.stringify(crossedList.engine),
+  JSON.stringify({ terms: await termLabels(), bar: crossed.lines.map((l) => [l.term, l.text]),
+    list: crossedList }));
 } finally {
 /* ── THE FIXTURE COMES BACK OUT ── */
 await evalJs(`(async function(){

@@ -6069,7 +6069,7 @@ disagree about who changed.
 
 ## WO-3.78 — the record bar's order is tested only where every order agrees
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-3.77 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-31 · **Size** XS · **Depends on** WO-3.77 · **Blocks** nothing
 **Closes roadmap** *(no box. Owner-directed, 2026-10-30, out of WO-3.77's verdict.)*
 
 **Booked 2026-10-30**, owner-directed, out of [WO-3.77](#wo-377--the-record-bar-names-every-quarter-that-needs-it-newest-first)'s
@@ -6095,14 +6095,18 @@ the newest entry, so a wrong *newest* sends the teacher to the wrong quarter.
 - **`TESTING.md` § WO-3.78** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] With three ended quarters unrecorded, the bar shows three lines, newest first by term order.
-- [ ] With list, name and end-date order all different, the bar's lines follow list order.
-- [ ] With the reader ordering by term name, the check goes red; with it ordering by end date, the
+- [x] With three ended quarters unrecorded, the bar shows three lines, newest first by term order.
+- [x] With list, name and end-date order all different, the bar's lines follow list order.
+- [x] With the reader ordering by term name, the check goes red; with it ordering by end date, the
       check goes red. Both mutations are reverted, and `TESTING.md` § WO-3.78 shows the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-3.78 carries these lines verbatim with the evidence for each.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-3.78 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Plant the terms, do not build a door**: if the term editor keeps terms in date order,
 the disagreeing fixture writes the document over `evalJs`, as WO-3.67's fixture blanks a host, and
-adds no way to reorder terms in the app. **A sort mutation will also trip the sweep's `.sort(`
-refusal**; the red that counts is the harness check's, so say which tool went red.
+adds no way to reorder terms in the app. **A sort mutation spelled `.sort(` will also
+trip WO-3.72's writer fence in `verify-shell.mjs`** (`REMOVERS`, `tools/verify/term-record.mjs`), and
+one spelled `['sort'](` passes it; the red that counts is the WO-3.78 check's, so say which check went
+red. *(This read "will also trip the sweep's `.sort(` refusal" until the verifier's pass on
+2026-10-30. No sweep check reads `src/term-record.js`; the sweep's `.sort(` refusal is § 17, which is
+about `src/calendar-derived.js`. `TESTING.md` § WO-3.78 records both spellings.)*

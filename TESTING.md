@@ -18972,6 +18972,115 @@ for the *ends today* case. The class's records are off the document when this pa
 - [x] `TESTING.md` § WO-3.77 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-3.78 — the record bar's order is tested only where every order agrees
+
+**What was built.** Harness only; nothing in `src/` moved, and `git diff src/` is empty on the tree as
+delivered. Two checks at the foot of `tools/verify/term-record-bar.mjs`, after WO-3.77's and inside
+the same `try`, on the same class. A helper `plantTerms()` replaces the class's `terms` array outright
+over the store (`evalJs`, then a flushed save) and takes this class's `termRecords` off, so every
+planted term is ended and unrecorded. That is a test-only write, as WO-3.67's fixture blanks a host;
+**no way to reorder terms was added to the app.** Quarter 1 and Quarter 2 keep their ids
+(`tm373q1`, `tm373q2`), so the columns filed under them stay filed; the third term, `tm378q3`, is new.
+The class comes off the document in the section's existing `finally`, so nothing needed restoring.
+
+**The disagreeing plant**, chosen so that every wrong order, in either direction, puts a different
+line at the head:
+
+| | first | second | third |
+|---|---|---|---|
+| list order (`cls.terms`) | `tm373q1` *Quarter 3*, ends −30 | `tm373q2` *Quarter 1*, ends −1 | `tm378q3` *Quarter 2*, ends −15 |
+| the bar, newest first by list | Quarter 2 | Quarter 1 | Quarter 3 |
+| by name, descending / ascending | Quarter 3 / Quarter 1 | | |
+| by end date, descending / ascending | Quarter 1 / Quarter 3 | | |
+
+The list's last term is the middle one by name and by end date, which is what makes all four wrong
+heads differ from the right one. The check compares all three lines, not just the head.
+
+- [x] With three ended quarters unrecorded, the bar shows three lines, newest first by term order.
+      — `node tools/verify-shell.mjs`, the clean run of 2026-10-30: `PASS | WO-3.78: with three ended
+      quarters none recorded, the bar shows three lines, newest first by the class's term order —
+      Quarter 3, Quarter 2, Quarter 1 — …`. Terms planted `[tm373q1 "Quarter 1" 2026-09-30, tm373q2
+      "Quarter 2" 2026-10-15, tm378q3 "Quarter 3" 2026-10-29]`. The bar's three lines equal WO-3.73's
+      *has ended* literal for Quarter 3, 2 and 1 in that order, each with one button carrying its own
+      term (`[[tm378q3,…,1],[tm373q2,…,1],[tm373q1,…,1]]`), and the bar model and
+      `termsNeedingRecord()` asked directly both read `[[tm378q3,"unrecorded",0],[tm373q2,…],[tm373q1,…]]`.
+- [x] With list, name and end-date order all different, the bar's lines follow list order.
+      — Same run: `PASS | WO-3.78: with the class's terms planted in LIST order Quarter 3, Quarter 1,
+      Quarter 2 — whose NAME order is Quarter 1, Quarter 2, Quarter 3 and END-DATE order Quarter 3,
+      Quarter 2, Quarter 1 — the bar's three lines follow list order, newest first: Quarter 2, Quarter
+      1, Quarter 3, not any order by name or by end date in either direction; …`. The check's
+      evidence reads the planted terms back off the document, `[["tm373q1","Quarter 3","2026-09-30"],
+      ["tm373q2","Quarter 1","2026-10-29"],["tm378q3","Quarter 2","2026-10-15"]]`, and the bar's lines
+      as `tm378q3` *Quarter 2 has ended …*, `tm373q2` *Quarter 1 …*, `tm373q1` *Quarter 3 …*.
+- [x] With the reader ordering by term name, the check goes red; with it ordering by end date, the
+      check goes red. Both mutations are reverted, and `TESTING.md` § WO-3.78 shows the red output.
+      — Each mutation planted in `termsNeedingRecord()` in `src/term-record.js`, directly after the
+      `reduceRight`, marked `// MUTATION WO-3.78`; each run stopped once the section had printed (its
+      log ends `EXIT=127`, the kill, so neither has a summary line); each reverted by hand before
+      anything else was written, and `grep -rn MUTATION src/ index.html` read after each revert showed
+      only the pre-existing prose at `src/shell.js:1091`.
+
+      **By term name, descending:**
+      ```
+      const labelOf = (need) => String((arrayOf(cls && cls.terms).filter((t) => t && t.id === need.termId)[0] || {}).label || ''); // MUTATION WO-3.78
+      newestFirst.sort((x, y) => labelOf(y).localeCompare(labelOf(x))); // MUTATION WO-3.78
+      ```
+      ```
+      FAIL | WO-3.72: src/term-record.js holds one writer, and it only pushes — … :: {…"found":[".sort("],…}
+      PASS | WO-3.73: … (every WO-3.73 check)
+      PASS | WO-3.77: … (all seven)
+      PASS | WO-3.78: with three ended quarters none recorded, the bar shows three lines, newest first …
+      FAIL | WO-3.78: with the class's terms planted in LIST order Quarter 3, Quarter 1, Quarter 2 — …
+        :: {"terms":[["tm373q1","Quarter 3","2026-09-30"],["tm373q2","Quarter 1","2026-10-29"],["tm378q3","Quarter 2","2026-10-15"]],
+            "bar":[["tm373q1","⚠ Quarter 3 has ended, … Record Q3 grades"],["tm378q3","⚠ Quarter 2 has ended, … Record Q2 grades"],
+                   ["tm373q2","⚠ Quarter 1 has ended, … Record Q1 grades"]],
+            "list":{"engine":[["tm373q1","unrecorded",0],["tm378q3","unrecorded",0],["tm373q2","unrecorded",0]],"model":[…the same…]}}
+      ```
+
+      **By end date, descending**, spelled `['sort'](` on purpose — a mutator named by a string, one
+      of the spellings WO-3.72's fence lists as passing it — so that this run's only red could be the
+      behavioural check:
+      ```
+      const endOf = (need) => String((arrayOf(cls && cls.terms).filter((t) => t && t.id === need.termId)[0] || {}).end || ''); // MUTATION WO-3.78
+      newestFirst['sort']((x, y) => endOf(y).localeCompare(endOf(x))); // MUTATION WO-3.78
+      ```
+      ```
+      PASS | WO-3.72: src/term-record.js holds one writer, and it only pushes — …
+      PASS | WO-3.77: … (all seven)
+      PASS | WO-3.78: with three ended quarters none recorded, the bar shows three lines, newest first …
+      FAIL | WO-3.78: with the class's terms planted in LIST order Quarter 3, Quarter 1, Quarter 2 — …
+        :: {"terms":[…as above…],
+            "bar":[["tm373q2","⚠ Quarter 1 has ended, … Record Q1 grades"],["tm378q3","⚠ Quarter 2 has ended, … Record Q2 grades"],
+                   ["tm373q1","⚠ Quarter 3 has ended, … Record Q3 grades"]],
+            "list":{"engine":[["tm373q2","unrecorded",0],["tm378q3","unrecorded",0],["tm373q1","unrecorded",0]],"model":[…the same…]}}
+      ```
+      That run printed 1,384 PASS lines and exactly one FAIL before it was stopped.
+
+      **Which tool went red.** The Traps expected `wo-sweep.mjs`'s `.sort(` refusal to trip; there is
+      no such refusal in the sweep. The `.sort(` fence over `src/term-record.js` is WO-3.72's check in
+      `tools/verify/term-record.mjs`, a section of `verify-shell.mjs` itself. Under each mutation
+      `node tools/wo-sweep.mjs` went red on one line only, `FAIL | every SHELL file change is paired
+      with a CACHE bump :: src/term-record.js changed since planbook-shell-v200 …` — a changed shell
+      file, not an ordering. So the red that counts is the harness's WO-3.78 cross check in both runs:
+      under the name mutation WO-3.72's fence went red beside it, and under the end-date mutation,
+      which that fence cannot see, the WO-3.78 check was the only red in the run. Both mutations left
+      the agreeing three-quarter check and every WO-3.77 check green, which is the gap this work order
+      was booked for, reproduced.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs`, run on the tree as delivered (harness and `tools/README.md`
+      count already edited, `src/` at HEAD), 2026-10-30, real clock: `2137 checks · 2137 passed · 0
+      failed · 0 skipped`, `68,747 lines · 32.2 lines per check · 1184s`, `EXIT=0`. Two more than
+      WO-3.77's 2135; both WO-3.78 checks PASS. After it, only this section and `tools/README.md`'s
+      ledger paragraph were written, and the two mutations were planted and removed in `src/`, which
+      `git diff --stat` shows unchanged.
+
+      `node tools/wo-sweep.mjs`, after both reverts: `52 checks · 49 passed · 0 failed · 3 to
+      review`, `EXIT=0`. The three reviews are the standing ones (sensitive field names, due-date
+      beside late/missing, mockup banners against the build). The call-site check reads `2127 check()
+      call site(s) across 99 harness file(s), matching tools/README.md:1363`.
+- [x] `TESTING.md` § WO-3.78 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

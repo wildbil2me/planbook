@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2125 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2127 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -3063,6 +3063,13 @@ string for the start of a block comment, and the next `check(` line was read as 
 without a word — though the run still executed it, which is why the executed count moved by seven
 both times. Full run: `2135 checks · 2135 passed · 0 failed · 0 skipped`, 68,670 lines, 32.2 lines
 per check, 1163s, exit 0, 2026-10-29 on the real clock.
+
+**WO-3.78 moved it from 2125 to 2127, and the executed count from 2135 to 2137 — two sites, two
+results, no new file.** Both are at the foot of `verify/term-record-bar.mjs`, after WO-3.77's, inside
+the same `try`: three ended quarters whose list, label and end-date orders agree, then the same three
+planted over the store so that all three orders disagree. Neither sits in a loop and neither is a
+failure arm. Full run: `2137 checks · 2137 passed · 0 failed · 0 skipped`, 68,747 lines, 32.2 lines
+per check, 1184s, exit 0, 2026-10-30 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
