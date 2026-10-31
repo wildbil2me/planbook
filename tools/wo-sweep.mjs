@@ -3744,21 +3744,30 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
       no `was` destructured out of an object. The word is ordinary English in a comment, and a local
       VARIABLE called `was` is untouched by all three patterns, which is the allowlist: only the key
       is being fenced.
-   2. src/score-history.js exports exactly the five names it was written with, and each is named
-      here with why it may leave: `reviseCell` is the WRITER's rule, whose answer goes straight back
-      into the document inside the caller's own update(); `hasVisibleHistory` and
-      `scoreHistoryVisible` answer a boolean; `scoreHistoryCard` hands back DOM; and
-      `REVISION_WINDOW_MS` is a number. A sixth export is a new door and has to be argued here.
-   3. `scoreHistoryCard` is imported by src/detail.js and by nothing else in src/, and `reviseCell`
-      by the two files that write a score cell — src/scores.js and src/past-due.js — and nothing else.
-      So the one export whose answer carries a trail reaches one screen, and the one whose answer
-      carries `was` reaches only writers.
+   2. src/score-history.js exports exactly the six names below, and each is named here with why it
+      may leave: `reviseCell` is the WRITER's rule, whose answer goes straight back into the document
+      inside the caller's own update(); `hasVisibleHistory` and `scoreHistoryVisible` answer a
+      boolean; `scoreHistoryCard` hands back DOM; `REVISION_WINDOW_MS` is a number; and
+      `scoreChangeSince` (WO-3.75) hands back ONE past version's value and flag beside the cell's
+      value and flag now, or null — never a note, an `at` or the trail. It is the sixth, and it was
+      argued here before it went into ALLOWED: the Record dialog's *What changed* box names the score
+      that moved a recorded quarter (*Act 2 quiz: 4 → 9*), the 4 is a past version, and the work order
+      puts the reader of a cell's value at a moment in this file rather than a second walk of the
+      history in src/term-record.js. A grade, a signal rule, a merge field and a print surface still
+      read none of it: the answer is the two ends of one cell, for one dialog, which is refused under
+      a projector before any reader is asked. A seventh export is a new door and has to be argued here.
+   3. `scoreHistoryCard` is imported by src/detail.js and by nothing else in src/, `reviseCell`
+      by the two files that write a score cell — src/scores.js and src/past-due.js — and nothing else,
+      and `scoreChangeSince` by src/term-record.js alone (WO-3.75), whose whatChanged() is the Record
+      dialog's one reader of it. So the one export whose answer carries a trail reaches one screen,
+      the one whose answer carries `was` reaches only writers, and the one that hands out a past
+      value reaches one reader.
 
    IT IS LOUD WHEN IT MOVES, for § 11's reason: no src/score-history.js, or no export of
    `reviseCell`, and every clause above is watching nothing — that FAILs saying so. */
 
 {
-  const NAME = 'a score cell\'s `was` is read only in src/score-history.js, whose exports are a writer\'s rule, two booleans, a card for src/detail.js and a number';
+  const NAME = 'a score cell\'s `was` is read only in src/score-history.js, whose exports are a writer\'s rule, two booleans, a card for src/detail.js, a number and one cell\'s value then and now for src/term-record.js';
   const OWNER = 'src/score-history.js';
   const ownerPath = path.join(REPO, 'src', 'score-history.js');
   const srcFiles = ALL.filter(p => /^src\/.*\.js$/.test(rel(p)));
@@ -3779,7 +3788,7 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
 
     const ownerCode = codeOf(ownerPath).join('\n');
     const exported = [...ownerCode.matchAll(/^export\s+(?:async\s+)?(?:function|const|let|class)\s+([A-Za-z_$][\w$]*)/gm)].map(m => m[1]).sort();
-    const ALLOWED = ['REVISION_WINDOW_MS', 'hasVisibleHistory', 'reviseCell', 'scoreHistoryCard', 'scoreHistoryVisible'];
+    const ALLOWED = ['REVISION_WINDOW_MS', 'hasVisibleHistory', 'reviseCell', 'scoreChangeSince', 'scoreHistoryCard', 'scoreHistoryVisible'];
     if (!exported.includes('reviseCell')) faults.push(`no \`export function reviseCell(\` in ${OWNER} — the rule every score write goes through is gone or renamed, and this section is watching a rearranged tree. Re-point § 28`);
     const extra = exported.filter(n => !ALLOWED.includes(n));
     if (extra.length) faults.push(`${OWNER} exports ${extra.join(', ')}, which § 28 does not name — every export of that file is a possible door to \`was\`, and a new one is argued in this section's banner before it is added to ALLOWED`);
@@ -3792,10 +3801,12 @@ const clip = s => (s.length > 140 ? s.slice(0, 137) + '…' : s);
     }).map(rel).sort();
     const cardBy = importers('scoreHistoryCard');
     const reviseBy = importers('reviseCell');
+    const changeBy = importers('scoreChangeSince');
     if (cardBy.join(',') !== 'src/detail.js') faults.push(`scoreHistoryCard is imported by ${cardBy.join(', ') || 'nothing'} — WO-3.33 puts a score's trail on student detail and nowhere else, so src/detail.js is its one importer`);
+    if (changeBy.join(',') !== 'src/term-record.js') faults.push(`scoreChangeSince is imported by ${changeBy.join(', ') || 'nothing'} — WO-3.75 hands one past version of a cell to the Record dialog's *What changed* reader and nowhere else, so src/term-record.js is its one importer. A second importer is a second door to a cell's past and is argued in this section's banner first`);
     if (reviseBy.join(',') !== 'src/past-due.js,src/scores.js') faults.push(`reviseCell is imported by ${reviseBy.join(', ') || 'nothing'} — its answer carries \`was\` and goes straight back into the document, so only the two files that write a score cell (src/scores.js, src/past-due.js) may hold it. A new writer is added here in the same edit; a reader is refused`);
     if (!faults.length) {
-      check(NAME, true, `${srcFiles.length - 1} file(s) under src/ read with comments stripped and none reads \`was\`; ${OWNER} exports ${exported.join(', ')}; scoreHistoryCard is imported by ${cardBy.join(', ')} alone and reviseCell by ${reviseBy.join(' and ')} alone`);
+      check(NAME, true, `${srcFiles.length - 1} file(s) under src/ read with comments stripped and none reads \`was\`; ${OWNER} exports ${exported.join(', ')}; scoreHistoryCard is imported by ${cardBy.join(', ')} alone, scoreChangeSince by ${changeBy.join(', ')} alone and reviseCell by ${reviseBy.join(' and ')} alone`);
     }
   }
   if (faults.length) check(NAME, false, faults.join(' · '));

@@ -16,7 +16,8 @@
   ── THIS FILE COMPUTES NOTHING ──
 
   Which terms need recording, in what order, in which of three states, how many students changed, who they are, what
-  was recorded and what it is now, whether a letter moved, how many boxes are empty, which columns are
+  was recorded and what it is now, whether a letter moved, which scores moved it and from what (WO-3.75),
+  how many boxes are empty, which columns are
   held, how much uncategorized work is outside a weighted grade — every one of those is a reader in
   src/term-record.js, and the bar and the dialog ask THE SAME reader for the same fact. Each of the
   bar's lines is one entry of termsNeedingRecord(), in its order, with its count — which is
@@ -84,7 +85,7 @@ import { currentView, isClassScreen } from './views.js';
 import { getSelectedClass, getSelectedTermId, getActiveClasses } from './classes.js';
 import {
   recordTerm, termsNeedingRecord, newestNeedOf, newestRecord, noLongerMatching, gradesToRecord,
-  emptyBoxes, heldColumns, looseWorkOutOfGrade,
+  emptyBoxes, heldColumns, looseWorkOutOfGrade, whatChanged,
 } from './term-record.js';
 /* The grid's order and the grid's figure, for src/held-column.js's reason over the same import: a
    teacher reads the dialog straight down against the grade sheet. */
@@ -109,6 +110,8 @@ const HINT_ID = 'termRecordHint';
 const EMPTY_ID = 'termRecordEmpty';
 const HELD_ID = 'termRecordHeld';
 const LOOSE_ID = 'termRecordLoose';
+const CAUSE_LABEL_ID = 'termRecordCauseLabel';
+const CAUSES_ID = 'termRecordCauses';
 const REFUSED_ID = 'termRecordRefused';
 const REFUSED_NAME_ID = 'termRecordRefusedName';
 const CONFIRM_ID = 'termRecordBtn';
@@ -278,7 +281,9 @@ export function refreshTermRecordBar() {
     form 'refused'  presentation mode is on: no rows, no figures, no names — nothing is asked of the
                     readers at all, so there is nothing in memory for a later paint to render.
     form 'changed'  the term is recorded and noLongerMatching() names someone: only those students,
-                    recorded beside now (frame C, without *What changed*, which is WO-3.75).
+                    recorded beside now (frame C), and `causes` — whatChanged()'s rows, the scores
+                    that moved each of them since the recording, or none for a class setting
+                    (WO-3.75). `causes` is null when the reader has nothing to say at all.
     form 'first'    otherwise: every student gradesToRecord() would record — the writer's own list —
                     with the empty boxes, the held columns and, in a weighted class, the
                     uncategorized work outside these grades (frame B).
@@ -303,10 +308,13 @@ export function termRecordModel(classId, termId) {
   const record = newestRecord(doc, cls, term.id);
   const changed = record ? noLongerMatching(doc, cls, term.id) : null;
   if (record && changed && changed.length) {
+    const causes = whatChanged(doc, cls, term.id);
     return Object.assign(base, {
       form: 'changed', at: record.at, recordId: record.id,
       rows: inOrder(changed).map((row) => ({ studentId: row.studentId, name: nameOf(row.studentId),
         recorded: row.recorded, live: row.live, letterChanged: row.letterChanged })),
+      causes: causes ? inOrder(causes).map((row) => ({ studentId: row.studentId,
+        name: nameOf(row.studentId), scores: row.scores })) : null,
     });
   }
   return Object.assign(base, {
@@ -359,6 +367,64 @@ function paintChangedRows(list, rows) {
     }
     now.setAttribute('data-term-record-now', row.letterChanged ? 'letter' : 'percentage');
     list.append(name, was, now);
+  });
+}
+
+/*
+  WHAT CHANGED (WO-3.75, frame C) — under the changed form's list, one `.term-record-cause` row per
+  changed student, the name and then each score that moved, one line each: *Act 2 quiz (Exams): 4 → 9
+  of 10*. A student with no score that moved gets the owner's line instead — no score changed, so a
+  class setting did — because weights, the letter scale and drop lowest keep no history to name.
+
+  The words are this file's; every fact in them is whatChanged()'s. A score reads as the score-history
+  trail reads it — *Missing*, *Excused*, *Late, 7*, *Blank* for nothing, a number — and *of 10* goes
+  once, after the last number on the line, never after a flag word. A cell whose value at the
+  recording is not kept (`then: null`) says so rather than showing a guess: *now 9 of 10 — what it
+  held when you recorded is not known*.
+*/
+const SETTING_LINE = 'No score changed; a class setting did — weights, the letter scale or drop lowest.';
+
+function scoreWords(score) {
+  const v = score.v;
+  if (score.flag === 'missing') return 'Missing';
+  if (score.flag === 'excused') return 'Excused' + (v === null ? '' : ', ' + v + ' kept');
+  if (score.flag === 'late') return 'Late' + (v === null ? '' : ', ' + v);
+  return v === null ? 'Blank' : String(v);
+}
+
+function counted(score) { return !!score && score.v !== null && score.flag !== 'excused'; }
+
+function causeLine(line) {
+  const of = Number(line.points) > 0 ? ' of ' + line.points : '';
+  const head = (line.name || 'Untitled assignment') + (line.category ? ' (' + line.category + ')' : '')
+    + ': ';
+  if (!line.then) {
+    return head + 'now ' + scoreWords(line.now) + (counted(line.now) ? of : '')
+      + ' — what it held when you recorded is not known';
+  }
+  const ofNow = counted(line.now);
+  return head + scoreWords(line.then) + (!ofNow && counted(line.then) ? of : '') + ' → '
+    + scoreWords(line.now) + (ofNow ? of : '');
+}
+
+function paintCauses(model) {
+  const box = document.getElementById(CAUSES_ID);
+  const rows = model.form === 'changed' && Array.isArray(model.causes) ? model.causes : [];
+  show(CAUSE_LABEL_ID, rows.length > 0);
+  show(CAUSES_ID, rows.length > 0);
+  if (!box) return;
+  box.textContent = '';
+  rows.forEach((row) => {
+    const cause = el('div', 'term-record-cause');
+    cause.setAttribute('data-term-record-cause', row.studentId);
+    const lines = el('span');
+    (row.scores.length ? row.scores.map(causeLine) : [SETTING_LINE]).forEach((text) => {
+      const one = el('span', 'term-record-cause-line', text);
+      one.setAttribute('data-term-record-cause-line', row.scores.length ? 'score' : 'setting');
+      lines.append(one);
+    });
+    cause.append(el('span', 'term-record-name', row.name), lines);
+    box.append(cause);
   });
 }
 
@@ -432,7 +498,7 @@ export function openTermRecordDialog(classId, termId, opener) {
 
   /* Every line that holds words from an earlier opening is emptied first, whichever form this one
      is: the refusal must carry nothing an earlier form wrote, hidden or not. */
-  [LIST_ID, LEAD_ID, LABEL_ID, EMPTY_ID, HELD_ID, LOOSE_ID].forEach((id) => {
+  [LIST_ID, LEAD_ID, LABEL_ID, EMPTY_ID, HELD_ID, LOOSE_ID, CAUSES_ID].forEach((id) => {
     const node = document.getElementById(id);
     if (node) node.textContent = '';
   });
@@ -453,6 +519,7 @@ export function openTermRecordDialog(classId, termId, opener) {
   if (refused || model.form === 'changed') {
     show(EMPTY_ID, false); show(HELD_ID, false); show(LOOSE_ID, false);
   }
+  paintCauses(model);
   if (confirm) confirm.textContent = model.button;
   const named = document.getElementById(REFUSED_NAME_ID);
   if (named) named.textContent = model.button;

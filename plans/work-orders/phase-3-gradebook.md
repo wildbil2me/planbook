@@ -5920,7 +5920,7 @@ a glance panel**: `src/glance.js` holds no arithmetic and no clock, and this con
 
 ## WO-3.75 — the notice says which score changed
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.74 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-10-31 · **Size** S · **Depends on** WO-3.74 · **Blocks** nothing
 **Closes roadmap** *(no box. Owner-directed, 2026-10-23, from the closing-a-quarter thread.)*
 
 **Read [WO-3.72](#wo-372--a-quarters-grades-can-be-recorded-and-the-engine-says-when-they-stop-matching) first**: the thread, the drawing and the rulings that bind all four are there.
@@ -5942,14 +5942,14 @@ frame **C**'s *What changed* box, and [`proposed-quarter.css`](../../design/mock
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.75** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] A score changed after a recording appears under *What changed* with the assignment, its
+- [x] A score changed after a recording appears under *What changed* with the assignment, its
       category, and the value at recording beside the value now.
-- [ ] Two edits to one cell after a recording show one line, from the recorded value to the latest.
-- [ ] A student whose grade moved only through a class setting gets the setting line.
-- [ ] With the reader dropping the `was` value, the check goes red. The mutation is reverted, and
+- [x] Two edits to one cell after a recording show one line, from the recorded value to the latest.
+- [x] A student whose grade moved only through a class setting gets the setting line.
+- [x] With the reader dropping the `was` value, the check goes red. The mutation is reverted, and
       `TESTING.md` § WO-3.75 shows the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-3.75 carries these lines verbatim with the evidence for each.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-3.75 carries these lines verbatim with the evidence for each.
 
 **Traps** — **A score's history is merged in five-minute windows** (WO-3.33), so the recorded value
 is the latest version at or before the recording, not the version before the newest. **Under a

@@ -537,7 +537,7 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
    down a class of twenty-five, and the list scrolls inside the box at 300px so the buttons stay on a
    landscape iPad. A row whose letter did not move is still listed (the owner, 2026-10-23), its letter
    drawn quieter so the eye finds the rows Blackbaud's letter has to change on. The drawing's
-   `.term-record-cause` (*What changed*) is WO-3.75's and is not lifted here. */
+   `.term-record-cause` (*What changed*) was left for WO-3.75 and is lifted below it. */
 .term-record-list {
   display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 2px 14px;
   font-size: 12.5px; line-height: 1.6; color: #1a1a2e;
@@ -552,6 +552,16 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
 .term-record-was { color: #6b7a8d; }
 .term-record-same { color: #6b7a8d; font-weight: 400; }
 .term-record-moved { font-weight: 700; }
+/* *What changed* under the changed form's list (WO-3.75, frame C): the student, then each score that
+   moved — lifted from design/mockups/proposed-quarter.css § RECORD LIST, values unchanged. A student
+   with two scores that moved is one row with two lines, so `.term-record-cause-line` is added here
+   and is not in the drawing, which draws one score per student. It holds no control, so nothing in
+   it is owed a 44px target. */
+.term-record-cause {
+  display: grid; grid-template-columns: minmax(0, 9em) minmax(0, 1fr); gap: 10px;
+  font-size: 12.5px; line-height: 1.6; color: #1a1a2e;
+}
+.term-record-cause-line { display: block; }
 /* The empty-boxes line, and the held-column and uncategorized lines beside it: amber, because each
    is worth a look and none is a refusal — recording is never blocked by them (the owner, 2026-10-23). */
 .term-record-empty {

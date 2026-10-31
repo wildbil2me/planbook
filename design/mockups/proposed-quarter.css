@@ -23,7 +23,10 @@
      § RECORD LIST   →  src/shell.css   (WO-3.73 — lifted 2026-10-26)
 
    WHAT THE LIFT LEFT DRAWN, ON PURPOSE (PROTOCOL.md § When the drawing lands):
-   `.term-record-cause` is the *What changed* box, and WO-3.75 lifts it.
+   `.term-record-cause` is the *What changed* box, left for WO-3.75 and
+   LIFTED 2026-10-31, values unchanged, with `.term-record-cause-line` added
+   in src/shell.css: built from data, a student can have two scores that
+   moved, and the drawing draws one.
    `.term-record-nag-classes`, the home bar's row of class buttons (frame E′),
    was left for WO-3.74 and LIFTED 2026-10-31, values unchanged, with an 8px
    gap under a coarse pointer added in src/shell.css. Every other class in both sections reached

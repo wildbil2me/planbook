@@ -268,7 +268,9 @@ Seven shape decisions that matter:
   score retyped as it stood leaves no *72 → 72*; and **a cleared cell with a past is kept** as
   `{ "v": null, "at": "…", "was": [ … ] }` — blank, ungraded, still carrying its history — where a
   cleared cell with no past still deletes its key. **Only the current fields count toward any grade,
-  and nothing reads `was` but student detail**: not the grade engine, not a signal, not a merge field,
+  and nothing reads `was` but student detail** — and, since WO-3.75, the Record dialog's *What
+  changed*, which is handed one version of a cell (its value and flag at the recording, beside its
+  value and flag now) and never the trail: not the grade engine, not a signal, not a merge field,
   not the printed sheet, not the CSV. What a dated score should mean for the praise rules is parked in
   `plans/future-features.md` § Gradebook as the owner's ruling to make. The score grid marks a cell
   that has a past and student detail lists the trail, and both are **absent under presentation mode**
@@ -823,6 +825,19 @@ two grades for one student.** So a class's term can be *recorded*: one entry app
 - **Grading settings stay per class**, not per term. A weight, letter-scale or drop-count change made
   after a quarter is keyed moves its grades, and the comparison reports exactly the students whose
   figures moved.
+- **What changed is read from each cell's own history** *(WO-3.75)*. `whatChanged()` answers, for
+  each of `noLongerMatching()`'s students, every live score cell of the term written since the newest
+  recording's `at`, as `{ then, now }` — each `{ v, flag }` — from `src/score-history.js`'s
+  `scoreChangeSince()`, which is what reads the history. **The value at the recording is the cell's
+  latest version at or before it**, the stamps compared as instants (a local stamp carries its
+  offset, and two either side of a daylight-saving change sort wrongly as strings). **`then` is
+  `null` — not known — when the first version written after the recording is stamped within five
+  minutes of it**, because a write inside the window replaced whatever the recording saw, and the
+  store cannot tell that from an edit made just after recording; likewise for every cell written
+  since in a column committed since. A cell back where it began is no change; **a held column is
+  never listed**, counting toward neither grade. A student with no score that moved is answered with
+  an empty list, and the dialog says a class setting did: weights, the letter scale and drop lowest
+  keep no history to name.
 - **Names and grades never show under a projector.** The readers hand back ids and figures; the
   screens that draw them (WO-3.73's `src/term-record-view.js`, and WO-3.74) name classes and counts
   only on their bars, and refuse the list in presentation mode.

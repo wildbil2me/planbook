@@ -58,6 +58,16 @@
   plans/future-features.md § Gradebook as the owner's ruling to make, not this file's.
   tools/wo-sweep.mjs § 28 keeps that true of the tree.
 
+  ONE MORE ANSWER LEAVES SINCE WO-3.75, AND IT IS ONE VERSION, NOT THE TRAIL. The Record dialog's
+  *What changed* box names the score that moved a recorded quarter — *Act 2 quiz (Exams): 4 → 9 of
+  10* — and the 4 is a past version. scoreChangeSince() hands src/term-record.js exactly that: one
+  cell's value and flag at a moment beside its value and flag now, or nothing. Never a note, never an
+  `at`, never the list, and never a version between the two ends: two edits since the recording are
+  one line from the recorded value to the latest. It asks presentationMode() nothing, deliberately —
+  the dialog it feeds is refused under a projector before any reader is asked
+  (src/term-record-view.js's termRecordModel()), so a second asker here would be the second opinion
+  this file exists to prevent. § 28 names its one importer.
+
   ── WHAT IT DOES NOT DO ──
 
   IT IS NOT A WRITER OF THE DOCUMENT: no store import, no update(). reviseCell() is pure — it is
@@ -228,6 +238,84 @@ export function scoreHistoryVisible() {
    being projected. A boolean and nothing more — the grid is never handed what the cell was. */
 export function hasVisibleHistory(cell) {
   return scoreHistoryVisible() && earlier(cell).length > 0;
+}
+
+/* The instant a stamp names, or NaN. Every `at` here is a local stamp WITH ITS OFFSET (localStamp()),
+   so two stamps either side of a daylight-saving change carry different offsets and compare wrongly
+   as strings — 01:30-04:00 is earlier than 01:10-05:00. Parsed, they compare as the moments they are,
+   which is how reviseCell() already measures its window and its two boundaries. */
+function instantOf(stamp) {
+  return typeof stamp === 'string' && stamp ? Date.parse(stamp) : NaN;
+}
+
+/* What a version counted as: its value and its flag, the two fields the grade math reads. Not the
+   note, which counts toward nothing and is the teacher's own text. */
+function scoreOf(cell) {
+  return { v: valueIn(cell), flag: flagWord(cell) };
+}
+
+/*
+  WHAT ONE CELL HELD AT A MOMENT, BESIDE WHAT IT HOLDS NOW (WO-3.75) — for the Record dialog's *What
+  changed*, through src/term-record.js and nothing else. `moment` is a stamp in the `at` form (a
+  recording's own `at`); `column` is `{ committedAt }` for the cell's column, or nothing. Answers:
+
+    null                                  nothing to say: the cell has not been written since the
+                                          moment, or it holds now what it held then (value and flag);
+    { then: { v, flag }, now: { v, flag } }  it changed, from `then` to `now`;
+    { then: null,       now: { v, flag } }  it was written since, and what it held at the moment is
+                                          not kept, so it is not said.
+
+  `flag` is '' for none. A blank `then` — `{ v: null, flag: '' }` — is a cell that held nothing at the
+  moment, which is known, and is not the same answer as `then: null`, which is not known.
+
+  THE VALUE AT THE MOMENT IS THE LATEST VERSION AT OR BEFORE IT (the work order's Traps): versions
+  merge in five-minute windows, so the version before the newest is not the one the recording saw. A
+  version with no `at` was written before WO-3.33, so it is before any recording — countedBefore()'s
+  reading. "At or before" because `at` is second-granular, the same second as the recording counts
+  as before, as it does at a hold and a commit.
+
+  WHEN THE MOMENT IS NOT KEPT, AND WHY `then` IS NULL RATHER THAN A GUESS. A write within five minutes
+  of the cell's last one REPLACES it and pushes nothing (above), so a write at 9:59, a recording at
+  10:00 and a write at 10:02 leave the 10:02 version alone, with nothing at or before 10:00 that the
+  recording saw — and the version before it on the trail, from days earlier, is NOT what the cell
+  held at 10:00. So whenever the first version written after the moment is stamped less than five
+  minutes after it, the burst that wrote it may have begun before the moment and swallowed what the
+  recording saw. The store cannot tell that from an edit made two minutes after recording a cell
+  untouched since September — the two cells are byte for byte the same — so both are `then: null`.
+  A COLUMN COMMITTED SINCE THE MOMENT is the same answer for every cell written since: it was held at
+  some point in between, and a held write replaces however long since (WO-3.52), so nothing on the
+  trail is a version the recording saw.
+
+  TWO LIMITS NO READING OF THE STORE CAN CLOSE, stated rather than claimed away: a burst that keeps
+  restamping one cell for more than five minutes across the moment is not seen, because each write
+  restamps `at`; and a burst across the moment that ends where it began pops its own push back
+  (above), restoring the old `at`, so the cell reads as unwritten since. Both want a teacher typing
+  into one cell while she records; both are in TESTING.md § WO-3.75.
+
+  A CELL THAT ENDS WHERE IT BEGAN IS NOT A CHANGE: 4 → 9 → 4 across the recording, more than five
+  minutes apart, answers null. Only the two ends are compared, because only the two ends are in the
+  two grades.
+*/
+export function scoreChangeSince(cell, moment, column) {
+  const when = instantOf(moment);
+  if (!isCell(cell) || !Number.isFinite(when)) return null;
+  const last = instantOf(cell.at);
+  if (!Number.isFinite(last) || last <= when) return null;
+  const versions = earlier(cell).concat([cell]);
+  let before = -1;
+  versions.forEach((version, i) => {
+    const stamped = instantOf(version.at);
+    if (!Number.isFinite(stamped) || stamped <= when) before = i;
+  });
+  const now = scoreOf(cell);
+  const committed = column ? instantOf(column.committedAt) : NaN;
+  const after = instantOf(versions[before + 1].at);
+  if ((Number.isFinite(committed) && committed > when) || after - when < REVISION_WINDOW_MS) {
+    return { then: null, now: now };
+  }
+  const then = before < 0 ? { v: null, flag: '' } : scoreOf(versions[before]);
+  if (then.v === now.v && then.flag === now.flag) return null;
+  return { then: then, now: now };
 }
 
 /* createElement and textContent, never innerHTML: a note inside a version is typed by a teacher. */

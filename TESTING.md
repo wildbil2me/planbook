@@ -19248,6 +19248,151 @@ now), `tools/README.md` (count), `design/mockups/proposed-quarter.css` and
 - [x] `TESTING.md` § WO-3.74 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-3.75 — the notice says which score changed
+
+**What was built.** Under the changed form's list, a *What changed* box (frame C): one
+`.term-record-cause` row per changed student, the name and then each score that moved since the
+recording, one line each — *Act 2 quiz (Exams): 4 → 9 of 10* — or, where no score of theirs moved,
+the owner's line *No score changed; a class setting did — weights, the letter scale or drop lowest.*
+
+- **The reader** is `whatChanged(doc, cls, termId)` in `src/term-record.js`: for each row of
+  `noLongerMatching()` (asked, not re-derived), every live column of the term in document order, each
+  cell answered by `scoreChangeSince()`. It hands back `{ studentId, scores: [{ assignmentId, name,
+  category, points, then, now }] }`, `then`/`now` as `{ v, flag }`; an empty `scores` is the setting
+  line. It never touches a cell's history key.
+- **The value at a moment** is `scoreChangeSince(cell, moment, column)`, a new export of
+  `src/score-history.js` — the work order's *add it there*. It answers `null` (not written since, or
+  holds now what it held then), `{ then, now }`, or `{ then: null, now }` when what the cell held at
+  the recording is not kept. Never a note, an `at`, or the trail.
+- **The screen** (`src/term-record-view.js`) adds words only: `causeLine()`, the flag words the
+  score-history trail uses (*Missing*, *Excused*, *Late, 7*, *Blank*), and *of 10* once, after the
+  last counted number. `#termRecordCauseLabel` and `#termRecordCauses` in `index.html`;
+  `.term-record-cause` lifted from `proposed-quarter.css` § RECORD LIST values unchanged, plus
+  `.term-record-cause-line` (a student can have two lines; the frame draws one). No control, so no
+  44px rule — the sweep's coarse-block REVIEW names both selectors, and neither is a touch target.
+
+**The orchestrator's traps, and how each was decided.**
+1. **`was` has one reader.** `scoreChangeSince` was argued in `tools/wo-sweep.mjs` § 28's banner
+   (clause 2: why a sixth export may leave; clause 3: its one importer is `src/term-record.js`),
+   added to `ALLOWED`, and given an importer check that fails on any second importer. The
+   score-history banner's *one reader* paragraph now names what the new reader hands out, and why it
+   asks `presentationMode()` nothing (the dialog refuses before any reader is asked). `src/term-record.js`
+   reads no `was` — § 28 is green over it. `docs/data-model.md`'s *nothing reads `was` but student
+   detail* sentence and the `tools/README.md` § 28 row were amended to match.
+2. **Instants, not strings.** Every comparison in `scoreChangeSince()` is `Date.parse()` of the two
+   stamps — the way `reviseCell()` already measures its window and its hold/commit boundaries. Proved
+   on hand-written stamps either side of 2026-11-01's change: `01:10-05:00` is read as 40 minutes
+   *after* `01:30-04:00`, though it sorts before it. *(Not changed, and out of scope: WO-3.72's
+   `newestRecord()` picks the newest record by string `at`. Two recordings of one quarter inside the
+   repeated hour of 2026-11-01 could pick the wrong one. Named in the result file as a follow-up.)*
+3. **A merge window straddling the recording.** `then` is `null` — and the line reads *now 8 of 10 —
+   what it held when you recorded is not known* — whenever the first version written after the
+   recording is stamped less than five minutes after it. A write at R−1min replaced at R+2min leaves
+   the R+2min version alone with an older version (from days before) behind it, and that older value
+   is NOT what the recording saw; showing it would be the fabricated *5 →*. **The cost, stated:** an
+   edit made within five minutes after recording a cell untouched for weeks produces a byte-identical
+   cell, so it reads *not known* too — honest, and never wrong. A cell with no `at` (before WO-3.33)
+   is never "written since", and a version with no `at` on a trail counts as before the recording —
+   `countedBefore()`'s reading. **Two limits no reading of the store can close**: a burst that keeps
+   restamping one cell for more than five minutes across the recording is not seen (each write
+   restamps `at`), and a burst across the recording that ends where it began pops its own push back,
+   restoring the old `at`, so the cell reads as unwritten since. Both need the teacher typing into one
+   cell while she records.
+4. **A cell back where it began** (4 → 9 → 4, more than five minutes apart) gets **no line**: only
+   the two ends are compared, because only the two ends are in the two grades. So a student whose only
+   written cell came back gets the setting line — *No score changed* is literally true of her scores.
+   A note-only change is not a change either: value and flag are compared, the two fields the grade
+   reads.
+5. **Held columns are never listed** (`isHeld()`, never `.held`). A held column counts toward neither
+   grade, so no change in it moved anything, and its history is not kept until a commit. A column
+   **committed since the recording** is live and is listed, with `then: null` for every cell written
+   since — held writes replace however long since, so nothing on its trail is a version the recording
+   saw.
+6. **The mutation** was reverted before anything else was written; the grep is under Acceptance 4.
+
+**Left as found, and named for the owner rather than built:** a hold or a commit made since the
+recording moves grades without moving a score, and a student moved only by that gets the setting
+line, whose list (weights, letter scale, drop lowest) does not name it. Uncategorized work in a
+weighted class is listed when its score moved although it is outside the weighted grade — the work
+order's *every score cell in the quarter*, taken as written.
+
+- [x] A score changed after a recording appears under *What changed* with the assignment, its
+      category, and the value at recording beside the value now.
+      — `node tools/verify-shell.mjs`, 2026-10-31, real clock (`tools/verify/term-record-cause.mjs`,
+      new): `PASS | WO-3.75: a score changed after a recording appears under *What changed* with the
+      assignment, its category, and the value at recording beside the value now — Avery375's Act 2
+      quiz (Exams) 4 → 9 of 10 and Essay 1 (Projects) Missing → 8 of 10, …` reading
+      `"label":"What changed","shown":true`, `listOrder` and the box's row order both
+      `["wo375-avery","wo375-brook","wo375-cole","wo375-dunn","wo375-ellis"]`, Avery's lines
+      `[["score","Act 2 quiz (Exams): 4 → 9 of 10"],["score","Essay 1 (Projects): Missing → 8 of 10"]]`,
+      the engine's `then`/`now` `{v:4}`→`{v:9}` and `{flag:"missing"}`→`{v:8}`, and the row a two-column
+      grid (`"cols":"112.5px 291.5px"`). Every cell in the fixture was written by `reviseCell()` on a
+      clock the section names, and the recording is `gradesToRecord()` taken at the before-state.
+- [x] Two edits to one cell after a recording show one line, from the recorded value to the latest.
+      — Same run: `PASS | WO-3.75: two edits to one cell after a recording show one line, … Brook375's
+      Act 2 quiz written 7 at R+1h and 9 at R+3h reads *4 → 9 of 10*, once: the value at the recording
+      is the latest version at or before it (4), not the version before the newest (7)`, on the cell
+      `{"v":9,…,"was":[{"v":4,"at":"2026-10-09T11:26:40-04:00"},{"v":7,"at":"2026-10-29T12:26:40-04:00"}]}`
+      and the line `[["score","Act 2 quiz (Exams): 4 → 9 of 10"]]`.
+- [x] A student whose grade moved only through a class setting gets the setting line.
+      — Same run: `PASS | WO-3.75: a student whose grade moved only through a class setting gets the
+      setting line — Cole375, 70.00 C → 78.00 C on the weights alone, reads exactly *No score changed;
+      a class setting did — weights, the letter scale or drop lowest.* and nothing else`, the engine
+      answering `"scores":[]`. The traps' checks in the same run: `PASS | WO-3.75 (trap 3): …` (Dunn375,
+      `"then":null`, *now 8 of 10 — what it held when you recorded is not known*, no *5 →* or *6 →* in
+      the box), `PASS | WO-3.75 (trap 4): …` (Ellis375, 4 → 9 → 4, setting line), `PASS | WO-3.75
+      (trap 5): …` (Vocab 4, held, written at R+1h, named nowhere), `PASS | WO-3.75 (trap 2): …`
+      (`{"after":{"then":{"v":4,"flag":""},"now":{"v":9,"flag":""}},"before":null}`), `PASS | WO-3.75:
+      in presentation mode the dialog refuses and *What changed* is neither drawn nor built — …`
+      (`"label":null,"shown":false,"children":0,"text":""`), and `PASS | WO-3.75: once the quarter is
+      recorded again and matches, the dialog opens in its first form and *What changed* is gone — …`.
+- [x] With the reader dropping the `was` value, the check goes red. The mutation is reverted, and
+      `TESTING.md` § WO-3.75 shows the red output.
+      — The mutation, in `scoreChangeSince()` in `src/score-history.js`, reading the cell as if it had
+      no trail:
+      ```
+      const versions = [cell]; // MUTATION WO-3.75 — the reader drops the was value
+      ```
+      ```
+      FAIL | WO-3.75: a score changed after a recording appears under *What changed* … :: … "lines":[["score","Act 2 quiz (Exams): Blank → 9 of 10"],["score","Essay 1 (Projects): Bl…
+      FAIL | WO-3.75: two edits to one cell after a recording show one line, … :: {"brook":[["score","Act 2 quiz (Exams): Blank → 9 of 10"]], … "then":{"v":null,"flag":""} …
+      PASS | WO-3.75: a student whose grade moved only through a class setting gets the setting line — …
+      PASS | WO-3.75 (trap 3): … (Dunn's line is "not known" either way — it never reads the trail)
+      FAIL | WO-3.75 (trap 4): a cell that ends where it began is not a change — … :: {"ellis":[["score","Act 2 quiz (Exams): Blank → 4 of 10"]], …
+      PASS | WO-3.75 (trap 5): …
+      FAIL | WO-3.75 (trap 2): stamps are compared as instants, not strings — … :: {"after":{"then":{"v":null,"flag":""},"now":{"v":9,"flag":""}},"before":null}
+      PASS | … (the refusal, the first form, and the fixture's removal)
+      ```
+      Those were the run's only four FAILs (1,397 PASS lines printed); it was stopped once the section
+      had printed (the log ends `EXIT=127`, the kill, so there is no summary line). The line was
+      restored by hand before anything else was written; `grep -rn "MUTATION WO-3.75" src tools sw.js
+      index.html` then printed nothing, and `grep -rn MUTATION src tools sw.js index.html` printed 18
+      lines, the same 18 that `git grep -n MUTATION HEAD -- src tools sw.js index.html` prints —
+      pre-existing prose, none of it a live mutation.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs` on the tree as delivered, before the mutation, 2026-10-31, real
+      clock: `2157 checks · 2157 passed · 0 failed · 0 skipped`, `69,597 lines · 32.3 lines per check ·
+      1203s`, `EXIT=0` — ten more than WO-3.74's 2147, the ten WO-3.75 checks that execute (the eleventh
+      site is the fixture-guard arm). And again after the mutation was reverted and every doc edit was
+      in, on the tree as delivered: `2157 checks · 2157 passed · 0 failed · 0 skipped`, `69,597 lines ·
+      32.3 lines per check · 1196s`, `EXIT=0`, every WO-3.75 line a PASS.
+      `node tools/wo-sweep.mjs`: `52 checks · 48 passed · 0 failed · 4 to review`, `EXIT=0` — the three
+      standing reviews, and the coarse-block review naming `.term-record-cause` and
+      `.term-record-cause-line`, neither of which is a control. The call-site check reads 2149,
+      matching `tools/README.md`.
+- [x] `TESTING.md` § WO-3.75 carries these lines verbatim with the evidence for each.
+      — This section.
+
+**Files.** `src/score-history.js` (`scoreChangeSince()`, the banner), `src/term-record.js`
+(`whatChanged()`, the import, the header), `src/term-record-view.js` (`causes` on the changed model,
+`paintCauses()`, `causeLine()`, the header), `index.html` (`#termRecordCauseLabel`,
+`#termRecordCauses`, the comment), `src/shell.css` (`.term-record-cause`, `.term-record-cause-line`),
+`sw.js` (`planbook-shell-v201` → `v202`), `tools/verify/term-record-cause.mjs` (new, registered after
+`term-record-notice.mjs` in `tools/verify-shell.mjs`), `tools/verify/term-record.mjs` (the one-writer
+check's export list gains `whatChanged`), `tools/wo-sweep.mjs` (§ 28), `tools/README.md` (count, the
+§ 28 row), `docs/data-model.md` (the `was` sentence, a *What changed* bullet), and the two drawing
+banners (`design/mockups/proposed-quarter.css`, `design/mockups/closing-a-quarter.html`).
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

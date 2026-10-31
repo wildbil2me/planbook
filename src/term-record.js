@@ -49,8 +49,9 @@
   notice is WO-3.74, and they draw from these readers and compute nothing — a screen that re-ran the comparison would be the
   second opinion that lets the bar and the dialog disagree about who changed.
 
-  IT HANDS BACK IDS AND FIGURES, NEVER A NAME. A student is a `studentId`; a category and a held
-  column carry their teacher-typed names because that is the whole of the line they feed. Whether a
+  IT HANDS BACK IDS AND FIGURES, NEVER A NAME. A student is a `studentId`; a category, a held column
+  and an assignment under *What changed* (WO-3.75) carry their teacher-typed names because that is
+  the whole of the line they feed. Whether a
   name may be on screen under a projector is the screen's question, and the screens WO-3.73 and
   WO-3.74 draw are refused there.
 */
@@ -72,6 +73,10 @@ import { todayISO } from './attendance.js';
 import { formatPercent } from './scores.js';
 /* The log's clock, for `at`: a local ISO timestamp with its offset, never a `Z`. */
 import { localStamp } from './log.js';
+/* What a score cell held at a recording (WO-3.75). The one reader of a cell's history outside
+   student detail, and it lives in that file: this one never touches the history key itself
+   (tools/wo-sweep.mjs § 28). */
+import { scoreChangeSince } from './score-history.js';
 
 function arrayOf(value) { return Array.isArray(value) ? value : []; }
 
@@ -455,4 +460,57 @@ export function heldColumns(doc, cls, termId) {
   return arrayOf(doc && doc.assignments)
     .filter((a) => a && a.classId === classId && a.termId === termId && isHeld(a))
     .map((a) => ({ id: a.id, name: String(a.name == null ? '' : a.name) }));
+}
+
+/*
+  WHAT CHANGED SINCE THE NEWEST RECORDING — the score cells that moved each changed student's grade,
+  for the Record dialog's *What changed* box (WO-3.75, frame C):
+
+    [{ studentId, scores: [{ assignmentId, name, category, points, then, now }] }]
+
+  one entry per row of noLongerMatching(), in its order (roster order), or NULL when the term was never
+  recorded or its recording's `at` names no moment. `then` and `now` are `{ v, flag }` — `flag` '' for
+  none — and `then` is null where what the cell held at the recording is not kept (src/score-history.js
+  says when). An EMPTY `scores` is the answer *no score changed*: the grade moved through a class
+  setting, which keeps no history, and the dialog says so in a line of its own.
+
+  WHO: exactly noLongerMatching()'s students, asked of it rather than re-derived — the box explains the
+  list above it, and a student it did not list has nothing to explain. WHAT: every live column of the
+  class's term, in document order (the grid's column order), and for each the cell's own answer from
+  scoreChangeSince(), which reads the history and hands back the two ends. This file reads `at` off
+  the record and nothing off a cell's past.
+
+  A HELD COLUMN IS NEVER LISTED (isHeld(), the one reader of `held`). It counts toward neither grade —
+  not the live one, and not the recorded one if it was held then too — so no change in it moved
+  anything, and its trail is not kept until a commit anyway (WO-3.52). A column COMMITTED since the
+  recording is live, and is listed with the value then unknown — scoreChangeSince() says why.
+
+  A CATEGORY is the class's own name for it, or the engine's LOOSE_NAME, *no category*, for work filed
+  under none — the engine's test for the pile, an id not among the class's categories. `points` is the
+  assignment's own, for *of 10*. Names come back because they are the whole of the line, as
+  heldColumns()' do; whether the line may be on screen is the dialog's question, refused there under
+  a projector.
+*/
+export function whatChanged(doc, cls, termId) {
+  const record = newestRecord(doc, cls, termId);
+  if (!record || !Number.isFinite(Date.parse(String(record.at || '')))) return null;
+  const classId = cls && cls.id;
+  const categories = categoriesOf(cls);
+  const categoryName = (id) => {
+    const hit = categories.filter((category) => category && category.id === id)[0];
+    return hit ? String(hit.name == null ? '' : hit.name) : LOOSE_NAME;
+  };
+  const work = arrayOf(doc && doc.assignments)
+    .filter((a) => a && a.classId === classId && a.termId === termId && !isHeld(a));
+  const column = (a) => (doc && doc.scores && doc.scores[a.id]) || {};
+  return noLongerMatching(doc, cls, termId).map((row) => ({
+    studentId: row.studentId,
+    scores: work.map((a) => {
+      const cells = column(a);
+      const cell = Object.prototype.hasOwnProperty.call(cells, row.studentId) ? cells[row.studentId] : null;
+      const change = scoreChangeSince(cell, record.at, { committedAt: a.committedAt });
+      return change ? { assignmentId: a.id, name: String(a.name == null ? '' : a.name),
+        category: categoryName(a.categoryId), points: a.points, then: change.then, now: change.now } : null;
+    }).filter((line) => line !== null),
+  }));
 }

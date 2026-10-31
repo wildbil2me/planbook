@@ -13,6 +13,20 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The Record dialog says which score changed — 2026-10-31
+
+WO-3.75. `CACHE` v201 → v202.
+
+- **When a recorded quarter stops matching, the Record dialog now says why, under *What changed***:
+  each score that moved since the recording, from what it held then to what it holds now — *Act 2
+  quiz (Exams): 4 → 9 of 10*, which is the line a Blackbaud grade-change form asks for. Two edits to
+  one score are one line, recorded value to latest.
+- **When no score of a student's moved**, one line says a class setting did — weights, the letter
+  scale or drop lowest — because those keep no history to name.
+- **A score changed within five minutes of the recording** says its earlier value is not known
+  rather than guessing, and a held column is never listed. Under a projector the dialog still
+  refuses.
+
 ### A changed quarter tells you when you leave it, and All classes says what still needs recording — 2026-10-31
 
 WO-3.74. `CACHE` v200 → v201. Read on the iPad by the owner.

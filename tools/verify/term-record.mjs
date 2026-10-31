@@ -547,10 +547,12 @@ check('WO-3.72: src/term-record.js holds one writer, and it only pushes — reco
        retired termNeedingRecord() for termsNeedingRecord(), the same question answered as a list
        of every term, in the same place in the file; still a reader. WO-3.74 added newestNeedOf()
        after it — which of that list's entries is the newest by term order, for the home bar's
-       button — a reader of the list it is handed, and nothing else. */
+       button — a reader of the list it is handed, and nothing else. WO-3.75 added whatChanged() at
+       the foot — the scores that moved each changed student since the recording, asked of
+       src/score-history.js's scoreChangeSince() — a reader too. */
     && JSON.stringify(exported) === JSON.stringify(['gradesToRecord', 'recordTerm', 'termEnded',
       'termEndsToday', 'termsNeedingRecord', 'newestNeedOf', 'newestRecord', 'noLongerMatching', 'emptyBoxes',
-      'looseWorkOutOfGrade', 'heldColumns'])
+      'looseWorkOutOfGrade', 'heldColumns', 'whatChanged'])
     && imports.indexOf('grade-engine') !== -1 && imports.indexOf('attendance') !== -1
     && engineSource.indexOf('term-record') === -1,
   JSON.stringify({ pushes: count(code, /\.push\(/g), updates: count(code, /\bupdate\(/g),
