@@ -258,6 +258,33 @@ export function termsNeedingRecord(doc, cls, today) {
 }
 
 /*
+  WHICH OF A CLASS'S WAITING TERMS IS THE NEWEST (WO-3.74) — of the entries termsNeedingRecord()
+  answered for this class, the one whose term is LATEST IN THE CLASS'S TERM ORDER, or null for an empty
+  list. The home bar's button opens this one.
+
+  IT IS NOT THE LIST'S HEAD, and that is the owner's ruling of 2026-10-30: the list puts unrecorded
+  before changed, so with Quarter 1 never recorded and Quarter 2 recorded and since changed the head
+  is Quarter 1 — and the home bar's button opens Quarter 2, the newest, while the class's own bar
+  names Quarter 1 first. Newest is a term's place in `cls.terms`, never its label and never its dates
+  (WO-3.77's Traps, WO-3.78's fixtures).
+
+  THE ANSWER IS THE ENGINE'S SO THE HOME BAR ORDERS NOTHING. It is handed the list rather than asking
+  for it, so a caller that already holds the list — the home bar, which also words a sentence from
+  it — does not run every comparison twice. A walk from the last term back, and no sort: this file's
+  fence refuses `.sort(`, `.reverse(` and `.find(` on sight.
+*/
+export function newestNeedOf(cls, needs) {
+  const waiting = arrayOf(needs);
+  const terms = arrayOf(cls && cls.terms);
+  for (let at = terms.length - 1; at >= 0; at -= 1) {
+    const termId = terms[at] && terms[at].id;
+    const hit = waiting.filter((need) => need && need.termId === termId)[0];
+    if (hit) return hit;
+  }
+  return null;
+}
+
+/*
   THE NEWEST RECORD FOR ONE CLASS AND TERM — a copy of it, or null when it was never recorded (which
   includes every document with no `termRecords` key at all).
 

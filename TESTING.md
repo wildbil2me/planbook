@@ -19081,6 +19081,173 @@ heads differ from the right one. The check compares all three lines, not just th
 - [x] `TESTING.md` § WO-3.78 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-3.74 — the notice opens when you leave a quarter that changed, and home carries the bar
+
+**What was built.** The notice is WO-3.73's changed-form dialog opening by itself; nothing new is
+drawn, and who changed is the dialog's own model (`termRecordModel()`), so the notice and the bar's
+button cannot disagree about it. It lives at the foot of `src/term-record-view.js` with the home bar.
+
+- **Where the teacher is** = the open class and its open term while a class screen is up
+  (`whereNow()`); any other view (All classes, the template editor) is *not in a quarter*. It is read
+  on every call of `refreshTermRecordBar()` — which `src/shell.js` already makes on every view change,
+  class change, document replacement and recording — and on a term tap (`checkTermRecordNotice()`, one
+  new line in the `data-term-select` hook, because that tap repaints no bar). The read is a
+  **microtask**, so it sees where the whole navigation chain lands, and a dialog the chain itself
+  opened is already up.
+- **Leaving** = the class or the term differs from the last reading, or the view left the class's
+  screens. If the quarter left is a `changed` entry of `termsNeedingRecord()`, the notice opens for it.
+- **Opening a class** = the class differs from the last reading (including the first class screen
+  after a launch). Every `changed` entry of that class's list, in list order, is a candidate. Leaving
+  is asked first; at most one notice per tap.
+- **Never under a projector, never over another dialog**: nothing opens and nothing is marked, so the
+  change is still unshown at the next class opening with the mode off.
+- **The home bar** (frame E′) is a second aside, `#termRecordHomeNag`, beside `#termRecordNag` in
+  `index.html`, painted from `refreshTermRecordBar()` on `home` only. One `.term-record-nag-line` with
+  the lead, a *changed* sentence, and `.term-record-nag-classes` holding one `.term-record-nag-btn` per
+  class (lifted from `proposed-quarter.css` § RECORD NAG; 44px under a coarse pointer by the class
+  bar's existing rule, with the gap opened to 8px there). The button carries `data-term-record-home`
+  (class) and `data-term-record-term`; `src/shell.js`'s `openRecordFromHome()` opens the class on
+  Scores (`openClassOn()`), selects that term through `selectTerm()` + `afterTermChange()`, and opens
+  the dialog with the class bar's button for that term as its opener.
+- **Which quarter a button opens** is the engine's: a new reader `newestNeedOf(cls, needs)` in
+  `src/term-record.js` — the entry latest in `cls.terms`, by a walk from the last term back, with no
+  sort and no `.find(`. The view hands it the class's `termsNeedingRecord()` and reorders nothing.
+- **Wording.** *Quarter 1 needs recording in 2 classes.* when every button opens a term of one label
+  (a display comparison for the sentence; no term is found by it), else *Grades need recording in 2
+  classes.* Then *X has changed since it was recorded.* for the classes whose button opens a changed
+  quarter. The drawing's banner records both departures.
+
+**How *once* is remembered — proposed by the implementer, confirmed by the owner 2026-10-31.** In memory
+only: a `Set` in `src/term-record-view.js`, `noticed`, holding a key per change shown — the class, the
+term, the newest record's id, and every changed student's live figure as the dialog prints it
+(`noticeKey()`). The same record, the same students and the same figures is the same change and is not
+shown again; a further edit makes a new key and is. Opening the changed form from either bar's button
+also counts as shown. Nothing reaches the year document or `localStorage`. **The cost, stated:** a
+relaunch forgets, so the same change can be shown once more after the app is reopened. That is the
+work order's own proposal taken as written; a stored flag would be read by nothing else, and in
+`localStorage` it would be the first non-preference there. *(The owner's reasoning in confirming: the
+key carries students' figures, so `localStorage` is barred by the preferences-only rule, and the year
+document would need a writer this notice is tested not to have; one repeat reminder after a relaunch
+is cheaper than one missed.)*
+
+**Decisions the work order did not settle**, each taken one way at the build and **all four accepted
+by the owner as built, 2026-10-31**:
+1. **The template editor counts as leaving the quarter**, like All classes: it is not one of a class's
+   screens. The calendar and the concern list are class screens (`src/views.js`), so moving to them
+   through the class's switcher is *staying* while the class and term are unchanged.
+2. **The `Today` button on the register can move the term** (WO-2.52) without a bar repaint; that move
+   is noticed at the next navigation rather than at the press — a late notice in that one case.
+   *(Accepted for a reason of its own: `Today` is pressed while taking attendance, the screen that
+   has to be fastest, and a dialog there would be in the way.)*
+3. **Leaving is asked before opening, and at most one notice opens per tap.** When a class tab both
+   leaves a changed quarter and opens a class with its own unshown change, the quarter just left is
+   shown; the arrived class keeps its change for its next opening.
+4. **The opening notice can open on the quarter the class opens into** — a change from a sync, say —
+   because arriving is not "still working in it". It never opens while she stays.
+*(The result file listed only 1–3 and the earlier draft of this list only 1, 2 and 4; both now carry
+all four, which is the record agreeing with itself rather than any change to the code.)*
+
+**Files.** `src/term-record-view.js` (home bar, notice, `recordId` on the changed model, the dialog
+marks what it shows), `src/term-record.js` (`newestNeedOf()`), `src/shell.js` (hook,
+`openRecordFromHome()`, the term-tap line, the header's hook list), `index.html`
+(`#termRecordHomeNag`), `src/shell.css` (`.term-record-nag-classes`, the coarse gap), `sw.js`
+(`planbook-shell-v200` → `v201`), `tools/verify/term-record-notice.mjs` (new, registered after
+`term-record-bar.mjs`), `tools/verify/term-record.mjs` (the one-writer check's export list gains
+`newestNeedOf`), `tools/verify/term-record-bar.mjs` (one check's message: All classes has its own bar
+now), `tools/README.md` (count), `design/mockups/proposed-quarter.css` and
+`design/mockups/closing-a-quarter.html` (banners).
+
+- [x] Changing a recorded quarter's score and then tapping another term, another class or All
+      classes opens the notice once, listing who changed.
+      — `node tools/verify-shell.mjs`, the clean run of 2026-10-31 on the tree as delivered: `PASS | WO-3.74: changing a recorded quarter's scores
+      and then tapping another term opens the notice — …` with rows `[["wo374-s1","90.00% A","85.00% B"],
+      ["wo374-s2","80.00% B","82.00% B"]]` on the Quarter 2 tab; then, after a further edit, the class
+      tab (`cls: c_wo374o`, s1 now `86.00% B`); then, after another, *All classes* (`view: home`, s2
+      now `83.00% B`); `wroteNothing: [true,true]` — the document and the `planbook_` keys (less the
+      three navigation preferences) identical across the notice opening and *Not yet*. And `PASS |
+      WO-3.74: the notice opens ONCE for a change — back into Quarter 1 and out again with nothing new
+      changed opens nothing, and nor does coming back to the class that was just left`. The scores were
+      typed into the grid's own cells (`input` on `[data-score-cell]`), not written over the store.
+- [x] Working in the quarter — several edits, moving between its screens — opens nothing.
+      — Same run: `PASS | WO-3.74: working in the quarter opens nothing — …` reading
+      `working: [["typed s1 85",false],["attendance",false],["assignments",false],["typed s2 82",false],
+      ["detail",false],["scores again",false],["Quarter 1 tapped again",false]]`, every screen reached
+      through the switcher's pill or the registry's door.
+- [x] A change made from another quarter opens the notice once, the next time the class is opened,
+      and not again for the same change.
+      — Same run: `PASS | WO-3.74: a change made from another quarter — the letter scale changed while
+      the class is on Quarter 2 — …` reading `stay: [false,false]`, `toOther: false`, then on reopening
+      the class `rows: [["wo374-s1","90.00% A","86.00% B"],["wo374-s2","80.00% B","83.00% C"]]`, and
+      `again: false` on the opening after. The setting was written over the store while the class sat
+      on Quarter 2, which is the shape a sync or a weight changed from Q2 takes.
+- [x] In presentation mode the notice does not open, and opens on the next opening with it off.
+      — Same run: `PASS | WO-3.74: in presentation mode the notice does not open — …` reading
+      `projOpen: false` (the class opened with a change unshown), `projLeave: false` (Quarter 1 left),
+      `modeOff: false` (the mode turned off, nothing opened by the flip), then `next` open on the
+      class's next opening with `rows: [["wo374-s1","90.00% A","86.00% A"],["wo374-s2","80.00% B",
+      "83.00% B"]]`. The refusal was never shown in the notice's place either.
+- [x] The home bar names each class that needs recording, and its button lands on that class's
+      Scores for the quarter with the dialog open.
+      — Same run: `PASS | WO-3.74: the home bar names each class that needs recording — …` reading the
+      bar `⚠ Quarter 1 needs recording in 2 classes. WO-3.74 Notice has changed since it was recorded.`,
+      buttons `[["c_wo374n","tm374q1","WO-3.74 Notice"],["c_wo374o","tm374oq","WO-3.74 Other"]]`,
+      `afterBackupNag: true`, `inGlance: false`, no student name; WO-3.74 Other's button landed on
+      `view: scores, cls: c_wo374o, term: tm374oq` with *Record Quarter 1 grades for WO-3.74 Other?*
+      open, and WO-3.74 Notice's on `term: tm374q1` with the changed form open; the bar hidden on a
+      class screen. And `PASS | WO-3.74: in presentation mode the home bar stays up naming classes and
+      no student, and its button lands on the class's Scores with the dialog's refusal, listing nobody`.
+      The structural check `PASS | WO-3.74: the home bar is not a glance panel and the notice stores
+      nothing — …` reads `glanceHits: []`, `tailHits: []`: `src/glance.js` and `src/home.js` name
+      nothing of the record, and the home bar's and the notice's code calls no writer, preference or
+      storage.
+- [x] With a class's Q1 never recorded and its Q2 recorded and since changed, the home bar's button
+      opens Q2, the newest by term order, though the class's own bar lists Q1 first.
+      — Same run: `PASS | WO-3.74: with the class's Quarter 1 never recorded and its Quarter 2 recorded
+      and since changed, …` reading the engine `list: [["tm374q1","unrecorded"],["tm374q2","changed"]]`,
+      `newest: "tm374q2"`, the button `["c_wo374n","tm374q2","WO-3.74 Notice"]`, landing on
+      `term: tm374q2` with *Quarter 2's grades have changed* and `rows: [["wo374-s1","85.00% B",
+      "70.00% C"]]`, and the class's own bar's buttons `["tm374q1","tm374q2"]` — Quarter 1 first.
+- [x] With the notice opening on every tap of the quarter, the check goes red. The mutation is
+      reverted, and `TESTING.md` § WO-3.74 shows the red output.
+      — The mutation, in `unshown()` in `src/term-record-view.js`, dropping the memory so that every
+      leaving and every opening of the changed quarter opens it:
+      ```
+      return !!model && model.form === 'changed'; // MUTATION WO-3.74 — every tap of the changed quarter
+      ```
+      ```
+      PASS | WO-3.74: working in the quarter opens nothing — …
+      PASS | WO-3.74: changing a recorded quarter's scores and then tapping another term opens the notice — …
+      FAIL | WO-3.74: the notice opens ONCE for a change — back into Quarter 1 and out again with nothing new changed opens nothing, and nor does coming back to the class that was just left
+        :: {"backIn":false,"leftAgain":[true,"tm374q2","Quarter 1’s grades have changed"],"backToN":[true,"Quarter 1’s grades have changed"]}
+      FAIL | WO-3.74: a change made from another quarter — … and the next opening after that, with nothing new changed, opens nothing
+        :: {"onQ2":"tm374q2","stay":[false,false],"toOther":false,"reopened":{"open":true,…},"again":true}
+      PASS | WO-3.74: in presentation mode the notice does not open — …
+      PASS | … (the four home-bar and structural checks, and the fixture's removal)
+      ```
+      Those were the run's only two FAILs (1,433 PASS lines printed); it was stopped once the section
+      had printed (the log ends `EXIT=127`, the kill, so there is no summary line). The line was
+      restored by hand before anything else was written; `grep -rn "MUTATION WO-3.74" src tools` then
+      printed nothing, and `grep -rn MUTATION src tools` printed 18 lines, the same 18 that `git grep -n
+      MUTATION HEAD -- src tools` prints — pre-existing prose, none of it a live mutation.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs`, the tree as delivered (mutation reverted), 2026-10-31, real clock:
+      `2147 checks · 2147 passed · 0 failed · 0 skipped`, `69,238 lines · 32.2 lines per check · 1215s`,
+      `EXIT=0` — ten more than WO-3.78's 2137, the ten WO-3.74 checks that execute (the eleventh site
+      is the fixture-guard arm). An earlier run on the same code had one FAIL, WO-3.72's one-writer
+      check, whose list of the module's exports did not yet name `newestNeedOf`; the list was widened
+      (`tools/verify/term-record.mjs`) and the clean run above is after it.
+      `node tools/wo-sweep.mjs`: `52 checks · 49 passed · 0 failed · 3 to review`, `EXIT=0` — the three
+      standing reviews (sensitive field names, due-date beside late/missing, mockup banners against
+      the build); the call-site check reads 2138, matching `tools/README.md`.
+- [x] 👤 On the iPad, the notice opens when leaving a changed quarter and not while working in it,
+      and the home bar's buttons are in reach.
+      — Read by the owner on the iPad, 2026-10-31, v201 on screen, local dev server: Q1 recorded, a Q1
+      score changed, Q2 tapped — the notice opened; several edits in Q1 and moves among its screens
+      opened nothing. On All classes each home-bar class button was thumbed: in reach, and each landed
+      on that class's Scores with the dialog open.
+- [x] `TESTING.md` § WO-3.74 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

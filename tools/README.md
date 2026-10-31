@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2127 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2138 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -3070,6 +3070,15 @@ the same `try`: three ended quarters whose list, label and end-date orders agree
 planted over the store so that all three orders disagree. Neither sits in a loop and neither is a
 failure arm. Full run: `2137 checks · 2137 passed · 0 failed · 0 skipped`, 68,747 lines, 32.2 lines
 per check, 1184s, exit 0, 2026-10-30 on the real clock.
+
+**WO-3.74 moved it from 2127 to 2138, and the executed count from 2137 to 2147 — eleven sites, ten
+results, one new file.** `verify/term-record-notice.mjs`, registered directly after
+`verify/term-record-bar.mjs`: eight checks on the notice and the home bar, one structural check over
+`src/glance.js`, `src/home.js` and the foot of `src/term-record-view.js`, and the fixture's removal. The
+eleventh site is the fixture-guard arm, which a run that plants cleanly never reaches — hence ten
+executed. None sits in a loop. `verify/term-record.mjs` gained no site: its one-writer check's export
+list names `newestNeedOf` now. Full run: `2147 checks · 2147 passed · 0 failed · 0 skipped`, 69,238
+lines, 32.2 lines per check, 1215s, exit 0, 2026-10-31 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

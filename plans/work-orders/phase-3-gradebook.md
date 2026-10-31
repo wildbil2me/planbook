@@ -5851,7 +5851,7 @@ stand as built; **one wants a wording change that the build does not yet carry.*
 
 ## WO-3.74 — the notice opens when you leave a quarter that changed, and home carries the bar
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.73, WO-3.77 · **Blocks** WO-3.75
+**Ship** — · **Status** ✅ DONE — 2026-10-31 · **Size** M · **Depends on** WO-3.73, WO-3.77 · **Blocks** WO-3.75
 **Closes roadmap** *(no box. Owner-directed, 2026-10-23, from the closing-a-quarter thread.)*
 
 **Read [WO-3.72](#wo-372--a-quarters-grades-can-be-recorded-and-the-engine-says-when-they-stop-matching) first**: the thread, the drawing and the rulings that bind all four are there.
@@ -5887,27 +5887,33 @@ frames **C** (the notice is WO-3.73's changed-form dialog, opening by itself) an
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.74** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] Changing a recorded quarter's score and then tapping another term, another class or All
+- [x] Changing a recorded quarter's score and then tapping another term, another class or All
       classes opens the notice once, listing who changed.
-- [ ] Working in the quarter — several edits, moving between its screens — opens nothing.
-- [ ] A change made from another quarter opens the notice once, the next time the class is opened,
+- [x] Working in the quarter — several edits, moving between its screens — opens nothing.
+- [x] A change made from another quarter opens the notice once, the next time the class is opened,
       and not again for the same change.
-- [ ] In presentation mode the notice does not open, and opens on the next opening with it off.
-- [ ] The home bar names each class that needs recording, and its button lands on that class's
+- [x] In presentation mode the notice does not open, and opens on the next opening with it off.
+- [x] The home bar names each class that needs recording, and its button lands on that class's
       Scores for the quarter with the dialog open.
-- [ ] With a class's Q1 never recorded and its Q2 recorded and since changed, the home bar's button
+- [x] With a class's Q1 never recorded and its Q2 recorded and since changed, the home bar's button
       opens Q2, the newest by term order, though the class's own bar lists Q1 first.
-- [ ] With the notice opening on every tap of the quarter, the check goes red. The mutation is
+- [x] With the notice opening on every tap of the quarter, the check goes red. The mutation is
       reverted, and `TESTING.md` § WO-3.74 shows the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] 👤 On the iPad, the notice opens when leaving a changed quarter and not while working in it,
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] 👤 On the iPad, the notice opens when leaving a changed quarter and not while working in it,
       and the home bar's buttons are in reach.
-- [ ] `TESTING.md` § WO-3.74 carries these lines verbatim with the evidence for each.
+- [x] `TESTING.md` § WO-3.74 carries these lines verbatim with the evidence for each.
 
 **Open — the implementer's to propose, the owner's to confirm:** how *once* is remembered. Proposed:
 in memory, keyed by the set of changed figures, so nothing reaches the document or `localStorage`; a
 relaunch may show the same notice one more time, which is cheaper than a stored flag nothing else
 reads.
+*(**Proposed 2026-10-31, at the build, for the owner to confirm:** exactly that — a `Set` in
+`src/term-record-view.js` keyed by the class, the term, the newest record's id and every changed
+student's live figure; opening the changed form from either bar's button counts as shown. The reasoning
+and the three calls the build made on its own are in `TESTING.md` § WO-3.74.)*
+*(**Confirmed by the owner, 2026-10-31**, as proposed — and the build's own calls, four once the
+record was reconciled, accepted as built. Reasons in `TESTING.md` § WO-3.74.)*
 
 **Traps** — **Nothing about the notice is stored in the year document.** **Do not make the home bar
 a glance panel**: `src/glance.js` holds no arithmetic and no clock, and this condition reads both.

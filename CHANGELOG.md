@@ -13,6 +13,21 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A changed quarter tells you when you leave it, and All classes says what still needs recording — 2026-10-31
+
+WO-3.74. `CACHE` v200 → v201. Read on the iPad by the owner.
+
+- **After a quarter is recorded, a change that moves a grade now opens *Quarter 1's grades have
+  changed* when you leave it** — for another term, another class or All classes — and never while you
+  are still correcting scores in it, so three corrections are not three interruptions.
+- **A change made from elsewhere** — a setting changed from Quarter 2, a sync from the other device —
+  opens it the next time the class is opened. Each change is shown once; a relaunch may show it once
+  more, because nothing about the notice is stored. Never under a projector: it waits for the next
+  opening with presentation mode off.
+- **All classes carries a bar naming every class with a quarter to record**, with a button per class
+  that opens its Scores on that quarter with the Record dialog up — on the newest quarter waiting,
+  when there are two. It names classes and counts, never a student.
+
 ### The record bar's order is tested where the orders disagree — 2026-10-31
 
 WO-3.78. A test-only change: nothing in the app moved, and no `CACHE` bump.

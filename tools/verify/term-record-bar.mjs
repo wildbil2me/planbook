@@ -269,8 +269,9 @@ const onOther = await barNow();
 await openClass(CLS);
 await go('scores');
 check('WO-3.73: the bar shows on all five of the class\'s screens — Attendance, Assignments, Scores, a '
-  + 'student\'s detail and the concern list — and on no other view (the calendar, All classes) and not '
-  + 'on another class\'s screens, whose own terms have ended nowhere',
+  + 'student\'s detail and the concern list — and on no other view (the calendar, All classes — which '
+  + 'since WO-3.74 carries a bar of its own, #termRecordHomeNag, and never this one) and not on another '
+  + 'class\'s screens, whose own terms have ended nowhere',
   Object.keys(screens).length === 5 && Object.values(screens).every(Boolean)
     && onCalendar.shown === false && onHome.shown === false && onOther.shown === false
     && onOther.view === 'class',

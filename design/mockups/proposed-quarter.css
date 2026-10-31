@@ -23,9 +23,10 @@
      § RECORD LIST   →  src/shell.css   (WO-3.73 — lifted 2026-10-26)
 
    WHAT THE LIFT LEFT DRAWN, ON PURPOSE (PROTOCOL.md § When the drawing lands):
-   `.term-record-nag-classes` is the home bar's row of class buttons, frame
-   E′, and WO-3.74 lifts it; `.term-record-cause` is the *What changed* box,
-   and WO-3.75 lifts it. Every other class in both sections reached
+   `.term-record-cause` is the *What changed* box, and WO-3.75 lifts it.
+   `.term-record-nag-classes`, the home bar's row of class buttons (frame E′),
+   was left for WO-3.74 and LIFTED 2026-10-31, values unchanged, with an 8px
+   gap under a coarse pointer added in src/shell.css. Every other class in both sections reached
    src/shell.css under its drawn name, values unchanged, with the backup
    nag's safe-area padding and its coarse-pointer font size added to the bar.
 

@@ -1,5 +1,7 @@
 /*
-  Record Q1 grades — the bar on a class's screens, and the dialog its button opens (WO-3.73).
+  Record Q1 grades — the bar on a class's screens, and the dialog its button opens (WO-3.73); since
+  WO-3.74 also the bar on All classes, and the notice — that dialog opening by itself when the teacher
+  leaves a recorded quarter that has changed.
 
   ── WHY THIS EXISTS ──
 
@@ -40,8 +42,9 @@
   src/shell.css, not a shared class, for the reason that file gives about the install banner: two
   components that happen to look alike. On the class's five screens — src/views.js's CLASS_SCREENS
   less the calendar, which is a screen ABOUT a class with its own filter and whose month would carry a
-  bar about one class over a grid of five — and on no other view: not home (WO-3.74 draws home's own
-  bar), not the template editor, not the calendar.
+  bar about one class over a grid of five — and on no other view: not home, not the template editor,
+  not the calendar. HOME HAS ITS OWN BAR since WO-3.74 (frame E′), a second aside beside this one,
+  naming classes with a button each; it is at the foot of this file, with the notice.
 
   Painted by src/shell.js on every view change, class change and document replacement, and after a
   recording — NOT on every save, and not subscribed to the store (src/store.js says why no screen
@@ -71,15 +74,17 @@
 */
 
 import { getDoc } from './store.js';
-import { openModal, closeModal } from './modal.js';
+/* anyModalOpen() for the notice alone (WO-3.74): a dialog nobody asked for never opens over one a
+   teacher did. That is not src/modal.js's duplicate question — openModal() still answers that. */
+import { openModal, closeModal, anyModalOpen } from './modal.js';
 import { announce } from './live-region.js';
 /* The one asker of the rule, imported rather than re-tested (src/supports.js owns it). */
 import { presentationMode } from './supports.js';
 import { currentView, isClassScreen } from './views.js';
-import { getSelectedClass } from './classes.js';
+import { getSelectedClass, getSelectedTermId, getActiveClasses } from './classes.js';
 import {
-  recordTerm, termsNeedingRecord, newestRecord, noLongerMatching, gradesToRecord, emptyBoxes,
-  heldColumns, looseWorkOutOfGrade,
+  recordTerm, termsNeedingRecord, newestNeedOf, newestRecord, noLongerMatching, gradesToRecord,
+  emptyBoxes, heldColumns, looseWorkOutOfGrade,
 } from './term-record.js';
 /* The grid's order and the grid's figure, for src/held-column.js's reason over the same import: a
    teacher reads the dialog straight down against the grade sheet. */
@@ -112,6 +117,13 @@ const KEEP_ID = 'termRecordKeep';
 /* What the open dialog is about — a class id and a term id, never the objects, for src/classes.js's
    reason about anything held across a render: a restore or a sync can replace the document. */
 let pending = null;
+
+/* THE NOTICE'S MEMORY (WO-3.74) — every change the teacher has been shown this launch, as a key built
+   from the changed figures (noticeKey() below), and nothing else. IN MEMORY ONLY: not the year
+   document (the work order's Traps) and not localStorage (UI preferences only, and this is not one).
+   A relaunch forgets it, so the same change may be shown once more after one — the owner's open
+   question, recorded in TESTING.md § WO-3.74. */
+const noticed = new Set();
 
 function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
@@ -241,7 +253,13 @@ function paintBarLine(classId, line, first) {
   return row;
 }
 
+/* Painted on every view change, class change and document replacement, and after a recording — and
+   each of those is also a moment the teacher may have LEFT A QUARTER, so the notice is looked for
+   here too (WO-3.74), after the paint and after the tap that caused it: see lookForNotice(). The
+   home screen's own bar (frame E′) is painted from here as well, for the same moments. */
 export function refreshTermRecordBar() {
+  paintHomeBar();
+  lookForNotice();
   const bar = document.getElementById(BAR_ID);
   if (!bar) return;
   const model = termRecordBarModel();
@@ -286,7 +304,7 @@ export function termRecordModel(classId, termId) {
   const changed = record ? noLongerMatching(doc, cls, term.id) : null;
   if (record && changed && changed.length) {
     return Object.assign(base, {
-      form: 'changed', at: record.at,
+      form: 'changed', at: record.at, recordId: record.id,
       rows: inOrder(changed).map((row) => ({ studentId: row.studentId, name: nameOf(row.studentId),
         recorded: row.recorded, live: row.live, letterChanged: row.letterChanged })),
     });
@@ -407,6 +425,10 @@ export function openTermRecordDialog(classId, termId, opener) {
   const model = termRecordModel(classId, termId);
   if (!model) return false;
   pending = { classId: model.classId, termId: model.termId };
+  /* A change the teacher has been shown, by whichever door — the bar's button, the home bar's, or the
+     notice opening by itself — is a change she has seen, so the notice does not open on it again
+     (WO-3.74; see the notice below). The refusal shows her nothing and marks nothing. */
+  if (model.form === 'changed') noticed.add(noticeKey(model));
 
   /* Every line that holds words from an earlier opening is emptied first, whichever form this one
      is: the refusal must carry nothing an earlier form wrote, hidden or not. */
@@ -501,3 +523,196 @@ export function cancelTermRecord() {
   closeModal(MODAL_ID);
   if (want && !presentationMode()) announce('Nothing was recorded.');
 }
+
+/* ────────────────────────────── the home bar (WO-3.74) ────────────────────────────── */
+
+const HOME_BAR_ID = 'termRecordHomeNag';
+const HOME_BAR_LEAD_ID = 'termRecordHomeNagLead';
+
+/*
+  WHAT THE HOME BAR SAYS NOW, as data — frame E′ —
+
+    { lead, more, classes: [{ classId, name, termId, state }] }   or null when it is not drawn
+
+  One bar on All classes naming every active class with a term that needs recording, in the class
+  order the cards are in, and a button per class that opens that class on the quarter's Scores with
+  the Record dialog open (src/shell.js's openRecordFromHome()). The seam a check reads it through.
+  `view` defaults to what is on screen; the bar is drawn on `home` and nowhere else.
+
+  WHICH QUARTER A CLASS'S BUTTON OPENS IS THE ENGINE'S, never this file's: termsNeedingRecord() is
+  the class's list and newestNeedOf() names its newest entry by the class's term order — the owner's
+  ruling of 2026-10-30, *opens on the newest*. So with Quarter 1 never recorded and Quarter 2
+  recorded and since changed, the button opens Quarter 2 while the class's own bar lists Quarter 1
+  first; that bar names the other. Nothing here sorts, reorders or picks among the entries.
+
+  IT IS NOT A GLANCE PANEL, and must not become one (the work order's Traps): src/glance.js holds no
+  arithmetic and no clock, and the condition this draws reads both, through src/term-record.js. It
+  sits with the backup nag, under the header, and src/home.js knows nothing about it.
+
+  A COUNT AND CLASS NAMES, NEVER A STUDENT, so it stays up under a projector — the dialog a button
+  opens is the half that refuses there, as it does from the class bar.
+
+  THE WORDS ARE THE DRAWING'S, generalised to what the data can hold. *Quarter 1 needs recording in 3
+  classes.* when every button opens a term of one name — a DISPLAY comparison of the label text, made
+  for the sentence and nothing else: no term is found or opened by it, the buttons carry term ids —
+  and *Grades need recording in 2 classes.* when they differ. Then the classes whose button opens a
+  changed quarter: *English III (B) has changed since it was recorded.*
+*/
+export function termRecordHomeModel(view) {
+  const on = view === undefined ? currentView() : view;
+  if (on !== 'home') return null;
+  const doc = getDoc();
+  if (!doc) return null;
+  const rows = getActiveClasses().map((cls) => {
+    const need = newestNeedOf(cls, termsNeedingRecord(doc, cls));
+    if (!need) return null;
+    return { classId: cls.id, name: className(cls), termId: need.termId, state: need.state,
+      termName: longName(termOf(cls, need.termId)) };
+  }).filter((row) => row !== null);
+  if (!rows.length) return null;
+  const oneName = rows.every((row) => row.termName === rows[0].termName);
+  const lead = (oneName ? rows[0].termName + ' needs' : 'Grades need') + ' recording in '
+    + plural(rows.length, 'class', 'classes') + '.';
+  const changed = rows.filter((row) => row.state === 'changed').map((row) => row.name);
+  let more = '';
+  if (changed.length === 1) more = changed[0] + ' has changed since it was recorded.';
+  else if (changed.length > 1) {
+    more = changed.slice(0, -1).join(', ') + ' and ' + changed[changed.length - 1]
+      + ' have changed since they were recorded.';
+  }
+  return { lead: lead, more: more, classes: rows.map((row) => ({ classId: row.classId, name: row.name,
+    termId: row.termId, state: row.state })) };
+}
+
+/* The drawing's markup, frame E′: the text, then a row of class buttons — inside WO-3.77's
+   `.term-record-nag-line`, so the strip is the class bar's strip, value for value. */
+function paintHomeBar() {
+  const bar = document.getElementById(HOME_BAR_ID);
+  if (!bar) return;
+  const model = termRecordHomeModel();
+  bar.textContent = '';
+  bar.classList.toggle('hidden', !model);
+  if (!model) return;
+  const row = el('div', 'term-record-nag-line');
+  const text = el('div', 'term-record-nag-text');
+  const strong = el('strong');
+  const warn = el('span', '', '⚠');
+  warn.setAttribute('aria-hidden', 'true');
+  const lead = el('span', '', model.lead);
+  lead.id = HOME_BAR_LEAD_ID;
+  strong.append(warn, document.createTextNode(' '), lead);
+  text.append(strong);
+  if (model.more) text.append(document.createTextNode(' '), el('span', '', model.more));
+  const buttons = el('div', 'term-record-nag-classes');
+  model.classes.forEach((item, at) => {
+    const button = el('button', 'term-record-nag-btn', item.name);
+    button.type = 'button';
+    button.setAttribute('data-term-record-home', item.classId);
+    button.setAttribute('data-term-record-term', item.termId);
+    button.setAttribute('aria-haspopup', 'dialog');
+    if (at > 0) buttons.append(document.createTextNode(' '));
+    buttons.append(button);
+  });
+  row.append(text, document.createTextNode(' '), buttons);
+  bar.append(row);
+}
+
+/* ────────────────────────────── the notice (WO-3.74) ────────────────────────────── */
+
+/*
+  THE NOTICE IS THE CHANGED FORM OF THE DIALOG ABOVE, OPENING BY ITSELF (frame C). Nothing new is
+  drawn, and who changed is the dialog's own model, so the notice and the bar's button cannot
+  disagree about it.
+
+  WHEN IT OPENS (plans/closing-a-quarter.md, the drawing's question 4, the owner, 2026-10-23):
+    · WHEN THE TEACHER LEAVES A RECORDED QUARTER THAT NO LONGER MATCHES — another term, another
+      class, All classes, or any view that is not one of a class's screens. Never while she is still
+      in it: moving between the class's own screens leaves the class and the term where they were, so
+      three corrections are not three interruptions.
+    · WHEN A CLASS IS OPENED and one of its quarters changed without being visited — a weight changed
+      from Quarter 2, a sync from the other device — the next time that class is opened, which
+      includes the first class screen after a launch.
+  Leaving is asked first, so a tap from one class to another shows the quarter just left; the class
+  arrived in keeps its unshown change for its next opening. One notice per tap, at most.
+
+  A CHANGE IS SHOWN ONCE: its key (noticeKey()) goes into `noticed` when it is shown, and a change
+  with the same key is not shown again — a NEW edit makes a new key, and is. Opening the dialog from
+  a bar's button counts as shown (openTermRecordDialog() above). The memory is in this module and
+  nowhere else; see `noticed` at the top of the file.
+
+  NEVER UNDER A PROJECTOR, AND NEVER OVER ANOTHER DIALOG: then it opens nothing and marks nothing, so
+  the change is still unshown at the next class opening with the mode off. Dismissed, the bar stays —
+  it is drawn from the engine, not from this.
+
+  WHERE THE TEACHER IS, is the class open on a class screen and that class's open term — read, never
+  written. This file keeps the last answer to tell a leaving from a staying, and nothing more.
+
+  LOOKED FOR AFTER THE TAP, NOT DURING IT. refreshTermRecordBar() is called part-way through every
+  navigation chain in src/shell.js — before the screen is painted, and before the home bar's button
+  has put the class on its quarter — so the look is a microtask, run once the whole chain is done:
+  the place read is the one the teacher lands on, and a dialog the chain itself opened is already up
+  to defer to.
+*/
+
+/* undefined until the first look; then null (not in a class's quarter) or { classId, termId }. */
+let where;
+let looking = false;
+
+/* A change, as a key: the class, the term, the newest record, and every changed student's live
+   figure as the dialog prints it. The same record, the same students and the same figures is the
+   same change. */
+function noticeKey(model) {
+  return [model.classId, model.termId, model.recordId || '']
+    .concat(model.rows.map((row) => row.studentId + '=' + figure(row.live))).join('|');
+}
+
+function whereNow() {
+  if (!isClassScreen(currentView())) return null;
+  const cls = getSelectedClass();
+  const termId = getSelectedTermId();
+  return cls && termId ? { classId: cls.id, termId: termId } : null;
+}
+
+/* Whether one class's term is a change not yet shown — the dialog's own model, asked. */
+function unshown(classId, termId) {
+  const model = termRecordModel(classId, termId);
+  return !!model && model.form === 'changed' && !noticed.has(noticeKey(model));
+}
+
+/* The class's changed terms, in the engine's list order — the list's own state, never a comparison. */
+function changedTermIds(doc, classId) {
+  const cls = classById(doc, classId);
+  return cls ? termsNeedingRecord(doc, cls).filter((need) => need.state === 'changed')
+    .map((need) => need.termId) : [];
+}
+
+function noticeNow() {
+  looking = false;
+  const doc = getDoc();
+  if (!doc) return;
+  const was = where;
+  const now = whereNow();
+  where = now;
+  const left = !!was && (!now || was.classId !== now.classId || was.termId !== now.termId);
+  const opened = !!now && (!was || was.classId !== now.classId);
+  if (!left && !opened) return;
+  if (presentationMode() || anyModalOpen()) return;
+  const asks = [];
+  if (left && changedTermIds(doc, was.classId).indexOf(was.termId) !== -1) {
+    asks.push({ classId: was.classId, termId: was.termId });
+  }
+  if (opened) {
+    changedTermIds(doc, now.classId).forEach((termId) => asks.push({ classId: now.classId, termId: termId }));
+  }
+  const ask = asks.filter((one) => unshown(one.classId, one.termId))[0];
+  if (ask) openTermRecordDialog(ask.classId, ask.termId, null);
+}
+
+function lookForNotice() {
+  if (looking) return;
+  looking = true;
+  Promise.resolve().then(noticeNow);
+}
+
+/* For src/shell.js's term tap, which moves the term without repainting the bar. */
+export function checkTermRecordNotice() { lookForNotice(); }

@@ -148,6 +148,7 @@ import { run as dropLowest } from './verify/drop-lowest.mjs';
 import { run as heldReaders } from './verify/held-readers.mjs';
 import { run as termRecord } from './verify/term-record.mjs';
 import { run as termRecordBar } from './verify/term-record-bar.mjs';
+import { run as termRecordNotice } from './verify/term-record-notice.mjs';
 import { run as accommodationPrompts } from './verify/accommodation-prompts.mjs';
 import { run as printGate } from './verify/print-gate.mjs';
 import { run as printSheets } from './verify/print-sheets.mjs';
@@ -466,6 +467,12 @@ const BROWSER_SECTIONS = [
      found it, takes both classes back out with the `termRecords` key as it found it, and hands the
      page back reloaded. No viewport change. */
   { file: 'verify/term-record-bar.mjs', run: termRecordBar },
+  /* WO-3.74, directly after the bar and the dialog it opens: the notice — that dialog opening by itself
+     when the teacher leaves a recorded quarter that changed — and the bar on All classes. It plants two
+     classes of its own through the store, turns presentation mode on and puts it back as it found it,
+     takes both classes back out with the `termRecords` key as it found it, and hands the page back
+     reloaded, which also empties the notice's in-memory record. No viewport change. */
+  { file: 'verify/term-record-notice.mjs', run: termRecordNotice },
   { file: 'verify/accommodation-prompts.mjs', run: accommodationPrompts },
   { file: 'verify/print-gate.mjs', run: printGate },
   /* WO-8.4, directly after the gate it prints through: the four sheets under one #printHeader, in

@@ -323,6 +323,10 @@
       data-term-record-confirm        that dialog's Record Q1 grades: appends one recording of the
                                       whole class's term, and the bar is repainted
       data-term-record-cancel         its Not now / Not yet / Close: closes it, having written nothing
+      data-term-record-home="<classId>" a class's button on the All classes bar (WO-3.74): opens that
+                                      class on the Scores of the term in its data-term-record-term —
+                                      the class's newest waiting term, the engine's answer — with the
+                                      Record dialog open over it. Opening writes nothing
       data-past-due                   not a control: the empty host each screen carries for the
                                       past-due prompt, painted by src/past-due.js. Two of them, on
                                       the score grid and on the assignment list
@@ -1880,6 +1884,35 @@ function openClassOn(classId, screen, date) {
 }
 
 /*
+  A CLASS'S BUTTON ON THE ALL CLASSES BAR (WO-3.74, frame E′): that class open, on its Scores, on the
+  term the button names, with the Record dialog open over it — one tap from home to the dialog.
+
+  openClassOn() is the navigation, as it is for a *Waiting to be graded* row, and it lands on the
+  term nearest today (src/attendance.js's resetRegistry(), the arrival); the button's term is then
+  selected through the same call a term tap makes, and the screen repainted through the same chain,
+  so the grid under the dialog is the quarter the dialog is about. WHICH TERM is not decided here: it
+  is the engine's newest waiting term for the class (src/term-record.js's newestNeedOf()), carried on
+  the button by src/term-record-view.js.
+
+  THE DIALOG'S OPENER IS THE CLASS BAR'S BUTTON FOR THAT TERM, not the home button that was tapped —
+  that one is on a screen that is no longer showing, and closing the dialog hands focus back to its
+  opener. Under a projector the dialog opens as its refusal, exactly as from the class bar.
+*/
+function openRecordFromHome(button) {
+  const classId = button.getAttribute('data-term-record-home') || '';
+  const termId = button.getAttribute('data-term-record-term') || '';
+  if (!openClassOn(classId, 'scores')) return;
+  if (classes.getSelectedTermId() !== termId) {
+    classes.selectTerm(termId);
+    afterTermChange();
+  }
+  const opener = Array.prototype.filter.call(
+    document.querySelectorAll('#termRecordNag [data-term-record-open]'),
+    (node) => node.getAttribute('data-term-record-open') === termId)[0] || null;
+  termRecordView.openTermRecordDialog(classId, termId, opener);
+}
+
+/*
   Today's attendance changed, and the card behind the dialog redrawn.
 
   THE SAME SHAPE AS afterClassChange() ABOVE, AND THE SAME COST OF FORGETTING. src/attendance.js
@@ -2939,6 +2972,11 @@ document.addEventListener('click', (e) => {
        change rather than to this hook, so the order of operations is afterTermChange() above and the
        next class screen adds a line there rather than a branch here. */
     afterTermChange();
+    /* AND A TERM TAP IS ONE OF THE THREE WAYS TO LEAVE A QUARTER (WO-3.74): if the quarter just left
+       is recorded and no longer matches, its notice opens. Asked here because this tap repaints no
+       bar — the bar is about the class's terms, not the one that is open — and src/term-record-view.js
+       is where "left" is told from "stayed". */
+    termRecordView.checkTermRecordNotice();
     return;
   }
   if (e.target.closest('[data-term-add]')) { classes.addTerm(); return; }
@@ -3326,6 +3364,10 @@ document.addEventListener('click', (e) => {
     return;
   }
   if (e.target.closest('[data-term-record-cancel]')) { termRecordView.cancelTermRecord(); return; }
+  /* WO-3.74's All classes bar: one button per class, landing on that class's quarter with the dialog
+     open. A navigation, so it is openRecordFromHome() above rather than a line here. */
+  const termRecordHome = e.target.closest('[data-term-record-home]');
+  if (termRecordHome) { openRecordFromHome(termRecordHome); return; }
   /* WO-3.28's category pills — a lens on which COLUMNS are drawn, writing nothing, remembered
      nowhere and chaining nothing, for the reasons the two hooks above chain nothing. */
   const scoreCategory = e.target.closest('[data-scores-category]');

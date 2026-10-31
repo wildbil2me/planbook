@@ -545,9 +545,11 @@ check('WO-3.72: src/term-record.js holds one writer, and it only pushes — reco
        dialog), termNeedingRecord() (the bar's question) and looseWorkOutOfGrade() (the weighted
        dialog's uncategorized line) — all readers: the one-writer claim above is what holds. WO-3.77
        retired termNeedingRecord() for termsNeedingRecord(), the same question answered as a list
-       of every term, in the same place in the file; still a reader. */
+       of every term, in the same place in the file; still a reader. WO-3.74 added newestNeedOf()
+       after it — which of that list's entries is the newest by term order, for the home bar's
+       button — a reader of the list it is handed, and nothing else. */
     && JSON.stringify(exported) === JSON.stringify(['gradesToRecord', 'recordTerm', 'termEnded',
-      'termEndsToday', 'termsNeedingRecord', 'newestRecord', 'noLongerMatching', 'emptyBoxes',
+      'termEndsToday', 'termsNeedingRecord', 'newestNeedOf', 'newestRecord', 'noLongerMatching', 'emptyBoxes',
       'looseWorkOutOfGrade', 'heldColumns'])
     && imports.indexOf('grade-engine') !== -1 && imports.indexOf('attendance') !== -1
     && engineSource.indexOf('term-record') === -1,

@@ -525,6 +525,10 @@ button, .cls-tab, .q-btn, .pill, .modal-close, .hdr-icon-btn, .batch-btn, .class
   cursor: pointer; flex-shrink: 0; white-space: nowrap; font-family: inherit;
 }
 .term-record-nag-btn:hover { background: #8a6d1a; border-color: #8a6d1a; }
+/* On All classes, one button per class that needs recording (WO-3.74, frame E′) — lifted from
+   design/mockups/proposed-quarter.css § RECORD NAG as drawn. The buttons are `.term-record-nag-btn`,
+   so they take the class bar's 44px under a coarse pointer with nothing added. */
+.term-record-nag-classes { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* ── RECORD LIST (WO-3.73) ── */
 /* The students in the Record dialog, inside a `.mode-change-facts` box — lifted from
@@ -2601,6 +2605,9 @@ a.class-action-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
   /* WO-3.73's bar, in the same pass that adds it — the backup nag's two lines above, copied. */
   .term-record-nag { font-size: 13.5px; }
   .term-record-nag-btn { padding: 8px 16px; font-size: 13px; min-height: 44px; }
+  /* WO-3.74's class buttons on All classes are that same button, so they are 44 by the line above; the
+     gap between them opens to 8 so two thumb-sized buttons side by side are not one target. */
+  .term-record-nag-classes { gap: 8px; }
   .term-record-empty { font-size: 13px; }
   .modal-body .backup-notice p { font-size: 13px; }
   .modal-body .backup-drop-hint { font-size: 13px; }
