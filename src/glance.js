@@ -337,9 +337,15 @@ export function weekItems() {
   names the pile. Between the live categories and the held columns, so uncategorized work reads
   after the class's own categories — the quarter dialog's order. The three sources are disjoint in
   the engine: uncategorizedWork() walks looseAssignments(), which leaves held columns out, and
-  heldWork() walks categories only, so a HELD uncategorized column is in none of them — it is
-  neither open here nor held here, which is heldWork()'s scope since WO-3.47, ruled as built on
-  2026-11-01 (TESTING.md § WO-3.70) and not widened by this work order.
+  heldWork() takes exactly the held ones.
+
+  A HELD UNCATEGORIZED COLUMN IS HELD WORK HERE, under the same *· held* (WO-3.80, the owner's ruling
+  of 2026-11-01). Until then heldWork() walked categories only, so such a column was in none of the
+  three sources and fell off this queue the moment it was held. The engine widened heldWork() to the
+  pile, and nothing in this function changed: its rows arrive through the same `take`, carrying the
+  engine's `column` marker and its null `categoryId`, so the panel names them *no category · held*.
+  A commit moves them from heldWork() to uncategorizedWork() with the same states, so the row stays
+  and loses its marker, exactly as a categorized column's does.
 */
 export function queueRows() {
   const doc = getDoc();

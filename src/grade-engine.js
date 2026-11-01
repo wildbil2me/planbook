@@ -98,13 +98,24 @@ function scoreCell(doc, assignmentId, studentId) {
   counts toward no points grade either, for the reason assignmentsFor() gives above.
 */
 function looseAssignments(doc, cls, termId) {
+  return looseColumns(doc, cls, termId).filter((assignment) => !isHeld(assignment));
+}
+
+/* The held half of the same pile (WO-3.80), for heldWork() and heldExcusedWork() and nothing else —
+   heldColumnsFor()'s twin, and cut the same way: both halves come from ONE walk with the one asker,
+   so an uncategorized column is in exactly one of them by construction, and a commit moves its rows
+   from the held readers to uncategorizedWork() and excusedWork() without counting them twice. */
+function heldLooseColumns(doc, cls, termId) {
+  return looseColumns(doc, cls, termId).filter((assignment) => isHeld(assignment));
+}
+
+function looseColumns(doc, cls, termId) {
   const classId = cls && cls.id;
   const filed = categoriesOf(cls).map((category) => category && category.id);
   return arrayOf(doc && doc.assignments).filter((assignment) => assignment
     && assignment.classId === classId
     && assignment.termId === termId
-    && filed.indexOf(assignment.categoryId) === -1
-    && !isHeld(assignment));
+    && filed.indexOf(assignment.categoryId) === -1);
 }
 
 /* The cell rule, once. categoryResult() sums a category's work through it and a points grade sums
@@ -330,8 +341,23 @@ export function openWork(doc, cls, termId, studentId) {
   THE SAME BRANCH DECIDES THE STATE. Each row comes out of workRows(), the one test for "not graded
   yet", so a held blank and a live blank cannot disagree about which they are — and a commit, which
   moves the column from heldColumnsFor() to assignmentsFor(), hands the same rows with the same
-  states to openWork(). Categorized work only, exactly as openWork(): the two sources have the same
-  scope, so nothing is counted on one side of a commit and not the other.
+  states to openWork().
+
+  AND THE WORK FILED UNDER NO CATEGORY, AFTER THE CLASS'S OWN CATEGORIES (WO-3.80, the owner's ruling
+  of 2026-11-01). Until then this walked categories only, as openWork() does, so a held uncategorized
+  column was in no reader at all — not open, because looseAssignments() leaves held columns out, and
+  not held, because this did not look — and a teacher who held one while re-keying it watched it
+  vanish from the card, the queue, student detail and the file. Counting toward nothing is not the
+  same as hidden (WO-3.47). THIS FUNCTION WAS WIDENED rather than given a held twin of
+  uncategorizedWork(), and the choice is deliberate: there is one held card, one *· N held* line and
+  one held marker on a queue row, and every reader of held work already asks here, so a fifth array
+  would have been four call sites (src/home.js, src/glance.js, src/detail.js twice) each owing the
+  same extra concatenation — and the first one that forgot it would have the hero's count and the
+  held card disagree. Widened here, every one of them is right without being touched. The scope now
+  matches the PAIR of live readers: openWork() plus uncategorizedWork() on one side of a commit,
+  this on the other, so nothing is counted on one side of a commit and not the other. openWork() is
+  NOT widened — every projection is built on it. The pile's rows carry `categoryId: null`, as
+  uncategorizedWork()'s do, and LOOSE_NAME is what the screens call it.
 
   EACH ROW CARRIES `column: 'held'`, which is the engine supplying the marker so that no reader
   has to ask the assignment again (src/glance.js forwards it onto its queue row). openWork()'s rows
@@ -346,6 +372,7 @@ export function heldWork(doc, cls, termId, studentId) {
     const categoryId = category && category.id;
     workRows(doc, heldColumnsFor(doc, cls, termId, categoryId), studentId, categoryId, rows);
   });
+  workRows(doc, heldLooseColumns(doc, cls, termId), studentId, null, rows);
   rows.forEach((row) => { row.column = HELD_COLUMN; });
   return rows;
 }
@@ -426,17 +453,20 @@ export function excusedWork(doc, cls, termId, studentId) {
   return excusedRows(doc, looseAssignments(doc, cls, termId), studentId, null, rows);
 }
 
-/* The held columns' excused cells (WO-3.70), categorized work only — heldWork()'s scope exactly, so
-   the held card is the one place such a cell is listed. Kept apart from heldWork() rather than
-   folded into it as a fourth state: heldWork() feeds the home card's `N to grade` and the glance
-   queue, and an excused cell is not work to grade. Each row carries `column: 'held'`, as heldWork()'s
-   do. */
+/* The held columns' excused cells (WO-3.70) — heldWork()'s scope exactly, so the held card is the one
+   place such a cell is listed: categorized work in category order, then the work filed under no
+   category (WO-3.80, widened with heldWork() and for its reason — excusedWork() above already takes
+   the live half of that pile, so without this a held uncategorized column's excused cell was on
+   neither list). Kept apart from heldWork() rather than folded into it as a fourth state: heldWork()
+   feeds the home card's `N to grade` and the glance queue, and an excused cell is not work to grade.
+   Each row carries `column: 'held'`, as heldWork()'s do. */
 export function heldExcusedWork(doc, cls, termId, studentId) {
   const rows = [];
   categoriesOf(cls).forEach((category) => {
     const categoryId = category && category.id;
     excusedRows(doc, heldColumnsFor(doc, cls, termId, categoryId), studentId, categoryId, rows);
   });
+  excusedRows(doc, heldLooseColumns(doc, cls, termId), studentId, null, rows);
   rows.forEach((row) => { row.column = HELD_COLUMN; });
   return rows;
 }

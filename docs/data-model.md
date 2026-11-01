@@ -635,7 +635,9 @@ never sees the column. The rule lives at the engine's two walks over a class's w
 - **`openWork()` loses a held column** as a side effect of the walk. That is correct for a grade, and
   since WO-3.47 the screens that list outstanding work ask a **sibling**, `heldWork(doc, cls, termId,
   studentId)`: the same rows from the same per-cell branch (`open`, `missing`, `bonus`), over the held
-  columns of the class's categories only, each stamped `column: 'held'` (`HELD_COLUMN`). It is a
+  columns of the class's categories and then, since WO-3.80, the held columns filed under no category
+  (`categoryId: null`, *no category*) — so a held column is listed however it was filed — each stamped
+  `column: 'held'` (`HELD_COLUMN`). `heldExcusedWork()` has the same scope. It is a
   second array rather than a new state in `openWork()`, because `openWork()` feeds the projection —
   `planned()` sums its `open` and `missing` rows — and a held row there would put a column that counts
   toward nothing into *what it would take to move*. The two sources are cut from one walk by the one

@@ -149,8 +149,10 @@ import { nextBandFor, openWork, projectedClassGrade,
 /* A held column's open work (WO-3.47), from the engine's sibling of openWork() rather than from a
    test of the assignment here. It is LISTED and never PROJECTED: `rows` above feeds the to-move card
    and every figure on it, and nothing out of this call is handed to projectedClassGrade() — which
-   could not count it anyway, because the engine's projection walks live columns only. */
-import { heldWork } from './grade-engine.js';
+   could not count it anyway, because the engine's projection walks live columns only. Since WO-3.80
+   its rows include the held columns filed under no category, `categoryId: null`, which this file
+   names in the engine's own word for the pile, LOOSE_NAME — never a phrase of its own. */
+import { heldWork, LOOSE_NAME } from './grade-engine.js';
 /* WHICH SCORES A CATEGORY DROPS FOR THIS STUDENT (WO-3.69), asked cell by cell and never worked out
    here — droppedPieces() below walks this class's term in column order and keeps what isDropped()
    says yes to. The grade above has already left them out; this file only lists them. */
@@ -658,6 +660,32 @@ function heldStateSay(row) {
   return HELD_STATE_SAY[row.state] || '';
 }
 
+/*
+  THE HELD CARD'S ROWS, for the screen and the file alike (WO-3.47, WO-3.70, WO-3.80): the held
+  columns' unfinished work, then their excused cells — both are held work, on one card and in one
+  count, and an excused piece is listed nowhere else; after it, so a student with none reads exactly
+  as before. Then THE WORK FILED UNDER NO CATEGORY MOVED TO THE FOOT (WO-3.80): each engine reader
+  hands its pile after the class's own categories, but two readers concatenated would put a loose
+  blank above a categorized excused cell, and the pile reads after the class's categories everywhere
+  else — the queue, the quarter dialog. A stable split on the engine's own null, so the categorized
+  rows keep the order they always had. One function for both callers, so the hero's *· N held*, the
+  card and the CSV's held rows cannot be cut from two different lists.
+*/
+function heldPieces(doc, cls, termId, studentId) {
+  const rows = heldWork(doc, cls, termId, studentId)
+    .concat(heldExcusedWork(doc, cls, termId, studentId));
+  return rows.filter((row) => row.categoryId !== null)
+    .concat(rows.filter((row) => row.categoryId === null));
+}
+
+/* Where a held row is filed: the class's own name for its category, or the engine's LOOSE_NAME for
+   the pile. categoryName() alone cannot say it — the grade carries a *no category* row only in a
+   points class with something graded in that pile, so a held loose row in a weighted class would
+   print with no category at all, and the CSV's Category cell would be empty. */
+function heldWhere(grade, row) {
+  return row.categoryId === null ? LOOSE_NAME : categoryName(grade, row.categoryId);
+}
+
 function heldCard(grade, held, person) {
   if (!held.length) return null;
   const card = el('div', 'detail-card');
@@ -667,7 +695,7 @@ function heldCard(grade, held, person) {
   held.forEach((row) => {
     const line = el('div', 'detail-missing-row');
     line.append(el('span', 'detail-missing-name', assignmentName(row.id)));
-    const where = categoryName(grade, row.categoryId);
+    const where = heldWhere(grade, row);
     if (where) line.append(el('span', 'detail-missing-when', where));
     line.append(el('span', 'detail-held-state', heldStateSay(row)));
     const mark = el('span', 'detail-held-mark', 'Held');
@@ -1114,11 +1142,9 @@ export function renderDetail() {
 
   const grade = classGrade(doc, cls, termId, student.id);
   const rows = openWork(doc, cls, termId, student.id);
-  /* A held column's excused cells join its unfinished work (WO-3.70): both are held work, on one card
-     and in one count, and an excused piece is listed nowhere else. After it, so a student with none
-     reads exactly as before. */
-  const held = heldWork(doc, cls, termId, student.id)
-    .concat(heldExcusedWork(doc, cls, termId, student.id));
+  /* A held column's excused cells join its unfinished work (WO-3.70), and the work filed under no
+     category goes to the foot (WO-3.80) — see heldPieces(), which detailModel() asks too. */
+  const held = heldPieces(doc, cls, termId, student.id);
   /* Which rows hold a graded piece (WO-3.38) — see gradedPieces(), which answers null in a weighted
      class without reading a cell. The breakdown, the to-move card and the hero's label all take it
      from here, so they say one thing. */
@@ -1317,8 +1343,7 @@ export function detailModel() {
   const termId = term ? term.id : '';
   const grade = classGrade(doc, cls, termId, student.id);
   const rows = openWork(doc, cls, termId, student.id);
-  const held = heldWork(doc, cls, termId, student.id)
-    .concat(heldExcusedWork(doc, cls, termId, student.id));
+  const held = heldPieces(doc, cls, termId, student.id);
   return {
     className: cls.name,
     termLabel: term ? (term.label || 'Untitled term') : '',
@@ -1338,7 +1363,7 @@ export function detailModel() {
     /* The held card's rows (WO-3.47), in the file as on the screen. Kept apart from `work` so that
        nothing reading `work` — the file's live rows — has to tell the two kinds apart. */
     onHold: held.map((row) => ({ name: assignmentName(row.id),
-      category: categoryName(grade, row.categoryId), points: row.points, state: row.state,
+      category: heldWhere(grade, row), points: row.points, state: row.state,
       kept: row.kept })),
     /* The dropped card's rows (WO-3.69), apart from `work` for `onHold`'s reason. */
     dropped: droppedPieces(doc, cls, termId, student.id).map((row) => ({ name: assignmentName(row.id),

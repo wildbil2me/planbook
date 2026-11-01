@@ -19990,6 +19990,150 @@ rule (`src/signals.js`) both count categorized missing marks only.
 - `tools/verify/uncategorized-to-grade.mjs` (new), registered in `tools/verify-shell.mjs`.
 - `tools/README.md`: the count and the ledger.
 
+### WO-3.80 — a held column filed under no category is listed nowhere
+
+**What was built.** The engine answers it, and the choice is **widening** rather than a held twin of
+`uncategorizedWork()`, stated at the point of departure above `heldWork()` in `src/grade-engine.js`.
+`looseAssignments()` is now cut from one walk, `looseColumns()`, into a live half (itself, unchanged in
+what it returns) and a held half, `heldLooseColumns()` — `heldColumnsFor()`'s twin, so an uncategorized
+column is in exactly one half by construction. `heldWork()` and `heldExcusedWork()` each take the held
+half after the class's categories, with `categoryId: null`. `openWork()` is untouched. Why widen: every
+reader of held work already asks those two functions, so `src/home.js` and `src/glance.js` changed only
+in comments, and the hero's *· N held*, the held card and the CSV's held rows cannot drift apart — a
+twin would have needed four call sites each to remember a concatenation. `src/detail.js` gained
+`heldPieces()` (one list for the screen and the file: the two engine readers concatenated, with the
+`null`-category rows moved to the foot by a stable split, so *no category* reads after the class's own
+categories even where the excused reader would otherwise interleave) and `heldWhere()` (the engine's
+`LOOSE_NAME` for a `null` category — `categoryName()` alone prints nothing in a weighted class, whose
+grade has no *no category* row). No screen tests a cell or reads `.held`. `sw.js` `v205` → `v206`.
+`docs/data-model.md` § held columns says the new scope. The harness: WO-3.76's section turned its
+held-column assertions around (P's card now reads 3 either side of the commit, the queue carries
+`wo376-ph` marked held, and the empty-boxes agreement is over the queue's *live* rows), and a new
+block, `heldLoose()`, sits at the foot of `tools/verify/uncategorized-to-grade.mjs`.
+
+**The fixture** (`heldLoose()`): a weighted and a points class of one shape, two students (Ada, Ben),
+every column planted live, then two held through `holdColumn()` and committed through `commitColumn()`
+— `e` Essays (Ada 80, Ben blank), `c` Essays to hold (Ada blank, Ben excused), `h` **no category** to
+hold (Ada excused with 62 kept, Ben blank), `u` no category (Ada blank, Ben 50). Hand-worked figures
+are in the block's header.
+
+- [x] A held column filed under no category, with one blank and one excused cell, is listed on
+      student detail's held card and in the student CSV's held rows, in a weighted class and in a
+      points class.
+      — `node tools/verify-shell.mjs`, 2026-11-01, real clock: `PASS | WO-3.80: a held column filed
+      under no category, with one blank and one excused cell, is listed on student detail's held card
+      and in the student CSV's held rows, in a weighted class and in a points class — …`. It asserts, in
+      each class: Ada's card rows `Wo380 held essay|Essays|not graded yet|Held`, `Wo380 held loose|no
+      category|excused, 62 kept|Held`; Ben's `Wo380 held essay|Essays|excused|Held`, `Wo380 held
+      loose|no category|not graded yet|Held` (Ben's engine readers hand h first, so this is the
+      *no category after the class's own* order being made, not inherited); both titles `Held out of
+      the grade · 2 pieces` and both heroes ending `· 2 held`; the CSV Work section carrying
+      `Wo380 held loose,no category,100,"held — excused, 62 kept"` and `Wo380 held loose,no
+      category,100,held — not graded yet` under the Essays row; and neither excused cell on the excused
+      card. Beside it, `PASS | WO-3.80: a held row and a live row never answer for the same cell — …`:
+      while held, nothing of `c` or `h` is in `openWork()`, `uncategorizedWork()` or `excusedWork()`
+      for either student, and the held readers hand exactly `wo380-wc:open` / `wo380-wh:excused:null:62`
+      (Ada) and `wo380-wh:open:null` / `wo380-wc:excused` (Ben).
+- [x] The home card and the queue show it under its held word, as they show a held categorized
+      column, per the owner's 2026-11-01 ruling, and *N to grade* is unchanged by the hold.
+      — Same run: `PASS | WO-3.80: the home card and the queue show the held uncategorized column under
+      its held word, as they show the held categorized one — …`. Card `4 to grade` in both classes
+      before the hold, during it and after the commit. Queue while held (sorted):
+      `wo380-pc:1:cat:held`, `wo380-pe:1:cat`, `wo380-ph:1:null:held`, `wo380-pu:1:null`, the same
+      in the weighted class; drawn `WO-3.80 Points · no category · held` beside `WO-3.80 Points · Essays
+      · held`. The home card itself carries no held word — its *N to grade* counts a held column's
+      blanks, as it has since WO-3.47 — so "shows it" there means *counted, as a held categorized
+      column is*, which is what keeps the figure at 4 across the hold. In WO-3.76's section the same
+      reading turned around: `wo376-ph` is now a held queue row and P's card reads `3 to grade`
+      either side of the commit.
+- [x] No projection's figures move, and committing the column moves its work back to open exactly
+      as a categorized column's does.
+      — Same run: `PASS | WO-3.80: no projection's figures move — …`. While held, grade · projection at
+      100% · at 0%: points Ada `80.00 · 90.00 · 40.00`, Ben `50.00 · 75.00 · 25.00` (Ben would read
+      83.33 / 16.67 had `h` been projected); weighted Ada `80.00 · 80.00 · 80.00`, Ben `— · 100.00 ·
+      0.00` — each equal to the same readings on a copy of the document with `c` and `h` deleted
+      outright; before the hold and after the commit, points Ada `80.00 · 93.33 · 26.67`, Ben `50.00 ·
+      83.33 · 16.67`, weighted Ada `80.00 · 90.00 · 40.00`, Ben `— · 100.00 · 0.00`, identical. And
+      `PASS | WO-3.80: committing moves the uncategorized column's work back to open exactly as the
+      categorized column's — …`: all four `commitColumn()` calls wrote; `c`'s rows reappear in
+      `openWork()` (Ada) and `excusedWork()` (Ben), `h`'s in `uncategorizedWork()` (Ben) and
+      `excusedWork()` (Ada), same ids and states; the held readers are empty; no held card or
+      *· N held* is drawn; the card stays at 4 and the queue rows lose their marker. WO-3.76's own
+      projection check is unchanged and green.
+- [x] With the uncategorized half dropped from the held reader, the check goes red. The mutation is
+      reverted, and `TESTING.md` § WO-3.80 shows the red output.
+      — Planted in `src/grade-engine.js`, both held readers (the line in each replaced by):
+      ```
+        // MUTATION (WO-3.80): uncategorized half dropped from heldWork()
+        // MUTATION (WO-3.80): uncategorized half dropped from heldExcusedWork()
+      ```
+      Run on a scratch copy of `verify-shell.mjs` filtered to five browser sections (focus-ring, modal,
+      year-document-store, classes-terms, uncategorized-to-grade; deleted afterwards — `classes-terms`
+      threw in the filtered run because the sections it leans on were filtered out, on the clean tree
+      as on the mutated one). Its output, `54 checks · 47 passed · 7 failed`, `EXIT=1`; on the clean
+      tree the same scratch run read `54 checks · 53 passed · 1 failed` (the `classes-terms` artifact):
+      ```
+      FAIL | WO-3.76: a class with one empty uncategorized assignment shows it in the card's *N to grade* … P's says 3, its third row the HELD uncategorized column …
+        :: {"view":"homeView","card":{"w":{"found":true,"said":"2 to grade"},"p":{"found":true,"said":"2 to grade"}},…
+      FAIL | WO-3.76: the *Waiting to be graded* panel draws the uncategorized row after the class's own category …
+        :: {"w":[…],"p":[{"id":"wo376-pe","why":"WO-3.76 Points · Essays","meta":"1 blank"},{"id":"wo376-pu","why":"WO-3.76 Points · no category","meta":"2 blanks"}]}
+      PASS | WO-3.76: the quarter dialog's empty-boxes count, the card and the queue agree …
+      PASS | WO-3.76: no projection's figures move — …
+      FAIL | WO-3.76: a held uncategorized column still counts as held, not open — …
+        :: {"held":{"card":"2 to grade","queue":[{"id":"wo376-pe",…},{"id":"wo376-pu",…}],…},"committed":{"card":"3 to grade",…
+      FAIL | WO-3.80: a held column filed under no category, with one blank and one excused cell, is listed on student detail's held card …
+        :: {"w":{"a":{"sub":"WO-3.80 Weighted · WO-3.80 Term · 0 pieces outstanding · 0 missing · 1 held","title":"Held out of the grade · 1 piece","rows":["Wo380 held essay|Essays|not graded yet|Held"],…
+      FAIL | WO-3.80: a held row and a live row never answer for the same cell — …
+        :: {"w":{"a":{…"held":["wo380-wc:open"],"heldExcused":[],…
+      FAIL | WO-3.80: the home card and the queue show the held uncategorized column under its held word … *N to grade* is unchanged by the hold …
+        :: {"live":{…"card":{"w":"4 to grade","p":"4 to grade"}…},"held":{"view":"homeView","card":{"w":"3 to grade","p":"3 to grade"},…
+      PASS | WO-3.80: no projection's figures move — …
+      PASS | WO-3.80: committing moves the uncategorized column's work back to open exactly as the categorized column's — …
+      PASS | WO-3.80: the fixture came back off the document — …
+      ```
+      Six red, each the defect's own shape: the card falls from 4 to 3 on the hold, the held card
+      shrinks to one piece and the hero to `· 1 held`, and the column is on no queue row. The two
+      projection checks stay green, as they should — the held readers feed no projection — and so does
+      the commit check, because after a commit nothing is held and the mutated line has nothing to
+      drop. Reverted by restoring the pre-mutation copy of the file before anything else was written;
+      `grep -rn MUTATION src/ tools/` afterwards returns the same 18 lines as `git grep -n MUTATION HEAD
+      -- src tools` — all pre-existing prose (`src/shell.js:1095`, `tools/README.md`, three harness
+      comments, `tools/wo-gate.mjs:2800`) — and `git diff -U0 -- src tools sw.js | grep -c MUTATION` reads 0.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs` on the delivered `src/` and harness, after the revert, 2026-11-01,
+      real clock: `2188 checks · 2188 passed · 0 failed · 0 skipped`, `71,069 lines · 32.5 lines per
+      check · 1221s`, `EXIT=0` — six more than WO-3.76's 2182, all six `heldLoose()`'s. After it only
+      `tools/README.md`'s ledger, this section and the phase file were written. `node tools/wo-sweep.mjs`
+      after the README edit: `52 checks · 49 passed · 0 failed · 3 to review`, `EXIT=0` — the three
+      standing reviews; the call-site check reads `2185 check() call site(s) across 103 harness
+      file(s), matching tools/README.md:1363`; § 30 (`held` read only by `isHeld()`) and § 31
+      (`src/glance.js` holds no arithmetic) both green.
+- [x] `TESTING.md` § WO-3.80 carries these lines verbatim with the evidence for each.
+      — This section.
+
+**Declined, and worth a booking if wanted.** Two edges this sitting walked past without widening:
+- **Live uncategorized open work is still not named on student detail.** After the commit, Ben's
+  blank in `h` is in `uncategorizedWork()` — on the card, the queue and the Record dialog — but
+  student detail's to-move card and the CSV's live Work rows are `openWork()`, categories only, so it is
+  named nowhere on that screen. That is the "one honest limit" `projectedClassGrade()`'s comment
+  already records, and WO-3.76's survey above; this work order is about held work.
+- **The excused card names a loose excused piece only in a points class.** `excusedCard()` and the
+  CSV's excused rows use `categoryName()`, which finds *no category* only where the points grade
+  carries that row; in a weighted class the piece prints with no category. `heldWhere()` fixes this
+  for the held card only; doing it for the excused card is WO-3.70's surface, not this one's.
+- WO-3.81 (missing marks on uncategorized work) is untouched.
+
+**Files.**
+- `src/grade-engine.js`: `looseColumns()` / `heldLooseColumns()`, the held half in `heldWork()` and
+  `heldExcusedWork()`, their comments.
+- `src/detail.js`: `heldPieces()`, `heldWhere()`, the `LOOSE_NAME` import, both callers.
+- `src/glance.js`, `src/home.js`: comments only — the sentences that said a held uncategorized column
+  was in no source.
+- `docs/data-model.md`: `heldWork()`'s scope.
+- `sw.js`: `v205` → `v206`.
+- `tools/verify/uncategorized-to-grade.mjs`: WO-3.76's held checks turned around; `heldLoose()`.
+- `tools/README.md`: the count and the ledger.
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

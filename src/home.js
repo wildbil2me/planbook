@@ -418,8 +418,9 @@ function rosterIdsOf(cls, doc) {
   widened for it — every projection is built on that array. Its rows are the engine's
   uncategorizedWork() instead, a third source into the same Set through the same `open`-only filter,
   so the Record dialog's empty-boxes line, this chip and src/glance.js's queue answer the same cell
-  the same way. A held uncategorized column is in none of the three sources — see src/glance.js's
-  queueRows().
+  the same way. A held uncategorized column is heldWork()'s since WO-3.80 (the owner's ruling of
+  2026-11-01: it shows here exactly as held categorized work does), so holding one leaves this chip
+  where it was rather than taking its blanks off the count — see src/glance.js's queueRows().
 */
 function ungradedCount(cls) {
   const doc = getDoc();

@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2178 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2185 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -3145,6 +3145,20 @@ held uncategorized column open nowhere until committed — and the fixture's rem
 the fixture-guard arm, which a run that plants cleanly never reaches — hence six executed. None sits in
 a loop. Full run: `2182 checks · 2182 passed · 0 failed · 0 skipped`, 70,702 lines, 32.4 lines per
 check, 1203s, exit 0, 2026-11-01 on the real clock.
+
+**WO-3.80 moved it from 2178 to 2185, and the executed count from 2182 to 2188 — seven sites, six
+results, no new file.** A second block, `heldLoose()`, at the foot of `verify/uncategorized-to-grade.mjs`
+and called from its `run()`: a weighted and a points class, each with a categorized and an
+uncategorized column held through `holdColumn()` and committed through `commitColumn()`, read off
+student detail's held card, hero and CSV, the engine's five work readers, the card, `queueRows()` and
+its panel, and two students' projections — the held uncategorized column listed on the card and in
+the file in both modes, no cell answered by a held and a live reader at once, the card and queue
+showing it held with *N to grade* unmoved by the hold, no projection moving, the commit moving it
+back as the categorized column moves, and the fixture's removal. The seventh site is the
+fixture-guard arm. WO-3.76's own block kept its six sites and turned its held-column assertions
+around (`wo376-ph` is a held queue row; P's card reads 3 either side of the commit). Full run:
+`2188 checks · 2188 passed · 0 failed · 0 skipped`, 71,069 lines, 32.5 lines per check, 1221s, exit
+0, 2026-11-01 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

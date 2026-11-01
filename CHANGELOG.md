@@ -13,6 +13,18 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A held column filed under no category stays in sight — 2026-11-01
+
+WO-3.80. `CACHE` v205 → v206.
+
+- **Holding an assignment that isn't in any category no longer makes it vanish.** Its blanks and
+  excused cells are listed with your other held work — on the home card, in *Waiting to be graded*,
+  on the student's held card and in the student CSV — under *no category*, after the class's own
+  categories.
+- **The hold still counts toward nothing**: no grade or *what it would take* figure moves, and
+  *N to grade* reads the same before the hold, during it and after you commit. The hero's *· N held*
+  and the held card are built from one list, so they always agree.
+
 ### Work filed under no category now counts as work to grade — 2026-11-01
 
 WO-3.76. `CACHE` v204 → v205.

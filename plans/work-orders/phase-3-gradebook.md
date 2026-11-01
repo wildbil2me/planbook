@@ -6206,11 +6206,11 @@ inside the five minutes before a recording, which is the swallow Why 2 names.
 
 ## WO-3.80 — a held column filed under no category is listed nowhere
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.76 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-11-01 · **Size** S · **Depends on** WO-3.76 · **Blocks** nothing
 **Closes roadmap** *(no box. Owner-directed, 2026-11-01, out of WO-3.76's verdict.)*
 
 **Booked 2026-11-01**, owner-directed, out of [WO-3.76](#wo-376--n-to-grade-skips-work-filed-under-no-category)'s
-verdict. That work order's third line kept a held uncategorized column out of *N to grade*, which is
+verdict. That work order's third line kept a held uncategorized column out of every grade, which is
 right: held work counts toward nothing. But `heldWork()` and `heldExcusedWork()` walk categories only,
 as `openWork()` does, so that column is **listed nowhere** either. It is not on the card, the queue,
 student detail or the student CSV. That breaks CLAUDE.md's rule from WO-3.47: **counting toward nothing
@@ -6229,8 +6229,11 @@ the home card's* N to grade*, because `heldWork()` feeds it.*
   § 30).
 - **Ruled by the owner, 2026-11-01, before `--start`: held uncategorized work shows on the home card
   and the queue under its held word, exactly as held categorized work does.** The question was
-  whether it should show there or stay off the card. *N to grade* still counts only open work. Two
-  reasons:
+  whether it should show there or stay off the card. *N to grade* counts its blanks as it counts a
+  held categorized column's (`src/home.js` takes `heldWork()` into the chip), so the hold leaves the
+  number where it was. *(This sentence read "N to grade still counts only open work" until the
+  verdict, 2026-11-01: it was never true of held categorized work, and the build follows the ruling
+  rather than the sentence.)* Two reasons:
   - **WO-3.47's rule names the home card.** Counting toward nothing is not the same as hidden, and
     leaving off only the uncategorized held columns would make the card depend on how a column was
     filed. A teacher would hold a column and then not find it where held work normally shows.
@@ -6241,17 +6244,17 @@ the home card's* N to grade*, because `heldWork()` feeds it.*
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.80** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] A held column filed under no category, with one blank and one excused cell, is listed on
+- [x] A held column filed under no category, with one blank and one excused cell, is listed on
       student detail's held card and in the student CSV's held rows, in a weighted class and in a
       points class.
-- [ ] The home card and the queue show it under its held word, as they show a held categorized
+- [x] The home card and the queue show it under its held word, as they show a held categorized
       column, per the owner's 2026-11-01 ruling, and *N to grade* is unchanged by the hold.
-- [ ] No projection's figures move, and committing the column moves its work back to open exactly
+- [x] No projection's figures move, and committing the column moves its work back to open exactly
       as a categorized column's does.
-- [ ] With the uncategorized half dropped from the held reader, the check goes red. The mutation is
+- [x] With the uncategorized half dropped from the held reader, the check goes red. The mutation is
       reverted, and `TESTING.md` § WO-3.80 shows the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-3.80 carries these lines verbatim with the evidence for each.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-3.80 carries these lines verbatim with the evidence for each.
 
 **Traps** — **A held row and an open row must never answer for the same cell**: the held reader and
 `uncategorizedWork()` split on `isHeld()`, as `heldWork()` and `openWork()` do. **`src/glance.js`
@@ -6301,6 +6304,11 @@ only. That means a `missing` mark on uncategorized work is never named. In a poi
   the resolver for an existing name reads, not in which names exist.
 - **A mutation per reader that can go silently wrong**: at least the card and `{{missing.list}}`.
   Show each red and revert it before writing anything else.
+- **Two gaps WO-3.80's verifier named, folded in because this row opens the same harness**
+  (`tools/verify/uncategorized-to-grade.mjs`), owner-directed 2026-11-01: a fixture student with
+  **both** a categorized and an uncategorized held blank, asserting the held card lists the
+  categorized row first; and the queue check comparing held rows **in the order drawn**, not after a
+  sort.
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.81** and the `CHANGELOG.md` entry.
 
 **Acceptance**
