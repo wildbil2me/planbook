@@ -394,6 +394,67 @@ export function uncategorizedScores(doc, cls, termId, studentId) {
     points: numberOrZero(assignment.points), state: 'scored' }));
 }
 
+/*
+  THE EXCUSED PIECES (WO-3.70) — one row per LIVE column of the term in which this student's cell is
+  excused, `{ id, categoryId, points, state: 'excused', kept }`, for the student report and nothing
+  else. `kept` is the score the cell still holds (WO-3.68) or null for an excused blank; it is a
+  number the grade does not use, handed out so that a reader can print it beside the mark that says
+  so, and read only AFTER the flag, the order every reader of a cell owes since WO-3.68.
+
+  A THIRD SIBLING, NOT A WIDENING OF openWork(), for heldWork()'s reason word for word. openWork()
+  feeds planned() through categoryRows(), and planned() sums its rows into every "what it would take
+  to move" figure; an excused row in that array would put a piece that moves nothing into a
+  projection of the grade. And it is not a fourth state there that planned() happens to ignore: every
+  reader of openWork() that tests `!==` rather than `===` — src/detail.js's CSV wording is one — would
+  start describing excused work as outstanding. So openWork() returns exactly what it always did, and
+  workRows() above still drops an excused cell before it reads anything else.
+
+  LIVE COLUMNS ONLY. A held column's excused cell is the held reader's (heldExcusedWork() below), so a
+  piece is listed once, as held work, and a commit moves it from that list to this one. Categorized
+  work first, in category order, then the work filed under no category this class has
+  (looseAssignments(), the points grade's own pile) — an excused piece is excused wherever it is
+  filed, and "each excused piece in the term" includes that pile. A DROPPED SCORE IS NEVER HERE: a
+  drop is worked out and never flagged (WO-3.69), and isDropped() never answers yes for an excused
+  cell. Ids, points, states and the kept number, never names.
+*/
+export function excusedWork(doc, cls, termId, studentId) {
+  const rows = [];
+  categoriesOf(cls).forEach((category) => {
+    const categoryId = category && category.id;
+    excusedRows(doc, assignmentsFor(doc, cls, termId, categoryId), studentId, categoryId, rows);
+  });
+  return excusedRows(doc, looseAssignments(doc, cls, termId), studentId, null, rows);
+}
+
+/* The held columns' excused cells (WO-3.70), categorized work only — heldWork()'s scope exactly, so
+   the held card is the one place such a cell is listed. Kept apart from heldWork() rather than
+   folded into it as a fourth state: heldWork() feeds the home card's `N to grade` and the glance
+   queue, and an excused cell is not work to grade. Each row carries `column: 'held'`, as heldWork()'s
+   do. */
+export function heldExcusedWork(doc, cls, termId, studentId) {
+  const rows = [];
+  categoriesOf(cls).forEach((category) => {
+    const categoryId = category && category.id;
+    excusedRows(doc, heldColumnsFor(doc, cls, termId, categoryId), studentId, categoryId, rows);
+  });
+  rows.forEach((row) => { row.column = HELD_COLUMN; });
+  return rows;
+}
+
+/* One walk for both excused readers, so a live and a held excused cell cannot disagree about what was
+   kept. The flag is tested first; `kept` is the cell's value when it is a finite number, else null —
+   src/scores.js's valueOf() rule, so the report prints the number the grid strikes through. */
+function excusedRows(doc, assignments, studentId, categoryId, rows) {
+  assignments.forEach((assignment) => {
+    const cell = scoreCell(doc, assignment.id, studentId);
+    if (!cell || cell.flag !== 'excused') return;
+    const value = cell.v === null || cell.v === undefined ? NaN : Number(cell.v);
+    rows.push({ id: assignment.id, categoryId: categoryId, points: numberOrZero(assignment.points),
+      state: 'excused', kept: Number.isFinite(value) ? value : null });
+  });
+  return rows;
+}
+
 /* openWork()'s per-assignment branch, shared with the points projection's walk over uncategorized
    work (WO-3.30) so the two cannot disagree about which state a cell is in. openWork() itself still
    walks categories only: what it returns is unchanged, and so is every screen that lists from it. */

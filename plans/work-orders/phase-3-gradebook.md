@@ -5568,7 +5568,7 @@ per student**: each student's lowest N are different assignments.
 
 ## WO-3.70 — the student report lists excused work, with any score it kept
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-3.68 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-11-01 · **Size** M · **Depends on** WO-3.68 · **Blocks** nothing
 **Closes roadmap** *(no box. Owner-directed, 2026-10-22.)*
 
 **Booked 2026-10-22**, owner-directed, out of [WO-3.68](#wo-368--an-excused-cell-keeps-the-score-it-had)'s
@@ -5595,17 +5595,17 @@ rather than to narrow the line, so that half of WO-3.68's line 4 is re-homed her
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.70** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] The student report's screen and its CSV list each excused piece in the term, with its kept
+- [x] The student report's screen and its CSV list each excused piece in the term, with its kept
       score when it has one and `Ex` alone when it does not.
-- [ ] The grade, the to-move card and every `openWork()` reader are unchanged by the new rows.
-- [ ] An excused cell in a held column is listed once, as held work, and not again as excused.
-- [ ] A student with no excused work gets a report and a CSV byte-identical to today's.
-- [ ] With the reader leaving the kept score off, the report checks go red. The mutation is reverted,
+- [x] The grade, the to-move card and every `openWork()` reader are unchanged by the new rows.
+- [x] An excused cell in a held column is listed once, as held work, and not again as excused.
+- [x] A student with no excused work gets a report and a CSV byte-identical to today's.
+- [x] With the reader leaving the kept score off, the report checks go red. The mutation is reverted,
       and `TESTING.md` § WO-3.70 shows the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] 👤 On the iPad, the excused rows read clearly on the report, in normal mode and in presentation
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] 👤 On the iPad, the excused rows read clearly on the report, in normal mode and in presentation
       mode.
-- [ ] `TESTING.md` § WO-3.70 carries these lines verbatim with the evidence for each.
+- [x] `TESTING.md` § WO-3.70 carries these lines verbatim with the evidence for each.
 
 **Traps** — **The excused rows are a third kind, not a widened `openWork()`**: CLAUDE.md's held-column
 rule applies word for word. **The engine's grade math is not edited.** **If WO-3.69 lands first**, a

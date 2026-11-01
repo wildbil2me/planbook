@@ -18457,6 +18457,156 @@ bonus 2, Quiz 5 missing, a held quiz 1/10, Test 80/100, and 1/10 on work filed u
 - [x] `TESTING.md` § WO-3.69 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-3.70 — the student report lists excused work, with any score it kept
+
+**What was built.** `src/grade-engine.js` gained `excusedWork(doc, cls, termId, studentId)` — a third
+sibling of `openWork()` and `heldWork()`, never a widening of either — returning one row per **live**
+column of the term in which the student's cell is excused: `{ id, categoryId, points, state: 'excused',
+kept }`, categorized work in category order and then the work filed under no category, `kept` the
+cell's score when it holds one (WO-3.68) and `null` otherwise. Its held twin, `heldExcusedWork()`,
+answers the same for held columns (categorized, `column: 'held'`, `heldWork()`'s scope exactly), so a
+held column's excused cell is listed on the held card and nowhere else. Both share one private walk,
+`excusedRows()`, which tests the flag before it reads the value. `openWork()`, `heldWork()`,
+`workRows()` and every grade function are untouched. `src/grades-report.js` exports `markText()` (no
+change to its body) so the report prints the grade sheet's own `Ex` / `Ex (62)`. `src/detail.js`: an
+*Excused · N pieces out of the grade* card under the dropped card (after the live and held rows), one
+row per piece — name, category, points in plain grey, the `Ex` mark in the excused purple — and a note
+saying the pieces count toward nothing; the held card and the hero's `N held` include held excused
+cells, the state worded `excused` / `excused, 7 kept` (the score history's own words, lower-cased);
+`detailModel()` carries the rows under their own key, `excused`, apart from `work` and `onHold`, and
+`studentCsv()` writes them last in the Work section, State `excused` or `excused — 62 kept`. No
+`presentationMode()` test, exactly as the held and dropped cards have none (below). `src/detail.css`:
+`.detail-excused-pts`, `.detail-excused-mark` (the sheet's excused pill colours, #7c3aed on #f3eaff),
+their print rules and their coarse-pointer font sizes — text, not controls, so no 44px target is owed.
+`sw.js`: `planbook-shell-v203` → `v204`. Harness: `tools/verify/excused-report.mjs`, new, registered
+after `verify/drop-lowest.mjs` (12 call sites, 10 results on a green run); three existing checks
+re-pinned, named under line 6.
+
+**The fixture**, written out at the head of `tools/verify/excused-report.mjs`, fixed dates so its text
+does not move with the clock. Weighted, Quizzes 50% (drop lowest 1) and Tests 50%. Ana: Test 80/100,
+Quiz 1 excused **kept 62**, Quiz 2 excused blank, Quiz 3 blank, Quiz 4 15/20, a **held** quiz excused
+**kept 7**, and work filed under no category excused blank. Ben: no excused cell anywhere, and one of
+every other row kind — Quiz 3 outstanding, Quiz 2 missing, the held quiz ungraded, Quiz 1 dropped.
+By hand, Ana: Quizzes hold one scored cell, 15/20 = 75% (the drop keeps the best, WO-3.69 ruling 4),
+Tests 80%, class **77.5%**; points mode (80+15)/(100+20) = 79.1666…%.
+
+**The golden.** Line 4 asks for "byte-identical to today's", which is only checkable against today, so
+the section was first run with `GOLDEN = null` against the tree with **no `src/` file edited** (the
+module and its registration were the only changes). That branch printed the pre-change output —
+`WO370-CAPTURE {"benText":"BBBen BrambleWO-3.70 Excused report · Q2 · 1 piece outstanding · 1 missing ·
+1 held57.50%F …","benCsv":"﻿Planbook — student grade detail\r\n…","anaGrade":77.5,"anaPoints":79.16666666666666,…}`
+— and the run's WO-3.70 checks went red as they should on a build without the feature (`… excusedWork() …
+:: null`; `opened from the Scores screen … :: {"up":true,"card":false,"color":null}`). The printed JSON
+was embedded as `GOLDEN` with non-ASCII written as `\u` escapes and round-tripped key by key before the
+file was saved. The capture branch stays in the module so the golden can be re-taken; it is unreachable
+while `GOLDEN` is set.
+
+- [x] The student report's screen and its CSV list each excused piece in the term, with its kept
+      score when it has one and `Ex` alone when it does not.
+      — `node tools/verify-shell.mjs`, run 4 (below): `PASS | WO-3.70: Ana's report draws an *Excused*
+      card listing her three live excused pieces in order — Quiz 1 as `Ex (62)`, Quiz 2 and the loose
+      work as `Ex` alone — in the grade sheet's own mark :: {"rows":[{"id":"a370-q1","mark":"Ex (62)"},{"id":"a370-q2","mark":"Ex"},{"id":"a370-lo","mark":"Ex"}],"card":"Excused · 3 pieces out of the gradeWO-3.70 Quiz 1Quizzes100 ptsEx (62)WO-3.70 Quiz 2Quizzes20 ptsExWO-3.70 Loose10 ptsEx…"}`;
+      `PASS | WO-3.70: Ana's CSV carries the same three rows in its Work section, after the live and held
+      rows, State `excused — 62 kept` or `excused`` (it asserts `WO-3.70 Quiz 1,Quizzes,100,excused — 62
+      kept`, `WO-3.70 Quiz 2,Quizzes,20,excused` and `WO-3.70 Loose,,10,excused` on consecutive lines,
+      after the outstanding row and the held row, a blank line before *Attendance*, and exactly three
+      `,excused` lines); `PASS | WO-3.70: the engine's excusedWork() is ids, points and kept scores — no
+      names — and its kept score is the one the cell holds :: [{"id":"a370-q1","categoryId":"k370q","points":100,"state":"excused","kept":62},{"id":"a370-q2",…,"kept":null},{"id":"a370-lo","categoryId":null,"points":10,"state":"excused","kept":null}]`;
+      and by the real path, Scores → Ana's name: `PASS | WO-3.70: opened from the Scores screen, Ana's
+      report shows the *Excused* card, and its mark is drawn in the grid's excused purple, #7c3aed ::
+      {"up":true,"card":true,"color":"rgb(124, 58, 237)"}`. Also from the WO-3.7 fixture, whose first
+      student has one excused blank: `PASS | the missing-work list is exactly what the teacher marked
+      missing … :: ["Ch 2 Homework"] :: [… "Missing work · 10 points at stake","Excused · 1 piece out of the grade", …]`.
+- [x] The grade, the to-move card and every `openWork()` reader are unchanged by the new rows.
+      — `PASS | WO-3.70: Ana's grade (77.5% weighted, by hand), her openWork() rows, her to-move card and
+      her missing card are what the build before WO-3.70 drew, in both grading modes :: {"now":{"grade":77.5,"points":79.16666666666666,"open":"[{\"id\":\"a370-q3\",\"categoryId\":\"k370q\",\"points\":20,\"state\":\"open\"}]","move":"What it would take to moveAna Aster is at 77.50% — a C+. …"…}`
+      — each compared to the golden taken from the pre-change build, and the grade to the hand figure as
+      well. By construction: `openWork()`, `heldWork()`, `workRows()` and the grade functions are not
+      edited (`git diff src/grade-engine.js` adds three functions and changes no existing line), and no
+      row of `excusedWork()` is handed to `projectedClassGrade()`. Every other `openWork()` reader in the
+      run — the home card's *N to grade*, the glance queue, the to-move card on the WO-3.7 fixture, the
+      held readers — stayed green in run 4.
+- [x] An excused cell in a held column is listed once, as held work, and not again as excused.
+      — `PASS | WO-3.70: Ana's excused Held quiz is on the held card as `excused, 7 kept`, counted in its
+      title and the hero's `1 held`, and is not an excused row — not on screen, not from the engine, not
+      in the CSV :: {"held":"Held out of the grade · 1 pieceWO-3.70 Held quizQuizzesexcused, 7 keptHeld…","hero":"WO-3.70 Excused report · Q2 · 1 piece outstanding · 0 missing · 1 held",…}`
+      — the check also asserts the CSV carries exactly one line for the held quiz,
+      `WO-3.70 Held quiz,Quizzes,10,"held — excused, 7 kept"`. **A note for the verifier:** before this
+      work order a held excused cell was listed **nowhere** — `heldWork()` drops excused cells through
+      `workRows()` — so "listed once, as held work" needed `heldExcusedWork()` rather than a change to
+      `heldWork()`, which feeds the home card's *N to grade* and the glance queue, where an excused cell
+      is not work to grade (named in the result file as a decision).
+- [x] A student with no excused work gets a report and a CSV byte-identical to today's.
+      — `PASS | WO-3.70: Ben, who has no excused cell, gets a report whose text is byte-identical to the
+      build before WO-3.70 (outstanding, missing, held and dropped rows all present), and no *Excused*
+      card :: {"now":"BBBen BrambleWO-3.70 Excused report · Q2 · 1 piece outstanding · 1 missing · 1 held57.50%F …"}`;
+      `PASS | WO-3.70: Ben's CSV is byte-identical to the build before WO-3.70, and his grade, openWork()
+      and heldWork() are too :: {"now":"﻿Planbook — student grade detail\r\nStudent,Bramble,Ben\r\n…"}`
+      — the `#detailContent` text and the whole CSV (only `Exported,<date>` masked) against the golden
+      captured from the pre-change build, above. Ben's report carries an outstanding, a missing, a held
+      and a dropped row, so every card the change touched is in the comparison.
+- [x] With the reader leaving the kept score off, the report checks go red. The mutation is reverted,
+      and `TESTING.md` § WO-3.70 shows the red output.
+      — `src/grade-engine.js`, in `excusedRows()` (the one walk both readers share), `kept:` became
+      `/* MUTATION WO-3.70: the reader leaves the kept score off — REVERT */ null`. `node
+      tools/verify-shell.mjs` (run 3): `2176 checks · 2171 passed · 5 failed · 0 skipped`, `EXIT=1`. All
+      five reds are report checks:
+      `FAIL | WO-3.70: Ana's report draws an *Excused* card … :: {"rows":[{"id":"a370-q1","mark":"Ex"},{"id":"a370-q2","mark":"Ex"},{"id":"a370-lo","mark":"Ex"}],…}`;
+      `FAIL | WO-3.70: Ana's CSV carries the same three rows in its Work section … :: [… "WO-3.70 Held quiz,Quizzes,10,held — excused","WO-3.70 Quiz 1 …]`;
+      `FAIL | WO-3.70: the engine's excusedWork() is ids, points and kept scores … :: [{"id":"a370-q1","categoryId":"k370q","points":100,"state":"excused","kept":null},…]`;
+      `FAIL | WO-3.70: Ana's excused Held quiz is on the held card as `excused, 7 kept` … :: {"held":"Held out of the grade · 1 pieceWO-3.70 Held quizQuizzesexcusedHeld…"}`;
+      `FAIL | WO-3.68: the student report's CSV differs by one cell whether Cy's excused homework kept its
+      7 or not … :: {"same":true,"len":525,"ex":false,"kept":false,"bare":true,…}`.
+      The grade, to-move, byte-identical and presentation checks stayed green under the mutation, as they
+      should: none of them depends on the kept score. Reverted by copying back a copy of
+      `src/grade-engine.js` saved immediately before the plant (not `git checkout`, which would have taken
+      this work order's unstaged engine changes with it); `cmp` reads identical, and `grep -rn "MUTATION
+      WO-3.70" src tools` finds nothing (exit 1). `grep -rn MUTATION src tools` finds only prose that
+      predates this work order.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs` (run 4, after the revert): `2176 checks · 2176 passed · 0 failed ·
+      0 skipped`, 70,393 lines, 32.3 lines per check, 1212s, `EXIT=0`, 2026-11-01, real clock. Run 2 on the
+      same `src/` (before the mutation) was `2176 · 2173 · 3 failed`, the three being existing checks
+      that asserted the report listed **no** excused piece — re-pinned to the new behaviour, not deleted,
+      on WO-3.68's precedent: `verify/grade-detail.mjs`'s missing-list read collected
+      `.detail-missing-name` from every card and now skips `[data-detail-excused-row]`; its WO-3.35
+      pinned weighted CSVs gained the excused rows (`Retake Quiz,Quizzes,20,excused` for the first
+      student, five `excused` rows for the second) and not one other byte — the pin's own comment asks
+      for an intended change to be argued there, and it is; `verify/excused-kept.mjs`'s student-CSV check
+      now asserts the files differ only in Cy's State cell (`excused — 7 kept` against `excused`). Run 4
+      shows all three green: `PASS | WO-3.35: a weighted class's student CSV is the file it was … :: 748
+      and 723 characters, identical to the pinned files`; `PASS | WO-3.68: the student report's CSV
+      differs by one cell … :: {"same":true,"len":534,"ex":false,"kept":true,"bare":true,…}`. `node
+      tools/wo-sweep.mjs`: `52 checks · 49 passed · 0 failed · 3 to review` — the three standing reviews —
+      after `tools/README.md`'s call-site line went 2159 → 2171 from the sweep's own count (its § 33
+      import-loop check is green with `src/detail.js` now importing `src/grades-report.js`).
+      **The verifier's own runs, on the real tree, were red twice before going green**: runs 1 and 2
+      ended `2158 checks · … · 1 failed` when `verify/cooldown-quiet.mjs` threw
+      `nothing to click for #homeGrid [data-class-tab="c_wo45"] [0]` and lost the rest of its checks;
+      run 3 read `2176 checks · 2176 passed · 0 failed`, and an exact copy of the tree passed twice. A
+      section this work order does not touch, with the same files passing and failing, reads as a
+      flake rather than a defect here. Whether the new section, which runs earlier and leaves the page
+      on the student report, makes it likelier is not ruled out; booked as
+      [WO-1.89](plans/work-orders/phase-1-shell-store-roster.md#wo-189--cooldown-quietmjs-sometimes-finds-no-class-tab-to-click).
+- [x] 👤 On the iPad, the excused rows read clearly on the report, in normal mode and in presentation
+      mode.
+      — **Read green by the owner on hardware, 2026-11-01, v204**, every item on the verifier's
+      checklist: the excused card under the dropped and held cards reading `Ex (62)` and `Ex`, told
+      apart from the red missing chip at arm's length; a held column's excused cell on the held card
+      only; and the same card under presentation mode. The pre-reading record follows. What the harness has shown: the card is drawn on
+      the real path and the mark's computed colour is #7c3aed; under presentation mode the card draws the
+      same rows and words — `PASS | WO-3.70: under presentation mode the excused card draws the same rows
+      and words, as the held and dropped cards beside it do …`. The branch followed: `src/detail.js` asks
+      `presentationMode()` nothing for the held and dropped cards, so the excused card asks nothing
+      either — an excused piece is a grade fact, not support data. To read: force-quit, open v204, open a
+      class's Scores, mark a scored cell excused (X) and leave another excused blank, tap the student's
+      name; under *Dropped from the grade* (or under the held work) find *Excused · N pieces out of the
+      grade*, each row's purple pill reading `Ex (62)` or `Ex`; then turn presentation mode on and look
+      again. Whether the pill reads as "not counted" at arm's length, and tells itself apart from the red
+      missing chip, is the reading.
+- [x] `TESTING.md` § WO-3.70 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ### WO-3.72 — a quarter's grades can be recorded, and the engine says when they stop matching
 
 **What was built.** The data and the engine half, with no screen. A new module, `src/term-record.js`:

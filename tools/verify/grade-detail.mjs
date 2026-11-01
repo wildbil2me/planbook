@@ -247,7 +247,10 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
           function(c){ return c.textContent; }),
         move: txt('.detail-move'),
         unreachable: !!v.querySelector('.detail-move.unreachable'),
-        missing: Array.prototype.map.call(v.querySelectorAll('.detail-missing-name'),
+        /* The excused card (WO-3.70) wears the missing card's row shape, and its rows are not missing
+           work — so they are read out of this list by their own marker. */
+        missing: Array.prototype.map.call(
+          v.querySelectorAll('.detail-missing-row:not([data-detail-excused-row]) .detail-missing-name'),
           function(e){ return e.textContent; }),
         stake: txt('.detail-card-title'),
         att: Array.prototype.map.call(v.querySelectorAll('.detail-att-stat'),
@@ -997,7 +1000,11 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
        two texts below were captured from these two students on the tree before that change
        (`9a40109`), not written out after it, and only the export date is masked — so the next work
        order that touches studentCsv() cannot drift a weighted file by a character without a red
-       line here. If a change to the weighted file is ever INTENDED, this is the place it is argued. */
+       line here. If a change to the weighted file is ever INTENDED, this is the place it is argued.
+       WO-3.70 IS ONE: the student report lists excused work, in the Work section after the live rows,
+       State `excused` (or `excused — 62 kept`). Both students have excused cells, so each pinned file
+       gained exactly those rows — Retake Quiz for the first, five rows for the second — and not one
+       other byte; the category section, the live rows and the attendance are as `9a40109` wrote them. */
     const pinned = (t) => String(t).replace(/\r\nExported,\d{4}-\d{2}-\d{2}\r\n/, '\r\nExported,<date>\r\n');
     const fileOf = (lines) => '\uFEFF' + lines.join('\r\n') + '\r\n';
     const S1_PINNED = fileOf(['Planbook — student grade detail', 'Student,' + S1_LAST + ',' + S1_FIRST,
@@ -1007,14 +1014,18 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
       'Homework,20,8,20,40.00%,23.53,9.41', 'Participation,15,,,nothing graded — weight redistributes,,',
       'Overall,100,,,,,65.24%', '', 'Work,Category,Points,State', 'Osmosis Quiz,Quizzes,20,outstanding',
       'Ch 2 Homework,Homework,10,marked missing', 'Ch 3 Homework,Homework,10,outstanding',
-      'Bonus poster,Homework,0,outstanding bonus work', '', 'Attendance,Count', 'Present,4', 'Tardy,1',
+      'Bonus poster,Homework,0,outstanding bonus work', 'Retake Quiz,Quizzes,20,excused', '',
+      'Attendance,Count', 'Present,4', 'Tardy,1',
       'Absent,1', 'Event,0', 'Dismissed,0', 'Recorded meetings,6', 'Attendance %,83%']);
     const S2_PINNED = fileOf(['Planbook — student grade detail', 'Student,"Ó""Brien, Jr",Ida',
       'Class,WO-3.7 Detail', 'Term,WO-3.7 Term', 'Overall grade,82.88%,B-', 'Exported,<date>', '',
       'Category,Weight %,Earned,Possible,Category %,Counts at %,Contributes',
       'Tests,40,78,100,78.00%,47.06,36.70', 'Quizzes,25,17,20,85.00%,29.41,25.00',
       'Homework,20,9,10,90.00%,23.53,21.18', 'Participation,15,,,nothing graded — weight redistributes,,',
-      'Overall,100,,,,,82.88%', '', 'Work,Category,Points,State', '', 'Attendance,Count', 'Present,6',
+      'Overall,100,,,,,82.88%', '', 'Work,Category,Points,State', 'Osmosis Quiz,Quizzes,20,excused',
+      'Retake Quiz,Quizzes,20,excused', 'Ch 2 Homework,Homework,10,excused',
+      'Ch 3 Homework,Homework,10,excused', 'Bonus poster,Homework,0,excused', '', 'Attendance,Count',
+      'Present,6',
       'Tardy,0', 'Absent,0', 'Event,0', 'Dismissed,0', 'Recorded meetings,6', 'Attendance %,100%']);
     const firstDiff = (a, b) => { let i = 0; while (i < a.length && a[i] === b[i]) i++; return i; };
     check('WO-3.35: a weighted class\'s student CSV is the file it was before the points shape was added, '

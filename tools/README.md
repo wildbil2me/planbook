@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2159 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2171 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -3111,6 +3111,21 @@ fixture's removal. The round also re-pinned two existing sites rather than addin
 *5 → 8* as the earlier-build limit, and Hale379 to *4 → 9* — because the owner ruled that the reader
 trusts the trail across a recording. None sits in a loop. Full run: `2166 checks · 2166 passed · 0
 failed · 0 skipped`, 70,019 lines, 32.3 lines per check, 1220s, exit 0, 2026-10-31 on the real clock.
+
+**WO-3.70 moved it from 2159 to 2171, and the executed count from 2166 to 2176 — twelve sites, ten
+results, one new file.** `verify/excused-report.mjs`, registered directly after `verify/drop-lowest.mjs`:
+the student report's excused rows on screen and in the CSV, the engine reader's rows, the grade and
+to-move card unchanged, a held column's excused cell listed once as held work, a no-excused student's
+report text and CSV byte-identical to a golden captured from the build before the change, presentation
+mode, the card opened by the real path, and the fixture's removal. The two sites a green run never
+reaches are the fixture-guard arm and the capture branch, which fires only while its `GOLDEN` is
+`null` — the branch the golden was taken with, kept so the capture can be re-taken. None sits in a
+loop. Three existing checks that asserted the report listed no excused piece were re-pinned rather
+than added: `verify/grade-detail.mjs`'s missing-list read skips the excused card's rows, its WO-3.35
+pinned weighted files gained the excused rows and nothing else, and `verify/excused-kept.mjs`'s
+student-CSV check now says the two files differ by Cy's one State cell. Full run: `2176 checks · 2176
+passed · 0 failed · 0 skipped`, 70,393 lines, 32.3 lines per check, 1212s, exit 0, 2026-11-01 on the
+real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

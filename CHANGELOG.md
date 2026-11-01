@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The student report lists excused work, with any score it kept — 2026-11-01
+
+WO-3.70. `CACHE` v203 → v204.
+
+- **A student's report now has an *Excused* card** listing each piece you excused them from, with
+  the score the cell kept shown the way the grade sheet shows it: `Ex (62)`, or `Ex` alone. Its CSV
+  carries the same rows, as `excused` or `excused — 62 kept`.
+- **None of it counts** toward the grade or toward *what it would take to move*. An excused cell in
+  a column you are holding is listed once, with the held work, as *excused, 62 kept*.
+- **A student with nothing excused** gets exactly the report and file they got before.
+
 ### *What changed* names the cause honestly, and a recording closes the edit window — 2026-11-01
 
 WO-3.79. `CACHE` v202 → v203.

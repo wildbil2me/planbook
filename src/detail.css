@@ -213,6 +213,18 @@
   font-size: 9px; font-weight: 800; color: #6b7a8d;
   text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
 }
+/* WORK YOU EXCUSED (WO-3.70), in the same row shape. The points are the held state's plain grey and not
+   the missing chip's red — nothing here is a zero the grade is carrying — and the mark is the grade
+   sheet's `Ex` / `Ex (62)` pill in the grid's excused colours (src/scores.css `.grades-report-mark.excused`
+   and `.scores-input.excused`: #7c3aed on #f3eaff), so the report and the cell it came from wear one
+   mark in one colour. Not uppercased: `Ex` is the sheet's spelling, and the brackets carry the kept
+   score that the sheet's legend says is not counted. */
+.detail-excused-pts { font-size: 11px; font-weight: 700; color: #6b7a8d; white-space: nowrap; }
+.detail-excused-mark {
+  font-size: 11px; font-weight: 800; color: #7c3aed;
+  background: #f3eaff; border: 1.5px solid #7c3aed; border-radius: 999px;
+  padding: 2px 9px; white-space: nowrap; font-variant-numeric: tabular-nums;
+}
 /* A NOTE ON A SCORE (WO-3.32), beside its assignment in the row shape above. Italic and grey, which
    is the hall-pass note's own register (src/attendance.css `.pass-history-note`, after Roll Call!'s
    `.sr-pass-note`): a teacher's aside under a record, not a finding. It takes the rest of the row
@@ -459,7 +471,11 @@
   body[data-detail-print] .detail-held-state,
   body[data-detail-print] .detail-held-mark,
   body[data-detail-print] .detail-dropped-score,
-  body[data-detail-print] .detail-dropped-mark { font-size: 7pt; color: #000; }
+  body[data-detail-print] .detail-dropped-mark,
+  body[data-detail-print] .detail-excused-pts { font-size: 7pt; color: #000; }
+  body[data-detail-print] .detail-excused-mark {
+    font-size: 7pt; color: #000; background: none !important; border-color: #999 !important;
+  }
 
   body[data-detail-print] .detail-att-stat {
     background: none !important; border: 0.2mm solid #999 !important;
@@ -588,6 +604,7 @@
   .detail-held-mark { font-size: 10px; }
   .detail-dropped-score { font-size: 12px; }
   .detail-dropped-mark { font-size: 10px; }
+  .detail-excused-pts, .detail-excused-mark { font-size: 12px; }
   .detail-score-note { font-size: 13px; }
   .detail-history-trail { font-size: 13px; }
   .detail-missing-none { font-size: 13px; }

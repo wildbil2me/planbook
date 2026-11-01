@@ -271,8 +271,12 @@ function categoryNameOf(cls, assignment) {
   `dropped` is isDropped()'s answer for the cell (WO-3.69), handed in rather than worked out: only a
   scored cell is ever dropped, so the flag tests above never meet it, and the score it brackets is
   the one the cell would otherwise print — `18 L` stays `18 L` inside the brackets.
+
+  EXPORTED AT WO-3.70, for the student report's excused rows, so that `Ex (62)` is spelled in one place
+  and the sheet and the report cannot drift apart on it. That caller hands in `{ flag: 'excused',
+  value }` and nothing else; this function is still the only place the mark becomes text.
 */
-function markText(mark, dropped) {
+export function markText(mark, dropped) {
   if (mark.flag === 'missing') return 'M';
   if (mark.flag === 'excused') return mark.value === null ? 'Ex' : 'Ex (' + mark.value + ')';
   if (mark.value === null) return mark.flag === 'late' ? 'L' : '';

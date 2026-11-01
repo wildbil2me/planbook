@@ -145,6 +145,7 @@ import { run as scoreHistory } from './verify/score-history.mjs';
 import { run as pastDue } from './verify/past-due.mjs';
 import { run as excusedKept } from './verify/excused-kept.mjs';
 import { run as dropLowest } from './verify/drop-lowest.mjs';
+import { run as excusedReport } from './verify/excused-report.mjs';
 import { run as heldReaders } from './verify/held-readers.mjs';
 import { run as termRecord } from './verify/term-record.mjs';
 import { run as termRecordBar } from './verify/term-record-bar.mjs';
@@ -451,6 +452,11 @@ const BROWSER_SECTIONS = [
      the class back out, and hands the page back at 1280x900 with touch off and presentation mode
      where it found it. */
   { file: 'verify/drop-lowest.mjs', run: dropLowest },
+  /* WO-3.70, after the excused cell and the drop it lists beside: the student report's excused rows.
+     It plants one class of its own through the store, reads two students' reports and CSVs against
+     the build before it, opens one by the real path, and takes the class back out with presentation
+     mode where it found it. No reload, no viewport change. */
+  { file: 'verify/excused-report.mjs', run: excusedReport },
   /* WO-3.53, directly after the prompt it reads: four readers that hide a held column. It plants one
      points class of its own through the store, selects it, filters the concern list to it, reads
      each reader held and then live, and puts the class, the selection and both filters back. No

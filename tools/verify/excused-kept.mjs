@@ -417,11 +417,18 @@ const cyCsv = await evalJs(`(function(){
   s.getDoc().scores['${A3}']['${S3}'] = { v:null, flag:'excused' };
   var b = p.detail.studentCsv(p.detail.detailModel()).text;
   s.getDoc().scores['${A3}']['${S3}'] = real;
-  return { same: a === b, len: a.length, ex: a.indexOf('Ex (') !== -1, homework: a.indexOf('WO-3.68 Homework') !== -1,
+  /* Since WO-3.70 the report lists excused work, so the kept 7 is in the file — in the homework's State
+     cell and nowhere else. Swapping that one cell's words back makes the two files byte-identical, which
+     is the claim this check has always made: the kept score never reaches a figure. */
+  var kept = 'WO-3.68 Homework,Practice,10,excused — 7 kept', bare = 'WO-3.68 Homework,Practice,10,excused';
+  return { same: a.replace(kept, bare) === b, len: a.length, ex: a.indexOf('Ex (') !== -1,
+    kept: a.split(kept).length === 2, bare: b.split(bare).length === 2,
     restored: JSON.stringify(s.getDoc().scores['${A3}']['${S3}']) }; })()`);
-check('WO-3.68: the student report\'s CSV is byte-identical whether Cy\'s excused homework kept its 7 or '
-  + 'not — it lists outstanding work and no excused piece, so the kept score never reaches its figures',
-  cyCsv.same && cyCsv.len > 50 && !cyCsv.ex && !cyCsv.homework && /"v":7,"flag":"excused"/.test(cyCsv.restored),
+check('WO-3.68: the student report\'s CSV differs by one cell whether Cy\'s excused homework kept its 7 or '
+  + 'not — its State reads `excused — 7 kept` or `excused` (WO-3.70) — and is otherwise byte-identical, so '
+  + 'the kept score never reaches its figures',
+  cyCsv.same && cyCsv.len > 50 && !cyCsv.ex && cyCsv.kept && cyCsv.bare
+    && /"v":7,"flag":"excused"/.test(cyCsv.restored),
   JSON.stringify(cyCsv));
 
 /* ── ACCEPTANCE LINE 6: THE PAST-DUE PROMPT ──

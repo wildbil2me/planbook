@@ -7062,3 +7062,53 @@ planting** (AGENTS.md, the WO-5.1 scar). **A whitespace-tolerant pattern must st
 read**: keep WO-1.83's no-following-`=` rule on `.length`, and do not let `\s*` turn a `==` comparison
 into an assignment. **Rule per token, not by symmetry** — WO-1.86's rule. **Nothing in `src/` moves
 in the end**, so no `CACHE` bump is owed.
+
+## WO-1.89 — cooldown-quiet.mjs sometimes finds no class tab to click
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.88 made.)*
+
+**Booked 2026-11-01**, owner-directed, out of [WO-3.70](phase-3-gradebook.md#wo-370--the-student-report-lists-excused-work-with-any-score-it-kept)'s
+verdict. On the real tree the verifier's `node tools/verify-shell.mjs` was red twice and then green,
+with no file moving between runs. Both red runs ended `2158 checks · … · 1 failed` when
+`verify/cooldown-quiet.mjs` threw `nothing to click for #homeGrid [data-class-tab="c_wo45"] [0]`. That
+lost the rest of the section's checks, so 18 never ran. The third run read
+`2176 checks · 2176 passed`, and an exact copy of the tree passed twice. WO-3.70 does not touch the
+section. Its new section, `verify/excused-report.mjs`, runs earlier and leaves the page on the student
+report, so it may make the flake likelier and is not ruled out. A harness that fails one run in three
+for no reason teaches its reader to re-run instead of read. That is the opposite of what WO-1.44's
+containment was built for.
+
+**Deliverables**
+- **Find the cause before changing anything**, and record it in `TESTING.md` § WO-1.89. The
+  candidates the verifier's evidence leaves open:
+  - `openSignals45()` clicks the class card after a fixed 250 ms wait from `goHome45()`, or after a
+    fixed 600 ms wait from `Page.reload` plus `waitForBoot()`, so the home grid may not have been
+    painted with the planted class yet.
+  - The page an earlier section leaves behind (WO-3.70's student report among them) changes what
+    `goHome45()` finds visible.
+  - The fixture's reload races the store's flush.
+  Reproduce it on demand if possible, for example by repeating or reordering the section, and say
+  how often it fails before and after.
+- **Fix it in the harness, not in `src/`.** Wait on the condition the click needs, the planted
+  class's card present in `#homeGrid`, rather than on a longer sleep. If the cause is a leftover page
+  state, the section establishes its own starting state, the way its two reloads already argue for.
+- **If the cause is in `src/`**, stop and report rather than fixing it here. A home grid that
+  sometimes misses a class a teacher has would be an app defect and a work order of its own.
+- **`tools/README.md`**: the call-site count if it moves, and one line in the ledger.
+- **`TESTING.md` § WO-1.89** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] `TESTING.md` § WO-1.89 names the cause with evidence, or says plainly that it could not be
+      reproduced and what was tried.
+- [ ] The section no longer depends on a fixed sleep for the class card it clicks.
+- [ ] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the
+      run lines are quoted in `TESTING.md` § WO-1.89.
+- [ ] `node tools/wo-sweep.mjs` passes.
+- [ ] `TESTING.md` § WO-1.89 carries these lines verbatim with the evidence for each.
+
+**Traps** — **A longer sleep is not a fix**: it moves the race, hides it on a fast machine, and costs
+every run. **Do not make the click non-fatal**: `nothing to click` killing a section loudly is what
+surfaced this, and WO-1.44's *blast radius, not tolerance* rule stands. **Nothing in `src/` moves**,
+so no `CACHE` bump is owed. **The three runs take about 20 minutes each**: background them and say so
+up front.

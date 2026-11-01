@@ -155,6 +155,15 @@ import { heldWork } from './grade-engine.js';
    here — droppedPieces() below walks this class's term in column order and keeps what isDropped()
    says yes to. The grade above has already left them out; this file only lists them. */
 import { isDropped } from './grade-engine.js';
+/* THE EXCUSED PIECES (WO-3.70), from the engine's third sibling of openWork() and its held twin, and
+   never from a test of a cell here. LISTED and never PROJECTED, for heldWork()'s reason above: nothing
+   out of either call is handed to projectedClassGrade(), and openWork() — `rows`, which the to-move
+   card is built on — is unchanged by them. A held column's excused cell comes out of
+   heldExcusedWork() and goes on the held card, so a piece is listed once. */
+import { excusedWork, heldExcusedWork } from './grade-engine.js';
+/* The grade sheet's `Ex` / `Ex (62)`, imported rather than retyped (WO-3.70): one spelling of one mark,
+   so the sheet and the report cannot drift apart. src/grades-report.js imports nothing from here. */
+import { markText } from './grades-report.js';
 /* What is graded, asked of the cells, and what to say when there is no grade (WO-3.38, lifted at
    WO-3.42). One copy, shared with the score grid and the grade sheet, so the three screens cannot
    disagree about a bonus graded at 0. None of it is grade arithmetic — see that file's header. */
@@ -639,6 +648,16 @@ const HELD_STATE_SAY = {
   bonus: 'bonus, not graded yet',
 };
 
+/* A held row's state in words. An EXCUSED cell in a held column (WO-3.70) is held work — it is listed
+   here and only here — and says what it kept in the score history's own words (src/score-history.js:
+   *Excused, 62 kept*), lower-cased to sit beside the three above. */
+function heldStateSay(row) {
+  if (row.state === 'excused') {
+    return 'excused' + (row.kept === null || row.kept === undefined ? '' : ', ' + row.kept + ' kept');
+  }
+  return HELD_STATE_SAY[row.state] || '';
+}
+
 function heldCard(grade, held, person) {
   if (!held.length) return null;
   const card = el('div', 'detail-card');
@@ -650,7 +669,7 @@ function heldCard(grade, held, person) {
     line.append(el('span', 'detail-missing-name', assignmentName(row.id)));
     const where = categoryName(grade, row.categoryId);
     if (where) line.append(el('span', 'detail-missing-when', where));
-    line.append(el('span', 'detail-held-state', HELD_STATE_SAY[row.state] || ''));
+    line.append(el('span', 'detail-held-state', heldStateSay(row)));
     const mark = el('span', 'detail-held-mark', 'Held');
     mark.title = 'Held out of the grade — it counts toward nothing until you commit it.';
     line.append(mark);
@@ -713,6 +732,55 @@ function droppedCard(grade, dropped, person) {
       + 'and count toward nothing in the grade above. A later, lower score takes the drop over by '
       + 'itself. A score marked missing is never dropped.'));
   return card;
+}
+
+/*
+  WORK YOU EXCUSED (WO-3.70) — each piece in a LIVE column of the term that this student is excused
+  from, with the score it kept when it kept one (WO-3.68). The rows are the engine's excusedWork(),
+  the work filed under no category included; a held column's excused cell is on the held card above
+  instead, and a dropped score is never here, because a drop is worked out and never flagged.
+
+  ITS OWN CARD, on the held and dropped cards' argument: the missing card promises its work is in the
+  grade, and the to-move card projects what it names, and an excused piece is in neither figure —
+  neither earned nor possible. The mark is the grade sheet's own, asked of markText(): `Ex (62)` when
+  the cell kept a score, `Ex` alone when it did not, in the grid's excused purple, so the report, the
+  sheet and the cell it came from say one thing. The points are printed in plain grey and not in the
+  missing card's red chip: nothing here is a zero the grade is carrying.
+
+  NO presentationMode() TEST, exactly as the held and dropped cards beside it have none: an excused
+  piece is a grade fact, not support data, and a second opinion about what a projector hides would be
+  this screen disagreeing with the rule src/supports.js owns.
+*/
+function excusedCard(grade, excused, person) {
+  if (!excused.length) return null;
+  const card = el('div', 'detail-card');
+  card.setAttribute('data-detail-excused', '');
+  card.append(el('div', 'detail-card-title',
+    'Excused · ' + plural(excused.length, 'piece', 'pieces') + ' out of the grade'));
+  excused.forEach((row) => {
+    const line = el('div', 'detail-missing-row');
+    line.setAttribute('data-detail-excused-row', row.id);
+    line.append(el('span', 'detail-missing-name', assignmentName(row.id)));
+    const where = categoryName(grade, row.categoryId);
+    if (where) line.append(el('span', 'detail-missing-when', where));
+    line.append(el('span', 'detail-excused-pts', row.points ? plural(row.points, 'pt', 'pts') : 'bonus'));
+    const mark = el('span', 'detail-excused-mark', excusedMark(row));
+    mark.title = row.kept === null
+      ? 'Excused — out of the grade entirely, neither earned nor possible.'
+      : 'Excused — the ' + row.kept + ' it had is kept for your record and not counted.';
+    line.append(mark);
+    card.append(line);
+  });
+  card.append(el('p', 'detail-card-note',
+    'You excused ' + person + ' from these — the cells the Scores screen marks Ex. They count toward '
+      + 'nothing in the grade above, neither earned nor possible, and nothing toward what it would take '
+      + 'to move. A score in brackets, Ex (62), is the one the cell had, kept for your record and not '
+      + 'counted.'));
+  return card;
+}
+
+function excusedMark(row) {
+  return markText({ flag: 'excused', value: row.kept === undefined ? null : row.kept });
 }
 
 /* ────────────────────────────── what it would take to move ────────────────────────────── */
@@ -1046,7 +1114,11 @@ export function renderDetail() {
 
   const grade = classGrade(doc, cls, termId, student.id);
   const rows = openWork(doc, cls, termId, student.id);
-  const held = heldWork(doc, cls, termId, student.id);
+  /* A held column's excused cells join its unfinished work (WO-3.70): both are held work, on one card
+     and in one count, and an excused piece is listed nowhere else. After it, so a student with none
+     reads exactly as before. */
+  const held = heldWork(doc, cls, termId, student.id)
+    .concat(heldExcusedWork(doc, cls, termId, student.id));
   /* Which rows hold a graded piece (WO-3.38) — see gradedPieces(), which answers null in a weighted
      class without reading a cell. The breakdown, the to-move card and the hero's label all take it
      from here, so they say one thing. */
@@ -1136,6 +1208,10 @@ export function renderDetail() {
      Absent when nothing is dropped. */
   const dropping = droppedCard(grade, droppedPieces(doc, cls, termId, student.id), person);
   if (dropping) right.append(dropping);
+  /* And the excused work under them (WO-3.70), after the live and held rows, for the same reason: none
+     of it is in the grade above. Absent when nothing is excused. */
+  const excusing = excusedCard(grade, excusedWork(doc, cls, termId, student.id), person);
+  if (excusing) right.append(excusing);
   /* Under the missing work, because both are about particular assignments and this is where a
      teacher reads "why is that one blank" beside "which ones are missing". Absent when empty. */
   const notes = scoreNotesCard(doc, cls, termId, student.id);
@@ -1241,7 +1317,8 @@ export function detailModel() {
   const termId = term ? term.id : '';
   const grade = classGrade(doc, cls, termId, student.id);
   const rows = openWork(doc, cls, termId, student.id);
-  const held = heldWork(doc, cls, termId, student.id);
+  const held = heldWork(doc, cls, termId, student.id)
+    .concat(heldExcusedWork(doc, cls, termId, student.id));
   return {
     className: cls.name,
     termLabel: term ? (term.label || 'Untitled term') : '',
@@ -1261,10 +1338,15 @@ export function detailModel() {
     /* The held card's rows (WO-3.47), in the file as on the screen. Kept apart from `work` so that
        nothing reading `work` — the file's live rows — has to tell the two kinds apart. */
     onHold: held.map((row) => ({ name: assignmentName(row.id),
-      category: categoryName(grade, row.categoryId), points: row.points, state: row.state })),
+      category: categoryName(grade, row.categoryId), points: row.points, state: row.state,
+      kept: row.kept })),
     /* The dropped card's rows (WO-3.69), apart from `work` for `onHold`'s reason. */
     dropped: droppedPieces(doc, cls, termId, student.id).map((row) => ({ name: assignmentName(row.id),
       category: categoryName(grade, row.categoryId), points: row.points, score: droppedScore(row) })),
+    /* The excused card's rows (WO-3.70), apart from `work` for `onHold`'s reason: nothing reading the
+       file's live rows has to tell an excused piece from an outstanding one. */
+    excused: excusedWork(doc, cls, termId, student.id).map((row) => ({ name: assignmentName(row.id),
+      category: categoryName(grade, row.categoryId), points: row.points, kept: row.kept })),
     attendance: termTotals(cls.id, student.id, term),
   };
 }
@@ -1331,12 +1413,19 @@ export function studentCsv(model) {
   });
   /* Under the live rows and marked held in the State cell (WO-3.47), in the held card's words. */
   (model.onHold || []).forEach((row) => {
-    rows.push([row.name, row.category, row.points, 'held — ' + (HELD_STATE_SAY[row.state] || '')]);
+    rows.push([row.name, row.category, row.points, 'held — ' + heldStateSay(row)]);
   });
   /* And the dropped scores under them (WO-3.69), in the card's words: what was scored, and that it
      does not count. Absent when nothing is dropped, so the file is the bytes it always was. */
   (model.dropped || []).forEach((row) => {
     rows.push([row.name, row.category, row.points, 'dropped — scored ' + row.score + ', not counted']);
+  });
+  /* And the excused work last (WO-3.70), in the grade sheet's legend's words: `excused` alone, or
+     `excused — 62 kept` when the cell kept a score — kept, and so not counted. Absent when nothing is
+     excused, so the file is the bytes it always was. */
+  (model.excused || []).forEach((row) => {
+    rows.push([row.name, row.category, row.points,
+      'excused' + (row.kept === null || row.kept === undefined ? '' : ' — ' + row.kept + ' kept')]);
   });
   rows.push([]);
 
