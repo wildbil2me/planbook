@@ -18607,6 +18607,14 @@ while `GOLDEN` is set.
 - [x] `TESTING.md` § WO-3.70 carries these lines verbatim with the evidence for each.
       — This section.
 
+**Two edges the verifier raised, both ruled as built by the owner on 2026-11-01.** *The hero's
+"· N held" counts excused cells in held columns*: it points at the held card, which lists them, so
+leaving them out would make the line and the card disagree. *An excused cell in a held, uncategorized
+column is listed nowhere*: that is `heldWork()`'s scope since WO-3.47, which matches `openWork()`'s and
+leaves out uncategorized work of any state, not only excused. If it is ever closed, one row widens both
+held readers to the uncategorized pile and takes a ruling on the home card's *N to grade*, because
+`heldWork()` feeds it. It is not booked.
+
 ### WO-3.72 — a quarter's grades can be recorded, and the engine says when they stop matching
 
 **What was built.** The data and the engine half, with no screen. A new module, `src/term-record.js`:
