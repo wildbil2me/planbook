@@ -138,16 +138,20 @@
   The owner's ruling of 2026-10-07: the merge fields follow the engine, so a held column's
   `missing` is not listed and a guardian is never told about a zero that does not count. They
   follow it BY CONSTRUCTION rather than by a filter of this file's own: `{{missing.count}}` and
-  `{{missing.list}}` are openWork(), and `{{grade.percent}}` and `{{grade.letter}}` are
-  classGrade(), and src/grade-engine.js drops a held column at both of its choke points before
-  either answers (WO-3.52). An isHeld() call here would be a second filter over a list that has
+  `{{missing.list}}` are openWork() and uncategorizedWork() (since WO-3.81), neither of which
+  hands back a held column, and `{{grade.percent}}` and `{{grade.letter}}` are classGrade(), and
+  src/grade-engine.js drops a held column at both of its choke points before either answers
+  (WO-3.52). An isHeld() call here would be a second filter over a list that has
   already been filtered — the second opinion about what "held" excludes that the engine's header
   refuses — so there is none, on purpose. If a field is ever added that walks `assignments[]`
   itself, it asks isHeld() from src/grade-engine.js; it never reads the key, and the call is a
   function call rather than a property read named after a token (tools/wo-sweep.mjs § 20 claim 5).
 */
 
-import { classGrade, openWork } from './grade-engine.js';
+/* uncategorizedWork() joined at WO-3.81: a `missing` mark on work filed under no category is listed by
+   {{missing.list}} and counted by {{missing.count}}, in a weighted class as in a points class (the
+   owner's ruling of 2026-11-01). See missing() in contextOf() below. */
+import { classGrade, openWork, uncategorizedWork } from './grade-engine.js';
 /* The term totals a guardian reads, out of the same walk the registry's own percentage comes from
    (WO-2.4, WO-2.6), and the formatter that prints it. `plainDate` is here for the behavior lines
    below: a date said four ways in one app is four dates, and src/attendance.js's parser is the one
@@ -321,8 +325,17 @@ function contextOf(request) {
     },
     missing() {
       if (!('missing' in memo)) {
+        /* ONE LIST FEEDS BOTH FIELDS, so the count cannot disagree with the names beside it. The
+           class's own categories first, then the work filed under no category (WO-3.81) — openWork()
+           walks categories only, so until then a missing mark there was named to no guardian, and
+           in a points class that mark is a zero in the grade. It is listed in a WEIGHTED class too,
+           where it is in no grade (the owner, 2026-10-23): the missing question is whether work is
+           being handed in, and neither field says anything about what a mark costs. Unioned here,
+           never by widening openWork(), which every projection is built on. */
         memo.missing = (doc && cls && student)
-          ? openWork(doc, cls, termId, student.id).filter((row) => row.state === 'missing') : [];
+          ? openWork(doc, cls, termId, student.id)
+            .concat(uncategorizedWork(doc, cls, termId, student.id))
+            .filter((row) => row.state === 'missing') : [];
       }
       return memo.missing;
     },

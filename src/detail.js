@@ -153,6 +153,11 @@ import { nextBandFor, openWork, projectedClassGrade,
    its rows include the held columns filed under no category, `categoryId: null`, which this file
    names in the engine's own word for the pile, LOOSE_NAME — never a phrase of its own. */
 import { heldWork, LOOSE_NAME } from './grade-engine.js';
+/* A MISSING MARK ON WORK FILED UNDER NO CATEGORY (WO-3.81), from the engine's sibling of openWork()
+   that walks the pile — its `missing` rows only, unioned in missingPieces() below and never by
+   widening openWork(), which `rows` and the to-move card are built on. LISTED in both grading
+   modes, and in a weighted class never said to cost points: see missingCard(). */
+import { uncategorizedWork } from './grade-engine.js';
 /* WHICH SCORES A CATEGORY DROPS FOR THIS STUDENT (WO-3.69), asked cell by cell and never worked out
    here — droppedPieces() below walks this class's term in column order and keeps what isDropped()
    says yes to. The grade above has already left them out; this file only lists them. */
@@ -610,24 +615,73 @@ function workRow(grade, row, points) {
   return line;
 }
 
-function missingCard(grade, rows, person) {
-  const missing = rows.filter((r) => r.state === 'missing');
-  const points = missing.reduce((sum, r) => sum + r.points, 0);
+/*
+  THE MISSING WORK, for the card, the hero's *N missing* and the file alike (WO-3.81): openWork()'s
+  `missing` rows, then the `missing` rows of the work filed under no category — after the class's own
+  categories, the order the queue and the quarter dialog read the pile in. One list for all three, so
+  the hero's count, the card's rows and the file's rows cannot be cut from different lists. Taken in
+  both grading modes (the owner's ruling of 2026-11-01): a missing mark is work not handed in whether
+  or not the class charges for it.
+*/
+function missingPieces(doc, cls, termId, studentId, rows) {
+  return rows.filter((r) => r.state === 'missing')
+    .concat(uncategorizedWork(doc, cls, termId, studentId).filter((r) => r.state === 'missing'));
+}
+
+/*
+  THE MISSING CARD. `charges` is whether the class charges work filed under no category — a points
+  class does, as a zero out of its full points; a WEIGHTED class does not, because that work has no
+  weight to sit under and is in no grade (the owner, 2026-10-23). So in a weighted class an
+  uncategorized row is listed and NEVER SAID TO COST ANYTHING (WO-3.81): it is out of the title's
+  points at stake, it wears the words *not in the grade* where a charged row wears its red points
+  pill, and the note's promise that this work "is already in the grade above" gains the sentence that
+  makes it true. A class with no such row reads exactly as it always did.
+*/
+function missingCard(grade, missing, person, charges) {
+  const charged = (row) => row.categoryId !== null || charges;
+  const costing = missing.filter(charged);
+  const points = costing.reduce((sum, r) => sum + r.points, 0);
   const card = el('div', 'detail-card');
-  card.append(el('div', 'detail-card-title', missing.length
-    ? 'Missing work · ' + plural(points, 'point', 'points') + ' at stake'
-    : 'Missing work'));
+  card.setAttribute('data-detail-missing', '');
+  card.append(el('div', 'detail-card-title', !missing.length ? 'Missing work'
+    : costing.length ? 'Missing work · ' + plural(points, 'point', 'points') + ' at stake'
+      : 'Missing work · ' + plural(missing.length, 'piece', 'pieces')));
   if (!missing.length) {
     card.append(el('p', 'detail-missing-none', 'Nothing is marked missing.'));
   } else {
-    missing.forEach((row) => card.append(workRow(grade, row, true)));
+    missing.forEach((row) => card.append(charged(row) ? missingRow(grade, row)
+      : unchargedRow(row)));
   }
   card.append(el('p', 'detail-card-note',
     'Missing is marked by you and is never worked out from a due date, so nothing on this list '
       + 'appeared because a date rolled over. A blank score is not on this list either: blank '
       + 'means ungraded and counts toward nothing until you say otherwise. Work marked missing '
-      + 'counts as zero out of its full points, which is already in ' + person + '’s grade above.'));
+      + 'counts as zero out of its full points, which is already in ' + person + '’s grade above.'
+      + (costing.length === missing.length ? ''
+        : ' The exception is work filed under no category: it carries no weight in this class, so '
+          + 'its missing mark is listed here and is not in the grade.')));
   return card;
+}
+
+/* A charged missing row: workRow()'s shape, named under *no category* when it is filed there — the
+   grade carries a *no category* row only once something in the pile is graded, so categoryName()
+   cannot be relied on to say it. */
+function missingRow(grade, row) {
+  const line = workRow(grade, row, true);
+  if (row.categoryId === null && !line.querySelector('.detail-missing-when')) {
+    line.insertBefore(el('span', 'detail-missing-when', LOOSE_NAME), line.children[1]);
+  }
+  return line;
+}
+
+/* An uncategorized missing row in a weighted class: named, filed under *no category*, and in muted
+   words rather than the red points pill, because nothing here is a zero the grade is carrying. */
+function unchargedRow(row) {
+  const line = el('div', 'detail-missing-row');
+  line.append(el('span', 'detail-missing-name', assignmentName(row.id)));
+  line.append(el('span', 'detail-missing-when', LOOSE_NAME));
+  line.append(el('span', 'detail-missing-when', 'not in the grade'));
+  return line;
 }
 
 /*
@@ -678,10 +732,11 @@ function heldPieces(doc, cls, termId, studentId) {
     .concat(rows.filter((row) => row.categoryId === null));
 }
 
-/* Where a held row is filed: the class's own name for its category, or the engine's LOOSE_NAME for
-   the pile. categoryName() alone cannot say it — the grade carries a *no category* row only in a
-   points class with something graded in that pile, so a held loose row in a weighted class would
-   print with no category at all, and the CSV's Category cell would be empty. */
+/* Where a held row is filed — and, since WO-3.81, a missing one in the file's Work rows: the class's
+   own name for its category, or the engine's LOOSE_NAME for the pile. categoryName() alone cannot
+   say it — the grade carries a *no category* row only in a points class with something graded in
+   that pile, so a held loose row in a weighted class would print with no category at all, and the
+   CSV's Category cell would be empty. */
 function heldWhere(grade, row) {
   return row.categoryId === null ? LOOSE_NAME : categoryName(grade, row.categoryId);
 }
@@ -1142,6 +1197,8 @@ export function renderDetail() {
 
   const grade = classGrade(doc, cls, termId, student.id);
   const rows = openWork(doc, cls, termId, student.id);
+  /* The missing work, uncategorized included (WO-3.81) — the hero's count and the card's rows. */
+  const missing = missingPieces(doc, cls, termId, student.id, rows);
   /* A held column's excused cells join its unfinished work (WO-3.70), and the work filed under no
      category goes to the foot (WO-3.80) — see heldPieces(), which detailModel() asks too. */
   const held = heldPieces(doc, cls, termId, student.id);
@@ -1166,7 +1223,7 @@ export function renderDetail() {
   sub.append(el('span', 'detail-hero-where', cls.name + ' · ' + (termLabel || 'No term set') + ' · '));
   sub.append(el('span', '',
     plural(rows.filter((r) => r.state === 'open').length, 'piece', 'pieces')
-    + ' outstanding · ' + plural(rows.filter((r) => r.state === 'missing').length, 'missing', 'missing')
+    + ' outstanding · ' + plural(missing.length, 'missing', 'missing')
     /* Held work is named beside the other two and counted in neither (WO-3.47): it is not in the
        grade, so it is not "outstanding" in the sense the to-move card means, and the card below
        says what it is. Absent when nothing is held, so the line reads as it always did. */
@@ -1224,7 +1281,7 @@ export function renderDetail() {
   if (grade.categories.length) left.append(breakdown(grade, gradingModeOf(cls) === 'points', graded));
   left.append(toMoveCard(doc, cls, termId, student, grade, rows, noGradeSays));
   const right = el('div');
-  right.append(missingCard(grade, rows, person));
+  right.append(missingCard(grade, missing, person, gradingModeOf(cls) === 'points'));
   /* Under the missing work and apart from it (WO-3.47): the missing card's note promises that what
      it lists is already in the grade above, and a held column's missing mark is not. Absent when
      nothing is held. */
@@ -1358,8 +1415,12 @@ export function detailModel() {
     graded: gradedPieces(doc, cls, termId, student.id),
     grade: grade,
     share: grade.percentage === null ? {} : contributionCents(grade.categories, grade.percentage),
-    work: rows.map((row) => ({ name: assignmentName(row.id),
-      category: categoryName(grade, row.categoryId), points: row.points, state: row.state })),
+    /* The live rows, then the missing marks on work filed under no category (WO-3.81) — the same
+       rows the card lists, Category *no category*, State *marked missing*, which says nothing
+       about what the mark costs. */
+    work: rows.concat(missingPieces(doc, cls, termId, student.id, [])).map((row) => ({
+      name: assignmentName(row.id), category: heldWhere(grade, row), points: row.points,
+      state: row.state })),
     /* The held card's rows (WO-3.47), in the file as on the screen. Kept apart from `work` so that
        nothing reading `work` — the file's live rows — has to tell the two kinds apart. */
     onHold: held.map((row) => ({ name: assignmentName(row.id),

@@ -20134,6 +20134,187 @@ are in the block's header.
 - `tools/verify/uncategorized-to-grade.mjs`: WO-3.76's held checks turned around; `heldLoose()`.
 - `tools/README.md`: the count and the ledger.
 
+### WO-3.81 — a missing mark on work filed under no category is listed nowhere
+
+**What was built.** Four readers now take the `missing` rows of the engine's `uncategorizedWork()`
+beside `openWork()`'s, in both grading modes, per the owner's ruling of 2026-11-01. `openWork()` and
+every projection are untouched.
+- `src/merge-fields.js`: `contextOf()`'s `missing()` memo unions the two readers. That one list feeds
+  both `{{missing.list}}` and `{{missing.count}}`, so the count and the names cannot disagree. The
+  whitelist is unchanged, and § 20's five claims stay green.
+- `src/signals.js`: `makeContext()`'s `missingWork()` unions them, and nothing changed inside the
+  `missingCount` rule (Traps: a rule is handed its own number and nothing else). Two comments were
+  reworded so they make no grade claim: the rule's header and `missingWork()`'s own, along with the
+  import comment and the context table. They used to say the count was "the same list the grade
+  charged for", which is false in a weighted class.
+- `src/detail.js`: `missingPieces()` is one list for the *Missing work* card, the hero's *N missing*
+  and the CSV's Work rows. In a points class an uncategorized row reads `no category · 50 pts` with
+  the red pill, because the zero is charged. In a weighted class it reads `no category · not in the
+  grade` with no pill. It is left out of the title's points at stake, and the card's note gains one
+  sentence: *"The exception is work filed under no category: it carries no weight in this class, so
+  its missing mark is listed here and is not in the grade."* The CSV rows say `no category,…,marked
+  missing` in both modes. That wording makes no cost claim. The card also gained the attribute
+  `data-detail-missing` so the harness can find it.
+- `sw.js` `v206` → `v207`. `docs/data-model.md`'s held-column table: the merge-field and signals rows
+  now name `uncategorizedWork()`.
+- The harness: a new block, `missingLoose()`, at the foot of `tools/verify/uncategorized-to-grade.mjs`.
+  It also carries **WO-3.80's two folded gaps**. The first is a third student, Cal, in `heldLoose()`
+  with a categorized **and** an uncategorized held blank, both coming out of `heldWork()`. A new check
+  asserts that the held card lists `Essays` before `no category`. The second is that the queue check
+  now compares the reader's rows and the panel's buttons **in the order drawn**. Live order is
+  `c(2) · e(1) · u(1) · h(2)`; held order is `e · u · c(held) · h(held)`. Both were worked out by hand
+  from `queueRows()`'s walk before the run. Until now the rows were sorted and the buttons keyed by id.
+
+**`missingCount.early()`'s bound, checked as the brief asked.** It reads `has.assignments`, which is
+`notYetRules()`'s `ctx.termWork().length`, which is `sequence`: every live assignment of the class and
+term, `categoryId` regardless. So it already counts uncategorized assignments, and it was not widened.
+
+**The fixture** (`missingLoose()`) is a weighted class and a points class of one shape, with two
+students, Ada and Ben:
+- `e1` Essays 100: Ada 90, Ben 90
+- `e2` Essays 100: Ada missing, Ben 80
+- `u1` no category 50: Ada missing, Ben 40
+- `u2` no category 50: Ada missing, Ben blank
+
+The hand-worked figures are in the block's header.
+
+- [x] In a points class, an uncategorized assignment marked missing is listed on student detail's
+      *Missing work* card, in the student CSV, and in a draft using `{{missing.list}}`, each under or
+      beside *no category*.
+      — The filtered run (below) and the full run: `PASS | WO-3.81: in a points class, an
+      uncategorized assignment marked missing is listed on student detail's *Missing work* card, in
+      the student CSV and by {{missing.list}}, each under or beside *no category* — …`. It asserts:
+      - The card rows are `Wo381 essay two|Essays|100 pts`, `Wo381 loose one|no category|50 pts` and
+        `Wo381 loose two|no category|50 pts`, with three red pills.
+      - The title is `Missing work · 200 points at stake`, and the note ends on its unchanged
+        sentence.
+      - The hero ends `· 0 pieces outstanding · 3 missing`.
+      - The CSV's Work section is exactly `Work,Category,Points,State` / `Wo381 essay two,Essays,100,marked
+        missing` / `Wo381 loose one,no category,50,marked missing` / `Wo381 loose two,no category,50,marked
+        missing`.
+      - `{{missing.list}}` resolves to `Wo381 essay two, Wo381 loose one, Wo381 loose two`.
+- [x] In a weighted class, the same mark is listed on the card, in the CSV and in `{{missing.list}}`,
+      and counts toward the missing rule and `{{missing.count}}`, per the owner's 2026-11-01 ruling,
+      and no sentence claims it lowers the grade.
+      — Same runs: `PASS | WO-3.81: in a weighted class, the same mark is listed on the card, in the
+      CSV and in {{missing.list}}, and counts toward the missing rule and {{missing.count}} … and no
+      sentence claims it lowers the grade — …`. It asserts:
+      - The card rows are `Wo381 essay two|Essays|100 pts`, then `Wo381 loose one|no category|not in
+        the grade` and `Wo381 loose two|no category|not in the grade`, with **one** pill (e2's).
+      - The title is `Missing work · 100 points at stake`, so u1 and u2 are out of it.
+      - The note ends on the old sentence followed by the exception sentence quoted above.
+      - The hero says `3 missing`. The CSV and `{{missing.list}}` are identical to the points class's.
+      - `{{missing.count}}` is `3` in both classes.
+      - `thresholdsOf().missingCount` is the default 3. `missing-count` fires once in each class with
+        `numbers.missing` 3 and `need` 3. `openWork()` alone would count 1 and not fire, so this
+        check pins the **count** the Traps line asks about, not only the list.
+      - The rule's sentence is `In WO-3.81 Weighted, Wo381Ada Missing has 3 assignments marked missing
+        — 3 or more.` With the class name removed, it matches none of
+        `/grade|point|zero|lower|cost|charge/i`.
+
+      **Sentence review, by reading:** `missingCount.say()` names a count of assignments marked
+      missing and nothing else, and was not changed. `{{missing.count}}`'s palette text is *"How many
+      pieces of work you have marked missing"* and `{{missing.list}}`'s is *"Those assignments by
+      name"*: neither makes a cost claim. On the card, the old note's *"already in … grade above"* is
+      the one sentence that would have been false for these rows in a weighted class. The exception
+      sentence corrects it, and appears only when an uncharged row is listed.
+- [x] No projection's figures move, and no grade changes.
+      — Same runs: `PASS | WO-3.81: no projection's figures move and no grade changes — …`. Each
+      student's grade and projections at 100% and 0% on what is left, in both classes:
+
+      | Class | Ada | Ben |
+      |---|---|---|
+      | points | `30.00 · 30.00 · 30.00` | `84.00 · 86.67 · 70.00` |
+      | weighted | `45.00 · 45.00 · 45.00` | `85.00 · 85.00 · 85.00` |
+
+      These equal the hand-worked figures, and are identical before and after detail, the CSV, the
+      fields and the rule were read. `openWork()` for Ada still hands back `wo381-*e2:missing` alone
+      in each class, so it was not widened. Every WO-3.76 and WO-3.80 projection check is unchanged
+      and green.
+- [x] With the uncategorized reader dropped from the card and from `{{missing.list}}`, each check goes
+      red. Both mutations are reverted, and `TESTING.md` § WO-3.81 shows the red output.
+      — The mutations ran on a scratch copy of `verify-shell.mjs` limited to four browser sections
+      (focus-ring, modal, year-document-store, uncategorized-to-grade): `tools/_scratch381.mjs`,
+      deleted afterwards. On the clean tree it read `58 checks · 58 passed · 0 failed · 0 skipped`,
+      `EXIT=0`. Each mutation was planted from a copy of the clean file and reverted by copying that
+      file back, which `diff -q` confirmed identical before anything else was written.
+
+      **Mutation 1**, `src/detail.js` `missingPieces()`:
+      ```
+        // MUTATION (WO-3.81): uncategorized half dropped from missingPieces()
+        return rows.filter((r) => r.state === 'missing');
+      ```
+      Result: `58 checks · 56 passed · 2 failed`, `EXIT=1`.
+      ```
+      FAIL | WO-3.81: in a points class, an uncategorized assignment marked missing is listed on student detail's *Missing work* card … 
+        :: {"card":{"sub":"WO-3.81 Points · WO-3.81 Term · 0 pieces outstanding · 1 missing","title":"Missing work · 100 points at stake","rows":["Wo381 essay two|Essays|100 pts"],"pills":1,… "list":"Wo381 essay two, Wo381 loose one, Wo381 loose two"}
+      FAIL | WO-3.81: in a weighted class, the same mark is listed on the card, in the CSV and in {{missing.list}} …
+        :: {"card":{"sub":"WO-3.81 Weighted · WO-3.81 Term · 0 pieces outstanding · 1 missing","title":"Missing work · 100 points at stake","rows":["Wo381 essay two|Essays|100 pts"],"pills":1,… "list":"Wo381 essay two, Wo381 loose one, Wo381 loose two"}
+      ```
+      The card, the hero and the file fall back to e2 alone, while `{{missing.list}}` is still
+      whole, which shows the two readers are independent.
+
+      **Mutation 2**, `src/merge-fields.js` `missing()`:
+      ```
+                // MUTATION (WO-3.81): uncategorized half dropped from {{missing.list}} / {{missing.count}}
+                ? openWork(doc, cls, termId, student.id)
+                  .filter((row) => row.state === 'missing') : [];
+      ```
+      Result: `58 checks · 56 passed · 2 failed`, `EXIT=1`. Both WO-3.81 list checks are red, with
+      `"list":"Wo381 essay two"` in each and `"count":["1","1"]`, while the rule's hits still read
+      `missing: 3`.
+
+      **Mutation 3**, an extra beyond the two the line asks for. It is the Traps line's *"the harness
+      pins the count"*, on `src/signals.js` `missingWork()`:
+      ```
+              // MUTATION (WO-3.81): uncategorized half dropped from missingWork()
+      ```
+      Result: `58 checks · 57 passed · 1 failed`, `EXIT=1`. Only the weighted-class check is red, with
+      `"count":["3","3"],"threshold":[3,3],"hits":{"w":[],"p":[]}`: the rule stops firing while the
+      merge field still counts 3.
+
+      After all three: `grep -rn MUTATION src/ tools/` returns 18 lines, the same 18 as `git grep -n
+      MUTATION HEAD -- src tools`, all of them pre-existing prose (the same set WO-3.80 recorded).
+      `git diff -U0 -- src tools sw.js | grep -c MUTATION` reads `0`.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs` on the delivered tree, after all three reverts, 2026-11-01, real
+      clock: `2193 checks · 2193 passed · 0 failed · 0 skipped`, `71,349 lines · 32.5 lines per check ·
+      1222s`, `EXIT=0`. That is five more than WO-3.80's 2188: four from `missingLoose()` and one from
+      Cal's check in `heldLoose()`. After it, only `tools/README.md`, this line and the phase file's
+      fifth box were written. `node tools/wo-sweep.mjs` after the README edit: `52 checks · 49 passed
+      · 0 failed · 3 to review`, `EXIT=0`, with the three standing reviews. The call-site check reads
+      `2191 check() call site(s) across 103 harness file(s), matching tools/README.md:1363`, and § 20
+      (*the merge-field resolver whitelists, and has no path into a support block*: 16 fields) is
+      green. One earlier full run was stopped deliberately at about check 1370: comment-only edits had
+      landed mid-run, so it could not count as a run of the delivered tree. Its figures are not used
+      anywhere.
+- [x] `TESTING.md` § WO-3.81 carries these lines verbatim with the evidence for each.
+      — This section.
+
+**Declined, and worth a booking if wanted.**
+- **Uncategorized *open* work is still not on student detail.** A blank in `u2` (Ben) is on the home
+  card and the queue (WO-3.76), but not in the hero's *N pieces outstanding*, the to-move card or the
+  CSV's outstanding rows, because those are `openWork()`, which feeds the projection. This work order
+  is about `missing` rows only. WO-3.80's section records the same edge.
+- **The excused card in a weighted class still prints a loose excused piece with no category.** This
+  is WO-3.80's second declined item, and is untouched here.
+- **The hero's *N missing* was not one of the four named readers. It was changed anyway**, because it
+  sits beside the card and the ruling's second reason, *a count must agree with the list beside it*,
+  applies to it directly. It reads from the same `missingPieces()` list as the card.
+
+**Files.**
+- `src/merge-fields.js`: `missing()` union, the import and header comments.
+- `src/signals.js`: `missingWork()` union, its comment, `missingCount`'s header, the import comment and
+  the context table.
+- `src/detail.js`: `missingPieces()`, `missingCard()` (now handed the list and the mode),
+  `missingRow()`, `unchargedRow()`, the `uncategorizedWork` import, the hero count, `detailModel().work`,
+  and `heldWhere()`'s comment.
+- `docs/data-model.md`: two rows of the held-column table.
+- `sw.js`: `v206` → `v207`.
+- `tools/verify/uncategorized-to-grade.mjs`: `heldLoose()` gains Cal and draw-order comparisons;
+  `missingLoose()` is new.
+- `tools/README.md`: the call-site count and the ledger.
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*

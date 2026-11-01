@@ -13,6 +13,18 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Missing work filed under no category is listed — 2026-11-01
+
+WO-3.81. `CACHE` v206 → v207.
+
+- **Work marked missing in an assignment that isn't in any category now shows up wherever missing
+  work is listed**: the student's *Missing work* card and its count, the student CSV,
+  `{{missing.list}}` and `{{missing.count}}` in drafts, and the concern list's missing-work rule —
+  under *no category*.
+- **In a points class it counts as the zero it already was in the grade. In a weighted class it is
+  listed and counted as missing, and the card says it is *not in the grade***, because uncategorized
+  work carries no weight there. No grade or *what it would take* figure changes.
+
 ### A held column filed under no category stays in sight — 2026-11-01
 
 WO-3.80. `CACHE` v205 → v206.

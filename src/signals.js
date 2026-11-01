@@ -128,11 +128,12 @@
 /* The grade half, and BOTH of these are reads of the same arithmetic rather than two of them
    (WO-4.2). classGrade() is what "fell N points" measures at each end of its window —
    the acceptance line says the weighted grade and not raw scores — and openWork() is where
-   `missing` is defined, so the missing-work rule counts the very rows the grade already charged
-   for. A rule that decided for itself what a missing cell was would be the second opinion
-   src/grade-engine.js's header forbids. isHeld() joined at WO-3.53, for the one list in this file
-   that walks `assignments[]` itself — see `sequence` in makeContext(). */
-import { classGrade, openWork, isHeld } from './grade-engine.js';
+   `missing` is defined for the class's categories, uncategorizedWork() for the work filed under no
+   category (WO-3.81), so the missing-work rule counts the engine's own rows. A rule that decided for
+   itself what a missing cell was would be the second opinion src/grade-engine.js's header forbids.
+   isHeld() joined at WO-3.53, for the one list in this file that walks `assignments[]` itself — see
+   `sequence` in makeContext(). */
+import { classGrade, openWork, uncategorizedWork, isHeld } from './grade-engine.js';
 /* attendanceHistory() joins the two window helpers at WO-4.2 because a RUN is the one attendance
    question a totals object cannot answer: `A 3` says how many, never whether they were the last
    three in a row. It is the same walk those totals come out of (src/attendance.js's walkMeetings),
@@ -648,10 +649,13 @@ const lowScoreRun = {
 
   `missing` IS THE TEACHER'S MARK AND IS NEVER INFERRED FROM A DATE (CLAUDE.md). Nothing in this
   rule reads a due date, and there is no clock within reach of it: the count comes off
-  src/grade-engine.js's openWork(), which is the same list of rows the grade already charged this
-  student for at full points. src/past-due.js is the one place in the app allowed to ASK about a
-  date, it writes only what the teacher accepts, and by the time a cell reaches here it is a
-  decision she made.
+  src/grade-engine.js's openWork() and uncategorizedWork(), unioned in makeContext()'s missingWork()
+  and never here (WO-3.81). THE COUNT MAKES NO GRADE CLAIM, and neither may its sentence: the rule
+  asks whether work is being handed in, so a missing mark on work filed under no category counts in
+  a weighted class too, where that work is in no grade (the owner's ruling of 2026-11-01) — falling
+  grades and low scores have rules of their own. src/past-due.js is the one place in the app
+  allowed to ASK about a date, it writes only what the teacher accepts, and by the time a cell
+  reaches here it is a decision she made.
 */
 const missingCount = {
   id: 'missing-count',
@@ -1692,7 +1696,8 @@ function termRangeOf(cls, termId, through) {
                  cannot disagree about a `U`.
     countedWork  the class's assignments filtered ONCE per pass, then read per student for whose
                  cells count. gradeWithout() rides on it.
-    missingWork  openWork() once per student, which is also the only place `missing` is defined.
+    missingWork  openWork() and uncategorizedWork() once per student, which between them are the only
+                 place `missing` is defined (the second since WO-3.81).
 
   `t` is the thresholds resolved once. A rule reads `ctx.t.gradeBelow` rather than calling a
   resolver, so a rule cannot accidentally read a raw key off the document and get `undefined`.
@@ -1730,10 +1735,10 @@ function makeContext(doc, cls, termId, through, historical) {
      score the grade does not count contradicts the grade on screen. Filtered HERE, once, so every
      reader projected off this list — countedWork(), countedRows(), scorePercents(), termWork() and
      the rules fed by them — follows without a test of its own. The rest already follow the engine:
-     grade() and gradeWithout() are classGrade(), and missingWork() is openWork(), both of which
-     drop a held column at src/grade-engine.js's own choke points (WO-3.52). The question is asked
-     of isHeld(), never of the key, because a second reading of what "held" means is a second
-     opinion. */
+     grade() and gradeWithout() are classGrade(), and missingWork() is openWork() with
+     uncategorizedWork(), all of which drop a held column at src/grade-engine.js's own choke points
+     (WO-3.52). The question is asked of isHeld(), never of the key, because a second reading of
+     what "held" means is a second opinion. */
   const sequence = (doc && Array.isArray(doc.assignments) ? doc.assignments : [])
     .filter((a) => a && a.classId === classId && a.termId === termId && !isHeld(a));
 
@@ -1928,10 +1933,16 @@ function makeContext(doc, cls, termId, through, historical) {
     },
 
     /* How many pieces of work the teacher has marked missing. openWork() is where that state is
-       defined and it is the same list the grade charged for; nothing here reads a date. */
+       defined for the class's categories and uncategorizedWork() for the work filed under no
+       category, so THE UNION IS TAKEN HERE, never inside the rule (WO-3.81): a rule is handed its
+       own number and nothing else. The count makes no claim about the grade — in a weighted class
+       the uncategorized mark costs nothing, and it still counts, because the question is whether
+       work is being handed in (the owner, 2026-11-01). It equals {{missing.count}}, which unions
+       the same two readers in src/merge-fields.js. Nothing here reads a date. */
     missingWork(studentId) {
       if (!missing.has(studentId)) {
         missing.set(studentId, openWork(doc, cls, termId, studentId)
+          .concat(uncategorizedWork(doc, cls, termId, studentId))
           .filter((row) => row.state === 'missing').length);
       }
       return missing.get(studentId);

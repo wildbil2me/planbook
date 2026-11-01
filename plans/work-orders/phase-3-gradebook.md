@@ -6263,7 +6263,7 @@ forwards, it does not compute** (WO-6.7, § 31). **The hero's *· N held* line p
 
 ## WO-3.81 — a missing mark on work filed under no category is listed nowhere
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.76 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-11-01 · **Size** S · **Depends on** WO-3.76 · **Blocks** nothing
 **Closes roadmap** *(no box. Owner-directed, 2026-11-01, out of WO-3.76's verdict.)*
 
 **Booked 2026-11-01**, owner-directed, out of [WO-3.76](#wo-376--n-to-grade-skips-work-filed-under-no-category)'s
@@ -6312,17 +6312,17 @@ only. That means a `missing` mark on uncategorized work is never named. In a poi
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.81** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] In a points class, an uncategorized assignment marked missing is listed on student detail's
+- [x] In a points class, an uncategorized assignment marked missing is listed on student detail's
       *Missing work* card, in the student CSV, and in a draft using `{{missing.list}}`, each under or
       beside *no category*.
-- [ ] In a weighted class, the same mark is listed on the card, in the CSV and in `{{missing.list}}`,
+- [x] In a weighted class, the same mark is listed on the card, in the CSV and in `{{missing.list}}`,
       and counts toward the missing rule and `{{missing.count}}`, per the owner's 2026-11-01 ruling,
       and no sentence claims it lowers the grade.
-- [ ] No projection's figures move, and no grade changes.
-- [ ] With the uncategorized reader dropped from the card and from `{{missing.list}}`, each check goes
+- [x] No projection's figures move, and no grade changes.
+- [x] With the uncategorized reader dropped from the card and from `{{missing.list}}`, each check goes
       red. Both mutations are reverted, and `TESTING.md` § WO-3.81 shows the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-3.81 carries these lines verbatim with the evidence for each.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-3.81 carries these lines verbatim with the evidence for each.
 
 **Traps** — **The concern list's cooldown and its sentences are Phase 4's**: a missing count that
 grows changes who is flagged on the next pass, so the harness pins the count, not only the list.
