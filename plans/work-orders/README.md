@@ -383,7 +383,7 @@ construction, and that the cheapest defence is to write pointers that cannot dri
 |---|---|---|
 | [`ROUTING.md`](ROUTING.md) | — | Which agent gets which work order, and why |
 | [`gates.md`](gates.md) | WO-G1 … WO-G4 | The delivery gates and the 1.0.0 call |
-| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.89 | Phase 1 |
+| [`phase-1-shell-store-roster.md`](phase-1-shell-store-roster.md) | WO-1.1 … WO-1.90 | Phase 1 |
 | [`phase-2-attendance.md`](phase-2-attendance.md) | WO-2.1 … WO-2.62 | Phase 2 |
 | [`phase-3-gradebook.md`](phase-3-gradebook.md) | WO-3.1 … WO-3.79 | Phase 3 |
 | [`phase-4-signals.md`](phase-4-signals.md) | WO-4.1 … WO-4.6 | Phase 4 |
@@ -459,7 +459,7 @@ still reading *Nothing* are watched by no one.
 
 | Phase | Work orders | Done | Not coming | Status |
 |---|---|---|---|---|
-| 1 — Shell, store, roster | 89 | 89 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
+| 1 — Shell, store, roster | 90 | 89 | — | 🔨 IN PROGRESS (reopened nineteen times; last on 2026-09-03) |
 | 2 — Attendance | 60 | 58 | ⏳ WO-2.7 | 🔨 IN PROGRESS |
 | 3 — Gradebook | 78 | 75 | 🚫 WO-3.13 | 🔨 IN PROGRESS |
 | 4 — Signals | 6 | 6 | — | ✅ DONE — 2026-09-30 |
@@ -468,7 +468,7 @@ still reading *Nothing* are watched by no one.
 | 7 — Drive sync | 17 | 16 | — | 🔨 IN PROGRESS — WO-7.1 ✅ DONE 2026-08-24, all six lines closed the same day including the three that needed a human; WO-7.2 ✅ DONE 2026-09-07, both two-device lines closed by the owner on two Chrome profiles; WO-7.4 ✅ DONE 2026-09-26, the sign-in opened on the deployed domain and read on the laptop and the iPad; WO-7.5 ✅ DONE 2026-09-26, the header's sync button; WO-7.6 ✅ DONE 2026-09-26, the privacy documents say when Google's library loads, read off the deployed /privacy; WO-7.7 ✅ DONE 2026-09-26, a download repaints the open screen, read both ways on laptop and iPad; WO-7.3 still 🔒 |
 | 8 — 1.0 packaging | 18 | 13 | — | 🔨 IN PROGRESS |
 | Gates | 4 | 3 | — | WO-G2 ✅ **2026-09-30**: worked 2026-09-29 with six of eight boxes closed, and the letter-scale setting and the backup drill closed the next day on the owner's reading; WO-G3 ✅ **2026-09-30** on the owner's ruling, watched across four weeks of the term with nothing recorded |
-| | **297** | **284** | **3** | `[█████████░] 96%` |
+| | **298** | **284** | **3** | `[█████████░] 95%` |
 
 ***Phase 1's row moved by hand on 2026-09-03, from `46 | 36` to `48 | 36`, and the total with it.***
 *Two rows were booked that day —* [WO-1.47](phase-1-shell-store-roster.md#wo-147--a-zero-typed-into-a-date-field-clears-the-date-and-takes-the-field-with-it)
@@ -611,6 +611,8 @@ addressed to the primary.)*
 ***And Phase 1's by hand on 2026-11-01, after WO-3.70's tick, from `88 | 88` to `89 | 88`, the total from `295 | 283` to `296 | 283`.*** *One row booked out of WO-3.70's verdict, owner-directed:* [WO-1.89](phase-1-shell-store-roster.md#wo-189--cooldown-quietmjs-sometimes-finds-no-class-tab-to-click) *chases the `nothing to click` that turned `verify/cooldown-quiet.mjs` red on two of the verifier's three runs with no file moving. 283 of 296 is 96%; the bar stays at nine. The next* `--tick` *is still the authority.*
 
 ***And Phase 2's by hand on 2026-11-01, after the row above, from `59 | 58` to `60 | 58`, the total from `296 | 283` to `297 | 283`.*** *One row booked, owner-directed, from a screenshot of the attendance record:* [WO-2.62](phase-2-attendance.md#wo-262--every-reports-numbers-sit-under-their-own-heads-and-the-term-row-is-one-builder) *puts every report's numbers under their own heads — two specificity ties, five attendance-side tables and the printed grade sheet — and makes the term row one builder. 283 of 297 is 95%; the bar stays at nine. The next* `--tick` *is still the authority.*
+
+***And Phase 1's by hand on 2026-11-01, after WO-1.89's tick, from `89 | 89` to `90 | 89`, the total from `297 | 284` to `298 | 284`.*** *One row booked out of WO-1.89's verdict, owner-directed:* [WO-1.90](phase-1-shell-store-roster.md#wo-190--front-doormjss-installed-cold-launch-timed-out-once-under-load) *steadies the `verify/front-door.mjs` installed cold-launch check that read `settled: "timeout"` once in five full runs, under load, a 🎒 on `tools/verify/`. 284 of 298 is 95%, down from 96%; the bar stays at nine. The next* `--tick` *is still the authority.*
 
 ***Phase 2 read `50 | 49` here until 2026-08-20, and Phase 8 read `11 | 5`.*** *Both were stale, and
 in the direction that undercounts: WO-2.53 and WO-2.54 landed on 2026-08-19–20 without this table being
@@ -2112,6 +2114,7 @@ it, never from a reading taken earlier in the same session.)*
 | 187 | [WO-1.86](phase-1-shell-store-roster.md#wo-186--the-two-append-only-checks-close-what-one-token-settles) The two append-only checks close what one token settles | M | WO-1.85 | **After row 186**, booked 2026-10-25, owner-directed. F1 (`log-entries`) and F3 (`term-record`) refuse compound assignment, every `delete`, `.length` updates, the reflective writes and the two document swaps; F3 gets WO-1.83's `.length` and bracketed-key patterns, which it never had. Each token argued per file first. Harness only; no `CACHE` bump |
 | 188 | [WO-1.87](phase-1-shell-store-roster.md#wo-187--the-four-whole-file-no-writer-checks-share-one-pattern-that-sees-only-dotted-writes) The four whole-file no-writer checks share one pattern that sees only dotted writes | M | WO-1.85 | **After row 187**, booked 2026-10-25, owner-directed. One widened `MUTATES` for sweep §§ 17 and 24; F2 (`contact-log`) and F5 (§ 20 claim 4) each widened or narrowed **on the owner's ruling**, asked before either moves. Harness only; no `CACHE` bump |
 | 192 | [WO-2.62](phase-2-attendance.md#wo-262--every-reports-numbers-sit-under-their-own-heads-and-the-term-row-is-one-builder) Every report's numbers sit under their own heads, and the term row is one builder | S | WO-2.59 | **After row 188**, booked 2026-11-01, owner-directed, from a screenshot of the record's *By student* tab. `.attendance-report-num` loses to the table-wide `td` rule in five tables, and the grade sheet's print rules move its name and total cells but not their heads. A dash for no meetings; `totalsRow()` shared with the student page. `src/attendance.css`, `src/scores.css`, `src/attendance-report.js`, `src/detail.js`, harness, one 👤 on the iPad and one printed sheet; `CACHE` bump |
+| 194 | [WO-1.90](phase-1-shell-store-roster.md#wo-190--front-doormjss-installed-cold-launch-timed-out-once-under-load) front-door.mjs's installed cold launch timed out once under load | S | — | 🎒 `tools/verify/` — **Nothing blocks it.** An hour inside any sitting that already has the browser harness open. Booked **2026-11-01**, owner-directed, from WO-1.89's verdict: the installed cold-launch check read `settled: "timeout"` once in five full runs, with the sweep and the audit running beside it. The same kind of fixed pause and budget WO-1.89 replaced with a wait on the condition. An app-side cause stops and reports. Harness only; no `CACHE` bump |
 
 ***Rows 17 through 32 were added 2026-08-28, and the reason is the third occurrence of the failure
 this section exists to prevent.*** *Before that sitting,* **sixteen open work orders had no row in

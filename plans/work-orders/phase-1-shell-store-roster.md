@@ -7112,3 +7112,50 @@ every run. **Do not make the click non-fatal**: `nothing to click` killing a sec
 surfaced this, and WO-1.44's *blast radius, not tolerance* rule stands. **Nothing in `src/` moves**,
 so no `CACHE` bump is owed. **The three runs take about 20 minutes each**: background them and say so
 up front.
+
+## WO-1.90 — front-door.mjs's installed cold launch timed out once under load
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.89 made.)*
+
+**Booked 2026-11-01**, owner-directed, out of [WO-1.89](#wo-189--cooldown-quietmjs-sometimes-finds-no-class-tab-to-click)'s
+verdict. The implementer's first full run on the fixed tree read `2176 checks · 2175 passed · 1 failed`,
+and the one failure was not WO-1.89's section: `verify/front-door.mjs`'s *"an installed launch opens
+the app with no flash of the door, even on a device holding no year … (WO-8.16 Acceptance 1)"* read
+`{"settled":"timeout",…}`. That run had `wo-sweep.mjs` and `wo-gate.mjs --audit` running beside it. The
+check passed on the run before and on the three after, so it is one failure in five, under load, with
+no file moving. The record is `TESTING.md` § WO-1.89, under its third Acceptance line. It is the same
+kind of check WO-1.89 just fixed: a `pause()` after navigation and a `settle()` with its own budget, so
+a slow machine reads as a failed door. **Booked as a ride-along rather than waited on**, because a
+flake that does not reproduce on demand comes back during some other work order's verdict, and that
+is how WO-3.70 lost two runs.
+
+**Deliverables**
+- **Read `coldVisit()` and `settle()` in `tools/verify/front-door.mjs` first**, and record in
+  `TESTING.md` § WO-1.90 what `timeout` means there: which budget ran out, and what the page had
+  reached when it did. If it can be reproduced, for example by running the section under the same
+  side load, say how often before and after.
+- **Fix it in the harness, not in `src/`.** Wait on the condition the check reads, the home screen
+  painted or the door drawn, the way WO-1.89's helpers wait on the reloaded page and the visible card,
+  rather than on a longer budget. Look at the section's other `pause(400)` + `settle()` pairs too, and
+  change the ones with the same shape.
+- **If the cause is in `src/`**, stop and report. A cold installed launch that sometimes takes long
+  enough to time out would be an app defect, WO-8.16's own, and a work order of its own.
+- **`tools/README.md`**: one line in the ledger.
+- **`TESTING.md` § WO-1.90** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] `TESTING.md` § WO-1.90 says what `settled: "timeout"` meant and names the cause with evidence,
+      or says plainly that it could not be reproduced and what was tried.
+- [ ] The installed cold-launch check no longer fails because a fixed pause or budget ran out on a
+      slow run.
+- [ ] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the
+      run lines are quoted in `TESTING.md` § WO-1.90.
+- [ ] `node tools/wo-sweep.mjs` passes.
+- [ ] `TESTING.md` § WO-1.90 carries these lines verbatim with the evidence for each.
+
+**Traps** — **A longer budget is not a fix**, for the reason WO-1.89's Traps gave. **Do not make a
+timeout read as a pass**: `settled: "timeout"` failing the check is what surfaced this, and it must
+still fail when the door really is drawn or the app never boots. **Nothing in `src/` moves**, so no
+`CACHE` bump is owed. **The three runs take about 20 minutes each**: background them and say so up
+front.
