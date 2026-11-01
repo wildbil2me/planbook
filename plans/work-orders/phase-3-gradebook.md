@@ -6203,3 +6203,98 @@ the score history never reads *Blank* this way.
 **The seal pushes no spare version for a cell untouched since September** — the five-minute rule
 already pushes there (the implementer's correction). It changes the outcome only for a cell written
 inside the five minutes before a recording, which is the swallow Why 2 names.
+
+## WO-3.80 — a held column filed under no category is listed nowhere
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.76 · **Blocks** nothing
+**Closes roadmap** *(no box. Owner-directed, 2026-11-01, out of WO-3.76's verdict.)*
+
+**Booked 2026-11-01**, owner-directed, out of [WO-3.76](#wo-376--n-to-grade-skips-work-filed-under-no-category)'s
+verdict. That work order's third line kept a held uncategorized column out of *N to grade*, which is
+right: held work counts toward nothing. But `heldWork()` and `heldExcusedWork()` walk categories only,
+as `openWork()` does, so that column is **listed nowhere** either. It is not on the card, the queue,
+student detail or the student CSV. That breaks CLAUDE.md's rule from WO-3.47: **counting toward nothing
+is not the same as hidden**. A teacher who holds an uncategorized column while re-keying it against
+Blackbaud sees it vanish. The owner ruled the edge as built on 2026-11-01 (`TESTING.md` § WO-3.70),
+and named this row: *one row widens both held readers to the uncategorized pile and takes a ruling on
+the home card's* N to grade*, because `heldWork()` feeds it.*
+
+**Deliverables**
+- **Held uncategorized work is listed** wherever held work is listed today: the home card, the
+  queue, student detail's held card and the student CSV's held rows. It is grouped under *no
+  category* (`LOOSE_NAME`), after the class's own categories, as WO-3.76 does for open work.
+- **The engine answers it.** Either the two held readers take in `looseAssignments()`, or the engine
+  gains a held twin of `uncategorizedWork()`. That is the implementer's call, stated at the point of
+  departure. `openWork()` is not widened, and no screen tests a cell or reads `.held` (`wo-sweep.mjs`
+  § 30).
+- **One question for the owner at `--start`**: whether held uncategorized work appears on the home
+  card under its held word, the way held categorized work does, or stays off the card. Whichever is
+  ruled, *N to grade* still counts only open work.
+- **A mutation**: drop the uncategorized half from the held reader, show the check go red, and revert
+  it before writing anything else.
+- **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.80** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] A held column filed under no category, with one blank and one excused cell, is listed on
+      student detail's held card and in the student CSV's held rows, in a weighted class and in a
+      points class.
+- [ ] The home card and the queue show it as the owner's `--start` ruling says, and *N to grade* is
+      unchanged by the hold.
+- [ ] No projection's figures move, and committing the column moves its work back to open exactly
+      as a categorized column's does.
+- [ ] With the uncategorized half dropped from the held reader, the check goes red. The mutation is
+      reverted, and `TESTING.md` § WO-3.80 shows the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-3.80 carries these lines verbatim with the evidence for each.
+
+**Traps** — **A held row and an open row must never answer for the same cell**: the held reader and
+`uncategorizedWork()` split on `isHeld()`, as `heldWork()` and `openWork()` do. **`src/glance.js`
+forwards, it does not compute** (WO-6.7, § 31). **The hero's *· N held* line points at the held card**
+(the owner's 2026-11-01 ruling on WO-3.70), so the two must still agree once the card grows.
+
+## WO-3.81 — a missing mark on work filed under no category is listed nowhere
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.76 · **Blocks** nothing
+**Closes roadmap** *(no box. Owner-directed, 2026-11-01, out of WO-3.76's verdict.)*
+
+**Booked 2026-11-01**, owner-directed, out of [WO-3.76](#wo-376--n-to-grade-skips-work-filed-under-no-category)'s
+survey (`TESTING.md` § WO-3.76). Four readers of missing work ask `openWork()`, which walks categories
+only. That means a `missing` mark on uncategorized work is never named. In a points class that mark is
+**in the grade as a zero**, so the grade drops and nothing says why:
+- student detail's *Missing work* card (`missingCard()`)
+- the student CSV's `Work` rows
+- `{{missing.list}}` and `{{missing.count}}` (`src/merge-fields.js`), which go home to a guardian
+- the signal engine's missing-count rule (`src/signals.js`)
+
+**Deliverables**
+- **The four readers take in the `missing` rows of `uncategorizedWork()`** beside `openWork()`'s,
+  grouped or named under *no category* where a reader groups. Neither `openWork()` nor any projection
+  is widened.
+- **One question for the owner at `--start`**: in a **weighted** class, uncategorized work is in no
+  grade (the owner, 2026-10-23). Should its missing mark still count toward the concern list's
+  missing rule and `{{missing.count}}`? Or should it count in a points class only, where the zero is
+  charged? The card and the CSV list it in either mode. Listing it is a fact; counting it is what
+  this question decides.
+- **`src/merge-fields.js` keeps its whitelist untouched** (§ 20's five claims). The change is in what
+  the resolver for an existing name reads, not in which names exist.
+- **A mutation per reader that can go silently wrong**: at least the card and `{{missing.list}}`.
+  Show each red and revert it before writing anything else.
+- **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.81** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] In a points class, an uncategorized assignment marked missing is listed on student detail's
+      *Missing work* card, in the student CSV, and in a draft using `{{missing.list}}`, each under or
+      beside *no category*.
+- [ ] In a weighted class, the same mark is listed on the card and in the CSV, and counts toward the
+      missing rule and `{{missing.count}}` as the owner's `--start` ruling says.
+- [ ] No projection's figures move, and no grade changes.
+- [ ] With the uncategorized reader dropped from the card and from `{{missing.list}}`, each check goes
+      red. Both mutations are reverted, and `TESTING.md` § WO-3.81 shows the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [ ] `TESTING.md` § WO-3.81 carries these lines verbatim with the evidence for each.
+
+**Traps** — **The concern list's cooldown and its sentences are Phase 4's**: a missing count that
+grows changes who is flagged on the next pass, so the harness pins the count, not only the list.
+**A signal rule is handed its own measured numbers and nothing else** (CLAUDE.md, WO-4.1): the union
+is taken where `missingWork()` is built, never inside a rule. **Never fold uncategorized rows into
+`openWork()`**: it feeds every *what it would take to move* projection.
