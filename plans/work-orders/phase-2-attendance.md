@@ -6529,3 +6529,49 @@ different bug. **`!important` is not the fix** — the print blocks already use 
 using it for alignment hides the next tie instead of settling this one. **The grade sheet's on-screen
 centring was never visible as a misalignment**, so a screenshot will not show this half working; the
 print attribute is where it is read.
+
+## WO-2.63 — the day-by-day grid centres its marks under their dates
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-2.62 · **Blocks** nothing
+**Closes roadmap** *(no box. Owner-directed, 2026-11-01.)*
+
+**Booked 2026-11-01**, owner-directed, out of WO-2.62's verdict. The same specificity tie WO-2.62
+settled for the number column, in the one table it left alone: the record's *Day by day* grid.
+
+**Why it exists.** `src/attendance.css` sets
+`.attendance-report-table th, .attendance-report-table td { text-align: left }` (0,1,1), and the grid's
+`.attendance-report-day { text-align: center }` and `.attendance-report-cell { text-align: center }`
+are (0,1,0) — so they lose, on screen and in the coarse block's restatements alike, and every date
+head and every mark sits at the left of its column. Heads and cells **agree** (both left), which is
+why WO-2.62's check, which excludes the grid (`:not(.attendance-report-grid)`), never saw it and why
+it was not WO-2.62's defect. The CSS says centre and the screen does not.
+
+**Deliverables**
+- **`src/attendance.css`**: the day and cell rules made specific enough to win for head and cell alike,
+  scoped to the grid (e.g. `.attendance-report-grid .attendance-report-day`,
+  `.attendance-report-grid .attendance-report-cell`), on screen and in the coarse block. The row head
+  (`.attendance-report-row-head`) and the *Student* head stay left. Read the `data-attendance-print`
+  block through: it sets widths here, not alignment, so paper should follow the screen — confirm it.
+- **The harness**: the grid joins `tools/verify/report-alignment.mjs` — every date head and every
+  mark cell computes `center`, the *Student* column `left`, on screen and with `data-attendance-print`
+  set. **A check that only asks heads and cells to agree passes this defect**, which is how it got
+  past WO-2.62.
+- **One mutation**, shown red and reverted before writing anything else: the grid rules put back to
+  the bare `.attendance-report-day` / `.attendance-report-cell`.
+- **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-2.63** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] In the record's *Day by day* grid, every date head and every mark cell computes
+      `text-align: center` and the *Student* head and row heads compute `left`, on screen and with
+      `data-attendance-print` set.
+- [ ] With the mutation in place the check goes red; it is reverted, and `TESTING.md` § WO-2.63 shows
+      the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] 👤 On the iPad, after a force-quit: the record's *Day by day* tab, each mark centred under its
+      date.
+- [ ] `TESTING.md` § WO-2.63 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Do not add a head-only rule**, and **`!important` is not the fix** — the same two
+WO-2.62 refused. **Do not centre `.attendance-report-row-head`**: names read down a left edge. **The
+mark's own `text-align: center` is not the column's** — it centres a letter inside a chip, not the chip
+inside the cell, so a check that reads `.attendance-report-mark` passes this defect.
