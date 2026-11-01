@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2149 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2159 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -3090,6 +3090,27 @@ arm, which a run that plants cleanly never reaches — hence ten executed. None 
 `verify/term-record.mjs` gained no site: its one-writer check's export list names `whatChanged` now.
 Full run: `2157 checks · 2157 passed · 0 failed · 0 skipped`, 69,597 lines, 32.3 lines per check,
 1203s, exit 0, 2026-10-31 on the real clock.
+
+**WO-3.79 moved it from 2149 to 2156, and the executed count from 2157 to 2163 — seven sites, six
+results, no new file.** Six are at the foot of `verify/term-record-cause.mjs`, in a second fixture
+class planted after WO-3.75's is gone: the deleted-assignment setting line, the typo fixed a minute
+after recording (*4 → 9*), the honest limit beside it, `newestRecord()` and the seal across the end
+of daylight saving, the fixture's removal, and a fixture-guard arm that a run planting cleanly never
+reaches — hence six executed there. The seventh is in `verify/score-history.mjs`, before its fixture
+comes out: a 9 typed at the grid over a 4 a minute old, after a recording, keeps the 4 — the proof
+that `src/scores.js` hands `reviseCell()` the recordings. None sits in a loop. Full run: `2163 checks
+· 2163 passed · 0 failed · 0 skipped`, 69,832 lines, 32.3 lines per check, 1219s, exit 0, 2026-10-31
+on the real clock.
+
+**WO-3.79's correction round moved it from 2156 to 2159, and the executed count from 2163 to 2166 —
+three sites, three results, no new file.** One is in `verify/score-history.mjs`, beside the grid
+check above: a recording of another term, and one of another class, typed against through the same
+writer, seal nothing. Two are in `verify/term-record-cause.mjs`, in a third fixture class: the
+past-due sweep's own writer, `acceptPastDue()`, sealed by a recording a minute before it, and that
+fixture's removal. The round also re-pinned two existing sites rather than adding any — Dunn375 to
+*5 → 8* as the earlier-build limit, and Hale379 to *4 → 9* — because the owner ruled that the reader
+trusts the trail across a recording. None sits in a loop. Full run: `2166 checks · 2166 passed · 0
+failed · 0 skipped`, 70,019 lines, 32.3 lines per check, 1220s, exit 0, 2026-10-31 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

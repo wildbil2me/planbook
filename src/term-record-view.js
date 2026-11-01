@@ -373,8 +373,12 @@ function paintChangedRows(list, rows) {
 /*
   WHAT CHANGED (WO-3.75, frame C) — under the changed form's list, one `.term-record-cause` row per
   changed student, the name and then each score that moved, one line each: *Act 2 quiz (Exams): 4 → 9
-  of 10*. A student with no score that moved gets the owner's line instead — no score changed, so a
-  class setting did — because weights, the letter scale and drop lowest keep no history to name.
+  of 10*. A student with no score that moved gets the owner's line instead — no score changed, so
+  something else did — because none of the things that can move a grade without moving a score keeps
+  history to name. WO-3.79 widened the list from the three class settings (weights, the letter
+  scale, drop lowest) to every such cause the line could be standing in for: an assignment's points,
+  category or term changed, a column held since the recording, or one deleted. It still cannot say
+  WHICH, and does not try; it only stops naming too few and sending the teacher to the wrong place.
 
   The words are this file's; every fact in them is whatChanged()'s. A score reads as the score-history
   trail reads it — *Missing*, *Excused*, *Late, 7*, *Blank* for nothing, a number — and *of 10* goes
@@ -382,7 +386,8 @@ function paintChangedRows(list, rows) {
   recording is not kept (`then: null`) says so rather than showing a guess: *now 9 of 10 — what it
   held when you recorded is not known*.
 */
-const SETTING_LINE = 'No score changed; a class setting did — weights, the letter scale or drop lowest.';
+const SETTING_LINE = 'No score changed. Something else did — weights, the letter scale, drop lowest, '
+  + 'or an assignment\'s points, category or term, or one held or deleted.';
 
 function scoreWords(score) {
   const v = score.v;

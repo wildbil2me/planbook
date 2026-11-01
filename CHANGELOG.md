@@ -13,6 +13,22 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### *What changed* names the cause honestly, and a recording closes the edit window — 2026-11-01
+
+WO-3.79. `CACHE` v202 → v203.
+
+- **When no score moved, the Record dialog no longer blames a class setting alone.** It now reads
+  *No score changed. Something else did — weights, the letter scale, drop lowest, or an
+  assignment's points, category or term, or one held or deleted*, because a deleted or re-filed
+  assignment moves a grade too and keeps no history to name.
+- **Recording a quarter and then fixing a typo now names both values** — *4 → 9 of 10* — instead of
+  saying the earlier value is not known. A recording is now a version boundary in a score's
+  history, the way a commit already was, so the first edit after it keeps what the recording saw.
+  A recording of another term or another class does not count, and the past-due sweep marking
+  *missing* just after a recording keeps it too.
+- **Two recordings either side of a daylight-saving change** are now ordered by when they actually
+  happened, not by how their timestamps sort as text.
+
 ### The Record dialog says which score changed — 2026-10-31
 
 WO-3.75. `CACHE` v201 → v202.

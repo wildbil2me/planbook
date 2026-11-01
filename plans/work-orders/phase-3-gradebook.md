@@ -6119,7 +6119,7 @@ about `src/calendar-derived.js`. `TESTING.md` § WO-3.78 records both spellings.
 
 ## WO-3.79 — *What changed* names the cause honestly, and a recording closes the edit window
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.75 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-11-01 · **Size** S · **Depends on** WO-3.75 · **Blocks** nothing
 **Closes roadmap** *(no box. Owner-directed, 2026-10-31, out of WO-3.75's verdict.)*
 
 **Booked 2026-10-31**, owner-directed, out of [WO-3.75](#wo-375--the-notice-says-which-score-changed)'s
@@ -6151,6 +6151,10 @@ implementer or the verifier and each ruled on by the owner the same day.
   recording, however soon — `sealed`'s rule for `committedAt`, extended. The boundary reaches
   `reviseCell()` from its callers (`src/scores.js`, `src/past-due.js`) through the `column`
   argument or one beside it; how is the implementer's call, stated at the point of departure.
+- **`scoreChangeSince()` reads the version at or before the recording as *then*** whenever the
+  recording falls inside the trail — no *not known* for a write just after it. A commit after the
+  recording still answers *not known* (WO-3.75). *(Added 2026-10-31 on the owner's ruling; the first
+  dispatch had already widened this reader to the seal's own shape.)*
 - **`newestRecord()` compares `at` as parsed instants**, the tie still going to the later write.
 - **`docs/data-model.md`** § the term record and § score history say a recording is a version
   boundary.
@@ -6159,22 +6163,43 @@ implementer or the verifier and each ruled on by the owner the same day.
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.79** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] A student whose grade moved only because an assignment was deleted gets the new setting line,
+- [x] A student whose grade moved only because an assignment was deleted gets the new setting line,
       word for word.
-- [ ] A score recorded at 4, edited to 9 one minute after the recording, reads *4 → 9 of 10*, not
-      *not known*.
-- [ ] Two recordings of one quarter stamped `…T01:30:00-04:00` and then `…T01:10:00-05:00` on
+- [x] A score recorded at 4, edited to 9 one minute after the recording, reads *4 → 9 of 10*, not
+      *not known* — whether the 4 was typed two minutes or twenty days before the recording.
+- [x] Dunn375 (an earlier build's 6 at R−1min swallowed by 8 at R+2min) reads *5 → 8 of 10*, and its
+      check names that as the earlier-build limit the Traps accept.
+- [x] A recording of another term, or of another class, does not seal: a cell written two minutes
+      before it and edited one minute after keeps one version, as WO-3.33's window has it.
+- [x] The past-due sweep writing *missing* one minute after a recording keeps the version the
+      recording saw, driven through `src/past-due.js`'s own writer rather than read off its source.
+- [x] Two recordings of one quarter stamped `…T01:30:00-04:00` and then `…T01:10:00-05:00` on
       2026-11-01: `newestRecord()` returns the second.
-- [ ] With the seal removed, the check goes red; with `newestRecord()` comparing strings, the check
+- [x] With the seal removed, the check goes red; with `newestRecord()` comparing strings, the check
       goes red. Both mutations are reverted, and `TESTING.md` § WO-3.79 shows the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-3.79 carries these lines verbatim with the evidence for each.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-3.79 carries these lines verbatim with the evidence for each.
 
 **Traps** — **`src/term-record.js` imports `src/scores.js`**, so the writer cannot import
 `newestRecord()` back without closing an import loop this repo refuses; the boundary is found with no
 new edge, or handed in by a caller that already has the document. **A held column is not touched**:
 a held write replaces however long since (WO-3.52), *What changed* never lists a held column, and
-the seal applies only to the ordinary branch. **Only new writes benefit**: an edit saved by an
-earlier build before this lands still answers *not known*, and that line stays. **The seal pushes a
-spare version for an edit just after recording a cell untouched since September** — that is the
-point, and a spare trail entry is cheaper than a lost score that counted (WO-3.33's rule).
+the seal applies only to the ordinary branch. **The reader trusts the trail across a recording, and
+an earlier build's edit can name the wrong *then*** (the owner's ruling, 2026-10-31, out of the
+implementer's report — this replaces *"an edit saved by an earlier build still answers* not known*"*,
+which contradicted Acceptance 2: a 4 typed weeks before a recording and fixed after it leaves the
+same cell on disk as an earlier build's swallow). With the seal, the first write after a recording
+always keeps the version the recording saw, so for every write this build makes the trail is true.
+A cell an earlier build replaced inside the five minutes after a recording is the one exception: it
+names the version before the swallowed one — Dunn375 reads *5 → 8* where the recording saw 6. Accepted
+because the Record button shipped on 2026-10-29 (WO-3.73), so only edits from the two days before
+this deploys can carry it; Dunn375 is re-pinned to that reading as the known limit, not deleted.
+**The same limit has a second shape, and it is accepted with the first** (the owner's ruling,
+2026-11-01, out of the correction round): a cell with no version at or before the recording reads
+*Blank → 8* at any distance, which is true for every write this build makes — the seal keeps
+whatever a cell held at the recording — and wrong only where an earlier build's first write at R−1min
+was replaced at R+2min. A version with no `at` counts as before the recording, so a cell older than
+the score history never reads *Blank* this way.
+**The seal pushes no spare version for a cell untouched since September** — the five-minute rule
+already pushes there (the implementer's correction). It changes the outcome only for a cell written
+inside the five minutes before a recording, which is the swallow Why 2 names.

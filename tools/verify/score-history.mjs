@@ -712,6 +712,92 @@ check('WO-3.52, Ruling 2\'s boundary: against a hold at 9:00:00, a cell stamped 
     && history352.heldBlank === '{"write":true,"cell":null}' && history352.heldSame === '{"write":false}',
   JSON.stringify({ edges: E, heldBlank: history352.heldBlank, heldSame: history352.heldSame }));
 
+/* ── A RECORDING IS A VERSION BOUNDARY, THROUGH THE GRID'S OWN WRITER (WO-3.79) ──
+   src/term-record.js's dialog fixture proves the rule on reviseCell() with the descriptor handed in;
+   this proves src/scores.js's putCell() is what hands it. Cy's homework holds a 4 stamped a minute ago,
+   a recording of this class and term is stamped thirty seconds ago, and a 9 is TYPED over the 4 now —
+   inside the five minutes of the 4, so without the seal the 9 replaces it and the 4 the recording saw is
+   gone. With it, the 4 is on the trail with its own `at`. The record is planted rather than taken
+   through recordTerm() so its stamp can sit between the two writes; it comes back off with the key as
+   it was found. */
+await clockNow();
+const sealPlant = await evalJs(`(async function(){
+  var s = window.planbook.store, lg = await import(new URL('src/log.js', document.baseURI).href);
+  var had = Object.prototype.hasOwnProperty.call(s.getDoc(), 'termRecords');
+  var four = lg.localStamp(new Date(Date.now() - 60 * 1000));
+  var rec = lg.localStamp(new Date(Date.now() - 30 * 1000));
+  s.update(function(doc){
+    if (!doc.scores['${A3}']) doc.scores['${A3}'] = {};
+    doc.scores['${A3}']['${S3}'] = { v: 4, at: four };
+    if (!Array.isArray(doc.termRecords)) doc.termRecords = [];
+    doc.termRecords.push({ id: 'tr333-379', classId: '${CLS}', termId: '${TERM}', at: rec, grades: [] });
+  });
+  await s.flush();
+  return { had: had, four: four, rec: rec }; })()`);
+await openGrid();
+await typeOver(A3, S3, '9');
+const sealedCell = await parsed(A3, S3);
+await evalJs(`(async function(){ var s = window.planbook.store;
+  s.update(function(doc){
+    if (${sealPlant.had ? 'true' : 'false'}) {
+      doc.termRecords = (doc.termRecords || []).filter(function(e){ return e.id !== 'tr333-379'; });
+    } else { delete doc.termRecords; }
+  });
+  await s.flush(); return 1; })()`);
+check('WO-3.79: a recording is a version boundary through the grid\'s own writer — a 9 typed over a 4 '
+  + 'stamped a minute ago, after a recording of the class and term stamped thirty seconds ago, PUSHES the '
+  + '4 with its `at` although it is inside the five minutes, because src/scores.js hands reviseCell() the '
+  + 'recordings',
+  sealedCell && sealedCell.v === 9 && ISO_LOCAL.test(sealedCell.at || '')
+    && JSON.stringify(sealedCell.was) === JSON.stringify([{ v: 4, at: sealPlant.four }]),
+  JSON.stringify({ cell: sealedCell, planted: sealPlant }));
+
+/* ── AND ONLY A RECORDING OF ITS OWN CLASS AND TERM SEALS (WO-3.79) ──
+   The same typing through the same writer, against a recording that is NOT the cell's: one of this
+   class's other term, and one of another class carrying this term's id. Each cell holds a 4 stamped two
+   minutes before its recording, the recording is stamped a minute ago, and the 9 is typed now — one
+   minute after it, three after the 4, inside WO-3.33's five minutes. Neither recording is a boundary
+   for this cell, so the 9 REPLACES the 4 and the cell keeps one version, exactly as it would with no
+   recording at all. Ada's homework takes the other term, Ben's the other class; each recording is
+   planted alone and comes back off before the next, with the key as it was found. */
+const notMine = async (student, recordOf) => {
+  const p = await evalJs(`(async function(){
+    var s = window.planbook.store, lg = await import(new URL('src/log.js', document.baseURI).href);
+    var had = Object.prototype.hasOwnProperty.call(s.getDoc(), 'termRecords');
+    var four = lg.localStamp(new Date(Date.now() - 3 * 60 * 1000));
+    var rec = lg.localStamp(new Date(Date.now() - 60 * 1000));
+    s.update(function(doc){
+      if (!doc.scores['${A3}']) doc.scores['${A3}'] = {};
+      doc.scores['${A3}']['${student}'] = { v: 4, at: four };
+      if (!Array.isArray(doc.termRecords)) doc.termRecords = [];
+      doc.termRecords.push({ id: 'tr333-379x', classId: ${JSON.stringify(recordOf.classId)},
+        termId: ${JSON.stringify(recordOf.termId)}, at: rec, grades: [] });
+    });
+    await s.flush();
+    return { had: had, four: four, rec: rec }; })()`);
+  await openGrid();
+  await typeOver(A3, student, '9');
+  const got = await parsed(A3, student);
+  await evalJs(`(async function(){ var s = window.planbook.store;
+    s.update(function(doc){
+      if (${p.had ? 'true' : 'false'}) {
+        doc.termRecords = (doc.termRecords || []).filter(function(e){ return e.id !== 'tr333-379x'; });
+      } else { delete doc.termRecords; }
+    });
+    await s.flush(); return 1; })()`);
+  return { cell: got, planted: p };
+};
+const otherTerm = await notMine(S1, { classId: CLS, termId: 'tm333-other' });
+const otherClass = await notMine(S2, { classId: 'c_wo333-other', termId: TERM });
+const oneVersion = (r) => r.cell && r.cell.v === 9 && ISO_LOCAL.test(r.cell.at || '')
+  && r.cell.at !== r.planted.four && !Object.prototype.hasOwnProperty.call(r.cell, 'was');
+check('WO-3.79: a recording of another term, or of another class, does not seal: a cell written two '
+  + 'minutes before it and edited one minute after keeps one version, as WO-3.33\'s window has it — '
+  + 'typed through the grid, Ada\'s homework against a recording of this class\'s other term and Ben\'s '
+  + 'against one of another class with this term\'s id: each 9 replaces its 4, no `was`',
+  oneVersion(otherTerm) && oneVersion(otherClass),
+  JSON.stringify({ otherTerm: otherTerm, otherClass: otherClass }));
+
 /* ── THE FIXTURE COMES BACK OUT, by id, the clock goes back, and the page is handed back ── */
 await evalJs(`(async function(){
   var s = window.planbook.store, c = window.planbook.classes;

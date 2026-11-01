@@ -298,9 +298,23 @@ export function newestNeedOf(cls, needs) {
   second is the one the teacher meant. Array order is write order, so a walk that takes a later
   entry on `>=` resolves the tie the right way without sorting anything.
 
+  `at` IS COMPARED AS THE INSTANT IT NAMES, NEVER AS A STRING (WO-3.79). A local stamp carries its
+  offset, so on the night daylight saving ends 01:10-05:00 is forty minutes AFTER 01:30-04:00 and
+  sorts before it as text — a string comparison picked the earlier recording there, and inside the
+  repeated hour either way round. scoreChangeSince() and reviseCell() already parse; this reader was
+  missed. A stamp that will not parse ranks below every one that does, and two of them tie and go to
+  the later write, which is where the string comparison put an empty `at` too. The instant is worked
+  out here rather than imported: src/score-history.js's instantOf() is not one of the exports
+  tools/wo-sweep.mjs § 28 lets out of that file, and a seventh is argued there first.
+
   A COPY, NOT THE STORED OBJECT, because nothing in the app edits a record and a caller handed the
   document's own entry is one assignment away from doing so.
 */
+function instantRank(entry) {
+  const when = Date.parse(String(entry.at || ''));
+  return Number.isFinite(when) ? when : -Infinity;
+}
+
 export function newestRecord(doc, cls, termId) {
   const classId = cls && cls.id;
   let newest = null;
@@ -308,7 +322,7 @@ export function newestRecord(doc, cls, termId) {
     if (!entry || typeof entry !== 'object' || entry.classId !== classId || entry.termId !== termId) {
       return;
     }
-    if (newest === null || String(entry.at || '') >= String(newest.at || '')) newest = entry;
+    if (newest === null || instantRank(entry) >= instantRank(newest)) newest = entry;
   });
   if (!newest) return null;
   return {

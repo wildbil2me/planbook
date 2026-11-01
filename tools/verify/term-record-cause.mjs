@@ -33,12 +33,21 @@
  * WHAT EACH ROW IS FOR. Avery: a score and a flag that moved, with the assignment and the category
  * (Acceptance 1), and a held column written since that is not listed (trap 5). Brook: two edits since,
  * one line from the recorded 4 to the latest 9 — not 7 → 9, the version before the newest (Acceptance
- * 2, the work order's Traps). Cole: the setting line (Acceptance 3). Dunn: the write at R+2min replaced
- * the one at R−1min inside the five minutes, so nothing the recording saw survives — and the version
- * before it on the trail, 5, is NOT what the recording saw: the line says the value then is not known
- * and shows no number for it (trap 3). Ellis: 4 → 9 → 4, so no score of hers differs and she gets the
+ * 2, the work order's Traps). Cole: the setting line (Acceptance 3). Dunn: written with no column
+ * descriptor, as an EARLIER BUILD wrote — the write at R+2min replaced the one at R−1min inside the five
+ * minutes, so nothing the recording saw survives. WO-3.75 read that as *not known* (its trap 3); since
+ * WO-3.79 the reader trusts the trail across a recording, and Dunn is the one cell shape where that
+ * names the wrong *then* — 5 → 8, where the recording saw 6 — pinned as the earlier-build limit
+ * WO-3.79's Traps accept. Ellis: 4 → 9 → 4, so no score of hers differs and she gets the
  * setting line (trap 4). Two stamps either side of the end of daylight saving are compared as instants
  * (trap 2), through scoreChangeSince() asked directly.
+ *
+ * WO-3.79 adds a second class at the foot, planted after the first is gone: the setting line's new
+ * wording for a grade moved only by a deleted assignment, a typo fixed a minute after recording that
+ * reads *4 → 9* because a recording is now a version boundary, the same edit over a 4 typed weeks
+ * before it reading *4 → 9* too because the reader trusts the trail across a recording, and
+ * newestRecord() on instants across the end of daylight saving. Its own table is at its own block. A
+ * third class after it puts the past-due sweep through the same seal.
  *
  * It plants one class through the store, turns presentation mode on once and puts it back as it found
  * it, takes the class and its records back out with the `termRecords` key as it found it, and hands
@@ -67,7 +76,10 @@ const S = { avery: 'wo375-avery', brook: 'wo375-brook', cole: 'wo375-cole', dunn
 const A = { e1: 'a375-e1', p1: 'a375-p1', h1: 'a375-h1' };
 const SCALE = [{ letter: 'A', min: 90 }, { letter: 'B', min: 80 }, { letter: 'C', min: 70 },
   { letter: 'D', min: 60 }, { letter: 'F', min: 0 }];
-const SETTING = 'No score changed; a class setting did — weights, the letter scale or drop lowest.';
+/* The owner's wording since WO-3.79 — an equality everywhere it is read, never a substring, so a line
+   that names too few causes again goes red here. */
+const SETTING = 'No score changed. Something else did — weights, the letter scale, drop lowest, '
+  + 'or an assignment\'s points, category or term, or one held or deleted.';
 const D = (n) => nodeDaysFromToday(n);
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -243,14 +255,15 @@ check('WO-3.75: a student whose grade moved only through a class setting gets th
     && engineOf('cole') && engineOf('cole').scores.length === 0,
   JSON.stringify({ cole: lines('cole'), engine: engineOf('cole') }));
 
-check('WO-3.75 (trap 3): a write inside the five minutes either side of the recording leaves no version '
-  + 'the recording saw, and the line says so rather than inventing one — Dunn375\'s 6 at R−1min was '
-  + 'replaced by 8 at R+2min, the 5 from twenty days before is still on the trail, and the line reads '
-  + '*now 8 of 10 — what it held when you recorded is not known*, with no *5 →* and no *6 →*',
-  JSON.stringify(lines('dunn')) === JSON.stringify([['score',
-    'Act 2 quiz (Exams): now 8 of 10 — what it held when you recorded is not known']])
-    && engineOf('dunn') && engineOf('dunn').scores.length === 1 && engineOf('dunn').scores[0].then === null
-    && seen.text.indexOf('5 →') === -1 && seen.text.indexOf('6 →') === -1,
+check('WO-3.79 (Acceptance 3, the earlier-build limit the Traps accept): Dunn375 (an earlier build\'s 6 '
+  + 'at R−1min swallowed by 8 at R+2min) reads *5 → 8 of 10* — the reader trusts the trail across a '
+  + 'recording, the 5 from twenty days before is the latest version at or before it, and the 6 the '
+  + 'recording saw is gone because the build that wrote this cell had no seal. Pinned as the known limit '
+  + '(Record shipped 2026-10-29, WO-3.73), not deleted: no *6 →* and no *not known*',
+  JSON.stringify(lines('dunn')) === JSON.stringify([['score', 'Act 2 quiz (Exams): 5 → 8 of 10']])
+    && engineOf('dunn') && engineOf('dunn').scores.length === 1
+    && JSON.stringify(engineOf('dunn').scores[0].then) === JSON.stringify({ v: 5, flag: '' })
+    && seen.text.indexOf('6 →') === -1 && seen.text.indexOf('not known') === -1,
   JSON.stringify({ dunn: lines('dunn'), engine: engineOf('dunn'), cell: plant.dunn }));
 
 check('WO-3.75 (trap 4): a cell that ends where it began is not a change — Ellis375\'s Act 2 quiz went '
@@ -342,6 +355,329 @@ check('the WO-3.75 fixture came back off the document, the termRecords key is as
   cleared.classes === 0 && cleared.students === 0 && cleared.work === 0 && cleared.scores === 0
     && cleared.records === !!(plant && plant.had) && cleared.mode === !!(plant && plant.was && plant.was.mode),
   JSON.stringify(cleared) + ' · had the key at the start: ' + !!(plant && plant.had));
+
+/* ══ WO-3.79 — *What changed* names the cause honestly, and a recording closes the edit window ══
+ *
+ * A SECOND CLASS, planted after the first is gone, so WO-3.75's hand table above stays exactly as it
+ * was argued. Same scale, Exams 50 / Projects 50, one term, three columns of 10: E1 *Act 2 quiz*
+ * (Exams), P1 *Essay 2* (Projects), P2 *Draft* (Projects, DELETED after the recording). Every cell is
+ * written by reviseCell() on a named clock, and every write after the recording is handed the
+ * descriptor the two score writers build — `classId`, `termId` and the document's own `termRecords` —
+ * so the seal is the app's, not the fixture's:
+ *
+ *            before the recording (R)              after it
+ *   Fenn     E1 8 (R−20d) · P2 2 (R−20d)           P2 deleted, column and all     moved only by that
+ *   Gale     E1 4 (R−2min) · P1 10 (R−20d)         E1 9 (R+1min)                  Acceptance 2
+ *   Hale     E1 4 (R−20d) · P1 10 (R−20d)          E1 9 (R+1min)                  Acceptance 2 too
+ *
+ *   Fenn 50.00 F → 80.00 B (Projects empty once P2 is gone: redistributed) · Gale 70.00 C → 95.00 A
+ *   · Hale 70.00 C → 95.00 A. Nothing else changes: no weight, no scale, no drop.
+ *
+ * Gale is the typo fixed a minute after recording: without the seal, the 9 at R+1min lands inside the
+ * five minutes of the 4 at R−2min and replaces it, and the trail would hold nothing the recording saw.
+ * Hale is the same edit over a 4 typed twenty days before: the five-minute rule pushes that 4 with or
+ * without the seal, and the cell is byte for byte what an earlier build left when it swallowed a write
+ * inside the window (Dunn375, above). WO-3.75 read both as *not known*; the owner's ruling of 2026-10-31
+ * is that the reader trusts the trail across a recording, so Hale reads *4 → 9* and Dunn names the
+ * earlier-build limit the Traps accept (src/score-history.js says why above scoreChangeSince()). */
+{
+const C9 = 'c_wo379', T9 = 'tm379q1', K9E = 'k379e', K9P = 'k379p';
+const S9 = { fenn: 'wo379-fenn', gale: 'wo379-gale', hale: 'wo379-hale' };
+const A9 = { e1: 'a379-e1', p1: 'a379-p1', p2: 'a379-p2' };
+const plant9 = await evalJs(`(async function(){
+  var s = window.planbook.store, d0 = s.getDoc();
+  if (!d0) return { ok: false, why: 'no year document is open' };
+  var sh = await import(new URL('src/score-history.js', document.baseURI).href);
+  var lg = await import(new URL('src/log.js', document.baseURI).href);
+  var had = Object.prototype.hasOwnProperty.call(d0, 'termRecords');
+  var was = { mode: window.planbook.supports.presentationMode() };
+  window.planbook.supports.setPresentationMode(false);
+  var MIN = 60 * 1000, DAY = 24 * 60 * MIN;
+  var R = new Date(Math.floor((Date.now() - 2 * DAY) / 1000) * 1000);
+  var at = function(ms){ return new Date(R.getTime() + ms); };
+  /* The descriptor src/scores.js's putCell() builds, from the document as it stands at the write. */
+  var column = function(doc){ return { held: false, classId: '${C9}', termId: '${T9}', records: doc.termRecords }; };
+  s.update(function(doc){
+    doc.students.push({ id: '${S9.fenn}', first: 'Flo', last: 'Fenn379' },
+      { id: '${S9.gale}', first: 'Gus', last: 'Gale379' }, { id: '${S9.hale}', first: 'Hal', last: 'Hale379' });
+    doc.classes.push({ id: '${C9}', name: 'WO-3.79 Seal', archived: false,
+      letterScale: ${JSON.stringify(SCALE)},
+      terms: [{ id: '${T9}', label: 'Quarter 1', start: '${D(-40)}', end: '${D(60)}' }],
+      categories: [{ id: '${K9E}', name: 'Exams', weight: 50 }, { id: '${K9P}', name: 'Projects', weight: 50 }],
+      roster: ['${S9.hale}', '${S9.fenn}', '${S9.gale}'] });
+    var add = function(id, cat, name){
+      doc.assignments.push({ id: id, classId: '${C9}', termId: '${T9}', categoryId: cat, name: name,
+        points: 10, assigned: '${D(-30)}', due: '${D(-25)}' });
+    };
+    add('${A9.e1}', '${K9E}', 'Act 2 quiz');
+    add('${A9.p1}', '${K9P}', 'Essay 2');
+    add('${A9.p2}', '${K9P}', 'Draft');
+    doc.scores['${A9.e1}'] = {}; doc.scores['${A9.p1}'] = {}; doc.scores['${A9.p2}'] = {};
+    var put = function(a, id, v, ms){
+      var r = sh.reviseCell(doc.scores[a][id] || null, { v: v }, at(ms), column(doc));
+      if (r.write) doc.scores[a][id] = r.cell;
+    };
+    put('${A9.e1}', '${S9.fenn}', 8, -20 * DAY); put('${A9.p2}', '${S9.fenn}', 2, -20 * DAY);
+    put('${A9.e1}', '${S9.gale}', 4, -2 * MIN); put('${A9.p1}', '${S9.gale}', 10, -20 * DAY);
+    put('${A9.e1}', '${S9.hale}', 4, -20 * DAY); put('${A9.p1}', '${S9.hale}', 10, -20 * DAY);
+  });
+  var cls = s.getDoc().classes.filter(function(c){ return c.id === '${C9}'; })[0];
+  var recorded = window.planbook.termRecord.gradesToRecord(s.getDoc(), cls, '${T9}');
+  s.update(function(doc){
+    if (!Array.isArray(doc.termRecords)) doc.termRecords = [];
+    doc.termRecords.push({ id: 'tr379', classId: '${C9}', termId: '${T9}', at: lg.localStamp(R), grades: recorded });
+  });
+  s.update(function(doc){
+    ['${S9.gale}', '${S9.hale}'].forEach(function(id){
+      var r = sh.reviseCell(doc.scores['${A9.e1}'][id], { v: 9 }, at(MIN), column(doc));
+      if (r.write) doc.scores['${A9.e1}'][id] = r.cell;
+    });
+    /* The deletion, as src/assignments.js does it: the assignment and its column, nothing else. */
+    doc.assignments = doc.assignments.filter(function(a){ return a.id !== '${A9.p2}'; });
+    delete doc.scores['${A9.p2}'];
+  });
+  await s.flush();
+  var d = s.getDoc();
+  var c = d.classes.filter(function(x){ return x.id === '${C9}'; })[0];
+  var live = function(id){ var g = window.planbook.gradeEngine.classGrade(d, c, '${T9}', id);
+    return g.percentage === null ? null : g.percentage.toFixed(2) + ' ' + g.letter; };
+  return { ok: true, had: had, was: was,
+    recorded: recorded.map(function(g){ return g.studentId.slice(6) + '=' + g.percentage.toFixed(2) + ' ' + g.letter; }),
+    live: ['${S9.fenn}', '${S9.gale}', '${S9.hale}'].map(function(id){ return id.slice(6) + '=' + live(id); }),
+    gale: JSON.stringify(d.scores['${A9.e1}']['${S9.gale}']),
+    hale: JSON.stringify(d.scores['${A9.e1}']['${S9.hale}']) }; })()`);
+
+try {
+const REC9 = ['fenn=50.00 F', 'gale=70.00 C', 'hale=70.00 C'];
+const LIVE9 = ['fenn=80.00 B', 'gale=95.00 A', 'hale=95.00 A'];
+if (!(plant9.ok && JSON.stringify(plant9.recorded.slice().sort()) === JSON.stringify(REC9)
+  && JSON.stringify(plant9.live) === JSON.stringify(LIVE9))) {
+  check('WO-3.79: the fixture is real — the recording holds the hand table\'s grades and every live grade '
+    + 'is the table\'s', false, JSON.stringify(plant9));
+} else {
+await evalJs(`(function(){ window.planbook.termRecordView.openTermRecordDialog('${C9}', '${T9}', null); return 1; })()`);
+await sleep(200);
+const seen9 = await causesNow();
+const lines9 = (key) => { const r = seen9.rows.filter((x) => x.id === S9[key])[0]; return r ? r.lines : null; };
+await closeDialog();
+
+check('WO-3.79 (Acceptance 1): a student whose grade moved only because an assignment was deleted gets '
+  + 'the new setting line, word for word — Fenn379, 50.00 F → 80.00 B once *Draft* went, reads exactly *'
+  + SETTING + '* and nothing else',
+  seen9.open && JSON.stringify(lines9('fenn')) === JSON.stringify([['setting', SETTING]]),
+  JSON.stringify({ fenn: lines9('fenn'), text: seen9.text }));
+
+check('WO-3.79 (Acceptance 2, two minutes): a score recorded at 4, edited to 9 one minute after the '
+  + 'recording, reads *4 → 9 of 10*, not *not known* — Gale379\'s 4 typed two minutes before the recording is pushed by '
+  + 'the 9 at R+1min, inside the five minutes, because the recording sealed it',
+  JSON.stringify(lines9('gale')) === JSON.stringify([['score', 'Act 2 quiz (Exams): 4 → 9 of 10']])
+    && /^\{"v":9,"at":"[^"]+","was":\[\{"v":4,"at":"[^"]+"\}\]\}$/.test(plant9.gale),
+  JSON.stringify({ gale: lines9('gale'), cell: plant9.gale }));
+
+check('WO-3.79 (Acceptance 2, twenty days): a score recorded at 4, edited to 9 one minute after the '
+  + 'recording, reads *4 → 9 of 10*, not *not known* — Hale379\'s 4 typed twenty days before the '
+  + 'recording, the 9 at R+1min: the reader trusts the trail across a recording, so the 4 at or before '
+  + 'it is what it saw',
+  JSON.stringify(lines9('hale')) === JSON.stringify([['score', 'Act 2 quiz (Exams): 4 → 9 of 10']])
+    && seen9.text.indexOf('not known') === -1
+    && /^\{"v":9,"at":"[^"]+","was":\[\{"v":4,"at":"[^"]+"\}\]\}$/.test(plant9.hale),
+  JSON.stringify({ hale: lines9('hale'), cell: plant9.hale }));
+}
+
+/* ── Acceptance 6, and the seal on the same night: instants, not strings ──
+   US daylight saving ends 2026-11-01 at 02:00 EDT, so 01:30-04:00 (05:30Z) is EARLIER than 01:10-05:00
+   (06:10Z) although it sorts later as a string. newestRecord() over the two in write order, the other
+   way round, two equal stamps, and an unparseable one; then reviseCell() handed both as `records`. */
+const dst9 = await evalJs(`(async function(){
+  var sh = await import(new URL('src/score-history.js', document.baseURI).href);
+  var T = window.planbook.termRecord, cls = { id: 'c' };
+  var rec = function(id, at){ return { id: id, classId: 'c', termId: 't', at: at, grades: [] }; };
+  var first = rec('first', '2026-11-01T01:30:00-04:00'), second = rec('second', '2026-11-01T01:10:00-05:00');
+  var pick = function(list){ var r = T.newestRecord({ termRecords: list }, cls, 't'); return r ? r.id : null; };
+  /* A cell stamped 01:09-05:00 (06:09Z) — after the first recording, before the second — written again
+     three minutes later. Sealed by the second; inside an ordinary window if the first were newest. */
+  var revised = sh.reviseCell({ v: 4, at: '2026-11-01T01:09:00-05:00' }, { v: 9 },
+    new Date(Date.parse('2026-11-01T01:12:00-05:00')),
+    { held: false, classId: 'c', termId: 't', records: [first, second] });
+  return { inOrder: pick([first, second]), reversed: pick([second, first]),
+    tie: pick([rec('a', '2026-11-01T01:10:00-05:00'), rec('b', '2026-11-01T01:10:00-05:00')]),
+    junk: pick([rec('junk', 'not a stamp'), first]) + '/' + pick([first, rec('junk', 'not a stamp')]),
+    sealed: revised.write && revised.cell && Array.isArray(revised.cell.was)
+      ? JSON.stringify(revised.cell.was) : JSON.stringify(revised) }; })()`);
+check('WO-3.79 (Acceptance 6): two recordings of one quarter stamped …T01:30:00-04:00 and then '
+  + '…T01:10:00-05:00 on 2026-11-01: newestRecord() returns the second — and the second still when '
+  + 'written first, the later write on a tie, a parseable stamp over one that will not parse either way '
+  + 'round; and reviseCell() seals against that same second recording, pushing a 4 stamped between them',
+  dst9.inOrder === 'second' && dst9.reversed === 'second' && dst9.tie === 'b'
+    && dst9.junk === 'first/first'
+    && dst9.sealed === JSON.stringify([{ v: 4, at: '2026-11-01T01:09:00-05:00' }]),
+  JSON.stringify(dst9));
+} finally {
+await closeDialog();
+await evalJs(`(async function(){
+  var s = window.planbook.store;
+  s.update(function(doc){
+    doc.classes = doc.classes.filter(function(x){ return x.id !== '${C9}'; });
+    doc.students = doc.students.filter(function(x){ return String(x.id).indexOf('wo379-') !== 0; });
+    doc.assignments = doc.assignments.filter(function(a){ return a.classId !== '${C9}'; });
+    Object.keys(doc.scores || {}).forEach(function(k){ if (String(k).indexOf('a379-') === 0) delete doc.scores[k]; });
+    if (${plant9 && plant9.had ? 'true' : 'false'}) {
+      doc.termRecords = (doc.termRecords || []).filter(function(e){ return e.classId !== '${C9}'; });
+    } else {
+      delete doc.termRecords;
+    }
+  });
+  window.planbook.supports.setPresentationMode(${plant9 && plant9.was && plant9.was.mode ? 'true' : 'false'});
+  await s.flush();
+  return 1; })()`);
+}
+const cleared9 = await evalJs(`(function(){ var d = window.planbook.store.getDoc();
+  return { classes: d.classes.filter(function(x){ return x.id === '${C9}'; }).length,
+    students: d.students.filter(function(x){ return String(x.id).indexOf('wo379-') === 0; }).length,
+    work: d.assignments.filter(function(a){ return a.classId === '${C9}'; }).length,
+    scores: Object.keys(d.scores || {}).filter(function(k){ return k.indexOf('a379-') === 0; }).length,
+    records: Object.prototype.hasOwnProperty.call(d, 'termRecords'),
+    mode: window.planbook.supports.presentationMode() }; })()`);
+check('the WO-3.79 fixture came back off the document, the termRecords key is as it was found, and '
+  + 'presentation mode is where it was found',
+  cleared9.classes === 0 && cleared9.students === 0 && cleared9.work === 0 && cleared9.scores === 0
+    && cleared9.records === !!(plant9 && plant9.had)
+    && cleared9.mode === !!(plant9 && plant9.was && plant9.was.mode),
+  JSON.stringify(cleared9) + ' · had the key at the start: ' + !!(plant9 && plant9.had));
+}
+
+/* ══ WO-3.79 — the past-due sweep is a writer too, and the recording seals against it ══
+ *
+ * A THIRD CLASS, so the sweep has a past-due blank of its own and touches nobody else's. All work 100,
+ * one term, two columns of 10, both due three days ago: Q *Quiz 3* and L *Reading log*. One student:
+ *
+ *            before the recording (R = a minute ago)       after it
+ *   Ives     Q 8 (R−20d) · L 4 (R−20d), cleared (R−2min)    L Missing (R+1min), by the past-due sweep
+ *
+ *   Recorded 80.00 B (the blank counts toward nothing) → live 40.00 F (8 of 20).
+ *
+ * The clear at R−2min pushes the 4 — twenty days old — and leaves a blank WITH A PAST, which is a blank
+ * to the sweep. The sweep runs on the device clock, a minute after R and three after the blank, inside
+ * WO-3.33's five minutes: without the seal it REPLACES the blank, and *What changed* reads the 4 from
+ * twenty days before as what the recording saw. With it, the blank is pushed, and the line reads
+ * *Blank → Missing*. It is src/past-due.js's own writer that runs — paintPastDue() takes the class's
+ * blanks as the screen does, acceptPastDue() writes them — imported from the page's own module graph,
+ * so the descriptor is the one that file builds and not the fixture's. */
+{
+const C8 = 'c_wo379pd', T8 = 'tm379pd', K8 = 'k379pd', S8 = 'wo379pd-ives';
+const A8 = { q: 'a379pd-q', l: 'a379pd-l' };
+const plant8 = await evalJs(`(async function(){
+  var s = window.planbook.store, c = window.planbook.classes, d0 = s.getDoc();
+  if (!d0) return { ok: false, why: 'no year document is open' };
+  var sh = await import(new URL('src/score-history.js', document.baseURI).href);
+  var lg = await import(new URL('src/log.js', document.baseURI).href);
+  var had = Object.prototype.hasOwnProperty.call(d0, 'termRecords');
+  var was = { mode: window.planbook.supports.presentationMode(), cls: c.getSelectedClassId() };
+  window.planbook.supports.setPresentationMode(false);
+  var MIN = 60 * 1000, DAY = 24 * 60 * MIN;
+  var R = new Date(Math.floor((Date.now() - MIN) / 1000) * 1000);
+  var at = function(ms){ return new Date(R.getTime() + ms); };
+  var column = function(doc){ return { held: false, classId: '${C8}', termId: '${T8}', records: doc.termRecords }; };
+  s.update(function(doc){
+    doc.students.push({ id: '${S8}', first: 'Ivo', last: 'Ives379' });
+    doc.classes.push({ id: '${C8}', name: 'WO-3.79 Sweep', archived: false,
+      letterScale: ${JSON.stringify(SCALE)},
+      terms: [{ id: '${T8}', label: 'Quarter 1', start: '${D(-40)}', end: '${D(60)}' }],
+      categories: [{ id: '${K8}', name: 'All work', weight: 100 }], roster: ['${S8}'] });
+    var add = function(id, name){
+      doc.assignments.push({ id: id, classId: '${C8}', termId: '${T8}', categoryId: '${K8}', name: name,
+        points: 10, assigned: '${D(-30)}', due: '${D(-3)}' });
+    };
+    add('${A8.q}', 'Quiz 3'); add('${A8.l}', 'Reading log');
+    doc.scores['${A8.q}'] = {}; doc.scores['${A8.l}'] = {};
+    var put = function(a, v, ms){
+      var r = sh.reviseCell(doc.scores[a]['${S8}'] || null, { v: v }, at(ms), column(doc));
+      if (r.write) { if (r.cell) doc.scores[a]['${S8}'] = r.cell; else delete doc.scores[a]['${S8}']; }
+    };
+    put('${A8.q}', 8, -20 * DAY); put('${A8.l}', 4, -20 * DAY); put('${A8.l}', null, -2 * MIN);
+  });
+  var cls = s.getDoc().classes.filter(function(x){ return x.id === '${C8}'; })[0];
+  var recorded = window.planbook.termRecord.gradesToRecord(s.getDoc(), cls, '${T8}');
+  s.update(function(doc){
+    if (!Array.isArray(doc.termRecords)) doc.termRecords = [];
+    doc.termRecords.push({ id: 'tr379pd', classId: '${C8}', termId: '${T8}', at: lg.localStamp(R), grades: recorded });
+  });
+  var blank = JSON.stringify(s.getDoc().scores['${A8.l}']['${S8}']);
+  /* The sweep, as the class screen offers it: the class open, its blanks taken, the offer accepted. */
+  c.selectClass('${C8}'); c.selectTerm('${T8}');
+  var pd = await import(new URL('src/past-due.js', document.baseURI).href);
+  pd.paintPastDue();
+  var asked = pd.pastDueAsksAbout('${A8.l}');
+  var wrote = pd.acceptPastDue();
+  await s.flush();
+  var d = s.getDoc();
+  var g = window.planbook.gradeEngine.classGrade(d, d.classes.filter(function(x){ return x.id === '${C8}'; })[0], '${T8}', '${S8}');
+  return { ok: true, had: had, was: was, R: lg.localStamp(R), term: c.getSelectedTermId(),
+    recorded: recorded.map(function(x){ return x.percentage.toFixed(2) + ' ' + x.letter; }),
+    live: g.percentage === null ? null : g.percentage.toFixed(2) + ' ' + g.letter,
+    blank: blank, asked: asked, wrote: wrote,
+    cell: JSON.stringify(d.scores['${A8.l}']['${S8}']) }; })()`);
+
+try {
+let swept = null;
+if (plant8.ok && plant8.asked && plant8.wrote) {
+  await evalJs(`(function(){ window.planbook.termRecordView.openTermRecordDialog('${C8}', '${T8}', null); return 1; })()`);
+  await sleep(200);
+  const seen8 = await causesNow();
+  const r8 = seen8.rows.filter((x) => x.id === S8)[0];
+  swept = r8 ? r8.lines : null;
+  await closeDialog();
+}
+const cell8 = (() => { try { return JSON.parse(plant8.cell); } catch (e) { return null; } })();
+check('WO-3.79: the past-due sweep writing *missing* one minute after a recording keeps the version the '
+  + 'recording saw, driven through src/past-due.js\'s own writer rather than read off its source — '
+  + 'Ives379\'s Reading log, cleared two minutes before the recording over a 4 from twenty days before, is '
+  + 'swept to Missing by acceptPastDue() a minute after it: the blank is pushed onto the trail behind the '
+  + '4, and *What changed* reads *Reading log (All work): Blank → Missing*, not *4 of 10 → Missing*',
+  plant8.ok && plant8.asked && plant8.wrote && plant8.term === T8
+    && JSON.stringify(plant8.recorded) === JSON.stringify(['80.00 B']) && plant8.live === '40.00 F'
+    && /^\{"v":null,"at":"[^"]+","was":\[\{"v":4,"at":"[^"]+"\}\]\}$/.test(plant8.blank)
+    && !!cell8 && cell8.v === null && cell8.flag === 'missing' && Array.isArray(cell8.was)
+    && cell8.was.length === 2 && cell8.was[0].v === 4
+    && JSON.stringify(cell8.was[1]) === JSON.stringify({ v: null, at: JSON.parse(plant8.blank).at })
+    && JSON.stringify(swept) === JSON.stringify([['score', 'Reading log (All work): Blank → Missing']]),
+  JSON.stringify({ plant: plant8, lines: swept }));
+} finally {
+await closeDialog();
+await evalJs(`(async function(){
+  var s = window.planbook.store, c = window.planbook.classes;
+  s.update(function(doc){
+    doc.classes = doc.classes.filter(function(x){ return x.id !== '${C8}'; });
+    doc.students = doc.students.filter(function(x){ return x.id !== '${S8}'; });
+    doc.assignments = doc.assignments.filter(function(a){ return a.classId !== '${C8}'; });
+    Object.keys(doc.scores || {}).forEach(function(k){ if (String(k).indexOf('a379pd-') === 0) delete doc.scores[k]; });
+    if (${plant8 && plant8.had ? 'true' : 'false'}) {
+      doc.termRecords = (doc.termRecords || []).filter(function(e){ return e.classId !== '${C8}'; });
+    } else {
+      delete doc.termRecords;
+    }
+  });
+  window.planbook.supports.setPresentationMode(${plant8 && plant8.was && plant8.was.mode ? 'true' : 'false'});
+  var back = ${JSON.stringify((plant8 && plant8.was && plant8.was.cls) || '')};
+  if (back) c.selectClass(back);
+  c.refreshClassBar();
+  await s.flush();
+  return 1; })()`);
+}
+const cleared8 = await evalJs(`(function(){ var d = window.planbook.store.getDoc();
+  return { classes: d.classes.filter(function(x){ return x.id === '${C8}'; }).length,
+    students: d.students.filter(function(x){ return x.id === '${S8}'; }).length,
+    work: d.assignments.filter(function(a){ return a.classId === '${C8}'; }).length,
+    scores: Object.keys(d.scores || {}).filter(function(k){ return k.indexOf('a379pd-') === 0; }).length,
+    records: Object.prototype.hasOwnProperty.call(d, 'termRecords'),
+    mode: window.planbook.supports.presentationMode() }; })()`);
+check('the WO-3.79 sweep fixture came back off the document, the termRecords key is as it was found, '
+  + 'and presentation mode is where it was found',
+  cleared8.classes === 0 && cleared8.students === 0 && cleared8.work === 0 && cleared8.scores === 0
+    && cleared8.records === !!(plant8 && plant8.had)
+    && cleared8.mode === !!(plant8 && plant8.was && plant8.was.mode),
+  JSON.stringify(cleared8) + ' · had the key at the start: ' + !!(plant8 && plant8.had));
+}
 await send('Page.reload');
 await sleep(600);
 await waitForBoot();

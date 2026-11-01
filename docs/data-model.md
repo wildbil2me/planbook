@@ -290,12 +290,18 @@ Seven shape decisions that matter:
   and the first change after the commit pushes it whatever its `at` says — type 72 while held, commit
   at 9:02, change it to 75 at 9:03, and the 72 is on the trail, where measuring five minutes from when
   it was *typed* would have dropped it. A write after the commit opens an ordinary five-minute window
-  from its own `at`. At both boundaries **the same second counts as before** (stamps are
+  from its own `at`. **A recording is the third boundary** *(WO-3.79)*: a cell last written at or
+  before the newest recording of its class and term is the version that recording saw, and the first
+  live write after the recording pushes it however soon, so a typo fixed a minute after recording
+  cannot swallow what was keyed into the SIS — see § Recording a quarter's grades. A held write
+  ignores it, as it ignores the five minutes. At all three boundaries **the same second counts as before** (stamps are
   second-granular, and a spare trail entry is cheaper than a lost score that counted), **a cell with
   no `at` counts as before**, and **a held column with no `heldAt` is read as held from before any
   score was typed**, so nothing is pushed for it. All of it is `reviseCell()`'s: the two score
   writers tell it whether the column is held and when it was held and committed, built from
-  `isHeld()` and the assignment's own `heldAt` and `committedAt`, and decide nothing with the answer.
+  `isHeld()` and the assignment's own `heldAt` and `committedAt` — and, since WO-3.79, the
+  document's `termRecords` with the assignment's `classId` and `termId` — and decide nothing with the
+  answer.
   **A cell does not know its column is held** — there is no marker on the cells, so a restore, a copy
   or the past-due sweep cannot write one half of it.
 - **Attendance stores only exceptions.** Present is the absence of a mark. A class of 25 with two
@@ -830,14 +836,37 @@ two grades for one student.** So a class's term can be *recorded*: one entry app
   recording's `at`, as `{ then, now }` — each `{ v, flag }` — from `src/score-history.js`'s
   `scoreChangeSince()`, which is what reads the history. **The value at the recording is the cell's
   latest version at or before it**, the stamps compared as instants (a local stamp carries its
-  offset, and two either side of a daylight-saving change sort wrongly as strings). **`then` is
-  `null` — not known — when the first version written after the recording is stamped within five
-  minutes of it**, because a write inside the window replaced whatever the recording saw, and the
-  store cannot tell that from an edit made just after recording; likewise for every cell written
-  since in a column committed since. A cell back where it began is no change; **a held column is
-  never listed**, counting toward neither grade. A student with no score that moved is answered with
-  an empty list, and the dialog says a class setting did: weights, the letter scale and drop lowest
-  keep no history to name.
+  offset, and two either side of a daylight-saving change sort wrongly as strings). **The reader
+  trusts the trail across a recording** *(WO-3.79, the owner's ruling of 2026-10-31)*: since a
+  recording is a version boundary (next bullet), the first write after it always keeps the version
+  the recording saw, so `then` is the latest version at or before the recording however soon after
+  it the edit came — type 4, record, fix it to 9 a minute later, and the line reads *4 → 9*, whether
+  the 4 was typed two minutes or twenty days before. A cell with **no** version at or before the
+  recording held nothing then, and `then` is blank. *(Until WO-3.79 `then` was `null` — not known —
+  whenever the first version after the recording was stamped within five minutes of it, because
+  without the seal a write inside the window could have replaced what the recording saw.)* **The one
+  exception, accepted rather than closed:** a cell an earlier build replaced inside the five minutes
+  after a recording is byte for byte a cell this build writes honestly, so it names the version
+  before the swallowed one — a 6 at R−1min overwritten by an 8 at R+2min over a 5 from weeks before
+  reads *5 → 8* where the recording saw 6. Record shipped on 2026-10-29 (WO-3.73), so only edits from
+  the days before WO-3.79 deployed can carry it. `then` is still `null` for every cell written since
+  in a column **committed** since the recording, because a held write replaces however long since.
+  A cell back where it began is no change; **a held column is never listed**, counting toward
+  neither grade. A student with no score that moved is answered
+  with an empty list, and the dialog says *something else did* — weights, the letter scale, drop
+  lowest, or an assignment's points, category or term, or one held or deleted *(WO-3.79; until then
+  it named the first three only, and sent a teacher whose grade moved because work was deleted to
+  her class settings)*. None of those keeps history, so the line cannot say which.
+- **A recording is a version boundary** *(WO-3.79, the owner's ruling of 2026-10-31: fix the store,
+  not the wording)*. A score cell last written at or before the newest recording of its class and
+  term holds the version that recording saw, so **the first write after the recording pushes it onto
+  `was`, however soon** — the commit's rule (§ score history), extended, and the same `sealed` test in
+  `reviseCell()`. Only the ordinary branch: a held write still replaces however long since. The two
+  score writers hand `reviseCell()` the document's `termRecords` and the column's class and term,
+  and it works out the newest recording itself — handed rather than imported, because `src/term-record.js`
+  imports `src/scores.js`. **Newest means the latest instant**, in the seal and in `newestRecord()`
+  alike, never the larger string, with a tie going to the later write. Nothing is rewritten in a cell
+  already stored; a cell an earlier build wrote is read as it stands (the exception above).
 - **Names and grades never show under a projector.** The readers hand back ids and figures; the
   screens that draw them (WO-3.73's `src/term-record-view.js`, and WO-3.74) name classes and counts
   only on their bars, and refuse the list in presentation mode.

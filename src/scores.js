@@ -519,13 +519,21 @@ export function classAverage(students, figureOf) {
   AND SINCE WO-3.52 IT TELLS reviseCell() ABOUT THE COLUMN — whether it is held, and when it was
   last held and last committed — and decides nothing with the answer: what a hold or a commit means
   for a cell is reviseCell()'s rule, so this writer and src/past-due.js's cannot disagree about it.
+
+  AND SINCE WO-3.79 IT HANDS OVER THE RECORDINGS TOO — the document's `termRecords` as stored, and the
+  column's class and term — because a recording is a version boundary and which recording counts is
+  reviseCell()'s to work out, not this writer's. Handed rather than imported: src/term-record.js
+  imports this file, so asking its newestRecord() here would close an import loop (src/score-history.js
+  argues the shape above reviseCell()).
 */
 function putCell(doc, assignmentId, studentId, old, next) {
   const assignment = (Array.isArray(doc.assignments) ? doc.assignments : [])
     .find((a) => a && a.id === assignmentId);
   const revised = reviseCell(old, next, undefined,
     { held: isHeld(assignment), heldAt: assignment ? assignment.heldAt : undefined,
-      committedAt: assignment ? assignment.committedAt : undefined });
+      committedAt: assignment ? assignment.committedAt : undefined,
+      classId: assignment ? assignment.classId : undefined,
+      termId: assignment ? assignment.termId : undefined, records: doc.termRecords });
   if (!revised.write) return;
   const column = doc.scores[assignmentId];
   if (!revised.cell) {

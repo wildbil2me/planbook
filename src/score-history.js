@@ -22,8 +22,9 @@
       minutes is measured from the current cell's `at`, and a cell with no `at` always pushes (the
       owner's ruling, 2026-10-02). Correcting a typo leaves no history entry, and neither does the
       second digit of a two-digit score. A held column, a cell last written before its column was
-      held, and one last written before its column was committed are the exceptions, all argued
-      above reviseCell() (WO-3.52).
+      held, one last written before its column was committed (WO-3.52), and one last written before
+      the newest recording of its class and term (WO-3.79) are the exceptions, all argued above
+      reviseCell().
     · A WRITE THAT CHANGES NOTHING IS NOT A WRITE. Same value, same flag, same note: nothing is
       pushed, nothing is restamped, and the caller is told not to touch the document. `72.` in the
       field reads as 72 over a stored 72, and leaving that cell is not a revision.
@@ -138,9 +139,10 @@ function countedBefore(cell, heldAt) {
   THE RULE, for every path that writes a score cell. `old` is the cell as stored (or nothing);
   `next` is the cell the writer wants — a value, a flag and a note, or null for "no value, no flag,
   no note". `now` is a Date, and defaults to the device clock. `column` is what the writer knows
-  about the cell's column — `{ held, heldAt, committedAt }`, built by the caller from
-  src/grade-engine.js's isHeld() and the assignment's own `heldAt` and `committedAt` — or nothing,
-  which means a live column that was never committed and is today's behaviour to the byte (WO-3.52).
+  about the cell's column — `{ held, heldAt, committedAt, classId, termId, records }`, built by the
+  caller from src/grade-engine.js's isHeld(), the assignment's own `heldAt`, `committedAt`, `classId`
+  and `termId`, and the document's `termRecords` (WO-3.79, below) — or nothing, which means a live
+  column that was never committed or recorded and is WO-3.33's behaviour to the byte (WO-3.52).
 
   Answers `{ write: false }` when the document must not be touched at all, or `{ write: true, cell }`
   where `cell` is what to store under the key — or null, which means delete the key.
@@ -183,7 +185,47 @@ function countedBefore(cell, heldAt) {
       and a spare trail entry costs nothing where a lost score that counted is the failure. The one
       spare it can produce: a write in the very second of a hold or a commit, followed by another,
       keeps the first. Both are compared as parsed instants, the way the window is.
+
+  ── A RECORDING IS A VERSION BOUNDARY TOO (WO-3.79) ──
+
+  The owner's ruling of 2026-10-31: *fix the store, not the wording*. A cell last written at or
+  before the NEWEST RECORDING OF ITS CLASS AND TERM (src/term-record.js's termRecords[]) is the
+  version that recording saw, so the first write after the recording PUSHES it, however soon — the
+  commit's rule above, extended, and computed in the same `sealed` test rather than beside it. Type 4
+  at 9:58, record at 10:00, fix it to 9 at 10:01: the 4 is on the trail, where the five minutes
+  measured from 9:58 would have replaced it and the Record dialog's *What changed* could only say the
+  value then was not known. A write after the recording opens an ordinary window from its own `at`.
+  The same second counts as before, as at the other two boundaries.
+
+    · IT IS THE ORDINARY BRANCH ONLY. A held write replaces however long since (WO-3.52), and *What
+      changed* never lists a held column, so the held branch above does not look at a recording.
+    · HOW THE BOUNDARY ARRIVES — the point of departure the work order left to this file. Not by
+      import: src/term-record.js imports src/scores.js, which imports this file, so a reader of
+      newestRecord() here would close an import loop. And not as an instant the caller worked out:
+      two writers each walking termRecords[] for "the newest" is two opinions about which recording
+      counts. The caller hands FACTS beside the ones it already hands — `records`, the document's own
+      `termRecords` array as stored, and `classId` and `termId`, the column's assignment's own — and
+      what they mean for the cell is decided here, by recordedBoundary(), the arrangement this
+      descriptor has had since WO-3.52 (the caller says when the column was held and committed; this
+      file says what that means). A descriptor without them is a column with no recording, which is
+      every caller that existed before this build, to the byte.
+    · NEWEST IS THE LATEST INSTANT, compared parsed, never as strings — a stamp carries its offset, and
+      two recordings either side of a daylight-saving change sort wrongly as text. A recording whose
+      `at` does not parse names no moment and seals nothing. It is the same recording newestRecord()
+      answers: that reader takes the latest instant too, and a tie between two equal instants is the
+      same instant either way.
 */
+function recordedBoundary(column) {
+  let newest = NaN;
+  (Array.isArray(column.records) ? column.records : []).forEach((entry) => {
+    if (!entry || typeof entry !== 'object' || entry.classId !== column.classId
+      || entry.termId !== column.termId) return;
+    const when = instantOf(entry.at);
+    if (Number.isFinite(when) && (!Number.isFinite(newest) || when > newest)) newest = when;
+  });
+  return newest;
+}
+
 export function reviseCell(old, next, now, column) {
   const at = now instanceof Date ? now : new Date();
   const was = isCell(old) ? old : null;
@@ -211,7 +253,10 @@ export function reviseCell(old, next, now, column) {
   const since = at.getTime() - stamped;
   const committed = column && typeof column.committedAt === 'string'
     ? Date.parse(column.committedAt) : NaN;
-  const sealed = Number.isFinite(committed) && Number.isFinite(stamped) && stamped <= committed;
+  const recorded = column ? recordedBoundary(column) : NaN;
+  const sealed = Number.isFinite(stamped)
+    && ((Number.isFinite(committed) && stamped <= committed)
+      || (Number.isFinite(recorded) && stamped <= recorded));
   if (!sealed && Number.isFinite(stamped) && since >= 0 && since < REVISION_WINDOW_MS) {
     const last = past[past.length - 1];
     if (last && sameContent(last, want)) {
@@ -274,23 +319,40 @@ function scoreOf(cell) {
   reading. "At or before" because `at` is second-granular, the same second as the recording counts
   as before, as it does at a hold and a commit.
 
-  WHEN THE MOMENT IS NOT KEPT, AND WHY `then` IS NULL RATHER THAN A GUESS. A write within five minutes
-  of the cell's last one REPLACES it and pushes nothing (above), so a write at 9:59, a recording at
-  10:00 and a write at 10:02 leave the 10:02 version alone, with nothing at or before 10:00 that the
-  recording saw — and the version before it on the trail, from days earlier, is NOT what the cell
-  held at 10:00. So whenever the first version written after the moment is stamped less than five
-  minutes after it, the burst that wrote it may have begun before the moment and swallowed what the
-  recording saw. The store cannot tell that from an edit made two minutes after recording a cell
-  untouched since September — the two cells are byte for byte the same — so both are `then: null`.
-  A COLUMN COMMITTED SINCE THE MOMENT is the same answer for every cell written since: it was held at
-  some point in between, and a held write replaces however long since (WO-3.52), so nothing on the
-  trail is a version the recording saw.
+  THE READER TRUSTS THE TRAIL ACROSS A RECORDING (WO-3.79, the owner's ruling of 2026-10-31). A
+  recording is a version boundary (above reviseCell()), so under this build the first write after a
+  recording always pushes the version the recording saw, however soon: type 4, record, fix it to 9 a
+  minute later, and the 4 is on the trail with its own `at`. So the latest version at or before the
+  moment IS what the recording saw, for every write this build makes, and `then` is that version —
+  whether the 4 was typed two minutes or twenty days before. There is no five-minute test here any
+  more: WO-3.75 answered `then: null` whenever the first version after the moment fell inside the
+  five minutes after it, because before the seal a burst across the moment could have swallowed what
+  the recording saw, and that guard is what the seal made unnecessary.
 
-  TWO LIMITS NO READING OF THE STORE CAN CLOSE, stated rather than claimed away: a burst that keeps
-  restamping one cell for more than five minutes across the moment is not seen, because each write
-  restamps `at`; and a burst across the moment that ends where it began pops its own push back
-  (above), restoring the old `at`, so the cell reads as unwritten since. Both want a teacher typing
-  into one cell while she records; both are in TESTING.md § WO-3.75.
+  THE ONE EXCEPTION, stated rather than claimed away: a cell an EARLIER BUILD replaced inside the five
+  minutes after a recording. That build had no seal, so a 6 written at R−1min and an 8 at R+2min left
+  one version, the 8, over a 5 from weeks before — byte for byte the cell this build leaves when a 5
+  typed weeks before is fixed to 8 just after recording. Nothing in the cell says which, and this
+  reader takes the trail at its word, so that cell names the version before the swallowed one: 5 → 8
+  where the recording saw 6. Accepted, because Record shipped on 2026-10-29 (WO-3.73) and only edits
+  saved in the days before this build can carry it (tools/verify/term-record-cause.mjs's Dunn375 pins
+  it as the known limit). The two WO-3.75 limits that came from the same cause — a burst restamping
+  one cell for more than five minutes across the moment, and a burst across it that ends where it
+  began popping its own push back — are closed for this build's writes by the same seal, and stand
+  for an earlier build's the same way.
+
+  NO VERSION AT OR BEFORE THE MOMENT — every version on the trail is stamped after it — answers a
+  BLANK `then`, `{ v: null, flag: '' }`: the cell held nothing when the quarter was recorded. That is
+  what WO-3.75 answered too once the first write was five minutes clear, and with the guard gone it is
+  the answer at any distance, because under the seal a cell that held anything at the recording keeps
+  that version on its trail (a cell cleared with no past is a deleted key, which is nothing). An
+  earlier build's first write at R−1min replaced at R+2min reads as blank → 8, the exception above in
+  its other shape, and accepted with it.
+
+  A COLUMN COMMITTED SINCE THE MOMENT still answers `then: null` for every cell written since
+  (WO-3.75): it was held at some point in between, and a held write replaces however long since
+  (WO-3.52) — the seal applies to the ordinary branch only — so nothing on the trail is a version the
+  recording saw.
 
   A CELL THAT ENDS WHERE IT BEGAN IS NOT A CHANGE: 4 → 9 → 4 across the recording, more than five
   minutes apart, answers null. Only the two ends are compared, because only the two ends are in the
@@ -309,10 +371,7 @@ export function scoreChangeSince(cell, moment, column) {
   });
   const now = scoreOf(cell);
   const committed = column ? instantOf(column.committedAt) : NaN;
-  const after = instantOf(versions[before + 1].at);
-  if ((Number.isFinite(committed) && committed > when) || after - when < REVISION_WINDOW_MS) {
-    return { then: null, now: now };
-  }
+  if (Number.isFinite(committed) && committed > when) return { then: null, now: now };
   const then = before < 0 ? { v: null, flag: '' } : scoreOf(versions[before]);
   if (then.v === now.v && then.flag === now.flag) return null;
   return { then: then, now: now };

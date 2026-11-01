@@ -548,13 +548,17 @@ export function acceptPastDue() {
         /* AND IT IS A WRITE TO A SCORE CELL LIKE ANY OTHER (WO-3.33): src/score-history.js stamps
            `at`, and a blank that already has a past — cleared after a revision — keeps it, with the
            blank pushed onto `was` when it is five minutes old. The cell is always written: a blank
-           going to `missing` is never a no-op, so `revised.cell` is never null here. */
+           going to `missing` is never a no-op, so `revised.cell` is never null here. The column's
+           recordings ride in the descriptor as src/scores.js's putCell() hands them (WO-3.79): a
+           recording is a version boundary, and reviseCell() decides what it means for the cell. */
         const assignment = (Array.isArray(d.assignments) ? d.assignments : [])
           .find((a) => a && a.id === cell.work.id);
         const revised = reviseCell(old, note
           ? { v: null, flag: 'missing', note: note } : { v: null, flag: 'missing' }, undefined,
           { held: isHeld(assignment), heldAt: assignment ? assignment.heldAt : undefined,
-            committedAt: assignment ? assignment.committedAt : undefined });
+            committedAt: assignment ? assignment.committedAt : undefined,
+            classId: assignment ? assignment.classId : undefined,
+            termId: assignment ? assignment.termId : undefined, records: d.termRecords });
         if (revised.write && revised.cell) d.scores[cell.work.id][cell.student.id] = revised.cell;
       });
     });

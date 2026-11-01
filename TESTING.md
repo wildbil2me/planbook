@@ -19393,6 +19393,198 @@ check's export list gains `whatChanged`), `tools/wo-sweep.mjs` (§ 28), `tools/R
 § 28 row), `docs/data-model.md` (the `was` sentence, a *What changed* bullet), and the two drawing
 banners (`design/mockups/proposed-quarter.css`, `design/mockups/closing-a-quarter.html`).
 
+### WO-3.79 — *What changed* names the cause honestly, and a recording closes the edit window
+
+**What was built.** Three repairs to what the Record dialog says about a changed quarter. Correction
+round 1 then changed the reader's rule that goes with the seal, to match the work order as amended
+on the owner's ruling of 2026-10-31.
+
+- **The setting line** (`SETTING_LINE` in `src/term-record-view.js`) reads *No score changed.
+  Something else did — weights, the letter scale, drop lowest, or an assignment's points, category or
+  term, or one held or deleted.* `tools/verify/term-record-cause.mjs` pins it by equality, and both
+  WO-3.75 checks that read it (Cole375, Ellis375) compare against the new words.
+- **A recording is a version boundary.** In `reviseCell()` (`src/score-history.js`), `sealed` (the
+  commit's rule) gains a second arm. A cell last written at or before the newest recording of its
+  class and term is pushed by the first live write after that recording, however soon. The held
+  branch never looks at a recording.
+  - **How the boundary arrives** (the work order left this open). The two score writers, `putCell()`
+    in `src/scores.js` and the past-due sweep in `src/past-due.js`, add three facts to the descriptor
+    they already build: `classId` and `termId` from the assignment, and `records`, the document's own
+    `termRecords` as stored.
+  - `reviseCell()` works out the newest recording itself, in a private `recordedBoundary()`.
+  - This adds no new import edge (`src/term-record.js` imports `src/scores.js`) and no new export
+    from `src/score-history.js` (§ 28's list is unchanged).
+- **`scoreChangeSince()` trusts the trail across a recording** (correction round 1, following the
+  amended Deliverable and Traps).
+  - `then` is the latest version at or before the recording whenever no commit follows it. The
+    reader has no five-minute test any more.
+  - Round 1 had kept WO-3.75's *not known* unless the version before the recording sat within five
+    minutes of the first version after it. That left a 4 typed weeks before and fixed a minute after
+    reading *not known*. The guard is gone.
+  - A commit after the recording still answers *not known* (WO-3.75).
+  - **No version at or before the recording** (`before < 0`) answers a **blank** `then`. Under the
+    seal, a cell that held anything at the recording keeps that version on its trail, so a trail that
+    starts after the recording means the cell held nothing then. This is stated at the point of
+    departure above `scoreChangeSince()`.
+  - The one exception is an earlier build's swallow, which the Traps accept: Dunn375 reads *5 → 8*
+    where the recording saw 6.
+- **`newestRecord()`** (`src/term-record.js`) compares `at` as the instant it names, through a private
+  `instantRank()`. An unparseable stamp ranks below every parseable one, and a tie still goes to the
+  later write.
+- **Docs and cache.**
+  - `docs/data-model.md` § Recording a quarter's grades carries *A recording is a version boundary*
+    and the reader's rule as amended, and names the earlier-build exception.
+  - `docs/data-model.md` § score history names the recording as the third boundary.
+  - `sw.js` goes from `planbook-shell-v202` to `v203` (round 1). That one bump covers both rounds'
+    changes to `src/score-history.js`, since neither has been deployed.
+
+- [x] A student whose grade moved only because an assignment was deleted gets the new setting line,
+      word for word.
+      — From the final run cited under the eighth line: `PASS | WO-3.79 (Acceptance 1): a
+      student whose grade moved only because an assignment was deleted gets the new setting line,
+      word for word — Fenn379, 50.00 F → 80.00 B once *Draft* went, reads exactly *No score changed.
+      Something else did — weights, the letter scale, drop lowest, or an assignment's points,
+      category or term, or one held or deleted.* and nothing else :: {"fenn":[["setting","No score
+      changed. Something else did — weights, the letter scale, drop lowest, or an assignment's points,
+      category or term, or one held or deleted."]], …}`.
+      Fenn's only change is *Draft* (Projects), deleted with its column. With Projects empty, its
+      weight redistributes, so no weight, scale or drop setting moved her. The check compares the
+      whole line by `JSON.stringify` equality.
+- [x] A score recorded at 4, edited to 9 one minute after the recording, reads *4 → 9 of 10*, not
+      *not known* — whether the 4 was typed two minutes or twenty days before the recording.
+      — **Two minutes:** `PASS | WO-3.79 (Acceptance 2, two minutes): … Gale379's 4 typed two
+      minutes before the recording is pushed by the 9 at R+1min, inside the five minutes, because the
+      recording sealed it :: {"gale":[["score","Act 2 quiz (Exams): 4 → 9 of 10"]],"cell":"{\"v\":9,\"at\":\"2026-10-29T20:15:29-04:00\",\"was\":[{\"v\":4,\"at\":\"2026-10-29T20:12:29-04:00\"}]}"}`.
+      **Twenty days:** `PASS | WO-3.79 (Acceptance 2, twenty days): … Hale379's 4 typed twenty days
+      before the recording, the 9 at R+1min: the reader trusts the trail across a recording, so the 4
+      at or before it is what it saw :: {"hale":[["score","Act 2 quiz (Exams): 4 → 9 of 10"]],"cell":"{\"v\":9,\"at\":\"2026-10-29T20:15:29-04:00\",\"was\":[{\"v\":4,\"at\":\"2026-10-09T20:14:29-04:00\"}]}"}`.
+      This check also requires that *not known* appears nowhere in the box. Every write goes through
+      `reviseCell()` with the descriptor the writers build.
+      **Through the grid's own writer** (`tools/verify/score-history.mjs`, typed at `#scoresBody`):
+      `PASS | WO-3.79: a recording is a version boundary through the grid's own writer — a 9 typed
+      over a 4 stamped a minute ago, after a recording of the class and term stamped thirty seconds
+      ago, PUSHES the 4 … :: {"cell":{"v":9,"at":"2026-10-31T20:12:10-04:00","was":[{"v":4,"at":"2026-10-31T20:11:09-04:00"}]}, …}`.
+      The stamps quoted on this line and the next three come from the clean run before the mutations,
+      on the same code. The final run's lines read the same with later stamps.
+- [x] Dunn375 (an earlier build's 6 at R−1min swallowed by 8 at R+2min) reads *5 → 8 of 10*, and its
+      check names that as the earlier-build limit the Traps accept.
+      — `PASS | WO-3.79 (Acceptance 3, the earlier-build limit the Traps accept): Dunn375 (an earlier
+      build's 6 at R−1min swallowed by 8 at R+2min) reads *5 → 8 of 10* — the reader trusts the trail
+      across a recording, the 5 from twenty days before is the latest version at or before it, and the
+      6 the recording saw is gone because the build that wrote this cell had no seal. Pinned as the
+      known limit (Record shipped 2026-10-29, WO-3.73), not deleted: no *6 →* and no *not known* ::
+      {"dunn":[["score","Act 2 quiz (Exams): 5 → 8 of 10"]],"engine":{…"then":{"v":5,"flag":""}…}}`.
+      The WO-3.75 check is re-pinned in place in `tools/verify/term-record-cause.mjs`. Dunn's cells are
+      still written with no column descriptor, the way an earlier build wrote them, and the fixture
+      guard still requires the 6 to be absent from the trail.
+- [x] A recording of another term, or of another class, does not seal: a cell written two minutes
+      before it and edited one minute after keeps one version, as WO-3.33's window has it.
+      — Typed through the grid (`src/scores.js`'s `putCell()`), in `tools/verify/score-history.mjs`:
+      `PASS | WO-3.79: a recording of another term, or of another class, does not seal: … Ada's
+      homework against a recording of this class's other term and Ben's against one of another class
+      with this term's id: each 9 replaces its 4, no `was` :: {"otherTerm":{"cell":{"v":9,"at":"2026-10-31T20:12:12-04:00"},"planted":{"had":false,"four":"2026-10-31T20:09:10-04:00","rec":"2026-10-31T20:11:10-04:00"}},"otherClass":{"cell":{"v":9,"at":"2026-10-31T20:12:13-04:00"},…}}`.
+      Each recording is planted on its own and removed before the next one is planted.
+- [x] The past-due sweep writing *missing* one minute after a recording keeps the version the
+      recording saw, driven through `src/past-due.js`'s own writer rather than read off its source.
+      — **The fixture:** a third class in `tools/verify/term-record-cause.mjs`.
+      - Ives379's *Reading log* held a 4 from twenty days back, cleared two minutes before the
+        recording. That leaves a blank with a past, which the sweep counts.
+      - `paintPastDue()` and `acceptPastDue()` are imported from the page's own module graph and run
+        on the device clock, a minute after the recording.
+
+      `PASS | WO-3.79: the past-due sweep writing *missing* one minute after a recording keeps the
+      version the recording saw … :: {…"recorded":["80.00 B"],"live":"40.00 F",…"asked":true,"wrote":true,"cell":"{\"v\":null,\"flag\":\"missing\",\"at\":\"2026-10-31T20:14:29-04:00\",\"was\":[{\"v\":4,\"at\":\"2026-10-11T20:13:29-04:00\"},{\"v\":null,\"at\":\"2026-10-31T20:11:29-04:00\"}]}"},"lines":[["score","Reading log (All work): Blank → Missing"]]}`.
+      The blank the recording saw is on the trail, and *What changed* reads it.
+- [x] Two recordings of one quarter stamped `…T01:30:00-04:00` and then `…T01:10:00-05:00` on
+      2026-11-01: `newestRecord()` returns the second.
+      — `PASS | WO-3.79 (Acceptance 6): … newestRecord() returns the second — and the second still
+      when written first, the later write on a tie, a parseable stamp over one that will not parse
+      either way round; and reviseCell() seals against that same second recording, pushing a 4
+      stamped between them :: {"inOrder":"second","reversed":"second","tie":"b","junk":"first/first","sealed":"[{\"v\":4,\"at\":\"2026-11-01T01:09:00-05:00\"}]"}`.
+- [x] With the seal removed, the check goes red; with `newestRecord()` comparing strings, the check
+      goes red. Both mutations are reverted, and `TESTING.md` § WO-3.79 shows the red output.
+      — Correction round 1 made two mutation runs. Each was stopped once `term-record-cause.mjs` had
+      printed its last WO-3.79 line, so neither log has a summary line. Before each cut, every other
+      line was a PASS: 1,415 PASS lines in each run.
+
+      **Run A, the seal removed**, in `reviseCell()` (`src/score-history.js`):
+      ```
+      const recorded = NaN; // MUTATION WO-3.79 — the seal removed
+      ```
+      ```
+      FAIL | WO-3.79: a recording is a version boundary through the grid's own writer — … :: {"cell":{"v":9,"at":"2026-10-31T20:33:06-04:00"},"planted":{"had":false,"four":"2026-10-31T20:32:05-04:00","rec":"2026-10-31T20:32:35-04:00"}}
+      FAIL | WO-3.79 (Acceptance 2, two minutes): … :: {"gale":[["score","Act 2 quiz (Exams): Blank → 9 of 10"]],"cell":"{\"v\":9,\"at\":\"2026-10-29T20:36:25-04:00\"}"}
+      FAIL | WO-3.79 (Acceptance 6): … :: {"inOrder":"second","reversed":"second","tie":"b","junk":"first/first","sealed":"{\"write\":true,\"cell\":{\"v\":9,\"at\":\"2026-11-01T01:12:00-05:00\"}}"}
+      FAIL | WO-3.79: the past-due sweep writing *missing* one minute after a recording … :: {… "lines":[["score","Reading log (All work): 4 of 10 → Missing"]]}
+      ```
+      - Gale379 (the 4 typed two minutes before, edited a minute after) goes red, and so does the
+        sweep.
+      - Hale379, Dunn375 and the other-term/other-class check stay green under this mutation, and
+        should. A 4 twenty days old is pushed by the five-minute rule with or without the seal. A
+        recording that does not seal looks the same as no seal at all.
+      - The reader is what pins Hale379 and Dunn375, so run B puts round 1's reader back.
+
+      **Run B, three mutations, each aimed at a different check:**
+      ```
+      // src/score-history.js scoreChangeSince(): round 1's five-minute guard back in the reader
+      const after = instantOf(versions[before + 1].at); // MUTATION WO-3.79
+      const prior = before < 0 ? NaN : instantOf(versions[before].at); // MUTATION WO-3.79
+      const pushedAcross = Number.isFinite(prior) && after - prior < REVISION_WINDOW_MS; // MUTATION WO-3.79
+      if ((Number.isFinite(committed) && committed > when) || (after - when < REVISION_WINDOW_MS && !pushedAcross)) return { then: null, now: now }; // MUTATION WO-3.79
+      // src/score-history.js recordedBoundary(): the boundary ignores class and term
+      if (!entry || typeof entry !== 'object') return; // MUTATION WO-3.79
+      // src/term-record.js newestRecord(): back on strings
+      if (newest === null || String(entry.at || '') >= String(newest.at || '')) newest = entry; // MUTATION WO-3.79
+      ```
+      ```
+      FAIL | WO-3.79: a recording of another term, or of another class, does not seal: … :: {"otherTerm":{"cell":{"v":9,"at":"2026-10-31T20:46:36-04:00","was":[{"v":4,"at":"2026-10-31T20:43:35-04:00"}]},…},"otherClass":{"cell":{"v":9,"at":"2026-10-31T20:46:37-04:00","was":[{"v":4,"at":"2026-10-31T20:43:36-04:00"}]},…}}
+      FAIL | WO-3.79 (Acceptance 3, the earlier-build limit the Traps accept): … :: {"dunn":[["score","Act 2 quiz (Exams): now 8 of 10 — what it held when you recorded is not known"]],…"then":null…}
+      FAIL | WO-3.79 (Acceptance 2, twenty days): … :: {"hale":[["score","Act 2 quiz (Exams): now 9 of 10 — what it held when you recorded is not known"]],…}
+      FAIL | WO-3.79 (Acceptance 6): … :: {"inOrder":"first","reversed":"first","tie":"b","junk":"junk/junk","sealed":"[{\"v\":4,\"at\":\"2026-11-01T01:09:00-05:00\"}]"}
+      ```
+      **Reverting.** Each mutated file was restored from a copy taken before the mutation, and
+      nothing else was written first. Then:
+      - `grep -rn "MUTATION WO-3.79" src tools sw.js index.html` printed nothing.
+      - `grep -rn MUTATION src tools sw.js index.html | wc -l` printed 18, the same as
+        `git grep -n MUTATION HEAD -- src tools sw.js index.html | wc -l`. These are pre-existing
+        prose.
+      - The md5 of `git diff src/ tools/verify/` matched the one taken before the clean run
+        (`36e43c23d0f8e7c1500dfe53f712b86d`).
+
+      Round 1's own two mutation runs, made against round 1's reader, are in
+      `.claude/dispatch/WO-3.79-result.md`.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs` on the final tree, 2026-10-31, real clock: `2166 checks ·
+      2166 passed · 0 failed · 0 skipped`, `70,019 lines · 32.3 lines per check · 1197s`, `EXIT=0`,
+      every WO-3.79 and WO-3.75 line a PASS. That is three more than round 1's 2163, from the three new
+      call sites, all executed. The md5 of `git diff src/ tools/verify/` at its start was
+      `36e43c23d0f8e7c1500dfe53f712b86d`, the same as the clean pre-mutation run (also
+      2166/2166, 1220s, `EXIT=0`).
+      **One run before it is reported, not hidden.** On the same tree (same md5) it read
+      `2158 checks · 2155 passed · 3 failed`, `EXIT=1`. The failures were all in Phase 7's
+      `verify/sync-button.mjs`: `TypeError: Cannot read properties of undefined (reading 'driveSync')`
+      after a pinned-clock reload, then two knock-on checks in the sections after it. No file this work
+      order touches is in that path. A plain re-run with nothing changed gave the green run above, so
+      this reads as a boot-timing flake, and it is named as a follow-up in the result file.
+      `node tools/wo-sweep.mjs`: `52 checks · 49 passed · 0 failed · 3 to review`, exit 0. The three are the standing
+      reviews. The call-site check reads 2159, matching `tools/README.md`, and the `CACHE` check is green
+      on the uncommitted `planbook-shell-v203`.
+- [x] `TESTING.md` § WO-3.79 carries these lines verbatim with the evidence for each.
+      — This section: the nine lines of the amended phase file, copied verbatim.
+
+**Files.**
+- `src/score-history.js`: `recordedBoundary()`, the seal in `reviseCell()`, the reader in
+  `scoreChangeSince()`, the banners.
+- `src/scores.js` and `src/past-due.js`: the descriptor.
+- `src/term-record.js`: `newestRecord()`, `instantRank()`.
+- `src/term-record-view.js`: `SETTING_LINE`.
+- `docs/data-model.md`.
+- `sw.js`: `v202` → `v203`.
+- `tools/verify/term-record-cause.mjs`: the new wording, Dunn375 re-pinned, a second fixture class,
+  and a third for the sweep.
+- `tools/verify/score-history.mjs`: the grid check, and the other-term and other-class check.
+- `tools/README.md`: the count and the ledger.
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*
