@@ -6227,9 +6227,15 @@ the home card's* N to grade*, because `heldWork()` feeds it.*
   gains a held twin of `uncategorizedWork()`. That is the implementer's call, stated at the point of
   departure. `openWork()` is not widened, and no screen tests a cell or reads `.held` (`wo-sweep.mjs`
   § 30).
-- **One question for the owner at `--start`**: whether held uncategorized work appears on the home
-  card under its held word, the way held categorized work does, or stays off the card. Whichever is
-  ruled, *N to grade* still counts only open work.
+- **Ruled by the owner, 2026-11-01, before `--start`: held uncategorized work shows on the home card
+  and the queue under its held word, exactly as held categorized work does.** The question was
+  whether it should show there or stay off the card. *N to grade* still counts only open work. Two
+  reasons:
+  - **WO-3.47's rule names the home card.** Counting toward nothing is not the same as hidden, and
+    leaving off only the uncategorized held columns would make the card depend on how a column was
+    filed. A teacher would hold a column and then not find it where held work normally shows.
+  - **The hero's *· N held* line must agree with the held card** (the owner's 2026-11-01 ruling on
+    WO-3.70). The simplest way to keep them agreeing is to give uncategorized work no special case.
 - **A mutation**: drop the uncategorized half from the held reader, show the check go red, and revert
   it before writing anything else.
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.80** and the `CHANGELOG.md` entry.
@@ -6238,8 +6244,8 @@ the home card's* N to grade*, because `heldWork()` feeds it.*
 - [ ] A held column filed under no category, with one blank and one excused cell, is listed on
       student detail's held card and in the student CSV's held rows, in a weighted class and in a
       points class.
-- [ ] The home card and the queue show it as the owner's `--start` ruling says, and *N to grade* is
-      unchanged by the hold.
+- [ ] The home card and the queue show it under its held word, as they show a held categorized
+      column, per the owner's 2026-11-01 ruling, and *N to grade* is unchanged by the hold.
 - [ ] No projection's figures move, and committing the column moves its work back to open exactly
       as a categorized column's does.
 - [ ] With the uncategorized half dropped from the held reader, the check goes red. The mutation is
@@ -6270,11 +6276,27 @@ only. That means a `missing` mark on uncategorized work is never named. In a poi
 - **The four readers take in the `missing` rows of `uncategorizedWork()`** beside `openWork()`'s,
   grouped or named under *no category* where a reader groups. Neither `openWork()` nor any projection
   is widened.
-- **One question for the owner at `--start`**: in a **weighted** class, uncategorized work is in no
-  grade (the owner, 2026-10-23). Should its missing mark still count toward the concern list's
-  missing rule and `{{missing.count}}`? Or should it count in a points class only, where the zero is
-  charged? The card and the CSV list it in either mode. Listing it is a fact; counting it is what
-  this question decides.
+- **Ruled by the owner, 2026-11-01, before `--start`: it counts as missing everywhere, and it costs
+  points only where the class charges them.** The question was: in a **weighted** class,
+  uncategorized work is in no grade (the owner, 2026-10-23), so should its missing mark still count
+  toward the concern list's missing rule and `{{missing.count}}`, or count in a points class only,
+  where the zero is charged? **It counts in both kinds of class**: the card, the CSV,
+  `{{missing.list}}`, `{{missing.count}}` and the missing-count rule all take it in a weighted class
+  as in a points class. Three reasons:
+  - **The missing rule asks whether work is being handed in, not what the grade is.** Falling grades
+    and low scores have their own rules, and a missing mark on uncategorized work is still work not
+    handed in.
+  - **A count must agree with the list beside it.** The card lists the mark in either mode, so
+    `{{missing.count}}` reading 2 over a list of three would be the screen disagreeing with itself,
+    and the same mismatch would reach a guardian's email.
+  - **Uncategorized is usually a filing slip.** Giving the assignment a category makes the mark count
+    anyway, so counting it now keeps the concern list from depending on whether the gradebook has
+    been tidied yet.
+
+  **The limit that comes with the ruling**: in a weighted class nothing may treat the mark as costing
+  points. No projection takes it in, and no sentence (a concern explanation, a merge field, a card
+  line) may say or imply that it lowers the grade there. That half stays with `openWork()` and the
+  grade engine, which already leave it out.
 - **`src/merge-fields.js` keeps its whitelist untouched** (§ 20's five claims). The change is in what
   the resolver for an existing name reads, not in which names exist.
 - **A mutation per reader that can go silently wrong**: at least the card and `{{missing.list}}`.
@@ -6285,8 +6307,9 @@ only. That means a `missing` mark on uncategorized work is never named. In a poi
 - [ ] In a points class, an uncategorized assignment marked missing is listed on student detail's
       *Missing work* card, in the student CSV, and in a draft using `{{missing.list}}`, each under or
       beside *no category*.
-- [ ] In a weighted class, the same mark is listed on the card and in the CSV, and counts toward the
-      missing rule and `{{missing.count}}` as the owner's `--start` ruling says.
+- [ ] In a weighted class, the same mark is listed on the card, in the CSV and in `{{missing.list}}`,
+      and counts toward the missing rule and `{{missing.count}}`, per the owner's 2026-11-01 ruling,
+      and no sentence claims it lowers the grade.
 - [ ] No projection's figures move, and no grade changes.
 - [ ] With the uncategorized reader dropped from the card and from `{{missing.list}}`, each check goes
       red. Both mutations are reverted, and `TESTING.md` § WO-3.81 shows the red output.
