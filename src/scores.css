@@ -905,11 +905,17 @@
   letter-spacing: 0.5px; text-transform: uppercase;
   border-bottom: 1.5px solid #eef0f4; vertical-align: bottom;
 }
-/* The name column and its head read left; everything else in this table is a number under a
-   centred head. */
-.grades-report-student-head, .grades-report-row-head { text-align: left; }
+/* The name column and its head read left, the grade column and its head read right; everything else
+   in this table is a number under a centred head. SCOPED TO THE TABLE SINCE WO-2.62: the table-wide
+   centring above is (0,1,1), and these two rules were (0,1,0) and lost to it on head and cell alike
+   — contrary to the sentence above, which was true of no cell. At (0,2,0) they win on a `th` and a
+   `td` the same way, so a head and its column move together. The print block at the foot of this
+   sheet names each head beside its cells for the same reason. */
+.grades-report-table .grades-report-student-head,
+.grades-report-table .grades-report-row-head { text-align: left; }
 .grades-report-row-head { font-weight: 600; color: #1a1a2e; }
-.grades-report-total-head, .grades-report-total { text-align: right; white-space: nowrap; }
+.grades-report-table .grades-report-total-head,
+.grades-report-table .grades-report-total { text-align: right; white-space: nowrap; }
 
 /* ── ONE COLUMN HEAD ── */
 /* Three lines, the same three the score grid's own head carries and in the same order of
@@ -1321,6 +1327,12 @@
   /* The millimetres ASSIGNMENTS_PER_SLICE is computed from, declared where the browser can act on
      them: 42 + 16 + 8 x 16 = 186mm inside A4's 190. The name is clipped rather than allowed to
      widen the column, because one long surname must not take a column of work off the page. */
+  /* EACH COLUMN'S HEAD IS NAMED BESIDE ITS CELLS (WO-2.62). Until then these two rules named the
+     cells alone, so on paper the names sat left and the grades right under a centred *Student* and
+     a centred *Grade* — on the sheet a teacher re-keys Blackbaud from. The screen rules above now win
+     for head and cell alike, so these restate rather than repair; they stay one rule per column, not
+     a cell rule and a head rule, so the two halves of a column cannot be edited apart. */
+  body[data-grades-print] .grades-report-student-head,
   body[data-grades-print] .grades-report-row-head {
     max-width: 42mm; overflow: hidden; text-align: left;
   }
@@ -1334,6 +1346,7 @@
     min-width: 0; padding: 0; border: none !important;
     background: none !important; color: #000; font-size: 7.5pt;
   }
+  body[data-grades-print] .grades-report-total-head,
   body[data-grades-print] .grades-report-total { width: 16mm; text-align: right; }
   body[data-grades-print] .grades-report-pct { font-size: 8pt; color: #000; }
   body[data-grades-print] .grades-report-pct.none { color: #000; }

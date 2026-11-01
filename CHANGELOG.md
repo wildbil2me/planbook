@@ -13,6 +13,20 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Every report's numbers sit under their own heads — 2026-11-01
+
+WO-2.62. `CACHE` v207 → v208.
+
+- **Each count is now right-aligned under its own column head** in the attendance record's
+  *By student* tab, the student page's term table and day by day, and both hall-pass tables.
+  Before, every count sat one column to the left of where it seemed to belong.
+- **On a printed grade sheet, *Student* sits over the names and *Grade* over the totals.**
+- **A term with no recorded meetings shows `—`** in its Attendance column instead of a sentence that
+  spilled into the Meetings column; a screen reader still says *No recorded meetings*. The student
+  page's attendance title still uses the sentence, and so do emails.
+- The student page builds its term row with the same code as the attendance record, so the two
+  tables cannot drift apart.
+
 ### Missing work filed under no category is listed — 2026-11-01
 
 WO-3.81. `CACHE` v206 → v207.

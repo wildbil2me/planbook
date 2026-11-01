@@ -217,6 +217,18 @@ import { registerPrintGate } from './print-gate.js';
 */
 import { studentPassCard } from './pass-history.js';
 /*
+  AND ONE ROW OF THE TERM TABLE (WO-2.62), on the same arrangement and for the same reason: one
+  builder renders the row for the record's By student summary and for this page, so the two cannot
+  drift. This file carried attTotalsRow(), a word-for-word copy, from WO-2.60 until the first change
+  that had to reach both — the dash in a row with no recorded meetings. It hands over a label, the
+  totals its own readers above produced, and whether the row is the open term; it never counts.
+
+  NO LOOP: src/attendance-report.js's import graph, walked transitively at WO-2.62, reaches twenty
+  modules and src/detail.js is not one of them. An import added there that reaches this file would
+  close a loop, and the walk is the check to repeat.
+*/
+import { totalsRow } from './attendance-report.js';
+/*
   AND THE LOG CARD (WO-4.4), on exactly the arrangement above and for the same three reasons. This
   file passes one student id and appends what comes back; it never reads `log`, never counts an
   entry, never words one, and never asks whether presentation mode is on. That last one matters more
@@ -1039,12 +1051,12 @@ function attendanceCard(cls, student, term) {
   const tbody = el('tbody');
   getTerms(cls.id).forEach((t) => {
     const open = !!(term && term.id === t.id);
-    tbody.append(attTotalsRow(t.label + (open ? ' — open' : ''),
+    tbody.append(totalsRow(t.label + (open ? ' — open' : ''),
       termTotals(cls.id, student.id, t), open));
   });
   /* The year under the terms rather than beside them: the same student over a wider window, and what
      a guardian asks about second. */
-  tbody.append(attTotalsRow('Whole year', attendanceTotals(cls.id, student.id), false));
+  tbody.append(totalsRow('Whole year', attendanceTotals(cls.id, student.id), false));
   terms.append(tbody);
   card.append(terms);
 
@@ -1130,17 +1142,6 @@ function attCell(tag, className, text) {
   if (tag === 'th') node.setAttribute('scope', className === 'attendance-report-row-head'
     ? 'row' : 'col');
   return node;
-}
-
-/* One row of the term table: the label, the five counts in MARKS order, the meetings and the
-   percentage in the registry's own words. The dialog's totalsRow(), moved with its table. */
-function attTotalsRow(label, totals, open) {
-  const tr = el('tr', open ? 'attendance-report-open' : '');
-  tr.append(attCell('th', 'attendance-report-row-head', label));
-  MARKS.forEach((mark) => tr.append(el('td', 'attendance-report-num', String(totals[mark.code]))));
-  tr.append(el('td', 'attendance-report-num', String(totals.meetings)));
-  tr.append(el('td', 'attendance-report-num', percentText(totals)));
-  return tr;
 }
 
 /* ────────────────────────────── the screen ────────────────────────────── */

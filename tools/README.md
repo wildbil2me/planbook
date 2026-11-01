@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2191 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2199 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -3173,6 +3173,20 @@ uncategorized held blank, whose held card lists the categorized row first. `held
 that student in its fixture and now compares the queue in draw order, with no new site. Full run:
 `2193 checks · 2193 passed · 0 failed · 0 skipped`, 71,349 lines, 32.5 lines per check, 1222s, exit
 0, 2026-11-01 on the real clock.
+
+**WO-2.62 moved it from 2191 to 2199, and the executed count from 2193 to 2205 — eight sites, twelve
+results, one new file.** `verify/report-alignment.mjs`, registered directly after `verify/print-sheets.mjs`:
+one class on two terms, the record's *By student* summary, the student page's term table and day by
+day, the hall-pass dialog's per-student counts and both trip tables, and the grade sheet, each read
+for the computed `text-align` of every head against every cell under it and against what the column
+is for, on screen and under each of the three print attributes; a CSSOM check that no rule aligns one
+half of a grade-sheet column without the other or aligns a column class under a table part; the dash
+and its accessible name, read from the accessibility tree, on the record and the term table; and the
+fixture's removal. The per-table check is one site in a six-pass loop — hence six results from it —
+and the eighth site is the fixture-guard arm, which a run that plants cleanly never reaches.
+`verify/excused-report.mjs`'s golden text had its two term-table percentage cells edited to `—`, with
+no new site. Full run: `2205 checks · 2205 passed · 0 failed · 0 skipped`, 71,830 lines, 32.6 lines
+per check, 1233s, exit 0, 2026-11-01 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

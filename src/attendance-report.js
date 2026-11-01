@@ -539,12 +539,30 @@ function wordFor(code) {
   return known ? known.word : code;
 }
 
-function totalsRow(label, totals, open) {
+/*
+  ONE ROW OF A TERM TABLE — the label, the five counts in MARKS order, the meetings and the
+  percentage. EXPORTED SINCE WO-2.62, and the one builder for both tables that draw it: the record's
+  By student summary below, and the student page's term table in src/detail.js, which carried a
+  word-for-word copy of this function from WO-2.60 until the first change that had to reach both.
+  The studentPassCard() arrangement (src/pass-history.js) — one builder, so the two cannot drift.
+
+  A ROW WITH NO RECORDED MEETINGS READS `—` IN ITS PERCENTAGE CELL (the owner's ruling,
+  2026-11-01), the mark the pass tables already use for nothing to count, and the cell carries the
+  sentence as its accessible name. percentText()'s sentence is a cell wider than the column it sits
+  in: it reads as the Meetings column's value, which is the screenshot that booked WO-2.62.
+  percentText() itself is NOT changed — the student page's card title, its term-history line and
+  the merge fields all use the sentence where it has room, and a dash in a guardian's email is a
+  different bug. The CSV keeps its empty cell (recordCsv(), below).
+*/
+const NO_MEETINGS = 'No recorded meetings';
+export function totalsRow(label, totals, open) {
   const tr = el('tr', open ? 'attendance-report-open' : '');
   tr.append(cell('th', 'attendance-report-row-head', label));
   MARKS.forEach((mark) => tr.append(el('td', 'attendance-report-num', String(totals[mark.code]))));
   tr.append(el('td', 'attendance-report-num', String(totals.meetings)));
-  tr.append(el('td', 'attendance-report-num', percentText(totals)));
+  const pct = el('td', 'attendance-report-num', totals.percent === null ? '—' : percentText(totals));
+  if (totals.percent === null) pct.setAttribute('aria-label', NO_MEETINGS);
+  tr.append(pct);
   return tr;
 }
 

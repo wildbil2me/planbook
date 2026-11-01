@@ -81,8 +81,11 @@ const GOLDEN = {
     + 'rade, and these are Ben Bramble\u2019s \u2014 the scores the Scores screen strikes through and m'
     + 'arks dropped. They are kept and count toward nothing in the grade above. A later, lower score ta'
     + 'kes the drop over by itself. A score marked missing is never dropped.Attendance \u00b7 No record'
-    + 'ed meetings0Present0Tardy0Absent0Event0DismissedTermPTAEDMeetingsAttendanceQ2 \u2014 open000000N'
-    + 'o recorded meetingsWhole year000000No recorded meetingsOut of 0 recorded meetings in Q2 \u2014 n'
+    + 'ed meetings0Present0Tardy0Absent0Event0DismissedTermPTAEDMeetingsAttendanceQ2 \u2014 open000000'
+    /* WO-2.62: the term table's percentage cell reads a dash where it read the sentence, with the
+       sentence as the cell's accessible name, which textContent does not carry. Two cells, edited
+       by hand from the build before; nothing else in this golden moved. */
+    + '\u2014Whole year000000\u2014Out of 0 recorded meetings in Q2 \u2014 n'
     + 'ot school days. A day this class did not meet, a holiday, and a day nobody has marked yet all co'
     + 'unt toward nothing in either direction.Q2, day by day \u00b7 0 meetingsNo meetings have been rec'
     + 'orded for WO-3.70 Excused report in this term yet. A day only appears here once it has been take'

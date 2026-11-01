@@ -1031,8 +1031,13 @@
   letter-spacing: 0.5px; text-transform: uppercase;
   border-bottom: 1.5px solid #eef0f4; white-space: nowrap;
 }
-.attendance-report-num { text-align: right; white-space: nowrap; }
-.attendance-report-table thead th.attendance-report-num { text-align: right; }
+/* THE NUMBER COLUMN, HEAD AND CELL ALIKE (WO-2.62). The table-wide rule above is (0,1,1) and a bare
+   `.attendance-report-num` is (0,1,0), so the column rule lost on every cell. A `thead th` patch
+   once repaired the head and nothing under it — heads sat right, numbers sat left, and each count
+   read as the column before it. Scoped to the table, at (0,2,0), it beats the table-wide rule on a
+   `th` and a `td` the same way, so a head and its column cannot be told apart by any selector here.
+   Do not add a head-only rule beside it; that is the shape of the defect, not a repair of one. */
+.attendance-report-table .attendance-report-num { text-align: right; white-space: nowrap; }
 .attendance-report-row-head { font-weight: 600; color: #1a1a2e; }
 /* The term the registry behind this dialog is on, in the interactive wash the rest of this app uses
    for "you are here" — Roll Call!'s `.sr-q-current` in Planbook's palette. */

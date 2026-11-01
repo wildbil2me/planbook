@@ -12710,6 +12710,116 @@ written.** Both were run on a scratch copy of the entry file restricted to `focu
 | **M2** the field's padding back to 11px left and right, fine and coarse | `35 checks · 32 passed · 2 failed`: the fine line-2 check and the coarse check |
 | Reverted, full run | `1918 checks · 1918 passed · 0 failed · 0 skipped`, 922s, exit 0 |
 
+### WO-2.62 — every report's numbers sit under their own heads, and the term row is one builder
+
+**What this changes for a teacher: in the record's *By student* tab, the student page's term table
+and day by day, both hall-pass tables, each count now sits under its own letter — right-aligned under
+a right-aligned head — and on a printed grade sheet *Student* sits over the names and *Grade* over the
+totals.** A row with no recorded meetings reads `—` in its Attendance cell, where the sentence used
+to sit wide enough to read as the Meetings column's value; a screen reader still hears *No recorded
+meetings*. The card title above the student page's table still says the sentence. Under the hood:
+`src/attendance.css`'s number column rule is scoped to the table, `(0,2,0)`, so it wins on head and
+cell alike, and the `thead th` patch that repaired only the head is deleted; `src/scores.css`'s
+student and grade column rules are scoped the same way, and the print block names each head beside
+its cells in one rule; `totalsRow()` is exported from `src/attendance-report.js` and
+`src/detail.js`'s copy, `attTotalsRow()`, is deleted. `percentText()` is untouched, and so are both
+CSVs. `src/pass-history.js` needed nothing — it wears the class and the CSS reached it.
+
+- [x] In each of the five `.attendance-report-num` tables and in the grade sheet, every head's
+      computed `text-align` equals its column's cells', on screen and under each print attribute
+      that applies to it.
+      — New section `tools/verify/report-alignment.mjs`, registered directly after
+      `verify/print-sheets.mjs`. It plants its own class (two students, two terms; term A has three
+      meetings, two trips and two graded assignments), opens each surface through its real door,
+      and for every column reads the **computed** `text-align` of the head and of every `tbody` and
+      `tfoot` cell under it — on screen, then with each of `data-attendance-print`,
+      `data-grades-print` and `data-detail-print` set on `<body>` under emulated print media. Every
+      table is read under **all four** conditions, which covers "each print attribute that applies
+      to it" and more. Rows whose cells do not line up one to one with the heads (the trip table's
+      note row, one cell spanning the table) are left out. Each column is also checked against
+      what it is for (number → right, name/date/mark → left, a grade-sheet assignment → centre),
+      because once the `thead` patch is gone a reverted column rule leaves heads and cells agreeing
+      at left, and a head-equals-cell check alone would pass that. Six checks, one per table: the
+      record's By student summary, the term table, day by day, the pass dialog's per-student counts
+      with its *All of …* footer (a seventh check confirms the footer was read), the trip table in
+      the dialog **and** on the student page, and the grade sheet. All PASS on the delivered tree,
+      e.g. *"4 readings, 8 body rows compared, heads ["left","right",…]"* for the record and
+      *"heads ["left","center","center","right"]"* for the grade sheet. **Against the tree before
+      this work order** (both stylesheets put back from `HEAD`, scratch subset run): 8 of 16 checks
+      red, and the grade-sheet line reads exactly the booked defect on paper —
+      *"data-grades-print #1: row 1 col 1: head center, cell left (Able, Ana) · … row 1 col 4: head
+      center, cell right (86.67%B)"*; the attendance tables read *"head right, cell left"* on every
+      number cell.
+      **One structural check sits beside them** (see line 4): every stylesheet rule that sets
+      `text-align` and names one half of a grade-sheet column must name the other half, and no rule
+      may align a column class under `thead`/`tbody`/`tfoot`/`th`/`td`. Delivered tree: *"5
+      text-align rule(s) naming a column class, across 12 sheet(s), every pair whole"*.
+- [x] A student with no recorded meetings reads `—` in the percentage cell of the record's
+      *By student* tab and of the student page's term table, and that cell's accessible name is
+      *No recorded meetings*. The student page's card title still reads *Attendance · No recorded
+      meetings*.
+      — `verify/report-alignment.mjs`, with term B (no meetings) selected. Record: both rows read
+      `{"text":"—","label":"No recorded meetings","scope":"row","head":"TH"}`, and the accessible
+      names **read from Chromium's accessibility tree** (`Accessibility.getPartialAXTree` on each
+      cell, not the attribute) are `["No recorded meetings","No recorded meetings"]`. Student page:
+      term B's row reads `—` with that name; term A's row reads `67%` and the *Whole year* row a
+      percentage, both with **no** `aria-label`; the AX name of term B's cell is *No recorded
+      meetings*; the card title reads exactly `Attendance · No recorded meetings`. The dash rows are
+      read for alignment under all four conditions too (separate check, PASS). `percentText()` is
+      not in `git diff`. `tools/verify/excused-report.mjs`'s WO-3.70 golden text held the term
+      table's two old cells (`000000No recorded meetings`); those two cells were edited to `—` by
+      hand, with a comment saying so, and nothing else in the golden moved — `textContent` does not
+      carry an `aria-label`, so the card title's sentence is still in it.
+- [x] `src/detail.js` contains no `attTotalsRow`, and imports `totalsRow` from
+      `src/attendance-report.js`; row heads keep `scope="row"`.
+      — `grep -n attTotalsRow src/detail.js` returns nothing; `import { totalsRow } from
+      './attendance-report.js';` sits under the `studentPassCard` import with a comment naming the
+      arrangement. `scope="row"` read on every row head of both tables by the line-2 checks above.
+      **No import loop:** `src/attendance-report.js`'s imports walked transitively (static `import
+      … from` and dynamic `import()`, multi-line forms included) reach 20 modules — `alert-sound`,
+      `attendance`, `backup`, `calendar`, `categories`, `classes`, `grade-engine`, `letter-scale`,
+      `live-region`, `modal`, `passes`, `prefs`, `print-gate`, `roster`, `save-indicator`, `store`,
+      `supports`, `views`, `year-picker`, `zip` — and `src/detail.js` is not among them.
+- [x] With either mutation in place the check goes red; both are reverted, and `TESTING.md`
+      § WO-2.62 shows the red output.
+      — Table below. **M1 goes red on the computed checks; M2 goes red only on the structural
+      check**, and that is stated rather than hidden: once the screen rules win for head and cell
+      (this work order's own fix), the grade sheet's print rules restate rather than repair, so
+      dropping a head from them computes exactly the same alignment on paper. A computed reading
+      cannot see it; the CSSOM check exists for that and nothing else. "The grade sheet's print head
+      rule" is read as the head selectors in the two print rules, since the delivered print rules
+      name head and cell in one rule rather than adding a head-only rule (the Traps line).
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      — `node tools/verify-shell.mjs` on the reverted, delivered tree: `2205 checks · 2205 passed ·
+      0 failed · 0 skipped`, 71,830 lines, 32.6 lines per check, 1233s, exit 0, 2026-11-01 on the
+      real clock — the twelve WO-2.62 results among them, and WO-3.70's two byte-identical checks
+      green on the edited golden. `node tools/wo-sweep.mjs`: `52 checks · 49 passed · 0 failed · 3 to
+      review` (the standing REVIEWs), exit 0, with `tools/README.md`'s call-site count moved 2191 →
+      2199. `CACHE` is `planbook-shell-v207` → `v208`.
+- [x] 👤 On the iPad, after a force-quit: the record's *By student* tab and a student page's term
+      table, numbers under their heads. On paper from the laptop: one grade sheet, *Student* over the
+      names and *Grade* over the totals.
+      — Read by the owner on 2026-11-01 against the local server, after a force-quit with About
+      reading v208: the *By student* counts under P T A E D, Meetings and Attendance with `—` for a
+      term with no meetings, the student page's term table under its heads, and one printed grade
+      sheet with *Student* over the names and *Grade* over the totals. All green.
+- [x] `TESTING.md` § WO-2.62 carries these lines verbatim with the evidence for each.
+      — This section.
+
+**Mutation rounds, each marked `MUTATION WO-2.62` while live and reverted with `git checkout`
+against the staged delivered tree before anything else was written.** Run on a scratch copy of the
+entry file (in the session scratchpad, not in `tools/`) restricted to `localstorage-prefs` (which
+sets the seam the section gates on) and `report-alignment`; the full run is on the reverted tree.
+`grep -rn MUTATION src tools/verify tools/verify-shell.mjs index.html sw.js` afterwards finds only
+the pre-existing prose uses.
+
+| Tree | Result |
+|---|---|
+| Delivered tree, subset (+ `excused-report`) | `26 checks · 26 passed · 0 failed · 0 skipped`, exit 0 |
+| **M1** `.attendance-report-table .attendance-report-num` put back to `.attendance-report-num` | `16 checks · 10 passed · 6 failed`, exit 1: the record, term table, day by day, pass counts, trip table and dash-row term table checks, each *"heads ["left","left",…], want ["left","right",…]"* under all four conditions. The grade-sheet and structural checks stay green, correctly |
+| **M2** `body[data-grades-print] .grades-report-student-head` and `.grades-report-total-head` removed from the print rules | `16 checks · 15 passed · 1 failed`, exit 1: the structural check — *"scores.css @media print { body[data-grades-print] .grades-report-row-head } names .grades-report-row-head without .grades-report-student-head · … .grades-report-total without .grades-report-total-head"*. The computed grade-sheet check stays green (see line 4) |
+| Pre-WO-2.62 stylesheets from `HEAD` (not a required mutation; the booked defect itself) | `16 checks · 8 passed · 8 failed`, exit 1, including the `thead th.attendance-report-num` rule caught by the structural check as a head-only rule |
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

@@ -154,6 +154,7 @@ import { run as termRecordCause } from './verify/term-record-cause.mjs';
 import { run as accommodationPrompts } from './verify/accommodation-prompts.mjs';
 import { run as printGate } from './verify/print-gate.mjs';
 import { run as printSheets } from './verify/print-sheets.mjs';
+import { run as reportAlignment } from './verify/report-alignment.mjs';
 import { run as buildLine } from './verify/build-line.mjs';
 import { run as workerTakeover } from './verify/worker-takeover.mjs';
 import { run as stuckUpdate } from './verify/stuck-update.mjs';
@@ -492,6 +493,10 @@ const BROWSER_SECTIONS = [
      both presentation modes, and the belt in src/shell.css. It seeds its own class and takes it back
      out at its foot, so it depends on its neighbours in neither direction. */
   { file: 'verify/print-sheets.mjs', run: printSheets },
+  /* WO-2.62, directly after the sheets: every head of the five `.attendance-report-num` tables and
+     the grade sheet read against its column's cells, on screen and under each print attribute. It
+     seeds its own class, reloads first at 1280x900, and takes the class back out at its foot. */
+  { file: 'verify/report-alignment.mjs', run: reportAlignment },
   { file: 'verify/build-line.mjs', run: buildLine },
   { file: 'verify/worker-takeover.mjs', run: workerTakeover },
   /* WO-8.18, after the two sections that read the worker's caches: it plants an old shell cache,

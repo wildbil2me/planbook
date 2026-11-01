@@ -6443,7 +6443,7 @@ border-radius only since 16.4**; the 👤 line is where that is settled, not a h
 
 ## WO-2.62 — every report's numbers sit under their own heads, and the term row is one builder
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.59 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-11-01 · **Size** S · **Depends on** WO-2.59 · **Blocks** nothing
 **Closes roadmap** *(no box. Owner-directed, 2026-11-01.)*
 
 **Booked 2026-11-01**, owner-directed, from a screenshot of the attendance record's *By student*
@@ -6506,22 +6506,22 @@ correctly — one cell per head, in order. **The stylesheets pull them apart, an
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-2.62** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] In each of the five `.attendance-report-num` tables and in the grade sheet, every head's
+- [x] In each of the five `.attendance-report-num` tables and in the grade sheet, every head's
       computed `text-align` equals its column's cells', on screen and under each print attribute
       that applies to it.
-- [ ] A student with no recorded meetings reads `—` in the percentage cell of the record's
+- [x] A student with no recorded meetings reads `—` in the percentage cell of the record's
       *By student* tab and of the student page's term table, and that cell's accessible name is
       *No recorded meetings*. The student page's card title still reads *Attendance · No recorded
       meetings*.
-- [ ] `src/detail.js` contains no `attTotalsRow`, and imports `totalsRow` from
+- [x] `src/detail.js` contains no `attTotalsRow`, and imports `totalsRow` from
       `src/attendance-report.js`; row heads keep `scope="row"`.
-- [ ] With either mutation in place the check goes red; both are reverted, and `TESTING.md`
+- [x] With either mutation in place the check goes red; both are reverted, and `TESTING.md`
       § WO-2.62 shows the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] 👤 On the iPad, after a force-quit: the record's *By student* tab and a student page's term
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the iPad, after a force-quit: the record's *By student* tab and a student page's term
       table, numbers under their heads. On paper from the laptop: one grade sheet, *Student* over the
       names and *Grade* over the totals.
-- [ ] `TESTING.md` § WO-2.62 carries these lines verbatim with the evidence for each.
+- [x] `TESTING.md` § WO-2.62 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Do not add another head-only rule**; that is the patch this work order deletes.
 **Do not change `percentText()`**: the merge fields read it and a dash in a guardian's email is a
