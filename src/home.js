@@ -157,8 +157,9 @@ import { getActiveClasses, getSelectedClassId, getOpenTermId, initials, avatarCl
 /* The signals slot's first content, from the module that owns what "not graded yet" IS. Nothing
    here looks at a cell: src/grade-engine.js's openWork() answers that question once, for this card
    and for the grade detail both, which is what stops a card and the screen it opens disagreeing
-   about the same class's unfinished work. heldWork() is its sibling for held columns (WO-3.47). */
-import { openWork, heldWork } from './grade-engine.js';
+   about the same class's unfinished work. heldWork() is its sibling for held columns (WO-3.47), and
+   uncategorizedWork() its sibling for work filed under no category (WO-3.76). */
+import { openWork, heldWork, uncategorizedWork } from './grade-engine.js';
 /* The students who need attention, POST-COOLDOWN, from the module that owns both answers. Nothing
    here decides whether a rule fired or whether a signal is silenced: src/signals.js decides it once,
    for this card and for the list the card's own class opens onto, which is what stops a chip saying
@@ -411,6 +412,14 @@ function rosterIdsOf(cls, doc) {
   most unfinished work a class has. Its rows are the engine's heldWork() — the same branch, the same
   three states, the same `open`-only filter — so nothing here asks whether a column is held, and a
   commit moves the column from that source to openWork() without the Set ever holding it twice.
+
+  WORK FILED UNDER NO CATEGORY IS STILL TO GRADE TOO, IN EITHER GRADING MODE (WO-3.76, the owner's
+  ruling of 2026-10-23: an empty box is an empty box). openWork() walks categories only, and is not
+  widened for it — every projection is built on that array. Its rows are the engine's
+  uncategorizedWork() instead, a third source into the same Set through the same `open`-only filter,
+  so the Record dialog's empty-boxes line, this chip and src/glance.js's queue answer the same cell
+  the same way. A held uncategorized column is in none of the three sources — see src/glance.js's
+  queueRows().
 */
 function ungradedCount(cls) {
   const doc = getDoc();
@@ -421,6 +430,7 @@ function ungradedCount(cls) {
   const take = (row) => { if (row.state === 'open') waiting.add(row.id); };
   rosterIdsOf(cls, doc).forEach((studentId) => {
     openWork(doc, cls, termId, studentId).forEach(take);
+    uncategorizedWork(doc, cls, termId, studentId).forEach(take);
     heldWork(doc, cls, termId, studentId).forEach(take);
   });
   return waiting.size;

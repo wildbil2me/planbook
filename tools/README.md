@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2171 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2178 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -3134,6 +3134,17 @@ is gone and the new one has booted, and every card click waits for the card's bo
 Both waits throw at their deadline, so a missing card still ends the section loudly. Three
 consecutive full runs on one tree: `2176 checks · 2176 passed · 0 failed · 0 skipped`, 70,459 lines,
 32.4 lines per check, 1201s, 1223s and 1227s, exit 0 each, 2026-11-01 on the real clock.
+
+**WO-3.76 moved it from 2171 to 2178, and the executed count from 2176 to 2182 — seven sites, six
+results, one new file.** `verify/uncategorized-to-grade.mjs`, registered directly after
+`verify/ungraded-count.mjs`: a weighted and a points class, each with one empty uncategorized
+assignment, read off the card's *N to grade*, `queueRows()` and its panel, the Record dialog's
+`emptyBoxes()` and `heldColumns()`, and one student's projections — the card and queue taking the
+uncategorized work in, the panel naming it *no category*, the three agreeing, no projection moving, a
+held uncategorized column open nowhere until committed — and the fixture's removal. The seventh site is
+the fixture-guard arm, which a run that plants cleanly never reaches — hence six executed. None sits in
+a loop. Full run: `2182 checks · 2182 passed · 0 failed · 0 skipped`, 70,702 lines, 32.4 lines per
+check, 1203s, exit 0, 2026-11-01 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

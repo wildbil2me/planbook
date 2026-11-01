@@ -13,9 +13,9 @@
     weekItems()        src/calendar.js's scheduledIn() — every authored event but a grades-due date
                        — and src/calendar-derived.js's due dates and term edges, today through six
                        days on                                            (WO-6.1 · WO-6.2 · WO-6.8)
-    queueRows()        src/grade-engine.js's openWork() and heldWork(), the `open` rows, one row
-                       per assignment — the engine behind the card's "N to grade"
-                                                                          (WO-3.26 · WO-3.47)
+    queueRows()        src/grade-engine.js's openWork(), uncategorizedWork() and heldWork(), the
+                       `open` rows, one row per assignment — the engine behind the card's
+                       "N to grade"                                (WO-3.26 · WO-3.47 · WO-3.76)
     attentionHits()    src/signals.js's evaluate() through applyCooldown(), the `shown` half — the
                        engine behind the card's "N need you"              (WO-4.5)
     closingIn()        grades-due dates inside src/calendar.js's lead window, term edges inside it,
@@ -172,8 +172,11 @@ import { getActiveClasses, getOpenTermId } from './classes.js';
 /* The engine behind "N to grade" — src/home.js's own import, for its own reason: nothing here looks
    at a cell, and what "not graded yet" means is decided once, over there. heldWork() and its marker
    joined at WO-3.47: nothing here asks whether a column is held either — the engine answers it on
-   the row, and HELD_COLUMN is a token constant that reads no document. */
-import { openWork, heldWork, HELD_COLUMN } from './grade-engine.js';
+   the row, and HELD_COLUMN is a token constant that reads no document. uncategorizedWork() and
+   LOOSE_NAME joined at WO-3.76, on the same terms: the engine's third array — the work filed under no
+   category this class has, live columns only — and the engine's own name for that pile, a constant
+   that reads no document, so the queue row says *no category* in the quarter dialog's words. */
+import { openWork, heldWork, uncategorizedWork, HELD_COLUMN, LOOSE_NAME } from './grade-engine.js';
 /* The engine behind "N need you" and behind the quiet middle. Nothing here decides whether a rule
    fired, whether a hit is silenced, or who is on the third list. */
 import { evaluate, applyCooldown, quietMiddle } from './signals.js';
@@ -323,6 +326,20 @@ export function weekItems() {
   class, so a document with no held column produces the array it always did. A commit moves a
   column from the second source to the first, and the two are disjoint by construction in the
   engine, so nothing is counted twice or dropped on the way.
+
+  WORK FILED UNDER NO CATEGORY IS WAITING TOO, IN EITHER GRADING MODE (WO-3.76, the owner's ruling of
+  2026-10-23: an empty box is an empty box). openWork() walks categories only, so until this work
+  order a blank in uncategorized work was on the Record dialog's empty-boxes line (WO-3.73) and on
+  neither this queue nor the card — one cell, two screens, two answers. Its rows come from the
+  engine's uncategorizedWork(), a THIRD source taken the way heldWork() is taken: forwarded through
+  the same `take`, never concatenated with arithmetic here and never by widening openWork(), which
+  every projection is built on. Each row's `categoryId` is the engine's null, which is how the panel
+  names the pile. Between the live categories and the held columns, so uncategorized work reads
+  after the class's own categories — the quarter dialog's order. The three sources are disjoint in
+  the engine: uncategorizedWork() walks looseAssignments(), which leaves held columns out, and
+  heldWork() walks categories only, so a HELD uncategorized column is in none of them — it is
+  neither open here nor held here, which is heldWork()'s scope since WO-3.47, ruled as built on
+  2026-11-01 (TESTING.md § WO-3.70) and not widened by this work order.
 */
 export function queueRows() {
   const doc = getDoc();
@@ -341,6 +358,7 @@ export function queueRows() {
       byAssignment[row.id].open += 1;
     };
     ids.forEach((studentId) => openWork(doc, cls, termId, studentId).forEach(take));
+    ids.forEach((studentId) => uncategorizedWork(doc, cls, termId, studentId).forEach(take));
     ids.forEach((studentId) => heldWork(doc, cls, termId, studentId).forEach(take));
   });
   return rows;
@@ -739,7 +757,11 @@ function queuePanel(rows, classes, doc) {
     const cat = cats.filter((c) => c && c.id === row.categoryId)[0] || null;
     /* A held column's row says so (WO-3.47), off the marker the engine put on the record — the
        score grid's own word for the same column, so the row and the column head it opens agree. */
-    const why = (cls ? cls.name : '') + (cat && cat.name ? ' · ' + cat.name : '')
+    /* Work filed under no category (WO-3.76) carries the engine's null `categoryId`, and is named by
+       the engine's own word for the pile — the Record dialog's *no category* — rather than by a
+       phrase of this file's. */
+    const catName = cat && cat.name ? cat.name : (row.categoryId === null ? LOOSE_NAME : '');
+    const why = (cls ? cls.name : '') + (catName ? ' · ' + catName : '')
       + (row.column === HELD_COLUMN ? QUEUE_HELD : '');
     const button = glRow((work && String(work.name || '').trim()) || UNTITLED_ASSIGNMENT, why,
       plural(row.open, 'blank', 'blanks'), false);

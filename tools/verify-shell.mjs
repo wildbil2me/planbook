@@ -161,6 +161,7 @@ import { run as copyClass } from './verify/copy-class.mjs';
 import { run as contactsImport } from './verify/contacts-import.mjs';
 import { run as signalEngine } from './verify/signal-engine.mjs';
 import { run as ungradedCount } from './verify/ungraded-count.mjs';
+import { run as uncategorizedToGrade } from './verify/uncategorized-to-grade.mjs';
 import { run as calendarEvents } from './verify/calendar-events.mjs';
 import { run as calendarDerived } from './verify/calendar-derived.mjs';
 import { run as calendarDrawn } from './verify/calendar-drawn.mjs';
@@ -501,6 +502,12 @@ const BROWSER_SECTIONS = [
   { file: 'verify/contacts-import.mjs', run: contactsImport },
   { file: 'verify/signal-engine.mjs', run: signalEngine },
   { file: 'verify/ungraded-count.mjs', run: ungradedCount },
+  /* WO-3.76, directly after the card's count it widens: the card and the glance queue take in work
+     filed under no category, in both grading modes, and agree with the Record dialog's empty boxes.
+     It plants two classes of its own through the store, walks to a class and back to the grid, takes
+     both classes back out and leaves the page on the class grid. No reload, no viewport change, no
+     presentation-mode change. */
+  { file: 'verify/uncategorized-to-grade.mjs', run: uncategorizedToGrade },
   { file: 'verify/calendar-events.mjs', run: calendarEvents },
   { file: 'verify/calendar-derived.mjs', run: calendarDerived },
   { file: 'verify/calendar-drawn.mjs', run: calendarDrawn },

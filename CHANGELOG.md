@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### Work filed under no category now counts as work to grade — 2026-11-01
+
+WO-3.76. `CACHE` v204 → v205.
+
+- **The home card's *N to grade* and the *Waiting to be graded* list now include blanks in
+  assignments that aren't in any category**, in both weighted and points classes. The list names
+  them *no category*, the same words the *Record grades* dialog uses, so the card, the list and the
+  dialog's empty-box count agree.
+- **Grades and *what it would take* figures are unchanged**, and a held column filed under no
+  category still counts toward nothing.
+
 ### The cooldown harness waits for the page instead of guessing — 2026-11-01
 
 WO-1.89. Harness only — nothing in `src/`, `sw.js` or `index.html` moved, so no `CACHE` bump.

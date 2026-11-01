@@ -5957,7 +5957,7 @@ projector the dialog is refused already**; this adds nothing that needs its own 
 
 ## WO-3.76 — "N to grade" skips work filed under no category
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.73 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-11-01 · **Size** S · **Depends on** WO-3.73 · **Blocks** nothing
 **Closes roadmap** *(no box. Owner-directed, 2026-10-23, from WO-3.72's verdict.)*
 
 **Booked 2026-10-23**, owner-directed. WO-3.72's verifier found that `emptyBoxes()` never counts an
@@ -5979,15 +5979,15 @@ one screen disagreeing with another about one cell, which is what `src/glance.js
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-3.76** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] A class with one empty uncategorized assignment shows it in the card's *N to grade* and in the
+- [x] A class with one empty uncategorized assignment shows it in the card's *N to grade* and in the
       queue, in a weighted class and in a points class, and the card's figure equals the queue's
       row count for that class.
-- [ ] The quarter dialog's empty-boxes count, the card and the queue agree on the same fixture.
-- [ ] No projection's figures move, and a held uncategorized column still counts as held, not open.
-- [ ] With the uncategorized reader dropped from the queue, the check goes red. The mutation is
+- [x] The quarter dialog's empty-boxes count, the card and the queue agree on the same fixture.
+- [x] No projection's figures move, and a held uncategorized column still counts as held, not open.
+- [x] With the uncategorized reader dropped from the queue, the check goes red. The mutation is
       reverted, and `TESTING.md` § WO-3.76 shows the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-3.76 carries these lines verbatim with the evidence for each.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-3.76 carries these lines verbatim with the evidence for each.
 
 **Traps** — **`src/glance.js` forwards, it does not compute** (CLAUDE.md, WO-6.7; `wo-sweep.mjs`
 § 31): the union is the engine's to answer, never a concat with arithmetic in the reader. **Student

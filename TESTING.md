@@ -19866,6 +19866,130 @@ on the owner's ruling of 2026-10-31.
 - `tools/verify/score-history.mjs`: the grid check, and the other-term and other-class check.
 - `tools/README.md`: the count and the ledger.
 
+### WO-3.76 — "N to grade" skips work filed under no category
+
+**What was built.** Two call sites and a word. `src/home.js`'s `ungradedCount()` and `src/glance.js`'s
+`queueRows()` each take a third engine array, `uncategorizedWork()` (WO-3.73), into the same `open`-only
+`take` they already used for `openWork()` and `heldWork()` — between the two, so uncategorized rows
+follow the class's own categories and precede held columns. Neither file tests a cell, and
+`src/grade-engine.js` is untouched (`git diff src/grade-engine.js` is empty): `openWork()` is not
+widened. The queue panel names a row whose `categoryId` is the engine's `null` by the engine's own
+`LOOSE_NAME`, *no category* — the Record dialog's word — imported as a constant that reads no document.
+`wo-sweep.mjs` § 31 stays green over the new import: it is a row-returning reader, not one of the 33
+numeric engine names. `sw.js` `v204` → `v205`. A new harness section,
+`tools/verify/uncategorized-to-grade.mjs`, registered directly after `verify/ungraded-count.mjs`.
+
+**The fixture**: a weighted class and a points class of one shape — Essays, one 100-point essay (S1
+scored 80, S2 blank) and one 100-point assignment filed under no category (both blank); the points
+class also has a held uncategorized column (both blank). Hand-worked figures are in the section's
+header.
+
+- [x] A class with one empty uncategorized assignment shows it in the card's *N to grade* and in the
+      queue, in a weighted class and in a points class, and the card's figure equals the queue's
+      row count for that class.
+      — `node tools/verify-shell.mjs`, 2026-11-01, real clock: `PASS | WO-3.76: a class with one empty
+      uncategorized assignment shows it in the card's *N to grade* and in the queue, in a weighted
+      class and in a points class — each card says 2 to grade …`, evidence
+      `"card":{"w":{"found":true,"said":"2 to grade"},"p":{"found":true,"said":"2 to grade"}}` and
+      `"queue":{"w":[{"id":"wo376-we","cat":"k_wo376w","open":1},{"id":"wo376-wu","cat":null,"open":2}],
+      "p":[…the same shape…]}`. The card is read off `#homeGrid` after a walk to a class and back
+      through `#classTabBar [data-view-home]`. Beside it, the panel's own check: `PASS | WO-3.76: the
+      *Waiting to be graded* panel draws the uncategorized row after the class's own category and names
+      it *no category* …` — rows read `WO-3.76 Weighted · Essays · 1 blank` then `WO-3.76 Weighted ·
+      no category · 2 blanks`, and the same in the points class.
+- [x] The quarter dialog's empty-boxes count, the card and the queue agree on the same fixture.
+      — Same run: `PASS | WO-3.76: the quarter dialog's empty-boxes count, the card and the queue agree
+      on the same fixture …` — `"boxes":{"w":{"count":3,"cats":["Essays","no category"]},"p":{"count":3,
+      …}},"queueBlanks":{"w":3,"p":3},"card":{"w":"2 to grade","p":"2 to grade"}`. **What "agree" means,
+      since the three count different units**: the dialog counts empty *cells*, the card counts
+      *assignments* holding one, and the queue carries both — a row per assignment and each row's
+      `open`, its blanks. So the check holds the dialog's count to the sum of the class's queue
+      blanks, and the card's figure to the queue's row count. The fixture holds no zero-point work and
+      no held column while this is read: the dialog counts a zero-point blank and the card does not,
+      and the queue and card show a held column the dialog leaves to its held line. Both are rulings
+      older than this work order (WO-3.26, WO-3.47, WO-3.72), not disagreements it introduced.
+- [x] No projection's figures move, and a held uncategorized column still counts as held, not open.
+      — Same run: `PASS | WO-3.76: no projection's figures move — S1's grade and projections at 100% and
+      0% on what is left read 80 · 90 · 40 in the points class (the loose pile counted once; twice would
+      be 93.33 and 26.67) and 80 · 80 · 80 in the weighted class, the same before and after the home
+      page drew the card and the queue  :: before {"w":[80,80,80],"p":[80,90,40]} · after
+      {"w":[80,80,80],"p":[80,90,40]}`. And `PASS | WO-3.76: a held uncategorized column still counts as
+      held, not open — while held it is on the dialog's held line (heldColumns) and in no empty-boxes
+      count, card figure or queue row; once committed it is open work everywhere at once …` — held:
+      card `2 to grade`, no queue row for `wo376-ph`, `emptyBoxes` 3, held line `["wo376-ph"]`;
+      committed: card `3 to grade`, a live queue row `{"id":"wo376-ph","cat":null,"open":2,"column":""}`,
+      `emptyBoxes` 5, held line `[]`. **The reading this tick rests on, stated so the verifier can
+      dispute it**: the one reader that counts a held *uncategorized* column as held is the Record
+      dialog's `heldColumns()`. The card and the queue count held columns through `heldWork()`, which
+      walks categories only, so a held uncategorized column is in neither as held — and was not
+      before this work order either. That is `heldWork()`'s scope since WO-3.47, ruled as built by the
+      owner on 2026-11-01 (§ WO-3.70, *"It is not booked"*), and this work order does not widen it.
+      What this work order could have broken is the *not open* half — `uncategorizedWork()` leaving
+      held columns out — and the check proves it did not.
+- [x] With the uncategorized reader dropped from the queue, the check goes red. The mutation is
+      reverted, and `TESTING.md` § WO-3.76 shows the red output.
+      — Planted in `queueRows()` in `src/glance.js`:
+      ```
+          // MUTATION WO-3.76: the uncategorized reader dropped from the queue
+          // ids.forEach((studentId) => uncategorizedWork(doc, cls, termId, studentId).forEach(take));
+      ```
+      `node tools/verify-shell.mjs`, stopped once the section had printed (the log ends `EXIT=127`, the
+      kill, so there is no summary line; 1,639 PASS lines by then):
+      ```
+      FAIL | WO-3.76: a class with one empty uncategorized assignment shows it in the card's *N to grade* and in the queue, …
+        :: {"view":"homeView","card":{"w":{"found":true,"said":"2 to grade"},"p":{"found":true,"said":"2 to grade"}},
+            "queue":{"w":[{"id":"wo376-we","cat":"k_wo376w","open":1,"column":""}],"p":[{"id":"wo376-pe","cat":"k_wo376p","open":1,"column":""}]}}
+      FAIL | WO-3.76: the *Waiting to be graded* panel draws the uncategorized row after the class's own category and names it *no category* …
+        :: {"w":[{"id":"wo376-we","why":"WO-3.76 Weighted · Essays","meta":"1 blank"}],"p":[{"id":"wo376-pe","why":"WO-3.76 Points · Essays","meta":"1 blank"}]}
+      FAIL | WO-3.76: the quarter dialog's empty-boxes count, the card and the queue agree on the same fixture — …
+        :: {"boxes":{"w":{"count":3,…},"p":{"count":3,…}},"queueBlanks":{"w":1,"p":1},"card":{"w":"2 to grade","p":"2 to grade"}}
+      PASS | WO-3.76: no projection's figures move — … :: before {"w":[80,80,80],"p":[80,90,40]} · after {"w":[80,80,80],"p":[80,90,40]}
+      FAIL | WO-3.76: a held uncategorized column still counts as held, not open — …
+        :: {…"committed":{"card":"3 to grade","queue":[{"id":"wo376-pe","cat":"k_wo376p","open":1,"column":""}],"boxes":{"count":5,…},"heldLine":[]}}
+      PASS | WO-3.76: the fixture came back off the document — …
+      ```
+      Four red, each the expected shape: the card (unmutated) still says 2 while the queue drops to one
+      row, which is the one-cell-two-answers defect itself. The projection check stays green, as it
+      should — the queue feeds no projection. Reverted by restoring the pre-mutation copy of the file
+      before anything else was written; `grep -rn MUTATION src/` afterwards shows only the pre-existing
+      prose at `src/shell.js:1095` (*"A CLASS MUTATION ADDED LATER …"*).
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs` on the delivered `src/` and harness, 2026-11-01, real clock:
+      `2182 checks · 2182 passed · 0 failed · 0 skipped`, `70,702 lines · 32.4 lines per check · 1203s`,
+      `EXIT=0` — six more than WO-1.89's 2176, all six this section's. After it, only `tools/README.md`'s
+      count and ledger, this section and the phase file were written; the mutation went into
+      `src/glance.js` and came out byte-identical. `node tools/wo-sweep.mjs` after the revert and the
+      README edit: `52 checks · 49 passed · 0 failed · 3 to review`, `EXIT=0` — the three standing
+      reviews; the call-site check reads `2178 check() call site(s) across 103 harness file(s),
+      matching tools/README.md:1363`, and § 31 is green over the new import.
+- [x] `TESTING.md` § WO-3.76 carries these lines verbatim with the evidence for each.
+      — This section.
+
+**The other readers of unfinished work — surveyed, not changed** (the Traps line; widening any of them
+is a booking):
+
+| Reader | Shows uncategorized work? | Why |
+|---|---|---|
+| Student detail, *Missing work* card | **No** | `missingCard()` lists the `missing` rows of `openWork()`, categories only — so a missing mark on uncategorized work is not listed, **even in a points class, where it is in the grade**. |
+| Student detail, held card | **No** | `heldWork()` + `heldExcusedWork()`, categories only — the WO-3.70 edge the owner ruled as built. |
+| Student detail, excused card | **Yes** | `excusedWork()` walks `looseAssignments()` after the categories (WO-3.70). |
+| Student detail, *what it would take to move* | Counted, not named | `projectedClassGrade()` projects the loose pile in points mode; the engine's own comment calls the unnamed piece "one honest limit". |
+| Student CSV (`detailModel()`: `Work` rows, held rows) | **No** for open, missing and held; **yes** for excused | The same three sources as the screen. |
+| Grade sheet, on screen and printed | **Yes** | Every column of the class's term, filed or not (`assignmentsOf()`), with `categoryNameOf()` printing *no category*; a blank prints nothing. |
+| Grade sheet CSV (`gradesCsv()`) | **Yes** | The same record as the sheet. |
+
+Two more readers of `openWork()` the Traps line does not name, noted rather than surveyed in depth:
+`{{missing.list}}` / `{{missing.count}}` (`src/merge-fields.js`) and the signal engine's missing-count
+rule (`src/signals.js`) both count categorized missing marks only.
+
+**Files.**
+- `src/home.js`: the import, the third source in `ungradedCount()`, its banner paragraph.
+- `src/glance.js`: the import (`uncategorizedWork`, `LOOSE_NAME`), the third source in `queueRows()`,
+  *no category* in `queuePanel()`, the header's reader list.
+- `sw.js`: `v204` → `v205`.
+- `tools/verify/uncategorized-to-grade.mjs` (new), registered in `tools/verify-shell.mjs`.
+- `tools/README.md`: the count and the ledger.
+
 ## Phase 4 — Signals: concern **and** praise
 
 *Phase goal: open the app and see who needs you today, in both directions.*
