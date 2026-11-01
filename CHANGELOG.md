@@ -13,6 +13,18 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The cooldown harness waits for the page instead of guessing — 2026-11-01
+
+WO-1.89. Harness only — nothing in `src/`, `sw.js` or `index.html` moved, so no `CACHE` bump.
+
+- **`tools/verify/cooldown-quiet.mjs` no longer sleeps a fixed 600ms** after a reload or before
+  tapping a class card. It waits until the reloaded page has really replaced the old one, and until
+  the card is on the screen, and still fails loudly if the card never appears — now saying whether
+  the class was missing from storage or only from the screen.
+- **The flake was never reproduced on demand** (0 in 293 scripted reloads), so three green runs
+  prove the fix breaks nothing rather than that it cures anything; the next few runs under load are
+  the real test.
+
 ### The student report lists excused work, with any score it kept — 2026-11-01
 
 WO-3.70. `CACHE` v203 → v204.

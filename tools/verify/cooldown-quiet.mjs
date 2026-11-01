@@ -12,7 +12,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, clickSel, KILL_ANIM, seam } = h;
 
 /*
  * ───────── the cooldown and the quiet middle (WO-4.5) ─────────
@@ -83,22 +83,92 @@ if (!seam) {
     await clickSel('[data-view-home]', nth);
     await new Promise(r => setTimeout(r, 250));
   }
+
+  /*
+    WAITED ON, NEVER SLEPT FOR (WO-1.89). This section threw `nothing to click for #homeGrid
+    [data-class-tab="c_wo45"] [0]` on two of three full runs of one tree — "after 1 of its own
+    checks", so at the first card click, straight after the fixture's reload, with the fixture check
+    green. Everything between the plant and that click was a fixed sleep: 600ms after `Page.reload`
+    and then `waitForBoot()`, which asks only whether SOME document has its loading screen down. The
+    document that was just told to reload has, so a reload not yet committed inside 600ms lets the
+    section carry on in the page it is leaving — whose grid was painted before the fixture existed
+    (no screen repaints on a save), and whose store is about to be thrown away. That is the reading
+    the evidence fits; it was NOT reproduced on demand, and TESTING.md § WO-1.89 says what was tried.
+
+    So the two things the click needs are waited for as conditions, with a deadline, the way
+    tools/README.md § "Driving a browser over CDP" trap 5 asks: a reload is over when the document
+    that was marked before it is GONE and the new one has booted, and a card is clickable when it
+    is in #homeGrid with a box on the screen. Neither wait is made forgiving — a deadline that
+    passes throws, loudly and with what was on the page, because `nothing to click` killing the
+    section is what surfaced this (WO-1.44: blast radius, not tolerance). The poll is the
+    `waitFor()` shape tools/verify/first-run.mjs and tools/verify/sync-button.mjs each keep for
+    their own reads: a reading, a predicate, 80ms between tries, the last reading handed back.
+  */
+  async function poll45(expr, pred, ms) {
+    const until = Date.now() + ms;
+    let r = null;
+    for (;;) {
+      try { r = await evalJs(expr); } catch { r = null; /* the document is swapping under us */ }
+      if (pred(r) || Date.now() >= until) return r;
+      await new Promise(res => setTimeout(res, 80));
+    }
+  }
+  /* `stored`: the class id the record in IndexedDB must already hold before the page is let go of —
+     the fixture's own, on the reload that exists to boot over it. A plant that never reached disk
+     comes back as a grid with no card on it, which is the same symptom as a grid not yet painted, so
+     the two are told apart here, before the reload, rather than guessed at after it. */
+  async function reload45(stored) {
+    await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
+    if (stored) {
+      const onDisk = await evalJs(`(async function(){ var s = window.planbook.store;
+        var rec = await s.readStoredDocument(s.getDoc().year);
+        return !!rec && (rec.classes || []).some(function(c){ return c.id === '${stored}'; }); })()`);
+      if (!onDisk) {
+        throw new Error('the flush resolved and the stored year still has no class ' + stored
+          + ' — the fixture never reached IndexedDB, so the reload would boot without it');
+      }
+    }
+    await evalJs('window.__wo45Leaving = 1; 1');
+    await send('Page.reload');
+    const r = await poll45(`(function(){ var l = document.getElementById('loadingScreen');
+      return { left: !window.__wo45Leaving, booted: !!(l && l.classList.contains('hidden')) }; })()`,
+      (x) => !!x && x.left && x.booted, 10000);
+    if (!r || !r.left || !r.booted) {
+      throw new Error('the reload never handed back a new, booted document inside 10s: '
+        + JSON.stringify(r));
+    }
+    await evalJs(KILL_ANIM);
+  }
+  const CARD45 = '#homeGrid [data-class-tab="' + CLS + '"]';
+  async function waitForCard45() {
+    const r = await poll45(`(function(){
+      var on = document.querySelector('main > :not(.hidden)');
+      var e = document.querySelector(${JSON.stringify(CARD45)});
+      var b = e ? e.getBoundingClientRect() : null;
+      var d = window.planbook && window.planbook.store.getDoc();
+      return { view: on ? on.id : '', card: !!b && b.width > 0 && b.height > 0,
+        drawn: Array.prototype.map.call(document.querySelectorAll('#homeGrid [data-class-tab]'),
+          function(n){ return n.getAttribute('data-class-tab'); }),
+        inStore: !!d && (d.classes || []).some(function(c){ return c.id === '${CLS}'; }) }; })()`,
+      (x) => !!x && x.view === 'homeView' && x.card, 5000);
+    if (!r || r.view !== 'homeView' || !r.card) {
+      throw new Error('nothing to click for ' + CARD45 + ' after 5s on the grid: '
+        + JSON.stringify(r));
+    }
+  }
   async function openSignals45() {
     if ((await onView45()) !== 'homeView') await goHome45();
-    await clickSel('#homeGrid [data-class-tab="' + CLS + '"]');
+    await waitForCard45();
+    await clickSel(CARD45);
     await new Promise(r => setTimeout(r, 250));
     await clickSel('#classView [data-class-screen="signals"]');
     await new Promise(r => setTimeout(r, 400));
   }
 
-  await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
   await send('Emulation.setDeviceMetricsOverride',
     { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
-  await send('Page.reload');
-  await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
-  await evalJs(KILL_ANIM);
+  await reload45();
 
   /* ── the fixture ── */
   const plant45 = await evalJs(`(function(){
@@ -227,11 +297,7 @@ if (!seam) {
     skip('the whole of WO-4.5', 'the fixture did not install, so nothing below it could be '
       + 'measured against a list that has anything on it');
   } else {
-    await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
-    await send('Page.reload');
-    await new Promise(r => setTimeout(r, 600));
-    await waitForBoot();
-    await evalJs(KILL_ANIM);
+    await reload45(CLS);
     await openSignals45();
 
     /*

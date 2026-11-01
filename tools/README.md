@@ -3127,6 +3127,14 @@ student-CSV check now says the two files differ by Cy's one State cell. Full run
 passed · 0 failed · 0 skipped`, 70,393 lines, 32.3 lines per check, 1212s, exit 0, 2026-11-01 on the
 real clock.
 
+**WO-1.89 moved neither number — no site, no result, no new file.** `verify/cooldown-quiet.mjs` stopped
+sleeping between its fixture's reload and its first card click, which threw `nothing to click` on two
+of three runs of one tree in WO-3.70's verdict: its two reloads now wait until the marked old document
+is gone and the new one has booted, and every card click waits for the card's box in `#homeGrid`.
+Both waits throw at their deadline, so a missing card still ends the section loudly. Three
+consecutive full runs on one tree: `2176 checks · 2176 passed · 0 failed · 0 skipped`, 70,459 lines,
+32.4 lines per check, 1201s, 1223s and 1227s, exit 0 each, 2026-11-01 on the real clock.
+
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
 `verify/touch-targets.mjs`'s About-modal block, where a `skip()` stands in when the modal never

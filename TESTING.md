@@ -8141,6 +8141,129 @@ src/` was empty.
   the three standing reviews. It was run before this subsection's results were typed in, so the
   only bytes it did not read are these lines.
 
+
+### WO-1.89 — cooldown-quiet.mjs sometimes finds no class tab to click
+
+No 👤 and no 📆 line. One harness file moves: `tools/verify/cooldown-quiet.mjs`. Nothing in `src/`
+moves (`git status --short src/` empty throughout), so no `CACHE` bump is owed, and no `check(` was
+added, so the call-site count in `tools/README.md` stays 2171.
+
+#### 1. Where it threw, read off the numbers before anything was changed
+
+`runSection()` reports a contained throw as one failed result (`§ … ran to the end of its own
+checks`) in place of the checks it lost. The section has twenty literal `check(` sites and executes
+twenty on a green run, so a red total of **2158** against the green **2176** is −19 lost +1 failure —
+the throw came after exactly **one** of the section's own checks. That one is the fixture check, so the
+throw is the **first** `openSignals45()`, the card click straight after the fixture's
+`flush` → `Page.reload` → 600ms → `waitForBoot()`. (A scratch probe run on this tree, below, failed
+on its own syntax error at the same place and printed exactly that: *"it threw after 1 of its own
+checks"*, `2158 checks · 2157 passed · 1 failed`.) So of the three candidates the work order lists:
+
+- **The page an earlier section leaves behind** is the least likely. Between WO-3.70's student report
+  (`verify/excused-report.mjs`, ~120 sections earlier) and that click, this section reloads the page
+  **twice**, and boot maps every stored view that is not a class screen to the grid
+  (`src/shell.js`, `views.showView(… ? 'class' : 'home')`). The section's immediate predecessor is
+  `verify/contact-log.mjs`, not the excused report.
+- **The grid not yet painted after boot**, read from the app's side, is not it either: `src/shell.js`
+  calls `afterClassChange()` → `home.refreshHome()` synchronously **before** it adds `hidden` to
+  `#loadingScreen`, whatever view is up, so a booted new document always has its cards. That is also
+  why this is not an app defect to stop and report: the grid does not miss a class a teacher has.
+- **What fits is the harness waiting on the wrong document.** `waitForBoot()` asks whether *a*
+  document has `#loadingScreen.hidden`. The document that was just told to reload has, so if the
+  reload has not committed inside the fixed 600ms, `waitForBoot()` returns at once **on the page being
+  left**, whose grid was painted before the fixture existed (no screen repaints on `notify()`), and
+  `clickSel` finds no card. The flush race (candidate three) is the same mechanism one reload earlier:
+  if the *first* reload had not committed, the plant lands in a store that is about to be discarded.
+
+#### 2. Reproduction — tried, and not achieved
+
+`repro189.mjs` (session scratchpad, not committed) drives its own headless Edge and server over the
+real app with the section's exact sequence — plant a class, `flush()`, mark the document, `Page.reload`,
+600ms, `waitForBoot()`, look for the card — and counts a missing card and a pre-reload document
+evaluated after the wait:
+
+| Shape | Iterations | Missing card | Old document evaluated | Reload → booted |
+|---|---|---|---|---|
+| plain, back to back | 30 | 0 | 0 | median 620ms, max 921 |
+| old page's main thread busy 800ms at the reload | 15 | 0 | 0 | median 998, max 1178 |
+| 35s idle before each reload (service worker cold) | 8 | 0 | 0 | median 632, max 661 |
+| 2s idle before each reload, run beside a full harness run | 80 | 0 | 0 | median 625, max 647 |
+| four instances in parallel, 500ms idle | 4 × 40 | 0 | 0 | medians 626–631, max 891 |
+| **the fix's shape** (poll), old page busy 800ms | 30 | 0 | 0 | median 936, max 1175 |
+
+**0 failures in 293 scripted reloads before the fix and 0 in 30 after.** The verifier's machine failed
+2 of 3 full runs at this click; this machine, on the unfixed tree, did not fail the click once in
+those 293, and the one unfixed full run made here died earlier on the probe's own typo, so it is no
+evidence either way. **The mechanism in § 1 is the reading the numbers fit, not a reproduced cause.**
+What the polled reload measures is worth keeping: on an idle page a reload is over in ~290ms, which is
+why a 600ms sleep is right almost always and wrong only when the machine is busy.
+
+#### 3. The fix, in the harness
+
+`tools/verify/cooldown-quiet.mjs` gains three helpers and loses every fixed sleep between a reload and
+the card click:
+
+- `poll45(expr, pred, ms)` — the `waitFor()` shape `verify/first-run.mjs` and `verify/sync-button.mjs`
+  already keep locally: a reading, a predicate, 80ms between tries, the last reading handed back. Kept
+  local like theirs rather than hoisted onto `h`, which would widen the shared surface for one section.
+- `reload45(stored)` — flushes; when given the fixture's class id, reads the **stored** record back
+  through `store.readStoredDocument()` and throws if the class is not on disk (which tells candidate
+  three apart from the other two before the reload instead of guessing after it); marks the document
+  (`window.__wo45Leaving`), sends `Page.reload`, and polls until the marked document is **gone** and the
+  new one has booted, throwing after 10s with the last reading. Both of the section's reloads use it.
+- `waitForCard45()` — polls until `#homeGrid [data-class-tab="c_wo45"]` has a box on screen with
+  `#homeView` up, and throws after 5s with the view, the class ids the grid did draw, and whether the
+  open document holds the class. `openSignals45()` calls it before every card click.
+
+**Nothing was made forgiving.** Every deadline throws, the click is still `clickSel`'s fatal one, and
+the throw is still contained by `runSection()` (WO-1.44: blast radius, not tolerance). The 250ms and
+400ms waits *after* the card click, and `goHome45()`'s 250ms, are untouched: they are not the card's,
+and the work order is about the card.
+
+#### Acceptance
+
+- [x] `TESTING.md` § WO-1.89 names the cause with evidence, or says plainly that it could not be
+      reproduced and what was tried.
+      — §§ 1–2 above: where it threw is derived from the counts (after one check, at the first card
+      click following the fixture reload); the mechanism that fits is stated, and § 2 says plainly it
+      was **not** reproduced, with the six shapes tried and their counts.
+- [x] The section no longer depends on a fixed sleep for the class card it clicks.
+      — § 3. `grep -n "setTimeout(r, 600)\|waitForBoot" tools/verify/cooldown-quiet.mjs` finds one
+      line, in the WO-1.89 comment that explains the change, and no code: `waitForBoot` is no longer
+      destructured from `h`. Both reloads go through `reload45()` and all four card clicks
+      (`openSignals45()`'s one site, called four times) through `waitForCard45()`.
+- [x] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the
+      run lines are quoted in `TESTING.md` § WO-1.89.
+      — Four full runs on the fixed tree, the code identical across all four (one md5 over every
+      `.mjs`/`.js`/`.css`/`.html` under `tools/` and `src/` plus `sw.js` and `index.html`,
+      `3d70192f…`, taken before each run; only `TESTING.md`, `tools/README.md` and the dispatch files
+      were written between them). Each waited out to its own `EXIT=`:
+      - Run 1: `2176 checks · 2175 passed · 1 failed · 0 skipped`, `70,459 lines · 32.4 lines per
+        check · 1220s`, `EXIT=1`. **Red, and not this section**: all twenty of
+        `cooldown-quiet.mjs`'s checks passed; the one FAIL was `verify/front-door.mjs`'s *"an installed
+        launch opens the app with no flash of the door … (WO-8.16 Acceptance 1)"* reading
+        `{"settled":"timeout",…}` — and this run had `wo-sweep.mjs` and `wo-gate.mjs --audit` run
+        beside it. That check passed on the earlier unfixed run and on all three below. Not touched
+        (out of scope); noted in the result file as a second timing-shaped check. Because it broke the
+        sequence, a fourth run was made so that three consecutive runs are green:
+      - Run 2: `2176 checks · 2176 passed · 0 failed · 0 skipped`, `70,459 lines · 32.4 lines per
+        check · 1201s`, `EXIT=0`.
+      - Run 3: `2176 checks · 2176 passed · 0 failed · 0 skipped`, `70,459 lines · 32.4 lines per
+        check · 1223s`, `EXIT=0`.
+      - Run 4: `2176 checks · 2176 passed · 0 failed · 0 skipped`, `70,459 lines · 32.4 lines per
+        check · 1227s`, `EXIT=0`.
+      Runs 2–4 had nothing run beside them, and each shows twenty `PASS` lines under
+      `--- the cooldown and the quiet middle (WO-4.5) ---`. **Limit:** three green runs on a machine
+      where the unfixed click never failed in 293 scripted tries is evidence the fix breaks nothing,
+      not proof it cures a flake this machine never showed; that proof is the verifier's machine
+      staying green.
+- [x] `node tools/wo-sweep.mjs` passes.
+      — `node tools/wo-sweep.mjs`: `52 checks · 49 passed · 0 failed · 3 to review`, `EXIT=0` — the three
+      standing reviews. Run after runs 2–4 and after this section's run lines were typed in; the only
+      bytes it did not read are these two lines and the ticks.
+- [x] `TESTING.md` § WO-1.89 carries these lines verbatim with the evidence for each.
+      — This list, copied from the work order.
+
 ---
 
 ## Phase 2 — Attendance

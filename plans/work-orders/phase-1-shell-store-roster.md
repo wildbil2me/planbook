@@ -7065,7 +7065,7 @@ in the end**, so no `CACHE` bump is owed.
 
 ## WO-1.89 — cooldown-quiet.mjs sometimes finds no class tab to click
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-11-01 · **Size** S · **Depends on** — · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.88 made.)*
 
 **Booked 2026-11-01**, owner-directed, out of [WO-3.70](phase-3-gradebook.md#wo-370--the-student-report-lists-excused-work-with-any-score-it-kept)'s
@@ -7099,13 +7099,13 @@ containment was built for.
 - **`TESTING.md` § WO-1.89** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] `TESTING.md` § WO-1.89 names the cause with evidence, or says plainly that it could not be
+- [x] `TESTING.md` § WO-1.89 names the cause with evidence, or says plainly that it could not be
       reproduced and what was tried.
-- [ ] The section no longer depends on a fixed sleep for the class card it clicks.
-- [ ] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the
+- [x] The section no longer depends on a fixed sleep for the class card it clicks.
+- [x] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the
       run lines are quoted in `TESTING.md` § WO-1.89.
-- [ ] `node tools/wo-sweep.mjs` passes.
-- [ ] `TESTING.md` § WO-1.89 carries these lines verbatim with the evidence for each.
+- [x] `node tools/wo-sweep.mjs` passes.
+- [x] `TESTING.md` § WO-1.89 carries these lines verbatim with the evidence for each.
 
 **Traps** — **A longer sleep is not a fix**: it moves the race, hides it on a fast machine, and costs
 every run. **Do not make the click non-fatal**: `nothing to click` killing a section loudly is what
