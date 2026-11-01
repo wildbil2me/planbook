@@ -6440,3 +6440,92 @@ in the coarse block; ruling 2 is the whole reason for this shape. **Do not put t
 wrapper**: that is the WO-1.2 defect this file names a dozen times. **The ✕ is not a re-render** —
 WO-2.58's rule, written above the attendance box in `index.html`. **Safari's ring follows a
 border-radius only since 16.4**; the 👤 line is where that is settled, not a headless run.
+
+## WO-2.62 — every report's numbers sit under their own heads, and the term row is one builder
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.59 · **Blocks** nothing
+**Closes roadmap** *(no box. Owner-directed, 2026-11-01.)*
+
+**Booked 2026-11-01**, owner-directed, from a screenshot of the attendance record's *By student*
+tab: the five counts sit to the left of P T A E D, each one apparently under the head before it, and
+*No recorded meetings* reads as the Meetings column when it is Attendance. The rows were built
+correctly — one cell per head, in order. **The stylesheets pull them apart, and so do two others.**
+
+**Why it exists.**
+1. **`.attendance-report-num` loses on every `<td>`.** `src/attendance.css` sets
+   `.attendance-report-table th, .attendance-report-table td { text-align: left }` (0,1,1), and the
+   column rule `.attendance-report-num { text-align: right }` (0,1,0) loses to it. Somebody saw the
+   head lose and added `thead th.attendance-report-num` (0,2,2) — **which repaired the head and
+   nothing under it**, so heads sit right and numbers sit left. Five tables wear the class: the
+   record's *By student* summary (`totalsRow()`, `src/attendance-report.js`), the student page's
+   term table (`attTotalsRow()`, `src/detail.js`), and in `src/pass-history.js` the per-student pass
+   counts with their *All of …* footer and the trip table's *Minutes*. The print blocks set no
+   alignment, so paper is the screen.
+2. **The grade sheet ties the same way in the other direction.** `src/scores.css` centres
+   `.grades-report-table th, td` (0,1,1), which beats both `.grades-report-student-head,
+   .grades-report-row-head { text-align: left }` and `.grades-report-total-head,
+   .grades-report-total { text-align: right }` (0,1,0) — contrary to the comment over them. On screen
+   everything is centred and heads at least agree with cells. **On paper they do not**: the print
+   block's `body[data-grades-print]` rules are specific enough to move the name cells left and the
+   totals right, and nothing moves their heads, so the sheet a teacher re-keys Blackbaud from has
+   *Student* and *Grade* centred over columns that are not.
+3. **The term row exists twice.** `attTotalsRow()` in `src/detail.js` says it is *"the dialog's
+   totalsRow(), moved with its table"*, and is a word-for-word copy of the one still in
+   `src/attendance-report.js`. This fix is the first change that has to reach both.
+
+**Rulings, the owner's, 2026-11-01**
+1. **A dash, not the sentence, in the table.** Where a row has no recorded meetings its percentage
+   cell reads `—` — the mark the pass tables already use for *nothing to count* — and carries the
+   accessible name *No recorded meetings*. **`percentText()` is not changed**: the student page's card
+   title, its term-history line and the merge fields all use the sentence where it has room. The two
+   CSVs keep their empty cell.
+2. **One builder.** `totalsRow()` is exported from `src/attendance-report.js` and `src/detail.js`
+   imports it in place of `attTotalsRow()`, which is deleted — the `studentPassCard()` arrangement,
+   where one builder renders for the dialog and the card so the two cannot drift.
+
+**Deliverables**
+- **`src/attendance.css`**: the column rule made specific enough to win on head and cell alike
+  (e.g. `.attendance-report-table .attendance-report-num`), and **`thead th.attendance-report-num`
+  deleted** — a head-only patch is the defect's shape. The coarse block's restatements stay true;
+  they are deliberate (each class the block considered is listed) and are not cleanup.
+- **`src/scores.css`**: the student and grade columns' rules win over the table-wide centring for
+  head and cell on screen, and the print block's head rules agree with its cell rules. Read the
+  `body[data-grades-print]` block through, not just the two lines that differ.
+- **`src/attendance-report.js`**: `totalsRow()` exported, with the dash and its accessible name.
+- **`src/detail.js`**: `attTotalsRow()` deleted, `totalsRow()` imported. **Confirm no import loop**
+  before writing it — nothing in `src/attendance-report.js`'s import graph may reach
+  `src/detail.js`; state what was checked in the result file.
+- **`src/pass-history.js`**: nothing, unless the CSS change does not reach it — it wears the class.
+- **The harness**: a check that, for each of the five tables and the grade sheet, compares every
+  head's computed `text-align` with its column's body cells — on screen, and with
+  `data-attendance-print`, `data-grades-print` and `data-detail-print` set. **A check that reads only
+  heads passes both defects**, which is how they got here.
+- **Two mutations**, each shown red and reverted before writing anything else: the
+  `.attendance-report-table .attendance-report-num` specificity put back to `.attendance-report-num`,
+  and the grade sheet's print head rule removed.
+- **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-2.62** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] In each of the five `.attendance-report-num` tables and in the grade sheet, every head's
+      computed `text-align` equals its column's cells', on screen and under each print attribute
+      that applies to it.
+- [ ] A student with no recorded meetings reads `—` in the percentage cell of the record's
+      *By student* tab and of the student page's term table, and that cell's accessible name is
+      *No recorded meetings*. The student page's card title still reads *Attendance · No recorded
+      meetings*.
+- [ ] `src/detail.js` contains no `attTotalsRow`, and imports `totalsRow` from
+      `src/attendance-report.js`; row heads keep `scope="row"`.
+- [ ] With either mutation in place the check goes red; both are reverted, and `TESTING.md`
+      § WO-2.62 shows the red output.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] 👤 On the iPad, after a force-quit: the record's *By student* tab and a student page's term
+      table, numbers under their heads. On paper from the laptop: one grade sheet, *Student* over the
+      names and *Grade* over the totals.
+- [ ] `TESTING.md` § WO-2.62 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Do not add another head-only rule**; that is the patch this work order deletes.
+**Do not change `percentText()`**: the merge fields read it and a dash in a guardian's email is a
+different bug. **`!important` is not the fix** — the print blocks already use it for colour, and
+using it for alignment hides the next tie instead of settling this one. **The grade sheet's on-screen
+centring was never visible as a misalignment**, so a screenshot will not show this half working; the
+print attribute is where it is read.
