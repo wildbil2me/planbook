@@ -750,8 +750,25 @@ const consoleLog = [];
    policy's promise that a device where neither door was ever tapped fetches nothing from Google
    (WO-7.16). It is on `h` for those three sections and read by no other. */
 const netLog = [];
+/* What the page reported going wrong, kept only for `load()`'s throw (WO-1.91): an uncaught
+   exception, or an error-level browser log entry — a module that failed to fetch or to evaluate
+   arrives as one of these and never as a console call, so `consoleLog` cannot see it. The full run
+   that first showed `load()`'s new message read `readyState: complete` with `modulesRan: false` — the
+   document had finished and its modules had not run — and nothing on record said why. The last
+   fifty, with the moment each arrived, so `load()` can quote the ones since its own navigation. Read
+   nowhere else. */
+const pageErrors = [];
 ws.onmessage = (m) => {
   const msg = JSON.parse(m.data);
+  if (msg.method === 'Runtime.exceptionThrown' || msg.method === 'Log.entryAdded') {
+    const d = msg.params.exceptionDetails, e = msg.params.entry;
+    if (d || (e && e.level === 'error')) {
+      pageErrors.push({ at: Date.now(), text: String(d ? (d.exception && d.exception.description) || d.text
+        : e.text).slice(0, 240), url: String((d ? d.url : e.url) || '') });
+      if (pageErrors.length > 50) pageErrors.shift();
+    }
+    return;
+  }
   if (msg.method === 'Runtime.consoleAPICalled') {
     const args = (msg.params.args || []).map(a => (a.value !== undefined ? String(a.value) : (a.description || '')));
     consoleLog.push({ type: msg.params.type, text: args.join(' ') });
@@ -865,6 +882,7 @@ const attached = await send('Target.attachToTarget', { targetId: target.targetId
 sessionId = attached.sessionId;
 await send('Page.enable');
 await send('Runtime.enable');
+await send('Log.enable');
 
 async function evalJs(expr) {
   const r = await send('Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true });
@@ -1086,7 +1104,18 @@ async function dateResetOn(sel, want, shownJs, shownWords) {
 /* Boot is asynchronous since WO-1.4 — the page hides its loading screen only once the year
    document is out of IndexedDB — so a fixed sleep is a race on a slow machine, and losing it
    would look like every check below failing at once. Poll instead, and report rather than
-   hang. Returns false if the app never came up, which is a failure and never a skip. */
+   hang. Returns false if the app never came up, which is a failure and never a skip.
+
+   IT CANNOT TELL TWO DOCUMENTS APART, AND IT IS NOT TAUGHT TO (WO-1.91). It asks whether SOME
+   document has its loading screen down, so on its own it cannot say whether that is the page a
+   reload was asked to leave or the page that replaced it. It is not given a mark of its own because
+   it has no "before" to compare with: it is called with no reload in front of it as often as with
+   one, and a mark it set on the page it saw would read the same on a page that never reloaded. The
+   one helper here that does navigate, `load()` below, marks the document itself and judges "gone"
+   and "booted" in one reading; a section that reloads by its own `Page.reload` and then calls this
+   is relying on what `TESTING.md` § WO-1.91 measured — CDP held a `Runtime.evaluate` until the
+   reload had committed in every shape tried, so the page being left was never the one read — and
+   on acting on the `false`, which is the half that actually bit. */
 async function waitForBoot(ms = 8000) {
   const until = Date.now() + ms;
   while (Date.now() < until) {
@@ -1214,15 +1243,69 @@ if (SHIFT_MS) await send('Page.addScriptToEvaluateOnNewDocument', { source: SHIF
    deployed app cannot be told to skip it, and it is a flag rather than a seeded `planbook_openYear`
    because a seeded preference passes today and silently stops passing the day the probe order
    changes (the work order's trap 5). `Page.reload` keeps the query, which is how every section's own
-   reload keeps it too. verify/front-door.mjs is the one section that navigates WITHOUT it. */
+   reload keeps it too. verify/front-door.mjs is the one section that navigates WITHOUT it.
+
+   WAITED ON, NEVER SLEPT FOR, AND NEVER RETURNED FROM UNBOOTED (WO-1.91). This was `Page.navigate`,
+   a fixed 800ms, and `waitForBoot()` with its answer thrown away. The thrown-away answer is what bit:
+   `verify/sync-button.mjs` threw `Cannot read properties of undefined (reading 'driveSync')` on two
+   full runs of WO-1.90's tree, which needs a document whose modules had not run — `window.planbook`
+   is set at module scope in src/shell.js, before the loading screen can come down — and the only path
+   to that is `waitForBoot()` running out its 8s on a page still booting and `load()` returning anyway.
+   `TESTING.md` § WO-1.91 reproduces that state on demand — slowed or blocked modules, and the old
+   `load()` returns after ~8.9s on a page with no `window.planbook` — and could not make the other
+   suspect happen: in every shape tried, nothing read the page being left.
+
+   So the document is marked before the navigation and the wait is one reading of two facts, taken
+   together so they cannot straddle a swap: the mark is GONE (this is not the page we left — a
+   same-URL navigation replaces the document and drops the expando with it, measured, which is the
+   condition verify/cooldown-quiet.mjs's reload45() and verify/front-door.mjs's settle() wait on) and
+   the loading screen is DOWN. A boot that failed says so at once rather than burning the budget, since
+   src/shell.js keeps the loading screen up on purpose under #loadingError. Anything else past the
+   deadline THROWS, naming every state it passed through and how far the page got — a section that
+   called it fails as a section (WO-1.44: blast radius, not tolerance), `recoverPage()` answers "did
+   not come back", and the first call below bails the run. The deadline is not a sleep and is not
+   paid on a good run; it is reload45()'s 10s, against a booted-in-under-1.5s worst case measured
+   with every core saturated (TESTING.md § WO-1.90 § 2). The first call replaces about:blank, which
+   takes the mark like any page does. */
+const LOAD_BUDGET_MS = 10000;
 async function load() {
-  await send('Page.navigate', { url: 'http://127.0.0.1:' + PORT + '/index.html?door=skip' });
-  await new Promise(r => setTimeout(r, 800));
-  await waitForBoot();
+  const url = 'http://127.0.0.1:' + PORT + '/index.html?door=skip';
+  await evalJs('window.__loadLeaving = 1; 1');
+  const since = Date.now();
+  const nav = await send('Page.navigate', { url });
+  const until = Date.now() + LOAD_BUDGET_MS;
+  const trail = [];
+  let last = null;
+  for (;;) {
+    try {
+      last = await evalJs(`(function(){ var l = document.getElementById('loadingScreen'),
+        e = document.getElementById('loadingError');
+        var state = window.__loadLeaving ? 'leaving' : !l ? 'none'
+          : l.classList.contains('hidden') ? 'booted'
+          : e && !e.classList.contains('hidden') ? 'failed' : 'booting';
+        return { state: state, href: location.href, ready: document.readyState,
+                 modulesRan: !!window.planbook,
+                 bootError: state === 'failed' ? (e.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 200) : null }; })()`);
+    } catch (e) {
+      last = { state: 'threw', error: String(e && e.message || e).slice(0, 120) }; /* swapping under us */
+    }
+    if (trail[trail.length - 1] !== last.state) trail.push(last.state);
+    if (last.state === 'booted' || last.state === 'failed' || Date.now() >= until) break;
+    await new Promise(r => setTimeout(r, 80));
+  }
+  if (last.state !== 'booted') {
+    const said = pageErrors.filter((x) => x.at >= since).slice(0, 4);
+    throw new Error('load() never handed back a new, booted document: '
+      + (last.state === 'failed' ? 'the boot failed and said so' : 'gave up after ' + LOAD_BUDGET_MS + 'ms')
+      + ' — states ' + trail.join('>') + ', last reading ' + JSON.stringify(last)
+      + (nav && nav.errorText ? ', Page.navigate answered ' + nav.errorText : '')
+      + '; the page reported ' + (said.length ? JSON.stringify(said.map((x) => x.text + (x.url ? ' @ ' + x.url : '')))
+        : 'no exception and no error-level log entry') + ' since the navigation');
+  }
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
 }
-await load();
+try { await load(); } catch (e) { bail('the page did not boot — ' + e.message); }
 
 const booted = await evalJs("document.querySelectorAll('*').length");
 if (booted < 20) bail('the page did not render — is index.html a placeholder?');

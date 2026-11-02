@@ -13,6 +13,21 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The harness stops handing sections a page that never started — 2026-11-02
+
+WO-1.91. Harness only — nothing in `src/`, `sw.js` or `index.html` moved, so no `CACHE` bump.
+
+- **`verify-shell.mjs`'s shared `load()` no longer sleeps a fixed 800ms** and then returns whether
+  the app booted or not. It waits until the old page is gone and the new one has booted, and gives up
+  after 10 seconds.
+- **A page that never boots now fails at the reload**, naming how far it got and quoting the
+  exceptions and error-level log entries the page reported. Before, the section carried on and threw
+  a confusing `TypeError` three reads later, which is what `verify/sync-button.mjs` kept doing.
+- **The suspicion that it was reading the page it had just left was wrong**: in 256 tries it never
+  did. The real cause was the thrown-away `false`.
+- **The flake itself is not cured.** A fresh document failed to boot in 2 of 6 full runs that day.
+  Booked as WO-1.92 (why) and WO-1.93 (the hundred section reloads that still discard the answer).
+
 ### The front-door harness waits for the page instead of guessing — 2026-11-02
 
 WO-1.90. Harness only — nothing in `src/`, `sw.js` or `index.html` moved, so no `CACHE` bump.

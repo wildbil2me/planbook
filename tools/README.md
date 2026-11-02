@@ -3199,6 +3199,18 @@ WO-1.89's verdict, and the cause was not reproduced in 315 scripted launches (`T
 consecutive full runs on one tree: `2205 checks · 2205 passed · 0 failed · 0 skipped`, 71,874 lines,
 32.6 lines per check, 1229s, 1233s and 1228s, exit 0 each, 2026-11-01 on the real clock.
 
+**WO-1.91 moved neither number. It added no check site, no result and no file.** The harness's own
+`load()` stopped sleeping 800ms after `Page.navigate` and stopped throwing away `waitForBoot()`'s
+`false`. It marks the document it leaves and polls one reading until the mark is gone and the loading
+screen is down, and it throws at a 10s deadline, or at once on a failed boot, naming every state it
+passed through, the URL, `readyState`, whether the modules ran, and any uncaught exception or
+error-level browser log entry the page reported since the navigation (the run now sends `Log.enable`
+for that, and keeps both kinds in `pageErrors`, read by `load()` alone). The thrown-away `false` is what
+`verify/sync-button.mjs`'s six recorded `reading 'driveSync'` throws needed; reading the page being
+left was not reproduced in any shape (`TESTING.md` § WO-1.91). `waitForBoot()` and the two local waits
+WO-1.89 and WO-1.90 added are unchanged. The three full runs are quoted in `TESTING.md` § WO-1.91
+rather than here, so that this file was not written to while they ran.
+
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
 `verify/touch-targets.mjs`'s About-modal block, where a `skip()` stands in when the modal never

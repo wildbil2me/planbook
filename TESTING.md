@@ -8432,6 +8432,208 @@ M2 and M3 also failed the `fromCache` check (also an installed launch). Every ot
 - [x] `TESTING.md` § WO-1.90 carries these lines verbatim with the evidence for each.
       — This list, copied from the work order.
 
+### WO-1.91 — h.load() sleeps a fixed 800 ms, and every section reloads through it
+
+No 👤 and no 📆 line. One harness file moves: `tools/verify-shell.mjs` (`load()`, and a comment on
+`waitForBoot()`). Nothing in `src/` moves (`git status --short src/` empty throughout), so no `CACHE`
+bump is owed. No `check(` was added, so neither count in `tools/README.md` moves.
+
+#### 1. What the old `load()` could and could not read
+
+**What the throw needs.** `verify/sync-button.mjs`'s `READ` reads `localStorage` inside a `try` and then
+`window.planbook.driveSync.syncState()`. The stack in every recorded throw is `<anonymous>:15:27`,
+and that is line 15 of `READ`, the `driveSync` read. `window.planbook` is assigned at **module scope**
+in `src/shell.js`, and the loading screen comes down inside the boot handler, which runs only after the
+modules have run. So a page with its loading screen down always has `window.planbook`. The page the
+check read was one whose modules **had not run**. Only two paths lead there through `load()`:
+
+- **(a) `waitForBoot()` read the page being left.** The navigation commits later, and the caller's next
+  read lands on the new document before its modules run. This is the work order's suspect.
+- **(b) `waitForBoot()` ran out its 8s on a new document that was still booting.** It returned `false`,
+  and `load()` **threw that `false` away** and returned.
+
+**The record**, read from the session scratchpads of earlier dispatches, which are still on this
+machine: 101 full-run logs reach the check just before the throw (*"and a tap on the stale button
+syncs"*), and **6 threw there**. They are WO-1.90's runs 1 and 2, `run2`/`run3` of 2026-10-27,
+`run-final` of 2026-10-31 and `capture` of 2026-11-01. The two from 2026-10-27 are the two that
+`.claude/dispatch/WO-3.73-result.md` reports, and that file guesses at (b) below. **All six threw at
+the same point**: after 35 of the section's checks, on the reload that installs the pinned 23:30
+same-day clock. The section reloads through `load()` fourteen other times, and the harness reloads
+about a hundred more times by its own `Page.reload` + `waitForBoot()`. None of those ever threw this
+way. Runs that threw
+took 1223–1232s, the same as the green runs beside them (1197–1233s), so the machine was not slow
+overall.
+
+#### 2. Reproduction
+
+`repro191.mjs` (session scratchpad, not committed) runs its own Edge and a static server over the real
+app, with the service worker bypassed so that the server's delays reach the page. It marks the
+document, navigates or reloads, and reads the mark, the loading screen and `window.planbook`, first at
+the moment CDP answers and then after the old `load()`'s 800ms + `waitForBoot()`.
+
+| Shape | Navigations | Old document read at the reply | Old document read after the wait | `load()` returned with no `window.planbook` |
+|---|---|---|---|---|
+| `Page.navigate` to the same `?door=skip` URL | 20 | 0 | 0 | 0 |
+| same, `index.html` held 2.5s by the server | 11 | 0 — `Page.navigate` answered only after ≥2s | 0 | 0 |
+| `Page.reload` | 20 | 0 | 0 | 0 |
+| `Page.reload`, `index.html` held 2.5s | 12 | 0 — the reply came in <500ms, and the next `Runtime.evaluate` was **held ~2.5s** and answered from the new document (timed on the last 4) | 0 | 0 |
+| old page's main thread busy 1.5s at the navigation | 15 | 0 — the evaluate was held ~1.5s and answered from the new document | 0 | 0 |
+| `sync-button.mjs`'s `FIXED_CLOCK` at 23:30 today, installed on every document | 25 | 0 | 0 | 0 |
+| same, with the service worker **on** (as in the harness) | 150 | 0 | 0 | 0 |
+| every `src/*.js` held 3s by the server | 3 | 0 | 0 | **3** — `waitForBoot()` returned `false` each time |
+
+**(a) is refuted on this machine: 0 reads of the page being left in 256 navigations.** `Page.navigate`
+answers only once the new document has committed. `Page.reload` answers early, but CDP holds the next
+`Runtime.evaluate` until the reload commits. In either case there is no window in which a read reaches
+the old page. The mark that WO-1.89 and WO-1.90 wait on also behaves as they assumed: a same-URL
+navigation drops it (20/20, and 11/11 under the slow response).
+
+**(b) is reproduced on demand.** Slow modules or blocked modules put the page into exactly the state
+the throw needs. A scratch copy of the harness (`make-only.mjs` writes it into the scratchpad, running
+only the chosen sections plus probe sections, with nothing written into the repository) ran a probe
+section that blocks `src/shell.js` and calls `h.load()`. **On the unchanged `load()`** it printed
+`returned after 8912ms; window.planbook = undefined`: `load()` came back and the section carried on.
+A second probe made IndexedDB throw, so the boot failed and said so. There it printed
+`returned after 8874ms; loadingError shown = true`: a page that had failed to start was handed to the
+section as if it had booted.
+
+**So the cause of the `sync-button.mjs` throw is (b)**: a new document whose modules had not run
+8.8s after the navigation, and a `load()` that returned anyway. **Why that one reload was slow is not
+reproduced.** The pinned clock alone is not enough (25/25 clean with the worker bypassed,
+150/150 with it on). A side-loaded or section-only reproduction was not possible: `sync-button.mjs` is the 88th
+browser section and needs the fixtures of the sections before it, and a section-only run fails at its first class click
+(tried, `ONLY=localstorage-prefs,classes-terms,roster-contacts,sync-button`). This does not point at
+`src/` either. A page whose modules have not run is a page that has not booted. It is not a booted
+page without `window.planbook`, which is the app defect the work order said to stop on. Every
+navigation measured here booted in under 1.5s unless the server was told to hold its modules.
+
+**It recurred on the changed `load()`, which is where the evidence above stops being an inference.**
+The first full run of the changed harness (2026-11-02, 05:05–05:26, before the error capture below
+was added, so it does not count toward the three runs) went red at the same place, and this time its
+own message gave the state:
+
+`FAIL | § verify/sync-button.mjs ran to the end of its own checks :: it threw after 35 of its own checks … Error: load() never handed back a new, booted document: gave up after 10000ms — states booting, last reading {"state":"booting","href":"http://127.0.0.1:57141/index.html?door=skip","ready":"complete","modulesRan":false,"bootError":null} ← at load (…verify-shell.mjs:1278:11) ← at async reload (…verify/sync-button.mjs:232:3) ← at async Object.run (…verify/sync-button.mjs:1351:1)`
+
+`2197 checks · 2194 passed · 3 failed · 0 skipped`, `1224s`. The other two failures were the same two
+downstream checks as before. Line 1351 is the same-day `reload()`. The trail is `booting` only, with
+no `leaving`: the old document was gone at the first reading. That is (b) again, observed directly
+this time. The document had **finished** loading (`readyState: complete`) and **its modules never
+ran**. That shape is not a slow boot. It is a module graph that failed. In `repro191.mjs`, both ways a
+graph fails produce it exactly: `src/shell.js` answered 404 (`ready: complete`, no `window.planbook`,
+and a `Log.entryAdded` error *"Failed to load resource: … 404"*), and a module that throws at module
+scope (a `throw` appended to `src/presentation.js` as served; same reading, plus a
+`Runtime.exceptionThrown` naming the file and line). A request blocked by `Network.setBlockedURLs`
+produces the same reading with **no** event at all.
+
+**So `load()` now quotes what the page reported.** `verify-shell.mjs` sends `Log.enable` and keeps
+every `Runtime.exceptionThrown` and error-level `Log.entryAdded` (the last fifty, timestamped) in
+`pageErrors`, which nothing but `load()`'s throw reads. When `load()` fails, it appends the ones that
+arrived since its own navigation, or says there were none. No `src/` module computes a date at
+module scope (`grep -n "^\(const\|let\|var\)[^=]*=.*\(new Date\|Date\.now\|today\|localDay\)" src/*.js`
+finds two string constants), so a pinned clock that throws at module scope has nothing to throw in. **The
+next occurrence will say which of the three it was.** Until it does, the cause below the failed
+module graph is not known. Nothing found points at `src/`, and this does not stop on it: a page whose
+modules never ran is a page that never booted. It is not a booted page without `window.planbook`.
+
+#### 3. The change
+
+`load()` in `tools/verify-shell.mjs`:
+
+- marks the document it leaves (`window.__loadLeaving`), then sends `Page.navigate` to the same
+  `?door=skip` URL as before;
+- polls **one** reading every 80ms. That reading returns `state` (`leaving` · `none` · `booting` ·
+  `failed` · `booted`), `href`, `readyState`, `modulesRan` and the boot error's text. "Gone" and
+  "booted" are judged on one reading, so they cannot straddle a swap;
+- returns only on `booted`: the mark is gone and `#loadingScreen` is hidden;
+- **throws** at once on `failed` (`#loadingError` up), and on anything else once **10s** have passed.
+  The message names the states it passed through, the last reading, `Page.navigate`'s `errorText`
+  if there was one, and the page's own exceptions and error-level log entries since the navigation
+  (or "no exception and no error-level log entry"). The 10s is WO-1.89's `reload45()` budget. It is a deadline, not a
+  sleep: a good load returns at its first `booted` reading;
+- the first call, which replaces `about:blank` before `h` exists, is wrapped so that a throw
+  **bails the run** with the message rather than escaping as an unhandled rejection.
+
+**The 800ms sleep is gone and nothing replaced it.** A section that calls `load()` and gets a throw is
+contained by `runSection()` (WO-1.44), and `recoverPage()`'s own `load()` throwing answers "did not
+come back", which stops the run and names the sections that did not run.
+
+**`waitForBoot()` is not taught the difference**, and its comment now says why. It has no "before":
+it is called with no navigation in front of it as often as with one. A mark set on the page it saw
+would read the same on a page that never reloaded. And § 2 found that the old-page read it cannot
+rule out does not happen in this browser. Its 101 call sites in `tools/verify/` that discard its
+answer (`await waitForBoot();` on a line of its own) are the same defect (b) in other places. They are not touched here, as the work order
+instructs: they are green files. That is a follow-up in the result file.
+
+**The local copies stay local.** `verify/cooldown-quiet.mjs`'s `reload45()` uses `Page.reload` and
+first checks that the fixture is in IndexedDB, which `load()` has no reason to know about.
+`verify/front-door.mjs`'s `navigateTo()`/`settle()` navigates **without** `?door=skip` and to
+`about:blank`, and it waits for `door` as well as `app`. `load()` can do neither. Both are green and
+both wait on the same condition `load()` now waits on, so sharing would be churn with nothing to gain.
+
+#### Acceptance
+
+- [x] `TESTING.md` § WO-1.91 says whether `waitForBoot()` can read the page being left, names the
+      cause of the `sync-button.mjs` throw with evidence, or says plainly that it could not be
+      reproduced and what was tried.
+      — §§ 1–2. **No, not in this browser:** 0 old-page reads in 256 navigations across eight shapes,
+      because CDP answers or holds the next evaluate until the commit. **The cause is the
+      thrown-away `false`**: the throw needs a page whose modules have not run, and the unchanged
+      `load()` was shown handing exactly that page back after 8912ms. The changed `load()` then caught
+      it in a full run, at the same reload: `readyState: complete`, `modulesRan: false`, so the module
+      graph failed rather than ran slowly. **What failed it was not reproduced**: not with the pinned
+      clock (175 navigations, worker on and off), and not with the section alone. § 2 says what was
+      tried. `load()` now quotes the page's own errors, so the next occurrence names it.
+- [x] `load()` no longer depends on a fixed sleep, and it does not return until the new document
+      has replaced the old one and booted.
+      — § 3. `grep -n "setTimeout(r, 800)" tools/verify-shell.mjs` finds nothing. The only exit
+      without a throw is a reading with the mark gone and the loading screen hidden.
+- [x] A `load()` whose new page never boots still fails loudly, and does not read as a pass.
+      — The probe sections in § 2, run against the changed `load()` (no mutation in the tree. The
+      probes live in the scratch copy):
+      `FAIL | § probe191-block ran to the end of its own checks :: it threw after 0 of its own checks … load() never handed back a new, booted document: gave up after 10000ms — states booting, last reading {"state":"booting",…,"ready":"complete","modulesRan":false,"bootError":null}; the page reported no exception and no error-level log entry since the navigation`
+      and
+      `FAIL | § probe191-fail … the boot failed and said so — states booting>failed, last reading {"state":"failed",…,"modulesRan":true,"bootError":"Planbook could not open its storage on this device, so it has not started. …"}; the page reported no exception and no error-level log entry since the navigation`,
+      then `PASS | probe191-after: the page came back booted after the probes`, `34 checks · 32 passed · 2 failed`.
+      The same two probes on the unchanged `load()` returned normally: they reached their own
+      "load() RETURNED" `FAIL` lines, which are there to prove the defect. And one in the wild: in the
+      pre-capture full run in § 2, `verify/sync-button.mjs` failed as a section on `load()`'s message
+      instead of a `TypeError` one read later.
+- [x] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the
+      run lines are quoted in `TESTING.md` § WO-1.91.
+      — Five full runs on the final tree, one after another with nothing beside them. Before each
+      run, one md5 was taken over every tracked `tools/*.mjs`, `tools/verify/*.mjs` and `src/*`, plus
+      `sw.js` and `index.html`. It read `dda4e9be512e` all five times, and again after the fifth.
+      Only `TESTING.md` was written between runs. Each run was waited out to its own `EXIT=`
+      (2026-11-02, real clock):
+      - Run 1: `2205 checks · 2205 passed · 0 failed · 0 skipped`, `71,957 lines · 32.6 lines per
+        check · 1217s`, `EXIT=0`.
+      - Run 2: `2186 checks · 2185 passed · 1 failed · 0 skipped`, `71,957 lines · 32.9 lines per
+        check · 1209s`, `EXIT=1`. **Red, and not through `load()`.** `verify/cooldown-quiet.mjs` threw
+        at its first `reload45()`, WO-1.89's local `Page.reload` wait:
+        `the reload never handed back a new, booted document inside 10s: {"left":true,"booted":false}`.
+        That is the same family as § 2: a new document that never booted. It happened in a section
+        that does not call `load()`, so it is not this change. And the reading cannot say whether
+        the modules ran, because `reload45()` does not ask. Not touched (a green file, and outside
+        this work order). It is in the result file as a follow-up. It broke the sequence, so runs
+        3–5 were made:
+      - Run 3: `2205 checks · 2205 passed · 0 failed · 0 skipped`, `71,957 lines · 32.6 lines per
+        check · 1196s`, `EXIT=0`.
+      - Run 4: `2205 checks · 2205 passed · 0 failed · 0 skipped`, `71,957 lines · 32.6 lines per
+        check · 1193s`, `EXIT=0`.
+      - Run 5: `2205 checks · 2205 passed · 0 failed · 0 skipped`, `71,957 lines · 32.6 lines per
+        check · 1194s`, `EXIT=0`.
+      **Runs 3, 4 and 5 are the three consecutive green runs.** The pre-capture run in § 2 was made
+      on an earlier tree (`4818607bd2a7`) and is not counted. **Limit:** the flake this work order
+      traced is not cured. It is now loud and diagnosable. Over the six full runs made this sitting,
+      a new document failed to boot twice, once through `load()` and once through a section's own
+      reload.
+- [x] `node tools/wo-sweep.mjs` passes.
+      — `node tools/wo-sweep.mjs`: `52 checks · 49 passed · 0 failed · 3 to review`, `EXIT=0`. These
+      are the three standing reviews. It was run after run 5, on the final `tools/` and with every
+      section above written except these run and sweep lines.
+- [x] `TESTING.md` § WO-1.91 carries these lines verbatim with the evidence for each.
+      — This list, copied from the work order.
+
 ---
 
 ## Phase 2 — Attendance

@@ -7162,7 +7162,7 @@ front.
 
 ## WO-1.91 — h.load() sleeps a fixed 800 ms, and every section reloads through it
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-11-02 · **Size** S · **Depends on** — · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.90 made.)*
 
 **Booked 2026-11-02**, owner-directed, out of [WO-1.90](#wo-190--front-doormjss-installed-cold-launch-timed-out-once-under-load)'s
@@ -7201,16 +7201,16 @@ section that reloads**, rather than one file at a time.
 - **`TESTING.md` § WO-1.91** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] `TESTING.md` § WO-1.91 says whether `waitForBoot()` can read the page being left, names the
+- [x] `TESTING.md` § WO-1.91 says whether `waitForBoot()` can read the page being left, names the
       cause of the `sync-button.mjs` throw with evidence, or says plainly that it could not be
       reproduced and what was tried.
-- [ ] `load()` no longer depends on a fixed sleep, and it does not return until the new document
+- [x] `load()` no longer depends on a fixed sleep, and it does not return until the new document
       has replaced the old one and booted.
-- [ ] A `load()` whose new page never boots still fails loudly, and does not read as a pass.
-- [ ] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the
+- [x] A `load()` whose new page never boots still fails loudly, and does not read as a pass.
+- [x] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the
       run lines are quoted in `TESTING.md` § WO-1.91.
-- [ ] `node tools/wo-sweep.mjs` passes.
-- [ ] `TESTING.md` § WO-1.91 carries these lines verbatim with the evidence for each.
+- [x] `node tools/wo-sweep.mjs` passes.
+- [x] `TESTING.md` § WO-1.91 carries these lines verbatim with the evidence for each.
 
 **Traps** — **A longer sleep is not a fix**, for the reason WO-1.89's Traps gave. **Every section
 reloads through this helper**, so a wait that hangs on some page shape kills far more than one
@@ -7219,3 +7219,112 @@ budget and with a message saying which state it reached. **The navigation keeps 
 `front-door.mjs` is the one section that navigates without it, so read its own navigation before
 assuming it uses `load()`. **Nothing in `src/` moves**, so no `CACHE` bump is owed. **The three runs
 take about 20 minutes each**: background them and say so up front.
+
+## WO-1.92 — A fresh document sometimes never runs its modules, and nothing has said why
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.91 · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app, unless the diagnosis finds otherwise — the same call WO-1.26 through WO-1.91 made.)*
+
+**Booked 2026-11-02**, owner-directed, out of [WO-1.91](#wo-191--hload-sleeps-a-fixed-800-ms-and-every-section-reloads-through-it)'s
+verdict. WO-1.91 found what made `verify/sync-button.mjs` throw: `load()` threw away `waitForBoot()`'s
+`false` and handed back a page that had never booted. It made that failure loud. It did not find
+**why the page never booted**, and it says so. Over six full runs on 2026-11-02, a fresh document
+failed to boot twice: once through `load()` in `sync-button.mjs`, and once through
+`verify/cooldown-quiet.mjs`'s own `reload45()`. The `load()` failure read `readyState: complete`,
+`modulesRan: false`, `bootError: null`. So the document had finished loading and its module graph
+never ran. That is a failed graph, not a slow boot. `TESTING.md` § WO-1.91 § 2 records three ways to
+produce that reading on demand: a module answering 404, a module throwing at module scope, and a
+request blocked outright. The last of these leaves no event at all. Since WO-1.91, `load()` quotes
+every `Runtime.exceptionThrown` and error-level `Log.entryAdded` the page reported since its
+navigation, so **the next occurrence through `load()` names which of the three it was**.
+
+The flake is about one run in three on this machine, and every verdict reads this harness. Until
+it is understood, a red run cannot be told from a real failure without a re-run.
+
+**Deliverables**
+- **Collect occurrences before theorising.** Run the full harness until `load()` fails at least
+  twice, or until a stated number of runs (say how many) passes clean. Quote every failure message in
+  full, including the page errors `load()` appends. Background the runs and say up front how long
+  they take.
+- **Name the cause from those messages**: a request that failed (which URL, which status), a module
+  that threw (which file and line), or a request with no event at all. If it is the last, say what
+  else was tried to see it, for example `Network.loadingFailed`, the service worker's own fetch
+  handler, or the `CACHE` it served from.
+- **If the cause is in `src/` or `sw.js`**, stop and report. A worker that sometimes serves a module
+  it should not, or a module that sometimes throws at load, is an app defect. It is also one a
+  teacher's iPad could meet. It gets its own work order and a `CACHE` bump there, not here.
+- **If the cause is in the harness**, for example a server, port or cache the harness itself
+  controls, fix it there and say why the fix is the cause and not a longer wait.
+- **`TESTING.md` § WO-1.92**, a `tools/README.md` ledger line if a harness file moves, and the
+  `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] `TESTING.md` § WO-1.92 quotes every boot failure seen, with the page errors `load()` reported,
+      and names the cause with evidence, or says plainly that it did not recur in N runs and what was
+      tried.
+- [ ] If the cause is in the harness, it is fixed there, and the fix is neither a longer budget nor a
+      retry.
+- [ ] If the cause is in `src/` or `sw.js`, nothing there has moved, and the report names the app
+      work order it needs.
+- [ ] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the run
+      lines are quoted in `TESTING.md` § WO-1.92.
+- [ ] `node tools/wo-sweep.mjs` passes.
+- [ ] `TESTING.md` § WO-1.92 carries these lines verbatim with the evidence for each.
+
+**Traps** — **A retry is not a fix**: a harness that reloads until the page boots hides the one
+reading a teacher's iPad could also get. WO-1.44's rule still applies: a failure must stay loud.
+**A green run proves nothing about a flake of this rate**, so three green runs show the change broke
+nothing, not that it cured anything. The same limit WO-1.90 and WO-1.91 stated. **The failures so far
+were in sections 88 and later**, after ~1,000 seconds of one browser. A section-only reproduction
+failed at its first class click in WO-1.91, so do not plan on one. [WO-1.93](#wo-193--about-a-hundred-section-reloads-throw-away-waitforboots-answer)
+widens the net to the sections' own reloads, so a second occurrence may arrive through one of them.
+**Each full run takes about 20 minutes.**
+
+## WO-1.93 — About a hundred section reloads throw away waitForBoot()'s answer
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.91 · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.91 made.)*
+
+**Booked 2026-11-02**, owner-directed, out of [WO-1.91](#wo-191--hload-sleeps-a-fixed-800-ms-and-every-section-reloads-through-it)'s
+verdict. WO-1.91 found that `load()` threw away `waitForBoot()`'s `false` and carried on with a page
+that had never booted. The section then failed three reads later on an unrelated `TypeError`. It
+fixed `load()` and left the same defect in place everywhere else, as its work order instructed:
+`grep -cE "^\s*await waitForBoot\(\);\s*$" tools/verify/*.mjs` finds **100** bare calls on
+2026-11-02. Each one is a reload that, when the page does not boot, says nothing and lets the next
+read fail somewhere it does not belong.
+
+The verifier named one more case. `verify/cooldown-quiet.mjs`'s `reload45()` (WO-1.89) went red on
+WO-1.91's run 2 with `{"left":true,"booted":false}`. Its message cannot say whether the modules ran,
+because it does not ask, and it quotes no page error.
+
+**Deliverables**
+- **Make a section reload that does not boot fail at the reload**, with a message that says so. One
+  shared shape for every call site is the aim, for example an `h.` helper that waits and throws, or
+  `waitForBoot()` gaining an option to throw. Say why the shape was chosen. **Do not change what
+  `waitForBoot()` returns to the callers that read its answer.**
+- **`reload45()`**: either move it onto `h.load()` or make it report what `load()` reports
+  (`modulesRan`, the boot error, the page errors since its own navigation). It still has to check the
+  stored fixture first. Say which, and why.
+- **A call that waits for a boot it expects to fail** (a section proving the loading error, for
+  example) keeps reading the answer. Find those sites before rewriting any, and leave them as they are.
+- **`TESTING.md` § WO-1.93**, a `tools/README.md` ledger line, and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] No call in `tools/verify/` waits for a boot and then discards the answer. A probe that blocks
+      the app's modules under one rewritten site fails at that reload, naming the state it reached,
+      and the probe is not in the tree.
+- [ ] `reload45()`'s failure message says whether the modules ran and quotes the page's errors since
+      its navigation.
+- [ ] Every site that expects a failed boot still reads `waitForBoot()`'s answer, and `TESTING.md`
+      § WO-1.93 lists them.
+- [ ] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the run
+      lines are quoted in `TESTING.md` § WO-1.93.
+- [ ] `node tools/wo-sweep.mjs` passes.
+- [ ] `TESTING.md` § WO-1.93 carries these lines verbatim with the evidence for each.
+
+**Traps** — **This touches green files on purpose**: WO-1.91's "do not churn green files" kept
+`load()` small and does not apply here. The churn is the deliverable. But **a mechanical rewrite of a
+hundred lines is where a section quietly changes meaning**. Read each site's next line before
+rewriting it, and keep a `false` that a section reads as `false`. **A longer budget is not a fix.**
+**If a page error names `src/`**, stop and report it under [WO-1.92](#wo-192--a-fresh-document-sometimes-never-runs-its-modules-and-nothing-has-said-why).
+**Nothing in `src/` moves**, so no `CACHE` bump is owed. **Each full run takes about 20 minutes.**
