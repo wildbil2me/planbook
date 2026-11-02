@@ -7115,7 +7115,7 @@ up front.
 
 ## WO-1.90 — front-door.mjs's installed cold launch timed out once under load
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-11-02 · **Size** S · **Depends on** — · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.89 made.)*
 
 **Booked 2026-11-01**, owner-directed, out of [WO-1.89](#wo-189--cooldown-quietmjs-sometimes-finds-no-class-tab-to-click)'s
@@ -7145,17 +7145,77 @@ is how WO-3.70 lost two runs.
 - **`TESTING.md` § WO-1.90** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] `TESTING.md` § WO-1.90 says what `settled: "timeout"` meant and names the cause with evidence,
+- [x] `TESTING.md` § WO-1.90 says what `settled: "timeout"` meant and names the cause with evidence,
       or says plainly that it could not be reproduced and what was tried.
-- [ ] The installed cold-launch check no longer fails because a fixed pause or budget ran out on a
+- [x] The installed cold-launch check no longer fails because a fixed pause or budget ran out on a
       slow run.
-- [ ] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the
+- [x] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the
       run lines are quoted in `TESTING.md` § WO-1.90.
-- [ ] `node tools/wo-sweep.mjs` passes.
-- [ ] `TESTING.md` § WO-1.90 carries these lines verbatim with the evidence for each.
+- [x] `node tools/wo-sweep.mjs` passes.
+- [x] `TESTING.md` § WO-1.90 carries these lines verbatim with the evidence for each.
 
 **Traps** — **A longer budget is not a fix**, for the reason WO-1.89's Traps gave. **Do not make a
 timeout read as a pass**: `settled: "timeout"` failing the check is what surfaced this, and it must
 still fail when the door really is drawn or the app never boots. **Nothing in `src/` moves**, so no
 `CACHE` bump is owed. **The three runs take about 20 minutes each**: background them and say so up
 front.
+
+## WO-1.91 — h.load() sleeps a fixed 800 ms, and every section reloads through it
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** — · **Blocks** nothing
+**Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.90 made.)*
+
+**Booked 2026-11-02**, owner-directed, out of [WO-1.90](#wo-190--front-doormjss-installed-cold-launch-timed-out-once-under-load)'s
+verdict. The implementer's first two full runs read `2197 checks · 2194 passed · 3 failed`, and the
+failures were not WO-1.90's section: both times `verify/sync-button.mjs` threw after 35 of its own
+checks, in its pinned same-day clock block, with `TypeError: Cannot read properties of undefined
+(reading 'driveSync')`, so `window.planbook` was not on the page it read. The throw left its stand-in
+Google library on the page, and two checks downstream failed with it. The section passed on the next
+four runs with no file moving. The record is `TESTING.md` § WO-1.90, under its third Acceptance line.
+
+The likely mechanism is in the shared helper, not in the section. `load()` in
+`tools/verify-shell.mjs` (exported as `h.load`) navigates, sleeps **a fixed 800 ms**, then calls
+`waitForBoot()`. `waitForBoot()` only asks whether `#loadingScreen` is hidden, and it cannot tell the
+page being left from the new one. So if the navigation has not committed within 800 ms, it can read
+the old page's hidden loading screen, return at once, and leave the caller reading a document that is
+about to be replaced. It is the same shape WO-1.89 and WO-1.90 fixed one section at a time.
+`sync-button.mjs`'s `reload()` is `h.load()`, and so are the reloads in `drive-sign-in.mjs`,
+`first-run.mjs` and `front-door.mjs`, about a dozen call sites in all. **One fix here covers every
+section that reloads**, rather than one file at a time.
+
+**Deliverables**
+- **Confirm the mechanism before changing anything**, and record it in `TESTING.md` § WO-1.91: whether
+  `waitForBoot()` can return `true` on the page being left, and whether that explains the
+  `sync-button.mjs` throw. If it can be reproduced, for example by running the section under side load
+  or with a slowed navigation, say how often before and after.
+- **Fix it in `load()`, not in each caller.** Mark the document before navigating and wait until a
+  new one has replaced it, then wait for it to boot. This is the condition WO-1.89's and WO-1.90's
+  local helpers wait on. Drop the fixed 800 ms rather than lengthening it. If `waitForBoot()` itself
+  should learn the difference, say why in its comment.
+- **Look at the sections' own local copies of the same wait.** WO-1.89 and WO-1.90 kept theirs local
+  on purpose. Say whether they should now call the shared one, but **do not churn files that are
+  green** only to make them share code.
+- **If the cause is in `src/`**, stop and report. A page that sometimes boots without
+  `window.planbook` would be an app defect and a work order of its own.
+- **`tools/README.md`**: one line in the ledger.
+- **`TESTING.md` § WO-1.91** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] `TESTING.md` § WO-1.91 says whether `waitForBoot()` can read the page being left, names the
+      cause of the `sync-button.mjs` throw with evidence, or says plainly that it could not be
+      reproduced and what was tried.
+- [ ] `load()` no longer depends on a fixed sleep, and it does not return until the new document
+      has replaced the old one and booted.
+- [ ] A `load()` whose new page never boots still fails loudly, and does not read as a pass.
+- [ ] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the
+      run lines are quoted in `TESTING.md` § WO-1.91.
+- [ ] `node tools/wo-sweep.mjs` passes.
+- [ ] `TESTING.md` § WO-1.91 carries these lines verbatim with the evidence for each.
+
+**Traps** — **A longer sleep is not a fix**, for the reason WO-1.89's Traps gave. **Every section
+reloads through this helper**, so a wait that hangs on some page shape kills far more than one
+section: WO-1.44's *blast radius, not tolerance* rule means it must still fail, but by a bounded
+budget and with a message saying which state it reached. **The navigation keeps `?door=skip`**, and
+`front-door.mjs` is the one section that navigates without it, so read its own navigation before
+assuming it uses `load()`. **Nothing in `src/` moves**, so no `CACHE` bump is owed. **The three runs
+take about 20 minutes each**: background them and say so up front.

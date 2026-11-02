@@ -8266,6 +8266,174 @@ and the work order is about the card.
 
 ---
 
+### WO-1.90 — front-door.mjs's installed cold launch timed out once under load
+
+No 👤 and no 📆 line. One harness file moves: `tools/verify/front-door.mjs`. Nothing in `src/` moves
+(`git status --short src/` empty after every mutation below was copied back), so no `CACHE` bump is
+owed, and no `check(` was added, so neither count in `tools/README.md` moves (2199 sites, 2205
+executed).
+
+#### 1. What `settled: "timeout"` meant
+
+`settle()` polled the page every 150ms for one of two answers — the door up (`door`), or the loading
+screen down with no door (`app`) — and returned `timeout` when **its own 12000ms default ran out**
+without either. In `coldVisit()` that budget started after a fixed `pause(400)`, so the check read
+`timeout` about 12.4s after `Page.navigate` returned.
+
+What the page had reached, read off the failing line in WO-1.89's run 1 (its log,
+`run1.log` in that session's scratchpad), whose full detail was
+`{"settled":"timeout","home":true,"seen":{"doorSeen":false,"appSeen":false,"appBeforeDoor":false}}`:
+
+- `seen` was an object, so the section's page-start observer had run — **the new document existed**
+  and was the one evaluated.
+- `appSeen: false` and `doorSeen: false`: at no task boundary in those 12.4s was the door up or the
+  loading screen down. **The app had not booted at all**; it was not a slow paint after a boot.
+- `home: true` says nothing either way: `#homeView` carries no `hidden` in `index.html` and is laid out
+  under the loading screen before boot.
+
+Two things the old reading could not tell apart, found by reading `settle()` against `src/shell.js`:
+
+- **A boot that failed read exactly like a boot that stalled.** `showBootFailure()` keeps the loading
+  screen up on purpose and shows `#loadingError`; `settle()` read that as `wait` until the budget ran
+  out. So `timeout` covered *the modules never ran*, *`store.boot()` never resolved* and *`store.boot()`
+  threw* (an IndexedDB `blocked` on a just-wiped origin is a live candidate for that one: `openDb()`
+  rejects on `onblocked`). The record holds nothing that picks between them.
+- **Every navigation was followed by a fixed sleep and then a read of whichever document was up**:
+  `wipe()` slept 250ms after `about:blank`, and `coldVisit()` and the four arms that navigate between
+  two booted pages (`again`, `prefFirst`, `byList`, `fromCache`) slept 400ms before `settle()`. If the
+  navigation had not committed in that time, `settle()` read the page being left. For the four
+  page-to-page arms that is worse than a timeout: an old booted page answers `app` straight away, so
+  the check would read the wrong page and could pass. This is the defect WO-1.89 fixed in
+  `verify/cooldown-quiet.mjs`, in this section's shape. The trail below shows it never happened on
+  this machine, because `Page.navigate` answered after the commit every time. The mark makes it
+  impossible rather than just unobserved.
+
+#### 2. Reproduction — tried, and not achieved
+
+Two scratch drivers, kept in the session scratchpad and not committed:
+
+- `repro190.mjs` runs its own Edge and server and repeats the section's sequence around the check: a
+  device holding a year and controlled by the worker (the `fromCache` arm), then `wipe()`, the
+  `navigator.standalone` stand-in, `Page.navigate`, `pause(400)`, `settle()` with a 30s budget. It
+  times each launch and reads the page's progress when one is slow.
+- `fd-only.mjs` is a copy of `verify-shell.mjs` that runs only `verify/localstorage-prefs.mjs` (it sets
+  `h.seam`) and then `verify/front-door.mjs` N times. `fd-orig.mjs` is the same, importing the
+  pre-change `front-door.mjs` from `git show HEAD:`.
+
+| Shape | Installed cold launches | Over 12s | Time from navigate to settled |
+|---|---|---|---|
+| `repro190`, idle | 5 | 0 | median 424ms, max 430 |
+| `repro190`, `wo-sweep` + `wo-gate --audit` looping beside it | 30 | 0 | median 424, max 736 |
+| `repro190`, 18 busy-loop processes on 16 cores | 25 | 0 | median 717, max 1391 |
+| `repro190`, three instances in parallel | 3 × 80 | 0 | medians 429–443, max 1536 |
+| `fd-orig.mjs`, the **unchanged** section × 15, sweep + audit looping | 15 | 0 (15/15 PASS) | — (the whole run, 15 sections, 154s) |
+| `fd-only.mjs`, the **changed** section × 15, sweep + audit looping | 15 | 0 (15/15 PASS) | — (the whole run, 15 sections, 110s) |
+
+**0 timeouts in 315 scripted installed launches.** The worst was 1.5s with every core saturated,
+against a 12s budget. Side load slows a launch by a few hundred milliseconds and never came near the
+12 seconds the failure needed: `wo-sweep.mjs` takes 2.8s here and `--audit` 0.25s, on a 16-core machine.
+**The one failure on record was not a slow run of the ordinary kind. It was a boot that never
+finished, and its cause is not reproduced.** The candidates are a module load that stalled, an
+IndexedDB open queued behind the wipe, and a boot that failed. Nothing found here points at `src/`.
+Every launch in these runs booted in under 1.6s. The candidates that sit in the browser are produced
+by the harness wiping an origin and relaunching on it in the same second, which a teacher's device
+never does. That is why this does not stop and report an app defect.
+
+A debug copy of the changed section printed `settle()`'s trail on every call, five section runs,
+65 settles: 45 `wait>app`, 15 `wait>door`, 5 `app` (the arm after the tap, where no navigation
+happens). **No `leaving`, no `none`, no `threw`.** On this machine the new document was already up
+by the first poll after `Page.navigate` answered.
+
+#### 3. The change, in the harness
+
+`tools/verify/front-door.mjs`:
+
+- `navigateTo(url)` marks the document it is leaving (`window.__fdLeaving`) before `Page.navigate`.
+  All six navigation sites in the section use it: `wipe()`, `coldVisit()` and the four page-to-page
+  arms. **All five `pause(400)` sites are gone, along with `wipe()`'s `pause(250)`.**
+- `settle()` answers `leaving` while the marked document is still up, so it can never return a state
+  read off the page being left. It answers **`failed` straight away when `#loadingError` is up**, so a
+  failed boot no longer burns 12s and reads as `timeout`. It keeps a `trail` of every distinct
+  reading. **Its budget is still 12000ms**: the work order's Traps say a longer budget is not a fix,
+  and § 2 shows the ordinary slow run uses about a tenth of it.
+- `wipe()` now waits until the current document is a fresh `about:blank` before it clears the origin.
+  It throws after 10s and gives the last reading, like WO-1.89's `reload45()`.
+- `READ` also carries `ready` (`document.readyState`), `modulesRan` (whether `window.planbook` exists)
+  and `bootError` (the text of `#loadingError` when it is up). `coldVisit()` returns `steps`, the
+  trail. The installed check's detail prints all of these. **If this check ever goes red again, its
+  line will say which of § 1's candidates happened.**
+
+**Nothing was made forgiving.** Every check still requires `settled === 'app'` or `'door'` exactly,
+and `timeout`, `failed` and `leaving` all fail. Three mutations prove the installed check still goes
+red, each run through `fd-only.mjs` and each `src/` file copied back from a saved copy straight
+after its run (`git diff --stat src/` empty after each, and `grep -rn "MUTATION WO-1.90"` over the
+tree empty at the end):
+
+| Mutation (`src/`, reverted) | Installed check | Its detail |
+|---|---|---|
+| M1 — `mightBeAStranger()` ignores `isInstalled()`: the door really drawn on an installed launch | **FAIL** | `"settled":"door","steps":"wait>door"`, `doorSeen: true` |
+| M2 — `store.boot()` never called on an installed launch: the app never boots | **FAIL** | `"settled":"timeout","steps":"wait","loadingUp":true,"modulesRan":true,"doc":false` — the recorded failure's shape, now saying how far the page got |
+| M3 — an installed boot throws | **FAIL** | `"settled":"failed","steps":"wait>failed"`, `bootError` carrying the loading screen's own words |
+
+M2 and M3 also failed the `fromCache` check (also an installed launch). Every other check stayed green.
+
+#### Acceptance
+
+- [x] `TESTING.md` § WO-1.90 says what `settled: "timeout"` meant and names the cause with evidence,
+      or says plainly that it could not be reproduced and what was tried.
+      — § 1 covers what it meant: `settle()`'s own 12000ms budget ran out after a fixed 400ms. The
+      failing line shows the new document was up and had not booted at 12.4s. A failed boot read the
+      same as a stalled one. § 2 says plainly that it was **not** reproduced: 0 timeouts in 315
+      scripted installed launches across six shapes, with the counts. It also gives the three
+      candidates that are left and why none of them is an app defect to stop on.
+- [x] The installed cold-launch check no longer fails because a fixed pause or budget ran out on a
+      slow run.
+      — § 3. **The fixed pause is gone.** `grep -n "pause(400)\|pause(250)" tools/verify/front-door.mjs`
+      finds nothing. The arm now waits on the
+      condition the check reads: the marked old document gone, then `door`, `app` or `failed`. **The
+      budget is unchanged at 12000ms, on purpose** (the Traps). The slowest ordinary run measured here
+      took 1.5s with every core busy, so a slow run uses about a tenth of it. What still fails the
+      check is a page that has not booted 12s after the navigation, or a page that failed or drew the
+      door. M1–M3 show all three still fail, and that is the behaviour the Traps require. **Limit:**
+      the one recorded failure was a non-boot of at least 12s whose cause is not known. If it comes
+      back, this check goes red again, and its detail now says which candidate it was.
+- [x] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the
+      run lines are quoted in `TESTING.md` § WO-1.90.
+      — Five full runs, all on one tree. Before each run, one md5 was taken over every
+      `.mjs`/`.js`/`.css`/`.html` under `tools/` and `src/`, plus `sw.js` and `index.html`. It read
+      `df10f337…` all five times. Only `TESTING.md` and `tools/README.md` were written between runs.
+      Each run was waited out to its own `EXIT=`:
+      - Runs 1 and 2: `2197 checks · 2194 passed · 3 failed · 0 skipped`, `71,874 lines · 32.7 lines
+        per check`, 1233s and 1234s, `EXIT=1`. **Red, and not this section.** Both times
+        `verify/sync-button.mjs` threw after 35 of its own checks, in its pinned same-day clock block
+        (`TypeError: Cannot read properties of undefined (reading 'driveSync')`, so `window.planbook`
+        was not on the page it read). That left its stand-in Google library on the page, and two
+        checks failed downstream: its own hand-back check and `outreach`'s no-Google-script check.
+        That section runs **before** `verify/front-door.mjs`, so nothing this work order changed ran
+        ahead of it. The front door's 18 checks passed in both runs. The section passed on runs 3–5
+        and on a full run of the **pre-change** harness, made alongside run 3 (a copy of
+        `verify-shell.mjs` importing `git show HEAD:tools/verify/front-door.mjs`:
+        `2205 checks · 2205 passed · 0 failed · 0 skipped`, `EXIT=0`). It is noted in the result file
+        as a follow-up. It is not touched here.
+      - Run 3: `2205 checks · 2205 passed · 0 failed · 0 skipped`, `71,874 lines · 32.6 lines per
+        check · 1229s`, `EXIT=0`.
+      - Run 4: `2205 checks · 2205 passed · 0 failed · 0 skipped`, `71,874 lines · 32.6 lines per
+        check · 1233s`, `EXIT=0`.
+      - Run 5: `2205 checks · 2205 passed · 0 failed · 0 skipped`, `71,874 lines · 32.6 lines per
+        check · 1228s`, `EXIT=0`.
+      In runs 1–5 the installed check read
+      `"settled":"app","steps":"wait>app",…,"ready":"complete","modulesRan":true,"doc":true,"bootError":null`.
+      Run 3 had the pre-change full run beside it, a second Edge, for almost its whole length:
+      20:01–20:21 against 20:02–20:23.
+- [x] `node tools/wo-sweep.mjs` passes.
+      — `node tools/wo-sweep.mjs`: `52 checks · 49 passed · 0 failed · 3 to review`, `EXIT=0`. The
+      three are the standing reviews. It was run again after this section and `tools/README.md` were
+      final; the result file quotes that run.
+- [x] `TESTING.md` § WO-1.90 carries these lines verbatim with the evidence for each.
+      — This list, copied from the work order.
+
+---
+
 ## Phase 2 — Attendance
 
 *Phase goal: the owner stops opening Roll Call!. The marking flow runs while students walk in.*

@@ -147,26 +147,69 @@ const WATCH = await send('Page.addScriptToEvaluateOnNewDocument', { source: `(fu
   }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
 })();` });
 
-async function wipe() {
-  await send('Page.navigate', { url: 'about:blank' });
-  await pause(250);
-  await send('Storage.clearDataForOrigin', { origin: FRESH, storageTypes: 'all' });
+/* WAITING ON THE DOCUMENT ASKED FOR, NOT ON A CLOCK (WO-1.90). Every navigation here used to be
+   `Page.navigate` and then a fixed `pause()` — 250ms before a wipe, 400ms before `settle()` — on the
+   bet that the new document had replaced the old one by then. When it had not, `settle()` read the
+   document being LEFT: an app page that had booted long ago answers "app" at once, so an arm that
+   navigates from one booted page to another could have checked the page it came from — the defect
+   WO-1.89 found in verify/cooldown-quiet.mjs's reload, in this section's shape. So the old document
+   is marked before every navigation, and nothing reads a state off a marked one: `settle()` says
+   `leaving` until it is gone. The mark is the one fact that tells two documents of the same URL
+   apart; a URL test cannot, because `again`, `prefFirst` and `byList` reload the address they are
+   already on.
+
+   WHAT `timeout` MEANT, before this (TESTING.md § WO-1.90): `settle()`'s own 12000ms ran out with
+   no reading of `door` or `app`. A boot that FAILED read the same — #loadingError up, the loading
+   screen kept up on purpose (src/shell.js, showBootFailure) — so "slow" and "broken" were one word.
+   A failed boot now answers `failed` at once, and READ carries the page's progress (readyState,
+   whether the modules ran, the boot error's text) into the check's detail. The budget is not
+   longer: on this machine a cold installed launch settles in ~0.4s idle and under 1.4s with every
+   core saturated, and the one timeout on record had not booted at all at 12.4s. */
+async function navigateTo(url) {
+  await evalJs('window.__fdLeaving = 1; 1');
+  await send('Page.navigate', { url });
 }
 
-/* Polls until the page has decided: the door is up, or the loading screen is down with no door. */
+/* Polls until the page has decided: the door is up, the loading screen is down with no door, or the
+   boot failed and said so. `trail` keeps every distinct reading in order, for a check's detail. */
+let trail = [];
 async function settle(ms = 12000) {
   const until = Date.now() + ms;
+  trail = [];
   while (Date.now() < until) {
+    let s;
     try {
-      const s = await evalJs(`(function(){ var d = document.getElementById('frontDoor'),
-        l = document.getElementById('loadingScreen'); if (!d || !l) return 'none';
+      s = await evalJs(`(function(){ if (window.__fdLeaving) return 'leaving';
+        var d = document.getElementById('frontDoor'), l = document.getElementById('loadingScreen'),
+        e = document.getElementById('loadingError'); if (!d || !l) return 'none';
         if (!d.classList.contains('hidden')) return 'door';
-        return l.classList.contains('hidden') ? 'app' : 'wait'; })()`);
-      if (s === 'door' || s === 'app') return s;
-    } catch (e) { /* the document is still swapping under us */ }
+        if (l.classList.contains('hidden')) return 'app';
+        return e && !e.classList.contains('hidden') ? 'failed' : 'wait'; })()`);
+    } catch (e) { s = 'threw'; /* the document is still swapping under us */ }
+    if (trail[trail.length - 1] !== s) trail.push(s);
+    if (s === 'door' || s === 'app' || s === 'failed') return s;
     await pause(150);
   }
   return 'timeout';
+}
+
+/* about:blank, and the FRESH page it replaces gone, before the origin is cleared under it. */
+async function wipe() {
+  await navigateTo('about:blank');
+  const until = Date.now() + 10000;
+  let at = null;
+  while (Date.now() < until) {
+    try {
+      at = await evalJs("window.__fdLeaving ? 'leaving' : location.href");
+      if (at === 'about:blank') break;
+    } catch (e) { at = 'threw'; }
+    await pause(80);
+  }
+  if (at !== 'about:blank') {
+    throw new Error('the page never left for about:blank inside 10s, so the fresh origin was not '
+      + 'cleared: last reading ' + JSON.stringify(at));
+  }
+  await send('Storage.clearDataForOrigin', { origin: FRESH, storageTypes: 'all' });
 }
 
 const READ = `(async function(){
@@ -195,6 +238,9 @@ const READ = `(async function(){
     restore: laidOut('#homeFirstRun [data-backup-panel]'),
     doc: !!(window.planbook && window.planbook.store.getDoc()),
     keys: Object.keys(localStorage), databases: names,
+    ready: document.readyState, modulesRan: !!window.planbook,
+    bootError: (function(){ var e = document.getElementById('loadingError');
+      return e && !e.classList.contains('hidden') ? e.textContent.replace(/\\s+/g, ' ').trim().slice(0, 240) : null; })(),
     seen: window.__fd ? { doorSeen: window.__fd.doorSeen, appSeen: window.__fd.appSeen,
       appBeforeDoor: window.__fd.appBeforeDoor } : null };
 })()`;
@@ -205,12 +251,12 @@ async function coldVisit(stand, query = '') {
   await wipe();
   if (stand) ident = (await send('Page.addScriptToEvaluateOnNewDocument', { source: stand })).identifier;
   try {
-    await send('Page.navigate', { url: FRESH + '/index.html' + query });
-    await pause(400);
+    await navigateTo(FRESH + '/index.html' + query);
     const settled = await settle();
+    const steps = trail.join('>');
     try { await evalJs(KILL_ANIM); } catch (e) { /* the check reports it */ }
     const state = await evalJs(READ);
-    return { settled, ...state };
+    return { settled, steps, ...state };
   } finally {
     if (ident) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: ident });
   }
@@ -317,8 +363,7 @@ check('"Use it in this browser" lands on the home screen with Restore on it: the
 /* ── Acceptance 1, second half: a browser that already holds a year goes straight in ── */
 
 await evalJs('window.planbook.store.flush().then(function(){ return 1; })');
-await send('Page.navigate', { url: FRESH + '/index.html' });
-await pause(400);
+await navigateTo(FRESH + '/index.html');
 const again = { settled: await settle(), ...(await evalJs(READ)) };
 check('a browser visit to a device that already holds a year opens the app with no flash of the door: '
   + 'the same device, reloaded with no flag, boots to the home screen and the door was never on the glass',
@@ -332,8 +377,7 @@ const emptyList = (await send('Page.addScriptToEvaluateOnNewDocument', { source:
   'IDBFactory.prototype.databases = function(){ return Promise.resolve([]); };' })).identifier;
 let prefFirst = null;
 try {
-  await send('Page.navigate', { url: FRESH + '/index.html' });
-  await pause(400);
+  await navigateTo(FRESH + '/index.html');
   prefFirst = { settled: await settle(), ...(await evalJs(READ)) };
 } finally {
   await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: emptyList });
@@ -347,8 +391,7 @@ check('the preference is asked first: with indexedDB.databases() standing in as 
 
 /* The preference gone and the database kept: the probe's second half answers alone. */
 await evalJs("(function(){ localStorage.removeItem('planbook_openYear'); return 1; })()");
-await send('Page.navigate', { url: FRESH + '/index.html' });
-await pause(400);
+await navigateTo(FRESH + '/index.html');
 const byList = { settled: await settle(), ...(await evalJs(READ)) };
 check('and the probe’s second half holds on its own: with the open-year preference removed but the '
   + '`planbook` database still there, indexedDB.databases() names it and the app opens with no door '
@@ -367,8 +410,7 @@ const standIn = (await send('Page.addScriptToEvaluateOnNewDocument', { source:
 let fromCache = null;
 const servedBefore = h.SERVED.length;
 try {
-  await send('Page.navigate', { url: FRESH + '/index.html?wo816=' + Date.now() });
-  await pause(400);
+  await navigateTo(FRESH + '/index.html?wo816=' + Date.now());
   fromCache = { settled: await settle(), ...(await evalJs(READ)) };
 } finally {
   await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: standIn });
@@ -394,7 +436,9 @@ check('an installed launch opens the app with no flash of the door, even on a de
   + 'with iOS’s installed flag standing in, a cold visit boots straight to the home screen and the door '
   + 'was never on the glass (WO-8.16 Acceptance 1)',
   installed.settled === 'app' && installed.home === true && !!installed.seen && installed.seen.doorSeen === false,
-  JSON.stringify({ settled: installed.settled, home: installed.home, seen: installed.seen }));
+  JSON.stringify({ settled: installed.settled, steps: installed.steps, home: installed.home,
+    loadingUp: installed.loadingUp, ready: installed.ready, modulesRan: installed.modulesRan,
+    doc: installed.doc, bootError: installed.bootError, seen: installed.seen }));
 
 /* ── doubt draws no door ── */
 

@@ -3188,6 +3188,17 @@ and the eighth site is the fixture-guard arm, which a run that plants cleanly ne
 no new site. Full run: `2205 checks · 2205 passed · 0 failed · 0 skipped`, 71,830 lines, 32.6 lines
 per check, 1233s, exit 0, 2026-11-01 on the real clock.
 
+**WO-1.90 moved neither number. It added no check site, no result and no file.** `verify/front-door.mjs`
+stopped sleeping after its navigations. Before, it slept 250ms before a wipe and 400ms before each
+`settle()`. Now every navigation marks the document it leaves, and `settle()` reads nothing off a
+marked page. A failed boot answers `failed` at once instead of reading `timeout` 12s later. The
+installed cold-launch check's detail now says how far the page got: the trail, `readyState`, whether
+the modules ran, whether a document is open, and the boot error. That check timed out once in
+WO-1.89's verdict, and the cause was not reproduced in 315 scripted launches (`TESTING.md`
+§ WO-1.90). `settle()`'s 12000ms budget is unchanged. Three
+consecutive full runs on one tree: `2205 checks · 2205 passed · 0 failed · 0 skipped`, 71,874 lines,
+32.6 lines per check, 1229s, 1233s and 1228s, exit 0 each, 2026-11-01 on the real clock.
+
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
 `verify/touch-targets.mjs`'s About-modal block, where a `skip()` stands in when the modal never

@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The front-door harness waits for the page instead of guessing — 2026-11-02
+
+WO-1.90. Harness only — nothing in `src/`, `sw.js` or `index.html` moved, so no `CACHE` bump.
+
+- **`tools/verify/front-door.mjs` no longer sleeps a fixed 400ms or 250ms** after a navigation.
+  Every navigation now marks the page it leaves, and each check waits until that page is really
+  gone. The 12-second budget is unchanged.
+- **A boot that fails now reads as `failed` straight away** instead of as a 12-second `timeout`,
+  and the installed-launch check records how far the page got, so if it goes red again the line
+  says why.
+- **The single timeout on record was never reproduced** (0 in 315 scripted launches), so three
+  green runs prove the fix breaks nothing rather than that it cures anything.
+
 ### Every report's numbers sit under their own heads — 2026-11-01
 
 WO-2.62. `CACHE` v207 → v208.

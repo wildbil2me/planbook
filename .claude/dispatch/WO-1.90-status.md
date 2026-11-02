@@ -1,0 +1,9 @@
+- 2026-11-01 18:58 gates PASS (no deps; WO-1.5 ordering satisfied; tree clean). Row is a 🎒 ride-along, taken by explicit owner request.
+- 2026-11-01 18:58 route Claude Opus — Acceptance needs 3 full verify-shell runs (~20 min each), far past Codex's 20-min cap; diagnosing the cause and the app-vs-harness stop rule are Claude-column judgment. Same call as WO-1.89. No Codex probe (not Codex route).
+- 2026-11-01 18:58 --start ran: row 🤖 CLAIMED.
+- 2026-11-01 18:58 brief written: .claude/dispatch/WO-1.90-brief.md (~10.5 KB, markers filled).
+- 2026-11-01 18:58 implementer spawned at Opus (no model override) with .claude/dispatch/WO-1.90-brief.md, awaiting return. Expect 60-90 min (three ~20-min harness runs); a flat trail for the first 20 min is reading, not death. Note: wo-gate reported the rolling 5h window at 19.6M proxy units, near the death median — a session-limit death here is plausible; resume from the tree.
+- 2026-11-01 21:04 implementer returned: result file present; claims timeout not reproduced (315 launches), harness-only fix in front-door.mjs (navigateTo/settle leaving+failed/wipe), 3 mutations reverted, runs 3-5 green 2205/2205 (runs 1-2 red on sync-button.mjs, out of scope), sweep 49/0/3. All five boxes ticked by implementer — claims, unverified. grep 'MUTATION WO-1.90' clean.
+- 2026-11-01 21:04 --handoff ran: row 🔍 AWAITING VERDICT. Verifier owed in a fresh session.
+- 2026-11-01 21:11 fresh session entered at 🔍 AWAITING VERDICT; tree matches handoff (4 modified + 3 dispatch files). Verifier spawned at Opus as a FIRST pass, awaiting verdict.
+- 2026-11-01 22:13 verdict in: PASS — 5/5 Acceptance verified on verifier's own 3 green verify-shell runs (2205/2205, same tree hash) and sweep 49/0/3; no MUTATION, no src/ change. CHANGELOG entry still owed (draft in result file). Awaiting owner go before --tick.
