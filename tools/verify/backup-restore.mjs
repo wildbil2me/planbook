@@ -16,7 +16,7 @@ import { nodeNow, nodeNowMs } from './lib-dates.mjs';
 
 export async function run(h) {
 const { SCHEMA_NOW, udd, check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER,
-  waitForBoot, seam } = h;
+  waitForBoot, mustBoot, seam } = h;
 
 /* ───────────────── backup & restore ─────────────────
  *
@@ -1150,7 +1150,7 @@ if (!backupBooted || !backupSeam) {
       t.onerror = function(){ rej(t.error); }; }; }); })()`);
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   const wiped = await evalJs(`(async function(){
     await window.planbook.backup.restoreFromText(${TEXT}, 'Planbook backup.json');

@@ -11,7 +11,7 @@
 import { measureIn } from './touch-targets.mjs';
 
 export async function run(h) {
-const { check, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, load } = h;
+const { check, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, mustBoot, load } = h;
 
 /* ───────── one student's grade detail (WO-3.7) ─────────
  *
@@ -101,7 +101,7 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
 
@@ -1122,7 +1122,7 @@ console.log('\n--- one student\'s grade detail (WO-3.7) ---');
     await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 700));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     await evalJs(INSTALL_WALKER);
     const coarseNow = await evalJs("matchMedia('(pointer: coarse)').matches");

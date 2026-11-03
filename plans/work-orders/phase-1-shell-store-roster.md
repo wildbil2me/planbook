@@ -7282,7 +7282,7 @@ widens the net to the sections' own reloads, so a second occurrence may arrive t
 
 ## WO-1.93 — About a hundred section reloads throw away waitForBoot()'s answer
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-1.91 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-11-03 · **Size** S · **Depends on** WO-1.91 · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app — the same call WO-1.26 through WO-1.91 made.)*
 
 **Booked 2026-11-02**, owner-directed, out of [WO-1.91](#wo-191--hload-sleeps-a-fixed-800-ms-and-every-section-reloads-through-it)'s
@@ -7310,17 +7310,17 @@ because it does not ask, and it quotes no page error.
 - **`TESTING.md` § WO-1.93**, a `tools/README.md` ledger line, and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] No call in `tools/verify/` waits for a boot and then discards the answer. A probe that blocks
+- [x] No call in `tools/verify/` waits for a boot and then discards the answer. A probe that blocks
       the app's modules under one rewritten site fails at that reload, naming the state it reached,
       and the probe is not in the tree.
-- [ ] `reload45()`'s failure message says whether the modules ran and quotes the page's errors since
+- [x] `reload45()`'s failure message says whether the modules ran and quotes the page's errors since
       its navigation.
-- [ ] Every site that expects a failed boot still reads `waitForBoot()`'s answer, and `TESTING.md`
+- [x] Every site that expects a failed boot still reads `waitForBoot()`'s answer, and `TESTING.md`
       § WO-1.93 lists them.
-- [ ] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the run
+- [x] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the run
       lines are quoted in `TESTING.md` § WO-1.93.
-- [ ] `node tools/wo-sweep.mjs` passes.
-- [ ] `TESTING.md` § WO-1.93 carries these lines verbatim with the evidence for each.
+- [x] `node tools/wo-sweep.mjs` passes.
+- [x] `TESTING.md` § WO-1.93 carries these lines verbatim with the evidence for each.
 
 **Traps** — **This touches green files on purpose**: WO-1.91's "do not churn green files" kept
 `load()` small and does not apply here. The churn is the deliverable. But **a mechanical rewrite of a

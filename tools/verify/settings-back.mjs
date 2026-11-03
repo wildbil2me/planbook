@@ -20,7 +20,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, mustBoot, seam } = h;
 
 console.log('\n--- the way back to Settings (WO-1.72) ---');
 
@@ -63,7 +63,7 @@ if (!seam) {
   const reload = async () => {
     await send('Page.reload');
     await pause(600);
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
   };
   const key = async (k, code, vk) => {

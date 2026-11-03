@@ -9,7 +9,7 @@
  */
 
 export async function run(h) {
-const { check, send, evalJs, has, clickSel, KILL_ANIM, waitForBoot } = h;
+const { check, send, evalJs, has, clickSel, KILL_ANIM, mustBoot } = h;
 
 /*
  * ───────────── the ungraded count on the home screen (WO-3.26) ─────────────
@@ -50,7 +50,7 @@ console.log('\n--- the ungraded count on the home screen (WO-3.26) ---');
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
 
   /* One key at a time, the shape the WO-3.5 block uses: a printable key needs keyDown with `text`
@@ -350,7 +350,7 @@ console.log('\n--- the ungraded count on the home screen (WO-3.26) ---');
     await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 600));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     if (await has('#classTabBar [data-view-home]')) {
       await clickSel('#classTabBar [data-view-home]');

@@ -9,7 +9,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, waitForBoot, seam, openSettingsDoor } = h;
+const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, mustBoot, seam, openSettingsDoor } = h;
 
 /*
   ══════════ IMPORTING A CLASS'S CONTACTS FROM THE SIS CSV (WO-1.23) ══════════
@@ -43,7 +43,7 @@ console.log('\n--- importing contacts from the SIS CSV (WO-1.23) ---');
 {
   await send('Page.reload');
   await new Promise((r) => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
 
   const seam123 = await evalJs("!!(window.planbook && window.planbook.store"

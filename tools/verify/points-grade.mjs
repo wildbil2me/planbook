@@ -13,7 +13,7 @@
  */
 
 export async function run(h) {
-const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, waitForBoot, openSettingsDoor } = h;
+const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, mustBoot, openSettingsDoor } = h;
 
 /* ───────── a points class on every screen (WO-3.30) ─────────
  *
@@ -85,7 +85,7 @@ if (!(await evalJs("!!(window.planbook && window.planbook.gradeEngine"
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
 

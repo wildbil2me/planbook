@@ -9,7 +9,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, has, clickSel, openCalendarPanel, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, has, clickSel, openCalendarPanel, KILL_ANIM, mustBoot, seam } = h;
 
 /*
  * ───────── calendar events: the six kinds, the rules, and a materialized series (WO-6.1) ─────────
@@ -61,7 +61,7 @@ if (!seam) {
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
 
   const plant = await evalJs(`(function(){
@@ -366,7 +366,7 @@ if (!seam) {
   await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   const leadKept = await evalJs(`(async function(){
     await window.planbook.store.flush();

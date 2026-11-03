@@ -65,7 +65,7 @@
 import { nodeDaysFromToday } from './lib-dates.mjs';
 
 export async function run(h) {
-const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, waitForBoot } = h;
+const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, mustBoot } = h;
 
 console.log('\n--- a category can drop each student\'s lowest N scores (WO-3.69) ---');
 if (!(await evalJs("!!(window.planbook && window.planbook.scores && window.planbook.gradeEngine"
@@ -105,7 +105,7 @@ await send('Emulation.setDeviceMetricsOverride',
 await send('Emulation.setTouchEmulationEnabled', { enabled: false });
 await send('Page.reload');
 await sleep(600);
-await waitForBoot();
+await mustBoot();
 await evalJs(KILL_ANIM);
 await evalJs(INSTALL_WALKER);
 
@@ -503,7 +503,7 @@ await send('Emulation.setDeviceMetricsOverride', { width: 1024, height: 768, dev
 await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
 await send('Page.reload');
 await sleep(600);
-await waitForBoot();
+await mustBoot();
 await evalJs(KILL_ANIM);
 await evalJs(INSTALL_WALKER);
 await evalJs(`(function(){ var c = window.planbook.classes; c.selectClass('${CLS}'); c.selectTerm('${TERM}');
@@ -531,7 +531,7 @@ await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, dev
 await send('Emulation.setTouchEmulationEnabled', { enabled: false });
 await send('Page.reload');
 await sleep(600);
-await waitForBoot();
+await mustBoot();
 await evalJs(KILL_ANIM);
 await evalJs(INSTALL_WALKER);
 
@@ -587,7 +587,7 @@ check('the WO-3.69 fixture came back off the document, and presentation mode was
   JSON.stringify(gone));
 await send('Page.reload');
 await sleep(600);
-await waitForBoot();
+await mustBoot();
 await evalJs(KILL_ANIM);
 await evalJs(INSTALL_WALKER);
 }

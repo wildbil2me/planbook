@@ -44,7 +44,7 @@ export function measureIn(rootSel) {
 
 export async function run(h) {
 const { check, skip, send, evalJs, has, clickSel, openCalendarPanel, KILL_ANIM, INSTALL_WALKER,
-  waitForBoot, seam, openSettingsDoor } = h;
+  mustBoot, seam, openSettingsDoor } = h;
 
 /* ───────────────── touch targets, under a pointer that is REALLY coarse ─────────────────
  *
@@ -60,7 +60,7 @@ await send('Emulation.setDeviceMetricsOverride', { width: 1024, height: 768, dev
 await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
 await send('Page.reload');
 await new Promise(r => setTimeout(r, 600));
-await waitForBoot();            /* boot is async since WO-1.4; see waitForBoot */
+await mustBoot();            /* boot is async since WO-1.4; see mustBoot */
 await evalJs(KILL_ANIM);
 await evalJs(INSTALL_WALKER);   /* a reload discards page-side helpers */
 

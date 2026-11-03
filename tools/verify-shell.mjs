@@ -296,7 +296,7 @@ const h = {
      surface of this harness is one object literal a reader can take in at a glance. */
   PORT: 0, SERVED: null, udd: '', consoleLog: null, netLog: null,
   send: null, evalJs: null, has: null, clickSel: null, clickVisible: null, openCalendarPanel: null,
-  openSettingsDoor: null, KILL_ANIM: '', INSTALL_WALKER: '', dateResetOn: null, waitForBoot: null, load: null,
+  openSettingsDoor: null, KILL_ANIM: '', INSTALL_WALKER: '', dateResetOn: null, waitForBoot: null, mustBoot: null, load: null,
 
   /* Three readings one section takes and later ones live on. `seam` is "is window.planbook on the
      page at all", read once by `tools/verify/localstorage-prefs.mjs`; fifteen sections after it
@@ -756,7 +756,7 @@ const netLog = [];
    that first showed `load()`'s new message read `readyState: complete` with `modulesRan: false` — the
    document had finished and its modules had not run — and nothing on record said why. The last
    fifty, with the moment each arrived, so `load()` can quote the ones since its own navigation. Read
-   nowhere else. */
+   by `saidSince()` alone, for `load()`'s throw and `mustBoot()`'s (WO-1.93), and by nothing else. */
 const pageErrors = [];
 ws.onmessage = (m) => {
   const msg = JSON.parse(m.data);
@@ -1115,7 +1115,12 @@ async function dateResetOn(sel, want, shownJs, shownWords) {
    and "booted" in one reading; a section that reloads by its own `Page.reload` and then calls this
    is relying on what `TESTING.md` § WO-1.91 measured — CDP held a `Runtime.evaluate` until the
    reload had committed in every shape tried, so the page being left was never the one read — and
-   on acting on the `false`, which is the half that actually bit. */
+   on acting on the `false`, which is the half that actually bit.
+
+   SO A CALLER THAT DOES NOT READ THE ANSWER CALLS `mustBoot()` INSTEAD (WO-1.93), which waits
+   through this very function and throws on its `false`. This one is kept, answer and budget
+   unchanged, for the callers that do read it — each of them asserts `true` in a check of its own,
+   and `TESTING.md` § WO-1.93 lists them. */
 async function waitForBoot(ms = 8000) {
   const until = Date.now() + ms;
   while (Date.now() < until) {
@@ -1268,6 +1273,26 @@ if (SHIFT_MS) await send('Page.addScriptToEvaluateOnNewDocument', { source: SHIF
    with every core saturated (TESTING.md § WO-1.90 § 2). The first call replaces about:blank, which
    takes the mark like any page does. */
 const LOAD_BUDGET_MS = 10000;
+/* The one reading of how far a page got, shared by `load()`'s poll and `mustBoot()`'s failure
+   (WO-1.93) so the two messages describe a page in the same words. `navigatedAt` is the document's
+   own `performance.timeOrigin` — the moment its navigation started, on the same machine's real clock
+   that stamps `pageErrors` (the page's `Date` may be shifted by `--today`; `performance` is not). */
+const BOOT_READING = `(function(){ var l = document.getElementById('loadingScreen'),
+  e = document.getElementById('loadingError');
+  var state = window.__loadLeaving ? 'leaving' : !l ? 'none'
+    : l.classList.contains('hidden') ? 'booted'
+    : e && !e.classList.contains('hidden') ? 'failed' : 'booting';
+  return { state: state, href: location.href, ready: document.readyState,
+           modulesRan: !!window.planbook,
+           bootError: state === 'failed' ? (e.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 200) : null,
+           navigatedAt: Math.round(performance.timeOrigin) }; })()`;
+/* The page's own exceptions and error-level log entries from `from` on, as the tail of a throw. */
+function saidSince(from) {
+  const said = pageErrors.filter((x) => x.at >= from).slice(0, 4);
+  return 'the page reported ' + (said.length
+    ? JSON.stringify(said.map((x) => x.text + (x.url ? ' @ ' + x.url : '')))
+    : 'no exception and no error-level log entry');
+}
 async function load() {
   const url = 'http://127.0.0.1:' + PORT + '/index.html?door=skip';
   await evalJs('window.__loadLeaving = 1; 1');
@@ -1278,14 +1303,7 @@ async function load() {
   let last = null;
   for (;;) {
     try {
-      last = await evalJs(`(function(){ var l = document.getElementById('loadingScreen'),
-        e = document.getElementById('loadingError');
-        var state = window.__loadLeaving ? 'leaving' : !l ? 'none'
-          : l.classList.contains('hidden') ? 'booted'
-          : e && !e.classList.contains('hidden') ? 'failed' : 'booting';
-        return { state: state, href: location.href, ready: document.readyState,
-                 modulesRan: !!window.planbook,
-                 bootError: state === 'failed' ? (e.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 200) : null }; })()`);
+      last = await evalJs(BOOT_READING);
     } catch (e) {
       last = { state: 'threw', error: String(e && e.message || e).slice(0, 120) }; /* swapping under us */
     }
@@ -1294,18 +1312,52 @@ async function load() {
     await new Promise(r => setTimeout(r, 80));
   }
   if (last.state !== 'booted') {
-    const said = pageErrors.filter((x) => x.at >= since).slice(0, 4);
     throw new Error('load() never handed back a new, booted document: '
       + (last.state === 'failed' ? 'the boot failed and said so' : 'gave up after ' + LOAD_BUDGET_MS + 'ms')
       + ' — states ' + trail.join('>') + ', last reading ' + JSON.stringify(last)
       + (nav && nav.errorText ? ', Page.navigate answered ' + nav.errorText : '')
-      + '; the page reported ' + (said.length ? JSON.stringify(said.map((x) => x.text + (x.url ? ' @ ' + x.url : '')))
-        : 'no exception and no error-level log entry') + ' since the navigation');
+      + '; ' + saidSince(since) + ' since the navigation');
   }
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
 }
 try { await load(); } catch (e) { bail('the page did not boot — ' + e.message); }
+
+/* A SECTION'S OWN RELOAD THAT DOES NOT BOOT FAILS AT THE RELOAD (WO-1.93). About a hundred sites in
+   `tools/verify/` reload by their own `Page.reload`, sleep, and then called `waitForBoot()` on a line
+   of its own — throwing its `false` away, which is the defect WO-1.91 found in `load()`: the section
+   carried on with a page whose modules never ran and failed three reads later on a `TypeError` that
+   named nothing. Those sites call this instead.
+
+   WHY A SECOND HELPER, AND NOT `waitForBoot({ orThrow })` OR A `reload()` THAT DOES IT ALL. An option
+   on `waitForBoot()` would make one function with two contracts, and its readers (each asserting
+   `true` in a check of its own) would sit one keystroke from a throw they never asked for — the
+   work order's "do not change what `waitForBoot()` returns". A helper that also did the reload would
+   have rewritten three lines at every site instead of one: the 600ms/700ms sleeps differ, one site
+   reloads by tapping the app's own Reload button, and a site whose sleep changed is a section whose
+   meaning changed. So the site keeps its reload and its sleep, and only the line that discarded the
+   answer moves — which is also what lets a reader check the hundred rewrites as one substitution.
+
+   It waits through `waitForBoot()` itself, so the budget is that function's 8s, unchanged — a
+   longer one would be no fix. It returns NOTHING on success, deliberately: a call with no answer has
+   no answer to discard, and a site that wants one should be calling `waitForBoot()`. On failure it
+   takes one `BOOT_READING` and throws with how far the page got — the state, `readyState`, whether
+   the modules ran, the boot error if one was shown — and the page's own errors since this document's
+   navigation, the same tail `load()`'s throw carries. A throw is contained by `runSection()` and the
+   page brought back by `recoverPage()` (WO-1.44: blast radius, not tolerance). */
+async function mustBoot() {
+  if (await waitForBoot()) return;
+  let last;
+  try { last = await evalJs(BOOT_READING); }
+  catch (e) { last = { state: 'threw', error: String(e && e.message || e).slice(0, 120) }; }
+  const from = last && last.navigatedAt ? last.navigatedAt : Date.now() - LOAD_BUDGET_MS;
+  throw new Error('a section\'s reload never booted: waitForBoot() answered false after 8000ms, '
+    + 'state ' + last.state + (last.state === 'threw' ? '' : ', modules ' + (last.modulesRan ? 'ran' : 'never ran')
+      + ', readyState ' + last.ready + (last.bootError ? ', boot error "' + last.bootError + '"' : ''))
+    + ', last reading ' + JSON.stringify(last) + '; ' + saidSince(from)
+    + (last && last.navigatedAt ? ' since this document\'s navigation, ' + (Date.now() - last.navigatedAt) + 'ms ago'
+      : ' in the last ' + LOAD_BUDGET_MS + 'ms (no document to date a navigation by)'));
+}
 
 const booted = await evalJs("document.querySelectorAll('*').length");
 if (booted < 20) bail('the page did not render — is index.html a placeholder?');
@@ -1315,7 +1367,7 @@ if (booted < 20) bail('the page did not render — is index.html a placeholder?'
 Object.assign(h, {
   PORT, SERVED, udd, consoleLog, netLog,
   send, evalJs, has, clickSel, clickVisible, openCalendarPanel, openSettingsDoor,
-  KILL_ANIM, INSTALL_WALKER, dateResetOn, waitForBoot, load,
+  KILL_ANIM, INSTALL_WALKER, dateResetOn, waitForBoot, mustBoot, load,
 });
 
 /* What the failed section changed that the reload below would not undo, put back to what it received

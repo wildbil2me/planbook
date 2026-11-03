@@ -3211,6 +3211,20 @@ left was not reproduced in any shape (`TESTING.md` § WO-1.91). `waitForBoot()` 
 WO-1.89 and WO-1.90 added are unchanged. The three full runs are quoted in `TESTING.md` § WO-1.91
 rather than here, so that this file was not written to while they ran.
 
+**WO-1.93 moved neither number. It added no check site, no result and no file.** The 101 section
+reloads that called `waitForBoot()` and threw its `false` away now call `mustBoot()`, a new helper on
+`h`: one line per site changed and every reload and sleep left as it was. It waits through
+`waitForBoot()` with the same 8s budget, returns nothing, and on `false` throws at the reload. The
+message names the state the page reached, whether the modules ran, `readyState`, any boot error, and
+the page's own errors since that document's navigation, in the words `load()` uses: the two now share
+one reading (`BOOT_READING`) and one error tail (`saidSince()`), and `pageErrors` is read by that
+alone. `verify/first-run.mjs`'s `goFresh()` does the same for the ten callers that discarded its
+answer, and keeps it for the one that asserts it. `verify/cooldown-quiet.mjs`'s `reload45()` now
+reloads through `h.load()` after its own flush and fixture check, so its failure says what `load()`'s
+says. The 19 sites that read `waitForBoot()`'s answer were not touched. None of them expects `false`:
+the sections that prove a failed boot poll `#loadingError` themselves. The survey, the probe and the
+three full runs are in `TESTING.md` § WO-1.93.
+
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
 `verify/touch-targets.mjs`'s About-modal block, where a `skip()` stands in when the modal never
@@ -5035,7 +5049,7 @@ which files to count, so the set that is counted is the set that runs.
 
 **What rides on `h`, and what is imported.** Anything that talks to the browser, the server or the
 run's bookkeeping is on the harness object: `check`, `skip`, `evalJs`, `has`, `clickSel`,
-`clickVisible`, `openCalendarPanel`, `send`, `load`, `waitForBoot`, `dateResetOn`, `KILL_ANIM`,
+`clickVisible`, `openCalendarPanel`, `send`, `load`, `waitForBoot`, `mustBoot`, `dateResetOn`, `KILL_ANIM`,
 `INSTALL_WALKER`, `ROOT`, `PORT`, `SERVED`, `udd`, `consoleLog`, `results`, `SCHEMA_NOW`, and three
 readings one section takes that later ones live on — `seam`, `classesBooted`, `classSeam`. Anything
 that does **not** talk to the browser stays in the module that documents it and is imported by name:
@@ -5139,6 +5153,12 @@ browser loop owes that run again.
    Note the difference from trap 5: sleeping longer would in fact fix this one, which is what makes
    it dangerous. A sleep that is long enough today is a race that fails on a slower machine, and the
    flush is a fact rather than a bet.
+
+   **And the wait after the reload is `await mustBoot()`, never a bare `await waitForBoot()`**
+   (WO-1.93). `waitForBoot()` answers `false` when the page never booted, and a call that throws the
+   answer away carries on with a page whose modules never ran. The section then fails three reads
+   later on a `TypeError` that names nothing. `mustBoot()` throws at the reload and says how far the
+   page got. Call `waitForBoot()` only when the section asserts its answer in a check of its own.
 7. **The pointer stays where you last clicked, so `getComputedStyle` reads a `:hover` rule.**
    `Input.dispatchMouseEvent` leaves the cursor at the release coordinates, and a check that
    measures the thing it just clicked measures it hovered. Every other element of the same class

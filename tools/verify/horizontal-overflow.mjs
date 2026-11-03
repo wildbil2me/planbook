@@ -16,7 +16,7 @@
 import { nodeDaysFromToday } from './lib-dates.mjs';
 
 export async function run(h) {
-const { check, skip, send, evalJs, has, clickSel, clickVisible, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, has, clickSel, clickVisible, KILL_ANIM, mustBoot, seam } = h;
 
 /* ───────────────── no horizontal overflow at any breakpoint ───────────────── */
 
@@ -157,7 +157,7 @@ if (!seam) {
   const reload = async () => {
     await send('Page.reload');
     await pause(600);
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
   };
   const shut = () => evalJs(`(function(){

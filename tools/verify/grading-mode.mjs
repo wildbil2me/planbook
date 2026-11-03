@@ -19,7 +19,7 @@
 import { nodeDaysFromToday } from './lib-dates.mjs';
 
 export async function run(h) {
-const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, waitForBoot, openSettingsDoor } = h;
+const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, mustBoot, openSettingsDoor } = h;
 
 /* ───────── the categories editor offers total points (WO-3.31) ─────────
  *
@@ -79,7 +79,7 @@ await send('Emulation.setDeviceMetricsOverride',
 await send('Emulation.setTouchEmulationEnabled', { enabled: false });
 await send('Page.reload');
 await new Promise(r => setTimeout(r, 600));
-await waitForBoot();
+await mustBoot();
 await evalJs(KILL_ANIM);
 await evalJs(INSTALL_WALKER);
 
@@ -470,7 +470,7 @@ await send('Emulation.setDeviceMetricsOverride', { width: 1024, height: 768, dev
 await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
 await send('Page.reload');
 await new Promise(r => setTimeout(r, 600));
-await waitForBoot();
+await mustBoot();
 await evalJs(KILL_ANIM);
 await evalJs(INSTALL_WALKER);
 const coarse = await evalJs("matchMedia('(pointer: coarse)').matches");
@@ -510,7 +510,7 @@ await send('Emulation.setDeviceMetricsOverride',
 await send('Emulation.setTouchEmulationEnabled', { enabled: false });
 await send('Page.reload');
 await new Promise(r => setTimeout(r, 600));
-await waitForBoot();
+await mustBoot();
 await evalJs(KILL_ANIM);
 await evalJs(INSTALL_WALKER);
 }

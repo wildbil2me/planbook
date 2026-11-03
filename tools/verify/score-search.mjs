@@ -18,7 +18,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, readLocalStore,
+const { check, skip, send, evalJs, clickSel, KILL_ANIM, INSTALL_WALKER, mustBoot, readLocalStore,
   oursIn } = h;
 
 console.log('\n--- the score grid narrows by student (WO-3.29) ---');
@@ -65,7 +65,7 @@ console.log('\n--- the score grid narrows by student (WO-3.29) ---');
     { width: 1200, height: 900, deviceScaleFactor: 1, mobile: false });
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 700));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
 
@@ -743,7 +743,7 @@ console.log('\n--- the score grid narrows by student (WO-3.29) ---');
     await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 700));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     await evalJs(INSTALL_WALKER);
     const coarse = await evalJs("matchMedia('(pointer: coarse)').matches");
@@ -920,7 +920,7 @@ console.log('\n--- the score grid narrows by student (WO-3.29) ---');
       { width: 1024, height: 768, deviceScaleFactor: 1, mobile: false });
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 700));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     await evalJs(INSTALL_WALKER);
     const fineNow = await evalJs("matchMedia('(pointer: fine)').matches");

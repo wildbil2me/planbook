@@ -11,7 +11,7 @@
 import { measureIn } from './touch-targets.mjs';
 
 export async function run(h) {
-const { PORT, check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, seam, openSettingsDoor } = h;
+const { PORT, check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, mustBoot, seam, openSettingsDoor } = h;
 
 /* ───────── the score entry grid (WO-3.5) ─────────
  *
@@ -70,7 +70,7 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
       { width: 1200, height: 900, deviceScaleFactor: 1, mobile: false });
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 700));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     await evalJs(INSTALL_WALKER);
 
@@ -2115,7 +2115,7 @@ console.log('\n--- the score entry grid (WO-3.5) ---');
         await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
         await send('Page.reload');
         await new Promise(r => setTimeout(r, 700));
-        await waitForBoot();
+        await mustBoot();
         await evalJs(KILL_ANIM);
         await evalJs(INSTALL_WALKER);
         const coarseNow = await evalJs("matchMedia('(pointer: coarse)').matches");

@@ -19,7 +19,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, mustBoot, seam } = h;
 
 console.log('\n--- the header and Settings (WO-1.71) ---');
 
@@ -59,7 +59,7 @@ if (!seam) {
   const reload = async () => {
     await send('Page.reload');
     await pause(600);
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
   };
   /* Everything about Settings and the header in one round trip. */

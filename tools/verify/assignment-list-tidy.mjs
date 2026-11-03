@@ -29,7 +29,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, mustBoot, seam } = h;
 
 console.log('\n--- the assignment list, tidied (WO-3.54) ---');
 
@@ -70,7 +70,7 @@ const onView = () => evalJs(
 const reload = async () => {
   await send('Page.reload');
   await pause(600);
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
 };
 /* The way a teacher gets there: home, the class's card, the switcher's Assignments. */

@@ -11,7 +11,7 @@
 import { nodeToday } from './lib-dates.mjs';
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, clickSel, KILL_ANIM, mustBoot, seam } = h;
 
 /* ───────── the Assigned and Due fields (WO-3.17) ─────────
  *
@@ -95,7 +95,7 @@ console.log('\n--- the Assigned and Due fields (WO-3.17) ---');
     await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 700));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     const coarse317 = await evalJs("matchMedia('(pointer: coarse)').matches");
 

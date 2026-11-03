@@ -27,7 +27,7 @@
 import { nodeDaysFromToday } from './lib-dates.mjs';
 
 export async function run(h) {
-const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, waitForBoot } = h;
+const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, waitForBoot, mustBoot } = h;
 
 console.log('\n--- a class tab keeps Assignments and Scores up (WO-3.45) ---');
 if (!(await evalJs("!!(window.planbook && window.planbook.store && window.planbook.classes)"))) {
@@ -54,7 +54,7 @@ await send('Emulation.setDeviceMetricsOverride',
 await send('Emulation.setTouchEmulationEnabled', { enabled: false });
 await send('Page.reload');
 await sleep(600);
-await waitForBoot();
+await mustBoot();
 await evalJs(KILL_ANIM);
 await evalJs(INSTALL_WALKER);
 
@@ -320,7 +320,7 @@ await evalJs(`(async function(){
   return 1; })()`);
 await send('Page.reload');
 await sleep(600);
-await waitForBoot();
+await mustBoot();
 await evalJs(KILL_ANIM);
 await evalJs(INSTALL_WALKER);
 const gone = await evalJs(`(function(){ var d = window.planbook.store.getDoc();

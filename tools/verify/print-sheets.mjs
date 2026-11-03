@@ -6,7 +6,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, clickSel, KILL_ANIM, mustBoot, seam } = h;
 
 /*
   ══════════ THE PRINTED PAGES: ONE HEADER, NO CHROME, NO SUPPORT DATA (WO-8.4) ══════════
@@ -69,7 +69,7 @@ await send('Emulation.setDeviceMetricsOverride',
 await send('Emulation.setTouchEmulationEnabled', { enabled: false });
 await send('Page.reload');
 await new Promise(r => setTimeout(r, 600));
-await waitForBoot();
+await mustBoot();
 await evalJs(KILL_ANIM);
 
 const plant = await evalJs(`(function(){

@@ -9,7 +9,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, mustBoot, seam } = h;
 
 /* ───────── accommodation prompts at point of use (WO-3.8) ─────────
  *
@@ -94,7 +94,7 @@ console.log('\n--- accommodation prompts at point of use (WO-3.8) ---');
     await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 700));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     const coarse38 = await evalJs("matchMedia('(pointer: coarse)').matches");
 

@@ -70,7 +70,7 @@ export const EDITOR_RED = { color: 'rgb(192, 57, 43)', bg: 'rgb(253, 234, 234)' 
 export const EDITOR_AMBER = { color: 'rgb(138, 109, 26)', bg: 'rgb(255, 248, 230)', border: 'rgb(240, 223, 168)' };
 
 export async function run(h) {
-const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, seam,
+const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, mustBoot, seam,
   classesBooted, classSeam, openSettingsDoor } = h;
 
 /* ───────────────── assignments and the screen switcher (WO-3.3) ─────────────────
@@ -1214,7 +1214,7 @@ console.log('\n--- the due date picks an assignment\'s term in the editor (WO-3.
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await sleep(600);
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
 
@@ -1740,7 +1740,7 @@ console.log('\n--- the due date picks an assignment\'s term in the editor (WO-3.
   await evalJs("window.planbook.closeModal('backupModal'); 1");
   await send('Page.reload');
   await sleep(600);
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
   const terms = (doc) => doc.assignments.map((a) => a.id + '=' + a.termId).join(',');
@@ -1776,7 +1776,7 @@ console.log('\n--- the due date picks an assignment\'s term in the editor (WO-3.
     await s.flush(); return 1; })()`);
   await send('Page.reload');
   await sleep(600);
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   const gone350 = await evalJs(`(function(){ var d = window.planbook.store.getDoc();
     return d.classes.filter(function(c){ return /^c_wo350_/.test(c.id); }).length

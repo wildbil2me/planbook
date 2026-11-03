@@ -9,7 +9,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, waitForBoot, load, seam } = h;
+const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, mustBoot, load, seam } = h;
 
 /*
  * ───────── the praise column, drawn (WO-4.3) ─────────
@@ -90,7 +90,7 @@ if (!seam) {
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
 
   /* ── the fixture ── */
@@ -185,7 +185,7 @@ if (!seam) {
     await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 600));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     if ((await onView43()) !== 'homeView') await goHome43();
     await clickSel('#homeGrid [data-class-tab="' + CLS + '"]');

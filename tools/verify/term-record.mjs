@@ -55,7 +55,7 @@ import path from 'node:path';
 import { nodeToday } from './lib-dates.mjs';
 
 export async function run(h) {
-const { ROOT, check, skip, evalJs, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, send } = h;
+const { ROOT, check, skip, evalJs, clickSel, KILL_ANIM, INSTALL_WALKER, mustBoot, send } = h;
 
 console.log('\n--- a quarter\'s grades can be recorded, and the engine says when they stop matching (WO-3.72) ---');
 if (!(await evalJs("!!(window.planbook && window.planbook.store && window.planbook.termRecord"
@@ -627,7 +627,7 @@ check('the WO-3.72 fixture came back off the document, and the termRecords key i
   JSON.stringify(cleared) + ' · had the key at the start: ' + plant.had);
 await send('Page.reload');
 await sleep(600);
-await waitForBoot();
+await mustBoot();
 await evalJs(KILL_ANIM);
 await evalJs(INSTALL_WALKER);
 }

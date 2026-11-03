@@ -9,7 +9,7 @@
  */
 
 export async function run(h) {
-const { check, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot } = h;
+const { check, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, mustBoot } = h;
 
 /* ───────── attendance history, print and CSV (WO-2.6) ─────────
  *
@@ -85,7 +85,7 @@ console.log('\n--- attendance history, print and CSV (WO-2.6) ---');
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
 

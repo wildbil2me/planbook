@@ -12,7 +12,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 export async function run(h) {
-const { ROOT, check, send, evalJs, has, clickSel, KILL_ANIM, waitForBoot } = h;
+const { ROOT, check, send, evalJs, has, clickSel, KILL_ANIM, mustBoot } = h;
 
 console.log('\n--- the screen can be older than the worker serving it (WO-8.11) ---');
 /*
@@ -107,7 +107,7 @@ console.log('\n--- the screen can be older than the worker serving it (WO-8.11) 
     await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()').catch(() => {});
     await send('Page.reload');
     await new Promise((r) => setTimeout(r, 600));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
   };
   /* Wait on the condition, never on a clock (tools/README.md trap 5): an install that precaches
@@ -361,7 +361,7 @@ console.log('\n--- the screen can be older than the worker serving it (WO-8.11) 
       return { was: was === undefined ? null : was, year: s.getDoc().year }; })()`);
     await clickSel('[data-update-reload]');
     await new Promise((r) => setTimeout(r, 600));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     const reloaded = await evalJs(`(async function(){
       var log = JSON.parse(sessionStorage.getItem('wo817log') || 'null');
@@ -399,7 +399,7 @@ console.log('\n--- the screen can be older than the worker serving it (WO-8.11) 
     await flushAndReload();
     const virgin = await readProbe();
     /* WHAT THIS DOES NOT ASSERT, and it went red once for asserting it: that the claim has not
-       landed YET. It usually has — the read is taken after waitForBoot(), and the worker was
+       landed YET. It usually has — the read is taken after mustBoot(), and the worker was
        already installed, so it activates and claims within a beat of `load`. Requiring a count of
        zero here is tools/README.md trap 5 in its plainest form, a measurement racing an event, and
        the count that matters is asserted by the check below instead. What is asserted here is the

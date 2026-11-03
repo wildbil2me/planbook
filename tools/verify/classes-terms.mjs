@@ -111,7 +111,7 @@ export const INSTALL_CLASS_READER = `(function(){
 
 export async function run(h) {
 const { ROOT, check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, dateResetOn,
-  waitForBoot, seam, openSettingsDoor } = h;
+  waitForBoot, mustBoot, seam, openSettingsDoor } = h;
 
 /* ───────────────── classes & terms ─────────────────
  *
@@ -1158,7 +1158,7 @@ if (!classesBooted || !classSeam) {
   await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
   await evalJs(INSTALL_CLASS_READER);

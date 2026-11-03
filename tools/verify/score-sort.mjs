@@ -19,7 +19,7 @@
 import { nodeDaysFromToday } from './lib-dates.mjs';
 
 export async function run(h) {
-const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, waitForBoot, readLocalStore,
+const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, mustBoot, readLocalStore,
   oursIn } = h;
 
 console.log('\n--- the Scores screen\'s top matches the other class screens (WO-3.60) ---');
@@ -45,7 +45,7 @@ const flush = () => evalJs('(async function(){ await window.planbook.store.flush
 async function reboot() {
   await send('Page.reload');
   await sleep(700);
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
 }

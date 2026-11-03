@@ -36,7 +36,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, load, netLog, waitForBoot, KILL_ANIM, INSTALL_WALKER } = h;
+const { check, skip, send, evalJs, clickSel, load, netLog, waitForBoot, mustBoot, KILL_ANIM, INSTALL_WALKER } = h;
 
 console.log('\n--- the first-run doors (WO-7.9) ---');
 
@@ -325,8 +325,11 @@ const DIGEST = `(async function(){
   return { docId: d.docId, rev: d.rev, years: years, stored: 'chars:' + json.length + '|h:' + hash.toString(36) };
 })()`;
 
-/* A device made fresh: the origin wiped from `about:blank`, then the app booted on it. */
-async function goFresh(wipe) {
+/* A device made fresh: the origin wiped from `about:blank`, then the app booted on it. Only the
+   caller that asserts the boot asks for `waitForBoot()`'s answer (`{ reads: true }`); every other
+   caller of this and of `reloadFresh()` discarded it, so for them a page that never boots throws at
+   the reload, with how far it got, rather than failing a read later on (WO-1.93). */
+async function goFresh(wipe, { reads = false } = {}) {
   if (wipe) {
     await send('Page.navigate', { url: 'about:blank' });
     await pause(250);
@@ -336,7 +339,7 @@ async function goFresh(wipe) {
      is about the home screen's doors behind it. verify/front-door.mjs drives the front door itself. */
   await send('Page.navigate', { url: FRESH + '/index.html?door=skip' });
   await pause(800);
-  const up = await waitForBoot();
+  const up = reads ? await waitForBoot() : await mustBoot();
   try { await evalJs(KILL_ANIM); await evalJs(INSTALL_WALKER); } catch (e) { /* the check reports it */ }
   return up;
 }
@@ -352,7 +355,7 @@ await shutModals();
 await evalJs('window.planbook.store.flush().then(function(){ return 1; })');
 netLog.length = 0;
 await send('Network.enable');
-const booted = await goFresh(true);
+const booted = await goFresh(true, { reads: true });
 const fresh = await waitFor((r) => r.block, 5000);
 await evalJs("document.dispatchEvent(new Event('visibilitychange')); 1");
 await pause(1200);

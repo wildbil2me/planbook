@@ -31,7 +31,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, clickSel, KILL_ANIM, mustBoot, seam } = h;
 
 console.log('\n--- a `0` typed into a date field (WO-1.47) ---');
 {
@@ -49,7 +49,7 @@ console.log('\n--- a `0` typed into a date field (WO-1.47) ---');
     await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 700));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
 
     /* The pointer is parked in a corner before anything is measured — trap 7. Nothing here reads a

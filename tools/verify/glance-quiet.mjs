@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, mustBoot, seam } = h;
 
 /*
  * ───────── the glance page: the stack, the readers and the quiet day (WO-6.7) ─────────
@@ -167,7 +167,7 @@ if (!seam) {
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
 
   /* ── the rest of the document, put away, and the quiet fixture planted ── */
@@ -568,7 +568,7 @@ if (!seam) {
     await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 600));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     const after = await evalJs(`(function(){ return {
       view: (document.querySelector('main > :not(.hidden)') || {}).id || '',
@@ -915,7 +915,7 @@ if (!seam) {
     await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 700));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     const coarse68 = await evalJs("matchMedia('(pointer: coarse)').matches");
     if ((await onView67()) !== 'homeView') await goHome67();
@@ -938,7 +938,7 @@ if (!seam) {
     await send('Emulation.setTouchEmulationEnabled', { enabled: false });
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 600));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     if ((await onView67()) !== 'homeView') await goHome67();
 
@@ -1676,7 +1676,7 @@ if (!seam) {
     await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 700));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     const coarse64 = await evalJs("matchMedia('(pointer: coarse)').matches");
     if ((await onView67()) !== 'homeView') await goHome67();
@@ -1689,7 +1689,7 @@ if (!seam) {
     await send('Emulation.setTouchEmulationEnabled', { enabled: false });
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 600));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     if ((await onView67()) !== 'homeView') await goHome67();
     check('under an emulated coarse pointer every control in panel 4 — the two header doors, six rows, '

@@ -72,7 +72,7 @@ export async function run(h) {
    clipboard is a BROWSER-level permission, granted against the harness's own origin rather than
    through the page session, so the check that presses the copy control needs to know what that
    origin is. tools/verify/score-grid.mjs takes it from the same place for the same reason. */
-const { check, skip, send, evalJs, clickSel, KILL_ANIM, waitForBoot, seam, PORT } = h;
+const { check, skip, send, evalJs, clickSel, KILL_ANIM, mustBoot, seam, PORT } = h;
 
 /*
  * ───────── the send flow (WO-5.3) ─────────
@@ -225,7 +225,7 @@ if (!seam) {
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
 
   /* ── the fixture ── */
@@ -343,7 +343,7 @@ if (!seam) {
     await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 600));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
 
     /* What the document looks like before a single control in this flow is touched. Read again at

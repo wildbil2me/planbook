@@ -9,7 +9,7 @@
  */
 
 export async function run(h) {
-const { check, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, seam } = h;
+const { check, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, mustBoot, seam } = h;
 
 /* ───────── the class's grade sheet, printed and exported (WO-3.9) ─────────
  *
@@ -109,7 +109,7 @@ console.log('\n--- the class\'s grade sheet, printed and exported (WO-3.9) ---')
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
 
@@ -1133,7 +1133,7 @@ console.log('\n--- the class\'s grade sheet, printed and exported (WO-3.9) ---')
     await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 700));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     await evalJs(INSTALL_WALKER);
     const coarseNow = await evalJs("matchMedia('(pointer: coarse)').matches");

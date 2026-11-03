@@ -30,7 +30,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, waitForBoot, seam, openSettingsDoor } = h;
+const { check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, mustBoot, seam, openSettingsDoor } = h;
 
 console.log('\n--- the roster dialog\'s width (WO-1.76) ---');
 
@@ -73,7 +73,7 @@ if (!seam) {
   const reload = async () => {
     await send('Page.reload');
     await pause(600);
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
   };
   const j = (x) => JSON.stringify(x);

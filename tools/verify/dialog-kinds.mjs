@@ -45,7 +45,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 export async function run(h) {
-const { ROOT, check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, waitForBoot, seam, openSettingsDoor } = h;
+const { ROOT, check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, mustBoot, seam, openSettingsDoor } = h;
 
 console.log('\n--- every dialog is the kind it was ruled (WO-1.77) ---');
 
@@ -129,7 +129,7 @@ if (!seam) {
   const reload = async () => {
     await send('Page.reload');
     await pause(600);
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
   };
 

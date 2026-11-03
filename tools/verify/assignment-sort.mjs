@@ -28,7 +28,7 @@
 import { nodeDaysFromToday } from './lib-dates.mjs';
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, mustBoot, seam } = h;
 
 console.log('\n--- the assignment list sorts within each category, and writes nothing (WO-3.55) ---');
 
@@ -106,7 +106,7 @@ const onView = () => evalJs(
 const reload = async () => {
   await send('Page.reload');
   await pause(600);
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
 };
 const toList = async (classId) => {

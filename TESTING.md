@@ -8634,6 +8634,208 @@ both wait on the same condition `load()` now waits on, so sharing would be churn
 - [x] `TESTING.md` § WO-1.91 carries these lines verbatim with the evidence for each.
       — This list, copied from the work order.
 
+### WO-1.93 — About a hundred section reloads throw away waitForBoot()'s answer
+
+No 👤 and no 📆 line. Harness files only: `tools/verify-shell.mjs` and 58 files under
+`tools/verify/`. Nothing in `src/` moves (`git status --short src/` empty throughout), so no `CACHE`
+bump is owed. No `check(` was added or removed, so neither count in `tools/README.md` moves.
+
+#### 1. The survey, before anything was rewritten
+
+`grep -cE "^\s*await waitForBoot\(\);\s*$" tools/verify/*.mjs` summed to **100** on the starting
+tree, which is the work order's figure. A **101st** discarding call does not match that pattern
+because a comment follows it on the same line: `verify/touch-targets.mjs:63`,
+`await waitForBoot();            /* boot is async since WO-1.4; see waitForBoot */`. WO-1.91's own
+section counted 101, and this is the difference. There is also one **indirect** discard:
+`verify/first-run.mjs`'s `goFresh()` returns `waitForBoot()`'s answer. One caller reads it (then
+line 355, now 358, `const booted = await goFresh(true)`, asserted `booted === true`). Every other call
+of `goFresh()` and of its wrapper `reloadFresh()` threw it away: ten on the starting tree (lines 457,
+585, 613, 615, 641, 643, 672, 674, 730, 733), plus the `reloadFresh()` body, which hands the answer
+on to callers that all discard it.
+
+**Every one of the 101 sites was read with its neighbours** (script output kept in the session
+scratchpad). The shape is uniform:
+
+- two lines before: `await send('Page.reload');` at 100 sites, and
+  `await clickSel('[data-update-reload]');` (the app's own Reload button) at
+  `verify/worker-takeover.mjs:364`;
+- one line before: a fixed sleep at all 101 (`setTimeout(…, 600)` ×52, `sleep(600)` ×22,
+  `setTimeout(…, 700)` ×16, `pause(600)` ×8, `sleep(700)` ×3);
+- the next line: `await evalJs(KILL_ANIM);` at all 101.
+
+**No site reads the answer later.** By construction, a bare call has no binding to read. **No site
+sits inside a `try` that has a `catch`.** An indentation walk over every site and every helper that
+wraps one (`reload`, `reboot`, `flushAndReload`, `goFresh`, `reloadFresh`) found `try` blocks only
+in `attendance-header.mjs`, `strip-holds-still.mjs`, `worker-takeover.mjs` and the eight
+`reload()`-helper sections. Every one of them closes with `finally` and no `catch`. So a throw at the
+reload reaches `runSection()`. Nothing in the section swallows it.
+
+**One meaning change, stated rather than hidden.** Eight helper calls sit **inside a `finally`**,
+reloading after the section puts its preferences back: `assignment-list-tidy.mjs:357`,
+`assignment-sort.mjs:530`, `dialog-kinds.mjs:384`, `horizontal-overflow.mjs:333`,
+`roster-who.mjs:233`, `roster-width.mjs:269`, `settings-back.mjs:339`, `settings-hub.mjs:325`. If
+the reload in one of them does not boot, the section now fails there. Before, it went on to the next
+section on a dead page. If the `try` had already thrown, the `finally`'s throw replaces that error in
+the FAIL line. Each of those `finally` blocks already holds `evalJs` calls that can throw the same
+way, so this adds no new kind of failure.
+
+#### 2. The sites that read the answer, and the sites that expect a failed boot
+
+**No site in `tools/verify/` calls `waitForBoot()` expecting `false`.** The two sections that prove
+a failed boot do not call it at all. `verify/backup-restore.mjs` (the `schemaVersion: 99` document,
+lines ~1275 and ~1388) polls `#loadingError` itself for up to 40 × 150ms. `verify/front-door.mjs`'s
+`settle()` reads `failed` from its own state reading. Neither is touched.
+
+The sites that **read** the answer keep reading it, and every one asserts `true` in a check of its
+own. None is rewritten:
+
+| File | Line | Binding |
+|---|---|---|
+| `assignments.mjs` | 1003 | `assignBoot` |
+| `attendance.mjs` | 90, 880, 979, 1122, 1563 | `attBooted`, `uReboot`, `attReboot`, `noteReboot`, `dayReboot` |
+| `backup-restore.mjs` | 52, 1458 | `backupBooted`, `soloBack` |
+| `categories-weights.mjs` | 428 | `catBoot` |
+| `class-tab-keeps-screen.mjs` | 296 | `booted` |
+| `classes-terms.mjs` | 138, 602 | `classesBooted`, `rememberedBoot` |
+| `first-run.mjs` | 342 (via `goFresh(true, { reads: true })` at 358) | `up` → `booted` |
+| `letter-grades.mjs` | 450 | `scaleBoot` |
+| `roster-contacts.mjs` | 127, 458 | `rosterBooted`, `rosterReboot` |
+| `support-details.mjs` | 307, 697 | `supportReboot`, `modeReboot` |
+| `year-document-store.mjs` | 250 | `cameBack` |
+
+That is 18 direct readers plus `first-run.mjs`'s one, 19 in all. `waitForBoot()`'s return value,
+its 8000ms default and its body are unchanged (`git diff tools/verify-shell.mjs` touches only its
+comment).
+
+#### 3. The change
+
+- **`mustBoot()`**, new in `tools/verify-shell.mjs` and on `h`. It awaits `waitForBoot()` and
+  returns nothing. On `false` it takes one reading and **throws**: `state` (`booting`, `failed`,
+  `none`, or `threw` if no document answered), `modules ran` / `never ran`, `readyState`, the boot
+  error text if `#loadingError` was up, the whole reading as JSON, and the page's own exceptions and
+  error-level log entries since **this document's** navigation (its `performance.timeOrigin`, on
+  the same real clock that stamps `pageErrors`), with how long ago that was. The budget is
+  `waitForBoot()`'s 8s. It was not lengthened.
+- **The reading is shared, not copied.** `load()`'s inline poll expression became `BOOT_READING`,
+  with one field added (`navigatedAt`). The page-errors tail became `saidSince(from)`. `load()`
+  reads both. Its behaviour and its message are unchanged except that the JSON reading now carries
+  `navigatedAt`.
+- **Why this shape.** Three were considered:
+  - an option on `waitForBoot()` would give one function two contracts, with its 19 readers one
+    keystroke from a throw;
+  - a `reload()` helper that did the reload, the sleep and the wait would rewrite three lines per
+    site, flatten five different sleeps, and could not serve the site that reloads by tapping the
+    app's button;
+  - **a separate helper that replaces only the discarding line** keeps every site's reload and
+    sleep byte for byte. That makes the 101 rewrites one substitution a reader can check with one
+    grep (§ Acceptance 1).
+  The full argument is in the comment above `mustBoot()`.
+- **The 101 sites**: `await waitForBoot();` → `await mustBoot();`, the trailing comment at
+  `touch-targets.mjs:63` kept with `see waitForBoot` → `see mustBoot`. Each file's `h` destructure
+  gained `mustBoot`, and dropped `waitForBoot` wherever nothing else in the file calls it. The
+  rewrite was made by a scratch script that refuses any site whose tail is not empty or a comment,
+  and refuses any file whose destructure it cannot find. `git diff --numstat tools/verify/` shows
+  equal insertions and deletions in every file except `first-run.mjs` (+8 −5) and
+  `cooldown-quiet.mjs` (+15 −12), so no line endings were rewritten.
+- **`first-run.mjs`**: `goFresh(wipe, { reads = false } = {})` now calls `mustBoot()` unless asked
+  for the answer. Only line 358 asks.
+- **`reload45()` moved onto `h.load()`.** It still flushes, and it still checks that the stored year
+  holds the fixture class **before** the page is let go of. The `Page.reload` and the
+  `{ left, booted }` poll are gone. `load()` already waits on the same condition (the marked
+  document gone and the loading screen down, judged on one reading) with the same 10s deadline, and
+  since WO-1.91 it reports everything this work order asks for. Teaching the local copy to say it a
+  second time would make two messages to keep in step. The one difference is the URL: `load()`
+  navigates to `index.html?door=skip` where `Page.reload` kept the current URL. Every section
+  reaches `cooldown-quiet.mjs` on that URL already, and the full runs below pass through it. The
+  argument is in the comment above `reload45()`. `KILL_ANIM` left that file's destructure because
+  `load()` runs it itself.
+
+#### 4. The probe
+
+`make-probe.mjs`, in the session scratchpad and **never in the repository**, writes a copy of
+`tools/verify-shell.mjs` into the scratchpad. The copy runs no static sections and five browser
+sections, imported by absolute URL from the real `tools/verify/`, except that two are scratch copies
+carrying a marked `MUTATION`:
+
+- `tt-probe.mjs`, a copy of the **rewritten** `touch-targets.mjs`. Just before its own
+  `Page.reload` it sends `Network.enable`, `Network.setBypassServiceWorker` and
+  `Network.setBlockedURLs ['*src/shell.js*']`, so the app's entry module cannot load. It also plants
+  a page script that throws `PROBE-1.93: …`, so there is an error to quote.
+- `cq-probe.mjs`, a copy of the changed `cooldown-quiet.mjs`, with the same block just before its
+  first `reload45()`.
+
+The run, quoted from its log (2026-11-02):
+
+- `FAIL | probe-old: the pre-WO-1.93 line returned and let the section carry on (this is the defect)  :: returned after 8714ms with {"planbook":"undefined","ready":"complete"}`.
+  This is the old line, `await waitForBoot();`, under the same block: it returned and the section
+  carried on.
+- `FAIL | § probe/tt-probe.mjs ran to the end of its own checks  :: it threw after 0 of its own checks, and the rest of that section did not run — Error: a section's reload never booted: waitForBoot() answered false after 8000ms, state booting, modules never ran, readyState complete, last reading {"state":"booting","href":"http://127.0.0.1:59834/index.html?door=skip","ready":"complete","modulesRan":false,"bootError":null,"navigatedAt":1793664829478}; the page reported ["Error: PROBE-1.93: a page error for the throw to quote\n    at <anonymous>:1:30"] since this document's navigation, 8683ms ago ← at mustBoot (…probe-shell.mjs:1090:9) ← at async Object.run (…tt-probe.mjs:68:1)`.
+  Line 68 of the copy is the rewritten `await mustBoot();`.
+- `PASS | probe-after: recoverPage() brought the page back booted after the throw` and
+  `PASS | probe-after: an unblocked reload passes straight through mustBoot()  :: returned after 618ms`.
+- `FAIL | § probe/cq-probe.mjs … Error: load() never handed back a new, booted document: gave up after 10000ms — states booting, last reading {"state":"booting",…,"ready":"complete","modulesRan":false,"bootError":null,…}; the page reported ["Error: PROBE-1.93: reload45 page error\n    at <anonymous>:1:30"] since the navigation ← at load (…) ← at async reload45 (…cq-probe.mjs:143:5)`,
+  followed by the two `probe-after` passes again.
+- Summary: `7 checks · 4 passed · 3 failed · 0 skipped`. All three failures were planted.
+
+An earlier run of the same probe, before the planted page error was added, read `the page reported
+no exception and no error-level log entry since this document's navigation, 8731ms ago`. That is
+the message's other branch.
+
+#### Acceptance
+
+- [x] No call in `tools/verify/` waits for a boot and then discards the answer. A probe that blocks
+      the app's modules under one rewritten site fails at that reload, naming the state it reached,
+      and the probe is not in the tree.
+      — `grep -rnE "await waitForBoot\(\);" tools/verify/` now finds only the 18 lines that bind
+      the answer to a name, which are § 2's table less `first-run.mjs`'s reader (that line also holds
+      the `mustBoot()` branch, so it ends `: await mustBoot();`). Each binding is asserted in a check. `grep -c "await mustBoot();"` sums to 102 across 57 files: the 101 rewritten sites in 56 files, plus `first-run.mjs:342`. The one
+      indirect discard, `first-run.mjs`'s `goFresh()`, calls `mustBoot()` for every caller except
+      the one that asserts its answer (§ 3). The probe in § 4 blocked `src/shell.js` under the
+      rewritten `touch-targets.mjs` site. The section failed **at that line**, `tt-probe.mjs:68:1`,
+      naming `state booting, modules never ran, readyState complete` and quoting the planted page
+      error. The probe exists only in the session scratchpad. `git status --short` lists no file
+      beyond the ones this work order changed, and `grep -rn MUTATION tools/ src/` finds only the
+      nine prose mentions that were there before this work order (in `keys-legend-guards.mjs`,
+      `outreach.mjs`, `score-grid.mjs`, `score-search.mjs`, `wo-gate.mjs` and `src/shell.js`) and
+      `tools/README.md`'s own ledger.
+- [x] `reload45()`'s failure message says whether the modules ran and quotes the page's errors since
+      its navigation.
+      — It now reloads through `h.load()` (§ 3). The probe's `cq-probe.mjs` blocked the modules
+      under its first `reload45()`, and the section failed with
+      `load() never handed back a new, booted document: gave up after 10000ms — states booting, last reading {…"modulesRan":false…}; the page reported ["Error: PROBE-1.93: reload45 page error …"] since the navigation ← at load ← at async reload45`.
+      The fixture check before the reload is unchanged, and it still runs first.
+- [x] Every site that expects a failed boot still reads `waitForBoot()`'s answer, and `TESTING.md`
+      § WO-1.93 lists them.
+      — § 2. **There are none.** No call to `waitForBoot()` in `tools/verify/` expects `false`. The
+      two sections that prove a failed boot (`backup-restore.mjs`'s `schemaVersion: 99` blocks and
+      `front-door.mjs`'s `settle()`) poll `#loadingError` themselves and never call it. The 19 sites
+      that read the answer are listed in § 2's table. Every one asserts `true`, and none was
+      rewritten.
+- [x] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the run
+      lines are quoted in `TESTING.md` § WO-1.93.
+      — Three runs back to back from one script, each waited out to its own `EXIT=`, with nothing
+      else running beside them. Before each run, and again after the third, one md5 was taken over
+      every tracked `tools/*.mjs`, `tools/verify/*.mjs` and `src/*`, plus `sw.js` and `index.html`.
+      It read `e417debc78b5` all four times. Only `TESTING.md` and `tools/README.md` were written
+      while the runs went, and the harness reads neither (2026-11-03 UTC, real clock):
+      - Run 1: `2205 checks · 2205 passed · 0 failed · 0 skipped`, `72,015 lines · 32.7 lines per
+        check · 1207s`, `EXIT=0`.
+      - Run 2: `2205 checks · 2205 passed · 0 failed · 0 skipped`, `72,015 lines · 32.7 lines per
+        check · 1212s`, `EXIT=0`.
+      - Run 3: `2205 checks · 2205 passed · 0 failed · 0 skipped`, `72,015 lines · 32.7 lines per
+        check · 1212s`, `EXIT=0`.
+      `verify/cooldown-quiet.mjs` passed all 28 of its checks in each run, through the new
+      `reload45()`. The check count is WO-1.91's 2205, unchanged. **Limit:** three green runs show
+      that nothing here broke a section. They do not show the flake is cured, and this work order
+      does not try to cure it (WO-1.92 does). The next time a reload does not boot, it will fail at
+      that reload with the state and the page's errors, not three reads later.
+- [x] `node tools/wo-sweep.mjs` passes.
+      — `node tools/wo-sweep.mjs`: `52 checks · 49 passed · 0 failed · 3 to review`, `EXIT=0`. These
+      are the three standing reviews. It was run after run 3, on the final `tools/`, and again with the
+      same result once this section and the phase file's ticks were written.
+- [x] `TESTING.md` § WO-1.93 carries these lines verbatim with the evidence for each.
+      — This list, copied from the work order.
+
 ---
 
 ## Phase 2 — Attendance

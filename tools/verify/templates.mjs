@@ -19,7 +19,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, KILL_ANIM, waitForBoot, seam, openSettingsDoor } = h;
+const { check, skip, send, evalJs, clickSel, KILL_ANIM, mustBoot, seam, openSettingsDoor } = h;
 
 /*
  * ───────── message templates (WO-5.2) ─────────
@@ -120,7 +120,7 @@ if (!seam) {
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
 
   /* ── the fixture ── */
@@ -217,7 +217,7 @@ if (!seam) {
     await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 600));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
 
     /* ── the door ── */

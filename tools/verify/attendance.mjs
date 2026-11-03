@@ -12,7 +12,7 @@ import { nodeToday, thisWeek, lastWeek, daysApart, tomorrow } from './lib-dates.
 import { passes } from './attendance-passes.mjs';
 
 export async function run(h) {
-const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, seam,
+const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, mustBoot, seam,
   residue, openSettingsDoor } = h;
 
 /* ───────────────── attendance ─────────────────
@@ -1978,7 +1978,7 @@ if (!attBooted || !attSeam) {
   await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
   await evalJs(INSTALL_ATT_READER);
@@ -2174,7 +2174,7 @@ if (!attBooted || !attSeam) {
     return was; })()`);
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
   await evalJs(INSTALL_ATT_READER);

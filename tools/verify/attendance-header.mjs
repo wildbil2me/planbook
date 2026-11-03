@@ -33,7 +33,7 @@
 import { nodeColumns, nodeWeekdayAhead } from './lib-dates.mjs';
 
 export async function run(h) {
-const { check, skip, send, evalJs, has, clickSel, clickVisible, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, has, clickSel, clickVisible, KILL_ANIM, mustBoot, seam } = h;
 
 console.log('\n--- the attendance header gives back the rows it does not need (WO-2.58) ---');
 
@@ -109,7 +109,7 @@ if (!seam) {
     await resetLedger();
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 600));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
 
     /* EVERYTHING THIS SECTION READS, IN ONE ROUND TRIP. */
@@ -362,7 +362,7 @@ if (!seam) {
       + (d.attendance || []).filter(function(r){ return r.classId === '${CLS}'; }).length; })()`);
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   if ((await onView()) !== 'homeView') await clickVisible('[data-view-home]');
   check('the WO-2.58 fixture came back off the document and the page was left on the class grid',

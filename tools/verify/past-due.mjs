@@ -12,7 +12,7 @@ import { nodeToday, nodeNow, tomorrow } from './lib-dates.mjs';
 import { measureIn } from './touch-targets.mjs';
 
 export async function run(h) {
-const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, INSTALL_WALKER, mustBoot, seam } = h;
 
 /* ───────── the past-due prompt (WO-3.6) ─────────
  *
@@ -301,7 +301,7 @@ console.log('\n--- the past-due prompt (WO-3.6) ---');
       await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
       await send('Page.reload');
       await new Promise(r => setTimeout(r, 700));
-      await waitForBoot();
+      await mustBoot();
       await evalJs(KILL_ANIM);
       await evalJs(INSTALL_WALKER);
       const coarseHere = await evalJs("matchMedia('(pointer: coarse)').matches");
@@ -325,7 +325,7 @@ console.log('\n--- the past-due prompt (WO-3.6) ---');
         { width: 1200, height: 900, deviceScaleFactor: 1, mobile: false });
       await send('Page.reload');
       await new Promise(r => setTimeout(r, 700));
-      await waitForBoot();
+      await mustBoot();
       await evalJs(KILL_ANIM);
       await evalJs(INSTALL_WALKER);
 
@@ -554,7 +554,7 @@ console.log('\n--- the past-due prompt (WO-3.6) ---');
       await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
       await send('Page.reload');
       await new Promise(r => setTimeout(r, 700));
-      await waitForBoot();
+      await mustBoot();
       await evalJs(KILL_ANIM);
       await evalJs(INSTALL_WALKER);
       await openClass(B);

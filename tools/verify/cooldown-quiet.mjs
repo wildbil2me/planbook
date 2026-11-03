@@ -12,7 +12,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, KILL_ANIM, seam } = h;
+const { check, skip, send, evalJs, clickSel, load, seam } = h;
 
 /*
  * ───────── the cooldown and the quiet middle (WO-4.5) ─────────
@@ -116,7 +116,19 @@ if (!seam) {
   /* `stored`: the class id the record in IndexedDB must already hold before the page is let go of —
      the fixture's own, on the reload that exists to boot over it. A plant that never reached disk
      comes back as a grid with no card on it, which is the same symptom as a grid not yet painted, so
-     the two are told apart here, before the reload, rather than guessed at after it. */
+     the two are told apart here, before the reload, rather than guessed at after it.
+
+     THE RELOAD ITSELF IS `h.load()` SINCE WO-1.93. This kept its own `Page.reload` and a poll of
+     `{ left, booted }`, and WO-1.91's run 2 went red here on `{"left":true,"booted":false}` — a
+     message that could not say whether the modules had run, because it did not ask, and quoted none
+     of the page's errors. `load()` waits on the very condition this one did (the document marked
+     before the navigation is gone and the loading screen is down, judged on one reading, the same
+     10s deadline), and since WO-1.91 its throw names every state it passed through, `readyState`,
+     whether the modules ran, the boot error, and the page's own errors since the navigation. So the
+     local copy went rather than learning to say the same thing a second time. What `load()` has no
+     reason to know stays here: the flush, and the fixture check before the page is let go of. The
+     one difference is the door — `load()` navigates to `index.html?door=skip`, where `Page.reload`
+     kept whatever URL the page was on, and every section reaches this one on that URL already. */
   async function reload45(stored) {
     await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
     if (stored) {
@@ -128,16 +140,7 @@ if (!seam) {
           + ' — the fixture never reached IndexedDB, so the reload would boot without it');
       }
     }
-    await evalJs('window.__wo45Leaving = 1; 1');
-    await send('Page.reload');
-    const r = await poll45(`(function(){ var l = document.getElementById('loadingScreen');
-      return { left: !window.__wo45Leaving, booted: !!(l && l.classList.contains('hidden')) }; })()`,
-      (x) => !!x && x.left && x.booted, 10000);
-    if (!r || !r.left || !r.booted) {
-      throw new Error('the reload never handed back a new, booted document inside 10s: '
-        + JSON.stringify(r));
-    }
-    await evalJs(KILL_ANIM);
+    await load();
   }
   const CARD45 = '#homeGrid [data-class-tab="' + CLS + '"]';
   async function waitForCard45() {

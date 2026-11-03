@@ -23,7 +23,7 @@ import { nodeToday } from './lib-dates.mjs';
 import { READ_EDITOR_MESSAGES, EDITOR_RED } from './assignments.mjs';
 
 export async function run(h) {
-const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, waitForBoot, seam, openSettingsDoor } = h;
+const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, mustBoot, seam, openSettingsDoor } = h;
 
 /*
   ══════════ COPYING A CLASS, TERMS AND CATEGORIES ONLY (WO-1.22) ══════════
@@ -48,7 +48,7 @@ console.log('\n--- copying a class, terms and categories only (WO-1.22) ---');
 {
   await send('Page.reload');
   await new Promise((r) => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
 
   const seam122 = await evalJs("!!(window.planbook && window.planbook.store"
@@ -519,7 +519,7 @@ console.log('\n--- one assignment into several classes, one line per class (WO-3
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await sleep(600);
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
 
@@ -1985,7 +1985,7 @@ console.log('\n--- one assignment into several classes, one line per class (WO-3
   await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   await send('Page.reload');
   await sleep(700);
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
   const coarse349 = await evalJs("matchMedia('(pointer: coarse)').matches && innerWidth === 820");
@@ -2036,7 +2036,7 @@ console.log('\n--- one assignment into several classes, one line per class (WO-3
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await sleep(600);
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   const gone349 = await evalJs(`(function(){ var d = window.planbook.store.getDoc();
     return d.classes.filter(function(c){ return /^c_wo349_/.test(c.id); }).length

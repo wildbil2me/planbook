@@ -45,7 +45,7 @@
 
 export async function run(h) {
 const { check, skip, send, evalJs, clickSel, clickVisible, openCalendarPanel, KILL_ANIM,
-  waitForBoot, seam } = h;
+  mustBoot, seam } = h;
 
 console.log('\n--- the Clear beside every date field (WO-1.48) ---');
 {
@@ -72,7 +72,7 @@ console.log('\n--- the Clear beside every date field (WO-1.48) ---');
     await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 700));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     /* The pointer parked in a corner before anything is measured — trap 7. */
     await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 2, y: 2 });

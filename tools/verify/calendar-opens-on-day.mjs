@@ -25,7 +25,7 @@
 import { nodeColumns, nodeWeekdayAhead } from './lib-dates.mjs';
 
 export async function run(h) {
-const { check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, clickSel, clickVisible, KILL_ANIM, mustBoot, seam } = h;
 
 console.log('\n--- a tapped day opens on that day (WO-6.5) ---');
 
@@ -99,7 +99,7 @@ if (!seam) {
     return { ok:true, wasClass:wasClass }; })()`);
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
 
   /* What the register shows, in one round trip. `seen` is every date a day-column head was ADDED
@@ -324,7 +324,7 @@ if (!seam) {
       + (d.attendance || []).filter(function(r){ return r.classId === '${CLS}'; }).length; })()`);
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   if ((await onView()) !== 'homeView') await clickVisible('[data-view-home]');
   check('the WO-6.5 fixture came back off the document and the page was left on the class grid',

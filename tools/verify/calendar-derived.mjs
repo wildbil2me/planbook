@@ -9,7 +9,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, KILL_ANIM, mustBoot, seam } = h;
 
 /*
  * ───────── derived events: computed at render, never stored (WO-6.2) ─────────
@@ -98,7 +98,7 @@ if (!seam) {
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
 
   /* ── the fixture: one of every row in the table, authored through the model where there is one ──
@@ -326,7 +326,7 @@ if (!seam) {
       students: (now.students || []).length }; })()`);
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   const reread = await evalJs(`(function(){
     var d = window.planbook.store.getDoc();

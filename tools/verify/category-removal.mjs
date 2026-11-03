@@ -21,7 +21,7 @@
 import { nodeDaysFromToday } from './lib-dates.mjs';
 
 export async function run(h) {
-const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, waitForBoot, openSettingsDoor } = h;
+const { check, skip, evalJs, clickSel, send, KILL_ANIM, INSTALL_WALKER, mustBoot, openSettingsDoor } = h;
 
 /* ───────── removing a category moves its work to no category (WO-3.43) ─────────
  *
@@ -63,7 +63,7 @@ await send('Emulation.setDeviceMetricsOverride',
 await send('Emulation.setTouchEmulationEnabled', { enabled: false });
 await send('Page.reload');
 await new Promise(r => setTimeout(r, 600));
-await waitForBoot();
+await mustBoot();
 await evalJs(KILL_ANIM);
 await evalJs(INSTALL_WALKER);
 
@@ -449,7 +449,7 @@ await evalJs(`(async function(){
   return 1; })()`);
 await send('Page.reload');
 await new Promise(r => setTimeout(r, 600));
-await waitForBoot();
+await mustBoot();
 await evalJs(KILL_ANIM);
 await evalJs(INSTALL_WALKER);
 }

@@ -57,7 +57,7 @@
 import { nodeDaysFromToday } from './lib-dates.mjs';
 
 export async function run(h) {
-const { check, skip, evalJs, clickSel, KILL_ANIM, INSTALL_WALKER, waitForBoot, send } = h;
+const { check, skip, evalJs, clickSel, KILL_ANIM, INSTALL_WALKER, mustBoot, send } = h;
 
 console.log('\n--- The notice says which score changed (WO-3.75) ---');
 if (!(await evalJs("!!(window.planbook && window.planbook.store && window.planbook.termRecord"
@@ -680,7 +680,7 @@ check('the WO-3.79 sweep fixture came back off the document, the termRecords key
 }
 await send('Page.reload');
 await sleep(600);
-await waitForBoot();
+await mustBoot();
 await evalJs(KILL_ANIM);
 await evalJs(INSTALL_WALKER);
 }

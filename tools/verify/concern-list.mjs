@@ -9,7 +9,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, mustBoot, seam } = h;
 
 /*
  * ───────── who needs you, drawn (WO-4.2) ─────────
@@ -79,7 +79,7 @@ if (!seam) {
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
 
   /* ── the fixture ── */
@@ -196,7 +196,7 @@ if (!seam) {
     await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 600));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
     /* ── in through the fifth segment, from inside a class ──
        Walked the way a teacher walks it: home, a card, then the new segment on the strip inside the

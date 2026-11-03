@@ -9,7 +9,7 @@
  */
 
 export async function run(h) {
-const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, waitForBoot, seam } = h;
+const { check, skip, send, evalJs, has, clickSel, KILL_ANIM, mustBoot, seam } = h;
 
 /*
  * ───────── the month and the week, drawn (WO-6.3) ─────────
@@ -97,7 +97,7 @@ if (!seam) {
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
 
   /* ── the fixture ──
@@ -1058,7 +1058,7 @@ if (!seam) {
       raw: String(localStorage.getItem('planbook_openView') || '') }; })()`);
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
   const afterReload = await evalJs(`(function(){
     return { view: (function(){ var e=document.querySelector('main > :not(.hidden)');

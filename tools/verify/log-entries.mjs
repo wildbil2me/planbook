@@ -12,7 +12,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 export async function run(h) {
-const { ROOT, check, skip, send, evalJs, has, clickSel, clickVisible, KILL_ANIM, waitForBoot, seam, openSettingsDoor } = h;
+const { ROOT, check, skip, send, evalJs, has, clickSel, clickVisible, KILL_ANIM, mustBoot, seam, openSettingsDoor } = h;
 
 /*
  * ───────── the log, written down (WO-4.4) ─────────
@@ -105,7 +105,7 @@ if (!seam) {
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   await send('Page.reload');
   await new Promise(r => setTimeout(r, 600));
-  await waitForBoot();
+  await mustBoot();
   await evalJs(KILL_ANIM);
 
   /* ── the fixture ── */
@@ -201,7 +201,7 @@ if (!seam) {
     await evalJs('(async function(){ await window.planbook.store.flush(); return 1; })()');
     await send('Page.reload');
     await new Promise(r => setTimeout(r, 600));
-    await waitForBoot();
+    await mustBoot();
     await evalJs(KILL_ANIM);
 
     /* ══ the record, and what a chip writes ══ */

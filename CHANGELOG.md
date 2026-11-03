@@ -13,6 +13,21 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The harness's own reloads now fail where they fail — 2026-11-03
+
+WO-1.93. Harness only — nothing in `src/`, `sw.js` or `index.html` moved, so no `CACHE` bump.
+
+- **About a hundred section reloads threw away `waitForBoot()`'s answer.** A reload that never
+  booted let the section carry on and fail somewhere unrelated, with an error that named nothing.
+  All 101 now go through a new `h.mustBoot()`, which stops at the reload and says how far the page
+  got — whether its code ran, and any error the page reported.
+- **The cooldown section's own `reload45()` now goes through the shared `h.load()`**, and opens
+  `index.html?door=skip` rather than reloading whatever page it was on.
+- **The sections that expect a failed boot were left alone** — they read the answer rather than
+  discarding it. Three full runs on one tree, each 2205 of 2205.
+- **One limit, known:** eight helper reloads sit inside a `finally`, so a boot failure there now
+  replaces whatever error the `try` had already raised.
+
 ### The harness stops handing sections a page that never started — 2026-11-02
 
 WO-1.91. Harness only — nothing in `src/`, `sw.js` or `index.html` moved, so no `CACHE` bump.

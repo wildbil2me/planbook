@@ -28,7 +28,7 @@ import path from 'node:path';
 import { nodeDaysFromToday } from './lib-dates.mjs';
 
 export async function run(h) {
-const { check, skip, evalJs, clickSel, clickVisible, KILL_ANIM, INSTALL_WALKER, waitForBoot, send } = h;
+const { check, skip, evalJs, clickSel, clickVisible, KILL_ANIM, INSTALL_WALKER, mustBoot, send } = h;
 
 console.log('\n--- The notice opens when you leave a quarter that changed, and home carries the bar (WO-3.74) ---');
 if (!(await evalJs("!!(window.planbook && window.planbook.store && window.planbook.termRecord"
@@ -474,7 +474,7 @@ check('the WO-3.74 fixture came back off the document, the termRecords key is as
   JSON.stringify(cleared) + ' · had the key at the start: ' + plant.had);
 await send('Page.reload');
 await sleep(600);
-await waitForBoot();
+await mustBoot();
 await evalJs(KILL_ANIM);
 await evalJs(INSTALL_WALKER);
 }
