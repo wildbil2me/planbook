@@ -5614,7 +5614,7 @@ the owner rules otherwise.
 
 ## WO-3.71 — a copied class keeps each category's drop lowest
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-3.69 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-11-03 · **Size** S · **Depends on** WO-3.69 · **Blocks** nothing
 **Closes roadmap** *(no box. Owner-directed, 2026-10-23.)*
 
 **Booked 2026-10-23**, owner-directed, out of [WO-3.69](#wo-369--a-category-can-drop-each-students-lowest-n-scores)'s
@@ -5638,14 +5638,14 @@ category, like its weight, which the copy already keeps — the argument WO-3.30
   retires WO-3.69's entry's sentence that copying does not carry the setting yet.
 
 **Acceptance**
-- [ ] Copying a class whose category drops its lowest N gives a class whose matching category drops
+- [x] Copying a class whose category drops its lowest N gives a class whose matching category drops
       its lowest N.
-- [ ] Copying a category with no drop writes no `dropLowest` key.
-- [ ] Every other field a copy carries or refuses is unchanged.
-- [ ] With `copyCategories()` leaving the key off, the new check goes red. The mutation is reverted,
+- [x] Copying a category with no drop writes no `dropLowest` key.
+- [x] Every other field a copy carries or refuses is unchanged.
+- [x] With `copyCategories()` leaving the key off, the new check goes red. The mutation is reverted,
       and `TESTING.md` § WO-3.71 shows the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
-- [ ] `TESTING.md` § WO-3.71 carries these lines verbatim with the evidence for each.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+- [x] `TESTING.md` § WO-3.71 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Copy the key, not a number for every category**: writing `dropLowest: 0` into a copy
 is the seeded-default mistake CLAUDE.md's settings-block rule refuses. **`letterScale: null` in the

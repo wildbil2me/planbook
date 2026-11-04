@@ -13,6 +13,14 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A copied class keeps each category's drop lowest — 2026-11-03
+
+WO-3.71, owner-directed. `CACHE` v209.
+
+- **Copying a class now carries each category's *drop lowest*** along with its name and weight, so
+  a copy of a class whose Quizzes drop their lowest score drops it too. A category that drops
+  nothing copies with no setting at all, and so does one holding a value the grade never used.
+
 ### A page that never booted now says what it was handed — 2026-11-03
 
 WO-1.92. Harness only — nothing in `src/`, `sw.js` or `index.html` moved, so no `CACHE` bump.
@@ -427,7 +435,7 @@ WO-3.69, owner-directed. `CACHE` v197.
 - **A score marked missing is never dropped, extra credit is never dropped, and each student's best
   score is always kept.** *A run of low scores* still notices a dropped score.
 - **Old backups restore and grade as before**: the setting is a key written only when used, and the
-  schema did not change. Copying a class's categories does not carry the setting yet.
+  schema did not change.
 
 ### An excused cell keeps the score it had — 2026-10-22
 

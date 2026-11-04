@@ -19611,6 +19611,73 @@ leaves out uncategorized work of any state, not only excused. If it is ever clos
 held readers to the uncategorized pile and takes a ruling on the home card's *N to grade*, because
 `heldWork()` feeds it. It is not booked.
 
+### WO-3.71 — a copied class keeps each category's drop lowest
+
+**What was built.** `src/categories.js`: `copyCategories()` now builds each category with
+`newCategory(name, weight)` as before and then writes `dropLowest` **only** when the source carries a
+count the engine honours — a whole number above zero — and writes no key otherwise (absent, `0`, a
+fraction, a negative, a string). The test is a new private `honouredDrop(cat)` in the same file,
+returning the honoured count or `0`; `dropShown()`, which already carried the same three conditions
+inline for the category field, now reads it too, so the file holds the rule once. It cannot import the
+engine's `dropCountOf()` — `src/grade-engine.js` imports `categoriesOf()` from this file, so the reverse
+edge is an import loop (`wo-sweep.mjs` § 33), and the work order moves nothing in the engine — so
+`honouredDrop()`'s comment says the two must agree, why there are two, and which harness reads each.
+`src/grade-engine.js` is not touched. `sw.js`: `planbook-shell-v208` → `v209` (`src/categories.js` is
+in `SHELL`). Harness: `tools/verify/copy-class.mjs` — the WO-1.22 fixture's source categories gained
+`dropLowest: 2` on *Quizzes*, `1.5` on *Homework* and `'2'` on *Classwork*, *Tests* left with no key;
+two new check sites beside WO-3.34's `gradingMode` check. `tools/README.md`: call-site count 2199 →
+2201 and its paragraph.
+
+- [x] Copying a class whose category drops its lowest N gives a class whose matching category drops
+      its lowest N.
+      — `node tools/verify-shell.mjs`, clean run (below): `PASS | WO-3.71: a copied category keeps its
+      drop lowest — the copy's Quizzes drops its lowest 2, as the source's does  :: copy dropLowest by
+      category = ["(no key)",2,"(no key)","(no key)"]`. The copy goes through the real Copy button
+      (`[data-class-copy="c_wo122_src"]`). The copy's key is the same number the source carries, and the
+      engine reads a category's drop from that key alone (`dropCountOf()`, unchanged), whose grading of
+      `dropLowest: 2` is `tools/verify/drop-lowest.mjs`'s, green in the same run.
+- [x] Copying a category with no drop writes no `dropLowest` key.
+      — `PASS | WO-3.71: a category with no drop copies with no dropLowest key — neither one absent on the
+      source (Tests) nor one the engine would not honour (Homework 1.5, Classwork '2') — and every copied
+      category holds exactly id, name and weight besides it  :: copy dropLowest by category =
+      ["(no key)",2,"(no key)","(no key)"], keys = [["id","name","weight"],["id","name","weight","dropLowest"],["id","name","weight"],["id","name","weight"]]`.
+      The copy is read back through JSON, so "no key" is absent rather than `undefined`; `0` would read as
+      `0` here and fail.
+- [x] Every other field a copy carries or refuses is unchanged.
+      — The WO-1.22 / WO-3.34 copy checks, unedited, all PASS in the clean run against the fixture that
+      now carries drops: one new class named "… (copy)" after its source; term labels and dates; category
+      names and weights in order; every class, term and category id new; roster empty, `letterScale`
+      `null`, not archived, no attendance, assignment, score or pass refers to it; `PASS | WO-3.34: copying
+      a weighted class writes no gradingMode key onto the copy  :: ["id","name","archived","terms","categories","letterScale","roster"]`;
+      editing a category weight in the copy leaves the source's alone and the reverse; and `PASS | WO-3.34:
+      copying a points class through the real Copy button gives a points class`. The second WO-3.71 check
+      also pins each copied category's other keys to exactly `id`, `name`, `weight`. `copyClass()` in
+      `src/classes.js` is not touched.
+- [x] With `copyCategories()` leaving the key off, the new check goes red. The mutation is reverted,
+      and `TESTING.md` § WO-3.71 shows the red output.
+      — Mutation: `if (n) copy.dropLowest = n;` replaced by `if (n) { /* MUTATION WO-3.71: drop the key */ }`
+      in `copyCategories()`. Full run on that tree, exit 1:
+      `FAIL | WO-3.71: a copied category keeps its drop lowest — the copy's Quizzes drops its lowest 2, as
+      the source's does  :: copy dropLowest by category = ["(no key)","(no key)","(no key)","(no key)"]`,
+      summary `2207 checks · 2206 passed · 1 failed · 0 skipped`, 1195s — the only failure. The no-key
+      check stays green under that mutation, as it should: it is the other half and cannot tell "copied
+      nothing" from "correctly copied nothing". Reverted by restoring the pre-mutation file before any
+      other write; `grep -rn MUTATION src/categories.js tools/verify/copy-class.mjs sw.js` finds nothing.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass.
+      — `node tools/verify-shell.mjs`, reverted tree, 2026-11-03 on the real clock: `2207 checks · 2206
+      passed · 0 failed · 1 skipped`, 72,099 lines, 1207s, exit 0. The skip is the Connect-to-Sync check
+      waiting on accounts.google.com ("the sign-in attempt was still out at Google 6042ms after the tap"),
+      network and not this work order. `node tools/wo-sweep.mjs` after the `tools/README.md` count was
+      updated: `52 checks · 49 passed · 0 failed · 3 to review`, exit 0 (the three standing reviews).
+      Before that update the sweep failed on exactly the count: `the harness has 2201 check() call
+      site(s) … up 2 on the 2199 recorded at tools/README.md:1363`.
+- [x] `TESTING.md` § WO-3.71 carries these lines verbatim with the evidence for each.
+      — This section.
+
+**Not done here, on purpose.** The `CHANGELOG.md` entry, and retiring WO-3.69's entry's sentence
+*"Copying a class's categories does not carry the setting yet."*, are left to the teacher; a draft is in
+`.claude/dispatch/WO-3.71-result.md`.
+
 ### WO-3.72 — a quarter's grades can be recorded, and the engine says when they stop matching
 
 **What was built.** The data and the engine half, with no screen. A new module, `src/term-record.js`:

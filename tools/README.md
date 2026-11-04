@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2199 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2201 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -3235,6 +3235,14 @@ name: a request that got no response reports no exception and no log entry, and 
 Resource Timing entry with status 0 and no bytes. On a run where every page boots it costs that one
 baseline reading and nothing else, and it changes neither when a throw happens nor the 8s and 10s budgets. The occurrences, the probe
 and the full runs are in `TESTING.md` § WO-1.92.
+
+**WO-3.71 moved it from 2199 to 2201, and the executed count from 2205 to 2207 — two sites, two
+results, no new file.** `verify/copy-class.mjs`, beside WO-3.34's `gradingMode` check: the copied
+*Quizzes* keeps its `dropLowest: 2`, and *Tests* (no key), *Homework* (`1.5`) and *Classwork* (`'2'`)
+copy with no key, every copied category holding exactly `id`, `name` and `weight` besides it. The
+WO-1.22 fixture's source categories gained those three values, with no other site changed. Full run:
+`2207 checks · 2206 passed · 0 failed · 1 skipped`, 72,099 lines, 32.7 lines per check, 1207s, exit
+0, 2026-11-03 on the real clock — the skip is the Connect check waiting on accounts.google.com.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

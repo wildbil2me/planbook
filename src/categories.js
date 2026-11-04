@@ -111,9 +111,38 @@ function newCategory(name, weight) {
    classId guard, exactly because a category id appearing in two classes at once is what lets a
    removal in one class count work filed in the other and move it to "no category" (WO-3.43; until
    then it destroyed it). A copy that carried the source's
-   id would reopen that door from the other side. */
+   id would reopen that door from the other side.
+
+   WO-3.71 — AND ITS DROP LOWEST, WHEN IT HAS ONE THE GRADE ENGINE WOULD HONOUR. How many of each
+   student's lowest scores a category leaves out is a grading decision about the category, like its
+   weight, so a copy keeps it — the argument WO-3.30 made for `gradingMode`. The key is copied, never
+   seeded: a category with no drop gets NO `dropLowest` key rather than a 0, because an absent key is
+   the default (CLAUDE.md, the settings-block rule), and a malformed source value — 1.5, -1, '2', 0 —
+   gets no key either, because the engine already reads it as "drop nothing" and a copy that carried
+   it would carry a value nobody can see on screen (dropShown() below shows it blank). honouredDrop()
+   decides which is which. */
 export function copyCategories(cls) {
-  return categoriesOf(cls).map((c) => newCategory(c.name, c.weight));
+  return categoriesOf(cls).map((c) => {
+    const copy = newCategory(c.name, c.weight);
+    const n = honouredDrop(c);
+    if (n) copy.dropLowest = n;
+    return copy;
+  });
+}
+
+/* WO-3.71. The drop count src/grade-engine.js's dropCountOf() honours: a whole number above zero, or
+   0 for anything else, absence included. THE TWO MUST AGREE, AND THERE ARE TWO ON PURPOSE. The engine
+   imports this file (src/grade-engine.js's import of categoriesOf()), so this file importing the
+   engine back would close an import loop — wo-sweep.mjs § 33 fails one — and WO-3.71 moves nothing in
+   the engine, so dropCountOf() could not be exported or moved here either. What keeps the two in
+   step is that each is one line of the same three conditions, and that both harnesses read the
+   result: tools/verify/drop-lowest.mjs grades through the engine's, and tools/verify/copy-class.mjs
+   copies a malformed value through this one and expects no key. Change the rule in one and change it
+   in the other in the same sitting. dropShown() below reads this too, so this file holds the rule
+   once rather than twice. */
+function honouredDrop(cat) {
+  const n = cat && cat.dropLowest;
+  return typeof n === 'number' && Number.isInteger(n) && n > 0 ? n : 0;
 }
 
 /* ────────────────────────────── reading, and the arithmetic ────────────────────────────── */
@@ -448,8 +477,8 @@ function dropField(cls, cat) {
    read as a drop — a hand-edited 1.5, a string — shows blank rather than a number the grade is not
    using, which is the silent-wrong-number failure in a settings field. */
 function dropShown(cat) {
-  const n = cat && cat.dropLowest;
-  return typeof n === 'number' && Number.isInteger(n) && n > 0 ? String(n) : '';
+  const n = honouredDrop(cat);
+  return n ? String(n) : '';
 }
 
 function renderCategoryList() {

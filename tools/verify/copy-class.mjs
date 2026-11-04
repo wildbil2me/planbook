@@ -92,10 +92,13 @@ console.log('\n--- copying a class, terms and categories only (WO-1.22) ---');
             { id:'tm_wo122_4', label:'Term D', start:'2027-03-02', end:'2027-06-01' }
           ],
           categories:[
+            /* WO-3.71: Quizzes drops its lowest 2, Tests carries no key at all, and Homework and
+               Classwork carry values the engine reads as "drop nothing" — a fraction and a string —
+               so the copy check below can tell a carried drop from a carried key. */
             { id:'k_wo122_1', name:'Tests', weight:40 },
-            { id:'k_wo122_2', name:'Quizzes', weight:25 },
-            { id:'k_wo122_3', name:'Homework', weight:20 },
-            { id:'k_wo122_4', name:'Classwork', weight:10 }
+            { id:'k_wo122_2', name:'Quizzes', weight:25, dropLowest:2 },
+            { id:'k_wo122_3', name:'Homework', weight:20, dropLowest:1.5 },
+            { id:'k_wo122_4', name:'Classwork', weight:10, dropLowest:'2' }
           ],
           letterScale:null, roster:['wo122-s1','wo122-s2'] });
         doc.classes.push({ id:'c_wo122_bal', name:'WO-1.22 Balanced Source', archived:false,
@@ -291,6 +294,29 @@ console.log('\n--- copying a class, terms and categories only (WO-1.22) ---');
     check('WO-3.34: copying a weighted class writes no gradingMode key onto the copy',
       !!copy && !Object.prototype.hasOwnProperty.call(copy, 'gradingMode'),
       JSON.stringify(copy && Object.keys(copy)));
+
+    /* WO-3.71: the copy carries each category's drop lowest when the engine would honour it, and
+       writes no key when it would not. Quizzes (2) arrives dropping 2; Tests (no key) arrives with no
+       key — not a 0, the seeded default CLAUDE.md's settings-block rule refuses; Homework (1.5) and
+       Classwork ('2') arrive with no key, because the engine reads both as "drop nothing" and a
+       carried value would be one nobody can see on screen. As above, the copy came back through
+       JSON, so absent is absent. */
+    const dropKeys = copy ? copy.categories.map((k) =>
+      Object.prototype.hasOwnProperty.call(k, 'dropLowest') ? k.dropLowest : '(no key)') : [];
+    check('WO-3.71: a copied category keeps its drop lowest — the copy\'s Quizzes drops its lowest 2, '
+      + 'as the source\'s does',
+      !!copy && copy.categories.length === 4 && copy.categories[1].name === 'Quizzes'
+        && copy.categories[1].dropLowest === 2,
+      'copy dropLowest by category = ' + JSON.stringify(dropKeys));
+    check('WO-3.71: a category with no drop copies with no dropLowest key — neither one absent on the '
+      + 'source (Tests) nor one the engine would not honour (Homework 1.5, Classwork \'2\') — and '
+      + 'every copied category holds exactly id, name and weight besides it',
+      !!copy && copy.categories.length === 4
+        && [0, 2, 3].every((i) => !Object.prototype.hasOwnProperty.call(copy.categories[i], 'dropLowest'))
+        && copy.categories.every((k) => JSON.stringify(Object.keys(k).filter((x) => x !== 'dropLowest'))
+          === JSON.stringify(['id', 'name', 'weight'])),
+      'copy dropLowest by category = ' + JSON.stringify(dropKeys)
+        + ', keys = ' + JSON.stringify(copy && copy.categories.map((k) => Object.keys(k))));
 
     check('the open class does not change: it is still the one that was open before the copy',
       after122.openClassId === before122.openClassId && after122.openClassId === 'c_wo122_src',
