@@ -6532,7 +6532,7 @@ print attribute is where it is read.
 
 ## WO-2.63 — the day-by-day grid centres its marks under their dates
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** XS · **Depends on** WO-2.62 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-11-04 · **Size** XS · **Depends on** WO-2.62 · **Blocks** nothing
 **Closes roadmap** *(no box. Owner-directed, 2026-11-01.)*
 
 **Booked 2026-11-01**, owner-directed, out of WO-2.62's verdict. The same specificity tie WO-2.62
@@ -6561,15 +6561,15 @@ it was not WO-2.62's defect. The CSS says centre and the screen does not.
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-2.63** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] In the record's *Day by day* grid, every date head and every mark cell computes
+- [x] In the record's *Day by day* grid, every date head and every mark cell computes
       `text-align: center` and the *Student* head and row heads compute `left`, on screen and with
       `data-attendance-print` set.
-- [ ] With the mutation in place the check goes red; it is reverted, and `TESTING.md` § WO-2.63 shows
+- [x] With the mutation in place the check goes red; it is reverted, and `TESTING.md` § WO-2.63 shows
       the red output.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] 👤 On the iPad, after a force-quit: the record's *Day by day* tab, each mark centred under its
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the iPad, after a force-quit: the record's *Day by day* tab, each mark centred under its
       date.
-- [ ] `TESTING.md` § WO-2.63 carries these lines verbatim with the evidence for each.
+- [x] `TESTING.md` § WO-2.63 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Do not add a head-only rule**, and **`!important` is not the fix** — the same two
 WO-2.62 refused. **Do not centre `.attendance-report-row-head`**: names read down a left edge. **The

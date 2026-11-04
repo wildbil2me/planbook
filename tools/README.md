@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2201 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2202 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -3243,6 +3243,15 @@ copy with no key, every copied category holding exactly `id`, `name` and `weight
 WO-1.22 fixture's source categories gained those three values, with no other site changed. Full run:
 `2207 checks · 2206 passed · 0 failed · 1 skipped`, 72,099 lines, 32.7 lines per check, 1207s, exit
 0, 2026-11-03 on the real clock — the skip is the Connect check waiting on accounts.google.com.
+
+**WO-2.63 moved it from 2201 to 2202, and the executed count from 2207 to 2208 — one site, one
+result, no new file.** `verify/report-alignment.mjs`, after the record's *By student* reading: the
+same fixture's *Day by day* tab, read under the same four conditions, every `th.attendance-report-day`
+and `td.attendance-report-cell` held to `center` and the *Student* head and every row head to `left`
+— absolute values, not head against cell, because both falling left together is the defect — with
+the count read (three date heads, six cells, two row heads) asserted so an empty grid cannot pass.
+Full run: `2208 checks · 2208 passed · 0 failed · 0 skipped`, 72,166 lines, 32.7 lines per check,
+1194s, exit 0, 2026-11-03 on the real clock.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

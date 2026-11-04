@@ -13583,6 +13583,68 @@ the pre-existing prose uses.
 | **M2** `body[data-grades-print] .grades-report-student-head` and `.grades-report-total-head` removed from the print rules | `16 checks · 15 passed · 1 failed`, exit 1: the structural check — *"scores.css @media print { body[data-grades-print] .grades-report-row-head } names .grades-report-row-head without .grades-report-student-head · … .grades-report-total without .grades-report-total-head"*. The computed grade-sheet check stays green (see line 4) |
 | Pre-WO-2.62 stylesheets from `HEAD` (not a required mutation; the booked defect itself) | `16 checks · 8 passed · 8 failed`, exit 1, including the `thead th.attendance-report-num` rule caught by the structural check as a head-only rule |
 
+### WO-2.63 — the day-by-day grid centres its marks under their dates
+
+**What this changes for a teacher: in the attendance record's *Day by day* tab, each date sits
+centred over its column and each mark sits centred under its date — on screen and on paper.** Names
+still read down the left edge. Under the hood: `src/attendance.css`'s grid rules are scoped to the
+grid — `.attendance-report-grid .attendance-report-day` and `.attendance-report-grid
+.attendance-report-cell`, `(0,2,0)` — so they beat the table-wide `text-align: left` `(0,1,1)` on the
+date `th` and the mark `td` alike, on screen and in the `@media (pointer: coarse)` block's
+restatements. No head-only rule, no `!important`, and `.attendance-report-row-head` is untouched.
+The `data-attendance-print` block was read through: it sets the grid's padding, the row head's
+`max-width`, `.attendance-report-day { width: 6mm }` and the mark's size, and **no `text-align`** —
+so paper follows the screen, which the harness confirms below under that attribute.
+
+- [x] In the record's *Day by day* grid, every date head and every mark cell computes
+      `text-align: center` and the *Student* head and row heads compute `left`, on screen and with
+      `data-attendance-print` set.
+      — `tools/verify/report-alignment.mjs`, one new check after the record's *By student* reading:
+      the same WO-2.62 fixture (two students, three meetings in term A, one `A` and one `T`), the
+      dialog's *Day by day* tab opened through its real tab button, and every grid read on screen
+      and with each of `data-attendance-print`, `data-grades-print` and `data-detail-print` set on
+      `<body>` under emulated print media. Each element is held to an **absolute** value —
+      `th.attendance-report-day` and `td.attendance-report-cell` must compute `center`, the head
+      row's first cell (*Student*) and every `.attendance-report-row-head` `left` — never head
+      against cell, since the defect was both agreeing at left. It reads the `td`, not
+      `.attendance-report-mark`. The count read is asserted (3 date heads, 6 mark cells, 2 row
+      heads, one *Student* head per grid, under every condition), so an empty grid fails. Delivered
+      tree: `PASS … :: 4 readings, each of 3 date heads, 6 mark cells, 2 row heads and 1 Student
+      head`.
+- [x] With the mutation in place the check goes red; it is reverted, and `TESTING.md` § WO-2.63 shows
+      the red output.
+      — The mutation put all four grid rules (two on screen, two in the coarse block) back to the
+      bare `.attendance-report-day` / `.attendance-report-cell`, each marked `MUTATION WO-2.63`, with
+      the delivered stylesheet staged first. Run on a scratch copy of the entry file in the session
+      scratchpad (not in `tools/`), restricted to `localstorage-prefs` (which sets the seam the
+      section gates on) and `report-alignment` — WO-2.62's arrangement. Red, exit 1:
+      `17 checks · 16 passed · 1 failed · 0 skipped`, the one failure being
+      *"FAIL | WO-2.63 · in the record's Day by day grid every date head and every mark cell computes
+      text-align center … :: screen: date head "TUE3/2" computes left, want center · screen: date
+      head "WED3/3" computes left, want center · screen: date head "THU3/4" computes left, want
+      center · screen: mark cell "P" computes left, want center · screen: mark cell "A" computes
+      left, want center · screen: mark cell "P" computes left, want center · … · …"*. The twelve
+      WO-2.62 checks stayed green under it, which is the defect's own shape: their head-against-cell
+      comparison excludes the grid. Reverted with `git checkout -- src/attendance.css` against the
+      staged tree; `git diff src/attendance.css` then empty against the stage, and
+      `grep -rn "MUTATION WO-2.63" src tools sw.js index.html` finds nothing (exit 1). The same
+      subset on the reverted tree: `17 checks · 17 passed · 0 failed · 0 skipped`, exit 0.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      — `node tools/verify-shell.mjs` on the delivered tree: `2208 checks · 2208 passed · 0 failed ·
+      0 skipped`, 72,166 lines, 32.7 lines per check, 1194s, exit 0, 2026-11-03 on the real clock.
+      `node tools/wo-sweep.mjs`: `52 checks · 49 passed · 0 failed · 3 to review` (the three standing
+      REVIEWs), exit 0, with `tools/README.md`'s call-site count moved 2201 → 2202. `CACHE` is
+      `planbook-shell-v209` → `v210`. A second full run on the final tree, after the `CACHE` bump,
+      the `tools/README.md` paragraph and this section: `2208 checks · 2208 passed · 0 failed ·
+      0 skipped`, 72,166 lines, 32.7 lines per check, 1195s, exit 0.
+- [x] 👤 On the iPad, after a force-quit: the record's *Day by day* tab, each mark centred under its
+      date.
+      — Read by the owner on the iPad 2026-11-04, served from the local dev server at v210 after a
+      force-quit: each date centred over its column, each mark centred under its date, and the names
+      down the left edge.
+- [x] `TESTING.md` § WO-2.63 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

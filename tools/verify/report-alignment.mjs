@@ -269,6 +269,73 @@ await new Promise(r => setTimeout(r, 250));
 const record = await readAll({ record:
   "document.querySelector('#attendanceRecordModal table.attendance-report-table:not(.attendance-report-grid)')" });
 
+/*
+  ══════════ THE DAY-BY-DAY GRID, READ FOR WHAT EACH CELL IS (WO-2.63) ══════════
+
+  The grid is the one table the reading above leaves out, and the reason it needs a reading of its
+  own is the shape of its defect: bare `.attendance-report-day` and `.attendance-report-cell` lost to
+  the table-wide left, so date heads AND marks both sat left — they agreed, and "head equals cells"
+  passes that. So nothing here compares a head with a cell. Each element is held to an ABSOLUTE
+  value: every `th.attendance-report-day` and every `td.attendance-report-cell` computes `center`,
+  the *Student* head and every `.attendance-report-row-head` compute `left`. It reads the `td`, never
+  `.attendance-report-mark` — the chip centres its own letter whatever the column does, so a reading
+  of the chip passes the defect too. Same four conditions as every other table in this section, and
+  a count of what was read, because a grid that drew no rows would pass any per-cell assertion.
+*/
+await clickSel('#attendanceRecordModal [data-attendance-record-part="days"]');
+await new Promise(r => setTimeout(r, 250));
+const gridReads = {};
+for (const gate of [null].concat(GATES)) {
+  const tag = gate || 'screen';
+  if (gate) {
+    await evalJs("document.body.setAttribute('" + gate + "', ''); 1");
+    await send('Emulation.setEmulatedMedia', { media: 'print' });
+    await new Promise(r => setTimeout(r, 60));
+  }
+  gridReads[tag] = await evalJs(`(function(){
+    var grids = document.querySelectorAll('#attendanceRecordModal table.attendance-report-grid');
+    var out = { grids: grids.length, days: 0, cells: 0, rowHeads: 0, studentHeads: 0, off: [] };
+    var want = function(e, w, what){ var a = getComputedStyle(e).textAlign;
+      if (a !== w) out.off.push(what + ' ' + JSON.stringify((e.textContent || '').trim().slice(0, 16))
+        + ' computes ' + a + ', want ' + w); };
+    Array.prototype.forEach.call(grids, function(t){
+      var hr = t.tHead && t.tHead.rows[t.tHead.rows.length - 1];
+      if (hr && hr.cells.length) { out.studentHeads++; want(hr.cells[0], 'left', 'Student head'); }
+      Array.prototype.forEach.call(t.querySelectorAll('th.attendance-report-day'), function(e){
+        out.days++; want(e, 'center', 'date head'); });
+      Array.prototype.forEach.call(t.querySelectorAll('td.attendance-report-cell'), function(e){
+        out.cells++; want(e, 'center', 'mark cell'); });
+      Array.prototype.forEach.call(t.querySelectorAll('.attendance-report-row-head'), function(e){
+        out.rowHeads++; want(e, 'left', 'row head'); });
+    });
+    return out; })()`);
+  if (gate) {
+    await send('Emulation.setEmulatedMedia', { media: '' });
+    await evalJs("document.body.removeAttribute('" + gate + "'); 1");
+  }
+}
+{
+  const faults = [];
+  for (const tag of Object.keys(gridReads)) {
+    const g = gridReads[tag];
+    if (!g) { faults.push(tag + ': no reading'); continue; }
+    /* The fixture: three meetings, two students — one slice of three date heads and six cells. */
+    if (g.grids < 1 || g.days !== 3 || g.cells !== 6 || g.rowHeads !== 2 || g.studentHeads !== g.grids) {
+      faults.push(tag + ': read ' + g.grids + ' grid(s), ' + g.days + ' date head(s), ' + g.cells
+        + ' mark cell(s), ' + g.rowHeads + ' row head(s), ' + g.studentHeads + ' Student head(s); '
+        + 'want 3, 6, 2 and one per grid');
+    }
+    g.off.forEach((o) => faults.push(tag + ': ' + o));
+  }
+  const s = gridReads.screen || {};
+  check('WO-2.63 · in the record\'s Day by day grid every date head and every mark cell computes '
+    + 'text-align center, and the Student head and every row head compute left — on screen and with '
+    + 'data-attendance-print, data-grades-print and data-detail-print each set under print media',
+    !faults.length, faults.length ? faults.slice(0, 8).join(' · ') + (faults.length > 8 ? ' · …' : '')
+      : Object.keys(gridReads).length + ' readings, each of ' + s.days + ' date heads, ' + s.cells
+        + ' mark cells, ' + s.rowHeads + ' row heads and ' + s.studentHeads + ' Student head');
+}
+
 await closeAll();
 await clickSel('#classView [data-pass-history]');
 await new Promise(r => setTimeout(r, 250));

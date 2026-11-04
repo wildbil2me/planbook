@@ -1,0 +1,11 @@
+# WO-2.63 dispatch trail
+- 2026-11-03T21:16:19-05:00 gates PASS (dep WO-2.62 DONE, tree clean, no dispatch files)
+- 2026-11-03T21:16:19-05:00 route Claude Opus on merits — Traps are judgment (no head-only rule, no !important, row head stays left, the mark chip is not the column) and it owes TESTING.md/CHANGELOG prose. Runner-up Codex set aside also on budget: clean + mutation = 2 verify-shell runs at ~20 min each vs 20-min cap (WO-3.71 precedent). No probe (not Codex route).
+- 2026-11-03T21:16:19-05:00 --start ran: row is 🤖 CLAIMED. A replacement is RESUMING, not starting.
+- 2026-11-03T21:16:41-05:00 brief written: .claude/dispatch/WO-2.63-brief.md (~11 KB, markers filled: routing, WO-2.62 precedent, rule locations, absolute-value check, populated grid, mutation discipline)
+- 2026-11-03T21:16:48-05:00 implementer spawned at Opus (no model override), handed .claude/dispatch/WO-2.63-brief.md; awaiting return — expect 30-60 min given two ~20-min harness runs; a flat trail for the first 20 is normal reading
+- 2026-11-03T22:02:31-05:00 implementer returned: claims 4/5 Acceptance ticked (👤 open), verify-shell 2208/2208 EXIT=0 x2, sweep 52/49/0/3, mutation red (17/16/1) and reverted; files src/attendance.css, tools/verify/report-alignment.mjs, sw.js v210, tools/README.md, TESTING.md, phase-2 ticks; CHANGELOG drafted only; nothing committed
+- 2026-11-03T22:02:33-05:00 --handoff ran: row is 🔍 AWAITING VERDICT; verifier owed in a fresh session; this run stops here
+- 2026-11-04T04:51:51-05:00 fresh session resumed at 🔍 AWAITING VERDICT; git status matches the returned implementer's file list; verifier spawned at Opus (first pass, self-claims as claims to check); awaiting verdict
+- 2026-11-04T05:13:16-05:00 verdict in: PASS WITH MANUAL CHECKS — 4/5 ✅ (verifier re-ran verify-shell 2208/2208 EXIT=0, sweep 52/49/0/3 EXIT=0, mutation red 17/16/1 in a scratch copy, plus a row-head mutation also red); 🙋 iPad line open; CHANGELOG entry not written (draft only in result file). Nothing ticked; awaiting owner.
+- 2026-11-04T05:27:54-05:00 verifier PASS WITH MANUAL CHECKS (4/5); owner read the iPad line 2026-11-04 on v210; --tick → ✅ DONE; CHANGELOG written; committed and pushed

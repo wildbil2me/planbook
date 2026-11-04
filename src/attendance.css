@@ -1067,10 +1067,17 @@
   font-size: 11px; font-weight: 700; color: #8a9bb0; margin-bottom: 4px;
 }
 .attendance-report-grid th, .attendance-report-grid td { padding: 4px 5px; }
-.attendance-report-day { text-align: center; }
+/* EVERY DATE HEAD AND EVERY MARK UNDER IT, CENTRED (WO-2.63). The same tie WO-2.62 settled for the
+   number column above: bare `.attendance-report-day` and `.attendance-report-cell` are (0,1,0) and
+   lost to the table-wide `text-align: left` (0,1,1), so every date and every mark sat at the left of
+   its column — heads and cells agreeing, which is how a check that compared them passed it. Scoped to
+   the grid, at (0,2,0), each beats the table-wide rule on its `th` and its `td` alike. The *Student*
+   head and the row heads are named by neither and stay left: names read down a left edge. The mark's
+   own `text-align: center` centres a letter inside its chip, not the chip inside the cell. */
+.attendance-report-grid .attendance-report-day { text-align: center; }
 .attendance-report-day .attendance-report-dow,
 .attendance-report-day .attendance-report-date { display: block; min-width: 0; }
-.attendance-report-cell { text-align: center; }
+.attendance-report-grid .attendance-report-cell { text-align: center; }
 .attendance-report-grid .attendance-report-mark { min-width: 20px; padding: 1px 4px; }
 
 /* ══════════════════ THE HALL PASS HISTORY (WO-2.9) ══════════════════
@@ -1493,8 +1500,8 @@
      sideways inside its own slice, and a step up in padding here costs columns on the screen with
      the least room for them. Named, considered, tightened rather than grown. */
   .attendance-report-grid th, .attendance-report-grid td { padding: 5px 5px; }
-  .attendance-report-day { text-align: center; }
-  .attendance-report-cell { text-align: center; }
+  .attendance-report-grid .attendance-report-day { text-align: center; }
+  .attendance-report-grid .attendance-report-cell { text-align: center; }
   /* ── THE DOORS OUT OF THE HISTORY DIALOG (WO-3.7, WO-2.9) ──
 
      THE FLOOR IS DECLARED AND NOT INHERITED. The control wearing this class — the "← All students"

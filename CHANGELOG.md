@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The day-by-day grid centres its marks under their dates — 2026-11-04
+
+WO-2.63. `CACHE` v210.
+
+- **The attendance record's *Day by day* tab now centres each date over its column and each mark
+  under its date**, on screen and on paper, as its stylesheet always intended. A table-wide left
+  alignment had been outranking it, so every mark sat at the left edge of its column. Names still
+  read down the left edge.
+- **The harness now checks the alignment of the column, not the mark** — every date head and mark
+  cell must compute `center` and the names `left`, on screen and under each print flag.
+
 ### A copied class keeps each category's drop lowest — 2026-11-03
 
 WO-3.71, owner-directed. `CACHE` v209.
