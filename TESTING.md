@@ -8836,6 +8836,197 @@ the message's other branch.
 - [x] `TESTING.md` § WO-1.93 carries these lines verbatim with the evidence for each.
       — This list, copied from the work order.
 
+### WO-1.92 — A fresh document sometimes never runs its modules, and nothing has said why
+
+No 👤 and no 📆 line. One harness file moves: `tools/verify-shell.mjs` (`whatItReceived()` and the
+module baseline, read only when a boot has failed). Nothing in `src/` or `sw.js` moves
+(`git status --short src/ sw.js` is empty), so no `CACHE` bump is owed. No `check(` was added, so
+neither count in `tools/README.md` moves; its ledger has a WO-1.92 paragraph.
+
+**The verdict, first: no boot failure happened in this sitting, so the cause is not named.** Six full
+runs and one 400-reload soak, all on the real clock on 2026-11-03, failed no boot. What this work order
+leaves behind is the instrument that makes the next occurrence name its module, including in the
+one shape that reports nothing today.
+
+#### 1. N, stated before the first run, and the rate it rested on
+
+N was written into `.claude/dispatch/WO-1.92-status.md` before run 1 started: **stop at the second boot
+failure, through `load()`, `mustBoot()` or any reload, or at six clean full runs of my own,
+whichever comes first.** That was the brief's suggestion. It assumed the work order's rate of about
+one run in three.
+
+**The rate is lower than that, and N was not moved to fit.** The session scratchpads of earlier
+dispatches are still on this machine. They hold **116 distinct full-run logs** (at least 2,000 checks
+each, deduplicated by md5) from 2026-10-24 to today. The same signature appears in nine of them: a
+section reads `window.planbook` on a page that never booted, or a reload says so outright.
+
+| Date | Log | Section | Shape |
+|---|---|---|---|
+| 2026-10-25 | `74c2288a…/vs-clean.log` | `verify/log-entries.mjs` (91st), at check 0 | `TypeError: … (reading 'store')`. This was its first read of `window.planbook`, before any reload of its own, on the page `front-door.mjs` had just navigated back to |
+| 2026-10-27 | `922ba57e…/run2.log`, `run3.log` | `verify/sync-button.mjs` (88th), at check 35 | `TypeError: … (reading 'driveSync')` |
+| 2026-10-31 | `fd5210c8…/run-final.log` | `sync-button.mjs`, at check 35 | the same |
+| 2026-11-01 | `505bb23f…/capture.log`, `40a3e277…/run1.log`, `run2.log` | `sync-button.mjs`, at check 35 | the same |
+| 2026-11-01 | `a830e80e…/vs.log` | `verify/front-door.mjs` (90th), at check 17 | `TypeError: … (reading 'store')` |
+| 2026-11-02 | `cca1c5d5…/run2.log` | `verify/cooldown-quiet.mjs` (96th), at check 0 | `the reload never handed back a new, booted document inside 10s: {"left":true,"booted":false}` |
+
+The sixth, WO-1.91's pre-capture run (2026-11-02, `modulesRan: false`, quoted in § WO-1.91 § 2), is
+not on disk. That makes ten in about 117 runs: **about one run in twelve, every one of them in
+browser sections 88 to 96**. Seven of the ten hit the same reload: the six `sync-button.mjs` runs and
+WO-1.91's pre-capture run, all at its 23:30 same-day clock. At this rate, six clean runs are weak evidence. Even if nothing had changed, six in a row come
+up clean about 59% of the time. So § 3 says what the clean runs do and do not show, and the rate
+correction is in the status file, written before run 5.
+
+#### 2. The instrument (the one harness change)
+
+The tail WO-1.91 added (`saidSince()`) names two of the three ways a module graph fails: a module that
+answered an error, and a module that threw. **It is silent on the third, a request that never got a
+response**, and that silence is exactly what the pre-capture occurrence read. Something else does not
+go silent there, measured on this Edge with a scratch driver (`probe/rt.mjs`, session scratchpad, not
+committed): **Resource Timing.** On a normal load every one of the 66 modules has an entry: status 200
+and its byte count, out of `cache-storage` from the worker once it controls the page. With
+`src/modal.js` blocked outright and the worker still on, the document read `planbook false ready
+complete modules 57`, and the blocked module still had an entry:
+`["/src/modal.js",0,0,0,false,0,"script",""]`. That is status 0, no bytes, not answered by the worker.
+The page reported only its usual warning about a deprecated `<meta>` tag, so the error tail would
+have had nothing to say.
+
+So **`whatItReceived()`** (new in `tools/verify-shell.mjs`, beside `saidSince()`) reads, from the page
+that failed to boot:
+
+- the Resource Timing entry for every `src/*.js`: status, decoded size, whether the worker answered
+  it, out of what (`deliveryType`), and how long it took;
+- the document's own entry (status, size, worker or not);
+- `navigator.serviceWorker.controller`'s state, the registration's installing, waiting and active
+  workers, and `caches.keys()`.
+
+It compares this against **`moduleBaseline`**, the module list this run's first `load()` received (read
+once, straight after that load). It names every module that is missing, answered other than 200, or
+came back a different size. No copy of `sw.js`'s SHELL is needed, so there is nothing to keep in step.
+It is appended to **`load()`'s throw and `mustBoot()`'s throw**, after the `saidSince()` tail. It is
+bounded at 3s, so a page that cannot answer costs the message one clause.
+
+**Why this is diagnosis and not tolerance.** It runs only after the throw has already been decided,
+and it changes neither whether nor when a throw happens. The 8s and 10s budgets are untouched. It
+adds no retry and no second reload. On a run where every page boots it costs one reading after the
+first load. Every one of the six full runs below carried it except run 1, which started before it was
+written (see § 3).
+
+**Proved by a scratch probe** (`probe/make-probe.mjs`, session scratchpad). It writes a copy of
+`verify-shell.mjs` into the scratchpad and runs four probe sections, each a marked `MUTATION` in that
+copy only. Nothing in the repository is written. From its log:
+
+- `FAIL | § probe/p-mustboot.mjs ran to the end of its own checks :: it threw after 0 of its own checks, and the rest of that section did not run — Error: a section's reload never booted: waitForBoot() answered false after 8000ms, state booting, modules never ran, readyState complete, last reading {"state":"booting","href":"http://127.0.0.1:62746/index.html?door=skip","ready":"complete","modulesRan":false,"bootError":null,"navigatedAt":1793700053662}; the page reported no exception and no error-level log entry since this document's navigation, 8782ms ago; the document was handed {"status":200,"bytes":332747,"worker":false} and 57 of the 66 modules the first load had (0 through the worker); answered wrong: src/modal.js 0 0B (first load 11044B) from network in 0ms; never requested: src/zip.js, src/save-indicator.js, src/date-text.js, src/print-gate.js, src/graded-pieces.js, src/score-notes.js and 3 more; worker: controller activated, registration active activated, caches [planbook-shell-v208] ← at mustBoot (…probe-shell.mjs:1145:9) ← at async Object.run (…p-mustboot.mjs:9:3)`
+- `PASS | probe-after: recoverPage() brought the page back booted :: {"planbook":"object"}` and
+  `PASS | probe-after: an unblocked reload passes through mustBoot()`
+- `FAIL | § probe/p-load.mjs … Error: load() never handed back a new, booted document: gave up after 10000ms — states booting, last reading {…"ready":"complete","modulesRan":false,"bootError":null,…}; the page reported no exception and no error-level log entry since the navigation; the document was handed {"status":200,"bytes":332747,"worker":true} and 57 of the 66 modules the first load had (56 through the worker); answered wrong: src/prefs.js 0 0B (first load 17514B) from network in 0ms; never requested: src/zip.js, … and 3 more; worker: controller activated, registration active activated, caches [planbook-shell-v208] ← at load (…probe-shell.mjs:1104:11)`
+- the two `probe-after` passes again, and `6 checks · 4 passed · 2 failed · 0 skipped`. Both failures
+  were planted.
+
+In both throws the error tail says *"no exception and no error-level log entry"*, and the new clause
+names the module. That is the shape the pre-capture occurrence had and could not explain.
+
+#### 3. The runs
+
+Each run was backgrounded, waited out to its own `EXIT=`, and logged into
+`.claude/dispatch/WO-1.92-status.md` as it ended. `scratchpad/runs.sh` appended each run's summary line,
+its exit code, every `FAIL | §` line, and an md5 taken before and after the run over every tracked
+`tools/*.mjs`, `tools/verify/*.mjs` and `src/*`, plus `sw.js` and `index.html`. Nothing else ran
+alongside them, apart from the 30-second probe in § 2 during run 1. Only `TESTING.md` and
+`tools/README.md` were written while runs 2 to 6 went, and the harness reads neither (2026-11-03,
+real clock):
+
+- Run 1, started on `e417debc78b5` (WO-1.93's tree): `2205 checks · 2205 passed · 0 failed · 0 skipped`,
+  `72,073 lines · 32.7 lines per check · 1231s`, `EXIT=0`. `whatItReceived()` was written while this run
+  went. Node had already loaded the harness, so the run executed the old code, and only its end-of-run
+  line count read the edited file. It counts toward N. It does not count toward the three runs.
+- Run 2, on `dec9b0442069`: `2205 checks · 2205 passed · 0 failed · 0 skipped`, `72,073 lines · 32.7 lines per check · 1230s`, `EXIT=0`.
+- Run 3, on `dec9b0442069`: `2205 checks · 2205 passed · 0 failed · 0 skipped`, `72,073 lines · 32.7 lines per check · 1223s`, `EXIT=0`.
+- Run 4, on `dec9b0442069`: `2205 checks · 2205 passed · 0 failed · 0 skipped`, `72,073 lines · 32.7 lines per check · 1208s`, `EXIT=0`.
+- Run 5, on `dec9b0442069`: `2205 checks · 2205 passed · 0 failed · 0 skipped`, `72,073 lines · 32.7 lines per check · 1201s`, `EXIT=0`.
+- Run 6, on `dec9b0442069`: `2205 checks · 2205 passed · 0 failed · 0 skipped`, `72,073 lines · 32.7 lines per check · 1200s`, `EXIT=0`.
+
+The md5 read `dec9b0442069` before and after every run from 2 to 6. **N reached with no boot failure.**
+WO-1.93's three green runs on `e417debc78b5` were three more clean runs of the same flake surface. They
+are theirs, quoted in § WO-1.93, and are counted here only as context: nine clean full runs in a row on
+these two trees.
+
+**The soak, declared in the status file before it ran.** It asked whether a browser about 1,200s old
+fails boots often enough to study. `soak/make-soak.mjs` (session scratchpad) writes a copy of the
+harness that runs every section unchanged and then one more in the same browser: 400 reloads,
+alternating `h.load()` and a section-style `Page.reload` + 600ms + `mustBoot()`. Nothing is blocked
+or planted. It printed `PASS | soak: every reload of an aged browser booted :: 400 reloads, 0 failed (load 0, reload 0), 150s`
+and `2206 checks · 2206 passed · 0 failed · 0 skipped`. The copy then exited 1, after its summary,
+because its own line count could not open the soak file, which lives outside `tools/` (the builder's
+patch for that did not match). That is the copy's own bookkeeping, not a check. **What it shows:**
+reloading alone, in an aged browser, does not fail at a rate anyone can study. The earlier failures
+need what the sections do, or a rate far below 1 in 400, and this cannot tell those apart.
+
+#### 4. What was not tried, and why
+
+- **`Network.loadingFailed` over the whole run.** That needs `Network.enable` for 1,200s. The run
+  records blocked URLs and network conditions without following `Network.enable` (WO-1.58, WO-1.59),
+  because a section's leftovers only bite while it is on. So turning it on run-wide changes what the
+  run is. Resource Timing reads the same "which request, what status" from inside the page, with no
+  domain switched on.
+- **Attaching to the service worker's own target** to read its console. A debugger attached to a
+  worker keeps it alive. That changes its lifecycle, which is one of the suspects, so it could hide
+  the very failure it was put there to see. The new clause still says whether the worker answered each
+  module, its state, and the caches it serves from.
+- **A section-only reproduction**, for the reason the work order gives.
+
+#### 5. Where this leaves the cause
+
+**Not in `src/` or `sw.js` on any evidence, and not in the harness on any evidence either.** No
+occurrence in this sitting, so there is nothing to attribute. Two things are known. Every one of the
+ten occurrences on record is in sections 88 to 96. A 400-reload soak at that browser age does not
+reproduce it. Two suspects fit both facts and are not ruled out:
+
+- **something one of the late sections leaves behind.** Network emulation and blocked-URL lists from
+  `drive-sign-in.mjs` and `sync-button.mjs`, and `Storage.clearDataForOrigin` from `first-run.mjs` and
+  `front-door.mjs`, are all in that band;
+- **the worker's lifecycle under that load.**
+
+The next occurrence, through `load()` or any of the hundred-odd section reloads that have failed loudly since WO-1.93, will name the module, its
+status, its size, whether the worker answered it, and the worker's own state. **That message decides
+which.** If it names a module the worker answered wrong, it is an app defect, and it needs its own
+work order and a `CACHE` bump, as this one says. If it names a request that never reached the worker
+(status 0, not through the worker), it is the harness's own emulation, and it is fixed in the
+harness. Until then a red run in sections 88 to 96 that quotes this clause should be read for that
+clause before anything is re-run.
+
+#### Acceptance
+
+- [x] `TESTING.md` § WO-1.92 quotes every boot failure seen, with the page errors `load()` reported,
+      and names the cause with evidence, or says plainly that it did not recur in N runs and what was
+      tried.
+      — **It did not recur.** N was six clean full runs of my own, stated before run 1 (§ 1), and all
+      six are green with no boot failure (§ 3). A 400-reload soak in a browser about 1,200s old was
+      clean too. What was tried: the record of 116 earlier full runs (§ 1: ten occurrences, all in
+      sections 88 to 96), a permanent instrument that names the failed module even when the page
+      reports nothing, proved under a probe (§ 2), and the soak (§ 3). What was not tried, and why, is
+      in § 4. **The cause is not named** (§ 5).
+- [x] If the cause is in the harness, it is fixed there, and the fix is neither a longer budget nor a
+      retry.
+      — **The condition did not arise.** No cause was named, so none was fixed. The one harness change
+      is the diagnostic in § 2. It changes no budget (8s and 10s, untouched), adds no retry or second
+      reload, and is read only after a throw is already decided.
+- [x] If the cause is in `src/` or `sw.js`, nothing there has moved, and the report names the app
+      work order it needs.
+      — **The condition did not arise**, and nothing there moved: `git status --short src/ sw.js` is
+      empty and `CACHE` is still `planbook-shell-v208`. No app work order is proposed, because there is no
+      evidence for one. § 5 says which reading of the next message would book one.
+- [x] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the run
+      lines are quoted in `TESTING.md` § WO-1.92.
+      — Runs 2, 3 and 4 (and 5 and 6 after them), all on `dec9b0442069`, which is the final tree. Each
+      is `2205 checks · 2205 passed · 0 failed · 0 skipped`, `EXIT=0`, quoted in § 3. **Limit:** this
+      shows the diagnostic broke nothing. At about one run in twelve, it shows nothing about the flake.
+- [x] `node tools/wo-sweep.mjs` passes.
+      — `node tools/wo-sweep.mjs`: `52 checks · 49 passed · 0 failed · 3 to review`, `EXIT=0`, run after
+      this section and `tools/README.md`'s ledger paragraph were written. These are the three standing
+      reviews.
+- [x] `TESTING.md` § WO-1.92 carries these lines verbatim with the evidence for each.
+      — This list, copied from the work order.
+
 ---
 
 ## Phase 2 — Attendance

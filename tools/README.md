@@ -3225,6 +3225,17 @@ says. The 19 sites that read `waitForBoot()`'s answer were not touched. None of 
 the sections that prove a failed boot poll `#loadingError` themselves. The survey, the probe and the
 three full runs are in `TESTING.md` § WO-1.93.
 
+**WO-1.92 moved neither number. It added no check site, no result and no file.** `load()`'s throw and
+`mustBoot()`'s throw now end with what the failed document was actually handed, module by module:
+`whatItReceived()` reads the page's Resource Timing for every `src/*.js` (status, size, whether the
+worker answered it and out of what) and compares it with the module list this run's first load
+received (`moduleBaseline`, read once after that load), then names the worker's controller, its
+registration and the shell caches. It exists for the one failed-graph shape `saidSince()` cannot
+name: a request that got no response reports no exception and no log entry, and it still gets a
+Resource Timing entry with status 0 and no bytes. On a run where every page boots it costs that one
+baseline reading and nothing else, and it changes neither when a throw happens nor the 8s and 10s budgets. The occurrences, the probe
+and the full runs are in `TESTING.md` § WO-1.92.
+
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in
 `verify/touch-targets.mjs`'s About-modal block, where a `skip()` stands in when the modal never

@@ -1293,6 +1293,61 @@ function saidSince(from) {
     ? JSON.stringify(said.map((x) => x.text + (x.url ? ' @ ' + x.url : '')))
     : 'no exception and no error-level log entry');
 }
+/* WHAT THE NEW DOCUMENT WAS ACTUALLY HANDED, module by module, read only when a boot has already
+   failed (WO-1.92). `saidSince()` answers two of the three ways a module graph fails — a module that
+   answered an error status, and one that threw — and is silent on the third: a request that never got
+   a response at all, which reports no exception and no log entry (`TESTING.md` § WO-1.91 § 2). The
+   pre-capture occurrence in that section read exactly that silence. Resource Timing does not go
+   silent there: measured on this Edge, a module request blocked outright still gets an entry, with
+   status 0 and no bytes, beside 65 others answered 200 out of `cache-storage` — so this names the module
+   in the one shape the error tail cannot. Each entry also says whether the worker answered it, so a
+   bad response can be told apart as the worker's or the server's.
+
+   DIAGNOSIS, NOT TOLERANCE: it is read after the throw is already decided and changes nothing about
+   whether or when one happens, and a run where every page boots never reads it past the first load.
+   It compares against the module list THIS run's first load received (`moduleBaseline`), so it needs
+   no copy of `sw.js`'s SHELL to keep in step: a module missing, answered other than 200, or a
+   different size from that first time is named; the worker's state and the shell caches close the
+   line. Bounded at 3s so a page that cannot answer costs the message a clause, not the run its throw. */
+let moduleBaseline = null;
+const MODULE_READING = `(async function(){
+  var out = { controller: 'unknown', registration: 'unknown', caches: 'unknown', document: null, modules: {} };
+  try { var c = navigator.serviceWorker.controller; out.controller = c ? c.state : 'none'; } catch (e) {}
+  try { var r = await navigator.serviceWorker.getRegistration();
+    out.registration = !r ? 'none' : [r.installing ? 'installing' : '', r.waiting ? 'waiting' : '',
+      r.active ? 'active ' + r.active.state : ''].filter(Boolean).join(', '); } catch (e) {}
+  try { out.caches = (await caches.keys()).join(' '); } catch (e) {}
+  var n = performance.getEntriesByType('navigation')[0];
+  if (n) out.document = { status: n.responseStatus, bytes: n.decodedBodySize, worker: n.workerStart > 0 };
+  performance.getEntriesByType('resource').forEach(function (e) {
+    var u = e.name.split('?')[0], at = u.indexOf('/src/');
+    if (at < 0 || u.slice(-3) !== '.js') return;
+    out.modules[u.slice(at + 1)] = { status: e.responseStatus, bytes: e.decodedBodySize,
+      worker: e.workerStart > 0, from: e.deliveryType || 'network', ms: Math.round(e.duration) };
+  });
+  return out; })()`;
+async function readModules() {
+  return await Promise.race([evalJs(MODULE_READING),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('no answer in 3000ms')), 3000))]);
+}
+async function whatItReceived() {
+  let r;
+  try { r = await readModules(); }
+  catch (e) { return 'what the document received could not be read (' + String(e && e.message || e).slice(0, 120) + ')'; }
+  const base = moduleBaseline || {};
+  const got = r.modules, names = Object.keys(got), want = Object.keys(base);
+  const missing = want.filter((k) => !got[k]);
+  const off = names.filter((k) => got[k].status !== 200 || (base[k] && got[k].bytes !== base[k].bytes));
+  const said = (k) => k + ' ' + got[k].status + ' ' + got[k].bytes + 'B' + (base[k] ? ' (first load ' + base[k].bytes + 'B)' : '')
+    + ' from ' + (got[k].worker ? 'the worker/' : '') + got[k].from + ' in ' + got[k].ms + 'ms';
+  const list = (a) => a.slice(0, 6).join(', ') + (a.length > 6 ? ' and ' + (a.length - 6) + ' more' : '');
+  return 'the document was handed ' + JSON.stringify(r.document) + ' and ' + names.length + ' of the '
+    + want.length + ' modules the first load had (' + names.filter((k) => got[k].worker).length
+    + ' through the worker)'
+    + (off.length ? '; answered wrong: ' + list(off.map(said)) : '; none answered other than 200 or at another size')
+    + (missing.length ? '; never requested: ' + list(missing) : '')
+    + '; worker: controller ' + r.controller + ', registration ' + r.registration + ', caches [' + r.caches + ']';
+}
 async function load() {
   const url = 'http://127.0.0.1:' + PORT + '/index.html?door=skip';
   await evalJs('window.__loadLeaving = 1; 1');
@@ -1316,12 +1371,14 @@ async function load() {
       + (last.state === 'failed' ? 'the boot failed and said so' : 'gave up after ' + LOAD_BUDGET_MS + 'ms')
       + ' — states ' + trail.join('>') + ', last reading ' + JSON.stringify(last)
       + (nav && nav.errorText ? ', Page.navigate answered ' + nav.errorText : '')
-      + '; ' + saidSince(since) + ' since the navigation');
+      + '; ' + saidSince(since) + ' since the navigation; ' + await whatItReceived());
   }
   await evalJs(KILL_ANIM);
   await evalJs(INSTALL_WALKER);
 }
 try { await load(); } catch (e) { bail('the page did not boot — ' + e.message); }
+/* What a booted document receives, for `whatItReceived()` to compare a failed one against (WO-1.92). */
+try { moduleBaseline = (await readModules()).modules; } catch { moduleBaseline = null; }
 
 /* A SECTION'S OWN RELOAD THAT DOES NOT BOOT FAILS AT THE RELOAD (WO-1.93). About a hundred sites in
    `tools/verify/` reload by their own `Page.reload`, sleep, and then called `waitForBoot()` on a line
@@ -1356,7 +1413,8 @@ async function mustBoot() {
       + ', readyState ' + last.ready + (last.bootError ? ', boot error "' + last.bootError + '"' : ''))
     + ', last reading ' + JSON.stringify(last) + '; ' + saidSince(from)
     + (last && last.navigatedAt ? ' since this document\'s navigation, ' + (Date.now() - last.navigatedAt) + 'ms ago'
-      : ' in the last ' + LOAD_BUDGET_MS + 'ms (no document to date a navigation by)'));
+      : ' in the last ' + LOAD_BUDGET_MS + 'ms (no document to date a navigation by)')
+    + '; ' + await whatItReceived());
 }
 
 const booted = await evalJs("document.querySelectorAll('*').length");

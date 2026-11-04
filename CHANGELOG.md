@@ -13,6 +13,19 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### A page that never booted now says what it was handed — 2026-11-03
+
+WO-1.92. Harness only — nothing in `src/`, `sw.js` or `index.html` moved, so no `CACHE` bump.
+
+- **When a reload's page fails to start, the failure now lists what each module delivered:** its
+  status and size, whether the service worker or the network answered, and what the worker held,
+  compared against the run's first load. Until now the commonest version of this failure said
+  nothing at all. It reads only, and it adds no retry and no longer wait.
+- **The cause is still open.** The failure did not recur in six full runs or a 400-reload soak; the
+  earlier logs put it at about one full run in twelve, always late in the run.
+- **One limit, known:** the new message has been proved only against a module blocked outright. A
+  stale module served with status 200 and the same size would look normal to it.
+
 ### The harness's own reloads now fail where they fail — 2026-11-03
 
 WO-1.93. Harness only — nothing in `src/`, `sw.js` or `index.html` moved, so no `CACHE` bump.

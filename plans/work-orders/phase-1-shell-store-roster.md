@@ -7222,7 +7222,7 @@ take about 20 minutes each**: background them and say so up front.
 
 ## WO-1.92 — A fresh document sometimes never runs its modules, and nothing has said why
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** M · **Depends on** WO-1.91 · **Blocks** nothing
+**Ship** — · **Status** ✅ DONE — 2026-11-03 · **Size** M · **Depends on** WO-1.91 · **Blocks** nothing
 **Closes roadmap** *(no box. Tooling, not app, unless the diagnosis finds otherwise — the same call WO-1.26 through WO-1.91 made.)*
 
 **Booked 2026-11-02**, owner-directed, out of [WO-1.91](#wo-191--hload-sleeps-a-fixed-800-ms-and-every-section-reloads-through-it)'s
@@ -7259,17 +7259,26 @@ it is understood, a red run cannot be told from a real failure without a re-run.
   `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] `TESTING.md` § WO-1.92 quotes every boot failure seen, with the page errors `load()` reported,
+- [x] `TESTING.md` § WO-1.92 quotes every boot failure seen, with the page errors `load()` reported,
       and names the cause with evidence, or says plainly that it did not recur in N runs and what was
       tried.
-- [ ] If the cause is in the harness, it is fixed there, and the fix is neither a longer budget nor a
+- [x] If the cause is in the harness, it is fixed there, and the fix is neither a longer budget nor a
       retry.
-- [ ] If the cause is in `src/` or `sw.js`, nothing there has moved, and the report names the app
+- [x] If the cause is in `src/` or `sw.js`, nothing there has moved, and the report names the app
       work order it needs.
-- [ ] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the run
+- [x] Three consecutive full runs of `node tools/verify-shell.mjs` on one tree are green, and the run
       lines are quoted in `TESTING.md` § WO-1.92.
-- [ ] `node tools/wo-sweep.mjs` passes.
-- [ ] `TESTING.md` § WO-1.92 carries these lines verbatim with the evidence for each.
+- [x] `node tools/wo-sweep.mjs` passes.
+- [x] `TESTING.md` § WO-1.92 carries these lines verbatim with the evidence for each.
+
+*(**Closed 2026-11-03 without naming a cause, which the first line allows.** The failure did not
+recur in six full runs and a 400-reload soak, all green; the rate measured from 116 earlier full-run
+logs is about one in twelve, so six clean runs are weak evidence. Lines 2 and 3 are ticked because
+their condition never arose, and a fresh verifier accepted that reading. What landed is an
+instrument: `load()` and `mustBoot()` now say, module by module, what a page that failed to boot was
+handed. It has been proved only against a module blocked outright, and it cannot tell a stale module
+served 200 at the same size from a fresh one. The next occurrence is the evidence this work order was
+looking for.)*
 
 **Traps** — **A retry is not a fix**: a harness that reloads until the page boots hides the one
 reading a teacher's iPad could also get. WO-1.44's rule still applies: a failure must stay loud.
