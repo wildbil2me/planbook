@@ -6101,7 +6101,7 @@ booking and not taken up. Any change to what a tap writes.
 
 ## WO-2.57 — the overdue tone comes back on by default after a classroom trial
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.33, WO-2.64
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.33, WO-2.64, WO-2.65
 
 **The lock came off 2026-11-05, the owner's call.** It was on the overdue-tone design thread
 (`plans/overdue-tone.md`): the trial passed on the owner's word 2026-11-04, the owner then picked a
@@ -6587,7 +6587,7 @@ inside the cell, so a check that reads `.attendance-report-mark` passes this def
 
 ## WO-2.64 — the overdue tone becomes the low pulse
 
-**Ship** — · **Status** ✅ DONE — 2026-11-05 · **Size** S · **Depends on** — · **Blocks** WO-2.57
+**Ship** — · **Status** ✅ DONE — 2026-11-05 · **Size** S · **Depends on** — · **Blocks** WO-2.57, WO-2.65
 **Closes roadmap** *(no box. Owner-directed, 2026-11-05, out of the overdue-tone design thread.)*
 
 **Booked 2026-11-05**, the owner's ruling in [`plans/overdue-tone.md`](../overdue-tone.md). WO-2.57's
@@ -6644,3 +6644,52 @@ source of truth, and it is copied, not re-derived.
 **Do not touch the thresholds, `unlockAudio()`, or the one-tone-per-tick rule.** **No audio files** —
 oscillators only, which is what keeps the no-dependencies rule. **Do not merge the two builders into
 one parameterised call**; the harness reads them as two shapes on purpose.
+
+---
+
+## WO-2.65 — the harness hears the whole tone, not its first note
+
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.64 · **Blocks** WO-2.57
+**Closes roadmap** *(no box. Owner-directed, 2026-11-05, out of WO-2.64's verdict.)*
+
+**Booked 2026-11-05, out of WO-2.64's verdict**, and placed ahead of WO-2.57 on the owner's call.
+The verifier found that the harness reads three figures per tone — note count, first frequency, first
+note's gain — out of the `shape` that `playOverdueAlert()` builds from the note list it *asked for*.
+So a later build that dropped `type: 'triangle'` from the real notes, changed a duration or an offset,
+or changed the second note's gain would play a different sound with all 2209 checks green. The one
+check WO-2.64 added for `type` and `attack` drives `playToneSequence()` with a hand-made note list,
+so it proves the defaults and says nothing about what the two alerts play. **WO-2.57 is about to make
+this tone the default on every device**, and the sound it makes is the thing the owner chose; that is
+why this lands first.
+
+**Deliverables**
+- **`src/alert-sound.js`: the log entry carries what the loop built**, not only what it was handed.
+  Inside `playToneSequence()`'s `forEach`, after each oscillator is configured, collect
+  `{ f, type, t, dur, peak, attack }` *as set on the nodes* — `osc.type`, `osc.frequency.value`, the
+  `start - t0` offset, `end - start`, the peak and attack actually ramped to — and return them as
+  `notes` beside `oscillators`. `playOverdueAlert()` carries that list into the record. A muted or
+  `locked` alert built nothing and records an empty list. Keep the entry a plain copy:
+  `alertSoundLog()` already returns copies, and a nested array must be copied too.
+- **`tools/verify/attendance-passes.mjs`: the WO-2.29 check asserts every note of both tones** against
+  WO-2.64's table, field by field — six for the 5-minute tone, eight for the 10-minute one, every one
+  `triangle` with attack 0.01. Times compared with a small tolerance (the context's clock is a
+  float), everything else exact. The existing three-figure assertions stay; this is added beside them.
+- **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-2.65** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [ ] The log entry for a played alert carries the note list the loop scheduled, read off the
+      oscillators it configured, and a muted or locked alert carries an empty one.
+- [ ] The harness asserts all six notes of the 5-minute tone and all eight of the 10-minute tone —
+      frequency, type, offset, duration, peak and attack — against WO-2.64's table.
+- [ ] Each of these turns the check red, one at a time, and is reverted: `type: 'triangle'` removed
+      from the 5-minute tone's second note; the 10-minute tone's second-note `dur` changed from 0.17 to
+      0.25; the 5-minute tone's second-note `gain` changed from 0.5 to 0.32. `TESTING.md` § WO-2.65
+      quotes each red line.
+- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [ ] `TESTING.md` § WO-2.65 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Nothing audible changes**: not a note, a gain or a threshold, so there is no 👤 line and
+none should be added. **Record what was set on the nodes, not the note list passed in** — copying the
+input into the log is the exact gap this closes, one level down. **Do not flip the default**; that is
+WO-2.57. **Do not read the figures out of `tools/tone-audition.html` at run time** — the harness checks
+the app against WO-2.64's table, and the audition page is free to gain new candidates.
