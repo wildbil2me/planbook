@@ -13,6 +13,17 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The overdue tone is now the low pulse — 2026-11-05
+
+WO-2.64, owner-directed. `CACHE` v211.
+
+- **The overdue hall-pass tone is now a soft, low "ba-dum"**: three pairs when a pass crosses five
+  minutes, four quicker, higher pairs at ten. It replaces the buzzy square-wave beeps lifted from
+  Roll Call!. The owner chose it from seven candidates on `tools/tone-audition.html`, and heard it
+  on the iPad the same day.
+- **Sound alerts still default off.** Turning them on for everyone is WO-2.57, which this unblocks.
+- `tools/audio-probe.html` plays the new pattern, so it still matches the app.
+
 ### The day-by-day grid centres its marks under their dates — 2026-11-04
 
 WO-2.63. `CACHE` v210.

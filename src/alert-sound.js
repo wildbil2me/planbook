@@ -18,12 +18,23 @@
   in CLAUDE.md. A tone does not go near it. (An indicator is a defensible feature and it needs its
   own work order, not a corner of this one.)
 
-  WHAT IS LIFTED, VERBATIM: Roll Call!'s src/dashboard.html:3464–3508 — playToneSequence()'s
-  scheduling loop and the two patterns. THE FREQUENCIES, NOTE COUNTS, DURATIONS AND GAINS ARE NOT
-  MINE TO TUNE. They are what a year of use settled on to carry across an occupied classroom and to
-  be told apart from each other without counting, and re-deriving a tuned decision is the WO-2.11
-  scar. The two builders below stay two functions for the same reason: one parameterised call would
+  WHAT THE TONE IS (WO-2.64). A soft triangle-wave "ba-dum", the LOW PULSE: three pairs at 440 Hz
+  for the 5-minute mark, four quicker pairs at 523.25 Hz and a touch louder for the 10-minute one.
+  THE OWNER CHOSE IT ON 2026-11-05, from seven candidates auditioned on tools/tone-audition.html
+  (the ruling is in plans/overdue-tone.md), after the two-week trial of the old tone passed and the
+  sound itself did not: it was Roll Call!'s square-wave pairs at 660 Hz and 700 Hz-and-rising, and
+  the owner found the buzz grating. The note lists below are copied from that page's `pulse` entry,
+  not re-derived, and "for now" was the owner's own phrase — a change of mind is a new thread, not
+  a reason to tune these in passing. What the two levels must still do is differ on all three axes
+  a person can hear without counting (note count, first pitch, peak gain), which the harness
+  asserts. The two builders below stay two functions for that reason: one parameterised call would
   lose the fact that the patterns are meant to be distinguishable by ear.
+
+  WHAT WAS LIFTED, AND IS STILL LIFTED: Roll Call!'s src/dashboard.html:3464–3508 —
+  playToneSequence()'s scheduling loop, line for line. Until WO-2.64 the two patterns came across
+  with it, frequencies, note counts, durations and gains, as a year of classroom use had settled
+  them. That half is history now; the loop is not, and it gained exactly one thing, a per-note
+  `type` and `attack` that default to the lifted values.
 
   WHAT IS NOT LIFTED IS THE UNLOCK (:3449–3462), and that is a correction rather than a preference:
   the iPad falsified it on 2026-08-14 with this file already shipped. The evidence, and the four
@@ -119,10 +130,9 @@ export function setSoundsOn(on) {
    CLAUDE.md requires a departure to name the evidence that beats the Roll Call! rule: the evidence
    is the probe table above, run on the device this ships to. (Roll Call! is the live classroom
    fallback and its 5- and 10-minute tones are very likely failing the same way on iPad, masked by
-   its visual banner. That is its own to look at, not this work order's.) THE TUNED HALF OF THE LIFT
-   IS UNTOUCHED: frequencies, note counts, durations and gains are still not ours to move — the
-   WO-2.11 scar — and playToneSequence()'s scheduling loop below is still line for line. It is only
-   the unlock that changes.
+   its visual banner. That is its own to look at, not this work order's.) playToneSequence()'s
+   scheduling loop below is still line for line (the tuned half of the lift was replaced by
+   WO-2.64, at the head of this file). It is only the unlock that changes.
 
    WHAT REPLACES IT. Five rules, each load-bearing — four from the correction, and the fifth from
    WO-2.31, which is the door the correction left open rather than a fault in it:
@@ -363,10 +373,11 @@ function record(entry) {
 }
 
 /*
-  Schedule a list of {f, t, dur, gain?} notes ON THE HELD CONTEXT. AudioContext-only — NO AUDIO
-  ASSETS, which is what keeps the no-dependencies rule: an oscillator is a browser API, not a
-  library, and nothing is fetched. Each note gets a short attack so the repeated beeps stay crisp
-  and attention-grabbing.
+  Schedule a list of {f, t, dur, gain?, type?, attack?} notes ON THE HELD CONTEXT. AudioContext-only
+  — NO AUDIO ASSETS, which is what keeps the no-dependencies rule: an oscillator is a browser API,
+  not a library, and nothing is fetched. Each note gets a short attack so the repeated beeps stay
+  crisp and attention-grabbing. `type` defaults to 'square' and `attack` to 0.015 s (WO-2.64), so a
+  note without them plays exactly as it did when every note was Roll Call!'s.
 
   THE SCHEDULING LOOP IS ROLL CALL!'s src/dashboard.html:3467–3485, LINE FOR LINE. What is not
   lifted is the frame around it, and the unlock block above is the argument: that version made its
@@ -378,7 +389,10 @@ function record(entry) {
   It is recorded as `locked` rather than swallowed, so the seam can tell it from a build that has
   stopped asking. The arm is still on and the next touch will unlock; nothing here needs to retry.
 */
-function playToneSequence(notes) {
+/* EXPORTED FOR THE HARNESS ONLY (WO-2.64): the default-type/default-attack claim needs a note list
+   with no `type` and no `attack`, and neither builder returns one any more. Nothing in the app
+   calls it from outside this file; window.planbook.alertSound is how verify-shell reaches it. */
+export function playToneSequence(notes) {
   let made = 0;
   let rearmed = false;
   const ctx = audioCtx;
@@ -409,11 +423,12 @@ function playToneSequence(notes) {
     const t0 = ctx.currentTime;
     notes.forEach((n) => {
       const start = t0 + n.t, end = start + n.dur, peak = n.gain || 0.32;
+      const attack = n.attack || 0.015;
       const osc = ctx.createOscillator(), g = ctx.createGain();
       osc.connect(g); g.connect(ctx.destination);
-      osc.frequency.value = n.f; osc.type = 'square';
+      osc.frequency.value = n.f; osc.type = n.type || 'square';
       g.gain.setValueAtTime(0.0001, start);
-      g.gain.exponentialRampToValueAtTime(peak, start + 0.015);
+      g.gain.exponentialRampToValueAtTime(peak, start + attack);
       g.gain.exponentialRampToValueAtTime(0.0001, end);
       osc.start(start); osc.stop(end + 0.02);
       made += 1;
@@ -429,27 +444,27 @@ function playToneSequence(notes) {
   }
 }
 
-/* 5-minute alert: a steady repeating two-note beep pattern over ~3 s. */
+/* 5-minute alert (WO-2.64, the low pulse): three soft triangle "ba-dum" pairs at A4, 0.9 s apart —
+   six notes. `t` is absolute from the start of the tone, as it was before. */
 function playAlertFive() {
   const notes = [];
   let t = 0;
-  for (let i = 0; i < 5; i++) {
-    notes.push({ f: 660, t: t,        dur: 0.18 });
-    notes.push({ f: 660, t: t + 0.24, dur: 0.18 });
-    t += 0.6;
+  for (let i = 0; i < 3; i++) {
+    notes.push({ f: 440, t: t,        dur: 0.16, type: 'triangle', gain: 0.6, attack: 0.01 });
+    notes.push({ f: 440, t: t + 0.19, dur: 0.20, type: 'triangle', gain: 0.5, attack: 0.01 });
+    t += 0.9;
   }
   return notes;
 }
 
-/* 10-minute alert: faster, higher, more insistent — a rising urgency pattern over ~3 s. */
+/* 10-minute alert: higher (C5), quicker and a touch louder — four pairs 0.6 s apart, eight notes. */
 function playAlertTen() {
   const notes = [];
   let t = 0;
-  for (let i = 0; i < 6; i++) {
-    const f = 700 + i * 64; // climbs to reinforce that it's more urgent than the 5-min tone
-    notes.push({ f: f,       t: t,        dur: 0.14, gain: 0.4 });
-    notes.push({ f: f + 120, t: t + 0.18, dur: 0.14, gain: 0.4 });
-    t += 0.5;
+  for (let i = 0; i < 4; i++) {
+    notes.push({ f: 523.25, t: t,        dur: 0.14, type: 'triangle', gain: 0.62, attack: 0.01 });
+    notes.push({ f: 523.25, t: t + 0.16, dur: 0.17, type: 'triangle', gain: 0.52, attack: 0.01 });
+    t += 0.6;
   }
   return notes;
 }

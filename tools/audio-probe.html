@@ -12,8 +12,8 @@
   start outside a user gesture. Both present as silence from a build whose logs say `running`.
   Probe 1 (context built inside the tap) against probe 2 (built 8s after one) is the whole
   discrimination — 1 audible and 2 silent is the gesture rule, both silent is the hardware
-  switch. It runs playToneSequence()'s exact note pattern from src/alert-sound.js, unchanged,
-  so a difference between this page and the app is a difference in the app.
+  switch. It runs playToneSequence()'s exact note pattern from src/alert-sound.js, unchanged —
+  since WO-2.64 that is the 5-minute low pulse (three triangle pairs at 440 Hz) — so a difference between this page and the app is a difference in the app.
 
   IT WAS WRITTEN TO BE THROWN AWAY AND IS KEPT FOR GOOD. It was cut for WO-2.29 and its header
   said "delete when done"; it was then kept while the overdue tone's 👤 line was still failing
@@ -68,13 +68,13 @@ log('AudioContext: ' + (!!(window.AudioContext || window.webkitAudioContext)));
 log('audioSession API: ' + (navigator.audioSession ? ('yes, type=' + navigator.audioSession.type) : 'no (pre-16.4)'));
 log('standalone PWA: ' + (window.navigator.standalone === true));
 
-/* The 5-minute pattern from src/alert-sound.js, unchanged. */
+/* The 5-minute pattern from src/alert-sound.js, unchanged (the low pulse since WO-2.64). */
 function fiveNotes() {
   var notes = [], t = 0;
-  for (var i = 0; i < 5; i++) {
-    notes.push({ f: 660, t: t, dur: 0.18 });
-    notes.push({ f: 660, t: t + 0.24, dur: 0.18 });
-    t += 0.6;
+  for (var i = 0; i < 3; i++) {
+    notes.push({ f: 440, t: t,        dur: 0.16, type: 'triangle', gain: 0.6, attack: 0.01 });
+    notes.push({ f: 440, t: t + 0.19, dur: 0.20, type: 'triangle', gain: 0.5, attack: 0.01 });
+    t += 0.9;
   }
   return notes;
 }
@@ -90,9 +90,9 @@ function play(notes, tag) {
       var start = t0 + n.t, end = start + n.dur, peak = n.gain || 0.32;
       var osc = ctx.createOscillator(), g = ctx.createGain();
       osc.connect(g); g.connect(ctx.destination);
-      osc.frequency.value = n.f; osc.type = 'square';
+      osc.frequency.value = n.f; osc.type = n.type || 'square';
       g.gain.setValueAtTime(0.0001, start);
-      g.gain.exponentialRampToValueAtTime(peak, start + 0.015);
+      g.gain.exponentialRampToValueAtTime(peak, start + (n.attack || 0.015));
       g.gain.exponentialRampToValueAtTime(0.0001, end);
       osc.start(start); osc.stop(end + 0.02);
       made += 1;
@@ -214,9 +214,9 @@ document.getElementById('b5').addEventListener('click', function () {
         var start = t0 + n.t, end = start + n.dur, peak = n.gain || 0.32;
         var osc = ctx.createOscillator(), g = ctx.createGain();
         osc.connect(g); g.connect(ctx.destination);
-        osc.frequency.value = n.f; osc.type = 'square';
+        osc.frequency.value = n.f; osc.type = n.type || 'square';
         g.gain.setValueAtTime(0.0001, start);
-        g.gain.exponentialRampToValueAtTime(peak, start + 0.015);
+        g.gain.exponentialRampToValueAtTime(peak, start + (n.attack || 0.015));
         g.gain.exponentialRampToValueAtTime(0.0001, end);
         osc.start(start); osc.stop(end + 0.02);
         made += 1;

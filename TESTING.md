@@ -13645,6 +13645,72 @@ so paper follows the screen, which the harness confirms below under that attribu
 - [x] `TESTING.md` § WO-2.63 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-2.64 — the overdue tone becomes the low pulse
+
+**What this changes for a teacher: when a hall pass crosses 5 or 10 minutes with *Sound alerts* on,
+she hears a soft low "ba-dum" instead of buzzy square-wave beeps** — the owner's pick (option 6,
+*Low pulse*, 2026-11-05) from the seven on `tools/tone-audition.html`. Under the hood
+`src/alert-sound.js`'s two builders return the audition page's `pulse` note lists, and
+`playToneSequence()` reads a per-note `type` and `attack`, defaulting to `'square'` and `0.015`.
+`alertSoundOn` still defaults `false`; thresholds, `unlockAudio()` and the one-tone-per-tick rule
+are untouched. The file's head was rewritten rather than trimmed. `tools/audio-probe.html` follows.
+
+- [x] The 5-minute and 10-minute tones are the low pulse's note lists above, note for note, and the
+      harness asserts the recorded shape: 6 notes from 440 Hz at peak 0.6, then 8 from 523.25 Hz at
+      peak 0.62.
+      — Notes copied from `tools/tone-audition.html`'s `pulse` entry: five = 3 pairs, `{440, t 0, dur
+      0.16, gain 0.6}` + `{440, t 0.19, dur 0.20, gain 0.5}`, 0.9 s apart; ten = 4 pairs,
+      `{523.25, t 0, dur 0.14, gain 0.62}` + `{523.25, t 0.16, dur 0.17, gain 0.52}`, 0.6 s apart;
+      all `triangle`, attack 0.01, two functions still. `tools/verify/attendance-passes.mjs`'s
+      WO-2.29 check now reads `notes === 6, first === 440, peak === 0.6, oscillators === 6` then
+      `notes === 8, first === 523.25, peak === 0.62, oscillators === 8`, with the three-axis
+      difference kept. The three downstream assertions that read the old figures (the unmuted tone,
+      WO-2.31's two tones) moved to 6/440 and 8/523.25. The WO-2.29 comment no longer calls them
+      Roll Call!'s numbers. Green on the final tree (see line 4).
+- [x] A note with no `type` or `attack` still plays as a square wave with a 0.015 s attack.
+      — One new check in `attendance-passes.mjs` after the WO-2.29 tone check: `playToneSequence()`
+      is now exported (for this and nothing else — noted in the file), and the harness hands it a
+      bare `{f, t, dur}` note and a typed one on the context it caught at construction, with the
+      node factories wrapped on that instance for the call and deleted after. Output on the
+      mutation run (the check is not what that run broke): `PASS | a note with no type or attack
+      still plays as a square wave with a 0.015s attack — and a typed note is not mistaken for it
+      :: oscillator types ["square","triangle"], attacks [0.015,0.01]`.
+- [x] With the 5-minute tone's first frequency put back to 660 the check goes red; it is reverted,
+      and `TESTING.md` § WO-2.64 shows the red output.
+      — The first note of `playAlertFive()` changed `440` → `660`, marked `MUTATION`, in the working
+      tree (no stash or checkout — the tree carried the owner's uncommitted booking). Full
+      `node tools/verify-shell.mjs` (the harness has no section filter), exit 1:
+      `2209 checks · 2207 passed · 2 failed · 0 skipped`, the two failures being *"FAIL | each
+      threshold asks for its own tone, and the two are not the same tone — the low pulse: six notes
+      from 440Hz at peak 0.6, then eight from 523.25Hz at a higher peak, 0.62 :: 2 tone(s)
+      requested across the two winds: [{"level":1,"notes":6,"first":660,"peak":0.6,"played":true,
+      "oscillators":6,…},{"level":2,"notes":8,"first":523.25,"peak":0.62,…}]"* and *"FAIL | an
+      interruption that never hides the app is recovered by the module itself … the tone that
+      followed was {"level":1,"notes":6,"first":660,…}"* (WO-2.31's leg reads the same first
+      frequency). Reverted by hand-editing the line back; `grep -rn MUTATION src tools sw.js
+      index.html` then finds only the pre-existing prose uses of the word (`src/shell.js:1095`,
+      `tools/verify/keys-legend-guards.mjs`, `outreach.mjs`, `wo-gate.mjs`), none a marker of this
+      work, and `git diff` shows `f: 440` on that line.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      — `node tools/verify-shell.mjs` on the final tree (mutation reverted, `CACHE` bumped, README edited):
+      `2209 checks · 2209 passed · 0 failed · 0 skipped`, 72,213 lines, 32.7 lines per check, 1195s,
+      exit 0, 2026-11-05 on the real clock. `node tools/wo-sweep.mjs`: `52 checks · 49 passed · 0 failed · 3 to
+      review` (the three standing REVIEWs), exit 0, after `tools/README.md`'s call-site count moved
+      2202 → 2203 (the sweep had gone red on it, `2203 … up 1 on the 2202 recorded`) and a
+      paragraph for this work order was added beside WO-2.63's. `CACHE` is `planbook-shell-v210` →
+      `v211`.
+- [x] 👤 On the iPad, after a force-quit, with the header speaker on: a pass crossing each threshold
+      plays the low pulse, audible from across the room, and the two levels can be told apart
+      without counting. If the level needs tuning, the gains settled at this reading are written
+      into `TESTING.md` and the harness moves with them.
+      — **Read by the owner on the iPad, 2026-11-05, against the local server**
+      (`serve-https.mjs`, after a force-quit, *Sound alerts* switched on in Settings — the header
+      speaker this line names is gone since WO-1.71): *"everything checks green."* Both thresholds
+      played the low pulse, audible, and told apart. **No gain was re-tuned**, so the harness's
+      figures stand as built.
+- [x] `TESTING.md` § WO-2.64 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

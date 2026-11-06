@@ -1360,7 +1360,7 @@ purpose:** the other two are safe by luck of naming (`data-attendance-record-pri
 `data-attendance-print`), so a detail-only check would have re-asserted an accident, and the fourth
 print surface Phase 4 and Phase 6 want is the one this is really for.
 
-**The harness holds 2202 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
+**The harness holds 2203 `check()` call sites**, and that is the number `tools/wo-sweep.mjs`
 asserts on every run — the sentence you are reading is the one it greps for, so rewording it turns the
 sweep red rather than turning the check off. **Recompute it with the sweep, never by arithmetic:**
 `node tools/wo-sweep.mjs | grep 'call-site'` prints the count it just took, and the executed count in
@@ -3252,6 +3252,14 @@ and `td.attendance-report-cell` held to `center` and the *Student* head and ever
 the count read (three date heads, six cells, two row heads) asserted so an empty grid cannot pass.
 Full run: `2208 checks · 2208 passed · 0 failed · 0 skipped`, 72,166 lines, 32.7 lines per check,
 1194s, exit 0, 2026-11-03 on the real clock.
+
+**WO-2.64 moved it from 2202 to 2203, and the executed count from 2208 to 2209 — one site, one
+result, no new file.** `verify/attendance-passes.mjs`, straight after the WO-2.29 tone check: a note
+with no `type` and no `attack` handed to `playToneSequence()` (exported for this and nothing else) on
+the context the harness caught at construction, read through two instance-level wrappers on the node
+factories, plays as a `square` with a 0.015 s attack — and a typed note beside it plays as a
+`triangle` at 0.01, so a build that ignores the keys cannot pass. The four existing tone assertions
+moved to the low pulse's figures and add no site.
 
 Its allowlist is written down at the check: the definition of `check()` in the entry file is not a
 call, the `else check(` sites in the harness — grep them, there are exactly two, both in

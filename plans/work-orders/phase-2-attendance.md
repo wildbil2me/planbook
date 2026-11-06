@@ -6101,7 +6101,7 @@ booking and not taken up. Any change to what a tap writes.
 
 ## WO-2.57 — the overdue tone comes back on by default after a classroom trial
 
-**Ship** — · **Status** 🔒 GATED — on the owner's classroom trial: two weeks of real periods with the speaker on, on the teaching iPad, from 2026-09-30 · **Size** S · **Depends on** WO-2.33
+**Ship** — · **Status** 🔒 GATED — on the overdue-tone design thread (`plans/overdue-tone.md`): the trial passed on the owner's word 2026-11-04, and the owner picked a new sound on 2026-11-05 (the low pulse) — this waits for WO-2.64 to build it · **Size** S · **Depends on** WO-2.33, WO-2.64
 
 **Booked 2026-09-30, out of WO-2.33's decision.** The owner re-ran the August sitting on the iPad and
 neither failure came back (`TESTING.md` § WO-2.33), so the tone is coming back as it is. **But one
@@ -6575,3 +6575,65 @@ it was not WO-2.62's defect. The CSS says centre and the screen does not.
 WO-2.62 refused. **Do not centre `.attendance-report-row-head`**: names read down a left edge. **The
 mark's own `text-align: center` is not the column's** — it centres a letter inside a chip, not the chip
 inside the cell, so a check that reads `.attendance-report-mark` passes this defect.
+
+---
+
+## WO-2.64 — the overdue tone becomes the low pulse
+
+**Ship** — · **Status** ✅ DONE — 2026-11-05 · **Size** S · **Depends on** — · **Blocks** WO-2.57
+**Closes roadmap** *(no box. Owner-directed, 2026-11-05, out of the overdue-tone design thread.)*
+
+**Booked 2026-11-05**, the owner's ruling in [`plans/overdue-tone.md`](../overdue-tone.md). WO-2.57's
+two-week trial passed — every overdue pass chimed — but the owner does not like the sound, and
+WO-2.57 is about to make it the default on every device. Of the seven candidates on
+[`tools/tone-audition.html`](../../tools/tone-audition.html) the owner picked **option 6, Low pulse**,
+*"for now"* — so this replaces the tone, and a later change of mind is a new thread, not a reason to
+build this one loosely.
+
+**What changes.** Today's tone is Roll Call!'s, lifted note for note: square-wave pairs at 660 Hz
+(5 minutes) and rising pairs from 700 Hz at a higher gain (10 minutes), about three seconds each. The
+low pulse is a soft triangle-wave *ba-dum*, lower in pitch:
+
+| Level | Pattern | Notes |
+|---|---|---|
+| 5 minutes | three pairs, 0.9 s apart; each pair `{440 Hz, t 0, dur 0.16, gain 0.6}` then `{440 Hz, t 0.19, dur 0.20, gain 0.5}` | 6 |
+| 10 minutes | four pairs, 0.6 s apart; each pair `{523.25 Hz, t 0, dur 0.14, gain 0.62}` then `{523.25 Hz, t 0.16, dur 0.17, gain 0.52}` | 8 |
+
+Both are `type: 'triangle'`, `attack: 0.01`, no partials — the audition page's `pulse` entry is the
+source of truth, and it is copied, not re-derived.
+
+**Deliverables**
+- **`src/alert-sound.js`**: `playAlertFive()` and `playAlertTen()` return the low pulse's note lists,
+  and stay **two functions** (the file's own rule). `playToneSequence()` reads a per-note `type` and
+  `attack`, defaulting to `'square'` and `0.015` so a note without them plays exactly as today.
+- **The file's head rewritten, not trimmed**: the paragraph saying *"THE FREQUENCIES, NOTE COUNTS,
+  DURATIONS AND GAINS ARE NOT MINE TO TUNE"* was true of the lift from Roll Call! and is false the day
+  the owner re-tunes it. Say what the tone now is, that the owner chose it on 2026-11-05 from an
+  audition, and where the audition lives. The lift's history can stay as history.
+- **`tools/verify/attendance-passes.mjs`**: the WO-2.29 check (~716) and the WO-2.31 one (~1027) move
+  to the new figures — notes 6 and 8, first frequency 440 and 523.25, peaks 0.6 and 0.62 — and the
+  comment above the first stops calling them Roll Call!'s numbers. The two levels must still differ on
+  all three axes.
+- **`tools/audio-probe.html`** plays the new pattern, because its header promises *"a difference
+  between this page and the app is a difference in the app"* and that stays true only if it follows.
+  Change the notes and the sentence naming what it plays; nothing else in the probe.
+- **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-2.64** and the `CHANGELOG.md` entry.
+
+**Acceptance**
+- [x] The 5-minute and 10-minute tones are the low pulse's note lists above, note for note, and the
+      harness asserts the recorded shape: 6 notes from 440 Hz at peak 0.6, then 8 from 523.25 Hz at
+      peak 0.62.
+- [x] A note with no `type` or `attack` still plays as a square wave with a 0.015 s attack.
+- [x] With the 5-minute tone's first frequency put back to 660 the check goes red; it is reverted, and
+      `TESTING.md` § WO-2.64 shows the red output.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] 👤 On the iPad, after a force-quit, with the header speaker on: a pass crossing each threshold
+      plays the low pulse, audible from across the room, and the two levels can be told apart without
+      counting. If the level needs tuning, the gains settled at this reading are written into
+      `TESTING.md` and the harness moves with them.
+- [x] `TESTING.md` § WO-2.64 carries these lines verbatim with the evidence for each.
+
+**Traps** — **Do not flip the default**: `alertSoundOn` stays `false` and is WO-2.57's to change.
+**Do not touch the thresholds, `unlockAudio()`, or the one-tone-per-tick rule.** **No audio files** —
+oscillators only, which is what keeps the no-dependencies rule. **Do not merge the two builders into
+one parameterised call**; the harness reads them as two shapes on purpose.

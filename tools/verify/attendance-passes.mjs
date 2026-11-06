@@ -697,8 +697,9 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
 
     The two winds above are the whole fixture — one student, one threshold at a time — so what is
     added here is a reading rather than a walk. Exactly two entries appear across them, in order, and
-    they are the two Roll Call! patterns at Roll Call!'s own numbers: five two-note pairs at 660 Hz
-    at the default gain, then six rising pairs from 700 Hz at 0.4. THE THREE FIGURES ARE HOW THE
+    they are the two low-pulse patterns (WO-2.64, the owner's choice of 2026-11-05 — before that
+    Roll Call!'s own numbers): three triangle pairs at 440 Hz, peak 0.6, six notes, then four pairs
+    at 523.25 Hz, peak 0.62, eight notes. THE THREE FIGURES ARE HOW THE
     HARNESS TELLS THEM APART WITHOUT EARS — note count, first frequency and peak gain — and they are
     the same three things that make the tones tellable apart in an occupied classroom, which is why
     they are the ones recorded. A build that "simplified" the two sequences into one parameterised
@@ -713,15 +714,61 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
   const newTones = soundAfterB.slice(soundBeforeB.length);
   const five = newTones[0] || {};
   const ten = newTones[1] || {};
-  check('each threshold asks for its own tone, and the two are not the same tone — five pairs at 660Hz, then six rising from 700Hz at a higher gain',
+  check('each threshold asks for its own tone, and the two are not the same tone — the low pulse: six notes from 440Hz at peak 0.6, then eight from 523.25Hz at a higher peak, 0.62',
     newTones.length === 2
-      && five.level === 1 && five.played === true && five.notes === 10 && five.first === 660
-      && five.peak === 0.32 && five.oscillators === 10 && five.error === ''
-      && ten.level === 2 && ten.played === true && ten.notes === 12 && ten.first === 700
-      && ten.peak === 0.4 && ten.oscillators === 12 && ten.error === ''
+      && five.level === 1 && five.played === true && five.notes === 6 && five.first === 440
+      && five.peak === 0.6 && five.oscillators === 6 && five.error === ''
+      && ten.level === 2 && ten.played === true && ten.notes === 8 && ten.first === 523.25
+      && ten.peak === 0.62 && ten.oscillators === 8 && ten.error === ''
       /* Distinguishable on all three axes, asserted rather than implied by the numbers above. */
       && five.notes !== ten.notes && five.first !== ten.first && five.peak !== ten.peak,
     newTones.length + ' tone(s) requested across the two winds: ' + JSON.stringify(newTones));
+
+  /*
+    ── WO-2.64: A NOTE WITH NO `type` AND NO `attack` STILL PLAYS AS IT ALWAYS DID ──
+
+    Neither builder returns such a note any more, so the default is reachable only by handing
+    playToneSequence() one directly — it is exported for exactly this and nothing else. The held
+    context is the one the harness caught at construction (CATCH_AUDIO_CONTEXTS), and its two node
+    factories are wrapped on THIS INSTANCE for the length of the call and deleted after, which
+    records what the audio path was asked to build: the oscillator's type, and the gap between the
+    gain's starting point and the ramp to its peak — the attack. A typed note is played beside it so
+    the check cannot go green on a build that ignores the keys and always answers 'square'.
+  */
+  const defaults64 = await evalJs(`(function(){
+    var c = (window.__audioContexts || [])[0];
+    if (!c) return { why: 'no context was caught at construction' };
+    var seen = [];
+    c.createOscillator = function(){
+      var o = AudioContext.prototype.createOscillator.call(c);
+      seen.push({ osc: o, from: null, to: null });
+      return o;
+    };
+    c.createGain = function(){
+      var g = AudioContext.prototype.createGain.call(c), rec = seen[seen.length - 1];
+      var p = g.gain, set = p.setValueAtTime.bind(p), ramp = p.exponentialRampToValueAtTime.bind(p);
+      p.setValueAtTime = function(v, t){ if (rec && rec.from === null) rec.from = t; return set(v, t); };
+      p.exponentialRampToValueAtTime = function(v, t){ if (rec && rec.to === null) rec.to = t; return ramp(v, t); };
+      return g;
+    };
+    try {
+      var play = window.planbook.alertSound.playToneSequence;
+      var bare = play([{ f: 440, t: 0, dur: 0.1 }]);
+      var typed = play([{ f: 440, t: 0, dur: 0.1, type: 'triangle', attack: 0.01 }]);
+    } finally {
+      delete c.createOscillator; delete c.createGain;
+    }
+    return { why: '', bare: bare, typed: typed,
+      types: seen.map(function(s){ return s.osc.type; }),
+      attacks: seen.map(function(s){ return Math.round((s.to - s.from) * 1e6) / 1e6; }) };
+  })()`);
+  check('a note with no type or attack still plays as a square wave with a 0.015s attack — and a typed note is not mistaken for it',
+    !defaults64.why && defaults64.bare.oscillators === 1 && defaults64.typed.oscillators === 1
+      && defaults64.types.length === 2
+      && defaults64.types[0] === 'square' && defaults64.attacks[0] === 0.015
+      && defaults64.types[1] === 'triangle' && defaults64.attacks[1] === 0.01,
+    defaults64.why || ('oscillator types ' + JSON.stringify(defaults64.types) + ', attacks '
+      + JSON.stringify(defaults64.attacks) + ', ran ' + JSON.stringify([defaults64.bare, defaults64.typed])));
 
   /*
     ── WO-2.29 (CORRECTION): AND BOTH WERE SCHEDULED ON THE ONE CONTEXT THE FIRST GESTURE MADE ──
@@ -929,7 +976,7 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
   check('and turning it back on is the same one tap: the next threshold sounds again, at the second pattern',
     !!woundBack.now && unmutedTones.length === 1
       && unmutedTones[0].played === true && unmutedTones[0].level === 2
-      && unmutedTones[0].oscillators === 12 && unmutedTones[0].first === 700
+      && unmutedTones[0].oscillators === 8 && unmutedTones[0].first === 523.25
       && unmutedTones[0].error === ''
       && (atUnmuted.openPasses.filter((p) => p.studentId === outB)[0] || {}).alerted === 2
       && soundBackOn.checked === true && soundBackOn.on === true
@@ -1023,8 +1070,8 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
          returned, so the resume src/alert-sound.js does on `visibilitychange` never ran. */
       && back31.wakeResumes === audio31Base.wakeResumes
       && !!wound31.now && !!tone31
-      && tone31.played === true && tone31.state === 'running' && tone31.oscillators === 10
-      && tone31.first === 660 && tone31.rearmed === false && tone31.error === ''
+      && tone31.played === true && tone31.state === 'running' && tone31.oscillators === 6
+      && tone31.first === 440 && tone31.rearmed === false && tone31.error === ''
       /* Still the ONE context, and still the one that was interrupted: its own clock ran on across
          the whole thing rather than restarting at the alert, which is the fingerprint WO-2.29's
          check above is built on. */
@@ -1059,7 +1106,7 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
          is: scheduled onto a context that is not running, with the next touch armed to fix it. */
       && tone31b.played === true && tone31b.rearmed === true
       && tone31b.state === waiting31.state && tone31b.state !== 'running'
-      && tone31b.oscillators === 12 && tone31b.first === 700 && tone31b.ctx === 1
+      && tone31b.oscillators === 8 && tone31b.first === 523.25 && tone31b.ctx === 1
       && tone31b.error === ''
       /* Everything that is not the tone is untouched: the level is on the record either way. */
       && (after31b.openPasses.filter((p) => p.studentId === outC)[0] || {}).alerted === 2,

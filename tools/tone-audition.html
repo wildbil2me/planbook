@@ -1,0 +1,351 @@
+<title>Overdue Tone Audition</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!--
+  Hand-run audition page for the overdue-pass tone — the overdue-tone design thread
+  (plans/overdue-tone.md). Not part of the app, not in sw.js, imported by nothing: `tools/` in the
+  same sense tools/audio-probe.html is.
+
+  Every candidate is built the way src/alert-sound.js builds a tone — oscillators scheduled on one
+  AudioContext, no audio files — so whatever is picked here can be carried into playToneSequence()
+  as note lists without breaking the no-dependencies rule. A bell or marimba is several oscillators
+  per note (its partials), each with its own decay; that is still nothing but oscillators.
+
+  "Current" is src/alert-sound.js's playAlertFive()/playAlertTen(), copied note for note, so the
+  comparison is against what the iPad actually plays today.
+
+  Published as a claude.ai artifact so it can be heard on the iPad's own speaker without the dev
+  server (the service worker answers every navigation on 8443 with the app shell; see
+  tools/audio-probe.html's header). Light-only, like the app.
+-->
+<style>
+  /* Layout: one column of option cards under the app's navy header band; controls at the top. */
+  :root {
+    --page: #f0f2f5;
+    --card: #ffffff;
+    --ink: #1a1a2e;
+    --muted: #6b7a8d;
+    --hair: #e0e4ea;
+    --accent: #5b6fcc;
+    --accent-soft: #eef0fb;
+    --warn: #e67e22;
+    --warn-soft: #fef5ea;
+    --danger: #c0392b;
+    --danger-soft: #fdeaea;
+    --navy: #0d2137;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color-scheme: light;
+  }
+  body { background: var(--page); color: var(--ink); font-family: var(--font); }
+  .band {
+    background: linear-gradient(135deg, #0d2137 0%, #1a3c5e 60%, #2a2a6e 100%);
+    color: #fff;
+    padding-block: 22px 20px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  .band h1 { margin: 0 0 6px; font-size: 22px; font-weight: 700; text-wrap: balance; }
+  .band p { margin: 0; font-size: 14px; line-height: 1.5; color: #c9d6e6; max-width: 62ch; }
+  main {
+    padding-block: 18px 40px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center;
+    background: var(--card); border: 1px solid var(--hair); border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 16px;
+  }
+  .controls label { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .controls input[type=range] { width: 130px; }
+  .hint { font-size: 12px; color: var(--muted); line-height: 1.45; flex-basis: 100%; }
+  .list { display: grid; gap: 12px; }
+  .opt {
+    background: var(--card); border: 1px solid var(--hair); border-radius: 10px;
+    padding: 14px 14px 12px; display: grid; gap: 8px;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .opt.playing { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .opt.ref { background: #f8f9fc; }
+  .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+  .head h2 { margin: 0; font-size: 16px; font-weight: 700; }
+  .tag {
+    font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .desc { margin: 0; font-size: 14px; line-height: 1.5; color: #3a4658; max-width: 64ch; }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; color: var(--muted);
+    font-variant-numeric: tabular-nums; }
+  .facts span { background: #f3f4f6; border-radius: 999px; padding: 3px 9px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+  button {
+    font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1.5px solid;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .b5 { background: var(--warn-soft); border-color: #f5c98a; color: #a35400; }
+  .b10 { background: var(--danger-soft); border-color: #f0b0b0; color: var(--danger); }
+  .bboth { background: var(--card); border-color: var(--hair); color: var(--ink); }
+  .stop { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: currentColor; flex: none; }
+  .foot { margin-top: 22px; font-size: 13px; color: var(--muted); line-height: 1.55; max-width: 66ch; }
+  @media (prefers-reduced-motion: reduce) { .opt { transition: none; } }
+</style>
+
+<header class="band">
+  <div class="wrap">
+    <h1>Overdue tone audition</h1>
+    <p>Each option has a 5-minute sound and a more urgent 10-minute one. “Current” is exactly what
+      Planbook plays today. Listen on the iPad, across the room, with the noise on.</p>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="controls">
+      <label><input type="checkbox" id="noiseOn"> Classroom noise</label>
+      <label>Noise level <input type="range" id="noiseLevel" min="0" max="100" value="45"></label>
+      <button class="stop" id="stopBtn" type="button">Stop</button>
+      <div class="hint">No sound on the iPad? Check that Silent Mode is off in Control Center
+        and the volume is up. The noise is a rough stand-in for a room of talking students, to
+        judge whether a soft option still carries.</div>
+    </div>
+    <div class="list" id="list"></div>
+    <p class="foot">Every option is built from plain oscillators, the same way the app builds its
+      tone today, so whichever you pick can go straight into the app with no sound files. Loudness
+      between options is matched by ear, not measured; the one you pick gets its level tuned on the
+      iPad when it is built.</p>
+  </div>
+</main>
+
+<script>
+(() => {
+  /* ---------- the candidates ---------- */
+  // A note: f (Hz), t (s from start), dur (s), gain (peak), type, attack (s),
+  // partials [[ratio, amp, decayScale], ...] — several oscillators per note, each its own decay.
+  const BELL    = [[1, 1, 1], [2, 0.4, 0.6], [3, 0.2, 0.4], [4.2, 0.1, 0.3]];
+  const MARIMBA = [[1, 1, 1], [4, 0.35, 0.25], [9.9, 0.08, 0.12]];
+  const ROUND   = [[1, 1, 1], [2, 0.15, 0.5]];
+  const N = { G4: 392, A4: 440, B4: 493.88, C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99,
+              A5: 880, B5: 987.77, C6: 1046.5, D6: 1174.66, E6: 1318.51, G6: 1567.98, C7: 2093 };
+  const rep = (times, every, make) => {
+    const out = [];
+    for (let i = 0; i < times; i++) for (const n of make(i)) out.push({ ...n, t: n.t + i * every });
+    return out;
+  };
+
+  const OPTIONS = [
+    {
+      id: 'current', name: 'Current', tag: 'Today’s tone, from Roll Call!', ref: true,
+      timbre: 'Square wave',
+      desc: 'Paired square-wave beeps at one pitch for the 5-minute mark; a climbing, louder pair ' +
+            'for 10 minutes. Built to cut through a noisy room, and buzzy because of it.',
+      five: () => rep(5, 0.6, () => [
+        { f: 660, t: 0, dur: 0.18 }, { f: 660, t: 0.24, dur: 0.18 }]),
+      ten: () => rep(6, 0.5, i => {
+        const f = 700 + i * 64;
+        return [{ f, t: 0, dur: 0.14, gain: 0.4 }, { f: f + 120, t: 0.18, dur: 0.14, gain: 0.4 }];
+      }),
+    },
+    {
+      id: 'soft', name: 'Same beeps, softer', tag: 'Only the timbre changes',
+      timbre: 'Triangle wave',
+      desc: 'The current pattern and pitches exactly, played with a rounder waveform. If this ' +
+            'fixes it, the problem was the buzz, not the pattern or the length.',
+      five: () => rep(5, 0.6, () => [
+        { f: 660, t: 0, dur: 0.18, type: 'triangle', gain: 0.55 },
+        { f: 660, t: 0.24, dur: 0.18, type: 'triangle', gain: 0.55 }]),
+      ten: () => rep(6, 0.5, i => {
+        const f = 700 + i * 64;
+        return [{ f, t: 0, dur: 0.14, type: 'triangle', gain: 0.6 },
+                { f: f + 120, t: 0.18, dur: 0.14, type: 'triangle', gain: 0.6 }];
+      }),
+    },
+    {
+      id: 'doorbell', name: 'Doorbell', tag: 'Two bell notes',
+      timbre: 'Bell',
+      desc: 'A falling ding-dong, once, for 5 minutes. At 10 minutes it becomes a three-note ' +
+            'fall played twice. Familiar and calm, but easy to mistake for a phone.',
+      five: () => [
+        { f: N.E5, t: 0, dur: 1.4, type: 'sine', gain: 0.32, attack: 0.005, partials: BELL },
+        { f: N.C5, t: 0.45, dur: 1.6, type: 'sine', gain: 0.32, attack: 0.005, partials: BELL }],
+      ten: () => rep(2, 1.1, () => [
+        { f: N.G5, t: 0, dur: 1.0, type: 'sine', gain: 0.34, attack: 0.005, partials: BELL },
+        { f: N.E5, t: 0.28, dur: 1.0, type: 'sine', gain: 0.34, attack: 0.005, partials: BELL },
+        { f: N.C5, t: 0.56, dur: 1.3, type: 'sine', gain: 0.34, attack: 0.005, partials: BELL }]),
+    },
+    {
+      id: 'marimba', name: 'Marimba', tag: 'Wooden, rising',
+      timbre: 'Marimba',
+      desc: 'A short rising three-note figure, played twice, with a warm wooden attack. The ' +
+            '10-minute version is higher, faster and repeats three times.',
+      five: () => rep(2, 1.0, () => [N.G4, N.B4, N.D5].map((f, k) =>
+        ({ f, t: k * 0.14, dur: 0.55, type: 'sine', gain: 0.45, attack: 0.003, partials: MARIMBA }))),
+      ten: () => rep(3, 0.7, () => [N.B4, N.D5, N.G5, N.B5].map((f, k) =>
+        ({ f, t: k * 0.1, dur: 0.45, type: 'sine', gain: 0.45, attack: 0.003, partials: MARIMBA }))),
+    },
+    {
+      id: 'nudge', name: 'Gentle nudge', tag: 'Shortest',
+      timbre: 'Rounded sine',
+      desc: 'A two-note upward “bloop”, under a second, played once. At 10 minutes it gains a ' +
+            'third, higher note and plays twice. The least intrusive, and the easiest to miss.',
+      five: () => [
+        { f: N.D5, t: 0, dur: 0.32, type: 'sine', gain: 0.45, attack: 0.02, partials: ROUND },
+        { f: N.A5, t: 0.16, dur: 0.38, type: 'sine', gain: 0.45, attack: 0.02, partials: ROUND }],
+      ten: () => rep(2, 0.8, () => [N.D5, N.A5, N.D6].map((f, k) =>
+        ({ f, t: k * 0.14, dur: 0.34, type: 'sine', gain: 0.45, attack: 0.02, partials: ROUND }))),
+    },
+    {
+      id: 'chime', name: 'Rising chime', tag: 'Bright, high bells',
+      timbre: 'Bell',
+      desc: 'A quick C–E–G bell arpeggio, once. The 10-minute version adds the octave on top and ' +
+            'plays twice. Reads as “something needs you” rather than an alarm.',
+      five: () => [N.C6, N.E6, N.G6].map((f, k) =>
+        ({ f, t: k * 0.18, dur: 1.1, type: 'sine', gain: 0.28, attack: 0.004, partials: BELL })),
+      ten: () => rep(2, 1.0, () => [N.C6, N.E6, N.G6, N.C7].map((f, k) =>
+        ({ f, t: k * 0.14, dur: 0.9, type: 'sine', gain: 0.26, attack: 0.004, partials: BELL }))),
+    },
+    {
+      id: 'pulse', name: 'Low pulse', tag: 'Lower pitch',
+      timbre: 'Triangle wave',
+      desc: 'A soft “ba-dum” heartbeat at a lower pitch, three times. At 10 minutes it is higher ' +
+            'and quicker, four times. For when the high pitch is what grates.',
+      five: () => rep(3, 0.9, () => [
+        { f: N.A4, t: 0, dur: 0.16, type: 'triangle', gain: 0.6, attack: 0.01 },
+        { f: N.A4, t: 0.19, dur: 0.2, type: 'triangle', gain: 0.5, attack: 0.01 }]),
+      ten: () => rep(4, 0.6, () => [
+        { f: N.C5, t: 0, dur: 0.14, type: 'triangle', gain: 0.62, attack: 0.01 },
+        { f: N.C5, t: 0.16, dur: 0.17, type: 'triangle', gain: 0.52, attack: 0.01 }]),
+    },
+  ];
+
+  /* ---------- audio ---------- */
+  let ctx = null, master = null, noiseNode = null, noiseGain = null;
+  let active = [], playingCard = null, clearTimer = 0;
+
+  function audio() {
+    if (!ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      ctx = new AC();
+      master = ctx.createGain();
+      master.gain.value = 1;
+      master.connect(ctx.destination);
+    }
+    if (ctx.state !== 'running') ctx.resume();
+    return ctx;
+  }
+
+  const lengthOf = notes => Math.max(...notes.map(n => {
+    const longest = Math.max(...(n.partials || [[1, 1, 1]]).map(p => p[2] ?? 1));
+    return n.t + n.dur * longest;
+  }));
+
+  function schedule(notes, t0) {
+    for (const n of notes) {
+      const start = t0 + n.t;
+      for (const [ratio, amp, decay = 1] of (n.partials || [[1, 1, 1]])) {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = n.type || 'square';
+        o.frequency.value = n.f * ratio;
+        const peak = (n.gain || 0.32) * amp;
+        const end = start + n.dur * decay;
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(peak, start + (n.attack || 0.015));
+        g.gain.exponentialRampToValueAtTime(0.0001, end);
+        o.connect(g); g.connect(master);
+        o.start(start); o.stop(end + 0.05);
+        active.push(o);
+      }
+    }
+  }
+
+  function stopTones() {
+    for (const o of active) { try { o.stop(); } catch (e) {} }
+    active = [];
+    clearTimeout(clearTimer);
+    if (playingCard) playingCard.classList.remove('playing');
+    playingCard = null;
+  }
+
+  function play(card, sequences) {
+    audio();
+    stopTones();
+    let t = ctx.currentTime + 0.06;
+    for (const notes of sequences) { schedule(notes, t); t += lengthOf(notes) + 0.9; }
+    playingCard = card;
+    card.classList.add('playing');
+    clearTimer = setTimeout(stopTones, (t - ctx.currentTime) * 1000);
+  }
+
+  function noiseBuffer() {
+    // Brown noise with a little slow wobble: closer to a room's murmur than hiss.
+    const len = ctx.sampleRate * 4, buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < len; i++) {
+      last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+      const wobble = 0.75 + 0.25 * Math.sin(i / ctx.sampleRate * 2 * Math.PI * 0.7);
+      d[i] = last * 3.5 * wobble;
+    }
+    return buf;
+  }
+
+  const noiseOn = document.getElementById('noiseOn');
+  const noiseLevel = document.getElementById('noiseLevel');
+  const levelValue = () => (noiseLevel.value / 100) * 0.6;
+
+  function setNoise() {
+    audio();
+    if (noiseOn.checked) {
+      if (!noiseNode) {
+        noiseNode = ctx.createBufferSource();
+        noiseNode.buffer = noiseBuffer();
+        noiseNode.loop = true;
+        noiseGain = ctx.createGain();
+        noiseNode.connect(noiseGain); noiseGain.connect(ctx.destination);
+        noiseNode.start();
+      }
+      noiseGain.gain.setTargetAtTime(levelValue(), ctx.currentTime, 0.05);
+    } else if (noiseNode) {
+      noiseNode.stop(); noiseNode = null; noiseGain = null;
+    }
+  }
+  noiseOn.addEventListener('change', setNoise);
+  noiseLevel.addEventListener('input', () => { if (noiseGain) noiseGain.gain.value = levelValue(); });
+  document.getElementById('stopBtn').addEventListener('click', () => {
+    stopTones();
+    if (noiseNode) { noiseOn.checked = false; setNoise(); }
+  });
+
+  /* ---------- cards ---------- */
+  const list = document.getElementById('list');
+  const fmt = s => s.toFixed(1) + ' s';
+  for (const opt of OPTIONS) {
+    const five = opt.five(), ten = opt.ten();
+    const card = document.createElement('section');
+    card.className = 'opt' + (opt.ref ? ' ref' : '');
+    card.setAttribute('aria-labelledby', 'h-' + opt.id);
+    card.innerHTML = `
+      <div class="head"><h2 id="h-${opt.id}"></h2><span class="tag"></span></div>
+      <p class="desc"></p>
+      <div class="facts">
+        <span>${opt.timbre}</span>
+        <span>5 min: ${fmt(lengthOf(five))}</span>
+        <span>10 min: ${fmt(lengthOf(ten))}</span>
+      </div>
+      <div class="btns">
+        <button type="button" class="b5" id="p5-${opt.id}"><span class="dot"></span>5-minute</button>
+        <button type="button" class="b10" id="p10-${opt.id}"><span class="dot"></span>10-minute</button>
+        <button type="button" class="bboth" id="pb-${opt.id}">Both, one after the other</button>
+      </div>`;
+    card.querySelector('h2').textContent = opt.name;
+    card.querySelector('.tag').textContent = opt.tag;
+    card.querySelector('.desc').textContent = opt.desc;
+    card.querySelector('.b5').addEventListener('click', () => play(card, [five]));
+    card.querySelector('.b10').addEventListener('click', () => play(card, [ten]));
+    card.querySelector('.bboth').addEventListener('click', () => play(card, [five, ten]));
+    list.appendChild(card);
+  }
+})();
+</script>
