@@ -6101,7 +6101,14 @@ booking and not taken up. Any change to what a tap writes.
 
 ## WO-2.57 — the overdue tone comes back on by default after a classroom trial
 
-**Ship** — · **Status** 🔒 GATED — on the overdue-tone design thread (`plans/overdue-tone.md`): the trial passed on the owner's word 2026-11-04, and the owner picked a new sound on 2026-11-05 (the low pulse) — this waits for WO-2.64 to build it · **Size** S · **Depends on** WO-2.33, WO-2.64
+**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.33, WO-2.64
+
+**The lock came off 2026-11-05, the owner's call.** It was on the overdue-tone design thread
+(`plans/overdue-tone.md`): the trial passed on the owner's word 2026-11-04, the owner then picked a
+new sound — the low pulse — and [WO-2.64](#wo-264--the-overdue-tone-becomes-the-low-pulse) built it
+and was read on the iPad on 2026-11-05. **So the default this flips is the low pulse, not the tone the
+trial heard**; the trial proved the alert fires, which is what the 📆 line asks, and the sound was
+heard separately at WO-2.64's 👤 line. The Traps line *do not touch the tone* still stands.
 
 **Booked 2026-09-30, out of WO-2.33's decision.** The owner re-ran the August sitting on the iPad and
 neither failure came back (`TESTING.md` § WO-2.33), so the tone is coming back as it is. **But one

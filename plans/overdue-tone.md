@@ -1,7 +1,7 @@
 # The overdue tone — choosing what it sounds like
 
-**Status: booked** 2026-11-05 — the owner picked **option 6, Low pulse**; built by
-[WO-2.64](work-orders/phase-2-attendance.md#wo-264--the-overdue-tone-becomes-the-low-pulse), and WO-2.57 flips the default after it.
+**Status: built** 2026-11-05 — the owner picked **option 6, Low pulse**; built by
+[WO-2.64](work-orders/phase-2-attendance.md#wo-264--the-overdue-tone-becomes-the-low-pulse), ✅ and read on the iPad the same day. WO-2.57 flips the default next; its lock came off the same day.
 
 **Started 2026-11-04**, the owner's call, out of WO-2.57's trial. The two-week classroom trial
 passed — every overdue pass chimed at its thresholds on the teaching iPad, the owner's word on
