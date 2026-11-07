@@ -13,6 +13,14 @@ records what someone remembered.
 
 ## [Unreleased]
 
+### The harness now hears the whole overdue tone — 2026-11-06
+
+WO-2.65. `CACHE` v212. Nothing audible changes.
+
+- **The alert's log entry records every note as it was set on the audio nodes** — pitch, wave,
+  offset, length, loudness, attack — and the harness checks all fourteen notes of the two tones
+  against the low pulse's table, so a later edit to any one of them can no longer pass unnoticed.
+
 ### The overdue tone is now the low pulse — 2026-11-05
 
 WO-2.64, owner-directed. `CACHE` v211.

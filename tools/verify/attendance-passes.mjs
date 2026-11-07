@@ -725,6 +725,51 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
     newTones.length + ' tone(s) requested across the two winds: ' + JSON.stringify(newTones));
 
   /*
+    ── WO-2.65: EVERY NOTE OF BOTH TONES, AS THE LOOP SET IT ON THE NODES ──
+
+    The check above reads three figures out of the note list the alert ASKED FOR. `heard` is what
+    playToneSequence() configured on the oscillators — type and frequency read back off the node,
+    offset, duration, peak and attack as handed to the scheduling calls — so a build that dropped
+    `type`, moved an offset or re-tuned the second note's gain now fails here. The table is WO-2.64's,
+    written out below on purpose and NOT read from tools/tone-audition.html, which is free to gain
+    candidates. Times use a tolerance (the context clock is a float); everything else is exact.
+  */
+  const near = (a, b) => typeof a === 'number' && Math.abs(a - b) < 1e-6;
+  const toneTable = (f, pairs, gap, second, d1, d2, g1, g2) => {
+    const out = [];
+    for (let i = 0; i < pairs; i++) {
+      out.push({ f, type: 'triangle', t: i * gap, dur: d1, peak: g1, attack: 0.01 });
+      out.push({ f, type: 'triangle', t: i * gap + second, dur: d2, peak: g2, attack: 0.01 });
+    }
+    return out;
+  };
+  const wantFive = toneTable(440, 3, 0.9, 0.19, 0.16, 0.20, 0.6, 0.5);
+  const wantTen = toneTable(523.25, 4, 0.6, 0.16, 0.14, 0.17, 0.62, 0.52);
+  const noteProblems = (got, want) => {
+    const bad = [];
+    if (!Array.isArray(got) || got.length !== want.length) {
+      return ['expected ' + want.length + ' notes, found ' + (Array.isArray(got) ? got.length : typeof got)];
+    }
+    want.forEach((w, i) => {
+      const g = got[i];
+      if (g.f !== w.f) bad.push('note ' + i + ' f ' + g.f + ' != ' + w.f);
+      if (g.type !== w.type) bad.push('note ' + i + ' type ' + g.type + ' != ' + w.type);
+      if (!near(g.t, w.t)) bad.push('note ' + i + ' t ' + g.t + ' != ' + w.t);
+      if (!near(g.dur, w.dur)) bad.push('note ' + i + ' dur ' + g.dur + ' != ' + w.dur);
+      if (g.peak !== w.peak) bad.push('note ' + i + ' peak ' + g.peak + ' != ' + w.peak);
+      if (g.attack !== w.attack) bad.push('note ' + i + ' attack ' + g.attack + ' != ' + w.attack);
+    });
+    return bad;
+  };
+  const badFive = noteProblems(five.heard, wantFive);
+  const badTen = noteProblems(ten.heard, wantTen);
+  check('every note both tones set on its oscillator matches WO-2.64: six triangle notes for 5 minutes, eight for 10 — frequency, type, offset, duration, peak and attack',
+    badFive.length === 0 && badTen.length === 0,
+    badFive.length + badTen.length === 0
+      ? 'all 14 notes match'
+      : '5-minute: ' + JSON.stringify(badFive) + '; 10-minute: ' + JSON.stringify(badTen));
+
+  /*
     ── WO-2.64: A NOTE WITH NO `type` AND NO `attack` STILL PLAYS AS IT ALWAYS DID ──
 
     Neither builder returns such a note any more, so the default is reachable only by handing
@@ -946,6 +991,7 @@ const { closeAll, goHome, read, openCard, park, start, ids, marking, opened, fir
     !!woundMute.now && mutedTones.length === 1
       && mutedTones[0].played === false && mutedTones[0].oscillators === 0
       && mutedTones[0].level === 1
+      && Array.isArray(mutedTones[0].heard) && mutedTones[0].heard.length === 0
       /* The same sentence it says with the sound on, word for word — this is the accessible mirror
          of the tone and it is not a preference. */
       && /has been out on a quick pass for 5 minutes\./.test(saidMuted)

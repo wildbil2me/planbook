@@ -344,7 +344,11 @@ const LOG_CAP = 12;
 const soundLog = [];
 
 export function alertSoundLog() {
-  return soundLog.map((e) => Object.assign({}, e));
+  /* A nested `heard` list (WO-2.65) is copied with its objects, so a caller holding the result
+     cannot edit what the log says it heard. */
+  return soundLog.map((e) => Object.assign({}, e, {
+    heard: (e.heard || []).map((h) => Object.assign({}, h)),
+  }));
 }
 
 /* The context itself, described rather than handed over — a harness holding the real object could
@@ -395,9 +399,15 @@ function record(entry) {
 export function playToneSequence(notes) {
   let made = 0;
   let rearmed = false;
+  /* WO-2.65: what the loop SET ON THE NODES, collected as it goes — the type and frequency read
+     back off the oscillator, the offset, duration, peak and attack being the very values handed to
+     the scheduling calls (defaults applied). Copying the input list here would be the gap this
+     closes, one level down. */
+  const heard = [];
   const ctx = audioCtx;
   if (!ctx) {
-    return { oscillators: 0, state: 'locked', ctx: contextsMade, ctxTime: 0, rearmed: false, error: '' };
+    return { oscillators: 0, state: 'locked', ctx: contextsMade, ctxTime: 0, rearmed: false, error: '',
+      notes: [] };
   }
   try {
     /* THE CHEAP FALLBACK, AND IT IS THE ONE WO-2.31 REQUIRES TO EXIST WHATEVER ELSE DOES. Whatever
@@ -432,15 +442,17 @@ export function playToneSequence(notes) {
       g.gain.exponentialRampToValueAtTime(0.0001, end);
       osc.start(start); osc.stop(end + 0.02);
       made += 1;
+      heard.push({ f: osc.frequency.value, type: osc.type, t: start - t0, dur: end - start,
+        peak: peak, attack: attack });
     });
     return { oscillators: made, state: ctx.state, ctx: contextsMade,
-      ctxTime: Math.round(t0 * 1000) / 1000, rearmed: rearmed, error: '' };
+      ctxTime: Math.round(t0 * 1000) / 1000, rearmed: rearmed, error: '', notes: heard };
   } catch (e) {
     /* `rearmed` rides the error arm too: a context that threw on createOscillator() is the deadest
        shape there is, and whether the next touch has been given a way to fix it is exactly what a
        reader of this entry needs to know. */
     return { oscillators: made, state: 'unavailable', ctx: contextsMade, ctxTime: 0,
-      rearmed: rearmed, error: (e && e.name) || 'Error' };
+      rearmed: rearmed, error: (e && e.name) || 'Error', notes: heard };
   }
 }
 
@@ -495,13 +507,13 @@ export function playOverdueAlert(level) {
        ALERT did not have to reach for the listener, and a muted one never does — it never asks the
        context for anything. alertAudioState() is where the live arm is read. */
     record(Object.assign(shape, { played: false, oscillators: 0, state: 'silenced',
-      ctx: contextsMade, ctxTime: 0, rearmed: false, error: '' }));
+      ctx: contextsMade, ctxTime: 0, rearmed: false, error: '', heard: [] }));
     return false;
   }
   const ran = playToneSequence(notes);
   record(Object.assign(shape, { played: true, oscillators: ran.oscillators,
     state: ran.state, ctx: ran.ctx, ctxTime: ran.ctxTime, rearmed: ran.rearmed,
-    error: ran.error }));
+    error: ran.error, heard: ran.notes }));
   return !ran.error && ran.oscillators > 0;
 }
 

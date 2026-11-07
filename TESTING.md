@@ -13711,6 +13711,53 @@ are untouched. The file's head was rewritten rather than trimmed. `tools/audio-p
 - [x] `TESTING.md` § WO-2.64 carries these lines verbatim with the evidence for each.
       — This section.
 
+### WO-2.65 — the harness hears the whole tone, not its first note
+
+Nothing audible changes, so there is no 👤 line. Run on the real clock, 2026-11-05, in headless
+Edge; each full run is `node tools/verify-shell.mjs`.
+
+- [x] The log entry for a played alert carries the note list the loop scheduled, read off the
+      oscillators it configured, and a muted or locked alert carries an empty one.
+      — `src/alert-sound.js`: inside `playToneSequence()`'s `forEach`, after each oscillator is
+      configured, `heard.push({ f: osc.frequency.value, type: osc.type, t: start - t0,
+      dur: end - start, peak, attack })` — `f` and `type` read back off the node, the rest the
+      defaulted values the scheduling calls received. It is returned as `notes` beside `oscillators`
+      (the log entry's own `notes` is already the count, so the record carries it as `heard`).
+      `alertSoundLog()` copies the nested list and its objects. The locked path returns `notes: []`
+      and the muted path records `heard: []`; the muted one is asserted in the existing "with the
+      sound off the tone is not played" check (passed). The locked path is by inspection and no check
+      reaches it with a fresh page, so that half is **not harness-proved**.
+- [x] The harness asserts all six notes of the 5-minute tone and all eight of the 10-minute tone —
+      frequency, type, offset, duration, peak and attack — against WO-2.64's table.
+      — New check in `tools/verify/attendance-passes.mjs` straight after the WO-2.29 tone check, its
+      table written out in the file (not read from `tools/tone-audition.html`): times within 1e-6,
+      everything else exact. Clean run (the verifier's, 2026-11-06, after the mutation reverts):
+      `PASS | every note both tones set on its oscillator matches
+      WO-2.64 … :: all 14 notes match`; `2210 checks · 2210 passed · 0 failed · 0 skipped`, exit 0, 1219 s.
+- [x] Each of these turns the check red, one at a time, and is reverted: `type: 'triangle'` removed
+      from the 5-minute tone's second note; the 10-minute tone's second-note `dur` changed from 0.17 to
+      0.25; the 5-minute tone's second-note `gain` changed from 0.5 to 0.32. `TESTING.md` § WO-2.65
+      quotes each red line.
+      — Each mutation was a full run, marked `/* MUTATION */`, and reverted by copying the
+      pre-mutation file back before the next; each run was `2210 checks · 2209 passed · 1 failed`,
+      exit 1, and only this check failed:
+      1. type removed — `FAIL | every note both tones set on its oscillator matches WO-2.64 … ::
+         5-minute: ["note 1 type square != triangle","note 3 type square != triangle","note 5 type
+         square != triangle"]; 10-minute: []`
+      2. `dur` 0.17 → 0.25 — `… :: 5-minute: []; 10-minute: ["note 1 dur 0.25 != 0.17","note 3 dur
+         0.25 != 0.17","note 5 dur 0.25 != 0.17","note 7 dur 0.25 != 0.17"]`
+      3. `gain` 0.5 → 0.32 — `… :: 5-minute: ["note 1 peak 0.32 != 0.5","note 3 peak 0.32 != 0.5",
+         "note 5 peak 0.32 != 0.5"]; 10-minute: []`
+      After the third, `src/alert-sound.js` was restored and `grep -rn MUTATION src tools` finds
+      only pre-existing prose (README, other harness comments), none in `src/alert-sound.js`. The
+      tree after revert is byte-identical to the one the clean run used (same saved copy).
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+      — Clean run above (the verifier's, 2026-11-06, after the reverts: 2210/2210, exit 0); sweep `52 checks · 49 passed · 0 failed · 3 to review`,
+      the three standing reviews. `tools/README.md`'s call-site count moved 2203 → 2204 (one new
+      site; the muted assertion extended an existing one). `CACHE` is `planbook-shell-v211` → `v212`.
+- [x] `TESTING.md` § WO-2.65 carries these lines verbatim with the evidence for each.
+      — This section.
+
 ## Phase 3 — Gradebook
 
 *Phase goal: grades entered once or twice a week, in minutes, for five classes.*

@@ -6649,7 +6649,7 @@ one parameterised call**; the harness reads them as two shapes on purpose.
 
 ## WO-2.65 — the harness hears the whole tone, not its first note
 
-**Ship** — · **Status** ⬜ NOT STARTED · **Size** S · **Depends on** WO-2.64 · **Blocks** WO-2.57
+**Ship** — · **Status** ✅ DONE — 2026-11-06 · **Size** S · **Depends on** WO-2.64 · **Blocks** WO-2.57
 **Closes roadmap** *(no box. Owner-directed, 2026-11-05, out of WO-2.64's verdict.)*
 
 **Booked 2026-11-05, out of WO-2.64's verdict**, and placed ahead of WO-2.57 on the owner's call.
@@ -6677,16 +6677,16 @@ why this lands first.
 - **`CACHE` bump in `sw.js`**, **`TESTING.md` § WO-2.65** and the `CHANGELOG.md` entry.
 
 **Acceptance**
-- [ ] The log entry for a played alert carries the note list the loop scheduled, read off the
+- [x] The log entry for a played alert carries the note list the loop scheduled, read off the
       oscillators it configured, and a muted or locked alert carries an empty one.
-- [ ] The harness asserts all six notes of the 5-minute tone and all eight of the 10-minute tone —
+- [x] The harness asserts all six notes of the 5-minute tone and all eight of the 10-minute tone —
       frequency, type, offset, duration, peak and attack — against WO-2.64's table.
-- [ ] Each of these turns the check red, one at a time, and is reverted: `type: 'triangle'` removed
+- [x] Each of these turns the check red, one at a time, and is reverted: `type: 'triangle'` removed
       from the 5-minute tone's second note; the 10-minute tone's second-note `dur` changed from 0.17 to
       0.25; the 5-minute tone's second-note `gain` changed from 0.5 to 0.32. `TESTING.md` § WO-2.65
       quotes each red line.
-- [ ] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
-- [ ] `TESTING.md` § WO-2.65 carries these lines verbatim with the evidence for each.
+- [x] `node tools/verify-shell.mjs` and `node tools/wo-sweep.mjs` pass. `CACHE` in `sw.js` is bumped.
+- [x] `TESTING.md` § WO-2.65 carries these lines verbatim with the evidence for each.
 
 **Traps** — **Nothing audible changes**: not a note, a gain or a threshold, so there is no 👤 line and
 none should be added. **Record what was set on the nodes, not the note list passed in** — copying the
